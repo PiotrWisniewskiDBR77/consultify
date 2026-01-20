@@ -241,16 +241,19 @@ router.post(
       }
 
       // Extract projectId and screenContext from request context
-      const projectId = (context as any)?.projectId || 
-                       (context as any)?.workspaceContext?.projectId ||
-                       (req.body as any)?.projectId || null;
-      
-      const screenContext = (context as any)?.screenContext ||
-                           (context as any)?.workspaceContext ||
-                           (req.body as any)?.screenContext || null;
-      
-      const focusMode = (context as any)?.focusMode || 
-                       (req.body as any)?.focusMode || 'all';
+      const projectId =
+        (context as any)?.projectId ||
+        (context as any)?.workspaceContext?.projectId ||
+        (req.body as any)?.projectId ||
+        null;
+
+      const screenContext =
+        (context as any)?.screenContext ||
+        (context as any)?.workspaceContext ||
+        (req.body as any)?.screenContext ||
+        null;
+
+      const focusMode = (context as any)?.focusMode || (req.body as any)?.focusMode || 'all';
 
       const pipelineRequest = {
         type: 'chat',
@@ -278,7 +281,7 @@ router.post(
           systemInstruction: enhancedSystemInstruction,
         },
       };
-      
+
       logger.info(`[AI Stream] Processing request for user ${req.userId}`, {
         projectId,
         focusMode,

@@ -1,9 +1,9 @@
 /**
  * InlineThinkingStream Component
- * 
+ *
  * Displays AI thinking process in a subtle, inline, streaming fashion.
  * Shows the current thinking step with a typewriter effect.
- * 
+ *
  * FLOW-AI-THINKING: Inline reasoning display
  */
 
@@ -49,15 +49,20 @@ export const ThinkingIndicator: React.FC<ThinkingIndicatorProps> = ({
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <div className="flex items-center gap-1">
-        <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-        <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-        <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+        <span
+          className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce"
+          style={{ animationDelay: '0ms' }}
+        />
+        <span
+          className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce"
+          style={{ animationDelay: '150ms' }}
+        />
+        <span
+          className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce"
+          style={{ animationDelay: '300ms' }}
+        />
       </div>
-      {label && (
-        <span className="text-xs text-slate-400 dark:text-slate-500 italic">
-          {label}
-        </span>
-      )}
+      {label && <span className="text-xs text-slate-400 dark:text-slate-500 italic">{label}</span>}
     </div>
   );
 };
@@ -78,8 +83,7 @@ export const InlineThinkingStream: React.FC<InlineThinkingStreamProps> = ({
   const hideTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Get current step
-  const currentStep = steps.find((s) => s.status === 'in_progress') || 
-                      steps[steps.length - 1];
+  const currentStep = steps.find((s) => s.status === 'in_progress') || steps[steps.length - 1];
 
   // Typewriter effect for current step content
   useEffect(() => {
@@ -168,11 +172,12 @@ export const InlineThinkingStream: React.FC<InlineThinkingStreamProps> = ({
                   key={step.id}
                   className={`
                     w-1.5 h-1.5 rounded-full transition-all duration-200
-                    ${step.status === 'done' 
-                      ? 'bg-green-400 dark:bg-green-500' 
-                      : step.status === 'in_progress'
-                        ? 'bg-primary-400 dark:bg-primary-500 animate-pulse'
-                        : 'bg-slate-300 dark:bg-slate-600'
+                    ${
+                      step.status === 'done'
+                        ? 'bg-green-400 dark:bg-green-500'
+                        : step.status === 'in_progress'
+                          ? 'bg-primary-400 dark:bg-primary-500 animate-pulse'
+                          : 'bg-slate-300 dark:bg-slate-600'
                     }
                   `}
                   title={step.label}

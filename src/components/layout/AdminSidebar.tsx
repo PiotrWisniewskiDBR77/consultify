@@ -86,7 +86,7 @@ export type AdminSection =
   | 'data-requests'
   | 'compliance-overview';
 
-// Mapping between sections and AppView
+// Mapping between sections and AppView (only main sections need AppView)
 export const adminSectionToAppView: Partial<Record<AdminSection, AppView>> = {
   overview: AppView.ADMIN_OVERVIEW,
   organization: AppView.ADMIN_ORGANIZATION,
@@ -128,15 +128,12 @@ export const appViewToAdminSection: Record<string, AdminSection> = {
   [AppView.ADMIN_BILLING_MANAGEMENT]: 'billing',
 };
 
-export interface AdminSidebarProps {
+interface AdminSidebarProps {
   activeSection: AdminSection;
   onSectionChange: (section: AdminSection) => void;
-  onBack?: () => void;
-  onBackToApp?: () => void;
-  currentUserEmail?: string;
+  onBackToApp: () => void;
+  currentUserEmail: string;
   companyName?: string;
-  pendingInvites?: number;
-  pendingDataRequests?: number;
 }
 
 interface MenuItem {
@@ -183,11 +180,10 @@ const MenuButton: React.FC<{
   return (
     <button
       onClick={() => onSectionChange(item.id)}
-      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative ${
-        activeSection === item.id
+      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative ${activeSection === item.id
           ? 'bg-gradient-to-r from-purple-600/20 to-transparent text-purple-600 dark:text-white border-l-2 border-purple-500'
           : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-      }`}
+        }`}
       title={!showFull ? label : undefined}
     >
       <span
@@ -203,9 +199,8 @@ const MenuButton: React.FC<{
       </span>
 
       <span
-        className={`flex-1 text-left text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${
-          showFull ? 'w-auto opacity-100' : 'w-0 opacity-0'
-        }`}
+        className={`flex-1 text-left text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${showFull ? 'w-auto opacity-100' : 'w-0 opacity-0'
+          }`}
       >
         {label}
       </span>

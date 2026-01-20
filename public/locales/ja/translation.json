@@ -3348,7 +3348,9 @@
       "fullDocs": "完全なドキュメント",
       "tabs": {
         "overview": "概要",
+        "howto": "使い方",
         "faq": "よくある質問",
+        "video": "ビデオ",
         "knowledge": "ナレッジベース"
       },
       "overview": {
@@ -3946,6 +3948,12 @@
         "tips": "ヒント",
         "selectView": "詳細な手順を確認するには特定のカードまたはビューを選択してください。",
         "relatedDocs": "関連ドキュメント",
+        "tabs": {
+          "overview": "概要",
+          "howto": "使い方",
+          "faq": "よくある質問",
+          "video": "ビデオ"
+        },
         "modules": {
           "dashboard": {
             "name": "ダッシュボード",

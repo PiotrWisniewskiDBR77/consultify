@@ -21,6 +21,38 @@ coverage:
         branches:
           - main
           - develop
+      critical:
+        target: 95%
+        threshold: 1%
+        base: auto
+        branches:
+          - main
+          - develop
+        paths:
+          - server/src/services/permissionService.*
+          - server/src/services/tokenBillingService.*
+          - server/src/services/accessPolicyService.*
+          - server/src/services/aiCostControlService.*
+          - server/src/services/billingService.*
+          - server/src/services/regulatoryModeGuard.*
+          - server/src/middleware/authMiddleware.*
+          - server/src/middleware/permissionMiddleware.*
+      high:
+        target: 85%
+        threshold: 1%
+        base: auto
+        branches:
+          - main
+          - develop
+        paths:
+          - server/src/services/ai*.*
+      standard:
+        target: 75%
+        threshold: 1%
+        base: auto
+        branches:
+          - main
+          - develop
     patch:
       default:
         target: 80%

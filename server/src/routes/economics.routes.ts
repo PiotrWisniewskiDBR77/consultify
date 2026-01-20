@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, run as dbRun, get as dbGet } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 console.log('[Economics Routes] Module loaded - TypeScript version');
@@ -84,9 +84,8 @@ router.get(
         projectName: row.project_name,
         organizationId: row.organization_id,
         createdBy: row.created_by,
-        createdByName: row.first_name && row.last_name 
-          ? `${row.first_name} ${row.last_name}` 
-          : 'Unknown',
+        createdByName:
+          row.first_name && row.last_name ? `${row.first_name} ${row.last_name}` : 'Unknown',
         overallScore: row.overall_score,
         completionPercent: row.completion_percent || 0,
         axisScores: safeJsonParse(row.axis_scores, {}),
@@ -263,9 +262,8 @@ router.get(
         projectName: row.project_name,
         organizationId: row.organization_id,
         createdBy: row.created_by,
-        createdByName: row.first_name && row.last_name 
-          ? `${row.first_name} ${row.last_name}` 
-          : 'Unknown',
+        createdByName:
+          row.first_name && row.last_name ? `${row.first_name} ${row.last_name}` : 'Unknown',
         overallScore: row.overall_score,
         completionPercent: row.completion_percent || 0,
         axisScores: safeJsonParse(row.axis_scores, {}),
@@ -339,10 +337,7 @@ router.put(
       params.push(new Date().toISOString());
       params.push(id);
 
-      await dbRun(
-        `UPDATE digitization_analyses SET ${updates.join(', ')} WHERE id = ?`,
-        params
-      );
+      await dbRun(`UPDATE digitization_analyses SET ${updates.join(', ')} WHERE id = ?`, params);
 
       return res.json({ success: true, message: 'Analysis updated' });
     } catch (error: any) {

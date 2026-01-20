@@ -1,9 +1,9 @@
 /**
  * ImageAttachment Component
- * 
+ *
  * Displays image attachments with preview, remove option, and drag-drop support.
  * Supports paste from clipboard and file upload.
- * 
+ *
  * FLOW-AI-VISION: Frontend image handling
  */
 

@@ -1,0 +1,405 @@
+/**
+ * DocumentsRAGTab - Knowledge > Documents (RAG)
+ * Wrapper for AdminKnowledgeView documents tab
+ */
+
+import {
+  Edit2,
+  FileText,
+  RefreshCw,
+  Search,
+  Tag,
+  Trash2,
+  Upload,
+  X,
+} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
+
+import { Api } from '../../../../services/api';
+
+interface Document {
+  id: string;
+  filename: string;
+  category?: string;
+  tags?: string[];
+  status: string;
+  created_at: string;
+  chunk_count?: number;
+}
+
+const DOCUMENT_CATEGORIES = ['Best Practices', 'Methodology', 'Standards', 'Templates', 'Other'];
+
+export const DocumentsRAGTab: React.FC = () => {
+  const [loading, setLoading] = useState(true);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadCategory, setUploadCategory] = useState('');
+  const [uploadTags, setUploadTags] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [editingDoc, setEditingDoc] = useState<Document | null>(null);
+  const [editDocCategory, setEditDocCategory] = useState('');
+  const [editDocTags, setEditDocTags] = useState('');
+
+  useEffect(() => {
+    loadDocuments();
+  }, []);
+
+  const loadDocuments = async () => {
+    setLoading(true);
+    try {
+      const data = await Api.getKnowledgeDocuments();
+      setDocuments(Array.isArray(data) ? data : []);
+    } catch (err) {
+      toast.error('Failed to load documents');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadFile) return;
+
+    setUploading(true);
+    try {
+      const tagsArray = uploadTags
+        .split(',')
+        .map((t) => t.trim())
+        .filter((t) => t.length > 0);
+      const result = await Api.uploadKnowledgeDocument(
+        uploadFile,
+        uploadCategory || undefined,
+        tagsArray.length > 0 ? tagsArray : undefined
+      );
+      toast.success(`Uploaded & Indexed! (${(result as any).chunkCount} chunks)`);
+      setUploadFile(null);
+      setUploadCategory('');
+      setUploadTags('');
+      loadDocuments();
+    } catch (err: any) {
+      toast.error(err.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleUpdateDocument = async (docId: string) => {
+    try {
+      const tagsArray = editDocTags
+        .split(',')
+        .map((t) => t.trim())
+        .filter((t) => t.length > 0);
+      await Api.updateKnowledgeDocument(docId, {
+        category: editDocCategory || undefined,
+        tags: tagsArray.length > 0 ? tagsArray : undefined,
+      });
+      toast.success('Document updated');
+      setEditingDoc(null);
+      setEditDocCategory('');
+      setEditDocTags('');
+      loadDocuments();
+    } catch (err: any) {
+      toast.error(err.message || 'Update failed');
+    }
+  };
+
+  const filteredDocuments = documents.filter((doc) => {
+    const matchesCategory = !categoryFilter || doc.category === categoryFilter;
+    const matchesSearch =
+      !searchTerm ||
+      doc.filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doc.tags?.some((t) => t.toLowerCase().includes(searchTerm.toLowerCase()));
+    return matchesCategory && matchesSearch;
+  });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <RefreshCw className="w-8 h-8 text-indigo-500 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-6 max-w-5xl mx-auto">
+      {/* Header */}
+      <div>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <FileText size={24} className="text-indigo-500" />
+          Documents (RAG)
+        </h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Upload and manage knowledge documents for AI retrieval
+        </p>
+      </div>
+
+      {/* Upload Form */}
+      <form
+        onSubmit={handleUpload}
+        className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6"
+      >
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <Upload size={18} className="text-blue-500" />
+          Upload Knowledge Document
+        </h3>
+
+        <div className="space-y-4">
+          <div className="flex gap-4 items-center">
+            <div className="flex-1 relative">
+              <input
+                type="file"
+                accept=".pdf,.txt,.md"
+                onChange={(e) => setUploadFile(e.target.files ? e.target.files[0] : null)}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+              <div className="bg-slate-50 dark:bg-navy-900 border border-dashed border-slate-300 dark:border-navy-600 rounded-lg p-4 text-center transition-colors hover:bg-slate-100 dark:hover:bg-navy-800 hover:border-indigo-500">
+                {uploadFile ? (
+                  <span className="text-indigo-600 dark:text-indigo-400 font-medium flex justify-center items-center gap-2">
+                    <FileText size={16} /> {uploadFile.name}
+                  </span>
+                ) : (
+                  <span className="text-slate-500 dark:text-slate-400 text-sm">
+                    Drag & drop PDF, TXT, MD here or click to select
+                  </span>
+                )}
+              </div>
+            </div>
+            <button
+              type="submit"
+              disabled={!uploadFile || uploading}
+              className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium flex items-center gap-2"
+            >
+              {uploading ? (
+                <RefreshCw className="animate-spin" size={18} />
+              ) : (
+                <Upload size={18} />
+              )}
+              {uploading ? 'Processing...' : 'Upload & Index'}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Category
+              </label>
+              <select
+                value={uploadCategory}
+                onChange={(e) => setUploadCategory(e.target.value)}
+                className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+              >
+                <option value="">Select category...</option>
+                {DOCUMENT_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Tags (comma-separated)
+              </label>
+              <input
+                type="text"
+                value={uploadTags}
+                onChange={(e) => setUploadTags(e.target.value)}
+                placeholder="tag1, tag2, tag3"
+                className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+              />
+            </div>
+          </div>
+        </div>
+        <p className="text-slate-500 dark:text-slate-400 text-xs mt-3">
+          Files are automatically chunked, embedded, and added to the vector store for AI retrieval.
+        </p>
+      </form>
+
+      {/* Filters */}
+      <div className="flex items-center gap-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search documents..."
+            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400"
+          />
+        </div>
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className="px-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+        >
+          <option value="">All Categories</option>
+          {DOCUMENT_CATEGORIES.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Documents List */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          Indexed Documents ({filteredDocuments.length})
+        </h3>
+
+        {filteredDocuments.length === 0 ? (
+          <div className="text-center py-12 text-slate-400 bg-slate-50 dark:bg-navy-900/50 rounded-xl border border-dashed border-slate-200 dark:border-navy-700">
+            {searchTerm || categoryFilter ? 'No matching documents found.' : 'No documents indexed yet.'}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredDocuments.map((doc) => (
+              <div
+                key={doc.id}
+                className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:shadow-md transition-shadow"
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-3 overflow-hidden flex-1">
+                    <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg shrink-0">
+                      <FileText className="text-indigo-500" size={20} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-slate-900 dark:text-white font-medium truncate">
+                        {doc.filename}
+                      </h4>
+                      <p className="text-slate-500 dark:text-slate-400 text-xs">
+                        {new Date(doc.created_at).toLocaleDateString()}
+                      </p>
+                      {doc.category && (
+                        <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded">
+                          {doc.category}
+                        </span>
+                      )}
+                      {doc.tags && doc.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {doc.tags.map((tag, idx) => (
+                            <span
+                              key={idx}
+                              className="text-xs px-1.5 py-0.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded flex items-center gap-1"
+                            >
+                              <Tag size={10} /> {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded uppercase font-bold tracking-wide ${
+                        doc.status === 'indexed'
+                          ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                          : 'bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-500'
+                      }`}
+                    >
+                      {doc.status}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setEditingDoc(doc);
+                        setEditDocCategory(doc.category || '');
+                        setEditDocTags(doc.tags?.join(', ') || '');
+                      }}
+                      className="p-1.5 text-slate-400 hover:text-indigo-500 transition-colors"
+                      title="Edit"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button
+                      className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Edit Modal */}
+      {editingDoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-lg shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Edit Document</h2>
+              <button
+                onClick={() => {
+                  setEditingDoc(null);
+                  setEditDocCategory('');
+                  setEditDocTags('');
+                }}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-white"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Category
+                </label>
+                <select
+                  value={editDocCategory}
+                  onChange={(e) => setEditDocCategory(e.target.value)}
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+                >
+                  <option value="">No category</option>
+                  {DOCUMENT_CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Tags (comma-separated)
+                </label>
+                <input
+                  type="text"
+                  value={editDocTags}
+                  onChange={(e) => setEditDocTags(e.target.value)}
+                  placeholder="tag1, tag2, tag3"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
+                />
+              </div>
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingDoc(null);
+                    setEditDocCategory('');
+                    setEditDocTags('');
+                  }}
+                  className="flex-1 py-2 bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-300 rounded-lg font-medium hover:bg-slate-200 dark:hover:bg-navy-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleUpdateDocument(editingDoc.id)}
+                  className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default DocumentsRAGTab;

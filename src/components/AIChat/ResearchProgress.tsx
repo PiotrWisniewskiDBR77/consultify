@@ -1,9 +1,9 @@
 /**
  * ResearchProgress Component
- * 
+ *
  * Displays real-time progress for deep research mode.
  * Shows query execution status, source aggregation, and relevance scores.
- * 
+ *
  * FLOW-AI-RESEARCH: Research progress visualization
  */
 
@@ -52,7 +52,13 @@ export interface Source {
 
 interface ResearchProgressProps {
   topic: string;
-  stage: 'generating_queries' | 'queries_ready' | 'searching' | 'aggregating' | 'synthesizing' | 'complete';
+  stage:
+    | 'generating_queries'
+    | 'queries_ready'
+    | 'searching'
+    | 'aggregating'
+    | 'synthesizing'
+    | 'complete';
   queries: ResearchQuery[];
   sources?: Source[];
   className?: string;
@@ -72,7 +78,9 @@ const QueryItem: React.FC<{ query: ResearchQuery; index: number }> = ({ query, i
   const [showResults, setShowResults] = useState(false);
 
   const statusIcon = {
-    pending: <div className="w-4 h-4 rounded-full border-2 border-slate-300 dark:border-slate-600" />,
+    pending: (
+      <div className="w-4 h-4 rounded-full border-2 border-slate-300 dark:border-slate-600" />
+    ),
     searching: <Loader2 size={16} className="animate-spin text-primary-500" />,
     done: <CheckCircle2 size={16} className="text-green-500" />,
     error: <XCircle size={16} className="text-red-500" />,
@@ -91,10 +99,8 @@ const QueryItem: React.FC<{ query: ResearchQuery; index: number }> = ({ query, i
               {query.query}
             </span>
           </div>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-            {query.purpose}
-          </p>
-          
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{query.purpose}</p>
+
           {query.status === 'done' && query.results && query.results.length > 0 && (
             <button
               onClick={() => setShowResults(!showResults)}
@@ -104,7 +110,7 @@ const QueryItem: React.FC<{ query: ResearchQuery; index: number }> = ({ query, i
               {showResults ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
             </button>
           )}
-          
+
           {showResults && query.results && (
             <div className="mt-2 space-y-1 pl-2 border-l-2 border-slate-200 dark:border-navy-600">
               {query.results.slice(0, 3).map((result, i) => (
@@ -115,7 +121,10 @@ const QueryItem: React.FC<{ query: ResearchQuery; index: number }> = ({ query, i
                   rel="noopener noreferrer"
                   className="flex items-start gap-1.5 text-xs hover:bg-slate-50 dark:hover:bg-navy-800 p-1 rounded group"
                 >
-                  <ExternalLink size={10} className="flex-shrink-0 mt-0.5 text-slate-400 group-hover:text-primary-500" />
+                  <ExternalLink
+                    size={10}
+                    className="flex-shrink-0 mt-0.5 text-slate-400 group-hover:text-primary-500"
+                  />
                   <div className="min-w-0">
                     <p className="text-slate-600 dark:text-slate-300 truncate">{result.title}</p>
                     <p className="text-slate-400 text-[10px]">{result.source}</p>
@@ -157,11 +166,11 @@ const SourceItem: React.FC<{ source: Source; index: number }> = ({ source, index
       <p className="text-xs text-slate-400 dark:text-slate-500">{source.domain}</p>
     </div>
     <div className="flex items-center gap-1">
-      <div 
+      <div
         className="w-12 h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden"
         title={`${Math.round(source.relevanceScore * 100)}% relevance`}
       >
-        <div 
+        <div
           className="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full"
           style={{ width: `${source.relevanceScore * 100}%` }}
         />
@@ -194,36 +203,38 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
   const progress = totalQueries > 0 ? (completedQueries / totalQueries) * 100 : 0;
 
   const stageLabels: Record<string, { label: string; icon: React.ReactNode }> = {
-    generating_queries: { 
+    generating_queries: {
       label: t('research.generatingQueries', 'Generating research queries...'),
-      icon: <Sparkles size={16} className="animate-pulse" />
+      icon: <Sparkles size={16} className="animate-pulse" />,
     },
-    queries_ready: { 
+    queries_ready: {
       label: t('research.queriesReady', 'Research queries ready'),
-      icon: <FileSearch size={16} />
+      icon: <FileSearch size={16} />,
     },
-    searching: { 
+    searching: {
       label: t('research.searching', 'Searching sources...'),
-      icon: <Search size={16} className="animate-pulse" />
+      icon: <Search size={16} className="animate-pulse" />,
     },
-    aggregating: { 
+    aggregating: {
       label: t('research.aggregating', 'Aggregating results...'),
-      icon: <BookOpen size={16} className="animate-pulse" />
+      icon: <BookOpen size={16} className="animate-pulse" />,
     },
-    synthesizing: { 
+    synthesizing: {
       label: t('research.synthesizing', 'Synthesizing findings...'),
-      icon: <Sparkles size={16} className="animate-pulse" />
+      icon: <Sparkles size={16} className="animate-pulse" />,
     },
-    complete: { 
+    complete: {
       label: t('research.complete', 'Research complete'),
-      icon: <CheckCircle2 size={16} className="text-green-500" />
+      icon: <CheckCircle2 size={16} className="text-green-500" />,
     },
   };
 
   const currentStage = stageLabels[stage] || stageLabels.searching;
 
   return (
-    <div className={`bg-gradient-to-br from-slate-50 to-indigo-50 dark:from-navy-800 dark:to-indigo-900/20 rounded-xl border border-slate-200 dark:border-navy-700 ${className}`}>
+    <div
+      className={`bg-gradient-to-br from-slate-50 to-indigo-50 dark:from-navy-800 dark:to-indigo-900/20 rounded-xl border border-slate-200 dark:border-navy-700 ${className}`}
+    >
       <button
         onClick={toggleExpand}
         className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/50 dark:hover:bg-navy-700/50 transition-colors"
@@ -231,7 +242,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
         <div className="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg text-indigo-600 dark:text-indigo-400">
           <Search size={18} />
         </div>
-        
+
         <div className="flex-1 text-left">
           <div className="flex items-center gap-2">
             <h4 className="text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -242,9 +253,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
               {currentStage.label}
             </span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-            {topic}
-          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{topic}</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -255,7 +264,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
             <p className="text-xs text-slate-400">{t('research.queries', 'queries')}</p>
           </div>
           <div className="w-20 h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
-            <div 
+            <div
               className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
@@ -315,7 +324,9 @@ export const ResearchStatusBadge: React.FC<{
     >
       <Search size={12} className="animate-pulse" />
       <span>{t('research.researching', 'Researching')}</span>
-      <span className="text-indigo-500">{queriesCompleted}/{totalQueries}</span>
+      <span className="text-indigo-500">
+        {queriesCompleted}/{totalQueries}
+      </span>
     </button>
   );
 };

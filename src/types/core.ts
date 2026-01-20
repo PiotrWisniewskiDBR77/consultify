@@ -778,6 +778,7 @@ export interface PortfolioInitiative {
   id: string;
   name: string;
   summary?: string;
+  description?: string;
   axis: string;
   status: InitiativeStatus;
   priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
@@ -2802,12 +2803,12 @@ export type TaskType = 'task' | 'bug' | 'story' | 'epic' | 'subtask' | 'pilot';
 
 export interface DecisionImpact {
   decisionType:
-    | 'CONTINUE'
-    | 'MOVE_TO_PILOT'
-    | 'MOVE_TO_SCALE'
-    | 'STOP'
-    | 'APPROVE_INVESTMENT'
-    | 'CHANGE_SCOPE';
+  | 'CONTINUE'
+  | 'MOVE_TO_PILOT'
+  | 'MOVE_TO_SCALE'
+  | 'STOP'
+  | 'APPROVE_INVESTMENT'
+  | 'CHANGE_SCOPE';
   decisionStatement: string;
 }
 
@@ -3094,10 +3095,12 @@ export interface FullInitiative {
   // Governance
   ownerBusinessId?: string;
   ownerExecutionId?: string;
+  ownerTechnicalId?: string;
   sponsorId?: string;
   assigneeId?: string; // For risk calculations
   ownerBusiness?: Pick<User, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>;
   ownerExecution?: Pick<User, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>;
+  ownerTechnical?: Pick<User, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>;
   sponsor?: Pick<User, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>;
   marketContext?: string;
 
@@ -3360,13 +3363,13 @@ export interface Comment {
 export interface AISuggestion {
   id: string;
   type:
-    | 'expand'
-    | 'condense'
-    | 'refine'
-    | 'add-data'
-    | 'add-example'
-    | 'restructure'
-    | 'add-section';
+  | 'expand'
+  | 'condense'
+  | 'refine'
+  | 'add-data'
+  | 'add-example'
+  | 'restructure'
+  | 'add-section';
   text: string;
   originalText: string;
   sectionId: string;
@@ -3837,21 +3840,21 @@ export interface LLMProvider {
   id: string;
   name: string;
   provider:
-    | 'openai'
-    | 'anthropic'
-    | 'google'
-    | 'mistral'
-    | 'groq'
-    | 'together'
-    | 'nvidia'
-    | 'deepseek'
-    | 'qwen'
-    | 'ernie'
-    | 'z_ai'
-    | 'ollama'
-    | 'tavily'
-    | 'google_search'
-    | 'cohere';
+  | 'openai'
+  | 'anthropic'
+  | 'google'
+  | 'mistral'
+  | 'groq'
+  | 'together'
+  | 'nvidia'
+  | 'deepseek'
+  | 'qwen'
+  | 'ernie'
+  | 'z_ai'
+  | 'ollama'
+  | 'tavily'
+  | 'google_search'
+  | 'cohere';
   api_key: string;
   endpoint?: string;
   model_id: string;
@@ -4791,6 +4794,7 @@ export interface FeedbackSettings {
 }
 
 // Response feedback from user
+// Extended in v2.0 with adaptive style fields
 export interface ResponseFeedback {
   rating: 'positive' | 'negative' | 'neutral';
   lengthFeedback?: 'too-short' | 'just-right' | 'too-long';
@@ -4799,6 +4803,12 @@ export interface ResponseFeedback {
   customFeedback?: string;
   wantedMode?: 'quick' | 'standard' | 'deepStudy';
   timestamp?: Date;
+
+  // Adaptive style fields (v2.0)
+  actionability?: number; // 1-5 - How useful/actionable was the response
+  accuracy?: number; // 1-5 - How accurate/correct was the information
+  expectedFormat?: 'bullets' | 'paragraphs' | 'structured' | 'conversational';
+  missingInfo?: string; // What was missing from the response
 }
 
 export interface UserAIProvider {
@@ -6072,14 +6082,14 @@ export interface TaskPMOExtension {
  */
 export interface RACIEntry {
   objectType:
-    | 'PROJECT'
-    | 'INITIATIVE'
-    | 'TASK'
-    | 'DECISION'
-    | 'CHANGE_REQUEST'
-    | 'ASSESSMENT'
-    | 'ROADMAP'
-    | 'STAGE_GATE';
+  | 'PROJECT'
+  | 'INITIATIVE'
+  | 'TASK'
+  | 'DECISION'
+  | 'CHANGE_REQUEST'
+  | 'ASSESSMENT'
+  | 'ROADMAP'
+  | 'STAGE_GATE';
   objectId?: string;
   userId: string;
   projectRole: PMOProjectRole;

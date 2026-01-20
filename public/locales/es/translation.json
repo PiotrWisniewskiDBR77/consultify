@@ -3348,7 +3348,9 @@
       "fullDocs": "Documentación Completa",
       "tabs": {
         "overview": "Resumen",
+        "howto": "Cómo usar",
         "faq": "FAQ",
+        "video": "Video",
         "knowledge": "Base de Conocimiento"
       },
       "overview": {

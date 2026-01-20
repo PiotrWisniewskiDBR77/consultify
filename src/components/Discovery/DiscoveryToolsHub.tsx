@@ -9,6 +9,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { ROUTES } from '@/routes/routeConfig';
+
 import {
   CategoryButton,
   FilterableTable,
@@ -668,7 +669,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                   <button
                     key={key}
                     onClick={() => {
-                      console.log('[DiscoveryToolsHub] Start tool:', key, 'category:', selectedCategory);
+                      console.log(
+                        '[DiscoveryToolsHub] Start tool:',
+                        key,
+                        'category:',
+                        selectedCategory
+                      );
                       setSelectedCategory(null);
                       // Navigate to strategic tools view with tool parameter
                       if (selectedCategory === 'strategic') {

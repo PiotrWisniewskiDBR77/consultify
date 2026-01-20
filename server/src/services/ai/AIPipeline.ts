@@ -370,42 +370,40 @@ export class AIPipeline {
   }> {
     try {
       const AIContextBuilder = await getAIContextBuilder();
-      
+
       // Extract IDs from request
       const userId = request.userId;
       const organizationId = request.organizationId || null;
       const projectId = (request as any).projectId || (request.context as any)?.projectId || null;
-      const screenContext = (request as any).screenContext || (request.context as any)?.screenContext || null;
-      
+      const screenContext =
+        (request as any).screenContext || (request.context as any)?.screenContext || null;
+
       // Build rich context if we have userId and organizationId
       if (userId && organizationId && AIContextBuilder?.buildContext) {
-        logger.info(`[AIPipeline] Building context for user: ${userId}, org: ${organizationId}, project: ${projectId}`);
-        
-        const fullContext = await AIContextBuilder.buildContext(
-          userId,
-          organizationId,
-          projectId,
-          {
-            focusMode: (request as any).focusMode || 'all',
-            currentScreen: screenContext?.screenId || screenContext?.currentScreen || null,
-            selectedObjectId: screenContext?.selectedObjectId || null,
-            selectedObjectType: screenContext?.selectedObjectType || null,
-          }
+        logger.info(
+          `[AIPipeline] Building context for user: ${userId}, org: ${organizationId}, project: ${projectId}`
         );
-        
+
+        const fullContext = await AIContextBuilder.buildContext(userId, organizationId, projectId, {
+          focusMode: (request as any).focusMode || 'all',
+          currentScreen: screenContext?.screenId || screenContext?.currentScreen || null,
+          selectedObjectId: screenContext?.selectedObjectId || null,
+          selectedObjectType: screenContext?.selectedObjectType || null,
+        });
+
         logger.info(`[AIPipeline] Context built successfully`, {
           hasExecution: !!fullContext?.execution,
           taskCount: fullContext?.execution?.userTasks?.length || 0,
           initiativeCount: fullContext?.execution?.userInitiatives?.length || 0,
         });
-        
+
         return {
           context: fullContext,
           ragResults: fullContext?.knowledge?.projectDocuments?.length || 0,
           memoryUsed: !!fullContext?.execution,
         };
       }
-      
+
       // Fallback: use context from request
       logger.info('[AIPipeline] Using fallback context (no userId/organizationId)');
       return {
@@ -431,20 +429,39 @@ export class AIPipeline {
   ): Promise<ChatMessage[]> {
     const ctx = enrichedContext.context as any;
     const messages: ChatMessage[] = [];
-    
+
     // Build intelligent system prompt based on context
     let systemPrompt = this.buildSystemPrompt(capability, ctx, request);
-    
+
     // Add custom system instruction if provided
     if ((request.options as any)?.systemInstruction) {
       systemPrompt += `\n\n${(request.options as any).systemInstruction}`;
     }
-    
+
+    // Integrate adaptive style preferences (v2.0)
+    try {
+      const adaptiveModule = await import('./adaptiveResponseService.js');
+      const adaptiveService = adaptiveModule.adaptiveResponseService || adaptiveModule.default;
+      
+      if (adaptiveService?.buildAdaptiveSystemPrompt && request.userId) {
+        const screenContext = (request as any).screenContext || ctx?.currentScreen;
+        systemPrompt = await adaptiveService.buildAdaptiveSystemPrompt(
+          request.userId,
+          systemPrompt,
+          screenContext ? { screenId: screenContext, screenType: screenContext } : undefined
+        );
+        logger.info('[AIPipeline] Applied adaptive style preferences for user');
+      }
+    } catch (err) {
+      // Adaptive service not available, continue with base prompt
+      logger.debug('[AIPipeline] Adaptive style service not available, using base prompt');
+    }
+
     messages.push({
       role: 'system',
       content: systemPrompt,
     });
-    
+
     // Add conversation history if provided (can come as 'history' or 'messages')
     const history = request.history || (request as any).messages || [];
     if (history.length > 0) {
@@ -455,103 +472,113 @@ export class AIPipeline {
         });
       }
     }
-    
+
     // Add user prompt
     messages.push({
       role: 'user',
       content: request.prompt,
     });
-    
+
     return messages;
   }
-  
+
   /**
    * Build intelligent system prompt with full context awareness
    */
-  private buildSystemPrompt(capability: AICapability, ctx: any, request: AIPipelineRequest): string {
+  private buildSystemPrompt(
+    capability: AICapability,
+    ctx: any,
+    request: AIPipelineRequest
+  ): string {
     const parts: string[] = [];
-    
+
     // 1. Role definition
     parts.push(this.buildRoleSection(capability));
-    
+
     // 2. Organization context
     if (ctx?.organization) {
       parts.push(this.buildOrganizationSection(ctx.organization));
     }
-    
+
     // 3. Project context
     if (ctx?.project) {
       parts.push(this.buildProjectSection(ctx.project));
     }
-    
+
     // 4. User execution context (tasks, initiatives, blockers)
     if (ctx?.execution) {
       parts.push(this.buildExecutionSection(ctx.execution));
     }
-    
+
     // 5. Pending approvals
     if (ctx?.pendingApprovals?.count > 0) {
       parts.push(this.buildPendingApprovalsSection(ctx.pendingApprovals));
     }
-    
+
     // 6. Screen context
     if (ctx?.currentScreen) {
       parts.push(this.buildScreenContextSection(ctx));
     }
-    
+
     // 7. Knowledge context
     if (ctx?.knowledge && !ctx.knowledge.ragDisabled) {
       parts.push(this.buildKnowledgeSection(ctx.knowledge));
     }
-    
+
     // 8. Behavioral instructions
     parts.push(this.buildBehavioralInstructions(capability, ctx));
-    
+
     return parts.filter(Boolean).join('\n\n');
   }
-  
+
   private buildRoleSection(capability: AICapability): string {
     const roleDescriptions: Record<string, string> = {
-      CONSULTANT: 'Jesteś ekspertem PMO i doradcą transformacji cyfrowej w platformie Consultinity. Pomagasz użytkownikom w zarządzaniu projektami, inicjatywami i zadaniami.',
-      ANALYST: 'Jesteś analitykiem biznesowym specjalizującym się w ocenie dojrzałości cyfrowej i analizie strategicznej.',
-      STRATEGIST: 'Jesteś strategiem transformacji cyfrowej, pomagającym w planowaniu roadmap i priorytetyzacji inicjatyw.',
-      IMPLEMENTER: 'Jesteś specjalistą od wdrożeń, pomagającym w wykonaniu zadań i zarządzaniu pracą.',
+      CONSULTANT:
+        'Jesteś ekspertem PMO i doradcą transformacji cyfrowej w platformie Consultinity. Pomagasz użytkownikom w zarządzaniu projektami, inicjatywami i zadaniami.',
+      ANALYST:
+        'Jesteś analitykiem biznesowym specjalizującym się w ocenie dojrzałości cyfrowej i analizie strategicznej.',
+      STRATEGIST:
+        'Jesteś strategiem transformacji cyfrowej, pomagającym w planowaniu roadmap i priorytetyzacji inicjatyw.',
+      IMPLEMENTER:
+        'Jesteś specjalistą od wdrożeń, pomagającym w wykonaniu zadań i zarządzaniu pracą.',
       GATEKEEPER: 'Jesteś kontrolerem jakości, weryfikującym zgodność ze standardami PMO.',
     };
-    
+
     return `## ROLA
 ${roleDescriptions[capability.role] || `Jesteś ${capability.role}. ${capability.description}`}`;
   }
-  
+
   private buildOrganizationSection(org: any): string {
     if (!org) return '';
-    
+
     return `## ORGANIZACJA
 - Nazwa: ${org.organizationName || 'Nieznana'}
 - Aktywne projekty: ${org.activeProjectCount || 0}
 - Poziom dojrzałości PMO: ${org.pmoMaturityLevel || 'BASIC'}`;
   }
-  
+
   private buildProjectSection(project: any): string {
     if (!project) return '';
-    
+
     return `## AKTUALNY PROJEKT
 - Nazwa: ${project.projectName}
 - Faza: ${project.currentPhase} (${project.phaseNumber}/6)
 - Inicjatywy: ${project.completedInitiatives || 0}/${project.initiativeCount || 0} ukończonych
 - Status: ${project.roadmapStatus || 'W TOKU'}`;
   }
-  
+
   private buildExecutionSection(execution: any): string {
     if (!execution) return '';
-    
+
     const sections: string[] = ['## KONTEKST UŻYTKOWNIKA'];
-    
+
     // User's tasks
     if (execution.userTasks && execution.userTasks.length > 0) {
       sections.push(`### Zadania użytkownika (${execution.userTasks.length}):`);
       const taskList = execution.userTasks.slice(0, 5).map((t: any) => {
-        const dueInfo = t.dueDate ? ` [termin: ${new Date(t.dueDate).toLocaleDateString('pl-PL')}]` : '';
+        const dueInfo = t.dueDate
+          ? ` [termin: ${new Date(t.dueDate).toLocaleDateString('pl-PL')}]`
+          : '';
         return `- [${t.status}] ${t.title}${dueInfo}`;
       });
       sections.push(taskList.join('\n'));
@@ -559,88 +586,114 @@ ${roleDescriptions[capability.role] || `Jesteś ${capability.role}. ${capability
         sections.push(`... i ${execution.userTasks.length - 5} więcej zadań`);
       }
     }
-    
+
     // User's initiatives
     if (execution.userInitiatives && execution.userInitiatives.length > 0) {
       sections.push(`### Inicjatywy użytkownika (${execution.userInitiatives.length}):`);
-      const initList = execution.userInitiatives.slice(0, 5).map((i: any) => 
-        `- [${i.status}] ${i.name}`
-      );
+      const initList = execution.userInitiatives
+        .slice(0, 5)
+        .map((i: any) => `- [${i.status}] ${i.name}`);
       sections.push(initList.join('\n'));
     }
-    
+
     // Blockers
     if (execution.blockers && execution.blockers.length > 0) {
       sections.push(`### ⚠️ BLOKERY (${execution.blockers.length}):`);
-      const blockerList = execution.blockers.slice(0, 3).map((b: any) => 
-        `- ${b.type}: ${b.description}`
-      );
+      const blockerList = execution.blockers
+        .slice(0, 3)
+        .map((b: any) => `- ${b.type}: ${b.description}`);
       sections.push(blockerList.join('\n'));
     }
-    
+
     // Pending decisions
     if (execution.pendingDecisions && execution.pendingDecisions.length > 0) {
       sections.push(`### Oczekujące decyzje (${execution.pendingDecisions.length}):`);
-      const decisionList = execution.pendingDecisions.slice(0, 3).map((d: any) => 
-        `- ${d.title}`
-      );
+      const decisionList = execution.pendingDecisions.slice(0, 3).map((d: any) => `- ${d.title}`);
       sections.push(decisionList.join('\n'));
     }
-    
+
     // Capacity status
     if (execution.capacityStatus) {
-      const statusEmoji = execution.capacityStatus === 'HEALTHY' ? '✅' : 
-                         execution.capacityStatus === 'WARNING' ? '⚠️' : '🔴';
+      const statusEmoji =
+        execution.capacityStatus === 'HEALTHY'
+          ? '✅'
+          : execution.capacityStatus === 'WARNING'
+            ? '⚠️'
+            : '🔴';
       sections.push(`### Obciążenie: ${statusEmoji} ${execution.capacityStatus}`);
     }
-    
+
     return sections.join('\n');
   }
-  
+
   private buildPendingApprovalsSection(approvals: any): string {
     if (!approvals || approvals.count === 0) return '';
-    
+
     return `## OCZEKUJĄCE AKCJE AI
 ${approvals.summary}
 Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwierdzić.`;
   }
-  
+
   private buildScreenContextSection(ctx: any): string {
+    // Legacy screen hints (fallback)
     const screenHints: Record<string, string> = {
-      initiatives: 'Użytkownik przegląda inicjatywy - skup się na statusach, postępach i priorytetach.',
+      initiatives:
+        'Użytkownik przegląda inicjatywy - skup się na statusach, postępach i priorytetach.',
       roadmap: 'Użytkownik jest w widoku roadmapy - skup się na harmonogramie i zależnościach.',
-      assessment: 'Użytkownik jest w module oceny dojrzałości - skup się na lukach i rekomendacjach.',
+      assessment:
+        'Użytkownik jest w module oceny dojrzałości - skup się na lukach i rekomendacjach.',
       tasks: 'Użytkownik zarządza zadaniami - pomóż w priorytetyzacji i planowaniu.',
-      dashboard: 'Użytkownik jest na dashboardzie - daj przegląd sytuacji i proponuj kolejne kroki.',
+      dashboard:
+        'Użytkownik jest na dashboardzie - daj przegląd sytuacji i proponuj kolejne kroki.',
       execution: 'Użytkownik jest w trybie realizacji - skup się na konkretnych działaniach.',
       discovery: 'Użytkownik jest w fazie discovery - pomóż zrozumieć kontekst biznesowy.',
       portfolio: 'Użytkownik przegląda portfolio projektów - daj perspektywę strategiczną.',
     };
-    
+
     const screen = ctx.currentScreen?.toLowerCase() || '';
+    
+    // Try to use contextResponseMapper for enhanced context (v2.0)
+    let contextGuidelines: string[] = [];
+    try {
+      const contextMapper = require('./contextResponseMapper.js');
+      if (contextMapper?.buildContextPromptAdditions) {
+        contextGuidelines = contextMapper.buildContextPromptAdditions(screen);
+      }
+    } catch {
+      // Fallback to legacy hints
+    }
+
     const hint = Object.entries(screenHints).find(([key]) => screen.includes(key))?.[1];
-    
-    if (!hint && !ctx.selectedObjectType) return '';
-    
+
+    if (!hint && !ctx.selectedObjectType && contextGuidelines.length === 0) return '';
+
     let section = `## KONTEKST EKRANU`;
     if (ctx.currentScreen) {
       section += `\n- Aktualny widok: ${ctx.currentScreen}`;
     }
-    if (hint) {
+    
+    // Add enhanced context guidelines if available
+    if (contextGuidelines.length > 0) {
+      section += '\n### Wytyczne dla tego kontekstu:';
+      for (const guideline of contextGuidelines.slice(0, 5)) {
+        section += `\n- ${guideline}`;
+      }
+    } else if (hint) {
       section += `\n- ${hint}`;
     }
+    
     if (ctx.selectedObjectType && ctx.selectedObjectId) {
       section += `\n- Wybrany element: ${ctx.selectedObjectType} (ID: ${ctx.selectedObjectId})`;
     }
-    
+
     return section;
   }
-  
+
   private buildKnowledgeSection(knowledge: any): string {
     if (!knowledge) return '';
-    
+
     const sections: string[] = [];
-    
+
     // Strategic directions
     if (knowledge.strategicDirections && knowledge.strategicDirections.length > 0) {
       sections.push(`### Kierunki strategiczne organizacji:`);
@@ -648,7 +701,7 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
         sections.push(`- ${s.title}: ${s.description?.substring(0, 100) || ''}...`);
       });
     }
-    
+
     // Previous decisions
     if (knowledge.previousDecisions && knowledge.previousDecisions.length > 0) {
       sections.push(`### Ostatnie decyzje w projekcie:`);
@@ -656,12 +709,12 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
         sections.push(`- ${d.title}: ${d.outcome}`);
       });
     }
-    
+
     if (sections.length === 0) return '';
-    
+
     return `## WIEDZA KONTEKSTOWA\n${sections.join('\n')}`;
   }
-  
+
   private buildBehavioralInstructions(capability: AICapability, ctx: any): string {
     const instructions: string[] = [
       '## INSTRUKCJE',
@@ -670,25 +723,29 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
       '3. Proponuj konkretne działania bazując na aktualnym stanie pracy użytkownika.',
       '4. Jeśli są blokery lub problemy, proaktywnie oferuj pomoc w ich rozwiązaniu.',
     ];
-    
+
     // Add context-specific instructions
     if (ctx?.execution?.capacityStatus === 'OVERLOADED') {
-      instructions.push('5. ⚠️ Użytkownik jest przeciążony - sugeruj priorytetyzację i delegowanie zadań.');
+      instructions.push(
+        '5. ⚠️ Użytkownik jest przeciążony - sugeruj priorytetyzację i delegowanie zadań.'
+      );
     }
-    
+
     if (ctx?.execution?.blockers?.length > 0) {
       instructions.push('5. Są aktywne blokery - zaoferuj pomoc w ich rozwiązaniu.');
     }
-    
+
     if (ctx?.pendingApprovals?.count > 0) {
-      instructions.push(`5. Użytkownik ma ${ctx.pendingApprovals.count} oczekujących akcji AI do przejrzenia.`);
+      instructions.push(
+        `5. Użytkownik ma ${ctx.pendingApprovals.count} oczekujących akcji AI do przejrzenia.`
+      );
     }
-    
+
     // Response format hint
     if (capability.outputFormat === 'json') {
       instructions.push('6. Odpowiedz w formacie JSON.');
     }
-    
+
     return instructions.join('\n');
   }
 

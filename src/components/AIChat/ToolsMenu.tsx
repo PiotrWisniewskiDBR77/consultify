@@ -102,6 +102,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
       return () => window.speechSynthesis.removeEventListener('voiceschanged', loadVoices);
     }
+    return undefined;
   }, []);
 
   // Use global store values
@@ -258,11 +259,10 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
         disabled={disabled}
         className={`
                     relative p-2 rounded-lg transition-colors
-                    ${
-                      activeModeCount > 0
-                        ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/30'
-                        : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
-                    }
+                    ${activeModeCount > 0
+            ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/30'
+            : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+          }
                     ${disabled ? 'cursor-not-allowed opacity-50' : ''}
                 `}
         title={t('aiChat.menu.tools', 'Narzędzia AI')}

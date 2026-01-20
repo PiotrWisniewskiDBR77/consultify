@@ -273,7 +273,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
           </div>
           <div className="max-h-56 overflow-y-auto">
             <table className="w-full text-left border-collapse">
-              <thead className="bg-navy-900 text-slate-500 dark:text-slate-400 text-xs uppercase sticky top-0">
+              <thead className="bg-slate-50 dark:bg-navy-900 text-slate-500 dark:text-slate-400 text-xs uppercase sticky top-0">
                 <tr>
                   <th className="p-3 font-medium">Date</th>
                   <th className="p-3 font-medium">Amount</th>

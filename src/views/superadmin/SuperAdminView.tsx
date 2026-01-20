@@ -1,12 +1,16 @@
 /**
  * SuperAdminView - Main Super Admin Panel
  *
- * Restructured with modular AI Platform (Variant A - 3 Modules):
+ * Unified AI Platform structure (6 main tabs with sub-tabs):
  * - Overview (Dashboard, Metrics, Signals)
  * - Customers (Organizations, Users, Feedback, Bulk Ops)
- * - AI Infrastructure (LLM Providers, Tiers, Settings, Health)
- * - AI Development (Prompts, Intelligence, Experiments, Knowledge)
- * - AI Operations (Mission Control, Performance, Costs, SLA, Analytics)
+ * - AI Platform (unified with 6 tabs):
+ *   - Configuration (LLM Providers, Model Tiers, Routing Rules, Global Settings)
+ *   - Development (Prompts Library, Prompt Builder, Experiments, Model Registry)
+ *   - Operations (Mission Control, Health Monitoring, Performance, SLA)
+ *   - Analytics (Usage, Costs, Performance Metrics, Custom Reports)
+ *   - Security (API Keys, Access Control, Audit Logs, Compliance)
+ *   - Knowledge (Knowledge Base, Documents RAG, Strategic Directions)
  * - System (Health, Audit Log, Feature Flags, Integrations)
  * - Content (Playbooks, Email Templates)
  * - Revenue (Billing, Invoices, Usage)
@@ -37,6 +41,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { AppView, User } from '../../types';
 
 // Lazy load heavy modules
+// Legacy AI modules - kept for backward compatibility redirects
 const AIDevelopmentModule = React.lazy(() =>
   import('./AIDevelopmentModule').then((m) => ({ default: m.AIDevelopmentModule }))
 );
@@ -46,9 +51,13 @@ const AIInfrastructureModule = React.lazy(() =>
 const AIOperationsModule = React.lazy(() =>
   import('./AIOperationsModule').then((m) => ({ default: m.AIOperationsModule }))
 );
-// AIPlatformModule legacy kept for compatibility
+// NEW: Unified AI Platform Module with 6 main tabs
 const AIPlatformModule = React.lazy(() =>
   import('./AIPlatformModule').then((m) => ({ default: m.AIPlatformModule }))
+);
+// NEW: AI Platform Module from new folder structure
+const NewAIPlatformModule = React.lazy(() =>
+  import('./AIPlatformModule/AIPlatformModule').then((m) => ({ default: m.AIPlatformModule }))
 );
 const AnalyticsModuleView = React.lazy(() =>
   import('./analytics').then((m) => ({ default: m.AnalyticsModuleView }))
@@ -126,19 +135,19 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
             case AppView.SUPERADMIN_CUSTOMERS:
               return <CustomersModule />;
 
-            // NEW: AI Platform - 3 Modular Structure (Variant A)
+            // NEW: Unified AI Platform with 6 main tabs
+            case AppView.SUPERADMIN_AI_PLATFORM:
+              return <NewAIPlatformModule />;
+
+            // Legacy AI modules - redirect to unified AI Platform
             case AppView.SUPERADMIN_AI_INFRASTRUCTURE:
-              return <AIInfrastructureModule />;
+              return <NewAIPlatformModule initialTab="configuration" />;
 
             case AppView.SUPERADMIN_AI_DEVELOPMENT:
-              return <AIDevelopmentModule />;
+              return <NewAIPlatformModule initialTab="development" />;
 
             case AppView.SUPERADMIN_AI_OPERATIONS:
-              return <AIOperationsModule />;
-
-            // Legacy AI Platform - redirects to AI Infrastructure
-            case AppView.SUPERADMIN_AI_PLATFORM:
-              return <AIInfrastructureModule />;
+              return <NewAIPlatformModule initialTab="operations" />;
 
             case AppView.SUPERADMIN_SYSTEM:
               return <SystemModule />;
@@ -180,13 +189,14 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                 />
               );
 
-            // Legacy AI views - redirect to appropriate new module
+            // Legacy AI views - redirect to unified AI Platform with appropriate tab
             case AppView.SUPERADMIN_LLM_MANAGEMENT:
             case AppView.SUPERADMIN_AI_CONFIG:
               return (
-                <AIInfrastructureModule
-                  initialTab={
-                    currentView === AppView.SUPERADMIN_LLM_MANAGEMENT ? 'llm-config' : 'settings'
+                <NewAIPlatformModule
+                  initialTab="configuration"
+                  initialSubTab={
+                    currentView === AppView.SUPERADMIN_LLM_MANAGEMENT ? 'llm-providers' : 'global-settings'
                   }
                 />
               );
@@ -194,11 +204,16 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
             case AppView.SUPERADMIN_AI_INTELLIGENCE:
             case AppView.SUPERADMIN_KNOWLEDGE:
               return (
-                <AIDevelopmentModule
+                <NewAIPlatformModule
                   initialTab={
                     currentView === AppView.SUPERADMIN_AI_INTELLIGENCE
-                      ? 'intelligence'
+                      ? 'development'
                       : 'knowledge'
+                  }
+                  initialSubTab={
+                    currentView === AppView.SUPERADMIN_AI_INTELLIGENCE
+                      ? 'prompt-builder'
+                      : 'knowledge-base'
                   }
                 />
               );

@@ -656,7 +656,7 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
                         <p className="text-sm text-white">
                           {contact.name}
                           {contact.is_primary && (
-                            <span className="ml-2 text-xs bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded">
+                            <span className="ml-2 text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded">
                               Primary
                             </span>
                           )}

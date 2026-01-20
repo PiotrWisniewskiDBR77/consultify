@@ -428,7 +428,7 @@ export const AdminKnowledgeView: React.FC = () => {
                     <select
                       value={ideaCategoryFilter}
                       onChange={(e) => setIdeaCategoryFilter(e.target.value)}
-                      className="bg-navy-950 border border-white/10 rounded px-3 py-1 text-white text-xs focus:border-purple-500 outline-none"
+                      className="bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded px-3 py-1 text-slate-900 dark:text-white text-xs focus:border-purple-500 outline-none"
                     >
                       <option value="">All Categories</option>
                       {IDEA_CATEGORIES.map((cat) => (
@@ -600,7 +600,7 @@ export const AdminKnowledgeView: React.FC = () => {
                         <select
                           value={uploadCategory}
                           onChange={(e) => setUploadCategory(e.target.value)}
-                          className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white text-sm focus:border-purple-500 outline-none"
+                          className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none"
                         >
                           <option value="">Select category...</option>
                           {DOCUMENT_CATEGORIES.map((cat) => (
@@ -619,7 +619,7 @@ export const AdminKnowledgeView: React.FC = () => {
                           value={uploadTags}
                           onChange={(e) => setUploadTags(e.target.value)}
                           placeholder="tag1, tag2, tag3"
-                          className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white text-sm focus:border-purple-500 outline-none"
+                          className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none"
                         />
                       </div>
                     </div>
@@ -639,7 +639,7 @@ export const AdminKnowledgeView: React.FC = () => {
                     <select
                       value={documentCategoryFilter}
                       onChange={(e) => setDocumentCategoryFilter(e.target.value)}
-                      className="bg-navy-950 border border-white/10 rounded px-3 py-1 text-white text-xs focus:border-purple-500 outline-none"
+                      className="bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded px-3 py-1 text-slate-900 dark:text-white text-xs focus:border-purple-500 outline-none"
                     >
                       <option value="">All Categories</option>
                       {DOCUMENT_CATEGORIES.map((cat) => (
@@ -768,7 +768,7 @@ export const AdminKnowledgeView: React.FC = () => {
                         </button>
                         <button
                           onClick={() => handleToggleStrategy(s.id, !!s.is_active)}
-                          className={`p-2 rounded-lg transition-colors ${s.is_active ? 'bg-green-500/20 text-green-400 hover:bg-red-500/20 hover:text-red-400' : 'bg-slate-700 text-slate-400 dark:text-slate-500 hover:bg-green-500/20 hover:text-green-400'}`}
+                          className={`p-2 rounded-lg transition-colors ${s.is_active ? 'bg-green-500/20 text-green-400 hover:bg-red-500/20 hover:text-red-400' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:bg-green-500/20 hover:text-green-400'}`}
                           title={s.is_active ? 'Click to Deactivate' : 'Click to Activate'}
                         >
                           <Power size={18} />
@@ -1105,7 +1105,7 @@ export const AdminKnowledgeView: React.FC = () => {
                 <select
                   value={approveIdeaCategory}
                   onChange={(e) => setApproveIdeaCategory(e.target.value)}
-                  className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
                 >
                   <option value="">Select category...</option>
                   {IDEA_CATEGORIES.map((cat) => (
@@ -1124,7 +1124,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   value={approveIdeaTags}
                   onChange={(e) => setApproveIdeaTags(e.target.value)}
                   placeholder="tag1, tag2, tag3"
-                  className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white text-sm focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none transition-colors"
                 />
               </div>
               <div className="pt-4 flex gap-3">
@@ -1180,7 +1180,7 @@ export const AdminKnowledgeView: React.FC = () => {
                 <select
                   value={linkProjectId}
                   onChange={(e) => setLinkProjectId(e.target.value)}
-                  className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
                 >
                   <option value="">Select project...</option>
                   {projects.map((project) => (
@@ -1199,7 +1199,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   onChange={(e) => setLinkProjectNotes(e.target.value)}
                   placeholder="How was this idea applied?"
                   rows={3}
-                  className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white text-sm focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none transition-colors"
                 />
               </div>
               <div className="pt-4 flex gap-3">
@@ -1253,7 +1253,7 @@ export const AdminKnowledgeView: React.FC = () => {
                 <select
                   value={editDocCategory}
                   onChange={(e) => setEditDocCategory(e.target.value)}
-                  className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
                 >
                   <option value="">No category</option>
                   {DOCUMENT_CATEGORIES.map((cat) => (
@@ -1272,7 +1272,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   value={editDocTags}
                   onChange={(e) => setEditDocTags(e.target.value)}
                   placeholder="tag1, tag2, tag3"
-                  className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white text-sm focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none transition-colors"
                 />
               </div>
               <div className="pt-4 flex gap-3">
@@ -1329,7 +1329,7 @@ export const AdminKnowledgeView: React.FC = () => {
                 <select
                   value={linkItemId}
                   onChange={(e) => setLinkItemId(e.target.value)}
-                  className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
                 >
                   <option value="">
                     Select {linkType === 'document' ? 'document' : 'idea'}...
@@ -1420,7 +1420,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   autoFocus
                   value={strategyForm.title}
                   onChange={(e) => setStrategyForm({ ...strategyForm, title: e.target.value })}
-                  className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
                   placeholder="Enter a concise title..."
                 />
               </div>
@@ -1435,7 +1435,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   onChange={(e) =>
                     setStrategyForm({ ...strategyForm, description: e.target.value })
                   }
-                  className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white text-sm focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none transition-colors"
                   placeholder="Explain how the AI should behave or what it should prioritize..."
                 />
               </div>
@@ -1452,7 +1452,7 @@ export const AdminKnowledgeView: React.FC = () => {
                         priority: e.target.value as 'low' | 'medium' | 'high',
                       })
                     }
-                    className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none transition-colors"
+                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
@@ -1469,7 +1469,7 @@ export const AdminKnowledgeView: React.FC = () => {
                     onChange={(e) =>
                       setStrategyForm({ ...strategyForm, target_date: e.target.value })
                     }
-                    className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none transition-colors"
+                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
                   />
                 </div>
               </div>
@@ -1486,7 +1486,7 @@ export const AdminKnowledgeView: React.FC = () => {
                       success_metrics: e.target.value.split('\n').filter((m) => m.trim()),
                     })
                   }
-                  className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white text-sm focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none transition-colors"
                   placeholder="Metric 1&#10;Metric 2&#10;Metric 3"
                 />
               </div>
@@ -1506,7 +1506,7 @@ export const AdminKnowledgeView: React.FC = () => {
                         progress_percentage: parseInt(e.target.value) || 0,
                       })
                     }
-                    className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none transition-colors"
+                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
                   />
                 </div>
               )}

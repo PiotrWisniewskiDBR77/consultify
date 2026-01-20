@@ -22,14 +22,14 @@ import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
 
-// Modular structure with 3 AI modules (Variant A)
+// Unified AI Platform structure (6 tabs with sub-tabs)
 export type SuperAdminSection =
   | 'overview'
   | 'customers'
-  | 'ai-platform' // Legacy - kept for backward compatibility
-  | 'ai-infrastructure' // New: LLM Providers, Tiers, Settings, Health
-  | 'ai-development' // New: Prompts, Intelligence, Experiments, Knowledge
-  | 'ai-operations' // New: Mission Control, Performance, Costs, SLA, Analytics
+  | 'ai-platform' // Unified AI Platform with 6 main tabs
+  | 'ai-infrastructure' // Legacy - redirects to ai-platform
+  | 'ai-development' // Legacy - redirects to ai-platform
+  | 'ai-operations' // Legacy - redirects to ai-platform
   | 'system'
   | 'content'
   | 'revenue'
@@ -41,10 +41,10 @@ export type SuperAdminSection =
 export const sectionToAppView: Record<SuperAdminSection, AppView> = {
   overview: AppView.SUPERADMIN_OVERVIEW,
   customers: AppView.SUPERADMIN_CUSTOMERS,
-  'ai-platform': AppView.SUPERADMIN_AI_PLATFORM, // Legacy
-  'ai-infrastructure': AppView.SUPERADMIN_AI_INFRASTRUCTURE,
-  'ai-development': AppView.SUPERADMIN_AI_DEVELOPMENT,
-  'ai-operations': AppView.SUPERADMIN_AI_OPERATIONS,
+  'ai-platform': AppView.SUPERADMIN_AI_PLATFORM, // Unified AI Platform
+  'ai-infrastructure': AppView.SUPERADMIN_AI_PLATFORM, // Legacy -> AI Platform
+  'ai-development': AppView.SUPERADMIN_AI_PLATFORM, // Legacy -> AI Platform
+  'ai-operations': AppView.SUPERADMIN_AI_PLATFORM, // Legacy -> AI Platform
   system: AppView.SUPERADMIN_SYSTEM,
   content: AppView.SUPERADMIN_CONTENT,
   revenue: AppView.SUPERADMIN_REVENUE,
@@ -56,25 +56,25 @@ export const sectionToAppView: Record<SuperAdminSection, AppView> = {
 export const appViewToSection: Record<string, SuperAdminSection> = {
   [AppView.SUPERADMIN_OVERVIEW]: 'overview',
   [AppView.SUPERADMIN_CUSTOMERS]: 'customers',
-  [AppView.SUPERADMIN_AI_PLATFORM]: 'ai-infrastructure', // Legacy redirects to infrastructure
-  [AppView.SUPERADMIN_AI_INFRASTRUCTURE]: 'ai-infrastructure',
-  [AppView.SUPERADMIN_AI_DEVELOPMENT]: 'ai-development',
-  [AppView.SUPERADMIN_AI_OPERATIONS]: 'ai-operations',
+  [AppView.SUPERADMIN_AI_PLATFORM]: 'ai-platform', // Unified AI Platform
+  [AppView.SUPERADMIN_AI_INFRASTRUCTURE]: 'ai-platform', // Legacy -> AI Platform
+  [AppView.SUPERADMIN_AI_DEVELOPMENT]: 'ai-platform', // Legacy -> AI Platform
+  [AppView.SUPERADMIN_AI_OPERATIONS]: 'ai-platform', // Legacy -> AI Platform
   [AppView.SUPERADMIN_SYSTEM]: 'system',
   [AppView.SUPERADMIN_CONTENT]: 'content',
   [AppView.SUPERADMIN_REVENUE]: 'revenue',
   [AppView.SUPERADMIN_SECURITY]: 'security',
   [AppView.SUPERADMIN_CONFIGURATION]: 'configuration',
   [AppView.SUPERADMIN_ANALYTICS]: 'analytics',
-  // Legacy view mappings - redirect to new modules
+  // Legacy view mappings - redirect to appropriate modules
   [AppView.SUPERADMIN_DASHBOARD]: 'overview',
   [AppView.SUPERADMIN_ORGANIZATIONS]: 'customers',
   [AppView.SUPERADMIN_USERS]: 'customers',
   [AppView.SUPERADMIN_FEEDBACK]: 'customers',
   [AppView.SUPERADMIN_BULK_OPERATIONS]: 'customers',
-  [AppView.SUPERADMIN_LLM_MANAGEMENT]: 'ai-infrastructure',
-  [AppView.SUPERADMIN_AI_INTELLIGENCE]: 'ai-development',
-  [AppView.SUPERADMIN_KNOWLEDGE]: 'ai-development',
+  [AppView.SUPERADMIN_LLM_MANAGEMENT]: 'ai-platform',
+  [AppView.SUPERADMIN_AI_INTELLIGENCE]: 'ai-platform',
+  [AppView.SUPERADMIN_KNOWLEDGE]: 'ai-platform',
   [AppView.SUPERADMIN_BILLING]: 'revenue',
   [AppView.SUPERADMIN_INVOICES]: 'revenue',
   [AppView.SUPERADMIN_SSO]: 'security',
@@ -100,20 +100,18 @@ interface MenuItem {
   separator?: 'before';
 }
 
-// Modular menu structure with 3 AI modules (Variant A)
+// Unified menu structure with single AI Platform entry
 const menuItems: MenuItem[] = [
   { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={20} /> },
   // --- separator ---
   { id: 'customers', label: 'Customers', icon: <Users size={20} />, separator: 'before' },
-  // --- AI Platform (3 modules) ---
+  // --- AI Platform (unified) ---
   {
-    id: 'ai-infrastructure',
-    label: 'AI Infrastructure',
-    icon: <Server size={20} />,
+    id: 'ai-platform',
+    label: 'AI Platform',
+    icon: <Brain size={20} />,
     separator: 'before',
   },
-  { id: 'ai-development', label: 'AI Development', icon: <Code size={20} /> },
-  { id: 'ai-operations', label: 'AI Operations', icon: <Radar size={20} /> },
   // --- separator ---
   { id: 'system', label: 'System', icon: <Activity size={20} />, separator: 'before' },
   { id: 'content', label: 'Content', icon: <Layers size={20} /> },

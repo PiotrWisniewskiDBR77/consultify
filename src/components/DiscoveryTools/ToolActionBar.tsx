@@ -4,8 +4,8 @@
  * Provides step navigation and AI action buttons.
  */
 
+import { ChevronLeft, ChevronRight, Sparkles, Square, Wand2 } from 'lucide-react';
 import React from 'react';
-import { ChevronLeft, ChevronRight, Sparkles, Wand2, Square } from 'lucide-react';
 
 import { StepDefinition } from '@/store/useToolStore';
 
@@ -54,9 +54,10 @@ export const ToolActionBar: React.FC<ToolActionBarProps> = ({
           disabled={isFirstStep}
           className={`
             flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
-            ${isFirstStep
-              ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
-              : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+            ${
+              isFirstStep
+                ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
             }
           `}
         >
@@ -104,13 +105,14 @@ export const ToolActionBar: React.FC<ToolActionBarProps> = ({
           disabled={!canAdvance || isStreaming}
           className={`
             flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
-            ${!canAdvance || isStreaming
-              ? 'bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-              : 'bg-primary-500 text-white hover:bg-primary-600'
+            ${
+              !canAdvance || isStreaming
+                ? 'bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                : 'bg-primary-500 text-white hover:bg-primary-600'
             }
           `}
         >
-          {isLastStep ? (isPolish ? 'Zakończ' : 'Finish') : (isPolish ? 'Następny' : 'Next')}
+          {isLastStep ? (isPolish ? 'Zakończ' : 'Finish') : isPolish ? 'Następny' : 'Next'}
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>

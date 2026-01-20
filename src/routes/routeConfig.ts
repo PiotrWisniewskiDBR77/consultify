@@ -3,6 +3,10 @@
  *
  * This file defines the URL structure and route mappings for the application.
  * Migration Strategy: Gradual replacement of ViewRenderer with standard routing.
+ *
+ * @see docs/modules/MODULE_ROUTING_ARCHITECTURE.md - Źródło prawdy dla routingu modułów
+ * @see src/components/navigation/Sidebar/menuConfig.ts - Konfiguracja menu Sidebar
+ * @see src/routes/AppRoutes.tsx - Definicje Route z komponentami
  */
 
 import { AppView } from '@/types';

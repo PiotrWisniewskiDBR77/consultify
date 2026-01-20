@@ -327,7 +327,7 @@ const CapabilityCard: React.FC<{
                 ? 'bg-emerald-500/20 text-emerald-400'
                 : status === 'beta'
                   ? 'bg-amber-500/20 text-amber-400'
-                  : 'bg-slate-700 text-slate-400 dark:text-slate-500'
+                  : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
             }`}
           >
             {status === 'active' ? 'Active' : status === 'beta' ? 'Beta' : 'Coming'}
@@ -415,7 +415,7 @@ const PromptTemplateManager: React.FC = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search templates..."
-              className="w-64 bg-navy-950 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-slate-500"
+              className="w-64 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
             />
           </div>
           <button className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors">

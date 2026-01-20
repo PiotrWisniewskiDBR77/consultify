@@ -10,7 +10,7 @@ import { FeedbackSidePanel } from '../components/Feedback/FeedbackSidePanel';
 import { FeedbackToggleButton } from '../components/Feedback/FeedbackToggleButton';
 import { HelpSidePanel } from '../components/Help/HelpSidePanel';
 import { HelpToggleButton } from '../components/Help/HelpToggleButton';
-import { DemoModeBanner } from '../components/layout/DemoModeBanner';
+import { DemoSessionManager } from '../components/demo/DemoSessionManager';
 import { NotificationDropdown } from '../components/layout/NotificationDropdown';
 import { UserProfileMenu } from '../components/layout/UserProfileMenu';
 import { LLMSelector } from '../components/LLMSelector';
@@ -163,8 +163,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       <DocumentSidePanel />
       <FeedbackSidePanel />
 
-      {/* Demo Mode Banner */}
-      <DemoModeBanner className="fixed top-0 left-0 right-0 z-50" />
+      {/* Demo Session Manager - Handles banner, tour, prompts, exit intent */}
+      <DemoSessionManager />
 
       {/* Impersonation Banner */}
       {currentUser?.impersonatorId && (

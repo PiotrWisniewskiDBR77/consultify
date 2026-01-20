@@ -307,7 +307,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
             className={`px-6 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-all ${
               saved
                 ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                : 'bg-white text-black hover:bg-slate-200 dark:hover:bg-navy-700 border border-transparent shadow-lg shadow-white/5 hover:shadow-white/10'
+                : 'bg-slate-100 dark:bg-white/90 text-slate-700 dark:text-slate-900 hover:bg-slate-200 dark:hover:bg-white border border-slate-200 dark:border-white/20 shadow-sm'
             }`}
           >
             {saved ? (
@@ -1632,8 +1632,8 @@ const NavTab = ({ id, label, icon, active, onClick }: any) => (
     onClick={onClick}
     className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all font-medium text-xs whitespace-nowrap ${
       active
-        ? 'bg-white text-black border-white shadow-[0_0_15px_-3px_rgba(255,255,255,0.3)]'
-        : 'text-slate-500 dark:text-slate-400 border-transparent hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
+        ? 'bg-primary-600 dark:bg-white text-white dark:text-slate-900 border-primary-600 dark:border-white shadow-lg'
+        : 'text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/20'
     }`}
   >
     {icon}

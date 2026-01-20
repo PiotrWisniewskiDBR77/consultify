@@ -319,7 +319,7 @@ export const SystemSettings: React.FC = () => {
               onChange={(e) =>
                 setSettings((prev) => ({ ...prev, system_announcement: e.target.value }))
               }
-              className="flex-1 px-4 py-2 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-blue-500 outline-none"
+              className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-blue-500 outline-none"
               placeholder="e.g. Scheduled maintenance at 22:00"
             />
             <button
@@ -370,7 +370,7 @@ export const SystemSettings: React.FC = () => {
                 onChange={(e) =>
                   setSettings((prev) => ({ ...prev, session_timeout_mins: e.target.value }))
                 }
-                className="flex-1 px-4 py-2 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-blue-500 outline-none"
+                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-blue-500 outline-none"
               />
               <button
                 onClick={() =>
@@ -401,7 +401,7 @@ export const SystemSettings: React.FC = () => {
                 type="text"
                 value={settings['smtp_host'] || ''}
                 onChange={(e) => setSettings((prev) => ({ ...prev, smtp_host: e.target.value }))}
-                className="flex-1 px-4 py-2 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-blue-500 outline-none"
+                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-blue-500 outline-none"
                 placeholder="smtp.example.com"
               />
               <button
@@ -422,7 +422,7 @@ export const SystemSettings: React.FC = () => {
                   type="text"
                   value={settings['smtp_port'] || ''}
                   onChange={(e) => setSettings((prev) => ({ ...prev, smtp_port: e.target.value }))}
-                  className="flex-1 px-4 py-2 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-blue-500 outline-none"
+                  className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-blue-500 outline-none"
                   placeholder="587"
                 />
                 <button
@@ -442,7 +442,7 @@ export const SystemSettings: React.FC = () => {
                   type="text"
                   value={settings['smtp_from'] || ''}
                   onChange={(e) => setSettings((prev) => ({ ...prev, smtp_from: e.target.value }))}
-                  className="flex-1 px-4 py-2 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-blue-500 outline-none"
+                  className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-blue-500 outline-none"
                   placeholder="noreply@technolex.com"
                 />
                 <button
@@ -475,7 +475,7 @@ export const SystemSettings: React.FC = () => {
                 onChange={(e) =>
                   setSettings((prev) => ({ ...prev, legal_tos_url: e.target.value }))
                 }
-                className="flex-1 px-4 py-2 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-blue-500 outline-none"
+                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-blue-500 outline-none"
                 placeholder="https://..."
               />
               <button
@@ -497,7 +497,7 @@ export const SystemSettings: React.FC = () => {
                 onChange={(e) =>
                   setSettings((prev) => ({ ...prev, legal_privacy_url: e.target.value }))
                 }
-                className="flex-1 px-4 py-2 bg-navy-950 border border-white/10 rounded-lg text-white focus:border-blue-500 outline-none"
+                className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-blue-500 outline-none"
                 placeholder="https://..."
               />
               <button
@@ -589,7 +589,7 @@ export const SystemSettings: React.FC = () => {
                     required
                     value={newAdmin.firstName}
                     onChange={(e) => setNewAdmin({ ...newAdmin, firstName: e.target.value })}
-                    className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-blue-500 outline-none"
                   />
                 </div>
                 <div>
@@ -600,7 +600,7 @@ export const SystemSettings: React.FC = () => {
                     required
                     value={newAdmin.lastName}
                     onChange={(e) => setNewAdmin({ ...newAdmin, lastName: e.target.value })}
-                    className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-blue-500 outline-none"
                   />
                 </div>
               </div>
@@ -613,7 +613,7 @@ export const SystemSettings: React.FC = () => {
                   type="email"
                   value={newAdmin.email}
                   onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
-                  className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-blue-500 outline-none"
                 />
               </div>
               <div>
@@ -625,7 +625,7 @@ export const SystemSettings: React.FC = () => {
                   type="password"
                   value={newAdmin.password}
                   onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
-                  className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-blue-500 outline-none"
                 />
               </div>
               <div className="flex gap-3 pt-4">
@@ -675,7 +675,7 @@ export const SystemSettings: React.FC = () => {
           </button>
         </div>
         <table className="w-full text-left">
-          <thead className="bg-navy-950 text-slate-400 dark:text-slate-500 text-xs uppercase">
+          <thead className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 text-xs uppercase">
             <tr>
               <th className="px-6 py-3">Organization / Folder</th>
               <th className="px-6 py-3 text-right">Size</th>
@@ -781,7 +781,7 @@ export const SystemSettings: React.FC = () => {
         {/* Logs Table */}
         <div className="bg-navy-900 border border-white/10 rounded-xl overflow-hidden">
           <table className="w-full text-left">
-            <thead className="bg-navy-950 text-slate-400 dark:text-slate-500 text-xs uppercase">
+            <thead className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 text-xs uppercase">
               <tr>
                 <th className="px-6 py-4">Timestamp</th>
                 <th className="px-6 py-4">User</th>
@@ -818,7 +818,7 @@ export const SystemSettings: React.FC = () => {
                               ? 'bg-red-500/20 text-red-400'
                               : log.action === 'updated'
                                 ? 'bg-blue-500/20 text-blue-400'
-                                : 'bg-slate-700 text-slate-300'
+                                : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                         }`}
                       >
                         {log.action}
@@ -904,7 +904,7 @@ export const SystemSettings: React.FC = () => {
               ) : (
                 <div className="overflow-x-auto max-h-[50vh]">
                   <table className="w-full text-left text-sm">
-                    <thead className="bg-navy-950 text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider border-b border-white/10 sticky top-0">
+                    <thead className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-white/10 sticky top-0">
                       <tr>
                         {columns.map((col) => (
                           <th key={col} className="px-6 py-4 whitespace-nowrap">

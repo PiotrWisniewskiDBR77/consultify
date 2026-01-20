@@ -1,1 +1,12 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Fast lint
 npx lint-staged --no-stash
+
+# Critical security tests (fast, ~2-5s)
+npm run test:unit:critical -- --run 2>&1 | grep -q "Tests.*passed" || {
+  echo "❌ Critical tests failed! Fix before committing."
+  echo "Run 'npm run test:unit:critical' to see details."
+  exit 1
+}

@@ -53,7 +53,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
       </div>
 
       <table className="w-full text-left text-sm">
-        <thead className="bg-navy-950 text-slate-400 dark:text-slate-500 text-xs uppercase">
+        <thead className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 text-xs uppercase">
           <tr>
             <th className="p-4">Initiative</th>
             <th className="p-4">Est. Cost</th>
@@ -73,7 +73,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
                 <td className="p-4 text-green-400">${benefit.toLocaleString()}</td>
                 <td className="p-4 text-center">
                   <span
-                    className={`px-2 py-1 rounded text-xs font-bold ${Number(roi) > 100 ? 'bg-green-500/20 text-green-400' : 'bg-slate-700 text-slate-300'}`}
+                    className={`px-2 py-1 rounded text-xs font-bold ${Number(roi) > 100 ? 'bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
                   >
                     {roi}%
                   </span>

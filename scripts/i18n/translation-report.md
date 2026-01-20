@@ -1,34 +1,34 @@
 # Translation Validation Report
 
-Generated: 2026-01-20T08:42:30.533Z
+Generated: 2026-01-20T09:06:59.328Z
 
 ## Overall Statistics
 
-- **Total Keys Checked**: 23045
-- **Missing Keys**: 2
+- **Total Keys Checked**: 23055
+- **Missing Keys**: 0
 - **Untranslated Keys**: 5835
 - **Empty Values**: 0
 - **Placeholder Mismatches**: 5
 - **Type Mismatches**: 119
-- **Extra/Orphaned Keys**: 383
+- **Extra/Orphaned Keys**: 384
 
 ## Summary by File
 
 | Locale | File | Total | Missing | Untranslated | Empty | Placeholders | Types | Extra | Coverage |
 |--------|------|-------|---------|--------------|-------|--------------|-------|-------|----------|
-| pl | translation.json | 4386 | 0 | 482 | 0 | 5 | 24 | 324 | 89.0% |
+| pl | translation.json | 4388 | 0 | 482 | 0 | 5 | 24 | 324 | 89.0% |
 | pl | assessment-module.json | 106 | 0 | 3 | 0 | 0 | 0 | 0 | 97.2% |
 | pl | discovery.json | 117 | 0 | 0 | 0 | 0 | 0 | 0 | 100.0% |
-| de | translation.json | 4386 | 0 | 1396 | 0 | 0 | 21 | 26 | 68.2% |
+| de | translation.json | 4388 | 0 | 1396 | 0 | 0 | 21 | 26 | 68.2% |
 | de | assessment-module.json | 106 | 0 | 0 | 0 | 0 | 0 | 0 | 100.0% |
 | de | discovery.json | 117 | 0 | 0 | 0 | 0 | 0 | 0 | 100.0% |
-| es | translation.json | 4386 | 0 | 1408 | 0 | 0 | 25 | 13 | 67.9% |
+| es | translation.json | 4388 | 0 | 1408 | 0 | 0 | 25 | 13 | 67.9% |
 | es | assessment-module.json | 106 | 0 | 0 | 0 | 0 | 0 | 0 | 100.0% |
 | es | discovery.json | 117 | 0 | 0 | 0 | 0 | 0 | 0 | 100.0% |
-| ar | translation.json | 4386 | 0 | 1376 | 0 | 0 | 25 | 16 | 68.6% |
+| ar | translation.json | 4388 | 0 | 1376 | 0 | 0 | 25 | 16 | 68.6% |
 | ar | assessment-module.json | 106 | 0 | 0 | 0 | 0 | 0 | 0 | 100.0% |
 | ar | discovery.json | 117 | 0 | 0 | 0 | 0 | 0 | 0 | 100.0% |
-| ja | translation.json | 4386 | 2 | 1170 | 0 | 0 | 24 | 4 | 73.3% |
+| ja | translation.json | 4388 | 0 | 1170 | 0 | 0 | 24 | 5 | 73.3% |
 | ja | assessment-module.json | 106 | 0 | 0 | 0 | 0 | 0 | 0 | 100.0% |
 | ja | discovery.json | 117 | 0 | 0 | 0 | 0 | 0 | 0 | 100.0% |
 
@@ -39,8 +39,8 @@ Generated: 2026-01-20T08:42:30.533Z
 | PL | 89.5% | 485 |
 | DE | 69.7% | 1396 |
 | ES | 69.5% | 1408 |
-| AR | 70.1% | 1376 |
-| JA | 74.6% | 1172 |
+| AR | 70.2% | 1376 |
+| JA | 74.6% | 1170 |
 
 ## Detailed Issues
 
@@ -937,14 +937,6 @@ Generated: 2026-01-20T08:42:30.533Z
 
 ### ja/translation.json
 
-#### MISSING (2)
-
-- `help.sidePanel.tabs.howto`
-  - EN: "How to Use"
-- `help.sidePanel.tabs.video`
-  - EN: "Video"
-  - Suggestion: "ビデオ"
-
 #### UNTRANSLATED (1170)
 
 - `sidebar.drd`
@@ -1091,7 +1083,7 @@ Generated: 2026-01-20T08:42:30.533Z
 - `help.sidePanel.modules.knowledge.tips`
   - Details: Array length mismatch: source has 3, target has 4
 
-#### EXTRA KEY (4)
+#### EXTRA KEY (5)
 
 - `help.onboarding`
   - Details: Key exists in target but not in source (may be orphaned)
@@ -1102,14 +1094,16 @@ Generated: 2026-01-20T08:42:30.533Z
 - `help.sidePanel.modules.ai-infrastructure`
   - Details: Key exists in target but not in source (may be orphaned)
   - JA: "{"name":"AIインフラストラクチャ","description":"すべてのLLMプロバイダ"
+- `help.sidePanel.content.tabs`
+  - Details: Key exists in target but not in source (may be orphaned)
+  - JA: "{"overview":"概要","howto":"使い方","faq":"よくある質問","vid"
 - `help.sidePanel.content.modules.playbookTemplates`
   - Details: Key exists in target but not in source (may be orphaned)
   - JA: "{"name":"プレイブックテンプレート","description":"AIプレイブックテンプレ"
 
 ## Recommendations
 
-1. **Add 2 missing keys** - Run with `--fix` to auto-add placeholders
 2. **Translate 5835 untranslated strings** - These appear to be English text in non-English locales
 3. **Fix 5 placeholder mismatches** - Ensure {{variables}} match between source and target
 4. **Fix 119 type mismatches** - Ensure arrays/objects match structure
-5. **Review 383 extra keys** - These may be orphaned translations no longer needed
+5. **Review 384 extra keys** - These may be orphaned translations no longer needed

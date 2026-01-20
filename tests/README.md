@@ -1,133 +1,187 @@
-# Przewodnik Testów - Quick Start
+# IRIS 6.0 Automated Testing Toolkit
 
-## 🚀 Szybki Start
+Kompletny zestaw narzędzi do automatycznego testowania platformy IRIS 6.0.
 
-### Uruchomienie wszystkich testów
+## 📊 Obecny Status
 
-```bash
-npm run test:all
-```
+| Metryka | Wartość |
+|---------|---------|
+| Pliki testów | 1,096+ |
+| Pass Rate (Unit) | 98.9% |
+| Pass Rate (Blended) | 96.4% |
+| Pokrycie | 85%+ |
 
-### Uruchomienie z pokryciem kodu
-
-```bash
-npm run test:coverage
-```
-
-### Uruchomienie konkretnego poziomu
+## 🚀 Quick Start
 
 ```bash
-npm run test:unit          # Poziom 1: Unit Tests
-npm run test:component     # Poziom 3: Component Tests
-npm run test:integration   # Poziom 2: Integration Tests
-npm run test:e2e           # Poziom 4: E2E Tests (Playwright)
-npm run test:performance   # Poziom 5: Performance Tests
+# Wszystkie testy
+npx tsx scripts/testing/test-runner.ts --all
+
+# Unit testy z pokryciem
+npx tsx scripts/testing/test-runner.ts --unit --coverage
+
+# Skan bezpieczeństwa
+npx tsx scripts/testing/security-scan.ts --quick
+
+# Audyt wydajności
+npx tsx scripts/testing/performance-audit.ts --baseline
+
+# Generowanie raportu
+npx tsx scripts/testing/test-report-generator.ts
 ```
 
----
+## 🛠️ Dostępne Narzędzia
 
-## 📋 Struktura Testów
+### Test Runner (`scripts/testing/test-runner.ts`)
 
-### Poziom 1: Unit Tests
+Unified CLI do wszystkich operacji testowych:
 
-**Lokalizacja**: `tests/unit/`
+```bash
+# Wyświetl pomoc
+npx tsx scripts/testing/test-runner.ts --help
 
-- Backend services (używają prawdziwej bazy SQLite in-memory)
-- Frontend services
-- Utils i helpers
-
-### Poziom 2: Integration Tests
-
-**Lokalizacja**: `tests/integration/`
-
-- API endpoints
-- Database health & performance
-- LLM health & performance
-- Transactions
-- Full API flows
-
-### Poziom 3: Component Tests
-
-**Lokalizacja**: `tests/components/`
-
-- React components
-- Accessibility tests
-
-### Poziom 4: E2E Tests
-
-**Lokalizacja**: `tests/e2e/`
-
-- Full user flows
-- Browser automation (Playwright)
-
-### Poziom 5: Performance Tests
-
-**Lokalizacja**: `tests/performance/`
-
-- Database performance
-- LLM performance
-- Stress tests
-- Load tests
-
----
-
-## 🔧 Konfiguracja
-
-### Environment Variables
-
-Testy automatycznie używają:
-
-- `NODE_ENV=test` - używa SQLite in-memory
-- `MOCK_DB=false` - używa prawdziwej bazy
-
-### Database Helper
-
-Wszystkie testy backendowe mogą używać `tests/helpers/dbHelper.cjs`:
-
-```javascript
-const { initTestDb, cleanTables, dbAll, dbRun } = require('../../helpers/dbHelper.cjs');
+# Opcje
+--all, -a           Wszystkie testy
+--unit, -u          Tylko unit testy
+--integration, -i   Testy integracyjne
+--component, -c     Testy komponentów
+--e2e, -e           Testy E2E (Playwright)
+--security, -s      Testy bezpieczeństwa
+--performance, -p   Testy wydajności
+--coverage, --cov   Generuj raport pokrycia
+--watch, -w         Watch mode
+--changed-only      Tylko zmienione pliki
+--failed-first      Najpierw failed testy
+--module=<name>     Konkretny moduł (np. --module=mes)
+--shard=<n/total>   Sharding dla CI (np. --shard=1/4)
+--report, -r        Generuj raport HTML
+--verbose, -v       Verbose output
 ```
 
----
+### Security Scan (`scripts/testing/security-scan.ts`)
 
-## 📊 Statystyki
+Orkiestrator testów bezpieczeństwa:
 
-- **~350+ testy zaimplementowane** ✅
-- **5 poziomów testowania**
-- **Pokrycie**: Cel: 95%+ na wszystkich poziomach
-- **Coverage Threshold**: 95% (lines, functions, statements), 90% (branches)
+```bash
+--full, -f     Pełny skan (wszystkie testy)
+--quick, -q    Szybki skan (krytyczne testy)
+```
 
-📈 **Szczegółowe statystyki**: Zobacz [TEST_INDEX.md](./TEST_INDEX.md)
+**Sprawdzane elementy:**
+- SQL Injection (`tests/security/sql-injection.test.ts`)
+- XSS Prevention (`tests/security/xss-prevention.test.ts`)
+- CSRF Protection (`tests/security/csrf-protection.test.ts`)
+- npm audit (CVE)
 
----
+### Performance Audit (`scripts/testing/performance-audit.ts`)
 
-## 🐛 Troubleshooting
+Audyt wydajności z porównaniem baseline:
 
-### Testy nie znajdują modułów
+```bash
+--baseline, -b    Zapisz baseline
+--compare, -c     Porównaj z baseline
+```
 
-- Sprawdź ścieżki w `vitest.config.ts`
-- Upewnij się, że używasz `.cjs` dla CommonJS modułów
+**Metryki:**
+- Latency (p50, p95, p99)
+- Memory (heap used/total)
+- Bundle size
 
-### Błędy bazy danych
+### Flaky Test Tracker (`scripts/testing/flaky-test-tracker.ts`)
 
-- Testy automatycznie używają SQLite in-memory
-- Sprawdź czy `db.initPromise` jest await'owane
+Śledzenie niestabilnych testów:
 
-### Testy E2E nie działają
+```bash
+--report, -r              Raport flaky testów
+--quarantine=<test>       Kwarantanna testu
+--unquarantine=<test>     Usuń z kwarantanny
+```
 
-- Upewnij się, że backend i frontend są uruchomione
-- Lub pozwól Playwright uruchomić je automatycznie
+### Report Generator (`scripts/testing/test-report-generator.ts`)
 
----
+Generator raportów HTML/JSON:
+
+```bash
+--html    Tylko raport HTML
+--json    Tylko raport JSON
+```
+
+## 📁 Struktura Testów
+
+```
+tests/
+├── unit/           # Unit testy (442 files)
+├── components/     # Testy komponentów (251 files)
+├── integration/    # Testy integracyjne (180 files)
+├── e2e/            # E2E Playwright (170 files)
+├── security/       # Testy bezpieczeństwa
+│   ├── sql-injection.test.ts
+│   ├── xss-prevention.test.ts
+│   └── csrf-protection.test.ts
+└── performance/    # Testy wydajności
+    ├── memory-leak-detector.test.ts
+    ├── api-latency-baseline.test.ts
+    └── bundle-size.test.ts
+```
+
+## 📋 npm Scripts
+
+```bash
+npm run test:unit           # Unit testy
+npm run test:component      # Testy komponentów
+npm run test:integration    # Testy integracyjne
+npm run test:e2e            # E2E (Playwright)
+npm run test:security       # Testy bezpieczeństwa
+npm run test:performance    # Testy wydajności
+npm run test:all            # Unit + Component + Integration
+npm run test:complete       # Wszystko + E2E + Security
+npm run test:coverage       # Z pokryciem
+```
+
+## 🔧 Konfiguracje
+
+| Plik | Opis |
+|------|------|
+| `vitest.config.ts` | Główna konfiguracja Vitest |
+| `vitest.security.config.ts` | Konfiguracja testów security |
+| `vitest.perf.config.ts` | Konfiguracja testów wydajności |
+| `playwright.config.ts` | Konfiguracja E2E |
+
+## 🎯 Progi Jakości
+
+| Metryka | Próg |
+|---------|------|
+| Coverage (global) | 85% |
+| Coverage (critical) | 95% |
+| Unit pass rate | 98% |
+| Integration pass rate | 91% |
+| E2E pass rate | 94% |
+| p95 latency | <200ms |
+| Bundle size | <500KB |
+
+## 🚨 Troubleshooting
+
+### SQLite binding crash (`napi_throw`)
+```bash
+NODE_OPTIONS=--max-old-space-size=4096 npm run test:integration -- --max-concurrency=4
+```
+
+### Memory issues
+```bash
+export NODE_OPTIONS="--max-old-space-size=4096"
+```
+
+### Flaky testy
+```bash
+# Sprawdź registry
+cat test-results/flaky-tests.json
+
+# Raport
+npx tsx scripts/testing/flaky-test-tracker.ts --report
+```
 
 ## 📚 Więcej Informacji
 
-Zobacz:
-
-- **[TEST_STRUCTURE_COMPLETE.md](./TEST_STRUCTURE_COMPLETE.md)** - ✨ **Kompletna struktura testów** - Mapowanie wszystkich testów do utworzenia
-- **[TEST_INDEX.md](./TEST_INDEX.md)** - 📊 **Indeks testów** - Szybki przewodnik i statystyki
-- `README_COMPREHENSIVE.md` - Pełna dokumentacja systemu testów
-- `SUMMARY.md` - Podsumowanie systemu testów
-- `TEST_SYSTEM_COMPLETE.md` - Pełna dokumentacja systemu testów
-- `TEST_STRATEGY_5_LEVELS.md` - Strategia testów na 5 poziomach
-- `TEST_MIGRATION_PLAN.md` - Plan migracji na prawdziwą bazę danych
+- [TESTING_GUIDE.md](./TESTING_GUIDE.md) - Szczegółowy przewodnik
+- [TEST_AUDIT_REGISTRY.md](./TEST_AUDIT_REGISTRY.md) - Rejestr audytów
+- [docs/testing/](../docs/testing/) - Dokumentacja testów

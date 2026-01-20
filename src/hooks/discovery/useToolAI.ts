@@ -10,7 +10,14 @@
 import { useCallback, useState } from 'react';
 
 import { useAIStream } from '@/hooks/useAIStream';
-import { useToolStore, ToolType, SWOTItem, SWOTCorrelation, InitiativeDraft } from '@/store/useToolStore';
+import {
+  InitiativeDraft,
+  SWOTCorrelation,
+  SWOTItem,
+  ToolType,
+  useToolStore,
+} from '@/store/useToolStore';
+
 import { useOrganizationContext } from './useOrganizationContext';
 
 // ==================== TYPES ====================
@@ -106,16 +113,18 @@ When generating initiatives, focus on:
 
 export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
   const { formatForPrompt } = useOrganizationContext();
-  const { currentSession, currentStep, getStepDefinitions, addSWOTItem, addCorrelation, addInitiative } = useToolStore();
+  const {
+    currentSession,
+    currentStep,
+    getStepDefinitions,
+    addSWOTItem,
+    addCorrelation,
+    addInitiative,
+  } = useToolStore();
 
   const [error, setError] = useState<string | null>(null);
 
-  const {
-    startStream,
-    isStreaming,
-    streamedContent,
-    abortStream,
-  } = useAIStream();
+  const { startStream, isStreaming, streamedContent, abortStream } = useAIStream();
 
   // Get the appropriate system prompt
   const getSystemPrompt = useCallback(() => {
@@ -145,32 +154,35 @@ ${orgContext}
   }, []);
 
   // Send a message to the AI
-  const sendMessage = useCallback(async (message: string) => {
-    setError(null);
+  const sendMessage = useCallback(
+    async (message: string) => {
+      setError(null);
 
-    try {
-      const systemPrompt = getSystemPrompt();
-      const stepDefs = getStepDefinitions();
-      const currentStepDef = stepDefs[currentStep - 1];
+      try {
+        const systemPrompt = getSystemPrompt();
+        const stepDefs = getStepDefinitions();
+        const currentStepDef = stepDefs[currentStep - 1];
 
-      // Build context about current step
-      const stepContext = currentStepDef
-        ? `\n\nCURRENT STEP: ${currentStepDef.name}\nSTEP DESCRIPTION: ${currentStepDef.description}`
-        : '';
+        // Build context about current step
+        const stepContext = currentStepDef
+          ? `\n\nCURRENT STEP: ${currentStepDef.name}\nSTEP DESCRIPTION: ${currentStepDef.description}`
+          : '';
 
-      await startStream({
-        userMessage: message,
-        systemPrompt: systemPrompt + stepContext,
-        history: currentSession?.chatHistory.map((m) => ({
-          role: m.role,
-          content: m.content,
-        })) || [],
-      });
-    } catch (e) {
-      setError('Failed to send message');
-      console.error('[useToolAI] Error sending message:', e);
-    }
-  }, [getSystemPrompt, currentSession, currentStep, getStepDefinitions, startStream]);
+        await startStream(
+          message,
+          currentSession?.chatHistory.map((m) => ({
+            role: m.role,
+            content: m.content,
+          })) || [],
+          systemPrompt + stepContext
+        );
+      } catch (e) {
+        setError('Failed to send message');
+        console.error('[useToolAI] Error sending message:', e);
+      }
+    },
+    [getSystemPrompt, currentSession, currentStep, getStepDefinitions, startStream]
+  );
 
   // Request AI suggestions for current step
   const requestSuggestions = useCallback(async () => {
@@ -195,7 +207,11 @@ Return your suggestions as JSON in this exact format:
 Provide specific, actionable items relevant to this organization.`;
       }
     } else if (toolType === 'market-forces') {
-      if (['rivalry', 'newEntrants', 'substitutes', 'buyerPower', 'supplierPower'].includes(currentStepDef.id)) {
+      if (
+        ['rivalry', 'newEntrants', 'substitutes', 'buyerPower', 'supplierPower'].includes(
+          currentStepDef.id
+        )
+      ) {
         prompt = `Analyze the ${currentStepDef.name} force for this industry.
 
 Provide:
@@ -227,9 +243,12 @@ Be specific to the organization's industry and market position.`;
       return;
     }
 
-    const itemsSummary = items.map((item: SWOTItem) => 
-      `[${item.id}] ${item.quadrant.toUpperCase()}: ${item.text} (${item.impact} impact)`
-    ).join('\n');
+    const itemsSummary = items
+      .map(
+        (item: SWOTItem) =>
+          `[${item.id}] ${item.quadrant.toUpperCase()}: ${item.text} (${item.impact} impact)`
+      )
+      .join('\n');
 
     const prompt = `Analyze these SWOT items and identify strategic correlations:
 
@@ -257,9 +276,9 @@ Return as JSON:
 
     if (toolType === 'dynamic-swot') {
       const swotData = currentSession.inputData as any;
-      const itemsSummary = (swotData.items || []).map((item: SWOTItem) => 
-        `- ${item.quadrant.toUpperCase()}: ${item.text}`
-      ).join('\n');
+      const itemsSummary = (swotData.items || [])
+        .map((item: SWOTItem) => `- ${item.quadrant.toUpperCase()}: ${item.text}`)
+        .join('\n');
 
       prompt = `Based on this completed SWOT analysis:
 
@@ -275,9 +294,8 @@ For initiatives, return as JSON:
     } else if (toolType === 'market-forces') {
       const porterData = currentSession.inputData as any;
       const forcesSummary = Object.entries(porterData.forces || {})
-        .map(([key, force]: [string, any]) => 
-          `- ${force.name}: ${force.score}/5 (${force.trend})`
-        ).join('\n');
+        .map(([key, force]: [string, any]) => `- ${force.name}: ${force.score}/5 (${force.trend})`)
+        .join('\n');
 
       prompt = `Based on this Porter's Five Forces analysis:
 
@@ -312,7 +330,8 @@ Return as JSON:
         weaknesses: 'What internal weaknesses need to be addressed?',
         opportunities: 'What external opportunities can your organization leverage?',
         threats: 'What external threats could impact your organization?',
-        correlations: 'I\'ll analyze connections between your SWOT elements to identify strategic patterns.',
+        correlations:
+          "I'll analyze connections between your SWOT elements to identify strategic patterns.",
         summary: 'Let me summarize the analysis and propose strategic initiatives.',
       },
       'market-forces': {

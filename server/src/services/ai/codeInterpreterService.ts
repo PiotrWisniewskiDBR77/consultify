@@ -1,9 +1,9 @@
 /**
  * Code Interpreter Service
- * 
+ *
  * Provides secure Python code execution for AI-powered data analysis.
  * Uses Pyodide (WebAssembly Python) or external sandbox services.
- * 
+ *
  * FLOW-AI-CODE: Code execution and analysis
  */
 
@@ -89,13 +89,7 @@ const DEFAULT_CONFIG: SandboxConfig = {
   ],
 };
 
-const PYODIDE_PACKAGES = [
-  'pandas',
-  'numpy',
-  'matplotlib',
-  'scipy',
-  'scikit-learn',
-];
+const PYODIDE_PACKAGES = ['pandas', 'numpy', 'matplotlib', 'scipy', 'scikit-learn'];
 
 // ==========================================
 // CODE VALIDATION
@@ -193,13 +187,13 @@ async function executePython(
     }
 
     result.executionTime = Date.now() - startTime;
-    
+
     logger.info(`[CodeInterpreter] Executed Python code in ${result.executionTime}ms`);
-    
+
     return result;
   } catch (error: any) {
     logger.error('[CodeInterpreter] Execution error:', error);
-    
+
     return {
       success: false,
       stdout: '',
@@ -272,8 +266,14 @@ async function executeJavaScript(
 
     return {
       success: true,
-      stdout: outputs.filter(o => o.type === 'text').map(o => o.data).join('\n'),
-      stderr: outputs.filter(o => o.type === 'error').map(o => o.data).join('\n'),
+      stdout: outputs
+        .filter((o) => o.type === 'text')
+        .map((o) => o.data)
+        .join('\n'),
+      stderr: outputs
+        .filter((o) => o.type === 'error')
+        .map((o) => o.data)
+        .join('\n'),
       outputs,
       executionTime: Date.now() - startTime,
     };
@@ -399,10 +399,7 @@ plt.savefig('output.png')
 /**
  * Generate code suggestion for data analysis
  */
-export function generateAnalysisCode(
-  dataDescription: string,
-  goal: string
-): string {
+export function generateAnalysisCode(dataDescription: string, goal: string): string {
   const templates: Record<string, string> = {
     summary: `
 import pandas as pd

@@ -5,7 +5,8 @@
  */
 
 import React from 'react';
-import { PorterData, ForceData } from '@/store/useToolStore';
+
+import { ForceData, PorterData } from '@/store/useToolStore';
 
 // ==================== TYPES ====================
 
@@ -62,21 +63,23 @@ export const PorterRadar: React.FC<PorterRadarProps> = ({ data, isPolish }) => {
     return (
       <div key={forceId} className="space-y-1">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-700 dark:text-slate-300">
-            {config.label[lang]}
-          </span>
+          <span className="text-slate-700 dark:text-slate-300">{config.label[lang]}</span>
           <div className="flex items-center gap-2">
-            <span className={`
+            <span
+              className={`
               px-1.5 py-0.5 text-xs rounded
-              ${force.trend === 'increasing' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
-                force.trend === 'decreasing' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' :
-                'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'}
-            `}>
+              ${
+                force.trend === 'increasing'
+                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                  : force.trend === 'decreasing'
+                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                    : 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'
+              }
+            `}
+            >
               {force.trend === 'increasing' ? '↑' : force.trend === 'decreasing' ? '↓' : '→'}
             </span>
-            <span className="font-medium text-slate-900 dark:text-white">
-              {force.score}/5
-            </span>
+            <span className="font-medium text-slate-900 dark:text-white">{force.score}/5</span>
           </div>
         </div>
         <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">

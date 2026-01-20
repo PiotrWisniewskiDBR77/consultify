@@ -4,10 +4,10 @@
  * Allows users to score and describe a competitive force.
  */
 
+import { Minus, Plus, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
 import React, { useState } from 'react';
-import { Plus, Trash2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
-import { useToolStore, ToolSession, PorterData, ForceData } from '@/store/useToolStore';
+import { ForceData, PorterData, ToolSession, useToolStore } from '@/store/useToolStore';
 
 // ==================== TYPES ====================
 
@@ -22,7 +22,10 @@ interface ForceStepProps {
 const FORCE_CONFIG = {
   rivalry: {
     title: { en: 'Competitive Rivalry', pl: 'Rywalizacja konkurencyjna' },
-    description: { en: 'Intensity of competition among existing firms', pl: 'Intensywność konkurencji między istniejącymi firmami' },
+    description: {
+      en: 'Intensity of competition among existing firms',
+      pl: 'Intensywność konkurencji między istniejącymi firmami',
+    },
     questions: [
       { en: 'How many competitors are there?', pl: 'Ilu jest konkurentów?' },
       { en: 'How similar are the products?', pl: 'Jak podobne są produkty?' },
@@ -32,7 +35,10 @@ const FORCE_CONFIG = {
   },
   newEntrants: {
     title: { en: 'Threat of New Entrants', pl: 'Zagrożenie nowych graczy' },
-    description: { en: 'Barriers to entry and likelihood of new competitors', pl: 'Bariery wejścia i prawdopodobieństwo nowych konkurentów' },
+    description: {
+      en: 'Barriers to entry and likelihood of new competitors',
+      pl: 'Bariery wejścia i prawdopodobieństwo nowych konkurentów',
+    },
     questions: [
       { en: 'How high are capital requirements?', pl: 'Jak wysokie są wymagania kapitałowe?' },
       { en: 'Are there economies of scale?', pl: 'Czy są korzyści skali?' },
@@ -42,7 +48,10 @@ const FORCE_CONFIG = {
   },
   substitutes: {
     title: { en: 'Threat of Substitutes', pl: 'Zagrożenie substytutów' },
-    description: { en: 'Availability of alternative products or services', pl: 'Dostępność alternatywnych produktów lub usług' },
+    description: {
+      en: 'Availability of alternative products or services',
+      pl: 'Dostępność alternatywnych produktów lub usług',
+    },
     questions: [
       { en: 'Are there close substitutes?', pl: 'Czy są bliskie substytuty?' },
       { en: 'What is the switching cost?', pl: 'Jaki jest koszt zmiany?' },
@@ -52,7 +61,10 @@ const FORCE_CONFIG = {
   },
   buyerPower: {
     title: { en: 'Bargaining Power of Buyers', pl: 'Siła przetargowa nabywców' },
-    description: { en: 'Customers\' ability to drive prices down', pl: 'Zdolność klientów do obniżania cen' },
+    description: {
+      en: "Customers' ability to drive prices down",
+      pl: 'Zdolność klientów do obniżania cen',
+    },
     questions: [
       { en: 'How concentrated are buyers?', pl: 'Jak skoncentrowani są nabywcy?' },
       { en: 'Can buyers backward integrate?', pl: 'Czy nabywcy mogą się integrować wstecz?' },
@@ -62,7 +74,10 @@ const FORCE_CONFIG = {
   },
   supplierPower: {
     title: { en: 'Bargaining Power of Suppliers', pl: 'Siła przetargowa dostawców' },
-    description: { en: 'Suppliers\' ability to drive prices up', pl: 'Zdolność dostawców do podnoszenia cen' },
+    description: {
+      en: "Suppliers' ability to drive prices up",
+      pl: 'Zdolność dostawców do podnoszenia cen',
+    },
     questions: [
       { en: 'How concentrated are suppliers?', pl: 'Jak skoncentrowani są dostawcy?' },
       { en: 'Are there substitutes for inputs?', pl: 'Czy są substytuty dla wejść?' },
@@ -74,11 +89,7 @@ const FORCE_CONFIG = {
 
 // ==================== COMPONENT ====================
 
-export const ForceStep: React.FC<ForceStepProps> = ({
-  forceId,
-  session,
-  isPolish,
-}) => {
+export const ForceStep: React.FC<ForceStepProps> = ({ forceId, session, isPolish }) => {
   const { updateInputData } = useToolStore();
   const [newDriver, setNewDriver] = useState('');
 
@@ -129,8 +140,12 @@ export const ForceStep: React.FC<ForceStepProps> = ({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-lg bg-${config.color}-100 dark:bg-${config.color}-900/30 flex items-center justify-center`}>
-          <span className={`text-lg font-bold text-${config.color}-600 dark:text-${config.color}-400`}>
+        <div
+          className={`w-10 h-10 rounded-lg bg-${config.color}-100 dark:bg-${config.color}-900/30 flex items-center justify-center`}
+        >
+          <span
+            className={`text-lg font-bold text-${config.color}-600 dark:text-${config.color}-400`}
+          >
             {forceId.charAt(0).toUpperCase()}
           </span>
         </div>
@@ -138,9 +153,7 @@ export const ForceStep: React.FC<ForceStepProps> = ({
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {config.title[lang]}
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {config.description[lang]}
-          </p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{config.description[lang]}</p>
         </div>
       </div>
 
@@ -156,21 +169,38 @@ export const ForceStep: React.FC<ForceStepProps> = ({
               onClick={() => handleScoreChange(score)}
               className={`
                 flex-1 py-3 rounded-lg border-2 transition-colors
-                ${force.score === score
-                  ? `border-${config.color}-500 bg-${config.color}-50 dark:bg-${config.color}-900/20`
-                  : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
+                ${
+                  force.score === score
+                    ? `border-${config.color}-500 bg-${config.color}-50 dark:bg-${config.color}-900/20`
+                    : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
                 }
               `}
             >
-              <div className={`text-lg font-bold ${force.score === score ? `text-${config.color}-600 dark:text-${config.color}-400` : 'text-slate-600 dark:text-slate-400'}`}>
+              <div
+                className={`text-lg font-bold ${force.score === score ? `text-${config.color}-600 dark:text-${config.color}-400` : 'text-slate-600 dark:text-slate-400'}`}
+              >
                 {score}
               </div>
               <div className="text-xs text-slate-400">
-                {score === 1 ? (isPolish ? 'Bardzo niska' : 'Very Low') :
-                 score === 2 ? (isPolish ? 'Niska' : 'Low') :
-                 score === 3 ? (isPolish ? 'Umiarkowana' : 'Moderate') :
-                 score === 4 ? (isPolish ? 'Wysoka' : 'High') :
-                 (isPolish ? 'Bardzo wysoka' : 'Very High')}
+                {score === 1
+                  ? isPolish
+                    ? 'Bardzo niska'
+                    : 'Very Low'
+                  : score === 2
+                    ? isPolish
+                      ? 'Niska'
+                      : 'Low'
+                    : score === 3
+                      ? isPolish
+                        ? 'Umiarkowana'
+                        : 'Moderate'
+                      : score === 4
+                        ? isPolish
+                          ? 'Wysoka'
+                          : 'High'
+                        : isPolish
+                          ? 'Bardzo wysoka'
+                          : 'Very High'}
               </div>
             </button>
           ))}
@@ -187,9 +217,10 @@ export const ForceStep: React.FC<ForceStepProps> = ({
             onClick={() => handleTrendChange('increasing')}
             className={`
               flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border-2 transition-colors
-              ${force.trend === 'increasing'
-                ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
-                : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+              ${
+                force.trend === 'increasing'
+                  ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
+                  : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
               }
             `}
           >
@@ -200,9 +231,10 @@ export const ForceStep: React.FC<ForceStepProps> = ({
             onClick={() => handleTrendChange('stable')}
             className={`
               flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border-2 transition-colors
-              ${force.trend === 'stable'
-                ? 'border-slate-500 bg-slate-50 dark:bg-slate-900/20 text-slate-700 dark:text-slate-300'
-                : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+              ${
+                force.trend === 'stable'
+                  ? 'border-slate-500 bg-slate-50 dark:bg-slate-900/20 text-slate-700 dark:text-slate-300'
+                  : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
               }
             `}
           >
@@ -213,9 +245,10 @@ export const ForceStep: React.FC<ForceStepProps> = ({
             onClick={() => handleTrendChange('decreasing')}
             className={`
               flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border-2 transition-colors
-              ${force.trend === 'decreasing'
-                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300'
-                : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+              ${
+                force.trend === 'decreasing'
+                  ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300'
+                  : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
               }
             `}
           >

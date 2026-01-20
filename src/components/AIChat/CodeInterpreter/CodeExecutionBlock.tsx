@@ -1,9 +1,9 @@
 /**
  * CodeExecutionBlock Component
- * 
+ *
  * Displays code with execution output including charts, tables, and console output.
  * Part of the Code Interpreter feature.
- * 
+ *
  * FLOW-AI-CODE: Code execution display
  */
 
@@ -72,7 +72,7 @@ const OutputRenderer: React.FC<{ output: ExecutionOutput }> = ({ output }) => {
           {output.data}
         </pre>
       );
-    
+
     case 'error':
       return (
         <div className="flex items-start gap-2 text-red-600 dark:text-red-400">
@@ -80,18 +80,20 @@ const OutputRenderer: React.FC<{ output: ExecutionOutput }> = ({ output }) => {
           <pre className="text-sm font-mono whitespace-pre-wrap">{output.data}</pre>
         </div>
       );
-    
+
     case 'image':
       return (
         <div className="rounded-lg overflow-hidden border border-slate-200 dark:border-navy-700">
-          <img 
-            src={output.data.startsWith('data:') ? output.data : `data:image/png;base64,${output.data}`}
+          <img
+            src={
+              output.data.startsWith('data:') ? output.data : `data:image/png;base64,${output.data}`
+            }
             alt="Output visualization"
             className="max-w-full h-auto"
           />
         </div>
       );
-    
+
     case 'table':
       return (
         <div className="overflow-x-auto">
@@ -99,7 +101,10 @@ const OutputRenderer: React.FC<{ output: ExecutionOutput }> = ({ output }) => {
             <thead className="bg-slate-100 dark:bg-navy-800">
               <tr>
                 {output.data.columns?.map((col: string, i: number) => (
-                  <th key={i} className="px-3 py-2 text-left font-medium text-slate-700 dark:text-slate-300">
+                  <th
+                    key={i}
+                    className="px-3 py-2 text-left font-medium text-slate-700 dark:text-slate-300"
+                  >
                     {col}
                   </th>
                 ))}
@@ -124,28 +129,26 @@ const OutputRenderer: React.FC<{ output: ExecutionOutput }> = ({ output }) => {
           )}
         </div>
       );
-    
+
     case 'chart':
       return (
         <div className="flex items-center justify-center p-8 bg-slate-50 dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700">
           <div className="text-center text-slate-500">
             <BarChart2 size={32} className="mx-auto mb-2" />
             <p className="text-sm">Chart visualization</p>
-            {output.data.message && (
-              <p className="text-xs mt-1">{output.data.message}</p>
-            )}
+            {output.data.message && <p className="text-xs mt-1">{output.data.message}</p>}
           </div>
         </div>
       );
-    
+
     case 'html':
       return (
-        <div 
+        <div
           className="prose prose-sm dark:prose-invert max-w-none"
           dangerouslySetInnerHTML={{ __html: output.data }}
         />
       );
-    
+
     default:
       return (
         <pre className="text-sm font-mono text-slate-600 dark:text-slate-400">
@@ -204,7 +207,9 @@ export const CodeExecutionBlock: React.FC<CodeExecutionBlockProps> = ({
   const hasOutput = result && (result.stdout || result.outputs.length > 0 || result.stderr);
 
   return (
-    <div className={`rounded-xl overflow-hidden border border-slate-200 dark:border-navy-700 ${className}`}>
+    <div
+      className={`rounded-xl overflow-hidden border border-slate-200 dark:border-navy-700 ${className}`}
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 bg-slate-100 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-2">
@@ -213,7 +218,9 @@ export const CodeExecutionBlock: React.FC<CodeExecutionBlockProps> = ({
             {title || languageDisplay[language].name}
           </span>
           {result && (
-            <span className={`flex items-center gap-1 text-xs ${result.success ? 'text-green-600' : 'text-red-600'}`}>
+            <span
+              className={`flex items-center gap-1 text-xs ${result.success ? 'text-green-600' : 'text-red-600'}`}
+            >
               {result.success ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
               {result.executionTime}ms
             </span>
@@ -226,7 +233,11 @@ export const CodeExecutionBlock: React.FC<CodeExecutionBlockProps> = ({
             className="p-1.5 hover:bg-slate-200 dark:hover:bg-navy-700 rounded text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
             title={t('code.copy', 'Copy code')}
           >
-            {copiedCode ? <CheckCircle2 size={14} className="text-green-500" /> : <Copy size={14} />}
+            {copiedCode ? (
+              <CheckCircle2 size={14} className="text-green-500" />
+            ) : (
+              <Copy size={14} />
+            )}
           </button>
 
           {(onExecute || onRerun) && (
@@ -235,9 +246,10 @@ export const CodeExecutionBlock: React.FC<CodeExecutionBlockProps> = ({
               disabled={isExecuting}
               className={`
                 flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors
-                ${isExecuting 
-                  ? 'bg-slate-200 dark:bg-navy-700 text-slate-400 cursor-wait' 
-                  : 'bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400'
+                ${
+                  isExecuting
+                    ? 'bg-slate-200 dark:bg-navy-700 text-slate-400 cursor-wait'
+                    : 'bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400'
                 }
               `}
             >
@@ -248,7 +260,11 @@ export const CodeExecutionBlock: React.FC<CodeExecutionBlockProps> = ({
               ) : (
                 <Play size={12} />
               )}
-              {isExecuting ? t('code.running', 'Running...') : result ? t('code.rerun', 'Rerun') : t('code.run', 'Run')}
+              {isExecuting
+                ? t('code.running', 'Running...')
+                : result
+                  ? t('code.rerun', 'Rerun')
+                  : t('code.run', 'Run')}
             </button>
           )}
 

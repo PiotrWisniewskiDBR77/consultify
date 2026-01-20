@@ -10,10 +10,10 @@ import {
   DragOverlay,
   DragStartEvent,
   PointerSensor,
+  useDraggable,
+  useDroppable,
   useSensor,
   useSensors,
-  useDroppable,
-  useDraggable,
 } from '@dnd-kit/core';
 import { Calendar, FileText, KanbanSquare, Loader2, Target, Timer, Users } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -334,12 +334,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       typeColor: 'cyan',
       status:
         item.status === InitiativeStatus.BLOCKED
-          ? 'in_review' as const
+          ? ('in_review' as const)
           : item.status === InitiativeStatus.DONE
-            ? 'completed' as const
+            ? ('completed' as const)
             : item.status === InitiativeStatus.APPROVED
-              ? 'approved' as const
-              : 'draft' as const,
+              ? ('approved' as const)
+              : ('draft' as const),
       progress: item.progress || 0,
       updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
     }));
@@ -355,7 +355,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   // DnD state
   const [activeId, setActiveId] = useState<string | null>(null);
-  
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -373,19 +373,19 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
-    
+
     if (!over) return;
-    
+
     const initiativeId = active.id as string;
     const targetColumn = over.id as string;
-    
+
     const newStatus = columnToStatus[targetColumn];
     if (!newStatus) return;
 
     // Find the initiative
     const initiative = initiatives.find((i) => i.id === initiativeId);
     if (!initiative) return;
-    
+
     // Check if status actually changed
     const currentColumnId = Object.entries(columnToStatus).find(
       ([_, status]) => status === initiative.status
@@ -418,7 +418,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     children: React.ReactNode;
   }> = ({ id, label, items, children }) => {
     const { isOver, setNodeRef } = useDroppable({ id });
-    
+
     return (
       <div className="flex-shrink-0 w-72 flex flex-col">
         <div className="flex items-center justify-between mb-3 px-2">
@@ -447,10 +447,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
       id: item.id,
     });
-    
-    const style = transform ? {
-      transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    } : undefined;
+
+    const style = transform
+      ? {
+          transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        }
+      : undefined;
 
     return (
       <div
@@ -464,16 +466,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         }`}
       >
         <div className="flex items-center gap-2 mb-2">
-          <span className="font-mono text-xs text-cyan-400">
-            {getTypeCode(item.axis)}
-          </span>
+          <span className="font-mono text-xs text-cyan-400">{getTypeCode(item.axis)}</span>
           <span
             className={`w-2 h-2 rounded-full ${STATUS_META[item.status]?.dotColor || 'bg-slate-400'}`}
           />
         </div>
-        <h4 className="text-sm font-medium text-white mb-2 line-clamp-2">
-          {item.name}
-        </h4>
+        <h4 className="text-sm font-medium text-white mb-2 line-clamp-2">{item.name}</h4>
         <div className="flex items-center justify-between">
           <div className="flex-1 h-1 bg-navy-700 rounded-full overflow-hidden mr-2">
             <div
@@ -503,11 +501,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const activeItem = activeId ? initiatives.find((i) => i.id === activeId) : null;
 
     return (
-      <DndContext
-        sensors={sensors}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
+      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="flex gap-4 p-4 h-full overflow-x-auto">
           {columns.map((column) => {
             const items = filteredInitiatives.filter((i) => column.statuses.includes(i.status));
@@ -551,11 +545,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   };
 
   // Handle status change from detail panel
-  const handleStatusChange = useCallback((newStatus: InitiativeStatus) => {
-    setInitiatives((prev) =>
-      prev.map((i) => (i.id === activeDocumentId ? { ...i, status: newStatus } : i))
-    );
-  }, [activeDocumentId]);
+  const handleStatusChange = useCallback(
+    (newStatus: InitiativeStatus) => {
+      setInitiatives((prev) =>
+        prev.map((i) => (i.id === activeDocumentId ? { ...i, status: newStatus } : i))
+      );
+    },
+    [activeDocumentId]
+  );
 
   // Handle refresh
   const handleRefresh = useCallback(async () => {
@@ -594,10 +591,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           <div className="p-6 bg-navy-800 rounded-xl border border-navy-700">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-white">{initiative.name}</h2>
-              <button
-                onClick={handleShowList}
-                className="text-slate-400 hover:text-white"
-              >
+              <button onClick={handleShowList} className="text-slate-400 hover:text-white">
                 ← Back to list
               </button>
             </div>

@@ -4,10 +4,10 @@
  * Displays tool name, progress, step navigation, and actions.
  */
 
+import { ArrowLeft, Check, Download, HelpCircle, Lightbulb } from 'lucide-react';
 import React from 'react';
-import { ArrowLeft, HelpCircle, Download, Lightbulb, Check } from 'lucide-react';
 
-import { ToolType, StepDefinition } from '@/store/useToolStore';
+import { StepDefinition, ToolType } from '@/store/useToolStore';
 
 // ==================== TYPES ====================
 
@@ -65,7 +65,9 @@ export const ToolHeader: React.FC<ToolHeaderProps> = ({
           </button>
 
           <div className="flex items-center gap-3">
-            <span className={`px-2 py-1 rounded text-xs font-mono font-bold bg-${toolMeta.color}-100 dark:bg-${toolMeta.color}-900/30 text-${toolMeta.color}-600 dark:text-${toolMeta.color}-400`}>
+            <span
+              className={`px-2 py-1 rounded text-xs font-mono font-bold bg-${toolMeta.color}-100 dark:bg-${toolMeta.color}-900/30 text-${toolMeta.color}-600 dark:text-${toolMeta.color}-400`}
+            >
               {toolMeta.badge}
             </span>
             <div>
@@ -86,9 +88,7 @@ export const ToolHeader: React.FC<ToolHeaderProps> = ({
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <span className="text-sm text-slate-600 dark:text-slate-400">
-              {progress}%
-            </span>
+            <span className="text-sm text-slate-600 dark:text-slate-400">{progress}%</span>
           </div>
         </div>
 
@@ -139,11 +139,12 @@ export const ToolHeader: React.FC<ToolHeaderProps> = ({
               disabled={!canClick}
               className={`
                 flex items-center gap-2 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all
-                ${isActive
-                  ? `bg-${toolMeta.color}-100 dark:bg-${toolMeta.color}-900/30 text-${toolMeta.color}-700 dark:text-${toolMeta.color}-300 font-medium`
-                  : isCompleted
-                  ? 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300'
-                  : 'text-slate-400 dark:text-slate-500'
+                ${
+                  isActive
+                    ? `bg-${toolMeta.color}-100 dark:bg-${toolMeta.color}-900/30 text-${toolMeta.color}-700 dark:text-${toolMeta.color}-300 font-medium`
+                    : isCompleted
+                      ? 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300'
+                      : 'text-slate-400 dark:text-slate-500'
                 }
                 ${canClick ? 'cursor-pointer hover:opacity-80' : 'cursor-not-allowed'}
               `}
@@ -151,11 +152,13 @@ export const ToolHeader: React.FC<ToolHeaderProps> = ({
               {isCompleted ? (
                 <Check className="w-4 h-4 text-emerald-500" />
               ) : (
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${
-                  isActive
-                    ? `bg-${toolMeta.color}-500 text-white`
-                    : 'bg-slate-200 dark:bg-navy-700 text-slate-500'
-                }`}>
+                <span
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${
+                    isActive
+                      ? `bg-${toolMeta.color}-500 text-white`
+                      : 'bg-slate-200 dark:bg-navy-700 text-slate-500'
+                  }`}
+                >
                   {stepNum}
                 </span>
               )}

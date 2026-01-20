@@ -3,10 +3,7 @@
  * Prevents React 19 compatibility issues by loading recharts only when needed
  */
 
-import React, { Suspense } from 'react';
-
-// Lazy load recharts module
-const rechartsModule = React.lazy(() => import('recharts'));
+import React, { ComponentType, Suspense } from 'react';
 
 // Create a wrapper component that provides recharts exports
 const RechartsProvider: React.FC<{ children: (recharts: any) => React.ReactNode }> = ({
@@ -39,53 +36,68 @@ const RechartsLoader: React.FC<{ children: (recharts: any) => React.ReactNode }>
   return <>{children(recharts)}</>;
 };
 
-// Export lazy-loaded components
-export const LazyBar = React.lazy(() => import('recharts').then((mod) => ({ default: mod.Bar })));
-export const LazyBarChart = React.lazy(() =>
-  import('recharts').then((mod) => ({ default: mod.BarChart }))
+// Helper to create typed lazy component
+const lazyLoad = <T extends ComponentType<any>>(
+  importer: () => Promise<{ default: T }>
+): React.LazyExoticComponent<T> => React.lazy(importer);
+
+// Export lazy-loaded components with explicit type assertions (using unknown for non-standard components)
+export const LazyBar = lazyLoad(() =>
+  import('recharts').then((mod) => ({ default: mod.Bar as unknown as ComponentType<any> }))
 );
-export const LazyLine = React.lazy(() => import('recharts').then((mod) => ({ default: mod.Line })));
-export const LazyLineChart = React.lazy(() =>
-  import('recharts').then((mod) => ({ default: mod.LineChart }))
+export const LazyBarChart = lazyLoad(() =>
+  import('recharts').then((mod) => ({ default: mod.BarChart as ComponentType<any> }))
 );
-export const LazyPie = React.lazy(() => import('recharts').then((mod) => ({ default: mod.Pie })));
-export const LazyPieChart = React.lazy(() =>
-  import('recharts').then((mod) => ({ default: mod.PieChart }))
+export const LazyLine = lazyLoad(() =>
+  import('recharts').then((mod) => ({ default: mod.Line as ComponentType<any> }))
 );
-export const LazyResponsiveContainer = React.lazy(() =>
-  import('recharts').then((mod) => ({ default: mod.ResponsiveContainer }))
+export const LazyLineChart = lazyLoad(() =>
+  import('recharts').then((mod) => ({ default: mod.LineChart as ComponentType<any> }))
 );
-export const LazyXAxis = React.lazy(() =>
-  import('recharts').then((mod) => ({ default: mod.XAxis }))
+export const LazyPie = lazyLoad(() =>
+  import('recharts').then((mod) => ({ default: mod.Pie as unknown as ComponentType<any> }))
 );
-export const LazyYAxis = React.lazy(() =>
-  import('recharts').then((mod) => ({ default: mod.YAxis }))
+export const LazyPieChart = lazyLoad(() =>
+  import('recharts').then((mod) => ({ default: mod.PieChart as ComponentType<any> }))
 );
-export const LazyCartesianGrid = React.lazy(() =>
-  import('recharts').then((mod) => ({ default: mod.CartesianGrid }))
+export const LazyResponsiveContainer = lazyLoad(() =>
+  import('recharts').then((mod) => ({ default: mod.ResponsiveContainer as ComponentType<any> }))
 );
-export const LazyTooltip = React.lazy(() =>
-  import('recharts').then((mod) => ({ default: mod.Tooltip }))
+export const LazyXAxis = lazyLoad(() =>
+  import('recharts').then((mod) => ({ default: mod.XAxis as ComponentType<any> }))
 );
-export const LazyLegend = React.lazy(() =>
-  import('recharts').then((mod) => ({ default: mod.Legend }))
+export const LazyYAxis = lazyLoad(() =>
+  import('recharts').then((mod) => ({ default: mod.YAxis as ComponentType<any> }))
 );
-export const LazyCell = React.lazy(() => import('recharts').then((mod) => ({ default: mod.Cell })));
-export const LazyArea = React.lazy(() => import('recharts').then((mod) => ({ default: mod.Area })));
-export const LazyAreaChart = React.lazy(() =>
-  import('recharts').then((mod) => ({ default: mod.AreaChart }))
+export const LazyCartesianGrid = lazyLoad(() =>
+  import('recharts').then((mod) => ({ default: mod.CartesianGrid as ComponentType<any> }))
 );
-export const LazyComposedChart = React.lazy(() =>
-  import('recharts').then((mod) => ({ default: mod.ComposedChart }))
+export const LazyTooltip = lazyLoad(() =>
+  import('recharts').then((mod) => ({ default: mod.Tooltip as ComponentType<any> }))
 );
-export const LazyRadar = React.lazy(() =>
-  import('recharts').then((mod) => ({ default: mod.Radar }))
+export const LazyLegend = lazyLoad(() =>
+  import('recharts').then((mod) => ({ default: mod.Legend as ComponentType<any> }))
 );
-export const LazyRadarChart = React.lazy(() =>
-  import('recharts').then((mod) => ({ default: mod.RadarChart }))
+export const LazyCell = lazyLoad(() =>
+  import('recharts').then((mod) => ({ default: mod.Cell as ComponentType<any> }))
 );
-export const LazyReferenceLine = React.lazy(() =>
-  import('recharts').then((mod) => ({ default: mod.ReferenceLine }))
+export const LazyArea = lazyLoad(() =>
+  import('recharts').then((mod) => ({ default: mod.Area as unknown as ComponentType<any> }))
+);
+export const LazyAreaChart = lazyLoad(() =>
+  import('recharts').then((mod) => ({ default: mod.AreaChart as ComponentType<any> }))
+);
+export const LazyComposedChart = lazyLoad(() =>
+  import('recharts').then((mod) => ({ default: mod.ComposedChart as ComponentType<any> }))
+);
+export const LazyRadar = lazyLoad(() =>
+  import('recharts').then((mod) => ({ default: mod.Radar as unknown as ComponentType<any> }))
+);
+export const LazyRadarChart = lazyLoad(() =>
+  import('recharts').then((mod) => ({ default: mod.RadarChart as ComponentType<any> }))
+);
+export const LazyReferenceLine = lazyLoad(() =>
+  import('recharts').then((mod) => ({ default: mod.ReferenceLine as ComponentType<any> }))
 );
 
 export { RechartsProvider };

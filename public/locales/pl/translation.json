@@ -80,6 +80,9 @@
     "implementation": "Wdrożenie",
     "realization": "Realizacja",
     "otherAssessments": "Inne",
+    "assessmentOverview": "Przegląd",
+    "myAssessments": "Moje Oceny",
+    "reviewerDashboard": "Panel Recenzenta",
     "assessmentDRD": "DRD",
     "assessmentSIRI": "SIRI",
     "assessmentADMA": "ADMA",
@@ -399,6 +402,9 @@
       "scheduleDemo": "Umów Osobiste Demo",
       "contactUs": "Masz Pytania? Skontaktuj się",
       "noCommitment": "Bez zobowiązań. Tylko rozmowa."
+    },
+    "tourComplete": {
+      "message": "Jesteś gotowy do eksploracji! Ta platforma zazwyczaj oszczędza zespołom 3+ tygodnie pracy konsultingowej."
     }
   },
   "tour": {
@@ -4352,7 +4358,9 @@
       "fullDocs": "Pełna Dokumentacja",
       "tabs": {
         "overview": "Przegląd",
+        "howto": "Jak używać",
         "faq": "FAQ",
+        "video": "Wideo",
         "knowledge": "Baza Wiedzy"
       },
       "overview": {

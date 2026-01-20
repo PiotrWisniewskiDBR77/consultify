@@ -1169,7 +1169,15 @@ export class InitiativeController {
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const orgId = req.user?.organizationId;
       const { id: initiativeId } = req.params;
-      const { name, description, category, unit, baselineValue, targetValue, measurementFrequency } = req.body;
+      const {
+        name,
+        description,
+        category,
+        unit,
+        baselineValue,
+        targetValue,
+        measurementFrequency,
+      } = req.body;
 
       if (!orgId) {
         res.status(401).json({ error: 'Unauthorized' });

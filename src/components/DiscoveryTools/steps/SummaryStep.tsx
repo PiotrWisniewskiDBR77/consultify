@@ -4,12 +4,13 @@
  * Displays executive summary, insights, and recommended initiatives.
  */
 
+import { FileText, Lightbulb, Target, TrendingUp } from 'lucide-react';
 import React from 'react';
-import { FileText, Lightbulb, TrendingUp, Target } from 'lucide-react';
 
-import { ToolType, ToolSession, SWOTData, PorterData } from '@/store/useToolStore';
-import { SWOTMatrix } from '../visualizations/SWOTMatrix';
+import { PorterData, SWOTData, ToolSession, ToolType } from '@/store/useToolStore';
+
 import { PorterRadar } from '../visualizations/PorterRadar';
+import { SWOTMatrix } from '../visualizations/SWOTMatrix';
 
 // ==================== TYPES ====================
 
@@ -21,11 +22,7 @@ interface SummaryStepProps {
 
 // ==================== COMPONENT ====================
 
-export const SummaryStep: React.FC<SummaryStepProps> = ({
-  toolType,
-  session,
-  isPolish,
-}) => {
+export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isPolish }) => {
   const inputData = session.inputData;
   const initiatives = session.generatedInitiatives;
 
@@ -78,9 +75,10 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
           {isPolish ? 'Podsumowanie wykonawcze' : 'Executive Summary'}
         </h3>
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          {summaryData.summary || (isPolish 
-            ? 'Kliknij "Generuj analizę" aby otrzymać podsumowanie AI.'
-            : 'Click "Generate Analysis" to get an AI summary.')}
+          {summaryData.summary ||
+            (isPolish
+              ? 'Kliknij "Generuj analizę" aby otrzymać podsumowanie AI.'
+              : 'Click "Generate Analysis" to get an AI summary.')}
         </p>
       </div>
 
@@ -148,7 +146,10 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
           </h3>
           <ul className="space-y-2">
             {summaryData.insights.map((insight, index) => (
-              <li key={index} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
+              <li
+                key={index}
+                className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
+              >
                 <span className="text-primary-500">•</span>
                 {insight}
               </li>
@@ -180,12 +181,17 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`px-2 py-0.5 text-xs rounded-full ${
-                      initiative.type === 'strategic' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' :
-                      initiative.type === 'operational' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
-                      initiative.type === 'defensive' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
-                      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                    }`}>
+                    <span
+                      className={`px-2 py-0.5 text-xs rounded-full ${
+                        initiative.type === 'strategic'
+                          ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                          : initiative.type === 'operational'
+                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                            : initiative.type === 'defensive'
+                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                              : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                      }`}
+                    >
                       {initiative.type}
                     </span>
                   </div>
@@ -215,10 +221,10 @@ const MetricCard: React.FC<{
   value: number | string;
   color: string;
 }> = ({ label, value, color }) => (
-  <div className={`p-4 rounded-lg bg-${color}-50 dark:bg-${color}-900/20 border border-${color}-200 dark:border-${color}-800`}>
-    <div className={`text-2xl font-bold text-${color}-600 dark:text-${color}-400`}>
-      {value}
-    </div>
+  <div
+    className={`p-4 rounded-lg bg-${color}-50 dark:bg-${color}-900/20 border border-${color}-200 dark:border-${color}-800`}
+  >
+    <div className={`text-2xl font-bold text-${color}-600 dark:text-${color}-400`}>{value}</div>
     <div className="text-sm text-slate-600 dark:text-slate-400">{label}</div>
   </div>
 );

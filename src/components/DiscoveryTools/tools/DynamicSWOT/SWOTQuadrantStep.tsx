@@ -4,10 +4,10 @@
  * Allows users to add, edit, and remove items for a specific quadrant.
  */
 
+import { Plus, Sparkles, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
-import { Plus, Trash2, Sparkles } from 'lucide-react';
 
-import { useToolStore, ToolSession, SWOTData, SWOTItem } from '@/store/useToolStore';
+import { SWOTData, SWOTItem, ToolSession, useToolStore } from '@/store/useToolStore';
 
 // ==================== TYPES ====================
 
@@ -92,8 +92,12 @@ export const SWOTQuadrantStep: React.FC<SWOTQuadrantStepProps> = ({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-lg bg-${config.color}-100 dark:bg-${config.color}-900/30 flex items-center justify-center`}>
-          <span className={`text-lg font-bold text-${config.color}-600 dark:text-${config.color}-400`}>
+        <div
+          className={`w-10 h-10 rounded-lg bg-${config.color}-100 dark:bg-${config.color}-900/30 flex items-center justify-center`}
+        >
+          <span
+            className={`text-lg font-bold text-${config.color}-600 dark:text-${config.color}-400`}
+          >
             {config.icon}
           </span>
         </div>
@@ -101,9 +105,7 @@ export const SWOTQuadrantStep: React.FC<SWOTQuadrantStepProps> = ({
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {config.title[lang]}
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {config.subtitle[lang]}
-          </p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{config.subtitle[lang]}</p>
         </div>
       </div>
 
@@ -149,7 +151,9 @@ export const SWOTQuadrantStep: React.FC<SWOTQuadrantStepProps> = ({
                   {/* Impact selector */}
                   <select
                     value={item.impact}
-                    onChange={(e) => handleImpactChange(item.id, e.target.value as 'high' | 'medium' | 'low')}
+                    onChange={(e) =>
+                      handleImpactChange(item.id, e.target.value as 'high' | 'medium' | 'low')
+                    }
                     className="px-2 py-1 text-xs rounded border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-primary-500"
                   >
                     <option value="high">{isPolish ? 'Wysoki wpływ' : 'High impact'}</option>
@@ -182,7 +186,8 @@ export const SWOTQuadrantStep: React.FC<SWOTQuadrantStepProps> = ({
       {/* Item count */}
       <div className="text-sm text-slate-500 dark:text-slate-400">
         {items.length} {isPolish ? 'elementów' : 'items'} •{' '}
-        {items.filter((i) => i.impact === 'high').length} {isPolish ? 'wysokiego wpływu' : 'high impact'}
+        {items.filter((i) => i.impact === 'high').length}{' '}
+        {isPolish ? 'wysokiego wpływu' : 'high impact'}
       </div>
     </div>
   );

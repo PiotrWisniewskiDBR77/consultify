@@ -363,7 +363,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                             Active
                           </span>
                         ) : (
-                          <span className="px-2 py-1 bg-slate-600 text-slate-300 rounded text-xs">
+                          <span className="px-2 py-1 bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300 rounded text-xs">
                             Inactive
                           </span>
                         )}

@@ -41,7 +41,7 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
     window.scrollTo(0, 0);
   }, []);
 
-  // Handle instant demo start (no modal)
+  // Handle instant demo start (no modal) - defined before keyboard shortcut effect
   const startInstantDemo = useCallback(async () => {
     if (isLoadingDemo) return;
 
@@ -68,6 +68,23 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
       setIsDemoModalOpen(true);
     }
   }, [isLoadingDemo, setCurrentUser]);
+
+  // Keyboard shortcut: Ctrl+D / Cmd+D for instant demo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+D or Cmd+D for instant demo
+      if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        e.preventDefault();
+        if (!isLoadingDemo) {
+          console.log('[ProductEntryPage] Ctrl+D pressed - starting instant demo');
+          startInstantDemo();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isLoadingDemo, startInstantDemo]);
 
   // Handle loading overlay completion
   const handleLoadingComplete = useCallback(() => {
@@ -166,6 +183,14 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
 
       {/* Instant Demo Loading Overlay */}
       <DemoLoadingOverlay isVisible={isLoadingDemo} onComplete={handleLoadingComplete} />
+
+      {/* Keyboard Shortcut Hint */}
+      <div className="fixed bottom-6 right-6 z-40 hidden lg:flex items-center gap-2 px-3 py-2 bg-white/80 dark:bg-navy-900/80 backdrop-blur-sm rounded-lg border border-slate-200 dark:border-navy-700 shadow-lg opacity-60 hover:opacity-100 transition-opacity">
+        <span className="text-xs text-slate-500 dark:text-slate-400">Quick demo:</span>
+        <kbd className="px-2 py-0.5 text-xs font-mono bg-slate-100 dark:bg-navy-800 rounded border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-300">
+          {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+D
+        </kbd>
+      </div>
     </div>
   );
 };

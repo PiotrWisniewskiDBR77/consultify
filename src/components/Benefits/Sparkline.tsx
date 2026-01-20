@@ -1,6 +1,6 @@
 /**
  * Sparkline
- * 
+ *
  * A simple sparkline chart component for showing KPI trends.
  */
 
@@ -49,7 +49,7 @@ export const Sparkline: React.FC<SparklineProps> = ({
     let path = '';
     if (points.length > 0) {
       path = `M ${points[0].x} ${points[0].y}`;
-      
+
       for (let i = 1; i < points.length; i++) {
         const prev = points[i - 1];
         const curr = points[i];
@@ -69,7 +69,7 @@ export const Sparkline: React.FC<SparklineProps> = ({
 
   if (data.length === 0) {
     return (
-      <div 
+      <div
         className={`flex items-center justify-center text-slate-600 text-xs ${className}`}
         style={{ width, height }}
       >
@@ -85,36 +85,28 @@ export const Sparkline: React.FC<SparklineProps> = ({
   // Create area path
   const areaPath = useMemo(() => {
     if (points.length === 0) return '';
-    
+
     const firstPoint = points[0];
     const lastPoint = points[points.length - 1];
-    
+
     let area = `M ${firstPoint.x} ${height - 2}`;
     area += ` L ${firstPoint.x} ${firstPoint.y}`;
-    
+
     for (let i = 1; i < points.length; i++) {
       const prev = points[i - 1];
       const curr = points[i];
       const cpX = (prev.x + curr.x) / 2;
       area += ` Q ${cpX} ${prev.y} ${curr.x} ${curr.y}`;
     }
-    
+
     area += ` L ${lastPoint.x} ${height - 2} Z`;
     return area;
   }, [points, height]);
 
   return (
-    <svg 
-      width={width} 
-      height={height} 
-      className={className}
-      viewBox={`0 0 ${width} ${height}`}
-    >
+    <svg width={width} height={height} className={className} viewBox={`0 0 ${width} ${height}`}>
       {/* Area fill */}
-      <path
-        d={areaPath}
-        className={areaColor}
-      />
+      <path d={areaPath} className={areaColor} />
 
       {/* Target line */}
       {targetY !== null && (

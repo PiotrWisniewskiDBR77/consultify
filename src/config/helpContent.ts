@@ -102,3 +102,58 @@ export function isKnowledgeBaseReady(): boolean {
 export function getVideoUrl(): string {
   return HELP_CONFIG.videoUrl;
 }
+
+/**
+ * Help Item interface for contextual help
+ */
+export interface HelpItem {
+  title: string;
+  content: string;
+  type?: 'article' | 'video' | 'guide';
+  onClick?: () => void;
+}
+
+/**
+ * View to help mapping for contextual help
+ */
+const VIEW_HELP_MAP: Record<string, HelpItem[]> = {
+  '/dashboard': [
+    { title: 'help.dashboard.overview', content: 'help.dashboard.overviewContent', type: 'article' },
+    { title: 'help.dashboard.navigation', content: 'help.dashboard.navigationContent', type: 'guide' },
+  ],
+  '/initiatives': [
+    { title: 'help.initiatives.create', content: 'help.initiatives.createContent', type: 'guide' },
+    { title: 'help.initiatives.manage', content: 'help.initiatives.manageContent', type: 'article' },
+  ],
+  '/assessment': [
+    { title: 'help.assessment.start', content: 'help.assessment.startContent', type: 'guide' },
+    { title: 'help.assessment.methodology', content: 'help.assessment.methodologyContent', type: 'article' },
+  ],
+  default: [
+    { title: 'help.general.gettingStarted', content: 'help.general.gettingStartedContent', type: 'guide' },
+    { title: 'help.general.support', content: 'help.general.supportContent', type: 'article' },
+  ],
+};
+
+/**
+ * Get contextual help items for a specific view/path
+ */
+export function getHelpForView(path: string): HelpItem[] {
+  // Find matching help items for the path
+  const normalizedPath = path.split('?')[0]; // Remove query params
+
+  // Try exact match first
+  if (VIEW_HELP_MAP[normalizedPath]) {
+    return VIEW_HELP_MAP[normalizedPath];
+  }
+
+  // Try prefix match for nested routes
+  for (const [key, items] of Object.entries(VIEW_HELP_MAP)) {
+    if (key !== 'default' && normalizedPath.startsWith(key)) {
+      return items;
+    }
+  }
+
+  // Return default help items
+  return VIEW_HELP_MAP.default;
+}

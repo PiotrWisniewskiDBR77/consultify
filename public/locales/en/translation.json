@@ -82,6 +82,9 @@
     "implementation": "Implementation",
     "realization": "Execution",
     "otherAssessments": "Other",
+    "assessmentOverview": "Overview",
+    "myAssessments": "My Assessments",
+    "reviewerDashboard": "Reviewer Dashboard",
     "assessmentDRD": "DRD",
     "assessmentSIRI": "SIRI",
     "assessmentADMA": "ADMA",
@@ -400,6 +403,9 @@
       "scheduleDemo": "Schedule a Personal Demo",
       "contactUs": "Have Questions? Contact Us",
       "noCommitment": "No commitment required. Just a conversation."
+    },
+    "tourComplete": {
+      "message": "You're ready to explore! This platform typically saves teams 3+ weeks of consulting work."
     }
   },
   "tour": {

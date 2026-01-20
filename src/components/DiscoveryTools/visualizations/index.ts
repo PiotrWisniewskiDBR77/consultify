@@ -2,5 +2,5 @@
  * Visualizations - Exports
  */
 
-export { SWOTMatrix } from './SWOTMatrix';
 export { PorterRadar } from './PorterRadar';
+export { SWOTMatrix } from './SWOTMatrix';

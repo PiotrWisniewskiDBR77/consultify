@@ -295,86 +295,94 @@ router.delete('/:id', verifyToken, async (req: Request, res: Response) => {
 
 // ==================== MOVE CONVERSATION TO PROJECT ====================
 
-router.post('/:id/conversations/:conversationId', verifyToken, async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).user?.id;
-    const { id, conversationId } = req.params;
+router.post(
+  '/:id/conversations/:conversationId',
+  verifyToken,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user?.id;
+      const { id, conversationId } = req.params;
 
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-    const db = getDatabase();
+      const db = getDatabase();
 
-    // Check project ownership
-    const project = await db.queryOne(
-      `
+      // Check project ownership
+      const project = await db.queryOne(
+        `
             SELECT id FROM chat_projects WHERE id = ? AND (user_id = ? OR organization_id = ?)
         `,
-      [id, userId, (req as any).user?.organizationId]
-    );
+        [id, userId, (req as any).user?.organizationId]
+      );
 
-    if (!project) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
 
-    // Check conversation ownership
-    const conversation = await db.queryOne(
-      `
+      // Check conversation ownership
+      const conversation = await db.queryOne(
+        `
             SELECT id FROM conversations WHERE id = ? AND user_id = ?
         `,
-      [conversationId, userId]
-    );
+        [conversationId, userId]
+      );
 
-    if (!conversation) {
-      return res.status(404).json({ error: 'Conversation not found' });
-    }
+      if (!conversation) {
+        return res.status(404).json({ error: 'Conversation not found' });
+      }
 
-    // Move conversation to project
-    await db.run(
-      `
+      // Move conversation to project
+      await db.run(
+        `
             UPDATE conversations SET chat_project_id = ?, updated_at = ? WHERE id = ?
         `,
-      [id, new Date().toISOString(), conversationId]
-    );
+        [id, new Date().toISOString(), conversationId]
+      );
 
-    logger.info(`[ChatProjects] Moved conversation ${conversationId} to project ${id}`);
-    res.json({ success: true });
-  } catch (error: any) {
-    logger.error('[ChatProjects] Move conversation error:', error);
-    res.status(500).json({ error: 'Failed to move conversation' });
+      logger.info(`[ChatProjects] Moved conversation ${conversationId} to project ${id}`);
+      res.json({ success: true });
+    } catch (error: any) {
+      logger.error('[ChatProjects] Move conversation error:', error);
+      res.status(500).json({ error: 'Failed to move conversation' });
+    }
   }
-});
+);
 
 // ==================== REMOVE CONVERSATION FROM PROJECT ====================
 
-router.delete('/:id/conversations/:conversationId', verifyToken, async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).user?.id;
-    const { id, conversationId } = req.params;
+router.delete(
+  '/:id/conversations/:conversationId',
+  verifyToken,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user?.id;
+      const { id, conversationId } = req.params;
 
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-    const db = getDatabase();
+      const db = getDatabase();
 
-    // Remove from project (set chat_project_id to NULL)
-    await db.run(
-      `
+      // Remove from project (set chat_project_id to NULL)
+      await db.run(
+        `
             UPDATE conversations 
             SET chat_project_id = NULL, updated_at = ? 
             WHERE id = ? AND user_id = ? AND chat_project_id = ?
         `,
-      [new Date().toISOString(), conversationId, userId, id]
-    );
+        [new Date().toISOString(), conversationId, userId, id]
+      );
 
-    logger.info(`[ChatProjects] Removed conversation ${conversationId} from project ${id}`);
-    res.json({ success: true });
-  } catch (error: any) {
-    logger.error('[ChatProjects] Remove conversation error:', error);
-    res.status(500).json({ error: 'Failed to remove conversation' });
+      logger.info(`[ChatProjects] Removed conversation ${conversationId} from project ${id}`);
+      res.json({ success: true });
+    } catch (error: any) {
+      logger.error('[ChatProjects] Remove conversation error:', error);
+      res.status(500).json({ error: 'Failed to remove conversation' });
+    }
   }
-});
+);
 
 export default router;

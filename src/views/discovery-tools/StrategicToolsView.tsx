@@ -30,14 +30,14 @@ import {
   Target,
   TrendingUp,
 } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
+import { ToolWorkspace } from '@/components/DiscoveryTools';
 import { useAppStore } from '@/store/useAppStore';
 import { ToolType } from '@/store/useToolStore';
 import { AppView } from '@/types';
-import { ToolWorkspace } from '@/components/DiscoveryTools';
 
 interface StrategicTool {
   id: string;

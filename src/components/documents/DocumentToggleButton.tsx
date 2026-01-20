@@ -23,7 +23,7 @@ export const DocumentToggleButton: React.FC = () => {
       onClick={() => toggleSidePanel('DOCUMENTS')}
       className="
                 group relative
-                w-9 h-9 
+                w-10 h-10 
                 flex items-center justify-center 
                 rounded-l-lg rounded-r-none
                 bg-gradient-to-br from-slate-700 to-slate-800
@@ -44,7 +44,7 @@ export const DocumentToggleButton: React.FC = () => {
       <div className="absolute inset-0 rounded-l-lg bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
 
       <FileText
-        size={18}
+        size={20}
         className="relative z-10 transition-transform duration-200 group-hover:scale-110"
       />
 

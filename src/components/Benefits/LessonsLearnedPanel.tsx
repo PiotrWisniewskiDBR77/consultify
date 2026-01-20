@@ -1,6 +1,6 @@
 /**
  * LessonsLearnedPanel
- * 
+ *
  * Panel for capturing and viewing post-implementation learnings.
  */
 
@@ -51,7 +51,10 @@ interface LessonsLearnedPanelProps {
 // CONFIG
 // ============================================
 
-const LESSON_TYPE_CONFIG: Record<LessonType, { label: string; icon: React.ReactNode; color: string }> = {
+const LESSON_TYPE_CONFIG: Record<
+  LessonType,
+  { label: string; icon: React.ReactNode; color: string }
+> = {
   SUCCESS: {
     label: 'Success',
     icon: <CheckCircle2 size={16} />,
@@ -99,17 +102,14 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson }) => {
 
   return (
     <div className={`rounded-xl border ${colors.border} ${colors.bg} overflow-hidden`}>
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full p-4 text-left"
-      >
+      <button onClick={() => setExpanded(!expanded)} className="w-full p-4 text-left">
         <div className="flex items-start gap-3">
-          <div className={`p-2 rounded-lg ${colors.bg} ${colors.text}`}>
-            {typeConfig.icon}
-          </div>
+          <div className={`p-2 rounded-lg ${colors.bg} ${colors.text}`}>{typeConfig.icon}</div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${colors.bg} ${colors.text}`}>
+              <span
+                className={`text-xs font-medium px-2 py-0.5 rounded-full ${colors.bg} ${colors.text}`}
+              >
                 {typeConfig.label}
               </span>
               <span className="text-xs text-slate-500 px-2 py-0.5 rounded-full bg-navy-700">
@@ -118,9 +118,7 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson }) => {
             </div>
             <p className="text-sm text-white line-clamp-2">{lesson.description}</p>
             {lesson.initiativeName && (
-              <p className="text-xs text-slate-500 mt-1">
-                From: {lesson.initiativeName}
-              </p>
+              <p className="text-xs text-slate-500 mt-1">From: {lesson.initiativeName}</p>
             )}
           </div>
           <div className="text-slate-400">
@@ -137,13 +135,16 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson }) => {
               <p className="text-sm text-slate-300">{lesson.actionTaken}</p>
             </div>
           )}
-          
+
           {lesson.applicableTo && lesson.applicableTo.length > 0 && (
             <div className="mb-3">
               <h4 className="text-xs font-medium text-slate-400 mb-1">Applicable To</h4>
               <div className="flex flex-wrap gap-1">
                 {lesson.applicableTo.map((tag, idx) => (
-                  <span key={idx} className="text-xs px-2 py-0.5 bg-navy-700 text-slate-300 rounded">
+                  <span
+                    key={idx}
+                    className="text-xs px-2 py-0.5 bg-navy-700 text-slate-300 rounded"
+                  >
                     {tag}
                   </span>
                 ))}
@@ -202,8 +203,11 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
         category: formData.category,
         description: formData.description,
         actionTaken: formData.actionTaken || undefined,
-        applicableTo: formData.applicableTo 
-          ? formData.applicableTo.split(',').map(s => s.trim()).filter(Boolean)
+        applicableTo: formData.applicableTo
+          ? formData.applicableTo
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean)
           : undefined,
       });
 
@@ -219,10 +223,13 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div 
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={onClose}
+    >
+      <div
         className="bg-navy-900 border border-navy-700 rounded-xl w-full max-w-lg shadow-2xl"
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-navy-700">
           <div>
@@ -239,10 +246,15 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
           <div>
             <label className="block text-sm font-medium text-slate-400 mb-2">Type</label>
             <div className="flex gap-2">
-              {(Object.entries(LESSON_TYPE_CONFIG) as [LessonType, typeof LESSON_TYPE_CONFIG[LessonType]][]).map(([key, config]) => (
+              {(
+                Object.entries(LESSON_TYPE_CONFIG) as [
+                  LessonType,
+                  (typeof LESSON_TYPE_CONFIG)[LessonType],
+                ][]
+              ).map(([key, config]) => (
                 <button
                   key={key}
-                  onClick={() => setFormData(prev => ({ ...prev, type: key }))}
+                  onClick={() => setFormData((prev) => ({ ...prev, type: key }))}
                   className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
                     formData.type === key
                       ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
@@ -260,10 +272,15 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
           <div>
             <label className="block text-sm font-medium text-slate-400 mb-2">Category</label>
             <div className="flex flex-wrap gap-2">
-              {(Object.entries(LESSON_CATEGORY_CONFIG) as [LessonCategory, typeof LESSON_CATEGORY_CONFIG[LessonCategory]][]).map(([key, config]) => (
+              {(
+                Object.entries(LESSON_CATEGORY_CONFIG) as [
+                  LessonCategory,
+                  (typeof LESSON_CATEGORY_CONFIG)[LessonCategory],
+                ][]
+              ).map(([key, config]) => (
                 <button
                   key={key}
-                  onClick={() => setFormData(prev => ({ ...prev, category: key }))}
+                  onClick={() => setFormData((prev) => ({ ...prev, category: key }))}
                   className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
                     formData.category === key
                       ? 'bg-cyan-500 text-white'
@@ -278,12 +295,10 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2">
-              Description *
-            </label>
+            <label className="block text-sm font-medium text-slate-400 mb-2">Description *</label>
             <textarea
               value={formData.description}
-              onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
               placeholder="Describe the lesson learned..."
               rows={3}
               className="w-full px-4 py-3 bg-navy-800 border border-navy-700 rounded-lg text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 resize-none"
@@ -297,7 +312,7 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
             </label>
             <textarea
               value={formData.actionTaken}
-              onChange={e => setFormData(prev => ({ ...prev, actionTaken: e.target.value }))}
+              onChange={(e) => setFormData((prev) => ({ ...prev, actionTaken: e.target.value }))}
               placeholder="What was done as a result of this learning?"
               rows={2}
               className="w-full px-4 py-3 bg-navy-800 border border-navy-700 rounded-lg text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 resize-none"
@@ -312,7 +327,7 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
             <input
               type="text"
               value={formData.applicableTo}
-              onChange={e => setFormData(prev => ({ ...prev, applicableTo: e.target.value }))}
+              onChange={(e) => setFormData((prev) => ({ ...prev, applicableTo: e.target.value }))}
               placeholder="e.g., Digital Projects, IT Implementation (comma-separated)"
               className="w-full px-4 py-3 bg-navy-800 border border-navy-700 rounded-lg text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-500"
             />
@@ -320,10 +335,7 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
         </div>
 
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-navy-700">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm text-slate-400 hover:text-white"
-          >
+          <button onClick={onClose} className="px-4 py-2 text-sm text-slate-400 hover:text-white">
             Cancel
           </button>
           <button
@@ -359,10 +371,8 @@ export const LessonsLearnedPanel: React.FC<LessonsLearnedPanelProps> = ({
   const fetchLessons = useCallback(async () => {
     setIsLoading(true);
     try {
-      const endpoint = initiativeId 
-        ? `/initiatives/${initiativeId}/lessons`
-        : '/lessons';
-      
+      const endpoint = initiativeId ? `/initiatives/${initiativeId}/lessons` : '/lessons';
+
       const response = await Api.get(endpoint);
       setLessons(response.lessons || []);
     } catch (error) {
@@ -375,8 +385,10 @@ export const LessonsLearnedPanel: React.FC<LessonsLearnedPanelProps> = ({
           initiativeName: initiativeName || 'Digital Transformation',
           type: 'SUCCESS',
           category: 'TECHNOLOGY',
-          description: 'Implementing CI/CD pipelines early in the project significantly reduced deployment issues.',
-          actionTaken: 'Documented the CI/CD setup process and created templates for future projects.',
+          description:
+            'Implementing CI/CD pipelines early in the project significantly reduced deployment issues.',
+          actionTaken:
+            'Documented the CI/CD setup process and created templates for future projects.',
           applicableTo: ['Digital Projects', 'IT Implementation'],
           createdAt: new Date().toISOString(),
           createdBy: 'user-1',
@@ -406,22 +418,23 @@ export const LessonsLearnedPanel: React.FC<LessonsLearnedPanelProps> = ({
   }, [fetchLessons]);
 
   // Filter lessons
-  const filteredLessons = lessons.filter(lesson => {
-    const matchesSearch = !searchQuery || 
+  const filteredLessons = lessons.filter((lesson) => {
+    const matchesSearch =
+      !searchQuery ||
       lesson.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       lesson.actionTaken?.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesType = filterType === 'ALL' || lesson.type === filterType;
-    
+
     return matchesSearch && matchesType;
   });
 
   // Stats
   const stats = {
     total: lessons.length,
-    successes: lessons.filter(l => l.type === 'SUCCESS').length,
-    challenges: lessons.filter(l => l.type === 'CHALLENGE').length,
-    improvements: lessons.filter(l => l.type === 'IMPROVEMENT').length,
+    successes: lessons.filter((l) => l.type === 'SUCCESS').length,
+    challenges: lessons.filter((l) => l.type === 'CHALLENGE').length,
+    improvements: lessons.filter((l) => l.type === 'IMPROVEMENT').length,
   };
 
   return (
@@ -471,13 +484,13 @@ export const LessonsLearnedPanel: React.FC<LessonsLearnedPanelProps> = ({
             <input
               type="text"
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search lessons..."
               className="w-full pl-9 pr-4 py-2 bg-navy-800 border border-navy-700 rounded-lg text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-500"
             />
           </div>
           <div className="flex gap-1">
-            {(['ALL', 'SUCCESS', 'CHALLENGE', 'IMPROVEMENT'] as const).map(type => (
+            {(['ALL', 'SUCCESS', 'CHALLENGE', 'IMPROVEMENT'] as const).map((type) => (
               <button
                 key={type}
                 onClick={() => setFilterType(type)}
@@ -515,7 +528,7 @@ export const LessonsLearnedPanel: React.FC<LessonsLearnedPanelProps> = ({
           </div>
         ) : (
           <div className="space-y-3">
-            {filteredLessons.map(lesson => (
+            {filteredLessons.map((lesson) => (
               <LessonCard key={lesson.id} lesson={lesson} />
             ))}
           </div>

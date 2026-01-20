@@ -347,7 +347,7 @@ export const LLMManagementView: React.FC = () => {
                           className={`px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-colors ${
                             alreadyAdded
                               ? 'bg-emerald-500/10 text-emerald-400 cursor-default'
-                              : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                              : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
                           }`}
                         >
                           {alreadyAdded && <Check size={12} />}

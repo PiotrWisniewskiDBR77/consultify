@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { translations } from '../translations';
 import { FullInitiative, FullSession, Language } from '../types';
 
 interface FullPilotWorkspaceProps {

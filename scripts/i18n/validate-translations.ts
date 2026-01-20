@@ -848,7 +848,14 @@ const CONFIG = {
 
 interface TranslationIssue {
   path: string;
-  type: 'missing' | 'untranslated' | 'empty' | 'placeholder_mismatch' | 'type_mismatch' | 'invalid_json' | 'extra_key';
+  type:
+    | 'missing'
+    | 'untranslated'
+    | 'empty'
+    | 'placeholder_mismatch'
+    | 'type_mismatch'
+    | 'invalid_json'
+    | 'extra_key';
   sourceValue?: string;
   targetValue?: string;
   suggestion?: string;
@@ -1046,17 +1053,17 @@ function saveTranslationFile(locale: string, filename: string, data: any): void 
 // Check type consistency between source and target values
 function checkTypeConsistency(sourceObj: any, targetObj: any, prefix = ''): TranslationIssue[] {
   const issues: TranslationIssue[] = [];
-  
+
   for (const key in sourceObj) {
     const path = prefix ? `${prefix}.${key}` : key;
     const sourceVal = sourceObj[key];
     const targetVal = targetObj?.[key];
-    
+
     if (targetVal === undefined) continue; // Handled by missing keys check
-    
+
     const sourceType = Array.isArray(sourceVal) ? 'array' : typeof sourceVal;
     const targetType = Array.isArray(targetVal) ? 'array' : typeof targetVal;
-    
+
     if (sourceType !== targetType) {
       issues.push({
         path,
@@ -1077,31 +1084,32 @@ function checkTypeConsistency(sourceObj: any, targetObj: any, prefix = ''): Tran
       }
     }
   }
-  
+
   return issues;
 }
 
 // Find extra keys in target that don't exist in source
 function findExtraKeys(sourceObj: any, targetObj: any, prefix = ''): TranslationIssue[] {
   const issues: TranslationIssue[] = [];
-  
+
   for (const key in targetObj) {
     const path = prefix ? `${prefix}.${key}` : key;
     const sourceVal = sourceObj?.[key];
     const targetVal = targetObj[key];
-    
+
     if (sourceVal === undefined) {
       issues.push({
         path,
         type: 'extra_key',
-        targetValue: typeof targetVal === 'string' ? targetVal : JSON.stringify(targetVal).substring(0, 50),
+        targetValue:
+          typeof targetVal === 'string' ? targetVal : JSON.stringify(targetVal).substring(0, 50),
         details: 'Key exists in target but not in source (may be orphaned)',
       });
     } else if (typeof targetVal === 'object' && !Array.isArray(targetVal)) {
       issues.push(...findExtraKeys(sourceVal, targetVal, path));
     }
   }
-  
+
   return issues;
 }
 
@@ -1109,21 +1117,21 @@ function findExtraKeys(sourceObj: any, targetObj: any, prefix = ''): Translation
 function validateJsonStructure(locale: string, filename: string): TranslationIssue[] {
   const filePath = path.join(CONFIG.localesDir, locale, filename);
   const issues: TranslationIssue[] = [];
-  
+
   try {
     if (fs.existsSync(filePath)) {
       const content = fs.readFileSync(filePath, 'utf-8');
       JSON.parse(content);
-      
+
       // Check for BOM or other encoding issues
-      if (content.charCodeAt(0) === 0xFEFF) {
+      if (content.charCodeAt(0) === 0xfeff) {
         issues.push({
           path: filename,
           type: 'invalid_json',
           details: 'File contains BOM (Byte Order Mark) - should be removed',
         });
       }
-      
+
       // Check for trailing commas (common JSON error)
       if (/,\s*[}\]]/.test(content)) {
         issues.push({
@@ -1140,7 +1148,7 @@ function validateJsonStructure(locale: string, filename: string): TranslationIss
       details: `JSON parse error: ${error.message}`,
     });
   }
-  
+
   return issues;
 }
 
@@ -1177,7 +1185,7 @@ function validateTranslations(locale: string, filename: string): ValidationResul
     const typeIssues = checkTypeConsistency(sourceData, targetData);
     result.typeMismatches = typeIssues.length;
     result.issues.push(...typeIssues);
-    
+
     // Check for extra keys
     const extraKeyIssues = findExtraKeys(sourceData, targetData);
     result.extraKeys = extraKeyIssues.length;
@@ -1339,9 +1347,10 @@ function generateReport(results: ValidationResult[]): string {
 
   for (const result of results) {
     const issues = result.missingKeys + result.untranslatedKeys + result.emptyKeys;
-    const coverage = result.totalKeys > 0
-      ? (((result.totalKeys - issues) / result.totalKeys) * 100).toFixed(1)
-      : '0.0';
+    const coverage =
+      result.totalKeys > 0
+        ? (((result.totalKeys - issues) / result.totalKeys) * 100).toFixed(1)
+        : '0.0';
     report += `| ${result.locale} | ${result.file} | ${result.totalKeys} | ${result.missingKeys} | ${result.untranslatedKeys} | ${result.emptyKeys} | ${result.placeholderMismatches} | ${result.typeMismatches} | ${result.extraKeys} | ${coverage}% |\n`;
   }
 
@@ -1353,13 +1362,14 @@ function generateReport(results: ValidationResult[]): string {
       localeStats[result.locale] = { total: 0, issues: 0 };
     }
     localeStats[result.locale].total += result.totalKeys;
-    localeStats[result.locale].issues += result.missingKeys + result.untranslatedKeys + result.emptyKeys;
+    localeStats[result.locale].issues +=
+      result.missingKeys + result.untranslatedKeys + result.emptyKeys;
   }
-  
+
   report += '| Locale | Coverage | Issues |\n';
   report += '|--------|----------|--------|\n';
   for (const [locale, stats] of Object.entries(localeStats)) {
-    const coverage = ((stats.total - stats.issues) / stats.total * 100).toFixed(1);
+    const coverage = (((stats.total - stats.issues) / stats.total) * 100).toFixed(1);
     report += `| ${locale.toUpperCase()} | ${coverage}% | ${stats.issues} |\n`;
   }
 
@@ -1377,11 +1387,19 @@ function generateReport(results: ValidationResult[]): string {
     }
 
     // Priority order for issue types
-    const typeOrder = ['missing', 'untranslated', 'empty', 'placeholder_mismatch', 'type_mismatch', 'extra_key', 'invalid_json'];
-    
+    const typeOrder = [
+      'missing',
+      'untranslated',
+      'empty',
+      'placeholder_mismatch',
+      'type_mismatch',
+      'extra_key',
+      'invalid_json',
+    ];
+
     for (const type of typeOrder) {
       if (!byType[type] || byType[type].length === 0) continue;
-      
+
       report += `#### ${type.replace(/_/g, ' ').toUpperCase()} (${byType[type].length})\n\n`;
 
       const shown = byType[type].slice(0, 30);
@@ -1443,7 +1461,7 @@ async function main() {
   const targetNamespace = namespaceArg ? namespaceArg.split('=')[1] + '.json' : null;
 
   const locales = targetLocale ? [targetLocale] : CONFIG.targetLocales;
-  
+
   // Determine which files to check
   let files: string[];
   if (targetNamespace) {
@@ -1471,19 +1489,23 @@ async function main() {
       allResults.push(result);
 
       const issues = result.missingKeys + result.untranslatedKeys + result.emptyKeys;
-      const coverage = result.totalKeys > 0 
-        ? (((result.totalKeys - issues) / result.totalKeys) * 100).toFixed(1)
-        : '0.0';
+      const coverage =
+        result.totalKeys > 0
+          ? (((result.totalKeys - issues) / result.totalKeys) * 100).toFixed(1)
+          : '0.0';
 
       grandTotalKeys += result.totalKeys;
       grandTotalIssues += issues + result.placeholderMismatches + result.typeMismatches;
 
       console.log(`   📄 ${file}: ${coverage}% coverage (${result.totalKeys} keys)`);
       if (result.missingKeys > 0) console.log(`      ❌ Missing: ${result.missingKeys}`);
-      if (result.untranslatedKeys > 0) console.log(`      ⚠️  Untranslated: ${result.untranslatedKeys}`);
+      if (result.untranslatedKeys > 0)
+        console.log(`      ⚠️  Untranslated: ${result.untranslatedKeys}`);
       if (result.emptyKeys > 0) console.log(`      🔸 Empty: ${result.emptyKeys}`);
-      if (result.placeholderMismatches > 0) console.log(`      🔀 Placeholder issues: ${result.placeholderMismatches}`);
-      if (result.typeMismatches > 0) console.log(`      🔧 Type mismatches: ${result.typeMismatches}`);
+      if (result.placeholderMismatches > 0)
+        console.log(`      🔀 Placeholder issues: ${result.placeholderMismatches}`);
+      if (result.typeMismatches > 0)
+        console.log(`      🔧 Type mismatches: ${result.typeMismatches}`);
       if (result.extraKeys > 0) console.log(`      📌 Extra/orphaned keys: ${result.extraKeys}`);
 
       if (isFix && result.issues.length > 0) {
@@ -1501,12 +1523,15 @@ async function main() {
       localeStats[result.locale] = { total: 0, issues: 0 };
     }
     localeStats[result.locale].total += result.totalKeys;
-    localeStats[result.locale].issues += result.missingKeys + result.untranslatedKeys + result.emptyKeys;
+    localeStats[result.locale].issues +=
+      result.missingKeys + result.untranslatedKeys + result.emptyKeys;
   }
-  
+
   for (const [locale, stats] of Object.entries(localeStats)) {
-    const coverage = ((stats.total - stats.issues) / stats.total * 100).toFixed(1);
-    const bar = '█'.repeat(Math.floor(parseFloat(coverage) / 5)) + '░'.repeat(20 - Math.floor(parseFloat(coverage) / 5));
+    const coverage = (((stats.total - stats.issues) / stats.total) * 100).toFixed(1);
+    const bar =
+      '█'.repeat(Math.floor(parseFloat(coverage) / 5)) +
+      '░'.repeat(20 - Math.floor(parseFloat(coverage) / 5));
     console.log(`   ${locale.toUpperCase()}: ${bar} ${coverage}% (${stats.issues} issues)`);
   }
 
@@ -1518,7 +1543,13 @@ async function main() {
   }
 
   const totalIssues = allResults.reduce(
-    (sum, r) => sum + r.missingKeys + r.untranslatedKeys + r.emptyKeys + r.placeholderMismatches + r.typeMismatches,
+    (sum, r) =>
+      sum +
+      r.missingKeys +
+      r.untranslatedKeys +
+      r.emptyKeys +
+      r.placeholderMismatches +
+      r.typeMismatches,
     0
   );
 

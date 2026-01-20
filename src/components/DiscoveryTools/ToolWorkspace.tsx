@@ -8,12 +8,12 @@
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useToolStore, ToolType } from '@/store/useToolStore';
 import { useToolAI } from '@/hooks/discovery/useToolAI';
+import { ToolType, useToolStore } from '@/store/useToolStore';
 
-import { ToolHeader } from './ToolHeader';
-import { ToolCanvas } from './ToolCanvas';
 import { ToolActionBar } from './ToolActionBar';
+import { ToolCanvas } from './ToolCanvas';
+import { ToolHeader } from './ToolHeader';
 
 // ==================== TYPES ====================
 
@@ -26,12 +26,15 @@ interface ToolWorkspaceProps {
 
 // ==================== TOOL METADATA ====================
 
-const TOOL_METADATA: Record<ToolType, {
-  name: string;
-  namePl: string;
-  color: string;
-  badge: string;
-}> = {
+const TOOL_METADATA: Record<
+  ToolType,
+  {
+    name: string;
+    namePl: string;
+    color: string;
+    badge: string;
+  }
+> = {
   'dynamic-swot': {
     name: 'Dynamic SWOT',
     namePl: 'Dynamiczny SWOT',
@@ -205,7 +208,9 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         currentStep={currentStep}
         totalSteps={stepDefs.length}
         steps={stepDefs}
-        completedSteps={currentSession.steps.filter((s) => s.status === 'completed').map((s) => s.stepId)}
+        completedSteps={currentSession.steps
+          .filter((s) => s.status === 'completed')
+          .map((s) => s.stepId)}
         onBack={onBack}
         onStepClick={setCurrentStep}
         onHelp={() => console.log('Help clicked')}

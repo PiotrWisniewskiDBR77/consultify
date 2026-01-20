@@ -157,7 +157,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                 shadow-2xl
                 flex flex-col
                 transition-transform duration-300 ease-in-out
-                ${isSidebarOpen ? 'translate-x-0 w-80' : '-translate-x-full w-80'}
+                ${isSidebarOpen ? 'translate-x-0 w-80 pointer-events-auto' : '-translate-x-full w-80 pointer-events-none'}
                 ${className}
             `}
       >

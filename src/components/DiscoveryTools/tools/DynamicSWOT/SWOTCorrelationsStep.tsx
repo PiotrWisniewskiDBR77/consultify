@@ -4,10 +4,10 @@
  * Shows strategic connections between SWOT elements.
  */
 
+import { ArrowRight, Lightbulb, Link2 } from 'lucide-react';
 import React from 'react';
-import { Link2, Lightbulb, ArrowRight } from 'lucide-react';
 
-import { ToolSession, SWOTData, SWOTCorrelation } from '@/store/useToolStore';
+import { SWOTCorrelation, SWOTData, ToolSession } from '@/store/useToolStore';
 
 // ==================== TYPES ====================
 
@@ -52,11 +52,14 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
   const correlations = swotData.correlations || [];
 
   // Group correlations by type
-  const groupedCorrelations = correlations.reduce((acc, corr) => {
-    if (!acc[corr.type]) acc[corr.type] = [];
-    acc[corr.type].push(corr);
-    return acc;
-  }, {} as Record<string, SWOTCorrelation[]>);
+  const groupedCorrelations = correlations.reduce(
+    (acc, corr) => {
+      if (!acc[corr.type]) acc[corr.type] = [];
+      acc[corr.type].push(corr);
+      return acc;
+    },
+    {} as Record<string, SWOTCorrelation[]>
+  );
 
   // Get item text by ID
   const getItemText = (itemId: string): string => {
@@ -73,7 +76,9 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
     return (
       <div key={type} className="space-y-3">
         <div className="flex items-center gap-2">
-          <span className={`w-8 h-8 rounded-lg bg-${config.color}-100 dark:bg-${config.color}-900/30 flex items-center justify-center text-xs font-bold text-${config.color}-600 dark:text-${config.color}-400`}>
+          <span
+            className={`w-8 h-8 rounded-lg bg-${config.color}-100 dark:bg-${config.color}-900/30 flex items-center justify-center text-xs font-bold text-${config.color}-600 dark:text-${config.color}-400`}
+          >
             {type}
           </span>
           <div>
@@ -106,9 +111,7 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
             </div>
 
             {/* Insight */}
-            <p className="text-slate-700 dark:text-slate-300 mb-3">
-              {corr.insight}
-            </p>
+            <p className="text-slate-700 dark:text-slate-300 mb-3">{corr.insight}</p>
 
             {/* Initiative proposal */}
             {corr.initiativeProposal && (
@@ -142,9 +145,7 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
             {isPolish ? 'Korelacje strategiczne' : 'Strategic Correlations'}
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? 'Powiązania między elementami SWOT'
-              : 'Connections between SWOT elements'}
+            {isPolish ? 'Powiązania między elementami SWOT' : 'Connections between SWOT elements'}
           </p>
         </div>
       </div>
@@ -161,9 +162,7 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
         <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center">
           <Link2 className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
           <p className="text-slate-500 dark:text-slate-400 mb-2">
-            {isPolish
-              ? 'Brak wygenerowanych korelacji'
-              : 'No correlations generated yet'}
+            {isPolish ? 'Brak wygenerowanych korelacji' : 'No correlations generated yet'}
           </p>
           <p className="text-sm text-slate-400">
             {isPolish
@@ -176,7 +175,9 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
       {/* Stats */}
       {correlations.length > 0 && (
         <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
-          <span>{correlations.length} {isPolish ? 'korelacji' : 'correlations'}</span>
+          <span>
+            {correlations.length} {isPolish ? 'korelacji' : 'correlations'}
+          </span>
           <span>•</span>
           <span>
             {correlations.filter((c) => c.initiativeProposal).length}{' '}

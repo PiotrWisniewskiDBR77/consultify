@@ -639,7 +639,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
       {/* Users Table */}
       <div className="bg-navy-900 border border-white/5 rounded-xl overflow-hidden">
         <table className="w-full text-left text-sm text-slate-400 dark:text-slate-500">
-          <thead className="bg-navy-950 text-slate-200 uppercase text-xs font-semibold">
+          <thead className="bg-slate-50 dark:bg-navy-950 text-slate-600 dark:text-slate-200 uppercase text-xs font-semibold">
             <tr>
               <th className="px-6 py-4">User</th>
               {mode === 'platform' && <th className="px-6 py-4">Organization</th>}

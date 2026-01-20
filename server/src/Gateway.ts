@@ -6,6 +6,7 @@ import accessControlRoutes from './routes/access-control.routes.js';
 import accessCodeRoutes from './routes/accessCodes.routes.js';
 import _actionDecisionRoutes from './routes/actionDecisions.routes.js';
 import adminBackupRoutes from './routes/admin/backup.routes.js';
+import adminAIQualityRoutes from './routes/admin/ai-quality.routes.js';
 import adminBulkRoutes from './routes/admin-bulk.routes.js';
 import adminDataRoutes from './routes/admin-data.routes.js';
 import adminAlertsRoutes from './routes/adminAlerts.routes.js';
@@ -38,6 +39,7 @@ import analyticsRoutes from './routes/analytics.routes.js';
 import analyticsSuperadminRoutes from './routes/analytics-superadmin.routes.js';
 import advancedAnalyticsRoutes from './routes/analyticsAdvanced.routes.js';
 import apiKeysRoutes from './routes/apiKeys.routes.js';
+import assessmentAIRoutes from './routes/assessment/assessment-ai.routes.js';
 import assessmentRoutes from './routes/assessment/assessment.routes.js';
 import assessmentHubRoutes from './routes/assessment/assessment-hub.routes.js';
 import assessmentLevelAttachmentsRoutes from './routes/assessment/assessment-level-attachments.routes.js';
@@ -269,6 +271,7 @@ export class ApiGateway {
       app.use('/api/initiatives', initiativesRoutes);
       app.use('/api/admin-alerts', adminAlertsRoutes);
       app.use('/api/admin/backups', adminBackupRoutes);
+      app.use('/api/admin/ai-quality', adminAIQualityRoutes);
 
       // AI-related legacy/duplicate routes (cleaned up)
       app.use('/api/conversations', conversationsRoutes);
@@ -381,6 +384,7 @@ export class ApiGateway {
       app.use('/api/context', contextRoutes);
 
       // Assessment routes
+      app.use('/api/assessment', assessmentAIRoutes); // AI endpoints: /api/assessment/:projectId/ai/*
       app.use('/api/assessment', assessmentRoutes);
       app.use('/api/rapidlean', rapidleanRoutes);
       app.use('/api/external-assessments', externalAssessmentsRoutes);

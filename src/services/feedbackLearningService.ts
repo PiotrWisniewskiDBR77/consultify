@@ -10,7 +10,9 @@
  * 3. Updates user memory with learned preferences
  * 4. Optionally updates organization memory for shared learnings
  *
- * @version 1.0.0
+ * Extended in v2.0.0 with adaptive style feedback fields
+ *
+ * @version 2.0.0
  */
 
 import { Api } from './api';
@@ -30,6 +32,12 @@ export interface FeedbackData {
   detailFeedback?: 'too-little' | 'just-right' | 'too-much';
   styleFeedback?: 'too-formal' | 'just-right' | 'too-casual';
 
+  // Advanced feedback (v2.0 - Adaptive Style)
+  actionability?: number; // 1-5
+  accuracy?: number; // 1-5
+  expectedFormat?: 'bullets' | 'paragraphs' | 'structured' | 'conversational';
+  missingInfo?: string;
+
   // Optional text feedback
   customFeedback?: string;
   wantedMode?: string;
@@ -38,6 +46,7 @@ export interface FeedbackData {
   responseLength: number;
   focusMode?: string;
   workspaceContext?: string;
+  screenContext?: string;
 }
 
 export interface FeedbackPattern {
@@ -105,6 +114,13 @@ class FeedbackLearningServiceClass {
         detailFeedback: feedback.detailFeedback,
         styleFeedback: feedback.styleFeedback,
         customFeedback: feedback.customFeedback,
+        // New adaptive style fields
+        actionability: feedback.actionability,
+        accuracy: feedback.accuracy,
+        expectedFormat: feedback.expectedFormat,
+        missingInfo: feedback.missingInfo,
+        screenContext: feedback.screenContext,
+        focusMode: feedback.focusMode,
       });
     } catch (err: any) {
       console.error('[FeedbackLearning] Failed to submit to backend:', err);

@@ -358,7 +358,15 @@ export const Api = {
     if (!res.ok) throw new Error('Failed to delete user');
   },
 
-  checkSystemHealth: async (): Promise<{ status: string; latency: number }> => {
+  checkSystemHealth: async (): Promise<{
+    status: string;
+    latency: number;
+    dbResponseTime?: number;
+    storageUsed?: number;
+    storageLimit?: number;
+    apiCallsUsed?: number;
+    apiCallsLimit?: number;
+  }> => {
     const res = await fetch(`${API_URL}/health`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Health check failed');
@@ -1988,8 +1996,8 @@ export const Api = {
     return [];
   },
 
-  approveAccessRequest: async (id: string): Promise<void> => {
-    console.log('Approving access request:', id);
+  approveAccessRequest: async (id: string, password?: string, role?: string): Promise<void> => {
+    console.log('Approving access request:', id, password ? '(with password)' : '', role || '');
   },
 
   rejectAccessRequest: async (id: string, reason: string): Promise<void> => {

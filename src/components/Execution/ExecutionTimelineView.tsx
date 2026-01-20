@@ -1,16 +1,11 @@
 /**
  * ExecutionTimelineView
- * 
+ *
  * Gantt-style timeline view for initiatives in execution phase.
  * Shows timeline bars based on planned/actual dates with status-based coloring.
  */
 
-import {
-  AlertTriangle,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react';
+import { AlertTriangle, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { FullInitiative, InitiativeStatus } from '../../types';
@@ -25,7 +20,10 @@ interface ExecutionTimelineViewProps {
 // STATUS COLORS
 // ============================================
 
-const STATUS_COLORS: Record<InitiativeStatus, { bg: string; border: string; text: string; progress: string }> = {
+const STATUS_COLORS: Record<
+  InitiativeStatus,
+  { bg: string; border: string; text: string; progress: string }
+> = {
   [InitiativeStatus.APPROVED]: {
     bg: 'bg-emerald-500/20',
     border: 'border-emerald-500/50',
@@ -91,10 +89,13 @@ const getWeekNumber = (date: Date): number => {
   const dayNum = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
 };
 
-const generateWeeks = (startDate: Date, numWeeks: number = 12): { date: Date; label: string; weekNum: number }[] => {
+const generateWeeks = (
+  startDate: Date,
+  numWeeks: number = 12
+): { date: Date; label: string; weekNum: number }[] => {
   const weeks: { date: Date; label: string; weekNum: number }[] = [];
   const current = new Date(startDate);
   current.setDate(current.getDate() - current.getDay() + 1);
@@ -112,7 +113,9 @@ const generateWeeks = (startDate: Date, numWeeks: number = 12): { date: Date; la
   return weeks;
 };
 
-const getMonthsFromWeeks = (weeks: { date: Date }[]): { month: string; year: number; startIdx: number; span: number }[] => {
+const getMonthsFromWeeks = (
+  weeks: { date: Date }[]
+): { month: string; year: number; startIdx: number; span: number }[] => {
   const months: { month: string; year: number; startIdx: number; span: number }[] = [];
   let currentMonth = -1;
   let currentYear = -1;
@@ -190,9 +193,7 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
       />
       <div className="relative h-full flex items-center gap-2 px-3 overflow-hidden">
         <div className={`w-2 h-2 rounded-full ${colors.progress} shrink-0`} />
-        <span className={`text-sm font-medium truncate ${colors.text}`}>
-          {initiative.name}
-        </span>
+        <span className={`text-sm font-medium truncate ${colors.text}`}>{initiative.name}</span>
         {initiative.priority === 'Critical' && (
           <AlertTriangle size={14} className="shrink-0 text-red-500" />
         )}
@@ -221,25 +222,28 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
   const weeks = useMemo(() => generateWeeks(startDate, viewWeeks), [startDate, viewWeeks]);
   const months = useMemo(() => getMonthsFromWeeks(weeks), [weeks]);
 
-  const getWeekIndex = useCallback((dateStr: string | undefined): number => {
-    if (!dateStr) return -1;
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return -1;
-    const firstWeekStart = weeks[0]?.date;
-    if (!firstWeekStart) return -1;
-    const diffTime = date.getTime() - firstWeekStart.getTime();
-    const diffWeeks = Math.floor(diffTime / (7 * 24 * 60 * 60 * 1000));
-    return Math.max(0, Math.min(diffWeeks, weeks.length - 1));
-  }, [weeks]);
+  const getWeekIndex = useCallback(
+    (dateStr: string | undefined): number => {
+      if (!dateStr) return -1;
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return -1;
+      const firstWeekStart = weeks[0]?.date;
+      if (!firstWeekStart) return -1;
+      const diffTime = date.getTime() - firstWeekStart.getTime();
+      const diffWeeks = Math.floor(diffTime / (7 * 24 * 60 * 60 * 1000));
+      return Math.max(0, Math.min(diffWeeks, weeks.length - 1));
+    },
+    [weeks]
+  );
 
   const processedInitiatives = useMemo(() => {
     return initiatives
-      .filter(i => i.startDate || i.plannedEndDate || i.endDate)
-      .map(initiative => {
-        const startIdx = getWeekIndex(initiative.startDate) >= 0 
-          ? getWeekIndex(initiative.startDate) 
-          : 0;
-        const endDateStr = initiative.actualEndDate || initiative.plannedEndDate || initiative.endDate;
+      .filter((i) => i.startDate || i.plannedEndDate || i.endDate)
+      .map((initiative) => {
+        const startIdx =
+          getWeekIndex(initiative.startDate) >= 0 ? getWeekIndex(initiative.startDate) : 0;
+        const endDateStr =
+          initiative.actualEndDate || initiative.plannedEndDate || initiative.endDate;
         let endIdx = getWeekIndex(endDateStr);
         if (endIdx < 0 || endIdx < startIdx) {
           endIdx = Math.min(startIdx + 2, weeks.length - 1);
@@ -250,12 +254,13 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
   }, [initiatives, getWeekIndex, weeks.length]);
 
   const initiativeRows = useMemo(() => {
-    const rows: typeof processedInitiatives[] = [];
-    processedInitiatives.forEach(initiative => {
+    const rows: (typeof processedInitiatives)[] = [];
+    processedInitiatives.forEach((initiative) => {
       let placed = false;
       for (const row of rows) {
-        const overlaps = row.some(existing => 
-          !(initiative.endIdx < existing.startIdx || initiative.startIdx > existing.endIdx)
+        const overlaps = row.some(
+          (existing) =>
+            !(initiative.endIdx < existing.startIdx || initiative.startIdx > existing.endIdx)
         );
         if (!overlaps) {
           row.push(initiative);
@@ -284,11 +289,15 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
   const criticalPathIds = useMemo(() => {
     const ids = new Set<string>();
     const today = new Date();
-    initiatives.forEach(i => {
+    initiatives.forEach((i) => {
       if (i.status === InitiativeStatus.BLOCKED) {
         ids.add(i.id);
       }
-      if (i.plannedEndDate && new Date(i.plannedEndDate) < today && i.status !== InitiativeStatus.DONE) {
+      if (
+        i.plannedEndDate &&
+        new Date(i.plannedEndDate) < today &&
+        i.status !== InitiativeStatus.DONE
+      ) {
         ids.add(i.id);
       }
     });
@@ -296,7 +305,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
   }, [initiatives]);
 
   const navigateTimeline = (direction: 'prev' | 'next') => {
-    setStartDate(prev => {
+    setStartDate((prev) => {
       const newDate = new Date(prev);
       newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
       return newDate;
@@ -334,13 +343,13 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
           </button>
         </div>
         <div className="flex items-center gap-1 bg-navy-800 rounded-lg p-1 border border-navy-700">
-          {[8, 12, 16].map(w => (
+          {[8, 12, 16].map((w) => (
             <button
               key={w}
               onClick={() => setViewWeeks(w)}
               className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                viewWeeks === w 
-                  ? 'bg-cyan-500/20 text-cyan-400' 
+                viewWeeks === w
+                  ? 'bg-cyan-500/20 text-cyan-400'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -421,7 +430,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
             ) : (
               initiativeRows.map((row, rowIdx) => (
                 <div key={rowIdx} className="relative h-14 border-b border-navy-800">
-                  {row.map(initiative => (
+                  {row.map((initiative) => (
                     <TimelineBar
                       key={initiative.id}
                       initiative={initiative}

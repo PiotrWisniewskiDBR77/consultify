@@ -4,14 +4,15 @@
  * Renders step-specific content and integrated chat.
  */
 
-import React from 'react';
 import { Send, Sparkles } from 'lucide-react';
+import React from 'react';
 
-import { ToolType, StepDefinition, ToolSession } from '@/store/useToolStore';
+import { StepDefinition, ToolSession, ToolType } from '@/store/useToolStore';
+
 import { ContextStep } from './steps/ContextStep';
 import { SummaryStep } from './steps/SummaryStep';
-import { SWOTQuadrantStep } from './tools/DynamicSWOT/SWOTQuadrantStep';
 import { SWOTCorrelationsStep } from './tools/DynamicSWOT/SWOTCorrelationsStep';
+import { SWOTQuadrantStep } from './tools/DynamicSWOT/SWOTQuadrantStep';
 import { ForceStep } from './tools/MarketForces/ForceStep';
 
 // ==================== TYPES ====================
@@ -69,24 +70,12 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
 
     // Context step (first step for all tools)
     if (stepDefinition.id === 'context') {
-      return (
-        <ContextStep
-          toolType={toolType}
-          session={session}
-          isPolish={isPolish}
-        />
-      );
+      return <ContextStep toolType={toolType} session={session} isPolish={isPolish} />;
     }
 
     // Summary step (last step for all tools)
     if (stepDefinition.id === 'summary') {
-      return (
-        <SummaryStep
-          toolType={toolType}
-          session={session}
-          isPolish={isPolish}
-        />
-      );
+      return <SummaryStep toolType={toolType} session={session} isPolish={isPolish} />;
     }
 
     // Tool-specific steps
@@ -104,21 +93,27 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
 
       // Correlations step
       if (stepDefinition.id === 'correlations') {
-        return (
-          <SWOTCorrelationsStep
-            session={session}
-            isPolish={isPolish}
-          />
-        );
+        return <SWOTCorrelationsStep session={session} isPolish={isPolish} />;
       }
     }
 
     if (toolType === 'market-forces') {
       // Porter force steps
-      if (['rivalry', 'newEntrants', 'substitutes', 'buyerPower', 'supplierPower'].includes(stepDefinition.id)) {
+      if (
+        ['rivalry', 'newEntrants', 'substitutes', 'buyerPower', 'supplierPower'].includes(
+          stepDefinition.id
+        )
+      ) {
         return (
           <ForceStep
-            forceId={stepDefinition.id as 'rivalry' | 'newEntrants' | 'substitutes' | 'buyerPower' | 'supplierPower'}
+            forceId={
+              stepDefinition.id as
+                | 'rivalry'
+                | 'newEntrants'
+                | 'substitutes'
+                | 'buyerPower'
+                | 'supplierPower'
+            }
             session={session}
             isPolish={isPolish}
           />
@@ -137,9 +132,7 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
   return (
     <div className="flex h-full">
       {/* Main content area */}
-      <div className="flex-1 overflow-y-auto p-6">
-        {renderStepContent()}
-      </div>
+      <div className="flex-1 overflow-y-auto p-6">{renderStepContent()}</div>
 
       {/* Chat sidebar */}
       <div className="w-96 border-l border-slate-200 dark:border-navy-700 flex flex-col bg-white dark:bg-navy-900">

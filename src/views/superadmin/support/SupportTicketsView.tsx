@@ -141,7 +141,7 @@ export const SupportTicketsView: React.FC = () => {
       ) : (
         <div className="bg-navy-800 rounded-xl border border-slate-700 overflow-hidden">
           <table className="w-full">
-            <thead className="bg-navy-900 border-b border-slate-700">
+            <thead className="bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-slate-700">
               <tr>
                 <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase">
                   Ticket #

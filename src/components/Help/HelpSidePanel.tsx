@@ -33,14 +33,24 @@ import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { getGuides, getKnowledgeBaseCategories, getVideoUrl, HELP_CONFIG } from '../../config/helpContent';
+import {
+  getGuides,
+  getKnowledgeBaseCategories,
+  getVideoUrl,
+  HELP_CONFIG,
+} from '../../config/helpContent';
 import { HelpTab, useHelpSidePanel } from '../../contexts/HelpContext';
 
 // Tab configuration - 3 tabs: Overview, FAQ, Knowledge Base
 const TABS: { id: HelpTab; icon: typeof BookOpen; label: string; labelKey: string }[] = [
   { id: 'overview', icon: BookOpen, label: 'Overview', labelKey: 'help.sidePanel.tabs.overview' },
   { id: 'faq', icon: HelpCircle, label: 'FAQ', labelKey: 'help.sidePanel.tabs.faq' },
-  { id: 'knowledge', icon: Library, label: 'Knowledge Base', labelKey: 'help.sidePanel.tabs.knowledge' },
+  {
+    id: 'knowledge',
+    icon: Library,
+    label: 'Knowledge Base',
+    labelKey: 'help.sidePanel.tabs.knowledge',
+  },
 ];
 
 // Dynamic icon component
@@ -178,7 +188,9 @@ export const HelpSidePanel: React.FC = () => {
 
       if (response.ok) {
         setIsSubscribed(true);
-        toast.success(t('help.sidePanel.knowledge.notify.success', "You'll be notified when ready!"));
+        toast.success(
+          t('help.sidePanel.knowledge.notify.success', "You'll be notified when ready!")
+        );
       } else {
         toast.error(t('common.error', 'Something went wrong'));
       }
@@ -265,7 +277,7 @@ export const HelpSidePanel: React.FC = () => {
                 <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                   {t(
                     'help.sidePanel.overview.intro',
-                    'Your complete PMO platform for digital transformation. Assess, plan, and track your organization\'s journey to digital excellence with AI-powered insights and proven methodologies.'
+                    "Your complete PMO platform for digital transformation. Assess, plan, and track your organization's journey to digital excellence with AI-powered insights and proven methodologies."
                   )}
                 </p>
               </div>
@@ -316,7 +328,10 @@ export const HelpSidePanel: React.FC = () => {
                       <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-purple-700 dark:group-hover:text-purple-300">
                         {t(`help.sidePanel.overview.guidesList.${guide.id}`, guide.id)}
                       </span>
-                      <ExternalLink size={12} className="ml-auto text-slate-400 group-hover:text-purple-500" />
+                      <ExternalLink
+                        size={12}
+                        className="ml-auto text-slate-400 group-hover:text-purple-500"
+                      />
                     </a>
                   ))}
                 </div>
@@ -330,24 +345,54 @@ export const HelpSidePanel: React.FC = () => {
                 </h4>
                 <ul className="space-y-2.5">
                   <li className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-100">
-                    <CheckCircle2 size={14} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                    {t('help.sidePanel.overview.tip1', 'Start with Quick Assessment (5 min) for instant AI recommendations')}
+                    <CheckCircle2
+                      size={14}
+                      className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
+                    />
+                    {t(
+                      'help.sidePanel.overview.tip1',
+                      'Start with Quick Assessment (5 min) for instant AI recommendations'
+                    )}
                   </li>
                   <li className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-100">
-                    <CheckCircle2 size={14} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                    {t('help.sidePanel.overview.tip2', 'AI generates initiatives from assessment gaps - review in Roadmap')}
+                    <CheckCircle2
+                      size={14}
+                      className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
+                    />
+                    {t(
+                      'help.sidePanel.overview.tip2',
+                      'AI generates initiatives from assessment gaps - review in Roadmap'
+                    )}
                   </li>
                   <li className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-100">
-                    <CheckCircle2 size={14} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                    {t('help.sidePanel.overview.tip3', 'Track implementation in Execution module with real-time dashboards')}
+                    <CheckCircle2
+                      size={14}
+                      className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
+                    />
+                    {t(
+                      'help.sidePanel.overview.tip3',
+                      'Track implementation in Execution module with real-time dashboards'
+                    )}
                   </li>
                   <li className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-100">
-                    <CheckCircle2 size={14} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                    {t('help.sidePanel.overview.tip4', 'Use AI Chat anytime to ask questions or get recommendations')}
+                    <CheckCircle2
+                      size={14}
+                      className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
+                    />
+                    {t(
+                      'help.sidePanel.overview.tip4',
+                      'Use AI Chat anytime to ask questions or get recommendations'
+                    )}
                   </li>
                   <li className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-100">
-                    <CheckCircle2 size={14} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                    {t('help.sidePanel.overview.tip5', 'Export reports in PDF/PowerPoint for stakeholder presentations')}
+                    <CheckCircle2
+                      size={14}
+                      className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
+                    />
+                    {t(
+                      'help.sidePanel.overview.tip5',
+                      'Export reports in PDF/PowerPoint for stakeholder presentations'
+                    )}
                   </li>
                 </ul>
               </div>
@@ -359,7 +404,10 @@ export const HelpSidePanel: React.FC = () => {
             <div className="space-y-4">
               {/* Search */}
               <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search
+                  size={14}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                />
                 <input
                   type="text"
                   value={searchQuery}
@@ -383,7 +431,10 @@ export const HelpSidePanel: React.FC = () => {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <HelpCircle size={32} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+                  <HelpCircle
+                    size={32}
+                    className="mx-auto text-slate-300 dark:text-slate-600 mb-3"
+                  />
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     {searchQuery
                       ? t('help.sidePanel.faq.noResults', 'No matching questions found.')
@@ -435,7 +486,10 @@ export const HelpSidePanel: React.FC = () => {
                 {isSubscribed ? (
                   <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
                     <CheckCircle2 size={16} />
-                    {t('help.sidePanel.knowledge.notify.success', "You'll be notified when the Knowledge Base launches!")}
+                    {t(
+                      'help.sidePanel.knowledge.notify.success',
+                      "You'll be notified when the Knowledge Base launches!"
+                    )}
                   </div>
                 ) : (
                   <form onSubmit={handleNotifySubmit} className="space-y-3">

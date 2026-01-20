@@ -1,9 +1,9 @@
 /**
  * Deep Research Service
- * 
+ *
  * Provides multi-query aggregation for comprehensive research
  * Similar to Perplexity Pro's deep research mode.
- * 
+ *
  * FLOW-AI-RESEARCH: Deep research with multi-query aggregation
  */
 
@@ -341,9 +341,10 @@ async function synthesizeFindings(
   }
 
   try {
-    const sourceSummaries = sources.slice(0, 10).map((s, i) => 
-      `[${i + 1}] ${s.title}: ${s.snippets[0]}`
-    ).join('\n\n');
+    const sourceSummaries = sources
+      .slice(0, 10)
+      .map((s, i) => `[${i + 1}] ${s.title}: ${s.snippets[0]}`)
+      .join('\n\n');
 
     const prompt = `Based on the following research about "${topic}", synthesize a comprehensive summary:
 
@@ -395,18 +396,15 @@ export async function conductDeepResearch(
 
   onProgress?.({ stage: 'generating_queries', queries: [] });
   const queries = await generateSubQueries(topic, mergedOptions, llmClient);
-  
+
   logger.info(`[DeepResearch] Generated ${queries.length} queries`);
   onProgress?.({ stage: 'queries_ready', queries });
 
   let executedQueries = queries;
   if (webSearchService) {
     onProgress?.({ stage: 'searching', queries });
-    executedQueries = await executeAllQueries(
-      queries,
-      webSearchService,
-      mergedOptions,
-      (q) => onProgress?.({ stage: 'searching', queries: q })
+    executedQueries = await executeAllQueries(queries, webSearchService, mergedOptions, (q) =>
+      onProgress?.({ stage: 'searching', queries: q })
     );
   }
 
@@ -422,9 +420,8 @@ export async function conductDeepResearch(
 
   const duration = Date.now() - startTime;
   const uniqueDomains = new Set(sources.map((s) => s.domain)).size;
-  const avgConfidence = results.length > 0
-    ? results.reduce((acc, r) => acc + r.confidence, 0) / results.length
-    : 0;
+  const avgConfidence =
+    results.length > 0 ? results.reduce((acc, r) => acc + r.confidence, 0) / results.length : 0;
 
   const output: DeepResearchOutput = {
     topic,
@@ -443,7 +440,7 @@ export async function conductDeepResearch(
   };
 
   logger.info(`[DeepResearch] Completed in ${duration}ms with ${sources.length} sources`);
-  
+
   return output;
 }
 

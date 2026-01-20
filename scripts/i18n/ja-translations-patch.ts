@@ -77,8 +77,7 @@ const jaTranslationsPatch: Record<string, unknown> = {
     forgotPassword: 'パスワードをお忘れですか？',
     pending: {
       title: 'アクセス待ち',
-      message:
-        '組織は現在手動承認を待っています。アクセスが許可されるとメールでお知らせします。',
+      message: '組織は現在手動承認を待っています。アクセスが許可されるとメールでお知らせします。',
     },
     oauth: {
       processing: '認証処理中...',
@@ -769,16 +768,8 @@ function deepMerge(
   const output: Record<string, unknown> = { ...target };
 
   for (const key in source) {
-    if (
-      source[key] &&
-      typeof source[key] === 'object' &&
-      !Array.isArray(source[key])
-    ) {
-      if (
-        target[key] &&
-        typeof target[key] === 'object' &&
-        !Array.isArray(target[key])
-      ) {
+    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+      if (target[key] && typeof target[key] === 'object' && !Array.isArray(target[key])) {
         output[key] = deepMerge(
           target[key] as Record<string, unknown>,
           source[key] as Record<string, unknown>

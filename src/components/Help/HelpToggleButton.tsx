@@ -22,7 +22,7 @@ export const HelpToggleButton: React.FC = () => {
       onClick={() => toggleSidePanel('HELP')}
       className="
                 group relative
-                w-9 h-9 
+                w-10 h-10 
                 flex items-center justify-center 
                 rounded-l-lg rounded-r-none
                 bg-gradient-to-br from-violet-500 to-purple-600
@@ -42,7 +42,7 @@ export const HelpToggleButton: React.FC = () => {
       {/* Glow effect */}
       <div className="absolute inset-0 rounded-l-lg bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
 
-      <span className="relative z-10 text-base font-bold transition-transform duration-200 group-hover:scale-110">
+      <span className="relative z-10 text-lg font-bold transition-transform duration-200 group-hover:scale-110">
         ?
       </span>
 

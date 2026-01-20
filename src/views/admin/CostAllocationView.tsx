@@ -543,7 +543,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
                     </span>
                   </td>
                   <td className="py-3 px-4">
-                    <span className="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded capitalize">
+                    <span className="text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded capitalize">
                       {center.type}
                     </span>
                   </td>

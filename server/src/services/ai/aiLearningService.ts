@@ -587,6 +587,256 @@ class AILearningService {
   }
 }
 
+  // ==========================================
+  // STYLE PATTERN EXTRACTION (v2.0)
+  // ==========================================
+
+  /**
+   * Extract style patterns from recent feedback for a user
+   */
+  async extractStylePatterns(userId: string): Promise<{
+    patterns: Array<{
+      type: string;
+      value: string;
+      confidence: number;
+      count: number;
+    }>;
+    profileSuggestions: Array<{
+      field: string;
+      suggestedValue: string;
+      confidence: number;
+      reason: string;
+    }>;
+  }> {
+    const db = await this.getDb();
+
+    // Get recent feedback for the user
+    const recentFeedback = await db.all<{
+      length_feedback: string | null;
+      detail_feedback: string | null;
+      expected_format: string | null;
+      screen_context: string | null;
+      rating: number;
+      actionability: number | null;
+      accuracy: number | null;
+    }>(
+      `SELECT 
+        CASE WHEN feedback_type IN ('too-short', 'too_short') THEN 'too_short' 
+             WHEN feedback_type IN ('too-long', 'too_long') THEN 'too_long' 
+             ELSE NULL END as length_feedback,
+        CASE WHEN feedback_type IN ('too-little', 'too_little') THEN 'too_little'
+             WHEN feedback_type IN ('too-much', 'too_much') THEN 'too_much'
+             ELSE NULL END as detail_feedback,
+        expected_format, screen_context, rating, actionability, accuracy
+      FROM ai_feedback
+      WHERE user_id = ?
+      AND created_at > datetime('now', '-30 days')
+      ORDER BY created_at DESC
+      LIMIT 50`,
+      [userId]
+    );
+
+    const patterns: Array<{ type: string; value: string; confidence: number; count: number }> = [];
+    const profileSuggestions: Array<{ field: string; suggestedValue: string; confidence: number; reason: string }> = [];
+
+    // Analyze length preferences
+    const lengthCounts = { too_short: 0, too_long: 0 };
+    for (const fb of recentFeedback || []) {
+      if (fb.length_feedback === 'too_short') lengthCounts.too_short++;
+      if (fb.length_feedback === 'too_long') lengthCounts.too_long++;
+    }
+
+    if (lengthCounts.too_short >= 3) {
+      const confidence = Math.min(0.9, lengthCounts.too_short * 0.15);
+      patterns.push({ type: 'length_preference', value: 'comprehensive', confidence, count: lengthCounts.too_short });
+      if (confidence >= 0.6) {
+        profileSuggestions.push({
+          field: 'responseLength',
+          suggestedValue: 'comprehensive',
+          confidence,
+          reason: `User indicated ${lengthCounts.too_short} times that responses were too short`,
+        });
+      }
+    } else if (lengthCounts.too_long >= 3) {
+      const confidence = Math.min(0.9, lengthCounts.too_long * 0.15);
+      patterns.push({ type: 'length_preference', value: 'concise', confidence, count: lengthCounts.too_long });
+      if (confidence >= 0.6) {
+        profileSuggestions.push({
+          field: 'responseLength',
+          suggestedValue: 'concise',
+          confidence,
+          reason: `User indicated ${lengthCounts.too_long} times that responses were too long`,
+        });
+      }
+    }
+
+    // Analyze detail/depth preferences
+    const detailCounts = { too_little: 0, too_much: 0 };
+    for (const fb of recentFeedback || []) {
+      if (fb.detail_feedback === 'too_little') detailCounts.too_little++;
+      if (fb.detail_feedback === 'too_much') detailCounts.too_much++;
+    }
+
+    if (detailCounts.too_little >= 3) {
+      const confidence = Math.min(0.9, detailCounts.too_little * 0.15);
+      patterns.push({ type: 'depth_preference', value: 'deep_dive', confidence, count: detailCounts.too_little });
+      if (confidence >= 0.6) {
+        profileSuggestions.push({
+          field: 'preferredDepth',
+          suggestedValue: 'deep_dive',
+          confidence,
+          reason: `User indicated ${detailCounts.too_little} times that responses lacked detail`,
+        });
+      }
+    } else if (detailCounts.too_much >= 3) {
+      const confidence = Math.min(0.9, detailCounts.too_much * 0.15);
+      patterns.push({ type: 'depth_preference', value: 'executive_summary', confidence, count: detailCounts.too_much });
+      if (confidence >= 0.6) {
+        profileSuggestions.push({
+          field: 'preferredDepth',
+          suggestedValue: 'executive_summary',
+          confidence,
+          reason: `User indicated ${detailCounts.too_much} times that responses had too much detail`,
+        });
+      }
+    }
+
+    // Analyze format preferences
+    const formatCounts: Record<string, number> = {};
+    for (const fb of recentFeedback || []) {
+      if (fb.expected_format) {
+        formatCounts[fb.expected_format] = (formatCounts[fb.expected_format] || 0) + 1;
+      }
+    }
+
+    const topFormat = Object.entries(formatCounts).sort((a, b) => b[1] - a[1])[0];
+    if (topFormat && topFormat[1] >= 3) {
+      const confidence = Math.min(0.9, topFormat[1] * 0.15);
+      patterns.push({ type: 'format_preference', value: topFormat[0], confidence, count: topFormat[1] });
+      if (confidence >= 0.6) {
+        profileSuggestions.push({
+          field: 'preferredFormat',
+          suggestedValue: topFormat[0],
+          confidence,
+          reason: `User requested ${topFormat[0]} format ${topFormat[1]} times`,
+        });
+      }
+    }
+
+    return { patterns, profileSuggestions };
+  }
+
+  /**
+   * Apply high-confidence profile suggestions
+   */
+  async applyProfileSuggestions(userId: string): Promise<{ applied: number; skipped: number }> {
+    let applied = 0;
+    let skipped = 0;
+
+    try {
+      const { profileSuggestions } = await this.extractStylePatterns(userId);
+
+      // Only apply suggestions with high confidence
+      const highConfidence = profileSuggestions.filter((s) => s.confidence >= 0.7);
+
+      if (highConfidence.length === 0) {
+        return { applied: 0, skipped: profileSuggestions.length };
+      }
+
+      // Import userStyleProfileService dynamically to avoid circular deps
+      const styleModule = await import('./userStyleProfileService.js');
+      const userStyleProfileService = styleModule.default;
+
+      if (!userStyleProfileService?.updateProfile) {
+        logger.warn('[AILearningService] userStyleProfileService not available');
+        return { applied: 0, skipped: profileSuggestions.length };
+      }
+
+      const updates: Record<string, string> = {};
+      for (const suggestion of highConfidence) {
+        updates[suggestion.field] = suggestion.suggestedValue;
+        applied++;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await userStyleProfileService.updateProfile(userId, updates as any);
+        logger.info(`[AILearningService] Applied ${applied} profile suggestions for user ${userId}`);
+      }
+
+      skipped = profileSuggestions.length - applied;
+    } catch (error) {
+      logger.error('[AILearningService] applyProfileSuggestions error:', error);
+    }
+
+    return { applied, skipped };
+  }
+
+  /**
+   * Run learning analysis for all active users
+   */
+  async runBatchLearning(orgId?: string): Promise<{
+    usersProcessed: number;
+    patternsFound: number;
+    suggestionsApplied: number;
+  }> {
+    const db = await this.getDb();
+    let usersProcessed = 0;
+    let patternsFound = 0;
+    let suggestionsApplied = 0;
+
+    try {
+      // Get users with recent feedback
+      let query = `
+        SELECT DISTINCT user_id 
+        FROM ai_feedback 
+        WHERE created_at > datetime('now', '-7 days')
+      `;
+      const params: string[] = [];
+
+      if (orgId) {
+        query += ` AND organization_id = ?`;
+        params.push(orgId);
+      }
+
+      const users = await db.all<{ user_id: string }>(query, params);
+
+      for (const { user_id } of users || []) {
+        try {
+          const { patterns, profileSuggestions } = await this.extractStylePatterns(user_id);
+          patternsFound += patterns.length;
+
+          // Store patterns
+          for (const pattern of patterns) {
+            await this.recordPattern({
+              patternType: pattern.type,
+              patternCategory: 'style',
+              patternData: { value: pattern.value, count: pattern.count },
+              patternDescription: `${pattern.type}: ${pattern.value}`,
+              isSuccess: pattern.confidence >= 0.7,
+            });
+          }
+
+          // Apply high-confidence suggestions
+          const { applied } = await this.applyProfileSuggestions(user_id);
+          suggestionsApplied += applied;
+
+          usersProcessed++;
+        } catch (err) {
+          logger.warn(`[AILearningService] Failed to process user ${user_id}:`, err);
+        }
+      }
+
+      logger.info(
+        `[AILearningService] Batch learning complete: ${usersProcessed} users, ${patternsFound} patterns, ${suggestionsApplied} suggestions applied`
+      );
+    } catch (error) {
+      logger.error('[AILearningService] runBatchLearning error:', error);
+    }
+
+    return { usersProcessed, patternsFound, suggestionsApplied };
+  }
+}
+
 // Export singleton
 const aiLearningService = new AILearningService();
 export default aiLearningService;
@@ -612,3 +862,8 @@ export const reviewSuggestion = (
   action: 'approve' | 'reject',
   notes?: string
 ) => aiLearningService.reviewSuggestion(id, reviewerId, action, notes);
+export const extractStylePatterns = (userId: string) =>
+  aiLearningService.extractStylePatterns(userId);
+export const applyProfileSuggestions = (userId: string) =>
+  aiLearningService.applyProfileSuggestions(userId);
+export const runBatchLearning = (orgId?: string) => aiLearningService.runBatchLearning(orgId);

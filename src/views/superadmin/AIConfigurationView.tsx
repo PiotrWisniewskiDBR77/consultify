@@ -576,7 +576,7 @@ Help leaders develop change management competencies.`,
                       value={editingPrompt}
                       onChange={(e) => setEditingPrompt(e.target.value)}
                       placeholder="Enter AI instructions..."
-                      className="w-full h-full bg-navy-900 border border-white/10 rounded-xl p-4 text-white text-sm font-mono resize-none focus:outline-none focus:border-blue-500/50"
+                      className="w-full h-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4 text-slate-900 dark:text-white text-sm font-mono resize-none focus:outline-none focus:border-blue-500/50"
                     />
                   </div>
                   <div className="shrink-0 p-4 border-t border-white/5 text-xs text-slate-500 dark:text-slate-400">
@@ -621,7 +621,7 @@ Help leaders develop change management competencies.`,
                   value={ollamaEndpoint}
                   onChange={(e) => setOllamaEndpoint(e.target.value)}
                   placeholder="http://localhost:11434"
-                  className="flex-1 bg-navy-950 border border-white/10 rounded-lg px-4 py-2 text-white text-sm"
+                  className="flex-1 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-4 py-2 text-slate-900 dark:text-white text-sm"
                 />
                 <button
                   onClick={testOllamaConnection}
@@ -707,7 +707,7 @@ Help leaders develop change management competencies.`,
 
             <div className="bg-navy-900 border border-white/10 rounded-xl overflow-hidden">
               <table className="w-full text-left text-sm">
-                <thead className="bg-navy-950 text-slate-400 dark:text-slate-500 uppercase text-xs">
+                <thead className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 uppercase text-xs">
                   <tr>
                     <th className="px-6 py-4 font-medium">Name</th>
                     <th className="px-6 py-4 font-medium">Provider</th>
@@ -751,7 +751,7 @@ Help leaders develop change management competencies.`,
                           </td>
                           <td className="px-6 py-4">
                             <span
-                              className={`px-2 py-1 rounded text-xs ${p.visibility === 'public' ? 'bg-emerald-500/20 text-emerald-400' : p.visibility === 'beta' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-slate-700 text-slate-300'}`}
+                              className={`px-2 py-1 rounded text-xs ${p.visibility === 'public' ? 'bg-emerald-500/20 text-emerald-400' : p.visibility === 'beta' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
                             >
                               {p.visibility}
                             </span>
@@ -1292,7 +1292,7 @@ Help leaders develop change management competencies.`,
                     required
                     value={providerForm.name}
                     onChange={(e) => setProviderForm({ ...providerForm, name: e.target.value })}
-                    className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white"
+                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
                   />
                 </div>
                 <div>
@@ -1304,7 +1304,7 @@ Help leaders develop change management competencies.`,
                     onChange={(e) =>
                       setProviderForm({ ...providerForm, provider: e.target.value as any })
                     }
-                    className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white"
+                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
                   >
                     <optgroup label="Major Providers">
                       <option value="openai">OpenAI (GPT-4)</option>
@@ -1334,7 +1334,7 @@ Help leaders develop change management competencies.`,
                   type="password"
                   value={providerForm.api_key}
                   onChange={(e) => setProviderForm({ ...providerForm, api_key: e.target.value })}
-                  className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white"
+                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
                   placeholder="sk-..."
                 />
               </div>
@@ -1348,7 +1348,7 @@ Help leaders develop change management competencies.`,
                     required
                     value={providerForm.model_id}
                     onChange={(e) => setProviderForm({ ...providerForm, model_id: e.target.value })}
-                    className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white"
+                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
                   />
                 </div>
                 <div>
@@ -1358,7 +1358,7 @@ Help leaders develop change management competencies.`,
                   <input
                     value={providerForm.endpoint}
                     onChange={(e) => setProviderForm({ ...providerForm, endpoint: e.target.value })}
-                    className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white"
+                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
                     placeholder="https://api..."
                   />
                 </div>
@@ -1374,7 +1374,7 @@ Help leaders develop change management competencies.`,
                     onChange={(e) =>
                       setProviderForm({ ...providerForm, visibility: e.target.value as any })
                     }
-                    className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white"
+                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
                   >
                     <option value="admin">Admin Only</option>
                     <option value="beta">Beta Users</option>

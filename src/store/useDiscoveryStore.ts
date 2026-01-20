@@ -498,18 +498,22 @@ export const useDiscoveryStore = create<DiscoveryState>()(
           painPoints: Array.isArray(entities?.painPoints) ? entities.painPoints : [],
           insights: Array.isArray(entities?.insights) ? entities.insights : [],
           quotes: Array.isArray(entities?.quotes) ? entities.quotes : [],
-          clientContext: entities?.clientContext && typeof entities.clientContext === 'object' 
-            ? entities.clientContext 
-            : {},
-          phaseProgress: entities?.phaseProgress && typeof entities.phaseProgress === 'object'
-            ? entities.phaseProgress
-            : { contextComplete: false, impactQuantified: false },
+          clientContext:
+            entities?.clientContext && typeof entities.clientContext === 'object'
+              ? entities.clientContext
+              : {},
+          phaseProgress:
+            entities?.phaseProgress && typeof entities.phaseProgress === 'object'
+              ? entities.phaseProgress
+              : { contextComplete: false, impactQuantified: false },
         };
 
         // Early return if no data to process
-        if (safeEntities.painPoints.length === 0 && 
-            safeEntities.insights.length === 0 && 
-            safeEntities.quotes.length === 0) {
+        if (
+          safeEntities.painPoints.length === 0 &&
+          safeEntities.insights.length === 0 &&
+          safeEntities.quotes.length === 0
+        ) {
           console.warn('[DiscoveryStore] processExtraction called with empty entities');
           return;
         }
@@ -540,7 +544,7 @@ export const useDiscoveryStore = create<DiscoveryState>()(
             position,
             data: {
               text: insight.text,
-              linkedPainIds: Array.isArray(insight.linkedPains) 
+              linkedPainIds: Array.isArray(insight.linkedPains)
                 ? insight.linkedPains.map((text) => painNodeIds[text]).filter(Boolean)
                 : [],
               source: 'ai' as const,

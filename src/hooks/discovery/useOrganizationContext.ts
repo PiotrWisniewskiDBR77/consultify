@@ -88,7 +88,9 @@ export const useOrganizationContext = (): OrganizationContextState => {
 
     try {
       // Fetch organization profile
-      const profileResponse = await Api.get(`/organizations/${currentOrg.id}/profile`).catch(() => null);
+      const profileResponse = await Api.get(`/organizations/${currentOrg.id}/profile`).catch(
+        () => null
+      );
 
       // Fetch projects
       const projectsResponse = await Api.get('/projects').catch(() => ({ projects: [] }));
@@ -211,9 +213,7 @@ ${context.activeProjects
     // Initiatives
     if (context.initiatives.length > 0) {
       sections.push(`## Current Initiatives (${context.initiatives.length})
-${context.initiatives
-  .map((i) => `- ${i.title} [${i.type}] - ${i.status}`)
-  .join('\n')}`);
+${context.initiatives.map((i) => `- ${i.title} [${i.type}] - ${i.status}`).join('\n')}`);
     }
 
     // KPIs

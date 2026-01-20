@@ -105,14 +105,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         if (searchQuery) params.append('search', searchQuery);
 
         // Try portfolio endpoint first, fallback to regular initiatives
-        let response;
+        let response: { initiatives?: PortfolioInitiative[] } = { initiatives: [] };
         try {
           response = await Api.get(`/initiatives/portfolio?${params.toString()}`);
         } catch {
           // Fallback to regular initiatives endpoint
-          response = await Api.getInitiatives(currentProjectId || undefined);
+          const fallbackResponse = await Api.getInitiatives(currentProjectId || undefined);
           response = {
-            initiatives: Array.isArray(response) ? response : response.initiatives || [],
+            initiatives: Array.isArray(fallbackResponse) ? fallbackResponse : (fallbackResponse as any).initiatives || [],
           };
         }
 
@@ -214,6 +214,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         id: 'new',
         label: 'New Initiative',
         icon: <Plus size={16} />,
+        count: 0,
         onClick: () => setShowNewModal(true),
       },
     ],
@@ -364,10 +365,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     // Filter by search
     const searchedInitiatives = searchQuery
       ? filteredInitiatives.filter(
-          (i) =>
-            i.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (i.description || '').toLowerCase().includes(searchQuery.toLowerCase())
-        )
+        (i) =>
+          i.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (i.description || '').toLowerCase().includes(searchQuery.toLowerCase())
+      )
       : filteredInitiatives;
 
     switch (viewMode) {

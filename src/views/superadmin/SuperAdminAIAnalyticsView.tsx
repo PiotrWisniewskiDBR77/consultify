@@ -315,7 +315,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
                     className={`px-2 py-1 rounded text-xs font-medium ${
                       provider.visibility === 'public'
                         ? 'bg-green-500/20 text-green-400'
-                        : 'bg-slate-700 text-slate-400 dark:text-slate-500'
+                        : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
                     }`}
                   >
                     {provider.visibility}

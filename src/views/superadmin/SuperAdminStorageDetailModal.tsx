@@ -110,7 +110,7 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({
             </div>
           ) : (
             <table className="w-full text-left border-collapse">
-              <thead className="bg-navy-950 text-slate-400 dark:text-slate-500 text-xs uppercase sticky top-0">
+              <thead className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 text-xs uppercase sticky top-0">
                 <tr>
                   <th className="p-4">File Name</th>
                   <th className="p-4">Path (Relative)</th>

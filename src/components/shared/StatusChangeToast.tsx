@@ -1,6 +1,6 @@
 /**
  * StatusChangeToast
- * 
+ *
  * Custom toast component for status changes with cross-module navigation.
  * Shows a toast with a link to view the initiative in its new module.
  */
@@ -10,7 +10,13 @@ import React from 'react';
 import toast, { Toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
-import { getModuleForStatus, getStatusMeta, ModuleId, MODULES } from '@/services/initiativeLifecycle';
+import {
+  getModuleForStatus,
+  getStatusMeta,
+  ModuleId,
+  MODULES,
+} from '@/services/initiativeLifecycle';
+
 import { InitiativeStatus } from '../../types';
 
 interface StatusChangeToastProps {
@@ -30,7 +36,7 @@ export const StatusChangeToast: React.FC<StatusChangeToastProps> = ({
   const statusMeta = getStatusMeta(newStatus);
   const newModule = getModuleForStatus(newStatus);
   const moduleConfig = MODULES[newModule];
-  
+
   const hasModuleChanged = previousModule && previousModule !== newModule;
 
   const handleNavigate = () => {
@@ -50,13 +56,9 @@ export const StatusChangeToast: React.FC<StatusChangeToastProps> = ({
             <CheckCircle2 size={20} className={statusMeta.color} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white">
-              Status updated to {statusMeta.label}
-            </p>
-            <p className="text-xs text-slate-400 truncate mt-0.5">
-              {initiativeName}
-            </p>
-            
+            <p className="text-sm font-medium text-white">Status updated to {statusMeta.label}</p>
+            <p className="text-xs text-slate-400 truncate mt-0.5">{initiativeName}</p>
+
             {hasModuleChanged && (
               <button
                 onClick={handleNavigate}
@@ -88,7 +90,7 @@ export const showStatusChangeToast = (
   previousStatus?: InitiativeStatus
 ): void => {
   const previousModule = previousStatus ? getModuleForStatus(previousStatus) : undefined;
-  
+
   toast.custom(
     (t) => (
       <StatusChangeToast

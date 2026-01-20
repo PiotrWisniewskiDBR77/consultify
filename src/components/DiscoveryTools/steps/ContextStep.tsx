@@ -5,10 +5,10 @@
  * Adapts labels based on tool type.
  */
 
+import { Calendar, MapPin, Target } from 'lucide-react';
 import React from 'react';
-import { Target, Calendar, MapPin } from 'lucide-react';
 
-import { useToolStore, ToolType, ToolSession, SWOTData, PorterData } from '@/store/useToolStore';
+import { PorterData, SWOTData, ToolSession, ToolType, useToolStore } from '@/store/useToolStore';
 
 // ==================== TYPES ====================
 
@@ -63,11 +63,7 @@ const LABELS: Record<string, ToolLabels> = {
 
 // ==================== COMPONENT ====================
 
-export const ContextStep: React.FC<ContextStepProps> = ({
-  toolType,
-  session,
-  isPolish,
-}) => {
+export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isPolish }) => {
   const { updateInputData } = useToolStore();
 
   const labels = LABELS[toolType as keyof typeof LABELS] || LABELS['dynamic-swot'];
@@ -179,12 +175,12 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                       ? 'Krótki'
                       : 'Short'
                     : tf === 'medium'
-                    ? isPolish
-                      ? 'Średni'
-                      : 'Medium'
-                    : isPolish
-                    ? 'Długi'
-                    : 'Long'}
+                      ? isPolish
+                        ? 'Średni'
+                        : 'Medium'
+                      : isPolish
+                        ? 'Długi'
+                        : 'Long'}
                 </div>
                 <div className="text-xs mt-1 opacity-70">
                   {tf === 'short' ? '< 1 rok' : tf === 'medium' ? '1-3 lata' : '3+ lata'}
@@ -223,16 +219,16 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                       ? 'Lider rynku'
                       : 'Market Leader'
                     : pos === 'challenger'
-                    ? isPolish
-                      ? 'Pretendent'
-                      : 'Challenger'
-                    : pos === 'follower'
-                    ? isPolish
-                      ? 'Naśladowca'
-                      : 'Follower'
-                    : isPolish
-                    ? 'Gracz niszowy'
-                    : 'Niche Player'}
+                      ? isPolish
+                        ? 'Pretendent'
+                        : 'Challenger'
+                      : pos === 'follower'
+                        ? isPolish
+                          ? 'Naśladowca'
+                          : 'Follower'
+                        : isPolish
+                          ? 'Gracz niszowy'
+                          : 'Niche Player'}
                 </div>
               </button>
             ))}

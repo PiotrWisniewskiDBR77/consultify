@@ -344,7 +344,7 @@ export const ClientAccessView: React.FC = () => {
                               'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold',
                               employee.status === 'ACTIVE'
                                 ? 'bg-violet-500/20 text-violet-400'
-                                : 'bg-slate-700 text-slate-400 dark:text-slate-500'
+                                : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
                             )}
                           >
                             {employee.employeeName.substring(0, 2).toUpperCase()}

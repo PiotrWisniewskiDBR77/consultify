@@ -117,9 +117,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         <AdminSidebar
           activeSection={activeSection}
           onSectionChange={handleSectionChange}
-          pendingInvites={pendingInvites}
-          pendingDataRequests={pendingDataRequests}
-          onBack={onBack}
+          onBackToApp={onBack || (() => { })}
+          currentUserEmail=""
+          companyName=""
         />
       </aside>
 

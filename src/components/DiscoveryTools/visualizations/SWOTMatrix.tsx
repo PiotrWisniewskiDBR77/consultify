@@ -6,6 +6,7 @@
  */
 
 import React from 'react';
+
 import { SWOTData, SWOTItem } from '@/store/useToolStore';
 
 // ==================== TYPES ====================
@@ -55,11 +56,7 @@ const QUADRANT_CONFIG = {
 
 // ==================== COMPONENT ====================
 
-export const SWOTMatrix: React.FC<SWOTMatrixProps> = ({
-  data,
-  isPolish,
-  onItemClick,
-}) => {
+export const SWOTMatrix: React.FC<SWOTMatrixProps> = ({ data, isPolish, onItemClick }) => {
   const lang = isPolish ? 'pl' : 'en';
 
   const getQuadrantItems = (quadrant: keyof typeof QUADRANT_CONFIG) => {
@@ -71,17 +68,15 @@ export const SWOTMatrix: React.FC<SWOTMatrixProps> = ({
     const items = getQuadrantItems(quadrant);
 
     return (
-      <div
-        className={`p-4 ${config.bgClass} border ${config.borderClass} rounded-lg`}
-      >
+      <div className={`p-4 ${config.bgClass} border ${config.borderClass} rounded-lg`}>
         {/* Quadrant header */}
         <div className="flex items-center gap-2 mb-3">
-          <span className={`w-6 h-6 rounded flex items-center justify-center text-xs font-bold ${config.textClass} bg-white dark:bg-navy-800`}>
+          <span
+            className={`w-6 h-6 rounded flex items-center justify-center text-xs font-bold ${config.textClass} bg-white dark:bg-navy-800`}
+          >
             {config.icon}
           </span>
-          <h4 className={`font-medium ${config.textClass}`}>
-            {config.label[lang]}
-          </h4>
+          <h4 className={`font-medium ${config.textClass}`}>{config.label[lang]}</h4>
           <span className="text-xs text-slate-400">({items.length})</span>
         </div>
 
@@ -100,12 +95,18 @@ export const SWOTMatrix: React.FC<SWOTMatrixProps> = ({
               >
                 <div className="flex items-start justify-between gap-2">
                   <span>{item.text}</span>
-                  <span className={`
+                  <span
+                    className={`
                     px-1.5 py-0.5 text-xs rounded
-                    ${item.impact === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
-                      item.impact === 'medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
-                      'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'}
-                  `}>
+                    ${
+                      item.impact === 'high'
+                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                        : item.impact === 'medium'
+                          ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                          : 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'
+                    }
+                  `}
+                  >
                     {item.impact}
                   </span>
                 </div>

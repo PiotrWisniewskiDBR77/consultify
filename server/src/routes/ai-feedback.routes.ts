@@ -424,17 +424,23 @@ router.get(
 // Response Feedback Endpoints (AI Response Personalization)
 // =====================================================
 
+// Import user style profile service
+let userStyleProfileService: any = null;
+try {
+  const styleModule = await import('../services/ai/userStyleProfileService.js');
+  userStyleProfileService = styleModule.default || styleModule;
+} catch {
+  console.warn('[AI Feedback Routes] userStyleProfileService not available');
+}
+
 /**
  * POST /api/ai-feedback/response
  * Submit detailed feedback on AI response length/style
+ * Extended with adaptive style fields (v2.0)
  */
 router.post(
   '/response',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!adaptiveResponseService?.processFeedback) {
-      return res.status(503).json({ error: 'Adaptive response service not available' });
-    }
-
     try {
       const {
         messageId,
@@ -448,9 +454,17 @@ router.post(
         responseMode,
         responseLength,
         capability,
+        // New adaptive style fields (v2.0)
+        actionability,
+        accuracy,
+        expectedFormat,
+        missingInfo,
+        screenContext,
+        focusMode,
       } = req.body;
 
       const userId = req.user?.id;
+      const organizationId = req.user?.organizationId;
 
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
@@ -466,40 +480,81 @@ router.post(
           .json({ error: 'Valid rating is required (positive, negative, neutral)' });
       }
 
-      const feedback = {
-        rating,
-        lengthFeedback,
-        detailFeedback,
-        formatFeedback,
-        wantedMode,
-        customFeedback,
-      };
-
-      const context = {
-        responseMode,
-        responseLength,
-        capability,
-      };
-
-      const result = await adaptiveResponseService.processFeedback(
-        userId,
-        messageId,
-        conversationId,
-        feedback,
-        context
+      // Store in database with new fields
+      const id = uuidv4();
+      await dbRun(
+        `INSERT INTO ai_feedback 
+          (id, organization_id, user_id, interaction_id, feedback_type, rating, comment,
+           actionability, accuracy, expected_format, missing_info, screen_context, focus_mode, response_length,
+           created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+        [
+          id,
+          organizationId,
+          userId,
+          messageId,
+          rating === 'positive' ? 'HELPFUL' : 'NOT_HELPFUL',
+          rating === 'positive' ? 1 : -1,
+          customFeedback || null,
+          actionability || null,
+          accuracy || null,
+          expectedFormat || null,
+          missingInfo || null,
+          screenContext || null,
+          focusMode || null,
+          responseLength || null,
+        ]
       );
+
+      // Process with userStyleProfileService if available
+      let profileSuggestions: any[] = [];
+      if (userStyleProfileService?.processFeedback) {
+        try {
+          profileSuggestions = await userStyleProfileService.processFeedback({
+            userId,
+            messageId,
+            rating: rating as 'positive' | 'negative',
+            lengthFeedback: lengthFeedback?.replace('-', '_'),
+            detailFeedback: detailFeedback?.replace('-', '_'),
+            formatFeedback,
+            actionability,
+            accuracy,
+            expectedFormat,
+            screenContext,
+            focusMode,
+          });
+        } catch (err) {
+          console.warn('[AI Feedback] Style profile processing failed:', err);
+        }
+      }
+
+      // Also process with adaptiveResponseService if available
+      if (adaptiveResponseService?.processFeedback) {
+        try {
+          await adaptiveResponseService.processFeedback(
+            userId,
+            messageId,
+            conversationId,
+            { rating, lengthFeedback, detailFeedback, formatFeedback, wantedMode, customFeedback },
+            { responseMode, responseLength, capability }
+          );
+        } catch (err) {
+          console.warn('[AI Feedback] Adaptive response processing failed:', err);
+        }
+      }
 
       if (aiLogger?.info) {
         aiLogger.info(
           'AIFeedback',
-          `Response feedback: ${rating} from user ${userId}, wanted: ${wantedMode || 'N/A'}`
+          `Response feedback: ${rating} from user ${userId}, format: ${expectedFormat || 'N/A'}, screen: ${screenContext || 'N/A'}`
         );
       }
 
       res.status(201).json({
         success: true,
-        feedbackId: result.feedbackId,
+        feedbackId: id,
         message: 'Feedback recorded successfully',
+        profileSuggestions: profileSuggestions.length > 0 ? profileSuggestions : undefined,
       });
     } catch (error: unknown) {
       if (aiLogger?.error) {
@@ -619,6 +674,90 @@ router.get(
         );
       }
       res.status(500).json({ error: 'Failed to get preferences' });
+    }
+  })
+);
+
+// =====================================================
+// User Style Profile Endpoints (Adaptive Style v2.0)
+// =====================================================
+
+/**
+ * GET /api/ai-feedback/style-profile
+ * Get user's communication style profile
+ */
+router.get(
+  '/style-profile',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!userStyleProfileService?.getProfile) {
+      return res.status(503).json({ error: 'Style profile service not available' });
+    }
+
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const profile = await userStyleProfileService.getProfile(userId);
+      const patterns = await userStyleProfileService.getLearnedPatterns?.(userId) || [];
+
+      res.json({
+        success: true,
+        profile,
+        patterns,
+      });
+    } catch (error: unknown) {
+      console.error('[AI Feedback] Style profile error:', error);
+      res.status(500).json({ error: 'Failed to get style profile' });
+    }
+  })
+);
+
+/**
+ * PUT /api/ai-feedback/style-profile
+ * Update user's communication style preferences
+ */
+router.put(
+  '/style-profile',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!userStyleProfileService?.updateProfile) {
+      return res.status(503).json({ error: 'Style profile service not available' });
+    }
+
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const {
+        preferredDepth,
+        preferredFormat,
+        technicalLevel,
+        responseLength,
+        autoAdaptEnabled,
+        contextPreferences,
+      } = req.body;
+
+      const updates: Record<string, any> = {};
+      if (preferredDepth) updates.preferredDepth = preferredDepth;
+      if (preferredFormat) updates.preferredFormat = preferredFormat;
+      if (technicalLevel) updates.technicalLevel = technicalLevel;
+      if (responseLength) updates.responseLength = responseLength;
+      if (autoAdaptEnabled !== undefined) updates.autoAdaptEnabled = autoAdaptEnabled;
+      if (contextPreferences) updates.contextPreferences = contextPreferences;
+
+      const profile = await userStyleProfileService.updateProfile(userId, updates);
+
+      res.json({
+        success: true,
+        profile,
+        message: 'Style profile updated successfully',
+      });
+    } catch (error: unknown) {
+      console.error('[AI Feedback] Style profile update error:', error);
+      res.status(500).json({ error: 'Failed to update style profile' });
     }
   })
 );

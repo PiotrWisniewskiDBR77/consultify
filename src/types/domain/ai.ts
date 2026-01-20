@@ -215,6 +215,7 @@ export interface MessageFeedback {
 
 /**
  * Detailed Response feedback
+ * Extended in v2.0 with adaptive style fields
  */
 export interface ResponseFeedback {
   rating: 'positive' | 'negative';
@@ -225,6 +226,12 @@ export interface ResponseFeedback {
   lengthFeedback?: 'too-short' | 'just-right' | 'too-long';
   detailFeedback?: 'too-little' | 'just-right' | 'too-much';
   customFeedback?: string;
+
+  // Adaptive style fields (v2.0)
+  actionability?: number; // 1-5
+  accuracy?: number; // 1-5
+  expectedFormat?: 'bullets' | 'paragraphs' | 'structured' | 'conversational';
+  missingInfo?: string;
 }
 
 /**

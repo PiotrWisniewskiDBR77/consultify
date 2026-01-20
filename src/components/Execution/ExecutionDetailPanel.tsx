@@ -1,6 +1,6 @@
 /**
  * ExecutionDetailPanel
- * 
+ *
  * Detailed view for an initiative in execution phase.
  * Shows full information with status change actions.
  */
@@ -20,12 +20,13 @@ import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { Api } from '@/services/api';
-import { 
-  getStatusActions, 
-  getStatusMeta, 
+import {
+  getStatusActions,
+  getStatusMeta,
   isValidTransition,
   StatusAction,
 } from '@/services/initiativeLifecycle';
+
 import { FullInitiative, InitiativeStatus, Task, TaskStatus } from '../../types';
 
 interface ExecutionDetailPanelProps {
@@ -41,7 +42,9 @@ interface ExecutionDetailPanelProps {
 const StatusBadge: React.FC<{ status: InitiativeStatus }> = ({ status }) => {
   const meta = getStatusMeta(status);
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${meta.bgColor} ${meta.color}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${meta.bgColor} ${meta.color}`}
+    >
       <span className={`w-2 h-2 rounded-full ${meta.dotColor}`} />
       {meta.label}
     </span>
@@ -94,8 +97,8 @@ const ProgressRing: React.FC<{ progress: number; size?: number }> = ({ progress,
 // TASK ITEM COMPONENT
 // ============================================
 
-const TaskItem: React.FC<{ 
-  task: Task; 
+const TaskItem: React.FC<{
+  task: Task;
   onToggle: (taskId: string, done: boolean) => void;
 }> = ({ task, onToggle }) => {
   const isDone = task.status === TaskStatus.DONE;
@@ -104,11 +107,8 @@ const TaskItem: React.FC<{
     <div className="flex items-start gap-3 p-3 bg-navy-800/50 rounded-lg hover:bg-navy-800 transition-colors">
       <button
         onClick={() => onToggle(task.id, !isDone)}
-        className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-          isDone 
-            ? 'bg-cyan-500 border-cyan-500' 
-            : 'border-slate-500 hover:border-cyan-500'
-        }`}
+        className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${isDone ? 'bg-cyan-500 border-cyan-500' : 'border-slate-500 hover:border-cyan-500'
+          }`}
       >
         {isDone && <CheckCircle2 size={12} className="text-white" />}
       </button>
@@ -147,22 +147,25 @@ const StatusChangeModal: React.FC<StatusChangeModalProps> = ({
   const [reason, setReason] = useState('');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onCancel}>
-      <div 
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={onCancel}
+    >
+      <div
         className="bg-navy-900 border border-navy-700 rounded-xl p-6 w-full max-w-md shadow-2xl"
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-lg font-semibold text-white mb-2">{action.label}</h3>
         <p className="text-sm text-slate-400 mb-4">
-          {action.requiresReason 
-            ? 'Please provide a reason for this change.' 
+          {action.requiresReason
+            ? 'Please provide a reason for this change.'
             : 'Are you sure you want to proceed?'}
         </p>
 
         {action.requiresReason && (
           <textarea
             value={reason}
-            onChange={e => setReason(e.target.value)}
+            onChange={(e) => setReason(e.target.value)}
             placeholder="Enter reason..."
             className="w-full p-3 bg-navy-800 border border-navy-700 rounded-lg text-white text-sm resize-none focus:outline-none focus:border-cyan-500"
             rows={3}
@@ -180,13 +183,12 @@ const StatusChangeModal: React.FC<StatusChangeModalProps> = ({
           <button
             onClick={() => onConfirm(reason || undefined)}
             disabled={isLoading || (action.requiresReason && !reason.trim())}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
-              action.variant === 'danger'
-                ? 'bg-red-600 hover:bg-red-500 text-white'
-                : action.variant === 'primary'
-                  ? 'bg-cyan-600 hover:bg-cyan-500 text-white'
-                  : 'bg-navy-700 hover:bg-navy-600 text-white'
-            }`}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${action.variant === 'danger'
+              ? 'bg-red-600 hover:bg-red-500 text-white'
+              : action.variant === 'primary'
+                ? 'bg-cyan-600 hover:bg-cyan-500 text-white'
+                : 'bg-navy-700 hover:bg-navy-600 text-white'
+              }`}
           >
             {isLoading && <Loader2 size={14} className="animate-spin" />}
             Confirm
@@ -211,73 +213,76 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
 
   const progress = initiative.progress || 0;
   const tasks = initiative.tasks || [];
-  const completedTasks = tasks.filter(t => t.status === TaskStatus.DONE).length;
+  const completedTasks = tasks.filter((t) => t.status === TaskStatus.DONE).length;
 
   // Get available status actions
   const statusActions = getStatusActions(initiative.status);
 
   // Handle status change
-  const handleStatusChange = useCallback(async (action: StatusAction, reason?: string) => {
-    if (!isValidTransition(initiative.status, action.targetStatus)) {
-      toast.error('Invalid status transition');
-      return;
-    }
-
-    setIsUpdating(true);
-    try {
-      const updates: Partial<FullInitiative> = { 
-        status: action.targetStatus,
-      };
-
-      if (reason) {
-        if (action.targetStatus === InitiativeStatus.BLOCKED) {
-          updates.blockedReason = reason;
-        }
+  const handleStatusChange = useCallback(
+    async (action: StatusAction, reason?: string) => {
+      if (!isValidTransition(initiative.status, action.targetStatus)) {
+        toast.error('Invalid status transition');
+        return;
       }
 
-      await Api.updateInitiative(initiative.id, updates);
-      
-      onUpdate({
-        ...initiative,
-        ...updates,
-      });
-      
-      toast.success(`Status changed to ${getStatusMeta(action.targetStatus).label}`);
-      setSelectedAction(null);
-    } catch (error) {
-      console.error('[ExecutionDetailPanel] Status change failed:', error);
-      toast.error('Failed to update status');
-    } finally {
-      setIsUpdating(false);
-    }
-  }, [initiative, onUpdate]);
+      setIsUpdating(true);
+      try {
+        const updates: Partial<FullInitiative> = {
+          status: action.targetStatus,
+        };
+
+        if (reason) {
+          if (action.targetStatus === InitiativeStatus.BLOCKED) {
+            updates.blockedReason = reason;
+          }
+        }
+
+        await Api.updateInitiative(initiative.id, updates);
+
+        onUpdate({
+          ...initiative,
+          ...updates,
+        });
+
+        toast.success(`Status changed to ${getStatusMeta(action.targetStatus).label}`);
+        setSelectedAction(null);
+      } catch (error) {
+        console.error('[ExecutionDetailPanel] Status change failed:', error);
+        toast.error('Failed to update status');
+      } finally {
+        setIsUpdating(false);
+      }
+    },
+    [initiative, onUpdate]
+  );
 
   // Handle task toggle
-  const handleTaskToggle = useCallback(async (taskId: string, done: boolean) => {
-    try {
-      const newStatus = done ? TaskStatus.DONE : TaskStatus.TODO;
-      await Api.put(`/tasks/${taskId}`, { status: newStatus });
-      
-      const updatedTasks = tasks.map(t => 
-        t.id === taskId ? { ...t, status: newStatus } : t
-      );
-      
-      // Recalculate progress
-      const completed = updatedTasks.filter(t => t.status === TaskStatus.DONE).length;
-      const newProgress = updatedTasks.length > 0 
-        ? Math.round((completed / updatedTasks.length) * 100) 
-        : 0;
+  const handleTaskToggle = useCallback(
+    async (taskId: string, done: boolean) => {
+      try {
+        const newStatus = done ? TaskStatus.DONE : TaskStatus.TODO;
+        await Api.put(`/tasks/${taskId}`, { status: newStatus });
 
-      onUpdate({
-        ...initiative,
-        tasks: updatedTasks,
-        progress: newProgress,
-      });
-    } catch (error) {
-      console.error('[ExecutionDetailPanel] Task toggle failed:', error);
-      toast.error('Failed to update task');
-    }
-  }, [initiative, tasks, onUpdate]);
+        const updatedTasks = tasks.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t));
+
+        // Recalculate progress
+        const completed = updatedTasks.filter((t) => t.status === TaskStatus.DONE).length;
+        const newProgress =
+          updatedTasks.length > 0 ? Math.round((completed / updatedTasks.length) * 100) : 0;
+
+        onUpdate({
+          ...initiative,
+          tasks: updatedTasks,
+          progress: newProgress,
+        });
+      } catch (error) {
+        console.error('[ExecutionDetailPanel] Task toggle failed:', error);
+        toast.error('Failed to update task');
+      }
+    },
+    [initiative, tasks, onUpdate]
+  );
 
   return (
     <div className="h-full flex flex-col bg-navy-950">
@@ -296,11 +301,14 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
               <div className="flex items-center gap-3 mt-1">
                 <StatusBadge status={initiative.status} />
                 {initiative.priority && (
-                  <span className={`text-xs font-medium ${
-                    initiative.priority === 'Critical' ? 'text-red-400' :
-                    initiative.priority === 'High' ? 'text-amber-400' :
-                    'text-slate-400'
-                  }`}>
+                  <span
+                    className={`text-xs font-medium ${initiative.priority === 'Critical'
+                      ? 'text-red-400'
+                      : initiative.priority === 'High'
+                        ? 'text-amber-400'
+                        : 'text-slate-400'
+                      }`}
+                  >
                     {initiative.priority} Priority
                   </span>
                 )}
@@ -310,18 +318,19 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
 
           <div className="flex items-center gap-2">
             {/* Quick actions based on status */}
-            {statusActions.slice(0, 2).map(action => (
+            {statusActions.slice(0, 2).map((action) => (
               <button
                 key={action.targetStatus}
-                onClick={() => action.requiresReason ? setSelectedAction(action) : handleStatusChange(action)}
+                onClick={() =>
+                  action.requiresReason ? setSelectedAction(action) : handleStatusChange(action)
+                }
                 disabled={isUpdating}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
-                  action.variant === 'danger'
-                    ? 'bg-red-600/20 text-red-400 hover:bg-red-600/30'
-                    : action.variant === 'primary'
-                      ? 'bg-cyan-600 text-white hover:bg-cyan-500'
-                      : 'bg-navy-700 text-slate-300 hover:bg-navy-600'
-                }`}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${action.variant === 'danger'
+                  ? 'bg-red-600/20 text-red-400 hover:bg-red-600/30'
+                  : action.variant === 'primary'
+                    ? 'bg-cyan-600 text-white hover:bg-cyan-500'
+                    : 'bg-navy-700 text-slate-300 hover:bg-navy-600'
+                  }`}
               >
                 {action.label}
               </button>
@@ -367,19 +376,15 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                   Tasks ({completedTasks}/{tasks.length})
                 </h3>
               </div>
-              
+
               {tasks.length === 0 ? (
                 <p className="text-sm text-slate-500 text-center py-4">
                   No tasks defined for this initiative
                 </p>
               ) : (
                 <div className="space-y-2">
-                  {tasks.map(task => (
-                    <TaskItem 
-                      key={task.id} 
-                      task={task} 
-                      onToggle={handleTaskToggle}
-                    />
+                  {tasks.map((task) => (
+                    <TaskItem key={task.id} task={task as unknown as Task} onToggle={handleTaskToggle} />
                   ))}
                 </div>
               )}
@@ -397,18 +402,19 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                     <div key={idx} className="p-3 bg-navy-800 rounded-lg">
                       <div className="flex items-start justify-between gap-3">
                         <p className="text-sm text-white">{risk.risk}</p>
-                        <span className={`text-xs px-2 py-0.5 rounded ${
-                          risk.metric === 'High' ? 'bg-red-500/20 text-red-400' :
-                          risk.metric === 'Medium' ? 'bg-amber-500/20 text-amber-400' :
-                          'bg-green-500/20 text-green-400'
-                        }`}>
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded ${risk.metric === 'High'
+                            ? 'bg-red-500/20 text-red-400'
+                            : risk.metric === 'Medium'
+                              ? 'bg-amber-500/20 text-amber-400'
+                              : 'bg-green-500/20 text-green-400'
+                            }`}
+                        >
                           {risk.metric}
                         </span>
                       </div>
                       {risk.mitigation && (
-                        <p className="text-xs text-slate-400 mt-2">
-                          Mitigation: {risk.mitigation}
-                        </p>
+                        <p className="text-xs text-slate-400 mt-2">Mitigation: {risk.mitigation}</p>
                       )}
                     </div>
                   ))}
@@ -445,11 +451,13 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                 {initiative.plannedEndDate && (
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-500">Planned End</span>
-                    <span className={`text-sm ${
-                      new Date(initiative.plannedEndDate) < new Date() && initiative.status !== InitiativeStatus.DONE
+                    <span
+                      className={`text-sm ${new Date(initiative.plannedEndDate) < new Date() &&
+                        initiative.status !== InitiativeStatus.DONE
                         ? 'text-red-400'
                         : 'text-white'
-                    }`}>
+                        }`}
+                    >
                       {new Date(initiative.plannedEndDate).toLocaleDateString()}
                     </span>
                   </div>

@@ -182,7 +182,13 @@ class NavigationMonitor {
     successful: number;
     failed: number;
     failureRate: number;
-    recentFailures: typeof this.navigationHistory;
+    recentFailures: Array<{
+      timestamp: Date;
+      from: AppView | null;
+      to: AppView;
+      success: boolean;
+      error?: string;
+    }>;
   } {
     const total = this.navigationHistory.length;
     const failed = this.navigationHistory.filter((n) => !n.success).length;

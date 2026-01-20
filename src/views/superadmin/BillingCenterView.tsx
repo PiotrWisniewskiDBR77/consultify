@@ -620,7 +620,7 @@ const PlanForm: React.FC<{
         type="text"
         value={formData.name || ''}
         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-        className="w-full bg-navy-950 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-blue-500 outline-none"
+        className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:border-blue-500 outline-none"
       />
     </div>
 
@@ -632,7 +632,7 @@ const PlanForm: React.FC<{
         type="number"
         value={formData.price_monthly || 0}
         onChange={(e) => setFormData({ ...formData, price_monthly: parseFloat(e.target.value) })}
-        className="w-full bg-navy-950 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-blue-500 outline-none"
+        className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:border-blue-500 outline-none"
       />
     </div>
 
@@ -647,7 +647,7 @@ const PlanForm: React.FC<{
               type="number"
               value={formData.token_limit || 0}
               onChange={(e) => setFormData({ ...formData, token_limit: parseInt(e.target.value) })}
-              className="w-full bg-navy-950 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-blue-500 outline-none"
+              className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:border-blue-500 outline-none"
             />
           </div>
           <div>
@@ -660,7 +660,7 @@ const PlanForm: React.FC<{
               onChange={(e) =>
                 setFormData({ ...formData, storage_limit_gb: parseFloat(e.target.value) })
               }
-              className="w-full bg-navy-950 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-blue-500 outline-none"
+              className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:border-blue-500 outline-none"
             />
           </div>
         </div>
@@ -672,7 +672,7 @@ const PlanForm: React.FC<{
             type="text"
             value={formData.stripe_price_id || ''}
             onChange={(e) => setFormData({ ...formData, stripe_price_id: e.target.value })}
-            className="w-full bg-navy-950 border border-white/10 rounded-lg px-3 py-2 text-white text-sm font-mono focus:border-blue-500 outline-none"
+            className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm font-mono focus:border-blue-500 outline-none"
             placeholder="price_..."
           />
         </div>
@@ -690,7 +690,7 @@ const PlanForm: React.FC<{
             : JSON.stringify(formData.features || {}, null, 2)
         }
         onChange={(e) => setFormData({ ...formData, features: e.target.value })}
-        className="w-full bg-navy-950 border border-white/10 rounded-lg px-3 py-2 text-white text-xs font-mono h-20 focus:border-blue-500 outline-none resize-none"
+        className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-xs font-mono h-20 focus:border-blue-500 outline-none resize-none"
       />
     </div>
 
@@ -730,7 +730,7 @@ const PlanCard: React.FC<{
         className={`px-2 py-1 text-[10px] font-bold rounded-full uppercase ${
           plan.is_active
             ? 'bg-emerald-500/20 text-emerald-400'
-            : 'bg-slate-700 text-slate-400 dark:text-slate-500'
+            : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
         }`}
       >
         {plan.is_active ? 'Active' : 'Inactive'}
@@ -915,7 +915,7 @@ const TransactionsTab: React.FC = () => {
       case 'bonus':
         return 'bg-yellow-500/20 text-yellow-400';
       default:
-        return 'bg-slate-700 text-slate-300';
+        return 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300';
     }
   };
 

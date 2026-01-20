@@ -5,17 +5,17 @@
  */
 
 // Main components
-export { ToolWorkspace } from './ToolWorkspace';
-export { ToolHeader } from './ToolHeader';
-export { ToolCanvas } from './ToolCanvas';
 export { ToolActionBar } from './ToolActionBar';
+export { ToolCanvas } from './ToolCanvas';
+export { ToolHeader } from './ToolHeader';
+export { ToolWorkspace } from './ToolWorkspace';
 
 // Steps
 export { ContextStep, SummaryStep } from './steps';
 
 // Visualizations
-export { SWOTMatrix, PorterRadar } from './visualizations';
+export { PorterRadar, SWOTMatrix } from './visualizations';
 
 // Tool-specific components
-export { SWOTQuadrantStep, SWOTCorrelationsStep } from './tools/DynamicSWOT';
+export { SWOTCorrelationsStep, SWOTQuadrantStep } from './tools/DynamicSWOT';
 export { ForceStep } from './tools/MarketForces';

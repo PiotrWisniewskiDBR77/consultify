@@ -53,7 +53,7 @@ export const ContentModule: React.FC<ContentModuleProps> = ({ initialTab }) => {
       onTabChange={setActiveTab}
       title="Content"
       subtitle="Manage playbooks, templates, and content assets"
-      actions={<InfoButton cardId={getCardId()} size="sm" variant="ghost" />}
+      actions={<InfoButton cardId={getCardId()} size="sm" />}
     >
       {renderContent()}
     </TabLayout>

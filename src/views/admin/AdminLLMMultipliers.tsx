@@ -105,7 +105,7 @@ export const AdminLLMMultipliers = () => {
 
       <div className="flex-1 overflow-auto">
         <table className="w-full text-left text-sm">
-          <thead className="sticky top-0 bg-navy-950/90 backdrop-blur-sm z-10">
+          <thead className="sticky top-0 bg-slate-50/90 dark:bg-navy-950/90 backdrop-blur-sm z-10">
             <tr className="border-b border-white/10 text-slate-400 dark:text-slate-500 uppercase tracking-wider text-xs">
               <th className="py-4 px-6 font-medium">Provider / Model</th>
               <th className="py-4 px-6 font-medium">

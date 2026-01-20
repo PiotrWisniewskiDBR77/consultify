@@ -353,7 +353,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                 'mt-2 px-3 py-1 text-xs font-medium rounded-lg transition-colors',
                 (summary?.readyForPayout || 0) >= 100
                   ? 'bg-violet-600 hover:bg-violet-500 text-white'
-                  : 'bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                  : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
               )}
             >
               {requestingPayout ? 'Requesting...' : 'Request Payout'}
@@ -669,7 +669,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             <input
               type="text"
               defaultValue="Acme Consulting GmbH"
-              className="w-full px-4 py-2 bg-navy-900 border border-white/10 rounded-lg text-white"
+              className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
             />
           </div>
           <div>
@@ -677,7 +677,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             <input
               type="text"
               defaultValue="DE89 3704 0044 0532 0130 00"
-              className="w-full px-4 py-2 bg-navy-900 border border-white/10 rounded-lg text-white"
+              className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
             />
           </div>
           <div>
@@ -687,7 +687,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             <input
               type="text"
               defaultValue="COBADEFFXXX"
-              className="w-full px-4 py-2 bg-navy-900 border border-white/10 rounded-lg text-white"
+              className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
             />
           </div>
           <div>
@@ -697,7 +697,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             <input
               type="text"
               defaultValue="Commerzbank AG"
-              className="w-full px-4 py-2 bg-navy-900 border border-white/10 rounded-lg text-white"
+              className="w-full px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
             />
           </div>
         </div>
@@ -719,7 +719,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                 Minimum amount before requesting payout
               </p>
             </div>
-            <select className="px-3 py-2 bg-navy-900 border border-white/10 rounded-lg text-white">
+            <select className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white">
               <option value="100">€100</option>
               <option value="250">€250</option>
               <option value="500">€500</option>

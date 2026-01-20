@@ -1,9 +1,9 @@
 /**
  * BranchSelector Component
- * 
+ *
  * Allows users to view and switch between conversation branches.
  * Provides UI for creating new branches from any message.
- * 
+ *
  * FLOW-CONVERSATION-BRANCHES: Branch selection and navigation
  */
 
@@ -84,15 +84,16 @@ const BranchItem: React.FC<BranchItemProps> = ({
     <div
       className={`
         group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors
-        ${isActive 
-          ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300' 
-          : 'hover:bg-slate-100 dark:hover:bg-navy-800'
+        ${
+          isActive
+            ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+            : 'hover:bg-slate-100 dark:hover:bg-navy-800'
         }
       `}
       onClick={() => !isEditing && onSelect()}
     >
       <GitBranch size={14} className={isActive ? 'text-primary-500' : 'text-slate-400'} />
-      
+
       {isEditing ? (
         <input
           type="text"
@@ -107,9 +108,7 @@ const BranchItem: React.FC<BranchItemProps> = ({
       ) : (
         <span className="flex-1 text-sm truncate">
           {branch.name}
-          {branch.isMain && (
-            <span className="ml-1 text-xs text-slate-400">(main)</span>
-          )}
+          {branch.isMain && <span className="ml-1 text-xs text-slate-400">(main)</span>}
         </span>
       )}
 
@@ -131,7 +130,7 @@ const BranchItem: React.FC<BranchItemProps> = ({
           </button>
 
           {showMenu && (
-            <div 
+            <div
               className="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1 z-50"
               onClick={(e) => e.stopPropagation()}
             >
@@ -217,9 +216,7 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
         <span className="max-w-[120px] truncate">
           {activeBranch?.name || t('branch.main', 'Main')}
         </span>
-        {branches.length > 1 && (
-          <span className="text-xs text-slate-400">({branches.length})</span>
-        )}
+        {branches.length > 1 && <span className="text-xs text-slate-400">({branches.length})</span>}
         <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
@@ -227,10 +224,7 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
       {isOpen && (
         <>
           {/* Backdrop */}
-          <div 
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          />
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
 
           {/* Menu */}
           <div className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-navy-800 rounded-xl shadow-xl border border-slate-200 dark:border-navy-700 py-2 z-50">

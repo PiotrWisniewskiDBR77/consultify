@@ -98,7 +98,7 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({
                   >
                     <span className="text-slate-300">{c.type}</span>
                     <span
-                      className={`text-xs px-1.5 py-0.5 rounded ${c.impactLevel === 'High' ? 'bg-red-900/40 text-red-200' : 'bg-slate-700 text-slate-300'}`}
+                      className={`text-xs px-1.5 py-0.5 rounded ${c.impactLevel === 'High' ? 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-200' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
                     >
                       {c.impactLevel}
                     </span>

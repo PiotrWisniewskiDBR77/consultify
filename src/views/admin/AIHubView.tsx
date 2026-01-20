@@ -431,7 +431,7 @@ PODEJŚCIE:
                       className={`px-2 py-1 rounded text-xs ${
                         provider.is_active
                           ? 'bg-emerald-500/20 text-emerald-400'
-                          : 'bg-slate-700 text-slate-400 dark:text-slate-500'
+                          : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
                       }`}
                     >
                       {provider.is_active ? 'Aktywny' : 'Nieaktywny'}
