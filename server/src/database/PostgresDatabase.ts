@@ -179,6 +179,31 @@ async function ensureTableExists(tableName: string): Promise<boolean> {
       await getPool().query(`CREATE INDEX IF NOT EXISTS idx_decision_impacts_impacted ON decision_impacts(impacted_type, impacted_id)`);
       logger.info(`[Postgres] Created table ${tableName} on-the-fly`);
       return true;
+    } else if (tableName === 'raid_items') {
+      await getPool().query(`CREATE TABLE IF NOT EXISTS raid_items(
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        initiative_id TEXT,
+        type TEXT NOT NULL CHECK(type IN ('RISK', 'ASSUMPTION', 'ISSUE', 'DEPENDENCY')),
+        title TEXT NOT NULL,
+        description TEXT,
+        status TEXT DEFAULT 'OPEN' CHECK(status IN ('OPEN', 'MITIGATED', 'REALIZED', 'CLOSED')),
+        probability TEXT CHECK(probability IN ('LOW', 'MEDIUM', 'HIGH')),
+        impact TEXT CHECK(impact IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')),
+        mitigation_plan TEXT,
+        owner_id TEXT,
+        due_date TIMESTAMP,
+        linked_items TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`);
+      await getPool().query(`CREATE INDEX IF NOT EXISTS idx_raid_org ON raid_items(organization_id)`);
+      await getPool().query(`CREATE INDEX IF NOT EXISTS idx_raid_initiative ON raid_items(initiative_id)`);
+      await getPool().query(`CREATE INDEX IF NOT EXISTS idx_raid_type_status ON raid_items(type, status)`);
+      await getPool().query(`CREATE INDEX IF NOT EXISTS idx_raid_owner ON raid_items(owner_id)`);
+      await getPool().query(`CREATE INDEX IF NOT EXISTS idx_raid_due_date ON raid_items(due_date)`);
+      logger.info(`[Postgres] Created table ${tableName} on-the-fly`);
+      return true;
     } else if (tableName === 'ai_actions') {
       await getPool().query(`CREATE TABLE IF NOT EXISTS ai_actions(
         id TEXT PRIMARY KEY,
