@@ -1629,6 +1629,175 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch generated initiatives');
   },
 
+  // --- ASSESSMENT WORKFLOW ---
+  createAssessmentSession: async (payload: {
+    assessmentType: 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
+    name: string;
+    projectId?: string | null;
+  }): Promise<{ id: string; status: string }> => {
+    const res = await fetch(`${API_URL}/assessment-workflow-v2`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create assessment session');
+  },
+
+  getAssessmentSession: async (assessmentId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch assessment session');
+  },
+
+  updateAssessmentSession: async (
+    assessmentId: string,
+    payload: {
+      answers?: Record<string, unknown>;
+      completionPercent?: number;
+      confidenceAvg?: number;
+      contextSnapshot?: Record<string, unknown>;
+      scoreSummary?: Record<string, unknown>;
+      currentSectionId?: string | null;
+    }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to update assessment session');
+  },
+
+  listAssessments: async (params?: {
+    projectId?: string;
+    status?: string;
+    assessmentType?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<any> => {
+    const query = new URLSearchParams();
+    if (params?.projectId) query.set('projectId', params.projectId);
+    if (params?.status) query.set('status', params.status);
+    if (params?.assessmentType) query.set('assessmentType', params.assessmentType);
+    if (params?.limit) query.set('limit', String(params.limit));
+    if (params?.offset) query.set('offset', String(params.offset));
+    
+    const res = await fetch(`${API_URL}/assessment-workflow?${query.toString()}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to list assessments');
+  },
+
+  deleteAssessment: async (assessmentId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to delete assessment');
+  },
+
+  // Assessment workflow transitions
+  requestAssessmentReview: async (
+    assessmentId: string,
+    payload?: { decisionOwnerId?: string; dueDate?: string; priority?: string }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}/request-review`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload || {}),
+    });
+    return handleResponse(res, 'Failed to request review');
+  },
+
+  generateAssessmentReport: async (
+    assessmentId: string,
+    payload?: { includeRecommendations?: boolean; includeGapAnalysis?: boolean }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}/report`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload || {}),
+    });
+    return handleResponse(res, 'Failed to generate report');
+  },
+
+  approveAssessmentReport: async (
+    assessmentId: string,
+    payload?: { decisionOwnerId?: string; dueDate?: string; priority?: string; comment?: string }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}/report/approve`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload || {}),
+    });
+    return handleResponse(res, 'Failed to approve report');
+  },
+
+  approveAssessment: async (
+    assessmentId: string,
+    payload?: { decisionOwnerId?: string; dueDate?: string; priority?: string }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}/approve`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload || {}),
+    });
+    return handleResponse(res, 'Failed to approve assessment');
+  },
+
+  sendAssessmentBackToDraft: async (assessmentId: string, comment: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}/send-back`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ comment }),
+    });
+    return handleResponse(res, 'Failed to send back assessment');
+  },
+
+  generateAssessmentInitiatives: async (
+    assessmentId: string,
+    payload: { methodologyId: string; count: number; includeChatContext?: boolean }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}/generate-initiatives`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to generate initiatives');
+  },
+
+  getAssessmentGeneratedInitiatives: async (assessmentId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}/generated-initiatives`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch generated initiatives');
+  },
+
+  // Assessment sessions (for dynamic submenu)
+  getOpenAssessmentSessions: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/assessment-workflow/sessions`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch open sessions');
+  },
+
+  openAssessmentSession: async (assessmentId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}/session/open`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to open session');
+  },
+
+  closeAssessmentSession: async (assessmentId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}/session/close`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to close session');
+  },
+
   // --- PROJECTS ---
   suggestInitiativeTasks: async (initiativeId: string): Promise<any[]> => {
     const res = await fetch(`${API_URL}/initiatives/${initiativeId}/tasks/suggest`, {

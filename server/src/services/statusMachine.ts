@@ -1,18 +1,18 @@
 // PMO Status State Machine - Validates status transitions
 // Step 3: PMO Objects, Statuses & Stage Gates
 // Updated 2024-12-26: New Initiative Lifecycle with module transitions
+// Updated 2026-01-20: Imports from central constants file
 
-export const INITIATIVE_STATUSES = {
-  DRAFT: 'DRAFT',
-  PLANNING: 'PLANNING',
-  REVIEW: 'REVIEW',
-  APPROVED: 'APPROVED',
-  EXECUTING: 'EXECUTING',
-  BLOCKED: 'BLOCKED',
-  DONE: 'DONE',
-  CANCELLED: 'CANCELLED',
-  ARCHIVED: 'ARCHIVED',
-} as const;
+import {
+  InitiativeStatus,
+  VALID_TRANSITIONS,
+  getModuleForStatus as getModule,
+  validateTransition as validateTx,
+  getStatusLabel as getLabel,
+} from '../constants/initiativeStatuses.js';
+
+// Re-export for backward compatibility
+export const INITIATIVE_STATUSES = InitiativeStatus;
 
 export const TASK_STATUSES = {
   TODO: 'TODO',

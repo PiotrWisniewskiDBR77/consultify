@@ -483,6 +483,10 @@ export class InitiativeController {
       const currentStatus = normalizeStatus((existing as Record<string, unknown>).status as string);
       const nextStatus = normalizeStatus(status as string);
 
+      // Gate decision validation
+      // Flow: DRAFT -> REVIEW -> APPROVED -> PLANNING -> EXECUTING
+      
+      // REVIEW -> APPROVED: requires Go/No-Go decision
       if (currentStatus === 'REVIEW' && nextStatus === 'APPROVED') {
         const hasGoNoGo = await hasApprovedGateDecision(
           orgId,
@@ -498,14 +502,15 @@ export class InitiativeController {
         }
       }
 
-      if (currentStatus === 'APPROVED' && nextStatus === 'EXECUTING') {
+      // APPROVED -> PLANNING: requires Resources Commit and Schedule Lock decisions
+      if (currentStatus === 'APPROVED' && nextStatus === 'PLANNING') {
         const [hasResourcesCommit, hasScheduleLock] = await Promise.all([
           hasApprovedGateDecision(orgId, id, 'RESOURCE_RESPONSIBILITY'),
           hasApprovedGateDecision(orgId, id, 'SCHEDULE_MILESTONES'),
         ]);
         if (!hasResourcesCommit || !hasScheduleLock) {
           res.status(400).json({
-            error: 'Resources Commit and Schedule Lock decisions are required to start execution',
+            error: 'Resources Commit and Schedule Lock decisions are required to start planning',
             rule: 'GATE_DECISION_REQUIRED',
           });
           return;
@@ -1699,6 +1704,334 @@ export class InitiativeController {
           status: 'on_track',
           measurementFrequency: measurementFrequency || 'monthly',
           createdAt: now,
+        },
+      });
+    }
+  );
+
+  // ==========================================
+  // ROADMAP MODULE: MILESTONES ENDPOINTS
+  // ==========================================
+
+  /**
+   * Get milestones for an initiative
+   */
+  static getMilestones = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId } = req.params;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      // Verify initiative belongs to org
+      const initiative = await queryHelpers.queryOne(
+        'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
+        [initiativeId, orgId]
+      );
+
+      if (!initiative) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+
+      const milestones = await queryHelpers.queryAll(
+        `SELECT 
+          id,
+          initiative_id as initiativeId,
+          name,
+          description,
+          target_date as targetDate,
+          actual_date as actualDate,
+          status,
+          order_index as orderIndex,
+          is_gate as isGate,
+          gate_decision_id as gateDecisionId,
+          created_at as createdAt,
+          updated_at as updatedAt
+        FROM initiative_milestones 
+        WHERE initiative_id = ?
+        ORDER BY order_index ASC`,
+        [initiativeId]
+      );
+
+      res.json({ milestones: milestones.map((m: any) => ({ ...m, isGate: Boolean(m.isGate) })) });
+    }
+  );
+
+  /**
+   * Create a milestone for an initiative
+   */
+  static createMilestone = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId } = req.params;
+      const { name, description, targetDate, isGate } = req.body;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      if (!name) {
+        res.status(400).json({ error: 'Name is required' });
+        return;
+      }
+
+      // Verify initiative belongs to org
+      const initiative = await queryHelpers.queryOne(
+        'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
+        [initiativeId, orgId]
+      );
+
+      if (!initiative) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+
+      // Get next order index
+      const lastMilestone = await queryHelpers.queryOne(
+        'SELECT MAX(order_index) as maxOrder FROM initiative_milestones WHERE initiative_id = ?',
+        [initiativeId]
+      );
+      const nextOrder = ((lastMilestone as any)?.maxOrder || 0) + 1;
+
+      const milestoneId = uuidv4();
+      const now = new Date().toISOString();
+
+      await queryHelpers.queryRun(
+        `INSERT INTO initiative_milestones (
+          id, initiative_id, organization_id, name, description, target_date, status, order_index, is_gate, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?, ?)`,
+        [
+          milestoneId,
+          initiativeId,
+          orgId,
+          name,
+          description || null,
+          targetDate || null,
+          nextOrder,
+          isGate ? 1 : 0,
+          now,
+          now,
+        ]
+      );
+
+      res.status(201).json({
+        success: true,
+        milestone: {
+          id: milestoneId,
+          initiativeId,
+          name,
+          description,
+          targetDate,
+          status: 'PENDING',
+          orderIndex: nextOrder,
+          isGate: Boolean(isGate),
+          createdAt: now,
+        },
+      });
+    }
+  );
+
+  /**
+   * Update a milestone
+   */
+  static updateMilestone = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId, milestoneId } = req.params;
+      const { name, description, targetDate, actualDate, status, orderIndex, isGate } = req.body;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      // Verify milestone exists and belongs to org
+      const milestone = await queryHelpers.queryOne(
+        `SELECT m.id FROM initiative_milestones m
+         JOIN initiatives i ON m.initiative_id = i.id
+         WHERE m.id = ? AND m.initiative_id = ? AND i.organization_id = ?`,
+        [milestoneId, initiativeId, orgId]
+      );
+
+      if (!milestone) {
+        res.status(404).json({ error: 'Milestone not found' });
+        return;
+      }
+
+      const updates: string[] = [];
+      const params: unknown[] = [];
+
+      if (name !== undefined) {
+        updates.push('name = ?');
+        params.push(name);
+      }
+      if (description !== undefined) {
+        updates.push('description = ?');
+        params.push(description);
+      }
+      if (targetDate !== undefined) {
+        updates.push('target_date = ?');
+        params.push(targetDate);
+      }
+      if (actualDate !== undefined) {
+        updates.push('actual_date = ?');
+        params.push(actualDate);
+      }
+      if (status !== undefined) {
+        updates.push('status = ?');
+        params.push(status);
+      }
+      if (orderIndex !== undefined) {
+        updates.push('order_index = ?');
+        params.push(orderIndex);
+      }
+      if (isGate !== undefined) {
+        updates.push('is_gate = ?');
+        params.push(isGate ? 1 : 0);
+      }
+
+      if (updates.length === 0) {
+        res.json({ success: true, message: 'No updates provided' });
+        return;
+      }
+
+      updates.push('updated_at = ?');
+      params.push(new Date().toISOString());
+      params.push(milestoneId);
+
+      await queryHelpers.queryRun(
+        `UPDATE initiative_milestones SET ${updates.join(', ')} WHERE id = ?`,
+        params
+      );
+
+      res.json({ success: true, message: 'Milestone updated' });
+    }
+  );
+
+  /**
+   * Delete a milestone
+   */
+  static deleteMilestone = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId, milestoneId } = req.params;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      // Verify milestone exists and belongs to org
+      const milestone = await queryHelpers.queryOne(
+        `SELECT m.id FROM initiative_milestones m
+         JOIN initiatives i ON m.initiative_id = i.id
+         WHERE m.id = ? AND m.initiative_id = ? AND i.organization_id = ?`,
+        [milestoneId, initiativeId, orgId]
+      );
+
+      if (!milestone) {
+        res.status(404).json({ error: 'Milestone not found' });
+        return;
+      }
+
+      await queryHelpers.queryRun('DELETE FROM initiative_milestones WHERE id = ?', [milestoneId]);
+
+      res.json({ success: true });
+    }
+  );
+
+  /**
+   * Get resources for an initiative
+   */
+  static getResources = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId } = req.params;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const resources = await queryHelpers.queryAll(
+        `SELECT 
+          r.id,
+          r.initiative_id as initiativeId,
+          r.user_id as userId,
+          r.role,
+          r.allocation_percentage as allocationPercentage,
+          r.start_date as startDate,
+          r.end_date as endDate,
+          r.notes,
+          u.first_name as firstName,
+          u.last_name as lastName,
+          u.avatar_url as avatarUrl
+        FROM initiative_resources r
+        LEFT JOIN users u ON r.user_id = u.id
+        WHERE r.initiative_id = ? AND r.organization_id = ?`,
+        [initiativeId, orgId]
+      );
+
+      res.json({ resources });
+    }
+  );
+
+  /**
+   * Add resource to an initiative
+   */
+  static addResource = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId } = req.params;
+      const { userId, role, allocationPercentage, startDate, endDate, notes } = req.body;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      if (!role) {
+        res.status(400).json({ error: 'Role is required' });
+        return;
+      }
+
+      const resourceId = uuidv4();
+      const now = new Date().toISOString();
+
+      await queryHelpers.queryRun(
+        `INSERT INTO initiative_resources (
+          id, initiative_id, organization_id, user_id, role, allocation_percentage, start_date, end_date, notes, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          resourceId,
+          initiativeId,
+          orgId,
+          userId || null,
+          role,
+          allocationPercentage || 100,
+          startDate || null,
+          endDate || null,
+          notes || null,
+          now,
+        ]
+      );
+
+      res.status(201).json({
+        success: true,
+        resource: {
+          id: resourceId,
+          initiativeId,
+          userId,
+          role,
+          allocationPercentage: allocationPercentage || 100,
+          startDate,
+          endDate,
+          notes,
         },
       });
     }

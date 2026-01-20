@@ -1,104 +1,66 @@
 /**
  * Execution Routes
- * API endpoints for execution monitoring
+ * API endpoints for Execution Center module
+ *
+ * Endpoints:
+ * - GET /api/execution/:projectId/summary - Execution summary
+ * - GET /api/execution/:projectId/blockers - Blocked items
+ * - POST /api/execution/:projectId/gate-check - Gate validation
+ * - GET /api/execution/:projectId/health - Portfolio health metrics
+ * - GET /api/execution/stats - Execution statistics by status
+ * - GET /api/execution/escalations - Escalation dashboard
+ * - GET /api/execution/calendar - Calendar items (tasks/decisions)
  *
  * Fully migrated to TypeScript ES modules
  */
 
-import { Response, Router } from 'express';
+import { Router } from 'express';
 
-import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
+import { ExecutionController } from '../controllers/ExecutionController.js';
+import { verifyToken } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
-// Service interfaces
-interface ExecutionServiceInterface {
-  getExecutionSummary?: (projectId: string) => Promise<unknown>;
-  getBlockedTasks?: (projectId: string) => Promise<unknown>;
-  checkDecisionGate?: (projectId: string, targetPhase: string) => Promise<unknown>;
-}
+/**
+ * GET /api/execution/stats
+ * Get execution statistics by status
+ */
+router.get('/stats', verifyToken, ExecutionController.getExecutionStats);
 
-// Dynamic import for ExecutionService (may not be migrated yet)
-let ExecutionService: ExecutionServiceInterface | null = null;
+/**
+ * GET /api/execution/escalations
+ * Get escalations dashboard data
+ */
+router.get('/escalations', verifyToken, ExecutionController.getEscalations);
 
-try {
-  const executionModule = await import('../../services/executionService.js');
-  ExecutionService = (executionModule.default || executionModule) as ExecutionServiceInterface;
-} catch {
-  console.warn('[Execution Routes] ExecutionService not available');
-}
+/**
+ * GET /api/execution/calendar
+ * Get calendar items (tasks and decisions with deadlines)
+ */
+router.get('/calendar', verifyToken, ExecutionController.getCalendarItems);
 
 /**
  * GET /api/execution/:projectId/summary
  * Get execution summary for a project
  */
-router.get(
-  '/:projectId/summary',
-  verifyToken,
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!ExecutionService?.getExecutionSummary) {
-      return res.status(503).json({ error: 'Execution service not available' });
-    }
-
-    try {
-      const projectId = Array.isArray(req.params.projectId)
-        ? req.params.projectId[0]
-        : req.params.projectId;
-      const summary = await ExecutionService.getExecutionSummary(projectId);
-      res.json(summary);
-    } catch (err: unknown) {
-      return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
-    }
-  })
-);
+router.get('/:projectId/summary', verifyToken, ExecutionController.getExecutionSummary);
 
 /**
  * GET /api/execution/:projectId/blockers
- * Get blocked tasks with reasons
+ * Get blocked items with reasons
  */
-router.get(
-  '/:projectId/blockers',
-  verifyToken,
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!ExecutionService?.getBlockedTasks) {
-      return res.status(503).json({ error: 'Execution service not available' });
-    }
+router.get('/:projectId/blockers', verifyToken, ExecutionController.getBlockers);
 
-    try {
-      const { projectId } = req.params;
-      const projectIdStr = Array.isArray(projectId) ? projectId[0] : projectId;
-      const blockers = await ExecutionService.getBlockedTasks(projectIdStr);
-      res.json(blockers);
-    } catch (err: unknown) {
-      return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
-    }
-  })
-);
+/**
+ * GET /api/execution/:projectId/health
+ * Get portfolio health metrics for Execution Center dashboard
+ */
+router.get('/:projectId/health', verifyToken, ExecutionController.getPortfolioHealth);
 
 /**
  * POST /api/execution/:projectId/gate-check
- * Check if project can advance phase (Decision Gate)
+ * Check if initiative can advance status (Decision Gate)
  */
-router.post(
-  '/:projectId/gate-check',
-  verifyToken,
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!ExecutionService?.checkDecisionGate) {
-      return res.status(503).json({ error: 'Execution service not available' });
-    }
-
-    try {
-      const { targetPhase } = req.body;
-      const projectId = Array.isArray(req.params.projectId)
-        ? req.params.projectId[0]
-        : req.params.projectId;
-      const result = await ExecutionService.checkDecisionGate(projectId, targetPhase);
-      res.json(result);
-    } catch (err: unknown) {
-      return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
-    }
-  })
-);
+router.post('/:projectId/gate-check', verifyToken, ExecutionController.checkGate);
 
 export default router;

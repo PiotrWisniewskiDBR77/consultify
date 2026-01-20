@@ -14,19 +14,29 @@ import { InitiativeStatus } from '../types';
  * Valid status transitions map
  * Defines which statuses can transition to which other statuses
  */
+/**
+ * Valid status transitions map
+ * 
+ * Flow in Initiatives module: REVIEW -> APPROVED -> PLANNING
+ * Then: PLANNING -> EXECUTING (moves to Execution module)
+ */
 export const VALID_TRANSITIONS: Record<InitiativeStatus, InitiativeStatus[]> = {
-  [InitiativeStatus.DRAFT]: [InitiativeStatus.PLANNING, InitiativeStatus.CANCELLED],
-  [InitiativeStatus.PLANNING]: [
-    InitiativeStatus.REVIEW,
+  // DRAFT is created in Tools/Assessment, then submitted for REVIEW
+  [InitiativeStatus.DRAFT]: [InitiativeStatus.REVIEW, InitiativeStatus.CANCELLED],
+  // REVIEW: awaiting Go/No-Go decision, can be approved or sent back to draft
+  [InitiativeStatus.REVIEW]: [
+    InitiativeStatus.APPROVED,
     InitiativeStatus.DRAFT,
     InitiativeStatus.CANCELLED,
   ],
-  [InitiativeStatus.REVIEW]: [
-    InitiativeStatus.APPROVED,
+  // APPROVED: awaiting Resources Commit and Schedule Lock, then moves to PLANNING
+  [InitiativeStatus.APPROVED]: [
     InitiativeStatus.PLANNING,
+    InitiativeStatus.REVIEW, // Can be sent back for re-review
     InitiativeStatus.CANCELLED,
   ],
-  [InitiativeStatus.APPROVED]: [InitiativeStatus.EXECUTING, InitiativeStatus.PLANNING],
+  // PLANNING: detailed planning, then moves to EXECUTING
+  [InitiativeStatus.PLANNING]: [InitiativeStatus.EXECUTING, InitiativeStatus.APPROVED],
   [InitiativeStatus.EXECUTING]: [
     InitiativeStatus.BLOCKED,
     InitiativeStatus.DONE,
@@ -73,8 +83,6 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
       InitiativeStatus.PLANNING,
       InitiativeStatus.REVIEW,
       InitiativeStatus.APPROVED,
-      InitiativeStatus.CANCELLED,
-      InitiativeStatus.ARCHIVED,
     ],
     color: 'purple',
   },
@@ -242,15 +250,16 @@ export function isStatusInModule(status: InitiativeStatus, moduleId: ModuleId): 
 
 /**
  * Get the progress percentage through the lifecycle
+ * Flow: DRAFT -> REVIEW -> APPROVED -> PLANNING -> EXECUTING -> DONE
  */
 export function getLifecycleProgress(status: InitiativeStatus): number {
   const progressMap: Record<InitiativeStatus, number> = {
     [InitiativeStatus.DRAFT]: 10,
-    [InitiativeStatus.PLANNING]: 25,
-    [InitiativeStatus.REVIEW]: 40,
-    [InitiativeStatus.APPROVED]: 50,
+    [InitiativeStatus.REVIEW]: 25,
+    [InitiativeStatus.APPROVED]: 40,
+    [InitiativeStatus.PLANNING]: 55,
     [InitiativeStatus.EXECUTING]: 70,
-    [InitiativeStatus.BLOCKED]: 60, // Same as executing but blocked
+    [InitiativeStatus.BLOCKED]: 65, // Same as executing but blocked
     [InitiativeStatus.DONE]: 100,
     [InitiativeStatus.CANCELLED]: 0,
     [InitiativeStatus.ARCHIVED]: 100,
@@ -260,13 +269,14 @@ export function getLifecycleProgress(status: InitiativeStatus): number {
 
 /**
  * Get the ordered list of statuses in the lifecycle
+ * Flow: DRAFT -> REVIEW -> APPROVED -> PLANNING -> EXECUTING -> DONE
  */
 export function getLifecycleOrder(): InitiativeStatus[] {
   return [
     InitiativeStatus.DRAFT,
-    InitiativeStatus.PLANNING,
     InitiativeStatus.REVIEW,
     InitiativeStatus.APPROVED,
+    InitiativeStatus.PLANNING,
     InitiativeStatus.EXECUTING,
     InitiativeStatus.DONE,
     InitiativeStatus.ARCHIVED,
@@ -304,18 +314,16 @@ export interface StatusAction {
   requiresReason?: boolean;
 }
 
+/**
+ * Get action buttons for a given status
+ * Flow: DRAFT -> REVIEW -> APPROVED -> PLANNING -> EXECUTING -> DONE
+ */
 export function getStatusActions(status: InitiativeStatus): StatusAction[] {
   const actions: StatusAction[] = [];
   const validNext = getValidNextStatuses(status);
 
-  // Primary actions (forward progress)
-  if (validNext.includes(InitiativeStatus.PLANNING)) {
-    actions.push({
-      label: 'Start Planning',
-      targetStatus: InitiativeStatus.PLANNING,
-      variant: 'primary',
-    });
-  }
+  // Primary actions (forward progress) - in workflow order
+  // DRAFT -> Submit for Review
   if (validNext.includes(InitiativeStatus.REVIEW)) {
     actions.push({
       label: 'Submit for Review',
@@ -323,9 +331,23 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
       variant: 'primary',
     });
   }
+  // REVIEW -> Approve (Go/No-Go gate)
   if (validNext.includes(InitiativeStatus.APPROVED)) {
-    actions.push({ label: 'Approve', targetStatus: InitiativeStatus.APPROVED, variant: 'primary' });
+    actions.push({
+      label: 'Approve',
+      targetStatus: InitiativeStatus.APPROVED,
+      variant: 'primary',
+    });
   }
+  // APPROVED -> Start Planning (Resources Commit + Schedule Lock gates)
+  if (validNext.includes(InitiativeStatus.PLANNING)) {
+    actions.push({
+      label: 'Start Planning',
+      targetStatus: InitiativeStatus.PLANNING,
+      variant: 'primary',
+    });
+  }
+  // PLANNING -> Start Execution
   if (validNext.includes(InitiativeStatus.EXECUTING)) {
     actions.push({
       label: 'Start Execution',
@@ -333,6 +355,7 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
       variant: 'primary',
     });
   }
+  // EXECUTING -> Mark Complete
   if (validNext.includes(InitiativeStatus.DONE)) {
     actions.push({
       label: 'Mark Complete',
@@ -340,6 +363,7 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
       variant: 'primary',
     });
   }
+  // DONE/CANCELLED -> Archive
   if (validNext.includes(InitiativeStatus.ARCHIVED)) {
     actions.push({
       label: 'Archive',
@@ -349,6 +373,7 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
   }
 
   // Secondary actions (backward or alternative)
+  // Can return to DRAFT from REVIEW
   if (validNext.includes(InitiativeStatus.DRAFT) && status !== InitiativeStatus.DRAFT) {
     actions.push({
       label: 'Return to Draft',
@@ -356,6 +381,23 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
       variant: 'secondary',
     });
   }
+  // Can return to REVIEW from APPROVED
+  if (validNext.includes(InitiativeStatus.REVIEW) && status === InitiativeStatus.APPROVED) {
+    actions.push({
+      label: 'Send Back to Review',
+      targetStatus: InitiativeStatus.REVIEW,
+      variant: 'secondary',
+    });
+  }
+  // Can return to APPROVED from PLANNING
+  if (validNext.includes(InitiativeStatus.APPROVED) && status === InitiativeStatus.PLANNING) {
+    actions.push({
+      label: 'Return to Approved',
+      targetStatus: InitiativeStatus.APPROVED,
+      variant: 'secondary',
+    });
+  }
+  // Mark as blocked (in EXECUTING)
   if (validNext.includes(InitiativeStatus.BLOCKED)) {
     actions.push({
       label: 'Mark Blocked',
@@ -364,6 +406,7 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
       requiresReason: true,
     });
   }
+  // Cancel
   if (validNext.includes(InitiativeStatus.CANCELLED)) {
     actions.push({
       label: 'Cancel',

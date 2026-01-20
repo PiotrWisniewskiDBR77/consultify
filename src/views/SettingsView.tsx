@@ -179,13 +179,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 }) => {
   const { setCurrentView } = useAppStore();
   const { t } = useTranslation();
-  const [activeSection, setActiveSection] = useState<SettingsSection>('profile');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Handle section change
+  // Get section from URL path
+  const location = typeof window !== 'undefined' ? window.location.pathname : '';
+  const pathSection = location.replace('/settings/', '').replace(/^\/+|\/+$/g, '') || 'profile';
+  const activeSection = (Object.keys(sectionMeta).includes(pathSection) ? pathSection : 'profile') as SettingsSection;
+
+  // Handle section change - update URL
   const handleSectionChange = useCallback((section: SettingsSection) => {
-    setActiveSection(section);
-    // Close sidebar on mobile after selection
+    window.history.pushState({}, '', `/settings/${section}`);
+    // Force re-render by triggering state change
     setSidebarOpen(false);
   }, []);
 

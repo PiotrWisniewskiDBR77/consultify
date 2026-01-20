@@ -11,17 +11,147 @@
     "back": "Zurück",
     "next": "Weiter",
     "previous": "Vorherige",
-    "of": "von"
+    "of": "von",
+    "add": "Hinzufügen",
+    "remove": "Entfernen",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "sort": "Sortieren",
+    "view": "Ansicht",
+    "download": "Herunterladen",
+    "upload": "Hochladen",
+    "submit": "Absenden",
+    "confirm": "Bestätigen",
+    "yes": "Ja",
+    "no": "Nein"
   },
   "sidebar": {
     "dashboard": "Dashboard",
     "settings": "Einstellungen",
     "help": "Hilfe",
-    "knowledge": "Wissensdatenbank"
+    "knowledge": "Wissensdatenbank",
+    "organization": "Organisation",
+    "adminPanel": "Admin-Panel",
+    "logOut": "Abmelden",
+    "chat": "KI-Chat",
+    "aiChat": "Chat",
+    "myWork": "Meine Arbeit",
+    "interview": "Interview",
+    "tools": "Werkzeuge",
+    "discoveryTools": "Werkzeuge",
+    "assessment": "Bewertung",
+    "assessmentOverview": "Übersicht",
+    "myAssessments": "Meine Bewertungen",
+    "reviewerDashboard": "Prüfer-Dashboard",
+    "initiatives": "Initiativen",
+    "execution": "Ausführung",
+    "benefits": "Vorteile",
+    "economics": "Wirtschaftlichkeit",
+    "reports": "Berichte",
+    "partnerPortal": "Partnerportal"
+  },
+  "widgets": {
+    "help": {
+      "title": "Hilfezentrum",
+      "tooltip": "Hilfezentrum"
+    },
+    "feedback": {
+      "title": "Feedback",
+      "tooltip": "Feedback"
+    },
+    "documents": {
+      "title": "Dokumente",
+      "tooltip": "Dokumente"
+    }
+  },
+  "myWork": {
+    "title": "Meine Arbeit",
+    "inbox": "Posteingang",
+    "focus": "Fokus",
+    "calendar": "Kalender",
+    "tasks": "Aufgaben"
+  },
+  "step1": {
+    "title": "Schritt 1"
+  },
+  "interview": {
+    "title": "Discovery-Interview",
+    "newSession": "Neue Sitzung",
+    "history": "Verlauf",
+    "categories": {
+      "strategy": "Strategie",
+      "operations": "Betrieb",
+      "digital": "Digital",
+      "people": "Personal",
+      "finance": "Finanzen"
+    },
+    "tabs": {
+      "questions": "Fragen",
+      "notes": "Notizen",
+      "evidence": "Nachweise",
+      "summary": "Zusammenfassung"
+    },
+    "actions": {
+      "addQuestion": "Frage hinzufügen",
+      "addNote": "Notiz hinzufügen",
+      "complete": "Interview abschließen"
+    },
+    "status": {
+      "inProgress": "In Bearbeitung",
+      "completed": "Abgeschlossen",
+      "archived": "Archiviert"
+    },
+    "companyFacts": {
+      "title": "Unternehmensdaten",
+      "profile": "Unternehmensprofil",
+      "metrics": "Kennzahlen",
+      "stakeholders": "Stakeholder",
+      "gaps": "Informationslücken"
+    }
+  },
+  "assessment": {
+    "title": "Bewertung",
+    "overview": "Übersicht",
+    "drd": "DRD-Bewertung",
+    "siri": "SIRI-Framework",
+    "adma": "ADMA-Framework",
+    "cmmi": "CMMI-Framework",
+    "lean": "Lean 4.0"
+  },
+  "initiatives": {
+    "title": "Initiativen",
+    "roadmap": "Roadmap",
+    "portfolio": "Portfolio"
+  },
+  "execution": {
+    "title": "Ausführungszentrum",
+    "dashboard": "Dashboard",
+    "calendar": "Kalender",
+    "decisions": "Entscheidungen"
+  },
+  "benefits": {
+    "title": "Nutzenrealisierung",
+    "kpis": "KPIs",
+    "lessons": "Lessons Learned"
+  },
+  "economics": {
+    "title": "Wirtschaftlichkeit",
+    "analysis": "Analyse",
+    "scenarios": "Szenarien"
+  },
+  "reports": {
+    "title": "Berichte",
+    "management": "Managementberichte",
+    "assessment": "Bewertungsberichte"
   },
   "auth": {
     "logIn": "Anmelden",
-    "welcomeBack": "Willkommen zurück"
+    "logOut": "Abmelden",
+    "welcomeBack": "Willkommen zurück",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "forgotPassword": "Passwort vergessen?",
+    "register": "Registrieren"
   },
   "help": {
     "title": "Hilfezentrum",
@@ -38,7 +168,7 @@
       "shareArticle": "Artikel teilen",
       "featured": "Empfohlen",
       "popular": "Beliebt",
-      "recent": "Neueste",
+      "recent": "Aktuell",
       "readMore": "Mehr lesen",
       "backToLibrary": "Zurück zur Bibliothek",
       "categories": "Kategorien",
@@ -51,10 +181,20 @@
       "feedbackThanks": "Danke für Ihr Feedback!",
       "relatedArticles": "Verwandte Artikel",
       "gettingStarted": "Erste Schritte",
-      "tutorials": "Tutorials",
+      "tutorials": "Anleitungen",
       "bestPractices": "Best Practices",
-      "faq": "Häufig gestellte Fragen",
+      "faq": "FAQ",
       "troubleshooting": "Fehlerbehebung"
     }
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "profile": "Profil",
+    "billing": "Abrechnung",
+    "ai": "KI-Einstellungen",
+    "notifications": "Benachrichtigungen",
+    "integrations": "Integrationen",
+    "security": "Sicherheit",
+    "appearance": "Erscheinungsbild"
   }
 }

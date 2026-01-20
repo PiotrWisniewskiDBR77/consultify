@@ -6,14 +6,30 @@
 1. **Tools** - ~95% zgodności (szczegóły: `ANALIZA_ZGODNOSCI_IMPLEMENTACJI.md`)
 
 ### ❌ Do wdrożenia (w kolejności priorytetów)
-1. Assessment (+ Interview jako część)
-2. Initiatives + Roadmap
-3. Execution Center
-4. Benefits (do dodania plan)
-5. Economic Analysis
-6. Reporting
-7. Decision Management
-8. System Integration (end-to-end)
+1. **Interview** - PRZEBUDOWA (5 kategorii, ClickUp-like UI)
+2. **Assessment** - DRD + SIRI pełne, ADMA/CMMI/Lean = Coming soon
+3. **Initiatives + Roadmap** - 4 widoki, drawer 50%, harmonogram
+4. **Execution Center** - 5 widoków, Gantt, RAID, Portfolio Health
+5. **Benefits** - monitoring efektów, rozliczenie
+6. **Economic Analysis** - scenariusze, powiązanie z inicjatywami
+7. **Reporting** - generator, PDF/PPTX, schedule
+8. **Decision Management** - unified model, eskalacje
+9. **System Integration** - end-to-end flow
+
+### 📊 Przepływ statusów inicjatyw
+```
+INTERVIEW → TOOLS/ASSESSMENT → INITIATIVES → EXECUTION → BENEFITS
+              (DRAFT, PLANNING)   (REVIEW,      (EXECUTING,   (DONE)
+                                  APPROVED,     BLOCKED,
+                                  PLANNING)     CANCELLED)
+```
+
+### 🎨 Standard UI/UX (obowiązuje wszystkie moduły)
+- Interfejs ClickUp-like: lewy sidebar, środek, prawy panel
+- Dynamiczne menu: max 6 otwartych elementów
+- Drawer inicjatyw: 50% viewport + "Open wider"
+- Spójne przyciski, kolory, typografia
+- Task-list pattern dla list
 
 ---
 
@@ -189,46 +205,59 @@ ZADANIE: Wdrożenie Execution Center zgodnie z planem wdrozenia/plan-execution-c
 PRZECZYTAJ NAJPIERW:
 1. wdrozenia/plan-execution-center.md (pełna specyfikacja)
 2. src/components/Execution/ (istniejące komponenty)
-3. src/components/MyWork/ (wzorce task management)
+3. src/components/Initiatives/ (wzorzec UI)
+4. server/src/controllers/InitiativeController.ts (istniejący controller)
 
-CEL: Centralne miejsce realizacji inicjatyw i tasków.
-Dwa poziomy pracy: Initiatives -> Tasks + decyzje jako osobny byt.
+CEL: Centralne miejsce realizacji inicjatyw i zarządzania projektami.
+To tu trafiają inicjatywy po zatwierdzeniu w Initiatives (status EXECUTING).
+Wzorowane na najlepszych narzędziach: Asana, ClickUp, Jira, monday, Wrike.
 
 KLUCZOWE WYMAGANIE:
 Moduł pokazuje TYLKO statusy: EXECUTING, BLOCKED, DONE, CANCELLED, ARCHIVED
-DONE przechodzi do Benefits, reszta wraca do Initiatives jako historyczne.
+- DONE -> przechodzi do Benefits
+- BLOCKED/CANCELLED/ARCHIVED -> wraca do Initiatives (historycznie)
 
 ZAKRES WDROŻENIA:
 1. 5 widoków: Lista, Kanban, Kafle, Timeline (Gantt), Kalendarz
-2. Dwa poziomy: Initiatives i zagnieżdżone Tasks
-3. Decyzje powiązane z initiative LUB task
-4. Portfolio Health dashboard
-5. Identyfikacja opóźnień z decyzji
-6. Eskalacje przy overdue decisions
+2. Dashboard Portfolio Health (góra ekranu)
+3. Dwa poziomy pracy: Initiatives -> Tasks
+4. Decyzje powiązane z Initiative lub Task
+5. RAID Log (Risks, Assumptions, Issues, Dependencies)
+6. Alerty: overdue, blockers, high-risk
 
-WORKFLOW STATUSÓW:
-EXECUTING -> BLOCKED/DONE/CANCELLED/ARCHIVED
-(DONE -> Benefits, reszta -> Initiatives historyczne)
+WORKFLOW STATUSÓW (w tym module):
+EXECUTING -> BLOCKED / DONE / CANCELLED / ARCHIVED
+(DONE przechodzi do Benefits, reszta wraca do Initiatives)
 
 GATE DECISIONS:
 - Scope Change (owner: Sponsor/PMO)
 - Risk Acceptance (owner: Sponsor/PMO)
 - Blocker Resolution (owner: Project Lead)
-- Phase Transition (Plan/Pilot/Scale)
+- Phase Transition (Plan -> Pilot -> Scale)
+
+PORTFOLIO HEALTH DASHBOARD:
+- % initiatives on track / at risk
+- Liczba blockers
+- Decyzje opóźnione (overdue)
+- Budget health
+- Średni postęp
 
 DELIVERABLES:
 1. Frontend:
    - src/components/Execution/ExecutionDashboard.tsx
+   - src/components/Execution/ExecutionHub.tsx (główny kontener)
    - src/components/Execution/ExecutionList.tsx
    - src/components/Execution/ExecutionKanban.tsx
+   - src/components/Execution/ExecutionTiles.tsx
    - src/components/Execution/ExecutionTimeline.tsx (Gantt)
    - src/components/Execution/ExecutionCalendar.tsx
    - src/components/Execution/TaskList.tsx
+   - src/components/Execution/RAIDLog.tsx
    - src/components/Execution/DecisionPanel.tsx
    - src/components/Execution/PortfolioHealth.tsx
 
 2. Backend:
-   - server/src/controllers/ExecutionController.ts
+   - server/src/controllers/ExecutionController.ts (rozbudowa)
    - server/src/routes/execution.routes.ts
    - server/migrations/XXX_execution_center.sql
 
@@ -237,19 +266,96 @@ DELIVERABLES:
 
 KRYTERIA AKCEPTACJI:
 - [ ] Wszystkie 5 widoków działa
+- [ ] Portfolio Health dashboard pokazuje metryki
 - [ ] Initiatives i Tasks zarządzane w jednym miejscu
 - [ ] Decyzje powiązane z initiative/task
 - [ ] Overdue decisions generują alerty
-- [ ] Portfolio Health pokazuje % on track, blockers, budget
 - [ ] Timeline (Gantt) pokazuje dependencies
-- [ ] Kalendarz pokazuje deadlines decyzji i tasków
+- [ ] Kalendarz pokazuje deadlines
+- [ ] RAID Log działa
+- [ ] Drag & drop w Kanban zmienia status
 
-PORTFOLIO HEALTH (kluczowe metryki):
-- % initiatives on track / at risk
-- Liczba blockers
-- Decyzje opóźnione (overdue)
-- Budget health
-- Średni postęp
+STANDARD UI/UX:
+Spójność z pozostałymi modułami:
+- Ten sam dynamiczny pasek nawigacji (max 6 otwartych)
+- Te same przyciski i style
+- Ten sam pattern drawer (50%) + open wider
+- Dashboard na górze ekranu
+```
+
+---
+
+## 🎯 PROMPT 3.5: MODUŁ BENEFITS (Rozliczenie)
+
+### Kontekst dla agenta
+
+```
+ZADANIE: Wdrożenie modułu Benefits do nadzoru i rozliczenia zakończonych inicjatyw
+
+PRZECZYTAJ NAJPIERW:
+1. src/components/Execution/ (wzorzec UI)
+2. src/views/BenefitsRealizationView.tsx (istniejący widok)
+3. server/src/controllers/InitiativeController.ts
+
+CEL: Monitoring efektów i rozliczenie zakończonych inicjatyw (status DONE).
+Tu trafiają inicjatywy po zakończeniu realizacji w Execution Center.
+
+KLUCZOWE WYMAGANIE:
+Moduł pokazuje TYLKO status: DONE
+- Inicjatywa może zmienić status na BLOCKED/ARCHIVED -> wraca do Initiatives
+
+ZAKRES WDROŻENIA:
+1. Lista inicjatyw DONE z metrykami
+2. Dashboard efektów (planned vs actual)
+3. Evidence (dowody realizacji)
+4. Benefit tracking per inicjatywa
+5. Możliwość zmiany statusu (BLOCKED, ARCHIVED)
+
+WORKFLOW:
+DONE (z Execution) -> monitoring w Benefits
+- Jeśli problemy: BLOCKED -> wraca do Initiatives
+- Jeśli zamknięte: ARCHIVED -> historyczne w Initiatives
+
+GATE DECISIONS:
+- Benefit Acceptance (owner: Sponsor/PMO)
+- Close vs Archive (owner: PMO)
+
+METRYKI DO ŚLEDZENIA:
+- ROI (planned vs actual)
+- Savings (planned vs actual)
+- Time to value
+- User adoption
+- Business impact score
+
+DELIVERABLES:
+1. Frontend:
+   - src/components/Benefits/BenefitsList.tsx
+   - src/components/Benefits/BenefitsDashboard.tsx
+   - src/components/Benefits/BenefitTracking.tsx
+   - src/components/Benefits/BenefitMetrics.tsx
+   - src/components/Benefits/EvidencePanel.tsx
+   - src/views/BenefitsView.tsx (refactor)
+
+2. Backend:
+   - server/src/controllers/BenefitsController.ts
+   - server/src/routes/benefits.routes.ts
+   - server/migrations/XXX_benefits_tracking.sql
+
+3. Testy:
+   - tests/e2e/benefits-tracking.spec.ts
+
+KRYTERIA AKCEPTACJI:
+- [ ] Lista inicjatyw DONE wyświetla się poprawnie
+- [ ] Dashboard pokazuje planned vs actual
+- [ ] Evidence można dodawać i przeglądać
+- [ ] Zmiana statusu na BLOCKED/ARCHIVED działa
+- [ ] Metryki ROI/Savings wyliczają się poprawnie
+
+STANDARD UI/UX:
+Spójność z pozostałymi modułami:
+- Ten sam dynamiczny pasek nawigacji
+- Te same przyciski i style
+- Ten sam pattern drawer (50%) + open wider
 ```
 
 ---
@@ -565,39 +671,111 @@ REGUŁY WIDOCZNOŚCI:
 
 ---
 
-## 🎯 PROMPT 8: INTERVIEW MODULE (opcjonalny)
+## 🎯 PROMPT 8: MODUŁ INTERVIEW (Discovery) - WYMAGANY
 
 ### Kontekst dla agenta
 
 ```
-ZADANIE: Rozbudowa Interview jako pierwszy krok w procesie Discovery
+ZADANIE: PEŁNA PRZEBUDOWA modułu Interview jako pierwszy krok Discovery
 
 PRZECZYTAJ NAJPIERW:
-1. wdrozenia/plan-system-integration-flow.md (sekcja Interview)
-2. src/components/AIInterviewModal.tsx (istniejący komponent)
-3. src/components/Intelligence/InterviewProgress.tsx (istniejący)
+1. src/views/InterviewView.tsx (istniejący - do przebudowy)
+2. src/components/Interview/ (istniejące - do przebudowy)
+3. src/components/DiscoveryTools/ (wzorzec UI - ClickUp-like)
+4. server/src/controllers/InterviewController.ts (istniejący)
+5. server/src/routes/interview.routes.ts (istniejące)
 
-CEL: Interview zbiera kontekst organizacji przed Tools/Assessment.
-To opcjonalny, ale wartościowy krok w procesie.
+CEL: Interview zbiera kontekst organizacji "as-is" przed Tools/Assessment.
+TYLKO FAKTY - bez rekomendacji, planów działań, analiz.
+To WYMAGANY pierwszy krok w procesie Discovery.
 
-ISTNIEJĄCA IMPLEMENTACJA:
-- AIInterviewModal - modal z AI dla osi assessment
-- InterviewProgress - progress bar kategorii
+UWAGA: Obecna implementacja jest przestarzała i wymaga PEŁNEJ PRZEBUDOWY UI/UX.
+Nowy interfejs ma być wzorowany na ClickUp (task-list style).
 
-ROZSZERZENIE (jeśli potrzebne):
-1. Osobny widok Interview (nie tylko modal)
-2. Zapisywanie kontekstu organizacji
-3. Przekazywanie kontekstu do Tools/Assessment
-4. Historia wywiadów per organizacja
+5 KATEGORII WYWIADU (nie 8!):
+1. Strategy - cele biznesowe, wizja, kierunki strategiczne
+2. Operations - procesy operacyjne, efektywność, bottlenecki
+3. Digital - dojrzałość cyfrowa, systemy IT, automatyzacja
+4. People - kompetencje, kultura, gotowość na zmiany
+5. Finance - budżety, ograniczenia finansowe, ROI expectations
 
-DELIVERABLES (jeśli wdrażany):
-1. src/views/InterviewView.tsx
-2. src/components/Interview/InterviewWorkspace.tsx
-3. server/src/controllers/InterviewController.ts
-4. server/migrations/XXX_interview_context.sql
+NOWA STRUKTURA UX (ClickUp-like):
+┌──────────────────────────────────────────────────────────────────┐
+│ TOP BAR: Session name | Status | Owner | Last updated           │
+├──────────────────────────────────────────────────────────────────┤
+│ TABS: [Questions] [Notes] [Evidence] [Summary]                   │
+├──────────────┬───────────────────────────────────┬───────────────┤
+│ LEFT SIDEBAR │     MAIN WORKSPACE                │ RIGHT PANEL   │
+│              │                                   │               │
+│ Categories:  │  Lista pytań (task-list style)   │ Company Facts │
+│ • Strategy   │  - Inline edit                   │ Key Metrics   │
+│ • Operations │  - Status per pytanie            │ Stakeholders  │
+│ • Digital    │  - Confidence score (1-5)        │ Open Gaps     │
+│ • People     │  - Owner (kto odpowiedział)      │               │
+│ • Finance    │  - Tags (risk, opportunity)      │               │
+└──────────────┴───────────────────────────────────┴───────────────┘
 
-UWAGA: Interview może być wdrożony jako część Assessment lub jako osobny moduł.
-Decyzja zależy od priorytetu - na razie Assessment ma wyższy priorytet.
+ZAKRES PRZEBUDOWY:
+1. Nowy layout ClickUp-like (lewy sidebar, środek, prawy panel)
+2. 4 taby: Questions, Notes, Evidence, Summary
+3. Lista pytań jako task-list (inline edit, statusy)
+4. Status per pytanie: Not started / In progress / Answered / Needs follow-up
+5. Confidence score (1-5) per pytanie
+6. Evidence panel (załączniki, linki)
+7. Summary view (auto-generowane + manual, BEZ rekomendacji)
+8. Company Facts panel (prawy sidebar)
+
+WORKFLOW SESJI:
+1. Użytkownik tworzy sesję Interview
+2. System proponuje szablon pytań per kategoria
+3. Użytkownik odpowiada - statusy zmieniają się automatycznie
+4. Na końcu generuje się Summary: "Current state snapshot"
+5. "Mark as Complete" -> zamyka etap Interview
+6. Kontekst dostępny w Tools/Assessment
+
+ZASADA: BRAK REKOMENDACJI
+W Summary tylko:
+- najważniejsze fakty (as-is)
+- główne luki informacyjne (gaps)
+- ryzyka i ograniczenia (constraints)
+- current pain points (opisowo)
+NIE MA: planów działań, rekomendacji, next steps
+
+DELIVERABLES:
+1. Frontend (PRZEBUDOWA):
+   - src/views/InterviewView.tsx (refactor)
+   - src/components/Interview/InterviewWorkspace.tsx (refactor)
+   - src/components/Interview/QuestionsList.tsx (nowy - task-list)
+   - src/components/Interview/NotesPanel.tsx (nowy)
+   - src/components/Interview/EvidencePanel.tsx (nowy)
+   - src/components/Interview/SummaryView.tsx (nowy)
+   - src/components/Interview/CompanyFactsPanel.tsx (nowy)
+   - src/components/Interview/CategorySidebar.tsx (nowy)
+
+2. Backend (rozbudowa):
+   - server/src/controllers/InterviewController.ts (rozbudowa)
+   - server/src/routes/interview.routes.ts (rozbudowa)
+   - server/migrations/XXX_interview_redesign.sql (update schema)
+
+3. Testy:
+   - tests/e2e/interview.spec.ts
+
+KRYTERIA AKCEPTACJI:
+- [ ] Nowy layout ClickUp-like działa
+- [ ] 5 kategorii (Strategy, Operations, Digital, People, Finance)
+- [ ] Lista pytań z inline edit i statusami
+- [ ] Confidence score per pytanie
+- [ ] Evidence panel działa (upload, links)
+- [ ] Summary generuje się BEZ rekomendacji
+- [ ] Kontekst przekazywany do Tools/Assessment
+- [ ] Historia sesji per organizacja
+
+STANDARD UI/UX:
+Spójność z pozostałymi modułami:
+- Ten sam dynamiczny pasek nawigacji (max 6 otwartych)
+- Te same przyciski i style  
+- Task-list pattern jak w ClickUp
+- Minimalizm, dużo przestrzeni
 ```
 
 ---
@@ -605,43 +783,59 @@ Decyzja zależy od priorytetu - na razie Assessment ma wyższy priorytet.
 ## 📋 KOLEJNOŚĆ WDROŻENIA (REKOMENDOWANA)
 
 ```
-FAZA 1 - Źródła inicjatyw (po Tools):
-1. Assessment (+ Interview jako część)
+FAZA 0 - Kontekst organizacji:
+0. Interview (PRZEBUDOWA - 5 kategorii, ClickUp-like UI)
+
+FAZA 1 - Źródła inicjatyw:
+1. Assessment (DRD + SIRI pełne, ADMA/CMMI/Lean = Coming soon)
 
 FAZA 2 - Centrum zarządzania:
-2. Initiatives + Roadmap
+2. Initiatives + Roadmap (4 widoki, drawer, harmonogram)
 
 FAZA 3 - Realizacja:
-3. Execution Center
-4. Benefits (do dodania plan)
+3. Execution Center (5 widoków, Gantt, RAID, Portfolio Health)
+4. Benefits (monitoring, rozliczenie)
 
 FAZA 4 - Wsparcie decyzji:
-5. Economic Analysis
-6. Reporting
+5. Economic Analysis (scenariusze, powiązanie z inicjatywami)
+6. Reporting (generator, PDF/PPTX, schedule)
 
 FAZA 5 - Warstwa przekrojowa:
-7. Decision Management (unified)
-8. System Integration (end-to-end)
+7. Decision Management (unified model, eskalacje)
+8. System Integration (end-to-end flow, testy)
 ```
+
+### 🔗 Zależności między modułami
+- Interview -> Tools/Assessment (kontekst)
+- Tools/Assessment -> Initiatives (inicjatywy DRAFT)
+- Initiatives -> Execution (inicjatywy EXECUTING)
+- Execution -> Benefits (inicjatywy DONE)
+- Economic Analysis -> może działać niezależnie LUB z inicjatywą
+- Reporting -> wymaga danych z wszystkich modułów
+- Decision Management -> przenika wszystkie moduły
 
 ---
 
 ## 🔧 JAK UŻYWAĆ TYCH PROMPTÓW
 
 ### Dla jednego agenta (sekwencyjnie):
-1. Wyślij prompt dla modułu 1 (Assessment)
-2. Poczekaj na implementację i audyt
-3. Wyślij prompt dla modułu 2 (Initiatives)
-4. itd.
+1. Wyślij PROMPT 8 (Interview) - PRZEBUDOWA UI
+2. Wyślij PROMPT 1 (Assessment)
+3. Wyślij PROMPT 2 (Initiatives)
+4. Wyślij PROMPT 3 (Execution)
+5. Wyślij PROMPT 3.5 (Benefits)
+6. Wyślij PROMPT 4-7 (pozostałe)
+7. itd.
 
 ### Dla wielu agentów (równolegle):
 Można uruchomić równolegle:
-- Agent A: Assessment
-- Agent B: Initiatives + Roadmap
+- Agent A: Interview (PROMPT 8)
+- Agent B: Assessment (PROMPT 1)
+- Agent C: Initiatives + Roadmap (PROMPT 2)
 
 NIE RÓWNOLEGLE (zależności):
-- Execution wymaga Initiatives
-- Benefits wymaga Execution
+- Execution wymaga Initiatives (czekaj na PROMPT 2)
+- Benefits wymaga Execution (czekaj na PROMPT 3)
 - Decision Management wymaga wszystkich modułów
 - System Integration wymaga wszystkich modułów
 
@@ -698,5 +892,28 @@ Po każdym module agent powinien wygenerować audyt:
 
 ---
 
-*Dokument wygenerowany: 2026-01-20*
-*Wersja: 1.0*
+## 📝 LISTA PROMPTÓW (spis treści)
+
+| # | Moduł | Priorytet | Status |
+|---|-------|-----------|--------|
+| 8 | **Interview** | 🔴 WYSOKI | PRZEBUDOWA - 5 kategorii, ClickUp UI |
+| 1 | **Assessment** | 🔴 WYSOKI | DRD + SIRI pełne |
+| 2 | **Initiatives + Roadmap** | 🔴 WYSOKI | 4 widoki, drawer, harmonogram |
+| 3 | **Execution Center** | 🔴 WYSOKI | 5 widoków, Gantt, RAID |
+| 3.5 | **Benefits** | 🟡 ŚREDNI | Monitoring, rozliczenie |
+| 4 | **Economic Analysis** | 🟡 ŚREDNI | Scenariusze, inicjatywy |
+| 5 | **Reporting** | 🔴 WYSOKI | Generator, PDF/PPTX |
+| 6 | **Decision Management** | 🔴 WYSOKI | Unified model, eskalacje |
+| 7 | **System Integration** | 🔴 WYSOKI | E2E flow, testy |
+
+---
+
+*Dokument zaktualizowany: 2026-01-20*
+*Wersja: 2.0*
+*Zmiany w v2.0:*
+- *Dodano PROMPT 3: Execution Center (brakowało)*
+- *Dodano PROMPT 3.5: Benefits (brakowało)*
+- *Zaktualizowano PROMPT 8: Interview (wymagany, 5 kategorii, przebudowa UI)*
+- *Dodano przepływ statusów inicjatyw*
+- *Dodano standard UI/UX*
+- *Zaktualizowano kolejność wdrożenia*

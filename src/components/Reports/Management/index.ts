@@ -3,6 +3,8 @@
 
 export { ExportControls } from './ExportControls';
 export { ManagementReportsView } from './ManagementReportsView';
+export { ReportsHub } from './ReportsHub';
+export { ReportGeneratorDrawer } from './ReportGeneratorDrawer';
 export { ReportHistoryTable } from './ReportHistoryTable';
 export { ReportTypeSelector } from './ReportTypeSelector';
 export { ReportTemplatesView } from './ReportTemplatesView';
@@ -27,3 +29,4 @@ export {
   ReportSkeletonCompact,
 } from './shared/ReportSkeleton';
 export { TaskListSection } from './shared/TaskListSection';
+export { DecisionsRequiredSection } from './shared/DecisionsRequiredSection';

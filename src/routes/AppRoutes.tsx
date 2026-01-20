@@ -152,9 +152,14 @@ const UserDashboardView = React.lazy(() =>
   import('../views/UserDashboardView').then((m) => ({ default: m.UserDashboardView }))
 );
 
-// Project Intelligence
+// Project Intelligence (legacy)
 const ProjectIntelligenceView = React.lazy(() =>
   import('@/views/ProjectIntelligenceView').then((m) => ({ default: m.ProjectIntelligenceView }))
+);
+
+// Interview Module (new)
+const InterviewView = React.lazy(() =>
+  import('@/views/InterviewView').then((m) => ({ default: m.InterviewView }))
 );
 
 // AI Actions
@@ -621,27 +626,24 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Interview (formerly Project Intelligence) */}
+        {/* Interview Module */}
         <Route
-          path={ROUTES.PROJECT_INTELLIGENCE}
+          path={ROUTES.INTERVIEW}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Interview']}>
+            <MainLayout breadcrumbs={breadcrumbs || ['Interview']} noPadding>
               <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <ProjectIntelligenceView />
-                </AnimationWrapper>
+                <InterviewView />
               </RouteErrorBoundary>
             </MainLayout>
           }
         />
+        {/* Project Intelligence (legacy - redirects to Interview) */}
         <Route
-          path={ROUTES.INTERVIEW}
+          path={ROUTES.PROJECT_INTELLIGENCE}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Interview']}>
+            <MainLayout breadcrumbs={breadcrumbs || ['Interview']} noPadding>
               <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <ProjectIntelligenceView />
-                </AnimationWrapper>
+                <InterviewView />
               </RouteErrorBoundary>
             </MainLayout>
           }

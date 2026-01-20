@@ -11,17 +11,147 @@
     "back": "Back",
     "next": "Next",
     "previous": "Previous",
-    "of": "of"
+    "of": "of",
+    "add": "Add",
+    "remove": "Remove",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "view": "View",
+    "download": "Download",
+    "upload": "Upload",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No"
   },
   "sidebar": {
     "dashboard": "Dashboard",
     "settings": "Settings",
     "help": "Help",
-    "knowledge": "Knowledge Base"
+    "knowledge": "Knowledge Base",
+    "organization": "Organization",
+    "adminPanel": "Admin Panel",
+    "logOut": "Log Out",
+    "chat": "AI Chat",
+    "aiChat": "Chat",
+    "myWork": "My Work",
+    "interview": "Interview",
+    "tools": "Tools",
+    "discoveryTools": "Tools",
+    "assessment": "Assessment",
+    "assessmentOverview": "Overview",
+    "myAssessments": "My Assessments",
+    "reviewerDashboard": "Reviewer Dashboard",
+    "initiatives": "Initiatives",
+    "execution": "Execution",
+    "benefits": "Benefits",
+    "economics": "Economics",
+    "reports": "Reports",
+    "partnerPortal": "Partner Portal"
+  },
+  "widgets": {
+    "help": {
+      "title": "Help Center",
+      "tooltip": "Help Center"
+    },
+    "feedback": {
+      "title": "Feedback",
+      "tooltip": "Feedback"
+    },
+    "documents": {
+      "title": "Documents",
+      "tooltip": "Documents"
+    }
+  },
+  "myWork": {
+    "title": "My Work",
+    "inbox": "Inbox",
+    "focus": "Focus",
+    "calendar": "Calendar",
+    "tasks": "Tasks"
+  },
+  "step1": {
+    "title": "Step 1"
+  },
+  "interview": {
+    "title": "Discovery Interview",
+    "newSession": "New Session",
+    "history": "History",
+    "categories": {
+      "strategy": "Strategy",
+      "operations": "Operations",
+      "digital": "Digital",
+      "people": "People",
+      "finance": "Finance"
+    },
+    "tabs": {
+      "questions": "Questions",
+      "notes": "Notes",
+      "evidence": "Evidence",
+      "summary": "Summary"
+    },
+    "actions": {
+      "addQuestion": "Add question",
+      "addNote": "Add note",
+      "complete": "Complete Interview"
+    },
+    "status": {
+      "inProgress": "In Progress",
+      "completed": "Completed",
+      "archived": "Archived"
+    },
+    "companyFacts": {
+      "title": "Company Facts",
+      "profile": "Company Profile",
+      "metrics": "Key Metrics",
+      "stakeholders": "Stakeholders",
+      "gaps": "Open Gaps"
+    }
+  },
+  "assessment": {
+    "title": "Assessment",
+    "overview": "Overview",
+    "drd": "DRD Assessment",
+    "siri": "SIRI Framework",
+    "adma": "ADMA Framework",
+    "cmmi": "CMMI Framework",
+    "lean": "Lean 4.0"
+  },
+  "initiatives": {
+    "title": "Initiatives",
+    "roadmap": "Roadmap",
+    "portfolio": "Portfolio"
+  },
+  "execution": {
+    "title": "Execution Center",
+    "dashboard": "Dashboard",
+    "calendar": "Calendar",
+    "decisions": "Decisions"
+  },
+  "benefits": {
+    "title": "Benefits Realization",
+    "kpis": "KPIs",
+    "lessons": "Lessons Learned"
+  },
+  "economics": {
+    "title": "Economics",
+    "analysis": "Analysis",
+    "scenarios": "Scenarios"
+  },
+  "reports": {
+    "title": "Reports",
+    "management": "Management Reports",
+    "assessment": "Assessment Reports"
   },
   "auth": {
     "logIn": "Log in",
-    "welcomeBack": "Welcome back"
+    "logOut": "Log out",
+    "welcomeBack": "Welcome back",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "register": "Register"
   },
   "help": {
     "title": "Help Center",
@@ -56,5 +186,15 @@
       "faq": "FAQ",
       "troubleshooting": "Troubleshooting"
     }
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "billing": "Billing",
+    "ai": "AI Settings",
+    "notifications": "Notifications",
+    "integrations": "Integrations",
+    "security": "Security",
+    "appearance": "Appearance"
   }
 }

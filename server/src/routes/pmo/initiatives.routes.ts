@@ -190,4 +190,48 @@ router.get('/:id/kpis', InitiativeController.getInitiativeKpis);
  */
 router.post('/:id/kpis', InitiativeController.createInitiativeKpi);
 
+// ==========================================
+// ROADMAP MODULE: MILESTONES ENDPOINTS
+// ==========================================
+
+/**
+ * GET /api/initiatives/:id/milestones
+ * Get all milestones for an initiative
+ */
+router.get('/:id/milestones', InitiativeController.getMilestones);
+
+/**
+ * POST /api/initiatives/:id/milestones
+ * Create a new milestone for an initiative
+ */
+router.post('/:id/milestones', InitiativeController.createMilestone);
+
+/**
+ * PUT /api/initiatives/:id/milestones/:milestoneId
+ * Update a milestone
+ */
+router.put('/:id/milestones/:milestoneId', InitiativeController.updateMilestone);
+
+/**
+ * DELETE /api/initiatives/:id/milestones/:milestoneId
+ * Delete a milestone
+ */
+router.delete('/:id/milestones/:milestoneId', InitiativeController.deleteMilestone);
+
+// ==========================================
+// ROADMAP MODULE: RESOURCES ENDPOINTS
+// ==========================================
+
+/**
+ * GET /api/initiatives/:id/resources
+ * Get resources allocated to an initiative
+ */
+router.get('/:id/resources', InitiativeController.getResources);
+
+/**
+ * POST /api/initiatives/:id/resources
+ * Add a resource to an initiative
+ */
+router.post('/:id/resources', InitiativeController.addResource);
+
 export default router;

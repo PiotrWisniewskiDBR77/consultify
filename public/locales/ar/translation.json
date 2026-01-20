@@ -11,17 +11,147 @@
     "back": "رجوع",
     "next": "التالي",
     "previous": "السابق",
-    "of": "من"
+    "of": "من",
+    "add": "إضافة",
+    "remove": "إزالة",
+    "search": "بحث",
+    "filter": "تصفية",
+    "sort": "ترتيب",
+    "view": "عرض",
+    "download": "تحميل",
+    "upload": "رفع",
+    "submit": "إرسال",
+    "confirm": "تأكيد",
+    "yes": "نعم",
+    "no": "لا"
   },
   "sidebar": {
     "dashboard": "لوحة التحكم",
     "settings": "الإعدادات",
     "help": "المساعدة",
-    "knowledge": "قاعدة المعرفة"
+    "knowledge": "قاعدة المعرفة",
+    "organization": "المنظمة",
+    "adminPanel": "لوحة الإدارة",
+    "logOut": "تسجيل الخروج",
+    "chat": "محادثة الذكاء الاصطناعي",
+    "aiChat": "محادثة",
+    "myWork": "عملي",
+    "interview": "مقابلة",
+    "tools": "أدوات",
+    "discoveryTools": "أدوات",
+    "assessment": "تقييم",
+    "assessmentOverview": "نظرة عامة",
+    "myAssessments": "تقييماتي",
+    "reviewerDashboard": "لوحة المراجع",
+    "initiatives": "المبادرات",
+    "execution": "التنفيذ",
+    "benefits": "الفوائد",
+    "economics": "الاقتصاد",
+    "reports": "التقارير",
+    "partnerPortal": "بوابة الشركاء"
+  },
+  "widgets": {
+    "help": {
+      "title": "مركز المساعدة",
+      "tooltip": "مركز المساعدة"
+    },
+    "feedback": {
+      "title": "ملاحظات",
+      "tooltip": "ملاحظات"
+    },
+    "documents": {
+      "title": "المستندات",
+      "tooltip": "المستندات"
+    }
+  },
+  "myWork": {
+    "title": "عملي",
+    "inbox": "البريد الوارد",
+    "focus": "التركيز",
+    "calendar": "التقويم",
+    "tasks": "المهام"
+  },
+  "step1": {
+    "title": "الخطوة 1"
+  },
+  "interview": {
+    "title": "مقابلة الاكتشاف",
+    "newSession": "جلسة جديدة",
+    "history": "التاريخ",
+    "categories": {
+      "strategy": "الاستراتيجية",
+      "operations": "العمليات",
+      "digital": "الرقمي",
+      "people": "الموارد البشرية",
+      "finance": "المالية"
+    },
+    "tabs": {
+      "questions": "الأسئلة",
+      "notes": "الملاحظات",
+      "evidence": "الأدلة",
+      "summary": "الملخص"
+    },
+    "actions": {
+      "addQuestion": "إضافة سؤال",
+      "addNote": "إضافة ملاحظة",
+      "complete": "إكمال المقابلة"
+    },
+    "status": {
+      "inProgress": "قيد التنفيذ",
+      "completed": "مكتمل",
+      "archived": "مؤرشف"
+    },
+    "companyFacts": {
+      "title": "بيانات الشركة",
+      "profile": "ملف الشركة",
+      "metrics": "المقاييس الرئيسية",
+      "stakeholders": "أصحاب المصلحة",
+      "gaps": "فجوات المعلومات"
+    }
+  },
+  "assessment": {
+    "title": "التقييم",
+    "overview": "نظرة عامة",
+    "drd": "تقييم DRD",
+    "siri": "إطار SIRI",
+    "adma": "إطار ADMA",
+    "cmmi": "إطار CMMI",
+    "lean": "لين 4.0"
+  },
+  "initiatives": {
+    "title": "المبادرات",
+    "roadmap": "خارطة الطريق",
+    "portfolio": "المحفظة"
+  },
+  "execution": {
+    "title": "مركز التنفيذ",
+    "dashboard": "لوحة التحكم",
+    "calendar": "التقويم",
+    "decisions": "القرارات"
+  },
+  "benefits": {
+    "title": "تحقيق الفوائد",
+    "kpis": "مؤشرات الأداء",
+    "lessons": "الدروس المستفادة"
+  },
+  "economics": {
+    "title": "الاقتصاد",
+    "analysis": "التحليل",
+    "scenarios": "السيناريوهات"
+  },
+  "reports": {
+    "title": "التقارير",
+    "management": "تقارير الإدارة",
+    "assessment": "تقارير التقييم"
   },
   "auth": {
     "logIn": "تسجيل الدخول",
-    "welcomeBack": "مرحباً بعودتك"
+    "logOut": "تسجيل الخروج",
+    "welcomeBack": "مرحباً بعودتك",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "register": "تسجيل"
   },
   "help": {
     "title": "مركز المساعدة",
@@ -39,7 +169,7 @@
       "featured": "مميز",
       "popular": "شائع",
       "recent": "حديث",
-      "readMore": "اقرأ المزيد",
+      "readMore": "قراءة المزيد",
       "backToLibrary": "العودة إلى المكتبة",
       "categories": "الفئات",
       "articles": "المقالات",
@@ -51,10 +181,20 @@
       "feedbackThanks": "شكراً لملاحظاتك!",
       "relatedArticles": "مقالات ذات صلة",
       "gettingStarted": "البدء",
-      "tutorials": "دروس تعليمية",
+      "tutorials": "الدروس",
       "bestPractices": "أفضل الممارسات",
       "faq": "الأسئلة الشائعة",
-      "troubleshooting": "استكشاف الأخطاء وإصلاحها"
+      "troubleshooting": "استكشاف الأخطاء"
     }
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "profile": "الملف الشخصي",
+    "billing": "الفواتير",
+    "ai": "إعدادات الذكاء الاصطناعي",
+    "notifications": "الإشعارات",
+    "integrations": "التكاملات",
+    "security": "الأمان",
+    "appearance": "المظهر"
   }
 }

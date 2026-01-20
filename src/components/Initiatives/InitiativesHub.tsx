@@ -18,10 +18,11 @@ import { InitiativeStatus, PortfolioFilters, PortfolioInitiative } from '../../t
 // Initiative Card component
 import { InitiativeCard } from '../InitiativeCard';
 // Portfolio view components
-import { InitiativeSidePanel } from '../Portfolio/InitiativeSidePanel';
 import { PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
 import { PortfolioListView } from '../Portfolio/PortfolioListView';
 import { PortfolioMatrixView } from '../Portfolio/PortfolioMatrixView';
+// New Initiative Drawer (50% width with Open wider)
+import { InitiativeDrawer } from './InitiativeDrawer';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
 // ModuleHub components
 import {
@@ -512,17 +513,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         <div className="flex-1 overflow-hidden">{renderContent()}</div>
       </ModuleHub>
 
-      {/* Side Panel for Initiative Details */}
-      <InitiativeSidePanel
+      {/* Initiative Drawer (50% width) with Open Wider functionality */}
+      <InitiativeDrawer
         initiative={selectedInitiative}
         isOpen={isSidePanelOpen}
         onClose={handleCloseSidePanel}
         onUpdate={(updated) => {
           setInitiatives((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
         }}
-        onOpenFullDetail={handleOpenFullScreen}
+        onOpenWider={handleOpenFullScreen}
         users={users}
-        currentUser={currentUser}
       />
 
       {/* New Initiative Modal */}

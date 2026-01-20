@@ -1,358 +1,432 @@
 /**
- * Assessment Initiative Service
- * FLOW-ASSESSMENT-001: Generate initiatives from assessment results
+ * AssessmentInitiativeService
+ * Service for generating initiatives from assessments
+ * 
+ * Pipeline:
+ * 1. Extract assessment answers and scores
+ * 2. Build context (org data + chat history + assessment data)
+ * 3. Generate initiatives using AI (with methodology mapping)
+ * 4. Persist initiatives with links to assessment
  */
 
 import { v4 as uuidv4 } from 'uuid';
+import * as queryHelpers from '../utils/queryHelpers.js';
 
-import { getDatabase } from '../database/Database.js';
-import type { IDatabase } from '../database/IDatabase.js';
-import logger from '../utils/Logger.js';
+// Types
+type AssessmentType = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
 
-// ==========================================
-// TYPES
-// ==========================================
-
-interface AssessmentGap {
-  dimensionId: string;
-  dimensionName: string;
-  currentScore: number;
-  targetScore: number;
-  gap: number;
-  priority: 'high' | 'medium' | 'low';
+interface AssessmentRow {
+  id: string;
+  organization_id: string;
+  project_id?: string | null;
+  assessment_type: AssessmentType;
+  name: string;
+  status: string;
+  completion_percent: number;
+  confidence_avg: number;
+  answers_json?: string | null;
+  context_snapshot?: string | null;
+  score_summary?: string | null;
 }
 
 interface GeneratedInitiative {
-  id: string;
   title: string;
-  summary: string;
-  problemStatement: string;
-  dimensionId: string;
-  estimatedEffort: 'low' | 'medium' | 'high';
-  estimatedImpact: 'low' | 'medium' | 'high';
-  priority: number;
-  suggestedDeliverables: string[];
+  description: string;
+  category: string;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  risk: 'low' | 'medium' | 'high';
+  estimatedEffort?: string;
+  expectedOutcome?: string;
+  relatedAxis?: string;
+  relatedDimension?: string;
 }
 
-// ==========================================
-// SERVICE
-// ==========================================
+interface GenerateParams {
+  assessment: AssessmentRow;
+  methodologyId: string;
+  count: number;
+  includeChatContext: boolean;
+  userId: string;
+}
+
+interface PersistParams {
+  assessment: AssessmentRow;
+  batchId: string;
+  initiatives: GeneratedInitiative[];
+  userId: string;
+}
+
+// Methodology configurations
+const METHODOLOGIES: Record<string, {
+  name: string;
+  categoryMapping: string[];
+  priorityBias: 'high' | 'medium' | 'balanced';
+  riskTolerance: 'low' | 'medium' | 'high';
+}> = {
+  'impact-feasibility': {
+    name: 'Impact-Feasibility Matrix',
+    categoryMapping: ['quick_win', 'strategic', 'operational', 'innovation'],
+    priorityBias: 'balanced',
+    riskTolerance: 'medium',
+  },
+  'moscow': {
+    name: 'MoSCoW Prioritization',
+    categoryMapping: ['must_have', 'should_have', 'could_have', 'wont_have'],
+    priorityBias: 'high',
+    riskTolerance: 'low',
+  },
+  'rice': {
+    name: 'RICE Scoring',
+    categoryMapping: ['high_reach', 'high_impact', 'high_confidence', 'low_effort'],
+    priorityBias: 'balanced',
+    riskTolerance: 'medium',
+  },
+  'value-effort': {
+    name: 'Value vs Effort',
+    categoryMapping: ['high_value_low_effort', 'high_value_high_effort', 'low_value_low_effort'],
+    priorityBias: 'high',
+    riskTolerance: 'low',
+  },
+  'strategic-fit': {
+    name: 'Strategic Fit',
+    categoryMapping: ['core_strategy', 'growth', 'efficiency', 'innovation'],
+    priorityBias: 'medium',
+    riskTolerance: 'high',
+  },
+};
+
+// Assessment type to initiative category mapping
+const ASSESSMENT_CATEGORY_MAPPING: Record<AssessmentType, string[]> = {
+  DRD: ['digital_transformation', 'process_automation', 'data_management', 'ai_readiness', 'cybersecurity', 'culture_change'],
+  SIRI: ['industry_40', 'smart_manufacturing', 'iot_integration', 'analytics', 'workforce_development', 'governance'],
+  ADMA: ['advanced_manufacturing', 'digital_maturity', 'operational_excellence', 'innovation'],
+  CMMI: ['process_improvement', 'capability_development', 'quality_management', 'risk_management'],
+  LEAN: ['lean_transformation', 'waste_reduction', 'continuous_improvement', 'value_stream'],
+};
+
+// Timeout helper
+const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error('Operation timed out'));
+    }, ms);
+    promise
+      .then((value) => {
+        clearTimeout(timer);
+        resolve(value);
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
+};
 
 class AssessmentInitiativeService {
-  private db: IDatabase | null = null;
+  /**
+   * Generate initiatives from assessment
+   */
+  static async generateFromAssessment(params: GenerateParams): Promise<GeneratedInitiative[]> {
+    const { assessment, methodologyId, count, includeChatContext, userId } = params;
 
-  private async getDb(): Promise<IDatabase> {
-    if (!this.db) {
-      this.db = await getDatabase();
+    const methodology = METHODOLOGIES[methodologyId] || METHODOLOGIES['impact-feasibility'];
+    const categories = ASSESSMENT_CATEGORY_MAPPING[assessment.assessment_type] || ['general'];
+
+    // Parse assessment data
+    const answers = assessment.answers_json ? JSON.parse(assessment.answers_json) : {};
+    const scoreSummary = assessment.score_summary ? JSON.parse(assessment.score_summary) : {};
+    const contextSnapshot = assessment.context_snapshot ? JSON.parse(assessment.context_snapshot) : {};
+
+    // Build prompt for AI
+    const prompt = this.buildPrompt({
+      assessment,
+      answers,
+      scoreSummary,
+      methodology,
+      categories,
+      count,
+      includeChatContext,
+      contextSnapshot,
+    });
+
+    try {
+      // Try to generate with AI
+      const aiInitiatives = await withTimeout(
+        this.callAI(prompt, count),
+        30000 // 30 second timeout
+      );
+      
+      if (aiInitiatives && aiInitiatives.length > 0) {
+        return this.normalizeInitiatives(aiInitiatives, assessment.assessment_type, methodology);
+      }
+    } catch (error) {
+      console.error('[AssessmentInitiativeService] AI generation failed:', error);
+      // Fall through to fallback
     }
-    return this.db;
+
+    // Fallback: Generate basic initiatives from gaps
+    return this.generateFallbackInitiatives(assessment, answers, scoreSummary, methodology, count);
   }
 
   /**
-   * Generate initiatives from assessment results
+   * Build AI prompt
    */
-  async generateInitiatives(
-    assessmentId: string,
-    projectId: string,
-    orgId: string,
-    userId: string
-  ): Promise<{ initiatives: GeneratedInitiative[]; gaps: AssessmentGap[] }> {
-    const db = await this.getDb();
+  private static buildPrompt(params: {
+    assessment: AssessmentRow;
+    answers: Record<string, any>;
+    scoreSummary: Record<string, any>;
+    methodology: typeof METHODOLOGIES[string];
+    categories: string[];
+    count: number;
+    includeChatContext: boolean;
+    contextSnapshot: Record<string, any>;
+  }): string {
+    const { assessment, answers, scoreSummary, methodology, categories, count, includeChatContext, contextSnapshot } = params;
 
-    // Get assessment with scores
-    const assessment = await db.get<{
-      id: string;
-      framework: string;
-      overall_score: number;
-      organization_id: string;
-    }>('SELECT * FROM assessments WHERE id = ? AND organization_id = ?', [assessmentId, orgId]);
+    let prompt = `You are an expert consultant generating transformation initiatives based on a ${assessment.assessment_type} assessment.
 
-    if (!assessment) {
-      throw new Error('Assessment not found');
+Assessment: ${assessment.name}
+Type: ${assessment.assessment_type}
+Methodology: ${methodology.name}
+
+Assessment Scores:
+${JSON.stringify(scoreSummary, null, 2)}
+
+Key Assessment Areas:
+${JSON.stringify(answers, null, 2)}
+
+Generate exactly ${count} strategic initiatives that address the gaps identified in this assessment.
+Each initiative should:
+1. Address a specific gap or improvement area
+2. Be actionable and measurable
+3. Align with ${methodology.name} prioritization
+4. Consider the organization's current maturity level
+
+Categories to consider: ${categories.join(', ')}
+
+`;
+
+    if (includeChatContext && contextSnapshot.chat) {
+      prompt += `\nRecent conversation context:\n${JSON.stringify(contextSnapshot.chat.slice(-10), null, 2)}\n`;
     }
 
-    // Get dimension scores
-    const dimensionScores = await db.all<{
-      dimension_id: string;
-      dimension_name: string;
-      score: number;
-      max_score: number;
-    }>(
-      `SELECT dimension_id, dimension_name, score, max_score 
-             FROM assessment_dimension_scores 
-             WHERE assessment_id = ?`,
-      [assessmentId]
-    );
+    if (contextSnapshot.org) {
+      prompt += `\nOrganization context:\n${JSON.stringify(contextSnapshot.org, null, 2)}\n`;
+    }
 
-    // Identify gaps (dimensions with low scores)
-    const gaps: AssessmentGap[] = (dimensionScores || [])
-      .map(
-        (d): AssessmentGap => ({
-          dimensionId: d.dimension_id,
-          dimensionName: d.dimension_name,
-          currentScore: d.score,
-          targetScore: d.max_score,
-          gap: d.max_score - d.score,
-          priority: (d.score <= 2 ? 'high' : d.score <= 3 ? 'medium' : 'low') as
-            | 'high'
-            | 'medium'
-            | 'low',
-        })
-      )
-      .sort((a, b) => b.gap - a.gap);
+    prompt += `
+Return a JSON array with exactly ${count} initiatives in this format:
+[
+  {
+    "title": "Initiative title (max 100 chars)",
+    "description": "Detailed description of the initiative",
+    "category": "one of: ${categories.join(', ')}",
+    "priority": "low|medium|high|critical",
+    "risk": "low|medium|high",
+    "estimatedEffort": "S|M|L|XL",
+    "expectedOutcome": "Expected business outcome",
+    "relatedAxis": "Related assessment axis/dimension"
+  }
+]`;
 
-    // Generate initiatives for top gaps
+    return prompt;
+  }
+
+  /**
+   * Call AI service
+   */
+  private static async callAI(prompt: string, count: number): Promise<GeneratedInitiative[]> {
+    // Try to import and use existing AI service
+    try {
+      const { generateChatResponse } = await import('./aiService.js');
+      
+      const response = await generateChatResponse({
+        messages: [{ role: 'user', content: prompt }],
+        systemPrompt: 'You are an expert consultant. Return only valid JSON arrays.',
+        model: 'gpt-4o-mini',
+        maxTokens: 2000,
+      });
+
+      if (response?.content) {
+        // Extract JSON from response
+        const jsonMatch = response.content.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          if (Array.isArray(parsed)) {
+            return parsed.slice(0, count);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('[AssessmentInitiativeService] AI service call failed:', err);
+    }
+
+    return [];
+  }
+
+  /**
+   * Normalize initiatives
+   */
+  private static normalizeInitiatives(
+    initiatives: any[],
+    assessmentType: AssessmentType,
+    methodology: typeof METHODOLOGIES[string]
+  ): GeneratedInitiative[] {
+    const categories = ASSESSMENT_CATEGORY_MAPPING[assessmentType] || ['general'];
+
+    return initiatives.map((init) => ({
+      title: String(init.title || 'Untitled Initiative').slice(0, 200),
+      description: String(init.description || ''),
+      category: categories.includes(init.category) ? init.category : categories[0],
+      priority: ['low', 'medium', 'high', 'critical'].includes(init.priority) ? init.priority : 'medium',
+      risk: ['low', 'medium', 'high'].includes(init.risk) ? init.risk : 'medium',
+      estimatedEffort: init.estimatedEffort || 'M',
+      expectedOutcome: init.expectedOutcome || '',
+      relatedAxis: init.relatedAxis || '',
+      relatedDimension: init.relatedDimension || '',
+    }));
+  }
+
+  /**
+   * Generate fallback initiatives from assessment gaps
+   */
+  private static generateFallbackInitiatives(
+    assessment: AssessmentRow,
+    answers: Record<string, any>,
+    scoreSummary: Record<string, any>,
+    methodology: typeof METHODOLOGIES[string],
+    count: number
+  ): GeneratedInitiative[] {
+    const categories = ASSESSMENT_CATEGORY_MAPPING[assessment.assessment_type] || ['general'];
     const initiatives: GeneratedInitiative[] = [];
-    let priorityOrder = 1;
 
-    for (const gap of gaps.filter((g) => g.gap > 0)) {
-      const initiative = this.createInitiativeFromGap(gap, assessment.framework, priorityOrder);
-      initiatives.push(initiative);
-      priorityOrder++;
-
-      // Limit to 10 initiatives per assessment
-      if (initiatives.length >= 10) break;
+    // DRD-specific fallback
+    if (assessment.assessment_type === 'DRD') {
+      const axes = ['processes', 'digitalProducts', 'businessModels', 'dataManagement', 'culture', 'cybersecurity', 'aiMaturity'];
+      
+      for (const axis of axes) {
+        if (initiatives.length >= count) break;
+        
+        const axisData = answers[axis] || scoreSummary[axis];
+        if (axisData) {
+          const actual = axisData.actual || axisData.current || 0;
+          const target = axisData.target || 5;
+          const gap = target - actual;
+          
+          if (gap > 1) {
+            initiatives.push({
+              title: `Improve ${axis.replace(/([A-Z])/g, ' $1').trim()} maturity`,
+              description: `Current level: ${actual}, Target: ${target}. Gap of ${gap} levels requires focused improvement initiatives.`,
+              category: categories[initiatives.length % categories.length],
+              priority: gap >= 3 ? 'high' : gap >= 2 ? 'medium' : 'low',
+              risk: gap >= 3 ? 'high' : 'medium',
+              estimatedEffort: gap >= 3 ? 'XL' : gap >= 2 ? 'L' : 'M',
+              expectedOutcome: `Increase ${axis} maturity from level ${actual} to level ${target}`,
+              relatedAxis: axis,
+            });
+          }
+        }
+      }
     }
 
-    // Save draft initiatives to database
+    // SIRI-specific fallback
+    if (assessment.assessment_type === 'SIRI') {
+      const dimensions = ['operations', 'supply_chain', 'product_lifecycle', 'automation', 'connectivity', 'intelligence', 'talent_readiness', 'structure_management'];
+      
+      for (const dim of dimensions) {
+        if (initiatives.length >= count) break;
+        
+        const dimData = answers[dim] || scoreSummary[dim];
+        if (dimData) {
+          const current = dimData.current || 0;
+          const target = dimData.target || 5;
+          const gap = target - current;
+          
+          if (gap > 1) {
+            initiatives.push({
+              title: `Advance ${dim.replace(/_/g, ' ')} capabilities`,
+              description: `Current maturity: ${current}, Target: ${target}. Strategic initiative to close the ${gap}-level gap.`,
+              category: categories[initiatives.length % categories.length],
+              priority: gap >= 3 ? 'high' : gap >= 2 ? 'medium' : 'low',
+              risk: gap >= 3 ? 'high' : 'medium',
+              estimatedEffort: gap >= 3 ? 'XL' : gap >= 2 ? 'L' : 'M',
+              expectedOutcome: `Achieve Industry 4.0 readiness level ${target} in ${dim}`,
+              relatedDimension: dim,
+            });
+          }
+        }
+      }
+    }
+
+    // Generic fallback if no specific gaps found
+    while (initiatives.length < count) {
+      initiatives.push({
+        title: `${assessment.assessment_type} Improvement Initiative ${initiatives.length + 1}`,
+        description: `Strategic initiative based on ${assessment.name} assessment findings.`,
+        category: categories[initiatives.length % categories.length],
+        priority: methodology.priorityBias === 'high' ? 'high' : 'medium',
+        risk: methodology.riskTolerance,
+        estimatedEffort: 'M',
+        expectedOutcome: 'Improve organizational maturity',
+      });
+    }
+
+    return initiatives.slice(0, count);
+  }
+
+  /**
+   * Persist initiatives to database
+   */
+  static async persistInitiatives(params: PersistParams): Promise<{ id: string; title: string; status: string }[]> {
+    const { assessment, batchId, initiatives, userId } = params;
     const now = new Date().toISOString();
-    for (const init of initiatives) {
-      await db.run(
+    const created: { id: string; title: string; status: string }[] = [];
+
+    for (const initiative of initiatives) {
+      const id = uuidv4();
+
+      // Insert into initiatives table
+      await queryHelpers.queryRun(
         `INSERT INTO initiatives (
-                    id, organization_id, project_id, title, summary, problem_statement,
-                    status, source_type, source_id, priority_order,
-                    deliverables, created_by, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, 'DRAFT', 'assessment', ?, ?, ?, ?, ?, ?)`,
+          id, organization_id, project_id, name, title, description,
+          status, priority, risk_level, category, source_type, source_id,
+          created_by, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          init.id,
-          orgId,
-          projectId,
-          init.title,
-          init.summary,
-          init.problemStatement,
-          assessmentId,
-          init.priority,
-          JSON.stringify(init.suggestedDeliverables),
+          id,
+          assessment.organization_id,
+          assessment.project_id || null,
+          initiative.title,
+          initiative.title,
+          initiative.description,
+          'DRAFT', // Always start as DRAFT
+          initiative.priority,
+          initiative.risk,
+          initiative.category,
+          'assessment', // source_type
+          assessment.id, // source_id
           userId,
           now,
           now,
         ]
       );
-    }
 
-    // Update assessment
-    await db.run(`UPDATE assessments SET initiatives_generated = ? WHERE id = ?`, [
-      initiatives.length,
-      assessmentId,
-    ]);
-
-    logger.info(
-      `[AssessmentInitiativeService] Generated ${initiatives.length} initiatives from assessment ${assessmentId}`
-    );
-
-    return { initiatives, gaps };
-  }
-
-  /**
-   * Create initiative from gap analysis
-   */
-  private createInitiativeFromGap(
-    gap: AssessmentGap,
-    framework: string,
-    priorityOrder: number
-  ): GeneratedInitiative {
-    const id = `initiative-${uuidv4()}`;
-
-    // Generate title based on dimension
-    const titleTemplates: Record<string, string> = {
-      strategy: 'Digital Strategy Enhancement',
-      organization: 'Organization Digital Transformation',
-      processes: 'Process Digitization Initiative',
-      technology: 'Technology Modernization',
-      people: 'Digital Skills Development',
-      data: 'Data & Analytics Capability Building',
-      operations: 'Operations Digitization',
-      'supply-chain': 'Supply Chain Digital Integration',
-      'product-lifecycle': 'Product Lifecycle Digitization',
-      'value-stream': 'Value Stream Optimization',
-    };
-
-    const title = titleTemplates[gap.dimensionId] || `${gap.dimensionName} Improvement`;
-
-    // Generate summary
-    const summary =
-      `Improve ${gap.dimensionName.toLowerCase()} maturity from level ${gap.currentScore.toFixed(1)} to ${gap.targetScore.toFixed(1)}. ` +
-      `This initiative addresses a ${gap.gap.toFixed(1)} point gap identified in the ${framework} assessment.`;
-
-    // Generate problem statement
-    const problemStatement =
-      `The ${gap.dimensionName.toLowerCase()} dimension scored ${gap.currentScore.toFixed(1)} out of ${gap.targetScore.toFixed(1)}, ` +
-      `indicating significant improvement opportunities. This gap impacts the organization's overall digital maturity and competitive position.`;
-
-    // Generate suggested deliverables
-    const deliverableTemplates: Record<string, string[]> = {
-      strategy: ['Digital Strategy Document', 'Roadmap with Milestones', 'KPI Dashboard'],
-      organization: ['Change Management Plan', 'Training Program', 'Culture Assessment'],
-      processes: [
-        'Process Maps (Current & Future)',
-        'Automation Requirements',
-        'Implementation Plan',
-      ],
-      technology: ['Technology Assessment', 'Architecture Blueprint', 'Migration Plan'],
-      people: ['Skills Gap Analysis', 'Training Curriculum', 'Certification Program'],
-      data: ['Data Strategy', 'Analytics Platform Requirements', 'Data Governance Framework'],
-    };
-
-    const suggestedDeliverables = deliverableTemplates[gap.dimensionId] || [
-      'Gap Analysis Report',
-      'Action Plan',
-      'Implementation Timeline',
-    ];
-
-    return {
-      id,
-      title,
-      summary,
-      problemStatement,
-      dimensionId: gap.dimensionId,
-      estimatedEffort: gap.gap > 3 ? 'high' : gap.gap > 2 ? 'medium' : 'low',
-      estimatedImpact:
-        gap.priority === 'high' ? 'high' : gap.priority === 'medium' ? 'medium' : 'low',
-      priority: priorityOrder,
-      suggestedDeliverables,
-    };
-  }
-
-  /**
-   * Calculate dimension scores from responses
-   */
-  async calculateDimensionScores(assessmentId: string): Promise<void> {
-    const db = await this.getDb();
-
-    // Get framework dimensions
-    const assessment = await db.get<{ framework: string }>(
-      'SELECT framework FROM assessments WHERE id = ?',
-      [assessmentId]
-    );
-
-    if (!assessment) {
-      throw new Error('Assessment not found');
-    }
-
-    const framework = await db.get<{ dimensions: string }>(
-      'SELECT dimensions FROM assessment_frameworks WHERE name = ?',
-      [assessment.framework]
-    );
-
-    if (!framework) {
-      throw new Error('Framework not found');
-    }
-
-    const dimensions = JSON.parse(framework.dimensions);
-
-    // Calculate scores per dimension
-    for (const dim of dimensions) {
-      const scores = await db.all<{ score: number }>(
-        `SELECT score FROM assessment_responses 
-                 WHERE assessment_id = ? AND dimension_id = ? AND score IS NOT NULL`,
-        [assessmentId, dim.id]
+      // Create link
+      await queryHelpers.queryRun(
+        `INSERT INTO assessment_initiative_links (id, assessment_id, batch_id, initiative_id, created_at)
+         VALUES (?, ?, ?, ?, ?)`,
+        [uuidv4(), assessment.id, batchId, id, now]
       );
 
-      if (scores && scores.length > 0) {
-        const avgScore = scores.reduce((sum, s) => sum + s.score, 0) / scores.length;
-
-        await db.run(
-          `INSERT OR REPLACE INTO assessment_dimension_scores 
-                     (id, assessment_id, dimension_id, dimension_name, score, max_score, question_count, answered_count)
-                     VALUES (?, ?, ?, ?, ?, 5, ?, ?)`,
-          [
-            `score-${assessmentId}-${dim.id}`,
-            assessmentId,
-            dim.id,
-            dim.name,
-            avgScore,
-            scores.length,
-            scores.length,
-          ]
-        );
-      }
+      created.push({
+        id,
+        title: initiative.title,
+        status: 'DRAFT',
+      });
     }
 
-    // Calculate overall score
-    const allScores = await db.all<{ score: number; weight: number }>(
-      `SELECT score, weight FROM assessment_dimension_scores WHERE assessment_id = ?`,
-      [assessmentId]
-    );
-
-    if (allScores && allScores.length > 0) {
-      const totalWeight = allScores.reduce((sum, s) => sum + (s.weight || 1), 0);
-      const weightedSum = allScores.reduce((sum, s) => sum + s.score * (s.weight || 1), 0);
-      const overallScore = weightedSum / totalWeight;
-      const maturityLevel = Math.round(overallScore);
-
-      await db.run(`UPDATE assessments SET overall_score = ?, maturity_level = ? WHERE id = ?`, [
-        overallScore,
-        maturityLevel,
-        assessmentId,
-      ]);
-    }
-
-    logger.info(`[AssessmentInitiativeService] Calculated scores for assessment ${assessmentId}`);
-  }
-
-  /**
-   * Complete assessment and generate report
-   */
-  async completeAssessment(
-    assessmentId: string,
-    orgId: string
-  ): Promise<{ assessmentId: string; reportId: string }> {
-    const db = await this.getDb();
-    const now = new Date().toISOString();
-
-    // Calculate final scores
-    await this.calculateDimensionScores(assessmentId);
-
-    // Update assessment status
-    await db.run(
-      `UPDATE assessments SET status = 'COMPLETED', completed_at = ? WHERE id = ? AND organization_id = ?`,
-      [now, assessmentId, orgId]
-    );
-
-    // Create report record
-    const reportId = `report-${uuidv4()}`;
-    await db.run(
-      `INSERT INTO assessment_reports (id, assessment_id, organization_id, generated_by, created_at)
-             VALUES (?, ?, ?, 'ai', ?)`,
-      [reportId, assessmentId, orgId, now]
-    );
-
-    // Update report generation timestamp
-    await db.run(`UPDATE assessments SET report_generated_at = ? WHERE id = ?`, [
-      now,
-      assessmentId,
-    ]);
-
-    logger.info(
-      `[AssessmentInitiativeService] Completed assessment ${assessmentId}, report: ${reportId}`
-    );
-
-    return { assessmentId, reportId };
+    return created;
   }
 }
 
-// Export singleton
-const assessmentInitiativeService = new AssessmentInitiativeService();
-export default assessmentInitiativeService;
-
-// Named exports
-export const generateInitiatives = (
-  assessmentId: string,
-  projectId: string,
-  orgId: string,
-  userId: string
-) => assessmentInitiativeService.generateInitiatives(assessmentId, projectId, orgId, userId);
-export const calculateDimensionScores = (assessmentId: string) =>
-  assessmentInitiativeService.calculateDimensionScores(assessmentId);
-export const completeAssessment = (assessmentId: string, orgId: string) =>
-  assessmentInitiativeService.completeAssessment(assessmentId, orgId);
+export default AssessmentInitiativeService;

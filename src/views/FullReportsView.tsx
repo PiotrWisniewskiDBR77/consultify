@@ -8,12 +8,12 @@
 import React from 'react';
 
 import { SplitLayout } from '../components/layout/SplitLayout';
-import { ManagementReportsView } from '../components/Reports/Management/ManagementReportsView';
+import { ReportsHub } from '../components/Reports/Management/ReportsHub';
 
 export const FullReportsView: React.FC = () => {
   return (
     <SplitLayout title="Management Reports">
-      <ManagementReportsView />
+      <ReportsHub />
     </SplitLayout>
   );
 };

@@ -1,9 +1,26 @@
 /**
  * ExecutionHub
- * Unified Execution module with 3 tabs (Kanban, Timeline, Workload)
+ * Unified Execution Center module with 5 views + RAID Log + Decisions
  * Uses shared ModuleHub components for consistent UX
+ *
+ * Views: List, Kanban, Tiles (Grid), Timeline (Gantt), Calendar
+ * Tabs: Execution Center, RAID Log, Decisions
+ * Features: Portfolio Health Dashboard, AI Insights, Decision Gates, Drag & Drop Kanban
  */
 
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCorners,
+} from '@dnd-kit/core';
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import {
   AlertTriangle,
   Calendar,
@@ -11,9 +28,12 @@ import {
   CheckCircle2,
   ClipboardList,
   Clock,
+  FileQuestion,
+  GripVertical,
   LayoutDashboard,
   Loader2,
   Scale,
+  Shield,
   Target,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -25,6 +45,8 @@ import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLife
 
 import { useAppStore } from '../../store/useAppStore';
 import { FullInitiative, InitiativeStatus, Task, TaskStatus } from '../../types';
+import { RAIDLog } from '../Implementation/RAIDLog';
+import { DecisionsPanel } from '../MyWork/DecisionsPanel';
 import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
 import { InitiativeSidePanel } from '../Portfolio/InitiativeSidePanel';
 import {
@@ -40,6 +62,127 @@ import {
 } from '../shared/ModuleHub';
 import { ExecutionDetailPanel } from './ExecutionDetailPanel';
 import { ExecutionTimelineView } from './ExecutionTimelineView';
+
+// Kanban column status mapping
+type KanbanColumnId = 'todo' | 'in_progress' | 'review' | 'blocked' | 'done';
+
+const KANBAN_STATUS_MAP: Record<KanbanColumnId, TaskStatus> = {
+  todo: TaskStatus.TODO,
+  in_progress: TaskStatus.IN_PROGRESS,
+  review: TaskStatus.REVIEW,
+  blocked: TaskStatus.BLOCKED,
+  done: TaskStatus.DONE,
+};
+
+// Draggable Task Card component
+interface DraggableTaskCardProps {
+  task: Task;
+  isPastDue: (date?: string) => boolean;
+}
+
+const DraggableTaskCard: React.FC<DraggableTaskCardProps> = ({ task, isPastDue }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: task.id,
+    data: { type: 'task', task },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`p-3 bg-navy-800 border border-navy-700 rounded-lg hover:border-cyan-500/40 transition-colors cursor-grab active:cursor-grabbing ${
+        isDragging ? 'shadow-lg ring-2 ring-cyan-500/50' : ''
+      }`}
+      {...attributes}
+      {...listeners}
+    >
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="flex items-center gap-2">
+          <GripVertical size={14} className="text-slate-500 flex-shrink-0" />
+          <h4 className="text-sm font-medium text-white line-clamp-2">{task.title}</h4>
+        </div>
+        {isPastDue(task.dueDate) && (
+          <span className="text-[10px] text-rose-400 uppercase tracking-wide flex-shrink-0">
+            Overdue
+          </span>
+        )}
+      </div>
+      {task.initiativeName && (
+        <div className="text-xs text-slate-400 mb-2 ml-6">{task.initiativeName}</div>
+      )}
+      <div className="flex items-center justify-between text-xs text-slate-400 ml-6">
+        <span className="capitalize">{task.priority}</span>
+        {task.dueDate && (
+          <span className="flex items-center gap-1">
+            <Clock size={12} />
+            {new Date(task.dueDate).toLocaleDateString()}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Droppable Kanban Column component
+interface KanbanColumnProps {
+  id: KanbanColumnId;
+  label: string;
+  accent: string;
+  icon: React.ReactNode;
+  tasks: Task[];
+  isPastDue: (date?: string) => boolean;
+}
+
+const KanbanColumn: React.FC<KanbanColumnProps> = ({ id, label, accent, icon, tasks, isPastDue }) => {
+  const { setNodeRef, isOver } = useSortable({
+    id: `column-${id}`,
+    data: { type: 'column', columnId: id },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`flex-1 min-w-[260px] bg-navy-900/50 rounded-xl border transition-colors ${
+        isOver ? 'border-cyan-500 bg-cyan-500/5' : 'border-navy-700'
+      }`}
+      data-testid={`kanban-column-${id}`}
+    >
+      <div
+        className={`flex items-center justify-between px-3 py-2 border-b border-navy-700 ${accent}`}
+      >
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide">
+          {icon}
+          {label}
+        </div>
+        <span className="text-xs text-slate-400 bg-navy-800 px-2 py-0.5 rounded-full">
+          {tasks.length}
+        </span>
+      </div>
+      <div className="p-3 space-y-3 max-h-[520px] overflow-y-auto min-h-[100px]">
+        <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+          {tasks.map((task) => (
+            <DraggableTaskCard key={task.id} task={task} isPastDue={isPastDue} />
+          ))}
+        </SortableContext>
+        {tasks.length === 0 && (
+          <div
+            className={`text-center text-xs py-6 border-2 border-dashed rounded-lg transition-colors ${
+              isOver ? 'border-cyan-500/50 text-cyan-400' : 'border-navy-700 text-slate-500'
+            }`}
+          >
+            {isOver ? 'Drop here' : 'No tasks'}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const MODULE_STATUSES = getStatusesForModule('execution');
 const EXECUTION_STATUS_FALLBACK: InitiativeStatus[] = [
@@ -304,8 +447,19 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         icon: <LayoutDashboard size={16} />,
         count: filteredInitiatives.length,
       },
+      {
+        id: 'raid' as ModuleTab,
+        label: t('execution.tabs.raid', 'RAID Log'),
+        icon: <Shield size={16} />,
+      },
+      {
+        id: 'decisions' as ModuleTab,
+        label: t('execution.tabs.decisions', 'Decisions'),
+        icon: <FileQuestion size={16} />,
+        count: decisions.filter((d) => String(d.status).toUpperCase() === 'PENDING').length,
+      },
     ],
-    [t, filteredInitiatives.length]
+    [t, filteredInitiatives.length, decisions]
   );
 
   // Table columns
@@ -707,6 +861,88 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }));
   }, [filteredInitiatives]);
 
+  // Drag & drop state
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
+  // Handle drag start
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const { active } = event;
+    const taskData = active.data.current;
+    if (taskData?.type === 'task') {
+      setActiveTask(taskData.task);
+    }
+  }, []);
+
+  // Handle drag over (for visual feedback)
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    // Visual feedback is handled by isOver in KanbanColumn
+  }, []);
+
+  // Handle drag end - update task status
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event;
+      setActiveTask(null);
+
+      if (!over) return;
+
+      const activeId = active.id as string;
+      const overId = over.id as string;
+
+      // Determine target column
+      let targetColumnId: KanbanColumnId | null = null;
+
+      if (overId.startsWith('column-')) {
+        targetColumnId = overId.replace('column-', '') as KanbanColumnId;
+      } else {
+        // Dropped on another task - find its column
+        const overTask = tasks.find((t) => t.id === overId);
+        if (overTask) {
+          targetColumnId = normalizeTaskStatus(overTask.status) as KanbanColumnId;
+        }
+      }
+
+      if (!targetColumnId) return;
+
+      const task = tasks.find((t) => t.id === activeId);
+      if (!task) return;
+
+      const currentColumn = normalizeTaskStatus(task.status);
+      if (currentColumn === targetColumnId) return;
+
+      // Get the new status
+      const newStatus = KANBAN_STATUS_MAP[targetColumnId];
+
+      // Optimistic update
+      setTasks((prev) =>
+        prev.map((t) => (t.id === activeId ? { ...t, status: newStatus } : t))
+      );
+
+      // API call to update task status
+      try {
+        await Api.patch(`/tasks/${activeId}`, { status: newStatus });
+        toast.success(`Task moved to ${targetColumnId.replace('_', ' ')}`);
+      } catch (error) {
+        // Revert on error
+        setTasks((prev) =>
+          prev.map((t) => (t.id === activeId ? { ...t, status: task.status } : t))
+        );
+        toast.error('Failed to update task status');
+        console.error('Error updating task status:', error);
+      }
+    },
+    [tasks, normalizeTaskStatus]
+  );
+
   const renderTaskBoard = () => {
     const groupedTasks = tasks.reduce(
       (acc, task) => {
@@ -723,55 +959,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     );
 
-    const renderColumn = (
-      label: string,
-      status: keyof typeof groupedTasks,
-      accent: string,
-      icon: React.ReactNode
-    ) => (
-      <div className="flex-1 min-w-[260px] bg-navy-900/50 rounded-xl border border-navy-700">
-        <div className={`flex items-center justify-between px-3 py-2 border-b border-navy-700 ${accent}`}>
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide">
-            {icon}
-            {label}
-          </div>
-          <span className="text-xs text-slate-400 bg-navy-800 px-2 py-0.5 rounded-full">
-            {groupedTasks[status].length}
-          </span>
-        </div>
-        <div className="p-3 space-y-3 max-h-[520px] overflow-y-auto">
-          {groupedTasks[status].map((task) => (
-            <div
-              key={task.id}
-              className="p-3 bg-navy-800 border border-navy-700 rounded-lg hover:border-cyan-500/40 transition-colors"
-            >
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <h4 className="text-sm font-medium text-white line-clamp-2">{task.title}</h4>
-                {isPastDue(task.dueDate) && (
-                  <span className="text-[10px] text-rose-400 uppercase tracking-wide">Overdue</span>
-                )}
-              </div>
-              {task.initiativeName && (
-                <div className="text-xs text-slate-400 mb-2">{task.initiativeName}</div>
-              )}
-              <div className="flex items-center justify-between text-xs text-slate-400">
-                <span className="capitalize">{task.priority}</span>
-                {task.dueDate && (
-                  <span className="flex items-center gap-1">
-                    <Clock size={12} />
-                    {new Date(task.dueDate).toLocaleDateString()}
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
-          {groupedTasks[status].length === 0 && (
-            <div className="text-center text-xs text-slate-500 py-6">No tasks</div>
-          )}
-        </div>
-      </div>
-    );
-
     if (isLoadingTasks) {
       return (
         <div className="flex items-center justify-center h-full">
@@ -780,14 +967,64 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       );
     }
 
+    const columns: { id: KanbanColumnId; label: string; accent: string; icon: React.ReactNode }[] = [
+      { id: 'todo', label: 'To Do', accent: 'text-slate-300', icon: <ClipboardList size={14} /> },
+      { id: 'in_progress', label: 'In Progress', accent: 'text-cyan-300', icon: <Target size={14} /> },
+      { id: 'review', label: 'Review', accent: 'text-amber-300', icon: <Scale size={14} /> },
+      { id: 'blocked', label: 'Blocked', accent: 'text-rose-300', icon: <AlertTriangle size={14} /> },
+      { id: 'done', label: 'Done', accent: 'text-emerald-300', icon: <CheckCircle2 size={14} /> },
+    ];
+
     return (
-      <div className="flex gap-4 p-4 overflow-x-auto">
-        {renderColumn('To Do', 'todo', 'text-slate-300', <ClipboardList size={14} />)}
-        {renderColumn('In Progress', 'in_progress', 'text-cyan-300', <Target size={14} />)}
-        {renderColumn('Review', 'review', 'text-amber-300', <Scale size={14} />)}
-        {renderColumn('Blocked', 'blocked', 'text-rose-300', <AlertTriangle size={14} />)}
-        {renderColumn('Done', 'done', 'text-emerald-300', <CheckCircle2 size={14} />)}
-      </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="flex gap-4 p-4 overflow-x-auto" data-testid="kanban-board">
+          <SortableContext items={columns.map((c) => `column-${c.id}`)}>
+            {columns.map((col) => (
+              <KanbanColumn
+                key={col.id}
+                id={col.id}
+                label={col.label}
+                accent={col.accent}
+                icon={col.icon}
+                tasks={groupedTasks[col.id]}
+                isPastDue={isPastDue}
+              />
+            ))}
+          </SortableContext>
+        </div>
+
+        {/* Drag overlay for smooth dragging experience */}
+        <DragOverlay>
+          {activeTask ? (
+            <div className="p-3 bg-navy-800 border-2 border-cyan-500 rounded-lg shadow-xl w-[240px]">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <GripVertical size={14} className="text-cyan-400" />
+                  <h4 className="text-sm font-medium text-white line-clamp-2">{activeTask.title}</h4>
+                </div>
+              </div>
+              {activeTask.initiativeName && (
+                <div className="text-xs text-slate-400 mb-2 ml-6">{activeTask.initiativeName}</div>
+              )}
+              <div className="flex items-center justify-between text-xs text-slate-400 ml-6">
+                <span className="capitalize">{activeTask.priority}</span>
+                {activeTask.dueDate && (
+                  <span className="flex items-center gap-1">
+                    <Clock size={12} />
+                    {new Date(activeTask.dueDate).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
     );
   };
 
@@ -821,7 +1058,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   }, [currentProjectId]);
 
   const renderPortfolioHealth = () => (
-    <div className="grid gap-4 lg:grid-cols-[1.2fr_2fr]">
+    <div className="grid gap-4 lg:grid-cols-[1.2fr_2fr]" data-testid="portfolio-health">
       <PortfolioHealthScore
         score={portfolioMetrics.healthScore}
         breakdown={portfolioMetrics.breakdown}
@@ -1098,6 +1335,33 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     return null;
   };
 
+  // Render RAID Log tab
+  const renderRAIDTab = () => (
+    <div className="p-4">
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold text-white">RAID Log</h2>
+        <p className="text-sm text-slate-400">
+          Track Risks, Assumptions, Issues, and Dependencies across all initiatives
+        </p>
+      </div>
+      <div className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden">
+        <RAIDLog
+          initiativeId={selectedInitiative?.id}
+          onItemClick={(item) => console.log('RAID item clicked:', item)}
+        />
+      </div>
+    </div>
+  );
+
+  // Render Decisions tab
+  const renderDecisionsTab = () => (
+    <div className="p-4 h-full">
+      <DecisionsPanel
+        onDecisionClick={(id) => console.log('Decision clicked:', id)}
+      />
+    </div>
+  );
+
   // Render content
   const renderContent = () => {
     if (isLoading) {
@@ -1106,6 +1370,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
         </div>
       );
+    }
+
+    // Handle RAID and Decisions tabs
+    if (activeTab === 'raid') {
+      return renderRAIDTab();
+    }
+
+    if (activeTab === 'decisions') {
+      return renderDecisionsTab();
     }
 
     if (activeDocumentId) {
@@ -1141,12 +1414,19 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             </button>
             <button
               onClick={() => {
-                setViewMode('calendar');
-                toast('Open Decisions to create or follow up.');
+                setActiveTab('decisions' as ModuleTab);
               }}
               className="px-3 py-2 rounded-lg bg-navy-800 border border-navy-700 text-sm text-slate-300 hover:text-white hover:border-amber-500/50 transition-colors"
             >
               New Decision
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('raid' as ModuleTab);
+              }}
+              className="px-3 py-2 rounded-lg bg-navy-800 border border-navy-700 text-sm text-slate-300 hover:text-white hover:border-rose-500/50 transition-colors"
+            >
+              RAID Log
             </button>
             <button
               onClick={handleExport}

@@ -84,6 +84,7 @@ import helpChatRoutes from './routes/helpChat.routes.js';
 import helpFeedbackRoutes from './routes/helpFeedback.routes.js';
 import initiativeGeneratorRoutes from './routes/initiative-generator.routes.js';
 import toolsRoutes from './routes/tools.routes.js';
+import assessmentWorkflowV2Routes from './routes/assessment-workflow-v2.routes.js';
 import calendarIntegrationsRoutes from './routes/integrations/calendarIntegrations.routes.js';
 import connectorRoutes from './routes/integrations/connectors.routes.js';
 import integrationsRoutes from './routes/integrations/integrations.routes.js';
@@ -92,6 +93,7 @@ import ssoRoutes from './routes/integrations/sso.routes.js';
 import webhookRoutes from './routes/integrations/webhooks.routes.js';
 import webhookSubRoutes from './routes/integrations/webhookSubscriptions.routes.js';
 import intelligenceRoutes from './routes/intelligence.routes.js';
+import interviewRoutes from './routes/interview.routes.js';
 import journeyAnalyticsRoutes from './routes/journeyAnalytics.routes.js';
 import knowledgeRoutes from './routes/knowledge.routes.js';
 import knowledgeBaseRoutes from './routes/knowledgeBase.routes.js';
@@ -238,6 +240,10 @@ export class ApiGateway {
       app.use('/api/ai/performance', performanceRoutes);
       console.log('[ApiGateway] Mounting /api/tools');
       app.use('/api/tools', toolsRoutes);
+      console.log('[ApiGateway] Mounting /api/assessment-workflow');
+      app.use('/api/assessment-workflow', assessmentWorkflowRoutes);
+      console.log('[ApiGateway] Mounting /api/assessment-workflow-v2');
+      app.use('/api/assessment-workflow-v2', assessmentWorkflowV2Routes);
 
       // Register routes
       console.log('[ApiGateway] Mounting /api/admin-data');
@@ -466,6 +472,7 @@ export class ApiGateway {
       app.use('/api/webhooks/subscriptions', webhookSubRoutes);
       app.use('/api/studio', studioRoutes);
       app.use('/api/intelligence', intelligenceRoutes);
+      app.use('/api/interview', interviewRoutes);
       app.use('/api/agents', agentsRoutes);
       app.use('/api/workqueue', workqueueRoutes);
       app.use('/api/connectors', connectorRoutes);
