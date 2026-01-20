@@ -41,7 +41,7 @@ const MODULE_STATUSES = getStatusesForModule('initiatives');
 const ALLOWED_STATUSES: InitiativeStatus[] =
   MODULE_STATUSES.length > 0
     ? MODULE_STATUSES
-    : [InitiativeStatus.PLANNING, InitiativeStatus.REVIEW, InitiativeStatus.APPROVED];
+    : [InitiativeStatus.DRAFT, InitiativeStatus.PLANNING, InitiativeStatus.REVIEW, InitiativeStatus.APPROVED, InitiativeStatus.EXECUTING, InitiativeStatus.BLOCKED];
 
 interface InitiativesHubProps {
   initialTab?: ModuleTab;

@@ -93,9 +93,12 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
     name: 'Initiatives',
     route: '/initiatives',
     statuses: [
+      InitiativeStatus.DRAFT,
       InitiativeStatus.PLANNING,
       InitiativeStatus.REVIEW,
       InitiativeStatus.APPROVED,
+      InitiativeStatus.EXECUTING,
+      InitiativeStatus.BLOCKED,
     ],
     color: 'purple',
     description: 'Initiative management and planning',
