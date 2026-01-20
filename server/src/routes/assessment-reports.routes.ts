@@ -57,7 +57,7 @@ const writePdfReport = async (report: any, filePath: string): Promise<void> => {
 
   doc.moveDown();
   doc.fontSize(13).text('Key Findings');
-  const detailed = safeJsonParse(report.detailed_analysis, {});
+  const detailed = safeJsonParse<{ keyFindings?: string[] }>(report.detailed_analysis, {});
   const keyFindings = detailed.keyFindings || [];
   if (keyFindings.length === 0) {
     doc.fontSize(11).text('None');
@@ -80,7 +80,7 @@ const writePptxReport = async (report: any, filePath: string): Promise<void> => 
 
   const title = report.name || 'Assessment Report';
   const summary = report.executive_summary || report.executiveSummary || 'No summary available.';
-  const detailed = safeJsonParse(report.detailed_analysis, {});
+  const detailed = safeJsonParse<{ keyFindings?: string[] }>(report.detailed_analysis, {});
   const keyFindings = detailed.keyFindings || [];
   const findingsText = keyFindings.length ? keyFindings.slice(0, 10).join('\n') : 'None';
 
@@ -318,7 +318,7 @@ router.get('/:reportId', async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Report not found' });
     }
 
-    const detailed = safeJsonParse(report.detailed_analysis, {});
+    const detailed = safeJsonParse<{ keyFindings?: string[]; notes?: string }>(report.detailed_analysis, {});
     const recommendations = safeJsonParse<string[]>(report.recommendations, []);
 
     res.json({
@@ -522,7 +522,7 @@ router.get('/:reportId/export/excel', async (_req: AuthRequest, res: Response) =
     }
 
     const workbook = xlsx.utils.book_new();
-    const detailed = safeJsonParse(report.detailed_analysis, {});
+    const detailed = safeJsonParse<{ keyFindings?: string[] }>(report.detailed_analysis, {});
     const recommendations = safeJsonParse<string[]>(report.recommendations, []);
 
     const rows = [

@@ -6,7 +6,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import * as queryHelpers from '../utils/queryHelpers.js';
-import { logger } from '../utils/logger.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -480,6 +480,57 @@ export class EscalationService {
         }),
       ]
     );
+  }
+
+  /**
+   * Get escalations for a project
+   */
+  static async getEscalations(projectId: string, status?: string): Promise<any[]> {
+    try {
+      let query = `
+        SELECT e.*, d.title as decision_title, d.type as decision_type
+        FROM escalations e
+        LEFT JOIN decisions d ON e.decision_id = d.id
+        WHERE e.project_id = ?
+      `;
+      const params: any[] = [projectId];
+      
+      if (status) {
+        query += ` AND e.status = ?`;
+        params.push(status);
+      }
+      
+      query += ` ORDER BY e.created_at DESC`;
+      
+      const escalations = await queryHelpers.queryAll(query, params);
+      return escalations || [];
+    } catch (error) {
+      logger.error('Failed to get escalations:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Run auto-escalation for a project
+   */
+  static async runAutoEscalation(projectId: string): Promise<any> {
+    try {
+      // Get project organization
+      const project = await queryHelpers.queryGet<{ organization_id: string }>(
+        `SELECT organization_id FROM projects WHERE id = ?`,
+        [projectId]
+      );
+      
+      if (!project) {
+        throw new Error('Project not found');
+      }
+      
+      const summary = await this.processEscalations(project.organization_id);
+      return { success: true, summary };
+    } catch (error) {
+      logger.error('Failed to run auto-escalation:', error);
+      throw error;
+    }
   }
 }
 

@@ -452,8 +452,19 @@ export const processFeedback = (
   userId: string,
   messageId: string,
   conversationId: string | undefined,
-  feedback: Parameters<typeof adaptiveResponseService.processFeedback>[2],
-  context: Parameters<typeof adaptiveResponseService.processFeedback>[3]
+  feedback: {
+    rating: string;
+    lengthFeedback?: string;
+    detailFeedback?: string;
+    formatFeedback?: string;
+    wantedMode?: string;
+    customFeedback?: string;
+  },
+  context: {
+    responseMode?: string;
+    responseLength?: string;
+    capability?: string;
+  }
 ) => adaptiveResponseService.processFeedback(userId, messageId, conversationId, feedback, context);
 export const getUserFeedbackStats = (userId: string) =>
   adaptiveResponseService.getUserFeedbackStats(userId);

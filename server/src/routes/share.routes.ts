@@ -11,8 +11,8 @@ import crypto from 'crypto';
 import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-import { getDb } from '../database/connection.js';
-import { authenticate, optionalAuth } from '../middleware/auth.js';
+import { getDatabase } from '../database/Database.js';
+import { verifyToken as authenticate, optionalAuth } from '../middleware/auth.middleware.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
@@ -65,7 +65,7 @@ router.post('/conversations/:id/share', authenticate, async (req: Request, res: 
   const { title, description, expiresIn, password, settings } = req.body;
 
   try {
-    const db = getDb();
+    const db = getDatabase();
 
     const conversation = await db.get(
       `SELECT * FROM conversations WHERE id = ? AND (user_id = ? OR organization_id IN (
@@ -143,7 +143,7 @@ router.get('/conversations/:id/share', authenticate, async (req: Request, res: R
   const userId = req.user?.id;
 
   try {
-    const db = getDb();
+    const db = getDatabase();
 
     const share = await db.get(
       `SELECT cs.*, c.title as conversation_title 
@@ -187,7 +187,7 @@ router.get('/share/:token', optionalAuth, async (req: Request, res: Response) =>
   const { password } = req.query;
 
   try {
-    const db = getDb();
+    const db = getDatabase();
 
     const share = await db.get('SELECT * FROM conversation_shares WHERE share_token = ?', [token]);
 
@@ -286,7 +286,7 @@ router.patch('/conversations/:id/share', authenticate, async (req: Request, res:
   const { title, description, expiresIn, password, settings } = req.body;
 
   try {
-    const db = getDb();
+    const db = getDatabase();
 
     const share = await db.get(
       `SELECT cs.* FROM conversation_shares cs
@@ -349,7 +349,7 @@ router.delete('/conversations/:id/share', authenticate, async (req: Request, res
   const userId = req.user?.id;
 
   try {
-    const db = getDb();
+    const db = getDatabase();
 
     const share = await db.get(
       `SELECT cs.* FROM conversation_shares cs
@@ -385,7 +385,7 @@ router.get('/shares', authenticate, async (req: Request, res: Response) => {
   const userId = req.user?.id;
 
   try {
-    const db = getDb();
+    const db = getDatabase();
 
     const shares = await db.all(
       `SELECT cs.*, c.title as conversation_title

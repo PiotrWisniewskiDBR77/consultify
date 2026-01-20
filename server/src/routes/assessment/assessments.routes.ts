@@ -219,11 +219,11 @@ router.post('/:id/complete', async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const organizationId = req.user?.organizationId || 'org-dbr77-system';
 
-    const assessmentInitiativeService = (
+    const AssessmentInitiativeService = (
       await import('../../services/assessmentInitiativeService.js')
     ).default;
     const assessmentId = Array.isArray(id) ? id[0] : id;
-    const result = await assessmentInitiativeService.completeAssessment(
+    const result = await AssessmentInitiativeService.completeAssessment(
       assessmentId,
       organizationId
     );
@@ -282,11 +282,11 @@ router.post('/:id/generate-initiatives', async (req: AuthRequest, res: Response)
       return res.status(400).json({ error: 'Final report required before initiatives' });
     }
 
-    const assessmentInitiativeService = (
+    const AssessmentInitiativeService = (
       await import('../../services/assessmentInitiativeService.js')
     ).default;
     const assessmentId = Array.isArray(id) ? id[0] : id;
-    const result = await assessmentInitiativeService.generateInitiatives(
+    const result = await AssessmentInitiativeService.generateInitiatives(
       assessmentId,
       projectId,
       organizationId,

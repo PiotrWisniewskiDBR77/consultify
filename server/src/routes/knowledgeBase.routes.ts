@@ -153,10 +153,14 @@ router.post(
       const authHeader = req.headers.authorization;
       if (authHeader?.startsWith('Bearer ')) {
         // Token might be present but we don't require it
-        const decoded = await import('../utils/jwt.js').then((m) =>
-          m.verifyToken(authHeader.split(' ')[1])
-        );
-        userId = (decoded as any)?.userId;
+        // Use auth middleware's verifyToken indirectly via jwt
+        try {
+          const jwt = await import('jsonwebtoken');
+          const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET || '') as any;
+          userId = decoded?.id || decoded?.userId;
+        } catch {
+          // Invalid token, continue as anonymous
+        }
       }
     } catch {
       // Ignore auth errors for anonymous tracking

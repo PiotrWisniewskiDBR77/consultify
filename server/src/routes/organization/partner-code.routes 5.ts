@@ -10,7 +10,7 @@
 import { Request, Response, Router } from 'express';
 
 import { getDatabase } from '../../database/Database.js';
-import { authenticateToken, AuthRequest } from '../../middleware/auth.js';
+import { verifyToken as authenticateToken, AuthRequest } from '../../middleware/auth.middleware.js';
 import * as partnerReferralService from '../../services/partnerReferralService.js';
 import * as DbPromise from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';

@@ -616,12 +616,12 @@ app.use((req, res, next) => {
   next();
 });
 if (isTest && process.env.ENABLE_TEST_GATEWAY !== 'true') {
-  const managementReportsRoutes = await import('./routes/managementReports.routes.ts').then(
+  const managementReportsRoutes = await import('./routes/managementReports.routes.js').then(
     (m) => m.default || m
   );
   app.use('/api/management-reports', managementReportsRoutes);
 } else {
-  const { apiGateway } = await import('./Gateway.ts');
+  const { apiGateway } = await import('./Gateway.js');
   apiGateway.initializeRoutes(app);
 }
 

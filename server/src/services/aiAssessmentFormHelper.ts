@@ -62,6 +62,50 @@ export class AIAssessmentFormHelper {
     console.log('[AIAssessmentFormHelper] getAISuggestions called:', fieldId);
     return [];
   }
+
+  /**
+   * Validate a field value with context
+   */
+  async validateFieldValue(fieldType: string, value: any, context: any = {}) {
+    console.log('[AIAssessmentFormHelper] validateFieldValue called:', fieldType, value);
+    return {
+      isValid: true,
+      errors: [],
+      warnings: [],
+    };
+  }
+
+  /**
+   * Get quick actions for form state
+   */
+  async getQuickActions(formState: any) {
+    console.log('[AIAssessmentFormHelper] getQuickActions called');
+    return [];
+  }
+
+  /**
+   * Get contextual help for form state
+   */
+  async getContextualHelp(formState: any) {
+    console.log('[AIAssessmentFormHelper] getContextualHelp called');
+    return { help: [] };
+  }
+
+  /**
+   * Fill missing fields with AI suggestions
+   */
+  async fillMissingFields(assessment: any, strategy: string = 'suggest-only') {
+    console.log('[AIAssessmentFormHelper] fillMissingFields called:', strategy);
+    return { filled: [], suggestions: [] };
+  }
+
+  /**
+   * Review all justifications for quality
+   */
+  async reviewAllJustifications(assessment: any, options: any = {}) {
+    console.log('[AIAssessmentFormHelper] reviewAllJustifications called');
+    return { reviews: [], issues: [] };
+  }
 }
 
 // Singleton instance
