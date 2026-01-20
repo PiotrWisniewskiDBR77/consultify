@@ -39,41 +39,35 @@ import {
 import React, { useEffect, useState } from 'react';
 
 import { InfoButton } from '../../../components/shared/InfoButton';
-
+import { CostAnalyticsTab } from './Analytics/CostAnalyticsTab';
+import { CustomReportsTab } from './Analytics/CustomReportsTab';
+import { PerformanceMetricsTab } from './Analytics/PerformanceMetricsTab';
+// Analytics Tab Components
+import { UsageAnalyticsTab } from './Analytics/UsageAnalyticsTab';
+import { GlobalSettingsTab } from './Configuration/GlobalSettingsTab';
 // Configuration Tab Components
 import { LLMProvidersTab } from './Configuration/LLMProvidersTab';
 import { ModelTiersTab } from './Configuration/ModelTiersTab';
 import { RoutingRulesTab } from './Configuration/RoutingRulesTab';
-import { GlobalSettingsTab } from './Configuration/GlobalSettingsTab';
-
-// Development Tab Components
-import { PromptsLibraryTab } from './Development/PromptsLibraryTab';
-import { PromptBuilderTab } from './Development/PromptBuilderTab';
 import { ExperimentsTab } from './Development/ExperimentsTab';
 import { ModelRegistryTab } from './Development/ModelRegistryTab';
-
-// Operations Tab Components
-import { MissionControlTab } from './Operations/MissionControlTab';
-import { HealthMonitoringTab } from './Operations/HealthMonitoringTab';
-import { PerformanceDashboardTab } from './Operations/PerformanceDashboardTab';
-import { SLAManagementTab } from './Operations/SLAManagementTab';
-
-// Analytics Tab Components
-import { UsageAnalyticsTab } from './Analytics/UsageAnalyticsTab';
-import { CostAnalyticsTab } from './Analytics/CostAnalyticsTab';
-import { PerformanceMetricsTab } from './Analytics/PerformanceMetricsTab';
-import { CustomReportsTab } from './Analytics/CustomReportsTab';
-
-// Security Tab Components
-import { APIKeysTab } from './Security/APIKeysTab';
-import { AccessControlTab } from './Security/AccessControlTab';
-import { AuditLogsTab } from './Security/AuditLogsTab';
-import { ComplianceTab } from './Security/ComplianceTab';
-
+import { PromptBuilderTab } from './Development/PromptBuilderTab';
+// Development Tab Components
+import { PromptsLibraryTab } from './Development/PromptsLibraryTab';
+import { DocumentsRAGTab } from './Knowledge/DocumentsRAGTab';
 // Knowledge Tab Components
 import { KnowledgeBaseTab } from './Knowledge/KnowledgeBaseTab';
-import { DocumentsRAGTab } from './Knowledge/DocumentsRAGTab';
 import { StrategicDirectionsTab } from './Knowledge/StrategicDirectionsTab';
+import { HealthMonitoringTab } from './Operations/HealthMonitoringTab';
+// Operations Tab Components
+import { MissionControlTab } from './Operations/MissionControlTab';
+import { PerformanceDashboardTab } from './Operations/PerformanceDashboardTab';
+import { SLAManagementTab } from './Operations/SLAManagementTab';
+import { AccessControlTab } from './Security/AccessControlTab';
+// Security Tab Components
+import { APIKeysTab } from './Security/APIKeysTab';
+import { AuditLogsTab } from './Security/AuditLogsTab';
+import { ComplianceTab } from './Security/ComplianceTab';
 
 // Types
 interface SubTab {

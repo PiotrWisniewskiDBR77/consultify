@@ -8,7 +8,17 @@
  * - Category buttons: same style as tabs
  */
 
-import { Calendar, Grid3X3, Kanban, LayoutGrid, List, Plus, Search, X } from 'lucide-react';
+import {
+  Calendar,
+  CalendarDays,
+  Grid3X3,
+  Kanban,
+  LayoutGrid,
+  List,
+  Plus,
+  Search,
+  X,
+} from 'lucide-react';
 import React, { useState } from 'react';
 
 import { CategoryButton, ModuleTab, TabConfig, ViewMode } from './types';
@@ -83,6 +93,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
     grid: { icon: <Grid3X3 size={16} />, label: 'Grid' },
     kanban: { icon: <Kanban size={16} />, label: 'Kanban' },
     timeline: { icon: <Calendar size={16} />, label: 'Timeline' },
+    calendar: { icon: <CalendarDays size={16} />, label: 'Calendar' },
     matrix: { icon: <LayoutGrid size={16} />, label: 'Matrix' },
   };
 
@@ -160,6 +171,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
                     <button
                       key={filter.id}
                       onClick={() => onStatusFilterChange?.(filter.id === 'all' ? null : filter.id)}
+                  data-testid={`status-filter-${filter.id}`}
                       className={`
                         flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium
                         border transition-all duration-200
@@ -194,6 +206,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
                 <button
                   key={mode}
                   onClick={() => onViewModeChange(mode)}
+                  data-testid={`view-mode-${mode}`}
                   className={`p-1.5 rounded transition-colors ${
                     isActive
                       ? 'bg-navy-700 text-white shadow-sm'
@@ -212,7 +225,12 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
             // Discovery Tools: 4 category buttons - same style as tabs
             <div className="flex items-center gap-2">
               {categoryButtons.map((btn) => (
-                <button key={btn.id} onClick={btn.onClick} className={BUTTON_INACTIVE}>
+                <button
+                  key={btn.id}
+                  onClick={btn.onClick}
+                  data-testid={`category-button-${btn.id}`}
+                  className={BUTTON_INACTIVE}
+                >
                   {btn.icon}
                   <span>{btn.label}</span>
                   <span className="px-1.5 py-0.5 text-xs rounded-full bg-navy-700 text-slate-400">

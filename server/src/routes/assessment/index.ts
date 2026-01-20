@@ -5,8 +5,8 @@
 
 import { Router } from 'express';
 
-import assessmentAIRoutes from './assessment-ai.routes.js';
 import assessmentRoutes from './assessment.routes.js';
+import assessmentAIRoutes from './assessment-ai.routes.js';
 import assessmentHubRoutes from './assessment-hub.routes.js';
 import assessmentLevelAttachmentsRoutes from './assessment-level-attachments.routes.js';
 import assessmentReportsRoutes from './assessment-reports.routes.js';

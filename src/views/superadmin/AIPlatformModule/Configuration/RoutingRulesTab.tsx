@@ -135,9 +135,7 @@ export const RoutingRulesTab: React.FC = () => {
   };
 
   const toggleRule = (ruleId: string) => {
-    setRules((prev) =>
-      prev.map((r) => (r.id === ruleId ? { ...r, isActive: !r.isActive } : r))
-    );
+    setRules((prev) => prev.map((r) => (r.id === ruleId ? { ...r, isActive: !r.isActive } : r)));
     toast.success('Rule updated');
   };
 

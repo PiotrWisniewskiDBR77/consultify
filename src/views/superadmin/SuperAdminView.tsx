@@ -196,7 +196,9 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                 <NewAIPlatformModule
                   initialTab="configuration"
                   initialSubTab={
-                    currentView === AppView.SUPERADMIN_LLM_MANAGEMENT ? 'llm-providers' : 'global-settings'
+                    currentView === AppView.SUPERADMIN_LLM_MANAGEMENT
+                      ? 'llm-providers'
+                      : 'global-settings'
                   }
                 />
               );
@@ -206,9 +208,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
               return (
                 <NewAIPlatformModule
                   initialTab={
-                    currentView === AppView.SUPERADMIN_AI_INTELLIGENCE
-                      ? 'development'
-                      : 'knowledge'
+                    currentView === AppView.SUPERADMIN_AI_INTELLIGENCE ? 'development' : 'knowledge'
                   }
                   initialSubTab={
                     currentView === AppView.SUPERADMIN_AI_INTELLIGENCE

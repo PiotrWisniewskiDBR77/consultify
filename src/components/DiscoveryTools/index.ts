@@ -7,6 +7,9 @@
 // Main components
 export { ToolActionBar } from './ToolActionBar';
 export { ToolCanvas } from './ToolCanvas';
+export { ToolContextPanel } from './ToolContextPanel';
+export { ToolReviewPanel } from './ToolReviewPanel';
+export { GenerateInitiativesModal } from './GenerateInitiativesModal';
 export { ToolHeader } from './ToolHeader';
 export { ToolWorkspace } from './ToolWorkspace';
 

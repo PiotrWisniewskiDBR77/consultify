@@ -188,7 +188,10 @@ router.get(
 
       // Get total count
       const countResult = (await dbGet(
-        query.replace('SELECT \n          f.*,\n          u.full_name as user_name,\n          u.email as user_email', 'SELECT COUNT(*) as count'),
+        query.replace(
+          'SELECT \n          f.*,\n          u.full_name as user_name,\n          u.email as user_email',
+          'SELECT COUNT(*) as count'
+        ),
         params
       )) as { count: number } | null;
 

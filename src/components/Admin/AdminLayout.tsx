@@ -117,7 +117,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         <AdminSidebar
           activeSection={activeSection}
           onSectionChange={handleSectionChange}
-          onBackToApp={onBack || (() => { })}
+          onBackToApp={onBack || (() => {})}
           currentUserEmail=""
           companyName=""
         />

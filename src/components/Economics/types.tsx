@@ -20,6 +20,9 @@ export interface DigitizationAnalysis {
   // Relationships
   projectId?: string;
   projectName?: string;
+  initiativeId?: string;
+  initiativeName?: string;
+  analysisType?: 'maturity' | 'financial' | 'combined' | string;
   organizationId: number;
 
   // Ownership
@@ -30,6 +33,8 @@ export interface DigitizationAnalysis {
   overallScore?: number;
   completionPercent: number;
   axisScores: Record<string, AxisScore>;
+  npv?: number | null;
+  roi?: number | null;
 
   // Import metadata
   importedFrom?: string;

@@ -1,6 +1,6 @@
 /**
  * ROIAnalysisView
- * 
+ *
  * ROI Analysis view for the Benefits module.
  * Shows return on investment calculations, charts, and variance analysis.
  */
@@ -108,13 +108,22 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   return (
     <div className="bg-navy-800 rounded-xl p-5 border border-navy-700">
       <div className="flex items-start justify-between">
-        <div className={`p-2.5 rounded-lg ${colorClasses[color]}`}>
-          {icon}
-        </div>
+        <div className={`p-2.5 rounded-lg ${colorClasses[color]}`}>{icon}</div>
         {trend && trendValue && (
-          <div className={`flex items-center gap-1 text-sm ${trend === 'up' ? 'text-green-400' : trend === 'down' ? 'text-red-400' : 'text-slate-400'
-            }`}>
-            {trend === 'up' ? <ArrowUp size={14} /> : trend === 'down' ? <ArrowDown size={14} /> : null}
+          <div
+            className={`flex items-center gap-1 text-sm ${
+              trend === 'up'
+                ? 'text-green-400'
+                : trend === 'down'
+                  ? 'text-red-400'
+                  : 'text-slate-400'
+            }`}
+          >
+            {trend === 'up' ? (
+              <ArrowUp size={14} />
+            ) : trend === 'down' ? (
+              <ArrowDown size={14} />
+            ) : null}
             {trendValue}
           </div>
         )}
@@ -138,12 +147,12 @@ interface ROIBarChartProps {
 }
 
 const ROIBarChart: React.FC<ROIBarChartProps> = ({ metrics, onBarClick }) => {
-  const maxROI = Math.max(...metrics.map(m => Math.abs(m.roi)), 100);
+  const maxROI = Math.max(...metrics.map((m) => Math.abs(m.roi)), 100);
 
   return (
     <div className="space-y-3">
-      {metrics.map(metric => {
-        const barWidth = Math.abs(metric.roi) / maxROI * 100;
+      {metrics.map((metric) => {
+        const barWidth = (Math.abs(metric.roi) / maxROI) * 100;
         const isPositive = metric.roi >= 0;
 
         return (
@@ -156,21 +165,30 @@ const ROIBarChart: React.FC<ROIBarChartProps> = ({ metrics, onBarClick }) => {
               <span className="text-sm text-white truncate max-w-[60%] group-hover:text-cyan-400 transition-colors">
                 {metric.initiativeName}
               </span>
-              <span className={`text-sm font-bold ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                {isPositive ? '+' : ''}{metric.roi.toFixed(0)}%
+              <span
+                className={`text-sm font-bold ${isPositive ? 'text-green-400' : 'text-red-400'}`}
+              >
+                {isPositive ? '+' : ''}
+                {metric.roi.toFixed(0)}%
               </span>
             </div>
             <div className="h-6 bg-navy-700 rounded-lg overflow-hidden relative">
               <div
-                className={`h-full rounded-lg transition-all ${isPositive ? 'bg-green-500/50' : 'bg-red-500/50'
-                  } group-hover:opacity-80`}
+                className={`h-full rounded-lg transition-all ${
+                  isPositive ? 'bg-green-500/50' : 'bg-red-500/50'
+                } group-hover:opacity-80`}
                 style={{ width: `${barWidth}%` }}
               />
               <div className="absolute inset-y-0 left-2 flex items-center">
-                <span className={`text-xs ${metric.status === InitiativeStatus.DONE ? 'text-green-400' :
-                    metric.status === InitiativeStatus.BLOCKED ? 'text-red-400' :
-                      'text-slate-400'
-                  }`}>
+                <span
+                  className={`text-xs ${
+                    metric.status === InitiativeStatus.DONE
+                      ? 'text-green-400'
+                      : metric.status === InitiativeStatus.BLOCKED
+                        ? 'text-red-400'
+                        : 'text-slate-400'
+                  }`}
+                >
                   {metric.status}
                 </span>
               </div>
@@ -210,7 +228,7 @@ const VarianceTable: React.FC<VarianceTableProps> = ({ metrics, onRowClick }) =>
 
   const handleSort = (column: typeof sortBy) => {
     if (sortBy === column) {
-      setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+      setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortBy(column);
       setSortDir('desc');
@@ -246,7 +264,7 @@ const VarianceTable: React.FC<VarianceTableProps> = ({ metrics, onRowClick }) =>
           </tr>
         </thead>
         <tbody>
-          {sortedMetrics.map(metric => (
+          {sortedMetrics.map((metric) => (
             <tr
               key={metric.initiativeId}
               onClick={() => onRowClick(metric.initiativeId)}
@@ -254,10 +272,15 @@ const VarianceTable: React.FC<VarianceTableProps> = ({ metrics, onRowClick }) =>
             >
               <td className="py-3">
                 <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${metric.status === InitiativeStatus.DONE ? 'bg-green-400' :
-                      metric.status === InitiativeStatus.BLOCKED ? 'bg-red-400' :
-                        'bg-slate-400'
-                    }`} />
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      metric.status === InitiativeStatus.DONE
+                        ? 'bg-green-400'
+                        : metric.status === InitiativeStatus.BLOCKED
+                          ? 'bg-red-400'
+                          : 'bg-slate-400'
+                    }`}
+                  />
                   <span className="text-sm text-white truncate max-w-[200px]">
                     {metric.initiativeName}
                   </span>
@@ -273,16 +296,24 @@ const VarianceTable: React.FC<VarianceTableProps> = ({ metrics, onRowClick }) =>
                 {formatCurrency(metric.projectedBenefits)} PLN
               </td>
               <td className="py-3">
-                <div className={`flex items-center gap-1 text-sm font-medium ${metric.variance >= 0 ? 'text-green-400' : 'text-red-400'
-                  }`}>
+                <div
+                  className={`flex items-center gap-1 text-sm font-medium ${
+                    metric.variance >= 0 ? 'text-green-400' : 'text-red-400'
+                  }`}
+                >
                   {metric.variance >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                  {metric.variance >= 0 ? '+' : ''}{metric.variance.toFixed(0)}%
+                  {metric.variance >= 0 ? '+' : ''}
+                  {metric.variance.toFixed(0)}%
                 </div>
               </td>
               <td className="py-3">
-                <span className={`text-sm font-bold ${metric.roi >= 0 ? 'text-green-400' : 'text-red-400'
-                  }`}>
-                  {metric.roi >= 0 ? '+' : ''}{metric.roi.toFixed(0)}%
+                <span
+                  className={`text-sm font-bold ${
+                    metric.roi >= 0 ? 'text-green-400' : 'text-red-400'
+                  }`}
+                >
+                  {metric.roi >= 0 ? '+' : ''}
+                  {metric.roi.toFixed(0)}%
                 </span>
               </td>
             </tr>
@@ -304,19 +335,21 @@ export const ROIAnalysisView: React.FC<ROIAnalysisViewProps> = ({
   // Calculate ROI metrics for each initiative
   const roiMetrics = useMemo((): ROIMetrics[] => {
     return initiatives
-      .filter(i => i.status === InitiativeStatus.DONE || i.status === InitiativeStatus.BLOCKED)
-      .map(initiative => {
+      .filter((i) => i.status === InitiativeStatus.DONE || i.status === InitiativeStatus.BLOCKED)
+      .map((initiative) => {
         const totalInvestment = (initiative.costCapex || 0) + (initiative.costOpex || 0);
-        const projectedBenefits = initiative.annualBenefit || initiative.estimatedAnnualBenefit || 0;
+        const projectedBenefits =
+          initiative.annualBenefit || initiative.estimatedAnnualBenefit || 0;
 
         const realizationRate = initiative.status === InitiativeStatus.DONE ? 0.85 : 0.4;
         const realizedBenefits = projectedBenefits * realizationRate;
 
         const roi = calculateROI(realizedBenefits, totalInvestment);
         const paybackPeriodMonths = calculatePaybackPeriod(totalInvestment, projectedBenefits);
-        const variance = projectedBenefits > 0
-          ? ((realizedBenefits - projectedBenefits) / projectedBenefits) * 100
-          : 0;
+        const variance =
+          projectedBenefits > 0
+            ? ((realizedBenefits - projectedBenefits) / projectedBenefits) * 100
+            : 0;
 
         return {
           initiativeId: initiative.id,
@@ -341,13 +374,16 @@ export const ROIAnalysisView: React.FC<ROIAnalysisViewProps> = ({
     const totalProjectedBenefits = roiMetrics.reduce((sum, m) => sum + m.projectedBenefits, 0);
     const overallROI = calculateROI(totalRealizedBenefits, totalInvestment);
 
-    const paybackPeriods = roiMetrics.filter(m => m.paybackPeriodMonths > 0).map(m => m.paybackPeriodMonths);
-    const averagePaybackMonths = paybackPeriods.length > 0
-      ? paybackPeriods.reduce((a, b) => a + b, 0) / paybackPeriods.length
-      : 0;
+    const paybackPeriods = roiMetrics
+      .filter((m) => m.paybackPeriodMonths > 0)
+      .map((m) => m.paybackPeriodMonths);
+    const averagePaybackMonths =
+      paybackPeriods.length > 0
+        ? paybackPeriods.reduce((a, b) => a + b, 0) / paybackPeriods.length
+        : 0;
 
-    const initiativesOnTrack = roiMetrics.filter(m => m.variance >= -10).length;
-    const initiativesBelowTarget = roiMetrics.filter(m => m.variance < -10).length;
+    const initiativesOnTrack = roiMetrics.filter((m) => m.variance >= -10).length;
+    const initiativesBelowTarget = roiMetrics.filter((m) => m.variance < -10).length;
 
     return {
       totalInvestment,
@@ -361,7 +397,7 @@ export const ROIAnalysisView: React.FC<ROIAnalysisViewProps> = ({
   }, [roiMetrics]);
 
   const handleInitiativeClick = (initiativeId: string) => {
-    const initiative = initiatives.find(i => i.id === initiativeId);
+    const initiative = initiatives.find((i) => i.id === initiativeId);
     if (initiative) {
       onInitiativeClick(initiative);
     }
@@ -396,7 +432,9 @@ export const ROIAnalysisView: React.FC<ROIAnalysisViewProps> = ({
           value={`${formatCurrency(summary.totalRealizedBenefits)} PLN`}
           subtitle={`of ${formatCurrency(summary.totalProjectedBenefits)} projected`}
           icon={<TrendingUp size={20} />}
-          trend={summary.totalRealizedBenefits >= summary.totalProjectedBenefits * 0.8 ? 'up' : 'down'}
+          trend={
+            summary.totalRealizedBenefits >= summary.totalProjectedBenefits * 0.8 ? 'up' : 'down'
+          }
           trendValue={`${((summary.totalRealizedBenefits / summary.totalProjectedBenefits) * 100).toFixed(0)}%`}
           color="green"
         />
@@ -422,10 +460,7 @@ export const ROIAnalysisView: React.FC<ROIAnalysisViewProps> = ({
             <BarChart3 size={16} className="text-cyan-400" />
             ROI by Initiative
           </h3>
-          <ROIBarChart
-            metrics={roiMetrics.slice(0, 8)}
-            onBarClick={handleInitiativeClick}
-          />
+          <ROIBarChart metrics={roiMetrics.slice(0, 8)} onBarClick={handleInitiativeClick} />
         </div>
 
         <div className="bg-navy-900 rounded-xl p-5 border border-navy-700">
@@ -439,14 +474,18 @@ export const ROIAnalysisView: React.FC<ROIAnalysisViewProps> = ({
                 <div className="w-3 h-3 rounded-full bg-green-500" />
                 <span className="text-sm text-slate-400">On Track</span>
               </div>
-              <span className="text-3xl font-bold text-green-400">{summary.initiativesOnTrack}</span>
+              <span className="text-3xl font-bold text-green-400">
+                {summary.initiativesOnTrack}
+              </span>
             </div>
             <div className="bg-navy-800 rounded-xl p-4 border border-navy-700">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-3 h-3 rounded-full bg-red-500" />
                 <span className="text-sm text-slate-400">Below Target</span>
               </div>
-              <span className="text-3xl font-bold text-red-400">{summary.initiativesBelowTarget}</span>
+              <span className="text-3xl font-bold text-red-400">
+                {summary.initiativesBelowTarget}
+              </span>
             </div>
           </div>
         </div>
@@ -458,10 +497,7 @@ export const ROIAnalysisView: React.FC<ROIAnalysisViewProps> = ({
           <TrendingUp size={16} className="text-green-400" />
           Variance Analysis
         </h3>
-        <VarianceTable
-          metrics={roiMetrics}
-          onRowClick={handleInitiativeClick}
-        />
+        <VarianceTable metrics={roiMetrics} onRowClick={handleInitiativeClick} />
       </div>
     </div>
   );

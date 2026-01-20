@@ -198,7 +198,7 @@ const CONTEXT_FORMAT_MAP: Record<ScreenContextType, ContextFormatMapping> = {
       'Cite relevant standards and best practices',
       'Provide specific, measurable recommendations',
       'Include examples of improvement actions',
-      'Consider the organization\'s current maturity level',
+      "Consider the organization's current maturity level",
     ],
   },
 
@@ -461,10 +461,7 @@ const CONTEXT_FORMAT_MAP: Record<ScreenContextType, ContextFormatMapping> = {
       focus: 'helpful',
     },
     systemPromptAdditions: [],
-    responseGuidelines: [
-      'Provide balanced, helpful response',
-      'Adapt to user\'s apparent needs',
-    ],
+    responseGuidelines: ['Provide balanced, helpful response', "Adapt to user's apparent needs"],
   },
 };
 
@@ -570,7 +567,4 @@ export function mergeWithUserPreferences(
 // EXPORTS
 // ==========================================
 
-export {
-  CONTEXT_FORMAT_MAP,
-  normalizeContextType,
-};
+export { CONTEXT_FORMAT_MAP, normalizeContextType };

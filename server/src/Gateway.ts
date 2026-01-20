@@ -5,8 +5,8 @@ import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGua
 import accessControlRoutes from './routes/access-control.routes.js';
 import accessCodeRoutes from './routes/accessCodes.routes.js';
 import _actionDecisionRoutes from './routes/actionDecisions.routes.js';
-import adminBackupRoutes from './routes/admin/backup.routes.js';
 import adminAIQualityRoutes from './routes/admin/ai-quality.routes.js';
+import adminBackupRoutes from './routes/admin/backup.routes.js';
 import adminBulkRoutes from './routes/admin-bulk.routes.js';
 import adminDataRoutes from './routes/admin-data.routes.js';
 import adminAlertsRoutes from './routes/adminAlerts.routes.js';
@@ -39,8 +39,8 @@ import analyticsRoutes from './routes/analytics.routes.js';
 import analyticsSuperadminRoutes from './routes/analytics-superadmin.routes.js';
 import advancedAnalyticsRoutes from './routes/analyticsAdvanced.routes.js';
 import apiKeysRoutes from './routes/apiKeys.routes.js';
-import assessmentAIRoutes from './routes/assessment/assessment-ai.routes.js';
 import assessmentRoutes from './routes/assessment/assessment.routes.js';
+import assessmentAIRoutes from './routes/assessment/assessment-ai.routes.js';
 import assessmentHubRoutes from './routes/assessment/assessment-hub.routes.js';
 import assessmentLevelAttachmentsRoutes from './routes/assessment/assessment-level-attachments.routes.js';
 import assessmentReportsRoutes from './routes/assessment/assessment-reports.routes.js';
@@ -83,6 +83,7 @@ import helpAnalyticsRoutes from './routes/helpAnalytics.routes.js';
 import helpChatRoutes from './routes/helpChat.routes.js';
 import helpFeedbackRoutes from './routes/helpFeedback.routes.js';
 import initiativeGeneratorRoutes from './routes/initiative-generator.routes.js';
+import toolsRoutes from './routes/tools.routes.js';
 import calendarIntegrationsRoutes from './routes/integrations/calendarIntegrations.routes.js';
 import connectorRoutes from './routes/integrations/connectors.routes.js';
 import integrationsRoutes from './routes/integrations/integrations.routes.js';
@@ -93,6 +94,7 @@ import webhookSubRoutes from './routes/integrations/webhookSubscriptions.routes.
 import intelligenceRoutes from './routes/intelligence.routes.js';
 import journeyAnalyticsRoutes from './routes/journeyAnalytics.routes.js';
 import knowledgeRoutes from './routes/knowledge.routes.js';
+import knowledgeBaseRoutes from './routes/knowledgeBase.routes.js';
 import legalRoutes from './routes/legal.routes.js';
 import llmRoutes from './routes/llm.routes.js';
 import locationsRoutes from './routes/locations.routes.js';
@@ -234,6 +236,8 @@ export class ApiGateway {
       app.use('/api/ai/operations', aiOperationsRoutes);
       app.use('/api/ai/actions', aiActionsRoutes);
       app.use('/api/ai/performance', performanceRoutes);
+      console.log('[ApiGateway] Mounting /api/tools');
+      app.use('/api/tools', toolsRoutes);
 
       // Register routes
       console.log('[ApiGateway] Mounting /api/admin-data');
@@ -317,6 +321,7 @@ export class ApiGateway {
       // Core API routes
       app.use('/api/projects', projectRoutes);
       app.use('/api/knowledge', knowledgeRoutes);
+      app.use('/api/kb', knowledgeBaseRoutes); // Public Knowledge Base API
       app.use('/api/media-ingestion', mediaIngestionRoutes);
       app.use('/api/llm', llmRoutes);
       app.use('/api/tasks', taskRoutes);

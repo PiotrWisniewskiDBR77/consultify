@@ -112,10 +112,9 @@ router.get('/:assessmentId/status', async (req: AuthRequest, res: Response) => {
 
     const totalReviews = reviewCounts.total || 0;
     const completedReviews = reviewCounts.completed || 0;
-    const reviewProgress = totalReviews > 0 ? Math.round((completedReviews / totalReviews) * 100) : 0;
-    const isOverdue = workflow.slaDeadline
-      ? new Date(workflow.slaDeadline) < new Date()
-      : false;
+    const reviewProgress =
+      totalReviews > 0 ? Math.round((completedReviews / totalReviews) * 100) : 0;
+    const isOverdue = workflow.slaDeadline ? new Date(workflow.slaDeadline) < new Date() : false;
 
     res.json({
       ...workflow,
@@ -123,9 +122,7 @@ router.get('/:assessmentId/status', async (req: AuthRequest, res: Response) => {
       totalReviews,
       reviewProgress,
       canSubmitForReview: workflow.status === 'DRAFT',
-      canApprove:
-        workflow.status === 'IN_REVIEW' ||
-        workflow.status === 'AWAITING_APPROVAL',
+      canApprove: workflow.status === 'IN_REVIEW' || workflow.status === 'AWAITING_APPROVAL',
       isOverdue,
     });
   } catch (err: any) {
@@ -306,6 +303,24 @@ router.post('/:assessmentId/approve', async (req: AuthRequest, res: Response) =>
     const db = getDatabase();
 
     logger.info(`[AssessmentWorkflow] Approving assessment ${assessmentId}`);
+
+    // Require finalized report before approval
+    const report = await new Promise<any>((resolve, reject) => {
+      db.get(
+        `SELECT status FROM assessment_reports WHERE assessment_id = ? AND organization_id = ?`,
+        [assessmentId, organizationId],
+        (err: Error | null, row: any) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+
+    if (!report || String(report.status || '').toUpperCase() !== 'FINAL') {
+      return res
+        .status(400)
+        .json({ error: 'Report must be finalized before approval' });
+    }
 
     // Get workflow
     const workflow = await new Promise<any>((resolve, reject) => {

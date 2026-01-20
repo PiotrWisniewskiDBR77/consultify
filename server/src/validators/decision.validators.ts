@@ -25,7 +25,13 @@ export type PMODomain = (typeof PMODomain)[keyof typeof PMODomain];
 // ENUMS
 // ==========================================
 
-export const DecisionStatusEnum = z.enum(['pending', 'approved', 'rejected', 'deferred']);
+export const DecisionStatusEnum = z.enum([
+  'pending',
+  'approved',
+  'rejected',
+  'escalated',
+  'cancelled',
+]);
 
 // ==========================================
 // REQUEST SCHEMAS
@@ -33,25 +39,47 @@ export const DecisionStatusEnum = z.enum(['pending', 'approved', 'rejected', 'de
 
 export const CreateDecisionSchema = z.object({
   projectId: z.string().optional(),
+  initiativeId: z.string().optional(),
+  taskId: z.string().optional(),
   title: z.string().min(1).max(255),
   description: z.string().max(5000).optional(),
-  pmoDomain: z.nativeEnum(PMODomain),
+  pmoDomain: z.nativeEnum(PMODomain).optional(),
   decisionOwnerId: z.string().optional().nullable(),
-  relatedObjectType: z.enum(['task', 'initiative', 'gate', 'risk']).optional(),
+  relatedObjectType: z.enum(['task', 'initiative', 'project', 'gate', 'risk']).optional(),
   relatedObjectId: z.string().optional().nullable(),
-  dueDate: z.string().datetime().optional().nullable(),
-  priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
+  dueDate: z.string().optional().nullable(),
+  priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+  impact: z.enum(['low', 'medium', 'high']).optional(),
+  decisionType: z.string().optional(),
+  type: z.string().optional(),
 });
 
-export const DecideSchema = z.object({
-  decision: z.enum(['approved', 'rejected', 'deferred']),
-  rationale: z.string().min(1).max(2000),
-  notes: z.string().max(1000).optional(),
-});
+export const DecideSchema = z
+  .object({
+    decision: z.enum(['approved', 'rejected', 'deferred']).optional(),
+    status: z.enum(['APPROVED', 'REJECTED', 'PENDING', 'ESCALATED']).optional(),
+    rationale: z.string().min(1).max(2000).optional(),
+    outcome: z.string().max(2000).optional(),
+    notes: z.string().max(1000).optional(),
+  })
+  .refine((data) => data.decision || data.status, {
+    message: 'Decision status required',
+    path: ['decision'],
+  });
 
 export const EscalateDecisionSchema = z.object({
-  reason: z.string().min(1).max(500),
+  reason: z.string().max(500).optional(),
   escalateToUserId: z.string().optional(),
+});
+
+export const UpdateDecisionSchema = z.object({
+  decisionOwnerId: z.string().optional(),
+  dueDate: z.string().optional(),
+  priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+  impact: z.enum(['low', 'medium', 'high']).optional(),
+  title: z.string().min(1).max(255).optional(),
+  description: z.string().max(5000).optional(),
+  delegationNote: z.string().max(500).optional(),
 });
 
 // ==========================================
@@ -72,4 +100,5 @@ export const GetDecisionsQuerySchema = z.object({
 export type CreateDecisionRequest = z.infer<typeof CreateDecisionSchema>;
 export type DecideRequest = z.infer<typeof DecideSchema>;
 export type EscalateDecisionRequest = z.infer<typeof EscalateDecisionSchema>;
+export type UpdateDecisionRequest = z.infer<typeof UpdateDecisionSchema>;
 export type GetDecisionsQuery = z.infer<typeof GetDecisionsQuerySchema>;

@@ -11,6 +11,7 @@ export interface HelpGuide {
   id: string;
   path: string;
   icon: string;
+  articleSlug?: string; // KB article slug for in-app navigation
 }
 
 export interface KnowledgeBaseCategory {
@@ -35,16 +36,26 @@ export const HELP_CONFIG: HelpConfig = {
   // Introduction video URL (YouTube, Vimeo, etc.)
   videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // TODO: Replace with actual intro video
 
-  // Base URL for documentation
-  docsBaseUrl: 'https://docs.consultinity.app',
+  // Base URL for documentation - internal route
+  docsBaseUrl: '/docs',
 
-  // Quick guides - links to documentation pages
+  // Quick guides - links to KB articles
   guides: [
-    { id: 'gettingStarted', path: '/getting-started', icon: 'Rocket' },
-    { id: 'assessment', path: '/assessment-guide', icon: 'ClipboardCheck' },
-    { id: 'initiatives', path: '/initiatives', icon: 'Target' },
-    { id: 'reports', path: '/reports', icon: 'FileText' },
-    { id: 'aiFeatures', path: '/ai-features', icon: 'Bot' },
+    {
+      id: 'gettingStarted',
+      path: '/getting-started',
+      icon: 'Rocket',
+      articleSlug: 'getting-started-consultinity',
+    },
+    {
+      id: 'assessment',
+      path: '/assessment-guide',
+      icon: 'ClipboardCheck',
+      articleSlug: 'assessment-guide',
+    },
+    { id: 'initiatives', path: '/initiatives', icon: 'Target', articleSlug: 'initiatives-guide' },
+    { id: 'reports', path: '/reports', icon: 'FileText', articleSlug: 'reports-guide' },
+    { id: 'aiFeatures', path: '/ai-features', icon: 'Bot', articleSlug: 'ai-features-guide' },
   ],
 
   // Knowledge Base categories (Coming Soon)
@@ -118,19 +129,39 @@ export interface HelpItem {
  */
 const VIEW_HELP_MAP: Record<string, HelpItem[]> = {
   '/dashboard': [
-    { title: 'help.dashboard.overview', content: 'help.dashboard.overviewContent', type: 'article' },
-    { title: 'help.dashboard.navigation', content: 'help.dashboard.navigationContent', type: 'guide' },
+    {
+      title: 'help.dashboard.overview',
+      content: 'help.dashboard.overviewContent',
+      type: 'article',
+    },
+    {
+      title: 'help.dashboard.navigation',
+      content: 'help.dashboard.navigationContent',
+      type: 'guide',
+    },
   ],
   '/initiatives': [
     { title: 'help.initiatives.create', content: 'help.initiatives.createContent', type: 'guide' },
-    { title: 'help.initiatives.manage', content: 'help.initiatives.manageContent', type: 'article' },
+    {
+      title: 'help.initiatives.manage',
+      content: 'help.initiatives.manageContent',
+      type: 'article',
+    },
   ],
   '/assessment': [
     { title: 'help.assessment.start', content: 'help.assessment.startContent', type: 'guide' },
-    { title: 'help.assessment.methodology', content: 'help.assessment.methodologyContent', type: 'article' },
+    {
+      title: 'help.assessment.methodology',
+      content: 'help.assessment.methodologyContent',
+      type: 'article',
+    },
   ],
   default: [
-    { title: 'help.general.gettingStarted', content: 'help.general.gettingStartedContent', type: 'guide' },
+    {
+      title: 'help.general.gettingStarted',
+      content: 'help.general.gettingStartedContent',
+      type: 'guide',
+    },
     { title: 'help.general.support', content: 'help.general.supportContent', type: 'article' },
   ],
 };

@@ -333,20 +333,22 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
             return (
               <React.Fragment key={mod.module}>
                 <div
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${isActive
-                    ? 'bg-blue-500/20 text-blue-400 shadow-sm'
-                    : isPassed
-                      ? 'bg-green-500/10 text-green-400'
-                      : 'bg-slate-800 text-slate-500'
-                    }`}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                    isActive
+                      ? 'bg-blue-500/20 text-blue-400 shadow-sm'
+                      : isPassed
+                        ? 'bg-green-500/10 text-green-400'
+                        : 'bg-slate-800 text-slate-500'
+                  }`}
                 >
                   <span
-                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${isActive
-                      ? 'bg-blue-500 text-white'
-                      : isPassed
-                        ? 'bg-green-500 text-white'
-                        : 'bg-slate-600 text-white'
-                      }`}
+                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                      isActive
+                        ? 'bg-blue-500 text-white'
+                        : isPassed
+                          ? 'bg-green-500 text-white'
+                          : 'bg-slate-600 text-white'
+                    }`}
                   >
                     {isPassed && !isActive ? '✓' : mod.icon}
                   </span>
@@ -391,12 +393,13 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
             <div className="text-right">
               <div className="text-xs text-slate-400 mb-1">Charter Readiness</div>
               <div
-                className={`text-2xl font-bold ${readiness.total >= 70
-                  ? 'text-green-400'
-                  : readiness.total >= 40
-                    ? 'text-amber-400'
-                    : 'text-red-400'
-                  }`}
+                className={`text-2xl font-bold ${
+                  readiness.total >= 70
+                    ? 'text-green-400'
+                    : readiness.total >= 40
+                      ? 'text-amber-400'
+                      : 'text-red-400'
+                }`}
               >
                 {readiness.total}%
               </div>
@@ -418,10 +421,11 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-all ${activeTab === tab.id
-                ? 'bg-navy-950 text-white border-t border-x border-navy-700'
-                : 'text-slate-400 hover:text-white hover:bg-navy-800'
-                }`}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-all ${
+                activeTab === tab.id
+                  ? 'bg-navy-950 text-white border-t border-x border-navy-700'
+                  : 'text-slate-400 hover:text-white hover:bg-navy-800'
+              }`}
             >
               {tab.icon}
               <span>{tab.label}</span>
@@ -596,14 +600,14 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
           <InitiativeTasksTab initiativeId={initiative.id} tasks={initiative.tasks || []} />
         )}
 
-        {activeTab === 'economics' && (
-          <InitiativeFinancialIntegration initiative={initiative} />
-        )}
+        {activeTab === 'economics' && <InitiativeFinancialIntegration initiative={initiative} />}
 
         {activeTab === 'intelligence' && (
           <InitiativeIntelligenceTab
             initiative={initiative}
-            onChange={(updates: Partial<FullInitiative>) => setInitiative({ ...initiative, ...updates })}
+            onChange={(updates: Partial<FullInitiative>) =>
+              setInitiative({ ...initiative, ...updates })
+            }
           />
         )}
 
@@ -611,16 +615,16 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
         {['definition', 'execution', 'governance', 'team', 'comments', 'history'].includes(
           activeTab
         ) && (
-            <div className="flex items-center justify-center h-64 text-slate-400">
-              <div className="text-center">
-                <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium text-white mb-2">
-                  {tabs.find((t) => t.id === activeTab)?.label}
-                </p>
-                <p className="text-sm">This section is available in the full modal view</p>
-              </div>
+          <div className="flex items-center justify-center h-64 text-slate-400">
+            <div className="text-center">
+              <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-medium text-white mb-2">
+                {tabs.find((t) => t.id === activeTab)?.label}
+              </p>
+              <p className="text-sm">This section is available in the full modal view</p>
             </div>
-          )}
+          </div>
+        )}
       </div>
     </div>
   );

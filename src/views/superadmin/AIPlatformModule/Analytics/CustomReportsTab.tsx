@@ -269,7 +269,9 @@ export const CustomReportsTab: React.FC = () => {
             </div>
             <div className="flex-1">
               <div className="font-medium text-slate-900 dark:text-white">{template.name}</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">{template.description}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {template.description}
+              </div>
             </div>
             <ChevronRight size={16} className="text-slate-400" />
           </button>
@@ -416,7 +418,9 @@ export const CustomReportsTab: React.FC = () => {
                         <Star size={14} fill={report.isFavorite ? 'currentColor' : 'none'} />
                       </button>
                       <div>
-                        <div className="font-medium text-slate-900 dark:text-white">{report.name}</div>
+                        <div className="font-medium text-slate-900 dark:text-white">
+                          {report.name}
+                        </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
                           {report.description}
                         </div>
@@ -463,7 +467,9 @@ export const CustomReportsTab: React.FC = () => {
       {filteredReports.length === 0 && (
         <div className="text-center py-12">
           <FileBarChart size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">No reports found</h3>
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
+            No reports found
+          </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
             {searchTerm || filterType
               ? 'Try adjusting your filters'

@@ -3,16 +3,7 @@
  * Wrapper for AdminKnowledgeView strategies tab
  */
 
-import {
-  Edit2,
-  FileText,
-  Lightbulb,
-  Plus,
-  Power,
-  RefreshCw,
-  Target,
-  X,
-} from 'lucide-react';
+import { Edit2, FileText, Lightbulb, Plus, Power, RefreshCw, Target, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -228,7 +219,9 @@ export const StrategicDirectionsTab: React.FC = () => {
                 <div className="flex items-center gap-2 mb-2">
                   <h3 className="text-lg font-bold text-slate-900 dark:text-white">{s.title}</h3>
                   {s.priority && (
-                    <span className={`text-xs px-2 py-0.5 rounded uppercase font-bold ${getPriorityColor(s.priority)}`}>
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded uppercase font-bold ${getPriorityColor(s.priority)}`}
+                    >
                       {s.priority}
                     </span>
                   )}
@@ -262,7 +255,9 @@ export const StrategicDirectionsTab: React.FC = () => {
               {/* Success Metrics */}
               {s.success_metrics && s.success_metrics.length > 0 && (
                 <div className="mb-4">
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Success Metrics:</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                    Success Metrics:
+                  </p>
                   <div className="flex flex-wrap gap-1">
                     {s.success_metrics.map((metric, idx) => (
                       <span
@@ -328,7 +323,9 @@ export const StrategicDirectionsTab: React.FC = () => {
                   required
                   rows={4}
                   value={strategyForm.description}
-                  onChange={(e) => setStrategyForm({ ...strategyForm, description: e.target.value })}
+                  onChange={(e) =>
+                    setStrategyForm({ ...strategyForm, description: e.target.value })
+                  }
                   className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
                   placeholder="Explain how the AI should behave or what it should prioritize..."
                 />
@@ -360,7 +357,9 @@ export const StrategicDirectionsTab: React.FC = () => {
                   <input
                     type="date"
                     value={strategyForm.target_date}
-                    onChange={(e) => setStrategyForm({ ...strategyForm, target_date: e.target.value })}
+                    onChange={(e) =>
+                      setStrategyForm({ ...strategyForm, target_date: e.target.value })
+                    }
                     className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
                   />
                 </div>

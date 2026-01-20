@@ -116,14 +116,40 @@ export const RoadmapRequestSchema = z.object({
   initiatives: z
     .array(
       z.object({
+        id: z.string().optional(),
         name: z.string(),
-        priority: z.enum(['HIGH', 'MEDIUM', 'LOW']).optional(),
+        priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).optional(),
         complexity: z.string().optional(),
         expectedRoi: z.number().optional(),
         roi: z.number().optional(),
       })
     )
     .min(1),
+});
+
+const InitiativeAIItemSchema = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  priority: z.string().optional(),
+  owner: z.string().optional(),
+  plannedStartDate: z.string().datetime().optional(),
+  plannedEndDate: z.string().datetime().optional(),
+  capacity: z.number().optional(),
+});
+
+const InitiativeDependencySchema = z.object({
+  fromInitiativeId: z.string(),
+  toInitiativeId: z.string(),
+  type: z.string().optional(),
+});
+
+export const InitiativeConflictsRequestSchema = z.object({
+  initiatives: z.array(InitiativeAIItemSchema).min(1),
+  dependencies: z.array(InitiativeDependencySchema).optional(),
+});
+
+export const InitiativePrioritiesRequestSchema = z.object({
+  initiatives: z.array(InitiativeAIItemSchema).min(1),
 });
 
 // Get Audit Logs Query
@@ -273,6 +299,8 @@ export type ApproveActionRequest = z.infer<typeof ApproveActionRequestSchema>;
 export type RejectActionRequest = z.infer<typeof RejectActionRequestSchema>;
 export type RecommendRequest = z.infer<typeof RecommendRequestSchema>;
 export type RoadmapRequest = z.infer<typeof RoadmapRequestSchema>;
+export type InitiativeConflictsRequest = z.infer<typeof InitiativeConflictsRequestSchema>;
+export type InitiativePrioritiesRequest = z.infer<typeof InitiativePrioritiesRequestSchema>;
 export type RecordAuditDecisionRequest = z.infer<typeof RecordAuditDecisionRequestSchema>;
 export type PostSuggestionsRequest = z.infer<typeof PostSuggestionsRequestSchema>;
 export type RecordSuggestionActionRequest = z.infer<typeof RecordSuggestionActionRequestSchema>;

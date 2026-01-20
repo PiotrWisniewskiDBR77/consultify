@@ -304,6 +304,48 @@ export { BenefitsTracker } from './BenefitsTracker';
 - [ ] Komponent jest poprawnie lazy-loaded
 - [ ] Eksport komponentu istnieje w `index.ts` modułu
 
+---
+
+## Stabilność Nawigacji (Incident: lodash/get + recharts)
+
+### Objaw
+
+Na `/economics`, `/reports` (a czasem inne moduły) pojawiał się ekran błędu:
+
+```
+SyntaxError: The requested module '/node_modules/lodash/get.js?...' does not provide an export named 'default'
+```
+
+Routing działał (URL się zmieniał), ale render kończył się błędem w `RouteErrorBoundary`.
+
+### Przyczyna
+
+`recharts` używa `lodash/get` w trybie CJS, a Vite (ESM) próbował importować `default`.
+W efekcie moduł ładowany dynamicznie powodował runtime error w widoku.
+
+### Bezpieczna Naprawa
+
+Wymuszenie prebundlingu `recharts` i `lodash` w Vite, aby usunąć konflikt CJS/ESM:
+
+```ts
+// vite.config.ts
+optimizeDeps: {
+  include: [
+    'lodash',
+    'lodash/get',
+    'recharts',
+  ],
+}
+```
+
+To nie zmienia logiki aplikacji i minimalizuje ryzyko regresji.
+
+### Test Po Naprawie
+
+- [ ] `Cmd+Shift+R` na `/economics`
+- [ ] `Cmd+Shift+R` na `/reports`
+- [ ] Brak błędu `lodash/get`
+
 ### Testowanie Połączenia
 
 ```bash
@@ -329,6 +371,7 @@ grep "[AppView.VIEW_NAME]" src/routes/routeConfig.ts
 | 2026-01-20 | Utworzenie dokumentacji | AI Assistant |
 | 2026-01-20 | Usunięcie badge 'soon' z Economics i Reports | User |
 | 2026-01-20 | Naprawienie błędów TypeScript w ExecutionHub | AI Assistant |
+| 2026-01-20 | Naprawa błędu lodash/get w modułach Economics/Reports | AI Assistant |
 
 ---
 

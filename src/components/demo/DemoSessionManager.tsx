@@ -1,6 +1,6 @@
 /**
  * DemoSessionManager
- * 
+ *
  * Central orchestration component for the demo experience.
  * Manages all demo UI elements and their triggers:
  * - Welcome Tour (first visit)
@@ -8,7 +8,7 @@
  * - Exit Intent Modal (on leave)
  * - Upgrade Prompts (strategic moments)
  * - Session Expiry Warnings
- * 
+ *
  * BCG/McKinsey class experience design.
  */
 
@@ -18,7 +18,6 @@ import { useTranslation } from 'react-i18next';
 
 import { useDemoSession } from '../../hooks/useDemoSession';
 import { trackTourCompleted, trackUpgradeClick } from '../../services/demoAnalyticsService';
-
 import { DemoLoadingOverlay } from './DemoLoadingOverlay';
 import { DemoUpgradePrompt } from './DemoUpgradePrompt';
 import { DemoWelcomeTour } from './DemoWelcomeTour';
@@ -126,7 +125,10 @@ export const DemoSessionManager: React.FC = () => {
     if (!isDemo) return;
     if (upgradePromptsShown >= CONFIG.MAX_UPGRADE_PROMPTS) return;
 
-    if (featuresExplored.length >= CONFIG.UPGRADE_PROMPT_FEATURE_THRESHOLD && upgradePromptsShown < 2) {
+    if (
+      featuresExplored.length >= CONFIG.UPGRADE_PROMPT_FEATURE_THRESHOLD &&
+      upgradePromptsShown < 2
+    ) {
       // Only show if we haven't shown the time-based one recently
       if (sessionDurationMs > CONFIG.UPGRADE_PROMPT_DELAY_MS + 60000) {
         setUpgradePromptFeature('features');
@@ -144,7 +146,10 @@ export const DemoSessionManager: React.FC = () => {
     if (!isDemo) return;
 
     // 1 hour warning
-    if (timeRemainingMs <= CONFIG.SESSION_WARNING_1H_MS && timeRemainingMs > CONFIG.SESSION_WARNING_5MIN_MS) {
+    if (
+      timeRemainingMs <= CONFIG.SESSION_WARNING_1H_MS &&
+      timeRemainingMs > CONFIG.SESSION_WARNING_5MIN_MS
+    ) {
       if (sessionWarningType !== '1h') {
         setSessionWarningType('1h');
         // Don't auto-show modal, let banner handle it
@@ -183,7 +188,10 @@ export const DemoSessionManager: React.FC = () => {
 
     // Show celebration toast with "aha moment" messaging
     toast.success(
-      t('demo.tourComplete.message', "You're ready to explore! This platform typically saves teams 3+ weeks of consulting work."),
+      t(
+        'demo.tourComplete.message',
+        "You're ready to explore! This platform typically saves teams 3+ weeks of consulting work."
+      ),
       {
         duration: 5000,
         icon: '🎉',
@@ -210,15 +218,18 @@ export const DemoSessionManager: React.FC = () => {
     setShowSessionWarning(false);
   }, [extendSession]);
 
-  const handleContactSales = useCallback((source: string = 'banner') => {
-    // Track upgrade click
-    trackUpgradeClick(sessionId, source);
+  const handleContactSales = useCallback(
+    (source: string = 'banner') => {
+      // Track upgrade click
+      trackUpgradeClick(sessionId, source);
 
-    window.open(
-      'https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017',
-      '_blank'
-    );
-  }, [sessionId]);
+      window.open(
+        'https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017',
+        '_blank'
+      );
+    },
+    [sessionId]
+  );
 
   // --------------------------------------------------------
   // RENDER
@@ -255,10 +266,7 @@ export const DemoSessionManager: React.FC = () => {
       />
 
       {/* Exit Intent Modal - When leaving */}
-      <ExitIntentModal
-        isOpen={showExitIntent}
-        onClose={handleExitIntentClose}
-      />
+      <ExitIntentModal isOpen={showExitIntent} onClose={handleExitIntentClose} />
 
       {/* Session Warning Modal */}
       {showSessionWarning && (
@@ -301,13 +309,15 @@ const SessionWarningModal: React.FC<SessionWarningModalProps> = ({
       case '5min':
         return {
           title: 'Session Almost Over',
-          description: 'Only 5 minutes left in your demo. Extend now or schedule a full demo with our team.',
+          description:
+            'Only 5 minutes left in your demo. Extend now or schedule a full demo with our team.',
           showExtend: true,
         };
       case 'expired':
         return {
           title: 'Session Expired',
-          description: 'Your demo session has ended. Start a new session or get full access with your own data.',
+          description:
+            'Your demo session has ended. Start a new session or get full access with your own data.',
           showExtend: false,
         };
     }
@@ -334,13 +344,9 @@ const SessionWarningModal: React.FC<SessionWarningModalProps> = ({
           </svg>
         </div>
 
-        <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-3">
-          {content.title}
-        </h3>
+        <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-3">{content.title}</h3>
 
-        <p className="text-slate-600 dark:text-slate-400 mb-6">
-          {content.description}
-        </p>
+        <p className="text-slate-600 dark:text-slate-400 mb-6">{content.description}</p>
 
         <div className="flex flex-col sm:flex-row gap-3">
           {content.showExtend && (

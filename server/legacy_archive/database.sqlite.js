@@ -39,10 +39,10 @@ export function getDatabaseInstance() {
   if (process.env.MOCK_DB === 'true') {
     console.log('Using MOCKED DB (No connection)');
     db = {
-      prepare: () => ({ run: () => {}, finalize: () => {} }),
-      run: () => {},
-      all: () => {},
-      get: () => {},
+      prepare: () => ({ run: () => { }, finalize: () => { } }),
+      run: () => { },
+      all: () => { },
+      get: () => { },
       serialize: (cb) => cb && cb(),
     };
   } else {
@@ -51,7 +51,10 @@ export function getDatabaseInstance() {
         console.error('Error opening database', err.message);
       } else {
         console.log('Connected to the SQLite database.');
-        if (process.env.NODE_ENV !== 'test') {
+        if (process.env.SKIP_INIT_DB === 'true') {
+          console.log('[SQLite] SKIP_INIT_DB is true, jumping over initDb().');
+        } else if (process.env.NODE_ENV !== 'test') {
+          console.log('[SQLite] Initializing DB...');
           initDb(db);
         }
       }
@@ -99,7 +102,7 @@ export function initDb(db) {
         )`);
 
     // Migrations
-    db.run(`ALTER TABLE users ADD COLUMN impersonator_id TEXT`, (err) => {});
+    db.run(`ALTER TABLE users ADD COLUMN impersonator_id TEXT`, (err) => { });
 
     // Sessions Table (Linked to user_id and optionally project_id)
     db.run(`CREATE TABLE IF NOT EXISTS sessions(
@@ -145,7 +148,7 @@ export function initDb(db) {
         )`);
 
     // Migration: Add context_data to projects if it doesn't exist
-    db.run(`ALTER TABLE projects ADD COLUMN context_data TEXT`, (err) => {});
+    db.run(`ALTER TABLE projects ADD COLUMN context_data TEXT`, (err) => { });
 
     // Knowledge Base: Documents
     db.run(`CREATE TABLE IF NOT EXISTS knowledge_docs(
@@ -394,23 +397,23 @@ export function initDb(db) {
         )`);
 
     // Migration: Add columns if they don't exist
-    db.run(`ALTER TABLE notifications ADD COLUMN organization_id TEXT`, (err) => {});
-    db.run(`ALTER TABLE notifications ADD COLUMN project_id TEXT`, (err) => {});
-    db.run(`ALTER TABLE notifications ADD COLUMN initiative_id TEXT`, (err) => {});
-    db.run(`ALTER TABLE notifications ADD COLUMN task_id TEXT`, (err) => {});
-    db.run(`ALTER TABLE notifications ADD COLUMN related_id TEXT`, (err) => {});
-    db.run(`ALTER TABLE notifications ADD COLUMN severity TEXT DEFAULT 'INFO'`, (err) => {});
-    db.run(`ALTER TABLE notifications ADD COLUMN priority TEXT DEFAULT 'medium'`, (err) => {});
-    db.run(`ALTER TABLE notifications ADD COLUMN is_read INTEGER DEFAULT 0`, (err) => {});
-    db.run(`ALTER TABLE notifications ADD COLUMN is_actionable INTEGER DEFAULT 0`, (err) => {});
-    db.run(`ALTER TABLE notifications ADD COLUMN action_url TEXT`, (err) => {});
-    db.run(`ALTER TABLE notifications ADD COLUMN expires_at DATETIME`, (err) => {});
-    db.run(`ALTER TABLE notifications ADD COLUMN read_at DATETIME`, (err) => {});
-    db.run(`ALTER TABLE notifications ADD COLUMN related_object_type TEXT`, (err) => {});
-    db.run(`ALTER TABLE notifications ADD COLUMN related_object_id TEXT`, (err) => {});
+    db.run(`ALTER TABLE notifications ADD COLUMN organization_id TEXT`, (err) => { });
+    db.run(`ALTER TABLE notifications ADD COLUMN project_id TEXT`, (err) => { });
+    db.run(`ALTER TABLE notifications ADD COLUMN initiative_id TEXT`, (err) => { });
+    db.run(`ALTER TABLE notifications ADD COLUMN task_id TEXT`, (err) => { });
+    db.run(`ALTER TABLE notifications ADD COLUMN related_id TEXT`, (err) => { });
+    db.run(`ALTER TABLE notifications ADD COLUMN severity TEXT DEFAULT 'INFO'`, (err) => { });
+    db.run(`ALTER TABLE notifications ADD COLUMN priority TEXT DEFAULT 'medium'`, (err) => { });
+    db.run(`ALTER TABLE notifications ADD COLUMN is_read INTEGER DEFAULT 0`, (err) => { });
+    db.run(`ALTER TABLE notifications ADD COLUMN is_actionable INTEGER DEFAULT 0`, (err) => { });
+    db.run(`ALTER TABLE notifications ADD COLUMN action_url TEXT`, (err) => { });
+    db.run(`ALTER TABLE notifications ADD COLUMN expires_at DATETIME`, (err) => { });
+    db.run(`ALTER TABLE notifications ADD COLUMN read_at DATETIME`, (err) => { });
+    db.run(`ALTER TABLE notifications ADD COLUMN related_object_type TEXT`, (err) => { });
+    db.run(`ALTER TABLE notifications ADD COLUMN related_object_id TEXT`, (err) => { });
 
     // Sync read -> is_read if needed
-    db.run(`UPDATE notifications SET is_read = read WHERE is_read = 0 AND read = 1`, (err) => {});
+    db.run(`UPDATE notifications SET is_read = read WHERE is_read = 0 AND read = 1`, (err) => { });
 
     // Activity Logs (Audit Trail) - Extended for Enterprise System Module
     db.run(`CREATE TABLE IF NOT EXISTS activity_logs (
@@ -455,24 +458,24 @@ export function initDb(db) {
     // Add indexes for audit_logs
     db.run(
       `CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp DESC)`,
-      (err) => {}
+      (err) => { }
     );
-    db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id)`, (err) => {});
+    db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id)`, (err) => { });
     db.run(
       `CREATE INDEX IF NOT EXISTS idx_audit_logs_action_type ON audit_logs(action_type)`,
-      (err) => {}
+      (err) => { }
     );
     db.run(
       `CREATE INDEX IF NOT EXISTS idx_audit_logs_resource ON audit_logs(resource_type, resource_id)`,
-      (err) => {}
+      (err) => { }
     );
     db.run(
       `CREATE INDEX IF NOT EXISTS idx_audit_logs_risk_level ON audit_logs(risk_level)`,
-      (err) => {}
+      (err) => { }
     );
     db.run(
       `CREATE INDEX IF NOT EXISTS idx_audit_logs_org_id ON audit_logs(organization_id)`,
-      (err) => {}
+      (err) => { }
     );
 
     // User Token Quota (Add columns to users - we'll use ALTER TABLE to add if not exists)
@@ -1223,11 +1226,11 @@ export function initDb(db) {
     // Migration: Add organization_type to organizations
     db.run(
       `ALTER TABLE organizations ADD COLUMN organization_type TEXT DEFAULT 'TRIAL'`,
-      (err) => {}
+      (err) => { }
     );
-    db.run(`ALTER TABLE organizations ADD COLUMN is_active INTEGER DEFAULT 1`, (err) => {});
-    db.run(`ALTER TABLE organizations ADD COLUMN trial_started_at DATETIME`, (err) => {});
-    db.run(`ALTER TABLE organizations ADD COLUMN trial_expires_at DATETIME`, (err) => {});
+    db.run(`ALTER TABLE organizations ADD COLUMN is_active INTEGER DEFAULT 1`, (err) => { });
+    db.run(`ALTER TABLE organizations ADD COLUMN trial_started_at DATETIME`, (err) => { });
+    db.run(`ALTER TABLE organizations ADD COLUMN trial_expires_at DATETIME`, (err) => { });
 
     // 5. INVOICES (for history & reconciliation)
     db.run(`CREATE TABLE IF NOT EXISTS invoices (
@@ -1399,15 +1402,15 @@ export function initDb(db) {
     // Add indexes for webhook_deliveries
     db.run(
       `CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_webhook_id ON webhook_deliveries(webhook_id)`,
-      (err) => {}
+      (err) => { }
     );
     db.run(
       `CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_status ON webhook_deliveries(status)`,
-      (err) => {}
+      (err) => { }
     );
     db.run(
       `CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_created_at ON webhook_deliveries(created_at DESC)`,
-      (err) => {}
+      (err) => { }
     );
 
     // Extend existing webhooks table with missing columns
@@ -1464,7 +1467,7 @@ export function initDb(db) {
     // Add indexes for system_metrics
     db.run(
       `CREATE INDEX IF NOT EXISTS idx_system_metrics_name_time ON system_metrics(metric_name, timestamp DESC)`,
-      (err) => {}
+      (err) => { }
     );
 
     // Security Events Table

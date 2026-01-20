@@ -29,6 +29,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
 import { BenefitsTrackingDashboard } from './BenefitsTrackingDashboard';
 import { BusinessCaseGenerator } from './BusinessCaseGenerator';
 import { CashFlowChart } from './CashFlowChart';
@@ -83,6 +84,8 @@ type ActiveSection =
   | 'metrics'
   | 'cashflow'
   | 'sensitivity'
+  | 'scenarios'
+  | 'gates'
   | 'initiative'
   | 'benefits'
   | 'businesscase';
@@ -96,11 +99,16 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [scenarios, setScenarios] = useState<any[]>([]);
+  const [isLoadingScenarios, setIsLoadingScenarios] = useState(false);
+  const currentUser = useAppStore((state) => state.currentUser);
   const [expandedSections, setExpandedSections] = useState<Record<ActiveSection, boolean>>({
     input: true,
     metrics: true,
     cashflow: false,
     sensitivity: false,
+    scenarios: false,
+    gates: false,
     initiative: false,
     benefits: false,
     businesscase: false,
@@ -124,7 +132,8 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
     };
 
     loadFinancialData();
-  }, [analysis.id]);
+    loadScenarios();
+  }, [analysis.id, loadScenarios]);
 
   // Calculate metrics when financial data changes
   const calculateMetrics = useCallback((data: FinancialData): CalculatedMetrics => {
@@ -137,8 +146,9 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
     const totalUpfront = totalInitialCost + contingency;
 
     // Calculate annual benefits
-    const annualBenefits =
+    const baseAnnualBenefits =
       data.annualCostSavings + data.annualRevenueIncrease + data.riskReductionValue;
+    const annualBenefits = baseAnnualBenefits * (1 + data.productivityGainsPercent / 100);
 
     // Build cash flow array
     const cashFlows: CalculatedMetrics['cashFlows'] = [];
@@ -249,6 +259,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
     setIsSaving(true);
     try {
       await Api.updateAnalysisFinancials(analysis.id, {
+        financialData: data,
         costs: [
           { year: 0, amount: data.initialInvestment, description: 'Inwestycja początkowa' },
           { year: 0, amount: data.implementationCost, description: 'Koszty wdrożenia' },
@@ -263,6 +274,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
       });
 
       setFinancialData(data);
+      await loadScenarios();
       toast.success('Dane finansowe zapisane');
     } catch (error: any) {
       toast.error(error.message || 'Nie udało się zapisać danych');
@@ -270,6 +282,19 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
       setIsSaving(false);
     }
   };
+
+  const loadScenarios = useCallback(async () => {
+    setIsLoadingScenarios(true);
+    try {
+      const response = await Api.getAnalysisScenarios(analysis.id);
+      setScenarios(response.scenarios || []);
+    } catch (error) {
+      console.error('Failed to load scenarios:', error);
+      setScenarios([]);
+    } finally {
+      setIsLoadingScenarios(false);
+    }
+  }, [analysis.id]);
 
   const handleLinkInitiative = async (initiativeId: string) => {
     await Api.linkAnalysisToInitiative(analysis.id, initiativeId);
@@ -284,6 +309,60 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
       ...prev,
       [section]: !prev[section],
     }));
+  };
+
+  const handleActivateScenario = async (scenarioId: string) => {
+    try {
+      await Api.activateAnalysisScenario(analysis.id, scenarioId);
+      await loadScenarios();
+      toast.success('Wybrano scenariusz aktywny');
+    } catch (error: any) {
+      toast.error(error.message || 'Nie udało się ustawić scenariusza');
+    }
+  };
+
+  const handleCreateInitiative = async () => {
+    try {
+      const result = await Api.createInitiativeFromAnalysis(analysis.id);
+      toast.success('Utworzono inicjatywę z analizy');
+      if (onUpdate && result?.initiativeId) {
+        const updated = await Api.getDigitizationAnalysis(analysis.id);
+        onUpdate(updated);
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Nie udało się utworzyć inicjatywy');
+    }
+  };
+
+  const handleStatusChange = async (status: 'draft' | 'in_progress' | 'completed') => {
+    try {
+      await Api.updateDigitizationAnalysis(analysis.id, { status });
+      if (onUpdate) {
+        const updated = await Api.getDigitizationAnalysis(analysis.id);
+        onUpdate(updated);
+      }
+      toast.success('Zmieniono status analizy');
+    } catch (error: any) {
+      toast.error(error.message || 'Nie udało się zmienić statusu');
+    }
+  };
+
+  const handleCreateDecision = async (
+    decisionType: 'approve-analysis' | 'select-scenario' | 'go-no-go'
+  ) => {
+    if (!currentUser?.id) {
+      toast.error('Brak użytkownika decyzyjnego');
+      return;
+    }
+    try {
+      await Api.createAnalysisDecision(analysis.id, {
+        decisionType,
+        decisionMakerId: currentUser.id,
+      });
+      toast.success('Utworzono decyzję');
+    } catch (error: any) {
+      toast.error(error.message || 'Nie udało się utworzyć decyzji');
+    }
   };
 
   // Prepare sensitivity data
@@ -426,6 +505,37 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
         )}
       </div>
 
+      {/* Status & Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          {([
+            { value: 'draft', label: 'Draft' },
+            { value: 'in_progress', label: 'Review' },
+            { value: 'completed', label: 'Approved' },
+          ] as const).map((item) => (
+            <button
+              key={item.value}
+              onClick={() => handleStatusChange(item.value)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                analysis.status === item.value
+                  ? 'bg-emerald-500 text-white border-emerald-500'
+                  : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+        {!analysis.initiativeId && (
+          <button
+            onClick={handleCreateInitiative}
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors"
+          >
+            Create Initiative
+          </button>
+        )}
+      </div>
+
       {/* Financial Input Section */}
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
         <SectionHeader
@@ -515,6 +625,138 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
         </div>
       )}
 
+      {/* Scenarios Section */}
+      <div className="space-y-0">
+        <SectionHeader
+          title="Scenariusze"
+          icon={<TrendingUp size={20} />}
+          section="scenarios"
+          badge="Base / Optimistic / Conservative"
+        />
+        {expandedSections.scenarios && (
+          <div className="mt-4">
+            {isLoadingScenarios ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 size={24} className="animate-spin text-emerald-500" />
+              </div>
+            ) : scenarios.length === 0 ? (
+              <div className="bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6 text-center text-slate-500 dark:text-slate-400">
+                Brak scenariuszy do wyświetlenia
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {scenarios.map((scenario) => (
+                  <div
+                    key={scenario.id}
+                    className={`p-4 rounded-xl border transition-colors ${
+                      scenario.isActive
+                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
+                        : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-semibold text-navy-900 dark:text-white">
+                        {scenario.name || scenario.scenarioType}
+                      </h4>
+                      {scenario.isActive && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                          Active
+                        </span>
+                      )}
+                    </div>
+                    <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                      <div className="flex items-center justify-between">
+                        <span>NPV</span>
+                        <span className="font-semibold text-navy-900 dark:text-white">
+                          {scenario.metrics?.npv
+                            ? new Intl.NumberFormat('pl-PL', {
+                                style: 'currency',
+                                currency: financialData?.currency || 'PLN',
+                                maximumFractionDigits: 0,
+                              }).format(scenario.metrics.npv)
+                            : '—'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>ROI</span>
+                        <span className="font-semibold text-navy-900 dark:text-white">
+                          {scenario.metrics?.roi !== null && scenario.metrics?.roi !== undefined
+                            ? `${(scenario.metrics.roi * 100).toFixed(1)}%`
+                            : '—'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Payback</span>
+                        <span className="font-semibold text-navy-900 dark:text-white">
+                          {scenario.metrics?.paybackPeriod
+                            ? `${scenario.metrics.paybackPeriod.toFixed(1)}y`
+                            : '—'}
+                        </span>
+                      </div>
+                    </div>
+                    {!scenario.isActive && (
+                      <button
+                        onClick={() => handleActivateScenario(scenario.id)}
+                        className="mt-4 w-full px-3 py-2 text-sm font-medium rounded-lg border border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10 transition-colors"
+                      >
+                        Ustaw jako aktywny
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Gate Decisions Section */}
+      <div className="space-y-0">
+        <SectionHeader
+          title="Decyzje bramkowe"
+          icon={<AlertCircle size={20} />}
+          section="gates"
+          badge="Approve / Scenario / Go-No-Go"
+        />
+        {expandedSections.gates && (
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <button
+              onClick={() => handleCreateDecision('approve-analysis')}
+              className="p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 hover:border-emerald-400 transition-colors text-left"
+            >
+              <p className="text-sm font-semibold text-navy-900 dark:text-white">
+                Approve Analysis
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Zatwierdzenie analizy finansowej
+              </p>
+            </button>
+            <button
+              onClick={() => handleCreateDecision('select-scenario')}
+              className="p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 hover:border-emerald-400 transition-colors text-left"
+            >
+              <p className="text-sm font-semibold text-navy-900 dark:text-white">
+                Select Active Scenario
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Wybór scenariusza aktywnego
+              </p>
+            </button>
+            <button
+              onClick={() => handleCreateDecision('go-no-go')}
+              className="p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 hover:border-emerald-400 transition-colors text-left"
+            >
+              <p className="text-sm font-semibold text-navy-900 dark:text-white">
+                Investment Go/No-Go
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Decyzja inwestycyjna Go/No-Go
+              </p>
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Initiative Linking Section */}
       <div className="space-y-0">
         <SectionHeader
@@ -527,7 +769,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
           <div className="mt-4">
             <InitiativeLinkingPanel
               analysisId={analysis.id}
-              linkedInitiativeId={(analysis as any).linked_initiative_id}
+              linkedInitiativeId={analysis.initiativeId}
               onLink={handleLinkInitiative}
             />
           </div>

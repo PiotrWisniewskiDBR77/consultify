@@ -5,6 +5,10 @@ export { ExportControls } from './ExportControls';
 export { ManagementReportsView } from './ManagementReportsView';
 export { ReportHistoryTable } from './ReportHistoryTable';
 export { ReportTypeSelector } from './ReportTypeSelector';
+export { ReportTemplatesView } from './ReportTemplatesView';
+export { ReportScheduleView } from './ReportScheduleView';
+export { PortfolioHealthReport } from './PortfolioHealthReport';
+export { RaidReport } from './RaidReport';
 export { SteeringCommitteeReport } from './SteeringCommitteeReport';
 export { TeamMeetingReport } from './TeamMeetingReport';
 

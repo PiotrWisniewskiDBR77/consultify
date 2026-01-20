@@ -84,7 +84,13 @@ const AILearningJob = {
         runId: 'skipped',
         success: false,
         duration: 0,
-        stats: { usersProcessed: 0, patternsFound: 0, suggestionsApplied: 0, metricsCalculated: 0, instructionSuggestionsCreated: 0 },
+        stats: {
+          usersProcessed: 0,
+          patternsFound: 0,
+          suggestionsApplied: 0,
+          metricsCalculated: 0,
+          instructionSuggestionsCreated: 0,
+        },
         errors: ['Job already running'],
       };
     }
@@ -144,7 +150,6 @@ const AILearningJob = {
       this.stats.profilesUpdated += suggestionsApplied;
       this.stats.suggestionsGenerated += instructionSuggestionsCreated;
       this.lastRun = new Date();
-
     } catch (error: any) {
       logger.error('[AILearningJob] Run error:', error);
       errors.push(error.message);
@@ -236,7 +241,13 @@ const AILearningJob = {
             `INSERT INTO ai_instruction_suggestions (
               id, suggested_instruction, category, reason, confidence_score, status, created_at
             ) VALUES (?, ?, ?, ?, ?, 'pending', datetime('now'))`,
-            [id, suggestion.instruction, suggestion.category, suggestion.reason, suggestion.confidence]
+            [
+              id,
+              suggestion.instruction,
+              suggestion.category,
+              suggestion.reason,
+              suggestion.confidence,
+            ]
           );
           created++;
         }
@@ -264,14 +275,16 @@ const AILearningJob = {
       case 'length_preference':
         if (pattern_value === 'too_long') {
           return {
-            instruction: 'Keep responses more concise. Focus on key points and avoid unnecessary elaboration.',
+            instruction:
+              'Keep responses more concise. Focus on key points and avoid unnecessary elaboration.',
             category: 'response_length',
             reason: `${count} users indicated responses were too long${contexts ? ` in contexts: ${contexts}` : ''}`,
             confidence: Math.min(0.9, count * 0.1),
           };
         } else if (pattern_value === 'too_short') {
           return {
-            instruction: 'Provide more comprehensive responses with additional context and detail when helpful.',
+            instruction:
+              'Provide more comprehensive responses with additional context and detail when helpful.',
             category: 'response_length',
             reason: `${count} users indicated responses were too short${contexts ? ` in contexts: ${contexts}` : ''}`,
             confidence: Math.min(0.9, count * 0.1),
@@ -282,7 +295,8 @@ const AILearningJob = {
       case 'depth_preference':
         if (pattern_value === 'too_much') {
           return {
-            instruction: 'Prioritize high-level summaries over deep technical details unless specifically asked.',
+            instruction:
+              'Prioritize high-level summaries over deep technical details unless specifically asked.',
             category: 'response_depth',
             reason: `${count} users indicated too much detail${contexts ? ` in contexts: ${contexts}` : ''}`,
             confidence: Math.min(0.9, count * 0.1),

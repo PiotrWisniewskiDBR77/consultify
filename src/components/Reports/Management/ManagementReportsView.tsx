@@ -6,7 +6,17 @@
  * Report Types: Team Meeting (Checkpoint), Steering Committee (Highlight)
  */
 
-import { ArrowLeft, FileBarChart2, History, Loader2, Plus, Sparkles } from 'lucide-react';
+import {
+  ArrowLeft,
+  CalendarClock,
+  FileBarChart2,
+  History,
+  Loader2,
+  Plus,
+  Settings,
+  Sparkles,
+  Wand2,
+} from 'lucide-react';
 import React, { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -22,7 +32,11 @@ import { ExportControls } from './ExportControls';
 import { ReportHistoryTable } from './ReportHistoryTable';
 // Import sub-components
 import { ReportTypeSelector } from './ReportTypeSelector';
+import { ReportScheduleView } from './ReportScheduleView';
+import { ReportTemplatesView } from './ReportTemplatesView';
 import { ReportSkeleton } from './shared/ReportSkeleton';
+import { PortfolioHealthReport } from './PortfolioHealthReport';
+import { RaidReport } from './RaidReport';
 
 // Lazy load report components for better performance
 const TeamMeetingReport = lazy(() =>
@@ -33,6 +47,7 @@ const SteeringCommitteeReport = lazy(() =>
 );
 
 type ViewMode = 'selector' | 'preview' | 'history';
+type ViewModeExtended = ViewMode | 'templates' | 'schedule' | 'settings';
 
 interface ManagementReportsViewProps {
   className?: string;
@@ -40,13 +55,23 @@ interface ManagementReportsViewProps {
 
 export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ className = '' }) => {
   // State
-  const [viewMode, setViewMode] = useState<ViewMode>('selector');
+  const [viewMode, setViewMode] = useState<ViewModeExtended>('selector');
   const [reportType, setReportType] = useState<ManagementReportType>('TEAM_MEETING');
   const [scope, setScope] = useState<ManagementReportScope>('PORTFOLIO');
   const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>();
   const [periodDays, setPeriodDays] = useState(7);
   const [includeSections, setIncludeSections] = useState<string[]>([]);
   const [excludeSections, setExcludeSections] = useState<string[]>([]);
+  const [outputFormat, setOutputFormat] = useState<'PDF' | 'PPTX'>('PDF');
+  const [scheduleMode, setScheduleMode] = useState<'ONE_TIME' | 'RECURRING'>('ONE_TIME');
+  const [scheduleFrequency, setScheduleFrequency] = useState<
+    'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'
+  >('WEEKLY');
+  const [scheduleDayOfWeek, setScheduleDayOfWeek] = useState(1);
+  const [scheduleDayOfMonth, setScheduleDayOfMonth] = useState(1);
+  const [scheduleTime, setScheduleTime] = useState('09:00');
+  const [scheduleTimezone, setScheduleTimezone] = useState('Europe/Warsaw');
+  const [scheduleRecipients, setScheduleRecipients] = useState('');
   const [generating, setGenerating] = useState(false);
   const [currentReport, setCurrentReport] = useState<ManagementReport | null>(null);
   const [reportHistory, setReportHistory] = useState<ManagementReport[]>([]);
@@ -141,6 +166,30 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
         setCurrentReport(response.data.report);
         setViewMode('preview');
         toast.success('Report generated successfully!');
+
+        if (scheduleMode === 'RECURRING') {
+          try {
+            await Api.post('/api/management-reports/schedules', {
+              reportType,
+              scope,
+              projectId: scope === 'PROJECT' ? selectedProjectId : undefined,
+              organizationId: currentOrganizationId,
+              frequency: scheduleFrequency,
+              dayOfWeek: scheduleFrequency !== 'MONTHLY' ? scheduleDayOfWeek : undefined,
+              dayOfMonth: scheduleFrequency === 'MONTHLY' ? scheduleDayOfMonth : undefined,
+              timeOfDay: scheduleTime,
+              timezone: scheduleTimezone,
+              recipients: scheduleRecipients
+                .split(',')
+                .map((entry) => entry.trim())
+                .filter(Boolean),
+            });
+            toast.success('Recurring schedule created');
+          } catch (scheduleError) {
+            console.error('Failed to create schedule:', scheduleError);
+            toast.error('Report generated, but schedule setup failed');
+          }
+        }
       }
     } catch (error: any) {
       console.error('Report generation failed:', error);
@@ -156,6 +205,13 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
     periodDays,
     includeSections,
     excludeSections,
+    scheduleMode,
+    scheduleFrequency,
+    scheduleDayOfWeek,
+    scheduleDayOfMonth,
+    scheduleTime,
+    scheduleTimezone,
+    scheduleRecipients,
   ]);
 
   // Export handlers
@@ -220,18 +276,31 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setViewMode('history')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                viewMode === 'history'
-                  ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300'
-                  : 'hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300'
-              }`}
-            >
-              <History size={18} />
-              <span>History</span>
-            </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {[
+              { id: 'selector', label: 'Generate', icon: Sparkles },
+              { id: 'history', label: 'History', icon: History },
+              { id: 'templates', label: 'Templates', icon: Wand2 },
+              { id: 'schedule', label: 'Schedule', icon: CalendarClock },
+              { id: 'settings', label: 'Settings', icon: Settings },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isActive = viewMode === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setViewMode(tab.id as ViewModeExtended)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300'
+                      : 'hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300'
+                  }`}
+                >
+                  <Icon size={16} />
+                  <span className="text-sm font-medium">{tab.label}</span>
+                </button>
+              );
+            })}
             {viewMode !== 'selector' && (
               <button
                 onClick={() => setViewMode('selector')}
@@ -270,8 +339,18 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                   // Reset sections when report type changes
                   setIncludeSections([]);
                   setExcludeSections([]);
+                  if (type === 'PORTFOLIO_HEALTH') {
+                    setScope('PORTFOLIO');
+                    setSelectedProjectId(undefined);
+                  }
+                  if (type === 'TEAM_MEETING' || type === 'TEAM_WEEKLY') {
+                    setScope('PROJECT');
+                  }
                 }}
-                onScopeChange={setScope}
+                onScopeChange={(nextScope) => {
+                  if (reportType === 'PORTFOLIO_HEALTH') return;
+                  setScope(nextScope);
+                }}
                 onProjectChange={setSelectedProjectId}
                 onPeriodChange={setPeriodDays}
                 onSectionsChange={(include, exclude) => {
@@ -279,6 +358,151 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                   setExcludeSections(exclude);
                 }}
               />
+
+              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-navy-700">
+                  <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                    Output Format
+                  </h3>
+                  <div className="flex gap-3">
+                    {(['PDF', 'PPTX'] as const).map((format) => (
+                      <button
+                        key={format}
+                        onClick={() => setOutputFormat(format)}
+                        className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                          outputFormat === format
+                            ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300'
+                            : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:border-violet-300'
+                        }`}
+                      >
+                        {format}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    Export controls are available after generation.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-navy-700">
+                  <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                    Schedule
+                  </h3>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setScheduleMode('ONE_TIME')}
+                      className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                        scheduleMode === 'ONE_TIME'
+                          ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300'
+                          : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:border-violet-300'
+                      }`}
+                    >
+                      One-time
+                    </button>
+                    <button
+                      onClick={() => setScheduleMode('RECURRING')}
+                      className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                        scheduleMode === 'RECURRING'
+                          ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300'
+                          : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:border-violet-300'
+                      }`}
+                    >
+                      Recurring
+                    </button>
+                  </div>
+                  {scheduleMode === 'RECURRING' && (
+                    <div className="mt-4 space-y-3 text-sm">
+                      <div>
+                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                          Frequency
+                        </label>
+                        <select
+                          value={scheduleFrequency}
+                          onChange={(event) =>
+                            setScheduleFrequency(
+                              event.target.value as 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'
+                            )
+                          }
+                          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-2 text-sm"
+                        >
+                          <option value="DAILY">Daily</option>
+                          <option value="WEEKLY">Weekly</option>
+                          <option value="BIWEEKLY">Bi-weekly</option>
+                          <option value="MONTHLY">Monthly</option>
+                        </select>
+                      </div>
+                      {scheduleFrequency !== 'MONTHLY' ? (
+                        <div>
+                          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                            Day of week
+                          </label>
+                          <select
+                            value={scheduleDayOfWeek}
+                            onChange={(event) => setScheduleDayOfWeek(Number(event.target.value))}
+                            className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-2 text-sm"
+                          >
+                            <option value={1}>Monday</option>
+                            <option value={2}>Tuesday</option>
+                            <option value={3}>Wednesday</option>
+                            <option value={4}>Thursday</option>
+                            <option value={5}>Friday</option>
+                            <option value={6}>Saturday</option>
+                            <option value={0}>Sunday</option>
+                          </select>
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                            Day of month
+                          </label>
+                          <input
+                            type="number"
+                            min={1}
+                            max={28}
+                            value={scheduleDayOfMonth}
+                            onChange={(event) => setScheduleDayOfMonth(Number(event.target.value))}
+                            className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-2 text-sm"
+                          />
+                        </div>
+                      )}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                            Time
+                          </label>
+                          <input
+                            type="time"
+                            value={scheduleTime}
+                            onChange={(event) => setScheduleTime(event.target.value)}
+                            className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-2 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                            Timezone
+                          </label>
+                          <input
+                            value={scheduleTimezone}
+                            onChange={(event) => setScheduleTimezone(event.target.value)}
+                            className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-2 text-sm"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                          Recipients (emails or user IDs)
+                        </label>
+                        <input
+                          value={scheduleRecipients}
+                          onChange={(event) => setScheduleRecipients(event.target.value)}
+                          placeholder="name@example.com, user-id-123"
+                          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-2 text-sm"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               <div className="mt-8 pt-6 border-t border-slate-200 dark:border-navy-700">
                 <button
@@ -348,8 +572,13 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
 
             {/* Report Content with Suspense */}
             <Suspense fallback={<ReportSkeleton reportType={currentReport.reportType} />}>
-              {currentReport.reportType === 'TEAM_MEETING' ? (
+              {currentReport.reportType === 'TEAM_MEETING' ||
+              currentReport.reportType === 'TEAM_WEEKLY' ? (
                 <TeamMeetingReport report={currentReport} />
+              ) : currentReport.reportType === 'PORTFOLIO_HEALTH' ? (
+                <PortfolioHealthReport report={currentReport} />
+              ) : currentReport.reportType === 'RAID' ? (
+                <RaidReport report={currentReport} />
               ) : (
                 <SteeringCommitteeReport report={currentReport} />
               )}
@@ -382,6 +611,48 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                   .catch(() => toast.error('Failed to create share link'));
               }}
             />
+          </div>
+        )}
+
+        {viewMode === 'templates' && (
+          <div className="max-w-5xl mx-auto">
+            <ReportTemplatesView />
+          </div>
+        )}
+
+        {viewMode === 'schedule' && (
+          <div className="max-w-5xl mx-auto">
+            <ReportScheduleView />
+          </div>
+        )}
+
+        {viewMode === 'settings' && (
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6 space-y-4">
+              <h2 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
+                <Settings size={18} />
+                Reporting Settings
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="rounded-lg border border-slate-200 dark:border-navy-700 p-4">
+                  <p className="font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Default Output
+                  </p>
+                  <p className="text-slate-500 dark:text-slate-400">
+                    Current default: {outputFormat}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-slate-200 dark:border-navy-700 p-4">
+                  <p className="font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Schedule Timezone
+                  </p>
+                  <p className="text-slate-500 dark:text-slate-400">{scheduleTimezone}</p>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Settings are applied when creating new reports or schedules.
+              </p>
+            </div>
           </div>
         )}
       </div>

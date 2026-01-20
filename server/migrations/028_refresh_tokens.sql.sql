@@ -26,16 +26,17 @@ CREATE INDEX IF NOT EXISTS idx_refresh_tokens_family ON refresh_tokens(token_fam
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires ON refresh_tokens(expires_at);
 
 -- Active sessions view (for user account management)
-CREATE VIEW IF NOT EXISTS active_sessions AS
-SELECT 
-    rt.id,
-    rt.user_id,
-    rt.device_info,
-    rt.ip_address,
-    rt.created_at,
-    rt.last_used_at,
-    u.email as user_email
-FROM refresh_tokens rt
-JOIN users u ON rt.user_id = u.id
-WHERE rt.revoked_at IS NULL 
-  AND rt.expires_at > datetime('now');
+-- Commented out to prevent conflict with active_sessions table in 080
+-- CREATE VIEW IF NOT EXISTS active_sessions AS
+-- SELECT 
+--     rt.id,
+--     rt.user_id,
+--     rt.device_info,
+--     rt.ip_address,
+--     rt.created_at,
+--     rt.last_used_at,
+--     u.email as user_email
+-- FROM refresh_tokens rt
+-- JOIN users u ON rt.user_id = u.id
+-- WHERE rt.revoked_at IS NULL 
+--   AND rt.expires_at > datetime('now');

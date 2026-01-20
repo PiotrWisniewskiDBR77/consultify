@@ -714,6 +714,7 @@ export enum DecisionStatus {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
+  ESCALATED = 'ESCALATED',
 }
 
 /** Dependency Types */
@@ -792,6 +793,8 @@ export interface PortfolioInitiative {
   waveName?: string;
   projectId?: string;
   projectName?: string;
+  sourceId?: string;
+  sourceType?: string;
   ownerBusiness?: {
     id: string;
     firstName: string;
@@ -1260,6 +1263,11 @@ export interface Decision {
   // Status
   status: DecisionStatus;
   required: boolean; // Based on project governance settings
+
+  // Escalation
+  dueDate?: string;
+  impact?: 'LOW' | 'MEDIUM' | 'HIGH';
+  escalationLevel?: 'NONE' | 'AMBER' | 'RED';
 
   // Details
   title: string;
@@ -2803,12 +2811,12 @@ export type TaskType = 'task' | 'bug' | 'story' | 'epic' | 'subtask' | 'pilot';
 
 export interface DecisionImpact {
   decisionType:
-  | 'CONTINUE'
-  | 'MOVE_TO_PILOT'
-  | 'MOVE_TO_SCALE'
-  | 'STOP'
-  | 'APPROVE_INVESTMENT'
-  | 'CHANGE_SCOPE';
+    | 'CONTINUE'
+    | 'MOVE_TO_PILOT'
+    | 'MOVE_TO_SCALE'
+    | 'STOP'
+    | 'APPROVE_INVESTMENT'
+    | 'CHANGE_SCOPE';
   decisionStatement: string;
 }
 
@@ -3363,13 +3371,13 @@ export interface Comment {
 export interface AISuggestion {
   id: string;
   type:
-  | 'expand'
-  | 'condense'
-  | 'refine'
-  | 'add-data'
-  | 'add-example'
-  | 'restructure'
-  | 'add-section';
+    | 'expand'
+    | 'condense'
+    | 'refine'
+    | 'add-data'
+    | 'add-example'
+    | 'restructure'
+    | 'add-section';
   text: string;
   originalText: string;
   sectionId: string;
@@ -3840,21 +3848,21 @@ export interface LLMProvider {
   id: string;
   name: string;
   provider:
-  | 'openai'
-  | 'anthropic'
-  | 'google'
-  | 'mistral'
-  | 'groq'
-  | 'together'
-  | 'nvidia'
-  | 'deepseek'
-  | 'qwen'
-  | 'ernie'
-  | 'z_ai'
-  | 'ollama'
-  | 'tavily'
-  | 'google_search'
-  | 'cohere';
+    | 'openai'
+    | 'anthropic'
+    | 'google'
+    | 'mistral'
+    | 'groq'
+    | 'together'
+    | 'nvidia'
+    | 'deepseek'
+    | 'qwen'
+    | 'ernie'
+    | 'z_ai'
+    | 'ollama'
+    | 'tavily'
+    | 'google_search'
+    | 'cohere';
   api_key: string;
   endpoint?: string;
   model_id: string;
@@ -6082,14 +6090,14 @@ export interface TaskPMOExtension {
  */
 export interface RACIEntry {
   objectType:
-  | 'PROJECT'
-  | 'INITIATIVE'
-  | 'TASK'
-  | 'DECISION'
-  | 'CHANGE_REQUEST'
-  | 'ASSESSMENT'
-  | 'ROADMAP'
-  | 'STAGE_GATE';
+    | 'PROJECT'
+    | 'INITIATIVE'
+    | 'TASK'
+    | 'DECISION'
+    | 'CHANGE_REQUEST'
+    | 'ASSESSMENT'
+    | 'ROADMAP'
+    | 'STAGE_GATE';
   objectId?: string;
   userId: string;
   projectRole: PMOProjectRole;
@@ -6113,7 +6121,12 @@ export interface RACIMatrix {
 /**
  * Management Report Types
  */
-export type ManagementReportType = 'TEAM_MEETING' | 'STEERING_COMMITTEE';
+export type ManagementReportType =
+  | 'TEAM_MEETING'
+  | 'TEAM_WEEKLY'
+  | 'STEERING_COMMITTEE'
+  | 'PORTFOLIO_HEALTH'
+  | 'RAID';
 export type ManagementReportScope = 'PORTFOLIO' | 'PROJECT';
 export type ManagementReportStatus = 'DRAFT' | 'FINAL' | 'ARCHIVED';
 
@@ -6394,6 +6407,76 @@ export interface TeamMeetingReportContent {
 }
 
 /**
+ * Team Weekly Report Content (same structure as Team Meeting)
+ */
+export interface TeamWeeklyReportContent extends TeamMeetingReportContent {}
+
+/**
+ * Portfolio Health Report Content
+ */
+export interface PortfolioHealthReportContent {
+  executiveSummary: string;
+  portfolioOverview: {
+    totalProjects: number;
+    onTrack: number;
+    atRisk: number;
+    critical: number;
+    overallHealth: RAGStatus;
+  };
+  healthDrivers: {
+    category: 'SCHEDULE' | 'BUDGET' | 'SCOPE' | 'RISK' | 'QUALITY' | 'RESOURCES' | 'BENEFITS';
+    status: RAGStatus;
+    summary: string;
+  }[];
+  projectHealth: {
+    projectId: string;
+    projectName: string;
+    ownerName?: string;
+    status: RAGStatus;
+    keyIssues: string[];
+    nextMilestone?: string;
+    decisionsRequired?: number;
+  }[];
+  benefitsSnapshot?: {
+    totalBenefits: number;
+    realizedBenefits: number;
+    pipelineBenefits: number;
+  };
+  economicsSnapshot?: {
+    plannedBudget?: number;
+    actualSpend?: number;
+    variancePercent?: number;
+  };
+  risksAndIssues: RiskIssueItem[];
+  decisionsRequired: DecisionForBoard[];
+  nextPeriodPriorities: string[];
+  warnings: string[];
+  auditTrail: AuditTrailInfo;
+}
+
+/**
+ * RAID Report Content (Risk, Assumption, Issue, Dependency)
+ */
+export interface RaidReportContent {
+  executiveSummary: string;
+  risks: RAIDItem[];
+  assumptions: RAIDItem[];
+  issues: RAIDItem[];
+  dependencies: RAIDItem[];
+  decisionsRequired: DecisionForBoard[];
+  escalations: {
+    id: string;
+    level: RAGStatus;
+    reason: string;
+    ownerName?: string;
+    dueDate?: string;
+    projectId?: string;
+    projectName?: string;
+  }[];
+  auditTrail: AuditTrailInfo;
+}
+
+/**
  * Steering Committee Report Content
  */
 export interface SteeringCommitteeReportContent {
@@ -6442,7 +6525,12 @@ export interface ManagementReport {
   status: ManagementReportStatus;
   generatedBy: string;
   generatedByName: string;
-  content: TeamMeetingReportContent | SteeringCommitteeReportContent;
+  content:
+    | TeamMeetingReportContent
+    | TeamWeeklyReportContent
+    | SteeringCommitteeReportContent
+    | PortfolioHealthReportContent
+    | RaidReportContent;
   aiNarrative: string;
   aiWarnings?: string[];
   pdfPath?: string;

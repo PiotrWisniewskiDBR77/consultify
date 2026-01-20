@@ -120,8 +120,8 @@ class AnalyticsService {
       made_today: number;
     }>(
       `SELECT 
-                COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
-                COUNT(CASE WHEN status = 'made' AND DATE(decided_at) = ? THEN 1 END) as made_today
+                COUNT(CASE WHEN status IN ('pending', 'escalated') THEN 1 END) as pending,
+                COUNT(CASE WHEN status IN ('approved', 'rejected') AND DATE(decided_at) = ? THEN 1 END) as made_today
              FROM decisions WHERE organization_id = ?`,
       [today, orgId]
     );

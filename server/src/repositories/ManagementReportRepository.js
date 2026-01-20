@@ -483,11 +483,11 @@ class ManagementReportRepository {
     return new Promise((resolve, reject) => {
       this.db.all(
         `
-                SELECT d.id, d.title, d.description, d.decision_type, d.status, d.created_at,
+                SELECT d.id, d.title, d.description, d.type as decision_type, d.status, d.created_at,
                        u.id as ownerId, u.first_name || ' ' || u.last_name as ownerName
                 FROM decisions d
-                LEFT JOIN users u ON d.decision_owner_id = u.id
-                WHERE d.project_id = ? AND d.status = 'PENDING'
+                LEFT JOIN users u ON d.decision_maker_id = u.id
+                WHERE d.project_id = ? AND d.status IN ('pending', 'escalated')
                 ORDER BY d.created_at ASC
             `,
         [projectId],

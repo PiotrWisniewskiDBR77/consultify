@@ -229,17 +229,17 @@ async function getTaskCounts(projectId: string): Promise<TaskCounts> {
  * Get decision counts efficiently
  */
 async function getDecisionCounts(projectId: string): Promise<DecisionCounts> {
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const nowIso = new Date().toISOString();
 
   try {
     const row = await DbPromise.get<DecisionCountRow>(
       db,
       `SELECT 
-                SUM(CASE WHEN status = 'PENDING' THEN 1 ELSE 0 END) as pendingCount,
-                SUM(CASE WHEN status = 'PENDING' AND created_at < ? THEN 1 ELSE 0 END) as overdueCount
+                SUM(CASE WHEN status IN ('pending', 'escalated') THEN 1 ELSE 0 END) as pendingCount,
+                SUM(CASE WHEN status IN ('pending', 'escalated') AND COALESCE(deadline, created_at) < ? THEN 1 ELSE 0 END) as overdueCount
             FROM decisions 
             WHERE project_id = ?`,
-      [sevenDaysAgo, projectId]
+      [nowIso, projectId]
     );
 
     return {
@@ -283,7 +283,7 @@ async function getInitiativeCounts(projectId: string): Promise<InitiativeCounts>
 async function getBlockers(projectId: string): Promise<Blocker[]> {
   const blockers: Blocker[] = [];
   const today = new Date().toISOString().split('T')[0];
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const nowIso = new Date().toISOString();
 
   // Overdue tasks
   try {
@@ -311,9 +311,9 @@ async function getBlockers(projectId: string): Promise<Blocker[]> {
     const pendingDecisions = await DbPromise.all<DecisionRow>(
       db,
       `SELECT id, title FROM decisions 
-             WHERE project_id = ? AND status = 'PENDING' AND created_at < ?
+            WHERE project_id = ? AND status IN ('pending', 'escalated') AND COALESCE(deadline, created_at) < ?
              LIMIT 5`,
-      [projectId, sevenDaysAgo]
+      [projectId, nowIso]
     );
 
     for (const decision of pendingDecisions) {

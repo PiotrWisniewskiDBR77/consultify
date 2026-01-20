@@ -8,8 +8,8 @@
 
 import { Request, Response, Router } from 'express';
 
-import { aiAssessmentPartner } from '../../services/aiAssessmentPartnerService.js';
 import { aiAssessmentFormHelper } from '../../services/aiAssessmentFormHelper.js';
+import { aiAssessmentPartner } from '../../services/aiAssessmentPartnerService.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
@@ -78,7 +78,9 @@ router.post('/:projectId/ai/suggest-evidence', async (req: AuthRequest, res: Res
     res.json(result);
   } catch (err: any) {
     logger.error('[AssessmentAI] Error suggesting evidence:', err);
-    res.status(500).json({ error: 'Failed to generate evidence suggestions', message: err.message });
+    res
+      .status(500)
+      .json({ error: 'Failed to generate evidence suggestions', message: err.message });
   }
 });
 
@@ -93,7 +95,11 @@ router.post('/:projectId/ai/suggest-target', async (req: AuthRequest, res: Respo
 
     logger.info(`[AssessmentAI] Suggesting target for ${axisId}, current ${currentScore}`);
 
-    const result = await aiAssessmentPartner.suggestTargetScore(axisId, currentScore, ambitionLevel);
+    const result = await aiAssessmentPartner.suggestTargetScore(
+      axisId,
+      currentScore,
+      ambitionLevel
+    );
 
     res.json(result);
   } catch (err: any) {
@@ -377,15 +383,21 @@ router.post('/:projectId/ai/benchmark-commentary', async (req: AuthRequest, res:
 
     logger.info(`[AssessmentAI] Generating benchmark commentary for project ${projectId}`);
 
-    const result = await aiAssessmentPartner.generateBenchmarkCommentary(assessment, benchmarks || {}, {
-      language,
-      industry,
-    });
+    const result = await aiAssessmentPartner.generateBenchmarkCommentary(
+      assessment,
+      benchmarks || {},
+      {
+        language,
+        industry,
+      }
+    );
 
     res.json(result);
   } catch (err: any) {
     logger.error('[AssessmentAI] Error generating benchmark commentary:', err);
-    res.status(500).json({ error: 'Failed to generate benchmark commentary', message: err.message });
+    res
+      .status(500)
+      .json({ error: 'Failed to generate benchmark commentary', message: err.message });
   }
 });
 
@@ -585,9 +597,8 @@ router.post('/:projectId/ai/reports/full', async (req: AuthRequest, res: Respons
     logger.info(`[AssessmentAI] Generating full report for project ${projectId}`);
 
     // Import report generator dynamically
-    const { aiAssessmentReportGenerator } = await import(
-      '../../services/aiAssessmentReportGenerator.js'
-    );
+    const { aiAssessmentReportGenerator } =
+      await import('../../services/aiAssessmentReportGenerator.js');
 
     const result = await aiAssessmentReportGenerator.generateFullReport(assessment, options);
 
@@ -617,9 +628,8 @@ router.post('/:projectId/ai/reports/stakeholder', async (req: AuthRequest, res: 
 
     logger.info(`[AssessmentAI] Generating ${stakeholderRole} report for project ${projectId}`);
 
-    const { aiAssessmentReportGenerator } = await import(
-      '../../services/aiAssessmentReportGenerator.js'
-    );
+    const { aiAssessmentReportGenerator } =
+      await import('../../services/aiAssessmentReportGenerator.js');
 
     const result = await aiAssessmentReportGenerator.generateStakeholderReport(
       assessment,
@@ -649,9 +659,8 @@ router.post('/:projectId/ai/reports/benchmark', async (req: AuthRequest, res: Re
 
     logger.info(`[AssessmentAI] Generating benchmark report for project ${projectId}`);
 
-    const { aiAssessmentReportGenerator } = await import(
-      '../../services/aiAssessmentReportGenerator.js'
-    );
+    const { aiAssessmentReportGenerator } =
+      await import('../../services/aiAssessmentReportGenerator.js');
 
     const result = await aiAssessmentReportGenerator.generateBenchmarkReport(
       assessment,
@@ -681,9 +690,8 @@ router.post('/:projectId/ai/reports/initiative-plan', async (req: AuthRequest, r
 
     logger.info(`[AssessmentAI] Generating initiative plan for project ${projectId}`);
 
-    const { aiAssessmentReportGenerator } = await import(
-      '../../services/aiAssessmentReportGenerator.js'
-    );
+    const { aiAssessmentReportGenerator } =
+      await import('../../services/aiAssessmentReportGenerator.js');
 
     const result = await aiAssessmentReportGenerator.generateInitiativePlan(
       assessment,
@@ -704,9 +712,8 @@ router.post('/:projectId/ai/reports/initiative-plan', async (req: AuthRequest, r
  */
 router.get('/:projectId/ai/reports/types', async (_req: AuthRequest, res: Response) => {
   try {
-    const { REPORT_TYPES, STAKEHOLDER_ROLES } = await import(
-      '../../services/aiAssessmentReportGenerator.js'
-    );
+    const { REPORT_TYPES, STAKEHOLDER_ROLES } =
+      await import('../../services/aiAssessmentReportGenerator.js');
 
     res.json({
       reportTypes: REPORT_TYPES || {

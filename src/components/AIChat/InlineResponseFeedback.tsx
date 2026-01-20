@@ -295,12 +295,20 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
               {t('chat.feedback.preferredFormat', 'Preferowany format:')}
             </span>
             <div className="flex flex-wrap gap-1">
-              {([
-                { value: 'bullets', label: t('chat.feedback.formatBullets', 'Punkty') },
-                { value: 'paragraphs', label: t('chat.feedback.formatParagraphs', 'Akapity') },
-                { value: 'structured', label: t('chat.feedback.formatStructured', 'Strukturalny') },
-                { value: 'conversational', label: t('chat.feedback.formatConversational', 'Swobodny') },
-              ] as { value: FormatPreference; label: string }[]).map((opt) => (
+              {(
+                [
+                  { value: 'bullets', label: t('chat.feedback.formatBullets', 'Punkty') },
+                  { value: 'paragraphs', label: t('chat.feedback.formatParagraphs', 'Akapity') },
+                  {
+                    value: 'structured',
+                    label: t('chat.feedback.formatStructured', 'Strukturalny'),
+                  },
+                  {
+                    value: 'conversational',
+                    label: t('chat.feedback.formatConversational', 'Swobodny'),
+                  },
+                ] as { value: FormatPreference; label: string }[]
+              ).map((opt) => (
                 <button
                   key={opt.value}
                   onClick={() => setExpectedFormat(opt.value)}
@@ -324,7 +332,10 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
             <textarea
               value={missingInfo}
               onChange={(e) => setMissingInfo(e.target.value)}
-              placeholder={t('chat.feedback.missingInfoPlaceholder', 'Opisz czego brakowało w odpowiedzi...')}
+              placeholder={t(
+                'chat.feedback.missingInfoPlaceholder',
+                'Opisz czego brakowało w odpowiedzi...'
+              )}
               className="w-full px-2 py-1.5 text-[11px] bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md resize-none focus:outline-none focus:ring-1 focus:ring-primary-500"
               rows={2}
             />

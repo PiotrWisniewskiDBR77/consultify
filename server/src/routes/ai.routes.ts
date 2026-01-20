@@ -41,6 +41,8 @@ import {
   GetQualityTrendsQuerySchema,
   GetSuggestionMetricsQuerySchema,
   GetSuggestionsQuerySchema,
+  InitiativeConflictsRequestSchema,
+  InitiativePrioritiesRequestSchema,
   PatternIdParamSchema,
   PostSuggestionsRequestSchema,
   ProjectIdParamSchema,
@@ -1097,6 +1099,195 @@ Return a structured roadmap assigning each initiative to a specific quarter.`;
       });
 
       return res.json(fallback);
+    }
+  })
+);
+
+// ==================== INITIATIVES AI ====================
+
+router.post(
+  '/initiatives/schedule',
+  verifyToken,
+  validateBody(RoadmapRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { initiatives } = req.body;
+    try {
+      const aiPipeline = await getAIPipeline();
+      const initiativesSummary = initiatives
+        .map(
+          (init: any, idx: number) =>
+            `${idx + 1}. "${init.name}" - Priority: ${init.priority || 'Medium'}, Complexity: ${init.complexity || 'Medium'}, ROI: ${init.expectedRoi || init.roi || 'Unknown'}`
+        )
+        .join('\n');
+
+      const roadmapPrompt = `You are a strategic transformation consultant. Create an optimized implementation roadmap for the following initiatives.
+
+INITIATIVES TO SCHEDULE:
+${initiativesSummary}
+
+RULES:
+1. High priority + Low complexity initiatives should go in Q1-Q2 Year 1 (quick wins)
+2. High priority + High complexity initiatives should start Q2 Year 1 with longer duration
+3. Medium/Low priority can be scheduled in Year 2-3
+4. Consider dependencies - foundation initiatives before dependent ones
+5. Balance workload across quarters - no more than 3-4 major initiatives per quarter
+6. Return the EXACT initiative names as provided (case-sensitive)
+
+Return a structured roadmap assigning each initiative to a specific quarter.`;
+
+      const response = await aiPipeline.process({
+        type: 'structured',
+        capability: 'strategic',
+        userId: req.userId!,
+        organizationId: req.organizationId!,
+        prompt: roadmapPrompt,
+        schema: 'roadmap',
+        stream: false,
+      });
+
+      const roadmapData = (response as { object?: unknown }).object || response;
+      const now = new Date();
+      const currentYear = now.getFullYear();
+
+      const schedule = (initiatives as any[]).map((init: any) => {
+        let quarter = 'Q1';
+        let yearOffset = 0;
+        let found = false;
+
+        ['year1', 'year2', 'year3'].forEach((yKey, yIdx) => {
+          const yObj = (roadmapData as any)?.[yKey];
+          if (!yObj || found) return;
+          ['q1', 'q2', 'q3', 'q4'].forEach((qKey: string) => {
+            if (found) return;
+            const titles = yObj[qKey];
+            if (Array.isArray(titles) && titles.includes(init.name)) {
+              quarter = qKey.toUpperCase();
+              yearOffset = yIdx;
+              found = true;
+            }
+          });
+        });
+
+        const qNum = Number(quarter.replace('Q', '')) || 1;
+        const year = currentYear + yearOffset;
+        const startDate = new Date(year, (qNum - 1) * 3, 1);
+        const endDate = new Date(year, qNum * 3, 0);
+
+        return {
+          id: init.id,
+          name: init.name,
+          quarter: `${quarter} ${year}`,
+          plannedStartDate: startDate.toISOString(),
+          plannedEndDate: endDate.toISOString(),
+        };
+      });
+
+      return res.json({ roadmap: roadmapData, schedule });
+    } catch (err: any) {
+      logger.error('[AI Schedule] Error:', err);
+      return res.status(500).json({ error: 'Failed to generate schedule' });
+    }
+  })
+);
+
+router.post(
+  '/initiatives/conflicts',
+  verifyToken,
+  validateBody(InitiativeConflictsRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { initiatives, dependencies } = req.body as any;
+    try {
+      const aiPipeline = await getAIPipeline();
+      const initiativesSummary = initiatives
+        .map(
+          (init: any, idx: number) =>
+            `${idx + 1}. "${init.name}" - Priority: ${init.priority || 'Medium'}, Owner: ${init.owner || 'Unassigned'}, Start: ${init.plannedStartDate || 'TBD'}, End: ${init.plannedEndDate || 'TBD'}`
+        )
+        .join('\n');
+
+      const depsSummary = Array.isArray(dependencies)
+        ? dependencies
+            .map(
+              (dep: any) =>
+                `- ${dep.fromInitiativeId} -> ${dep.toInitiativeId} (${dep.type || 'FINISH_TO_START'})`
+            )
+            .join('\n')
+        : 'None';
+
+      const conflictsPrompt = `Analyze the following initiative schedule and dependencies. Identify resource conflicts, timeline overlaps, and dependency risks.
+
+INITIATIVES:
+${initiativesSummary}
+
+DEPENDENCIES:
+${depsSummary}
+
+Return a JSON array of conflicts with fields:
+- type (resource|dependency|timeline)
+- initiatives (array of initiative names)
+- severity (low|medium|high)
+- description
+- recommendation`;
+
+      const response = await aiPipeline.process({
+        type: 'structured',
+        capability: 'strategic',
+        userId: req.userId!,
+        organizationId: req.organizationId!,
+        prompt: conflictsPrompt,
+        schema: 'initiative_conflicts',
+        stream: false,
+      });
+
+      const result = (response as { object?: unknown }).object || response;
+      return res.json({ conflicts: result });
+    } catch (err: any) {
+      logger.error('[AI Conflicts] Error:', err);
+      return res.status(500).json({ error: 'Failed to analyze conflicts' });
+    }
+  })
+);
+
+router.post(
+  '/initiatives/priorities',
+  verifyToken,
+  validateBody(InitiativePrioritiesRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { initiatives } = req.body as any;
+    try {
+      const aiPipeline = await getAIPipeline();
+      const initiativesSummary = initiatives
+        .map(
+          (init: any, idx: number) =>
+            `${idx + 1}. "${init.name}" - Current Priority: ${init.priority || 'Medium'}, ROI: ${init.expectedRoi || 'Unknown'}, Owner: ${init.owner || 'Unassigned'}`
+        )
+        .join('\n');
+
+      const prioritiesPrompt = `Review the initiatives and recommend priority adjustments. Consider ROI, strategic impact, and dependencies.
+
+INITIATIVES:
+${initiativesSummary}
+
+Return a JSON array with fields:
+- name
+- recommendedPriority (Critical|High|Medium|Low)
+- rationale`;
+
+      const response = await aiPipeline.process({
+        type: 'structured',
+        capability: 'strategic',
+        userId: req.userId!,
+        organizationId: req.organizationId!,
+        prompt: prioritiesPrompt,
+        schema: 'initiative_priorities',
+        stream: false,
+      });
+
+      const result = (response as { object?: unknown }).object || response;
+      return res.json({ priorities: result });
+    } catch (err: any) {
+      logger.error('[AI Priorities] Error:', err);
+      return res.status(500).json({ error: 'Failed to recommend priorities' });
     }
   })
 );

@@ -442,7 +442,7 @@ export class AIPipeline {
     try {
       const adaptiveModule = await import('./adaptiveResponseService.js');
       const adaptiveService = adaptiveModule.adaptiveResponseService || adaptiveModule.default;
-      
+
       if (adaptiveService?.buildAdaptiveSystemPrompt && request.userId) {
         const screenContext = (request as any).screenContext || ctx?.currentScreen;
         systemPrompt = await adaptiveService.buildAdaptiveSystemPrompt(
@@ -651,7 +651,7 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
     };
 
     const screen = ctx.currentScreen?.toLowerCase() || '';
-    
+
     // Try to use contextResponseMapper for enhanced context (v2.0)
     let contextGuidelines: string[] = [];
     try {
@@ -671,7 +671,7 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
     if (ctx.currentScreen) {
       section += `\n- Aktualny widok: ${ctx.currentScreen}`;
     }
-    
+
     // Add enhanced context guidelines if available
     if (contextGuidelines.length > 0) {
       section += '\n### Wytyczne dla tego kontekstu:';
@@ -681,7 +681,7 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
     } else if (hint) {
       section += `\n- ${hint}`;
     }
-    
+
     if (ctx.selectedObjectType && ctx.selectedObjectId) {
       section += `\n- Wybrany element: ${ctx.selectedObjectType} (ID: ${ctx.selectedObjectId})`;
     }

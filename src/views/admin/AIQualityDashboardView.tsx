@@ -232,9 +232,7 @@ const AIQualityDashboardView: React.FC = () => {
         {icon}
       </div>
       <div className="flex items-baseline gap-2">
-        <span className="text-2xl font-bold text-slate-900 dark:text-white">
-          {value ?? '-'}
-        </span>
+        <span className="text-2xl font-bold text-slate-900 dark:text-white">{value ?? '-'}</span>
         {trend && (
           <span
             className={`text-xs ${
@@ -336,10 +334,22 @@ const AIQualityDashboardView: React.FC = () => {
       {/* Tabs */}
       <div className="flex gap-1 mb-6 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg w-fit">
         {[
-          { id: 'overview', label: t('admin.aiQuality.tabs.overview', 'Przegląd'), icon: BarChart3 },
-          { id: 'feedback', label: t('admin.aiQuality.tabs.feedback', 'Feedback'), icon: MessageSquare },
+          {
+            id: 'overview',
+            label: t('admin.aiQuality.tabs.overview', 'Przegląd'),
+            icon: BarChart3,
+          },
+          {
+            id: 'feedback',
+            label: t('admin.aiQuality.tabs.feedback', 'Feedback'),
+            icon: MessageSquare,
+          },
           { id: 'patterns', label: t('admin.aiQuality.tabs.patterns', 'Wzorce'), icon: Brain },
-          { id: 'analytics', label: t('admin.aiQuality.tabs.analytics', 'Analityka'), icon: Activity },
+          {
+            id: 'analytics',
+            label: t('admin.aiQuality.tabs.analytics', 'Analityka'),
+            icon: Activity,
+          },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -593,9 +603,7 @@ const AIQualityDashboardView: React.FC = () => {
         <div className="space-y-4">
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-              <h3 className="font-medium text-slate-900 dark:text-white">
-                Wykryte wzorce uczenia
-              </h3>
+              <h3 className="font-medium text-slate-900 dark:text-white">Wykryte wzorce uczenia</h3>
               <p className="text-sm text-slate-500 mt-1">
                 Wzorce preferencji wykryte na podstawie feedbacku użytkowników
               </p>
@@ -604,7 +612,9 @@ const AIQualityDashboardView: React.FC = () => {
               <thead className="bg-slate-50 dark:bg-slate-700/50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">Typ</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">Wartość</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">
+                    Wartość
+                  </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">
                     Wystąpienia
                   </th>

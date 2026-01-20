@@ -33,6 +33,15 @@ import { toast } from 'react-hot-toast';
 import { Api } from '../../services/api';
 import { AnalysisCatalogStats, AnalysisStatus, DigitizationAnalysis } from './types';
 
+const formatCurrencyValue = (value?: number | null) => {
+  if (value === null || value === undefined) return '—';
+  return new Intl.NumberFormat('pl-PL', {
+    style: 'currency',
+    currency: 'PLN',
+    maximumFractionDigits: 0,
+  }).format(value);
+};
+
 interface AnalysisCatalogProps {
   onSelect: (analysis: DigitizationAnalysis) => void;
   onCreateNew: () => void;
@@ -189,12 +198,17 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
   const filteredAnalyses = analyses.filter((a) => {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      if (!a.name.toLowerCase().includes(q) && !a.projectName?.toLowerCase().includes(q)) {
+      if (
+        !a.name.toLowerCase().includes(q) &&
+        !a.projectName?.toLowerCase().includes(q) &&
+        !a.initiativeName?.toLowerCase().includes(q)
+      ) {
         return false;
       }
     }
     return true;
   });
+
 
   return (
     <div className="p-6 space-y-6">
@@ -498,6 +512,12 @@ const AnalysisCard: React.FC<{
     completed: 'Ukończona',
   };
 
+  const statusLabelsFinancial: Record<string, string> = {
+    draft: 'Draft',
+    in_progress: 'Review',
+    completed: 'Approved',
+  };
+
   return (
     <div
       className={`group bg-white dark:bg-navy-800 border rounded-xl p-4 transition-all cursor-pointer
@@ -585,7 +605,7 @@ const AnalysisCard: React.FC<{
               {analysis.name}
             </h3>
             <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
-              {analysis.projectName || 'Bez projektu'}
+              {analysis.initiativeName || analysis.projectName || 'Bez inicjatywy'}
             </p>
           </div>
         </div>
@@ -611,13 +631,29 @@ const AnalysisCard: React.FC<{
           <span
             className={`text-xs px-3 py-1 rounded-full font-medium ${statusColors[analysis.status]}`}
           >
-            {statusLabels[analysis.status]}
+            {analysis.analysisType === 'financial'
+              ? statusLabelsFinancial[analysis.status]
+              : statusLabels[analysis.status]}
           </span>
           <div className="text-right">
-            <span className="text-xs text-slate-400 dark:text-slate-500">Wynik</span>
-            <div className="text-xl font-bold text-emerald-500">
-              {analysis.overallScore?.toFixed(1) || '-'}/7
-            </div>
+            {analysis.analysisType === 'financial' ? (
+              <>
+                <span className="text-xs text-slate-400 dark:text-slate-500">NPV / ROI</span>
+                <div className="text-sm font-semibold text-emerald-500">
+                  {formatCurrencyValue(analysis.npv)} •{' '}
+                  {analysis.roi !== null && analysis.roi !== undefined
+                    ? `${(analysis.roi * 100).toFixed(1)}%`
+                    : '—'}
+                </div>
+              </>
+            ) : (
+              <>
+                <span className="text-xs text-slate-400 dark:text-slate-500">Wynik</span>
+                <div className="text-xl font-bold text-emerald-500">
+                  {analysis.overallScore?.toFixed(1) || '-'}/7
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -649,6 +685,11 @@ const AnalysisTable: React.FC<{
     in_progress: 'W trakcie',
     completed: 'Ukończona',
   };
+  const statusLabelsFinancial: Record<string, string> = {
+    draft: 'Draft',
+    in_progress: 'Review',
+    completed: 'Approved',
+  };
 
   return (
     <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
@@ -677,6 +718,9 @@ const AnalysisTable: React.FC<{
             <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
               Projekt
             </th>
+            <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+              Inicjatywa
+            </th>
             <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
               Status
             </th>
@@ -685,6 +729,9 @@ const AnalysisTable: React.FC<{
             </th>
             <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
               Wynik
+            </th>
+            <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+              NPV / ROI
             </th>
             <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
               Data
@@ -718,6 +765,9 @@ const AnalysisTable: React.FC<{
               <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
                 {analysis.projectName || '-'}
               </td>
+              <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
+                {analysis.initiativeName || '-'}
+              </td>
               <td className="px-4 py-3 text-center">
                 <span
                   className={`text-xs px-2 py-1 rounded-full ${
@@ -728,7 +778,9 @@ const AnalysisTable: React.FC<{
                         : 'bg-slate-500/10 text-slate-400 dark:text-slate-500'
                   }`}
                 >
-                  {statusLabels[analysis.status]}
+                  {analysis.analysisType === 'financial'
+                    ? statusLabelsFinancial[analysis.status]
+                    : statusLabels[analysis.status]}
                 </span>
               </td>
               <td className="px-4 py-3">
@@ -749,6 +801,18 @@ const AnalysisTable: React.FC<{
                   {analysis.overallScore?.toFixed(1) || '-'}
                 </span>
                 <span className="text-xs text-slate-400 dark:text-slate-500">/7</span>
+              </td>
+              <td className="px-4 py-3 text-center text-sm text-slate-500 dark:text-slate-400">
+                {analysis.analysisType === 'financial' ? (
+                  <>
+                    {formatCurrencyValue(analysis.npv)} •{' '}
+                    {analysis.roi !== null && analysis.roi !== undefined
+                      ? `${(analysis.roi * 100).toFixed(1)}%`
+                      : '—'}
+                  </>
+                ) : (
+                  '—'
+                )}
               </td>
               <td className="px-4 py-3 text-center text-xs text-slate-500 dark:text-slate-400">
                 {new Date(analysis.createdAt).toLocaleDateString('pl-PL')}

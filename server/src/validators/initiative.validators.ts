@@ -12,18 +12,25 @@ import { z } from 'zod';
 // ==========================================
 
 // FLOW-INITIATIVE-001: Extended status machine
-export const InitiativeStatusEnum = z.enum([
-  'draft', // Generated from assessment, being edited
-  'planning', // Details being worked on, completion checker
-  'review', // Submitted for approval review
-  'approved', // Approved, appears on timeline/roadmap
-  'executing', // In execution phase (Kanban)
-  'blocked', // Blocked (red flag)
-  'done', // Completed, goes to Benefits tracking
-  'on_hold', // Paused temporarily
-  'cancelled', // Cancelled
-  'archived', // In archive only
-]);
+const INITIATIVE_STATUSES = [
+  'DRAFT',
+  'PLANNING',
+  'REVIEW',
+  'APPROVED',
+  'EXECUTING',
+  'BLOCKED',
+  'DONE',
+  'ON_HOLD',
+  'CANCELLED',
+  'ARCHIVED',
+] as const;
+
+export const InitiativeStatusEnum = z
+  .string()
+  .transform((value) => value.toUpperCase())
+  .refine((value) => INITIATIVE_STATUSES.includes(value as (typeof INITIATIVE_STATUSES)[number]), {
+    message: 'Invalid initiative status',
+  });
 export const InitiativeAxisEnum = z.enum([
   'strategic',
   'operational',
@@ -43,7 +50,7 @@ export const CreateInitiativeSchema = z.object({
   area: z.string().max(255).optional(),
   summary: z.string().max(5000).optional(),
   hypothesis: z.string().max(2000).optional(),
-  status: InitiativeStatusEnum.optional().default('draft'),
+  status: InitiativeStatusEnum.optional().default('DRAFT'),
   businessValue: z.number().optional(),
   costCapex: z.number().optional(),
   costOpex: z.number().optional(),
@@ -78,6 +85,11 @@ export const QuickUpdateInitiativeSchema = z.object({
   progress: z.number().min(0).max(100).optional(),
   status: InitiativeStatusEnum.optional(),
   notes: z.string().max(1000).optional(),
+  plannedStartDate: z.string().datetime().optional().nullable(),
+  plannedEndDate: z.string().datetime().optional().nullable(),
+  ownerBusinessId: z.string().optional().nullable(),
+  ownerExecutionId: z.string().optional().nullable(),
+  priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).optional(),
 });
 
 export const BulkStatusUpdateSchema = z.object({

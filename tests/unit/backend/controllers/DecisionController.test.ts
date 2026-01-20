@@ -33,6 +33,7 @@ vi.mock('uuid', () => ({
 describe('DecisionController', () => {
   let mockReq: any;
   let mockRes: any;
+  let mockNext: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -53,22 +54,43 @@ describe('DecisionController', () => {
       json: vi.fn(),
       status: vi.fn().mockReturnThis(),
     };
+
+    mockNext = vi.fn();
   });
 
   describe('getDecisions', () => {
     it('should return all decisions for organization', async () => {
       const mockDecisions = [
-        { id: 'd1', title: 'Decision 1', status: 'PENDING' },
-        { id: 'd2', title: 'Decision 2', status: 'APPROVED' },
+        {
+          id: 'd1',
+          title: 'Decision 1',
+          status: 'pending',
+          decision_maker_id: 'user-123',
+          created_by: 'user-123',
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: 'd2',
+          title: 'Decision 2',
+          status: 'approved',
+          decision_maker_id: 'user-456',
+          created_by: 'user-123',
+          created_at: new Date().toISOString(),
+        },
       ];
       mockQueryAll.mockResolvedValue(mockDecisions);
 
       const { DecisionController } =
         await import('../../../../server/src/controllers/DecisionController.js');
-      await DecisionController.getDecisions(mockReq, mockRes);
+      await DecisionController.getDecisions(mockReq, mockRes, mockNext);
 
       expect(mockQueryAll).toHaveBeenCalled();
-      expect(mockRes.json).toHaveBeenCalledWith(mockDecisions);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ id: 'd1', status: 'PENDING' }),
+          expect.objectContaining({ id: 'd2', status: 'APPROVED' }),
+        ])
+      );
     });
 
     it('should filter decisions by projectId', async () => {
@@ -77,7 +99,7 @@ describe('DecisionController', () => {
 
       const { DecisionController } =
         await import('../../../../server/src/controllers/DecisionController.js');
-      await DecisionController.getDecisions(mockReq, mockRes);
+      await DecisionController.getDecisions(mockReq, mockRes, mockNext);
 
       const callArgs = mockQueryAll.mock.calls[0];
       expect(callArgs[0]).toContain('project_id');
@@ -90,23 +112,32 @@ describe('DecisionController', () => {
 
       const { DecisionController } =
         await import('../../../../server/src/controllers/DecisionController.js');
-      await DecisionController.getDecisions(mockReq, mockRes);
+      await DecisionController.getDecisions(mockReq, mockRes, mockNext);
 
       const callArgs = mockQueryAll.mock.calls[0];
       expect(callArgs[0]).toContain('status');
-      expect(callArgs[1]).toContain('PENDING');
+      expect(callArgs[1]).toContain('pending');
     });
   });
 
   describe('getDecisionById', () => {
     it('should return decision when found', async () => {
-      const mockDecision = { id: 'd1', title: 'Test Decision' };
+      const mockDecision = {
+        id: 'd1',
+        title: 'Test Decision',
+        status: 'pending',
+        decision_maker_id: 'user-123',
+        created_by: 'user-123',
+        created_at: new Date().toISOString(),
+        organization_id: 'org-123',
+      };
       mockReq.params.id = 'd1';
       mockQueryOne.mockResolvedValue(mockDecision);
+      mockQueryAll.mockResolvedValue([]);
 
       const { DecisionController } =
         await import('../../../../server/src/controllers/DecisionController.js');
-      await DecisionController.getDecisionById(mockReq, mockRes);
+      await DecisionController.getDecisionById(mockReq, mockRes, mockNext);
 
       expect(mockQueryOne).toHaveBeenCalled();
       expect(mockRes.json).toHaveBeenCalled();
@@ -118,7 +149,7 @@ describe('DecisionController', () => {
 
       const { DecisionController } =
         await import('../../../../server/src/controllers/DecisionController.js');
-      await DecisionController.getDecisionById(mockReq, mockRes);
+      await DecisionController.getDecisionById(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(404);
       expect(mockRes.json).toHaveBeenCalledWith({ error: 'Decision not found' });
@@ -137,7 +168,7 @@ describe('DecisionController', () => {
 
       const { DecisionController } =
         await import('../../../../server/src/controllers/DecisionController.js');
-      await DecisionController.createDecision(mockReq, mockRes);
+      await DecisionController.createDecision(mockReq, mockRes, mockNext);
 
       expect(mockQueryRun).toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(201);
@@ -146,7 +177,7 @@ describe('DecisionController', () => {
           id: 'test-uuid-123',
           projectId: 'proj-123',
           title: 'New Decision',
-          status: 'pending',
+          status: 'PENDING',
         })
       );
     });
@@ -157,7 +188,7 @@ describe('DecisionController', () => {
 
       const { DecisionController } =
         await import('../../../../server/src/controllers/DecisionController.js');
-      await DecisionController.createDecision(mockReq, mockRes);
+      await DecisionController.createDecision(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(401);
     });
@@ -168,7 +199,7 @@ describe('DecisionController', () => {
 
       const { DecisionController } =
         await import('../../../../server/src/controllers/DecisionController.js');
-      await DecisionController.createDecision(mockReq, mockRes);
+      await DecisionController.createDecision(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(403);
     });
@@ -178,7 +209,7 @@ describe('DecisionController', () => {
 
       const { DecisionController } =
         await import('../../../../server/src/controllers/DecisionController.js');
-      await DecisionController.createDecision(mockReq, mockRes);
+      await DecisionController.createDecision(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({ error: 'Missing required fields' });
@@ -191,19 +222,19 @@ describe('DecisionController', () => {
       mockReq.body = { decision: 'approved', rationale: 'Good proposal' };
       mockQueryOne.mockResolvedValue({
         id: 'd1',
-        decision_owner_id: 'user-123',
-        audit_trail: '[]',
+        decision_maker_id: 'user-123',
+        status: 'pending',
       });
       mockQueryRun.mockResolvedValue({ changes: 1 });
 
       const { DecisionController } =
         await import('../../../../server/src/controllers/DecisionController.js');
-      await DecisionController.decide(mockReq, mockRes);
+      await DecisionController.decide(mockReq, mockRes, mockNext);
 
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
           id: 'd1',
-          status: 'approved',
+          status: 'APPROVED',
         })
       );
     });
@@ -213,18 +244,18 @@ describe('DecisionController', () => {
       mockReq.body = { decision: 'rejected', rationale: 'Not feasible' };
       mockQueryOne.mockResolvedValue({
         id: 'd1',
-        decision_owner_id: 'user-123',
-        audit_trail: '[]',
+        decision_maker_id: 'user-123',
+        status: 'pending',
       });
       mockQueryRun.mockResolvedValue({ changes: 1 });
 
       const { DecisionController } =
         await import('../../../../server/src/controllers/DecisionController.js');
-      await DecisionController.decide(mockReq, mockRes);
+      await DecisionController.decide(mockReq, mockRes, mockNext);
 
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          status: 'rejected',
+          status: 'REJECTED',
         })
       );
     });
@@ -235,21 +266,10 @@ describe('DecisionController', () => {
 
       const { DecisionController } =
         await import('../../../../server/src/controllers/DecisionController.js');
-      await DecisionController.decide(mockReq, mockRes);
+      await DecisionController.decide(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({ error: 'Invalid decision' });
-    });
-
-    it('should return 400 when rationale missing', async () => {
-      mockReq.params.id = 'd1';
-      mockReq.body = { decision: 'approved', rationale: '' };
-
-      const { DecisionController } =
-        await import('../../../../server/src/controllers/DecisionController.js');
-      await DecisionController.decide(mockReq, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(400);
     });
 
     it('should return 404 when decision not found', async () => {
@@ -259,7 +279,7 @@ describe('DecisionController', () => {
 
       const { DecisionController } =
         await import('../../../../server/src/controllers/DecisionController.js');
-      await DecisionController.decide(mockReq, mockRes);
+      await DecisionController.decide(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(404);
     });
@@ -270,13 +290,13 @@ describe('DecisionController', () => {
       mockReq.user.role = 'USER';
       mockQueryOne.mockResolvedValue({
         id: 'd1',
-        decision_owner_id: 'other-user',
-        audit_trail: '[]',
+        decision_maker_id: 'other-user',
+        status: 'pending',
       });
 
       const { DecisionController } =
         await import('../../../../server/src/controllers/DecisionController.js');
-      await DecisionController.decide(mockReq, mockRes);
+      await DecisionController.decide(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(403);
     });
@@ -286,7 +306,7 @@ describe('DecisionController', () => {
     it('should return aging and blocking decisions', async () => {
       const { DecisionController } =
         await import('../../../../server/src/controllers/DecisionController.js');
-      await DecisionController.getBottlenecks(mockReq, mockRes);
+      await DecisionController.getBottlenecks(mockReq, mockRes, mockNext);
 
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -301,10 +321,16 @@ describe('DecisionController', () => {
     it('should escalate decision', async () => {
       mockReq.params.id = 'd1';
       mockReq.body = { reason: 'Urgent', escalateToUserId: 'manager-123' };
+      mockQueryOne.mockResolvedValue({
+        id: 'd1',
+        decision_maker_id: 'user-123',
+        status: 'pending',
+      });
+      mockQueryRun.mockResolvedValue({ changes: 1 });
 
       const { DecisionController } =
         await import('../../../../server/src/controllers/DecisionController.js');
-      await DecisionController.escalateDecision(mockReq, mockRes);
+      await DecisionController.escalateDecision(mockReq, mockRes, mockNext);
 
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({

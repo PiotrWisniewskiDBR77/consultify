@@ -21,6 +21,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
     name: '',
     description: '',
     projectId: '',
+    analysisType: 'financial',
   });
   const [projects, setProjects] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,6 +43,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
         name: formData.name,
         description: formData.description || undefined,
         projectId: formData.projectId || undefined,
+        analysisType: formData.analysisType,
       });
       toast.success('Analiza utworzona!');
       onCreate(result);
@@ -65,11 +67,9 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
               <FileText size={24} className="text-emerald-500" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-navy-900 dark:text-white">
-                Nowa analiza dojrzałości
-              </h2>
+              <h2 className="text-lg font-bold text-navy-900 dark:text-white">Nowa analiza</h2>
               <p className="text-xs text-slate-400 dark:text-slate-500">
-                Utwórz nową ocenę dojrzałości cyfrowej
+                Utwórz analizę ekonomiczną lub dojrzałościową
               </p>
             </div>
           </div>
@@ -121,6 +121,23 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
             </select>
           </div>
 
+          {/* Analysis Type */}
+          <div>
+            <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
+              Typ analizy
+            </label>
+            <select
+              value={formData.analysisType}
+              onChange={(e) => setFormData((prev) => ({ ...prev, analysisType: e.target.value }))}
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 
+                                dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+            >
+              <option value="financial">Analiza ekonomiczna</option>
+              <option value="maturity">Ocena dojrzałości</option>
+              <option value="combined">Połączona</option>
+            </select>
+          </div>
+
           {/* Description */}
           <div>
             <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
@@ -140,8 +157,8 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
           {/* Info */}
           <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl p-4">
             <p className="text-sm text-emerald-700 dark:text-emerald-400">
-              Po utworzeniu analizy zostaniesz przeniesiony do narzędzia oceny, gdzie będziesz mógł
-              ocenić dojrzałość cyfrową w 6 głównych osiach i 32 obszarach.
+              Po utworzeniu analizy przejdziesz do odpowiedniego workspace: oceny dojrzałości lub
+              analizy ekonomicznej.
             </p>
           </div>
 

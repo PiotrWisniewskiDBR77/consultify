@@ -56,7 +56,7 @@ interface Decision {
   title: string;
   description?: string;
   decisionType: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'DEFERRED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'DEFERRED' | 'ESCALATED';
   decisionOwnerId?: string;
   ownerName?: string;
   requestedById?: string;
@@ -935,7 +935,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
 
   // Filter and sort decisions
   const getFilteredDecisions = () => {
-    let filtered = decisions.filter((d) => d.status === 'PENDING');
+    let filtered = decisions.filter((d) => ['PENDING', 'ESCALATED'].includes(d.status));
 
     // View mode filter
     if (viewMode === 'my') {
@@ -1007,15 +1007,17 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
 
   const filteredDecisions = getFilteredDecisions();
   const myDecisionsCount = decisions.filter(
-    (d) => d.status === 'PENDING' && d.decisionOwnerId === currentUserId
+    (d) => ['PENDING', 'ESCALATED'].includes(d.status) && d.decisionOwnerId === currentUserId
   ).length;
   const awaitingCount = decisions.filter(
     (d) =>
-      d.status === 'PENDING' &&
+      ['PENDING', 'ESCALATED'].includes(d.status) &&
       d.requestedById === currentUserId &&
       d.decisionOwnerId !== currentUserId
   ).length;
-  const urgentCount = decisions.filter((d) => d.status === 'PENDING' && d.isOverdue).length;
+  const urgentCount = decisions.filter(
+    (d) => ['PENDING', 'ESCALATED'].includes(d.status) && d.isOverdue
+  ).length;
 
   if (loading) {
     return (

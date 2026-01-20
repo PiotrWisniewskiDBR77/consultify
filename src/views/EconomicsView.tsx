@@ -163,20 +163,20 @@ export const EconomicsView: React.FC = () => {
 
   const handleSelectAnalysis = useCallback((analysis: DigitizationAnalysis) => {
     setSelectedAnalysis(analysis);
-    setActiveTab('tool');
+    setActiveTab(analysis.analysisType === 'financial' ? 'financial' : 'tool');
   }, []);
 
   const handleCreateAnalysis = useCallback((newAnalysis: DigitizationAnalysis) => {
     setSelectedAnalysis(newAnalysis);
     setShowCreateModal(false);
-    setActiveTab('tool');
+    setActiveTab(newAnalysis.analysisType === 'financial' ? 'financial' : 'tool');
     setRefreshKey((k) => k + 1);
   }, []);
 
   const handleImportComplete = useCallback((analysis: DigitizationAnalysis) => {
     setSelectedAnalysis(analysis);
     setShowImportWizard(false);
-    setActiveTab('tool');
+    setActiveTab(analysis.analysisType === 'financial' ? 'financial' : 'tool');
     setRefreshKey((k) => k + 1);
   }, []);
 
@@ -219,11 +219,17 @@ export const EconomicsView: React.FC = () => {
                           : 'text-slate-400 dark:text-slate-500'
                     }`}
                   >
-                    {selectedAnalysis.status === 'completed'
-                      ? 'Zakończona'
-                      : selectedAnalysis.status === 'in_progress'
-                        ? 'W trakcie'
-                        : 'Szkic'}
+                    {selectedAnalysis.analysisType === 'financial'
+                      ? selectedAnalysis.status === 'completed'
+                        ? 'Approved'
+                        : selectedAnalysis.status === 'in_progress'
+                          ? 'Review'
+                          : 'Draft'
+                      : selectedAnalysis.status === 'completed'
+                        ? 'Zakończona'
+                        : selectedAnalysis.status === 'in_progress'
+                          ? 'W trakcie'
+                          : 'Szkic'}
                   </span>{' '}
                   • Wynik:{' '}
                   <span className="text-emerald-400 font-medium">

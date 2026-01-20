@@ -3,16 +3,7 @@
  * Wrapper for AdminKnowledgeView documents tab
  */
 
-import {
-  Edit2,
-  FileText,
-  RefreshCw,
-  Search,
-  Tag,
-  Trash2,
-  Upload,
-  X,
-} from 'lucide-react';
+import { Edit2, FileText, RefreshCw, Search, Tag, Trash2, Upload, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -172,11 +163,7 @@ export const DocumentsRAGTab: React.FC = () => {
               disabled={!uploadFile || uploading}
               className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium flex items-center gap-2"
             >
-              {uploading ? (
-                <RefreshCw className="animate-spin" size={18} />
-              ) : (
-                <Upload size={18} />
-              )}
+              {uploading ? <RefreshCw className="animate-spin" size={18} /> : <Upload size={18} />}
               {uploading ? 'Processing...' : 'Upload & Index'}
             </button>
           </div>
@@ -252,7 +239,9 @@ export const DocumentsRAGTab: React.FC = () => {
 
         {filteredDocuments.length === 0 ? (
           <div className="text-center py-12 text-slate-400 bg-slate-50 dark:bg-navy-900/50 rounded-xl border border-dashed border-slate-200 dark:border-navy-700">
-            {searchTerm || categoryFilter ? 'No matching documents found.' : 'No documents indexed yet.'}
+            {searchTerm || categoryFilter
+              ? 'No matching documents found.'
+              : 'No documents indexed yet.'}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

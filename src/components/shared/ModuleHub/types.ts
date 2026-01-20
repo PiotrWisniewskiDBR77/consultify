@@ -5,7 +5,7 @@
 
 export type ModuleTab = 'list' | 'reports' | 'initiatives';
 
-export type ViewMode = 'table' | 'grid' | 'kanban' | 'timeline' | 'matrix';
+export type ViewMode = 'table' | 'grid' | 'kanban' | 'timeline' | 'calendar' | 'matrix';
 
 export type ItemStatus = 'draft' | 'in_review' | 'approved' | 'completed';
 

@@ -17,6 +17,7 @@ import {
   CreateInitiativeSchema,
   UpdateInitiativeSchema,
   UpdateInitiativeStatusSchema,
+  QuickUpdateInitiativeSchema,
 } from '../../validators/initiative.validators.js';
 
 const router = Router();
@@ -39,6 +40,24 @@ router.use(demoContextMiddleware);
  * Get initiatives with portfolio stats
  */
 router.get('/portfolio', InitiativeController.getPortfolioData);
+
+/**
+ * GET /api/initiatives/portfolio/dependencies
+ * Get initiative dependencies for timeline
+ */
+router.get('/portfolio/dependencies', InitiativeController.getPortfolioDependencies);
+
+/**
+ * POST /api/initiatives/portfolio/dependencies
+ * Create initiative dependency
+ */
+router.post('/portfolio/dependencies', InitiativeController.createPortfolioDependency);
+
+/**
+ * DELETE /api/initiatives/portfolio/dependencies/:id
+ * Remove initiative dependency
+ */
+router.delete('/portfolio/dependencies/:id', InitiativeController.deletePortfolioDependency);
 
 /**
  * GET /api/initiatives
@@ -79,6 +98,16 @@ router.patch(
   '/:id/status',
   validateBody(UpdateInitiativeStatusSchema),
   InitiativeController.updateInitiativeStatus
+);
+
+/**
+ * PATCH /api/initiatives/:id/quick-update
+ * Quick update initiative fields
+ */
+router.patch(
+  '/:id/quick-update',
+  validateBody(QuickUpdateInitiativeSchema),
+  InitiativeController.quickUpdateInitiative
 );
 
 // ==========================================

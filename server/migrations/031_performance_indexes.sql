@@ -58,8 +58,8 @@ ON initiatives(organization_id, status);
 
 -- Optimize: Decisions by owner and status
 CREATE INDEX IF NOT EXISTS idx_decisions_owner_status 
-ON decisions(decision_owner_id, status) 
-WHERE status = 'PENDING';
+ON decisions(decision_maker_id, status) 
+WHERE status IN ('pending', 'escalated');
 
 -- Optimize: Decisions by project
 CREATE INDEX IF NOT EXISTS idx_decisions_project 

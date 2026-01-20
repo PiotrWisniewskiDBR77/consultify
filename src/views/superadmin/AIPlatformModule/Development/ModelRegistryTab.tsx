@@ -311,7 +311,9 @@ export const ModelRegistryTab: React.FC = () => {
             <Cpu size={16} className="text-purple-500" />
             <span className="text-sm text-slate-500 dark:text-slate-400">Providers</span>
           </div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white">{providers.length}</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">
+            {providers.length}
+          </div>
         </div>
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
           <div className="flex items-center gap-2 mb-2">
@@ -410,7 +412,9 @@ export const ModelRegistryTab: React.FC = () => {
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="text-sm text-slate-700 dark:text-slate-300">{model.provider}</span>
+                  <span className="text-sm text-slate-700 dark:text-slate-300">
+                    {model.provider}
+                  </span>
                 </td>
                 <td className="px-6 py-4">{getTierBadge(model.tier)}</td>
                 <td className="px-6 py-4">{getStatusBadge(model.status)}</td>

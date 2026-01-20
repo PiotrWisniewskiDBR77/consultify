@@ -39,6 +39,48 @@ const safeJsonParse = <T = unknown>(
   }
 };
 
+const normalizeStatus = (value: string | null | undefined): string =>
+  String(value || '').toUpperCase();
+
+const hasApprovedGateDecision = async (
+  orgId: string,
+  initiativeId: string,
+  pmoDomain: string
+): Promise<boolean> => {
+  const sql = `
+        SELECT id, status, decision_maker_id, deadline
+        FROM decisions
+        WHERE organization_id = ?
+          AND initiative_id = ?
+          AND pmo_domain = ?
+    `;
+  const rows = await queryHelpers.queryAll(sql, [orgId, initiativeId, pmoDomain]);
+  return rows.some((row: Record<string, unknown>) => {
+    const status = String(row.status || '').toLowerCase();
+    const hasOwner = !!row.decision_maker_id;
+    const hasDueDate = !!row.deadline;
+    return status === 'approved' && hasOwner && hasDueDate;
+  });
+};
+
+const hasPendingExecutionGateDecisions = async (
+  orgId: string,
+  initiativeId: string
+): Promise<boolean> => {
+  const sql = `
+        SELECT d.id
+        FROM decisions d
+        LEFT JOIN tasks t ON d.task_id = t.id
+        WHERE d.organization_id = ?
+          AND (d.initiative_id = ? OR t.initiative_id = ?)
+          AND d.status IN ('pending', 'escalated')
+          AND d.type IN ('SCOPE_CHANGE', 'RISK_ACCEPTANCE', 'BLOCKER_RESOLUTION', 'PHASE_TRANSITION')
+        LIMIT 1
+    `;
+  const rows = await queryHelpers.queryAll(sql, [orgId, initiativeId, initiativeId]);
+  return rows.length > 0;
+};
+
 /**
  * Parse multilingual text and return translation for user's language
  * @param text - JSON string with translations {pl: '...', en: '...', ...} or plain string
@@ -96,7 +138,9 @@ export class InitiativeController {
       const supportedLangs = ['pl', 'en', 'de', 'es', 'ar', 'ja'];
       const lang = supportedLangs.includes(userLang) ? userLang : 'en';
 
-      const sql = `
+      const { status } = req.query as { status?: string };
+      const params: Array<unknown> = [orgId];
+      let sql = `
             SELECT i.*, 
                 ob.first_name as ob_first_name, ob.last_name as ob_last_name, ob.avatar_url as ob_avatar,
                 oe.first_name as oe_first_name, oe.last_name as oe_last_name, oe.avatar_url as oe_avatar
@@ -104,10 +148,14 @@ export class InitiativeController {
             LEFT JOIN users ob ON i.owner_business_id = ob.id
             LEFT JOIN users oe ON i.owner_execution_id = oe.id
             WHERE i.organization_id = ?
-            ORDER BY i.created_at DESC
         `;
+      if (status) {
+        sql += ` AND UPPER(i.status) = ?`;
+        params.push(normalizeStatus(status));
+      }
+      sql += ` ORDER BY i.created_at DESC`;
 
-      const rows = await queryHelpers.queryAll(sql, [orgId]);
+      const rows = await queryHelpers.queryAll(sql, params);
 
       const initiatives = rows.map((i: Record<string, unknown>) => ({
         id: i.id,
@@ -341,11 +389,163 @@ export class InitiativeController {
         return;
       }
 
+      const existing = await queryHelpers.queryOne(
+        `SELECT status FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
+      if (!existing) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+
+      const currentStatus = normalizeStatus((existing as Record<string, unknown>).status as string);
+      const nextStatus = normalizeStatus(status as string);
+
+      if (currentStatus === 'REVIEW' && nextStatus === 'APPROVED') {
+        const hasGoNoGo = await hasApprovedGateDecision(
+          orgId,
+          id,
+          'GOVERNANCE_DECISION_MAKING'
+        );
+        if (!hasGoNoGo) {
+          res.status(400).json({
+            error: 'Go/No-Go decision is required to approve this initiative',
+            rule: 'GATE_DECISION_REQUIRED',
+          });
+          return;
+        }
+      }
+
+      if (currentStatus === 'APPROVED' && nextStatus === 'EXECUTING') {
+        const [hasResourcesCommit, hasScheduleLock] = await Promise.all([
+          hasApprovedGateDecision(orgId, id, 'RESOURCE_RESPONSIBILITY'),
+          hasApprovedGateDecision(orgId, id, 'SCHEDULE_MILESTONES'),
+        ]);
+        if (!hasResourcesCommit || !hasScheduleLock) {
+          res.status(400).json({
+            error: 'Resources Commit and Schedule Lock decisions are required to start execution',
+            rule: 'GATE_DECISION_REQUIRED',
+          });
+          return;
+        }
+      }
+
+      if (
+        ['EXECUTING', 'BLOCKED'].includes(currentStatus) &&
+        nextStatus === 'DONE' &&
+        (await hasPendingExecutionGateDecisions(orgId, id))
+      ) {
+        res.status(400).json({
+          error: 'Resolve pending execution gate decisions before closing this initiative',
+          rule: 'EXECUTION_GATE_DECISION_REQUIRED',
+        });
+        return;
+      }
+
       // TODO: Use InitiativeStatusService when migrated
       const sql = `UPDATE initiatives SET status = ?, updated_at = ? WHERE id = ? AND organization_id = ?`;
-      await queryHelpers.queryRun(sql, [status, new Date().toISOString(), id, orgId]);
+      await queryHelpers.queryRun(sql, [nextStatus, new Date().toISOString(), id, orgId]);
 
-      res.json({ id, status, message: 'Status updated' });
+      res.json({ id, status: nextStatus, message: 'Status updated' });
+    }
+  );
+
+  /**
+   * Quick update initiative (timeline, owners, status)
+   */
+  static quickUpdateInitiative = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { id } = req.params;
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const {
+        progress,
+        status,
+        plannedStartDate,
+        plannedEndDate,
+        ownerBusinessId,
+        ownerExecutionId,
+        priority,
+      } = req.body as Record<string, unknown>;
+
+      const current = await queryHelpers.queryOne(
+        `SELECT planned_start_date, planned_end_date FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
+      if (!current) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+
+      const existingStart = (current as Record<string, unknown>).planned_start_date as
+        | string
+        | null;
+      const existingEnd = (current as Record<string, unknown>).planned_end_date as string | null;
+      const finalStart = (plannedStartDate ?? existingStart) as string | null;
+      const finalEnd = (plannedEndDate ?? existingEnd) as string | null;
+
+      if (finalStart && finalEnd) {
+        const startDate = new Date(finalStart);
+        const endDate = new Date(finalEnd);
+        if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+          res.status(400).json({ error: 'Invalid date format' });
+          return;
+        }
+        if (startDate > endDate) {
+          res.status(400).json({ error: 'plannedStartDate must be before plannedEndDate' });
+          return;
+        }
+      }
+
+      const updates: string[] = [];
+      const params: Array<unknown> = [];
+
+      if (progress !== undefined) {
+        updates.push('progress = ?');
+        params.push(progress);
+      }
+      if (status) {
+        updates.push('status = ?');
+        params.push(normalizeStatus(status as string));
+      }
+      if (plannedStartDate !== undefined) {
+        updates.push('planned_start_date = ?');
+        params.push(plannedStartDate);
+      }
+      if (plannedEndDate !== undefined) {
+        updates.push('planned_end_date = ?');
+        params.push(plannedEndDate);
+      }
+      if (ownerBusinessId !== undefined) {
+        updates.push('owner_business_id = ?');
+        params.push(ownerBusinessId);
+      }
+      if (ownerExecutionId !== undefined) {
+        updates.push('owner_execution_id = ?');
+        params.push(ownerExecutionId);
+      }
+      if (priority !== undefined) {
+        updates.push('priority = ?');
+        params.push(priority);
+      }
+
+      if (updates.length === 0) {
+        res.json({ message: 'No updates provided' });
+        return;
+      }
+
+      updates.push('updated_at = ?');
+      params.push(new Date().toISOString());
+      params.push(id, orgId);
+
+      const sql = `UPDATE initiatives SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`;
+      await queryHelpers.queryRun(sql, params);
+
+      res.json({ success: true, message: 'Initiative updated' });
     }
   );
 
@@ -374,7 +574,7 @@ export class InitiativeController {
       const rows = await queryHelpers.queryAll(sql, [orgId]);
 
       // Helper to normalize status
-      const normalizeStatus = (status: string | unknown): string => {
+      const normalizePortfolioStatus = (status: string | unknown): string => {
         const s = String(status || 'DRAFT').toUpperCase();
         // Map old statuses to new ones
         if (s.includes('STEP3') || s.includes('STEP_3')) return 'REVIEW';
@@ -428,7 +628,7 @@ export class InitiativeController {
           area: i.area,
           summary: i.summary,
           hypothesis: i.hypothesis,
-          status: normalizeStatus(i.status),
+          status: normalizePortfolioStatus(i.status),
           progress: i.progress || 0,
           currentStage: i.current_stage,
           businessValue: i.business_value || 0,
@@ -444,6 +644,8 @@ export class InitiativeController {
           actualStartDate: i.actual_start_date,
           actualEndDate: i.actual_end_date,
           priority: String(i.priority || 'MEDIUM').toUpperCase(),
+          sourceId: i.source_id,
+          sourceType: i.source_type,
           targetQuarter: i.planned_start_date
             ? `Q${Math.ceil((new Date(i.planned_start_date as string).getMonth() + 1) / 3)} ${new Date(i.planned_start_date as string).getFullYear()}`
             : undefined,
@@ -509,6 +711,149 @@ export class InitiativeController {
           avgProgress,
         },
       });
+    }
+  );
+
+  /**
+   * Get initiative dependencies for portfolio timeline
+   */
+  static getPortfolioDependencies = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const { projectId } = req.query as { projectId?: string };
+      const params: Array<string> = [orgId];
+      let sql = `
+            SELECT id, from_initiative_id, to_initiative_id, type, project_id
+            FROM initiative_dependencies
+            WHERE organization_id = ?
+        `;
+
+      if (projectId) {
+        sql += ` AND project_id = ?`;
+        params.push(projectId);
+      }
+
+      sql += ` ORDER BY created_at DESC`;
+
+      const rows = await queryHelpers.queryAll(sql, params);
+      const dependencies = rows.map((row: Record<string, unknown>) => ({
+        id: row.id,
+        fromInitiativeId: row.from_initiative_id,
+        toInitiativeId: row.to_initiative_id,
+        type: row.type,
+        projectId: row.project_id,
+      }));
+
+      res.json({ dependencies });
+    }
+  );
+
+  /**
+   * Create initiative dependency
+   */
+  static createPortfolioDependency = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const { fromInitiativeId, toInitiativeId, type, projectId } = req.body as {
+        fromInitiativeId?: string;
+        toInitiativeId?: string;
+        type?: string;
+        projectId?: string;
+      };
+
+      if (!fromInitiativeId || !toInitiativeId) {
+        res.status(400).json({ error: 'fromInitiativeId and toInitiativeId are required' });
+        return;
+      }
+
+      if (fromInitiativeId === toInitiativeId) {
+        res.status(400).json({ error: 'Cannot create self-dependency' });
+        return;
+      }
+
+      const existing = await queryHelpers.queryOne(
+        `SELECT id FROM initiative_dependencies
+         WHERE organization_id = ? AND from_initiative_id = ? AND to_initiative_id = ?`,
+        [orgId, fromInitiativeId, toInitiativeId]
+      );
+      if (existing) {
+        res.json({
+          dependency: {
+            id: (existing as Record<string, unknown>).id,
+            fromInitiativeId,
+            toInitiativeId,
+            type: type || 'FINISH_TO_START',
+            projectId,
+          },
+        });
+        return;
+      }
+
+      let resolvedProjectId = projectId;
+      if (!resolvedProjectId) {
+        const projectRow = await queryHelpers.queryOne(
+          `SELECT project_id FROM initiatives WHERE id = ? AND organization_id = ?`,
+          [fromInitiativeId, orgId]
+        );
+        resolvedProjectId = (projectRow as Record<string, unknown>)?.project_id as string;
+      }
+
+      const id = uuidv4();
+      await queryHelpers.queryRun(
+        `INSERT INTO initiative_dependencies (
+              id, organization_id, project_id, from_initiative_id, to_initiative_id, type, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          orgId,
+          resolvedProjectId || null,
+          fromInitiativeId,
+          toInitiativeId,
+          type || 'FINISH_TO_START',
+          new Date().toISOString(),
+        ]
+      );
+
+      res.status(201).json({
+        dependency: {
+          id,
+          fromInitiativeId,
+          toInitiativeId,
+          type: type || 'FINISH_TO_START',
+          projectId: resolvedProjectId || null,
+        },
+      });
+    }
+  );
+
+  /**
+   * Delete initiative dependency
+   */
+  static deletePortfolioDependency = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const { id } = req.params;
+      await queryHelpers.queryRun(
+        `DELETE FROM initiative_dependencies WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
+
+      res.json({ success: true });
     }
   );
 
@@ -1087,9 +1432,25 @@ export class InitiativeController {
         id: i.id,
         name: i.name,
         description: i.description,
+        summary: i.summary,
+        problemStatement: i.problem_statement,
+        hypothesis: i.hypothesis,
+        businessValue: i.business_value,
+        costCapex: i.cost_capex,
+        costOpex: i.cost_opex,
+        expectedRoi: i.expected_roi,
+        ownerBusinessId: i.owner_business_id,
+        ownerExecutionId: i.owner_execution_id,
+        plannedStartDate: i.planned_start_date,
+        plannedEndDate: i.planned_end_date,
+        deliverables: safeJsonParse(i.deliverables as string, []),
+        successCriteria: safeJsonParse(i.success_criteria as string, []),
+        keyRisks: safeJsonParse(i.key_risks as string, []),
         axis: i.axis,
         priority: i.priority,
         status: (i.status as string)?.toUpperCase() === 'COMPLETED' ? 'DONE' : i.status,
+        sourceId: i.source_id,
+        sourceType: i.source_type,
         progress: i.progress || 0,
         projectId: i.project_id,
         projectName: i.project_name,

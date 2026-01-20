@@ -5,7 +5,7 @@
  * Connected to real API endpoints
  */
 
-import { Lightbulb, Plus, RefreshCw } from 'lucide-react';
+import { Edit2, Lightbulb, Plus, RefreshCw } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +21,7 @@ import { InitiativeSidePanel } from '../Portfolio/InitiativeSidePanel';
 import { PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
 import { PortfolioListView } from '../Portfolio/PortfolioListView';
 import { PortfolioMatrixView } from '../Portfolio/PortfolioMatrixView';
-import { PortfolioTimelineView } from '../Portfolio/PortfolioTimelineView';
+import { InitiativesTimelineView } from './InitiativesTimelineView';
 // ModuleHub components
 import {
   CategoryButton,
@@ -55,13 +55,19 @@ const STATUS_META: Record<
   [InitiativeStatus.ARCHIVED]: { color: 'slate', label: 'Archived', dotColor: 'bg-slate-500' },
 };
 
+const ALLOWED_STATUSES: InitiativeStatus[] = [
+  InitiativeStatus.PLANNING,
+  InitiativeStatus.REVIEW,
+  InitiativeStatus.APPROVED,
+];
+
 interface InitiativesHubProps {
   initialTab?: ModuleTab;
 }
 
 export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'list' }) => {
   const { t } = useTranslation();
-  const { currentProjectId } = useAppStore();
+  const { currentProjectId, currentUser } = useAppStore();
 
   // View state
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
@@ -77,6 +83,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showNewModal, setShowNewModal] = useState(false);
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [users, setUsers] = useState<any[]>([]);
+  const [bulkStatus, setBulkStatus] = useState<InitiativeStatus | ''>('');
+  const [bulkPriority, setBulkPriority] = useState<'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | ''>('');
+  const [bulkOwnerBusinessId, setBulkOwnerBusinessId] = useState<string>('');
+  const [bulkOwnerExecutionId, setBulkOwnerExecutionId] = useState<string>('');
 
   // Side panel state
   const [selectedInitiative, setSelectedInitiative] = useState<PortfolioInitiative | null>(null);
@@ -100,7 +113,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       try {
         const params = new URLSearchParams();
         if (currentProjectId) params.append('projectId', currentProjectId);
-        if (activeStatusFilter) params.append('status', activeStatusFilter);
+        if (activeStatusFilter && ALLOWED_STATUSES.includes(activeStatusFilter as InitiativeStatus)) {
+          params.append('status', activeStatusFilter);
+        }
         if (filters.priority?.length) filters.priority.forEach((p) => params.append('priority', p));
         if (searchQuery) params.append('search', searchQuery);
 
@@ -112,11 +127,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           // Fallback to regular initiatives endpoint
           const fallbackResponse = await Api.getInitiatives(currentProjectId || undefined);
           response = {
-            initiatives: Array.isArray(fallbackResponse) ? fallbackResponse : (fallbackResponse as any).initiatives || [],
+            initiatives: Array.isArray(fallbackResponse)
+              ? fallbackResponse
+              : (fallbackResponse as any).initiatives || [],
           };
         }
 
-        setInitiatives(response.initiatives || []);
+        const allowed = (response.initiatives || []).filter((i) =>
+          ALLOWED_STATUSES.includes(i.status as InitiativeStatus)
+        );
+        setInitiatives(allowed);
       } catch (error: any) {
         console.error('[InitiativesHub] Fetch error:', error);
         toast.error('Failed to load initiatives');
@@ -132,6 +152,38 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     fetchData();
   }, [fetchData]);
 
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const data = await Api.getUsers();
+        setUsers(Array.isArray(data) ? data : data?.users || []);
+      } catch (error: any) {
+        console.error('[InitiativesHub] Failed to load users:', error);
+      }
+    };
+    loadUsers();
+  }, []);
+
+  useEffect(() => {
+    if (initiatives.length === 0 && selectedIds.size > 0) {
+      setSelectedIds(new Set());
+      return;
+    }
+    if (selectedIds.size > 0) {
+      const allowedIds = new Set(initiatives.map((i) => i.id));
+      const filtered = new Set(Array.from(selectedIds).filter((id) => allowedIds.has(id)));
+      if (filtered.size !== selectedIds.size) {
+        setSelectedIds(filtered);
+      }
+    }
+  }, [initiatives, selectedIds]);
+
+  useEffect(() => {
+    if (activeStatusFilter && !ALLOWED_STATUSES.includes(activeStatusFilter as InitiativeStatus)) {
+      setActiveStatusFilter(null);
+    }
+  }, [activeStatusFilter]);
+
   // ============================================
   // STATUS FILTERS
   // ============================================
@@ -144,70 +196,22 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
     return [
       { id: 'all', label: 'All', color: 'bg-slate-400', count: initiatives.length },
-      {
-        id: InitiativeStatus.DRAFT,
-        label: 'Draft',
-        color: 'bg-slate-400',
-        count: counts[InitiativeStatus.DRAFT] || 0,
-      },
-      {
-        id: InitiativeStatus.PLANNING,
-        label: 'Planning',
-        color: 'bg-blue-400',
-        count: counts[InitiativeStatus.PLANNING] || 0,
-      },
-      {
-        id: InitiativeStatus.REVIEW,
-        label: 'Review',
-        color: 'bg-amber-400',
-        count: counts[InitiativeStatus.REVIEW] || 0,
-      },
-      {
-        id: InitiativeStatus.APPROVED,
-        label: 'Approved',
-        color: 'bg-emerald-400',
-        count: counts[InitiativeStatus.APPROVED] || 0,
-      },
-      {
-        id: InitiativeStatus.EXECUTING,
-        label: 'Executing',
-        color: 'bg-cyan-400',
-        count: counts[InitiativeStatus.EXECUTING] || 0,
-      },
-      {
-        id: InitiativeStatus.BLOCKED,
-        label: 'Blocked',
-        color: 'bg-red-400',
-        count: counts[InitiativeStatus.BLOCKED] || 0,
-      },
-      {
-        id: InitiativeStatus.DONE,
-        label: 'Done',
-        color: 'bg-green-400',
-        count: counts[InitiativeStatus.DONE] || 0,
-      },
-      {
-        id: InitiativeStatus.CANCELLED,
-        label: 'Cancelled',
-        color: 'bg-gray-400',
-        count: counts[InitiativeStatus.CANCELLED] || 0,
-      },
-      {
-        id: InitiativeStatus.ARCHIVED,
-        label: 'Archived',
-        color: 'bg-slate-500',
-        count: counts[InitiativeStatus.ARCHIVED] || 0,
-      },
+      ...ALLOWED_STATUSES.map((status) => ({
+        id: status,
+        label: STATUS_META[status].label,
+        color: STATUS_META[status].dotColor,
+        count: counts[status] || 0,
+      })),
     ];
   }, [initiatives]);
 
   // Available view modes
-  const availableViewModes: ViewMode[] = ['table', 'grid', 'kanban', 'timeline', 'matrix'];
+  const availableViewModes: ViewMode[] = ['table', 'grid', 'kanban', 'timeline'];
 
   // Empty tabs - using status filters instead
   const tabs: any[] = [];
 
-  // Category buttons - only New Initiative
+  // Category buttons - New Initiative + Bulk Edit
   const categoryButtons: CategoryButton[] = useMemo(
     () => [
       {
@@ -217,8 +221,21 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         count: 0,
         onClick: () => setShowNewModal(true),
       },
+      {
+        id: 'bulk',
+        label: 'Bulk edit',
+        icon: <Edit2 size={16} />,
+        count: selectedIds.size,
+        onClick: () => {
+          if (selectedIds.size === 0) {
+            toast.error('Select initiatives to edit');
+            return;
+          }
+          setShowBulkModal(true);
+        },
+      },
     ],
-    []
+    [selectedIds.size]
   );
 
   // ============================================
@@ -318,6 +335,53 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     toast.success('Initiative saved');
   }, [fetchData]);
 
+  const handleBulkApply = useCallback(async () => {
+    if (selectedIds.size === 0) return;
+
+    const ids = Array.from(selectedIds);
+    const statusUpdates = bulkStatus
+      ? ids.map((id) =>
+          Api.patch(`/initiatives/${id}/status`, {
+            status: bulkStatus,
+          })
+        )
+      : [];
+
+    const quickUpdatePayload: Record<string, unknown> = {};
+    if (bulkPriority) quickUpdatePayload.priority = bulkPriority;
+    if (bulkOwnerBusinessId) quickUpdatePayload.ownerBusinessId = bulkOwnerBusinessId;
+    if (bulkOwnerExecutionId) quickUpdatePayload.ownerExecutionId = bulkOwnerExecutionId;
+
+    const quickUpdates =
+      Object.keys(quickUpdatePayload).length > 0
+        ? ids.map((id) => Api.patch(`/initiatives/${id}/quick-update`, quickUpdatePayload))
+        : [];
+
+    const results = await Promise.allSettled([...statusUpdates, ...quickUpdates]);
+    const failed = results.filter((r) => r.status === 'rejected').length;
+
+    if (failed > 0) {
+      toast.error(`${failed} updates failed`);
+    } else {
+      toast.success('Bulk update applied');
+    }
+
+    setShowBulkModal(false);
+    setSelectedIds(new Set());
+    setBulkStatus('');
+    setBulkPriority('');
+    setBulkOwnerBusinessId('');
+    setBulkOwnerExecutionId('');
+    fetchData(true);
+  }, [
+    bulkOwnerBusinessId,
+    bulkOwnerExecutionId,
+    bulkPriority,
+    bulkStatus,
+    fetchData,
+    selectedIds,
+  ]);
+
   // ============================================
   // CONTENT RENDERING - Original Portfolio Components
   // ============================================
@@ -365,10 +429,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     // Filter by search
     const searchedInitiatives = searchQuery
       ? filteredInitiatives.filter(
-        (i) =>
-          i.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (i.description || '').toLowerCase().includes(searchQuery.toLowerCase())
-      )
+          (i) =>
+            i.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (i.description || '').toLowerCase().includes(searchQuery.toLowerCase())
+        )
       : filteredInitiatives;
 
     switch (viewMode) {
@@ -379,6 +443,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             onInitiativeClick={handleInitiativeClick}
             onStatusChange={handleStatusChange}
             onQuickUpdate={handleQuickUpdate}
+            onSelectionChange={setSelectedIds}
           />
         );
       case 'grid':
@@ -418,7 +483,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         );
       case 'timeline':
         return (
-          <PortfolioTimelineView
+          <InitiativesTimelineView
             initiatives={searchedInitiatives}
             onInitiativeClick={handleInitiativeClick}
             projectId={currentProjectId || undefined}
@@ -441,7 +506,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // ============================================
 
   return (
-    <>
+    <div className="h-full" data-testid="initiatives-hub">
       <ModuleHub
         tabs={tabs}
         activeTab={activeTab}
@@ -475,6 +540,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           setInitiatives((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
         }}
         onOpenFullDetail={handleOpenFullScreen}
+        users={users}
+        currentUser={currentUser}
       />
 
       {/* New Initiative Modal */}
@@ -494,7 +561,91 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           </div>
         </div>
       )}
-    </>
+
+      {showBulkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-navy-900 border border-navy-700 rounded-xl p-6 w-full max-w-lg">
+            <h2 className="text-lg font-semibold text-white mb-4">Bulk edit initiatives</h2>
+            <p className="text-sm text-slate-400 mb-4">
+              {selectedIds.size} initiatives selected
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Status</label>
+                <select
+                  value={bulkStatus}
+                  onChange={(e) => setBulkStatus(e.target.value as InitiativeStatus)}
+                  className="w-full px-3 py-2 bg-navy-950 border border-navy-700 rounded-lg text-sm text-white"
+                >
+                  <option value="">No change</option>
+                  <option value="PLANNING">Planning</option>
+                  <option value="REVIEW">Review</option>
+                  <option value="APPROVED">Approved</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Priority</label>
+                <select
+                  value={bulkPriority}
+                  onChange={(e) => setBulkPriority(e.target.value as any)}
+                  className="w-full px-3 py-2 bg-navy-950 border border-navy-700 rounded-lg text-sm text-white"
+                >
+                  <option value="">No change</option>
+                  <option value="CRITICAL">Critical</option>
+                  <option value="HIGH">High</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="LOW">Low</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Business Owner</label>
+                <select
+                  value={bulkOwnerBusinessId}
+                  onChange={(e) => setBulkOwnerBusinessId(e.target.value)}
+                  className="w-full px-3 py-2 bg-navy-950 border border-navy-700 rounded-lg text-sm text-white"
+                >
+                  <option value="">No change</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.firstName} {user.lastName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Execution Owner</label>
+                <select
+                  value={bulkOwnerExecutionId}
+                  onChange={(e) => setBulkOwnerExecutionId(e.target.value)}
+                  className="w-full px-3 py-2 bg-navy-950 border border-navy-700 rounded-lg text-sm text-white"
+                >
+                  <option value="">No change</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.firstName} {user.lastName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setShowBulkModal(false)}
+                className="px-4 py-2 text-sm text-slate-400 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkApply}
+                className="px-4 py-2 text-sm text-white bg-primary-600 hover:bg-primary-500 rounded-lg"
+              >
+                Apply changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

@@ -317,10 +317,10 @@ class UserStyleProfileService {
       if (peakHours.length > 5) {
         peakHours.shift();
       }
-      await db.run(
-        `UPDATE ai_user_style_profiles SET peak_activity_hours = ? WHERE user_id = ?`,
-        [JSON.stringify(peakHours), data.userId]
-      );
+      await db.run(`UPDATE ai_user_style_profiles SET peak_activity_hours = ? WHERE user_id = ?`, [
+        JSON.stringify(peakHours),
+        data.userId,
+      ]);
     }
 
     // Update focus modes
@@ -379,7 +379,12 @@ class UserStyleProfileService {
       const suggestion = this.suggestLengthChange(profile, feedback.lengthFeedback);
       if (suggestion) {
         suggestions.push(suggestion);
-        await this.recordPattern(feedback.userId, 'length_preference', feedback.lengthFeedback, feedback.screenContext);
+        await this.recordPattern(
+          feedback.userId,
+          'length_preference',
+          feedback.lengthFeedback,
+          feedback.screenContext
+        );
       }
     }
 
@@ -388,7 +393,12 @@ class UserStyleProfileService {
       const suggestion = this.suggestDepthChange(profile, feedback.detailFeedback);
       if (suggestion) {
         suggestions.push(suggestion);
-        await this.recordPattern(feedback.userId, 'depth_preference', feedback.detailFeedback, feedback.screenContext);
+        await this.recordPattern(
+          feedback.userId,
+          'depth_preference',
+          feedback.detailFeedback,
+          feedback.screenContext
+        );
       }
     }
 
@@ -401,7 +411,12 @@ class UserStyleProfileService {
         confidence: 0.6,
         reason: `User indicated preference for ${feedback.expectedFormat} format`,
       });
-      await this.recordPattern(feedback.userId, 'format_preference', feedback.expectedFormat, feedback.screenContext);
+      await this.recordPattern(
+        feedback.userId,
+        'format_preference',
+        feedback.expectedFormat,
+        feedback.screenContext
+      );
     }
 
     // Apply high-confidence suggestions automatically
@@ -426,7 +441,11 @@ class UserStyleProfileService {
     const now = new Date().toISOString();
 
     // Check if pattern exists
-    const existing = await db.get<{ id: string; occurrence_count: number; confidence_score: number }>(
+    const existing = await db.get<{
+      id: string;
+      occurrence_count: number;
+      confidence_score: number;
+    }>(
       `SELECT id, occurrence_count, confidence_score FROM ai_style_learning_patterns 
        WHERE user_id = ? AND pattern_type = ? AND pattern_value = ? AND status = 'active'`,
       [userId, patternType, patternValue]
@@ -640,21 +659,30 @@ class UserStyleProfileService {
       dashboard: { format: 'bullets', length: 'concise', depth: 'executive_summary' },
       assessment: { format: 'structured', length: 'comprehensive', depth: 'deep_dive' },
       roadmap: { format: 'structured', length: 'medium', depth: 'balanced' },
-      chat_full: { format: profile.preferredFormat, length: profile.responseLength, depth: profile.preferredDepth },
+      chat_full: {
+        format: profile.preferredFormat,
+        length: profile.responseLength,
+        depth: profile.preferredDepth,
+      },
     };
 
-    return contextDefaults[screenContext] || {
-      format: profile.preferredFormat,
-      length: profile.responseLength,
-      depth: profile.preferredDepth,
-    };
+    return (
+      contextDefaults[screenContext] || {
+        format: profile.preferredFormat,
+        length: profile.responseLength,
+        depth: profile.preferredDepth,
+      }
+    );
   }
 
   // ==========================================
   // HELPER METHODS
   // ==========================================
 
-  private getDefaultProfile(): Omit<UserStyleProfile, 'id' | 'userId' | 'organizationId' | 'createdAt' | 'updatedAt'> {
+  private getDefaultProfile(): Omit<
+    UserStyleProfile,
+    'id' | 'userId' | 'organizationId' | 'createdAt' | 'updatedAt'
+  > {
     return {
       preferredDepth: 'balanced',
       preferredFormat: 'structured',
@@ -705,7 +733,10 @@ class UserStyleProfileService {
     profile: UserStyleProfile,
     feedback: 'too_short' | 'too_long'
   ): ProfileUpdateSuggestion | null {
-    const lengthMap: Record<ResponseLength, { shorter: ResponseLength | null; longer: ResponseLength | null }> = {
+    const lengthMap: Record<
+      ResponseLength,
+      { shorter: ResponseLength | null; longer: ResponseLength | null }
+    > = {
       concise: { shorter: null, longer: 'medium' },
       medium: { shorter: 'concise', longer: 'comprehensive' },
       comprehensive: { shorter: 'medium', longer: null },
@@ -730,7 +761,10 @@ class UserStyleProfileService {
     profile: UserStyleProfile,
     feedback: 'too_little' | 'too_much'
   ): ProfileUpdateSuggestion | null {
-    const depthMap: Record<PreferredDepth, { less: PreferredDepth | null; more: PreferredDepth | null }> = {
+    const depthMap: Record<
+      PreferredDepth,
+      { less: PreferredDepth | null; more: PreferredDepth | null }
+    > = {
       executive_summary: { less: null, more: 'balanced' },
       balanced: { less: 'executive_summary', more: 'deep_dive' },
       deep_dive: { less: 'balanced', more: null },
@@ -758,11 +792,16 @@ export default userStyleProfileService;
 
 // Named exports
 export const getProfile = (userId: string) => userStyleProfileService.getProfile(userId);
-export const updateProfile = (userId: string, updates: Parameters<typeof userStyleProfileService.updateProfile>[1]) =>
-  userStyleProfileService.updateProfile(userId, updates);
-export const recordInteraction = (data: InteractionData) => userStyleProfileService.recordInteraction(data);
-export const processFeedback = (feedback: FeedbackData) => userStyleProfileService.processFeedback(feedback);
-export const getLearnedPatterns = (userId: string) => userStyleProfileService.getLearnedPatterns(userId);
+export const updateProfile = (
+  userId: string,
+  updates: Parameters<typeof userStyleProfileService.updateProfile>[1]
+) => userStyleProfileService.updateProfile(userId, updates);
+export const recordInteraction = (data: InteractionData) =>
+  userStyleProfileService.recordInteraction(data);
+export const processFeedback = (feedback: FeedbackData) =>
+  userStyleProfileService.processFeedback(feedback);
+export const getLearnedPatterns = (userId: string) =>
+  userStyleProfileService.getLearnedPatterns(userId);
 export const buildSystemPromptModifiers = (profile: UserStyleProfile) =>
   userStyleProfileService.buildSystemPromptModifiers(profile);
 export const getContextFormat = (profile: UserStyleProfile, screenContext: string) =>

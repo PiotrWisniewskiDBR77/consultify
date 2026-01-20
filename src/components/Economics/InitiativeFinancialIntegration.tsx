@@ -27,6 +27,7 @@ interface LinkedAnalysis {
   id: string;
   name: string;
   status: string;
+  analysisType?: string;
   overallScore: number | null;
   completionPercent: number;
   createdAt: string;
@@ -65,9 +66,12 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
       setIsLoading(true);
       try {
         // Try to find analysis linked to this initiative
-        const analyses = await Api.getDigitizationAnalyses({ search: initiative.name });
+        const analyses = await Api.getDigitizationAnalyses({
+          initiativeId: initiative.id,
+          analysisType: 'financial',
+        });
         const linked = analyses.analyses?.find(
-          (a: any) => a.linked_initiative_id === initiative.id || a.projectId === initiative.id
+          (a: any) => a.initiativeId === initiative.id || a.projectId === initiative.id
         );
 
         if (linked) {
@@ -103,6 +107,8 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
         name: `Analiza ekonomiczna: ${initiative.name}`,
         description: `Analiza ekonomiczna dla inicjatywy: ${initiative.name}`,
         projectId: initiative.id,
+        initiativeId: initiative.id,
+        analysisType: 'financial',
       });
 
       // Link to initiative
@@ -219,11 +225,17 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
                     : 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-400'
               }`}
             >
-              {linkedAnalysis.status === 'completed'
-                ? 'Zakończona'
-                : linkedAnalysis.status === 'in_progress'
-                  ? 'W trakcie'
-                  : 'Szkic'}
+              {linkedAnalysis.analysisType === 'financial'
+                ? linkedAnalysis.status === 'completed'
+                  ? 'Approved'
+                  : linkedAnalysis.status === 'in_progress'
+                    ? 'Review'
+                    : 'Draft'
+                : linkedAnalysis.status === 'completed'
+                  ? 'Zakończona'
+                  : linkedAnalysis.status === 'in_progress'
+                    ? 'W trakcie'
+                    : 'Szkic'}
             </span>
           </div>
 

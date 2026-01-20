@@ -1,6 +1,6 @@
 /**
  * Demo Analytics Service
- * 
+ *
  * Centralized analytics tracking for demo sessions.
  * Tracks key metrics for BCG/McKinsey class conversion optimization:
  * - Demo Start Rate (target >40%)
@@ -149,7 +149,7 @@ const storeEvent = (event: DemoEvent): void => {
   try {
     const events = getStoredEvents();
     events.push(event);
-    
+
     // Keep only last N events
     const trimmedEvents = events.slice(-MAX_EVENTS_STORED);
     sessionStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(trimmedEvents));
@@ -197,11 +197,11 @@ const updateAvgSessionDuration = (newDurationMin: number): void => {
     const metrics = getStoredMetrics();
     const totalSessions = metrics.totalDemoStarts || 1;
     const currentAvg = metrics.avgSessionDurationMin || 0;
-    
+
     // Calculate new rolling average
-    metrics.avgSessionDurationMin = 
+    metrics.avgSessionDurationMin =
       (currentAvg * (totalSessions - 1) + newDurationMin) / totalSessions;
-    
+
     localStorage.setItem(METRICS_STORAGE_KEY, JSON.stringify(metrics));
   } catch {
     // ignore
@@ -217,7 +217,7 @@ const getStoredMetrics = (): DemoMetrics => {
   } catch {
     // ignore
   }
-  
+
   return {
     totalDemoStarts: 0,
     tourCompletions: 0,
@@ -304,7 +304,7 @@ export const getConversionRates = (): {
 } => {
   const metrics = getStoredMetrics();
   const totalStarts = Math.max(metrics.totalDemoStarts, 1);
-  
+
   return {
     tourCompletionRate: (metrics.tourCompletions / totalStarts) * 100,
     upgradeClickRate: (metrics.upgradeClicks / totalStarts) * 100,
@@ -316,7 +316,7 @@ export const getConversionRates = (): {
  * Get events for current session
  */
 export const getCurrentSessionEvents = (sessionId: string): DemoEvent[] => {
-  return getStoredEvents().filter(e => e.sessionId === sessionId);
+  return getStoredEvents().filter((e) => e.sessionId === sessionId);
 };
 
 /**

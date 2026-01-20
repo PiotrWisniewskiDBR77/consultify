@@ -32,6 +32,7 @@ import * as LucideIcons from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
 import {
   getGuides,
@@ -40,6 +41,8 @@ import {
   HELP_CONFIG,
 } from '../../config/helpContent';
 import { HelpTab, useHelpSidePanel } from '../../contexts/HelpContext';
+import { KnowledgeArticleView } from './KnowledgeArticleView';
+import { KnowledgeLibrary } from './KnowledgeLibrary';
 
 // Tab configuration - 3 tabs: Overview, FAQ, Knowledge Base
 const TABS: { id: HelpTab; icon: typeof BookOpen; label: string; labelKey: string }[] = [
@@ -158,6 +161,65 @@ const KBCategoryItem: React.FC<{
   );
 };
 
+// Knowledge Tab Content - Full library with article detail view
+interface KnowledgeTabContentProps {
+  initialArticleSlug?: string | null;
+  onBack?: () => void;
+  moduleId?: string;
+}
+
+const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
+  initialArticleSlug,
+  onBack,
+  moduleId,
+}) => {
+  const { t } = useTranslation();
+  const [selectedArticleSlug, setSelectedArticleSlug] = useState<string | null>(
+    initialArticleSlug || null
+  );
+
+  // Sync with initialArticleSlug when it changes (from Quick Guides navigation)
+  useEffect(() => {
+    if (initialArticleSlug) {
+      setSelectedArticleSlug(initialArticleSlug);
+    }
+  }, [initialArticleSlug]);
+
+  // Handle back navigation
+  const handleBack = () => {
+    setSelectedArticleSlug(null);
+    if (onBack) {
+      onBack();
+    }
+  };
+
+  // Show article detail view
+  if (selectedArticleSlug) {
+    return <KnowledgeArticleView slug={selectedArticleSlug} onBack={handleBack} />;
+  }
+
+  // Show library view
+  return (
+    <div className="h-full flex flex-col">
+      <div className="mb-3 px-1">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <Library size={20} className="text-purple-500" />
+          {t('help.sidePanel.knowledge.title', 'Knowledge Base')}
+        </h3>
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          {t(
+            'help.sidePanel.knowledge.description',
+            'Explore articles, tutorials, and best practices.'
+          )}
+        </p>
+      </div>
+      <div className="flex-1 overflow-hidden">
+        <KnowledgeLibrary onArticleClick={setSelectedArticleSlug} moduleId={moduleId} />
+      </div>
+    </div>
+  );
+};
+
 export const HelpSidePanel: React.FC = () => {
   const { t, i18n } = useTranslation();
   const lang = i18n.language === 'pl' ? 'pl' : 'en';
@@ -167,10 +229,23 @@ export const HelpSidePanel: React.FC = () => {
   const [notifyEmail, setNotifyEmail] = useState('');
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [selectedGuideArticle, setSelectedGuideArticle] = useState<string | null>(null);
 
-  // Reset search when tab changes
+  // Handle Quick Guide click - navigate to KB article
+  const handleGuideClick = (articleSlug: string | undefined) => {
+    if (articleSlug) {
+      setSelectedGuideArticle(articleSlug);
+      setActiveTab('knowledge');
+    }
+  };
+
+  // Reset search and selected article when tab changes
   useEffect(() => {
     setSearchQuery('');
+    // Only reset selected article if leaving knowledge tab
+    if (activeTab !== 'knowledge') {
+      setSelectedGuideArticle(null);
+    }
   }, [activeTab]);
 
   // Handle notify me subscription
@@ -213,13 +288,13 @@ export const HelpSidePanel: React.FC = () => {
   // Filter FAQs by search
   const filteredFAQs = searchQuery
     ? faqs.filter((faq) => {
-        const question = lang === 'pl' ? faq.questionPl : faq.question;
-        const answer = lang === 'pl' ? faq.answerPl : faq.answer;
-        const q = searchQuery.toLowerCase();
-        return (
-          (question || '').toLowerCase().includes(q) || (answer || '').toLowerCase().includes(q)
-        );
-      })
+      const question = lang === 'pl' ? faq.questionPl : faq.question;
+      const answer = lang === 'pl' ? faq.answerPl : faq.answer;
+      const q = searchQuery.toLowerCase();
+      return (
+        (question || '').toLowerCase().includes(q) || (answer || '').toLowerCase().includes(q)
+      );
+    })
     : faqs;
 
   return (
@@ -252,11 +327,10 @@ export const HelpSidePanel: React.FC = () => {
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2 ${
-                activeTab === id
-                  ? 'border-purple-500 text-purple-600 dark:text-purple-400'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-              }`}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2 ${activeTab === id
+                ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                }`}
             >
               <Icon size={14} />
               {t(labelKey, label)}
@@ -311,12 +385,10 @@ export const HelpSidePanel: React.FC = () => {
                 </h4>
                 <div className="space-y-2">
                   {guides.map((guide) => (
-                    <a
+                    <button
                       key={guide.id}
-                      href={`${HELP_CONFIG.docsBaseUrl}${guide.path}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors group"
+                      onClick={() => handleGuideClick(guide.articleSlug)}
+                      className="w-full flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors group"
                     >
                       <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-navy-800 flex items-center justify-center group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30 transition-colors">
                         <DynamicIcon
@@ -328,11 +400,11 @@ export const HelpSidePanel: React.FC = () => {
                       <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-purple-700 dark:group-hover:text-purple-300">
                         {t(`help.sidePanel.overview.guidesList.${guide.id}`, guide.id)}
                       </span>
-                      <ExternalLink
-                        size={12}
+                      <ChevronRight
+                        size={14}
                         className="ml-auto text-slate-400 group-hover:text-purple-500"
                       />
-                    </a>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -447,83 +519,11 @@ export const HelpSidePanel: React.FC = () => {
 
           {/* Knowledge Base Tab */}
           {activeTab === 'knowledge' && (
-            <div className="space-y-5">
-              {/* Title */}
-              <div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
-                  <Library size={20} className="text-purple-500" />
-                  {t('help.sidePanel.knowledge.title', 'Knowledge Base')}
-                </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-300">
-                  {t(
-                    'help.sidePanel.knowledge.description',
-                    'Comprehensive resources about digital transformation tools, methodologies, and best practices.'
-                  )}
-                </p>
-              </div>
-
-              {/* Categories */}
-              <div className="space-y-2">
-                {kbCategories.map((category) => (
-                  <KBCategoryItem
-                    key={category.id}
-                    icon={category.icon}
-                    labelKey={category.id}
-                    enabled={category.enabled}
-                  />
-                ))}
-              </div>
-
-              {/* Notify Me CTA */}
-              <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border border-purple-200 dark:border-purple-800/30 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Bell size={16} className="text-purple-600 dark:text-purple-400" />
-                  <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-100">
-                    {t('help.sidePanel.knowledge.notify.title', 'Get notified when ready')}
-                  </h4>
-                </div>
-
-                {isSubscribed ? (
-                  <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-                    <CheckCircle2 size={16} />
-                    {t(
-                      'help.sidePanel.knowledge.notify.success',
-                      "You'll be notified when the Knowledge Base launches!"
-                    )}
-                  </div>
-                ) : (
-                  <form onSubmit={handleNotifySubmit} className="space-y-3">
-                    <input
-                      type="email"
-                      value={notifyEmail}
-                      onChange={(e) => setNotifyEmail(e.target.value)}
-                      placeholder={t('help.sidePanel.knowledge.notify.placeholder', 'Your email')}
-                      className="w-full px-3 py-2 text-sm border border-purple-200 dark:border-purple-700 rounded-lg bg-white dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      required
-                    />
-                    <button
-                      type="submit"
-                      disabled={isSubscribing}
-                      className="w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                      {isSubscribing ? (
-                        <Loader2 size={16} className="animate-spin" />
-                      ) : (
-                        <Bell size={16} />
-                      )}
-                      {t('help.sidePanel.knowledge.notify.button', 'Notify Me')}
-                    </button>
-                  </form>
-                )}
-
-                <p className="text-xs text-purple-600 dark:text-purple-400 mt-3">
-                  {t(
-                    'help.sidePanel.knowledge.notify.description',
-                    'Receive an email when our comprehensive knowledge base with tools, methodologies, and case studies is ready.'
-                  )}
-                </p>
-              </div>
-            </div>
+            <KnowledgeTabContent
+              moduleId={help.moduleId}
+              initialArticleSlug={selectedGuideArticle}
+              onBack={() => setSelectedGuideArticle(null)}
+            />
           )}
         </div>
 
@@ -535,18 +535,17 @@ export const HelpSidePanel: React.FC = () => {
           >
             {t('common.close', 'Close')}
           </button>
-          <a
-            href={HELP_CONFIG.docsBaseUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to={HELP_CONFIG.docsBaseUrl}
+            onClick={() => setOpen(false)}
             className="flex items-center justify-center gap-2 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
           >
             <BookOpen size={14} />
             <span className="hidden sm:inline">
               {t('help.sidePanel.fullDocs', 'Full Documentation')}
             </span>
-            <ExternalLink size={12} />
-          </a>
+            <ChevronRight size={12} />
+          </Link>
         </div>
       </div>
     </>

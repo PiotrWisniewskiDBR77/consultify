@@ -1,6 +1,8 @@
-import { ArrowRight, Handshake, Layers, Shield, Target, Zap } from 'lucide-react';
+import { ArrowRight, BookOpen, Handshake, Layers, Shield, Target, Zap } from 'lucide-react';
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+
+import { KnowledgePreviewSection } from '../components/Landing/KnowledgePreviewSection';
 
 /**
  * PublicLandingPage — Phase A: Pre-Entry
@@ -41,11 +43,22 @@ export const PublicLandingPage: React.FC = () => {
               TECHNOLEX
             </span>
           </div>
-          {/* Minimal trust indicator */}
-          <div className="hidden md:flex items-center gap-2 text-xs font-medium text-white/40 uppercase tracking-widest">
-            <Shield size={12} className="text-brand-400" />
-            Inteligentne Wsparcie Decyzji
-          </div>
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center gap-6">
+            <Link
+              to="/docs"
+              className="flex items-center gap-2 text-sm font-medium text-white/60 hover:text-white transition-colors"
+            >
+              <BookOpen size={14} />
+              Docs
+            </Link>
+            <Link
+              to="/login"
+              className="px-4 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-colors border border-white/10"
+            >
+              Sign In
+            </Link>
+          </nav>
         </div>
       </header>
 
@@ -166,6 +179,9 @@ export const PublicLandingPage: React.FC = () => {
             </div>
           </div>
         </section>
+
+        {/* KNOWLEDGE BASE PREVIEW */}
+        <KnowledgePreviewSection className="mb-12" />
 
         {/* CALL TO ACTION — Invitation */}
         <section

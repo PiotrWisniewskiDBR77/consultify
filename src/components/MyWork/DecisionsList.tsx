@@ -29,7 +29,7 @@ export interface Decision {
   title: string;
   description?: string;
   decisionType: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'DEFERRED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'DEFERRED' | 'ESCALATED';
   decisionOwnerId?: string;
   ownerName?: string;
   requestedById?: string;
@@ -213,7 +213,9 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
           ? `/decisions?projectId=${currentProjectId}&includeAll=true`
           : '/decisions?includeAll=true';
         const data = await Api.get(url);
-        setDecisions((data || []).filter((d: Decision) => d.status === 'PENDING'));
+        setDecisions(
+          (data || []).filter((d: Decision) => ['PENDING', 'ESCALATED'].includes(d.status))
+        );
       } catch (error) {
         console.error('Failed to fetch decisions:', error);
       } finally {

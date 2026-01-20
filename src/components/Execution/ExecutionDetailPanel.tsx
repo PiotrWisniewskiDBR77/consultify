@@ -107,8 +107,9 @@ const TaskItem: React.FC<{
     <div className="flex items-start gap-3 p-3 bg-navy-800/50 rounded-lg hover:bg-navy-800 transition-colors">
       <button
         onClick={() => onToggle(task.id, !isDone)}
-        className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${isDone ? 'bg-cyan-500 border-cyan-500' : 'border-slate-500 hover:border-cyan-500'
-          }`}
+        className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+          isDone ? 'bg-cyan-500 border-cyan-500' : 'border-slate-500 hover:border-cyan-500'
+        }`}
       >
         {isDone && <CheckCircle2 size={12} className="text-white" />}
       </button>
@@ -183,12 +184,13 @@ const StatusChangeModal: React.FC<StatusChangeModalProps> = ({
           <button
             onClick={() => onConfirm(reason || undefined)}
             disabled={isLoading || (action.requiresReason && !reason.trim())}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${action.variant === 'danger'
-              ? 'bg-red-600 hover:bg-red-500 text-white'
-              : action.variant === 'primary'
-                ? 'bg-cyan-600 hover:bg-cyan-500 text-white'
-                : 'bg-navy-700 hover:bg-navy-600 text-white'
-              }`}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
+              action.variant === 'danger'
+                ? 'bg-red-600 hover:bg-red-500 text-white'
+                : action.variant === 'primary'
+                  ? 'bg-cyan-600 hover:bg-cyan-500 text-white'
+                  : 'bg-navy-700 hover:bg-navy-600 text-white'
+            }`}
           >
             {isLoading && <Loader2 size={14} className="animate-spin" />}
             Confirm
@@ -302,12 +304,13 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                 <StatusBadge status={initiative.status} />
                 {initiative.priority && (
                   <span
-                    className={`text-xs font-medium ${initiative.priority === 'Critical'
-                      ? 'text-red-400'
-                      : initiative.priority === 'High'
-                        ? 'text-amber-400'
-                        : 'text-slate-400'
-                      }`}
+                    className={`text-xs font-medium ${
+                      initiative.priority === 'Critical'
+                        ? 'text-red-400'
+                        : initiative.priority === 'High'
+                          ? 'text-amber-400'
+                          : 'text-slate-400'
+                    }`}
                   >
                     {initiative.priority} Priority
                   </span>
@@ -325,12 +328,13 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                   action.requiresReason ? setSelectedAction(action) : handleStatusChange(action)
                 }
                 disabled={isUpdating}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${action.variant === 'danger'
-                  ? 'bg-red-600/20 text-red-400 hover:bg-red-600/30'
-                  : action.variant === 'primary'
-                    ? 'bg-cyan-600 text-white hover:bg-cyan-500'
-                    : 'bg-navy-700 text-slate-300 hover:bg-navy-600'
-                  }`}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
+                  action.variant === 'danger'
+                    ? 'bg-red-600/20 text-red-400 hover:bg-red-600/30'
+                    : action.variant === 'primary'
+                      ? 'bg-cyan-600 text-white hover:bg-cyan-500'
+                      : 'bg-navy-700 text-slate-300 hover:bg-navy-600'
+                }`}
               >
                 {action.label}
               </button>
@@ -384,7 +388,11 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
               ) : (
                 <div className="space-y-2">
                   {tasks.map((task) => (
-                    <TaskItem key={task.id} task={task as unknown as Task} onToggle={handleTaskToggle} />
+                    <TaskItem
+                      key={task.id}
+                      task={task as unknown as Task}
+                      onToggle={handleTaskToggle}
+                    />
                   ))}
                 </div>
               )}
@@ -403,12 +411,13 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                       <div className="flex items-start justify-between gap-3">
                         <p className="text-sm text-white">{risk.risk}</p>
                         <span
-                          className={`text-xs px-2 py-0.5 rounded ${risk.metric === 'High'
-                            ? 'bg-red-500/20 text-red-400'
-                            : risk.metric === 'Medium'
-                              ? 'bg-amber-500/20 text-amber-400'
-                              : 'bg-green-500/20 text-green-400'
-                            }`}
+                          className={`text-xs px-2 py-0.5 rounded ${
+                            risk.metric === 'High'
+                              ? 'bg-red-500/20 text-red-400'
+                              : risk.metric === 'Medium'
+                                ? 'bg-amber-500/20 text-amber-400'
+                                : 'bg-green-500/20 text-green-400'
+                          }`}
                         >
                           {risk.metric}
                         </span>
@@ -452,11 +461,12 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-500">Planned End</span>
                     <span
-                      className={`text-sm ${new Date(initiative.plannedEndDate) < new Date() &&
+                      className={`text-sm ${
+                        new Date(initiative.plannedEndDate) < new Date() &&
                         initiative.status !== InitiativeStatus.DONE
-                        ? 'text-red-400'
-                        : 'text-white'
-                        }`}
+                          ? 'text-red-400'
+                          : 'text-white'
+                      }`}
                     >
                       {new Date(initiative.plannedEndDate).toLocaleDateString()}
                     </span>

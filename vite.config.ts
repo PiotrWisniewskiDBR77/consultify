@@ -42,6 +42,9 @@ export default defineConfig(({ mode }) => {
         'date-fns',
         'clsx',
         'tailwind-merge',
+        // Ensure lodash CJS helpers are prebundled for ESM import safety
+        'lodash',
+        'lodash/get',
         // React Flow and its dependencies need to be pre-bundled
         'reactflow',
         'use-sync-external-store',
@@ -49,6 +52,8 @@ export default defineConfig(({ mode }) => {
         'use-sync-external-store/shim/with-selector',
         // Ensure react-is matches React 19 version
         'react-is',
+        // Prebundle recharts to avoid lodash CJS/ESM import issues
+        'recharts',
       ],
       exclude: [
         // Large libs that should be lazy loaded
@@ -56,9 +61,6 @@ export default defineConfig(({ mode }) => {
         '@tiptap/react',
         'jspdf',
         'xlsx',
-        // Exclude recharts from pre-bundling to prevent React 19 compatibility issues
-        // It will be loaded dynamically when needed
-        'recharts',
       ],
     },
     build: {

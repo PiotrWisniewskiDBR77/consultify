@@ -1541,6 +1541,86 @@ export const Api = {
     return response.json();
   },
 
+  // --- TOOLS -> INITIATIVES ---
+  createToolSession: async (payload: {
+    toolType: string;
+    name: string;
+    projectId?: string | null;
+  }): Promise<{ id: string; status: string }> => {
+    const res = await fetch(`${API_URL}/tools`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create tool session');
+  },
+
+  getToolSession: async (toolId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/tools/${toolId}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch tool session');
+  },
+
+  updateToolSession: async (
+    toolId: string,
+    payload: {
+      answers?: Record<string, unknown>;
+      completionPercent?: number;
+      confidenceAvg?: number;
+      contextSnapshot?: Record<string, unknown>;
+    }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/tools/${toolId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to update tool session');
+  },
+
+  requestToolReview: async (toolId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/tools/${toolId}/request-review`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to request review');
+  },
+
+  approveTool: async (toolId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/tools/${toolId}/approve`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to approve tool');
+  },
+
+  sendToolBackToDraft: async (toolId: string, comment?: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/tools/${toolId}/send-back`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ comment }),
+    });
+    return handleResponse(res, 'Failed to send back tool');
+  },
+
+  generateToolInitiatives: async (
+    toolId: string,
+    payload: { methodologyId: string; count: number; includeChatContext?: boolean }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/tools/${toolId}/generate-initiatives`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to generate initiatives');
+  },
+
+  getToolGeneratedInitiatives: async (toolId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/tools/${toolId}/generated-initiatives`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch generated initiatives');
+  },
+
   // --- PROJECTS ---
   suggestInitiativeTasks: async (initiativeId: string): Promise<any[]> => {
     const res = await fetch(`${API_URL}/initiatives/${initiativeId}/tasks/suggest`, {
@@ -2862,6 +2942,8 @@ export const Api = {
     status?: string;
     projectId?: string;
     search?: string;
+    initiativeId?: string;
+    analysisType?: string;
     sortBy?: string;
     sortOrder?: string;
     page?: number;
@@ -2887,6 +2969,8 @@ export const Api = {
     name: string;
     description?: string;
     projectId?: string;
+    initiativeId?: string;
+    analysisType?: string;
     tags?: string[];
   }): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/economics/analyses`, {
@@ -2917,6 +3001,8 @@ export const Api = {
       description?: string;
       status?: string;
       projectId?: string;
+      initiativeId?: string;
+      analysisType?: string;
       tags?: string[];
     }
   ): Promise<any> => {
@@ -3427,6 +3513,7 @@ export const Api = {
   updateAnalysisFinancials: async (
     analysisId: string,
     data: {
+      financialData?: Record<string, any>;
       costs?: Array<{ year: number; amount: number; description?: string }>;
       benefits?: Array<{ year: number; amount: number; description?: string }>;
       discountRate?: number;
@@ -3439,6 +3526,71 @@ export const Api = {
       body: JSON.stringify(data),
     });
     return handleResponse(res, 'Failed to update financial data');
+  },
+
+  /**
+   * Get financial scenarios for analysis
+   */
+  getAnalysisScenarios: async (analysisId: string): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/scenarios`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch scenarios');
+  },
+
+  /**
+   * Upsert financial scenario for analysis
+   */
+  upsertAnalysisScenario: async (
+    analysisId: string,
+    data: { scenarioType: string; name?: string; financialData?: Record<string, any> }
+  ): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/scenarios`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to save scenario');
+  },
+
+  /**
+   * Activate scenario
+   */
+  activateAnalysisScenario: async (analysisId: string, scenarioId: string): Promise<any> => {
+    const res = await fetchWithRetry(
+      `${API_URL}/economics/analyses/${analysisId}/scenarios/${scenarioId}/activate`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to activate scenario');
+  },
+
+  /**
+   * Create initiative from analysis
+   */
+  createInitiativeFromAnalysis: async (analysisId: string): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/create-initiative`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to create initiative from analysis');
+  },
+
+  /**
+   * Create gate decision for analysis
+   */
+  createAnalysisDecision: async (
+    analysisId: string,
+    data: { decisionType: 'approve-analysis' | 'select-scenario' | 'go-no-go'; decisionMakerId?: string }
+  ): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/decisions`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to create decision');
   },
 
   /**
@@ -4186,10 +4338,26 @@ export const Api = {
   },
   // Assessment Reports
   getAssessmentReports: async (projectId: string) => {
-    return [];
+    const url = projectId
+      ? `${API_URL}/assessment-reports?projectId=${projectId}`
+      : `${API_URL}/assessment-reports`;
+    const res = await fetch(url, { headers: getHeaders() });
+    if (!res.ok) {
+      throw new Error('Failed to fetch assessment reports');
+    }
+    const data = await res.json();
+    return data.reports || [];
   },
   generateAssessmentReport: async (projectId: string, type?: string) => {
-    return { id: '', url: '', pdfUrl: '', excelUrl: '' };
+    const res = await fetch(`${API_URL}/assessment-reports`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ projectId, type }),
+    });
+    if (!res.ok) {
+      throw new Error('Failed to generate assessment report');
+    }
+    return res.json();
   },
   // Payment Methods
   getPaymentMethods: async () => {

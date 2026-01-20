@@ -1,0 +1,84 @@
+{"numTotalTestSuites":6,"numPassedTestSuites":6,"numFailedTestSuites":0,"numPendingTestSuites":0,"numTotalTests":14,"numPassedT    <testsuite name="tests/integration/resource-management-api.test.ts" timestamp="2026-01-20T10:51:48.439Z" hostname="MacBook-Pro-Piotr.local" tests="14" failures="0" errors="0" skipped="0" time="0.020655125">
+        <testcase classname="tests/integration/resource-management-api.test.ts" name="Resource Management API Tests &gt; Subscription Plans CRUD &gt; should create a new subscription plan" time="0.001057042">
+            <system-out>
+Skipping: Server not available
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/resource-management-api.test.ts" name="Resource Management API Tests &gt; Subscription Plans CRUD &gt; should get all subscription plans" time="0.002208625">
+        </testcase>
+        <testcase classname="tests/integration/resource-management-api.test.ts" name="Resource Management API Tests &gt; Subscription Plans CRUD &gt; should update a subscription plan" time="0.000249541">
+            <system-out>
+Skipping: Server not available or no test plan
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/resource-management-api.test.ts" name="Resource Management API Tests &gt; Subscription Plans CRUD &gt; should delete a subscription plan" time="0.000352083">
+            <system-out>
+Skipping: Server not available or no test plan
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/resource-management-api.test.ts" name="Resource Management API Tests &gt; Subscription Plans CRUD &gt; should reject plan creation without auth" time="0.000191917">
+            <system-out>
+Skipping: Server not available
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/resource-management-api.test.ts" name="Resource Management API Tests &gt; Organization Resource Management &gt; should get organization resources" time="0.00014775">
+            <system-out>
+Skipping: Server not available
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/resource-management-api.test.ts" name="Resource Management API Tests &gt; Organization Resource Management &gt; should update organization budget" time="0.000134208">
+            <system-out>
+Skipping: Server not available
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/resource-management-api.test.ts" name="Resource Management API Tests &gt; Organization Resource Management &gt; should update organization quotas" time="0.000122625">
+            <system-out>
+Skipping: Server not available
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/resource-management-api.test.ts" name="Resource Management API Tests &gt; Organization Resource Management &gt; should charge for resource change" time="0.000154125">
+            <system-out>
+Skipping: Server not available
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/resource-management-api.test.ts" name="Resource Management API Tests &gt; Budget Management (Admin) &gt; should get budget status" time="0.000139792">
+            <system-out>
+Skipping: Server not available
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/resource-management-api.test.ts" name="Resource Management API Tests &gt; Budget Management (Admin) &gt; should get expense history" time="0.000118958">
+            <system-out>
+Skipping: Server not available
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/resource-management-api.test.ts" name="Resource Management API Tests &gt; Budget Management (Admin) &gt; should filter expenses by category" time="0.000116917">
+            <system-out>
+Skipping: Server not available
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/resource-management-api.test.ts" name="Resource Management API Tests &gt; Authorization Tests &gt; should reject regular user accessing SuperAdmin endpoints" time="0.0001">
+            <system-out>
+Skipping: Server not available
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/resource-management-api.test.ts" name="Resource Management API Tests &gt; Authorization Tests &gt; should reject admin accessing other org resources" time="0.000091542">
+            <system-out>
+Skipping: Server not available
+
+            </system-out>
+        </testcase>
+    </testsuite>
+</testsuites>
+ Tests should reject admin accessing other org resources","status":"passed","title":"should reject admin accessing other org resources","duration":0.09154200000000401,"failureMessages":[],"meta":{}}],"startTime":1768906308412,"endTime":1768906308417.14,"status":"passed","message":"","name":"/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/integration/resource-management-api.test.ts"}]}

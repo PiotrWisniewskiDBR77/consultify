@@ -71,9 +71,21 @@ const reportTypeLabels = {
     label: 'Team Meeting',
     color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   },
+  TEAM_WEEKLY: {
+    label: 'Team Weekly',
+    color: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400',
+  },
   STEERING_COMMITTEE: {
     label: 'Steering Committee',
     color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
+  },
+  PORTFOLIO_HEALTH: {
+    label: 'Portfolio Health',
+    color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  },
+  RAID: {
+    label: 'Risk/Assumption/Issue/Dependency',
+    color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   },
 };
 
@@ -159,7 +171,10 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
               >
                 <option value="">All Types</option>
                 <option value="TEAM_MEETING">Team Meeting</option>
+                <option value="TEAM_WEEKLY">Team Weekly</option>
                 <option value="STEERING_COMMITTEE">Steering Committee</option>
+                <option value="PORTFOLIO_HEALTH">Portfolio Health</option>
+                <option value="RAID">Risk/Assumption/Issue/Dependency</option>
               </select>
               <ChevronDown
                 size={14}
@@ -280,7 +295,9 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-              {reports.map((report) => (
+              {reports.map((report) => {
+                const typeBadge = reportTypeLabels[report.reportType] || reportTypeLabels.TEAM_MEETING;
+                return (
                 <tr
                   key={report.id}
                   className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
@@ -299,9 +316,9 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span
-                      className={`px-2 py-1 text-xs font-medium rounded ${reportTypeLabels[report.reportType]?.color}`}
+                      className={`px-2 py-1 text-xs font-medium rounded ${typeBadge.color}`}
                     >
-                      {reportTypeLabels[report.reportType]?.label}
+                      {typeBadge.label}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center">
@@ -369,7 +386,8 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                     </div>
                   </td>
                 </tr>
-              ))}
+              );
+              })}
             </tbody>
           </table>
         )}

@@ -246,9 +246,40 @@ router.post('/:id/generate-initiatives', async (req: AuthRequest, res: Response)
     const { projectId } = req.body;
     const organizationId = req.user?.organizationId || 'org-dbr77-system';
     const userId = req.user?.id || 'system';
+    const db = getDatabase();
 
     if (!projectId) {
       return res.status(400).json({ error: 'projectId is required' });
+    }
+
+    const workflow = await new Promise<any>((resolve, reject) => {
+      db.get(
+        `SELECT status FROM assessment_workflows WHERE assessment_id = ? AND organization_id = ?`,
+        [id, organizationId],
+        (err: Error | null, row: any) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+
+    if (!workflow || workflow.status !== 'APPROVED') {
+      return res.status(400).json({ error: 'Assessment must be APPROVED to generate initiatives' });
+    }
+
+    const report = await new Promise<any>((resolve, reject) => {
+      db.get(
+        `SELECT status FROM assessment_reports WHERE assessment_id = ? AND organization_id = ?`,
+        [id, organizationId],
+        (err: Error | null, row: any) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+
+    if (!report || String(report.status || '').toUpperCase() !== 'FINAL') {
+      return res.status(400).json({ error: 'Final report required before initiatives' });
     }
 
     const assessmentInitiativeService = (

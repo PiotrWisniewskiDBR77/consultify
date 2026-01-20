@@ -59,11 +59,7 @@ CREATE TABLE IF NOT EXISTS report_section_history (
 CREATE INDEX IF NOT EXISTS idx_section_history_section ON report_section_history(section_id, version);
 
 -- Add columns to assessment_reports if not exists
--- Check for template_id column
-SELECT CASE 
-    WHEN COUNT(*) = 0 THEN 'ALTER TABLE assessment_reports ADD COLUMN template_id TEXT;'
-    ELSE 'SELECT 1;'
-END FROM pragma_table_info('assessment_reports') WHERE name = 'template_id';
+ALTER TABLE assessment_reports ADD COLUMN template_id TEXT;
 
 -- Report templates for reusable report structures
 CREATE TABLE IF NOT EXISTS report_templates (

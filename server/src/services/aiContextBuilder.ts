@@ -407,7 +407,7 @@ export const AIContextBuilder = {
     initiativeSql += ` LIMIT 10`;
     const initiatives = await all(initiativeSql, initiativeParams);
 
-    let decisionSql = `SELECT id, title, created_at FROM decisions WHERE decision_owner_id = ? AND status = 'PENDING'`;
+    let decisionSql = `SELECT id, title, created_at FROM decisions WHERE decision_maker_id = ? AND status IN ('pending', 'escalated')`;
     const decisionParams = [userId];
     if (projectId) {
       decisionSql += ` AND project_id = ?`;

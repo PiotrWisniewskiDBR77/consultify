@@ -219,11 +219,14 @@ export const ComplianceTab: React.FC = () => {
       100
   );
 
-  const groupedChecks = checks.reduce((acc, check) => {
-    if (!acc[check.category]) acc[check.category] = [];
-    acc[check.category].push(check);
-    return acc;
-  }, {} as Record<string, ComplianceCheck[]>);
+  const groupedChecks = checks.reduce(
+    (acc, check) => {
+      if (!acc[check.category]) acc[check.category] = [];
+      acc[check.category].push(check);
+      return acc;
+    },
+    {} as Record<string, ComplianceCheck[]>
+  );
 
   if (loading) {
     return (
@@ -363,7 +366,10 @@ export const ComplianceTab: React.FC = () => {
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Globe size={16} className={config.isActive ? 'text-emerald-500' : 'text-slate-400'} />
+                  <Globe
+                    size={16}
+                    className={config.isActive ? 'text-emerald-500' : 'text-slate-400'}
+                  />
                   <span className="font-medium text-slate-900 dark:text-white">{config.label}</span>
                 </div>
                 <span

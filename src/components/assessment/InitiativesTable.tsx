@@ -37,6 +37,8 @@ interface Initiative {
   description: string;
   reportId: string;
   reportName: string;
+  sourceId?: string;
+  sourceType?: string;
   projectId?: string;
   projectName?: string;
   locationId?: string;
@@ -79,6 +81,8 @@ const mapApiToInitiative = (item: any): Initiative => ({
   problemStatement: item.problemStatement,
   hypothesis: item.hypothesis,
   businessValue: item.businessValue,
+  sourceId: item.sourceId || item.source_id,
+  sourceType: item.sourceType || item.source_type,
   reportId: item.reportId || '',
   reportName: item.reportName || item.projectId || '',
   projectId: item.projectId,
@@ -86,7 +90,7 @@ const mapApiToInitiative = (item: any): Initiative => ({
   locationId: item.locationId,
   locationName: item.locationName,
   axis: item.axis || '',
-  status: (item.status as InitiativeStatus) || InitiativeStatus.DRAFT,
+  status: (String(item.status || '').toUpperCase() as InitiativeStatus) || InitiativeStatus.DRAFT,
   priority: (
     item.priority ||
     item.businessValue ||
@@ -121,6 +125,7 @@ interface InitiativesTableProps {
   projectId: string;
   framework?: AssessmentFramework;
   pendingReportId?: string | null;
+  assessmentId?: string;
   onOpenInitiative?: (initiativeId: string, initiativeName: string, status?: string) => void;
 }
 
@@ -134,6 +139,7 @@ const PRIORITY_CONFIG = {
 export const InitiativesTable: React.FC<InitiativesTableProps> = ({
   projectId,
   pendingReportId,
+  assessmentId,
   onOpenInitiative,
 }) => {
   // State
@@ -228,6 +234,9 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
 
   // Filter initiatives
   const filteredInitiatives = initiatives.filter((initiative) => {
+    if (assessmentId) {
+      if (!initiative.sourceId || initiative.sourceId !== assessmentId) return false;
+    }
     // Status filter
     if (filterStatus !== 'all') {
       if (filterStatus === 'draft' && initiative.status !== InitiativeStatus.DRAFT) return false;

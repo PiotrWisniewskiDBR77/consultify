@@ -16,7 +16,7 @@ import {
   TrendingUp,
   User,
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { getAxisColor, getPriorityClasses, getStatusClasses } from '../../config/portfolioColors';
 import { InitiativeStatus, PortfolioInitiative, PortfolioSortConfig } from '../../types';
@@ -26,6 +26,7 @@ interface PortfolioListViewProps {
   onInitiativeClick: (initiative: PortfolioInitiative) => void;
   onStatusChange: (id: string, status: InitiativeStatus) => void;
   onQuickUpdate: (id: string, updates: Partial<PortfolioInitiative>) => void;
+  onSelectionChange?: (ids: Set<string>) => void;
 }
 
 type SortField = 'name' | 'status' | 'priority' | 'plannedStartDate' | 'budget' | 'progress';
@@ -52,6 +53,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
   onInitiativeClick,
   onStatusChange,
   onQuickUpdate,
+  onSelectionChange,
 }) => {
   const [sortConfig, setSortConfig] = useState<PortfolioSortConfig>({
     field: 'priority',
@@ -59,6 +61,16 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
   });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selectedIds.size === 0) return;
+    const allowed = new Set(initiatives.map((i) => i.id));
+    const filtered = new Set(Array.from(selectedIds).filter((id) => allowed.has(id)));
+    if (filtered.size !== selectedIds.size) {
+      setSelectedIds(filtered);
+      onSelectionChange?.(filtered);
+    }
+  }, [initiatives, onSelectionChange, selectedIds]);
 
   // Sort initiatives
   const sortedInitiatives = useMemo(() => {
@@ -105,15 +117,20 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
       } else {
         next.add(id);
       }
+      onSelectionChange?.(next);
       return next;
     });
   };
 
   const toggleSelectAll = () => {
     if (selectedIds.size === initiatives.length) {
-      setSelectedIds(new Set());
+      const next = new Set<string>();
+      setSelectedIds(next);
+      onSelectionChange?.(next);
     } else {
-      setSelectedIds(new Set(initiatives.map((i) => i.id)));
+      const next = new Set(initiatives.map((i) => i.id));
+      setSelectedIds(next);
+      onSelectionChange?.(next);
     }
   };
 
@@ -279,13 +296,9 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                   }
                   className={`px-2 py-1 text-xs font-medium rounded-lg border-0 cursor-pointer ${getStatusClasses(initiative.status)}`}
                 >
-                  <option value="DRAFT">Draft</option>
                   <option value="PLANNING">Planning</option>
                   <option value="REVIEW">Review</option>
                   <option value="APPROVED">Approved</option>
-                  <option value="EXECUTING">Executing</option>
-                  <option value="DONE">Done</option>
-                  <option value="BLOCKED">Blocked</option>
                 </select>
               </td>
 

@@ -697,6 +697,830 @@ Where you provide services:
     relatedModules: ['dashboard', 'assessment'],
     targetAudience: ['new_user'],
   },
+
+  // ============================================
+  // INDUSTRIAL IRIS MODULES (19 Modules)
+  // Enterprise Manufacturing & Operations
+  // ============================================
+
+  mes: {
+    id: 'mes',
+    title: 'Manufacturing Execution (MES)',
+    description: 'Real-time production monitoring, work orders, and OEE tracking.',
+    content: `The MES module is your command center for shop floor operations:
+
+**Production Monitoring**
+• Real-time machine status and production counts
+• OEE calculation (Availability × Performance × Quality)
+• Shift reports and production summaries
+• Downtime tracking and categorization
+
+**Work Order Management**
+• Create, schedule, and track work orders
+• Material consumption and yield tracking
+• Quality checkpoints and inspections
+• Operator assignment and labor tracking
+
+**Performance Analytics**
+• OEE trend analysis and benchmarking
+• Six Big Losses identification
+• Pareto analysis of stops and rejects
+• Shift and line comparison dashboards
+
+**Integration Points**
+• Connects to QMS for quality data
+• Links with CMMS for maintenance events
+• Feeds KPI module with production metrics
+• Syncs with APS for scheduling
+
+**Best Practices**
+💡 Start with pilot line before plant-wide rollout
+📊 Target world-class OEE: 85%+
+🔗 Use standardized downtime reason codes`,
+    icon: 'Factory',
+    translationKey: 'help.modules.mes',
+    relatedModules: ['wms', 'qms', 'cmms', 'iot', 'gemba', 'kpi'],
+    targetAudience: ['production_manager', 'operations', 'plant_manager'],
+  },
+
+  wms: {
+    id: 'wms',
+    title: 'Warehouse Management (WMS)',
+    description: 'Inventory control, storage optimization, and logistics execution.',
+    content: `The WMS module optimizes your warehouse and logistics operations:
+
+**Inventory Management**
+• Real-time stock levels across locations
+• Lot and serial number tracking
+• Expiration date management (FEFO/FIFO)
+• ABC/XYZ classification for optimization
+
+**Warehouse Operations**
+• Receiving and put-away workflows
+• Picking strategies (wave, batch, zone)
+• Packing and shipping management
+• Cross-docking for fast throughput
+
+**Storage Optimization**
+• Bin location management
+• Slotting optimization algorithms
+• Space utilization dashboards
+• Heat maps for movement patterns
+
+**Integration Points**
+• Syncs with MES for production materials
+• Links to MRP for demand planning
+• Feeds KPI with logistics metrics
+• Connects to external 3PL systems
+
+**Key Metrics**
+📦 Inventory Accuracy: Target 99%+
+⚡ Order Fill Rate: Target 98%+
+📍 Location Accuracy: Target 99.5%+`,
+    icon: 'Warehouse',
+    translationKey: 'help.modules.wms',
+    relatedModules: ['mes', 'mrp', 'aps', 'kpi'],
+    targetAudience: ['logistics_manager', 'warehouse_supervisor', 'supply_chain'],
+  },
+
+  qms: {
+    id: 'qms',
+    title: 'Quality Management (QMS)',
+    description: 'Document control, non-conformance, audits, and compliance tracking.',
+    content: `The QMS module ensures quality excellence and regulatory compliance:
+
+**Document Control**
+• Version-controlled procedures and work instructions
+• Approval workflows with electronic signatures
+• Distribution and acknowledgment tracking
+• Automatic revision notifications
+
+**Non-Conformance Management**
+• NC/CAPA creation and tracking
+• Root cause analysis (8D, 5-Why, Ishikawa)
+• Corrective action assignment and verification
+• Trend analysis for recurring issues
+
+**Audit Management**
+• Internal and external audit scheduling
+• Finding documentation and tracking
+• Audit checklist templates
+• Compliance status dashboards
+
+**Quality Metrics**
+• First Pass Yield (FPY)
+• Customer complaint rates
+• Supplier quality scores
+• Cost of Quality (CoQ) tracking
+
+**Compliance Standards**
+🏭 ISO 9001:2015
+🚗 IATF 16949 (Automotive)
+💊 GMP/FDA 21 CFR Part 11 (Pharma)
+✈️ AS9100 (Aerospace)`,
+    icon: 'ClipboardCheck',
+    translationKey: 'help.modules.qms',
+    relatedModules: ['mes', 'cmms', 'hse', 'kpi'],
+    targetAudience: ['quality_manager', 'compliance_officer', 'auditor'],
+  },
+
+  cmms: {
+    id: 'cmms',
+    title: 'Maintenance Management (CMMS)',
+    description: 'Asset lifecycle, preventive maintenance, and spare parts management.',
+    content: `The CMMS module maximizes asset availability and reduces maintenance costs:
+
+**Work Order Management**
+• Corrective and preventive work orders
+• Priority-based scheduling
+• Technician assignment and tracking
+• Time and material logging
+
+**Preventive Maintenance**
+• Calendar and meter-based PM schedules
+• Maintenance procedure library
+• Compliance tracking and overdue alerts
+• PM optimization analytics
+
+**Asset Management**
+• Complete asset hierarchy and registry
+• Criticality classification (A/B/C)
+• Warranty and contract tracking
+• Asset lifecycle cost analysis
+
+**Spare Parts**
+• Parts inventory with min/max levels
+• Part-to-asset relationships
+• Automatic reorder suggestions
+• Supplier lead time tracking
+
+**Predictive Maintenance (Advanced)**
+• IoT sensor integration
+• Failure prediction algorithms
+• Condition-based maintenance triggers
+• AI-powered anomaly detection
+
+**Key Metrics**
+⏱️ MTBF: Mean Time Between Failures
+🔧 MTTR: Mean Time To Repair
+📊 PM Compliance: Target 95%+
+💰 Maintenance Cost per Unit`,
+    icon: 'Wrench',
+    translationKey: 'help.modules.cmms',
+    relatedModules: ['mes', 'iot', 'kpi', 'aps'],
+    targetAudience: ['maintenance_manager', 'reliability_engineer', 'plant_manager'],
+  },
+
+  hse: {
+    id: 'hse',
+    title: 'Health, Safety & Environment (HSE)',
+    description: 'Incident management, risk assessments, and safety compliance.',
+    content: `The HSE module protects your workforce and ensures environmental compliance:
+
+**Incident Management**
+• Injury and near-miss reporting
+• Incident investigation workflows
+• Root cause analysis tools
+• Corrective action tracking
+
+**Risk Assessment**
+• Job Safety Analysis (JSA)
+• Risk matrices with probability/severity
+• Control measure documentation
+• Periodic reassessment scheduling
+
+**Safety Inspections**
+• Scheduled safety walks and audits
+• Mobile checklist execution
+• Finding documentation with photos
+• Trend analysis by area/type
+
+**Training & Compliance**
+• Safety training requirements by role
+• Certification tracking and renewals
+• Training completion dashboards
+• Compliance gap identification
+
+**Environmental Management**
+• Waste tracking and classification
+• Emission monitoring
+• Permit management
+• Environmental incident response
+
+**Key Metrics**
+🦺 TRIR: Total Recordable Incident Rate
+📈 Leading Indicators: Inspections, training, near-misses
+🎯 Zero Harm Target tracking`,
+    icon: 'ShieldCheck',
+    translationKey: 'help.modules.hse',
+    relatedModules: ['qms', 'hrm', 'esg', 'gemba'],
+    targetAudience: ['safety_manager', 'ehs_specialist', 'plant_manager'],
+  },
+
+  esg: {
+    id: 'esg',
+    title: 'ESG & Sustainability',
+    description: 'Carbon tracking, sustainability reporting, and ESG compliance.',
+    content: `The ESG module drives sustainability and stakeholder value:
+
+**Carbon Management**
+• Scope 1, 2, and 3 emissions tracking
+• Carbon footprint calculators
+• Reduction target setting and monitoring
+• Science-based targets alignment
+
+**Sustainability Metrics**
+• Energy consumption dashboards
+• Water usage and recycling rates
+• Waste diversion and recycling
+• Renewable energy percentage
+
+**ESG Reporting**
+• GRI Standards alignment
+• TCFD climate disclosure
+• CDP questionnaire preparation
+• Sustainability report generation
+
+**Supply Chain Sustainability**
+• Supplier ESG assessments
+• Responsible sourcing tracking
+• Conflict minerals compliance
+• Modern slavery due diligence
+
+**Social Metrics**
+• Diversity and inclusion tracking
+• Community engagement
+• Employee wellbeing indices
+• Human rights compliance
+
+**Governance**
+• ESG policy management
+• Board oversight documentation
+• Stakeholder engagement tracking
+• Materiality assessments`,
+    icon: 'Leaf',
+    translationKey: 'help.modules.esg',
+    relatedModules: ['hse', 'kpi', 'qms'],
+    targetAudience: ['sustainability_manager', 'cfo', 'investor_relations'],
+  },
+
+  iot: {
+    id: 'iot',
+    title: 'IoT & Connected Devices',
+    description: 'Device management, telemetry collection, and industrial connectivity.',
+    content: `The IoT module connects your physical assets to the digital platform:
+
+**Device Management**
+• Device registry and provisioning
+• Firmware version management
+• Health status monitoring
+• Remote configuration
+
+**Data Collection**
+• Real-time telemetry ingestion
+• Edge processing and filtering
+• Time-series data storage
+• Data validation and cleansing
+
+**Protocol Support**
+• OPC-UA for industrial equipment
+• MQTT for sensors
+• Modbus/TCP for PLCs
+• REST APIs for modern devices
+
+**Digital Twin Integration**
+• Asset digital representations
+• Real-time state synchronization
+• Simulation and what-if scenarios
+• Predictive analytics
+
+**Alerts & Automation**
+• Threshold-based alerting
+• Anomaly detection
+• Automated escalation rules
+• Integration with CMMS for work orders
+
+**Security**
+🔐 Device authentication
+🔒 Encrypted communications
+📜 Audit logging
+🛡️ Network segmentation support`,
+    icon: 'Radio',
+    translationKey: 'help.modules.iot',
+    relatedModules: ['mes', 'cmms', 'gemba', 'dt'],
+    targetAudience: ['it_manager', 'automation_engineer', 'plant_manager'],
+  },
+
+  gemba: {
+    id: 'gemba',
+    title: 'GEMBA Shop Floor Management',
+    description: 'Digital shop floor walks, visual management, and operator engagement.',
+    content: `The GEMBA module brings lean management to your shop floor:
+
+**Digital GEMBA Walks**
+• Structured walk templates by area
+• Mobile-first checklist execution
+• Photo and video capture
+• Real-time finding submission
+
+**Visual Management**
+• Digital Andon boards
+• Production status displays
+• KPI visualization screens
+• Problem escalation boards
+
+**Operator Engagement**
+• Suggestion submission system
+• Quick problem reporting
+• Skill matrix visualization
+• Shift communication logs
+
+**AI Panel (Agent 01)**
+• Real-time OEE summaries
+• AI-powered insights
+• Anomaly detection alerts
+• Natural language queries
+
+**Live Dashboard (Agent 02)**
+• Production overview
+• Equipment status
+• Active alarms
+• Performance trends
+
+**Shift/Line KPIs (Agent 03)**
+• OEE by shift comparison
+• Line ranking charts
+• Historical trends
+• Target vs. actual
+
+**Best Practices**
+🚶 Daily GEMBA walks by leadership
+📊 5-15 minute shift handover meetings
+🎯 Focus on process, not people
+📱 Mobile-first for real-time capture`,
+    icon: 'Footprints',
+    translationKey: 'help.modules.gemba',
+    relatedModules: ['mes', 'hse', 'kpi', 'iot'],
+    targetAudience: ['plant_manager', 'supervisor', 'lean_specialist'],
+  },
+
+  kpi: {
+    id: 'kpi',
+    title: 'KPI & Performance Management',
+    description: 'Metrics dashboards, OKRs, scorecards, and performance analytics.',
+    content: `The KPI module drives data-driven performance management:
+
+**Dashboard Builder**
+• Drag-and-drop dashboard creation
+• Widget library (charts, gauges, tables)
+• Real-time data connections
+• Role-based dashboard sharing
+
+**KPI Library**
+• Pre-built industrial KPIs
+• Custom KPI definitions
+• Calculation formulas
+• Benchmark references
+
+**OKR Management**
+• Objective and Key Result creation
+• Progress tracking and updates
+• Alignment visualization
+• Quarterly review workflows
+
+**Scorecards**
+• Balanced Scorecard templates
+• Dimension-based scoring
+• Traffic light indicators
+• Historical trend analysis
+
+**Analytics**
+• Trend analysis over time
+• Drill-down capabilities
+• Correlation discovery
+• Predictive forecasting
+
+**Common Industrial KPIs**
+📈 OEE - Overall Equipment Effectiveness
+📦 OTIF - On Time In Full
+🔧 MTBF/MTTR - Reliability metrics
+💰 Cost per Unit
+⏱️ Lead Time
+📊 First Pass Yield`,
+    icon: 'BarChart3',
+    translationKey: 'help.modules.kpi',
+    relatedModules: ['mes', 'wms', 'qms', 'dashboard'],
+    targetAudience: ['plant_manager', 'operations', 'executive'],
+  },
+
+  data_ai: {
+    id: 'data_ai',
+    title: 'Data Analytics & AI',
+    description: 'Data warehouse, machine learning, and predictive analytics.',
+    content: `The DATA_AI module unlocks advanced analytics and AI capabilities:
+
+**Data Warehouse**
+• Unified data from all modules
+• Historical data retention
+• Dimensional modeling
+• Query and reporting tools
+
+**Report Builder**
+• Visual report designer
+• Scheduled report generation
+• Multiple export formats
+• Email distribution
+
+**Machine Learning**
+• Model training interface
+• Feature engineering tools
+• Model versioning
+• Performance monitoring
+
+**Predictive Analytics**
+• Demand forecasting
+• Equipment failure prediction
+• Quality prediction
+• Anomaly detection
+
+**Advanced Capabilities**
+🤖 AutoML for automated model selection
+📊 A/B testing framework
+🔮 What-if scenario modeling
+📈 Root cause analysis`,
+    icon: 'BrainCircuit',
+    translationKey: 'help.modules.data_ai',
+    relatedModules: ['kpi', 'mes', 'qms', 'cmms'],
+    targetAudience: ['data_analyst', 'data_scientist', 'operations'],
+  },
+
+  mrp: {
+    id: 'mrp',
+    title: 'Material Requirements Planning (MRP)',
+    description: 'Demand planning, material scheduling, and procurement optimization.',
+    content: `The MRP module optimizes material availability and inventory investment:
+
+**Demand Planning**
+• Sales forecast integration
+• Demand sensing and adjustment
+• Promotional impact modeling
+• Customer order incorporation
+
+**Material Planning**
+• BOM explosion and netting
+• Lead time consideration
+• Safety stock calculation
+• Order quantity optimization
+
+**Procurement Actions**
+• Purchase requisition generation
+• Vendor selection support
+• Expedite/defer recommendations
+• Supplier capacity visibility
+
+**Inventory Optimization**
+• ABC/XYZ classification
+• Reorder point calculation
+• Economic order quantities
+• Excess/obsolete identification
+
+**Key Planning Horizons**
+📅 Short-term: Weekly execution
+📊 Medium-term: Monthly planning
+🎯 Long-term: S&OP process`,
+    icon: 'Boxes',
+    translationKey: 'help.modules.mrp',
+    relatedModules: ['wms', 'aps', 'mes', 'kpi'],
+    targetAudience: ['supply_chain', 'planner', 'procurement'],
+  },
+
+  aps: {
+    id: 'aps',
+    title: 'Advanced Planning & Scheduling (APS)',
+    description: 'Finite capacity scheduling, constraint optimization, and what-if scenarios.',
+    content: `The APS module enables intelligent production scheduling:
+
+**Finite Capacity Scheduling**
+• Resource constraint modeling
+• Setup time optimization
+• Parallel operation support
+• Machine and labor constraints
+
+**Optimization Engine**
+• Multi-objective optimization
+• Priority rule configuration
+• constraint-based solving
+• Genetic algorithm options
+
+**Gantt Visualization**
+• Interactive drag-and-drop
+• Order color coding
+• Constraint highlighting
+• Real-time rescheduling
+
+**What-If Scenarios**
+• Scenario comparison
+• Rush order simulation
+• Capacity change impact
+• Demand variation analysis
+
+**Integration**
+🔗 Links to MRP for material availability
+📋 Connects to MES for execution
+⚙️ Syncs with CMMS for maintenance windows
+📊 Feeds KPI with schedule adherence`,
+    icon: 'CalendarClock',
+    translationKey: 'help.modules.aps',
+    relatedModules: ['mes', 'mrp', 'cmms', 'kpi'],
+    targetAudience: ['planner', 'scheduler', 'operations'],
+  },
+
+  dt: {
+    id: 'dt',
+    title: 'Digital Twin',
+    description: 'Virtual asset models, simulation, and real-time synchronization.',
+    content: `The Digital Twin module creates virtual representations of your physical assets:
+
+**Asset Modeling**
+• 3D model integration
+• Component hierarchy
+• Parameter definitions
+• State representation
+
+**Real-Time Sync**
+• IoT sensor connection
+• Live state updates
+• Historical playback
+• Event recording
+
+**Simulation**
+• Process simulation
+• What-if scenarios
+• Failure impact analysis
+• Optimization testing
+
+**Visualization**
+• 3D interactive views
+• Heat maps and overlays
+• Animation support
+• Mobile AR preview
+
+**Use Cases**
+🏭 Factory layout optimization
+🔧 Maintenance planning
+📈 Performance prediction
+🎓 Training and onboarding`,
+    icon: 'Boxes',
+    translationKey: 'help.modules.dt',
+    relatedModules: ['iot', 'mes', 'cmms', 'aps'],
+    targetAudience: ['engineer', 'plant_manager', 'it_manager'],
+  },
+
+  hrm: {
+    id: 'hrm',
+    title: 'Human Resources Management (HRM)',
+    description: 'Workforce management, skills tracking, and organizational development.',
+    content: `The HRM module manages your most important asset — your people:
+
+**Employee Management**
+• Employee profiles and records
+• Organizational structure
+• Position management
+• Employment history
+
+**Skills & Competencies**
+• Skills matrix
+• Competency frameworks
+• Gap analysis
+• Development planning
+
+**Scheduling**
+• Shift planning
+• Absence management
+• Overtime tracking
+• Labor compliance
+
+**Performance**
+• Performance reviews
+• Goal setting
+• 360 feedback
+• Talent assessment
+
+**Recruitment**
+• Job requisitions
+• Candidate tracking
+• Interview scheduling
+• Offer management
+
+**Integration**
+🔗 Links to LMS for training
+📋 Connected to SKILLS module
+⚙️ Syncs with payroll systems`,
+    icon: 'Users',
+    translationKey: 'help.modules.hrm',
+    relatedModules: ['lms', 'skills', 'hse', 'kpi'],
+    targetAudience: ['hr_manager', 'people_ops', 'plant_manager'],
+  },
+
+  lms: {
+    id: 'lms',
+    title: 'Learning Management (LMS)',
+    description: 'Training programs, certifications, and skills development.',
+    content: `The LMS module accelerates workforce development:
+
+**Course Management**
+• Course catalog
+• Multi-format content (video, docs, quizzes)
+• Learning paths
+• Prerequisite chains
+
+**Enrollment & Tracking**
+• Self-enrollment options
+• Manager-assigned training
+• Progress tracking
+• Completion certificates
+
+**Certifications**
+• Certification programs
+• Validity periods
+• Renewal tracking
+• Compliance reporting
+
+**Assessment**
+• Quiz and exam builder
+• Passing score configuration
+• Attempt tracking
+• Detailed results analysis
+
+**Instructor-Led Training**
+• Session scheduling
+• Attendance tracking
+• Classroom resource booking
+• Virtual training integration
+
+**Compliance**
+📋 Mandatory training assignment
+⏰ Due date tracking
+📊 Compliance dashboards
+🔔 Reminder notifications`,
+    icon: 'GraduationCap',
+    translationKey: 'help.modules.lms',
+    relatedModules: ['hrm', 'skills', 'hse', 'qms'],
+    targetAudience: ['training_manager', 'hr_manager', 'supervisor'],
+  },
+
+  skills: {
+    id: 'skills',
+    title: 'Skills Matrix & Competency',
+    description: 'Skill tracking, competency frameworks, and gap analysis.',
+    content: `The SKILLS module ensures workforce capability alignment:
+
+**Skills Matrix**
+• Visual skill/employee grid
+• Proficiency level tracking
+• Coverage analysis
+• Skill demand planning
+
+**Competency Frameworks**
+• Define competency models
+• Role requirements mapping
+• Behavioral indicators
+• Development resources
+
+**Gap Analysis**
+• Current vs. required skills
+• Individual development plans
+• Team capability views
+• Succession planning support
+
+**Skill Development**
+• Training recommendations
+• Mentoring matches
+• On-the-job learning tracking
+• Cross-training programs
+
+**Operational Planning**
+🎯 Shift skill coverage
+📊 Project team capability
+🔄 Cross-training priorities
+📈 Skill trending analysis`,
+    icon: 'Star',
+    translationKey: 'help.modules.skills',
+    relatedModules: ['hrm', 'lms', 'mes', 'aps'],
+    targetAudience: ['hr_manager', 'supervisor', 'plant_manager'],
+  },
+
+  execution: {
+    id: 'execution',
+    title: 'Execution Tracking',
+    description: 'Initiative progress monitoring, task management, and milestone tracking.',
+    content: `The Execution module ensures transformation initiatives deliver results:
+
+**Progress Tracking**
+• Overall completion percentage
+• Status distribution (On Track/At Risk/Blocked)
+• Burndown charts
+• Velocity trends
+
+**Task Management**
+• Task creation and assignment
+• Status workflow (To Do → Done)
+• Time logging
+• Comments and attachments
+
+**Milestones**
+• Milestone definition
+• Due date tracking
+• Achievement logging
+• Stakeholder notifications
+
+**Risk Management**
+• Risk identification
+• Probability/impact scoring
+• Mitigation actions
+• Risk owner assignment
+
+**Reporting**
+📊 Weekly progress reports
+📈 Executive summaries
+🎯 Milestone hit rates
+⏱️ Cycle time analytics`,
+    icon: 'Play',
+    translationKey: 'help.modules.execution',
+    relatedModules: ['initiatives', 'roadmap', 'dashboard', 'kpi'],
+    targetAudience: ['project_manager', 'manager', 'executive'],
+  },
+
+  billing: {
+    id: 'billing',
+    title: 'Billing & Subscription',
+    description: 'Subscription management, invoicing, and payment processing.',
+    content: `Manage your Consultinity subscription and billing:
+
+**Subscription**
+• Current plan details
+• Feature access levels
+• Usage monitoring
+• Upgrade/downgrade options
+
+**Billing Details**
+• Invoice history
+• Payment methods
+• Billing contacts
+• Tax information
+
+**Add-ons**
+• Module add-ons
+• User seat expansion
+• Storage upgrades
+• API access tiers
+
+**Support Levels**
+• Standard support included
+• Premium support options
+• SLA commitments
+• Escalation paths`,
+    targetAudience: ['admin', 'owner', 'finance'],
+  },
+  economics: {
+    id: 'economics',
+    title: 'Economics & Value Realization',
+    description: 'Financial analysis, ROI tracking, and value maturity modeling.',
+    content: `The Economics module translates digital transformation into financial impact:
+
+**ROI Analysis**
+• Automated Net Present Value (NPV) calculation for initiatives
+• Payback period estimation and tracking
+• Internal Rate of Return (IRR) for capital investments
+• Cost-benefit analysis for technology adoption
+
+**Digitization Maturity**
+• Dimension-based maturity scoring
+• Financial impact of maturity level transitions
+• Benchmarking against industry leaders (SIRI/ADMA)
+• Strategic alignment with business goals
+
+**Cost Management**
+• Total Cost of Ownership (TCO) calculators
+• Capex vs. Opex optimization
+• SaaS licensing and infrastructure cost tracking
+• Resource efficiency and labor savings quantification
+
+**Integration Points**
+• Connects to Initiatives for project budgets
+• Syncs with KPI module for realized savings
+• Feeds Executive View with financial summaries
+• Links with Data AI for anomaly-based loss detection
+
+**Executive Insights**
+💰 High-maturity organizations see 2-3x higher EBITDA growth
+📊 Target transformation ROI: >250% over 3 years
+🚀 Focus on "Quick Wins" to fund long-term strategic shifts`,
+    icon: 'TrendingUp',
+    translationKey: 'help.modules.economics',
+    relatedModules: ['initiatives', 'kpi', 'dashboard', 'data_ai'],
+    targetAudience: ['cfo', 'ceo', 'owner', 'executive'],
+  },
 };
 
 export function getModuleHelp(id: HelpModuleId): ModuleHelp | null {

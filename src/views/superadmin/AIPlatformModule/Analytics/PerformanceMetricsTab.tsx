@@ -261,7 +261,9 @@ export const PerformanceMetricsTab: React.FC = () => {
                     {metric.unit}
                   </span>
                 </div>
-                <div className={`flex items-center gap-1 text-sm ${getChangeColor(metric.changeType)}`}>
+                <div
+                  className={`flex items-center gap-1 text-sm ${getChangeColor(metric.changeType)}`}
+                >
                   {getChangeIcon(metric.changeType)}
                   <span>
                     {metric.change > 0 ? '+' : ''}

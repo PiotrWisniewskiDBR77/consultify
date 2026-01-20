@@ -100,7 +100,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
       // Fetch all data in parallel
       const [initiativesRes, decisionsRes, raidRes, budgetRes] = await Promise.all([
         Api.get('/initiatives/by-status/EXECUTING,BLOCKED').catch(() => ({ initiatives: [] })),
-        Api.get('/decisions?status=PENDING').catch(() => ({ decisions: [] })),
+        Api.get('/decisions').catch(() => []),
         Api.get('/raid/summary').catch(() => ({
           openCount: 0,
           highPriorityCount: 0,
@@ -131,8 +131,11 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           : 0;
 
       // Process decisions
-      const pendingDecisions = decisionsRes.decisions?.length || 0;
-      const blockingDecisions = (decisionsRes.decisions || []).filter(
+      const decisionsList = Array.isArray(decisionsRes) ? decisionsRes : [];
+      const pendingDecisions = decisionsList.filter((d: any) =>
+        ['PENDING', 'ESCALATED'].includes(d.status)
+      ).length;
+      const blockingDecisions = decisionsList.filter(
         (d: any) => d.priority === 'CRITICAL' || d.priority === 'HIGH'
       ).length;
 

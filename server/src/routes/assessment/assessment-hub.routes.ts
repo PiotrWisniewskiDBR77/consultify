@@ -72,25 +72,41 @@ router.get('/', async (req: AuthRequest, res: Response) => {
   try {
     const db = getDatabase();
     const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const { status, projectId } = req.query as { status?: string; projectId?: string };
 
     const assessments = await new Promise<any[]>((resolve, reject) => {
-      db.all(
-        `SELECT 
-                    id,
-                    organization_id as organizationId,
-                    name,
-                    description,
-                    status,
-                    created_at as createdAt,
-                    updated_at as updatedAt,
+      const params: (string | number)[] = [organizationId];
+      let sql = `SELECT 
+                    a.id,
+                    a.organization_id as organizationId,
+                    a.name,
+                    a.description,
+                    COALESCE(w.status, a.status) as status,
+                    a.created_at as createdAt,
+                    a.updated_at as updatedAt,
                     'DRD' as type,
                     'Digital Readiness Diagnosis' as projectName,
                     75 as progress,
                     3.2 as overallScore
-                FROM assessments 
-                WHERE organization_id = ?
-                ORDER BY created_at DESC`,
-        [organizationId],
+                FROM assessments a
+                LEFT JOIN assessment_workflows w ON w.assessment_id = a.id
+                WHERE a.organization_id = ?`;
+
+      if (status) {
+        sql += ' AND UPPER(COALESCE(w.status, a.status)) = ?';
+        params.push(status.toUpperCase());
+      }
+
+      if (projectId) {
+        sql += ' AND a.project_id = ?';
+        params.push(projectId);
+      }
+
+      sql += ' ORDER BY created_at DESC';
+
+      db.all(
+        sql,
+        params,
         (err: Error | null, rows: any[]) => {
           if (err) reject(err);
           else resolve(rows || []);

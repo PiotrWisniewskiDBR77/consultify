@@ -52,18 +52,78 @@ export const AccessControlTab: React.FC = () => {
     try {
       // Mock data - replace with API
       setPermissions([
-        { id: 'ai_chat_basic', name: 'Basic AI Chat', description: 'Access to standard AI chat', category: 'chat' },
-        { id: 'ai_chat_max', name: 'MAX Mode', description: 'Access to extended thinking mode', category: 'chat' },
-        { id: 'ai_deep_research', name: 'Deep Research', description: 'Access to deep research feature', category: 'analysis' },
-        { id: 'ai_code_interpreter', name: 'Code Interpreter', description: 'Execute code in AI chat', category: 'advanced' },
-        { id: 'ai_vision', name: 'Vision Analysis', description: 'Analyze images in chat', category: 'analysis' },
-        { id: 'ai_web_search', name: 'Web Search', description: 'AI web search capability', category: 'analysis' },
-        { id: 'ai_document_analysis', name: 'Document Analysis', description: 'Analyze uploaded documents', category: 'analysis' },
-        { id: 'ai_prompts_view', name: 'View Prompts', description: 'View prompt library', category: 'admin' },
-        { id: 'ai_prompts_edit', name: 'Edit Prompts', description: 'Create and modify prompts', category: 'admin' },
-        { id: 'ai_knowledge_manage', name: 'Manage Knowledge', description: 'Upload and manage knowledge base', category: 'admin' },
-        { id: 'ai_experiments', name: 'Run Experiments', description: 'Create and manage A/B tests', category: 'admin' },
-        { id: 'ai_config', name: 'AI Configuration', description: 'Full AI platform configuration', category: 'admin' },
+        {
+          id: 'ai_chat_basic',
+          name: 'Basic AI Chat',
+          description: 'Access to standard AI chat',
+          category: 'chat',
+        },
+        {
+          id: 'ai_chat_max',
+          name: 'MAX Mode',
+          description: 'Access to extended thinking mode',
+          category: 'chat',
+        },
+        {
+          id: 'ai_deep_research',
+          name: 'Deep Research',
+          description: 'Access to deep research feature',
+          category: 'analysis',
+        },
+        {
+          id: 'ai_code_interpreter',
+          name: 'Code Interpreter',
+          description: 'Execute code in AI chat',
+          category: 'advanced',
+        },
+        {
+          id: 'ai_vision',
+          name: 'Vision Analysis',
+          description: 'Analyze images in chat',
+          category: 'analysis',
+        },
+        {
+          id: 'ai_web_search',
+          name: 'Web Search',
+          description: 'AI web search capability',
+          category: 'analysis',
+        },
+        {
+          id: 'ai_document_analysis',
+          name: 'Document Analysis',
+          description: 'Analyze uploaded documents',
+          category: 'analysis',
+        },
+        {
+          id: 'ai_prompts_view',
+          name: 'View Prompts',
+          description: 'View prompt library',
+          category: 'admin',
+        },
+        {
+          id: 'ai_prompts_edit',
+          name: 'Edit Prompts',
+          description: 'Create and modify prompts',
+          category: 'admin',
+        },
+        {
+          id: 'ai_knowledge_manage',
+          name: 'Manage Knowledge',
+          description: 'Upload and manage knowledge base',
+          category: 'admin',
+        },
+        {
+          id: 'ai_experiments',
+          name: 'Run Experiments',
+          description: 'Create and manage A/B tests',
+          category: 'admin',
+        },
+        {
+          id: 'ai_config',
+          name: 'AI Configuration',
+          description: 'Full AI platform configuration',
+          category: 'admin',
+        },
       ]);
 
       setRoles([
@@ -81,7 +141,14 @@ export const AccessControlTab: React.FC = () => {
           description: 'Extended AI capabilities',
           type: 'system',
           userCount: 320,
-          permissions: ['ai_chat_basic', 'ai_chat_max', 'ai_deep_research', 'ai_vision', 'ai_document_analysis', 'ai_web_search'],
+          permissions: [
+            'ai_chat_basic',
+            'ai_chat_max',
+            'ai_deep_research',
+            'ai_vision',
+            'ai_document_analysis',
+            'ai_web_search',
+          ],
         },
         {
           id: '3',
@@ -89,7 +156,18 @@ export const AccessControlTab: React.FC = () => {
           description: 'AI development and testing',
           type: 'system',
           userCount: 45,
-          permissions: ['ai_chat_basic', 'ai_chat_max', 'ai_deep_research', 'ai_code_interpreter', 'ai_vision', 'ai_document_analysis', 'ai_web_search', 'ai_prompts_view', 'ai_prompts_edit', 'ai_experiments'],
+          permissions: [
+            'ai_chat_basic',
+            'ai_chat_max',
+            'ai_deep_research',
+            'ai_code_interpreter',
+            'ai_vision',
+            'ai_document_analysis',
+            'ai_web_search',
+            'ai_prompts_view',
+            'ai_prompts_edit',
+            'ai_experiments',
+          ],
         },
         {
           id: '4',
@@ -97,7 +175,20 @@ export const AccessControlTab: React.FC = () => {
           description: 'Full AI platform administration',
           type: 'system',
           userCount: 8,
-          permissions: ['ai_chat_basic', 'ai_chat_max', 'ai_deep_research', 'ai_code_interpreter', 'ai_vision', 'ai_document_analysis', 'ai_web_search', 'ai_prompts_view', 'ai_prompts_edit', 'ai_knowledge_manage', 'ai_experiments', 'ai_config'],
+          permissions: [
+            'ai_chat_basic',
+            'ai_chat_max',
+            'ai_deep_research',
+            'ai_code_interpreter',
+            'ai_vision',
+            'ai_document_analysis',
+            'ai_web_search',
+            'ai_prompts_view',
+            'ai_prompts_edit',
+            'ai_knowledge_manage',
+            'ai_experiments',
+            'ai_config',
+          ],
         },
         {
           id: '5',
@@ -105,7 +196,14 @@ export const AccessControlTab: React.FC = () => {
           description: 'Custom role for research department',
           type: 'custom',
           userCount: 24,
-          permissions: ['ai_chat_basic', 'ai_chat_max', 'ai_deep_research', 'ai_vision', 'ai_document_analysis', 'ai_web_search'],
+          permissions: [
+            'ai_chat_basic',
+            'ai_chat_max',
+            'ai_deep_research',
+            'ai_vision',
+            'ai_document_analysis',
+            'ai_web_search',
+          ],
         },
       ]);
     } catch (err) {
@@ -125,11 +223,14 @@ export const AccessControlTab: React.FC = () => {
     return colors[category];
   };
 
-  const groupedPermissions = permissions.reduce((acc, perm) => {
-    if (!acc[perm.category]) acc[perm.category] = [];
-    acc[perm.category].push(perm);
-    return acc;
-  }, {} as Record<string, AIPermission[]>);
+  const groupedPermissions = permissions.reduce(
+    (acc, perm) => {
+      if (!acc[perm.category]) acc[perm.category] = [];
+      acc[perm.category].push(perm);
+      return acc;
+    },
+    {} as Record<string, AIPermission[]>
+  );
 
   if (loading) {
     return (
@@ -187,14 +288,23 @@ export const AccessControlTab: React.FC = () => {
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <Shield size={16} className={selectedRole?.id === role.id ? 'text-indigo-500' : 'text-slate-400'} />
+                    <Shield
+                      size={16}
+                      className={
+                        selectedRole?.id === role.id ? 'text-indigo-500' : 'text-slate-400'
+                      }
+                    />
                     <span className="font-medium text-slate-900 dark:text-white">{role.name}</span>
                   </div>
                   {role.type === 'custom' && (
-                    <span className="px-2 py-0.5 text-xs bg-amber-500/10 text-amber-500 rounded">Custom</span>
+                    <span className="px-2 py-0.5 text-xs bg-amber-500/10 text-amber-500 rounded">
+                      Custom
+                    </span>
                   )}
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{role.description}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                  {role.description}
+                </p>
                 <div className="flex items-center gap-2 text-xs text-slate-400">
                   <Users size={12} />
                   <span>{role.userCount} users</span>
@@ -212,8 +322,12 @@ export const AccessControlTab: React.FC = () => {
             <>
               <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold text-slate-900 dark:text-white">{selectedRole.name}</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{selectedRole.description}</p>
+                  <h3 className="font-semibold text-slate-900 dark:text-white">
+                    {selectedRole.name}
+                  </h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {selectedRole.description}
+                  </p>
                 </div>
                 {selectedRole.type === 'custom' && (
                   <button className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg text-slate-500">
@@ -225,7 +339,13 @@ export const AccessControlTab: React.FC = () => {
                 {Object.entries(groupedPermissions).map(([category, perms]) => (
                   <div key={category}>
                     <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase mb-3 flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${getCategoryColor(category as AIPermission['category']).split(' ')[0].replace('/10', '')}`} />
+                      <span
+                        className={`w-2 h-2 rounded-full ${getCategoryColor(
+                          category as AIPermission['category']
+                        )
+                          .split(' ')[0]
+                          .replace('/10', '')}`}
+                      />
                       {category}
                     </h4>
                     <div className="space-y-2">
@@ -259,7 +379,9 @@ export const AccessControlTab: React.FC = () => {
                                 </div>
                               </div>
                             </div>
-                            <span className={`px-2 py-1 rounded text-xs ${getCategoryColor(perm.category)}`}>
+                            <span
+                              className={`px-2 py-1 rounded text-xs ${getCategoryColor(perm.category)}`}
+                            >
                               {perm.category}
                             </span>
                           </div>

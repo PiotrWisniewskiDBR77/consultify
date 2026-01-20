@@ -37,11 +37,9 @@ interface PortfolioKanbanViewProps {
 
 // Kanban column configuration
 const KANBAN_COLUMNS: { id: InitiativeStatus; label: string }[] = [
-  { id: 'DRAFT' as InitiativeStatus, label: 'Draft' },
   { id: 'PLANNING' as InitiativeStatus, label: 'Planning' },
   { id: 'REVIEW' as InitiativeStatus, label: 'Review' },
   { id: 'APPROVED' as InitiativeStatus, label: 'Approved' },
-  { id: 'EXECUTING' as InitiativeStatus, label: 'Executing' },
 ];
 
 // ============================================
@@ -215,6 +213,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   return (
     <div
       ref={setNodeRef}
+      data-testid={`kanban-column-${id.toString().toLowerCase()}`}
       className={`
                 flex flex-col min-w-[300px] max-w-[300px] rounded-xl overflow-hidden
                 ${columnColors.bg}

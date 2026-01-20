@@ -9,12 +9,15 @@
 
 import React from 'react';
 
+import { ManagementReportType } from '../../../../types';
+
 interface ReportSkeletonProps {
-  reportType?: 'TEAM_MEETING' | 'STEERING_COMMITTEE';
+  reportType?: ManagementReportType;
 }
 
 export const ReportSkeleton: React.FC<ReportSkeletonProps> = ({ reportType = 'TEAM_MEETING' }) => {
-  const isSteeringCommittee = reportType === 'STEERING_COMMITTEE';
+  const isSteeringCommittee =
+    reportType === 'STEERING_COMMITTEE' || reportType === 'PORTFOLIO_HEALTH';
 
   return (
     <div className="animate-pulse space-y-6 p-6">

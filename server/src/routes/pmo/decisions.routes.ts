@@ -16,6 +16,7 @@ import {
   CreateDecisionSchema,
   DecideSchema,
   EscalateDecisionSchema,
+  UpdateDecisionSchema,
 } from '../../validators/decision.validators.js';
 
 // Apply rate limiting
@@ -51,6 +52,12 @@ router.get('/:id', DecisionController.getDecisionById);
  * Create a new decision (requires approve_changes permission)
  */
 router.post('/', validateBody(CreateDecisionSchema), DecisionController.createDecision);
+
+/**
+ * PUT /api/decisions/:id
+ * Update a decision (delegate, reschedule, reprioritize)
+ */
+router.put('/:id', validateBody(UpdateDecisionSchema), DecisionController.updateDecision);
 
 /**
  * PATCH /api/decisions/:id/decide

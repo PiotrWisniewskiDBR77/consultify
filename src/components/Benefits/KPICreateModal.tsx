@@ -1,18 +1,10 @@
 /**
  * KPICreateModal
- * 
+ *
  * Modal for creating KPIs for initiatives in the Benefits module.
  */
 
-import {
-  DollarSign,
-  Loader2,
-  Target,
-  TrendingUp,
-  Users,
-  X,
-  Zap,
-} from 'lucide-react';
+import { DollarSign, Loader2, Target, TrendingUp, Users, X, Zap } from 'lucide-react';
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -48,7 +40,10 @@ interface KPICreateModalProps {
 // CATEGORY CONFIG
 // ============================================
 
-const CATEGORY_CONFIG: Record<KPICategory, { label: string; icon: React.ReactNode; color: string; description: string }> = {
+const CATEGORY_CONFIG: Record<
+  KPICategory,
+  { label: string; icon: React.ReactNode; color: string; description: string }
+> = {
   FINANCIAL: {
     label: 'Financial',
     icon: <DollarSign size={20} />,
@@ -115,7 +110,7 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
   });
 
   const updateField = <K extends keyof KPIFormData>(field: K, value: KPIFormData[K]) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async () => {
@@ -161,10 +156,13 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div 
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={onClose}
+    >
+      <div
         className="bg-navy-900 border border-navy-700 rounded-xl w-full max-w-lg shadow-2xl"
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-navy-700">
@@ -183,11 +181,13 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
         {/* Step Indicator */}
         <div className="px-6 py-3 border-b border-navy-800">
           <div className="flex items-center gap-2">
-            {[1, 2, 3].map(s => (
+            {[1, 2, 3].map((s) => (
               <React.Fragment key={s}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  step >= s ? 'bg-cyan-500 text-white' : 'bg-navy-700 text-slate-400'
-                }`}>
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    step >= s ? 'bg-cyan-500 text-white' : 'bg-navy-700 text-slate-400'
+                  }`}
+                >
                   {s}
                 </div>
                 {s < 3 && (
@@ -208,10 +208,13 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
           {/* Step 1: Category Selection */}
           {step === 1 && (
             <div className="space-y-3">
-              <p className="text-sm text-slate-400 mb-4">
-                Select the category for this KPI
-              </p>
-              {(Object.entries(CATEGORY_CONFIG) as [KPICategory, typeof CATEGORY_CONFIG[KPICategory]][]).map(([key, config]) => {
+              <p className="text-sm text-slate-400 mb-4">Select the category for this KPI</p>
+              {(
+                Object.entries(CATEGORY_CONFIG) as [
+                  KPICategory,
+                  (typeof CATEGORY_CONFIG)[KPICategory],
+                ][]
+              ).map(([key, config]) => {
                 const colorClasses: Record<string, string> = {
                   emerald: 'border-emerald-500 bg-emerald-500/10',
                   cyan: 'border-cyan-500 bg-cyan-500/10',
@@ -225,17 +228,19 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
                     key={key}
                     onClick={() => updateField('category', key)}
                     className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
-                      formData.category === key 
+                      formData.category === key
                         ? colorClasses[config.color]
                         : 'border-navy-700 hover:border-navy-600'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${
-                        formData.category === key 
-                          ? 'bg-cyan-500/20 text-cyan-400'
-                          : 'bg-navy-700 text-slate-400'
-                      }`}>
+                      <div
+                        className={`p-2 rounded-lg ${
+                          formData.category === key
+                            ? 'bg-cyan-500/20 text-cyan-400'
+                            : 'bg-navy-700 text-slate-400'
+                        }`}
+                      >
                         {config.icon}
                       </div>
                       <div>
@@ -253,25 +258,21 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
           {step === 2 && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-2">
-                  KPI Name *
-                </label>
+                <label className="block text-sm font-medium text-slate-400 mb-2">KPI Name *</label>
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={e => updateField('name', e.target.value)}
+                  onChange={(e) => updateField('name', e.target.value)}
                   placeholder="e.g., Process Cycle Time Reduction"
                   className="w-full px-4 py-3 bg-navy-800 border border-navy-700 rounded-lg text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-2">
-                  Description
-                </label>
+                <label className="block text-sm font-medium text-slate-400 mb-2">Description</label>
                 <textarea
                   value={formData.description}
-                  onChange={e => updateField('description', e.target.value)}
+                  onChange={(e) => updateField('description', e.target.value)}
                   placeholder="Describe what this KPI measures..."
                   rows={3}
                   className="w-full px-4 py-3 bg-navy-800 border border-navy-700 rounded-lg text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 resize-none"
@@ -283,7 +284,7 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
                   Unit of Measurement
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {COMMON_UNITS.map(unit => (
+                  {COMMON_UNITS.map((unit) => (
                     <button
                       key={unit}
                       onClick={() => updateField('unit', unit)}
@@ -304,7 +305,7 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
                   Measurement Frequency
                 </label>
                 <div className="flex gap-2">
-                  {FREQUENCY_OPTIONS.map(option => (
+                  {FREQUENCY_OPTIONS.map((option) => (
                     <button
                       key={option.value}
                       onClick={() => updateField('measurementFrequency', option.value)}
@@ -334,7 +335,9 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
                     <input
                       type="number"
                       value={formData.baselineValue}
-                      onChange={e => updateField('baselineValue', parseFloat(e.target.value) || 0)}
+                      onChange={(e) =>
+                        updateField('baselineValue', parseFloat(e.target.value) || 0)
+                      }
                       className="w-full px-4 py-3 bg-navy-800 border border-navy-700 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500"
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-500">
@@ -352,7 +355,7 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
                     <input
                       type="number"
                       value={formData.targetValue}
-                      onChange={e => updateField('targetValue', parseFloat(e.target.value) || 0)}
+                      onChange={(e) => updateField('targetValue', parseFloat(e.target.value) || 0)}
                       className="w-full px-4 py-3 bg-navy-800 border border-navy-700 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500"
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-500">
@@ -367,21 +370,29 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
                 <div className="p-4 bg-navy-800 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-slate-400">Expected improvement</span>
-                    <span className={`text-sm font-bold ${
-                      formData.targetValue > formData.baselineValue ? 'text-green-400' : 'text-red-400'
-                    }`}>
+                    <span
+                      className={`text-sm font-bold ${
+                        formData.targetValue > formData.baselineValue
+                          ? 'text-green-400'
+                          : 'text-red-400'
+                      }`}
+                    >
                       {formData.targetValue > formData.baselineValue ? '+' : ''}
-                      {formData.baselineValue !== 0 
-                        ? (((formData.targetValue - formData.baselineValue) / formData.baselineValue) * 100).toFixed(0)
-                        : formData.targetValue
-                      }%
+                      {formData.baselineValue !== 0
+                        ? (
+                            ((formData.targetValue - formData.baselineValue) /
+                              formData.baselineValue) *
+                            100
+                          ).toFixed(0)
+                        : formData.targetValue}
+                      %
                     </span>
                   </div>
                   <div className="h-2 bg-navy-700 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className="h-full bg-gradient-to-r from-slate-500 to-cyan-500 rounded-full"
-                      style={{ 
-                        width: `${Math.min(100, Math.abs((formData.targetValue / Math.max(formData.baselineValue, formData.targetValue)) * 100))}%` 
+                      style={{
+                        width: `${Math.min(100, Math.abs((formData.targetValue / Math.max(formData.baselineValue, formData.targetValue)) * 100))}%`,
                       }}
                     />
                   </div>
@@ -395,7 +406,7 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
                 <input
                   type="text"
                   value={formData.dataSource}
-                  onChange={e => updateField('dataSource', e.target.value)}
+                  onChange={(e) => updateField('dataSource', e.target.value)}
                   placeholder="e.g., ERP System, Manual Entry, API..."
                   className="w-full px-4 py-3 bg-navy-800 border border-navy-700 rounded-lg text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-500"
                 />
@@ -407,7 +418,7 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
         {/* Footer */}
         <div className="flex items-center justify-between px-6 py-4 border-t border-navy-700">
           <button
-            onClick={() => step > 1 ? setStep(step - 1) : onClose()}
+            onClick={() => (step > 1 ? setStep(step - 1) : onClose())}
             className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
           >
             {step > 1 ? 'Back' : 'Cancel'}

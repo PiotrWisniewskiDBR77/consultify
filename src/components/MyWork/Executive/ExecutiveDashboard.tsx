@@ -115,7 +115,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
       // Parallel API calls for performance
       const [statsRes, decisionsRes, teamRes, tasksRes] = await Promise.allSettled([
         Api.get('/my-work/stats?period=week'),
-        Api.get('/decisions?status=PENDING&limit=10'),
+        Api.get('/decisions?limit=10'),
         Api.get('/my-work/team-workload'),
         Api.getTasks({ assigneeId: user?.id, status: 'todo,in_progress' } as any),
       ]);
@@ -153,7 +153,9 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
       // Process decisions
       if (decisionsRes.status === 'fulfilled' && decisionsRes.value) {
         const decisionList = Array.isArray(decisionsRes.value) ? decisionsRes.value : [];
-        const pendingDecisions = decisionList.filter((d: any) => d.status === 'PENDING');
+        const pendingDecisions = decisionList.filter((d: any) =>
+          ['PENDING', 'ESCALATED'].includes(d.status)
+        );
 
         setDecisions(
           pendingDecisions.map((d: any) => ({

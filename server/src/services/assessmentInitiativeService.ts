@@ -122,7 +122,7 @@ class AssessmentInitiativeService {
                     id, organization_id, project_id, title, summary, problem_statement,
                     status, source_type, source_id, priority_order,
                     deliverables, created_by, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, 'draft', 'assessment', ?, ?, ?, ?, ?, ?)`,
+                ) VALUES (?, ?, ?, ?, ?, ?, 'DRAFT', 'assessment', ?, ?, ?, ?, ?, ?)`,
         [
           init.id,
           orgId,

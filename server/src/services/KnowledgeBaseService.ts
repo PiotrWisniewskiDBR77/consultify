@@ -1,11 +1,12 @@
 /**
  * Knowledge Base Service
  * Handles public Knowledge Base articles, categories and translations
- * 
+ *
  * @module services/KnowledgeBaseService
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -14,58 +15,58 @@ import logger from '../utils/Logger.js';
 // ============================================
 
 export interface KbCategory {
-    id: string;
-    slug: string;
-    icon: string;
-    sort_order: number;
-    is_active: boolean;
-    is_public: boolean;
-    created_at: string;
-    // Translation fields (populated based on language)
-    name?: string;
-    description?: string;
-    article_count?: number;
+  id: string;
+  slug: string;
+  icon: string;
+  sort_order: number;
+  is_active: boolean;
+  is_public: boolean;
+  created_at: string;
+  // Translation fields (populated based on language)
+  name?: string;
+  description?: string;
+  article_count?: number;
 }
 
 export interface KbArticle {
-    id: string;
-    category_id: string;
-    slug: string;
-    status: 'draft' | 'published' | 'archived';
-    is_featured: boolean;
-    is_public: boolean;
-    view_count: number;
-    reading_time_minutes: number;
-    thumbnail_url?: string;
-    video_url?: string;
-    video_teaser_url?: string;
-    related_modules: string[];
-    target_audience: string[];
-    created_at: string;
-    updated_at?: string;
-    // Translation fields
-    title?: string;
-    summary?: string;
-    content?: string;
-    video_script?: string;
-    // Category info
-    category_slug?: string;
-    category_name?: string;
-    category_icon?: string;
+  id: string;
+  category_id: string;
+  slug: string;
+  status: 'draft' | 'published' | 'archived';
+  is_featured: boolean;
+  is_public: boolean;
+  view_count: number;
+  reading_time_minutes: number;
+  thumbnail_url?: string;
+  video_url?: string;
+  video_teaser_url?: string;
+  related_modules: string[];
+  target_audience: string[];
+  created_at: string;
+  updated_at?: string;
+  // Translation fields
+  title?: string;
+  summary?: string;
+  content?: string;
+  video_script?: string;
+  // Category info
+  category_slug?: string;
+  category_name?: string;
+  category_icon?: string;
 }
 
 export interface KbArticleListItem {
-    id: string;
-    slug: string;
-    title: string;
-    summary: string;
-    thumbnail_url?: string;
-    reading_time_minutes: number;
-    is_featured: boolean;
-    category_slug: string;
-    category_name: string;
-    category_icon: string;
-    view_count: number;
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  thumbnail_url?: string;
+  reading_time_minutes: number;
+  is_featured: boolean;
+  category_slug: string;
+  category_name: string;
+  category_icon: string;
+  view_count: number;
 }
 
 // ============================================
@@ -73,14 +74,17 @@ export interface KbArticleListItem {
 // ============================================
 
 class KnowledgeBaseService {
-    /**
-     * Get all active categories with translations
-     */
-    async getCategories(language: string = 'en', includePrivate: boolean = false): Promise<KbCategory[]> {
-        try {
-            const publicFilter = includePrivate ? '' : 'AND c.is_public = 1';
+  /**
+   * Get all active categories with translations
+   */
+  async getCategories(
+    language: string = 'en',
+    includePrivate: boolean = false
+  ): Promise<KbCategory[]> {
+    try {
+      const publicFilter = includePrivate ? '' : 'AND c.is_public = 1';
 
-            const sql = `
+      const sql = `
         SELECT 
           c.id, c.slug, c.icon, c.sort_order, c.is_active, c.is_public, c.created_at,
           COALESCE(t.name, te.name) as name,
@@ -93,79 +97,81 @@ class KnowledgeBaseService {
         ORDER BY c.sort_order ASC
       `;
 
-            const rows = await dbAll(sql, [language]);
-            return rows.map((row: any) => ({
-                ...row,
-                is_active: Boolean(row.is_active),
-                is_public: Boolean(row.is_public),
-            }));
-        } catch (error) {
-            logger.error('[KnowledgeBaseService] Error getting categories:', error);
-            return [];
-        }
+      const rows = await dbAll(sql, [language]);
+      return rows.map((row: any) => ({
+        ...row,
+        is_active: Boolean(row.is_active),
+        is_public: Boolean(row.is_public),
+      }));
+    } catch (error) {
+      logger.error('[KnowledgeBaseService] Error getting categories:', error);
+      return [];
     }
+  }
 
-    /**
-     * Get articles with optional filtering
-     */
-    async getArticles(params: {
-        language?: string;
-        categorySlug?: string;
-        search?: string;
-        limit?: number;
-        offset?: number;
-        publicOnly?: boolean;
-        moduleId?: string;
-    } = {}): Promise<{ articles: KbArticleListItem[]; total: number }> {
-        try {
-            const {
-                language = 'en',
-                categorySlug,
-                search,
-                limit = 20,
-                offset = 0,
-                publicOnly = false,
-                moduleId,
-            } = params;
+  /**
+   * Get articles with optional filtering
+   */
+  async getArticles(
+    params: {
+      language?: string;
+      categorySlug?: string;
+      search?: string;
+      limit?: number;
+      offset?: number;
+      publicOnly?: boolean;
+      moduleId?: string;
+    } = {}
+  ): Promise<{ articles: KbArticleListItem[]; total: number }> {
+    try {
+      const {
+        language = 'en',
+        categorySlug,
+        search,
+        limit = 20,
+        offset = 0,
+        publicOnly = false,
+        moduleId,
+      } = params;
 
-            let whereConditions = ['a.status = ?'];
-            const queryParams: any[] = ['published'];
+      const whereConditions = ['a.status = ?'];
+      const queryParams: any[] = ['published'];
 
-            if (publicOnly) {
-                whereConditions.push('a.is_public = 1');
-            }
+      if (publicOnly) {
+        whereConditions.push('a.is_public = 1');
+      }
 
-            if (categorySlug) {
-                whereConditions.push('c.slug = ?');
-                queryParams.push(categorySlug);
-            }
+      if (categorySlug) {
+        whereConditions.push('c.slug = ?');
+        queryParams.push(categorySlug);
+      }
 
-            if (moduleId) {
-                whereConditions.push(`a.related_modules LIKE ?`);
-                queryParams.push(`%"${moduleId}"%`);
-            }
+      if (moduleId) {
+        whereConditions.push(`a.related_modules LIKE ?`);
+        queryParams.push(`%"${moduleId}"%`);
+      }
 
-            if (search) {
-                whereConditions.push(`(t.title LIKE ? OR t.summary LIKE ? OR t.content LIKE ?)`);
-                const searchPattern = `%${search}%`;
-                queryParams.push(searchPattern, searchPattern, searchPattern);
-            }
+      if (search) {
+        whereConditions.push(`(t.title LIKE ? OR t.summary LIKE ? OR t.content LIKE ?)`);
+        const searchPattern = `%${search}%`;
+        queryParams.push(searchPattern, searchPattern, searchPattern);
+      }
 
-            const whereClause = whereConditions.join(' AND ');
+      const whereClause = whereConditions.join(' AND ');
 
-            // Count query
-            const countSql = `
+      // Count query
+      const countSql = `
         SELECT COUNT(*) as total
         FROM kb_articles a
         JOIN kb_categories c ON a.category_id = c.id
         LEFT JOIN kb_article_translations t ON a.id = t.article_id AND t.language = ?
         WHERE ${whereClause}
       `;
-            const countResult = await dbGet(countSql, [language, ...queryParams]);
-            const total = countResult?.total || 0;
+      const countResult = await dbGet(countSql, [language, ...queryParams]);
+      const total = countResult?.total || 0;
 
-            // Data query
-            const dataSql = `
+      // Data query
+      const dataSql = `
         SELECT 
           a.id, a.slug, a.thumbnail_url, a.reading_time_minutes, a.is_featured, a.view_count,
           COALESCE(t.title, te.title) as title,
@@ -184,27 +190,27 @@ class KnowledgeBaseService {
         LIMIT ? OFFSET ?
       `;
 
-            const articles = await dbAll(dataSql, [language, language, ...queryParams, limit, offset]);
+      const articles = await dbAll(dataSql, [language, language, ...queryParams, limit, offset]);
 
-            return {
-                articles: articles.map((row: any) => ({
-                    ...row,
-                    is_featured: Boolean(row.is_featured),
-                })),
-                total,
-            };
-        } catch (error) {
-            logger.error('[KnowledgeBaseService] Error getting articles:', error);
-            return { articles: [], total: 0 };
-        }
+      return {
+        articles: articles.map((row: any) => ({
+          ...row,
+          is_featured: Boolean(row.is_featured),
+        })),
+        total,
+      };
+    } catch (error) {
+      logger.error('[KnowledgeBaseService] Error getting articles:', error);
+      return { articles: [], total: 0 };
     }
+  }
 
-    /**
-     * Get single article by slug with full content
-     */
-    async getArticleBySlug(slug: string, language: string = 'en'): Promise<KbArticle | null> {
-        try {
-            const sql = `
+  /**
+   * Get single article by slug with full content
+   */
+  async getArticleBySlug(slug: string, language: string = 'en'): Promise<KbArticle | null> {
+    try {
+      const sql = `
         SELECT 
           a.*,
           COALESCE(t.title, te.title) as title,
@@ -223,30 +229,30 @@ class KnowledgeBaseService {
         WHERE a.slug = ? AND a.status = 'published'
       `;
 
-            const row = await dbGet(sql, [language, language, slug]);
+      const row = await dbGet(sql, [language, language, slug]);
 
-            if (!row) return null;
+      if (!row) return null;
 
-            // Parse JSON arrays
-            return {
-                ...row,
-                is_featured: Boolean(row.is_featured),
-                is_public: Boolean(row.is_public),
-                related_modules: JSON.parse(row.related_modules || '[]'),
-                target_audience: JSON.parse(row.target_audience || '[]'),
-            };
-        } catch (error) {
-            logger.error('[KnowledgeBaseService] Error getting article:', error);
-            return null;
-        }
+      // Parse JSON arrays
+      return {
+        ...row,
+        is_featured: Boolean(row.is_featured),
+        is_public: Boolean(row.is_public),
+        related_modules: JSON.parse(row.related_modules || '[]'),
+        target_audience: JSON.parse(row.target_audience || '[]'),
+      };
+    } catch (error) {
+      logger.error('[KnowledgeBaseService] Error getting article:', error);
+      return null;
     }
+  }
 
-    /**
-     * Get public articles for landing page preview
-     */
-    async getPublicPreview(language: string = 'en', limit: number = 3): Promise<KbArticleListItem[]> {
-        try {
-            const sql = `
+  /**
+   * Get public articles for landing page preview
+   */
+  async getPublicPreview(language: string = 'en', limit: number = 3): Promise<KbArticleListItem[]> {
+    try {
+      const sql = `
         SELECT 
           a.id, a.slug, a.thumbnail_url, a.reading_time_minutes, a.is_featured, a.view_count,
           a.video_teaser_url,
@@ -266,23 +272,27 @@ class KnowledgeBaseService {
         LIMIT ?
       `;
 
-            const articles = await dbAll(sql, [language, language, limit]);
-            return articles.map((row: any) => ({
-                ...row,
-                is_featured: Boolean(row.is_featured),
-            }));
-        } catch (error) {
-            logger.error('[KnowledgeBaseService] Error getting public preview:', error);
-            return [];
-        }
+      const articles = await dbAll(sql, [language, language, limit]);
+      return articles.map((row: any) => ({
+        ...row,
+        is_featured: Boolean(row.is_featured),
+      }));
+    } catch (error) {
+      logger.error('[KnowledgeBaseService] Error getting public preview:', error);
+      return [];
     }
+  }
 
-    /**
-     * Get articles related to a specific module (for context-aware help)
-     */
-    async getContextualArticles(moduleId: string, language: string = 'en', limit: number = 5): Promise<KbArticleListItem[]> {
-        try {
-            const sql = `
+  /**
+   * Get articles related to a specific module (for context-aware help)
+   */
+  async getContextualArticles(
+    moduleId: string,
+    language: string = 'en',
+    limit: number = 5
+  ): Promise<KbArticleListItem[]> {
+    try {
+      const sql = `
         SELECT 
           a.id, a.slug, a.thumbnail_url, a.reading_time_minutes, a.is_featured, a.view_count,
           COALESCE(t.title, te.title) as title,
@@ -301,25 +311,29 @@ class KnowledgeBaseService {
         LIMIT ?
       `;
 
-            const articles = await dbAll(sql, [language, language, `%"${moduleId}"%`, limit]);
-            return articles.map((row: any) => ({
-                ...row,
-                is_featured: Boolean(row.is_featured),
-            }));
-        } catch (error) {
-            logger.error('[KnowledgeBaseService] Error getting contextual articles:', error);
-            return [];
-        }
+      const articles = await dbAll(sql, [language, language, `%"${moduleId}"%`, limit]);
+      return articles.map((row: any) => ({
+        ...row,
+        is_featured: Boolean(row.is_featured),
+      }));
+    } catch (error) {
+      logger.error('[KnowledgeBaseService] Error getting contextual articles:', error);
+      return [];
     }
+  }
 
-    /**
-     * Search articles with full-text search
-     */
-    async searchArticles(query: string, language: string = 'en', limit: number = 10): Promise<KbArticleListItem[]> {
-        try {
-            const searchPattern = `%${query}%`;
+  /**
+   * Search articles with full-text search
+   */
+  async searchArticles(
+    query: string,
+    language: string = 'en',
+    limit: number = 10
+  ): Promise<KbArticleListItem[]> {
+    try {
+      const searchPattern = `%${query}%`;
 
-            const sql = `
+      const sql = `
         SELECT 
           a.id, a.slug, a.thumbnail_url, a.reading_time_minutes, a.is_featured, a.view_count,
           COALESCE(t.title, te.title) as title,
@@ -342,53 +356,64 @@ class KnowledgeBaseService {
         LIMIT ?
       `;
 
-            const articles = await dbAll(sql, [
-                language, language,
-                searchPattern, searchPattern, searchPattern,
-                searchPattern, searchPattern, searchPattern,
-                searchPattern, searchPattern,
-                limit
-            ]);
+      const articles = await dbAll(sql, [
+        language,
+        language,
+        searchPattern,
+        searchPattern,
+        searchPattern,
+        searchPattern,
+        searchPattern,
+        searchPattern,
+        searchPattern,
+        searchPattern,
+        limit,
+      ]);
 
-            return articles.map((row: any) => ({
-                ...row,
-                is_featured: Boolean(row.is_featured),
-            }));
-        } catch (error) {
-            logger.error('[KnowledgeBaseService] Error searching articles:', error);
-            return [];
-        }
+      return articles.map((row: any) => ({
+        ...row,
+        is_featured: Boolean(row.is_featured),
+      }));
+    } catch (error) {
+      logger.error('[KnowledgeBaseService] Error searching articles:', error);
+      return [];
     }
+  }
 
-    /**
-     * Increment view count for an article
-     */
-    async trackView(articleId: string, userId?: string, sessionId?: string, source: string = 'in_app'): Promise<void> {
-        try {
-            const viewId = uuidv4();
+  /**
+   * Increment view count for an article
+   */
+  async trackView(
+    articleId: string,
+    userId?: string,
+    sessionId?: string,
+    source: string = 'in_app'
+  ): Promise<void> {
+    try {
+      const viewId = uuidv4();
 
-            // Insert view record
-            await dbRun(
-                'INSERT INTO kb_article_views (id, article_id, user_id, session_id, source) VALUES (?, ?, ?, ?, ?)',
-                [viewId, articleId, userId || null, sessionId || null, source]
-            );
+      // Insert view record
+      await dbRun(
+        'INSERT INTO kb_article_views (id, article_id, user_id, session_id, source) VALUES (?, ?, ?, ?, ?)',
+        [viewId, articleId, userId || null, sessionId || null, source]
+      );
 
-            // Increment counter
-            await dbRun(
-                'UPDATE kb_articles SET view_count = view_count + 1 WHERE id = ?',
-                [articleId]
-            );
-        } catch (error) {
-            logger.error('[KnowledgeBaseService] Error tracking view:', error);
-        }
+      // Increment counter
+      await dbRun('UPDATE kb_articles SET view_count = view_count + 1 WHERE id = ?', [articleId]);
+    } catch (error) {
+      logger.error('[KnowledgeBaseService] Error tracking view:', error);
     }
+  }
 
-    /**
-     * Get featured articles
-     */
-    async getFeaturedArticles(language: string = 'en', limit: number = 4): Promise<KbArticleListItem[]> {
-        try {
-            const sql = `
+  /**
+   * Get featured articles
+   */
+  async getFeaturedArticles(
+    language: string = 'en',
+    limit: number = 4
+  ): Promise<KbArticleListItem[]> {
+    try {
+      const sql = `
         SELECT 
           a.id, a.slug, a.thumbnail_url, a.reading_time_minutes, a.is_featured, a.view_count,
           COALESCE(t.title, te.title) as title,
@@ -407,16 +432,16 @@ class KnowledgeBaseService {
         LIMIT ?
       `;
 
-            const articles = await dbAll(sql, [language, language, limit]);
-            return articles.map((row: any) => ({
-                ...row,
-                is_featured: Boolean(row.is_featured),
-            }));
-        } catch (error) {
-            logger.error('[KnowledgeBaseService] Error getting featured articles:', error);
-            return [];
-        }
+      const articles = await dbAll(sql, [language, language, limit]);
+      return articles.map((row: any) => ({
+        ...row,
+        is_featured: Boolean(row.is_featured),
+      }));
+    } catch (error) {
+      logger.error('[KnowledgeBaseService] Error getting featured articles:', error);
+      return [];
     }
+  }
 }
 
 export default new KnowledgeBaseService();

@@ -9,7 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase, getDatabaseAsync } from '../src/database/Database.js';
 import logger from '../src/utils/Logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -46,7 +46,7 @@ function calculateChecksum(filepath: string): string {
 function getAllMigrations(): Migration[] {
   const files = fs
     .readdirSync(MIGRATIONS_DIR)
-    .filter((f) => f.endsWith('.sql') || f.endsWith('.js'))
+    .filter((f) => f.endsWith('.sql') || f.endsWith('.js') || f.endsWith('.ts'))
     .sort(); // Alphabetical order ensures version order
 
   return files.map((filename) => {
@@ -70,7 +70,7 @@ async function getAppliedMigrations(): Promise<AppliedMigration[]> {
 
   try {
     const result = await db.query(
-      'SELECT version, filename, applied_at, checksum, status FROM schema_migrations ORDER BY version'
+      'SELECT version, filename, applied_at, checksum, status FROM schema_migrations ORDER BY filename'
     );
     return result.rows as AppliedMigration[];
   } catch (error) {
@@ -93,14 +93,124 @@ async function applyMigration(migration: Migration): Promise<boolean> {
     const content = fs.readFileSync(migration.filepath, 'utf-8');
 
     if (migration.filename.endsWith('.sql')) {
-      // Execute SQL migration
-      const statements = content
-        .split(';')
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0 && !s.startsWith('--'));
+      // Strip SQL comments first
+      let cleanContent = content
+        .replace(/--.*$/gm, '') // Remove single-line comments
+        .replace(/\/\*[\s\S]*?\*\//g, '') // Remove multi-line comments
+        .trim();
+
+      // PostgreSQL to SQLite Dialect Translation (Real-time)
+      // 1. Strip PostgreSQL style casts (e.g. ::boolean, ::jsonb, ::text)
+      cleanContent = cleanContent.replace(/::[a-zA-Z_]+/g, '');
+
+      // 2. Strip PostgreSQL DO blocks and procedural logic
+      cleanContent = cleanContent
+        .replace(/DO \$\$[\s\S]*?BEGIN/gi, '')
+        .replace(/END \$\$;/gi, '')
+        .replace(/IF (NOT )?EXISTS \([\s\S]*?THEN/gi, '') // Strip pg-style IF blocks
+        .replace(/END IF;/gi, '');
+
+      // 3. Strip PostgreSQL 'ON table_name' from DROP TRIGGER
+      cleanContent = cleanContent.replace(/DROP TRIGGER IF EXISTS ([a-zA-Z0-9_]+) ON ([a-zA-Z0-9_]+)/gi, 'DROP TRIGGER IF EXISTS $1');
+
+      // 4. Remove PL/pgSQL functions and triggers
+      cleanContent = cleanContent.replace(/CREATE OR REPLACE FUNCTION[\s\S]*?LANGUAGE\s+'?plpgsql'?;/gi, '');
+      cleanContent = cleanContent.replace(/CREATE TRIGGER[\s\S]*?EXECUTE FUNCTION.*?;/gi, '');
+
+      // 5. Transform PostgreSQL views and constraints
+      cleanContent = cleanContent
+        .replace(/CREATE OR REPLACE VIEW/gi, 'CREATE VIEW')
+        .replace(/ALTER\s+TABLE\s+\w+\s+DROP\s+CONSTRAINT\s+(IF\s+EXISTS\s+)?\w+;/gi, '')
+        .replace(/ALTER\s+TABLE\s+\w+\s+ADD\s+CONSTRAINT\s+[\s\S]*?;/gi, '');
+
+      // 4. Transform PostgreSQL types and functions to SQLite equivalents
+      cleanContent = cleanContent
+        .replace(/\bUUID\b/gi, 'TEXT')
+        .replace(/\bVARCHAR\(\d+\)/gi, 'TEXT')
+        .replace(/\bJSONB\b/gi, 'TEXT')
+        .replace(/\bJSON\b/gi, 'TEXT')
+        .replace(/\bTIMESTAMPTZ\b/gi, 'DATETIME')
+        .replace(/\bTIMESTAMP WITH TIME ZONE\b/gi, 'DATETIME')
+        .replace(/\b(BIG)?SERIAL\s+PRIMARY\s+KEY\b/gi, 'INTEGER PRIMARY KEY AUTOINCREMENT')
+        .replace(/\b(BIG)?SERIAL\b/gi, 'INTEGER PRIMARY KEY AUTOINCREMENT')
+        .replace(/\bINET\b/gi, 'TEXT')
+        .replace(/\bgen_random_uuid\(\)/gi, "(hex(randomblob(16)))")
+        .replace(/\bNOW\(\)/gi, "CURRENT_TIMESTAMP")
+        .replace(/\bCURRENT_TIMESTAMP\(\)/gi, "CURRENT_TIMESTAMP")
+        .replace(/\bTRUE\b/gi, '1')
+        .replace(/\bFALSE\b/gi, '0');
+
+      // 5. Transform PostgreSQL indexing and specific clauses
+      // Also handle full-text search indexes using GIN/TSVECTOR
+      // We strip the whole statement if it uses GIN/BTREE as these are often incompatible or unnecessary for basic SQLite
+      cleanContent = cleanContent
+        .replace(/CREATE\s+INDEX\s+IF\s+NOT\s+EXISTS\s+\w+\s+ON\s+\w+\s+USING\s+gin[\s\S]*?;/gi, '')
+        .replace(/USING\s+(BTREE|HASH|GIST|SPGIST|BRIN)\s*\(/gi, '(')
+        .replace(/USING\s+(BTREE|HASH|GIST|SPGIST|BRIN)\s+[a-zA-Z0-9_]+/gi, '')
+        .replace(/DISTINCT ON\s*\([a-zA-Z0-9_,\s]+\)/gi, 'DISTINCT')
+        .replace(/UPDATE\s+([a-zA-Z0-9_]+)\s+[a-zA-Z0-9_]+\s+SET/gi, 'UPDATE $1 SET')
+        .replace(/INSERT\s+OR\s+IGNORE\s+INTO\s+migrations\s+[\s\S]*?;/gi, '');
+
+      // 6. Fix string escaping (PostgreSQL \' to SQLite '')
+      // We only target \' inside strings, but for simplicity, a global replace of escaped quotes is usually safe in SQL scripts
+      cleanContent = cleanContent.replace(/\\'/g, "''");
+
+      // 7. Transform PostgreSQL ALTER TABLE syntax
+      cleanContent = cleanContent.replace(/ADD COLUMN IF NOT EXISTS/gi, 'ADD COLUMN');
+
+      // 8. Remove PostgreSQL Comments
+      cleanContent = cleanContent.replace(/COMMENT ON[\s\S]*?;/gi, '');
+
+      // 5. Split statements carefully (don't split inside BEGIN...END blocks)
+      const rawStatements = cleanContent.split(';');
+      const statements: string[] = [];
+      let buffer = '';
+      let inBlock = 0;
+
+      for (const stmt of rawStatements) {
+        const full = (buffer + stmt).trim();
+        if (!full) continue;
+
+        // Check for BEGIN/END blocks (triggers) 
+        // We ignore BEGIN TRANSACTION/DEFERRED/IMMEDIATE/EXCLUSIVE as they don't have an END clause
+        // We also count CASE...END as a block to avoid premature END matching
+        const stmtUpper = stmt.toUpperCase();
+        const beginMatches = stmtUpper.match(/\b(BEGIN|CASE)\b(?!\s+(TRANSACTION|DEFERRED|IMMEDIATE|EXCLUSIVE))/g) || [];
+        const beginCount = beginMatches.length;
+        const endCount = (stmtUpper.match(/\bEND\b/g) || []).length;
+        inBlock += beginCount - endCount;
+
+        if (inBlock <= 0) {
+          statements.push(full + ';');
+          buffer = '';
+          inBlock = 0;
+        } else {
+          buffer += stmt + ';';
+        }
+      }
+      if (buffer.trim()) statements.push(buffer.trim());
 
       for (const statement of statements) {
-        await db.run(statement);
+        try {
+          await db.run(statement);
+        } catch (stmtError: any) {
+          // Ignore errors for elements that already exist (idempotency support)
+          const msg = stmtError.message || '';
+          const isCreateIndex = statement.toUpperCase().includes('CREATE INDEX');
+
+          if (
+            msg.includes('already exists') ||
+            msg.includes('duplicate column name') ||
+            msg.includes('already a column') ||
+            (isCreateIndex && (msg.includes('no such table') || msg.includes('no such column')))
+          ) {
+            logger.warn(`[Migrate] Skipping stmt in ${migration.filename}: ${msg}`);
+          } else {
+            logger.error(`[Migrate] ❌ SQL Error in ${migration.filename}: ${msg}`);
+            logger.error(`[Migrate] ❌ Failing statement: ${statement}`);
+            throw stmtError;
+          }
+        }
       }
     } else if (migration.filename.endsWith('.js')) {
       // Execute JS migration
@@ -114,7 +224,7 @@ async function applyMigration(migration: Migration): Promise<boolean> {
 
     // Record successful migration
     await db.run(
-      `INSERT INTO schema_migrations (version, filename, checksum, execution_time_ms, status)
+      `INSERT OR REPLACE INTO schema_migrations (version, filename, checksum, execution_time_ms, status)
              VALUES (?, ?, ?, ?, 'success')`,
       [migration.version, migration.filename, migration.checksum, executionTime]
     );
@@ -128,7 +238,7 @@ async function applyMigration(migration: Migration): Promise<boolean> {
     // Record failed migration
     try {
       await db.run(
-        `INSERT INTO schema_migrations (version, filename, checksum, execution_time_ms, status)
+        `INSERT OR REPLACE INTO schema_migrations (version, filename, checksum, execution_time_ms, status)
                  VALUES (?, ?, ?, ?, 'failed')`,
         [migration.version, migration.filename, migration.checksum, executionTime]
       );
@@ -170,8 +280,15 @@ async function backfillMigrations(migrations: Migration[]): Promise<void> {
 async function runMigrations(options: { backfill?: boolean } = {}): Promise<void> {
   logger.info('[Migrate] Starting migration process...');
 
+  // Disable foreign keys for migration flexibility (essential for SQLite schema changes)
+  const db = await getDatabaseAsync();
+  // @ts-ignore - SQLite specific PRAGMA
+  await db.run('PRAGMA foreign_keys = OFF');
+
   const allMigrations = getAllMigrations();
   const appliedMigrations = await getAppliedMigrations();
+
+  const dbType = process.env.DB_TYPE || 'sqlite';
 
   logger.info(`[Migrate] Found ${allMigrations.length} migration files`);
   logger.info(`[Migrate] ${appliedMigrations.length} migrations already applied`);
@@ -181,8 +298,17 @@ async function runMigrations(options: { backfill?: boolean } = {}): Promise<void
     return;
   }
 
-  const appliedVersions = new Set(appliedMigrations.map((m) => m.version));
-  const pendingMigrations = allMigrations.filter((m) => !appliedVersions.has(m.version));
+  const appliedFilenames = new Set(appliedMigrations.map((m) => m.filename));
+  const pendingMigrations = allMigrations
+    .filter((m) => !appliedFilenames.has(m.filename))
+    .filter((m) => {
+      // Skip PostgreSQL-specific files when running on SQLite
+      if (dbType === 'sqlite' && m.filename.endsWith('_postgres.sql')) {
+        logger.info(`[Migrate] Skipping PG-specific migration: ${m.filename}`);
+        return false;
+      }
+      return true;
+    });
 
   if (pendingMigrations.length === 0) {
     logger.info('[Migrate] ✅ No pending migrations');

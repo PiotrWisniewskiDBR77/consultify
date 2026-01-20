@@ -258,6 +258,23 @@ const ExecutiveView = React.lazy(() =>
   import('@/views/ExecutiveView').then((m) => ({ default: m.ExecutiveView }))
 );
 
+// Documentation Portal (Public)
+const DocsLayout = React.lazy(() =>
+  import('@/layouts/DocsLayout').then((m) => ({ default: m.DocsLayout }))
+);
+const DocsHomeView = React.lazy(() =>
+  import('@/views/docs/DocsHomeView').then((m) => ({ default: m.DocsHomeView }))
+);
+const DocsCategoryView = React.lazy(() =>
+  import('@/views/docs/DocsCategoryView').then((m) => ({ default: m.DocsCategoryView }))
+);
+const DocsArticleView = React.lazy(() =>
+  import('@/views/docs/DocsArticleView').then((m) => ({ default: m.DocsArticleView }))
+);
+const DocsSearchView = React.lazy(() =>
+  import('@/views/docs/DocsSearchView').then((m) => ({ default: m.DocsSearchView }))
+);
+
 export const AppRoutes: React.FC = () => {
   const navigate = useNavigate();
   const {
@@ -416,6 +433,14 @@ export const AppRoutes: React.FC = () => {
             </AuthLayout>
           }
         />
+
+        {/* Documentation Portal - Public Routes */}
+        <Route path="/docs" element={<DocsLayout />}>
+          <Route index element={<DocsHomeView />} />
+          <Route path="search" element={<DocsSearchView />} />
+          <Route path=":categorySlug" element={<DocsCategoryView />} />
+          <Route path=":categorySlug/:articleSlug" element={<DocsArticleView />} />
+        </Route>
 
         {/* Login - stable key prevents remount during auth initialization */}
         <Route

@@ -232,10 +232,11 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
               <button
                 key={range}
                 onClick={() => setTimeRange(range)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${timeRange === range
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  timeRange === range
                     ? 'bg-white/[0.08] text-white'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-300'
-                  }`}
+                }`}
               >
                 {range}d
               </button>
@@ -417,7 +418,10 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                     borderRadius: '8px',
                     color: '#fff',
                   }}
-                  formatter={(value) => [formatNumber(typeof value === 'number' ? value : 0), 'Tokens']}
+                  formatter={(value) => [
+                    formatNumber(typeof value === 'number' ? value : 0),
+                    'Tokens',
+                  ]}
                   labelFormatter={(label) => new Date(label).toLocaleDateString()}
                 />
                 <Area
@@ -472,7 +476,10 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                     borderRadius: '8px',
                     color: '#fff',
                   }}
-                  formatter={(value) => [formatNumber(typeof value === 'number' ? value : 0), 'Tokens']}
+                  formatter={(value) => [
+                    formatNumber(typeof value === 'number' ? value : 0),
+                    'Tokens',
+                  ]}
                 />
               </RechartsPieChart>
             </ResponsiveContainer>
@@ -497,10 +504,11 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
               <button
                 key={view}
                 onClick={() => setBreakdownView(view)}
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-all capitalize ${breakdownView === view
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-all capitalize ${
+                  breakdownView === view
                     ? 'bg-white/[0.08] text-white'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-300'
-                  }`}
+                }`}
               >
                 {view}
               </button>
@@ -600,10 +608,11 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
       {/* Projected Usage Alert */}
       {usage && usage.tokens.percentage >= 75 && (
         <div
-          className={`admin-card p-4 border ${usage.tokens.percentage >= 90
+          className={`admin-card p-4 border ${
+            usage.tokens.percentage >= 90
               ? 'border-red-500/30 bg-red-500/5'
               : 'border-amber-500/30 bg-amber-500/5'
-            }`}
+          }`}
         >
           <div className="flex items-start gap-3">
             <Zap

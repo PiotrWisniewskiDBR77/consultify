@@ -29,6 +29,7 @@ import {
   Map,
   Plus,
   Save,
+  X,
   Workflow,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -46,6 +47,7 @@ import { AssessmentSummaryWorkspace } from './AssessmentSummaryWorkspace';
 // Sub-components
 // Sub-components
 import { AssessmentTable } from './AssessmentTable';
+import { AssessmentInitiativesDrawer } from './AssessmentInitiativesDrawer';
 import { DocumentTabsBar, DocumentType, OpenDocument } from './DocumentTabsBar';
 // Multi-framework assessment maps
 import { InitiativeDetailsModal } from './modals/InitiativeDetailsModal';
@@ -68,9 +70,6 @@ const DBR77LeanMap = React.lazy(() =>
 );
 const SIRIAssessmentMap = React.lazy(() =>
   import('./maps/SIRIAssessmentMap').then((m) => ({ default: m.SIRIAssessmentMap }))
-);
-const ReportBuilderWorkspace = React.lazy(() =>
-  import('./ReportBuilderWorkspace').then((m) => ({ default: m.ReportBuilderWorkspace }))
 );
 const ReportsTable = React.lazy(() =>
   import('./ReportsTable').then((m) => ({ default: m.ReportsTable }))
@@ -163,6 +162,12 @@ interface AssessmentModuleHubProps {
   onNavigate?: (view: AppView, params?: any) => void;
 }
 
+interface OpenAssessmentEntry {
+  id: string;
+  name: string;
+  status?: WorkflowStatus;
+}
+
 export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
   framework,
   initialTab = 'assessment',
@@ -186,6 +191,8 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
     isNew: boolean;
     status?: WorkflowStatus;
   } | null>(null);
+  const [openAssessments, setOpenAssessments] = useState<OpenAssessmentEntry[]>([]);
+  const [isInitiativesDrawerOpen, setIsInitiativesDrawerOpen] = useState(false);
 
   // SAFE ACCESS: Handle potential missing config
   const frameworkConfig = FRAMEWORK_CONFIG[framework];
@@ -243,6 +250,28 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
     setSelectedAssessmentId(assessmentId);
     setActiveTab('reports');
     // Will trigger report creation flow
+  }, []);
+
+  const handleCloseOpenAssessment = useCallback(
+    (assessmentId: string) => {
+      setOpenAssessments((prev) => {
+        const next = prev.filter((item) => item.id !== assessmentId);
+        if (selectedAssessmentId === assessmentId) {
+          const nextSelected = next[0]?.id || null;
+          setSelectedAssessmentId(nextSelected);
+          if (!nextSelected) {
+            setActiveTab('assessment');
+          }
+        }
+        return next;
+      });
+    },
+    [selectedAssessmentId]
+  );
+
+  const handleSelectOpenAssessment = useCallback((assessmentId: string) => {
+    setSelectedAssessmentId(assessmentId);
+    setActiveTab('map');
   }, []);
 
   // Create initiatives from approved report
@@ -570,6 +599,36 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
     }
   }, [activeTab, selectedAssessmentId, loadAssessmentData]);
 
+  useEffect(() => {
+    if (activeTab !== 'map') {
+      setIsInitiativesDrawerOpen(false);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (!selectedAssessmentId) {
+      setIsInitiativesDrawerOpen(false);
+    }
+  }, [selectedAssessmentId]);
+
+  useEffect(() => {
+    if (!selectedAssessmentId || !assessmentMeta?.name || assessmentMeta?.isNew) return;
+    setOpenAssessments((prev) => {
+      const exists = prev.find((item) => item.id === selectedAssessmentId);
+      if (exists) {
+        return prev.map((item) =>
+          item.id === selectedAssessmentId
+            ? { ...item, name: assessmentMeta.name, status: assessmentMeta.status }
+            : item
+        );
+      }
+      return [
+        ...prev,
+        { id: selectedAssessmentId, name: assessmentMeta.name, status: assessmentMeta.status },
+      ];
+    });
+  }, [selectedAssessmentId, assessmentMeta?.name, assessmentMeta?.status, assessmentMeta?.isNew]);
+
   // Check if framework is implemented - all frameworks now supported
   const isFrameworkImplemented = ['DRD', 'SIRI', 'ADMA', 'CMMI', 'LEAN'].includes(framework);
 
@@ -629,6 +688,62 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
           );
         }
 
+        const renderMapWithSidebar = (content: React.ReactNode) => (
+          <div className="flex h-full">
+            {/* Dynamiczne submenu z otwartymi assessmentami */}
+            <div className="w-56 shrink-0 border-r border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950/50 hidden lg:flex flex-col">
+              <div className="px-3 py-3 border-b border-slate-200 dark:border-navy-700">
+                <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                  Otwarte assessmenty
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1">
+                {openAssessments.length === 0 ? (
+                  <div className="text-xs text-slate-400 dark:text-slate-500 px-2 py-2">
+                    Brak aktywnych assessmentow
+                  </div>
+                ) : (
+                  openAssessments.map((item) => {
+                    const isActive = item.id === selectedAssessmentId;
+                    return (
+                      <div
+                        key={item.id}
+                        className={`flex items-center justify-between gap-2 px-2 py-2 rounded-md text-xs transition-colors ${
+                          isActive
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+                        }`}
+                      >
+                        <button
+                          className="flex-1 text-left truncate"
+                          onClick={() => handleSelectOpenAssessment(item.id)}
+                          title={item.name}
+                        >
+                          {item.name}
+                        </button>
+                        <button
+                          className={`p-1 rounded ${
+                            isActive
+                              ? 'hover:bg-white/20'
+                              : 'hover:bg-slate-200 dark:hover:bg-white/10'
+                          }`}
+                          onClick={() => handleCloseOpenAssessment(item.id)}
+                          title="Zamknij"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Workspace */}
+            <div className="flex-1 overflow-hidden">{content}</div>
+          </div>
+        );
+
         // Map shows either Dashboard or specific Axis Workspace
         if (framework === 'DRD') {
           // Get assessment data from store
@@ -639,7 +754,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
             const handleAxisNavigate = (axis: DRDAxis) => {
               setSelectedAxis(axis);
             };
-            return (
+            const dashboard = (
               <AssessmentSummaryWorkspace
                 assessment={assessmentData}
                 onNavigate={handleAxisNavigate}
@@ -648,6 +763,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                 onNameChange={handleNameChange}
               />
             );
+            return renderMapWithSidebar(dashboard);
           }
 
           // Otherwise show the specific axis workspace
@@ -673,7 +789,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
             }
           };
 
-          return (
+          const axisWorkspace = (
             <AssessmentAxisWorkspace
               axis={selectedAxis as DRDAxis}
               data={axisData}
@@ -688,9 +804,10 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
               assessmentId={selectedAssessmentId || undefined}
             />
           );
+          return renderMapWithSidebar(axisWorkspace);
         }
 
-        return (
+        const frameworkMap = (
           <React.Suspense fallback={<FallbackLoader />}>
             {/* SIRI Assessment Map */}
             {framework === 'SIRI' && (
@@ -744,6 +861,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
             )}
           </React.Suspense>
         );
+        return renderMapWithSidebar(frameworkMap);
 
       case 'reports': {
         // Get active document if it's a report
@@ -754,12 +872,12 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
         // If a report is selected and we're not in list view, show the full Report Builder
         if (activeReport && !showListView) {
           return (
-            <React.Suspense fallback={<FallbackLoader />}>
-              <ReportBuilderWorkspace
-                reportId={activeReport.id}
-                onClose={() => handleCloseDocument(activeReport.id)}
-              />
-            </React.Suspense>
+            <ReportEditor
+              reportId={activeReport.id}
+              onClose={() => handleCloseDocument(activeReport.id)}
+              onSaved={() => {}}
+              onFinalized={() => {}}
+            />
           );
         }
 
@@ -1017,6 +1135,24 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
           />
         )}
 
+        {/* Initiatives Drawer Toggle */}
+        {activeTab === 'map' && (
+          <div className="shrink-0 bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700 px-4 py-2 flex justify-end">
+            <button
+              onClick={() => setIsInitiativesDrawerOpen((prev) => !prev)}
+              disabled={!selectedAssessmentId}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                selectedAssessmentId
+                  ? 'bg-amber-500 text-white hover:bg-amber-400'
+                  : 'bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+              }`}
+            >
+              <Lightbulb size={14} />
+              Initiatives drawer
+            </button>
+          </div>
+        )}
+
         {/* Document Tabs Bar - visible for Reports and Initiatives tabs when documents are open */}
         {(activeTab === 'reports' || activeTab === 'initiatives') && (
           <DocumentTabsBar
@@ -1127,7 +1263,16 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
         )}
 
         {/* Content Area */}
-        <div className="flex-1 overflow-hidden momentum-scroll">{renderContent()}</div>
+        <div className="flex-1 overflow-hidden relative">
+          {renderContent()}
+          <AssessmentInitiativesDrawer
+            isOpen={isInitiativesDrawerOpen}
+            onClose={() => setIsInitiativesDrawerOpen(false)}
+            projectId={currentProjectId || ''}
+            assessmentId={selectedAssessmentId}
+            framework={framework}
+          />
+        </div>
 
         {/* Version History Panel */}
         {selectedAssessmentId && (

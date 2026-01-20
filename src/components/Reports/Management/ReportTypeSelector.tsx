@@ -4,6 +4,7 @@
  */
 
 import {
+  AlertTriangle,
   Briefcase,
   Building2,
   Calendar,
@@ -50,7 +51,15 @@ const reportTypeOptions = [
     id: 'TEAM_MEETING' as ManagementReportType,
     icon: Users,
     title: 'Team Meeting Report',
-    description: 'Weekly status for project team synchronization',
+    description: 'Checkpoint-style status for project teams',
+    defaultPeriod: 7,
+    prince2: 'Checkpoint Report',
+  },
+  {
+    id: 'TEAM_WEEKLY' as ManagementReportType,
+    icon: Users,
+    title: 'Team Weekly Report',
+    description: 'Weekly delivery summary with blockers and priorities',
     defaultPeriod: 7,
     prince2: 'Checkpoint Report',
   },
@@ -62,14 +71,28 @@ const reportTypeOptions = [
     defaultPeriod: 30,
     prince2: 'Highlight Report',
   },
+  {
+    id: 'PORTFOLIO_HEALTH' as ManagementReportType,
+    icon: Briefcase,
+    title: 'Portfolio Health Report',
+    description: 'Portfolio-level health, RAG, and escalation view',
+    defaultPeriod: 30,
+    prince2: 'Portfolio Review',
+  },
+  {
+    id: 'RAID' as ManagementReportType,
+    icon: AlertTriangle,
+    title: 'Risk, Assumptions, Issues, Dependencies',
+    description: 'Consolidated RAID reporting for governance',
+    defaultPeriod: 30,
+    prince2: 'Risk Register Summary',
+  },
 ];
 
 const periodOptions = [
   { value: 7, label: 'Last 7 days' },
-  { value: 14, label: 'Last 14 days' },
   { value: 30, label: 'Last 30 days' },
-  { value: 60, label: 'Last 60 days' },
-  { value: 90, label: 'Last 90 days' },
+  { value: 90, label: 'Last quarter (90 days)' },
 ];
 
 const teamMeetingSections: SectionConfig[] = [
@@ -88,6 +111,26 @@ const steeringCommitteeSections: SectionConfig[] = [
   { id: 'risksAndIssues', name: 'Risks & Issues', required: false },
   { id: 'decisionsRequired', name: 'Decisions Required', required: true },
   { id: 'forecast', name: 'Forecast & Milestones', required: false },
+];
+
+const portfolioHealthSections: SectionConfig[] = [
+  { id: 'executiveSummary', name: 'Executive Summary', required: true },
+  { id: 'portfolioOverview', name: 'Portfolio Overview', required: true },
+  { id: 'healthDrivers', name: 'Health Drivers', required: false },
+  { id: 'benefitsSnapshot', name: 'Benefits Snapshot', required: false },
+  { id: 'economicsSnapshot', name: 'Economic Outcomes', required: false },
+  { id: 'risksAndIssues', name: 'Risks & Issues', required: false },
+  { id: 'decisionsRequired', name: 'Decisions Required', required: true },
+  { id: 'nextPeriodPriorities', name: 'Next Period Priorities', required: false },
+];
+
+const raidSections: SectionConfig[] = [
+  { id: 'executiveSummary', name: 'Executive Summary', required: true },
+  { id: 'risks', name: 'Risks', required: true },
+  { id: 'assumptions', name: 'Assumptions', required: false },
+  { id: 'issues', name: 'Issues', required: true },
+  { id: 'dependencies', name: 'Dependencies', required: false },
+  { id: 'decisionsRequired', name: 'Decisions Required', required: false },
 ];
 
 export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
@@ -109,7 +152,16 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
 
   // Get sections based on report type
   const availableSections = useMemo(() => {
-    return reportType === 'TEAM_MEETING' ? teamMeetingSections : steeringCommitteeSections;
+    if (reportType === 'TEAM_MEETING' || reportType === 'TEAM_WEEKLY') {
+      return teamMeetingSections;
+    }
+    if (reportType === 'PORTFOLIO_HEALTH') {
+      return portfolioHealthSections;
+    }
+    if (reportType === 'RAID') {
+      return raidSections;
+    }
+    return steeringCommitteeSections;
   }, [reportType]);
 
   // Calculate enabled sections (all enabled by default except those in excludeSections)

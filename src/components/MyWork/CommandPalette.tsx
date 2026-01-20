@@ -305,10 +305,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
   // Fetch pending decisions for quick actions
   useEffect(() => {
     if (isOpen) {
-      Api.get('/decisions?status=PENDING&limit=5')
+      Api.get('/decisions?limit=5')
         .then((res) => {
           if (Array.isArray(res)) {
-            setPendingDecisions(res);
+            setPendingDecisions(
+              res.filter((d) => ['PENDING', 'ESCALATED'].includes(d.status))
+            );
           }
         })
         .catch(() => {});

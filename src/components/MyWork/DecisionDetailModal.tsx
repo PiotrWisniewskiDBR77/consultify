@@ -274,7 +274,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                           {decision.priority}
                         </span>
                       )}
-                      {decision.status !== 'PENDING' && (
+                      {decision.status !== 'PENDING' && decision.status !== 'ESCALATED' && (
                         <span
                           className={`text-xs px-2 py-0.5 rounded font-medium ${
                             decision.status === 'APPROVED'
@@ -282,6 +282,11 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                               : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
                           }`}
                         >
+                          {decision.status}
+                        </span>
+                      )}
+                      {decision.status === 'ESCALATED' && (
+                        <span className="text-xs px-2 py-0.5 rounded font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
                           {decision.status}
                         </span>
                       )}
@@ -464,7 +469,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
               </div>
 
               {/* Footer - Decision Actions (only for owner and pending status) */}
-              {isOwner && decision.status === 'PENDING' && (
+              {isOwner && ['PENDING', 'ESCALATED'].includes(decision.status) && (
                 <div className="shrink-0 p-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50 space-y-3">
                   {/* Outcome textarea */}
                   <div>
@@ -516,7 +521,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
               )}
 
               {/* Read-only footer for non-owners */}
-              {(!isOwner || decision.status !== 'PENDING') && (
+              {(!isOwner || !['PENDING', 'ESCALATED'].includes(decision.status)) && (
                 <div className="shrink-0 p-4 border-t border-slate-200 dark:border-navy-700 flex justify-end">
                   <button
                     onClick={onClose}

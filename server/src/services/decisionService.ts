@@ -27,7 +27,7 @@ export interface Decision {
   criteria?: string;
   deadline?: string;
   escalationDeadline?: string;
-  status: 'pending' | 'made' | 'escalated' | 'expired' | 'cancelled';
+  status: 'pending' | 'approved' | 'rejected' | 'escalated' | 'expired' | 'cancelled';
   selectedOption?: string;
   decisionRationale?: string;
   decidedAt?: string;
@@ -226,15 +226,19 @@ class DecisionService {
       throw new Error(`Cannot make decision in status: ${decision.status}`);
     }
 
+    const normalizedOption = input.selectedOption.toLowerCase();
+    const nextStatus =
+      normalizedOption === 'reject' || normalizedOption === 'no-go' ? 'rejected' : 'approved';
+
     await db.run(
       `UPDATE decisions SET
-                status = 'made',
+                status = ?,
                 selected_option = ?,
                 decision_rationale = ?,
                 decided_at = ?,
                 updated_at = ?
              WHERE id = ?`,
-      [input.selectedOption, input.rationale || null, now, now, input.decisionId]
+      [nextStatus, input.selectedOption, input.rationale || null, now, now, input.decisionId]
     );
 
     // Record history
@@ -242,7 +246,7 @@ class DecisionService {
       input.decisionId,
       'decided',
       decision.status,
-      'made',
+      nextStatus,
       input.decidedBy,
       {
         selectedOption: input.selectedOption,

@@ -347,7 +347,10 @@ async function checkNoBlockingDecisions(projectId: string): Promise<boolean> {
   try {
     const row = await DbPromise.get<{ cnt: number }>(
       db,
-      `SELECT COUNT(*) as cnt FROM decisions WHERE project_id = ? AND status = 'PENDING' AND required = 1`,
+      `SELECT COUNT(*) as cnt FROM decisions 
+       WHERE project_id = ? 
+       AND status IN ('pending', 'escalated')
+       AND (required = 1 OR type IN ('INITIATIVE_APPROVAL', 'PHASE_TRANSITION', 'EXECUTION'))`,
       [projectId]
     );
     return row ? row.cnt === 0 : true;

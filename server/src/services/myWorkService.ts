@@ -211,7 +211,7 @@ class MyWorkService {
       deadline: string;
     }>(
       `SELECT id, title, deadline FROM decisions 
-             WHERE decision_maker_id = ? AND organization_id = ? AND status = 'pending'
+             WHERE decision_maker_id = ? AND organization_id = ? AND status IN ('pending', 'escalated')
              ORDER BY deadline ASC LIMIT 2`,
       [userId, orgId]
     );
@@ -358,7 +358,7 @@ class MyWorkService {
       `SELECT d.id, d.title, d.type, d.deadline, d.status, d.decision_maker_id
              FROM decisions d
              WHERE d.created_by = ? AND d.organization_id = ? 
-             AND d.decision_maker_id != ? AND d.status = 'pending'
+             AND d.decision_maker_id != ? AND d.status IN ('pending', 'escalated')
              ORDER BY d.deadline ASC`,
       [userId, orgId, userId]
     );

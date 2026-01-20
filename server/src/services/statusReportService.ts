@@ -340,7 +340,7 @@ export class StatusReportService {
       `
             SELECT COUNT(*) as pending
             FROM decisions 
-            WHERE related_object_id = ? AND status = 'PENDING'
+            WHERE initiative_id = ? AND status IN ('pending', 'escalated')
         `,
       [initiativeId]
     )) || { pending: 0 };

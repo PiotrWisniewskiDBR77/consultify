@@ -700,7 +700,7 @@ router.get(
       }
 
       const profile = await userStyleProfileService.getProfile(userId);
-      const patterns = await userStyleProfileService.getLearnedPatterns?.(userId) || [];
+      const patterns = (await userStyleProfileService.getLearnedPatterns?.(userId)) || [];
 
       res.json({
         success: true,

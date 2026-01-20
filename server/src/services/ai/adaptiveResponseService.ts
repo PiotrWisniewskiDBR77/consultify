@@ -17,9 +17,9 @@ import { getDatabase } from '../../database/Database.js';
 import type { IDatabase } from '../../database/IDatabase.js';
 import logger from '../../utils/Logger.js';
 import userStyleProfileService, {
+  type ContextPreference,
   type FeedbackData,
   type UserStyleProfile,
-  type ContextPreference,
 } from './userStyleProfileService.js';
 
 // ==========================================
@@ -28,7 +28,15 @@ import userStyleProfileService, {
 
 export interface ScreenContext {
   screenId: string;
-  screenType?: 'task_detail' | 'initiative_detail' | 'dashboard' | 'assessment' | 'roadmap' | 'chat_full' | 'settings' | string;
+  screenType?:
+    | 'task_detail'
+    | 'initiative_detail'
+    | 'dashboard'
+    | 'assessment'
+    | 'roadmap'
+    | 'chat_full'
+    | 'settings'
+    | string;
   selectedObjectId?: string;
   selectedObjectType?: string;
   projectId?: string;
@@ -118,7 +126,9 @@ class AdaptiveResponseService {
         contextualInstructions,
       };
 
-      logger.info(`[AdaptiveResponseService] Config for user ${userId}: format=${config.format}, length=${config.length}`);
+      logger.info(
+        `[AdaptiveResponseService] Config for user ${userId}: format=${config.format}, length=${config.length}`
+      );
 
       return config;
     } catch (error) {
@@ -138,7 +148,10 @@ class AdaptiveResponseService {
   /**
    * Build contextual instructions based on screen context
    */
-  private buildContextualInstructions(context: ScreenContext | undefined, profile: UserStyleProfile): string[] {
+  private buildContextualInstructions(
+    context: ScreenContext | undefined,
+    profile: UserStyleProfile
+  ): string[] {
     const instructions: string[] = [];
 
     if (!context) return instructions;
@@ -176,7 +189,9 @@ class AdaptiveResponseService {
       case 'chat_full':
         // Full chat mode - use user's general preferences
         if (profile.preferredFocusModes.length > 0) {
-          instructions.push(`User commonly uses these focus modes: ${profile.preferredFocusModes.join(', ')}`);
+          instructions.push(
+            `User commonly uses these focus modes: ${profile.preferredFocusModes.join(', ')}`
+          );
         }
         break;
     }
@@ -255,7 +270,9 @@ class AdaptiveResponseService {
         formatFeedback: feedback.formatFeedback?.replace('-', '_') as any,
       });
 
-      logger.info(`[AdaptiveResponseService] Feedback processed: ${feedbackId} (${feedback.rating})`);
+      logger.info(
+        `[AdaptiveResponseService] Feedback processed: ${feedbackId} (${feedback.rating})`
+      );
 
       return { feedbackId };
     } catch (error) {

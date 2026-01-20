@@ -1,9 +1,9 @@
 /**
  * useDemoSession Hook
- * 
+ *
  * Enterprise-grade demo session lifecycle management.
  * Handles session timing, milestone tracking, and conversion optimization.
- * 
+ *
  * BCG/McKinsey class experience - designed to maximize:
  * - Demo Start Rate (>40%)
  * - Tour Completion (>60%)
@@ -32,17 +32,17 @@ export interface DemoSessionState {
   sessionStartTime: Date | null;
   sessionDurationMs: number;
   timeRemainingMs: number;
-  
+
   // Lifecycle stages
   hasCompletedTour: boolean;
   hasSeenWelcome: boolean;
   hasInteractedWithAI: boolean;
   featuresExplored: string[];
-  
+
   // Conversion tracking
   upgradePromptsShown: number;
   exitIntentTriggered: boolean;
-  
+
   // Milestones
   milestones: DemoMilestone[];
 }
@@ -52,18 +52,18 @@ export interface DemoSessionActions {
   startDemoSession: () => void;
   endDemoSession: () => void;
   extendSession: () => void;
-  
+
   // Progress tracking
   markTourCompleted: () => void;
   markWelcomeSeen: () => void;
   markAIInteraction: () => void;
   trackFeatureExplored: (featureId: string) => void;
   addMilestone: (id: string, name: string, metadata?: Record<string, unknown>) => void;
-  
+
   // Conversion
   incrementUpgradePrompts: () => void;
   markExitIntent: () => void;
-  
+
   // Analytics
   getSessionAnalytics: () => DemoAnalytics;
 }
@@ -139,50 +139,52 @@ const generateSessionId = (): string => {
 
 export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
   const { currentUser } = useAppStore();
-  
+
   // Determine if user is in demo mode
   const isDemo = useMemo(() => {
-    return currentUser?.isDemo === true || 
-           currentUser?.email === 'demo@legolex.com' ||
-           sessionStorage.getItem('isDemo') === 'true';
+    return (
+      currentUser?.isDemo === true ||
+      currentUser?.email === 'demo@legolex.com' ||
+      sessionStorage.getItem('isDemo') === 'true'
+    );
   }, [currentUser]);
-  
+
   // Session state
   const [sessionId, setSessionId] = useState<string>('');
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
   const [sessionDurationMs, setSessionDurationMs] = useState(0);
   const [timeRemainingMs, setTimeRemainingMs] = useState(DEMO_SESSION_DURATION_MS);
-  
+
   // Progress tracking
   const [hasCompletedTour, setHasCompletedTour] = useState(false);
   const [hasSeenWelcome, setHasSeenWelcome] = useState(false);
   const [hasInteractedWithAI, setHasInteractedWithAI] = useState(false);
   const [featuresExplored, setFeaturesExplored] = useState<string[]>([]);
-  
+
   // Conversion tracking
   const [upgradePromptsShown, setUpgradePromptsShown] = useState(0);
   const [exitIntentTriggered, setExitIntentTriggered] = useState(false);
-  
+
   // Milestones
   const [milestones, setMilestones] = useState<DemoMilestone[]>([]);
-  
+
   // Timer ref
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // --------------------------------------------------------
   // INITIALIZATION
   // --------------------------------------------------------
-  
+
   useEffect(() => {
     if (!isDemo) return;
-    
+
     // Try to restore existing session
     const stored = loadStoredSession();
-    
+
     if (stored) {
       const startTime = new Date(stored.startTime);
       const elapsed = Date.now() - startTime.getTime();
-      
+
       // Check if session is still valid
       if (elapsed < DEMO_SESSION_DURATION_MS) {
         setSessionId(stored.sessionId);
@@ -202,15 +204,15 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
         clearStoredSession();
       }
     }
-    
+
     // Start new session
     const newSessionId = generateSessionId();
     const newStartTime = new Date();
-    
+
     setSessionId(newSessionId);
     setSessionStartTime(newStartTime);
     setTimeRemainingMs(DEMO_SESSION_DURATION_MS);
-    
+
     saveSession({
       sessionId: newSessionId,
       startTime: newStartTime.toISOString(),
@@ -220,50 +222,51 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
       featuresExplored: [],
       upgradePromptsShown: 0,
       exitIntentTriggered: false,
-      milestones: [{
-        id: 'session_start',
-        name: 'Demo Session Started',
-        timestamp: Date.now(),
-      }],
+      milestones: [
+        {
+          id: 'session_start',
+          name: 'Demo Session Started',
+          timestamp: Date.now(),
+        },
+      ],
     });
-    
+
     // Track demo start
     trackDemoEvent('demo_session_started', { sessionId: newSessionId });
-    
   }, [isDemo]);
-  
+
   // --------------------------------------------------------
   // TIMER
   // --------------------------------------------------------
-  
+
   useEffect(() => {
     if (!isDemo || !sessionStartTime) return;
-    
+
     const updateTimer = () => {
       const elapsed = Date.now() - sessionStartTime.getTime();
       const remaining = Math.max(0, DEMO_SESSION_DURATION_MS - elapsed);
-      
+
       setSessionDurationMs(elapsed);
       setTimeRemainingMs(remaining);
     };
-    
+
     updateTimer();
     timerRef.current = setInterval(updateTimer, 1000);
-    
+
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
     };
   }, [isDemo, sessionStartTime]);
-  
+
   // --------------------------------------------------------
   // PERSISTENCE
   // --------------------------------------------------------
-  
+
   useEffect(() => {
     if (!isDemo || !sessionId) return;
-    
+
     saveSession({
       sessionId,
       startTime: sessionStartTime?.toISOString() || new Date().toISOString(),
@@ -287,25 +290,31 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
     exitIntentTriggered,
     milestones,
   ]);
-  
+
   // --------------------------------------------------------
   // ACTIONS
   // --------------------------------------------------------
-  
+
   // Define addMilestone first since other callbacks depend on it
-  const addMilestone = useCallback((id: string, name: string, metadata?: Record<string, unknown>) => {
-    setMilestones(prev => [...prev, {
-      id,
-      name,
-      timestamp: Date.now(),
-      metadata,
-    }]);
-  }, []);
-  
+  const addMilestone = useCallback(
+    (id: string, name: string, metadata?: Record<string, unknown>) => {
+      setMilestones((prev) => [
+        ...prev,
+        {
+          id,
+          name,
+          timestamp: Date.now(),
+          metadata,
+        },
+      ]);
+    },
+    []
+  );
+
   const startDemoSession = useCallback(() => {
     const newSessionId = generateSessionId();
     const newStartTime = new Date();
-    
+
     setSessionId(newSessionId);
     setSessionStartTime(newStartTime);
     setTimeRemainingMs(DEMO_SESSION_DURATION_MS);
@@ -315,15 +324,17 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
     setFeaturesExplored([]);
     setUpgradePromptsShown(0);
     setExitIntentTriggered(false);
-    setMilestones([{
-      id: 'session_start',
-      name: 'Demo Session Started',
-      timestamp: Date.now(),
-    }]);
-    
+    setMilestones([
+      {
+        id: 'session_start',
+        name: 'Demo Session Started',
+        timestamp: Date.now(),
+      },
+    ]);
+
     trackDemoEvent('demo_session_started', { sessionId: newSessionId });
   }, []);
-  
+
   const endDemoSession = useCallback(() => {
     trackDemoEvent('demo_session_ended', {
       sessionId,
@@ -331,36 +342,36 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
       tourCompleted: hasCompletedTour,
       featuresExploredCount: featuresExplored.length,
     });
-    
+
     clearStoredSession();
-    
+
     setSessionId('');
     setSessionStartTime(null);
     setSessionDurationMs(0);
     setTimeRemainingMs(0);
   }, [sessionId, sessionDurationMs, hasCompletedTour, featuresExplored]);
-  
+
   const extendSession = useCallback(() => {
     if (sessionStartTime) {
       const newStartTime = new Date();
       setSessionStartTime(newStartTime);
       setTimeRemainingMs(DEMO_SESSION_DURATION_MS);
-      
+
       addMilestone('session_extended', 'Session Extended');
       trackDemoEvent('demo_session_extended', { sessionId });
     }
   }, [sessionStartTime, sessionId, addMilestone]);
-  
+
   const markTourCompleted = useCallback(() => {
     setHasCompletedTour(true);
     addMilestone('tour_completed', 'Onboarding Tour Completed');
     trackDemoEvent('demo_tour_completed', { sessionId });
   }, [sessionId, addMilestone]);
-  
+
   const markWelcomeSeen = useCallback(() => {
     setHasSeenWelcome(true);
   }, []);
-  
+
   const markAIInteraction = useCallback(() => {
     if (!hasInteractedWithAI) {
       setHasInteractedWithAI(true);
@@ -368,36 +379,39 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
       trackDemoEvent('demo_first_ai_interaction', { sessionId });
     }
   }, [hasInteractedWithAI, sessionId, addMilestone]);
-  
-  const trackFeatureExplored = useCallback((featureId: string) => {
-    setFeaturesExplored(prev => {
-      if (prev.includes(featureId)) return prev;
-      const updated = [...prev, featureId];
-      
-      // Track milestone for first 3 features
-      if (updated.length === 3) {
-        addMilestone('features_explored_3', '3 Features Explored');
-      }
-      if (updated.length === 5) {
-        addMilestone('features_explored_5', '5 Features Explored');
-      }
-      
-      trackDemoEvent('demo_feature_explored', { sessionId, featureId });
-      return updated;
-    });
-  }, [sessionId, addMilestone]);
-  
+
+  const trackFeatureExplored = useCallback(
+    (featureId: string) => {
+      setFeaturesExplored((prev) => {
+        if (prev.includes(featureId)) return prev;
+        const updated = [...prev, featureId];
+
+        // Track milestone for first 3 features
+        if (updated.length === 3) {
+          addMilestone('features_explored_3', '3 Features Explored');
+        }
+        if (updated.length === 5) {
+          addMilestone('features_explored_5', '5 Features Explored');
+        }
+
+        trackDemoEvent('demo_feature_explored', { sessionId, featureId });
+        return updated;
+      });
+    },
+    [sessionId, addMilestone]
+  );
+
   const incrementUpgradePrompts = useCallback(() => {
-    setUpgradePromptsShown(prev => prev + 1);
+    setUpgradePromptsShown((prev) => prev + 1);
   }, []);
-  
+
   const markExitIntent = useCallback(() => {
     if (!exitIntentTriggered) {
       setExitIntentTriggered(true);
       trackDemoEvent('demo_exit_intent', { sessionId });
     }
   }, [exitIntentTriggered, sessionId]);
-  
+
   const getSessionAnalytics = useCallback((): DemoAnalytics => {
     return {
       sessionId,
@@ -419,7 +433,7 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
     exitIntentTriggered,
     milestones,
   ]);
-  
+
   return {
     // State
     isDemo,
@@ -433,7 +447,7 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
     upgradePromptsShown,
     exitIntentTriggered,
     milestones,
-    
+
     // Actions
     startDemoSession,
     endDemoSession,
@@ -456,19 +470,19 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
 const trackDemoEvent = (eventName: string, data: Record<string, unknown>) => {
   // Console log for debugging
   console.log(`[DemoAnalytics] ${eventName}`, data);
-  
+
   // Integration with analytics (if available)
   try {
     // Google Analytics 4
     if (typeof window !== 'undefined' && (window as any).gtag) {
       (window as any).gtag('event', eventName, data);
     }
-    
+
     // Custom analytics
     if (typeof window !== 'undefined' && (window as any).journeyAnalytics) {
       (window as any).journeyAnalytics.trackMilestone?.(eventName, data);
     }
-    
+
     // Store in session for retrieval
     try {
       const events = JSON.parse(sessionStorage.getItem('demo_events') || '[]');
