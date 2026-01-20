@@ -22,7 +22,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
-import { useDocsCategories } from '@/hooks/useDocs';
+import { KbCategory, useDocsCategories } from '@/hooks/useDocs';
 import { cn } from '@/lib/utils';
 
 interface DocsLayoutProps {
@@ -203,7 +203,7 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
                                 Overview
                             </Link>
 
-                            {categories?.map((category) => (
+                            {categories?.map((category: KbCategory) => (
                                 <Link
                                     key={category.id}
                                     to={`/docs/${category.slug}`}
@@ -254,7 +254,7 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
                                             Overview
                                         </Link>
 
-                                        {categories?.map((category) => (
+                                        {categories?.map((category: KbCategory) => (
                                             <Link
                                                 key={category.id}
                                                 to={`/docs/${category.slug}`}

@@ -43,7 +43,9 @@ const PhaseIndicator: React.FC<{ currentPhase: DiscoveryPhase }> = ({ currentPha
             >
               {isPast && <span className="text-green-500">✓</span>}
               {isActive && <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />}
-              <span className="hidden md:inline">{t(`discovery.phases.${phase}`, config?.title)}</span>
+              <span className="hidden md:inline">
+                {t(`discovery.phases.${phase}`, config?.title ?? phase)}
+              </span>
               <span className="md:hidden">{index + 1}</span>
             </div>
             {index < mainPhases.length - 1 && (

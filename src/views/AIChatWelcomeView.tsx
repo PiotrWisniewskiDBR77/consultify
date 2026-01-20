@@ -707,27 +707,34 @@ For example: REMEMBER: preferred_language: Polish`;
           {pendingActions.length > 0 && (
             <div className="shrink-0 p-3 bg-yellow-50 dark:bg-yellow-900/20 border-t border-yellow-200 dark:border-yellow-800">
               <div className="max-w-3xl mx-auto">
-                {pendingActions.map((pa) => (
-                  <div key={pa.actionId} className="flex items-center justify-between text-sm">
+                {pendingActions.map((pa) => {
+                  const message =
+                    typeof pa.payload?.message === 'string'
+                      ? pa.payload.message
+                      : t('aiChat.pendingAction', 'Action requires confirmation');
+
+                  return (
+                    <div key={pa.id} className="flex items-center justify-between text-sm">
                     <span className="text-yellow-800 dark:text-yellow-200">
-                      🔔 {pa.confirmationMessage}
+                      🔔 {message}
                     </span>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handleConfirmPendingAction(pa.actionId, true)}
+                        onClick={() => handleConfirmPendingAction(pa.id, true)}
                         className="px-3 py-1 bg-green-500 text-white rounded-md text-xs hover:bg-green-600"
                       >
                         Potwierdź
                       </button>
                       <button
-                        onClick={() => handleConfirmPendingAction(pa.actionId, false)}
+                        onClick={() => handleConfirmPendingAction(pa.id, false)}
                         className="px-3 py-1 bg-red-500 text-white rounded-md text-xs hover:bg-red-600"
                       >
                         Anuluj
                       </button>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

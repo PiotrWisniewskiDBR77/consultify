@@ -3,12 +3,13 @@ import { useCallback, useRef, useState } from 'react';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { parseArtifactsFromResponse, useArtifactsStore } from '@/store/useArtifactsStore';
+import type { Artifact, ThinkingStep } from '@/types';
 
 type StreamOptions = {
-  onStreamDone?: (fullText: string, thinking: unknown[], artifacts: unknown[]) => void;
+  onStreamDone?: (fullText: string, thinking: ThinkingStep[], artifacts: Artifact[]) => void;
   onStreamError?: (error: Error) => void;
-  onThinkingUpdate?: (steps: unknown[]) => void;
-  onArtifactDetected?: (artifact: unknown) => void;
+  onThinkingUpdate?: (steps: ThinkingStep[]) => void;
+  onArtifactDetected?: (artifact: Artifact) => void;
 };
 
 type PartialResponse = {
@@ -28,8 +29,8 @@ export const useAIStream = (options: StreamOptions = {}) => {
 
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamedContent, setStreamedContent] = useState('');
-  const [thinkingSteps, setThinkingSteps] = useState<unknown[]>([]);
-  const [artifacts, setArtifacts] = useState<unknown[]>([]);
+  const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
+  const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [progress, setProgress] = useState(0);
   const abortRef = useRef({ aborted: false });
 
@@ -57,7 +58,7 @@ export const useAIStream = (options: StreamOptions = {}) => {
       resetStreamState();
 
       let fullText = '';
-      const currentThinking: unknown[] = [];
+      const currentThinking: ThinkingStep[] = [];
       let step = 0;
 
       const handleChunk = (chunk: string) => {
@@ -68,7 +69,13 @@ export const useAIStream = (options: StreamOptions = {}) => {
           thinkingMatches.forEach((match) => {
             const content = match[1]?.trim();
             if (content) {
-              currentThinking.push({ id: `${Date.now()}-${currentThinking.length}`, content });
+              currentThinking.push({
+                id: `${Date.now()}-${currentThinking.length}`,
+                label: 'Reasoning',
+                content,
+                status: 'done',
+                timestamp: new Date(),
+              });
             }
           });
 

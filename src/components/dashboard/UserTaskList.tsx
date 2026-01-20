@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { Api } from '../../services/api';
-import { AppView, Task, TaskStatus } from '../../types';
+import { AppView, Task, TaskStatus, User } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { TaskDetailModal } from '../TaskDetailModal';
 
@@ -10,7 +10,10 @@ interface UserTaskListProps {
 }
 
 export const UserTaskList: React.FC<UserTaskListProps> = ({ onNavigate }) => {
-  const currentUser = useAppStore((state) => state.currentUser);
+  const { currentUser, currentProjectId } = useAppStore((state) => ({
+    currentUser: state.currentUser,
+    currentProjectId: state.currentProjectId,
+  }));
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -32,9 +35,22 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ onNavigate }) => {
   }, [fetchTasks]);
 
   const handleSaveTask = async (payload: Partial<Task>) => {
+    if (!currentProjectId) {
+      setShowModal(false);
+      return;
+    }
+
     try {
+      const title = payload.title?.trim() || 'Untitled task';
+      const stepPhase =
+        payload.stepPhase && ['design', 'pilot', 'rollout'].includes(payload.stepPhase)
+          ? (payload.stepPhase as 'design' | 'pilot' | 'rollout')
+          : undefined;
       await Api.createTask({
         ...payload,
+        projectId: currentProjectId,
+        title,
+        stepPhase,
         assigneeId: currentUser?.id,
       });
       setShowModal(false);
@@ -120,11 +136,24 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ onNavigate }) => {
         </p>
       </div>
 
-      <TaskDetailModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onSave={handleSaveTask}
-      />
+      {currentUser && (
+        <TaskDetailModal
+          task={{
+            id: 'new-task',
+            projectId: currentProjectId || '',
+            title: '',
+            type: 'task',
+            status: 'todo',
+            priority: 'medium',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }}
+          currentUser={currentUser as User}
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onSave={(task) => handleSaveTask(task)}
+        />
+      )}
     </div>
   );
 };

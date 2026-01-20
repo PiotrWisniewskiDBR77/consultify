@@ -18,6 +18,7 @@ import { ADMAAssessmentData } from '../services/admaStructure';
 import { CMMIAssessmentData } from '../services/cmmiStructure';
 import { DBR77AssessmentData } from '../services/dbr77LeanStructure';
 import { SIRIAssessmentData } from '../services/siriStructure';
+import type { AxisAssessment, DRDAxis } from '../types';
 
 // ============================================
 // TYPES
@@ -53,6 +54,7 @@ export interface MultiFrameworkState {
   activeMetadata: AssessmentMetadata | null;
 
   // Framework-specific data
+  drdData: Partial<Record<DRDAxis, AxisAssessment>> | null;
   siriData: SIRIAssessmentData | null;
   admaData: ADMAAssessmentData | null;
   cmmiData: CMMIAssessmentData | null;
@@ -72,6 +74,7 @@ export interface MultiFrameworkState {
 export interface MultiFrameworkActions {
   // Framework data setters
   setFrameworkData: (framework: AssessmentFramework, data: any) => void;
+  setDRDData: (data: Partial<Record<DRDAxis, AxisAssessment>>) => void;
   setSIRIData: (data: Partial<SIRIAssessmentData>) => void;
   setADMAData: (data: Partial<ADMAAssessmentData>) => void;
   setCMMIData: (data: Partial<CMMIAssessmentData>) => void;
@@ -104,6 +107,7 @@ export interface MultiFrameworkActions {
 
   // Utility
   getActiveData: () =>
+    | Partial<Record<DRDAxis, AxisAssessment>>
     | SIRIAssessmentData
     | ADMAAssessmentData
     | CMMIAssessmentData
@@ -122,6 +126,7 @@ const initialState: MultiFrameworkState = {
   activeAssessmentId: null,
   activeFramework: null,
   activeMetadata: null,
+  drdData: null,
   siriData: null,
   admaData: null,
   cmmiData: null,
@@ -150,6 +155,9 @@ export const useMultiFrameworkStore = create<MultiFrameworkStore>()(
       setFrameworkData: (framework: AssessmentFramework, data: any) => {
         set((state) => {
           switch (framework) {
+            case 'DRD':
+              state.drdData = data;
+              break;
             case 'SIRI':
               state.siriData = data;
               break;
@@ -163,6 +171,13 @@ export const useMultiFrameworkStore = create<MultiFrameworkStore>()(
               state.leanData = data;
               break;
           }
+          state.isDirty = true;
+        });
+      },
+
+      setDRDData: (data: Partial<Record<DRDAxis, AxisAssessment>>) => {
+        set((state) => {
+          state.drdData = { ...(state.drdData || {}), ...data };
           state.isDirty = true;
         });
       },
@@ -520,6 +535,7 @@ export const useMultiFrameworkStore = create<MultiFrameworkStore>()(
           state.activeAssessmentId = null;
           state.activeFramework = null;
           state.activeMetadata = null;
+          state.drdData = null;
           state.siriData = null;
           state.admaData = null;
           state.cmmiData = null;
@@ -539,6 +555,8 @@ export const useMultiFrameworkStore = create<MultiFrameworkStore>()(
       getActiveData: () => {
         const state = get();
         switch (state.activeFramework) {
+          case 'DRD':
+            return state.drdData;
           case 'SIRI':
             return state.siriData;
           case 'ADMA':

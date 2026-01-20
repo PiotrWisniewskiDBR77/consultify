@@ -18,7 +18,7 @@ import {
 import React, { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
-import { useDocsArticles, useDocsCategories } from '@/hooks/useDocs';
+import { KbArticleListItem, KbCategory, useDocsArticles, useDocsCategories } from '@/hooks/useDocs';
 import { cn } from '@/lib/utils';
 
 export const DocsCategoryView: React.FC = () => {
@@ -31,8 +31,8 @@ export const DocsCategoryView: React.FC = () => {
         search: searchQuery || undefined,
     });
 
-    const currentCategory = categories?.find((c) => c.slug === categorySlug);
-    const articles = articlesData?.articles || [];
+    const currentCategory = (categories || []).find((c: KbCategory) => c.slug === categorySlug);
+    const articles = (articlesData?.articles || []) as KbArticleListItem[];
 
     return (
         <div className="max-w-4xl mx-auto px-4 py-8">
@@ -98,7 +98,7 @@ export const DocsCategoryView: React.FC = () => {
                         </p>
                     </div>
                 ) : (
-                    articles.map((article, index) => (
+                    articles.map((article: KbArticleListItem, index: number) => (
                         <motion.div
                             key={article.id}
                             initial={{ opacity: 0, y: 20 }}

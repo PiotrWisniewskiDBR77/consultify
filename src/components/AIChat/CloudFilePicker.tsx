@@ -22,6 +22,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import type { CloudFile, CloudProviderId } from '../../hooks/useCloudIntegrations';
+
 // Cloud provider icons
 const ProviderIcons: Record<string, React.ReactNode> = {
   'google-drive': (
@@ -57,20 +59,10 @@ const ProviderNames: Record<string, string> = {
   dropbox: 'Dropbox',
 };
 
-export interface CloudFile {
-  id: string;
-  name: string;
-  mimeType: string;
-  size: number;
-  isFolder: boolean;
-  modifiedAt?: string;
-  thumbnailUrl?: string;
-}
-
 interface CloudFilePickerProps {
   isOpen: boolean;
   onClose: () => void;
-  provider: 'google-drive' | 'onedrive' | 'dropbox';
+  provider: CloudProviderId;
   onFileSelect: (file: CloudFile) => void;
 }
 
@@ -286,7 +278,7 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
                       : 'hover:bg-slate-50 dark:hover:bg-navy-700'
                   }`}
                 >
-                  {getFileIcon(file.mimeType, file.isFolder)}
+                  {getFileIcon(file.mimeType ?? '', Boolean(file.isFolder))}
                   <div className="flex-1 min-w-0">
                     <div
                       className={`text-sm font-medium truncate ${
@@ -305,7 +297,7 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
                   </div>
                   {!file.isFolder && (
                     <span className="text-xs text-slate-500 dark:text-slate-400 shrink-0">
-                      {formatSize(file.size)}
+                      {formatSize(file.size ?? 0)}
                     </span>
                   )}
                   {file.isFolder && <ChevronRight size={16} className="text-slate-400 shrink-0" />}

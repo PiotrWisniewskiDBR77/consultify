@@ -36,7 +36,7 @@ interface GenerationOptions {
   format: 'pdf' | 'docx';
   language: 'pl' | 'en';
   sections: {
-    executiveTotalmary: boolean;
+    executiveSummary: boolean;
     problemStatement: boolean;
     proposedSolution: boolean;
     financialAnalysis: boolean;
@@ -52,7 +52,7 @@ const defaultOptions: GenerationOptions = {
   format: 'pdf',
   language: 'pl',
   sections: {
-    executiveTotalmary: true,
+    executiveSummary: true,
     problemStatement: true,
     proposedSolution: true,
     financialAnalysis: true,
@@ -79,7 +79,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
     keyof GenerationOptions['sections'],
     { label: string; icon: React.ReactNode }
   > = {
-    executiveTotalmary: { label: 'Streszczenie wykonawcze', icon: <FileText size={16} /> },
+    executiveSummary: { label: 'Streszczenie wykonawcze', icon: <FileText size={16} /> },
     problemStatement: { label: 'Opis problemu', icon: <AlertCircle size={16} /> },
     proposedSolution: { label: 'Proposed Solution', icon: <Building2 size={16} /> },
     financialAnalysis: { label: 'Analiza finansowa', icon: <TrendingUp size={16} /> },
@@ -111,7 +111,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
       const result = await Api.generateBusinessCase(analysisId, {
         format: options.format,
         language: options.language,
-        includeExecutiveTotalmary: options.sections.executiveTotalmary,
+        includeExecutiveSummary: options.sections.executiveSummary,
         includeFinancialAnalysis: options.sections.financialAnalysis,
         includeRiskAssessment: options.sections.riskAssessment,
       });

@@ -44,7 +44,7 @@ import { Api } from '@/services/api';
 import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
 
 import { useAppStore } from '../../store/useAppStore';
-import { FullInitiative, InitiativeStatus, Task, TaskStatus } from '../../types';
+import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
 import { RAIDLog } from '../Implementation/RAIDLog';
 import { DecisionsPanel } from '../MyWork/DecisionsPanel';
 import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
@@ -66,12 +66,70 @@ import { ExecutionTimelineView } from './ExecutionTimelineView';
 // Kanban column status mapping
 type KanbanColumnId = 'todo' | 'in_progress' | 'review' | 'blocked' | 'done';
 
-const KANBAN_STATUS_MAP: Record<KanbanColumnId, TaskStatus> = {
-  todo: TaskStatus.TODO,
-  in_progress: TaskStatus.IN_PROGRESS,
-  review: TaskStatus.REVIEW,
-  blocked: TaskStatus.BLOCKED,
-  done: TaskStatus.DONE,
+type ProjectTaskStatus = Task['status'];
+
+const mapPriorityToPortfolio = (
+  priority: FullInitiative['priority']
+): PortfolioInitiative['priority'] => {
+  switch (priority) {
+    case 'Critical':
+      return 'CRITICAL';
+    case 'High':
+      return 'HIGH';
+    case 'Medium':
+      return 'MEDIUM';
+    case 'Low':
+    default:
+      return 'LOW';
+  }
+};
+
+const mapPriorityToFull = (priority: PortfolioInitiative['priority']): FullInitiative['priority'] => {
+  switch (priority) {
+    case 'CRITICAL':
+      return 'Critical';
+    case 'HIGH':
+      return 'High';
+    case 'MEDIUM':
+      return 'Medium';
+    case 'LOW':
+    default:
+      return 'Low';
+  }
+};
+
+const toPortfolioInitiative = (initiative: FullInitiative): PortfolioInitiative => ({
+  id: initiative.id,
+  name: initiative.name,
+  summary: initiative.summary,
+  description: initiative.description,
+  axis: String(initiative.axis),
+  status: initiative.status,
+  priority: mapPriorityToPortfolio(initiative.priority),
+  progress: Number((initiative as any).progress ?? 0),
+  budget: Number((initiative as any).budget ?? 0),
+  plannedStartDate: initiative.plannedStartDate,
+  plannedEndDate: initiative.plannedEndDate,
+  projectId: initiative.projectId,
+  projectName: (initiative as any).projectName,
+  sourceId: (initiative as any).sourceId,
+  sourceType: (initiative as any).sourceType,
+  ownerBusiness: (initiative as any).ownerBusiness,
+  ownerExecution: (initiative as any).ownerExecution,
+  dependencies: (initiative as any).dependencies,
+  isCriticalPath: (initiative as any).isCriticalPath,
+  riskScore: (initiative as any).riskScore,
+  valueScore: (initiative as any).valueScore,
+  createdAt: (initiative as any).createdAt || new Date().toISOString(),
+  updatedAt: (initiative as any).updatedAt || new Date().toISOString(),
+});
+
+const KANBAN_STATUS_MAP: Record<KanbanColumnId, ProjectTaskStatus> = {
+  todo: 'todo',
+  in_progress: 'in_progress',
+  review: 'review',
+  blocked: 'blocked',
+  done: 'done',
 };
 
 // Draggable Task Card component
@@ -246,7 +304,9 @@ type PMOHealthSnapshot = {
   updatedAt: string;
 };
 
-const normalizeTaskStatus = (status: TaskStatus): 'todo' | 'in_progress' | 'review' | 'blocked' | 'done' => {
+const normalizeTaskStatus = (
+  status: ProjectTaskStatus
+): 'todo' | 'in_progress' | 'review' | 'blocked' | 'done' => {
   const normalized = status.toString().toLowerCase();
   if (normalized === 'in_progress') return 'in_progress';
   if (normalized === 'review') return 'review';
@@ -1043,6 +1103,28 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     setSelectedInitiative((prev) => (prev?.id === updated.id ? updated : prev));
   }, []);
 
+  const handlePortfolioUpdate = useCallback((updated: PortfolioInitiative) => {
+    setInitiatives((prev) =>
+      prev.map((i) =>
+        i.id === updated.id
+          ? {
+              ...i,
+              name: updated.name,
+              summary: updated.summary ?? i.summary,
+              description: updated.description ?? i.description,
+              status: updated.status,
+              priority: mapPriorityToFull(updated.priority),
+              plannedStartDate: updated.plannedStartDate ?? i.plannedStartDate,
+              plannedEndDate: updated.plannedEndDate ?? i.plannedEndDate,
+            }
+          : i
+      )
+    );
+    setSelectedInitiative((prev) =>
+      prev?.id === updated.id ? { ...prev, status: updated.status } : prev
+    );
+  }, []);
+
   // Handle refresh
   const handleRefresh = useCallback(async () => {
     try {
@@ -1362,6 +1444,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     </div>
   );
 
+  const sidePanelInitiative = useMemo(
+    () => (selectedInitiative ? toPortfolioInitiative(selectedInitiative) : null),
+    [selectedInitiative]
+  );
+
   // Render content
   const renderContent = () => {
     if (isLoading) {
@@ -1470,14 +1557,19 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         {renderContent()}
       </ModuleHub>
       <InitiativeSidePanel
-        initiative={selectedInitiative as any}
+        initiative={sidePanelInitiative}
         isOpen={isSidePanelOpen}
         onClose={() => {
           setIsSidePanelOpen(false);
           setSelectedInitiative(null);
         }}
-        onUpdate={handleInitiativeUpdate}
-        onOpenFullDetail={(initiative) => handleOpenDocument(initiative as FullInitiative)}
+        onUpdate={handlePortfolioUpdate}
+        onOpenFullDetail={(initiative) => {
+          const full = initiatives.find((item) => item.id === initiative.id);
+          if (full) {
+            handleOpenDocument(full);
+          }
+        }}
       />
     </>
   );

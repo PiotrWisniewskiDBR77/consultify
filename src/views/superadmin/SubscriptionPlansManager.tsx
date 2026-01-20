@@ -9,7 +9,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
 
 import { TableSkeleton } from '../../components/ui/LoadingSkeleton';
-import { useToast } from '../../components/ui/ToastNotification';
+import { useToast } from '../../components/ui/use-toast';
 import api from '../../services/api';
 
 interface SubscriptionPlan {
@@ -43,7 +43,7 @@ interface PlanFormData {
 
 export const SubscriptionPlansManager: React.FC = () => {
   const queryClient = useQueryClient();
-  const { showToast } = useToast();
+  const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -86,10 +86,10 @@ export const SubscriptionPlansManager: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['subscriptionPlans'] });
       setShowModal(false);
       resetForm();
-      showToast('Plan created successfully!', 'success');
+      toast({ description: 'Plan created successfully!' });
     },
     onError: (error: any) => {
-      showToast(error.response?.data?.error || 'Failed to create plan', 'error');
+      toast({ description: error.response?.data?.error || 'Failed to create plan', variant: 'destructive' });
     },
   });
 
@@ -109,10 +109,10 @@ export const SubscriptionPlansManager: React.FC = () => {
       setShowModal(false);
       setEditingPlan(null);
       resetForm();
-      showToast('Plan updated successfully!', 'success');
+      toast({ description: 'Plan updated successfully!' });
     },
     onError: (error: any) => {
-      showToast(error.response?.data?.error || 'Failed to update plan', 'error');
+      toast({ description: error.response?.data?.error || 'Failed to update plan', variant: 'destructive' });
     },
   });
 
@@ -123,10 +123,10 @@ export const SubscriptionPlansManager: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscriptionPlans'] });
-      showToast('Plan deleted successfully!', 'success');
+      toast({ description: 'Plan deleted successfully!' });
     },
     onError: (error: any) => {
-      showToast(error.response?.data?.error || 'Failed to delete plan', 'error');
+      toast({ description: error.response?.data?.error || 'Failed to delete plan', variant: 'destructive' });
     },
   });
 

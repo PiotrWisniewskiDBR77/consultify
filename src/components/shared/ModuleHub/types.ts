@@ -3,7 +3,7 @@
  * Shared types for Assessment and Discovery Tools modules
  */
 
-export type ModuleTab = 'list' | 'reports' | 'initiatives';
+export type ModuleTab = 'list' | 'reports' | 'initiatives' | 'raid' | 'decisions';
 
 export type ViewMode = 'table' | 'grid' | 'kanban' | 'timeline' | 'calendar' | 'matrix';
 

@@ -35,7 +35,13 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isP
   const initiatives = session.generatedInitiatives;
 
   // Get summary data based on tool type
-  const getSummaryData = () => {
+  type SummaryData = {
+    summary: string;
+    insights: string[];
+    metrics: Record<string, number>;
+  };
+
+  const getSummaryData = (): SummaryData => {
     if (toolType === 'dynamic-swot') {
       const swotData = inputData as SWOTData;
       return {
@@ -101,14 +107,16 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isP
         toolType
       )
     ) {
-      const operational = inputData as any;
-      const sections = operational.sections || {};
-      const totalItems = Object.values(sections).reduce(
-        (sum: number, items: any[]) => sum + items.length,
+      const operational = inputData as { sections?: Record<string, unknown[]>; summary?: any };
+      const sections = (operational.sections || {}) as Record<string, unknown[]>;
+      const sectionItems = Object.values(sections);
+      const totalItems = sectionItems.reduce(
+        (sum, items) => sum + (Array.isArray(items) ? items.length : 0),
         0
       );
-      const sectionsWithItems = Object.values(sections).filter((items: any[]) => items.length > 0)
-        .length;
+      const sectionsWithItems = sectionItems.filter(
+        (items) => Array.isArray(items) && items.length > 0
+      ).length;
       return {
         summary: operational.summary?.keyInsights?.join(' ') || '',
         insights: operational.summary?.keyInsights || [],
@@ -324,7 +332,7 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isP
             {isPolish ? 'Kluczowe wnioski' : 'Key Insights'}
           </h3>
           <ul className="space-y-2">
-            {summaryData.insights.map((insight, index) => (
+            {summaryData.insights.map((insight: string, index: number) => (
               <li
                 key={index}
                 className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"

@@ -3017,8 +3017,11 @@ export interface FullInitiative {
   complexity: 'High' | 'Medium' | 'Low'; // Keep for compatibility
   status: InitiativeStatus;
   currentStage?: string;
+  plannedStartDate?: string;
   plannedEndDate?: string;
   actualEndDate?: string;
+  sourceId?: string;
+  sourceType?: string;
   blockedReason?: string;
   slaDeadline?: string;
   tasks?: Task[];

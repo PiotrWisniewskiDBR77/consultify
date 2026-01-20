@@ -19,7 +19,11 @@ import { AudioWaveform, Mic, Plus, Send, Square, StopCircle, Wrench } from 'luci
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { CloudFile, useCloudIntegrations } from '../../hooks/useCloudIntegrations';
+import {
+  CloudFile,
+  CloudProviderId,
+  useCloudIntegrations,
+} from '../../hooks/useCloudIntegrations';
 import { useAppStore } from '../../store/useAppStore';
 import { AddFilesMenu } from './AddFilesMenu';
 import { CloudFilePicker } from './CloudFilePicker';
@@ -491,16 +495,16 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
 
   // Cloud file selection handler - opens file picker for connected provider
   const handleCloudFileSelect = useCallback(
-    (provider: string, _fileId: string, _fileName: string) => {
-      openFilePicker(provider as 'google-drive' | 'onedrive' | 'dropbox');
+    (provider: CloudProviderId, _fileId: string, _fileName: string) => {
+      openFilePicker(provider);
     },
     [openFilePicker]
   );
 
   // Cloud connection handler - redirects to integrations settings
   const handleConnectCloud = useCallback(
-    (provider: string) => {
-      connectProvider(provider as 'google-drive' | 'onedrive' | 'dropbox');
+    (provider: CloudProviderId) => {
+      connectProvider(provider);
     },
     [connectProvider]
   );

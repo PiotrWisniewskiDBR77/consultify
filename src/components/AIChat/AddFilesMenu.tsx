@@ -15,9 +15,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import type { CloudProviderId } from '../../hooks/useCloudIntegrations';
+
 // Cloud provider configurations
 interface CloudProvider {
-  id: string;
+  id: CloudProviderId;
   name: string;
   icon: string; // SVG path or emoji
   color: string;
@@ -26,9 +28,9 @@ interface CloudProvider {
 
 interface AddFilesMenuProps {
   onFileSelect: (files: File[]) => void;
-  onCloudFileSelect?: (provider: string, fileId: string, fileName: string) => void;
-  onConnectCloud?: (provider: string) => void;
-  connectedProviders?: string[];
+  onCloudFileSelect?: (provider: CloudProviderId, fileId: string, fileName: string) => void;
+  onConnectCloud?: (provider: CloudProviderId) => void;
+  connectedProviders?: CloudProviderId[];
   disabled?: boolean;
 }
 

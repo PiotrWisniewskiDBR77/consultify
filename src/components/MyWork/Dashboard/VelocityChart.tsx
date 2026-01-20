@@ -23,7 +23,7 @@ const BarChart: React.FC<{
 
   return (
     <div className="flex items-end justify-between gap-1 w-full" style={{ height }}>
-      {data.map((item, idx) => {
+      {data.map((item: { completed: number; created: number }, idx: number) => {
         const completedHeight = (item.completed / maxValue) * height;
         const createdHeight = (item.created / maxValue) * height;
 
@@ -73,7 +73,12 @@ export const VelocityChart: React.FC<Partial<VelocityChartProps> & { className?:
   // Calculate max value for scaling
   const maxValue = useMemo(() => {
     if (!metrics?.data) return 10;
-    return Math.max(...metrics.data.map((d) => Math.max(d.completed, d.created)), 10);
+    return Math.max(
+      ...metrics.data.map((d: { completed: number; created: number }) =>
+        Math.max(d.completed, d.created)
+      ),
+      10
+    );
   }, [metrics]);
 
   // Trend icon and color
@@ -131,7 +136,7 @@ export const VelocityChart: React.FC<Partial<VelocityChartProps> & { className?:
 
         {/* X-axis labels */}
         <div className="flex justify-between mt-2">
-          {metrics.data.map((d, idx) => (
+                {metrics.data.map((d: VelocityMetrics['data'][number], idx: number) => (
             <div key={idx} className="flex-1 text-center">
               <span className="text-[10px] text-slate-400 dark:text-slate-500">
                 {new Date(d.date).toLocaleDateString('pl-PL', {

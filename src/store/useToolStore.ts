@@ -914,7 +914,13 @@ const TOOL_STEP_DEFINITIONS: Record<ToolType, StepDefinition[]> = {
 
 const TOOL_INITIAL_DATA: Record<
   ToolType,
-  SWOTData | PorterData | GrowthPathsData | PortfolioPriorityData | RiskUncertaintyData | Record<string, unknown>
+  | SWOTData
+  | PorterData
+  | GrowthPathsData
+  | PortfolioPriorityData
+  | RiskUncertaintyData
+  | OperationalToolData
+  | Record<string, unknown>
 > = {
   'dynamic-swot': createInitialSWOTData(),
   'market-forces': createInitialPorterData(),

@@ -114,6 +114,19 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
     businesscase: false,
   });
 
+  const loadScenarios = useCallback(async () => {
+    setIsLoadingScenarios(true);
+    try {
+      const response = await Api.getAnalysisScenarios(analysis.id);
+      setScenarios(response.scenarios || []);
+    } catch (error) {
+      console.error('Failed to load scenarios:', error);
+      setScenarios([]);
+    } finally {
+      setIsLoadingScenarios(false);
+    }
+  }, [analysis.id]);
+
   // Load financial data
   useEffect(() => {
     const loadFinancialData = async () => {
@@ -282,19 +295,6 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
       setIsSaving(false);
     }
   };
-
-  const loadScenarios = useCallback(async () => {
-    setIsLoadingScenarios(true);
-    try {
-      const response = await Api.getAnalysisScenarios(analysis.id);
-      setScenarios(response.scenarios || []);
-    } catch (error) {
-      console.error('Failed to load scenarios:', error);
-      setScenarios([]);
-    } finally {
-      setIsLoadingScenarios(false);
-    }
-  }, [analysis.id]);
 
   const handleLinkInitiative = async (initiativeId: string) => {
     await Api.linkAnalysisToInitiative(analysis.id, initiativeId);

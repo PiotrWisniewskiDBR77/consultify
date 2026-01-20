@@ -16,6 +16,7 @@ interface SelectProps {
   placeholder?: string;
   disabled?: boolean;
   fullWidth?: boolean;
+  size?: 'sm' | 'md' | 'lg';
   className?: string;
   id?: string;
   name?: string;
@@ -30,12 +31,19 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       placeholder = 'Select...',
       disabled = false,
       fullWidth = false,
+      size = 'md',
       className,
       id,
       name,
     },
     ref
   ) => {
+    const sizeClasses = {
+      sm: 'h-8 text-xs px-2 py-1',
+      md: 'h-10 text-sm px-3 py-2',
+      lg: 'h-12 text-base px-4 py-3',
+    } as const;
+
     return (
       <div className={cn('relative', fullWidth && 'w-full')}>
         <select
@@ -46,13 +54,14 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           onChange={(e) => onChange?.(e.target.value)}
           disabled={disabled}
           className={cn(
-            'flex h-10 w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm',
+            'flex w-full items-center justify-between rounded-lg border border-slate-200 bg-white',
             'ring-offset-background placeholder:text-slate-500',
             'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary',
             'disabled:cursor-not-allowed disabled:opacity-50',
             'dark:border-navy-600 dark:bg-navy-800 dark:text-white dark:placeholder:text-slate-400',
             'dark:focus:ring-primary/30 dark:focus:border-primary',
             'appearance-none cursor-pointer',
+            sizeClasses[size],
             fullWidth && 'w-full',
             className
           )}

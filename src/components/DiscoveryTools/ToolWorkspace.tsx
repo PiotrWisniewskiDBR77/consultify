@@ -207,6 +207,41 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     abortStream,
   } = useToolAI({ toolType });
 
+  const toolMeta = TOOL_METADATA[toolType];
+  const stepDefs = getStepDefinitions();
+  const progress = calculateProgress();
+
+  const reviewGaps = useMemo(() => {
+    if (!currentSession) return [];
+    const gaps: string[] = [];
+    const data = currentSession.inputData as any;
+    if (toolType === 'dynamic-swot') {
+      if (!data.context?.goal || !data.context?.scope) gaps.push('Missing strategic context');
+      ['strengths', 'weaknesses', 'opportunities', 'threats'].forEach((q) => {
+        if (!data.items?.some((i: any) => i.quadrant === q)) {
+          gaps.push(`Missing ${q}`);
+        }
+      });
+      if (!data.correlations?.length) gaps.push('Missing correlations');
+    }
+    if (toolType === 'market-forces') {
+      if (!data.context?.industry) gaps.push('Missing industry');
+      if (!data.context?.geographicScope) gaps.push('Missing geographic scope');
+      Object.values(data.forces || {}).forEach((force: any) => {
+        if (!force?.drivers?.length) gaps.push(`Missing drivers for ${force?.name}`);
+      });
+    }
+    return gaps;
+  }, [currentSession, toolType]);
+
+  const completionReady = reviewGaps.length === 0;
+
+  const confidenceAvg = useMemo(() => {
+    if (!currentSession) return 1;
+    if (completionReady) return 4;
+    return Math.max(1, Math.min(5, Math.round(progress / 20)));
+  }, [completionReady, currentSession, progress]);
+
   // Initialize or load local session
   useEffect(() => {
     if (sessionId) {
@@ -244,9 +279,9 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       };
 
       await Api.updateToolSession(toolSessionId, {
-        answers: currentSession.inputData,
+        answers: currentSession.inputData as Record<string, unknown>,
         completionPercent: completionReady ? 100 : completionPercent,
-        confidenceAvg: calculateConfidenceAvg(),
+        confidenceAvg,
         contextSnapshot,
       });
     };
@@ -258,6 +293,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     currentOrganization,
     activeChatMessages,
     calculateProgress,
+    confidenceAvg,
     completionReady,
     recentInitiatives,
   ]);
@@ -288,7 +324,9 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     const loadRecentInitiatives = async () => {
       try {
         const initiatives = await Api.getInitiatives(currentProjectId || undefined);
-        const list = Array.isArray(initiatives) ? initiatives : initiatives?.items || [];
+        const list = Array.isArray(initiatives)
+          ? initiatives
+          : (initiatives as { items?: any[] })?.items || [];
         setRecentInitiatives(
           list.slice(0, 5).map((item: any) => ({
             id: item.id,
@@ -313,41 +351,6 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     }
     return undefined;
   }, [currentSession, saveSession]);
-
-  const toolMeta = TOOL_METADATA[toolType];
-  const stepDefs = getStepDefinitions();
-  const progress = calculateProgress();
-
-  const reviewGaps = useMemo(() => {
-    if (!currentSession) return [];
-    const gaps: string[] = [];
-    const data = currentSession.inputData as any;
-    if (toolType === 'dynamic-swot') {
-      if (!data.context?.goal || !data.context?.scope) gaps.push('Missing strategic context');
-      ['strengths', 'weaknesses', 'opportunities', 'threats'].forEach((q) => {
-        if (!data.items?.some((i: any) => i.quadrant === q)) {
-          gaps.push(`Missing ${q}`);
-        }
-      });
-      if (!data.correlations?.length) gaps.push('Missing correlations');
-    }
-    if (toolType === 'market-forces') {
-      if (!data.context?.industry) gaps.push('Missing industry');
-      if (!data.context?.geographicScope) gaps.push('Missing geographic scope');
-      Object.values(data.forces || {}).forEach((force: any) => {
-        if (!force?.drivers?.length) gaps.push(`Missing drivers for ${force?.name}`);
-      });
-    }
-    return gaps;
-  }, [currentSession, toolType]);
-
-  const completionReady = reviewGaps.length === 0;
-
-  const calculateConfidenceAvg = () => {
-    if (!currentSession) return 1;
-    if (completionReady) return 4;
-    return Math.max(1, Math.min(5, Math.round(progress / 20)));
-  };
 
   // Handle step navigation
   const handleNextStep = () => {

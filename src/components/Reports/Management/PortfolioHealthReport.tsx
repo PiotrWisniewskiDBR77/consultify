@@ -6,7 +6,7 @@
 import { AlertTriangle, CheckCircle2, Flag, Sparkles, Target } from 'lucide-react';
 import React from 'react';
 
-import { ManagementReport, PortfolioHealthReportContent } from '../../../types';
+import { ManagementReport, PortfolioHealthReportContent, RAGStatus } from '../../../types';
 import { MetricCard } from './shared/MetricCard';
 import { RAGIndicator } from './shared/RAGIndicator';
 import { ReportFooter } from './shared/ReportFooter';
@@ -24,7 +24,7 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
   const content = report.content as PortfolioHealthReportContent;
   const overview = content.portfolioOverview;
 
-  const metrics = [
+  const metrics: Array<{ label: string; value: number; status: RAGStatus }> = [
     {
       label: 'Total Projects',
       value: overview.totalProjects,
@@ -90,7 +90,8 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Health Drivers</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {content.healthDrivers.map((driver) => (
+          {content.healthDrivers.map(
+            (driver: PortfolioHealthReportContent['healthDrivers'][number]) => (
             <div
               key={driver.category}
               className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-navy-700 p-3"
@@ -126,7 +127,8 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-sm">
-              {content.projectHealth.map((project) => (
+              {content.projectHealth.map(
+                (project: PortfolioHealthReportContent['projectHealth'][number]) => (
                 <tr key={project.projectId} className="hover:bg-slate-50 dark:hover:bg-white/5">
                   <td className="px-4 py-3 font-medium text-navy-900 dark:text-white">
                     {project.projectName}
@@ -159,7 +161,8 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
             </h3>
           </div>
           <div className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
-            {content.decisionsRequired.map((decision) => (
+            {content.decisionsRequired.map(
+              (decision: PortfolioHealthReportContent['decisionsRequired'][number]) => (
               <div key={decision.id} className="flex items-center justify-between gap-4">
                 <span className="font-medium text-navy-900 dark:text-white">{decision.title}</span>
                 <span className="text-xs text-slate-400 dark:text-slate-500">
@@ -180,7 +183,7 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
             </h3>
           </div>
           <ul className="space-y-2 text-sm text-red-700 dark:text-red-300">
-            {content.warnings.map((warning, index) => (
+            {content.warnings.map((warning: string, index: number) => (
               <li key={index} className="flex items-start gap-2">
                 <span>•</span>
                 <span>{warning}</span>
@@ -199,14 +202,23 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
             </h3>
           </div>
           <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
-            {content.nextPeriodPriorities.map((priority, idx) => (
+            {content.nextPeriodPriorities.map((priority: string, idx: number) => (
               <li key={idx}>• {priority}</li>
             ))}
           </ul>
         </div>
       )}
 
-      <ReportFooter report={report} />
+      <ReportFooter
+        reportId={content.auditTrail?.reportId || report.id}
+        generatedAt={content.auditTrail?.generatedAt || report.createdAt}
+        version={content.auditTrail?.version}
+        pmoDomain={content.auditTrail?.pmoDomain}
+        iso21500Mapping={content.auditTrail?.iso21500Mapping}
+        pmbokMapping={content.auditTrail?.pmbokMapping}
+        prince2Mapping={content.auditTrail?.prince2Mapping}
+        dataSnapshot={content.auditTrail?.dataSnapshot}
+      />
     </div>
   );
 };

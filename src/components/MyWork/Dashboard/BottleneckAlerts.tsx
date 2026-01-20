@@ -179,7 +179,7 @@ export const BottleneckAlerts: React.FC<
           </div>
         ) : (
           <AnimatePresence>
-            {visibleBottlenecks.map((bottleneck, idx) => (
+            {visibleBottlenecks.map((bottleneck: Bottleneck, idx: number) => (
               <BottleneckItem
                 key={`${bottleneck.type}-${idx}`}
                 bottleneck={bottleneck}

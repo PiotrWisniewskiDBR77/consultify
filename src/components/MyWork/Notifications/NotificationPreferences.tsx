@@ -9,7 +9,11 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useNotificationPreferences } from '../../../hooks/useNotificationPreferences';
-import type { ChannelSettings, NotificationCategory } from '../../../types/myWork';
+import type {
+  ChannelSettings,
+  MyWorkNotificationPreferences,
+  NotificationCategory,
+} from '../../../types/myWork';
 
 interface NotificationPreferencesProps {
   className?: string;
@@ -333,7 +337,11 @@ export const NotificationPreferences: React.FC<NotificationPreferencesProps> = (
                 <>
                   <select
                     value={preferences.weeklyDigest?.day || 'monday'}
-                    onChange={(e) => updateDigestSettings('weekly', { day: e.target.value })}
+                    onChange={(e) =>
+                      updateDigestSettings('weekly', {
+                        day: e.target.value as MyWorkNotificationPreferences['weeklyDigest']['day'],
+                      })
+                    }
                     className="px-3 py-1.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg text-sm"
                   >
                     {['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].map((day) => (

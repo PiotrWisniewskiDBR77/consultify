@@ -138,7 +138,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     const loadUsers = async () => {
       try {
         const data = await Api.getUsers();
-        setUsers(Array.isArray(data) ? data : data?.users || []);
+        setUsers(Array.isArray(data) ? data : []);
       } catch (error: any) {
         console.error('[InitiativesHub] Failed to load users:', error);
       }

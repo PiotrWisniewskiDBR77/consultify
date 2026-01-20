@@ -204,7 +204,7 @@ export const ExecutionScoreCard: React.FC<
       {score.breakdown && (
         <div className="mt-4 pt-4 border-t border-slate-100 dark:border-navy-700">
           <div className="grid grid-cols-4 gap-2">
-            {Object.entries(score.breakdown).map(([key, value]) => (
+            {Object.entries(score.breakdown as Record<string, number>).map(([key, value]) => (
               <div key={key} className="text-center">
                 <p className="text-xs text-slate-400 dark:text-slate-500 capitalize">
                   {key.replace(/([A-Z])/g, ' $1').trim()}

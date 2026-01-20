@@ -172,7 +172,16 @@ export const RaidReport: React.FC<RaidReportProps> = ({ report, className = '' }
         </p>
       </div>
 
-      <ReportFooter report={report} />
+      <ReportFooter
+        reportId={content.auditTrail?.reportId || report.id}
+        generatedAt={content.auditTrail?.generatedAt || report.createdAt}
+        version={content.auditTrail?.version}
+        pmoDomain={content.auditTrail?.pmoDomain}
+        iso21500Mapping={content.auditTrail?.iso21500Mapping}
+        pmbokMapping={content.auditTrail?.pmbokMapping}
+        prince2Mapping={content.auditTrail?.prince2Mapping}
+        dataSnapshot={content.auditTrail?.dataSnapshot}
+      />
     </div>
   );
 };

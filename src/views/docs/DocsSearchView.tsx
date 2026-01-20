@@ -18,7 +18,7 @@ import {
 import React, { useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 
-import { useDocsSearch } from '@/hooks/useDocs';
+import { KbArticleListItem, useDocsSearch } from '@/hooks/useDocs';
 
 export const DocsSearchView: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -108,7 +108,7 @@ export const DocsSearchView: React.FC = () => {
                         </p>
                     </div>
                 ) : (
-                    results?.map((article, index) => (
+                    results?.map((article: KbArticleListItem, index: number) => (
                         <motion.div
                             key={article.id}
                             initial={{ opacity: 0, y: 20 }}

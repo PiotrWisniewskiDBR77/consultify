@@ -210,7 +210,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
             {/* Results */}
             {!isLoading && results.length > 0 && (
               <div className="py-2">
-                {results.map((result, index) => {
+                {results.map((result: SearchResult, index: number) => {
                   const TypeIcon = TYPE_ICONS[result.type];
                   const isSelected = index === selectedIndex;
 
@@ -297,7 +297,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                     <h4 className="px-5 py-2 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                       {t('help.search.suggestions')}
                     </h4>
-                    {suggestions.map((suggestion, index) => (
+                    {suggestions.map((suggestion: string, index: number) => (
                       <button
                         key={index}
                         onClick={() => handleQuickSearch(suggestion)}
@@ -324,7 +324,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                         {t('help.search.clear')}
                       </button>
                     </div>
-                    {recentSearches.slice(0, 5).map((term, index) => (
+                    {recentSearches.slice(0, 5).map((term: string, index: number) => (
                       <button
                         key={index}
                         onClick={() => handleQuickSearch(term)}
@@ -342,7 +342,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                   <h4 className="px-5 py-2 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                     {t('help.search.popular')}
                   </h4>
-                  {popularSearches.slice(0, 5).map((term, index) => (
+                  {popularSearches.slice(0, 5).map((term: string, index: number) => (
                     <button
                       key={index}
                       onClick={() => handleQuickSearch(term)}

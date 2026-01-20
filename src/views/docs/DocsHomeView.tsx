@@ -36,7 +36,7 @@ import {
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { useDocsCategories, useDocsFeatured } from '@/hooks/useDocs';
+import { KbArticleListItem, KbCategory, useDocsCategories, useDocsFeatured } from '@/hooks/useDocs';
 import { cn } from '@/lib/utils';
 
 // Icon mapping for categories
@@ -162,7 +162,7 @@ export const DocsHomeView: React.FC = () => {
                             </div>
                         ))
                     ) : (
-                        categories?.map((category) => (
+                        categories?.map((category: KbCategory) => (
                             <motion.div
                                 key={category.id}
                                 initial={{ opacity: 0, y: 20 }}
@@ -225,7 +225,7 @@ export const DocsHomeView: React.FC = () => {
                             </div>
                         ))
                     ) : (
-                        featuredArticles?.map((article) => (
+                        featuredArticles?.map((article: KbArticleListItem) => (
                             <motion.div
                                 key={article.id}
                                 initial={{ opacity: 0, y: 20 }}
