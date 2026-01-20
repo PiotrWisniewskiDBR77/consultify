@@ -300,7 +300,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
                   <button
                     onClick={() => handleDownload(attachment)}
                     className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-blue-500 transition-colors"
-                    title="Pobierz"
+                    title="Download"
                   >
                     <Download size={14} />
                   </button>
@@ -310,7 +310,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
                       onClick={() => handleDelete(attachment.id)}
                       disabled={isCurrentDeleting}
                       className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors disabled:opacity-50"
-                      title="Usuń"
+                      title="Delete"
                     >
                       {isCurrentDeleting ? (
                         <Loader2 size={14} className="animate-spin" />

@@ -261,13 +261,13 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
       await Api.updateAnalysisFinancials(analysis.id, {
         financialData: data,
         costs: [
-          { year: 0, amount: data.initialInvestment, description: 'Inwestycja początkowa' },
-          { year: 0, amount: data.implementationCost, description: 'Koszty wdrożenia' },
-          { year: 0, amount: data.trainingCost, description: 'Koszty szkoleń' },
+          { year: 0, amount: data.initialInvestment, description: 'Initial Investment' },
+          { year: 0, amount: data.implementationCost, description: 'Implementation Costs' },
+          { year: 0, amount: data.trainingCost, description: 'Training Costs' },
         ],
         benefits: [
-          { year: 1, amount: data.annualCostSavings, description: 'Roczne oszczędności' },
-          { year: 1, amount: data.annualRevenueIncrease, description: 'Wzrost przychodów' },
+          { year: 1, amount: data.annualCostSavings, description: 'Annual Savings' },
+          { year: 1, amount: data.annualRevenueIncrease, description: 'Revenue Increase' },
         ],
         discountRate: data.discountRate,
         investmentHorizon: data.analysisHorizonYears,
@@ -275,9 +275,9 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
 
       setFinancialData(data);
       await loadScenarios();
-      toast.success('Dane finansowe zapisane');
+      toast.success('Dane financial zapisane');
     } catch (error: any) {
-      toast.error(error.message || 'Nie udało się zapisać danych');
+      toast.error(error.message || 'Failed to save data');
     } finally {
       setIsSaving(false);
     }
@@ -315,22 +315,22 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
     try {
       await Api.activateAnalysisScenario(analysis.id, scenarioId);
       await loadScenarios();
-      toast.success('Wybrano scenariusz aktywny');
+      toast.success('Selected scenario active');
     } catch (error: any) {
-      toast.error(error.message || 'Nie udało się ustawić scenariusza');
+      toast.error(error.message || 'Failed to set scenario');
     }
   };
 
   const handleCreateInitiative = async () => {
     try {
       const result = await Api.createInitiativeFromAnalysis(analysis.id);
-      toast.success('Utworzono inicjatywę z analizy');
+      toast.success('Created initiative z analysis');
       if (onUpdate && result?.initiativeId) {
         const updated = await Api.getDigitizationAnalysis(analysis.id);
         onUpdate(updated);
       }
     } catch (error: any) {
-      toast.error(error.message || 'Nie udało się utworzyć inicjatywy');
+      toast.error(error.message || 'Failed to create initiative');
     }
   };
 
@@ -341,9 +341,9 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
         const updated = await Api.getDigitizationAnalysis(analysis.id);
         onUpdate(updated);
       }
-      toast.success('Zmieniono status analizy');
+      toast.success('Changed status analysis');
     } catch (error: any) {
-      toast.error(error.message || 'Nie udało się zmienić statusu');
+      toast.error(error.message || 'Failed to change status');
     }
   };
 
@@ -351,7 +351,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
     decisionType: 'approve-analysis' | 'select-scenario' | 'go-no-go'
   ) => {
     if (!currentUser?.id) {
-      toast.error('Brak użytkownika decyzyjnego');
+      toast.error('No usera decision maker');
       return;
     }
     try {
@@ -359,9 +359,9 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
         decisionType,
         decisionMakerId: currentUser.id,
       });
-      toast.success('Utworzono decyzję');
+      toast.success('Created decision');
     } catch (error: any) {
-      toast.error(error.message || 'Nie udało się utworzyć decyzji');
+      toast.error(error.message || 'Failed to create decision');
     }
   };
 
@@ -400,14 +400,14 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
     return [
       generateSensitivityData(
         'initialInvestment',
-        'Inwestycja początkowa',
+        'Initial Investment',
         baseData.initialInvestment,
         (data, factor) => ({ ...data, initialInvestment: data.initialInvestment * factor }),
         '#ef4444'
       ),
       generateSensitivityData(
         'annualCostSavings',
-        'Roczne oszczędności',
+        'Annual Savings',
         baseData.annualCostSavings,
         (data, factor) => ({ ...data, annualCostSavings: data.annualCostSavings * factor }),
         '#10b981'
@@ -421,7 +421,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
       ),
       generateSensitivityData(
         'annualOperatingCost',
-        'Roczne koszty operacyjne',
+        'Roczne costs operacyjne',
         baseData.annualOperatingCost,
         (data, factor) => ({ ...data, annualOperatingCost: data.annualOperatingCost * factor }),
         '#f59e0b'
@@ -461,7 +461,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
       <div className="flex items-center justify-center py-20">
         <div className="text-center">
           <Loader2 size={32} className="animate-spin text-emerald-500 mx-auto mb-4" />
-          <p className="text-slate-500 dark:text-slate-400">Ładowanie danych finansowych...</p>
+          <p className="text-slate-500 dark:text-slate-400">Loading financial data...</p>
         </div>
       </div>
     );
@@ -539,10 +539,10 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
       {/* Financial Input Section */}
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
         <SectionHeader
-          title="Dane wejściowe"
+          title="Input Data"
           icon={<DollarSign size={20} />}
           section="input"
-          badge="Koszty i korzyści"
+          badge="Costs i benefits"
         />
         {expandedSections.input && (
           <div className="p-6 border-t border-slate-100 dark:border-navy-700">
@@ -564,7 +564,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
       {calculatedMetrics && (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
           <SectionHeader
-            title="Wskaźniki finansowe"
+            title="Financial Metrics"
             icon={<TrendingUp size={20} />}
             section="metrics"
             badge="NPV, IRR, ROI, Payback"
@@ -586,7 +586,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
       {calculatedMetrics && calculatedMetrics.cashFlows.length > 0 && (
         <div className="space-y-0">
           <SectionHeader
-            title="Przepływy pieniężne"
+            title="Cash Flows"
             icon={<Activity size={20} />}
             section="cashflow"
             badge="Wizualizacja cash flow"
@@ -608,10 +608,10 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
       {sensitivityVariables.length > 0 && (
         <div className="space-y-0">
           <SectionHeader
-            title="Analiza wrażliwości"
+            title="Sensitivity Analysis"
             icon={<Activity size={20} />}
             section="sensitivity"
-            badge="Wpływ zmian parametrów"
+            badge="Impact of Parameter Changes"
           />
           {expandedSections.sensitivity && (
             <div className="mt-4">
@@ -641,7 +641,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
               </div>
             ) : scenarios.length === 0 ? (
               <div className="bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6 text-center text-slate-500 dark:text-slate-400">
-                Brak scenariuszy do wyświetlenia
+                No scenarios to display
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -699,7 +699,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
                         onClick={() => handleActivateScenario(scenario.id)}
                         className="mt-4 w-full px-3 py-2 text-sm font-medium rounded-lg border border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10 transition-colors"
                       >
-                        Ustaw jako aktywny
+                        Ustaw jako active
                       </button>
                     )}
                   </div>
@@ -728,7 +728,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
                 Approve Analysis
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Zatwierdzenie analizy finansowej
+                Zatwierdzenie analysis financialj
               </p>
             </button>
             <button
@@ -739,7 +739,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
                 Select Active Scenario
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Wybór scenariusza aktywnego
+                Selection of scenario active
               </p>
             </button>
             <button
@@ -760,7 +760,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
       {/* Initiative Linking Section */}
       <div className="space-y-0">
         <SectionHeader
-          title="Powiązanie z inicjatywą"
+          title="Initiative Linking"
           icon={<Link2 size={20} />}
           section="initiative"
           badge="Integracja z portfolio"
@@ -779,7 +779,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
       {/* Benefits Tracking Section */}
       <div className="space-y-0">
         <SectionHeader
-          title="Śledzenie korzyści"
+          title="Benefits Tracking"
           icon={<Target size={20} />}
           section="benefits"
           badge="Plan vs realizacja"

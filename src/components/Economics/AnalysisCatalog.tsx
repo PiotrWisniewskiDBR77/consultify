@@ -75,7 +75,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
       setStats(statsResult);
     } catch (e) {
       console.error('Failed to load analyses:', e);
-      toast.error('Nie udało się załadować analiz');
+      toast.error('Failed to load analyses');
     } finally {
       setIsLoading(false);
     }
@@ -86,23 +86,23 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
   }, [loadAnalyses]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Czy na pewno chcesz usunąć tę analizę? Tej operacji nie można cofnąć.')) return;
+    if (!confirm('Are you sure you want to delete this analysis? This action cannot be undone.')) return;
     try {
       await Api.deleteDigitizationAnalysis(id);
-      toast.success('Analiza usunięta');
+      toast.success('Analysis deleted');
       loadAnalyses();
     } catch (e) {
-      toast.error('Nie udało się usunąć analizy');
+      toast.error('Failed to delete analysis');
     }
   };
 
   const handleDuplicate = async (analysis: DigitizationAnalysis) => {
     try {
-      await Api.duplicateDigitizationAnalysis(analysis.id, `${analysis.name} (Kopia)`);
-      toast.success('Analiza zduplikowana');
+      await Api.duplicateDigitizationAnalysis(analysis.id, `${analysis.name} (Copy)`);
+      toast.success('Analysis duplicated');
       loadAnalyses();
     } catch (e) {
-      toast.error('Nie udało się zduplikować analizy');
+      toast.error('Failed to duplicate analysis');
     }
   };
 
@@ -111,10 +111,10 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
       const result = await Api.exportDigitizationAnalysis(id);
       if (result.downloadUrl) {
         window.open(result.downloadUrl, '_blank');
-        toast.success('Eksport rozpoczęty');
+        toast.success('Export started');
       }
     } catch (e) {
-      toast.error('Nie udało się wyeksportować analizy');
+      toast.error('Failed to export analysis');
     }
   };
 
@@ -122,7 +122,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
   const handleBulkDelete = async () => {
     if (
       !confirm(
-        `Czy na pewno chcesz usunąć ${selectedIds.length} analiz? Tej operacji nie można cofnąć.`
+        `Are you sure you want to delete ${selectedIds.length} analyses? This action cannot be undone.`
       )
     )
       return;
@@ -138,17 +138,17 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
         }
       }
 
-      toast.success(`Usunięto ${successCount}/${selectedIds.length} analiz`);
+      toast.success(`Deleted ${successCount}/${selectedIds.length} analyses`);
       setSelectedIds([]);
       loadAnalyses();
     } catch (e) {
-      toast.error('Wystąpił błąd podczas usuwania');
+      toast.error('Error occurred while deleting');
     }
   };
 
   const handleBulkExport = async () => {
     try {
-      toast.loading(`Eksportowanie ${selectedIds.length} analiz...`);
+      toast.loading(`Exporting ${selectedIds.length} analyses...`);
       let successCount = 0;
 
       for (const id of selectedIds) {
@@ -165,10 +165,10 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
       }
 
       toast.dismiss();
-      toast.success(`Wyeksportowano ${successCount}/${selectedIds.length} analiz`);
+      toast.success(`Exported ${successCount}/${selectedIds.length} analyses`);
     } catch (e) {
       toast.dismiss();
-      toast.error('Wystąpił błąd podczas eksportu');
+      toast.error('Error occurred while exporting');
     }
   };
 
@@ -184,11 +184,11 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
         }
       }
 
-      toast.success(`Zmieniono status ${successCount}/${selectedIds.length} analiz`);
+      toast.success(`Changed status for ${successCount}/${selectedIds.length} analyses`);
       setSelectedIds([]);
       loadAnalyses();
     } catch (e) {
-      toast.error('Wystąpił błąd podczas zmiany statusu');
+      toast.error('Error occurred while changing status');
     }
   };
 
@@ -215,11 +215,11 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
       {/* Stats Bar */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard label="Wszystkie analizy" value={stats.total} icon={BarChart3} color="purple" />
-          <StatCard label="Ukończone" value={stats.completed} icon={TrendingUp} color="green" />
+          <StatCard label="Wszystkie analysis" value={stats.total} icon={BarChart3} color="purple" />
+          <StatCard label="Completed" value={stats.completed} icon={TrendingUp} color="green" />
           <StatCard label="W trakcie" value={stats.inProgress} icon={Calendar} color="yellow" />
           <StatCard
-            label="Średni wynik"
+            label="Average Score"
             value={`${(stats.avgScore ?? 0).toFixed(1)}/7`}
             icon={TrendingUp}
             color="emerald"
@@ -238,7 +238,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Szukaj analiz po nazwie lub projekcie..."
+            placeholder="Szukaj analyses po nazwie lub projekcie..."
             className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 
                             dark:border-navy-700 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
           />
@@ -256,7 +256,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
               <option value="all">Wszystkie statusy</option>
               <option value="DRAFT">Szkic</option>
               <option value="REVIEW">W trakcie</option>
-              <option value="APPROVED">Ukończone</option>
+              <option value="APPROVED">Completed</option>
             </select>
             <ChevronDown
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
@@ -283,7 +283,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
           {/* Compare Button */}
           {selectedIds.length >= 2 && (
             <button className="px-4 py-2.5 bg-purple-600 text-white rounded-xl text-sm font-medium hover:bg-purple-500 transition-colors">
-              Porównaj ({selectedIds.length})
+              Compare ({selectedIds.length})
             </button>
           )}
         </div>
@@ -301,10 +301,10 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
             </span>
             <span className="text-sm font-medium text-navy-900 dark:text-white">
               {selectedIds.length === 1
-                ? 'analiza wybrana'
+                ? 'analysis selected'
                 : selectedIds.length < 5
-                  ? 'analizy wybrane'
-                  : 'analiz wybranych'}
+                  ? 'analysis wybrane'
+                  : 'analyses wybranych'}
             </span>
           </div>
           <div className="h-6 w-px bg-slate-300 dark:bg-white/20" />
@@ -327,7 +327,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
                                     hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
               >
                 <CheckCircle size={14} />
-                Zmień status
+                Change Status
                 <ChevronDown size={14} />
               </button>
               <div
@@ -350,7 +350,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
                   onClick={() => handleBulkStatusChange('APPROVED')}
                   className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5"
                 >
-                  Ukończone
+                  Completed
                 </button>
               </div>
             </div>
@@ -362,7 +362,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
                                 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
             >
               <Trash2 size={14} />
-              Usuń
+              Delete
             </button>
           </div>
           <div className="flex-1" />
@@ -370,7 +370,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
             onClick={clearSelection}
             className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 
                             hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-            title="Wyczyść zaznaczenie"
+            title="Clear selection"
           >
             <X size={16} />
           </button>
@@ -464,9 +464,9 @@ const EmptyState: React.FC<{ onCreateNew: () => void; onImport: () => void }> = 
     <div className="w-16 h-16 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-4">
       <BarChart3 size={32} className="text-emerald-500" />
     </div>
-    <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">Brak analiz</h3>
+    <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">No analyses</h3>
     <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-md">
-      Rozpocznij ocenę dojrzałości cyfrowej swojej organizacji. Utwórz nową analizę lub zaimportuj
+      Start assessing your organization's digital maturity. Create a new analysis or import
       dane z Excel.
     </p>
     <div className="flex gap-3">
@@ -483,7 +483,7 @@ const EmptyState: React.FC<{ onCreateNew: () => void; onImport: () => void }> = 
         className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-500 transition-colors"
       >
         <Plus size={18} />
-        Nowa analiza
+        Nowa analysis
       </button>
     </div>
   </div>
@@ -509,7 +509,7 @@ const AnalysisCard: React.FC<{
   const statusLabels: Record<string, string> = {
     DRAFT: 'Szkic',
     REVIEW: 'W trakcie',
-    APPROVED: 'Ukończona',
+    APPROVED: 'Completed',
   };
 
   const statusLabelsFinancial: Record<string, string> = {
@@ -557,7 +557,7 @@ const AnalysisCard: React.FC<{
               }}
               className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2"
             >
-              <Eye size={14} /> Otwórz
+              <Eye size={14} /> Open
             </button>
             <button
               onClick={(e) => {
@@ -577,7 +577,7 @@ const AnalysisCard: React.FC<{
               }}
               className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2"
             >
-              <Copy size={14} /> Duplikuj
+              <Copy size={14} /> Dufilej
             </button>
             <hr className="my-1 border-slate-100 dark:border-navy-700" />
             <button
@@ -588,7 +588,7 @@ const AnalysisCard: React.FC<{
               }}
               className="w-full px-4 py-2.5 text-left text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-2"
             >
-              <Trash2 size={14} /> Usuń
+              <Trash2 size={14} /> Delete
             </button>
           </div>
         )}
@@ -605,7 +605,7 @@ const AnalysisCard: React.FC<{
               {analysis.name}
             </h3>
             <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
-              {analysis.initiativeName || analysis.projectName || 'Bez inicjatywy'}
+              {analysis.initiativeName || analysis.projectName || 'Bez initiative'}
             </p>
           </div>
         </div>
@@ -613,7 +613,7 @@ const AnalysisCard: React.FC<{
         {/* Progress */}
         <div className="mb-4">
           <div className="flex justify-between text-xs mb-1.5">
-            <span className="text-slate-500 dark:text-slate-400">Postęp</span>
+            <span className="text-slate-500 dark:text-slate-400">Progress</span>
             <span className="font-medium text-navy-900 dark:text-white">
               {analysis.completionPercent || 0}%
             </span>
@@ -683,7 +683,7 @@ const AnalysisTable: React.FC<{
   const statusLabels: Record<string, string> = {
     DRAFT: 'Szkic',
     REVIEW: 'W trakcie',
-    APPROVED: 'Ukończona',
+    APPROVED: 'Completed',
   };
   const statusLabelsFinancial: Record<string, string> = {
     DRAFT: 'Draft',
@@ -719,13 +719,13 @@ const AnalysisTable: React.FC<{
               Projekt
             </th>
             <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-              Inicjatywa
+              Initiative
             </th>
             <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
               Status
             </th>
             <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-              Postęp
+              Progress
             </th>
             <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
               Wynik
@@ -829,14 +829,14 @@ const AnalysisTable: React.FC<{
                   <button
                     onClick={() => onDuplicate(analysis)}
                     className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors"
-                    title="Duplikuj"
+                    title="Dufilej"
                   >
                     <Copy size={16} />
                   </button>
                   <button
                     onClick={() => onDelete(analysis.id)}
                     className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-                    title="Usuń"
+                    title="Delete"
                   >
                     <Trash2 size={16} />
                   </button>

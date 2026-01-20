@@ -61,18 +61,18 @@ const TYPE_CONFIG = {
   training: { icon: Award, color: 'amber', label: 'Szkolenie' },
   strategic: { icon: Target, color: 'emerald', label: 'Strategiczna' },
   quick_win: { icon: Lightbulb, color: 'yellow', label: 'Quick Win' },
-  initiative: { icon: TrendingUp, color: 'teal', label: 'Inicjatywa' },
+  initiative: { icon: TrendingUp, color: 'teal', label: 'Initiative' },
 };
 
 const EFFORT_CONFIG = {
   low: { label: 'Niski', color: 'emerald' },
-  medium: { label: 'Średni', color: 'amber' },
+  medium: { label: 'Medium', color: 'amber' },
   high: { label: 'Wysoki', color: 'red' },
 };
 
 const IMPACT_CONFIG = {
   low: { label: 'Niski', color: 'slate' },
-  medium: { label: 'Średni', color: 'blue' },
+  medium: { label: 'Medium', color: 'blue' },
   high: { label: 'Wysoki', color: 'emerald' },
 };
 
@@ -91,12 +91,12 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
     try {
       const result = await (Api as any).generateDigitizationRecommendations(analysis.id);
       setRecommendations(result.recommendations || []);
-      toast.success('Rekomendacje wygenerowane');
+      toast.success('Recommendations generated');
     } catch (err: any) {
       // Fallback: generate locally based on analysis data
       const localRecs = generateLocalRecommendations(analysis);
       setRecommendations(localRecs);
-      toast.success('Rekomendacje wygenerowane lokalnie');
+      toast.success('Recommendations generated locally');
     } finally {
       setIsGenerating(false);
     }
@@ -115,7 +115,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
       setRecommendations((prev) =>
         prev.map((r) => (r.id === rec.id ? { ...r, status: 'accepted' } : r))
       );
-      toast.success('Rekomendacja zaakceptowana');
+      toast.success('Recommendation accepted');
       onCreateInitiative?.(rec);
     } catch (err) {
       // Update locally anyway
@@ -162,10 +162,10 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
             <Sparkles className="text-purple-500" size={28} />
           </div>
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
-            Rekomendacje AI
+            Recommendations AI
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 max-w-md mx-auto">
-            Wygeneruj inteligentne rekomendacje na podstawie analizy luk dojrzałości cyfrowej
+            Generate intelligent recommendations based on digital maturity gap analysis
           </p>
           <button
             onClick={generateRecommendations}
@@ -173,7 +173,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
             className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white rounded-xl font-medium mx-auto"
           >
             {isGenerating ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
-            {isGenerating ? 'Generowanie...' : 'Wygeneruj rekomendacje'}
+            {isGenerating ? 'Generating...' : 'Wygeneruj recommendations'}
           </button>
         </div>
       </div>
@@ -190,7 +190,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
               <Sparkles className="text-white" size={20} />
             </div>
             <div>
-              <h3 className="font-bold text-navy-900 dark:text-white">Rekomendacje AI</h3>
+              <h3 className="font-bold text-navy-900 dark:text-white">Recommendations AI</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {recommendations.length} sugestii • {quickWinCount} quick wins
               </p>
@@ -206,7 +206,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
             ) : (
               <RefreshCw size={14} />
             )}
-            Odśwież
+            Refresh
           </button>
         </div>
 
@@ -294,7 +294,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
                       <span
                         className={`text-xs font-medium text-${EFFORT_CONFIG[rec.estimatedEffort].color}-600`}
                       >
-                        Nakład: {EFFORT_CONFIG[rec.estimatedEffort].label}
+                        Effort: {EFFORT_CONFIG[rec.estimatedEffort].label}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -302,11 +302,11 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
                       <span
                         className={`text-xs font-medium text-${IMPACT_CONFIG[rec.estimatedImpact].color}-600`}
                       >
-                        Wpływ: {IMPACT_CONFIG[rec.estimatedImpact].label}
+                        Impact: {IMPACT_CONFIG[rec.estimatedImpact].label}
                       </span>
                     </div>
                     <span className="text-xs text-slate-400 dark:text-slate-500">
-                      {Math.round(rec.aiConfidence * 100)}% pewności
+                      {Math.round(rec.aiConfidence * 100)}% pewns
                     </span>
                   </div>
 
@@ -354,7 +354,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
                       <button
                         onClick={() => handleReject(rec)}
                         className="p-1.5 hover:bg-red-100 dark:hover:bg-red-500/10 rounded-lg text-slate-400 dark:text-slate-500 hover:text-red-500"
-                        title="Odrzuć"
+                        title="Reject"
                       >
                         <XCircle size={16} />
                       </button>
@@ -366,7 +366,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
                       onClick={() => onCreateInitiative(rec)}
                       className="flex items-center gap-1 px-2 py-1 text-xs text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-500/10 rounded-lg"
                     >
-                      Utwórz inicjatywę
+                      Create initiative
                       <ArrowRight size={12} />
                     </button>
                   )}
@@ -394,7 +394,7 @@ function generateLocalRecommendations(analysis: DigitizationAnalysis): Recommend
   > = {
     digital_processes: [
       {
-        title: 'Automatyzacja procesów produkcyjnych',
+        title: 'Production Process Automation',
         type: 'technology',
         effort: 'high',
         impact: 'high',
@@ -407,16 +407,16 @@ function generateLocalRecommendations(analysis: DigitizationAnalysis): Recommend
       },
     ],
     digital_products: [
-      { title: 'Platforma IoT dla produktów', type: 'technology', effort: 'high', impact: 'high' },
+      { title: 'IoT Platform for Products', type: 'technology', effort: 'high', impact: 'high' },
       { title: 'System Track & Trace', type: 'technology', effort: 'medium', impact: 'high' },
     ],
     big_data: [
       { title: 'Dashboard analityczny', type: 'technology', effort: 'medium', impact: 'medium' },
-      { title: 'Szkolenie z analizy danych', type: 'training', effort: 'low', impact: 'medium' },
+      { title: 'Szkolenie z analysis data', type: 'training', effort: 'low', impact: 'medium' },
     ],
     transformation_culture: [
       {
-        title: 'Program ambasadorów transformacji',
+        title: 'Transformation Ambassadors Program',
         type: 'process_change',
         effort: 'medium',
         impact: 'high',
@@ -424,19 +424,19 @@ function generateLocalRecommendations(analysis: DigitizationAnalysis): Recommend
       { title: 'Hackathon innowacji', type: 'quick_win', effort: 'low', impact: 'medium' },
     ],
     cybersecurity: [
-      { title: 'Audyt bezpieczeństwa', type: 'process_change', effort: 'medium', impact: 'high' },
-      { title: 'Szkolenia z cyberbezpieczeństwa', type: 'training', effort: 'low', impact: 'high' },
+      { title: 'Security Audit', type: 'process_change', effort: 'medium', impact: 'high' },
+      { title: 'Cybersecurity Training', type: 'training', effort: 'low', impact: 'high' },
     ],
   };
 
   // Axis names mapping
   const axisNames: Record<string, string> = {
-    digital_processes: 'Cyfryzacja procesów',
+    digital_processes: 'Process Digitization',
     digital_products: 'Cyfrowe produkty',
     digital_business_models: 'Cyfrowe modele biznesowe',
     big_data: 'Big Data i Analityka',
     transformation_culture: 'Kultura transformacji',
-    cybersecurity: 'Cyberbezpieczeństwo',
+    cybersecurity: 'Cybersecurity',
   };
 
   // Find axes with gaps
@@ -461,8 +461,8 @@ function generateLocalRecommendations(analysis: DigitizationAnalysis): Recommend
           axisName: axisNames[axisId] || axisId,
           recommendationType: template.type as any,
           title: template.title,
-          description: `Inicjatywa "${template.title}" pozwoli zamknąć lukę w obszarze ${axisNames[axisId] || axisId}.`,
-          rationale: `Luka ${gap.toFixed(1)} poziomów wymaga działań o ${template.impact === 'high' ? 'wysokim' : 'średnim'} wpływie.`,
+          description: `Initiative "${template.title}" will close the gap in area ${axisNames[axisId] || axisId}.`,
+          rationale: `Gap ${gap.toFixed(1)} levels requires actions with ${template.impact === 'high' ? 'high' : 'medium'} impact.`,
           estimatedEffort: template.effort as any,
           estimatedImpact: template.impact as any,
           priorityScore,

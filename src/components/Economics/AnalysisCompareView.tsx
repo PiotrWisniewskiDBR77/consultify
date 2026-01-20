@@ -53,7 +53,7 @@ export const AnalysisCompareView: React.FC = () => {
       const result = await Api.getDigitizationAnalyses({ pageSize: 100 });
       setAvailableAnalyses(result.analyses || []);
     } catch (e) {
-      toast.error('Nie udało się załadować analiz');
+      toast.error('Failed to load analyses');
     } finally {
       setIsLoading(false);
     }
@@ -65,11 +65,11 @@ export const AnalysisCompareView: React.FC = () => {
 
   const addAnalysis = (analysis: DigitizationAnalysis) => {
     if (selectedAnalyses.length >= 4) {
-      toast.error('Maksymalnie 4 analizy do porównania');
+      toast.error('Maximum 4 analyses for comparison');
       return;
     }
     if (selectedAnalyses.find((a) => a.id === analysis.id)) {
-      toast.error('Ta analiza jest już wybrana');
+      toast.error('This analysis is already selected');
       return;
     }
     setSelectedAnalyses([...selectedAnalyses, analysis]);
@@ -121,10 +121,10 @@ export const AnalysisCompareView: React.FC = () => {
         <div>
           <h2 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
             <GitCompare className="text-purple-500" />
-            Porównanie analiz
+            Compare Analyses
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Porównaj do 4 analiz dojrzałości cyfrowej
+            Compare up to 4 digital maturity analyses
           </p>
         </div>
         {selectedAnalyses.length < 4 && (
@@ -134,7 +134,7 @@ export const AnalysisCompareView: React.FC = () => {
                             text-white rounded-xl font-medium transition-colors"
           >
             <Plus size={16} />
-            Dodaj analizę
+            Dodaj analysis
           </button>
         )}
       </div>
@@ -146,10 +146,10 @@ export const AnalysisCompareView: React.FC = () => {
             <GitCompare size={32} className="text-purple-500" />
           </div>
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
-            Brak wybranych analiz
+            No wybranych analyses
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 max-w-md">
-            Wybierz co najmniej 2 analizy, aby rozpocząć porównanie
+            Select at least 2 analyses to start comparison
           </p>
           <button
             onClick={() => setShowSelector(true)}
@@ -157,7 +157,7 @@ export const AnalysisCompareView: React.FC = () => {
                             text-white rounded-xl font-medium transition-colors"
           >
             <Plus size={16} />
-            Dodaj analizę
+            Dodaj analysis
           </button>
         </div>
       ) : (
@@ -192,7 +192,7 @@ export const AnalysisCompareView: React.FC = () => {
                   <p className="text-3xl font-bold text-emerald-500">
                     {analysis.overallScore?.toFixed(1) || '0'}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">ogólny wynik</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">overall score</p>
                 </div>
               </div>
             ))}
@@ -203,7 +203,7 @@ export const AnalysisCompareView: React.FC = () => {
             <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                  Porównanie per oś
+                  Comparison per axis
                 </h3>
                 {/* View toggle */}
                 <div className="flex items-center bg-slate-100 dark:bg-navy-900/50 rounded-lg p-1">
@@ -301,7 +301,7 @@ export const AnalysisCompareView: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-navy-900 rounded-xl w-full max-w-md max-h-[80vh] flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
-              <h3 className="font-bold text-navy-900 dark:text-white">Wybierz analizę</h3>
+              <h3 className="font-bold text-navy-900 dark:text-white">Select analysis</h3>
               <button
                 onClick={() => setShowSelector(false)}
                 className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg"

@@ -216,7 +216,7 @@ export const SensitivityChart: React.FC<SensitivityChartProps> = ({
       <div className="flex items-center justify-center h-64 bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
         <div className="text-center text-slate-500 dark:text-slate-400">
           <Activity size={32} className="mx-auto mb-2 opacity-50" />
-          <p>Brak danych do analizy wrażliwości</p>
+          <p>No data do Sensitivity Analysis</p>
         </div>
       </div>
     );
@@ -229,10 +229,10 @@ export const SensitivityChart: React.FC<SensitivityChartProps> = ({
         <div>
           <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
             <Activity size={20} className="text-purple-500" />
-            Analiza wrażliwości
+            Sensitivity Analysis
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Wpływ zmian parametrów na NPV (±20%)
+            Impact of Parameter Changes na NPV (±20%)
           </p>
         </div>
 
@@ -376,24 +376,24 @@ export const SensitivityChart: React.FC<SensitivityChartProps> = ({
           <ArrowLeftRight size={20} className="text-purple-500 shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-medium text-navy-900 dark:text-white">
-              Najważniejsze zmienne
+              Most important variables
             </p>
             <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
               {tornadoData.length > 0 && (
                 <>
-                  Największy wpływ na NPV ma{' '}
+                  Highest impact on NPV has{' '}
                   <span className="font-medium text-purple-600 dark:text-purple-400">
                     {tornadoData[0].variablePl}
                   </span>
                   {tornadoData.length > 1 && (
                     <>
-                      , następnie{' '}
+                      , then{' '}
                       <span className="font-medium text-purple-600 dark:text-purple-400">
                         {tornadoData[1].variablePl}
                       </span>
                     </>
                   )}
-                  . Zarządzanie tymi zmiennymi jest kluczowe dla sukcesu inwestycji.
+                  . Managing these variables is key to investment success.
                 </>
               )}
             </p>

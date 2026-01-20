@@ -492,7 +492,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                       <button
                         onClick={() => onEditAssessment?.(assessment.id, assessment.projectId)}
                         className="p-2 text-slate-500 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-                        title="Edytuj"
+                        title="Edit"
                       >
                         <Edit className="w-4 h-4" />
                       </button>

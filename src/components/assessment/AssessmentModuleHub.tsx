@@ -728,7 +728,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                               : 'hover:bg-slate-200 dark:hover:bg-white/10'
                           }`}
                           onClick={() => handleCloseOpenAssessment(item.id)}
-                          title="Zamknij"
+                          title="Close"
                         >
                           <X size={12} />
                         </button>

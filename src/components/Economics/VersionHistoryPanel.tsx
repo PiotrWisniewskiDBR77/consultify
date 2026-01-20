@@ -71,7 +71,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
       const result = await Api.getDigitizationVersions(analysis.id);
       setVersions(result.versions || []);
     } catch (err) {
-      toast.error('Nie udało się załadować wersji');
+      toast.error('Failed to load version');
     } finally {
       setIsLoading(false);
     }
@@ -95,7 +95,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
       setNotes('');
       loadVersions();
     } catch (err: any) {
-      toast.error(err.message || 'Nie udało się utworzyć wersji');
+      toast.error(err.message || 'Failed to create version');
     } finally {
       setIsCreating(false);
     }
@@ -104,7 +104,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
   const handleRestore = async (version: Version) => {
     if (
       !confirm(
-        `Czy na pewno chcesz przywrócić analizę do wersji "${version.version_name}"? Obecny stan zostanie zapisany jako nowa wersja.`
+        `Czy na pewno chcesz restore analysis do version "${version.version_name}"? Obecny stan will be zapisany jako nowa wersja.`
       )
     ) {
       return;
@@ -112,27 +112,27 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
 
     try {
       await Api.restoreDigitizationVersion(analysis.id, version.id);
-      toast.success(`Przywrócono do wersji ${version.version_number}`);
+      toast.success(`Restored do version ${version.version_number}`);
       loadVersions();
       onRestore?.(version);
     } catch (err: any) {
-      toast.error(err.message || 'Nie udało się przywrócić wersji');
+      toast.error(err.message || 'Failed to restore version');
     }
   };
 
   const handleMarkAsBaseline = async (versionId: string) => {
     try {
       await Api.markVersionAsBaseline(analysis.id, versionId);
-      toast.success('Oznaczono jako baseline');
+      toast.success('Marked jako baseline');
       loadVersions();
     } catch (err) {
-      toast.error('Nie udało się oznaczyć jako baseline');
+      toast.error('Failed to mark jako baseline');
     }
   };
 
   const handleCompare = async () => {
     if (selectedForCompare.length !== 2) {
-      toast.error('Wybierz dokładnie 2 wersje do porównania');
+      toast.error('Select exactly 2 versions for comparison');
       return;
     }
 
@@ -145,7 +145,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
       );
       setComparisonResult(result);
     } catch (err: any) {
-      toast.error(err.message || 'Nie udało się porównać wersji');
+      toast.error(err.message || 'Failed to compare version');
     } finally {
       setIsComparing(false);
     }
@@ -175,7 +175,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
       case 'baseline':
         return 'Baseline';
       case 'milestone':
-        return 'Kamień milowy';
+        return 'Milestone';
       default:
         return 'Snapshot';
     }
@@ -190,7 +190,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
             <History className="text-blue-500" size={20} />
           </div>
           <div>
-            <h2 className="font-bold text-navy-900 dark:text-white">Historia wersji</h2>
+            <h2 className="font-bold text-navy-900 dark:text-white">Historia version</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">{analysis.name}</p>
           </div>
         </div>
@@ -206,14 +206,14 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
       {selectedForCompare.length > 0 && (
         <div className="p-3 bg-blue-50 dark:bg-blue-500/10 border-b border-blue-200 dark:border-blue-500/20 flex items-center justify-between">
           <span className="text-sm text-blue-600 dark:text-blue-400">
-            Wybrano {selectedForCompare.length}/2 wersji do porównania
+            Selected {selectedForCompare.length}/2 version for comparison
           </span>
           <div className="flex gap-2">
             <button
               onClick={() => setSelectedForCompare([])}
               className="px-3 py-1 text-sm text-slate-600 dark:text-slate-400 hover:bg-white rounded-lg"
             >
-              Anuluj
+              Cancel
             </button>
             <button
               onClick={handleCompare}
@@ -225,7 +225,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
               ) : (
                 <GitCompare size={14} />
               )}
-              Porównaj
+              Compare
             </button>
           </div>
         </div>
@@ -252,7 +252,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                   Wynik: {analysis.overallScore?.toFixed(1) || 0}/7
                 </span>
                 <span className="text-slate-600 dark:text-slate-400">
-                  {analysis.completionPercent || 0}% ukończone
+                  {analysis.completionPercent || 0}% completed
                 </span>
               </div>
             </div>
@@ -261,12 +261,12 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
             {showCreateForm && (
               <div className="bg-blue-50 dark:bg-blue-500/10 rounded-xl p-4 border border-blue-200 dark:border-blue-500/20">
                 <h4 className="font-medium text-navy-900 dark:text-white mb-4">
-                  Utwórz nową wersję
+                  Create new version
                 </h4>
                 <div className="space-y-3">
                   <input
                     type="text"
-                    placeholder="Nazwa wersji (opcjonalnie)"
+                    placeholder="Nazwa version (opcjonalnie)"
                     value={versionName}
                     onChange={(e) => setVersionName(e.target.value)}
                     className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-sm"
@@ -300,7 +300,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                     onClick={() => setShowCreateForm(false)}
                     className="px-3 py-1.5 text-sm text-slate-600 dark:text-slate-400 hover:bg-white rounded-lg"
                   >
-                    Anuluj
+                    Cancel
                   </button>
                   <button
                     onClick={handleCreateVersion}
@@ -312,7 +312,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                     ) : (
                       <Plus size={14} />
                     )}
-                    Utwórz
+                    Create
                   </button>
                 </div>
               </div>
@@ -323,7 +323,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
               <div className="bg-purple-50 dark:bg-purple-500/10 rounded-xl p-4 border border-purple-200 dark:border-purple-500/20">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-medium text-purple-700 dark:text-purple-400">
-                    Porównanie wersji
+                    Version Comparison
                   </h4>
                   <button
                     onClick={() => {
@@ -356,7 +356,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                 <div className="mt-4 pt-4 border-t border-purple-200 dark:border-purple-500/20">
                   <p className="text-sm text-slate-600 dark:text-slate-400">
                     <span className="font-medium">{comparisonResult.summary.totalChanges}</span>{' '}
-                    zmian w ocenach
+                    changes w ocenach
                     {comparisonResult.summary.improved > 0 && (
                       <span className="text-emerald-500 ml-2">
                         +{comparisonResult.summary.improved} poprawionych
@@ -369,7 +369,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                     )}
                   </p>
                   <div className="mt-2 text-sm">
-                    <span className="text-slate-500 dark:text-slate-400">Zmiana wyniku: </span>
+                    <span className="text-slate-500 dark:text-slate-400">Zmiana scoreu: </span>
                     <span
                       className={
                         (comparisonResult.metricsDiff?.overallScore?.change ?? 0) > 0
@@ -394,10 +394,10 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                   <History className="text-slate-400 dark:text-slate-500" size={28} />
                 </div>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-                  Brak zapisanych wersji
+                  No zapisanych version
                 </p>
                 <p className="text-xs text-slate-400 dark:text-slate-500">
-                  Utwórz pierwszą wersję, aby śledzić zmiany
+                  Create first version to track changesy
                 </p>
               </div>
             ) : (
@@ -451,7 +451,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                               </span>
                               <span className="flex items-center gap-1">
                                 <User size={12} />
-                                {version.created_by_name || 'Użytkownik'}
+                                {version.created_by_name || 'User'}
                               </span>
                             </div>
                             {version.notes && expandedVersion === version.id && (
@@ -503,7 +503,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                             className="flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded ml-auto"
                           >
                             <RotateCcw size={12} />
-                            Przywróć
+                            Restore
                           </button>
                         </div>
                       </div>
@@ -524,7 +524,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition-colors"
           >
             <Plus size={18} />
-            Zapisz wersję
+            Save Version
           </button>
         </div>
       )}

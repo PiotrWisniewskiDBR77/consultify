@@ -40,16 +40,16 @@ const TEMPLATES: Array<{
   {
     id: 'executive',
     namePl: 'Podsumowanie wykonawcze',
-    nameEn: 'Executive Summary',
-    descriptionPl: '1-2 strony z kluczowymi wynikami i rekomendacjami',
+    nameEn: 'Executive Totalmary',
+    descriptionPl: '1-2 strony z kluczowymi scoreami i recommendationmi',
     descriptionEn: '1-2 pages with key results and recommendations',
     icon: FileCheck,
   },
   {
     id: 'full',
-    namePl: 'Pełny raport',
+    namePl: 'Full Report',
     nameEn: 'Full Report',
-    descriptionPl: 'Kompletny raport ze wszystkimi szczegółami per oś',
+    descriptionPl: 'Complete report with all details per axis',
     descriptionEn: 'Complete report with all axis details',
     icon: FileText,
   },
@@ -57,7 +57,7 @@ const TEMPLATES: Array<{
     id: 'gap_analysis',
     namePl: 'Analiza luk',
     nameEn: 'Gap Analysis',
-    descriptionPl: 'Szczegółowa analiza luk z priorytetyzacją',
+    descriptionPl: 'Detailed analysis gaps with prioritization',
     descriptionEn: 'Detailed gap analysis with prioritization',
     icon: Layout,
   },
@@ -83,12 +83,12 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
 
       setExportResult({ success: true, url: result.downloadUrl });
       toast.success(
-        language === 'pl' ? 'PDF wygenerowany pomyślnie' : 'PDF generated successfully'
+        language === 'pl' ? 'PDF generated successfully' : 'PDF generated successfully'
       );
     } catch (error: any) {
       toast.error(
         error.message ||
-          (language === 'pl' ? 'Nie udało się wygenerować PDF' : 'Failed to generate PDF')
+          (language === 'pl' ? 'Failed to generate PDF' : 'Failed to generate PDF')
       );
       setExportResult({ success: false });
     } finally {
@@ -134,7 +134,7 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
           <div>
             <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
               <Globe size={14} className="inline mr-2" />
-              {isPl ? 'Język raportu' : 'Report Language'}
+              {isPl ? 'Report Language' : 'Report Language'}
             </label>
             <div className="flex gap-2">
               <button
@@ -218,7 +218,7 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
                 className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-emerald-500 focus:ring-emerald-500"
               />
               <span className="text-sm text-navy-900 dark:text-white">
-                {isPl ? 'Dołącz rekomendacje' : 'Include recommendations'}
+                {isPl ? 'Include recommendations' : 'Include recommendations'}
               </span>
             </label>
           </div>
@@ -251,7 +251,7 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
             onClick={onClose}
             className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl font-medium transition-colors"
           >
-            {isPl ? 'Anuluj' : 'Cancel'}
+            {isPl ? 'Cancel' : 'Cancel'}
           </button>
           <button
             onClick={handleExport}
@@ -261,7 +261,7 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
             {isExporting ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
-                {isPl ? 'Generowanie...' : 'Generating...'}
+                {isPl ? 'Generating...' : 'Generating...'}
               </>
             ) : (
               <>

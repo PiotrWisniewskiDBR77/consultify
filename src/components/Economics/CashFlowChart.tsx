@@ -88,7 +88,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
             <div className="flex items-center justify-between gap-4">
               <span className="text-red-500 flex items-center gap-1">
                 <div className="w-3 h-3 rounded bg-red-500" />
-                Koszty:
+                Costs:
               </span>
               <span className="font-medium text-navy-900 dark:text-white">
                 {new Intl.NumberFormat('pl-PL', { style: 'currency', currency }).format(
@@ -99,7 +99,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
             <div className="flex items-center justify-between gap-4">
               <span className="text-emerald-500 flex items-center gap-1">
                 <div className="w-3 h-3 rounded bg-emerald-500" />
-                Korzyści:
+                Benefits:
               </span>
               <span className="font-medium text-navy-900 dark:text-white">
                 {new Intl.NumberFormat('pl-PL', { style: 'currency', currency }).format(
@@ -149,7 +149,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
       <div className="flex items-center justify-center h-64 bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
         <div className="text-center text-slate-500 dark:text-slate-400">
           <Layers size={32} className="mx-auto mb-2 opacity-50" />
-          <p>Brak danych do wyświetlenia wykresu</p>
+          <p>No data to display chart</p>
         </div>
       </div>
     );
@@ -162,7 +162,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
         <div>
           <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
             <Layers size={20} className="text-blue-500" />
-            Przepływy pieniężne
+            Cash Flows
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Projekcja na {cashFlows.length} lat
@@ -172,7 +172,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
         {/* Stats */}
         <div className="flex items-center gap-6">
           <div className="text-right">
-            <p className="text-xs text-slate-500 dark:text-slate-400">Suma kosztów</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Total costs</p>
             <p className="text-sm font-bold text-red-600 dark:text-red-400">
               {new Intl.NumberFormat('pl-PL', {
                 style: 'currency',
@@ -182,7 +182,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
             </p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-slate-500 dark:text-slate-400">Suma korzyści</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Total benefits</p>
             <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
               {new Intl.NumberFormat('pl-PL', {
                 style: 'currency',
@@ -231,10 +231,10 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
           )}
 
           {/* Bars for costs and benefits */}
-          <Bar dataKey="costs" name="Koszty" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={50} />
+          <Bar dataKey="costs" name="Costs" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={50} />
           <Bar
             dataKey="benefits"
-            name="Korzyści"
+            name="Benefits"
             fill="#10b981"
             radius={[4, 4, 0, 0]}
             maxBarSize={50}
@@ -244,7 +244,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
           <Area
             type="monotone"
             dataKey="netCashFlow"
-            name="Przepływ netto"
+            name="Net Flow"
             fill="rgba(59, 130, 246, 0.2)"
             stroke="#3b82f6"
             strokeWidth={2}
@@ -270,15 +270,15 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
         <div className="flex items-center justify-center gap-8 text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded bg-red-500" />
-            <span>Koszty (wydatki)</span>
+            <span>Costs (wydatki)</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded bg-emerald-500" />
-            <span>Korzyści (wpływy)</span>
+            <span>Benefits (inflows)</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded bg-blue-500/30 border border-blue-500" />
-            <span>Przepływ netto</span>
+            <span>Net Flow</span>
           </div>
           {showCumulative && (
             <div className="flex items-center gap-2">

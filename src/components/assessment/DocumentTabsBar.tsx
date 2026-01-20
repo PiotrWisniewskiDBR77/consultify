@@ -134,7 +134,7 @@ export const DocumentTabsBar: React.FC<DocumentTabsBarProps> = ({
                                     opacity-0 group-hover:opacity-100 transition-opacity
                                     ${isActive ? 'opacity-100' : ''}
                                 `}
-                title="Zamknij"
+                title="Close"
               >
                 <X
                   size={12}

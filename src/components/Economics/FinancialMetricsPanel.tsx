@@ -170,12 +170,12 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
       {/* Main Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
-          title="NPV (Wartość obecna netto)"
+          title="NPV (Net Present Value)"
           value={formatCurrency(metrics.npv)}
           subtitle={`przy stopie ${discountRate}%`}
           status={npvStatus}
           icon={<DollarSign size={20} className={statusColors[npvStatus].text} />}
-          tooltip="Net Present Value - suma zdyskontowanych przepływów pieniężnych"
+          tooltip="Net Present Value - sum of discounted flows cash"
         />
 
         <MetricCard
@@ -183,12 +183,12 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
           value={formatPercent(metrics.irr)}
           subtitle={
             metrics.irr && metrics.irr > discountRate / 100
-              ? 'powyżej progu rentowności'
-              : 'poniżej progu rentowności'
+              ? 'above break-even'
+              : 'below break-even'
           }
           status={irrStatus}
           icon={<Percent size={20} className={statusColors[irrStatus].text} />}
-          tooltip="Internal Rate of Return - stopa dyskontowa przy której NPV = 0"
+          tooltip="Internal Rate of Return - discount rate at which NPV = 0"
         />
 
         <MetricCard
@@ -201,7 +201,7 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
           }
           status={paybackStatus}
           icon={<Clock size={20} className={statusColors[paybackStatus].text} />}
-          tooltip="Czas potrzebny do odzyskania początkowej inwestycji"
+          tooltip="Time needed do recover initial investment"
         />
 
         <MetricCard
@@ -210,28 +210,28 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
           subtitle={metrics.roi && metrics.roi > 0 ? 'zysk na inwestycji' : 'strata na inwestycji'}
           status={roiStatus}
           icon={<TrendingUp size={20} className={statusColors[roiStatus].text} />}
-          tooltip="Return on Investment - stosunek zysku do kosztów inwestycji"
+          tooltip="Return on Investment - profit ratio to investment costs"
         />
       </div>
 
-      {/* Summary Cards */}
+      {/* Totalmary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <SummaryCard
-          title="Łączne koszty"
+        <TotalmaryCard
+          title="Total costs"
           value={formatCurrency(metrics.totalCosts)}
           icon={<ArrowDownRight size={18} className="text-red-500" />}
           color="red"
           isLoading={isLoading}
         />
-        <SummaryCard
-          title="Łączne korzyści"
+        <TotalmaryCard
+          title="Total benefits"
           value={formatCurrency(metrics.totalBenefits)}
           icon={<ArrowUpRight size={18} className="text-emerald-500" />}
           color="green"
           isLoading={isLoading}
         />
-        <SummaryCard
-          title="Korzyść netto"
+        <TotalmaryCard
+          title="Net Benefit"
           value={formatCurrency(metrics.netBenefit)}
           icon={
             metrics.netBenefit >= 0 ? (
@@ -258,7 +258,7 @@ export const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({
   );
 };
 
-const SummaryCard: React.FC<{
+const TotalmaryCard: React.FC<{
   title: string;
   value: string;
   icon: React.ReactNode;
@@ -338,19 +338,19 @@ const InvestmentDecisionCard: React.FC<{
 
   if (percentage >= 75) {
     recommendation = 'strong';
-    recommendationText = 'Silna rekomendacja inwestycyjna';
+    recommendationText = 'Silna recommendation inwestycyjna';
     recommendationColor = 'bg-gradient-to-r from-emerald-500 to-teal-500';
   } else if (percentage >= 50) {
     recommendation = 'moderate';
-    recommendationText = 'Umiarkowana rekomendacja';
+    recommendationText = 'Umiarkowana recommendation';
     recommendationColor = 'bg-gradient-to-r from-blue-500 to-cyan-500';
   } else if (percentage >= 25) {
     recommendation = 'weak';
-    recommendationText = 'Słaba rekomendacja - wymaga analizy ryzyka';
+    recommendationText = 'Weak recommendation - wymaga analysis ryzyka';
     recommendationColor = 'bg-gradient-to-r from-yellow-500 to-orange-500';
   } else {
     recommendation = 'negative';
-    recommendationText = 'Nie rekomendowane - negatywne wskaźniki';
+    recommendationText = 'Not recommended - negative indicators';
     recommendationColor = 'bg-gradient-to-r from-red-500 to-rose-500';
   }
 
@@ -359,7 +359,7 @@ const InvestmentDecisionCard: React.FC<{
       <div className="p-6 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl">
         <div className="text-center text-slate-500 dark:text-slate-400">
           <Info size={24} className="mx-auto mb-2" />
-          <p>Wprowadź dane finansowe, aby zobaczyć rekomendację inwestycyjną</p>
+          <p>Enter financial, to see recommendation investment</p>
         </div>
       </div>
     );
@@ -376,7 +376,7 @@ const InvestmentDecisionCard: React.FC<{
           </div>
           <div className="text-right">
             <div className="text-4xl font-bold">{Math.round(percentage)}%</div>
-            <div className="text-sm text-white/80">zgodności kryteriów</div>
+            <div className="text-sm text-white/80">criteria compliance</div>
           </div>
         </div>
       </div>

@@ -79,14 +79,14 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
         setInitiatives([
           {
             id: '1',
-            name: 'Wdrożenie systemu ERP',
+            name: 'ERP System Implementation',
             status: 'active',
             priority: 'high',
             projectName: 'Transformacja cyfrowa',
           },
           {
             id: '2',
-            name: 'Automatyzacja procesów HR',
+            name: 'HR Process Automation',
             status: 'planned',
             priority: 'medium',
             projectName: 'HR 2025',
@@ -143,9 +143,9 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
       await onLink(initiative.id);
       setLinkedInitiative(initiative);
       setShowSelector(false);
-      toast.success(`Powiązano z inicjatywą: ${initiative.name}`);
+      toast.success(`Linked to initiative: ${initiative.name}`);
     } catch (error: any) {
-      toast.error(error.message || 'Nie udało się powiązać inicjatywy');
+      toast.error(error.message || 'Failed to link initiative');
     } finally {
       setIsLinking(false);
     }
@@ -158,9 +158,9 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
     try {
       await onUnlink();
       setLinkedInitiative(null);
-      toast.success('Usunięto powiązanie z inicjatywą');
+      toast.success('Deleted link to initiative');
     } catch (error: any) {
-      toast.error(error.message || 'Nie udało się usunąć powiązania');
+      toast.error(error.message || 'Failed to delete link');
     } finally {
       setIsLinking(false);
     }
@@ -199,14 +199,14 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
             <Link2 size={20} className="text-blue-500" />
-            Powiązana inicjatywa
+            Linked inicjatywa
           </h3>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowSelector(true)}
               className="px-3 py-1.5 text-sm text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
             >
-              Zmień
+              Change
             </button>
             {onUnlink && (
               <button
@@ -214,7 +214,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
                 disabled={isLinking}
                 className="px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
               >
-                Usuń powiązanie
+                Delete Link
               </button>
             )}
           </div>
@@ -238,7 +238,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
                     : linkedInitiative.status === 'planned'
                       ? 'Planowana'
                       : linkedInitiative.status === 'completed'
-                        ? 'Zakończona'
+                        ? 'Completed'
                         : linkedInitiative.status}
                 </span>
               </div>
@@ -265,7 +265,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
                     {linkedInitiative.priority === 'high'
                       ? 'Wysoki'
                       : linkedInitiative.priority === 'medium'
-                        ? 'Średni'
+                        ? 'Medium'
                         : 'Niski'}
                   </div>
                 )}
@@ -284,7 +284,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
             <a
               href={`/initiatives/${linkedInitiative.id}`}
               className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-lg transition-colors"
-              title="Otwórz inicjatywę"
+              title="Open Initiative"
             >
               <ExternalLink size={18} />
             </a>
@@ -301,7 +301,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
             <Link2 size={20} className="text-blue-500" />
-            Wybierz inicjatywę
+            Select Initiative
           </h3>
           <button
             onClick={() => setShowSelector(false)}
@@ -337,7 +337,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
           ) : filteredInitiatives.length === 0 ? (
             <div className="text-center py-8 text-slate-500 dark:text-slate-400">
               <AlertCircle size={24} className="mx-auto mb-2 opacity-50" />
-              <p>Brak inicjatyw do wyboru</p>
+              <p>No inicjatyw do wyboru</p>
             </div>
           ) : (
             filteredInitiatives.map((initiative) => (
@@ -396,7 +396,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
           <Link2 size={20} className="text-blue-500" />
-          Powiązanie z inicjatywą
+          Initiative Linking
         </h3>
       </div>
 
@@ -405,17 +405,17 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
           <Link2 size={32} className="text-slate-400 dark:text-slate-500" />
         </div>
         <h4 className="font-medium text-navy-900 dark:text-white mb-2">
-          Brak powiązanej inicjatywy
+          No linked initiative
         </h4>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 max-w-sm mx-auto">
-          Powiąż tę analizę ekonomiczną z inicjatywą, aby śledzić realizację korzyści i integrować
+          Link this analysis financial to initiative, to track benefits realization and integrate
           dane.
         </p>
         <button
           onClick={() => setShowSelector(true)}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
         >
-          Wybierz inicjatywę
+          Select Initiative
         </button>
       </div>
     </div>

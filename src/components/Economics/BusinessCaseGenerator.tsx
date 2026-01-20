@@ -36,7 +36,7 @@ interface GenerationOptions {
   format: 'pdf' | 'docx';
   language: 'pl' | 'en';
   sections: {
-    executiveSummary: boolean;
+    executiveTotalmary: boolean;
     problemStatement: boolean;
     proposedSolution: boolean;
     financialAnalysis: boolean;
@@ -52,7 +52,7 @@ const defaultOptions: GenerationOptions = {
   format: 'pdf',
   language: 'pl',
   sections: {
-    executiveSummary: true,
+    executiveTotalmary: true,
     problemStatement: true,
     proposedSolution: true,
     financialAnalysis: true,
@@ -79,13 +79,13 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
     keyof GenerationOptions['sections'],
     { label: string; icon: React.ReactNode }
   > = {
-    executiveSummary: { label: 'Streszczenie wykonawcze', icon: <FileText size={16} /> },
+    executiveTotalmary: { label: 'Streszczenie wykonawcze', icon: <FileText size={16} /> },
     problemStatement: { label: 'Opis problemu', icon: <AlertCircle size={16} /> },
-    proposedSolution: { label: 'Proponowane rozwiązanie', icon: <Building2 size={16} /> },
+    proposedSolution: { label: 'Proposed Solution', icon: <Building2 size={16} /> },
     financialAnalysis: { label: 'Analiza finansowa', icon: <TrendingUp size={16} /> },
     riskAssessment: { label: 'Ocena ryzyka', icon: <Shield size={16} /> },
-    implementation: { label: 'Plan wdrożenia', icon: <Settings size={16} /> },
-    recommendations: { label: 'Rekomendacje', icon: <Check size={16} /> },
+    implementation: { label: 'Implementation Plan', icon: <Settings size={16} /> },
+    recommendations: { label: 'Recommendations', icon: <Check size={16} /> },
   };
 
   const toggleSection = (section: keyof GenerationOptions['sections']) => {
@@ -102,7 +102,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
     // Validate at least one section selected
     const hasSelectedSections = Object.values(options.sections).some((v) => v);
     if (!hasSelectedSections) {
-      toast.error('Wybierz co najmniej jedną sekcję dokumentu');
+      toast.error('Select at least one section document');
       return;
     }
 
@@ -111,13 +111,13 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
       const result = await Api.generateBusinessCase(analysisId, {
         format: options.format,
         language: options.language,
-        includeExecutiveSummary: options.sections.executiveSummary,
+        includeExecutiveTotalmary: options.sections.executiveTotalmary,
         includeFinancialAnalysis: options.sections.financialAnalysis,
         includeRiskAssessment: options.sections.riskAssessment,
       });
 
       setLastGenerated({ url: result.downloadUrl, timestamp: new Date() });
-      toast.success('Business Case wygenerowany pomyślnie');
+      toast.success('Business Case generated successfully');
 
       if (onGenerate) {
         onGenerate(result.downloadUrl);
@@ -126,7 +126,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
       // Auto-download
       window.open(result.downloadUrl, '_blank');
     } catch (error: any) {
-      toast.error(error.message || 'Nie udało się wygenerować dokumentu');
+      toast.error(error.message || 'Failed to generate document');
     } finally {
       setIsGenerating(false);
     }
@@ -210,7 +210,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
           <div>
             <label className="text-sm font-medium text-navy-900 dark:text-white mb-2 block">
               <Languages size={14} className="inline mr-1.5" />
-              Język dokumentu
+              Document language
             </label>
             <div className="flex gap-2">
               <button
@@ -239,7 +239,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
           {/* Sections */}
           <div>
             <label className="text-sm font-medium text-navy-900 dark:text-white mb-2 block">
-              Sekcje dokumentu ({selectedSectionsCount}/{totalSections})
+              Sekcje document ({selectedSectionsCount}/{totalSections})
             </label>
             <div className="grid grid-cols-2 gap-2">
               {(
@@ -293,7 +293,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
                 }
                 className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-indigo-600 focus:ring-indigo-500"
               />
-              <span className="text-sm text-slate-600 dark:text-slate-400">Załączniki</span>
+              <span className="text-sm text-slate-600 dark:text-slate-400">Attachments</span>
             </label>
           </div>
         </div>
@@ -304,7 +304,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
         <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/30 rounded-lg">
           <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-400 text-sm">
             <AlertCircle size={16} />
-            <span>Brak danych finansowych. Sekcja analizy finansowej będzie niekompletna.</span>
+            <span>No financial data. Financial analysis section will be incomplete.</span>
           </div>
         </div>
       )}
@@ -320,7 +320,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
         {isGenerating ? (
           <span className="flex items-center justify-center gap-2">
             <Loader2 size={18} className="animate-spin" />
-            Generowanie dokumentu...
+            Generating document...
           </span>
         ) : (
           <span className="flex items-center justify-center gap-2">
@@ -345,7 +345,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
               className="flex items-center gap-1 text-sm text-emerald-600 dark:text-emerald-400 hover:underline"
             >
               <Eye size={14} />
-              Otwórz
+              Open
             </a>
           </div>
         </div>
@@ -354,7 +354,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
       {/* Preview Info */}
       <div className="mt-4 pt-4 border-t border-slate-100 dark:border-navy-700">
         <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
-          Dokument będzie zawierał dane z analizy: <strong>{analysisName}</strong>
+          Document will contain data from analysis: <strong>{analysisName}</strong>
         </p>
       </div>
     </div>

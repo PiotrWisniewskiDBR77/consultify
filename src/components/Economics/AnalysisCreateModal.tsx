@@ -33,7 +33,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) {
-      toast.error('Wprowadź nazwę analizy');
+      toast.error('Enter name analysis');
       return;
     }
 
@@ -48,7 +48,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
       toast.success('Analiza utworzona!');
       onCreate(result);
     } catch (e) {
-      toast.error('Nie udało się utworzyć analizy');
+      toast.error('Failed to create analysis');
     } finally {
       setIsSubmitting(false);
     }
@@ -67,9 +67,9 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
               <FileText size={24} className="text-emerald-500" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-navy-900 dark:text-white">Nowa analiza</h2>
+              <h2 className="text-lg font-bold text-navy-900 dark:text-white">Nowa analysis</h2>
               <p className="text-xs text-slate-400 dark:text-slate-500">
-                Utwórz analizę ekonomiczną lub dojrzałościową
+                Create financial or maturity analysis
               </p>
             </div>
           </div>
@@ -86,14 +86,14 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
           {/* Name */}
           <div>
             <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
-              Nazwa analizy <span className="text-red-500">*</span>
+              Nazwa analysis <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               required
               value={formData.name}
               onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-              placeholder="np. Ocena dojrzałości Q1 2025"
+              placeholder="np. Maturity Assessment Q1 2025"
               className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 
                                 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
             />
@@ -103,7 +103,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
           <div>
             <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
               <Briefcase size={14} className="inline mr-1.5 -mt-0.5" />
-              Powiąż z projektem{' '}
+              Link to project{' '}
               <span className="text-slate-400 dark:text-slate-500 font-normal">(opcjonalnie)</span>
             </label>
             <select
@@ -124,7 +124,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
           {/* Analysis Type */}
           <div>
             <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
-              Typ analizy
+              Typ analysis
             </label>
             <select
               value={formData.analysisType}
@@ -133,8 +133,8 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
                                 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
             >
               <option value="financial">Analiza ekonomiczna</option>
-              <option value="maturity">Ocena dojrzałości</option>
-              <option value="combined">Połączona</option>
+              <option value="maturity">Maturity Assessment</option>
+              <option value="combined">Combined</option>
             </select>
           </div>
 
@@ -147,7 +147,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
             <textarea
               value={formData.description}
               onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-              placeholder="Krótki opis celu tej analizy..."
+              placeholder="Brief description of this analysis purpose..."
               rows={3}
               className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 
                                 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none resize-none transition-all"
@@ -157,8 +157,8 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
           {/* Info */}
           <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl p-4">
             <p className="text-sm text-emerald-700 dark:text-emerald-400">
-              Po utworzeniu analizy przejdziesz do odpowiedniego workspace: oceny dojrzałości lub
-              analizy ekonomicznej.
+              After creating analysis you will go to the appropriate workspace: maturity assessment or
+              analysis ekonomicznej.
             </p>
           </div>
 
@@ -170,7 +170,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
               className="flex-1 py-3 text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white 
                                 font-medium transition-colors rounded-xl hover:bg-slate-100 dark:hover:bg-white/5"
             >
-              Anuluj
+              Cancel
             </button>
             <button
               type="submit"
@@ -179,7 +179,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
                                 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed
                                 shadow-lg shadow-emerald-600/20"
             >
-              {isSubmitting ? 'Tworzenie...' : 'Utwórz analizę'}
+              {isSubmitting ? 'Creating...' : 'Create analysis'}
             </button>
           </div>
         </form>

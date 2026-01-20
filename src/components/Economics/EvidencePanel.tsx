@@ -53,21 +53,21 @@ interface EvidencePanelProps {
 }
 
 const EVIDENCE_TYPES = [
-  { id: 'note', icon: StickyNote, label: 'Notatka', color: 'yellow' },
+  { id: 'note', icon: StickyNote, label: 'Note', color: 'yellow' },
   { id: 'link', icon: LinkIcon, label: 'Link', color: 'blue' },
-  { id: 'document', icon: FileText, label: 'Dokument', color: 'purple' },
-  { id: 'screenshot', icon: Image, label: 'Zrzut ekranu', color: 'green' },
+  { id: 'document', icon: FileText, label: 'Document', color: 'purple' },
+  { id: 'screenshot', icon: Image, label: 'Screenshot', color: 'green' },
 ];
 
 const CATEGORIES = [
-  { id: 'policy', label: 'Dokument polityki' },
-  { id: 'procedure', label: 'Procedura' },
-  { id: 'screenshot', label: 'Zrzut ekranu' },
-  { id: 'interview', label: 'Notatka z wywiadu' },
-  { id: 'audit', label: 'Raport audytu' },
-  { id: 'metric', label: 'Metryka/KPI' },
-  { id: 'training', label: 'Materiał szkoleniowy' },
-  { id: 'other', label: 'Inne' },
+  { id: 'policy', label: 'Policy Document' },
+  { id: 'procedure', label: 'Procedure' },
+  { id: 'screenshot', label: 'Screenshot' },
+  { id: 'interview', label: 'Interview Notes' },
+  { id: 'audit', label: 'Audit Report' },
+  { id: 'metric', label: 'Metric/KPI' },
+  { id: 'training', label: 'Training Material' },
+  { id: 'other', label: 'Other' },
 ];
 
 export const EvidencePanel: React.FC<EvidencePanelProps> = ({
@@ -95,7 +95,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
       const result = await Api.getDigitizationEvidence(scoreId);
       setEvidence(result.evidence || []);
     } catch (err) {
-      toast.error('Nie udało się załadować dowodów');
+      toast.error('Failed to load evidence');
     } finally {
       setIsLoading(false);
     }
@@ -107,7 +107,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
 
   const handleAddEvidence = async () => {
     if (!title.trim()) {
-      toast.error('Tytuł jest wymagany');
+      toast.error('Title is required');
       return;
     }
 
@@ -128,38 +128,38 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
         });
       }
 
-      toast.success('Dowód dodany');
+      toast.success('Evidence added');
       setShowAddForm(false);
       resetForm();
       loadEvidence();
       onEvidenceChange?.();
     } catch (err: any) {
-      toast.error(err.message || 'Nie udało się dodać dowodu');
+      toast.error(err.message || 'Failed to add evidence');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDeleteEvidence = async (evidenceId: string) => {
-    if (!confirm('Czy na pewno chcesz usunąć ten dowód?')) return;
+    if (!confirm('Are you sure you want to delete this evidence?')) return;
 
     try {
       await Api.deleteDigitizationEvidence(evidenceId);
-      toast.success('Dowód usunięty');
+      toast.success('Evidence deleted');
       loadEvidence();
       onEvidenceChange?.();
     } catch (err) {
-      toast.error('Nie udało się usunąć dowodu');
+      toast.error('Failed to delete evidence');
     }
   };
 
   const handleVerifyEvidence = async (evidenceId: string) => {
     try {
       await Api.verifyDigitizationEvidence(evidenceId);
-      toast.success('Dowód zweryfikowany');
+      toast.success('Evidence verified');
       loadEvidence();
     } catch (err) {
-      toast.error('Nie udało się zweryfikować dowodu');
+      toast.error('Failed to verify evidence');
     }
   };
 
@@ -191,7 +191,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
             <Paperclip className="text-purple-500" size={20} />
           </div>
           <div>
-            <h2 className="font-bold text-navy-900 dark:text-white">Dowody i uzasadnienie</h2>
+            <h2 className="font-bold text-navy-900 dark:text-white">Evidence & Justification</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[200px]">
               {axisName} › {areaName}
             </p>
@@ -220,10 +220,10 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                   <Paperclip className="text-slate-400 dark:text-slate-500" size={28} />
                 </div>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-                  Brak załączonych dowodów
+                  No evidence attached
                 </p>
                 <p className="text-xs text-slate-400 dark:text-slate-500">
-                  Dodaj dowody potwierdzające ocenę
+                  Add evidence to support the assessment
                 </p>
               </div>
             ) : (
@@ -268,7 +268,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                             rel="noopener noreferrer"
                             className="text-sm text-blue-500 hover:underline flex items-center gap-1 mt-1"
                           >
-                            Pobierz plik ({formatFileSize(item.file_size)})
+                            Download file ({formatFileSize(item.file_size)})
                             <ExternalLink size={12} />
                           </a>
                         )}
@@ -279,9 +279,9 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                                 item.category}
                             </span>
                           )}
-                          <span>{item.uploaded_by_name || 'Użytkownik'}</span>
+                          <span>{item.uploaded_by_name || 'User'}</span>
                           <span>•</span>
-                          <span>{new Date(item.uploaded_at).toLocaleDateString('pl-PL')}</span>
+                          <span>{new Date(item.uploaded_at).toLocaleDateString('en-US')}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -289,7 +289,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                           <button
                             onClick={() => handleVerifyEvidence(item.id)}
                             className="p-1.5 hover:bg-emerald-100 dark:hover:bg-emerald-500/10 rounded-lg text-slate-400 dark:text-slate-500 hover:text-emerald-500"
-                            title="Zweryfikuj"
+                            title="Verify"
                           >
                             <Check size={16} />
                           </button>
@@ -297,7 +297,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                         <button
                           onClick={() => handleDeleteEvidence(item.id)}
                           className="p-1.5 hover:bg-red-100 dark:hover:bg-red-500/10 rounded-lg text-slate-400 dark:text-slate-500 hover:text-red-500"
-                          title="Usuń"
+                          title="Delete"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -311,7 +311,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
             {/* Add evidence form */}
             {showAddForm && (
               <div className="bg-emerald-50 dark:bg-emerald-500/10 rounded-xl p-4 border border-emerald-200 dark:border-emerald-500/20">
-                <h4 className="font-medium text-navy-900 dark:text-white mb-4">Dodaj nowy dowód</h4>
+                <h4 className="font-medium text-navy-900 dark:text-white mb-4">Add new evidence</h4>
 
                 {/* Type selector */}
                 <div className="flex gap-2 mb-4">
@@ -338,7 +338,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                 <div className="space-y-3">
                   <input
                     type="text"
-                    placeholder="Tytuł *"
+                    placeholder="Title *"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
@@ -356,7 +356,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
 
                   {addType === 'note' && (
                     <textarea
-                      placeholder="Treść notatki..."
+                      placeholder="Note content..."
                       value={content}
                       onChange={(e) => setContent(e.target.value)}
                       rows={3}
@@ -390,7 +390,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                             className="mx-auto text-slate-400 dark:text-slate-500 mb-2"
                           />
                           <p className="text-sm text-slate-500 dark:text-slate-400">
-                            Kliknij, aby wybrać plik
+                            Click to select file
                           </p>
                           <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                             PDF, DOC, XLS, PNG, JPG (max 25MB)
@@ -405,7 +405,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                     onChange={(e) => setCategory(e.target.value)}
                     className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   >
-                    <option value="">Wybierz kategorię (opcjonalnie)</option>
+                    <option value="">Select category (optional)</option>
                     {CATEGORIES.map((cat) => (
                       <option key={cat.id} value={cat.id}>
                         {cat.label}
@@ -422,7 +422,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                     }}
                     className="px-3 py-1.5 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/30 rounded-lg"
                   >
-                    Anuluj
+                    Cancel
                   </button>
                   <button
                     onClick={handleAddEvidence}
@@ -434,7 +434,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                     ) : (
                       <Plus size={14} />
                     )}
-                    Dodaj
+                    Add
                   </button>
                 </div>
               </div>
@@ -451,7 +451,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-medium transition-colors"
           >
             <Plus size={18} />
-            Dodaj dowód
+            Add Evidence
           </button>
         </div>
       )}

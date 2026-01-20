@@ -105,7 +105,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
       // Create new analysis with initiative data pre-filled
       const newAnalysis = await Api.createDigitizationAnalysis({
         name: `Analiza ekonomiczna: ${initiative.name}`,
-        description: `Analiza ekonomiczna dla inicjatywy: ${initiative.name}`,
+        description: `Analiza ekonomiczna dla initiative: ${initiative.name}`,
         projectId: initiative.id,
         initiativeId: initiative.id,
         analysisType: 'financial',
@@ -122,7 +122,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
             { year: 1, amount: initiative.costOpex || 0, description: 'OPEX (roczne)' },
           ],
           benefits: initiative.annualBenefit
-            ? [{ year: 1, amount: initiative.annualBenefit, description: 'Roczne korzyści' }]
+            ? [{ year: 1, amount: initiative.annualBenefit, description: 'Roczne benefits' }]
             : [],
           discountRate: 10,
           investmentHorizon: 5,
@@ -138,14 +138,14 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
         createdAt: new Date().toISOString(),
       });
 
-      toast.success('Utworzono analizę ekonomiczną');
+      toast.success('Created analysis financial');
 
       // Navigate to the new analysis
       if (onNavigateToAnalysis) {
         onNavigateToAnalysis(newAnalysis.id);
       }
     } catch (error: any) {
-      toast.error(error.message || 'Nie udało się utworzyć analizy');
+      toast.error(error.message || 'Failed to create analysis');
     } finally {
       setIsCreating(false);
     }
@@ -197,7 +197,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
               <h3 className="font-bold text-navy-900 dark:text-white">Analiza ekonomiczna</h3>
               <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                 <Link2 size={12} />
-                Powiązana analiza
+                Linked analysis
               </p>
             </div>
           </div>
@@ -206,11 +206,11 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
             className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors"
           >
             <ExternalLink size={16} />
-            Otwórz analizę
+            Open analysis
           </button>
         </div>
 
-        {/* Analysis Summary */}
+        {/* Analysis Totalmary */}
         <div className="bg-white/50 dark:bg-navy-800/50 rounded-lg p-4 mb-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium text-navy-900 dark:text-white truncate">
@@ -232,7 +232,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
                     ? 'Review'
                     : 'Draft'
                 : linkedAnalysis.status === 'APPROVED'
-                  ? 'Zakończona'
+                  ? 'Completed'
                   : linkedAnalysis.status === 'REVIEW'
                     ? 'W trakcie'
                     : 'Szkic'}
@@ -242,7 +242,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
           {/* Progress Bar */}
           <div className="mb-3">
             <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
-              <span>Postęp</span>
+              <span>Progress</span>
               <span>{linkedAnalysis.completionPercent}%</span>
             </div>
             <div className="h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
@@ -256,7 +256,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
           {/* Quick Metrics */}
           <div className="grid grid-cols-3 gap-3">
             <div className="text-center p-2 bg-white/50 dark:bg-navy-900/50 rounded-lg">
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Wynik dojrzałości</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Maturity Score</p>
               <p className="text-lg font-bold text-navy-900 dark:text-white">
                 {linkedAnalysis.overallScore?.toFixed(1) || '—'}/7
               </p>
@@ -292,8 +292,8 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <BarChart2 size={14} />
           <span>
-            Kliknij "Otwórz analizę" aby zobaczyć pełne wyniki i przeprowadzić szczegółową analizę
-            finansową
+            Click "Open Analysis" to see full scores and perform detailed analysis
+            financial
           </span>
         </div>
       </div>
@@ -308,10 +308,10 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
           <Calculator size={32} className="text-emerald-500" />
         </div>
         <h3 className="font-bold text-navy-900 dark:text-white mb-2">
-          Szczegółowa analiza ekonomiczna
+          Detailed analysis ekonomiczna
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 max-w-sm mx-auto">
-          Przeprowadź pełną analizę NPV, IRR, okresu zwrotu i wrażliwości dla tej inicjatywy.
+          Perform full analysis NPV, IRR, payback period and sensitivity for this initiative.
         </p>
 
         {/* Pre-filled Data Preview */}
@@ -319,7 +319,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
           <div className="bg-white dark:bg-navy-800 rounded-lg p-4 mb-4 text-left">
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1">
               <Check size={12} className="text-emerald-500" />
-              Dane zostaną automatycznie przeniesione:
+              Data will be automatically transferred:
             </p>
             <div className="grid grid-cols-3 gap-2 text-sm">
               {initiative.costCapex && (
@@ -340,7 +340,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
               )}
               {initiative.annualBenefit && (
                 <div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">Korzyści roczne</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">Annual Benefits</p>
                   <p className="font-medium text-emerald-600 dark:text-emerald-400">
                     {formatCurrency(initiative.annualBenefit)}
                   </p>
@@ -358,18 +358,18 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
           {isCreating ? (
             <>
               <Loader2 size={18} className="animate-spin" />
-              Tworzenie analizy...
+              Creating analysis...
             </>
           ) : (
             <>
               <Plus size={18} />
-              Utwórz analizę ekonomiczną
+              Create analysis financial
             </>
           )}
         </button>
 
         <p className="text-xs text-slate-400 dark:text-slate-500 mt-4">
-          Analiza zostanie powiązana z tą inicjatywą i będzie dostępna w module Economics
+          Analysis will be linked to this initiative and available w module Economics
         </p>
       </div>
     </div>

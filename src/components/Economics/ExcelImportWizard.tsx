@@ -44,10 +44,10 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const steps: { id: WizardStep; label: string }[] = [
-    { id: 'upload', label: 'Wgraj plik' },
-    { id: 'preview', label: 'Podgląd' },
+    { id: 'upload', label: 'Wgraj file' },
+    { id: 'preview', label: 'Preview' },
     { id: 'name', label: 'Nazwa' },
-    { id: 'confirm', label: 'Potwierdź' },
+    { id: 'confirm', label: 'Confirm' },
   ];
 
   const handleFileSelect = useCallback((selectedFile: File) => {
@@ -61,12 +61,12 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
       !selectedFile.name.endsWith('.xlsx') &&
       !selectedFile.name.endsWith('.xls')
     ) {
-      toast.error('Obsługiwane są tylko pliki Excel (.xlsx, .xls)');
+      toast.error('Supported are only filei Excel (.xlsx, .xls)');
       return;
     }
 
     if (selectedFile.size > 10 * 1024 * 1024) {
-      toast.error('Plik jest za duży. Maksymalny rozmiar to 10MB.');
+      toast.error('File jest too large. Maximum size to 10MB.');
       return;
     }
 
@@ -106,13 +106,13 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
       if (result.success && result.analysisId) {
         // Fetch the created analysis
         const analysis = await Api.getDigitizationAnalysis(result.analysisId);
-        toast.success('Import zakończony pomyślnie!');
+        toast.success('Import completed successfully!');
         onImportComplete(analysis);
       } else {
-        setError(result.message || 'Import nie powiódł się');
+        setError(result.message || 'Import failed');
       }
     } catch (err: any) {
-      setError(err.message || 'Wystąpił błąd podczas importu');
+      setError(err.message || 'Error occurred during import');
     } finally {
       setIsImporting(false);
     }
@@ -161,7 +161,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
             <div>
               <h2 className="text-lg font-bold text-navy-900 dark:text-white">Import z Excel</h2>
               <p className="text-xs text-slate-400 dark:text-slate-500">
-                Zaimportuj analizę z pliku Excel
+                Zaimportuj analysis z file Excel
               </p>
             </div>
           </div>
@@ -229,10 +229,10 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
             <div className="space-y-4">
               <div className="text-center mb-4">
                 <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                  Wgraj plik Excel
+                  Wgraj file Excel
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                  Obsługiwane formaty: .xlsx, .xls (max. 10MB)
+                  Supported formaty: .xlsx, .xls (max. 10MB)
                 </p>
               </div>
 
@@ -255,8 +255,8 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                     className={`w-16 h-16 mx-auto mb-4 ${isDragging ? 'text-emerald-500' : 'text-slate-400 dark:text-slate-500'}`}
                   />
                   <p className="text-slate-600 dark:text-slate-400">
-                    Przeciągnij plik Excel tutaj lub{' '}
-                    <span className="text-emerald-500 font-medium">kliknij aby wybrać</span>
+                    Drag Excel file here or{' '}
+                    <span className="text-emerald-500 font-medium">click to select</span>
                   </p>
                   <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
                     Format: Basic Digitization Project Evaluation Form
@@ -300,9 +300,9 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
           {currentStep === 'preview' && file && (
             <div className="space-y-4">
               <div className="text-center mb-4">
-                <h3 className="text-lg font-bold text-navy-900 dark:text-white">Podgląd pliku</h3>
+                <h3 className="text-lg font-bold text-navy-900 dark:text-white">File Previewu</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                  Sprawdź czy plik został poprawnie rozpoznany
+                  Check if file was correctly recognized
                 </p>
               </div>
 
@@ -319,7 +319,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between py-2 border-b border-slate-200 dark:border-navy-700">
-                    <span className="text-slate-500 dark:text-slate-400">Typ pliku</span>
+                    <span className="text-slate-500 dark:text-slate-400">Typ file</span>
                     <span className="text-navy-900 dark:text-white font-medium">Excel (.xlsx)</span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-slate-200 dark:border-navy-700">
@@ -343,15 +343,15 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
           {currentStep === 'name' && (
             <div className="space-y-4">
               <div className="text-center mb-4">
-                <h3 className="text-lg font-bold text-navy-900 dark:text-white">Nazwa analizy</h3>
+                <h3 className="text-lg font-bold text-navy-900 dark:text-white">Nazwa analysis</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                  Nadaj nazwę importowanej analizie
+                  Nadaj name importowanej analysesie
                 </p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
-                  Nazwa analizy
+                  Nazwa analysis
                 </label>
                 <input
                   type="text"
@@ -371,9 +371,9 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
               {isImporting ? (
                 <div className="text-center py-12">
                   <Loader2 className="w-12 h-12 mx-auto mb-4 text-emerald-500 animate-spin" />
-                  <p className="text-slate-600 dark:text-slate-400">Importowanie danych...</p>
+                  <p className="text-slate-600 dark:text-slate-400">Importing data...</p>
                   <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
-                    To może potrwać kilka sekund
+                    This may take a few seconds
                   </p>
                 </div>
               ) : (
@@ -384,19 +384,19 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                       Gotowe do importu
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                      Sprawdź podsumowanie i potwierdź import
+                      Check summary and confirm import
                     </p>
                   </div>
 
                   <div className="bg-slate-50 dark:bg-navy-800 rounded-xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-500 dark:text-slate-400">Plik źródłowy:</span>
+                      <span className="text-slate-500 dark:text-slate-400">Source file:</span>
                       <span className="font-medium text-navy-900 dark:text-white">
                         {file?.name}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-500 dark:text-slate-400">Nazwa analizy:</span>
+                      <span className="text-slate-500 dark:text-slate-400">Nazwa analysis:</span>
                       <span className="font-medium text-navy-900 dark:text-white">
                         {analysisName}
                       </span>
@@ -432,12 +432,12 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
               {isImporting ? (
                 <>
                   <Loader2 size={18} className="animate-spin" />
-                  Importowanie...
+                  Importing...
                 </>
               ) : (
                 <>
                   <CheckCircle size={18} />
-                  Importuj analizę
+                  Importuj analysis
                 </>
               )}
             </button>

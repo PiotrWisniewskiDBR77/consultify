@@ -86,13 +86,13 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
       <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-emerald-100 text-sm">Ogólny wynik dojrzałości</p>
+            <p className="text-emerald-100 text-sm">Overall Maturity Score</p>
             <div className="flex items-baseline gap-2 mt-1">
               <span className="text-5xl font-bold">{analysis.overallScore?.toFixed(1) || '0'}</span>
               <span className="text-2xl text-emerald-200">/7</span>
             </div>
             <p className="text-emerald-100 text-sm mt-2">
-              {analysis.completionPercent || 0}% obszarów ocenionych
+              {analysis.completionPercent || 0}% areas ocenionych
             </p>
           </div>
           <div className="text-right">
@@ -130,19 +130,19 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
       {/* Stats Grid */}
       <div className="grid grid-cols-3 gap-4">
         <StatCard
-          label="Średni poziom aktualny"
+          label="Medium poziom aktualny"
           value={overallStats.avgCurrent.toFixed(1)}
           icon={TrendingUp}
           color="blue"
         />
         <StatCard
-          label="Średni poziom docelowy"
+          label="Medium poziom docelowy"
           value={overallStats.avgTarget.toFixed(1)}
           icon={Target}
           color="purple"
         />
         <StatCard
-          label="Średnia luka"
+          label="Mediuma luka"
           value={overallStats.avgGap.toFixed(1)}
           icon={overallStats.avgGap > 1.5 ? AlertTriangle : CheckCircle}
           color={overallStats.avgGap > 1.5 ? 'orange' : 'green'}
@@ -154,7 +154,7 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
             <PieChart size={20} className="text-blue-500" />
-            Wykres radarowy dojrzałości
+            Maturity Radar Chart
           </h3>
           <div className="flex items-center gap-4 text-xs">
             <div className="flex items-center gap-1.5">
@@ -179,7 +179,7 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
 
       {/* Axis Breakdown */}
       <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4">Wyniki per oś</h3>
+        <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4">Wyniki per axis</h3>
         <div className="space-y-4">
           {axisData.map((axis) => {
             const Icon = AXIS_ICONS[axis.id] || Workflow;
@@ -200,7 +200,7 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
                   </div>
                   <div className="flex items-center gap-4 text-sm">
                     <span className="text-slate-500 dark:text-slate-400">
-                      {axis.completedAreas}/{axis.totalAreas} obszarów
+                      {axis.completedAreas}/{axis.totalAreas} areas
                     </span>
                     <div className="flex items-center gap-2">
                       <span className="font-bold" style={{ color: axis.color }}>
@@ -239,7 +239,7 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
         <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
           <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
             <AlertTriangle className="text-orange-500" size={20} />
-            Największe luki do adresowania
+            Biggest Gaps to Address
           </h3>
           <div className="space-y-3">
             {topGaps.map((axis, index) => {
@@ -266,7 +266,7 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-bold text-orange-600">-{axis.gap.toFixed(1)}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">poziomów luki</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">levels luki</p>
                   </div>
                 </div>
               );
@@ -278,7 +278,7 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
       {/* Maturity Level Legend */}
       <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4">
-          Legenda poziomów dojrzałości
+          Maturity Levels Legend
         </h3>
         <div className="grid grid-cols-7 gap-2">
           {[1, 2, 3, 4, 5, 6, 7].map((level) => (

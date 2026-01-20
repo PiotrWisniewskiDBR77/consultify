@@ -219,7 +219,7 @@ export const MATURITY_LEVELS = [
   {
     level: 1,
     name: 'Basic Data Registration',
-    namePl: 'Rejestracja danych podstawowych',
+    namePl: 'Rejestracja data podstawowych',
     color: '#ef4444',
   },
   { level: 2, name: 'Workstation Control', namePl: 'Kontrola stanowiska', color: '#f97316' },

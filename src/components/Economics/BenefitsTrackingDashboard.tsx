@@ -80,7 +80,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
         setBenefits(response.benefits || []);
       } catch (error) {
         console.error('Failed to load benefits:', error);
-        toast.error('Nie udało się załadować danych');
+        toast.error('Failed to load data');
       } finally {
         setIsLoading(false);
       }
@@ -179,9 +179,9 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
 
       setShowMeasurementModal(false);
       setEditingEntry(null);
-      toast.success('Pomiar zapisany');
+      toast.success('Measurement zapisany');
     } catch (error: any) {
-      toast.error(error.message || 'Nie udało się zapisać pomiaru');
+      toast.error(error.message || 'Failed to save measurement');
     }
   };
 
@@ -241,7 +241,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
         <div>
           <h2 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
             <Target size={24} className="text-emerald-500" />
-            Śledzenie korzyści
+            Benefits Tracking
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{analysisName}</p>
         </div>
@@ -250,19 +250,19 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
           className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors"
         >
           <Plus size={18} />
-          Dodaj pomiar
+          Dodaj measurement
         </button>
       </div>
 
-      {/* Summary Cards */}
+      {/* Totalmary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <SummaryCard
-          title="Plan całkowity"
+        <TotalmaryCard
+          title="Total Plan"
           value={formatCurrency(stats.totalPlanned)}
           icon={<Target size={20} />}
           color="blue"
         />
-        <SummaryCard
+        <TotalmaryCard
           title="Realizacja"
           value={formatCurrency(stats.totalActual)}
           icon={
@@ -274,7 +274,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
           }
           color={stats.totalActual >= stats.totalPlanned ? 'green' : 'red'}
         />
-        <SummaryCard
+        <TotalmaryCard
           title="Odchylenie"
           value={formatPercent(stats.variancePercent)}
           subtitle={formatCurrency(stats.totalVariance)}
@@ -283,8 +283,8 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
           }
           color={stats.totalVariance >= 0 ? 'green' : 'red'}
         />
-        <SummaryCard
-          title="Status okresów"
+        <TotalmaryCard
+          title="Status periods"
           value={`${stats.periodsOnTrack} / ${benefits.length}`}
           subtitle="zgodnych z planem"
           icon={<Check size={20} />}
@@ -297,7 +297,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
           <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
             <BarChart2 size={20} className="text-blue-500" />
-            Porównanie plan vs realizacja
+            Plan vs Actual Comparison
           </h3>
           <ResponsiveContainer width="100%" height={350}>
             <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
@@ -341,23 +341,23 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
       {/* Tracking History Table */}
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700">
-          <h3 className="text-lg font-bold text-navy-900 dark:text-white">Historia pomiarów</h3>
+          <h3 className="text-lg font-bold text-navy-900 dark:text-white">Historia measurements</h3>
         </div>
 
         {benefits.length === 0 ? (
           <div className="p-12 text-center">
             <Target size={48} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
             <h4 className="text-lg font-medium text-navy-900 dark:text-white mb-2">
-              Brak pomiarów
+              No measurements
             </h4>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-              Rozpocznij śledzenie korzyści dodając pierwszy pomiar
+              Start tracking benefits by adding first measurement
             </p>
             <button
               onClick={() => setShowMeasurementModal(true)}
               className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium"
             >
-              Dodaj pomiar
+              Dodaj measurement
             </button>
           </div>
         ) : (
@@ -434,7 +434,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
                                 : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
                           }`}
                         >
-                          {isOnTrack ? 'Zgodny' : isAhead ? 'Powyżej' : 'Poniżej'}
+                          {isOnTrack ? 'On Track' : isAhead ? 'Above' : 'Below'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -470,8 +470,8 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
   );
 };
 
-// Summary Card Component
-const SummaryCard: React.FC<{
+// Totalmary Card Component
+const TotalmaryCard: React.FC<{
   title: string;
   value: string;
   subtitle?: string;
@@ -524,7 +524,7 @@ const MeasurementModal: React.FC<{
     return [
       `Q${quarter} ${year}`,
       `Q${quarter > 1 ? quarter - 1 : 4} ${quarter > 1 ? year : year - 1}`,
-      `Miesiąc ${now.getMonth() + 1}/${year}`,
+      `Month ${now.getMonth() + 1}/${year}`,
       `Rok ${year}`,
     ];
   }, []);
@@ -532,7 +532,7 @@ const MeasurementModal: React.FC<{
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!trackingPeriod.trim()) {
-      toast.error('Podaj okres pomiaru');
+      toast.error('Enter period measurement');
       return;
     }
 
@@ -553,7 +553,7 @@ const MeasurementModal: React.FC<{
       <div className="bg-white dark:bg-navy-800 rounded-xl w-full max-w-md shadow-2xl">
         <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-navy-700">
           <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-            {initialData ? 'Edytuj pomiar' : 'Nowy pomiar'}
+            {initialData ? 'Edit measurement' : 'Nowy measurement'}
           </h3>
           <button
             onClick={onClose}
@@ -567,7 +567,7 @@ const MeasurementModal: React.FC<{
           {/* Period Selection */}
           <div>
             <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
-              Okres pomiaru
+              Okres measurement
             </label>
             <input
               type="text"
@@ -594,7 +594,7 @@ const MeasurementModal: React.FC<{
           {/* Planned Benefits */}
           <div>
             <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
-              Planowane korzyści ({currency})
+              Planowane benefits ({currency})
             </label>
             <input
               type="number"
@@ -609,7 +609,7 @@ const MeasurementModal: React.FC<{
           {/* Actual Benefits */}
           <div>
             <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
-              Rzeczywiste korzyści ({currency})
+              Rzeczywiste benefits ({currency})
             </label>
             <input
               type="number"
@@ -648,7 +648,7 @@ const MeasurementModal: React.FC<{
               onClick={onClose}
               className="flex-1 px-4 py-2.5 text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-navy-700 rounded-lg font-medium hover:bg-slate-200 dark:hover:bg-navy-600 transition-colors"
             >
-              Anuluj
+              Cancel
             </button>
             <button
               type="submit"
@@ -658,7 +658,7 @@ const MeasurementModal: React.FC<{
               {isSaving ? (
                 <>
                   <Loader2 size={18} className="animate-spin" />
-                  Zapisywanie...
+                  Saving...
                 </>
               ) : (
                 <>

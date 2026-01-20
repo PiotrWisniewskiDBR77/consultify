@@ -281,7 +281,7 @@ export function DraftReviewPanel({
                   onClick={() => startEditing(draft)}
                   className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
                   disabled={isProcessing}
-                  title="Edytuj"
+                  title="Edit"
                 >
                   <Edit3 className="w-5 h-5" />
                 </button>
