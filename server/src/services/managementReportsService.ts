@@ -9,6 +9,10 @@ import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import PDFDocument from 'pdfkit';
+
+import managementReportRepository from '../repositories/ManagementReportRepository.js';
+import { all, get, run } from '../utils/DbPromise.js';
+
 // Lazy load pptxgenjs to avoid runtime errors if not installed
 let PptxGenJS: any;
 const loadPptxGenJS = async () => {
@@ -21,9 +25,6 @@ const loadPptxGenJS = async () => {
   }
   return PptxGenJS;
 };
-
-import managementReportRepository from '../repositories/ManagementReportRepository.js';
-import { all, get, run } from '../utils/DbPromise.js';
 
 const DEFAULT_PERIODS: Record<string, number> = {
   TEAM_MEETING: 7,

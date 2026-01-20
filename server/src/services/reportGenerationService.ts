@@ -8,6 +8,11 @@ import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import PDFDocument from 'pdfkit';
+
+import { getDatabase } from '../database/Database.js';
+import type { IDatabase } from '../database/IDatabase.js';
+import logger from '../utils/Logger.js';
+
 // Lazy load pptxgenjs to avoid runtime errors if not installed
 let PptxGenJS: any;
 const loadPptxGenJS = async () => {
@@ -20,10 +25,6 @@ const loadPptxGenJS = async () => {
   }
   return PptxGenJS;
 };
-
-import { getDatabase } from '../database/Database.js';
-import type { IDatabase } from '../database/IDatabase.js';
-import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES

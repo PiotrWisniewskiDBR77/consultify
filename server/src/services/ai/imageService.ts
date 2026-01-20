@@ -10,6 +10,8 @@
  * FLOW-AI-VISION: Image input processing
  */
 
+import logger from '../../utils/Logger.js';
+
 // Lazy load sharp to avoid runtime errors if not installed
 let sharp: any;
 const loadSharp = async () => {
@@ -22,8 +24,6 @@ const loadSharp = async () => {
   }
   return sharp;
 };
-
-import logger from '../../utils/Logger.js';
 
 // ==========================================
 // TYPES
