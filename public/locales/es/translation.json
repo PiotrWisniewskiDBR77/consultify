@@ -3344,11 +3344,53 @@
       }
     },
     "sidePanel": {
+      "title": "Centro de Ayuda",
+      "fullDocs": "Documentación Completa",
       "tabs": {
         "overview": "Resumen",
-        "howto": "Cómo usar",
         "faq": "FAQ",
-        "video": "Videos"
+        "knowledge": "Base de Conocimiento"
+      },
+      "overview": {
+        "title": "Bienvenido a Consultinity",
+        "intro": "Tu plataforma PMO completa para la transformación digital. Evalúa, planifica y realiza el seguimiento del viaje de tu organización hacia la excelencia digital con información impulsada por IA y metodologías probadas.",
+        "watchVideo": "Ver Video de Introducción",
+        "videoDuration": "3 min de resumen",
+        "guides": "Guías Rápidas",
+        "guidesList": {
+          "gettingStarted": "Primeros Pasos",
+          "assessment": "Cómo Realizar una Evaluación",
+          "initiatives": "Gestión de Iniciativas",
+          "reports": "Creación de Informes",
+          "aiFeatures": "Guía de Funciones de IA"
+        },
+        "whatToKnow": "Lo que Debes Saber",
+        "tip1": "Comienza con una evaluación para entender tu madurez digital",
+        "tip2": "Usa los insights de IA para priorizar iniciativas",
+        "tip3": "Realiza seguimiento del progreso con dashboards e informes en tiempo real"
+      },
+      "faq": {
+        "searchPlaceholder": "Buscar preguntas...",
+        "noResults": "No se encontraron preguntas coincidentes.",
+        "noFAQ": "No hay FAQ disponibles."
+      },
+      "knowledge": {
+        "title": "Base de Conocimiento",
+        "description": "Recursos completos sobre herramientas de transformación digital, metodologías y mejores prácticas.",
+        "comingSoon": "Próximamente",
+        "categories": {
+          "tools": "Herramientas de Transformación Digital",
+          "methodologies": "Metodologías (DRD, SIRI, Lean)",
+          "caseStudies": "Casos de Estudio",
+          "bestPractices": "Mejores Prácticas"
+        },
+        "notify": {
+          "title": "Recibe notificación cuando esté listo",
+          "placeholder": "Tu email",
+          "button": "Notificarme",
+          "success": "¡Te notificaremos cuando la Base de Conocimiento se lance!",
+          "description": "Recibe un email cuando nuestra base de conocimiento completa con herramientas, metodologías y casos de estudio esté lista."
+        }
       },
       "modules": {
         "dashboard": {
