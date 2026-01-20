@@ -8,7 +8,18 @@ import path from 'path';
 import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import PDFDocument from 'pdfkit';
-import PptxGenJS from 'pptxgenjs';
+// Lazy load pptxgenjs to avoid runtime errors if not installed
+let PptxGenJS: any;
+const loadPptxGenJS = async () => {
+  if (!PptxGenJS) {
+    try {
+      PptxGenJS = (await import('pptxgenjs')).default;
+    } catch (error) {
+      throw new Error('pptxgenjs package is required for PPTX report generation. Please install it: npm install pptxgenjs');
+    }
+  }
+  return PptxGenJS;
+};
 import * as xlsx from 'xlsx';
 
 import { getDatabase } from '../database/index.js';
@@ -75,7 +86,8 @@ const writePdfReport = async (report: any, filePath: string): Promise<void> => {
 };
 
 const writePptxReport = async (report: any, filePath: string): Promise<void> => {
-  const pptx = new PptxGenJS();
+  const PptxGenJSClass = await loadPptxGenJS();
+  const pptx = new PptxGenJSClass();
   pptx.layout = 'LAYOUT_WIDE';
 
   const title = report.name || 'Assessment Report';

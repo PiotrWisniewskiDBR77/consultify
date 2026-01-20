@@ -9,7 +9,18 @@ import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import PDFDocument from 'pdfkit';
-import PptxGenJS from 'pptxgenjs';
+// Lazy load pptxgenjs to avoid runtime errors if not installed
+let PptxGenJS: any;
+const loadPptxGenJS = async () => {
+  if (!PptxGenJS) {
+    try {
+      PptxGenJS = (await import('pptxgenjs')).default;
+    } catch (error) {
+      throw new Error('pptxgenjs package is required for PPTX report generation. Please install it: npm install pptxgenjs');
+    }
+  }
+  return PptxGenJS;
+};
 
 import managementReportRepository from '../repositories/ManagementReportRepository.js';
 import { all, get, run } from '../utils/DbPromise.js';
@@ -118,7 +129,8 @@ class ManagementReportsService {
   }
 
   private async writePptxReport(report: any, filePath: string): Promise<void> {
-    const pptx = new PptxGenJS();
+    const PptxGenJSClass = await loadPptxGenJS();
+    const pptx = new PptxGenJSClass();
     pptx.layout = 'LAYOUT_WIDE';
 
     const titleSlide = pptx.addSlide();
