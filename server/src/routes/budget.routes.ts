@@ -4,9 +4,8 @@
  */
 import { Router } from 'express';
 
-import type { AuthRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { verifyToken } from '../middleware/auth.middleware.js';
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import logger from '../utils/Logger.js';
 
