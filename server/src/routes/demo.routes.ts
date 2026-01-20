@@ -51,13 +51,13 @@ router.post(
 
     try {
       // Save preference to database
-      await demoGuard.setUserDemoPreference(userId, isDemoEnabled);
+      await setUserDemoPreference(userId, isDemoEnabled);
 
       if (isDemoEnabled) {
         // Get demo organization details and stats
         const [demoOrganization, stats] = await Promise.all([
-          demoGuard.getDemoOrganization(),
-          demoGuard.getDemoStats(),
+          getDemoOrganization(),
+          getDemoStats(),
         ]);
 
         logger.info(`[DemoMode] User ${userId} enabled demo mode`);
@@ -125,12 +125,12 @@ router.get(
     }
 
     try {
-      const isDemoEnabled = await demoGuard.checkUserDemoPreference(userId);
+      const isDemoEnabled = await checkUserDemoPreference(userId);
 
       if (isDemoEnabled) {
         const [demoOrganization, stats] = await Promise.all([
-          demoGuard.getDemoOrganization(),
-          demoGuard.getDemoStats(),
+          getDemoOrganization(),
+          getDemoStats(),
         ]);
 
         return res.json({
@@ -175,15 +175,15 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const [demoOrganization, stats] = await Promise.all([
-        demoGuard.getDemoOrganization(),
-        demoGuard.getDemoStats(),
+        getDemoOrganization(),
+        getDemoStats(),
       ]);
 
       return res.json({
         success: true,
         organization: {
-          id: demoGuard.DEMO_ORG_ID,
-          name: demoGuard.DEMO_ORG_NAME,
+          id: DEMO_ORG_ID,
+          name: DEMO_ORG_NAME,
           slug: 'acme-demo',
           industry: 'Manufacturing & Technology',
           size: '500-1000 employees',
