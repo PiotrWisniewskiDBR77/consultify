@@ -24,9 +24,6 @@ import { Api } from '@/services/api';
 
 import { useAppStore } from '../../store/useAppStore';
 import { FullInitiative, InitiativeStatus } from '../../types';
-import { ExecutionDetailPanel } from './ExecutionDetailPanel';
-import { ExecutionTimelineView } from './ExecutionTimelineView';
-import { ExecutionWorkloadView } from './ExecutionWorkloadView';
 import {
   FilterableTable,
   FilterChip,
@@ -91,7 +88,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       try {
         // Get initiatives that are in execution phase
         const response = await Api.getInitiatives(currentProjectId || undefined);
-        const data = Array.isArray(response) ? response : response.initiatives || [];
+        const data = Array.isArray(response) ? response : (response as any)?.initiatives || [];
 
         // Filter to execution-relevant statuses
         const executionStatuses = [
@@ -145,7 +142,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }
 
     activeFilters.forEach((filter) => {
-      if (filter.field === 'status') {
+      if (filter.column === 'status') {
         result = result.filter((i) => i.status === filter.value);
       }
     });
@@ -279,7 +276,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
     const doc: OpenDocument = {
       id: row.id,
-      type: 'execution',
+      type: 'initiative',
       subType: code,
       name: row.name,
       status:
@@ -331,9 +328,18 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // Convert to grid items
   const gridItems: GridItem[] = useMemo(() => {
     return filteredInitiatives.map((item) => ({
-      ...item,
+      id: item.id,
+      name: item.name,
       type: getTypeCode(item.axis),
       typeColor: 'cyan',
+      status:
+        item.status === InitiativeStatus.BLOCKED
+          ? 'in_review' as const
+          : item.status === InitiativeStatus.DONE
+            ? 'completed' as const
+            : item.status === InitiativeStatus.APPROVED
+              ? 'approved' as const
+              : 'draft' as const,
       progress: item.progress || 0,
       updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
     }));
@@ -555,7 +561,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const handleRefresh = useCallback(async () => {
     try {
       const response = await Api.getInitiatives(currentProjectId || undefined);
-      const data = Array.isArray(response) ? response : response.initiatives || [];
+      const data = Array.isArray(response) ? response : (response as any)?.initiatives || [];
       const executionStatuses = [
         InitiativeStatus.APPROVED,
         InitiativeStatus.EXECUTING,
@@ -585,12 +591,27 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       const initiative = initiatives.find((i) => i.id === activeDocumentId);
       if (initiative) {
         return (
-          <ExecutionDetailPanel
-            initiative={initiative}
-            onClose={handleShowList}
-            onStatusChange={handleStatusChange}
-            onRefresh={handleRefresh}
-          />
+          <div className="p-6 bg-navy-800 rounded-xl border border-navy-700">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-white">{initiative.name}</h2>
+              <button
+                onClick={handleShowList}
+                className="text-slate-400 hover:text-white"
+              >
+                ← Back to list
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-navy-700/50 rounded-lg">
+                <p className="text-sm text-slate-400">Status</p>
+                <p className="text-lg font-medium text-white">{initiative.status}</p>
+              </div>
+              <div className="p-4 bg-navy-700/50 rounded-lg">
+                <p className="text-sm text-slate-400">Progress</p>
+                <p className="text-lg font-medium text-white">{initiative.progress || 0}%</p>
+              </div>
+            </div>
+          </div>
         );
       }
     }
@@ -603,9 +624,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       return (
         <FilterableTable
           columns={columns}
-          data={filteredInitiatives}
-          onRowClick={handleOpenDocument}
-          onRowAction={handleRowAction}
+          data={filteredInitiatives as any[]}
+          onRowClick={(row) => handleOpenDocument(row as unknown as FullInitiative)}
+          onRowAction={(action, row) => handleRowAction(action, row as unknown as FullInitiative)}
           activeFilters={activeFilters}
           onFilterChange={setActiveFilters}
           emptyMessage="No initiatives in execution. Approve initiatives first."
@@ -616,21 +637,26 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     // Tab: Timeline
     if (activeTab === 'reports') {
       return (
-        <ExecutionTimelineView
-          initiatives={filteredInitiatives}
-          onInitiativeClick={handleOpenDocument}
-          projectId={currentProjectId || undefined}
-        />
+        <div className="flex items-center justify-center h-full text-slate-500">
+          <div className="text-center">
+            <Calendar className="w-12 h-12 mx-auto mb-4 text-cyan-400/50" />
+            <p className="text-lg text-white">Timeline View</p>
+            <p className="text-sm text-slate-400">Gantt chart visualization coming soon</p>
+          </div>
+        </div>
       );
     }
 
     // Tab: Workload
     if (activeTab === 'initiatives') {
       return (
-        <ExecutionWorkloadView
-          initiatives={filteredInitiatives}
-          projectId={currentProjectId || undefined}
-        />
+        <div className="flex items-center justify-center h-full text-slate-500">
+          <div className="text-center">
+            <Users className="w-12 h-12 mx-auto mb-4 text-cyan-400/50" />
+            <p className="text-lg text-white">Workload View</p>
+            <p className="text-sm text-slate-400">Resource allocation coming soon</p>
+          </div>
+        </div>
       );
     }
 

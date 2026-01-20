@@ -17,6 +17,7 @@ import {
   DollarSign,
   FileText,
   Filter,
+  GanttChart,
   Kanban,
   LayoutDashboard,
   List as ListIcon,
@@ -42,6 +43,7 @@ import { ExecutiveDashboard } from '../components/Implementation/ExecutiveDashbo
 import { InitiativeKanban } from '../components/Implementation/InitiativeKanban';
 import { RAIDLog } from '../components/Implementation/RAIDLog';
 import { StatusReportBuilder } from '../components/Implementation/StatusReportBuilder';
+import { ExecutionTimelineView } from '../components/Execution/ExecutionTimelineView';
 import { SplitLayout } from '../components/layout/SplitLayout';
 import { TaskDetailModal } from '../components/TaskDetailModal';
 import { useAppStore } from '../store/useAppStore';
@@ -50,6 +52,7 @@ import { AppView, Initiative, InitiativeStatus, Task, TaskStatus } from '../type
 type TabId =
   | 'dashboard'
   | 'kanban'
+  | 'timeline'
   | 'tasks'
   | 'decisions'
   | 'raid'
@@ -66,6 +69,7 @@ interface Tab {
 const TABS: Tab[] = [
   { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
   { id: 'kanban', label: 'Initiatives', icon: <Kanban size={16} /> },
+  { id: 'timeline', label: 'Timeline', icon: <GanttChart size={16} /> },
   { id: 'tasks', label: 'Tasks', icon: <ListIcon size={16} /> },
   { id: 'decisions', label: 'Decisions', icon: <Target size={16} /> },
   { id: 'raid', label: 'RAID Log', icon: <AlertTriangle size={16} /> },
@@ -361,6 +365,13 @@ export const ImplementationView: React.FC = () => {
             initiatives={initiatives}
             onInitiativeClick={handleInitiativeClick}
             onStageChange={handleStageChange}
+          />
+        );
+      case 'timeline':
+        return (
+          <ExecutionTimelineView
+            initiatives={initiatives as any}
+            onInitiativeClick={handleInitiativeClick as any}
           />
         );
       case 'tasks':

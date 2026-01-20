@@ -107,13 +107,12 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       icon: React.createElement(TrendingUp, { size: 20 }),
       viewId: AppView.BENEFITS_REALIZATION,
     },
-    // 8. Ekonomia - analiza ekonomiczna
+    // 8. Ekonomia - analiza ekonomiczna i wartość biznesowa
     {
       id: 'MODULE_ECONOMICS',
       label: t('sidebar.economics', 'Economics'),
       icon: React.createElement(Calculator, { size: 20 }),
       viewId: AppView.ECONOMICS,
-      badge: 'soon',
     },
     // 9. Raporty
     {
@@ -121,7 +120,6 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       label: t('sidebar.reports', 'Reports'),
       icon: React.createElement(BookOpen, { size: 20 }),
       viewId: AppView.FULL_STEP6_REPORTS,
-      badge: 'soon',
     },
     // Ecosystem affiliate dashboard (Phase G - conditional)
     ...(journeyState === 'ECOSYSTEM_NODE'

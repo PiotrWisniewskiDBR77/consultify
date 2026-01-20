@@ -23,14 +23,14 @@ export const FeedbackToggleButton: React.FC = () => {
       onClick={() => toggleSidePanel('FEEDBACK')}
       className="
                 group relative
-                w-9 h-9 
+                w-11 h-11 
                 flex items-center justify-center 
-                rounded-l-lg rounded-r-none
+                rounded-l-xl rounded-r-none
                 bg-gradient-to-br from-amber-500 to-orange-600
                 hover:from-amber-400 hover:to-orange-500
                 text-white
-                shadow-md shadow-amber-500/25
-                hover:shadow-lg hover:shadow-amber-500/35
+                shadow-lg shadow-amber-500/30
+                hover:shadow-xl hover:shadow-amber-500/40
                 hover:scale-105
                 active:scale-95
                 transition-all duration-200
@@ -41,10 +41,10 @@ export const FeedbackToggleButton: React.FC = () => {
       aria-label={t('widgets.feedback.title', 'Feedback')}
     >
       {/* Glow effect */}
-      <div className="absolute inset-0 rounded-l-lg bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+      <div className="absolute inset-0 rounded-l-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
 
       <MessageSquareText
-        size={18}
+        size={20}
         className="relative z-10 transition-transform duration-200 group-hover:scale-110"
       />
 

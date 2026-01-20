@@ -493,9 +493,30 @@ export const useDiscoveryStore = create<DiscoveryState>()(
           setImpactQuantified,
         } = get();
 
+        // Normalize entities to ensure all required properties exist
+        const safeEntities = {
+          painPoints: Array.isArray(entities?.painPoints) ? entities.painPoints : [],
+          insights: Array.isArray(entities?.insights) ? entities.insights : [],
+          quotes: Array.isArray(entities?.quotes) ? entities.quotes : [],
+          clientContext: entities?.clientContext && typeof entities.clientContext === 'object' 
+            ? entities.clientContext 
+            : {},
+          phaseProgress: entities?.phaseProgress && typeof entities.phaseProgress === 'object'
+            ? entities.phaseProgress
+            : { contextComplete: false, impactQuantified: false },
+        };
+
+        // Early return if no data to process
+        if (safeEntities.painPoints.length === 0 && 
+            safeEntities.insights.length === 0 && 
+            safeEntities.quotes.length === 0) {
+          console.warn('[DiscoveryStore] processExtraction called with empty entities');
+          return;
+        }
+
         // Add pain points
         const painNodeIds: Record<string, string> = {};
-        entities.painPoints.forEach((pain) => {
+        safeEntities.painPoints.forEach((pain) => {
           const position = calculateNodePosition('painPoint');
           const nodeId = addNode({
             type: 'painPoint',
@@ -512,34 +533,38 @@ export const useDiscoveryStore = create<DiscoveryState>()(
         });
 
         // Add insights and link to pains
-        entities.insights.forEach((insight) => {
+        safeEntities.insights.forEach((insight) => {
           const position = calculateNodePosition('insight');
           const insightId = addNode({
             type: 'insight',
             position,
             data: {
               text: insight.text,
-              linkedPainIds: insight.linkedPains.map((text) => painNodeIds[text]).filter(Boolean),
+              linkedPainIds: Array.isArray(insight.linkedPains) 
+                ? insight.linkedPains.map((text) => painNodeIds[text]).filter(Boolean)
+                : [],
               source: 'ai' as const,
             },
           });
 
           // Create edges to linked pains
-          insight.linkedPains.forEach((painText) => {
-            const painId = painNodeIds[painText];
-            if (painId) {
-              addEdge({
-                source: painId,
-                target: insightId,
-                type: 'smoothstep',
-                animated: true,
-              });
-            }
-          });
+          if (Array.isArray(insight.linkedPains)) {
+            insight.linkedPains.forEach((painText) => {
+              const painId = painNodeIds[painText];
+              if (painId) {
+                addEdge({
+                  source: painId,
+                  target: insightId,
+                  type: 'smoothstep',
+                  animated: true,
+                });
+              }
+            });
+          }
         });
 
         // Add quotes
-        entities.quotes.forEach((quote) => {
+        safeEntities.quotes.forEach((quote) => {
           const position = calculateNodePosition('quote');
           addNode({
             type: 'quote',
@@ -552,22 +577,22 @@ export const useDiscoveryStore = create<DiscoveryState>()(
         });
 
         // Update client context
-        if (Object.keys(entities.clientContext).length > 0) {
-          updateClientContext(entities.clientContext);
+        if (Object.keys(safeEntities.clientContext).length > 0) {
+          updateClientContext(safeEntities.clientContext);
         }
 
         // Update phase progress
-        if (entities.phaseProgress.contextComplete) {
+        if (safeEntities.phaseProgress.contextComplete) {
           setContextComplete(true);
         }
-        if (entities.phaseProgress.impactQuantified) {
+        if (safeEntities.phaseProgress.impactQuantified) {
           setImpactQuantified(true);
         }
 
         console.log('[DiscoveryStore] Processed extraction:', {
-          pains: entities.painPoints.length,
-          insights: entities.insights.length,
-          quotes: entities.quotes.length,
+          pains: safeEntities.painPoints.length,
+          insights: safeEntities.insights.length,
+          quotes: safeEntities.quotes.length,
         });
       },
 

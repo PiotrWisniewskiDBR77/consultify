@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { getDatabase } from '../database/index.js';
+import { verifyToken } from '../middleware/auth.middleware.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
@@ -39,7 +40,7 @@ const UpdateProjectSchema = z.object({
 
 // ==================== GET ALL PROJECTS ====================
 
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', verifyToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const orgId = (req as any).user?.organizationId;
@@ -74,7 +75,7 @@ router.get('/', async (req: Request, res: Response) => {
 
 // ==================== GET SINGLE PROJECT ====================
 
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', verifyToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const { id } = req.params;
@@ -122,7 +123,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 // ==================== CREATE PROJECT ====================
 
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', verifyToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const orgId = (req as any).user?.organizationId;
@@ -176,7 +177,7 @@ router.post('/', async (req: Request, res: Response) => {
 
 // ==================== UPDATE PROJECT ====================
 
-router.patch('/:id', async (req: Request, res: Response) => {
+router.patch('/:id', verifyToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const { id } = req.params;
@@ -250,7 +251,7 @@ router.patch('/:id', async (req: Request, res: Response) => {
 
 // ==================== DELETE PROJECT ====================
 
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', verifyToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const { id } = req.params;
@@ -294,7 +295,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
 
 // ==================== MOVE CONVERSATION TO PROJECT ====================
 
-router.post('/:id/conversations/:conversationId', async (req: Request, res: Response) => {
+router.post('/:id/conversations/:conversationId', verifyToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const { id, conversationId } = req.params;
@@ -347,7 +348,7 @@ router.post('/:id/conversations/:conversationId', async (req: Request, res: Resp
 
 // ==================== REMOVE CONVERSATION FROM PROJECT ====================
 
-router.delete('/:id/conversations/:conversationId', async (req: Request, res: Response) => {
+router.delete('/:id/conversations/:conversationId', verifyToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const { id, conversationId } = req.params;
