@@ -480,7 +480,10 @@ export class TaskController {
       } = body;
 
       if (!projectId) {
-        res.status(400).json({ error: 'projectId is required' });
+        res.status(400).json({ 
+          error: 'projectId is required',
+          message: 'Tasks must be associated with a project. Please select a project before creating a task.'
+        });
         return;
       }
 
