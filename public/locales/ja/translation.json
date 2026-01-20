@@ -83,7 +83,7 @@
     "affiliateDashboard": "Ecosystem Impact",
     "collapse": "Collapse",
     "expand": "Expand",
-    "metrics": "Metrics & Conversion",
+    "metrics": "メトリクス & Conversion",
     "aiChat": "AI Chat",
     "projectIntelligence": "Project Intelligence",
     "partnerPortal": "Partner Portal",
@@ -132,17 +132,17 @@
       "successMessage": "Thank you for verifying your email.",
       "redirecting": "Redirecting to login...",
       "errorTitle": "Verification Failed",
-      "invalidToken": "Invalid verification link.",
+      "invalidToken": "無効 verification link.",
       "failedMessage": "Verification failed. Token may be expired."
     },
-    "backToLogin": "Back to Login",
+    "backToLogin": "戻る to ログイン",
     "privacyLink": "Privacy Policy",
-    "termsLink": "Terms of Service",
+    "termsLink": "利用規約 of サービス",
     "orRegisterWith": "or register with",
     "orContinueWith": "or continue with",
-    "tryDemo": "Try Demo Account",
+    "tryDemo": "Try Demo アカウント",
     "accessCode": "Access Code",
-    "accessCodePlaceholder": "Enter invitation code",
+    "accessCodePlaceholder": "入力 invitation code",
     "optional": "Optional",
     "forgotPassword": "Forgot password?",
     "pending": {
@@ -154,7 +154,7 @@
       "success": "Authentication Successful!",
       "redirecting": "Redirecting...",
       "failed": "Authentication Failed",
-      "backToHome": "Back to Home",
+      "backToHome": "戻る to Home",
       "googleFailed": "Google authentication failed",
       "linkedinFailed": "LinkedIn authentication failed",
       "tokenFailed": "Token generation failed. Please try again."
@@ -169,10 +169,10 @@
       "joiningAs": "Joining as:",
       "confirmPassword": "Confirm Password",
       "acceptTerms": "I agree to the",
-      "termsOfService": "Terms of Service",
+      "termsOfService": "利用規約 of サービス",
       "and": "and",
       "decline": "Decline",
-      "acceptJoin": "Accept & Join",
+      "acceptJoin": "承諾 & Join",
       "joining": "Joining...",
       "success": "Welcome!",
       "successMessage": "Your account has been created successfully. You can now log in to access your organization.",
@@ -182,10 +182,10 @@
     "demoMode": "Demo Mode",
     "demoModeDescription": "For commercial purposes, please contact our sales team. You can explore the platform in demo mode now.",
     "loginAs": "You will be logged in as:",
-    "enterDemo": "Enter Demo Mode",
+    "enterDemo": "入力 Demo Mode",
     "contactSales": "Contact Sales for Full Access",
     "back": "Back",
-    "loading": "Loading..."
+    "loading": "読み込み中..."
   },
   "step1": {
     "title": "ステップ 1 / 3 — 会社と期待",
@@ -281,7 +281,7 @@
       "dataManagement": "品質とガバナンス",
       "culture": "スキルとマインドセット",
       "aiMaturity": "採用と戦略",
-      "cybersecurity": "Security & Risk"
+      "cybersecurity": "セキュリティ & リスク"
     },
     "questions": {
       "processes": [
@@ -533,15 +533,15 @@
       "lastName": "姓",
       "role": "役職 / 肩書き",
       "email": {
-        "title": "Email & Communication",
+        "title": "メール & Communication",
         "description": "Manage your email signature, aliases, and notification preferences",
         "signature": "Email Signature",
         "signatureText": "Signature Text",
         "signaturePlaceholder": "Best regards,\nYour Name\nTitle | Company",
         "signatureHint": "This signature will be added to your outgoing emails",
         "aliases": "Email Aliases",
-        "addAlias": "Add email alias...",
-        "digest": "Email Digest Frequency",
+        "addAlias": "追加 email alias...",
+        "digest": "メール Digest Frequency",
         "outOfOffice": "Out of Office",
         "enableOOO": "Enable Out of Office",
         "enableOOODesc": "Automatically respond when you are away",
@@ -566,24 +566,24 @@
       "saving": "Saving...",
       "emailAddress": "Email Address (Managed by Admin)",
       "bioAbout": {
-        "title": "Bio & About",
+        "title": "Bio & 概要",
         "description": "Tell others about yourself and your expertise",
         "shortBio": "Short Bio",
         "shortBioPlaceholder": "A brief one-liner about yourself...",
         "shortBioHint": "Displayed on your profile card",
-        "longBio": "About Me",
+        "longBio": "概要 Me",
         "longBioPlaceholder": "Tell your story, share your background, interests, and what drives you...",
         "longBioHint": "Markdown formatting supported",
-        "skills": "Skills & Expertise",
+        "skills": "スキル & Expertise",
         "noSkills": "No skills added yet",
-        "addSkill": "Add a skill...",
+        "addSkill": "追加 a skill...",
         "experience": "Experience",
-        "yearsExperience": "Years of Experience",
+        "yearsExperience": "年間 of 経験",
         "tip": "Profile Tip",
         "tipText": "A complete profile helps your team members understand your background and expertise. It also helps AI provide more personalized assistance."
       },
       "social": {
-        "title": "Social & Links",
+        "title": "Social & リンク",
         "description": "Connect your social profiles and share your online presence",
         "socialProfiles": "Social Profiles",
         "customLinks": "Custom Links",
@@ -592,20 +592,20 @@
         "addLink": "Add Link"
       },
       "visibility": {
-        "title": "Privacy & Visibility",
+        "title": "プライバシー & Visibility",
         "description": "Control who can see your profile and contact you",
         "profileVisibility": "Profile Visibility",
         "contactVisibility": "Contact Information",
-        "showEmail": "Show email address",
+        "showEmail": "表示 email address",
         "showEmailDesc": "Allow others to see your email on your profile",
-        "showPhone": "Show phone number",
+        "showPhone": "表示 phone number",
         "showPhoneDesc": "Allow others to see your phone number",
         "showInDirectory": "Show in team directory",
         "showInDirectoryDesc": "Appear in the organization team directory",
         "activityStatus": "Activity Status",
-        "showActivity": "Show online status",
+        "showActivity": "表示 online status",
         "showActivityDesc": "Let others see when you are online or away",
-        "showLastSeen": "Show last seen",
+        "showLastSeen": "表示 last seen",
         "showLastSeenDesc": "Display when you were last active",
         "communication": "Communication Settings",
         "allowMentions": "Allow @mentions from",
@@ -616,7 +616,7 @@
     },
     "title": "SETTINGS",
     "subtitle": "Preferences",
-    "backToApp": "Back to App",
+    "backToApp": "戻る to App",
     "user": "User",
     "modules": {
       "profile": "Profile",
@@ -625,15 +625,15 @@
       "aiPreferencesDesc": "Customize AI behavior, memory, and response style",
       "notifications": "Notifications",
       "notificationsDesc": "Manage how and when you receive notifications",
-      "security": "Security & Privacy",
+      "security": "セキュリティ & プライバシー",
       "securityDesc": "Manage your security settings, sessions, and privacy controls",
       "integrations": "Integrations",
       "integrationsDesc": "Connect apps, manage API keys, and configure webhooks",
-      "appearance": "Appearance & Regional",
+      "appearance": "外観 & Regional",
       "appearanceDesc": "Customize theme, language, accessibility, and work preferences"
     },
     "tabs": {
-      "personal": "Personal Info",
+      "personal": "Personal 情報",
       "avatar": "Avatar",
       "password": "Password",
       "billing": "Billing",
@@ -665,7 +665,7 @@
       "work": "Work",
       "dashboard": "Dashboard",
       "status": "Status",
-      "bio": "Bio & About",
+      "bio": "Bio & 概要",
       "social": "Social Links",
       "workHours": "Work Hours",
       "professional": "Professional",
@@ -675,7 +675,7 @@
       "security": "Security",
       "shortcuts": "Shortcuts",
       "quietHours": "Quiet Hours",
-      "dataPrivacy": "Data & Privacy",
+      "dataPrivacy": "データ & プライバシー",
       "visibility": "Visibility"
     },
     "recovery": {
@@ -712,8 +712,8 @@
         "title": "Notification Rules",
         "description": "Customize notifications for different projects and scenarios",
         "projectRules": "Project Rules",
-        "addRule": "Add Project Rule",
-        "selectProject": "Select a project...",
+        "addRule": "追加 プロジェクト Rule",
+        "selectProject": "選択 a project...",
         "ruleType": "Notification Mode",
         "all": "All",
         "mentions_only": "Mentions only",
@@ -722,7 +722,7 @@
         "priorityFilter": "Priority Filter",
         "allPriorities": "All priorities",
         "highMedium": "High & Medium only",
-        "highOnly": "High priority only",
+        "highOnly": "高 priority only",
         "rulesSaved": "Notification rules saved",
         "saveError": "Failed to save rules"
       },
@@ -746,9 +746,9 @@
       "title": "Keyboard Shortcuts",
       "description": "Customize keyboard shortcuts to boost your productivity",
       "reset": "Reset",
-      "enable": "Enable Keyboard Shortcuts",
+      "enable": "有効化 Keyboard Shortcuts",
       "enableDesc": "Use keyboard shortcuts throughout the app",
-      "showHints": "Show Shortcut Hints",
+      "showHints": "表示 Shortcut Hints",
       "showHintsDesc": "Display keyboard hints next to actions",
       "preset": "Shortcut Preset",
       "search": "Search shortcuts...",
@@ -760,7 +760,7 @@
       "description": "Schedule times when you want to minimize notifications",
       "currentlyActive": "Quiet Hours are currently active",
       "activeUntil": "Active until",
-      "enable": "Enable Quiet Hours",
+      "enable": "有効化 Quiet 時間",
       "enableDesc": "Pause notifications during scheduled times",
       "schedule": "Schedule",
       "startTime": "Start Time",
@@ -775,7 +775,7 @@
       "allowDMs": "Allow direct messages",
       "allowDMsDesc": "Private messages will still notify you",
       "autoReply": "Auto Reply",
-      "enableAutoReply": "Enable auto-reply",
+      "enableAutoReply": "有効化 auto-reply",
       "enableAutoReplyDesc": "Automatically respond to messages during quiet hours",
       "autoReplyMessage": "Auto-reply message",
       "autoReplyPlaceholder": "I'm currently unavailable. I'll respond when I return.",
@@ -785,14 +785,14 @@
       "presetAfterWork": "After work hours (6pm-9am, weekdays)"
     },
     "dataPrivacy": {
-      "title": "Data & Privacy",
+      "title": "データ & プライバシー",
       "description": "Control how your data is used and manage your privacy settings",
       "dataSharing": "Data Sharing",
-      "shareAnalytics": "Share analytics data",
+      "shareAnalytics": "共有 analytics data",
       "shareAnalyticsDesc": "Help us improve by sharing anonymous usage analytics",
       "shareUsageData": "Share detailed usage data",
       "shareUsageDataDesc": "Include more detailed interaction data for product improvement",
-      "improveAI": "Help improve AI",
+      "improveAI": "ヘルプ improve AI",
       "improveAIDesc": "Allow your interactions to help train better AI models",
       "communications": "Communication Preferences",
       "productUpdates": "Product updates",
@@ -804,30 +804,30 @@
       "dataRetention": "Data Retention",
       "dataRetentionDesc": "Choose how long we keep your data",
       "security": "Security",
-      "piiRedaction": "Enable PII redaction",
+      "piiRedaction": "有効化 PII redaction",
       "piiRedactionDesc": "Automatically redact personally identifiable information in AI interactions",
       "thirdParty": "Allow third-party integrations",
       "thirdPartyDesc": "Enable connections to external services and apps",
-      "exportData": "Export Your Data",
+      "exportData": "エクスポート Your データ",
       "exportDataDesc": "Download a copy of all your data. This may take some time to prepare.",
       "exportRequested": "Data export requested. You will receive an email when ready.",
       "exportFailed": "Failed to request data export. Please try again.",
       "preparing": "Preparing...",
-      "requestExport": "Request Data Export",
+      "requestExport": "Request データ エクスポート",
       "exportNote": "You will receive an email with a download link within 24 hours. The link expires after 7 days.",
       "dangerZone": "Danger Zone",
       "deleteDesc": "Permanently delete your account and all associated data. This action cannot be undone.",
       "deleteRequested": "Account deletion requested. You will receive a confirmation email.",
       "deleteFailed": "Failed to request account deletion.",
-      "requestDeletion": "Request Account Deletion",
+      "requestDeletion": "Request アカウント Deletion",
       "confirmDelete": "Are you sure?",
       "confirmDeleteDesc": "Type your email address to confirm account deletion.",
-      "confirmDeleteButton": "Delete My Account"
+      "confirmDeleteButton": "削除 My アカウント"
     },
     "accessibility": {
       "title": "Accessibility",
       "description": "Customize the application to match your accessibility needs",
-      "saved": "Accessibility preferences saved",
+      "saved": "アクセシビリティ preferences saved",
       "error": "Failed to save preferences",
       "fontSizeTitle": "Font Size",
       "fontSizeDescription": "Adjust the base font size for all text in the application",
@@ -838,7 +838,7 @@
         "extraLarge": "Extra Large"
       },
       "visualTitle": "Visual Settings",
-      "highContrast": "High Contrast Mode",
+      "highContrast": "高 Contrast Mode",
       "highContrastDescription": "Increase contrast for better visibility",
       "reduceMotion": "Reduce Motion",
       "reduceMotionDescription": "Disable animations and transitions",
@@ -851,8 +851,8 @@
         "relaxed": "Relaxed",
         "spacious": "Spacious"
       },
-      "navigationTitle": "Navigation & Input",
-      "keyboardShortcuts": "Show Keyboard Shortcuts",
+      "navigationTitle": "Navigation & インプット",
+      "keyboardShortcuts": "表示 Keyboard Shortcuts",
       "keyboardShortcutsDescription": "Display keyboard shortcut hints in tooltips",
       "focusHighlight": "Enhanced Focus Indicator",
       "focusHighlightDescription": "Show clear visual focus rings when navigating with keyboard",
@@ -892,7 +892,7 @@
     "complete": "Complete",
     "first": "first",
     "previousStep": "previous step",
-    "backToDashboard": "Back to Dashboard",
+    "backToDashboard": "戻る to ダッシュボード",
     "level": "Level",
     "status": {
       "saved": "Auto-saved",
@@ -906,14 +906,14 @@
       "stop": "Stop Impersonating"
     },
     "underConstruction": "Component Under Construction",
-    "backToHome": "Back to Home",
+    "backToHome": "戻る to Home",
     "close": "Close",
     "cancel": "Cancel",
     "save": "Save Changes",
     "add": "Add",
     "apply": "Apply",
     "confirm": "Confirm",
-    "loading": "Loading...",
+    "loading": "読み込み中...",
     "analysis": "Analysis",
     "statusLabel": "Status:",
     "notDefined": "Not defined",
@@ -939,15 +939,15 @@
     "processing": "Processing...",
     "verify": "Verify",
     "copy": "Copy",
-    "loadingOnboarding": "Loading Onboarding...",
-    "loadingConsultantPanel": "Loading Consultant Panel...",
-    "loadingInviteTool": "Loading Invite Tool...",
-    "loadingOrgSetup": "Loading Organization Setup...",
+    "loadingOnboarding": "読み込み中 Onboarding...",
+    "loadingConsultantPanel": "読み込み中 Consultant Panel...",
+    "loadingInviteTool": "読み込み中 招待 Tool...",
+    "loadingOrgSetup": "読み込み中 組織 Setup...",
     "back": "Back",
     "next": "Next",
-    "delete": "Delete",
+    "delete": "削除",
     "edit": "Edit",
-    "view": "View"
+    "view": "表示"
   },
   "assessment": {
     "workspace": {
@@ -975,7 +975,7 @@
       "target_only": "TARGET",
       "dashboardHeader": "Assessment Dashboard",
       "tabs": {
-        "summary": "Assessment & Gaps",
+        "summary": "評価 & ギャップ",
         "audits": "Additional Audits"
       },
       "generateInitiatives": "Generate Initiatives",
@@ -984,7 +984,7 @@
       "remaining": "Remaining",
       "assessmentArea": "ASSESSMENT AREA",
       "functionalArea": "FUNCTIONAL AREA",
-      "selectArea": "Select Area"
+      "selectArea": "選択 Area"
     },
     "wizard": {
       "startTitle": "アセスメント開始",
@@ -1009,13 +1009,13 @@
           "sales": {
             "title": "Sales",
             "levels": {
-              "1": "Basic Data Registration",
+              "1": "Basic データ Registration",
               "2": "CRM Implementation",
-              "3": "Integration with ERP/Marketing",
+              "3": "統合 with ERP/Marketing",
               "4": "Sales Automation",
               "5": "Omnichannel Integration",
-              "6": "AI-Driven Sales Forecasting",
-              "7": "Autonomous Sales Agents"
+              "6": "AI-Driven 営業 Forecasting",
+              "7": "Autonomous 営業 Agents"
             },
             "level1Desc": "electronically register agreements and orders. This level ensures the precise documentation and efficient storage of crucial data.",
             "level2Desc": "monitoring and analysis of sales-related data. The reporting tool automatically generates reports containing key sales indicators and statistics, facilitating decision-making.",
@@ -1079,10 +1079,10 @@
             "levels": {
               "1": "Basic Promotion",
               "2": "Digital Presence",
-              "3": "Marketing Automation Tools",
+              "3": "マーケティング 自動化 Tools",
               "4": "Personalization & Segmentation",
               "5": "Data-Driven Campaigns",
-              "6": "Predictive Marketing (AI)",
+              "6": "Predictive マーケティング (AI)",
               "7": "Real-time Hyper-personalization"
             },
             "level1Desc": "CRM (Customer Relationship Management) system to register and manage basic customer data. It gathers contact details, precise interaction histories and marketing preferences, which are the basis for further marketing operations.",
@@ -1231,7 +1231,7 @@
               "4": "Real-time Tracking",
               "5": "Automated Warehousing",
               "6": "Predictive Supply Chain",
-              "7": "Autonomous Logistics Network"
+              "7": "Autonomous 物流 Network"
             },
             "level1Desc": "allow the registration of data related to material location and identification. These scanners quickly read the labels on goods in the warehouse to precisely identify them and record their locations.",
             "level2Desc": "mobile terminals to control and monitor logistics stations . Employees can thus track and update the location and condition of goods in the warehouse.",
@@ -1295,8 +1295,8 @@
             "levels": {
               "1": "Manual Operations",
               "2": "Machine Monitoring",
-              "3": "Process Control Systems",
-              "4": "Automated Production Lines",
+              "3": "プロセス 制御 Systems",
+              "4": "自動化 生産 Lines",
               "5": "MES Implementation",
               "6": "Digital Twin of Production",
               "7": "Autonomous Factory"
@@ -1363,10 +1363,10 @@
             "levels": {
               "1": "Manual Inspection",
               "2": "Digital Records",
-              "3": "Statistical Process Control",
+              "3": "Statistical プロセス 制御",
               "4": "Automated Inspection",
-              "5": "Integrated Quality Management",
-              "6": "Predictive Quality (AI)",
+              "5": "Integrated 品質 管理",
+              "6": "Predictive 品質 (AI)",
               "7": "Zero-Defect Autonomous Systems"
             }
           },
@@ -1379,7 +1379,7 @@
               "4": "Automated Invoicing",
               "5": "Real-time Financial Controlling",
               "6": "Predictive Financial Modeling",
-              "7": "Autonomous Finance Operations"
+              "7": "Autonomous 財務 オペレーション"
             },
             "level1Desc": "document management are used to record basic data such as invoices, contracts and other financial documents. OCR technology automatically extracts data from invoices and electronic document management to accelerate and streamline the recording of financial data.",
             "level2Desc": "as financial management systems monitor and control financial indicators and financial reporting. FC systems analyse and control budgets, costs , profitability and other financial indicators.",
@@ -1439,15 +1439,15 @@
             "level7Formula": "AI recommends and optimizes, human supervises strategy."
           },
           "hr": {
-            "title": "HR & Admin",
+            "title": "人事 & 管理者",
             "levels": {
               "1": "Paper Records",
-              "2": "Basic HR Software",
+              "2": "Basic 人事 Software",
               "3": "HRM System",
-              "4": "Talent Management System",
+              "4": "Talent 管理 システム",
               "5": "People Analytics",
               "6": "AI Recruitment & Retention",
-              "7": "Autonomous Workforce Management"
+              "7": "Autonomous Workforce 管理"
             }
           }
         },
@@ -1466,13 +1466,13 @@
           "electronic": {
             "title": "Electronic Form",
             "levels": {
-              "1": "Basic Digital Format",
+              "1": "Basic デジタル フォーマット",
               "2": "Multimedia Content",
               "3": "Interactive Applications",
               "4": "Cloud-Based Services",
               "5": "API-First Products",
               "6": "AI-Enhanced Products",
-              "7": "Autonomous Digital Services"
+              "7": "Autonomous デジタル サービス"
             },
             "level1Desc": "downloaded or streamed from online platforms like Amazon and Audible. For example, a customer purchases an e-book from a website and downloads it to their e-reader device .",
             "level2Desc": "multimedia, e-books, audio and video are available on various devices or platforms, such as streaming platforms like Netflix. A website offers a multimedia package containing e-books, audio and video that can be played on different devices.",
@@ -1519,8 +1519,8 @@
             "title": "Community Based",
             "levels": {
               "1": "No Community",
-              "2": "Basic User Forum",
-              "3": "Active User Community",
+              "2": "Basic ユーザー Forum",
+              "3": "アクティブ ユーザー Community",
               "4": "Community Support",
               "5": "Co-Creation with Community",
               "6": "Community-Led Development",
@@ -1571,8 +1571,8 @@
             "title": "ICT Based",
             "levels": {
               "1": "Non-ICT Product",
-              "2": "Basic ICT Features",
-              "3": "Connected Product (IoT)",
+              "2": "Basic ICT 機能",
+              "3": "接続済み 製品 (IoT)",
               "4": "Remote Control/Monitoring",
               "5": "Data-Generating Product",
               "6": "Smart Product",
@@ -1679,7 +1679,7 @@
               "3": "National Scale",
               "4": "International Export",
               "5": "Global Platform",
-              "6": "Infinite Scalability (Cloud-Native)",
+              "6": "Infinite スケーラビリティ (Cloud-Native)",
               "7": "Universal Availability"
             },
             "level1Desc": "narrow audience or regional market. There are no opportunities for expansion into other markets . For example, a food ordering mobile app that operates in only one city.",
@@ -1732,7 +1732,7 @@
           "ecommerce": {
             "title": "E-commerce",
             "levels": {
-              "1": "No Online Sales",
+              "1": "いいえ オンライン 営業",
               "2": "Basic Web Shop",
               "3": "Integrated Web Store",
               "4": "Marketplace Presence",
@@ -1776,7 +1776,7 @@
             "title": "Platform Models",
             "levels": {
               "1": "Linear Business",
-              "2": "Basic Partner Portal",
+              "2": "Basic パートナー Portal",
               "3": "Two-Sided Platform",
               "4": "Multi-Sided Platform",
               "5": "Ecosystem Orchestrator",
@@ -1815,7 +1815,7 @@
           "aas": {
             "title": "As-a-Service",
             "levels": {
-              "1": "Product Sales Only",
+              "1": "製品 営業 Only",
               "2": "Maintenance Contracts",
               "3": "Leasing/Rental",
               "4": "Pay-per-Use",
@@ -1855,8 +1855,8 @@
               "1": "Exclusive Ownership",
               "2": "Internal Sharing",
               "3": "Partner Sharing",
-              "4": "Public Sharing Economy",
-              "5": "P2P Asset Sharing",
+              "4": "パブリック 共有 Economy",
+              "5": "P2P Asset 共有",
               "6": "AI-Optimized Sharing",
               "7": "Autonomous Asset Pooling"
             },
@@ -1889,7 +1889,7 @@
           "monetization": {
             "title": "Data Monetization",
             "levels": {
-              "1": "No Data Use",
+              "1": "いいえ データ Use",
               "2": "Internal Reporting",
               "3": "Process Optimization",
               "4": "Data-Enhanced Products",
@@ -1938,7 +1938,7 @@
               "4": "Real-time Streaming",
               "5": "IoT / Sensor Networks",
               "6": "AI-Enhanced Collection",
-              "7": "Autonomous Data Sensing"
+              "7": "Autonomous データ Sensing"
             },
             "level1Desc": "completing forms with information about their work or other activities related to the organization. These forms typically include information about tasks performed, working hours, equipment used, materials and tools employed by the employee, and work-related problems or incidents. The downside of manual declarations is that they are time-consuming and costly, requiring manual filling of documents by employees. They are also often prone to human error, which can degrade data quality and complicate analysis. An example of this level is a construction company using paper cards to track working hours and equipment usage. While a simple task, errors in records could lead to inaccuracies in project management.",
             "level2Desc": "or QR codes are popularly employed in warehouses, stores or production to identify goods, products or devices using a scanner . Each product or device is graphically labelled, and its data are stored in an IT system. Using a scanner, an employee can quickly and precisely gather information about products or devices to ensure their smooth operation or to assist customers . In a large supermarket network, each product on the shelf has a barcode. Employees use scanners for quick inventory counting and receiving deliveries, thereby increasing efficiency and reducing errors.",
@@ -2030,8 +2030,8 @@
             "levels": {
               "1": "Sneakernet (USB/Print)",
               "2": "Local Network (LAN)",
-              "3": "Connected Systems (API)",
-              "4": "Enterprise Bus (ESB)",
+              "3": "接続済み Systems (API)",
+              "4": "エンタープライズ Bus (ESB)",
               "5": "Event-Driven Architecture",
               "6": "Real-time Mesh",
               "7": "Neural Network Communication"
@@ -2073,13 +2073,13 @@
             "level7Formula": "Autonomy"
           },
           "analysis": {
-            "title": "Big Data Analysis",
+            "title": "Big データ 分析",
             "levels": {
               "1": "Spreadsheets",
               "2": "Basic Reporting",
               "3": "BI Dashboards",
               "4": "Advanced Analytics",
-              "5": "Big Data Platforms",
+              "5": "Big データ Platforms",
               "6": "Predictive Analytics",
               "7": "Prescriptive AI"
             },
@@ -2193,7 +2193,7 @@
             "level2Questions": [
               "[PL] Are decisions top-down only?"
             ],
-            "level2Formula": "[PL] Low adaptability",
+            "level2Formula": "[PL] 低 adaptability",
             "level3Desc": "[TODO] Leaders set ambitious goals and provide resources but tightly control execution.",
             "level3Questions": [
               "[PL] Are goals clear but rigid?"
@@ -2235,11 +2235,11 @@
             "level1Questions": [
               "[PL] Is change acknowledged but not executed?"
             ],
-            "level1Formula": "[PL] High inertia",
+            "level1Formula": "[PL] 高 inertia",
             "level2Questions": [
               "[PL] Is there a change coalition?"
             ],
-            "level2Formula": "[PL] Medium risk",
+            "level2Formula": "[PL] 中 risk",
             "level3Questions": [
               "[PL] Is there a shared vision?"
             ],
@@ -2247,7 +2247,7 @@
             "level4Questions": [
               "[PL] Is communication two-way?"
             ],
-            "level4Formula": "[PL] Low risk",
+            "level4Formula": "[PL] 低 risk",
             "level5Questions": [
               "[PL] Are initiatives implemented?"
             ],
@@ -2262,7 +2262,7 @@
             "levels": {
               "1": "Ad-hoc Fixes",
               "2": "Basic Reviews",
-              "3": "Structured Improvement Process",
+              "3": "Structured 改善 プロセス",
               "4": "Kaizen / Lean Culture",
               "5": "Data-Driven Improvement",
               "6": "Predictive Optimization",
@@ -2289,7 +2289,7 @@
             "level4Questions": [
               "[PL] Is self-learning encouraged?"
             ],
-            "level4Formula": "[PL] Low risk",
+            "level4Formula": "[PL] 低 risk",
             "level5Questions": [
               "[PL] Are teams cross-functional?"
             ],
@@ -2302,7 +2302,7 @@
           "innovation": {
             "title": "Innovation Culture",
             "levels": {
-              "1": "No Innovation Focus",
+              "1": "いいえ イノベーション Focus",
               "2": "R&D Department Only",
               "3": "Innovation Projects",
               "4": "Open Innovation",
@@ -2319,7 +2319,7 @@
             "level1Questions": [
               "[PL] Are ideas rewarded?"
             ],
-            "level1Formula": "[PL] Low maturity",
+            "level1Formula": "[PL] 低 maturity",
             "level2Questions": [
               "[PL] Are experiments allowed?"
             ],
@@ -2331,7 +2331,7 @@
             "level4Questions": [
               "[PL] Are mistakes tolerated?"
             ],
-            "level4Formula": "[PL] Low risk",
+            "level4Formula": "[PL] 低 risk",
             "level5Questions": [
               "[PL] Is R&D strategic?"
             ],
@@ -2350,7 +2350,7 @@
               "4": "Flexible Resourcing",
               "5": "On-Demand Resourcing",
               "6": "Crowdsourced Resources",
-              "7": "Abundant Ecosystem Resources"
+              "7": "Abundant Ecosystem リソース"
             },
             "level1Desc": "adequate sources of funding for the transformation process. This is a key element of organizational transformation, as organizations must be prepared to finance planned initiatives and projects. The question is whether the company has a financial plan that includes expenses for implementing transformation initiatives.",
             "level2Desc": "training exist within the organization , including both internal and external training, mentoring programmes and self -learning. The example here is of a manufacturing company that was introducing a new management system. The company expanded its training programmes to cover various aspects of the new system . Employees were given access to internal training on operating the new software but also participated in webinars conducted by the system provider, allowing them to gain firsthand expert knowledge.",
@@ -2361,11 +2361,11 @@
             "level1Questions": [
               "[PL] Is budget allocated?"
             ],
-            "level1Formula": "[PL] High risk",
+            "level1Formula": "[PL] 高 risk",
             "level2Questions": [
               "[PL] Are trainings accessible?"
             ],
-            "level2Formula": "[PL] Medium risk",
+            "level2Formula": "[PL] 中 risk",
             "level3Questions": [
               "[PL] Are experts engaged?"
             ],
@@ -2373,7 +2373,7 @@
             "level4Questions": [
               "[PL] Is data available?"
             ],
-            "level4Formula": "[PL] Low risk",
+            "level4Formula": "[PL] 低 risk",
             "level5Questions": [
               "[PL] Are tools modern?"
             ],
@@ -2390,14 +2390,14 @@
         "intro": "Assessment of security posture.",
         "areas": {
           "strategy": {
-            "title": "Strategy & Risk",
+            "title": "戦略 & リスク",
             "levels": {
               "1": "No Strategy",
               "2": "Basic Policy",
               "3": "Risk Assessment",
               "4": "Compliance Framework",
-              "5": "Integrated Risk Management",
-              "6": "Predictive Risk AI",
+              "5": "Integrated リスク 管理",
+              "6": "Predictive リスク AI",
               "7": "Autonomous Immunosystem"
             },
             "level1Desc": "developed or implemented a cybersecurity strategy or policy. There are no defined goals, standards or security procedures. Risk management is impossible , and the organization is exposed to serious threats.",
@@ -2517,7 +2517,7 @@
             "level6Formula": "High trust"
           },
           "education": {
-            "title": "Education & Quality",
+            "title": "Education & 品質",
             "levels": {
               "1": "No Training",
               "2": "Ad-hoc Awareness",
@@ -2563,8 +2563,8 @@
             "levels": {
               "1": "No Plan",
               "2": "Backup Only",
-              "3": "Disaster Recovery Plan",
-              "4": "Business Continuity Plan",
+              "3": "Disaster Recovery プラン",
+              "4": "ビジネス Continuity プラン",
               "5": "Resilience Testing",
               "6": "Automated Recovery",
               "7": "Anti-Fragile Operations"
@@ -2613,7 +2613,7 @@
               "2": "Structured Data in Silos",
               "3": "Centralized Data & Initial AI Readiness",
               "4": "Fully AI-Ready Data Architecture",
-              "5": "Autonomous Data Intelligence"
+              "5": "Autonomous データ Intelligence"
             },
             "level1Desc": "Data are scattered across spreadsheets, local drives and disconnected systems. There is no unified view of the organization's information. Data is incomplete or inconsistent across systems. AI cannot function because data is not available in the right format.",
             "level1Questions": [
@@ -2628,7 +2628,7 @@
               "Does preparing data require manual work?",
               "Is historical data archived digitally?"
             ],
-            "level2Formula": "Data for Reporting",
+            "level2Formula": "データ for Reporting",
             "level3Desc": "The organization builds the first centralized data repositories. ETL processes start functioning. First machine learning projects appear, based on standardized datasets. Data in the warehouse is updated regularly.",
             "level3Questions": [
               "Do data scientists have easy access to raw data?",
@@ -2655,7 +2655,7 @@
             "title": "AI-Augmented Processes",
             "levels": {
               "1": "Isolated AI Experiments",
-              "2": "Assisted Work Automation",
+              "2": "Assisted Work 自動化",
               "3": "Integrated AI Decision Support",
               "4": "Semi-Autonomous Processes",
               "5": "Fully Autonomous Operational Orchestration"
@@ -2700,10 +2700,10 @@
             "title": "AI in Products & Services",
             "levels": {
               "1": "No AI Components in Products",
-              "2": "Add-On AI Features",
+              "2": "Add-On AI 機能",
               "3": "AI as a Core Product Component",
-              "4": "Fully AI-Driven Products",
-              "5": "AI-Native Business Offerings"
+              "4": "Fully AI-Driven 製品",
+              "5": "AI-Native ビジネス Offerings"
             },
             "level1Desc": "Products and services contain no AI elements. Value comes from traditional functions. Products work the same for every user. No predictive functions.",
             "level1Questions": [
@@ -2777,7 +2777,7 @@
               "Are there standards for documenting AI decisions?",
               "Is bias in data monitored?"
             ],
-            "level4Formula": "Systemic Risk Management",
+            "level4Formula": "Systemic リスク 管理",
             "level5Desc": "AI governance is automated and built-in. Systems detect problems and react. The firm proves transparency to auditors.",
             "level5Questions": [
               "Is AI ethics verified automatically?",
@@ -2848,9 +2848,9 @@
       "ai": "AI"
     },
     "emptyState": {
-      "title": "No assessments yet",
+      "title": "いいえ assessments yet",
       "noMatch": "No assessments match your search",
-      "createFirst": "Create First Assessment"
+      "createFirst": "Create First 評価"
     },
     "table": {
       "assessment": "Assessment",
@@ -2864,10 +2864,10 @@
       "add": "Add",
       "noAttachments": "No attachments for this level",
       "addAttachment": "Add attachment",
-      "type": "Attachment type",
+      "type": "添付ファイル type",
       "description": "Description (optional)",
       "descriptionPlaceholder": "Brief description of the attachment...",
-      "selectFile": "Select file",
+      "selectFile": "選択 file",
       "uploading": "Uploading...",
       "allowedTypes": "Allowed: PDF, Word, Excel, PowerPoint, images, CSV, TXT, JSON (max 25MB)",
       "deleteConfirm": "Are you sure you want to delete this attachment?",
@@ -2963,7 +2963,7 @@
       "carouselTagline": "AIが分析。あなたが指揮。",
       "status": {
         "awaiting": "Awaiting Your Decision",
-        "approved": "Approved by You"
+        "approved": "承認済み by You"
       }
     },
     "regional": {
@@ -3096,7 +3096,7 @@
       "title": "Privacy Policy"
     },
     "terms": {
-      "title": "Terms of Service"
+      "title": "利用規約 of サービス"
     },
     "lastUpdated": "Last updated"
   },
@@ -3104,34 +3104,34 @@
     "panel": {
       "title": "Consultant Panel",
       "welcome": "Welcome back, {{name}}. Manage your client organizations.",
-      "createInvite": "Create Invite",
+      "createInvite": "Create 招待",
       "linkedOrgs": "Linked Organizations",
       "activeCount": "{{count}} Active",
-      "loading": "Loading...",
-      "noOrgsTitle": "No Organizations Linked",
+      "loading": "読み込み中...",
+      "noOrgsTitle": "いいえ Organizations Linked",
       "noOrgsMessage": "You don't have access to any organizations yet. Invite a client to get started.",
       "inviteClient": "Invite Client",
       "openWorkspace": "Open Workspace",
       "role": "Role: {{role}}"
     },
     "invites": {
-      "backToPanel": "Back to Panel",
+      "backToPanel": "戻る to Panel",
       "generateInvites": "Generate Invites",
       "newInvitation": "New Invitation",
-      "inviteType": "Invite Type",
+      "inviteType": "招待 入力",
       "typeTrialOrg": "New Trial Company (Org)",
-      "typeTrialUser": "Existing Trial User",
+      "typeTrialUser": "Existing トライアル ユーザー",
       "typeAddMe": "Add Me to Organization",
-      "companyName": "Company Name (Optional)",
+      "companyName": "Company 名前 (Optional)",
       "companyPlaceholder": "e.g. Acme Corp",
-      "targetEmail": "Target Email (Optional)",
+      "targetEmail": "目標 メール (Optional)",
       "emailPlaceholder": "user@example.com",
       "emailHint": "Leave empty for a generic code.",
       "generateCode": "Generate Code",
       "generating": "Generating...",
       "recentInvites": "Recent Invites",
       "noInvites": "No invites generated yet.",
-      "labelType": "Type:",
+      "labelType": "入力:",
       "labelUses": "Uses:",
       "labelTo": "To:",
       "labelExp": "Exp:"
@@ -3147,29 +3147,29 @@
     "demoDesc": "Watch the system in action. No registration, no pressure. Understand the approach before committing.",
     "demoBtn": "Explore Demo",
     "demoTime": "~10 minutes",
-    "demoNoReg": "No registration required",
+    "demoNoReg": "いいえ registration required",
     "quickTitle": "Quick Assessment",
     "quickSteps": "3 Steps",
     "quickTime": "~5 minutes",
     "quickDesc": "Instant auto-analysis of your firm. Get personalized recommendations and quick-win ideas generated by AI immediately.",
-    "quickBtn": "Start Quick Assessment",
-    "fullTitle": "Full Transformation Project",
+    "quickBtn": "開始 Quick 評価",
+    "fullTitle": "Full 変革 プロジェクト",
     "fullSteps": "5 Steps",
-    "fullTime": "Complete Consulting Flow",
+    "fullTime": "完了 Consulting Flow",
     "fullDesc": "Deep strategic assessment, financial analysis (ROI), roadmap creation, and execution monitoring.",
     "fullFeatures": {
       "drd": "Full maturity assessment (DRD)",
       "roadmap": "Financial analysis & Roadmap",
       "ai": "AI Strategic Advisor"
     },
-    "fullBtn": "Unlock Full Version",
+    "fullBtn": "Unlock Full バージョン",
     "consultingTitle": "Talk to Consulting",
     "consultingDesc": "Need a bespoke approach? Schedule a call with our senior consultants to discuss your specific transformation needs.",
     "consultingBtn": "Contact Us",
     "consultingTag": "Custom Engagement",
     "masterclassTitle": "Want to deepen your knowledge?",
     "masterclassDesc": "Join our Masterclass program and learn proven tools from transformation leaders.",
-    "masterclassLink": "View Masterclass Details",
+    "masterclassLink": "表示 Masterclass 詳細",
     "videoTitle": "See how CONSULTINITY works",
     "videoPerson": "Dr. Piotr Wiśniewski",
     "videoRole": "Your guide to digital transformation"
@@ -3177,14 +3177,14 @@
   "demo": {
     "modal": {
       "title": "Experience Consultinity",
-      "titleTrial": "Start Your Trial",
+      "titleTrial": "開始 Your トライアル",
       "subtitle": "Explore our AI-powered consulting platform",
       "demoMode": "Demo Environment",
       "demoDescription": "You'll be logged in as a demo user with full access to explore all features. This is a shared environment for evaluation purposes.",
       "commercialAccess": "Want Full Commercial Access?",
       "commercialDescription": "For production use with your own data and team, please contact our sales team to set up your dedicated environment.",
       "loginAs": "You will be logged in as:",
-      "startDemo": "Enter Demo",
+      "startDemo": "入力 Demo",
       "contactSales": "Contact Sales",
       "footerNote": "By entering the demo, you agree to our Terms of Service and Privacy Policy.",
       "loading": "Starting..."
@@ -3213,8 +3213,8 @@
       "title": "Demo Mode",
       "exploring": "Exploring with sample data",
       "showLimitations": "Limitations",
-      "hideLimitations": "Hide",
-      "getFullAccess": "Get Full Access",
+      "hideLimitations": "非表示",
+      "getFullAccess": "Get Full アクセス",
       "upgrade": "Upgrade",
       "minimize": "Minimize",
       "minimizedLabel": "Demo Mode",
@@ -3232,7 +3232,7 @@
     },
     "indicator": "DEMO",
     "loading": {
-      "title": "Preparing Your Experience",
+      "title": "Preparing Your 経験",
       "subtitle": "Setting up your personalized demo environment",
       "steps": {
         "environment": "Initializing demo environment",
@@ -3249,7 +3249,7 @@
       "learnMore": "Learn more",
       "modalTitle": "Ready for the Full Experience?",
       "modalDescription": "You've explored {{feature}}. Get a dedicated environment with your real company data and unlimited AI capabilities.",
-      "contactSales": "Talk to Sales",
+      "contactSales": "Talk to 営業",
       "continueBrowsing": "Continue Exploring"
     },
     "exit": {
@@ -3371,8 +3371,8 @@
       },
       "faq": {
         "searchPlaceholder": "質問を検索...",
-        "noResults": "一致する質問が見つかりません。",
-        "noFAQ": "FAQはありません。"
+        "noResults": "質問が見つかりません。",
+        "noFAQ": "このモジュールのFAQはありません。"
       },
       "knowledge": {
         "title": "ナレッジベース",
@@ -3833,11 +3833,13 @@
           "workflow": [
             "ユーザープロファイルを完成",
             "組織詳細を設定",
-            "プラットフォームツアーを受ける"
+            "プラットフォームツアーを受ける",
+            "開始 first assessment"
           ],
           "tips": [
             "より良い体験のためすべてのステップを完了",
-            "早めにチームメンバーを招待"
+            "早めにチームメンバーを招待",
+            "[TODO:JA] Revisit tutorials as needed"
           ]
         },
         "consultant": {
@@ -3853,11 +3855,13 @@
           "workflow": [
             "クライアントリストを表示",
             "プロジェクトを選択",
-            "レポートを生成"
+            "レポートを生成",
+            "レポート to stakeholders"
           ],
           "tips": [
             "ハイレベルステータスにはポートフォリオビューを使用",
-            "クライアント間でレポートを標準化"
+            "クライアント間でレポートを標準化",
+            "ドキュメント best practices"
           ]
         },
         "ecosystem": {
@@ -3867,16 +3871,19 @@
           "keyFeatures": [
             "パートナーディレクトリ",
             "アフィリエイトダッシュボード",
-            "コラボレーションツール"
+            "コラボレーションツール",
+            "統合 catalog"
           ],
           "workflow": [
             "パートナーを探索",
             "エキスパートと接続",
-            "アフィリエイトパフォーマンスを追跡"
+            "アフィリエイトパフォーマンスを追跡",
+            "[TODO:JA] Configure integrations"
           ],
           "tips": [
             "認定パートナーを探す",
-            "アフィリエイトへの影響を監視"
+            "アフィリエイトへの影響を監視",
+            "[TODO:JA] Engage with community"
           ]
         },
         "emailTemplates": {
@@ -3921,11 +3928,6 @@
         "watchAgain": "もう一度視聴",
         "progress": "視聴進捗",
         "progressSummary": "{{watched}} / {{total}}"
-      },
-      "faq": {
-        "searchPlaceholder": "質問を検索...",
-        "noResults": "質問が見つかりません。",
-        "noFAQ": "このモジュールのFAQはありません。"
       },
       "content": {
         "help": "ヘルプ",
@@ -3976,19 +3978,24 @@
               "AI支援評価",
               "ギャップ分析とヒートマップ",
               "ベンチマーク比較",
-              "自動レポート生成"
+              "自動レポート生成",
+              "[TODO:JA] Multi-axis assessment (Processes, Digital, Data, Culture, etc.)",
+              "[TODO:JA] Reviewer workflow for quality assurance"
             ],
             "workflow": [
               "適切な評価フレームワークを選択",
               "各評価軸のアンケートを完了",
               "エビデンス文書をアップロード",
               "チームとスコアを確認・調整",
-              "評価レポートを生成"
+              "評価レポートを生成",
+              "[TODO:JA] Submit for reviewer approval if required",
+              "[TODO:JA] Generate comprehensive assessment report"
             ],
             "tips": [
               "コンテキストビルダーを最初に完了",
               "実際のエビデンス文書をアップロード",
-              "定期的な再評価をスケジュール"
+              "定期的な再評価をスケジュール",
+              "[TODO:JA] Schedule regular re-assessments (quarterly recommended)"
             ]
           },
           "initiatives": {
@@ -3999,17 +4006,25 @@
               "AI駆動イニシアチブ生成",
               "テンプレートライブラリ",
               "ROI見積もりビルダー",
-              "優先順位スコアリング"
+              "優先順位スコアリング",
+              "リソース allocation planning",
+              "イニシアチブ dependencies tracking",
+              "[TODO:JA] Progress monitoring and milestones"
             ],
             "workflow": [
               "評価から特定されたギャップをレビュー",
               "AIを使用してイニシアチブを生成",
               "スコープとタイムラインを定義",
-              "ロードマップに追加"
+              "ロードマップに追加",
+              "[TODO:JA] Assign ownership and team members",
+              "[TODO:JA] Prioritize using impact/effort scoring",
+              "[TODO:JA] Add to roadmap for execution planning"
             ],
             "tips": [
               "クイックウィンから開始",
-              "各イニシアチブに明確な所有者を確保"
+              "各イニシアチブに明確な所有者を確保",
+              "[TODO:JA] Link initiatives to specific assessment gaps for traceability",
+              "[TODO:JA] Review and reprioritize initiatives quarterly"
             ]
           },
           "roadmap": {
@@ -4020,16 +4035,25 @@
               "ガントチャートビュー",
               "ドラッグアンドドロップスケジューリング",
               "フェーズ管理",
-              "マイルストーン追跡"
+              "マイルストーン追跡",
+              "リソース capacity planning",
+              "マイルストーン tracking",
+              "エクスポート for presentations"
             ],
             "workflow": [
               "優先順位付けされたイニシアチブをレビュー",
               "戦略フェーズに整理",
-              "主要マイルストーンを設定"
+              "主要マイルストーンを設定",
+              "[TODO:JA] Define dependencies between initiatives",
+              "[TODO:JA] Assign resources and check capacity",
+              "[TODO:JA] Set key milestones and review gates",
+              "[TODO:JA] Share roadmap with stakeholders"
             ],
             "tips": [
               "バッファ時間を組み込む",
-              "月次でロードマップをレビュー"
+              "月次でロードマップをレビュー",
+              "[TODO:JA] Use phases to communicate strategic intent",
+              "[TODO:JA] Review and adjust roadmap monthly"
             ]
           },
           "implementation": {
@@ -4039,16 +4063,28 @@
             "keyFeatures": [
               "パイロットプログラム管理",
               "ステージゲートワークフロー",
-              "変更管理"
+              "変更管理",
+              "[TODO:JA] Risk and issue management",
+              "[TODO:JA] Stakeholder communication",
+              "[TODO:JA] Go/No-go decision support",
+              "[TODO:JA] Rollout planning and execution",
+              "[TODO:JA] ADKAR change management"
             ],
             "workflow": [
               "パイロット用イニシアチブを選択",
               "成功基準を定義",
-              "展開を実行"
+              "展開を実行",
+              "[TODO:JA] Collect feedback and lessons learned",
+              "[TODO:JA] Make Go/No-go decision",
+              "[TODO:JA] Plan full rollout based on pilot learnings",
+              "[TODO:JA] Execute rollout with change management",
+              "[TODO:JA] Transition to operations"
             ],
             "tips": [
               "本格展開前にパイロットを実施",
-              "成功指標を事前に定義"
+              "成功指標を事前に定義",
+              "[TODO:JA] Engage change champions early",
+              "[TODO:JA] Document everything for future reference"
             ]
           },
           "reports": {
@@ -4058,16 +4094,26 @@
             "keyFeatures": [
               "エグゼクティブサマリーレポート",
               "ROI計算機",
-              "KPI追跡ダッシュボード"
+              "KPI追跡ダッシュボード",
+              "評価 comparison reports",
+              "[TODO:JA] PDF/PowerPoint export",
+              "カスタム report builder",
+              "監査 trail documentation",
+              "ベンチマーク reports"
             ],
             "workflow": [
               "レポートタイプを選択",
               "レポートをカスタマイズ",
-              "エクスポートまたは共有"
+              "エクスポートまたは共有",
+              "[TODO:JA] Add commentary and insights",
+              "[TODO:JA] Export or share report",
+              "[TODO:JA] Schedule recurring reports"
             ],
             "tips": [
               "役員会向けにエグゼクティブビューを使用",
-              "月次進捗レポートをスケジュール"
+              "月次進捗レポートをスケジュール",
+              "[TODO:JA] Compare current vs baseline assessments",
+              "[TODO:JA] Schedule monthly progress reports"
             ]
           },
           "mywork": {
@@ -4077,16 +4123,24 @@
             "keyFeatures": [
               "個人タスクリスト",
               "受信トレイ",
-              "集中モード"
+              "集中モード",
+              "[TODO:JA] Task prioritization (P1-P4)",
+              "[TODO:JA] Due date tracking and reminders",
+              "[TODO:JA] Activity history",
+              "[TODO:JA] Cross-module task aggregation"
             ],
             "workflow": [
               "受信トレイを確認",
               "タスクを優先順位付け",
-              "完了マークを付ける"
+              "完了マークを付ける",
+              "[TODO:JA] Mark tasks complete as you finish",
+              "[TODO:JA] Process inbox to zero"
             ],
             "tips": [
               "毎日受信トレイを処理",
-              "集中モードを使用"
+              "集中モードを使用",
+              "[TODO:JA] Set realistic task estimates",
+              "[TODO:JA] Review weekly to reprioritize"
             ]
           },
           "organization": {
@@ -4096,16 +4150,25 @@
             "keyFeatures": [
               "会社プロファイル設定",
               "戦略目標定義",
-              "課題マッピング"
+              "課題マッピング",
+              "[TODO:JA] Megatrend analysis",
+              "戦略 synthesis",
+              "[TODO:JA] AI context enhancement",
+              "[TODO:JA] Multi-site support"
             ],
             "workflow": [
               "会社プロファイルを完成",
               "戦略目標を定義",
-              "AI推奨をレビュー"
+              "AI推奨をレビュー",
+              "[TODO:JA] Analyze relevant megatrends",
+              "[TODO:JA] Synthesize strategic direction",
+              "レビュー AI recommendations"
             ],
             "tips": [
               "戦略の進化に合わせて更新",
-              "業界について具体的に"
+              "業界について具体的に",
+              "[TODO:JA] Include both short and long-term goals",
+              "[TODO:JA] Review quarterly with leadership"
             ]
           },
           "settings": {
@@ -4115,16 +4178,26 @@
             "keyFeatures": [
               "プロファイル管理",
               "二要素認証",
-              "通知設定"
+              "通知設定",
+              "[TODO:JA] AI behavior customization",
+              "[TODO:JA] Theme and language settings",
+              "統合 connections",
+              "プライバシー controls",
+              "アクセシビリティ options"
             ],
             "workflow": [
               "プロファイルを完成",
               "2FAを有効化",
-              "設定を調整"
+              "設定を調整",
+              "[TODO:JA] Set AI preferences",
+              "[TODO:JA] Connect integrations (Slack, etc.)",
+              "[TODO:JA] Adjust display preferences"
             ],
             "tips": [
               "2FAを有効化",
-              "プライバシー設定を定期的にレビュー"
+              "プライバシー設定を定期的にレビュー",
+              "[TODO:JA] Customize AI response style to your preference",
+              "[TODO:JA] Review privacy settings periodically"
             ]
           },
           "admin": {
@@ -4134,16 +4207,27 @@
             "keyFeatures": [
               "ユーザー管理",
               "プロジェクト管理",
-              "AI設定"
+              "AI設定",
+              "知識 base management",
+              "[TODO:JA] Usage analytics and metrics",
+              "フィードバック review",
+              "[TODO:JA] Security and access control",
+              "[TODO:JA] Playbook management"
             ],
             "workflow": [
               "ユーザーを招待",
               "プロジェクトを設定",
-              "使用状況を監視"
+              "使用状況を監視",
+              "アップロード organizational knowledge",
+              "[TODO:JA] Monitor usage and costs",
+              "レビュー team feedback",
+              "[TODO:JA] Manage security policies"
             ],
             "tips": [
               "ユーザー権限を定期的にレビュー",
-              "ナレッジベースを最新に保つ"
+              "ナレッジベースを最新に保つ",
+              "[TODO:JA] Keep knowledge base current",
+              "[TODO:JA] Monitor for unusual activity"
             ]
           },
           "superadmin": {
@@ -4153,16 +4237,30 @@
             "keyFeatures": [
               "マルチ組織管理",
               "グローバルユーザー管理",
-              "請求管理"
+              "請求管理",
+              "[TODO:JA] AI provider configuration",
+              "[TODO:JA] SSO/SAML configuration",
+              "セキュリティ policy management",
+              "[TODO:JA] White-label studio",
+              "コンプライアンス center",
+              "[TODO:JA] API management",
+              "[TODO:JA] Bulk operations"
             ],
             "workflow": [
               "ヘルスダッシュボードを監視",
               "組織を管理",
-              "SSOを設定"
+              "SSOを設定",
+              "[TODO:JA] Set security policies",
+              "[TODO:JA] Manage billing and subscriptions",
+              "[TODO:JA] Configure AI providers globally",
+              "[TODO:JA] Apply white-label branding",
+              "[TODO:JA] Ensure compliance requirements"
             ],
             "tips": [
               "設定変更を文書化",
-              "サンドボックスでテスト"
+              "サンドボックスでテスト",
+              "[TODO:JA] Test SSO changes in sandbox first",
+              "[TODO:JA] Monitor AI costs across organizations"
             ]
           },
           "ai-infrastructure": {
@@ -4172,16 +4270,28 @@
             "keyFeatures": [
               "LLMプロバイダー設定",
               "モデルティア管理",
-              "ヘルスモニタリング"
+              "ヘルスモニタリング",
+              "[TODO:JA] Global rate limits and token budgets",
+              "[TODO:JA] Real-time health monitoring",
+              "[TODO:JA] Cost tracking and analytics",
+              "[TODO:JA] Circuit breaker configuration",
+              "[TODO:JA] PII detection settings"
             ],
             "workflow": [
               "プロバイダーを設定",
               "制限を設定",
-              "ヘルスを監視"
+              "ヘルスを監視",
+              "[TODO:JA] Test provider connections",
+              "[TODO:JA] Monitor health dashboard for issues",
+              "[TODO:JA] Review usage analytics and costs",
+              "[TODO:JA] Adjust circuit breaker thresholds as needed"
             ],
             "tips": [
               "エコノミーモデルを適切に使用",
-              "コストを監視"
+              "コストを監視",
+              "[TODO:JA] Monitor latency trends to detect degraded performance",
+              "[TODO:JA] Keep at least one fallback provider active",
+              "[TODO:JA] Review costs weekly to prevent budget overruns"
             ]
           },
           "playbookTemplates": {
@@ -4210,16 +4320,24 @@
             "keyFeatures": [
               "AIアクションアドバイザー",
               "プロアクティブな推奨",
-              "リスク分析"
+              "リスク分析",
+              "[TODO:JA] Chat-based consultation",
+              "[TODO:JA] Evidence-based suggestions",
+              "リスク analysis",
+              "[TODO:JA] What-if scenarios"
             ],
             "workflow": [
               "AI推奨をレビュー",
               "提案を評価",
-              "フィードバックを提供"
+              "フィードバックを提供",
+              "[TODO:JA] Implement accepted recommendations",
+              "[TODO:JA] Provide feedback to improve AI"
             ],
             "tips": [
               "AI提案を批判的にレビュー",
-              "AIはアイデア発想に使用"
+              "AIはアイデア発想に使用",
+              "[TODO:JA] Use AI for ideation, humans for decisions",
+              "[TODO:JA] Check evidence before accepting recommendations"
             ]
           },
           "knowledge": {
@@ -4229,16 +4347,26 @@
             "keyFeatures": [
               "方法論ガイド",
               "ビデオマスタークラス",
-              "テンプレート"
+              "テンプレート",
+              "[TODO:JA] Case studies library",
+              "[TODO:JA] Glossary of terms",
+              "外部 resource links",
+              "[TODO:JA] Searchable article database",
+              "[TODO:JA] Downloadable assets"
             ],
             "workflow": [
               "トピックを検索",
               "チュートリアルを視聴",
-              "テンプレートをダウンロード"
+              "テンプレートをダウンロード",
+              "[TODO:JA] Download templates for offline use",
+              "[TODO:JA] Share useful articles with team",
+              "[TODO:JA] Suggest new topics"
             ],
             "tips": [
               "よく使うガイドをブックマーク",
-              "毎週更新をチェック"
+              "毎週更新をチェック",
+              "[TODO:JA] Use templates to save time on deliverables",
+              "[TODO:JA] Contribute your own learnings"
             ]
           },
           "onboarding": {
@@ -4247,11 +4375,14 @@
             "purpose": "スムーズなスタートを確保します。",
             "keyFeatures": [
               "プロファイルセットアップ",
-              "プラットフォームツアー"
+              "プラットフォームツアー",
+              "[TODO:JA] Platform tour",
+              "[TODO:JA] Initial goal setting"
             ],
             "workflow": [
               "プロファイルを完成",
-              "ツアーを受ける"
+              "ツアーを受ける",
+              "[TODO:JA] Take the platform tour"
             ],
             "tips": [
               "すべてのステップを完了",
@@ -4264,11 +4395,14 @@
             "purpose": "クライアント管理を効率化します。",
             "keyFeatures": [
               "クライアントポートフォリオ",
-              "プロジェクト追跡"
+              "プロジェクト追跡",
+              "リソース allocation",
+              "クライアント reporting"
             ],
             "workflow": [
               "クライアントを表示",
-              "レポートを生成"
+              "レポートを生成",
+              "[TODO:JA] Generate reports"
             ],
             "tips": [
               "ポートフォリオビューを使用",
@@ -4281,14 +4415,17 @@
             "purpose": "ネットワークを拡大します。",
             "keyFeatures": [
               "パートナーディレクトリ",
-              "アフィリエイトダッシュボード"
+              "アフィリエイトダッシュボード",
+              "[TODO:JA] Collaboration tools"
             ],
             "workflow": [
               "パートナーを探索",
-              "パフォーマンスを追跡"
+              "パフォーマンスを追跡",
+              "[TODO:JA] Track affiliate performance"
             ],
             "tips": [
-              "認定パートナーを探す"
+              "認定パートナーを探す",
+              "[TODO:JA] Monitor your affiliate impact"
             ]
           },
           "superadmin-overview": {
@@ -4608,15 +4745,15 @@
       "title": "How Discovery Tools Work"
     },
     "strategic": {
-      "title": "Strategic Analysis Tools",
+      "title": "Strategic 分析 Tools",
       "subtitle": "10 classic strategic frameworks powered by AI"
     },
     "operational": {
-      "title": "Operational Excellence Tools",
+      "title": "Operational 卓越性 Tools",
       "subtitle": "10 Lean and process excellence tools powered by AI"
     },
     "digital": {
-      "title": "Digital Transformation Tools",
+      "title": "デジタル 変革 Tools",
       "subtitle": "10 technology readiness and automation assessment tools"
     },
     "processAutomation": {
@@ -4634,7 +4771,7 @@
       "matrix": "Matrix"
     },
     "emptyState": {
-      "title": "No initiatives yet",
+      "title": "いいえ initiatives yet",
       "description": "Create your first initiative or generate from assessment to start building your portfolio.",
       "createFirst": "New Initiative"
     },
@@ -4648,7 +4785,7 @@
     },
     "stats": {
       "total": "Total Initiatives",
-      "inProgress": "In Progress",
+      "inProgress": "進行中",
       "approved": "Approved",
       "totalBudget": "Total Budget"
     },
@@ -4685,7 +4822,7 @@
       "refresh": "Refresh"
     },
     "empty": {
-      "title": "No initiatives yet",
+      "title": "いいえ initiatives yet",
       "description": "Create your first initiative or generate from assessment"
     }
   },
@@ -4704,7 +4841,7 @@
     "notifications": "Notifications",
     "overdue": "Overdue",
     "today": "Today",
-    "thisWeek": "This Week",
+    "thisWeek": "This 週",
     "urgent": "Urgent",
     "newTask": "New Task",
     "newDecision": "New Decision",
@@ -4714,8 +4851,8 @@
     "personalNotifications": "Personal",
     "allNotifications": "All",
     "markAllRead": "Mark all read",
-    "noTasks": "No tasks found",
-    "noDecisions": "No decisions found",
+    "noTasks": "いいえ tasks found",
+    "noDecisions": "いいえ decisions found",
     "noNotifications": "No notifications"
   },
   "tour": {
@@ -4755,7 +4892,7 @@
         "description": "Tasks, decisions, and accountability—all tracked. Your team stays aligned with AI-managed workflows and reminders."
       },
       "complete": {
-        "title": "You're All Set!",
+        "title": "You're すべて Set!",
         "description": "Explore freely. Remember: AI recommends, but you decide. Every strategic decision remains in your hands."
       }
     }
@@ -4764,7 +4901,7 @@
     "title": "ADMIN",
     "panel": "Panel",
     "role": "Admin",
-    "backToApp": "Back to App",
+    "backToApp": "戻る to App",
     "modules": {
       "overview": "Overview",
       "overviewDesc": "Dashboard, metrics, and analytics for your organization",
@@ -4817,7 +4954,7 @@
       "usedSeats": "Used",
       "available": "Available",
       "utilization": "Utilization",
-      "byType": "Licenses by Type",
+      "byType": "Licenses by 入力",
       "searchUsers": "Search users...",
       "allLicenses": "All Licenses",
       "noLicense": "No License",
@@ -4826,11 +4963,11 @@
       "assignedDate": "Assigned",
       "actions": "Actions",
       "none": "No license",
-      "noUsersFound": "No users found",
+      "noUsersFound": "いいえ users found",
       "bulkAssign": "Assign",
       "bulkAssignTitle": "Bulk Assign Licenses",
       "bulkAssignDesc": "Assign license to selected users",
-      "selectLicense": "Select License Type",
+      "selectLicense": "選択 ライセンス 入力",
       "removeLicense": "Remove License",
       "assign": "Assign",
       "fetchError": "Failed to load license data",
@@ -4844,13 +4981,13 @@
       "description": "Configure data retention, residency, and compliance settings",
       "residency": "Data Residency",
       "residencyDesc": "Primary region where your data is stored",
-      "crossBorder": "Cross-Border Data Transfer",
+      "crossBorder": "Cross-Border データ Transfer",
       "crossBorderDesc": "Allow data processing in other regions for performance",
       "crossBorderNote": "Data will only be stored and processed in the selected region (GDPR compliant)",
       "encryption": "Encryption",
-      "retention": "Data Retention Policies",
+      "retention": "データ Retention ポリシー",
       "retentionDesc": "Configure how long different types of data are kept",
-      "auditRetention": "Audit Log Retention",
+      "auditRetention": "監査 Log Retention",
       "auditRetentionDesc": "Security and compliance audit logs",
       "warning": "Important",
       "warningText": "Changing data retention policies will affect data available for compliance audits. Purged data cannot be recovered.",
@@ -4858,7 +4995,7 @@
       "saveError": "Failed to save settings"
     },
     "audit": {
-      "title": "Audit & Compliance",
+      "title": "監査 & コンプライアンス",
       "description": "Export audit logs and generate compliance reports",
       "tabs": {
         "export": "Export",
@@ -4869,18 +5006,18 @@
       "startDate": "Start Date",
       "endDate": "End Date",
       "format": "Format",
-      "exportBtn": "Export Audit Log",
+      "exportBtn": "エクスポート 監査 Log",
       "complianceReports": "Compliance Reports",
       "generateReport": "Generate Report",
       "recentExports": "Recent Exports",
-      "addSchedule": "Add Scheduled Report",
-      "anomalyInfo": "Anomaly Detection Active",
+      "addSchedule": "追加 Scheduled レポート",
+      "anomalyInfo": "Anomaly Detection アクティブ",
       "anomalyInfoDesc": "AI-powered monitoring detects unusual patterns in user activity and data access.",
       "resolve": "Mark Resolved",
       "resolved": "Resolved",
       "exportStarted": "Export started. You will be notified when ready.",
       "exportError": "Failed to start export",
-      "reportStarted": "Report generation started.",
+      "reportStarted": "レポート generation started.",
       "reportError": "Failed to generate report"
     },
     "feedback": {
@@ -4900,14 +5037,14 @@
       },
       "owner": {
         "badge": "Owner",
-        "protected": "Protected: Account Owner",
+        "protected": "Protected: アカウント 所有者",
         "cannotDelete": "Cannot delete Account Owner. Transfer ownership first.",
         "cannotDeactivate": "Cannot deactivate Account Owner. Transfer ownership first.",
         "transfer": "Transfer Ownership",
         "transferTitle": "Transfer Ownership",
         "transferWarning": "Transferring ownership will give another user full control over this organization, including billing and the ability to delete the organization. This action cannot be undone by you.",
-        "selectNewOwner": "Select New Owner",
-        "selectAdmin": "Select an Admin...",
+        "selectNewOwner": "選択 New 所有者",
+        "selectAdmin": "選択 an 管理者...",
         "noEligible": "No eligible candidates. The new owner must be an Admin.",
         "reason": "Reason (optional)",
         "reasonPlaceholder": "e.g., Leaving the company, Role change...",
@@ -4917,7 +5054,7 @@
       }
     },
     "security": {
-      "title": "Security & Compliance",
+      "title": "セキュリティ & コンプライアンス",
       "subtitle": "Authentication, access control, audit logs, and data management",
       "tabs": {
         "settings": "Security Settings",
@@ -4939,7 +5076,7 @@
         "title": "Two-Factor Authentication",
         "require": "Require 2FA for All Users",
         "requireDesc": "When enabled, all users must set up two-factor authentication to access the system.",
-        "status": "User 2FA Status",
+        "status": "ユーザー 2FA ステータス",
         "enabled": "Enabled",
         "notEnabled": "Not Enabled",
         "adoption": "2FA Adoption",
@@ -4947,7 +5084,7 @@
       },
       "password": {
         "title": "Password Requirements",
-        "minLength": "Minimum Password Length",
+        "minLength": "最小 パスワード Length",
         "characters": "characters",
         "requireUppercase": "Require uppercase letter (A-Z)",
         "requireNumber": "Require number (0-9)",
@@ -4961,13 +5098,13 @@
         "active": "Active Sessions",
         "terminate": "Terminate session",
         "terminateAll": "Terminate All",
-        "noSessions": "No active sessions"
+        "noSessions": "いいえ active sessions"
       },
       "loginHistory": {
         "title": "Login History",
         "success": "Successful login",
         "failed": "Failed login",
-        "noHistory": "No login history"
+        "noHistory": "いいえ login history"
       }
     },
     "overview": {
@@ -4983,7 +5120,7 @@
       "title": "Organization",
       "subtitle": "Profile, branding, ownership, and regional settings",
       "tabs": {
-        "profile": "Profile & Branding",
+        "profile": "プロフィール & Branding",
         "ownership": "Ownership"
       }
     },
@@ -4996,13 +5133,13 @@
       "subtitle": "AI configuration, health monitoring, and analytics"
     },
     "billing": {
-      "title": "Billing & Subscription",
+      "title": "請求 & サブスクリプション",
       "subtitle": "Plans, payments, invoices, and spending controls"
     },
     "roles": {
-      "title": "Roles & Permissions",
+      "title": "役割 & 権限",
       "subtitle": "Manage access levels and permissions for your organization",
-      "infoTitle": "About Roles",
+      "infoTitle": "概要 役割",
       "infoContent": "Roles define what actions users can perform. System roles provide a base set of permissions, while custom roles can be tailored to your organization's needs.",
       "systemRoles": "System Roles",
       "customRoles": "Custom Roles",
@@ -5011,56 +5148,56 @@
       "permissions": "permissions",
       "edit": "Edit",
       "duplicate": "Duplicate",
-      "delete": "Delete",
-      "createRole": "Create Role",
-      "createNewRole": "Create New Role",
+      "delete": "削除",
+      "createRole": "Create 役割",
+      "createNewRole": "Create New 役割",
       "editRole": "Edit Role",
-      "selectToEdit": "Select a Role",
+      "selectToEdit": "選択 a 役割",
       "selectToEditDesc": "Select a role from the list to view or edit its permissions",
       "name": "Role Name",
-      "namePlaceholder": "Enter role name",
+      "namePlaceholder": "入力 role name",
       "nameRequired": "Role name is required",
       "color": "Color",
       "description": "Description",
       "descriptionPlaceholder": "Describe this role",
       "permissionsMatrix": "Permissions",
-      "selectAll": "Select All",
+      "selectAll": "選択 すべて",
       "deselectAll": "Deselect All",
       "systemWarning": "System roles cannot be renamed or deleted. You can only customize permissions.",
-      "created": "Role created successfully",
-      "updated": "Role updated successfully",
-      "deleted": "Role deleted successfully",
-      "permissionsUpdated": "Role permissions updated",
+      "created": "役割 created successfully",
+      "updated": "役割 updated successfully",
+      "deleted": "役割 deleted successfully",
+      "permissionsUpdated": "役割 permissions updated",
       "cannotDeleteSystem": "Cannot delete system roles",
       "hasUsers": "Cannot delete role with assigned users",
       "loadError": "Failed to load roles",
       "saveError": "Failed to save role",
       "deleteError": "Failed to delete role",
-      "noResults": "No roles found"
+      "noResults": "いいえ roles found"
     },
     "templates": {
       "title": "Templates",
       "subtitle": "Manage project and task templates",
-      "infoTitle": "About Templates",
+      "infoTitle": "概要 Templates",
       "infoContent": "Templates help standardize project structures. Create templates based on proven methodologies or customize them for your organization.",
       "create": "Create Template",
       "createNew": "Create Template",
       "editTemplate": "Edit Template",
-      "selectToEdit": "Select a Template",
+      "selectToEdit": "選択 a Template",
       "selectToEditDesc": "Select a template from the list to edit or create a new one",
       "name": "Template Name",
-      "namePlaceholder": "Enter template name",
+      "namePlaceholder": "入力 template name",
       "nameRequired": "Template name is required",
       "description": "Description",
       "descriptionPlaceholder": "Describe this template",
       "duration": "Estimated Duration",
       "durationPlaceholder": "e.g., 3 months",
-      "phases": "Phases / Stages",
+      "phases": "フェーズ / ステージ",
       "addPhase": "Add Phase",
       "phaseName": "Phase name",
       "noTasks": "No tasks in this phase yet. Tasks can be added when creating a project from this template.",
       "searchPlaceholder": "Search templates...",
-      "noResults": "No templates found",
+      "noResults": "いいえ templates found",
       "loadError": "Failed to load templates",
       "created": "Template created",
       "updated": "Template updated",
@@ -5068,34 +5205,34 @@
       "duplicated": "Template duplicated",
       "exported": "Template exported",
       "imported": "Template imported",
-      "importError": "Invalid template file",
+      "importError": "無効 template file",
       "cannotDeleteDefault": "Cannot delete default templates"
     },
     "defaults": {
       "title": "Workspace Defaults",
       "subtitle": "Configure default settings for projects and tasks",
-      "infoTitle": "About Defaults",
+      "infoTitle": "概要 Defaults",
       "infoContent": "Set default values for new projects and tasks. These settings apply organization-wide but can be overridden at the project level.",
       "projectDefaults": "Project Defaults",
       "projectDefaultsDesc": "Settings for new projects",
       "taskDefaults": "Task Defaults",
       "taskDefaultsDesc": "Settings for new tasks",
       "workflowStates": "Workflow States",
-      "workflowStatesDesc": "Default task statuses",
-      "timeDateSettings": "Time & Date",
+      "workflowStatesDesc": "デフォルト task statuses",
+      "timeDateSettings": "時間 & 日付",
       "timeDateSettingsDesc": "Regional preferences",
-      "defaultView": "Default View",
+      "defaultView": "デフォルト 表示",
       "defaultPrivacy": "Default Privacy",
       "public": "Public (visible to all)",
       "team": "Team (visible to team members)",
-      "private": "Private (invite only)",
+      "private": "プライベート (invite only)",
       "estimationUnit": "Estimation Unit",
       "hours": "Hours",
       "days": "Days",
       "points": "Story Points",
       "autoAssignCreator": "Auto-assign project creator",
-      "enableTimeTracking": "Enable time tracking",
-      "enableDependencies": "Enable task dependencies",
+      "enableTimeTracking": "有効化 time tracking",
+      "enableDependencies": "有効化 task dependencies",
       "defaultPriority": "Default Priority",
       "defaultDueOffset": "Default Due Date Offset",
       "daysFromCreation": "days from creation",
@@ -5107,18 +5244,18 @@
       "timezone": "Timezone",
       "dateFormat": "Date Format",
       "timeFormat": "Time Format",
-      "weekStart": "Week Starts On",
+      "weekStart": "週 Starts On",
       "workingDays": "Working Days",
       "workingHours": "Working Hours",
       "unsavedChanges": "You have unsaved changes",
-      "saved": "Settings saved successfully",
+      "saved": "設定 saved successfully",
       "loadError": "Failed to load settings",
       "saveError": "Failed to save settings"
     },
     "branding": {
       "title": "Branding",
       "subtitle": "Customize your organization's appearance",
-      "infoTitle": "About Branding",
+      "infoTitle": "概要 Branding",
       "infoContent": "Customize the look and feel of your organization's workspace. Upload logos, set colors, and configure the login page.",
       "logos": "Logos",
       "colors": "Colors",
@@ -5126,9 +5263,9 @@
       "loginPage": "Login Page",
       "emailTemplates": "Email",
       "logosTitle": "Logo Settings",
-      "logoLight": "Light Mode Logo",
+      "logoLight": "ライト Mode Logo",
       "logoLightDesc": "Displayed on light backgrounds",
-      "logoDark": "Dark Mode Logo",
+      "logoDark": "ダーク Mode Logo",
       "logoDarkDesc": "Displayed on dark backgrounds",
       "logoIcon": "Logo Icon",
       "logoIconDesc": "Square icon for compact spaces",
@@ -5146,24 +5283,24 @@
       "typographyTitle": "Typography Settings",
       "bodyFont": "Body Font",
       "headingsFont": "Headings Font",
-      "customCss": "Custom CSS (Advanced)",
+      "customCss": "カスタム CSS (Advanced)",
       "customCssNote": "Use with caution. May override default styles.",
       "typographyPreview": "Typography Preview",
-      "loginPageTitle": "Login Page Customization",
-      "loginTitle": "Login Page Title",
+      "loginPageTitle": "ログイン Page Customization",
+      "loginTitle": "ログイン Page タイトル",
       "loginTitlePlaceholder": "Welcome to Your Workspace",
-      "loginSubtitle": "Login Page Subtitle",
+      "loginSubtitle": "ログイン Page Subtitle",
       "loginSubtitlePlaceholder": "Sign in to continue",
-      "loginLogo": "Login Page Logo",
+      "loginLogo": "ログイン Page Logo",
       "loginLogoDesc": "Logo shown on the login page",
       "customDomain": "Custom Domain",
       "customDomainNote": "Contact support to configure DNS for custom domains.",
-      "emailTitle": "Email Template Branding",
-      "emailLogo": "Email Header Logo",
+      "emailTitle": "メール Template Branding",
+      "emailLogo": "メール Header Logo",
       "emailLogoDesc": "Logo shown in email headers",
-      "emailFromName": "Email From Name",
-      "emailFromNamePlaceholder": "Your Company Name",
-      "emailFooter": "Email Footer Text",
+      "emailFromName": "メール From 名前",
+      "emailFromNamePlaceholder": "Your Company 名前",
+      "emailFooter": "メール Footer Text",
       "emailFooterPlaceholder": "Company Name\n123 Street, City, Country\ncontact@company.com",
       "emailPreview": "Email Preview",
       "unsavedChanges": "You have unsaved changes",
@@ -5176,14 +5313,14 @@
     "integrations": {
       "title": "Integrations",
       "subtitle": "Connect with external services and webhooks",
-      "infoTitle": "About Integrations",
+      "infoTitle": "概要 Integrations",
       "infoContent": "Connect your workspace with external services. Set up webhooks to receive real-time notifications or connect third-party apps.",
       "webhooks": "Webhooks",
       "connectedApps": "Connected Apps",
       "addWebhook": "Add Webhook",
       "createWebhook": "Create Webhook",
       "editWebhook": "Edit Webhook",
-      "selectOrCreate": "Select or Create",
+      "selectOrCreate": "選択 or Create",
       "selectOrCreateDesc": "Select a webhook to edit or create a new one",
       "webhookName": "Webhook Name",
       "webhookNamePlaceholder": "My Webhook",
@@ -5199,7 +5336,7 @@
       "requiredFields": "Name and URL are required",
       "selectEvents": "Select at least one event",
       "searchPlaceholder": "Search integrations...",
-      "noWebhooks": "No webhooks configured",
+      "noWebhooks": "いいえ webhooks configured",
       "webhookCreated": "Webhook created",
       "webhookUpdated": "Webhook updated",
       "webhookDeleted": "Webhook deleted",
@@ -5237,14 +5374,14 @@
       "unstar": "Unpin",
       "archive": "Archive",
       "unarchive": "Unarchive",
-      "delete": "Delete",
+      "delete": "削除",
       "export": "Export"
     },
     "history": "History",
-    "newSession": "New Strategy Session",
+    "newSession": "New 戦略 Session",
     "searchPlaceholder": "Search conversations...",
-    "noConversations": "No conversations yet",
-    "noResults": "No conversations found",
+    "noConversations": "いいえ conversations yet",
+    "noResults": "いいえ conversations found",
     "startNewChat": "Start a new chat to begin",
     "expandSidebar": "Expand sidebar",
     "collapseSidebar": "Collapse sidebar",
@@ -5253,11 +5390,11 @@
       "pinned": "Pinned",
       "today": "Today",
       "yesterday": "Yesterday",
-      "thisWeek": "This Week",
-      "lastMonth": "Last 30 Days",
+      "thisWeek": "This 週",
+      "lastMonth": "Last 30 日間",
       "older": "Older",
       "archived": "Archived",
-      "byProject": "By Project"
+      "byProject": "By プロジェクト"
     },
     "menu": {
       "addFiles": "Add Files & Media",
@@ -5265,7 +5402,7 @@
       "uploadFile": "Upload File",
       "pasteContent": "Paste Content",
       "addLink": "Add Link / URL",
-      "enterUrl": "Enter URL",
+      "enterUrl": "入力 URL",
       "fromPmo": "From Your PMO Data",
       "importAssessment": "Import Assessment",
       "importInitiative": "Import Initiative",
@@ -5274,7 +5411,7 @@
       "aiModes": "AI Modes",
       "deepResearch": "Deep Research",
       "webSearch": "Web Search",
-      "showReasoning": "Show Reasoning",
+      "showReasoning": "表示 Reasoning",
       "pmoTools": "PMO Tools",
       "startAssessment": "Start Assessment",
       "generateInitiatives": "Generate Initiatives",
@@ -5292,7 +5429,7 @@
     "startRecording": "Voice input",
     "stopRecording": "Stop",
     "voiceModeOn": "Voice conversation active - click to disable",
-    "voiceModeOff": "Enable voice conversation"
+    "voiceModeOff": "有効化 voice conversation"
   },
   "billing": {
     "paymentMethods": {
@@ -5308,12 +5445,12 @@
       "defaultError": "Failed to update default",
       "expires": "Expires",
       "removeConfirm": "Are you sure you want to remove this payment method?",
-      "removed": "Payment method removed",
+      "removed": "支払い method removed",
       "removeError": "Failed to remove payment method",
       "fetchError": "Failed to load payment methods"
     },
     "addCard": {
-      "title": "Add Payment Method",
+      "title": "追加 支払い Method",
       "subtitle": "Securely add a new card",
       "secureNote": "Secured by Stripe",
       "holderName": "Cardholder Name",
@@ -5337,20 +5474,20 @@
       "availablePlans": "Available Plans",
       "popular": "Most Popular",
       "current": "Current",
-      "yourPlan": "Your Current Plan",
+      "yourPlan": "Your Current プラン",
       "upgrade": "Upgrade",
       "switch": "Switch",
-      "select": "Select",
+      "select": "選択",
       "confirmUpgrade": "Confirm Upgrade",
-      "confirmChange": "Confirm Plan Change",
+      "confirmChange": "確認 プラン Change",
       "newPrice": "New Monthly Price",
       "discountCode": "Discount Code",
       "apply": "Apply",
-      "invalidDiscount": "Invalid discount code",
+      "invalidDiscount": "無効 discount code",
       "proratedNote": "You will be charged the prorated difference immediately.",
       "downgradeNote": "Changes will take effect at the end of your current billing period.",
       "confirm": "Confirm Change",
-      "changed": "Subscription updated successfully",
+      "changed": "サブスクリプション updated successfully",
       "changeError": "Failed to update subscription",
       "fetchError": "Failed to load subscription data"
     },
@@ -5359,20 +5496,20 @@
       "description": "Configure notifications when you approach usage limits",
       "emailNotifications": "Email Notifications",
       "emailNotificationsDesc": "Receive alerts via email",
-      "tokenUsage": "Token Usage Alerts",
-      "storageUsage": "Storage Usage Alerts",
+      "tokenUsage": "Token 使用量 Alerts",
+      "storageUsage": "Storage 使用量 Alerts",
       "threshold80": "Alert at 80% usage",
       "threshold90": "Alert at 90% usage",
       "threshold100": "Alert at 100% usage",
       "storageThreshold80": "Alert at 80% storage",
       "storageThreshold90": "Alert at 90% storage",
       "storageThreshold100": "Alert at 100% storage",
-      "costCap": "Monthly Cost Cap",
+      "costCap": "Monthly コスト Cap",
       "costCapDesc": "Set a hard limit on monthly spending (overage charges will be blocked)",
       "noCap": "No limit",
       "autoUpgrade": "Auto-Upgrade",
       "autoUpgradeDesc": "Automatically upgrade plan when limits are reached",
-      "selectPlan": "Select upgrade plan...",
+      "selectPlan": "選択 upgrade plan...",
       "saved": "Alert settings saved",
       "saveError": "Failed to save settings",
       "fetchError": "Failed to load settings"
@@ -5381,24 +5518,24 @@
       "title": "Tax & Invoice Settings",
       "description": "Configure your tax ID and billing information for invoices",
       "taxId": "Tax ID / VAT Number",
-      "taxIdType": "Tax ID Type",
-      "selectType": "Select type...",
+      "taxIdType": "Tax ID 入力",
+      "selectType": "選択 type...",
       "taxIdNumber": "Tax ID Number",
       "taxExempt": "Tax Exempt",
       "taxExemptDesc": "Check if your organization is tax exempt",
       "billingAddress": "Billing Address",
-      "billingName": "Company / Name",
+      "billingName": "Company / 名前",
       "billingEmail": "Billing Email",
       "addressLine1": "Address Line 1",
       "addressLine2": "Address Line 2",
       "city": "City",
-      "state": "State / Region",
+      "state": "State / 地域",
       "postalCode": "Postal Code",
       "country": "Country",
-      "selectCountry": "Select...",
+      "selectCountry": "選択...",
       "invoiceCustomization": "Invoice Customization",
       "invoicePrefix": "Invoice Prefix",
-      "poNumber": "Default PO Number",
+      "poNumber": "デフォルト PO Number",
       "saved": "Tax settings saved",
       "saveError": "Failed to save settings",
       "fetchError": "Failed to load tax settings"
@@ -5415,8 +5552,8 @@
       "overview": "Overview",
       "tasks": "Tasks",
       "definition": "Definition & Scope",
-      "execution": "Execution & Risks",
-      "economics": "Value & Finance",
+      "execution": "実行 & Risks",
+      "economics": "Value & 財務",
       "governance": "Governance",
       "team": "Team",
       "discussion": "Discussion",
@@ -5429,8 +5566,8 @@
     "problemStatement": "Problem Statement (The Why)",
     "symptom": "Symptom",
     "rootCause": "Root Cause",
-    "costOfInaction": "Cost of Inaction",
-    "fullDescription": "Full Description (Legacy)",
+    "costOfInaction": "コスト of Inaction",
+    "fullDescription": "Full 説明 (Legacy)",
     "nameLabel": "Initiative Name",
     "strategicIntentLabel": "Strategic Intent",
     "strategicFitTitle": "Strategic Fit",
@@ -5443,38 +5580,38 @@
     "processChanges": "Process Changes",
     "behaviorChanges": "Behavior Changes",
     "capabilityChanges": "Capability Changes",
-    "addBullet": "+ Add bullet",
-    "evidenceTitle": "Evidence & Attachments",
+    "addBullet": "+ 追加 bullet",
+    "evidenceTitle": "Evidence & 添付ファイル",
     "strategicChangeLog": "Strategic Change Log",
     "addAttachmentMock": "+ Add Attachment (Mock)",
     "addLogEntry": "+ Add Log Entry",
-    "strategicRoadmapAttributes": "Strategic Roadmap Attributes",
+    "strategicRoadmapAttributes": "Strategic ロードマップ Attributes",
     "strategicRole": "Strategic Role",
     "placementReason": "Placement Reason",
     "autoFillWithAI": "Auto-fill with AI",
-    "effortProfileLabel": "Effort Profile (1-5)",
+    "effortProfileLabel": "Effort プロフィール (1-5)",
     "analytical": "Analytical",
     "operational": "Operational",
     "changeMgmt": "Change Mgmt",
-    "successCriteriaTyped": "Success Criteria (Typed)",
+    "successCriteriaTyped": "成功 Criteria (Typed)",
     "autoSuggest": "Auto-Suggest",
     "metric": "Metric",
     "behavior": "Behavior",
     "process": "Process",
     "capability": "Capability",
     "criteriaDescriptionPlaceholder": "Criteria description...",
-    "addCriteria": "+ Add Criteria",
+    "addCriteria": "+ 追加 Criteria",
     "explicitAssumptions": "Explicit Assumptions",
     "organizational": "Organizational",
-    "dataTech": "Data / Tech",
-    "budgetResources": "Budget / Resources",
-    "peopleSkills": "People / Skills",
+    "dataTech": "データ / Tech",
+    "budgetResources": "予算 / リソース",
+    "peopleSkills": "People / スキル",
     "keyDeliverables": "Key Deliverables",
-    "addDeliverable": "+ Add Deliverable",
+    "addDeliverable": "+ 追加 成果物",
     "scopeGuard": "Scope Guard (Target)",
     "inScope": "In Scope",
     "outOfScope": "Out of Scope",
-    "timelineMilestones": "Timeline & Milestones",
+    "timelineMilestones": "Timeline & マイルストーン",
     "autoFillExecution": "Auto-fill Execution",
     "killCriteriaMandatory": "Kill Criteria (Mandatory) *",
     "stopConditions": "Stop Conditions",
@@ -5496,14 +5633,14 @@
     "riskDescriptionPlaceholder": "Risk description...",
     "mitigationStrategyPlaceholder": "Mitigation strategy...",
     "maxRisksReached": "Max 5 Risks reached",
-    "addRisk": "+ Add Risk",
+    "addRisk": "+ 追加 リスク",
     "financialCase": "Financial Case",
     "capexLabel": "CAPEX",
     "opexLabel": "OPEX",
     "annualBenefitLabel": "Annual Benefit",
     "roiLabel": "ROI (Calculated)",
     "strategicValue": "Strategic Value",
-    "businessValueLabel": "Business Value Description",
+    "businessValueLabel": "ビジネス Value 説明",
     "businessValuePlaceholder": "Describe major business impact...",
     "ownershipAccountability": "Ownership & Accountability",
     "businessOwner": "Business Owner",
@@ -5516,7 +5653,7 @@
     "actions": "Actions",
     "businessValue": "Business Value",
     "valueDriver": "Value Driver",
-    "selectDriverPlaceholder": "Select Driver...",
+    "selectDriverPlaceholder": "選択 Driver...",
     "costOptimization": "Cost Optimization",
     "revenueGrowth": "Revenue Growth",
     "capitalEfficiency": "Capital Efficiency",
@@ -5537,13 +5674,13 @@
     "totalInvestment": "Total Investment",
     "missingValueDriverWarning": "Missing Value Driver for Investment",
     "socialImpact": "Social Impact",
-    "rolesOwnership": "Roles & Ownership",
+    "rolesOwnership": "役割 & Ownership",
     "businessOwnerDescription": "Accountable for VALUE delivery",
     "executionOwnerDescription": "Accountable for DELIVERY",
     "sponsorDescription": "Final APPROVAL authority",
-    "selectBusinessOwnerPlaceholder": "Select Business Owner...",
-    "selectExecutionOwnerPlaceholder": "Select Execution Owner...",
-    "selectSponsorPlaceholder": "Select Sponsor...",
+    "selectBusinessOwnerPlaceholder": "選択 ビジネス 所有者...",
+    "selectExecutionOwnerPlaceholder": "選択 実行 所有者...",
+    "selectSponsorPlaceholder": "選択 Sponsor...",
     "approvalWorkflow": "Approval Workflow",
     "currentStatus": "Current Status",
     "nextAction": "Next Action",
@@ -5553,23 +5690,23 @@
     "sponsorApproval": "Sponsor approval",
     "nextActionApproved": "Ready to start",
     "nextActionExecuting": "Complete all tasks to mark as",
-    "completedSuccessfully": "Initiative completed successfully",
+    "completedSuccessfully": "イニシアチブ completed successfully",
     "decisionRequired": "Decision Required",
-    "viewBrief": "View Brief",
-    "governanceAuditTrail": "Governance Audit Trail",
+    "viewBrief": "表示 Brief",
+    "governanceAuditTrail": "ガバナンス 監査 Trail",
     "noGovernanceEvents": "No governance events recorded yet.",
     "teamMembers": "Team Members",
-    "selectMember": "Select member...",
+    "selectMember": "選択 member...",
     "noTeamMembersAssigned": "No team members assigned yet",
     "allocation": "Allocation",
     "relatedInitiatives": "Related Initiatives",
     "linkInitiative": "Link Initiative",
-    "noLinkedInitiatives": "No linked initiatives",
+    "noLinkedInitiatives": "いいえ linked initiatives",
     "initiativeIdOrNamePlaceholder": "Initiative ID or name...",
     "addCommentPlaceholder": "Add a comment or question...",
     "postComment": "Post Comment",
-    "noCommentsYet": "No comments yet",
-    "startDiscussion": "Start the discussion!",
+    "noCommentsYet": "いいえ comments yet",
+    "startDiscussion": "開始 the discussion!",
     "exportCharter": "Export Charter",
     "cloneAsTemplate": "Clone as Template",
     "versionHistory": "Version History",
@@ -5592,10 +5729,10 @@
     "noPatternsDesc": "Run AI analysis to compare with other initiatives.",
     "detectPatterns": "Detect Patterns",
     "detectedPatternsLabel": "Detected Patterns",
-    "knowledgeGraphTitle": "BCG Knowledge Graph",
+    "knowledgeGraphTitle": "BCG 知識 Graph",
     "knowledgeGraphSharing": "This initiative shares",
     "knowledgeGraphSimilarity": "similarity in \"Change Resistance\" patterns with",
-    "viewRelated": "View Related Initiative"
+    "viewRelated": "表示 Related イニシアチブ"
   },
   "dashboard": {
     "title": "Execution Dashboard",
@@ -5617,7 +5754,7 @@
           "description": "Begin your digital readiness diagnosis"
         },
         "roadmap": {
-          "title": "View Roadmap",
+          "title": "表示 ロードマップ",
           "description": "Explore your transformation timeline"
         }
       }
@@ -5632,9 +5769,9 @@
       "healthScore": "Health Score",
       "healthy": "Transformation Healthy",
       "activeInitiatives": "Active Initiatives",
-      "inProgress": "In Progress",
+      "inProgress": "進行中",
       "valueRealized": "Value Realized",
-      "ofTarget": "of Target",
+      "ofTarget": "of 目標",
       "criticalRisks": "Critical Risks",
       "needAttention": "Need Attention"
     },
@@ -5650,7 +5787,7 @@
     "downloadPdf": "Download PDF",
     "initiativeTracking": "Initiative Tracking",
     "onTrack": "On Track",
-    "atRisk": "At Risk",
+    "atRisk": "At リスク",
     "table": {
       "initiative": "Initiative",
       "owner": "Owner",
@@ -5672,14 +5809,14 @@
       "options": "Options",
       "ready": "READY",
       "soon": "SOON",
-      "generate": "Generate Final Report",
+      "generate": "Generate Final レポート",
       "pdfDoc": "PDF Document",
       "powerPoint": "PowerPoint"
     },
     "reportSections": {
       "summary": "Executive Summary",
-      "maturity": "Maturity Assessment Results",
-      "roadmap": "Strategic Initiatives Roadmap",
+      "maturity": "成熟度 評価 Results",
+      "roadmap": "Strategic イニシアチブ ロードマップ",
       "financial": "Financial Case (ROI, NPV)",
       "risk": "Risk & Change Management"
     },
@@ -5688,7 +5825,7 @@
   "status": {
     "DRAFT": "Draft",
     "PLANNING": "Planning",
-    "REVIEW": "In Review",
+    "REVIEW": "In レビュー",
     "APPROVED": "Approved",
     "EXECUTING": "Executing",
     "DONE": "Done",
@@ -5733,7 +5870,7 @@
       "importPDF": "Import PDF",
       "manualEntry": "Manual Entry",
       "generateReport": "Generate Report",
-      "viewReport": "View Report",
+      "viewReport": "表示 レポート",
       "exportPDF": "Export PDF",
       "saveProgress": "Save Progress",
       "legalNotice": "Legal Notice",
@@ -5741,7 +5878,7 @@
     },
     "DRD": {
       "name": "DRD",
-      "fullName": "Digital Readiness Diagnosis",
+      "fullName": "デジタル Readiness Diagnosis",
       "description": "7-axis digital maturity assessment based on Digital Pathfinder methodology",
       "axes": {
         "processes": "Digital Processes",
@@ -5771,7 +5908,7 @@
         "connectivity": "Connectivity",
         "intelligence": "Intelligence",
         "talentReadiness": "Talent Readiness",
-        "structureManagement": "Structure & Management"
+        "structureManagement": "Structure & 管理"
       },
       "levels": {
         "0": "Not Present",
@@ -5788,7 +5925,7 @@
       "description": "European Digital Innovation Hubs framework - 5 Pillars × 12 Dimensions",
       "legalNotice": "ADMA (Advanced Digital Maturity Assessment) is a tool developed by the European Commission as part of the Digital Innovation Hubs program. Use in Consultinity is for educational purposes.",
       "pillars": {
-        "strategy": "Strategy & Organization",
+        "strategy": "戦略 & 組織",
         "smartProducts": "Smart Products",
         "smartOperations": "Smart Operations",
         "smartSupply": "Smart Supply Chain",
@@ -5798,11 +5935,11 @@
         "digitalStrategy": "Digital Strategy",
         "digitalInvestments": "Digital Investments",
         "digitalCulture": "Digital Culture",
-        "productFeatures": "Smart Product Features",
-        "productData": "Product Data Usage",
+        "productFeatures": "Smart 製品 機能",
+        "productData": "製品 データ 使用量",
         "productionTech": "Production Technologies",
-        "productionIT": "Production IT",
-        "supplyIntegration": "Supply Chain Integration",
+        "productionIT": "生産 IT",
+        "supplyIntegration": "Supply Chain 統合",
         "supplyVisibility": "Supply Chain Visibility",
         "dataCollection": "Data Collection",
         "dataAnalytics": "Data Analytics",
@@ -5829,9 +5966,9 @@
       "practiceAreas": {
         "EST": "Estimating",
         "PAD": "Planning",
-        "MC": "Monitor & Control",
+        "MC": "Monitor & 制御",
         "PI": "Peer Reviews",
-        "PQA": "Process Quality Assurance",
+        "PQA": "プロセス 品質 Assurance",
         "RDM": "Requirements Development & Management",
         "RM": "Requirements Management",
         "TS": "Technical Solution",
@@ -5841,7 +5978,7 @@
         "CM": "Configuration Management",
         "DAR": "Decision Analysis & Resolution",
         "RSKM": "Risk & Opportunity Management",
-        "SAM": "Supplier Agreement Management",
+        "SAM": "サプライヤー 契約 管理",
         "GOV": "Governance",
         "II": "Implementation Infrastructure",
         "OT": "Organizational Training",
@@ -5890,7 +6027,7 @@
       "metrics": {
         "tasksPerDay": "Tasks/day",
         "avgTaskTime": "Avg. task time",
-        "errorRate": "Error rate",
+        "errorRate": "エラー rate",
         "overtimeHours": "Overtime hours",
         "digitalMaturity": "Digital Maturity",
         "automationPotential": "Automation Potential",
@@ -5919,7 +6056,7 @@
       "more": "more steps",
       "dismiss": "I'll explore on my own",
       "profile": {
-        "title": "Complete your profile",
+        "title": "完了 your profile",
         "description": "Add your name and company info"
       },
       "firstChat": {
@@ -5927,7 +6064,7 @@
         "description": "Ask your first question"
       },
       "firstAssessment": {
-        "title": "Start an assessment",
+        "title": "開始 an assessment",
         "description": "Begin your digital readiness diagnosis"
       },
       "firstInitiative": {
@@ -5939,7 +6076,7 @@
         "description": "View your transformation timeline"
       },
       "inviteTeam": {
-        "title": "Invite your team",
+        "title": "招待 your team",
         "description": "Collaborate with colleagues"
       },
       "billing": {
@@ -5981,18 +6118,18 @@
       "bugReported": "Bug reported! We'll investigate ASAP.",
       "ideaSubmitted": "Great idea! Added to our backlog.",
       "pulse": "Thanks for your feedback! 🎉",
-      "feature": "Feature request submitted!",
+      "feature": "機能 request submitted!",
       "featureWithAI": "Feature request submitted! AI found similar requests."
     },
     "error": {
       "submit": "Failed to submit feedback"
     },
     "intro": "Your feedback helps us improve the platform. Report a bug or share an idea.",
-    "footer": "Feedback sent as",
+    "footer": "フィードバック sent as",
     "pulse": {
       "title": "How's your experience?",
       "subtitle": "Quick feedback helps us improve",
-      "context": "Feedback for:",
+      "context": "フィードバック for:",
       "sorry": "Sorry to hear that!",
       "tellUs": "Tell us what went wrong",
       "commentPlaceholder": "What can we improve?"
@@ -6004,11 +6141,11 @@
       "description": "Description",
       "descPlaceholder": "Describe the feature and how it would help you...",
       "impact": "Business Impact",
-      "submit": "Submit Feature Request"
+      "submit": "送信 機能 Request"
     },
     "ai": {
       "insights": "AI Insights",
-      "loading": "Loading AI insights..."
+      "loading": "読み込み中 AI insights..."
     }
   },
   "documents": {
@@ -6017,11 +6154,11 @@
     "myDocs": "My Docs",
     "upload": "Add Document",
     "uploading": "Uploading...",
-    "noProjectDocs": "No project documents",
-    "noUserDocs": "No user documents",
+    "noProjectDocs": "いいえ project documents",
+    "noUserDocs": "いいえ user documents",
     "download": "Download",
     "moveToProject": "Move to project",
-    "delete": "Delete",
+    "delete": "削除",
     "projectHint": "Documents available to everyone in the project",
     "userHint": "Your private documents",
     "confirmDelete": "Are you sure you want to delete this document?"
