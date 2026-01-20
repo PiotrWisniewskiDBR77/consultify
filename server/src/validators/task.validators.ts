@@ -64,7 +64,8 @@ export const CreateTaskSchema = z.object({
   raidItemId: z.string().uuid().optional().nullable(),
 });
 
-export const UpdateTaskSchema = CreateTaskSchema.partial().omit({ organizationId: true });
+// UpdateTaskSchema: All fields optional, organizationId explicitly omitted
+export const UpdateTaskSchema = CreateTaskSchema.omit({ organizationId: true }).partial();
 
 export const AssignTaskSchema = z.object({
   assigneeId: z.string().uuid(),

@@ -22,6 +22,27 @@ import logger from '../utils/Logger.js';
 export const validateBody = (schema: z.ZodSchema) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     try {
+      // Guard against undefined or invalid schemas
+      if (!schema) {
+        logger.error('[ValidationMiddleware] Schema is undefined', { 
+          path: req.path, 
+          method: req.method 
+        });
+        res.status(500).json({ error: 'Validation schema is undefined' });
+        return;
+      }
+
+      if (typeof schema.safeParse !== 'function') {
+        logger.error('[ValidationMiddleware] Schema does not have safeParse method', { 
+          path: req.path, 
+          method: req.method,
+          schemaType: typeof schema,
+          schemaKeys: schema ? Object.keys(schema) : []
+        });
+        res.status(500).json({ error: 'Invalid validation schema - missing safeParse method' });
+        return;
+      }
+
       const result = schema.safeParse(req.body);
       if (!result.success) {
         // Format Zod errors into a readable structure

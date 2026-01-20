@@ -79,7 +79,7 @@ const getAIActionExecutor = async () =>
   (await import('../services/aiActionExecutor.js')).default as any;
 const getAIAuditLogger = async () => (await import('../services/aiAuditLogger.js')).default as any;
 const getAIPipeline = async () => {
-  const { AIPipeline } = (await import('../services/ai/aiPipeline.js')) as any;
+  const { AIPipeline } = (await import('../services/ai/AIPipeline.js')) as any;
   return new AIPipeline();
 };
 
