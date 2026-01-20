@@ -525,9 +525,11 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.STUDIO}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Studio']}>
-              <AnimationWrapper variant="slideUp">
-                <StudioView />
-              </AnimationWrapper>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <StudioView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -537,12 +539,14 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.MY_WORK}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['My Work']}>
-              <AnimationWrapper variant="slideUp">
-                <MyWorkView
-                  currentUser={currentUser as any}
-                  onNavigate={(view) => setCurrentView(view as AppView)}
-                />
-              </AnimationWrapper>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <MyWorkView
+                    currentUser={currentUser as any}
+                    onNavigate={(view) => setCurrentView(view as AppView)}
+                  />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -552,9 +556,11 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.AI_CHAT}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['AI Chat']}>
-              <AnimationWrapper variant="fade">
-                <AIChatWelcomeView />
-              </AnimationWrapper>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="fade">
+                  <AIChatWelcomeView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -564,9 +570,11 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.DISCOVERY_CONSULTANT}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Discovery Consultant']}>
-              <AnimationWrapper variant="fade">
-                <DiscoveryConsultantView />
-              </AnimationWrapper>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="fade">
+                  <DiscoveryConsultantView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -576,12 +584,14 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.DASHBOARD}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Dashboard']}>
-              <AnimationWrapper variant="fade">
-                <UserDashboardView
-                  currentUser={currentUser as any}
-                  onNavigate={(view) => setCurrentView(view as AppView)}
-                />
-              </AnimationWrapper>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="fade">
+                  <UserDashboardView
+                    currentUser={currentUser as any}
+                    onNavigate={(view) => setCurrentView(view as AppView)}
+                  />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -591,9 +601,11 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.PROJECT_INTELLIGENCE}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Interview']}>
-              <AnimationWrapper variant="slideUp">
-                <ProjectIntelligenceView />
-              </AnimationWrapper>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <ProjectIntelligenceView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -601,9 +613,11 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.INTERVIEW}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Interview']}>
-              <AnimationWrapper variant="slideUp">
-                <ProjectIntelligenceView />
-              </AnimationWrapper>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <ProjectIntelligenceView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -613,7 +627,9 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.DISCOVERY_TOOLS.ROOT}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Discovery Tools']} noPadding>
-              <DiscoveryToolsHub />
+              <RouteErrorBoundary>
+                <DiscoveryToolsHub />
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -625,7 +641,9 @@ export const AppRoutes: React.FC = () => {
               breadcrumbs={breadcrumbs || ['Discovery Tools', 'Strategic Analysis']}
               noPadding
             >
-              <StrategicToolsView />
+              <RouteErrorBoundary>
+                <StrategicToolsView />
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -636,7 +654,9 @@ export const AppRoutes: React.FC = () => {
               breadcrumbs={breadcrumbs || ['Discovery Tools', 'Operational Tools']}
               noPadding
             >
-              <DiscoveryToolsHub initialTab="list" />
+              <RouteErrorBoundary>
+                <DiscoveryToolsHub initialTab="list" />
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -647,7 +667,9 @@ export const AppRoutes: React.FC = () => {
               breadcrumbs={breadcrumbs || ['Discovery Tools', 'Digital Transformation']}
               noPadding
             >
-              <DiscoveryToolsHub initialTab="list" />
+              <RouteErrorBoundary>
+                <DiscoveryToolsHub initialTab="list" />
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -658,7 +680,9 @@ export const AppRoutes: React.FC = () => {
               breadcrumbs={breadcrumbs || ['Discovery Tools', 'Process Automation']}
               noPadding
             >
-              <DiscoveryToolsHub initialTab="list" />
+              <RouteErrorBoundary>
+                <DiscoveryToolsHub initialTab="list" />
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -668,9 +692,11 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.AI_ACTIONS}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['AI Actions']}>
-              <AnimationWrapper variant="slideUp">
-                <ActionProposalView />
-              </AnimationWrapper>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <ActionProposalView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -724,7 +750,9 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.INITIATIVES}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Initiatives']} noPadding>
-              <InitiativesHub />
+              <RouteErrorBoundary>
+                <InitiativesHub />
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -732,9 +760,11 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.ROADMAP}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Roadmap']}>
-              <AnimationWrapper variant="slideUp">
-                <FullRoadmapView />
-              </AnimationWrapper>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <FullRoadmapView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -742,7 +772,9 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.PORTFOLIO}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Initiatives']} noPadding>
-              <PortfolioView />
+              <RouteErrorBoundary>
+                <PortfolioView />
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -750,9 +782,11 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.ROI}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['ROI']}>
-              <AnimationWrapper variant="slideUp">
-                <FullROIView />
-              </AnimationWrapper>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <FullROIView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -760,9 +794,11 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.ECONOMICS}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Economics']}>
-              <AnimationWrapper variant="slideUp">
-                <EconomicsView />
-              </AnimationWrapper>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <EconomicsView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -770,7 +806,9 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.EXECUTION}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Execution']} noPadding>
-              <ExecutionHub />
+              <RouteErrorBoundary>
+                <ExecutionHub />
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -778,9 +816,11 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.IMPLEMENTATION}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Implementation']}>
-              <AnimationWrapper variant="slideUp">
-                <ImplementationView />
-              </AnimationWrapper>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <ImplementationView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -788,9 +828,11 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.ROLLOUT}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Rollout']}>
-              <AnimationWrapper variant="slideUp">
-                <FullRolloutView />
-              </AnimationWrapper>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <FullRolloutView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -798,9 +840,11 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.REPORTS}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Reports']}>
-              <AnimationWrapper variant="slideUp">
-                <FullReportsView />
-              </AnimationWrapper>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <FullReportsView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -808,9 +852,11 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.KPI_OKR}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['KPI & OKR']}>
-              <AnimationWrapper variant="slideUp">
-                <KpiOkrView />
-              </AnimationWrapper>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <KpiOkrView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />
@@ -818,7 +864,9 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.BENEFITS}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Benefits']} noPadding>
-              <BenefitsHub />
+              <RouteErrorBoundary>
+                <BenefitsHub />
+              </RouteErrorBoundary>
             </MainLayout>
           }
         />

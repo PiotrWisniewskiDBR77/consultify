@@ -388,9 +388,20 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
 
 /**
  * Helper function to get route path from AppView
+ * Enhanced with diagnostic logging for navigation debugging
  */
 export function getRouteFromAppView(view: AppView): string {
-  return APP_VIEW_TO_ROUTE[view] || ROUTES.DASHBOARD;
+  const route = APP_VIEW_TO_ROUTE[view];
+
+  if (!route) {
+    console.warn(
+      `[routeConfig] WARNING: No route mapping for view "${view}", falling back to dashboard`
+    );
+    console.warn('[routeConfig] This may indicate a missing entry in APP_VIEW_TO_ROUTE');
+    return ROUTES.DASHBOARD;
+  }
+
+  return route;
 }
 
 /**
@@ -400,4 +411,34 @@ export function getRouteFromAppView(view: AppView): string {
 export function getAppViewFromRoute(path: string): AppView | null {
   const entry = Object.entries(APP_VIEW_TO_ROUTE).find(([_, route]) => route === path);
   return entry ? (entry[0] as AppView) : null;
+}
+
+/**
+ * Validates that all AppView enum values have corresponding route mappings
+ * Call this during development to catch missing mappings early
+ */
+export function validateRouteCompleteness(): { valid: boolean; missing: string[] } {
+  const allViews = Object.values(AppView);
+  const mappedViews = Object.keys(APP_VIEW_TO_ROUTE);
+
+  const missing = allViews.filter((view) => !mappedViews.includes(view));
+
+  if (missing.length > 0) {
+    console.error('[routeConfig] VALIDATION ERROR: Missing route mappings for views:', missing);
+  } else {
+    console.log('[routeConfig] Route validation passed: All AppView values have mappings');
+  }
+
+  return {
+    valid: missing.length === 0,
+    missing,
+  };
+}
+
+// Run validation in development mode
+if (process.env.NODE_ENV === 'development') {
+  // Defer validation to avoid blocking initial load
+  setTimeout(() => {
+    validateRouteCompleteness();
+  }, 1000);
 }

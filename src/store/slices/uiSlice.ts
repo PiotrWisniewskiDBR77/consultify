@@ -3,6 +3,7 @@ import { StateCreator } from 'zustand';
 import { getRouteFromAppView } from '../../routes/routeConfig';
 import { AppView } from '../../types';
 import { NavigationOptions } from '../../types/workspace';
+import { navigationMonitor, validateNavigation } from '../../utils/navigationGuard';
 import { AppState } from '../useAppStore';
 
 export interface UISlice {
@@ -65,6 +66,25 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
   setNavigateFn: (fn) => set({ navigateFn: fn }),
 
   setCurrentView: (view) => {
+    const previousView = get().currentView;
+
+    // Validate navigation before executing
+    const validation = validateNavigation(view);
+
+    // Enhanced diagnostic logging
+    console.log('[UISlice] ====== setCurrentView START ======');
+    console.log('[UISlice] State change:', {
+      from: previousView,
+      to: view,
+      validation: validation.valid ? 'PASSED' : 'FAILED',
+      timestamp: new Date().toISOString(),
+    });
+
+    if (!validation.valid) {
+      console.error('[UISlice] Navigation validation failed:', validation.errors);
+      navigationMonitor.recordNavigation(previousView, view, false, validation.errors.join(', '));
+    }
+
     set({ currentView: view });
 
     // Navigate using React Router if available
@@ -73,19 +93,51 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
     if (navigateFn) {
       try {
         const route = getRouteFromAppView(view);
+        console.log('[UISlice] Route resolution:', {
+          view,
+          resolvedRoute: route,
+          method: 'React Router (navigateFn)',
+        });
+
+        if (!route) {
+          console.error('[UISlice] CRITICAL: No route found for view:', view);
+          navigationMonitor.recordNavigation(previousView, view, false, 'No route found');
+        }
+
         navigateFn(route);
+        navigationMonitor.recordNavigation(previousView, view, true);
+        console.log('[UISlice] navigateFn called successfully');
       } catch (error) {
-        console.error('[UISlice] Error navigating to route:', error);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error('[UISlice] ERROR navigating to route:', {
+          view,
+          error,
+        });
+        navigationMonitor.recordNavigation(previousView, view, false, errorMsg);
       }
     } else {
+      console.warn('[UISlice] WARNING: navigateFn not available, using fallback');
       // Fallback to window.location
       try {
         const route = getRouteFromAppView(view);
+        console.log('[UISlice] Fallback route:', {
+          view,
+          resolvedRoute: route,
+          method: 'window.location.href',
+        });
         window.location.href = route;
+        navigationMonitor.recordNavigation(previousView, view, true);
       } catch (error) {
-        console.error('[UISlice] Fallback navigation failed:', error);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error('[UISlice] Fallback navigation FAILED:', {
+          view,
+          error,
+        });
+        navigationMonitor.recordNavigation(previousView, view, false, errorMsg);
       }
     }
+
+    console.log('[UISlice] ====== setCurrentView END ======');
   },
 
   toggleTheme: (newTheme) =>
@@ -112,6 +164,15 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
 
   navigateWithChatContext: (view: AppView, options?: NavigationOptions) => {
     const state = get();
+
+    console.log('[UISlice] ====== navigateWithChatContext START ======');
+    console.log('[UISlice] Chat context navigation:', {
+      from: state.currentView,
+      to: view,
+      options,
+      timestamp: new Date().toISOString(),
+    });
+
     set({
       previousView: state.currentView,
       currentView: view,
@@ -122,11 +183,28 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
     if (navigateFn) {
       try {
         const route = getRouteFromAppView(view);
+        console.log('[UISlice] Route with chat context:', {
+          view,
+          resolvedRoute: route,
+        });
+
+        if (!route) {
+          console.error('[UISlice] CRITICAL: No route found for view:', view);
+        }
+
         navigateFn(route);
+        console.log('[UISlice] navigateWithChatContext completed');
       } catch (error) {
-        console.error('[UISlice] Error navigating with chat context:', error);
+        console.error('[UISlice] ERROR navigating with chat context:', {
+          view,
+          error,
+        });
       }
+    } else {
+      console.warn('[UISlice] WARNING: navigateFn not available for chat context navigation');
     }
+
+    console.log('[UISlice] ====== navigateWithChatContext END ======');
   },
 
   returnToFullChat: () => {

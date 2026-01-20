@@ -110,7 +110,17 @@ export const Sidebar: React.FC = () => {
 
   const handleItemClick = React.useCallback(
     (item: MenuItem) => {
-      console.log('[Sidebar] handleItemClick called for:', item.id, item.viewId);
+      // Enhanced diagnostic logging for navigation debugging
+      console.log('[Sidebar] ====== NAVIGATION START ======');
+      console.log('[Sidebar] handleItemClick:', {
+        itemId: item.id,
+        viewId: item.viewId,
+        label: item.label,
+        currentView,
+        hasActiveConversation: !!activeConversationId,
+        userRole: currentUser?.role,
+        timestamp: new Date().toISOString(),
+      });
 
       const isLocked =
         item.requiresView &&
@@ -118,12 +128,20 @@ export const Sidebar: React.FC = () => {
         !(currentUser?.role === UserRole.ADMIN || currentUser?.role === 'SUPERADMIN');
 
       if (isLocked) {
-        console.log('[Sidebar] Item is locked:', item.id);
+        console.warn('[Sidebar] BLOCKED - Item is locked:', {
+          itemId: item.id,
+          requiresView: item.requiresView,
+          completedViews,
+        });
         return;
       }
 
       // AI Chat special handling
       if (item.id === 'AI_CHAT') {
+        console.log('[Sidebar] AI_CHAT special handling:', {
+          isCurrentlyOnChat: currentView === AppView.AI_CHAT,
+          action: currentView === AppView.AI_CHAT ? 'togglePanel' : 'navigateToFullChat',
+        });
         if (currentView === AppView.AI_CHAT) {
           toggleChatSlidingPanel();
         } else {
@@ -133,19 +151,33 @@ export const Sidebar: React.FC = () => {
       }
 
       if (item.viewId) {
-        console.log('[Sidebar] Navigating to view:', item.viewId);
-        if (activeConversationId) {
-          navigateToViewWithChat(item.viewId);
-        } else {
-          setCurrentView(item.viewId);
+        console.log('[Sidebar] Executing navigation:', {
+          targetView: item.viewId,
+          method: activeConversationId ? 'navigateToViewWithChat' : 'setCurrentView',
+        });
+
+        try {
+          if (activeConversationId) {
+            navigateToViewWithChat(item.viewId);
+          } else {
+            setCurrentView(item.viewId);
+          }
+          console.log('[Sidebar] Navigation call completed successfully');
+        } catch (error) {
+          console.error('[Sidebar] NAVIGATION ERROR:', error);
         }
 
         if (isMobile || (isTablet && isSidebarOpen)) {
           setIsSidebarOpen(false);
         }
       } else {
-        console.warn('[Sidebar] Item has no viewId:', item.id);
+        console.error('[Sidebar] INVALID - Item has no viewId:', {
+          itemId: item.id,
+          item,
+        });
       }
+
+      console.log('[Sidebar] ====== NAVIGATION END ======');
     },
     [
       completedViews,
