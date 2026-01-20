@@ -204,6 +204,32 @@ async function ensureTableExists(tableName: string): Promise<boolean> {
       await getPool().query(`CREATE INDEX IF NOT EXISTS idx_raid_due_date ON raid_items(due_date)`);
       logger.info(`[Postgres] Created table ${tableName} on-the-fly`);
       return true;
+    } else if (tableName === 'management_report_schedules') {
+      await getPool().query(`CREATE TABLE IF NOT EXISTS management_report_schedules(
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        project_id TEXT,
+        report_type TEXT NOT NULL,
+        scope TEXT NOT NULL DEFAULT 'PROJECT',
+        frequency TEXT NOT NULL,
+        day_of_week INTEGER,
+        day_of_month INTEGER,
+        time_of_day TEXT DEFAULT '09:00',
+        timezone TEXT DEFAULT 'Europe/Warsaw',
+        is_active INTEGER DEFAULT 1,
+        last_generated_at TIMESTAMP,
+        next_scheduled_at TIMESTAMP,
+        recipients TEXT,
+        created_by TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`);
+      await getPool().query(`CREATE INDEX IF NOT EXISTS idx_mrs_org ON management_report_schedules(organization_id)`);
+      await getPool().query(`CREATE INDEX IF NOT EXISTS idx_mrs_next ON management_report_schedules(next_scheduled_at)`);
+      await getPool().query(`CREATE INDEX IF NOT EXISTS idx_mrs_active ON management_report_schedules(is_active)`);
+      await getPool().query(`CREATE INDEX IF NOT EXISTS idx_mrs_project ON management_report_schedules(project_id)`);
+      logger.info(`[Postgres] Created table ${tableName} on-the-fly`);
+      return true;
     } else if (tableName === 'ai_actions') {
       await getPool().query(`CREATE TABLE IF NOT EXISTS ai_actions(
         id TEXT PRIMARY KEY,
