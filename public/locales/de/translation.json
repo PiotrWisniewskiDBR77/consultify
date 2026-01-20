@@ -135,7 +135,7 @@
       "invalidToken": "Invalid verification link.",
       "failedMessage": "Verification failed. Token may be expired."
     },
-    "backToLogin": "Back to Login",
+    "backToLogin": "Zurück to Anmelden",
     "privacyLink": "Privacy Policy",
     "termsLink": "Terms of Service",
     "orRegisterWith": "or register with",
@@ -154,7 +154,7 @@
       "success": "Authentication Successful!",
       "redirecting": "Redirecting...",
       "failed": "Authentication Failed",
-      "backToHome": "Back to Home",
+      "backToHome": "Zurück to Home",
       "googleFailed": "Google authentication failed",
       "linkedinFailed": "LinkedIn authentication failed",
       "tokenFailed": "Token generation failed. Please try again."
@@ -185,7 +185,7 @@
     "enterDemo": "Enter Demo Mode",
     "contactSales": "Contact Sales for Full Access",
     "back": "Back",
-    "loading": "Loading..."
+    "loading": "Wird geladen..."
   },
   "step1": {
     "title": "Schritt 1 von 3 — Unternehmen & Erwartungen",
@@ -533,15 +533,15 @@
       "lastName": "Nachname",
       "role": "Rolle / Berufsbezeichnung",
       "email": {
-        "title": "Email & Communication",
+        "title": "E-Mail & Communication",
         "description": "Manage your email signature, aliases, and notification preferences",
         "signature": "Email Signature",
         "signatureText": "Signature Text",
         "signaturePlaceholder": "Best regards,\nYour Name\nTitle | Company",
         "signatureHint": "This signature will be added to your outgoing emails",
         "aliases": "Email Aliases",
-        "addAlias": "Add email alias...",
-        "digest": "Email Digest Frequency",
+        "addAlias": "Hinzufügen email alias...",
+        "digest": "E-Mail Digest Frequency",
         "outOfOffice": "Out of Office",
         "enableOOO": "Enable Out of Office",
         "enableOOODesc": "Automatically respond when you are away",
@@ -576,7 +576,7 @@
         "longBioHint": "Markdown formatting supported",
         "skills": "Skills & Expertise",
         "noSkills": "No skills added yet",
-        "addSkill": "Add a skill...",
+        "addSkill": "Hinzufügen a skill...",
         "experience": "Experience",
         "yearsExperience": "Years of Experience",
         "tip": "Profile Tip",
@@ -616,7 +616,7 @@
     },
     "title": "SETTINGS",
     "subtitle": "Preferences",
-    "backToApp": "Back to App",
+    "backToApp": "Zurück to App",
     "user": "User",
     "modules": {
       "profile": "Profile",
@@ -633,7 +633,7 @@
       "appearanceDesc": "Customize theme, language, accessibility, and work preferences"
     },
     "tabs": {
-      "personal": "Personal Info",
+      "personal": "Personal Information",
       "avatar": "Avatar",
       "password": "Password",
       "billing": "Billing",
@@ -712,8 +712,8 @@
         "title": "Notification Rules",
         "description": "Customize notifications for different projects and scenarios",
         "projectRules": "Project Rules",
-        "addRule": "Add Project Rule",
-        "selectProject": "Select a project...",
+        "addRule": "Hinzufügen Projekt Rule",
+        "selectProject": "Auswählen a project...",
         "ruleType": "Notification Mode",
         "all": "All",
         "mentions_only": "Mentions only",
@@ -792,7 +792,7 @@
       "shareAnalyticsDesc": "Help us improve by sharing anonymous usage analytics",
       "shareUsageData": "Share detailed usage data",
       "shareUsageDataDesc": "Include more detailed interaction data for product improvement",
-      "improveAI": "Help improve AI",
+      "improveAI": "Hilfe improve AI",
       "improveAIDesc": "Allow your interactions to help train better AI models",
       "communications": "Communication Preferences",
       "productUpdates": "Product updates",
@@ -808,12 +808,12 @@
       "piiRedactionDesc": "Automatically redact personally identifiable information in AI interactions",
       "thirdParty": "Allow third-party integrations",
       "thirdPartyDesc": "Enable connections to external services and apps",
-      "exportData": "Export Your Data",
+      "exportData": "Exportieren Your Data",
       "exportDataDesc": "Download a copy of all your data. This may take some time to prepare.",
       "exportRequested": "Data export requested. You will receive an email when ready.",
       "exportFailed": "Failed to request data export. Please try again.",
       "preparing": "Preparing...",
-      "requestExport": "Request Data Export",
+      "requestExport": "Request Data Exportieren",
       "exportNote": "You will receive an email with a download link within 24 hours. The link expires after 7 days.",
       "dangerZone": "Danger Zone",
       "deleteDesc": "Permanently delete your account and all associated data. This action cannot be undone.",
@@ -822,7 +822,7 @@
       "requestDeletion": "Request Account Deletion",
       "confirmDelete": "Are you sure?",
       "confirmDeleteDesc": "Type your email address to confirm account deletion.",
-      "confirmDeleteButton": "Delete My Account"
+      "confirmDeleteButton": "Löschen My Account"
     },
     "accessibility": {
       "title": "Accessibility",
@@ -892,7 +892,7 @@
     "complete": "Complete",
     "first": "first",
     "previousStep": "previous step",
-    "backToDashboard": "Back to Dashboard",
+    "backToDashboard": "Zurück to Dashboard",
     "level": "Level",
     "status": {
       "saved": "Auto-saved",
@@ -906,14 +906,14 @@
       "stop": "Stop Impersonating"
     },
     "underConstruction": "Component Under Construction",
-    "backToHome": "Back to Home",
+    "backToHome": "Zurück to Home",
     "close": "Close",
     "cancel": "Cancel",
     "save": "Save Changes",
     "add": "Add",
     "apply": "Apply",
     "confirm": "Confirm",
-    "loading": "Loading...",
+    "loading": "Wird geladen...",
     "analysis": "Analysis",
     "statusLabel": "Status:",
     "notDefined": "Not defined",
@@ -939,15 +939,15 @@
     "processing": "Processing...",
     "verify": "Verify",
     "copy": "Copy",
-    "loadingOnboarding": "Loading Onboarding...",
-    "loadingConsultantPanel": "Loading Consultant Panel...",
-    "loadingInviteTool": "Loading Invite Tool...",
-    "loadingOrgSetup": "Loading Organization Setup...",
+    "loadingOnboarding": "Wird geladen Onboarding...",
+    "loadingConsultantPanel": "Wird geladen Consultant Panel...",
+    "loadingInviteTool": "Wird geladen Invite Tool...",
+    "loadingOrgSetup": "Wird geladen Organisation Setup...",
     "back": "Back",
     "next": "Next",
-    "delete": "Delete",
+    "delete": "Löschen",
     "edit": "Edit",
-    "view": "View"
+    "view": "Ansicht"
   },
   "assessment": {
     "workspace": {
@@ -975,7 +975,7 @@
       "target_only": "TARGET",
       "dashboardHeader": "Assessment Dashboard",
       "tabs": {
-        "summary": "Assessment & Gaps",
+        "summary": "Bewertung & Gaps",
         "audits": "Additional Audits"
       },
       "generateInitiatives": "Generate Initiatives",
@@ -984,7 +984,7 @@
       "remaining": "Remaining",
       "assessmentArea": "ASSESSMENT AREA",
       "functionalArea": "FUNCTIONAL AREA",
-      "selectArea": "Select Area"
+      "selectArea": "Auswählen Area"
     },
     "wizard": {
       "startTitle": "Bewertung Starten",
@@ -1439,7 +1439,7 @@
             "level7Formula": "AI recommends and optimizes, human supervises strategy."
           },
           "hr": {
-            "title": "HR & Admin",
+            "title": "HR & Administrator",
             "levels": {
               "1": "Paper Records",
               "2": "Basic HR Software",
@@ -1519,8 +1519,8 @@
             "title": "Community Based",
             "levels": {
               "1": "No Community",
-              "2": "Basic User Forum",
-              "3": "Active User Community",
+              "2": "Basic Benutzer Forum",
+              "3": "Aktiv Benutzer Community",
               "4": "Community Support",
               "5": "Co-Creation with Community",
               "6": "Community-Led Development",
@@ -1732,7 +1732,7 @@
           "ecommerce": {
             "title": "E-commerce",
             "levels": {
-              "1": "No Online Sales",
+              "1": "Nein Online Sales",
               "2": "Basic Web Shop",
               "3": "Integrated Web Store",
               "4": "Marketplace Presence",
@@ -1788,9 +1788,13 @@
             "level3Desc": "ecosystem, connecting suppliers, partners and customers to create added value and synergy. They offer market analysis tools, joint promotions and loyalty programmes. An example might be an e-commerce platform integrating suppliers, partners and customers while also offering market analysis.",
             "level4Desc": "relationships, the owner provides Software- as-a-Service solutions on its platform, enabling access to various online applications and tools. This type of platform organization is referred to as a Software-as-a-Service Enabled Marketplace (SEM). SEM platforms offer diverse applications, from project Digital Pathfinder 488 management to data analysis, with the option for customization and integration. An example might be a project management platform that provides access to various tools tailored to customer needs.",
             "level5Desc": "of SEM platforms with an active user community. This enables participants to interact, collaborate and share knowledge. Companies combine SEM platforms with forums and chats where users can share knowledge and resolve issues. For example, an IT platform might allow IT resource management while also providing a space for collaboration and technical support for users. Piotr Wisniewski, PhD 489",
-            "level1Questions": ["[PL] Czy firma tylko korzysta z platform?"],
+            "level1Questions": [
+              "[PL] Czy firma tylko korzysta z platform?"
+            ],
             "level1Formula": "[PL] Dostęp do rynku",
-            "level2Questions": ["[PL] Czy inni sprzedają na platformie?"],
+            "level2Questions": [
+              "[PL] Czy inni sprzedają na platformie?"
+            ],
             "level2Formula": "[PL] Pośrednictwo",
             "level3Questions": [
               "[PL] Czy istnieje ekosystem?",
@@ -1824,15 +1828,25 @@
             "level3Desc": "use available assets or resources. The service provider focuses on managing and maintaining assets for the customer`s needs, providing greater flexibility . Consider an electronics manufacturer that establishes a long-term partnership with an outsourcing company that manages various sales channels, including online stores, physical retail shops and online marketplaces. The outsourcing company also offers advanced analytical tools for sales monitoring. Digital Pathfinder 490",
             "level4Desc": "to complete specific tasks or achieve precisely defined results. The provider adapts heavily to the customer`s individual needs and delivers personalized solutions. The customer expects a specialized and tailored approach from the provider. An electronics manufacturer might use an omnichannel platform that connects various sales channels, allowing personalized customer service at every stage. The platform integrates online stores, physical stores, mobile apps and real-time delivery.",
             "level5Desc": "the entire customer business process. The customer leverages comprehensive business solutions offered by the provider. This is the highest level of provider involvement in the customer`s business processes and might, for example, entail an electronics manufacturer outsourcing solutions to experts in omnichannel. The collaboration includes comprehensive sales management, delivery, customer service and high-level personalization. Services are fully tailored to the customer`s needs and utilize advanced technologies. In this business model, the level of digital maturity depends on the amount of complexity and risk that is delegated to the service provider. The technological aspect of this assessment indirectly concerns the extent to which the service provider can monitor and manage the risks they undertake. Piotr Wisniewski, PhD 491",
-            "level1Questions": ["[PL] Czy usługa przypomina outsourcing?"],
+            "level1Questions": [
+              "[PL] Czy usługa przypomina outsourcing?"
+            ],
             "level1Formula": "Convenience",
-            "level2Questions": ["[PL] Czy klient płaci abonament?"],
+            "level2Questions": [
+              "[PL] Czy klient płaci abonament?"
+            ],
             "level2Formula": "Availability",
-            "level3Questions": ["[PL] Czy klient płaci za użycie?"],
+            "level3Questions": [
+              "[PL] Czy klient płaci za użycie?"
+            ],
             "level3Formula": "Flexibility",
-            "level4Questions": ["[PL] Czy płatność zależy od wyniku?"],
+            "level4Questions": [
+              "[PL] Czy płatność zależy od wyniku?"
+            ],
             "level4Formula": "Result",
-            "level5Questions": ["[PL] Czy dostawca zarządza procesem klienta?"],
+            "level5Questions": [
+              "[PL] Czy dostawca zarządza procesem klienta?"
+            ],
             "level5Formula": "Delegation"
           },
           "sharing": {
@@ -1851,21 +1865,31 @@
             "level3Desc": "experience or the product of intellectual work. Users can offer their services, conduct training or share educational materials with other platform users. One example might be a platform for marketing professionals on which experts offer their skills in data analysis and marketing strategy to other platform users for an hourly fee.",
             "level4Desc": "provider for the time they use available assets or resources. The service provider focuses on managing and maintaining assets for the customer` s needs in order to increase the customer`s flexibility. Thus, an electronics manufacturer might enter into a long-term partnership with an outsourcing company that manages various sales channels, including online stores, physical retail shops and online marketplaces. The outsourcing company also offers advanced analytical tools for sales monitoring. Digital Pathfinder 492",
             "level5Desc": "solutions such as IT infrastructure, analytical tools, logistics services or project management. Users can use these solutions on a subscription or pay- per-use basis, allowing them to reduce the costs of their investments. An example might be a platform that integrates various services and technologies to provide comprehensive business solutions for project management, data analysis and logistics. Companies can use these solutions on a subscription basis, allowing them to devote the time and resources they save to developing their proprietary solutions. Piotr Wisniewski, PhD 493",
-            "level1Questions": ["[PL] Czy zasoby są cyfrowe?"],
+            "level1Questions": [
+              "[PL] Czy zasoby są cyfrowe?"
+            ],
             "level1Formula": "Sharing",
-            "level2Questions": ["[PL] Czy zasoby są fizyczne?"],
+            "level2Questions": [
+              "[PL] Czy zasoby są fizyczne?"
+            ],
             "level2Formula": "Access",
-            "level3Questions": ["[PL] Czy użytkownicy dzielą się wiedzą?"],
+            "level3Questions": [
+              "[PL] Czy użytkownicy dzielą się wiedzą?"
+            ],
             "level3Formula": "Know-how",
-            "level4Questions": ["[PL] Czy platforma zarządza zasobami?"],
+            "level4Questions": [
+              "[PL] Czy platforma zarządza zasobami?"
+            ],
             "level4Formula": "Flexibility",
-            "level5Questions": ["[PL] Czy rozwiązania są kompleksowe?"],
+            "level5Questions": [
+              "[PL] Czy rozwiązania są kompleksowe?"
+            ],
             "level5Formula": "[PL] Efektywność"
           },
           "monetization": {
             "title": "Data Monetization",
             "levels": {
-              "1": "No Data Use",
+              "1": "Nein Data Use",
               "2": "Internal Reporting",
               "3": "Process Optimization",
               "4": "Data-Enhanced Products",
@@ -1878,15 +1902,25 @@
             "level3Desc": "offerings to individual customers. This allows it to deliver customized products , services and content that align more closely with individual customer needs and preferences. Spotify, for instance, analyses musical preferences to provide users with personalized playlists and song recommendations.",
             "level4Desc": "data as a valuable resource that can be sold, shared or used to generate additional revenue. This may involve sharing data with business partners, offering paid analytical services, or using data for advertising purposes. Facebook, for instance, sells data to advertisers, enabling them to target specific user groups.",
             "level5Desc": "products, services and innovative solutions. Data serve as the foundation for developing new business models, crafting intelligent algorithms and harnessing artificial intelligence to deliver more advanced solutions to Digital Pathfinder 494 customers. Google, for example , utilizes user data to develop advanced AI algorithms, such as search algorithms, leading to the creation of new services and products. Piotr Wisniewski, PhD 495 Axis 4: Data management: Big Data everywhere In the digital era, data management and the effective use of Big Data have become critical components of organizational success. The fourth axis of digital transformation focuses on how well an organization captures, stores, processes and utilizes vast amounts of data to enhance decision-making, improve operational efficiencies and drive innovation. This axis examines the infrastructure, strategies and competencies that organizations deploy to handle the complexities of Big Data. As we explore this axis, we investigate the various facets of data management that are essential for building a strong digital ecosystem. From collecting data and ensuring their secure storage to conducting advanced analytics and deriving actionable insights, each component is crucial in turning raw data into strategic assets. This axis encompasses not only the technical skills required to handle Big Data but also the cultural transformations needed to cultivate a data-centric approach throughout the organization. A seven-tier maturity model has been proposed to assess each area, reflecting the broad range of technical capabilities present in these fields. --- END OF FILE: 3. digitlane modele .pdf --- --- START OF FILE: 4. Big data.pdf --- Piotr Wisniewski, PhD 495 Axis 4: Data management: Big Data everywhere In the digital era, data management and the effective use of Big Data have become critical components of organizational success. The fourth axis of digital transformation focuses on how well an organization captures, stores, processes and utilizes vast amounts of data to enhance decision-making, improve operational efficiencies and drive innovation. This axis examines the infrastructure, strategies and competencies that organizations deploy to handle the complexities of Big Data. As we explore this axis, we investigate the various facets of data management that are essential for building a strong digital ecosystem. From collecting data and ensuring their secure storage to conducting advanced analytics and deriving actionable insights, each component is crucial in turning raw data into strategic assets. This axis encompasses not only the technical skills required to handle Big Data but also the cultural transformations needed to cultivate a data-centric approach throughout the organization. A seven-tier maturity model has been proposed to assess each area, reflecting the broad range of technical capabilities present in these fields. Digital Pathfinder 496",
-            "level1Questions": ["[PL] Czy dane są wykorzystywane wewnętrznie?"],
+            "level1Questions": [
+              "[PL] Czy dane są wykorzystywane wewnętrznie?"
+            ],
             "level1Formula": "Understanding",
-            "level2Questions": ["[PL] Czy dane wspierają decyzje?"],
+            "level2Questions": [
+              "[PL] Czy dane wspierają decyzje?"
+            ],
             "level2Formula": "Insight",
-            "level3Questions": ["[PL] Czy dane personalizują ofertę?"],
+            "level3Questions": [
+              "[PL] Czy dane personalizują ofertę?"
+            ],
             "level3Formula": "Fit",
-            "level4Questions": ["[PL] Czy dane są sprzedawane?"],
+            "level4Questions": [
+              "[PL] Czy dane są sprzedawane?"
+            ],
             "level4Formula": "Monetization",
-            "level5Questions": ["[PL] Czy dane są podstawą nowych modeli?"],
+            "level5Questions": [
+              "[PL] Czy dane są podstawą nowych modeli?"
+            ],
             "level5Formula": "[PL] Innowacja"
           }
         }
@@ -1918,17 +1952,30 @@
               "[PL] Czy pojawiają się opóźnienia?"
             ],
             "level1Formula": "[PL] Dane opisują przeszłość",
-            "level2Questions": ["[PL] Czy część danych zbiera się automatycznie?"],
+            "level2Questions": [
+              "[PL] Czy część danych zbiera się automatycznie?"
+            ],
             "level2Formula": "[PL] Lepsza widoczność",
-            "level3Questions": ["[PL] Czy dane zbierają się automatycznie?", "[PL] Czy są spójne?"],
+            "level3Questions": [
+              "[PL] Czy dane zbierają się automatycznie?",
+              "[PL] Czy są spójne?"
+            ],
             "level3Formula": "[PL] Dane operacyjne",
-            "level4Questions": ["[PL] Czy dane są real-time?"],
+            "level4Questions": [
+              "[PL] Czy dane są real-time?"
+            ],
             "level4Formula": "[PL] Bieżący obraz",
-            "level5Questions": ["[PL] Czy dane są standaryzowane?"],
+            "level5Questions": [
+              "[PL] Czy dane są standaryzowane?"
+            ],
             "level5Formula": "[PL] Jedna wersja prawdy",
-            "level6Questions": ["[PL] Czy dane są kompletne i jakościowe?"],
+            "level6Questions": [
+              "[PL] Czy dane są kompletne i jakościowe?"
+            ],
             "level6Formula": "[PL] Przewidywalność",
-            "level7Questions": ["[PL] Czy system sam poprawia dane?"],
+            "level7Questions": [
+              "[PL] Czy system sam poprawia dane?"
+            ],
             "level7Formula": "[PL] Autonomiczna baza"
           },
           "storage": {
@@ -1949,19 +1996,33 @@
             "level5Desc": "services of external cloud service providers. These providers maintain cloud infrastructure, which their clients access via the Internet. Public clouds offer a wide range of services, including data processing, data storage, virtual machines and tools for data analysis. A company that uses the services of providers such as Google Cloud, Dropbox or AWS is operating at this level. Employing a public cloud reduces costs , allows resources to be scaled, and provides flexibility in managing data and applications.",
             "level6Desc": "organization. This means that cloud resources such as servers, storage and network are available only to the employees of that specific organization, and not to external users. An example is a financial corporation such as a bank Piotr Wisniewski, PhD 501 using a private cloud to securely store customer data. This ensures full control over data security, a critical aspect in the financial sector.",
             "level7Desc": "storage by utilizing a mix of solutions tailored to the specific needs of different types of data. For instance, operational data critical for production processes are stored on edge devices for immediate access, while sensitive information like technical drawings is kept in private clouds to enhance security. Other data, such as financial and material reports, benefit from the scalability and accessibility of public clouds, allowing for resource adjustments in response to fluctuating demands. This approach not only optimizes performance and cost-efficiency but also ensures robust security and control, exemplified by an automotive component manufacturer who effectively segregates data storage based on function and sensitivity. Digital Pathfinder 502",
-            "level1Questions": ["[PL] Czy dane są w plikach lokalnych?"],
+            "level1Questions": [
+              "[PL] Czy dane są w plikach lokalnych?"
+            ],
             "level1Formula": "[PL] Brak spójności",
-            "level2Questions": ["[PL] Czy istnieje jedna baza danych?"],
+            "level2Questions": [
+              "[PL] Czy istnieje jedna baza danych?"
+            ],
             "level2Formula": "[PL] Podstawowa spójność",
-            "level3Questions": ["[PL] Czy istnieje hurtownia danych?"],
+            "level3Questions": [
+              "[PL] Czy istnieje hurtownia danych?"
+            ],
             "level3Formula": "[PL] Porządek danych",
-            "level4Questions": ["[PL] Czy dane są w różnych formatach?"],
+            "level4Questions": [
+              "[PL] Czy dane są w różnych formatach?"
+            ],
             "level4Formula": "Flexibility",
-            "level5Questions": ["[PL] Czy istnieje jedna architektura?"],
+            "level5Questions": [
+              "[PL] Czy istnieje jedna architektura?"
+            ],
             "level5Formula": "[PL] Jedna platforma",
-            "level6Questions": ["[PL] Czy spełnione są standardy?"],
+            "level6Questions": [
+              "[PL] Czy spełnione są standardy?"
+            ],
             "level6Formula": "[PL] Zaufanie",
-            "level7Questions": ["[PL] Czy system sam zarządza?"],
+            "level7Questions": [
+              "[PL] Czy system sam zarządza?"
+            ],
             "level7Formula": "Autonomy"
           },
           "communication": {
@@ -1982,19 +2043,33 @@
             "level5Desc": "connect to one another via a central access point, facilitating centralized network management. Wireless networks find applications in various industries, including manufacturing, transportation, medicine and services .",
             "level6Desc": "servers connect multiple computers and devices into a network. WAN/LAN networks provide a stable connection between company branches and offices, enabling access to data and applications from different devices and locations. Various protocols and technologies such as TCP/IP, VPN and MPLS ensure fast and secure data exchange within the organization. In particular, VPN (Virtual Private Network) technology ensures secure communication between locations, which is crucial for safeguarding sensitive company data.",
             "level7Desc": "stored and processed in the cloud, which is usually provided by an external vendor. A cloud-based architecture allows access to applications and data from anywhere and any Internet-enabled device, allowing resources to be scaled flexibly according to needs. This enables organizations to adapt more easily to changing business requirements and reduce the costs of maintaining infrastructure. An example of cloud-based architecture is a microservices architecture, where applications are built as a set of smaller, independent services that can be easily scaled and updated. Digital Pathfinder 504",
-            "level1Questions": ["[PL] Czy dane są przesyłane ręcznie?"],
+            "level1Questions": [
+              "[PL] Czy dane są przesyłane ręcznie?"
+            ],
             "level1Formula": "Delays",
-            "level2Questions": ["[PL] Czy dane są batch?"],
+            "level2Questions": [
+              "[PL] Czy dane są batch?"
+            ],
             "level2Formula": "Periodic consistency",
-            "level3Questions": ["[PL] Czy istnieją API?"],
+            "level3Questions": [
+              "[PL] Czy istnieją API?"
+            ],
             "level3Formula": "Current consistency",
-            "level4Questions": ["[PL] Czy architektura jest event-driven?"],
+            "level4Questions": [
+              "[PL] Czy architektura jest event-driven?"
+            ],
             "level4Formula": "Immediacy",
-            "level5Questions": ["[PL] Czy przepływy są orkiestrwane?"],
+            "level5Questions": [
+              "[PL] Czy przepływy są orkiestrwane?"
+            ],
             "level5Formula": "Control",
-            "level6Questions": ["[PL] Czy istnieje data fabric?"],
+            "level6Questions": [
+              "[PL] Czy istnieje data fabric?"
+            ],
             "level6Formula": "Uniformity",
-            "level7Questions": ["[PL] Czy system działa autonomicznie?"],
+            "level7Questions": [
+              "[PL] Czy system działa autonomicznie?"
+            ],
             "level7Formula": "Autonomy"
           },
           "analysis": {
@@ -2015,19 +2090,33 @@
             "level5Desc": "improved and maintained through the automated detection and elimination of data errors, standardization of data, verification of information from external sources, and completion of missing data. Often, these tools can manage the data entry and modification process, continuously monitor data quality and then generate data quality reports. For example, an insurance company might use such tools to automatically detect and correct errors in customer data.",
             "level6Desc": "useful tool in various fields and involves the creation of data that mimic real- world information. This is particularly valuable for testing different scenarios and variations of system operations, algorithms or mathematical models. Data simulation can be used for safe, controlled testing without using real data, which is a crucial facility when dealing with sensitive information. In the medical field, for example, data simulation can create artificial datasets of patient information. The simulated data can be used to test and evaluate the performance of new diagnostic or therapeutic algorithms, eliminating the risk of making real-world errors or endangering patients. Digital Pathfinder 506",
             "level7Desc": "and classify atypical data in ways that are often hard or impossible using traditional analytical methods. The algorithms learn from existing data in order to classify new data, making them extremely versatile. In banks and payment processing companies, for example , machine learning algorithms can be used to identify anomalous customer behaviours. By analysing extensive datasets, machine learning algorithms can detect suspect behaviours and block such operations. Thus, by working with a database of banking transactions, machine learning algorithms further protect customers against, for example, fraudulent activity. Piotr Wisniewski, PhD 507",
-            "level1Questions": ["[PL] Czy raporty opisują przeszłość?"],
+            "level1Questions": [
+              "[PL] Czy raporty opisują przeszłość?"
+            ],
             "level1Formula": "History",
-            "level2Questions": ["[PL] Czy znane są przyczyny?"],
+            "level2Questions": [
+              "[PL] Czy znane są przyczyny?"
+            ],
             "level2Formula": "Understanding",
-            "level3Questions": ["[PL] Czy firma prognozuje?"],
+            "level3Questions": [
+              "[PL] Czy firma prognozuje?"
+            ],
             "level3Formula": "Prediction",
-            "level4Questions": ["[PL] Czy system rekomenduje?"],
+            "level4Questions": [
+              "[PL] Czy system rekomenduje?"
+            ],
             "level4Formula": "Recommendations",
-            "level5Questions": ["[PL] Czy modele się uczą?"],
+            "level5Questions": [
+              "[PL] Czy modele się uczą?"
+            ],
             "level5Formula": "Learning",
-            "level6Questions": ["[PL] Czy system decyduje sam?"],
+            "level6Questions": [
+              "[PL] Czy system decyduje sam?"
+            ],
             "level6Formula": "Autonomy",
-            "level7Questions": ["[PL] Czy system się rozwija?"],
+            "level7Questions": [
+              "[PL] Czy system się rozwija?"
+            ],
             "level7Formula": "Evolution"
           },
           "computing": {
@@ -2048,19 +2137,33 @@
             "level5Desc": "networking and application services over the Internet. In cloud computing, computational resources such as servers, memory, networks and databases are provided as a service, allowing them to be used flexibly, based on user needs. Various service models are available in cloud computing, including Software- as-a-Service, Platform-as-a-Service and Infrastructure-as-a-Service.",
             "level6Desc": "extraordinarily complex computations on multiple processors simultaneously. This allows large amounts of data to be processed quickly, which is essential in various fields such as science, finance, industry and data analysis. HPC systems consist of multiple computing nodes connected by a high-throughput network. In the field of science, HPC technology is used for simulating complex physical phenomena to process vast amounts of data and obtain results in a short time.",
             "level7Desc": "interconnected computers operating as a single computing unit. In the aviation industry, computer clusters are used for aerodynamics simulations, enabling the rapid processing of large amounts of data and shortening analysis times for more efficient designing of new aircraft models. Piotr Wisniewski, PhD 509 Axis 5: Competence levels and digital culture Axis 5, focusing on the digital culture of an organization, describes softer, yet equally crucial aspects of a company`s digital transformation. Unlike the first three axes, which directly influence the financial performance of an organization, the last three, especially Axis 5, emphasize the organizational behaviours critical for successful transformation. Experience in implementing digital transformations with client companies indicates that failures are often attributable to a lack of attention to organizational culture. A transformational culture within an organization encompasses values, attitudes and practices that promote agility in the face of changing market and technological conditions. Such a culture values openness to change, innovativeness and a propensity for experimentation and judicious risk-taking. In organizations endowed with a strong transformation culture, employees are actively engaged in the change process and encouraged by leaders to be creative and inventive, which enhances agility. For digital transformation strategies to succeed, they must align with the organizational culture. New technologies and processes require shifts in both thought and action across all levels of the organization. Without a culture that supports innovation, flexibility and openness to change, even the most --- END OF FILE: 4. Big data.pdf --- --- START OF FILE: 5. Kultura.pdf --- Piotr Wisniewski, PhD 509 Axis 5: Competence levels and digital culture Axis 5, focusing on the digital culture of an organization, describes softer, yet equally crucial aspects of a company`s digital transformation. Unlike the first three axes, which directly influence the financial performance of an organization, the last three, especially Axis 5, emphasize the organizational behaviours critical for successful transformation. Experience in implementing digital transformations with client companies indicates that failures are often attributable to a lack of attention to organizational culture. A transformational culture within an organization encompasses values, attitudes and practices that promote agility in the face of changing market and technological conditions. Such a culture values openness to change, innovativeness and a propensity for experimentation and judicious risk-taking. In organizations endowed with a strong transformation culture, employees are actively engaged in the change process and encouraged by leaders to be creative and inventive, which enhances agility. For digital transformation strategies to succeed, they must align with the organizational culture. New technologies and processes require shifts in both thought and action across all levels of the organization. Without a culture that supports innovation, flexibility and openness to change, even the most Digital Pathfinder 510 meticulously developed digital strategies may encounter tepid support or outright resistance. Thus, it is imperative to cultivate an organizational culture that not only supports but champions the values integral to digital transformation. This axis will explore five key areas – leadership styles, readiness for change, continuous improvement, innovation culture and resource availability – each of which is crucial for fostering an environment conducive to sustainable digital growth. Piotr Wisniewski, PhD 511",
-            "level1Questions": ["[PL] Czy obliczenia są lokalne?"],
+            "level1Questions": [
+              "[PL] Czy obliczenia są lokalne?"
+            ],
             "level1Formula": "Limitations",
-            "level2Questions": ["[PL] Czy istnieją centralne serwery?"],
+            "level2Questions": [
+              "[PL] Czy istnieją centralne serwery?"
+            ],
             "level2Formula": "Stability",
-            "level3Questions": ["[PL] Czy firma korzysta z chmury?"],
+            "level3Questions": [
+              "[PL] Czy firma korzysta z chmury?"
+            ],
             "level3Formula": "Flexibility",
-            "level4Questions": ["[PL] Czy architektura jest hybrydowa?"],
+            "level4Questions": [
+              "[PL] Czy architektura jest hybrydowa?"
+            ],
             "level4Formula": "Optimization",
-            "level5Questions": ["[PL] Czy system jest rozproszony?"],
+            "level5Questions": [
+              "[PL] Czy system jest rozproszony?"
+            ],
             "level5Formula": "Scale",
-            "level6Questions": ["[PL] Czy są akceleratory?"],
+            "level6Questions": [
+              "[PL] Czy są akceleratory?"
+            ],
             "level6Formula": "Performance",
-            "level7Questions": ["[PL] Czy system sam zarządza?"],
+            "level7Questions": [
+              "[PL] Czy system sam zarządza?"
+            ],
             "level7Formula": "Autonomy"
           }
         }
@@ -2087,19 +2190,29 @@
             ],
             "level1Formula": "[PL] High risk of failure",
             "level2Desc": "[TODO] Decisions are made centrally without employee involvement. Innovation is limited due to lack of trust and empowerment.",
-            "level2Questions": ["[PL] Are decisions top-down only?"],
+            "level2Questions": [
+              "[PL] Are decisions top-down only?"
+            ],
             "level2Formula": "[PL] Low adaptability",
             "level3Desc": "[TODO] Leaders set ambitious goals and provide resources but tightly control execution.",
-            "level3Questions": ["[PL] Are goals clear but rigid?"],
+            "level3Questions": [
+              "[PL] Are goals clear but rigid?"
+            ],
             "level3Formula": "[PL] Fast results, limited learning",
             "level4Desc": "[TODO] Leaders encourage ideas, psychological safety and initiative.",
-            "level4Questions": ["[PL] Do employees feel safe proposing ideas?"],
+            "level4Questions": [
+              "[PL] Do employees feel safe proposing ideas?"
+            ],
             "level4Formula": "[PL] Strong engagement",
             "level5Desc": "[TODO] Leaders actively experiment, accept risk and learn from failure.",
-            "level5Questions": ["[PL] Is experimentation encouraged?"],
+            "level5Questions": [
+              "[PL] Is experimentation encouraged?"
+            ],
             "level5Formula": "[PL] High innovation capacity",
             "level6Desc": "[TODO] Leadership drives vision, values and long-term transformation across the organization.",
-            "level6Questions": ["[PL] Is there a strong transformation vision?"],
+            "level6Questions": [
+              "[PL] Is there a strong transformation vision?"
+            ],
             "level6Formula": "[PL] Sustainable transformation"
           },
           "readiness": {
@@ -2119,17 +2232,29 @@
             "level4Desc": "and presented in a way that is accessible to all employees. Communication should be two-way and consider the opinions and suggestions of employees so that the vision can be better adapted to the organization`s actual needs. Continuous communication of progress and achievements is also crucial for maintaining motivation and engagement in the change process.",
             "level5Desc": "taking specific actions to introduce and carry out changes. Implementing changes requires that we plan, define goals and directions, and identify the people and resources needed for change . It is also essential to define criteria for assessing progress and results.",
             "level6Desc": "objective is to make the transformation integral to the company`s working methods and culture. It is important to regularly assess the effectiveness of implemented changes and modify the strategy accordingly. Also important is that adequate training and support be given to help employees adapt to the new priorities and ways of working. This requires that the leadership continuously engage in the transformation process and promote the newly implemented solutions. Digital Pathfinder 516",
-            "level1Questions": ["[PL] Is change acknowledged but not executed?"],
+            "level1Questions": [
+              "[PL] Is change acknowledged but not executed?"
+            ],
             "level1Formula": "[PL] High inertia",
-            "level2Questions": ["[PL] Is there a change coalition?"],
+            "level2Questions": [
+              "[PL] Is there a change coalition?"
+            ],
             "level2Formula": "[PL] Medium risk",
-            "level3Questions": ["[PL] Is there a shared vision?"],
+            "level3Questions": [
+              "[PL] Is there a shared vision?"
+            ],
             "level3Formula": "[PL] Lower risk",
-            "level4Questions": ["[PL] Is communication two-way?"],
+            "level4Questions": [
+              "[PL] Is communication two-way?"
+            ],
             "level4Formula": "[PL] Low risk",
-            "level5Questions": ["[PL] Are initiatives implemented?"],
+            "level5Questions": [
+              "[PL] Are initiatives implemented?"
+            ],
             "level5Formula": "[PL] Controlled risk",
-            "level6Questions": ["[PL] Is change part of culture?"],
+            "level6Questions": [
+              "[PL] Is change part of culture?"
+            ],
             "level6Formula": "[PL] Very low risk"
           },
           "improvement": {
@@ -2149,23 +2274,35 @@
             "level4Desc": "acquisition of knowledge, skills and experience without the need for formal education, such as through reading books and articles or participating in online training. Self-education allows individuals to develop in directions that most interest them in the way that best suits them. In the context of organizations, employees` self-education can, and should, be integrated into the transformation culture strategy.",
             "level5Desc": "from various departments who collaborate on specific tasks or projects, leveraging their expertise towards a common objective. This team structure not only speeds up decision-making and boosts efficiency but also facilitates personal skill development and broader professional growth through cross- functional collaboration. For instance, when developing a new product or service, representatives from different departments can pool their specialized knowledge, enhancing the entire team`s understanding of the project`s challenges and potential solutions. This approach not only achieves better outcomes but also serves as a powerful educational experience within the context of real-world tasks.",
             "level6Desc": "serves as a guide and support for a junior employee, the mentee. Mentors are carefully selected for their rich experience and competence in a specific field, with their main goals being to assist the mentee in understanding the demands of their job and tools and to guide them towards achieving their goals. Mentoring is often integrated into organizational training programmes but can also exist as an individual professional development programme for Digital Pathfinder 518 employees. Through regular meetings , mentors share their knowledge and experience, help mentees develop practical skills, and provide advice on key issues related to their career paths. This process, based on a relationship of mutual trust, often significantly expands the mentee`s competencies, boosting their achievements within the organization. Piotr Wisniewski, PhD 519",
-            "level1Questions": ["[PL] Is learning external only?"],
+            "level1Questions": [
+              "[PL] Is learning external only?"
+            ],
             "level1Formula": "[PL] Skill gaps",
-            "level2Questions": ["[PL] Are trainings systematic?"],
+            "level2Questions": [
+              "[PL] Are trainings systematic?"
+            ],
             "level2Formula": "[PL] Moderate risk",
-            "level3Questions": ["[PL] Are external experts used?"],
+            "level3Questions": [
+              "[PL] Are external experts used?"
+            ],
             "level3Formula": "[PL] Lower risk",
-            "level4Questions": ["[PL] Is self-learning encouraged?"],
+            "level4Questions": [
+              "[PL] Is self-learning encouraged?"
+            ],
             "level4Formula": "[PL] Low risk",
-            "level5Questions": ["[PL] Are teams cross-functional?"],
+            "level5Questions": [
+              "[PL] Are teams cross-functional?"
+            ],
             "level5Formula": "[PL] Very low risk",
-            "level6Questions": ["[PL] Is mentoring systematic?"],
+            "level6Questions": [
+              "[PL] Is mentoring systematic?"
+            ],
             "level6Formula": "[PL] Minimal risk"
           },
           "innovation": {
             "title": "Innovation Culture",
             "levels": {
-              "1": "No Innovation Focus",
+              "1": "Nein Innovation Focus",
               "2": "R&D Department Only",
               "3": "Innovation Projects",
               "4": "Open Innovation",
@@ -2179,17 +2316,29 @@
             "level4Desc": "experimentation and seeking new solutions can sometimes lead to errors, but they are willing to accept this risk. Employees feel free to take risks and explore new ideas, even if it involves the chance of mistakes. Some companies, for example, run regular competitions for the biggest blunder of the week. As part of the competition, employees are encouraged to share mistakes that happened during the week. Though unusual, the contest aims to emphasize that every employee can make mistakes and that the company can accept mistakes as long as they lead to learning and improvement. This innovative approach to accepting mistakes aims to eliminate the fear of making mistakes and to create an atmosphere of experimentation. Employees, seeing that mistakes are part of the development and learning process, gain more confidence and willingness to try new solutions. This makes the organization more flexible and innovative.",
             "level5Desc": "stage invest significant resources in research, develop experimental activities, and design new solutions that are later tested in the form of prototypes. The R&D process is no longer a one-time event but a constant part of the pursuit of innovation within the organization. Employees recognize the role of this process in creating new products or services and strengthening the company`s market position.",
             "level6Desc": "Organizations acknowledge that partnerships with other companies, research institutes or startups are crucial for accelerating the innovation process. By being open to collaboration with external entities , organizations gain access to new technologies, knowledge and perspectives that may be hard to obtain internally. This approach allows organizations to better leverage the innovation ecosystem and more quickly put out new solutions. An example here is a medical software company that partnered with a local university. They jointly researched advanced diagnostic tools. This collaboration provided the company access to the latest scientific and technological advancements and Piotr Wisniewski, PhD 521 expert knowledge from the university. This resulted in the faster introduction of advanced diagnostic tools to the market, benefiting both the company and the entire medical sector. Digital Pathfinder 522",
-            "level1Questions": ["[PL] Are ideas rewarded?"],
+            "level1Questions": [
+              "[PL] Are ideas rewarded?"
+            ],
             "level1Formula": "[PL] Low maturity",
-            "level2Questions": ["[PL] Are experiments allowed?"],
+            "level2Questions": [
+              "[PL] Are experiments allowed?"
+            ],
             "level2Formula": "[PL] Moderate risk",
-            "level3Questions": ["[PL] Are trends monitored?"],
+            "level3Questions": [
+              "[PL] Are trends monitored?"
+            ],
             "level3Formula": "[PL] Lower risk",
-            "level4Questions": ["[PL] Are mistakes tolerated?"],
+            "level4Questions": [
+              "[PL] Are mistakes tolerated?"
+            ],
             "level4Formula": "[PL] Low risk",
-            "level5Questions": ["[PL] Is R&D strategic?"],
+            "level5Questions": [
+              "[PL] Is R&D strategic?"
+            ],
             "level5Formula": "[PL] Very low risk",
-            "level6Questions": ["[PL] Are external partners used?"],
+            "level6Questions": [
+              "[PL] Are external partners used?"
+            ],
             "level6Formula": "[PL] Minimal risk"
           },
           "resources": {
@@ -2209,17 +2358,29 @@
             "level4Desc": "to advanced use of data in the decision-making process. The question is whether the organization has appropriate information systems and databases and focuses on securing and utilizing them. At this point, the organization realizes that data are an essential foundation for fact-based decision-making. An example could be a logistics company utilizing advanced IT tools for shipment analysis. Through a data warehouse, the company can precisely monitor, analyse and forecast shipment traffic. Decisions such as optimizing delivery routes or inventory management are data-driven rather than intuitive. Furthermore, the company emphasizes data security, which is crucial when dealing with shipment information.",
             "level5Desc": "employees with access to modern tools and technologies. The question of whether employees have access to modern technologies supported by appropriate training and technical assistance is crucial in the context of organizational transformation. Organizations realize that innovations often require tools that allow for more advanced actions, and they invest in them. Our example here is that of an advertising agency deciding to invest in the latest graphic design and data analysis software. This gives employees access to advanced tools to create effective advertising campaigns and analyse their outcomes. Furthermore, the company secures training for employees, enabling them to use the new technologies effectively. This is an example of an organization that understands that investments in modern technologies contribute to improving efficiency and competitiveness.",
             "level6Desc": "ability to collaborate with external entities. This collaboration is crucial in the context of organizational transformation because external partners can bring Digital Pathfinder 524 knowledge, experience and capital that expedite innovative processes. The example here is a software company and a technical university entering into a strategic partnership. The university provides the company with research and knowledge in technology, and, in return, the company offers internships to university students. This mutual benefit accelerates the innovation process and contributes to the development of both parties. For the university, it means that its knowledge finds practical application and that it can provide students access to real projects. For the software company, it means access to the latest research and young, talented employees. Piotr Wisniewski, PhD 525 Axis 6: Cybersecurity In the digital age, cybersecurity has transcended its past role as a mere safeguard to become a fundamental pillar of operational integrity and trust. As organizations increasingly digitalize their operations, the importance of robust cybersecurity measures has never been more critical. Accordingly, this sixth axis of digital transformation explores how deeply an organization has ingrained security practices into its digital and operational fabric. The relentless evolution of cyber threats means that a proactive stance on cybersecurity is not just advisable; it is imperative for protecting sensitive customer data, ensuring privacy and maintaining the trust that is so crucial to sustaining reputation and financial viability. This axis evaluates an organization`s cybersecurity maturity across five distinct but interconnected areas: strategy and risk management, protection of networks and systems, data security, education and training, and emergency planning. Each area is assessed on a graduated scale that corresponds to the depth and sophistication of cybersecurity measures in place. From the basics of securing network perimeters to the complexities of managing a comprehensive emergency response, this axis provides a structured framework to gauge how prepared an organization is to defend against and respond to cyber incidents with the potential to disrupt operations and compromise data --- END OF FILE: 5. Kultura.pdf --- --- START OF FILE: 6. Cyberbezpieczenstwo .pdf --- Piotr Wisniewski, PhD 525 Axis 6: Cybersecurity In the digital age, cybersecurity has transcended its past role as a mere safeguard to become a fundamental pillar of operational integrity and trust. As organizations increasingly digitalize their operations, the importance of robust cybersecurity measures has never been more critical. Accordingly, this sixth axis of digital transformation explores how deeply an organization has ingrained security practices into its digital and operational fabric. The relentless evolution of cyber threats means that a proactive stance on cybersecurity is not just advisable; it is imperative for protecting sensitive customer data, ensuring privacy and maintaining the trust that is so crucial to sustaining reputation and financial viability. This axis evaluates an organization`s cybersecurity maturity across five distinct but interconnected areas: strategy and risk management, protection of networks and systems, data security, education and training, and emergency planning. Each area is assessed on a graduated scale that corresponds to the depth and sophistication of cybersecurity measures in place. From the basics of securing network perimeters to the complexities of managing a comprehensive emergency response, this axis provides a structured framework to gauge how prepared an organization is to defend against and respond to cyber incidents with the potential to disrupt operations and compromise data Digital Pathfinder 526 integrity. As we elaborate on the specifics of each area, we underscore the critical need for an integrated approach to cybersecurity, one that stays in step with both technological advancements and emerging threats. The level of an organization`s digital development in the area of cybersecurity is assessed in five areas: strategy and risk management, network and system protection, data protection, education and quality systems, and emergency plans. Each area is evaluated on a scale from level one to level six. Piotr Wisniewski, PhD 527",
-            "level1Questions": ["[PL] Is budget allocated?"],
+            "level1Questions": [
+              "[PL] Is budget allocated?"
+            ],
             "level1Formula": "[PL] High risk",
-            "level2Questions": ["[PL] Are trainings accessible?"],
+            "level2Questions": [
+              "[PL] Are trainings accessible?"
+            ],
             "level2Formula": "[PL] Medium risk",
-            "level3Questions": ["[PL] Are experts engaged?"],
+            "level3Questions": [
+              "[PL] Are experts engaged?"
+            ],
             "level3Formula": "[PL] Lower risk",
-            "level4Questions": ["[PL] Is data available?"],
+            "level4Questions": [
+              "[PL] Is data available?"
+            ],
             "level4Formula": "[PL] Low risk",
-            "level5Questions": ["[PL] Are tools modern?"],
+            "level5Questions": [
+              "[PL] Are tools modern?"
+            ],
             "level5Formula": "[PL] Very low risk",
-            "level6Questions": ["[PL] Are partnerships strategic?"],
+            "level6Questions": [
+              "[PL] Are partnerships strategic?"
+            ],
             "level6Formula": "[PL] Minimal risk"
           }
         }
@@ -2250,15 +2411,25 @@
               "[PL] Czy ryzyka są mapowane?"
             ],
             "level1Formula": "[PL] Wysokie ryzyko reputacyjne",
-            "level2Questions": ["[PL] Czy ryzyka są identyfikowane?"],
+            "level2Questions": [
+              "[PL] Czy ryzyka są identyfikowane?"
+            ],
             "level2Formula": "[PL] Świadomość zagrożeń",
-            "level3Questions": ["[PL] Czy istnieje plan działań?"],
+            "level3Questions": [
+              "[PL] Czy istnieje plan działań?"
+            ],
             "level3Formula": "[PL] Kontrola ryzyka",
-            "level4Questions": ["[PL] Czy polityki są egzekwowane?"],
+            "level4Questions": [
+              "[PL] Czy polityki są egzekwowane?"
+            ],
             "level4Formula": "[PL] Zaufanie operacyjne",
-            "level5Questions": ["[PL] Czy ludzie są szkoleni?"],
+            "level5Questions": [
+              "[PL] Czy ludzie są szkoleni?"
+            ],
             "level5Formula": "[PL] Odporność organizacji",
-            "level6Questions": ["[PL] Czy strategia jest audytowana?"],
+            "level6Questions": [
+              "[PL] Czy strategia jest audytowana?"
+            ],
             "level6Formula": "[PL] Zaufanie strategiczne"
           },
           "network": {
@@ -2278,17 +2449,29 @@
             "level4Desc": "to compromise data, Security Information and Event Management systems and Intrusion Detection Systems analyse data from multiple sources and Digital Pathfinder 530 generate alerts or reports, enabling an effective response and ensuring operational continuity. These systems are used in the transportation sector, for example. Here, where complex logistics networks and data management are commonplace, incident detection systems are essential.",
             "level5Desc": "the user`s identity and access level. In the education sector, for example, where there is a need to secure access to university resources, authorization and authentication systems are indispensable. Students and staff must provide unique identification data and passwords to access educational materials.",
             "level6Desc": "of cybersecurity in, for example , the e-commerce industry, where secure transmission of financial data is a priority. Online merchants use VPNs to ensure a secure connection between different geographical locations, protecting sensitive data from interception. This allows for the secure transmission of financial information over public networks while protecting customers. Piotr Wisniewski, PhD 531",
-            "level1Questions": ["[PL] Czy istnieją firewalle?"],
+            "level1Questions": [
+              "[PL] Czy istnieją firewalle?"
+            ],
             "level1Formula": "Minimal protection",
-            "level2Questions": ["[PL] Czy antivirus jest aktualny?"],
+            "level2Questions": [
+              "[PL] Czy antivirus jest aktualny?"
+            ],
             "level2Formula": "System stability",
-            "level3Questions": ["[PL] Czy ataki są wykrywane?"],
+            "level3Questions": [
+              "[PL] Czy ataki są wykrywane?"
+            ],
             "level3Formula": "Rapid response",
-            "level4Questions": ["[PL] Czy zdarzenia są korelowane?"],
+            "level4Questions": [
+              "[PL] Czy zdarzenia są korelowane?"
+            ],
             "level4Formula": "Operational control",
-            "level5Questions": ["[PL] Czy dostęp jest kontrolowany?"],
+            "level5Questions": [
+              "[PL] Czy dostęp jest kontrolowany?"
+            ],
             "level5Formula": "System trust",
-            "level6Questions": ["[PL] Czy komunikacja jest szyfrowana?"],
+            "level6Questions": [
+              "[PL] Czy komunikacja jest szyfrowana?"
+            ],
             "level6Formula": "Operational continuity"
           },
           "dataProtection": {
@@ -2308,17 +2491,29 @@
             "level4Desc": "backup copies of data so that, in the event of the loss of original data, they can be effectively restored. This requires that a backup strategy be established, that the process of data restoration from backup copies be tested, and that the backup strategy be regularly adjusted to changing needs.",
             "level5Desc": "networks and s y s t e m s t o d e t e c t a b n o r m a l i t i e s a n d t h r e a t s . T h i s i n v o l v e s Digital Pathfinder 532 implementing solutions that monitor systems and network traffic, training monitoring personnel to respond to security alarms and continually updating monitoring tools.",
             "level6Desc": "access to data and systems by unauthorized individuals requires the implementation of identity verification systems, such as biometric scanners or digital certificates, and, of course, training. Piotr Wisniewski, PhD 533",
-            "level1Questions": ["[PL] Czy dane są szyfrowane?"],
+            "level1Questions": [
+              "[PL] Czy dane są szyfrowane?"
+            ],
             "level1Formula": "Data protection",
-            "level2Questions": ["[PL] Czy hasła są zarządzane?"],
+            "level2Questions": [
+              "[PL] Czy hasła są zarządzane?"
+            ],
             "level2Formula": "Controlled access",
-            "level3Questions": ["[PL] Czy role są zdefiniowane?"],
+            "level3Questions": [
+              "[PL] Czy role są zdefiniowane?"
+            ],
             "level3Formula": "Risk minimization",
-            "level4Questions": ["[PL] Czy backupy są testowane?"],
+            "level4Questions": [
+              "[PL] Czy backupy są testowane?"
+            ],
             "level4Formula": "Business continuity",
-            "level5Questions": ["[PL] Czy zagrożenia są monitorowane?"],
+            "level5Questions": [
+              "[PL] Czy zagrożenia są monitorowane?"
+            ],
             "level5Formula": "Early warning",
-            "level6Questions": ["[PL] Czy stosowane jest MFA/biometria?"],
+            "level6Questions": [
+              "[PL] Czy stosowane jest MFA/biometria?"
+            ],
             "level6Formula": "High trust"
           },
           "education": {
@@ -2338,17 +2533,29 @@
             "level4Desc": "conduct regular internal audits of cybersecurity. Their goal is to assess the effectiveness of systems and procedures, contributing to continuous improvement in this area. Digital Pathfinder 534",
             "level5Desc": "of internal and external audits to assess effectiveness and compliance with the organization`s cybersecurity policies and procedures. It also ensures compliance with applicable standards and regulations on information security.",
             "level6Desc": "management is used to certify organizations that have implemented a sufficient information security management system. Certification attests to high-quality risk management and protection of confidential information in the organization. This certificate builds trust with customers and business partners and contributes to the company`s development. Piotr Wisniewski, PhD 535",
-            "level1Questions": ["[PL] Czy istnieje plan szkoleń?"],
+            "level1Questions": [
+              "[PL] Czy istnieje plan szkoleń?"
+            ],
             "level1Formula": "[PL] Świadomość",
-            "level2Questions": ["[PL] Czy szkolenia są realizowane?"],
+            "level2Questions": [
+              "[PL] Czy szkolenia są realizowane?"
+            ],
             "level2Formula": "[PL] Zmniejszenie ryzyka",
-            "level3Questions": ["[PL] Czy system jest testowany?"],
+            "level3Questions": [
+              "[PL] Czy system jest testowany?"
+            ],
             "level3Formula": "[PL] Wykrywanie luk",
-            "level4Questions": ["[PL] Czy są auditorzy?"],
+            "level4Questions": [
+              "[PL] Czy są auditorzy?"
+            ],
             "level4Formula": "[PL] Kontrola jakości",
-            "level5Questions": ["[PL] Czy audyty są planowane?"],
+            "level5Questions": [
+              "[PL] Czy audyty są planowane?"
+            ],
             "level5Formula": "[PL] Zaufanie",
-            "level6Questions": ["[PL] Czy istnieje certyfikacja?"],
+            "level6Questions": [
+              "[PL] Czy istnieje certyfikacja?"
+            ],
             "level6Formula": "[PL] Wiarygodność rynkowa"
           },
           "contingency": {
@@ -2368,17 +2575,29 @@
             "level4Desc": "emergency plans is regular employee training in emergencies. These training sessions cover both technical aspects and security procedures.",
             "level5Desc": "is important to regularly test them in practice. These tests should include various incident scenarios and be conducted in a controlled manner. Regular Digital Pathfinder 536 testing allows adjustments to be made to emergency plans based on changing conditions and threats.",
             "level6Desc": "is necessary to keep accurate documentation. This documentation includes information about procedures, test results and implemented changes. This allows for the rapid identification of weaknesses and introduction of corrections. Precise documentation is important if incidents are to be responded to swiftly and their harms minimized. In conclusion, cybersecurity is often underappreciated until a crisis unfolds. Much like safety measures in traditional industries, where the value of a Safety Officer is often only recognized following a serious incident, the critical importance of robust cybersecurity measures tends to be realized in hindsight. As enterprises expand their digital footprints, the necessity for both technical and non-technical measures to safeguard information, systems, and software becomes increasingly imperative . This aspect of digital transformation is not merely a precaution ; it is an essential component of maintaining trust and operational integrity in the digital age. Neglecting this could lead to severe consequences, making it essential for businesses to prioritize and continuously enhance their cybersecurity strategies. Piotr Wisniewski, PhD 537 Index 6V Adobe AI, Artificial Intelligence Alibaba AlphaGo Altman, Sam Amazon API, Application Programming Interface AR/VR, Augmented Reality/ Virtual Reality B2B, business to business Ballmer Steve Bennis, Warren Bezos, Jeff Big Data Black swan Blik Boeing Bolt Booking.com Branson, Richard Buffett, Warren butterfly effect C&D, Connect and Develop ChatGPT Christensen, Clayton Cisco CMMS, Computerized Maintenance Management Systems Cooperators CRM, Customer Relationship Management customer experience DBR77 Deep Blue Deep Mind Devol, Georg Digital 2022 Global Overview Report Digital Change Management Digital Roadmap Dropbox EDI, Electronic Data Interchange Eight-step model (see: Kotter`s eight-step model) ERP, Enterprise Resource Planning ETL, Extract, Transform, Load Farley, Jim FMEA, Failure Mode and Effects Analysis Ford (Motor Company) Ford, Henry Frog (see Żabka ) GAI, General Artificial --- END OF FILE: 6. Cyberbezpieczenstwo .pdf --- --- START OF FILE: 7. Os AI opis.pdf --- AXIS 7: ARTIFICIAL INTELLIGENCE READINESS & INTEGRATION (Wprowadzenie do całej osi – styl zgodny z pozostałymi osiami DRD) Artificial Intelligence has become one of the most transformative forces shaping modern organizations. While earlier axes examine processes, data, culture or products, this axis focuses on the organization’s ability to adopt, scale and operationalize AI in a structured, safe and value-creating manner. AI is no longer an experimental technology reserved for innovators. It increasingly defines competitive advantage, productivity, decision-making quality and the speed at which organizations can respond to change. Companies that understand how to integrate AI into their architecture, processes, people and governance structures will build stronger adaptability and long-term resilience. Axis 7 evaluates maturity across five areas that collectively determine the organization’s readiness for AI: 7A – Data Exposure & AI Foundations Evaluates how accessible, structured and prepared the organization’s data is for use by AI models. 7B – AI-Augmented Processes Describes how deeply AI supports or automates decision-making inside operational and administrative workflows. 7C – AI in Products & Services Assesses whether AI enhances offerings or becomes a core component of new digital products. 7D – AI Governance, Safety & Ethics Measures the organization’s capability to manage risks, compliance and responsible AI deployment. 7E – AI Empowerment of Employees Examines whether employees possess the skills, tools and routines to work effectively with AI in daily operations. The maturity scale, similarly to other axes, ranges from Level 1 (initial) to Level 5 (advanced) and allows organizations to identify precisely where they stand and what steps must be taken to progress to the next stage. AREA 7A — Data Exposure & AI Foundations Wprowadzenie (dlaczego to ważne) Artificial Intelligence is only as powerful as the data it can access. Organizations with fragmented, inconsistent or inaccessible data struggle to achieve meaningful AI outcomes. Conversely, companies that maintain structured, integrated and governed data environments progress quickly toward automation, advanced analytics and generative AI adoption. This area assesses whether the organization’s data architecture — including operational data, transactional data, machine data, documents and knowledge — is ready to be consumed by AI models. A company cannot achieve AI maturity without achieving maturity in this area first. Poniżej przedstawiono pięciopoziomową skalę umożliwiającą precyzyjną samoocenę. LEVEL 1 — Fragmented Data, No AI Readiness Jak to rozumieć Data are scattered across spreadsheets, local drives and disconnected systems. There is no unified view of the organization’s information. Preparing any dataset for analysis requires manual work and significant effort. Data quality issues are common and not monitored. Typowe technologie / brak technologii • Excel, lokalne pliki, brak API • Brak systemów ETL / brak hurtowni danych • Brak standardów nazewnictwa i metadanych Jak rozpoznać, że jesteś na tym poziomie • Każde zapytanie analityczne wymaga ręcznego zbierania danych • Dane są niekompletne lub niespójne między systemami • AI nie może działać, bo dane nie są dostępne w odpowiednim formacie LEVEL 2 — Structured Data in Silos Jak to rozumieć Firma posiada kilka systemów cyfrowych (ERP, MES, CRM), ale każdy z nich przechowuje dane we własnym „silosie”. Dane są bardziej uporządkowane, lecz nie są łatwo dostępne dla AI. Eksporty realizowane są ręcznie. Typowe technologie • ERP / MES / CRM jako główne źródła danych • Podstawowe API, ale niewykorzystywane • Manualne integracje (CSV, XLS export/import) Jak rozpoznać, że jesteś na tym poziomie • Dane są cyfrowe, lecz niepołączone • Aby wykonać analizę, pracownicy łączą pliki z różnych źródeł • AI może działać tylko na małych, jednorazowo przygotowanych zestawach LEVEL 3 — Centralized Data & Initial AI Readiness Jak to rozumieć Organizacja buduje pierwsze scentralizowane repozytoria danych. Procesy ETL zaczynają funkcjonować, a dane są pobierane do jednego miejsca. Pojawiają się pierwsze projekty machine learning, oparte na ustandaryzowanych zbiorach danych. Typowe technologie • Data Warehouse / Data Lake (np. BigQuery, Redshift, Snowflake) • ETL/ELT (Airflow, Fivetran, dbt) • Pierwsze API integracyjne Jak rozpoznać, że jesteś na tym poziomie • Dane w hurtowni są aktualizowane regularnie • Analitycy i data scientists mogą korzystać z uzgodnionych źródeł • Projekty AI nie wymagają manualnego łączenia danych LEVEL 4 — Fully AI-Ready Data Architecture Jak to rozumieć Organizacja posiada spójne zasady governance, jakość danych jest monitorowana, a źródła danych są udokumentowane. Dane są dostępne w czasie zbliżonym do rzeczywistego. AI może trenować modele i aktualizować je w sposób powtarzalny i niezawodny. Typowe technologie • Real-time streaming (Kafka, Pub/Sub) • Data Catalog / Metadata Management • Automatyczne walidacje danych • Feature Store dla modeli AI Jak rozpoznać, że jesteś na tym poziomie • Dane są zawsze dostępne, spójne i aktualne • Modele AI mają stabilne, powtarzalne pipeline’y • Dane wykorzystywane są w wielu inicjatywach AI równocześnie LEVEL 5 — Autonomous Data Intelligence Jak to rozumieć Dane są automatycznie przygotowywane, czyszczone, wersjonowane i udostępniane modelom AI. Systemy potrafią wykrywać anomalie, uzupełniać braki i optymalizować przepływy danych bez udziału człowieka. To najwyższy stopień dojrzałości fundamentów AI. Typowe technologie • Automatyczne data quality engines • Self-healing pipelines • Real-time feature engineering • Monitoring driftu danych i modeli Jak rozpoznać, że jesteś na tym poziomie • Systemy same reagują na problemy z danymi • AI działa na danych w czasie rzeczywistym, bez ręcznej ingerencji • Dane są traktowane jako produkt („data as a product”) ----------------------------------------------------- ⭐ AREA 7B — AI-Augmented Processes ----------------------------------------------------- Wprowadzenie (dlaczego to ważne) Procesy stanowią rdzeń działalności każdej organizacji — to one generują wynik finansowy, obsługują klientów, produkują wartość oraz organizują codzienną pracę. Dlatego dojrzałość w wykorzystaniu AI w procesach jest jednym z kluczowych elementów transformacji. Ten obszar mierzy, w jakim stopniu sztuczna inteligencja wspiera, optymalizuje lub autonomicznie prowadzi działania operacyjne w firmie. Ocena obejmuje: • zakres automatyzacji, • rolę AI w podejmowaniu decyzji, • integrację AI z systemami operacyjnymi, • stopień, w jakim procesy są projektowane „AI-first”. Wysoka dojrzałość oznacza, że procesy działają szybciej, taniej, stabilniej, przewidywalniej, a decyzje są podejmowane w sposób powtarzalny i oparty na danych. ⭐ LEVEL 1 — Isolated AI Experiments Jak to rozumieć AI pojawia się w organizacji jedynie w formie małych, niepowiązanych inicjatyw. Mogą to być testy narzędzi generatywnych, chatboty, OCR lub podstawowe automatyzacje biurowe — ale nie mają one wpływu na główne procesy biznesowe. Procesy działają tak jak dotychczas, a AI pojawia się jako ciekawostka lub inicjatywa pojedynczych pracowników. Typowe technologie • ChatGPT, Gemini, Copilot – używane prywatnie, nie jako część procesów • Proste narzędzia OCR • Pojedyncze makra, skrypty automatyzujące • Narzędzia do generowania treści (np. marketing) Jak rozpoznać, że jesteś na tym poziomie • AI działa „obok” procesów, nie w ich środku • Nie ma wpływu na decyzje operacyjne • Brak połączenia z systemami (ERP/MES/CRM) • Użycie AI zależy od indywidualnej inicjatywy, nie od strategii ⭐ LEVEL 2 — Assisted Work Automation Jak to rozumieć AI wspiera pracowników w wykonywaniu zadań, ale nie decyduje w procesach. Pojawiają się pierwsze automatyzacje: planowanie spotkań, generowanie treści, analiza dokumentów, klasyfikacja maili, automatyczne przepływy pracy (RPA). Rola AI to przyspieszanie pracy człowieka, nie jej przejmowanie. Proces działa tak jak wcześniej — ale szybciej. Typowe technologie • RPA (UiPath, Power Automate) • Generative AI w obsłudze biura (podsumowania, transkrypcje, drafty) • Automatyczne klasyfikatory dokumentów • Predictive alerts w systemach analitycznych • Wtyczki AI do Excel/Office Jak rozpoznać, że jesteś na tym poziomie • AI poprawia efektywność, ale nie ma wpływu na jakość procesu • Każda decyzja wciąż należy do człowieka • AI nie posiada dostępu do danych operacyjnych „na żywo” • Automatyzacje są jednostkowe, działające tylko w swoich wycinkach ⭐ LEVEL 3 — Integrated AI Decision Support Jak to rozumieć AI zaczyna być częścią procesu, a nie dodatkiem. Modele AI dostarczają rekomendacje operacyjne, np.: • prognozy sprzedaży, • predykcja awarii maszyn, • rekomendacje zamówień, • optymalizacja tras, • planowanie produkcji, • ocena ryzyka finansowego. Pracownicy podejmują decyzje w oparciu o wskazania AI. Procesy są projektowane tak, by uwzględniały dane i algorytmy — ale odpowiedzialność pozostaje po stronie człowieka. Typowe technologie • Modele ML (regresja, klasyfikacja, forecasting) • Systemy rekomendacyjne • Predykcyjne moduły ERP/MES/WMS • Computer vision w kontroli jakości • IoT + AI do analizy danych maszynowych Jak rozpoznać, że jesteś na tym poziomie • Każdy kluczowy proces ma elementy predykcyjne lub analityczne • Pracownik polega na rekomendacjach AI w codziennej pracy • Modele są trenowane cyklicznie, a dane przepływają automatycznie • Systemy generują powtarzalne rekomendacje o wysokiej jakości ⭐ LEVEL 4 — Semi-Autonomous Processes Jak to rozumieć AI wykonuje część działań procesowych samodzielnie. Człowiek pełni rolę nadzorcy lub zatwierdzającego. Przykłady: • automatyczne planowanie produkcji z możliwością akceptacji, • autonomiczne przydzielanie zleceń do pracowników lub maszyn, • dynamiczne sterowanie zapasami, • automatyczne generowanie zamówień, • autonomiczne wykrywanie i klasyfikacja usterek, • priorytetyzacja zadań w obsłudze klienta. W wielu procesach człowiek nie podejmuje już decyzji — jedynie kontroluje system. Typowe technologie • Autonomiczne moduły APS • Zaawansowane reinforcement learning / optymalizatory • Agentowe systemy workflow • Predictive + prescriptive analytics • Vision systems z auto-reagowaniem Jak rozpoznać, że jesteś na tym poziomie • AI wykonuje „action steps”, nie tylko analizy • Systemy same proponują i wdrażają zmiany • Człowiek działa tylko w wyjątkach lub zatwierdza krok końcowy • Zmienność procesu spada, stabilność rośnie ⭐ LEVEL 5 — Fully Autonomous Operational Orchestration Jak to rozumieć Procesy są projektowane tak, aby były wykonywane przez autonomiczne systemy AI. AI nie tylko decyduje, ale: • monitoruje procesy, • reaguje na odchylenia, • symuluje scenariusze, • podejmuje działania, • uczy się na podstawie wyników, • stale optymalizuje sposób działania organizacji. Człowiek zajmuje się nadzorem, audytami, strategią i rozwiązywaniem wyjątkowych sytuacji. Przykład (fabryka): AI zarządza harmonogramem produkcji, przepływem materiałów, kolejnością zleceń, jakością, maintenance i logistyką — działając w cyklu zamkniętej pętli. Typowe technologie • Multi-agent AI (operational agents, planning agents) • Autonomous decision engines • Digital twin + real-time optimization • Large Action Models • On-line reinforcement learning • Autonomous workflow orchestration Jak rozpoznać, że jesteś na tym poziomie • Procesy wykonują się w całości bez udziału człowieka • AI dynamicznie przebudowuje proces na podstawie danych w czasie rzeczywistym • Organizacja działa w modelu „closed-loop operations” • Pracownicy nie wykonują pracy operacyjnej — tylko nadzorują system ----------------------------------------------------- ⭐ AREA 7C — AI in Products & Services ----------------------------------------------------- Wprowadzenie (dlaczego to ważne) Artificial Intelligence is not only a tool for improving internal processes — it fundamentally reshapes the value delivered to customers. This area evaluates the extent to which AI is: • embedded in products, • enhances customer experience, • creates new digital services, • builds competitive advantage, • generates new revenue streams. As organizations mature, AI transitions from a minor feature to a core element of product architecture, eventually giving rise to fully AI-native offerings that could not exist without advanced algorithms. Ten obszar odpowiada na pytania: • Czy produkty korzystają z danych użytkowników? • Czy AI tworzy przewagę na rynku? • Czy firma jest w stanie skalować swoje produkty dzięki AI? • Czy pojawiają się nowe modele biznesowe oparte o inteligencję maszynową? Poniżej znajdują się poziomy dojrzałości. ⭐ LEVEL 1 — No AI Components in Products Jak to rozumieć Produkty i usługi nie zawierają żadnych elementów AI. Wartość dostarczana klientowi wynika w całości z tradycyjnych funkcji — manualnych, mechanicznych, proceduralnych lub standardowych cyfrowych modułów. AI nie jest brana pod uwagę podczas projektowania produktów, a roadmapa nie przewiduje wykorzystania AI. Technologie typowe / brak technologii • Tradycyjne systemy cyfrowe bez elementów inteligencji • Manualne konfiguracje, brak personalizacji • Brak modeli ML lub jakichkolwiek komponentów predykcyjnych Jak rozpoznać, że jesteś na tym poziomie • Produkty działają tak samo dla każdego użytkownika • Nie ma funkcji predykcyjnych ani rekomendacyjnych • Nie wykorzystuje się danych klientów do ulepszeń produktu • Firma konkuruje wyłącznie funkcjami, ceną lub obsługą, a nie inteligencją produktów ⭐ LEVEL 2 — Add-On AI Features Jak to rozumieć AI pojawia się jako dodatkowy moduł wzbogacający produkt, ale nie definiujący jego istoty. Funkcje AI mają charakter ulepszeń, np.: • rekomendacje, • klasyfikacja danych, • proste predykcje, • analiza dokumentów, • automatyczne podsumowania. AI jest dodatkiem, który usprawnia doświadczenie klienta, ale produkt nadal posiada klasyczną strukturę. Typowe technologie • API modeli AI (OpenAI, Gemini, Claude) • Proste machine learning models (np. klasyfikatory) • Vision AI z ograniczonym zakresem • Standardowe moduły personalizacji Jak rozpoznać, że jesteś na tym poziomie • AI „pomaga”, ale nie jest fundamentem produktu • Produkt może działać w pełni bez AI • Funkcje AI nie są kluczowym argumentem sprzedażowym • AI jest traktowane jako atrakcyjna funkcja, a nie strategia ⭐ LEVEL 3 — AI as a Core Product Component Jak to rozumieć AI staje się kluczowym elementem architektury produktu. Bez niego większość nowoczesnych funkcji nie mogłaby działać. Produkt „rozumie” użytkownika, adaptuje się i reaguje na dane. Przykłady: • predykcyjne utrzymanie ruchu (maintenance), • inteligentne planowanie, • dynamiczne rekomendacje, • adaptacyjne UI na podstawie zachowań użytkownika, • wykrywanie anomalii, • automatyczna optymalizacja parametrów usługi. Typowe technologie • DSPM / ML pipelines • Systemy rekomendacyjne • Vision AI do wykrywania usterek • Modele predykcyjne w produktach SaaS • Systemy edge AI z analizą na urządzeniach klienta Jak rozpoznać, że jesteś na tym poziomie • Produkt znacząco różni się od konkurencji dzięki AI • Funkcje AI działają wewnątrz produktu, nie jako dodatki • Dane klientów są wykorzystywane w treningu/rekonfiguracji • AI wpływa na jakość, efektywność lub koszty usługi ⭐ LEVEL 4 — Fully AI-Driven Products Jak to rozumieć AI odpowiada za większość logiki produktu i dynamicznie dostosowuje sposób działania. Produkt stale uczy się zachowań klienta, optymalizuje procesy i reaguje w czasie rzeczywistym. Jest to poziom, gdzie funkcjonalność produktu jest: • personalizowana, • adaptacyjna, • predykcyjna, • samodoskonaląca się. Przykłady: • autonomiczne moduły zarządzania produkcją, • inteligentne roboty reagujące na środowisko, • autonomiczne logistyczne systemy routingowe, • aplikacje, które same zmieniają UI, workflow i logikę działania. Typowe technologie • Reinforcement learning • Multi-modal AI • Real-time feedback loops • Auto-personalization engines • On-device learning (edge re-training) Jak rozpoznać, że jesteś na tym poziomie • Produkt samodzielnie podejmuje wiele decyzji • Zachowanie produktu zmienia się na podstawie danych • Produkt tworzy unikalne doświadczenia dla każdego klienta • AI jest fundamentem architektury — nie da się go „odłączyć” ⭐ LEVEL 5 — AI-Native Business Offerings Jak to rozumieć Firma oferuje produkty lub usługi, które nie mogłyby istnieć bez AI. AI tworzy nie tylko funkcje — tworzy cały model biznesowy. Na tym poziomie powstają: • autonomiczne systemy zarządzania (fabryka, magazyn, park maszyn), • w pełni autonomiczne analityczne lub operacyjne „agenty”, • platformy predykcyjne, które działają jak „inteligentni współpracownicy”, • cyfrowe bliźniaki działające w trybie closed-loop, • oprogramowanie, które reaguje na środowisko w czasie rzeczywistym i podejmuje działania. To poziom firm, które budują własne modele, własną AI-architekturę i własne systemy autonomiczne. Technologie, które dominują • Multi-agent systems • Proprietary LLM/SLM models • Digital Twins + Autonomous Control Loops • Synthetic data generation pipelines • RLHF + real-time optimization • AI-operated ecosystems Jak rozpoznać, że jesteś na tym poziomie • Produkt działa jak inteligentny system, nie aplikacja • AI podejmuje autonomicznie decyzje strategiczne i operacyjne • Klienci kupują rozwiązanie głównie dlatego, że jest AI-native • Firma posiada własne modele lub własną warstwę agentów • AI umożliwia całkowicie nowe modele biznesowe, niedostępne wcześniej ----------------------------------------------------- ⭐ AREA 7D — AI Governance, Safety & Ethics ----------------------------------------------------- Wprowadzenie (dlaczego to ważne) Wraz ze wzrostem wykorzystania sztucznej inteligencji rośnie znaczenie odpowiedzialnego zarządzania nią. AI niesie ogromną wartość, ale również nowe ryzyka: • błędne decyzje podejmowane autonomicznie, • niejawne uprzedzenia w danych (bias), • naruszenia prywatności i poufności, • niekontrolowane generowanie treści, • niezgodność z regulacjami (np. EU AI Act), • brak nadzoru nad modelem po wdrożeniu. Brak odpowiedniego governance może prowadzić do strat finansowych, utraty reputacji, ryzyk prawnych lub całkowitego wstrzymania projektów AI. Ten obszar bada, czy organizacja potrafi: • kontrolować ryzyka AI, • zapewniać bezpieczeństwo danych i modeli, • dokumentować procesy AI, • monitorować działanie systemów, • budować zaufanie i przejrzystość, • wdrażać AI zgodnie z etyką i prawem. ⭐ LEVEL 1 — No AI Governance, Uncontrolled Use Jak to rozumieć AI jest używane spontanicznie i bez nadzoru. Pracownicy korzystają z narzędzi AI według własnego uznania — bez zasad, kontroli czy świadomości ryzyk. Nie istnieją: • polityki użycia, • zasady bezpieczeństwa, • standardy prywatności, • kontrola danych wprowadzanych do modeli, • reguły dotyczące treści generowanych przez AI. Organizacja nie jest świadoma ryzyk. Typowe technologie / praktyki • Otwarta praca z publicznymi modelami • Brak kontroli nad tym, jakie dane trafiają do AI • Brak procesów audytu czy dokumentacji Jak rozpoznać, że jesteś na tym poziomie • Każdy używa AI jak chce • Często pojawia się zdanie „No przecież to tylko ChatGPT” • Poufne dane są kopiowane do narzędzi publicznych • Firma nie posiada żadnych dokumentów nt. AI ⭐ LEVEL 2 — Basic AI Usage Policies Jak to rozumieć Organizacja zaczyna dostrzegać ryzyka i tworzy podstawowe zasady korzystania z AI: • co wolno, • czego nie wolno, • jakie dane można używać, • jakie narzędzia są dopuszczone. Polityki te mają charakter informacyjny i nie są jeszcze egzekwowane. Typowe technologie / praktyki • Proste dokumenty: „Responsible Use of AI” • White-list lub black-list narzędzi • Edukacja pracowników w minimalnym zakresie • Wyłączanie generatywnych funkcji tam, gdzie to konieczne Jak rozpoznać, że jesteś na tym poziomie • Istnieją zasady, ale nie ma systemu nadzoru • Decyzje pozostają po stronie działów lub pojedynczych osób • Firma zaczyna zadawać pytania o bezpieczeństwo i zgodność z prawem • Nadal nie ma kontroli nad jakością modeli ani generowanych wyników ⭐ LEVEL 3 — Organization-Wide AI Governance Framework Jak to rozumieć Firma formalizuje podejście do AI. Powstają: • procesy akceptacji projektów AI, • kryteria oceny ryzyka, • dedykowana rola (Chief AI Officer, AI Committee), • kontrola danych wejściowych, • dokumentacja modeli, • zasady wyjaśnialności (explainability), • polityki zarządzania dostawcami AI. Organizacja zaczyna kontrolować nie tylko użycie AI, lecz również cały cykl życia projektów. Technologie / praktyki • Model cards • Data cards • Dokumentacja pipeline’ów ML • Centralna platforma do AI governance (np. Azure Responsible AI Dashboard) • Wstępny model risk scoring Jak rozpoznać, że jesteś na tym poziomie • Modele są wersjonowane i audytowane • AI nie jest wdrażane bez formalnego zatwierdzenia • Pracownicy wiedzą, czego nie powinni robić z AI • Jest jedna wspólna polityka obowiązująca w całej firmie ⭐ LEVEL 4 — Continuous AI Risk Management & Monitoring Jak to rozumieć Organizacja ma ustrukturyzowany system kontroli nad AI, który działa nie tylko przy wdrożeniu, ale cały czas. Obejmuje to: • monitoring działania modeli w czasie rzeczywistym, • wykrywanie driftu danych i modelu, • audyty jakości predykcji, • zgłaszanie incydentów AI, • procedury reagowania, • testy bezpieczeństwa i robustności modeli, • zapewnienie zgodności z regulacjami (np. EU AI Act). AI staje się częścią infrastruktury krytycznej, a firma monitoruje ją jak inne systemy produkcyjne. Technologie • ML observability platforms (Arize AI, Fiddler, Evidently) • Real-time monitoring & alerts • AI risk dashboards • Automated fairness checks • Testy penetracyjne modeli Jak rozpoznać, że jesteś na tym poziomie • Modele są monitorowane 24/7 • Firma zna procent błędów i odchyleń modeli • Każda zmiana AI musi przejść proces walidacji • AI jest traktowane tak samo poważnie jak systemy ERP/MES • Ryzyka są przypisane do właścicieli procesów ⭐ LEVEL 5 — Ethical, Transparent & Autonomous AI Governance Jak to rozumieć Najwyższy poziom — AI governance jest zautomatyzowane, wbudowane w systemy i zgodne z najlepszymi praktykami etycznymi. Systemy AI: • same wykrywają problemy, • same reagują, • same raportują nieprawidłowości, • dynamicznie dostosowują parametry, • minimalizują bias w czasie rzeczywistym, • wymuszają zgodność z polityką organizacji. Organizacja posiada zaawansowane podejście do przejrzystości, uczciwości, bezpieczeństwa i dokumentacji — oraz potrafi to udowodnić audytorom, klientom i regulatorom. Technologie / praktyki • Autonomous governance engines • Automatyczne audyty modeli • Dynamic access control • Model explainability na poziomie enterprise • Wbudowane regulatory guardrails • Pełna zgodność z AI-regulacjami (EU AI Act, NIST AI Framework) Jak rozpoznać, że jesteś na tym poziomie • Governance działa autonomicznie bez udziału człowieka • AI spełnia najwyższe standardy bezpieczeństwa i etyki • Firma sama wyznacza standardy rynku • Klienci i partnerzy widzą governance jako przewagę konkurencyjną • Regulacje nie ograniczają działalności, lecz wzmacniają --- END OF FILE: 7. Os AI opis.pdf ---",
-            "level1Questions": ["[PL] Czy zagrożenia są znane?"],
+            "level1Questions": [
+              "[PL] Czy zagrożenia są znane?"
+            ],
             "level1Formula": "[PL] Świadomość",
-            "level2Questions": ["[PL] Czy priorytety są znane?"],
+            "level2Questions": [
+              "[PL] Czy priorytety są znane?"
+            ],
             "level2Formula": "Rapid response",
-            "level3Questions": ["[PL] Czy procedury są opisane?"],
+            "level3Questions": [
+              "[PL] Czy procedury są opisane?"
+            ],
             "level3Formula": "[PL] Kontrola kryzysu",
-            "level4Questions": ["[PL] Czy szkolenia są prowadzone?"],
+            "level4Questions": [
+              "[PL] Czy szkolenia są prowadzone?"
+            ],
             "level4Formula": "[PL] Gotowość",
-            "level5Questions": ["[PL] Czy plany są testowane?"],
+            "level5Questions": [
+              "[PL] Czy plany są testowane?"
+            ],
             "level5Formula": "[PL] Odporność",
-            "level6Questions": ["[PL] Czy dokumentacja jest aktualna?"],
+            "level6Questions": [
+              "[PL] Czy dokumentacja jest aktualna?"
+            ],
             "level6Formula": "[PL] Ciągłość"
           }
         }
@@ -2629,9 +2848,9 @@
       "ai": "AI"
     },
     "emptyState": {
-      "title": "No assessments yet",
+      "title": "Nein assessments yet",
       "noMatch": "No assessments match your search",
-      "createFirst": "Create First Assessment"
+      "createFirst": "Create First Bewertung"
     },
     "table": {
       "assessment": "Assessment",
@@ -2648,7 +2867,7 @@
       "type": "Attachment type",
       "description": "Description (optional)",
       "descriptionPlaceholder": "Brief description of the attachment...",
-      "selectFile": "Select file",
+      "selectFile": "Auswählen file",
       "uploading": "Uploading...",
       "allowedTypes": "Allowed: PDF, Word, Excel, PowerPoint, images, CSV, TXT, JSON (max 25MB)",
       "deleteConfirm": "Are you sure you want to delete this attachment?",
@@ -2888,24 +3107,24 @@
       "createInvite": "Create Invite",
       "linkedOrgs": "Linked Organizations",
       "activeCount": "{{count}} Active",
-      "loading": "Loading...",
-      "noOrgsTitle": "No Organizations Linked",
+      "loading": "Wird geladen...",
+      "noOrgsTitle": "Nein Organizations Linked",
       "noOrgsMessage": "You don't have access to any organizations yet. Invite a client to get started.",
       "inviteClient": "Invite Client",
       "openWorkspace": "Open Workspace",
       "role": "Role: {{role}}"
     },
     "invites": {
-      "backToPanel": "Back to Panel",
+      "backToPanel": "Zurück to Panel",
       "generateInvites": "Generate Invites",
       "newInvitation": "New Invitation",
       "inviteType": "Invite Type",
       "typeTrialOrg": "New Trial Company (Org)",
-      "typeTrialUser": "Existing Trial User",
+      "typeTrialUser": "Existing Trial Benutzer",
       "typeAddMe": "Add Me to Organization",
       "companyName": "Company Name (Optional)",
       "companyPlaceholder": "e.g. Acme Corp",
-      "targetEmail": "Target Email (Optional)",
+      "targetEmail": "Target E-Mail (Optional)",
       "emailPlaceholder": "user@example.com",
       "emailHint": "Leave empty for a generic code.",
       "generateCode": "Generate Code",
@@ -2928,15 +3147,15 @@
     "demoDesc": "Watch the system in action. No registration, no pressure. Understand the approach before committing.",
     "demoBtn": "Explore Demo",
     "demoTime": "~10 minutes",
-    "demoNoReg": "No registration required",
+    "demoNoReg": "Nein registration required",
     "quickTitle": "Quick Assessment",
     "quickSteps": "3 Steps",
     "quickTime": "~5 minutes",
     "quickDesc": "Instant auto-analysis of your firm. Get personalized recommendations and quick-win ideas generated by AI immediately.",
-    "quickBtn": "Start Quick Assessment",
-    "fullTitle": "Full Transformation Project",
+    "quickBtn": "Start Quick Bewertung",
+    "fullTitle": "Full Transformation Projekt",
     "fullSteps": "5 Steps",
-    "fullTime": "Complete Consulting Flow",
+    "fullTime": "Abgeschlossen Consulting Flow",
     "fullDesc": "Deep strategic assessment, financial analysis (ROI), roadmap creation, and execution monitoring.",
     "fullFeatures": {
       "drd": "Full maturity assessment (DRD)",
@@ -2950,7 +3169,7 @@
     "consultingTag": "Custom Engagement",
     "masterclassTitle": "Want to deepen your knowledge?",
     "masterclassDesc": "Join our Masterclass program and learn proven tools from transformation leaders.",
-    "masterclassLink": "View Masterclass Details",
+    "masterclassLink": "Ansicht Masterclass Details",
     "videoTitle": "See how CONSULTINITY works",
     "videoPerson": "Dr. Piotr Wiśniewski",
     "videoRole": "Your guide to digital transformation"
@@ -3130,30 +3349,34 @@
       "tabs": {
         "overview": "Übersicht",
         "faq": "FAQ",
-        "knowledge": "Wissensdatenbank"
+        "knowledge": "Wissensdatenbank",
+        "howto": "[TODO:DE] How to Use",
+        "video": "[TODO:DE] Video"
       },
       "overview": {
         "title": "Willkommen bei Consultinity",
-        "intro": "Ihre komplette PMO-Plattform für die digitale Transformation. Bewerten, planen und verfolgen Sie die Reise Ihrer Organisation zur digitalen Exzellenz mit KI-gestützten Einblicken und bewährten Methoden.",
+        "intro": "Consultinity ist Ihre komplette PMO-Plattform für digitale Transformation. Mit KI-gestützten Einblicken und bewährten Methoden wie DRD, SIRI und Lean 4.0 können Sie die digitale Reife Ihrer Organisation bewerten, strategische Initiativen generieren und den Implementierungsfortschritt verfolgen - alles an einem Ort.",
         "watchVideo": "Einführungsvideo ansehen",
         "videoDuration": "3 Min. Überblick",
         "guides": "Schnellanleitungen",
         "guidesList": {
-          "gettingStarted": "Erste Schritte",
-          "assessment": "Eine Bewertung durchführen",
-          "initiatives": "Initiativen verwalten",
-          "reports": "Berichte erstellen",
-          "aiFeatures": "KI-Funktionen Leitfaden"
+          "gettingStarted": "Erste Schritte - Start",
+          "assessment": "Digitale Bewertung durchführen",
+          "initiatives": "Strategische Initiativen verwalten",
+          "reports": "Executive-Berichte erstellen",
+          "aiFeatures": "KI-Funktionen nutzen"
         },
-        "whatToKnow": "Wissenswert",
-        "tip1": "Beginnen Sie mit einer Bewertung, um Ihre digitale Reife zu verstehen",
-        "tip2": "Nutzen Sie KI-Einblicke zur Priorisierung von Initiativen",
-        "tip3": "Verfolgen Sie den Fortschritt mit Echtzeit-Dashboards und Berichten"
+        "whatToKnow": "Wichtige Informationen",
+        "tip1": "Starten Sie mit der Schnellbewertung (5 Min.) für sofortige KI-Empfehlungen, oder führen Sie eine vollständige Bewertung für detaillierte Analyse durch",
+        "tip2": "KI generiert automatisch Initiativen aus Bewertungslücken - überprüfen, priorisieren und genehmigen Sie diese in der Roadmap-Ansicht",
+        "tip3": "Verfolgen Sie die Implementierung im Ausführungsmodul - Dashboards aktualisieren sich in Echtzeit",
+        "tip4": "Nutzen Sie den KI-Chat (obere Leiste) jederzeit für Fragen oder strategische Empfehlungen",
+        "tip5": "Exportieren Sie professionelle Berichte im PDF/PowerPoint-Format für Stakeholder-Präsentationen"
       },
       "faq": {
-        "searchPlaceholder": "Fragen suchen...",
-        "noResults": "Keine passenden Fragen gefunden.",
-        "noFAQ": "Keine FAQ verfügbar."
+        "searchPlaceholder": "Search questions...",
+        "noResults": "Nein questions found.",
+        "noFAQ": "No FAQ available for this module."
       },
       "knowledge": {
         "title": "Wissensdatenbank",
@@ -3599,7 +3822,8 @@
           "workflow": [
             "Benutzerprofil vervollständigen",
             "Organisationsdetails einrichten",
-            "An der Plattform-Tour teilnehmen"
+            "An der Plattform-Tour teilnehmen",
+            "[TODO:DE] Start first assessment"
           ],
           "tips": [
             "Alle Schritte für ein besseres Erlebnis abschließen",
@@ -3617,23 +3841,39 @@
             "Ressourcenallokation",
             "Kunden-Reporting"
           ],
-          "workflow": ["Kundenliste ansehen", "Projekt auswählen", "Berichte generieren"],
+          "workflow": [
+            "Kundenliste ansehen",
+            "Projekt auswählen",
+            "Berichte generieren",
+            "Bericht to stakeholders"
+          ],
           "tips": [
             "Portfolio-Ansicht für High-Level-Status nutzen",
-            "Berichte über Kunden hinweg standardisieren"
+            "Berichte über Kunden hinweg standardisieren",
+            "[TODO:DE] Document best practices"
           ]
         },
         "ecosystem": {
           "name": "Ökosystem",
           "description": "Vernetzung mit Partnern und anderen Organisationen im DBR77-Ökosystem.",
           "purpose": "Erweiterung Ihres Netzwerks und Nutzung externer Expertise.",
-          "keyFeatures": ["Partner-Verzeichnis", "Affiliate-Dashboard", "Kollaborations-Tools"],
+          "keyFeatures": [
+            "Partner-Verzeichnis",
+            "Affiliate-Dashboard",
+            "Kollaborations-Tools",
+            "[TODO:DE] Integration catalog"
+          ],
           "workflow": [
             "Partner erkunden",
             "Mit Experten vernetzen",
-            "Affiliate-Leistung verfolgen"
+            "Affiliate-Leistung verfolgen",
+            "[TODO:DE] Configure integrations"
           ],
-          "tips": ["Nach zertifizierten Partnern suchen", "Ihren Affiliate-Impact überwachen"]
+          "tips": [
+            "Nach zertifizierten Partnern suchen",
+            "Ihren Affiliate-Impact überwachen",
+            "[TODO:DE] Engage with community"
+          ]
         },
         "emailTemplates": {
           "name": "Email Templates",
@@ -3677,11 +3917,6 @@
         "watchAgain": "Watch again",
         "progress": "Watch Progress",
         "progressSummary": "{{watched}} / {{total}}"
-      },
-      "faq": {
-        "searchPlaceholder": "Search questions...",
-        "noResults": "No questions found.",
-        "noFAQ": "No FAQ available for this module."
       },
       "content": {
         "help": "Hilfe",
@@ -4026,18 +4261,26 @@
               "Modell-Konfiguration",
               "Kostenüberwachung",
               "Leistungskennzahlen",
-              "Sicherheitsrichtlinien"
+              "Sicherheitsrichtlinien",
+              "[TODO:DE] Cost tracking and analytics",
+              "[TODO:DE] Circuit breaker configuration",
+              "[TODO:DE] PII detection settings"
             ],
             "workflow": [
               "KI-Anbieter konfigurieren",
               "Modelle den Modulen zuweisen",
               "Nutzungsmetriken überwachen",
-              "Kostenlimits festlegen"
+              "Kostenlimits festlegen",
+              "[TODO:DE] Monitor health dashboard for issues",
+              "[TODO:DE] Review usage analytics and costs",
+              "[TODO:DE] Adjust circuit breaker thresholds as needed"
             ],
             "tips": [
               "Modellleistung regelmäßig bewerten",
               "Tokens zur Kostenersparnis optimieren",
-              "Failover-Anbieter einrichten"
+              "Failover-Anbieter einrichten",
+              "[TODO:DE] Keep at least one fallback provider active",
+              "[TODO:DE] Review costs weekly to prevent budget overruns"
             ]
           },
           "playbookTemplates": {
@@ -4072,18 +4315,22 @@
               "Assessment-Analyse",
               "Initiativ-Empfehlungen",
               "Content-Generierung",
-              "Gap-Analyse"
+              "Gap-Analyse",
+              "[TODO:DE] Risk analysis",
+              "[TODO:DE] What-if scenarios"
             ],
             "workflow": [
               "Frage oder Bedarf beschreiben",
               "KI-Vorschläge prüfen",
               "Empfehlungen verfeinern und anwenden",
-              "Feedback geben zur Verbesserung"
+              "Feedback geben zur Verbesserung",
+              "[TODO:DE] Provide feedback to improve AI"
             ],
             "tips": [
               "Spezifisch bei Fragen sein",
               "Kontext angeben für bessere Ergebnisse",
-              "KI-Vorschläge als Ausgangspunkt nutzen"
+              "KI-Vorschläge als Ausgangspunkt nutzen",
+              "[TODO:DE] Check evidence before accepting recommendations"
             ]
           },
           "knowledge": {
@@ -4096,19 +4343,23 @@
               "Video-Masterclasses",
               "Fallstudien-Bibliothek",
               "Glossar der Begriffe",
-              "Suchbare Artikel-Datenbank"
+              "Suchbare Artikel-Datenbank",
+              "[TODO:DE] Searchable article database",
+              "[TODO:DE] Downloadable assets"
             ],
             "workflow": [
               "Nach spezifischen Themen suchen",
               "Inhalte nach Kategorie durchsuchen",
               "Video-Tutorials ansehen",
               "Vorlagen für Offline-Nutzung herunterladen",
-              "Nützliche Artikel mit dem Team teilen"
+              "Nützliche Artikel mit dem Team teilen",
+              "[TODO:DE] Suggest new topics"
             ],
             "tips": [
               "Häufig genutzte Leitfäden als Lesezeichen speichern",
               "Wöchentlich nach neuen Inhalts-Updates suchen",
-              "Vorlagen nutzen, um Zeit bei Arbeitsergebnissen zu sparen"
+              "Vorlagen nutzen, um Zeit bei Arbeitsergebnissen zu sparen",
+              "[TODO:DE] Contribute your own learnings"
             ]
           },
           "onboarding": {
@@ -4142,7 +4393,11 @@
               "Ressourcenallokation",
               "Kunden-Reporting"
             ],
-            "workflow": ["Kundenliste ansehen", "Projekt auswählen", "Berichte generieren"],
+            "workflow": [
+              "Kundenliste ansehen",
+              "Projekt auswählen",
+              "Berichte generieren"
+            ],
             "tips": [
               "Portfolio-Ansicht für High-Level-Status nutzen",
               "Berichte über Kunden hinweg standardisieren"
@@ -4152,13 +4407,20 @@
             "name": "Ökosystem",
             "description": "Vernetzung mit Partnern und anderen Organisationen im DBR77-Ökosystem.",
             "purpose": "Erweiterung Ihres Netzwerks und Nutzung externer Expertise.",
-            "keyFeatures": ["Partner-Verzeichnis", "Affiliate-Dashboard", "Kollaborations-Tools"],
+            "keyFeatures": [
+              "Partner-Verzeichnis",
+              "Affiliate-Dashboard",
+              "Kollaborations-Tools"
+            ],
             "workflow": [
               "Partner erkunden",
               "Mit Experten vernetzen",
               "Affiliate-Leistung verfolgen"
             ],
-            "tips": ["Nach zertifizierten Partnern suchen", "Ihren Affiliate-Impact überwachen"]
+            "tips": [
+              "Nach zertifizierten Partnern suchen",
+              "Ihren Affiliate-Impact überwachen"
+            ]
           },
           "superadmin-overview": {
             "name": "SuperAdmin Overview",
@@ -4260,7 +4522,7 @@
             "content": "Click 'Invite', enter email and choose a role for your team members."
           },
           "1": {
-            "title": "Roles & Permissions",
+            "title": "Roles & Berechtigungen",
             "content": "Information about different user roles (Admin, Member, Viewer) in the system."
           }
         },
@@ -4492,7 +4754,7 @@
     },
     "search": {
       "placeholder": "Search help...",
-      "noResults": "No results for",
+      "noResults": "Nein results for",
       "tryDifferentKeywords": "Try different keywords",
       "suggestions": "Suggestions",
       "recentSearches": "Recent Searches",
@@ -4530,8 +4792,8 @@
       "error": "Failed to submit feedback"
     },
     "toggle": {
-      "open": "Open Help Center",
-      "close": "Close Help Center"
+      "open": "Öffnen Hilfe Center",
+      "close": "Schließen Hilfe Center"
     },
     "video": {
       "watched": "Watched",
@@ -4560,7 +4822,7 @@
       "dontShow": "Don't show for this version",
       "gotIt": "Got it!",
       "learnMore": "Learn More",
-      "changelog": "View full changelog",
+      "changelog": "Ansicht full changelog",
       "watchDemo": "Watch demo"
     }
   },
@@ -4654,11 +4916,11 @@
       "description": "Description",
       "descPlaceholder": "Describe the feature and how it would help you...",
       "impact": "Business Impact",
-      "submit": "Submit Feature Request"
+      "submit": "Absenden Feature Request"
     },
     "ai": {
       "insights": "AI Insights",
-      "loading": "Loading AI insights..."
+      "loading": "Wird geladen AI insights..."
     }
   },
   "toggle": {
@@ -4773,7 +5035,7 @@
       "matrix": "Matrix"
     },
     "emptyState": {
-      "title": "No initiatives yet",
+      "title": "Nein initiatives yet",
       "description": "Create your first initiative or generate from assessment to start building your portfolio.",
       "createFirst": "New Initiative"
     },
@@ -4787,7 +5049,7 @@
     },
     "stats": {
       "total": "Total Initiatives",
-      "inProgress": "In Progress",
+      "inProgress": "In Bearbeitung",
       "approved": "Approved",
       "totalBudget": "Total Budget"
     },
@@ -4824,7 +5086,7 @@
       "refresh": "Refresh"
     },
     "empty": {
-      "title": "No initiatives yet",
+      "title": "Nein initiatives yet",
       "description": "Create your first initiative or generate from assessment"
     }
   },
@@ -4853,8 +5115,8 @@
     "personalNotifications": "Personal",
     "allNotifications": "All",
     "markAllRead": "Mark all read",
-    "noTasks": "No tasks found",
-    "noDecisions": "No decisions found",
+    "noTasks": "Nein tasks found",
+    "noDecisions": "Nein decisions found",
     "noNotifications": "No notifications"
   },
   "tour": {
@@ -4894,7 +5156,7 @@
         "description": "Tasks, decisions, and accountability—all tracked. Your team stays aligned with AI-managed workflows and reminders."
       },
       "complete": {
-        "title": "You're All Set!",
+        "title": "You're Alle Set!",
         "description": "Explore freely. Remember: AI recommends, but you decide. Every strategic decision remains in your hands."
       }
     }
@@ -4903,7 +5165,7 @@
     "title": "ADMIN",
     "panel": "Panel",
     "role": "Admin",
-    "backToApp": "Back to App",
+    "backToApp": "Zurück to App",
     "modules": {
       "overview": "Overview",
       "overviewDesc": "Dashboard, metrics, and analytics for your organization",
@@ -4965,11 +5227,11 @@
       "assignedDate": "Assigned",
       "actions": "Actions",
       "none": "No license",
-      "noUsersFound": "No users found",
+      "noUsersFound": "Nein users found",
       "bulkAssign": "Assign",
       "bulkAssignTitle": "Bulk Assign Licenses",
       "bulkAssignDesc": "Assign license to selected users",
-      "selectLicense": "Select License Type",
+      "selectLicense": "Auswählen License Type",
       "removeLicense": "Remove License",
       "assign": "Assign",
       "fetchError": "Failed to load license data",
@@ -5008,18 +5270,18 @@
       "startDate": "Start Date",
       "endDate": "End Date",
       "format": "Format",
-      "exportBtn": "Export Audit Log",
+      "exportBtn": "Exportieren Audit Log",
       "complianceReports": "Compliance Reports",
       "generateReport": "Generate Report",
       "recentExports": "Recent Exports",
-      "addSchedule": "Add Scheduled Report",
-      "anomalyInfo": "Anomaly Detection Active",
+      "addSchedule": "Hinzufügen Scheduled Bericht",
+      "anomalyInfo": "Anomaly Detection Aktiv",
       "anomalyInfoDesc": "AI-powered monitoring detects unusual patterns in user activity and data access.",
       "resolve": "Mark Resolved",
       "resolved": "Resolved",
       "exportStarted": "Export started. You will be notified when ready.",
       "exportError": "Failed to start export",
-      "reportStarted": "Report generation started.",
+      "reportStarted": "Bericht generation started.",
       "reportError": "Failed to generate report"
     },
     "feedback": {
@@ -5045,8 +5307,8 @@
         "transfer": "Transfer Ownership",
         "transferTitle": "Transfer Ownership",
         "transferWarning": "Transferring ownership will give another user full control over this organization, including billing and the ability to delete the organization. This action cannot be undone by you.",
-        "selectNewOwner": "Select New Owner",
-        "selectAdmin": "Select an Admin...",
+        "selectNewOwner": "Auswählen New Owner",
+        "selectAdmin": "Auswählen an Administrator...",
         "noEligible": "No eligible candidates. The new owner must be an Admin.",
         "reason": "Reason (optional)",
         "reasonPlaceholder": "e.g., Leaving the company, Role change...",
@@ -5078,7 +5340,7 @@
         "title": "Two-Factor Authentication",
         "require": "Require 2FA for All Users",
         "requireDesc": "When enabled, all users must set up two-factor authentication to access the system.",
-        "status": "User 2FA Status",
+        "status": "Benutzer 2FA Status",
         "enabled": "Enabled",
         "notEnabled": "Not Enabled",
         "adoption": "2FA Adoption",
@@ -5086,7 +5348,7 @@
       },
       "password": {
         "title": "Password Requirements",
-        "minLength": "Minimum Password Length",
+        "minLength": "Minimum Passwort Length",
         "characters": "characters",
         "requireUppercase": "Require uppercase letter (A-Z)",
         "requireNumber": "Require number (0-9)",
@@ -5100,13 +5362,13 @@
         "active": "Active Sessions",
         "terminate": "Terminate session",
         "terminateAll": "Terminate All",
-        "noSessions": "No active sessions"
+        "noSessions": "Nein active sessions"
       },
       "loginHistory": {
         "title": "Login History",
         "success": "Successful login",
         "failed": "Failed login",
-        "noHistory": "No login history"
+        "noHistory": "Nein login history"
       }
     },
     "overview": {
@@ -5122,7 +5384,7 @@
       "title": "Organization",
       "subtitle": "Profile, branding, ownership, and regional settings",
       "tabs": {
-        "profile": "Profile & Branding",
+        "profile": "Profil & Branding",
         "ownership": "Ownership"
       }
     },
@@ -5139,7 +5401,7 @@
       "subtitle": "Plans, payments, invoices, and spending controls"
     },
     "roles": {
-      "title": "Roles & Permissions",
+      "title": "Roles & Berechtigungen",
       "subtitle": "Manage access levels and permissions for your organization",
       "infoTitle": "About Roles",
       "infoContent": "Roles define what actions users can perform. System roles provide a base set of permissions, while custom roles can be tailored to your organization's needs.",
@@ -5150,11 +5412,11 @@
       "permissions": "permissions",
       "edit": "Edit",
       "duplicate": "Duplicate",
-      "delete": "Delete",
-      "createRole": "Create Role",
-      "createNewRole": "Create New Role",
+      "delete": "Löschen",
+      "createRole": "Create Rolle",
+      "createNewRole": "Create New Rolle",
       "editRole": "Edit Role",
-      "selectToEdit": "Select a Role",
+      "selectToEdit": "Auswählen a Rolle",
       "selectToEditDesc": "Select a role from the list to view or edit its permissions",
       "name": "Role Name",
       "namePlaceholder": "Enter role name",
@@ -5163,19 +5425,19 @@
       "description": "Description",
       "descriptionPlaceholder": "Describe this role",
       "permissionsMatrix": "Permissions",
-      "selectAll": "Select All",
+      "selectAll": "Auswählen Alle",
       "deselectAll": "Deselect All",
       "systemWarning": "System roles cannot be renamed or deleted. You can only customize permissions.",
-      "created": "Role created successfully",
-      "updated": "Role updated successfully",
-      "deleted": "Role deleted successfully",
-      "permissionsUpdated": "Role permissions updated",
+      "created": "Rolle created successfully",
+      "updated": "Rolle updated successfully",
+      "deleted": "Rolle deleted successfully",
+      "permissionsUpdated": "Rolle permissions updated",
       "cannotDeleteSystem": "Cannot delete system roles",
       "hasUsers": "Cannot delete role with assigned users",
       "loadError": "Failed to load roles",
       "saveError": "Failed to save role",
       "deleteError": "Failed to delete role",
-      "noResults": "No roles found"
+      "noResults": "Nein roles found"
     },
     "templates": {
       "title": "Templates",
@@ -5185,7 +5447,7 @@
       "create": "Create Template",
       "createNew": "Create Template",
       "editTemplate": "Edit Template",
-      "selectToEdit": "Select a Template",
+      "selectToEdit": "Auswählen a Template",
       "selectToEditDesc": "Select a template from the list to edit or create a new one",
       "name": "Template Name",
       "namePlaceholder": "Enter template name",
@@ -5199,7 +5461,7 @@
       "phaseName": "Phase name",
       "noTasks": "No tasks in this phase yet. Tasks can be added when creating a project from this template.",
       "searchPlaceholder": "Search templates...",
-      "noResults": "No templates found",
+      "noResults": "Nein templates found",
       "loadError": "Failed to load templates",
       "created": "Template created",
       "updated": "Template updated",
@@ -5220,10 +5482,10 @@
       "taskDefaults": "Task Defaults",
       "taskDefaultsDesc": "Settings for new tasks",
       "workflowStates": "Workflow States",
-      "workflowStatesDesc": "Default task statuses",
-      "timeDateSettings": "Time & Date",
+      "workflowStatesDesc": "Standard task statuses",
+      "timeDateSettings": "Time & Datum",
       "timeDateSettingsDesc": "Regional preferences",
-      "defaultView": "Default View",
+      "defaultView": "Standard Ansicht",
       "defaultPrivacy": "Default Privacy",
       "public": "Public (visible to all)",
       "team": "Team (visible to team members)",
@@ -5250,7 +5512,7 @@
       "workingDays": "Working Days",
       "workingHours": "Working Hours",
       "unsavedChanges": "You have unsaved changes",
-      "saved": "Settings saved successfully",
+      "saved": "Einstellungen saved successfully",
       "loadError": "Failed to load settings",
       "saveError": "Failed to save settings"
     },
@@ -5285,24 +5547,24 @@
       "typographyTitle": "Typography Settings",
       "bodyFont": "Body Font",
       "headingsFont": "Headings Font",
-      "customCss": "Custom CSS (Advanced)",
+      "customCss": "Benutzerdefiniert CSS (Advanced)",
       "customCssNote": "Use with caution. May override default styles.",
       "typographyPreview": "Typography Preview",
-      "loginPageTitle": "Login Page Customization",
-      "loginTitle": "Login Page Title",
+      "loginPageTitle": "Anmelden Page Customization",
+      "loginTitle": "Anmelden Page Titel",
       "loginTitlePlaceholder": "Welcome to Your Workspace",
-      "loginSubtitle": "Login Page Subtitle",
+      "loginSubtitle": "Anmelden Page Subtitle",
       "loginSubtitlePlaceholder": "Sign in to continue",
-      "loginLogo": "Login Page Logo",
+      "loginLogo": "Anmelden Page Logo",
       "loginLogoDesc": "Logo shown on the login page",
       "customDomain": "Custom Domain",
       "customDomainNote": "Contact support to configure DNS for custom domains.",
-      "emailTitle": "Email Template Branding",
-      "emailLogo": "Email Header Logo",
+      "emailTitle": "E-Mail Template Branding",
+      "emailLogo": "E-Mail Header Logo",
       "emailLogoDesc": "Logo shown in email headers",
-      "emailFromName": "Email From Name",
+      "emailFromName": "E-Mail From Name",
       "emailFromNamePlaceholder": "Your Company Name",
-      "emailFooter": "Email Footer Text",
+      "emailFooter": "E-Mail Footer Text",
       "emailFooterPlaceholder": "Company Name\n123 Street, City, Country\ncontact@company.com",
       "emailPreview": "Email Preview",
       "unsavedChanges": "You have unsaved changes",
@@ -5322,7 +5584,7 @@
       "addWebhook": "Add Webhook",
       "createWebhook": "Create Webhook",
       "editWebhook": "Edit Webhook",
-      "selectOrCreate": "Select or Create",
+      "selectOrCreate": "Auswählen or Create",
       "selectOrCreateDesc": "Select a webhook to edit or create a new one",
       "webhookName": "Webhook Name",
       "webhookNamePlaceholder": "My Webhook",
@@ -5338,7 +5600,7 @@
       "requiredFields": "Name and URL are required",
       "selectEvents": "Select at least one event",
       "searchPlaceholder": "Search integrations...",
-      "noWebhooks": "No webhooks configured",
+      "noWebhooks": "Nein webhooks configured",
       "webhookCreated": "Webhook created",
       "webhookUpdated": "Webhook updated",
       "webhookDeleted": "Webhook deleted",
@@ -5376,14 +5638,14 @@
       "unstar": "Unpin",
       "archive": "Archive",
       "unarchive": "Unarchive",
-      "delete": "Delete",
+      "delete": "Löschen",
       "export": "Export"
     },
     "history": "History",
     "newSession": "New Strategy Session",
     "searchPlaceholder": "Search conversations...",
-    "noConversations": "No conversations yet",
-    "noResults": "No conversations found",
+    "noConversations": "Nein conversations yet",
+    "noResults": "Nein conversations found",
     "startNewChat": "Start a new chat to begin",
     "expandSidebar": "Expand sidebar",
     "collapseSidebar": "Collapse sidebar",
@@ -5396,7 +5658,7 @@
       "lastMonth": "Last 30 Days",
       "older": "Older",
       "archived": "Archived",
-      "byProject": "By Project"
+      "byProject": "By Projekt"
     },
     "menu": {
       "addFiles": "Add Files & Media",
@@ -5452,7 +5714,7 @@
       "fetchError": "Failed to load payment methods"
     },
     "addCard": {
-      "title": "Add Payment Method",
+      "title": "Hinzufügen Payment Method",
       "subtitle": "Securely add a new card",
       "secureNote": "Secured by Stripe",
       "holderName": "Cardholder Name",
@@ -5479,9 +5741,9 @@
       "yourPlan": "Your Current Plan",
       "upgrade": "Upgrade",
       "switch": "Switch",
-      "select": "Select",
+      "select": "Auswählen",
       "confirmUpgrade": "Confirm Upgrade",
-      "confirmChange": "Confirm Plan Change",
+      "confirmChange": "Bestätigen Plan Change",
       "newPrice": "New Monthly Price",
       "discountCode": "Discount Code",
       "apply": "Apply",
@@ -5511,7 +5773,7 @@
       "noCap": "No limit",
       "autoUpgrade": "Auto-Upgrade",
       "autoUpgradeDesc": "Automatically upgrade plan when limits are reached",
-      "selectPlan": "Select upgrade plan...",
+      "selectPlan": "Auswählen upgrade plan...",
       "saved": "Alert settings saved",
       "saveError": "Failed to save settings",
       "fetchError": "Failed to load settings"
@@ -5521,7 +5783,7 @@
       "description": "Configure your tax ID and billing information for invoices",
       "taxId": "Tax ID / VAT Number",
       "taxIdType": "Tax ID Type",
-      "selectType": "Select type...",
+      "selectType": "Auswählen type...",
       "taxIdNumber": "Tax ID Number",
       "taxExempt": "Tax Exempt",
       "taxExemptDesc": "Check if your organization is tax exempt",
@@ -5534,10 +5796,10 @@
       "state": "State / Region",
       "postalCode": "Postal Code",
       "country": "Country",
-      "selectCountry": "Select...",
+      "selectCountry": "Auswählen...",
       "invoiceCustomization": "Invoice Customization",
       "invoicePrefix": "Invoice Prefix",
-      "poNumber": "Default PO Number",
+      "poNumber": "Standard PO Number",
       "saved": "Tax settings saved",
       "saveError": "Failed to save settings",
       "fetchError": "Failed to load tax settings"
@@ -5554,7 +5816,7 @@
       "overview": "Overview",
       "tasks": "Tasks",
       "definition": "Definition & Scope",
-      "execution": "Execution & Risks",
+      "execution": "Ausführung & Risks",
       "economics": "Value & Finance",
       "governance": "Governance",
       "team": "Team",
@@ -5569,7 +5831,7 @@
     "symptom": "Symptom",
     "rootCause": "Root Cause",
     "costOfInaction": "Cost of Inaction",
-    "fullDescription": "Full Description (Legacy)",
+    "fullDescription": "Full Beschreibung (Legacy)",
     "nameLabel": "Initiative Name",
     "strategicIntentLabel": "Strategic Intent",
     "strategicFitTitle": "Strategic Fit",
@@ -5582,7 +5844,7 @@
     "processChanges": "Process Changes",
     "behaviorChanges": "Behavior Changes",
     "capabilityChanges": "Capability Changes",
-    "addBullet": "+ Add bullet",
+    "addBullet": "+ Hinzufügen bullet",
     "evidenceTitle": "Evidence & Attachments",
     "strategicChangeLog": "Strategic Change Log",
     "addAttachmentMock": "+ Add Attachment (Mock)",
@@ -5591,25 +5853,25 @@
     "strategicRole": "Strategic Role",
     "placementReason": "Placement Reason",
     "autoFillWithAI": "Auto-fill with AI",
-    "effortProfileLabel": "Effort Profile (1-5)",
+    "effortProfileLabel": "Effort Profil (1-5)",
     "analytical": "Analytical",
     "operational": "Operational",
     "changeMgmt": "Change Mgmt",
-    "successCriteriaTyped": "Success Criteria (Typed)",
+    "successCriteriaTyped": "Erfolg Criteria (Typed)",
     "autoSuggest": "Auto-Suggest",
     "metric": "Metric",
     "behavior": "Behavior",
     "process": "Process",
     "capability": "Capability",
     "criteriaDescriptionPlaceholder": "Criteria description...",
-    "addCriteria": "+ Add Criteria",
+    "addCriteria": "+ Hinzufügen Criteria",
     "explicitAssumptions": "Explicit Assumptions",
     "organizational": "Organizational",
     "dataTech": "Data / Tech",
     "budgetResources": "Budget / Resources",
     "peopleSkills": "People / Skills",
     "keyDeliverables": "Key Deliverables",
-    "addDeliverable": "+ Add Deliverable",
+    "addDeliverable": "+ Hinzufügen Deliverable",
     "scopeGuard": "Scope Guard (Target)",
     "inScope": "In Scope",
     "outOfScope": "Out of Scope",
@@ -5635,14 +5897,14 @@
     "riskDescriptionPlaceholder": "Risk description...",
     "mitigationStrategyPlaceholder": "Mitigation strategy...",
     "maxRisksReached": "Max 5 Risks reached",
-    "addRisk": "+ Add Risk",
+    "addRisk": "+ Hinzufügen Risk",
     "financialCase": "Financial Case",
     "capexLabel": "CAPEX",
     "opexLabel": "OPEX",
     "annualBenefitLabel": "Annual Benefit",
     "roiLabel": "ROI (Calculated)",
     "strategicValue": "Strategic Value",
-    "businessValueLabel": "Business Value Description",
+    "businessValueLabel": "Business Value Beschreibung",
     "businessValuePlaceholder": "Describe major business impact...",
     "ownershipAccountability": "Ownership & Accountability",
     "businessOwner": "Business Owner",
@@ -5655,7 +5917,7 @@
     "actions": "Actions",
     "businessValue": "Business Value",
     "valueDriver": "Value Driver",
-    "selectDriverPlaceholder": "Select Driver...",
+    "selectDriverPlaceholder": "Auswählen Driver...",
     "costOptimization": "Cost Optimization",
     "revenueGrowth": "Revenue Growth",
     "capitalEfficiency": "Capital Efficiency",
@@ -5680,9 +5942,9 @@
     "businessOwnerDescription": "Accountable for VALUE delivery",
     "executionOwnerDescription": "Accountable for DELIVERY",
     "sponsorDescription": "Final APPROVAL authority",
-    "selectBusinessOwnerPlaceholder": "Select Business Owner...",
-    "selectExecutionOwnerPlaceholder": "Select Execution Owner...",
-    "selectSponsorPlaceholder": "Select Sponsor...",
+    "selectBusinessOwnerPlaceholder": "Auswählen Business Owner...",
+    "selectExecutionOwnerPlaceholder": "Auswählen Ausführung Owner...",
+    "selectSponsorPlaceholder": "Auswählen Sponsor...",
     "approvalWorkflow": "Approval Workflow",
     "currentStatus": "Current Status",
     "nextAction": "Next Action",
@@ -5694,20 +5956,20 @@
     "nextActionExecuting": "Complete all tasks to mark as",
     "completedSuccessfully": "Initiative completed successfully",
     "decisionRequired": "Decision Required",
-    "viewBrief": "View Brief",
+    "viewBrief": "Ansicht Brief",
     "governanceAuditTrail": "Governance Audit Trail",
     "noGovernanceEvents": "No governance events recorded yet.",
     "teamMembers": "Team Members",
-    "selectMember": "Select member...",
+    "selectMember": "Auswählen member...",
     "noTeamMembersAssigned": "No team members assigned yet",
     "allocation": "Allocation",
     "relatedInitiatives": "Related Initiatives",
     "linkInitiative": "Link Initiative",
-    "noLinkedInitiatives": "No linked initiatives",
+    "noLinkedInitiatives": "Nein linked initiatives",
     "initiativeIdOrNamePlaceholder": "Initiative ID or name...",
     "addCommentPlaceholder": "Add a comment or question...",
     "postComment": "Post Comment",
-    "noCommentsYet": "No comments yet",
+    "noCommentsYet": "Nein comments yet",
     "startDiscussion": "Start the discussion!",
     "exportCharter": "Export Charter",
     "cloneAsTemplate": "Clone as Template",
@@ -5734,7 +5996,7 @@
     "knowledgeGraphTitle": "BCG Knowledge Graph",
     "knowledgeGraphSharing": "This initiative shares",
     "knowledgeGraphSimilarity": "similarity in \"Change Resistance\" patterns with",
-    "viewRelated": "View Related Initiative"
+    "viewRelated": "Ansicht Related Initiative"
   },
   "dashboard": {
     "title": "Execution Dashboard",
@@ -5756,7 +6018,7 @@
           "description": "Begin your digital readiness diagnosis"
         },
         "roadmap": {
-          "title": "View Roadmap",
+          "title": "Ansicht Roadmap",
           "description": "Explore your transformation timeline"
         }
       }
@@ -5771,7 +6033,7 @@
       "healthScore": "Health Score",
       "healthy": "Transformation Healthy",
       "activeInitiatives": "Active Initiatives",
-      "inProgress": "In Progress",
+      "inProgress": "In Bearbeitung",
       "valueRealized": "Value Realized",
       "ofTarget": "of Target",
       "criticalRisks": "Critical Risks",
@@ -5811,14 +6073,14 @@
       "options": "Options",
       "ready": "READY",
       "soon": "SOON",
-      "generate": "Generate Final Report",
+      "generate": "Generate Final Bericht",
       "pdfDoc": "PDF Document",
       "powerPoint": "PowerPoint"
     },
     "reportSections": {
       "summary": "Executive Summary",
-      "maturity": "Maturity Assessment Results",
-      "roadmap": "Strategic Initiatives Roadmap",
+      "maturity": "Maturity Bewertung Results",
+      "roadmap": "Strategic Initiativen Roadmap",
       "financial": "Financial Case (ROI, NPV)",
       "risk": "Risk & Change Management"
     },
@@ -5872,7 +6134,7 @@
       "importPDF": "Import PDF",
       "manualEntry": "Manual Entry",
       "generateReport": "Generate Report",
-      "viewReport": "View Report",
+      "viewReport": "Ansicht Bericht",
       "exportPDF": "Export PDF",
       "saveProgress": "Save Progress",
       "legalNotice": "Legal Notice",
@@ -5927,7 +6189,7 @@
       "description": "European Digital Innovation Hubs framework - 5 Pillars × 12 Dimensions",
       "legalNotice": "ADMA (Advanced Digital Maturity Assessment) is a tool developed by the European Commission as part of the Digital Innovation Hubs program. Use in Consultinity is for educational purposes.",
       "pillars": {
-        "strategy": "Strategy & Organization",
+        "strategy": "Strategy & Organisation",
         "smartProducts": "Smart Products",
         "smartOperations": "Smart Operations",
         "smartSupply": "Smart Supply Chain",
@@ -6029,7 +6291,7 @@
       "metrics": {
         "tasksPerDay": "Tasks/day",
         "avgTaskTime": "Avg. task time",
-        "errorRate": "Error rate",
+        "errorRate": "Fehler rate",
         "overtimeHours": "Overtime hours",
         "digitalMaturity": "Digital Maturity",
         "automationPotential": "Automation Potential",
@@ -6058,7 +6320,7 @@
       "more": "more steps",
       "dismiss": "I'll explore on my own",
       "profile": {
-        "title": "Complete your profile",
+        "title": "Abgeschlossen your profile",
         "description": "Add your name and company info"
       },
       "firstChat": {
@@ -6093,11 +6355,11 @@
     "myDocs": "My Docs",
     "upload": "Add Document",
     "uploading": "Uploading...",
-    "noProjectDocs": "No project documents",
-    "noUserDocs": "No user documents",
+    "noProjectDocs": "Nein project documents",
+    "noUserDocs": "Nein user documents",
     "download": "Download",
     "moveToProject": "Move to project",
-    "delete": "Delete",
+    "delete": "Löschen",
     "projectHint": "Documents available to everyone in the project",
     "userHint": "Your private documents",
     "confirmDelete": "Are you sure you want to delete this document?"

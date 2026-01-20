@@ -3353,21 +3353,23 @@
       },
       "overview": {
         "title": "Bienvenido a Consultinity",
-        "intro": "Tu plataforma PMO completa para la transformación digital. Evalúa, planifica y realiza el seguimiento del viaje de tu organización hacia la excelencia digital con información impulsada por IA y metodologías probadas.",
+        "intro": "Consultinity es tu plataforma PMO completa para la transformación digital. Usando insights impulsados por IA y metodologías probadas como DRD, SIRI y Lean 4.0, puedes evaluar la madurez digital de tu organización, generar iniciativas estratégicas y seguir el progreso de implementación - todo en un solo lugar.",
         "watchVideo": "Ver Video de Introducción",
         "videoDuration": "3 min de resumen",
         "guides": "Guías Rápidas",
         "guidesList": {
-          "gettingStarted": "Primeros Pasos",
-          "assessment": "Cómo Realizar una Evaluación",
-          "initiatives": "Gestión de Iniciativas",
-          "reports": "Creación de Informes",
-          "aiFeatures": "Guía de Funciones de IA"
+          "gettingStarted": "Primeros Pasos - Inicio",
+          "assessment": "Cómo Realizar una Evaluación Digital",
+          "initiatives": "Gestión de Iniciativas Estratégicas",
+          "reports": "Creación de Informes Ejecutivos",
+          "aiFeatures": "Uso de Funciones de IA"
         },
-        "whatToKnow": "Lo que Debes Saber",
-        "tip1": "Comienza con una evaluación para entender tu madurez digital",
-        "tip2": "Usa los insights de IA para priorizar iniciativas",
-        "tip3": "Realiza seguimiento del progreso con dashboards e informes en tiempo real"
+        "whatToKnow": "Información Clave",
+        "tip1": "Comienza con la Evaluación Rápida (5 min) para recomendaciones AI instantáneas, o realiza una Evaluación Completa para análisis detallado",
+        "tip2": "La IA genera iniciativas automáticamente desde las brechas de evaluación - revisa, prioriza y aprueba en la vista de Roadmap",
+        "tip3": "Sigue la implementación en el módulo de Ejecución - los dashboards se actualizan en tiempo real cuando se completan tareas",
+        "tip4": "Usa el Chat de IA (barra superior) en cualquier momento para hacer preguntas u obtener recomendaciones estratégicas",
+        "tip5": "Exporta informes profesionales en formato PDF/PowerPoint para presentaciones a stakeholders"
       },
       "faq": {
         "searchPlaceholder": "Buscar preguntas...",
