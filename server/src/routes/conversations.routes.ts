@@ -47,7 +47,7 @@ const CreateConversationSchema = z.object({
   title: z.string().max(255).optional(),
   projectId: z.string().uuid().optional(),
   chatProjectId: z.string().uuid().optional(),
-  pmoContext: z.record(z.unknown()).optional(),
+  pmoContext: z.record(z.string(), z.unknown()).optional(),
 });
 
 const ConversationIdParamSchema = z.object({
@@ -59,7 +59,7 @@ const UpdateConversationSchema = z.object({
   starred: z.boolean().optional(),
   archived: z.boolean().optional(),
   tags: z.array(z.string()).optional(),
-  pmoContext: z.record(z.unknown()).optional(),
+  pmoContext: z.record(z.string(), z.unknown()).optional(),
   chatProjectId: z.string().uuid().nullable().optional(),
 });
 
@@ -69,7 +69,7 @@ const AddMessageSchema = z.object({
   messageType: z
     .enum(['text', 'action_request', 'summary', 'file', 'tool_call', 'voice'])
     .optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   tokenCount: z.number().int().positive().optional(),
   modelUsed: z.string().max(100).optional(),
 });

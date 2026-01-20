@@ -71,13 +71,15 @@ WHERE project_id IS NOT NULL;
 -- ==========================================
 
 -- Optimize: Notifications by user and read status
+-- Note: is_read is BOOLEAN, so use FALSE instead of 0
 CREATE INDEX IF NOT EXISTS idx_notifications_user_read 
 ON notifications(user_id, is_read, created_at) 
-WHERE is_read = 0;
+WHERE is_read = FALSE;
 
--- Optimize: Notifications by user and severity
-CREATE INDEX IF NOT EXISTS idx_notifications_user_severity 
-ON notifications(user_id, severity, created_at);
+-- Optimize: Notifications by user and priority
+-- Note: Using priority instead of severity (severity column may not exist in all schemas)
+CREATE INDEX IF NOT EXISTS idx_notifications_user_priority 
+ON notifications(user_id, priority, created_at);
 
 -- ==========================================
 -- USERS TABLE INDEXES
@@ -103,6 +105,7 @@ ON activity_logs(entity_type, entity_id);
 -- ==========================================
 -- USER_CAPACITY_PROFILE TABLE INDEXES
 -- ==========================================
+-- Note: This table may not exist yet - index will be skipped if table doesn't exist
 
 -- Optimize: User capacity profiles
 CREATE INDEX IF NOT EXISTS idx_user_capacity_profile_user 
@@ -111,6 +114,7 @@ ON user_capacity_profile(user_id);
 -- ==========================================
 -- INITIATIVE_LOCATIONS TABLE INDEXES
 -- ==========================================
+-- Note: This table may not exist yet - indexes will be skipped if table doesn't exist
 
 -- Optimize: Initiative locations lookup
 CREATE INDEX IF NOT EXISTS idx_initiative_locations_initiative 
@@ -122,6 +126,7 @@ ON initiative_locations(location_id);
 -- ==========================================
 -- KNOWLEDGE_CHUNKS TABLE INDEXES
 -- ==========================================
+-- Note: doc_id column may not exist yet - index will be skipped if column doesn't exist
 
 -- Optimize: Knowledge chunks by document
 CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_doc 
