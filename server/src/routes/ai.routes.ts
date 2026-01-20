@@ -391,7 +391,36 @@ router.post(
         return res.end();
       }
     } catch (err: any) {
-      logger.error('Stream Error:', err);
+      const errorMessage = err?.message || 'Unknown error occurred';
+      const errorName = err?.name || 'Error';
+      const isConnectionError =
+        errorMessage.includes('ECONNREFUSED') ||
+        errorMessage.includes('ENOTFOUND') ||
+        errorMessage.includes('ETIMEDOUT') ||
+        errorMessage.includes('network') ||
+        errorMessage.includes('connect') ||
+        errorMessage.includes('timeout');
+      const isAuthError =
+        errorMessage.includes('401') ||
+        errorMessage.includes('403') ||
+        errorMessage.includes('unauthorized') ||
+        errorMessage.includes('authentication') ||
+        errorMessage.includes('API key') ||
+        errorMessage.includes('Missing API key');
+
+      logger.error('[Stream] Error occurred:', {
+        error: errorMessage,
+        errorName,
+        sessionId: streamSessionId,
+        userId: req.userId,
+        provider: (err as any)?.provider,
+        model: (err as any)?.model,
+        isConnectionError,
+        isAuthError,
+        stack: err?.stack,
+        code: err?.code,
+        status: err?.status,
+      });
 
       if (accumulatedContent.length > 0) {
         savePartialResponse(
@@ -406,11 +435,23 @@ router.post(
 
       if (isClientConnected && !res.destroyed && !streamAborted) {
         try {
+          // Provide user-friendly error messages
+          let userMessage = errorMessage;
+          if (isConnectionError) {
+            userMessage = `Connection failed: Unable to reach AI service. Please check your network connection and try again.`;
+          } else if (isAuthError) {
+            userMessage = `Authentication failed: ${errorMessage}. Please check your API key configuration.`;
+          } else if (errorMessage.includes('Circuit breaker')) {
+            userMessage = `Service temporarily unavailable: ${errorMessage}. Please try again in a moment or use a different provider.`;
+          }
+
           res.write(
             `data: ${JSON.stringify({
-              error: (err as Error).message,
+              error: userMessage,
+              errorType: isConnectionError ? 'connection' : isAuthError ? 'authentication' : 'unknown',
               sessionId: streamSessionId,
               canResume: accumulatedContent.length > 0,
+              originalError: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
             })}\n\n`
           );
         } catch (writeError: any) {
