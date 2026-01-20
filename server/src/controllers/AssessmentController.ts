@@ -19,7 +19,7 @@ import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { hasPermission } from '../services/permissionService.js';
-import AssessmentInitiativeService from '../services/assessmentInitiativeService.js';
+import AssessmentInitiativeService from '../services/AssessmentInitiativeService.js';
 
 // Types
 type AssessmentType = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
