@@ -4,14 +4,29 @@
  * Uses shared ModuleHub components for consistent UX
  */
 
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDroppable,
+  useDraggable,
+} from '@dnd-kit/core';
 import { Calendar, FileText, KanbanSquare, Loader2, Target, Timer, Users } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
 import { useAppStore } from '../../store/useAppStore';
 import { FullInitiative, InitiativeStatus } from '../../types';
+import { ExecutionDetailPanel } from './ExecutionDetailPanel';
+import { ExecutionTimelineView } from './ExecutionTimelineView';
+import { ExecutionWorkloadView } from './ExecutionWorkloadView';
 import {
   FilterableTable,
   FilterChip,
@@ -324,7 +339,149 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }));
   }, [filteredInitiatives]);
 
-  // Render Kanban Board
+  // Column to status mapping for drag & drop
+  const columnToStatus: Record<string, InitiativeStatus> = {
+    todo: InitiativeStatus.APPROVED,
+    inProgress: InitiativeStatus.EXECUTING,
+    blocked: InitiativeStatus.BLOCKED,
+    done: InitiativeStatus.DONE,
+  };
+
+  // DnD state
+  const [activeId, setActiveId] = useState<string | null>(null);
+  
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
+  // Handle drag start
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  // Handle drag end
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+    
+    if (!over) return;
+    
+    const initiativeId = active.id as string;
+    const targetColumn = over.id as string;
+    
+    const newStatus = columnToStatus[targetColumn];
+    if (!newStatus) return;
+
+    // Find the initiative
+    const initiative = initiatives.find((i) => i.id === initiativeId);
+    if (!initiative) return;
+    
+    // Check if status actually changed
+    const currentColumnId = Object.entries(columnToStatus).find(
+      ([_, status]) => status === initiative.status
+    )?.[0];
+    if (currentColumnId === targetColumn) return;
+
+    // Optimistic update
+    setInitiatives((prev) =>
+      prev.map((i) => (i.id === initiativeId ? { ...i, status: newStatus } : i))
+    );
+
+    try {
+      await Api.patch(`/initiatives/${initiativeId}`, { status: newStatus });
+      toast.success(`Moved to ${newStatus.toLowerCase()}`);
+    } catch (error) {
+      console.error('[ExecutionHub] Failed to update status:', error);
+      toast.error('Failed to update status');
+      // Revert optimistic update
+      setInitiatives((prev) =>
+        prev.map((i) => (i.id === initiativeId ? { ...i, status: initiative.status } : i))
+      );
+    }
+  };
+
+  // Droppable Column Component
+  const DroppableColumn: React.FC<{
+    id: string;
+    label: string;
+    items: FullInitiative[];
+    children: React.ReactNode;
+  }> = ({ id, label, items, children }) => {
+    const { isOver, setNodeRef } = useDroppable({ id });
+    
+    return (
+      <div className="flex-shrink-0 w-72 flex flex-col">
+        <div className="flex items-center justify-between mb-3 px-2">
+          <h3 className="text-sm font-semibold text-white">{label}</h3>
+          <span className="text-xs text-slate-400 bg-navy-800 px-2 py-0.5 rounded-full">
+            {items.length}
+          </span>
+        </div>
+        <div
+          ref={setNodeRef}
+          className={`flex-1 space-y-2 overflow-y-auto p-1 rounded-lg transition-colors min-h-[200px] ${
+            isOver ? 'bg-cyan-500/10' : ''
+          }`}
+        >
+          {children}
+          {items.length === 0 && !isOver && (
+            <div className="text-center py-8 text-slate-500 text-sm">No items</div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Draggable Card Component
+  const DraggableCard: React.FC<{ item: FullInitiative }> = ({ item }) => {
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+      id: item.id,
+    });
+    
+    const style = transform ? {
+      transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    } : undefined;
+
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        {...listeners}
+        {...attributes}
+        onClick={() => !isDragging && handleOpenDocument(item)}
+        className={`p-3 bg-navy-800 border border-navy-700 rounded-lg cursor-pointer transition-all ${
+          isDragging ? 'shadow-xl border-cyan-500 opacity-50' : 'hover:border-cyan-500/50'
+        }`}
+      >
+        <div className="flex items-center gap-2 mb-2">
+          <span className="font-mono text-xs text-cyan-400">
+            {getTypeCode(item.axis)}
+          </span>
+          <span
+            className={`w-2 h-2 rounded-full ${STATUS_META[item.status]?.dotColor || 'bg-slate-400'}`}
+          />
+        </div>
+        <h4 className="text-sm font-medium text-white mb-2 line-clamp-2">
+          {item.name}
+        </h4>
+        <div className="flex items-center justify-between">
+          <div className="flex-1 h-1 bg-navy-700 rounded-full overflow-hidden mr-2">
+            <div
+              className={`h-full ${item.status === InitiativeStatus.BLOCKED ? 'bg-red-500' : 'bg-cyan-500'} rounded-full`}
+              style={{ width: `${item.progress || 0}%` }}
+            />
+          </div>
+          <span className="text-xs text-slate-400">{item.progress || 0}%</span>
+        </div>
+      </div>
+    );
+  };
+
+  // Render Kanban Board with @dnd-kit
   const renderKanbanBoard = () => {
     const columns = [
       {
@@ -337,57 +494,82 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       { id: 'done', label: 'Done', statuses: [InitiativeStatus.DONE] },
     ];
 
+    const activeItem = activeId ? initiatives.find((i) => i.id === activeId) : null;
+
     return (
-      <div className="flex gap-4 p-4 h-full overflow-x-auto">
-        {columns.map((column) => {
-          const items = filteredInitiatives.filter((i) => column.statuses.includes(i.status));
-          return (
-            <div key={column.id} className="flex-shrink-0 w-72 flex flex-col">
-              <div className="flex items-center justify-between mb-3 px-2">
-                <h3 className="text-sm font-semibold text-white">{column.label}</h3>
-                <span className="text-xs text-slate-400 bg-navy-800 px-2 py-0.5 rounded-full">
-                  {items.length}
-                </span>
-              </div>
-              <div className="flex-1 space-y-2 overflow-y-auto">
+      <DndContext
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="flex gap-4 p-4 h-full overflow-x-auto">
+          {columns.map((column) => {
+            const items = filteredInitiatives.filter((i) => column.statuses.includes(i.status));
+            return (
+              <DroppableColumn key={column.id} id={column.id} label={column.label} items={items}>
                 {items.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => handleOpenDocument(item)}
-                    className="p-3 bg-navy-800 border border-navy-700 rounded-lg cursor-pointer hover:border-cyan-500/50 transition-all"
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="font-mono text-xs text-cyan-400">
-                        {getTypeCode(item.axis)}
-                      </span>
-                      <span
-                        className={`w-2 h-2 rounded-full ${STATUS_META[item.status]?.dotColor || 'bg-slate-400'}`}
-                      />
-                    </div>
-                    <h4 className="text-sm font-medium text-white mb-2 line-clamp-2">
-                      {item.name}
-                    </h4>
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 h-1 bg-navy-700 rounded-full overflow-hidden mr-2">
-                        <div
-                          className={`h-full ${item.status === InitiativeStatus.BLOCKED ? 'bg-red-500' : 'bg-cyan-500'} rounded-full`}
-                          style={{ width: `${item.progress || 0}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-slate-400">{item.progress || 0}%</span>
-                    </div>
-                  </div>
+                  <DraggableCard key={item.id} item={item} />
                 ))}
-                {items.length === 0 && (
-                  <div className="text-center py-8 text-slate-500 text-sm">No items</div>
-                )}
+              </DroppableColumn>
+            );
+          })}
+        </div>
+        <DragOverlay>
+          {activeItem ? (
+            <div className="p-3 bg-navy-800 border border-cyan-500 rounded-lg shadow-xl rotate-2 w-72">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="font-mono text-xs text-cyan-400">
+                  {getTypeCode(activeItem.axis)}
+                </span>
+                <span
+                  className={`w-2 h-2 rounded-full ${STATUS_META[activeItem.status]?.dotColor || 'bg-slate-400'}`}
+                />
+              </div>
+              <h4 className="text-sm font-medium text-white mb-2 line-clamp-2">
+                {activeItem.name}
+              </h4>
+              <div className="flex items-center justify-between">
+                <div className="flex-1 h-1 bg-navy-700 rounded-full overflow-hidden mr-2">
+                  <div
+                    className={`h-full ${activeItem.status === InitiativeStatus.BLOCKED ? 'bg-red-500' : 'bg-cyan-500'} rounded-full`}
+                    style={{ width: `${activeItem.progress || 0}%` }}
+                  />
+                </div>
+                <span className="text-xs text-slate-400">{activeItem.progress || 0}%</span>
               </div>
             </div>
-          );
-        })}
-      </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
     );
   };
+
+  // Handle status change from detail panel
+  const handleStatusChange = useCallback((newStatus: InitiativeStatus) => {
+    setInitiatives((prev) =>
+      prev.map((i) => (i.id === activeDocumentId ? { ...i, status: newStatus } : i))
+    );
+  }, [activeDocumentId]);
+
+  // Handle refresh
+  const handleRefresh = useCallback(async () => {
+    try {
+      const response = await Api.getInitiatives(currentProjectId || undefined);
+      const data = Array.isArray(response) ? response : response.initiatives || [];
+      const executionStatuses = [
+        InitiativeStatus.APPROVED,
+        InitiativeStatus.EXECUTING,
+        InitiativeStatus.BLOCKED,
+        InitiativeStatus.DONE,
+      ];
+      const executionInitiatives = data.filter((i: FullInitiative) =>
+        executionStatuses.includes(i.status)
+      );
+      setInitiatives(executionInitiatives);
+    } catch (err) {
+      console.error('[ExecutionHub] Failed to refresh:', err);
+    }
+  }, [currentProjectId]);
 
   // Render content
   const renderContent = () => {
@@ -400,21 +582,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }
 
     if (activeDocumentId) {
-      const doc = openDocuments.find((d) => d.id === activeDocumentId);
       const initiative = initiatives.find((i) => i.id === activeDocumentId);
-      return (
-        <div className="flex items-center justify-center h-full text-slate-500">
-          <div className="text-center">
-            <KanbanSquare className="w-12 h-12 mx-auto mb-4 text-cyan-400/50" />
-            <p className="text-lg text-white">Execution Details: {doc?.name}</p>
-            <p className="text-sm text-slate-400">
-              ({doc?.subType} -{' '}
-              {STATUS_META[initiative?.status || InitiativeStatus.EXECUTING]?.label})
-            </p>
-            <p className="mt-4 text-xs">Connect to existing execution workspace</p>
-          </div>
-        </div>
-      );
+      if (initiative) {
+        return (
+          <ExecutionDetailPanel
+            initiative={initiative}
+            onClose={handleShowList}
+            onStatusChange={handleStatusChange}
+            onRefresh={handleRefresh}
+          />
+        );
+      }
     }
 
     // Tab: Kanban (default)
@@ -438,28 +616,21 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     // Tab: Timeline
     if (activeTab === 'reports') {
       return (
-        <div className="flex items-center justify-center h-full text-slate-500">
-          <div className="text-center">
-            <Timer className="w-12 h-12 mx-auto mb-4 text-blue-400/50" />
-            <p className="text-lg text-white">Timeline View</p>
-            <p className="text-sm text-slate-400">Gantt-style timeline of execution</p>
-            <p className="mt-4 text-xs">Connect to existing timeline component</p>
-          </div>
-        </div>
+        <ExecutionTimelineView
+          initiatives={filteredInitiatives}
+          onInitiativeClick={handleOpenDocument}
+          projectId={currentProjectId || undefined}
+        />
       );
     }
 
     // Tab: Workload
     if (activeTab === 'initiatives') {
       return (
-        <div className="flex items-center justify-center h-full text-slate-500">
-          <div className="text-center">
-            <Users className="w-12 h-12 mx-auto mb-4 text-purple-400/50" />
-            <p className="text-lg text-white">Team Workload</p>
-            <p className="text-sm text-slate-400">Resource allocation and capacity</p>
-            <p className="mt-4 text-xs">Connect to existing workload component</p>
-          </div>
-        </div>
+        <ExecutionWorkloadView
+          initiatives={filteredInitiatives}
+          projectId={currentProjectId || undefined}
+        />
       );
     }
 

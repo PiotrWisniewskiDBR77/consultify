@@ -3125,11 +3125,53 @@
       }
     },
     "sidePanel": {
+      "title": "Hilfezentrum",
+      "fullDocs": "Vollständige Dokumentation",
       "tabs": {
-        "overview": "Overview",
-        "howto": "How to Use",
+        "overview": "Übersicht",
         "faq": "FAQ",
-        "video": "Video"
+        "knowledge": "Wissensdatenbank"
+      },
+      "overview": {
+        "title": "Willkommen bei Consultinity",
+        "intro": "Ihre komplette PMO-Plattform für die digitale Transformation. Bewerten, planen und verfolgen Sie die Reise Ihrer Organisation zur digitalen Exzellenz mit KI-gestützten Einblicken und bewährten Methoden.",
+        "watchVideo": "Einführungsvideo ansehen",
+        "videoDuration": "3 Min. Überblick",
+        "guides": "Schnellanleitungen",
+        "guidesList": {
+          "gettingStarted": "Erste Schritte",
+          "assessment": "Eine Bewertung durchführen",
+          "initiatives": "Initiativen verwalten",
+          "reports": "Berichte erstellen",
+          "aiFeatures": "KI-Funktionen Leitfaden"
+        },
+        "whatToKnow": "Wissenswert",
+        "tip1": "Beginnen Sie mit einer Bewertung, um Ihre digitale Reife zu verstehen",
+        "tip2": "Nutzen Sie KI-Einblicke zur Priorisierung von Initiativen",
+        "tip3": "Verfolgen Sie den Fortschritt mit Echtzeit-Dashboards und Berichten"
+      },
+      "faq": {
+        "searchPlaceholder": "Fragen suchen...",
+        "noResults": "Keine passenden Fragen gefunden.",
+        "noFAQ": "Keine FAQ verfügbar."
+      },
+      "knowledge": {
+        "title": "Wissensdatenbank",
+        "description": "Umfassende Ressourcen zu Tools für die digitale Transformation, Methoden und Best Practices.",
+        "comingSoon": "Demnächst",
+        "categories": {
+          "tools": "Tools für digitale Transformation",
+          "methodologies": "Methoden (DRD, SIRI, Lean)",
+          "caseStudies": "Fallstudien",
+          "bestPractices": "Best Practices"
+        },
+        "notify": {
+          "title": "Benachrichtigung erhalten",
+          "placeholder": "Ihre E-Mail",
+          "button": "Benachrichtigen",
+          "success": "Sie werden benachrichtigt, wenn die Wissensdatenbank verfügbar ist!",
+          "description": "Erhalten Sie eine E-Mail, wenn unsere umfassende Wissensdatenbank mit Tools, Methoden und Fallstudien bereit ist."
+        }
       },
       "modules": {
         "dashboard": {

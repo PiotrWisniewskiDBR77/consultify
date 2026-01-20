@@ -38,6 +38,11 @@ const MyWorkView = React.lazy(() =>
 const ProjectIntelligenceView = React.lazy(() =>
   import('@/views/ProjectIntelligenceView').then((m) => ({ default: m.ProjectIntelligenceView }))
 );
+const DiscoveryConsultantView = React.lazy(() =>
+  import('@/components/Discovery/DiscoveryConsultantView').then((m) => ({
+    default: m.DiscoveryConsultantView,
+  }))
+);
 
 // Assessment
 const AssessmentModuleHub = React.lazy(() =>
@@ -226,6 +231,22 @@ export const router = createBrowserRouter([
         element: (
           <AnimatedSuspenseWrapper variant="slideUp">
             <ProjectIntelligenceView />
+          </AnimatedSuspenseWrapper>
+        ),
+      },
+      {
+        path: ROUTES.INTERVIEW,
+        element: (
+          <AnimatedSuspenseWrapper variant="slideUp">
+            <ProjectIntelligenceView />
+          </AnimatedSuspenseWrapper>
+        ),
+      },
+      {
+        path: ROUTES.DISCOVERY_CONSULTANT,
+        element: (
+          <AnimatedSuspenseWrapper variant="fade">
+            <DiscoveryConsultantView />
           </AnimatedSuspenseWrapper>
         ),
       },
