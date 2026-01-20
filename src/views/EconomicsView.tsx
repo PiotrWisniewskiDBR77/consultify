@@ -121,44 +121,40 @@ export const EconomicsView: React.FC = () => {
     if (!selectedAnalysis) return;
     try {
       const result = await Api.exportDigitizationAnalysis(selectedAnalysis.id);
-      toast.success('Excel wygenerowany');
+      toast.success('Excel generated');
       if (result.downloadUrl) {
         window.open(result.downloadUrl, '_blank');
       }
     } catch (err: any) {
-      toast.error(err.message || 'Nie udało się wyeksportować');
+      toast.error(err.message || 'Failed to export');
     }
   };
 
   const tabs = [
     {
       id: 'catalog' as const,
-      label: 'Katalog analiz',
-      labelEn: 'Analysis Catalog',
+      label: 'Analysis Catalog',
       icon: FolderOpen,
     },
     {
       id: 'tool' as const,
-      label: 'Narzędzie oceny',
-      labelEn: 'Evaluation Tool',
+      label: 'Evaluation Tool',
       icon: Wrench,
       disabled: !selectedAnalysis,
     },
     {
       id: 'results' as const,
-      label: 'Wyniki',
-      labelEn: 'Results & Insights',
+      label: 'Results',
       icon: BarChart3,
       disabled: !selectedAnalysis,
     },
     {
       id: 'financial' as const,
-      label: 'Analiza finansowa',
-      labelEn: 'Financial Analysis',
+      label: 'Financial Analysis',
       icon: Calculator,
       disabled: !selectedAnalysis,
     },
-    { id: 'compare' as const, label: 'Porównaj', labelEn: 'Compare', icon: GitCompare },
+    { id: 'compare' as const, label: 'Compare', icon: GitCompare },
   ];
 
   const handleSelectAnalysis = useCallback((analysis: DigitizationAnalysis) => {
@@ -193,7 +189,7 @@ export const EconomicsView: React.FC = () => {
   return (
     <SplitLayout
       title="Economics & Value Realization"
-      subtitle="Ocena dojrzałości cyfrowej i analiza wartości"
+      subtitle="Digital maturity assessment and value analysis"
     >
       <div className="flex flex-col h-full">
         {/* Selected Analysis Context Bar */}
@@ -207,8 +203,8 @@ export const EconomicsView: React.FC = () => {
                 <h3 className="text-sm font-semibold text-white">{selectedAnalysis.name}</h3>
                 <p className="text-xs text-slate-400 dark:text-slate-500">
                   {selectedAnalysis.projectName
-                    ? `Projekt: ${selectedAnalysis.projectName}`
-                    : 'Bez projektu'}{' '}
+                    ? `Project: ${selectedAnalysis.projectName}`
+                    : 'No project'}{' '}
                   • Status:{' '}
                   <span
                     className={`capitalize ${
@@ -219,19 +215,13 @@ export const EconomicsView: React.FC = () => {
                           : 'text-slate-400 dark:text-slate-500'
                     }`}
                   >
-                    {selectedAnalysis.analysisType === 'financial'
-                      ? selectedAnalysis.status === 'APPROVED'
-                        ? 'Approved'
-                        : selectedAnalysis.status === 'REVIEW'
-                          ? 'Review'
-                          : 'Draft'
-                      : selectedAnalysis.status === 'APPROVED'
-                        ? 'Zakończona'
-                        : selectedAnalysis.status === 'REVIEW'
-                          ? 'W trakcie'
-                          : 'Szkic'}
+                    {selectedAnalysis.status === 'APPROVED'
+                      ? 'Completed'
+                      : selectedAnalysis.status === 'REVIEW'
+                        ? 'In Progress'
+                        : 'Draft'}
                   </span>{' '}
-                  • Wynik:{' '}
+                  • Score:{' '}
                   <span className="text-emerald-400 font-medium">
                     {selectedAnalysis.overallScore?.toFixed(1) || '0'}/7
                   </span>
@@ -242,15 +232,15 @@ export const EconomicsView: React.FC = () => {
               <button
                 onClick={() => setShowVersionHistory(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
-                title="Historia wersji (Ctrl+H)"
+                title="Version History (Ctrl+H)"
               >
                 <History size={14} />
-                Wersje
+                Versions
               </button>
               <button
                 onClick={handleExcelExport}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
-                title="Eksport Excel (Ctrl+E)"
+                title="Export Excel (Ctrl+E)"
               >
                 <Download size={14} />
                 Excel

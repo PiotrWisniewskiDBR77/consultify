@@ -215,9 +215,9 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
       {/* Stats Bar */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard label="Wszystkie analysis" value={stats.total} icon={BarChart3} color="purple" />
+          <StatCard label="All Analyses" value={stats.total} icon={BarChart3} color="purple" />
           <StatCard label="Completed" value={stats.completed} icon={TrendingUp} color="green" />
-          <StatCard label="W trakcie" value={stats.inProgress} icon={Calendar} color="yellow" />
+          <StatCard label="In Progress" value={stats.inProgress} icon={Calendar} color="yellow" />
           <StatCard
             label="Average Score"
             value={`${(stats.avgScore ?? 0).toFixed(1)}/7`}
@@ -238,7 +238,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Szukaj analyses po nazwie lub projekcie..."
+            placeholder="Search analyses by name or project..."
             className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 
                             dark:border-navy-700 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
           />
@@ -255,7 +255,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
             >
               <option value="all">Wszystkie statusy</option>
               <option value="DRAFT">Szkic</option>
-              <option value="REVIEW">W trakcie</option>
+              <option value="REVIEW">In Progress</option>
               <option value="APPROVED">Completed</option>
             </select>
             <ChevronDown
@@ -303,8 +303,8 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
               {selectedIds.length === 1
                 ? 'analysis selected'
                 : selectedIds.length < 5
-                  ? 'analysis wybrane'
-                  : 'analyses wybranych'}
+                  ? 'analyses selected'
+                  : 'analyses selected'}
             </span>
           </div>
           <div className="h-6 w-px bg-slate-300 dark:bg-white/20" />
@@ -344,7 +344,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
                   onClick={() => handleBulkStatusChange('REVIEW')}
                   className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5"
                 >
-                  W trakcie
+                  In Progress
                 </button>
                 <button
                   onClick={() => handleBulkStatusChange('APPROVED')}
@@ -483,7 +483,7 @@ const EmptyState: React.FC<{ onCreateNew: () => void; onImport: () => void }> = 
         className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-500 transition-colors"
       >
         <Plus size={18} />
-        Nowa analysis
+        New Analysis
       </button>
     </div>
   </div>
@@ -508,7 +508,7 @@ const AnalysisCard: React.FC<{
 
   const statusLabels: Record<string, string> = {
     DRAFT: 'Szkic',
-    REVIEW: 'W trakcie',
+    REVIEW: 'In Progress',
     APPROVED: 'Completed',
   };
 
@@ -577,7 +577,7 @@ const AnalysisCard: React.FC<{
               }}
               className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2"
             >
-              <Copy size={14} /> Dufilej
+              <Copy size={14} /> Duplicate
             </button>
             <hr className="my-1 border-slate-100 dark:border-navy-700" />
             <button
@@ -605,7 +605,7 @@ const AnalysisCard: React.FC<{
               {analysis.name}
             </h3>
             <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
-              {analysis.initiativeName || analysis.projectName || 'Bez initiative'}
+              {analysis.initiativeName || analysis.projectName || 'No initiative'}
             </p>
           </div>
         </div>
@@ -682,7 +682,7 @@ const AnalysisTable: React.FC<{
 }> = ({ analyses, selectedIds, onSelect, onToggleSelect, onDelete, onDuplicate, onExport }) => {
   const statusLabels: Record<string, string> = {
     DRAFT: 'Szkic',
-    REVIEW: 'W trakcie',
+    REVIEW: 'In Progress',
     APPROVED: 'Completed',
   };
   const statusLabelsFinancial: Record<string, string> = {
@@ -829,7 +829,7 @@ const AnalysisTable: React.FC<{
                   <button
                     onClick={() => onDuplicate(analysis)}
                     className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors"
-                    title="Dufilej"
+                    title="Duplicate"
                   >
                     <Copy size={16} />
                   </button>

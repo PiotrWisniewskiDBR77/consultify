@@ -21,6 +21,16 @@ export const LANGUAGE_NAMES: Record<SupportedLanguage, string> = {
   es: 'Español',
 };
 
+// ISO country codes for display (language code -> country code)
+export const LANGUAGE_DISPLAY_CODES: Record<SupportedLanguage, string> = {
+  en: 'EN',
+  pl: 'PL',
+  de: 'DE',
+  ar: 'AR',
+  ja: 'JP',
+  es: 'ES',
+};
+
 // Language direction (for RTL support)
 export const LANGUAGE_DIRECTION: Record<SupportedLanguage, 'ltr' | 'rtl'> = {
   en: 'ltr',

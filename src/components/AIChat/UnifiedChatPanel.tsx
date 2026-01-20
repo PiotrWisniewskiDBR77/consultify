@@ -820,7 +820,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               ? t('aiChat.contextPlaceholder', 'Jak mogę pomóc z {{context}}?', {
                   context: workspaceContext.entityName,
                 })
-              : t('aiChat.placeholder', 'Jak mogę Ci pomóc?')
+              : t('aiChat.placeholder', 'How can I help you?')
           }
           voiceModeEnabled={voiceModeEnabled}
           onVoiceModeChange={setVoiceModeEnabled}

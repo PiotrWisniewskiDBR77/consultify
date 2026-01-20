@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { changeLanguage, LANGUAGE_NAMES, SUPPORTED_LANGUAGES } from '../../i18n';
+import { changeLanguage, LANGUAGE_DISPLAY_CODES, LANGUAGE_NAMES, SUPPORTED_LANGUAGES } from '../../i18n';
 import { useAppStore } from '../../store/useAppStore';
 
 interface EntryTopBarProps {
@@ -36,6 +36,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
   const languages = SUPPORTED_LANGUAGES.map((code) => ({
     code,
     label: LANGUAGE_NAMES[code],
+    displayCode: LANGUAGE_DISPLAY_CODES[code],
   }));
 
   const currentLang = languages.find((l) => l.code === i18n.language.split('-')[0]) || languages[0];
@@ -107,7 +108,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
               size={18}
               className="group-hover:rotate-12 transition-transform duration-300"
             />
-            <span>{t('partner.becomePartner', 'Zostań Partnerem')}</span>
+            <span>{t('partner.becomePartner', 'Become Partner')}</span>
           </button>
         </div>
 
@@ -187,7 +188,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
               className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-navy-950 dark:hover:text-white transition-colors py-2"
             >
               <Globe size={18} />
-              <span>{currentLang.code.toUpperCase()}</span>
+              <span>{currentLang.displayCode}</span>
               <ChevronDown
                 size={14}
                 className={`transition-transform duration-200 ${isLangOpen ? 'rotate-180' : ''}`}
@@ -255,7 +256,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                     className="w-full px-4 py-3 text-base font-semibold text-white bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-500 hover:to-purple-500 rounded-lg transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
                   >
                     <Handshake size={20} />
-                    <span>{t('partner.becomePartner', 'Zostań Partnerem')}</span>
+                    <span>{t('partner.becomePartner', 'Become Partner')}</span>
                   </button>
 
                   <div className="h-px bg-slate-200 dark:bg-white/10 my-2" />
@@ -324,13 +325,13 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                           <button
                             key={lang.code}
                             onClick={() => handleLangChange(lang.code)}
-                            className={`text-xs px-2 py-1.5 rounded-lg border transition-colors font-medium uppercase ${
+                            className={`text-xs px-2 py-1.5 rounded-lg border transition-colors font-medium ${
                               i18n.language.startsWith(lang.code)
                                 ? 'bg-purple-100 border-purple-300 text-purple-700 dark:bg-purple-900/30 dark:border-purple-500/30 dark:text-purple-300'
                                 : 'border-slate-200 text-slate-500 hover:bg-slate-100 dark:border-navy-700 dark:hover:bg-white/5 dark:text-slate-400'
                             }`}
                           >
-                            {lang.code}
+                            {lang.displayCode}
                           </button>
                         ))}
                       </div>

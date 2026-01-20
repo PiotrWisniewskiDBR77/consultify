@@ -36,10 +36,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   const cards = [
     {
       id: 'demo',
-      title: t('landing.hero.cards.demo.title'),
-      description: t('landing.hero.cards.demo.description'),
-      meta: t('landing.hero.cards.demo.meta'),
-      cta: t('landing.hero.cards.demo.cta'),
+      title: t('landing.hero.cards.demo.title', 'Interactive Demo'),
+      description: t('landing.hero.cards.demo.description', 'Explore Consultinity with AI-guided walkthrough. No signup required.'),
+      meta: t('landing.hero.cards.demo.meta', 'GUIDED EXPERIENCE'),
+      cta: t('landing.hero.cards.demo.cta', 'Start Demo'),
       image: '/assets/landing/cinematic/demo_digital_twin.png',
       color: 'purple',
       onClick: onDemoClick,
@@ -47,10 +47,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     },
     {
       id: 'trial',
-      title: t('landing.hero.cards.trial.title'),
-      description: t('landing.hero.cards.trial.description'),
-      meta: t('landing.hero.cards.trial.meta'),
-      cta: t('landing.hero.cards.trial.cta'),
+      title: t('landing.hero.cards.trial.title', 'Free Trial'),
+      description: t('landing.hero.cards.trial.description', '14-day full access to all features. Start your transformation today.'),
+      meta: t('landing.hero.cards.trial.meta', '14 DAYS FREE'),
+      cta: t('landing.hero.cards.trial.cta', 'Start Free Trial'),
       image: '/assets/landing/cinematic/trial_command_cockpit.png',
       color: 'indigo',
       onClick: onTrialClick,
@@ -59,10 +59,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     },
     {
       id: 'video',
-      title: t('landing.hero.cards.video.title'),
-      description: t('landing.hero.cards.video.description'),
-      meta: t('landing.hero.cards.video.meta'),
-      cta: t('landing.hero.cards.video.cta'),
+      title: t('landing.hero.cards.video.title', 'Watch How It Works'),
+      description: t('landing.hero.cards.video.description', 'See Consultinity in action with real enterprise transformation examples.'),
+      meta: t('landing.hero.cards.video.meta', '3 MIN VIDEO'),
+      cta: t('landing.hero.cards.video.cta', 'Play Video'),
       image: '/assets/landing/video_presentation.jpg',
       color: 'black',
       onClick: () => setIsVideoOpen(true),
@@ -71,10 +71,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     },
     {
       id: 'expert',
-      title: t('landing.hero.cards.expert.title'),
-      description: t('landing.hero.cards.expert.description'),
-      meta: t('landing.hero.cards.expert.meta'),
-      cta: t('landing.hero.cards.expert.cta'),
+      title: t('landing.hero.cards.expert.title', 'Talk to Expert'),
+      description: t('landing.hero.cards.expert.description', 'Schedule a personalized consultation with our strategy specialists.'),
+      meta: t('landing.hero.cards.expert.meta', 'HUMAN TOUCH'),
+      cta: t('landing.hero.cards.expert.cta', 'Book Consultation'),
       image: '/assets/landing/cinematic/expert_dialogue.png',
       color: 'emerald',
       onClick: onExpertClick,
@@ -82,10 +82,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     },
     {
       id: 'login',
-      title: t('landing.hero.cards.login.title'),
-      description: t('landing.hero.cards.login.description'),
-      meta: t('landing.hero.cards.login.meta'),
-      cta: t('landing.hero.cards.login.cta'),
+      title: t('landing.hero.cards.login.title', 'Welcome Back'),
+      description: t('landing.hero.cards.login.description', 'Continue your transformation journey. Your workspace awaits.'),
+      meta: t('landing.hero.cards.login.meta', 'EXISTING USER'),
+      cta: t('landing.hero.cards.login.cta', 'Log In'),
       image: '/assets/landing/cinematic/login_portal.png',
       color: 'navy',
       onClick: onLoginClick,
@@ -104,8 +104,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             transition={{ duration: 0.6 }}
             className="text-5xl lg:text-7xl font-black text-navy-950 dark:text-white leading-[1.05] tracking-tight mb-8"
           >
-            {t('landing.hero.title').split('.')[0]}.<br />
-            {t('landing.hero.title').split('.')[1]}.
+            {t('landing.hero.title', 'Think bigger.Do smarter').split('.')[0]}.<br />
+            {t('landing.hero.title', 'Think bigger.Do smarter').split('.')[1]}.
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}

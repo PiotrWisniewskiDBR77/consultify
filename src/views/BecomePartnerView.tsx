@@ -156,7 +156,7 @@ export const BecomePartnerView: React.FC = () => {
 
           {/* Main Headline */}
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.1] mb-8 bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
-            Zostań Partnerem <br className="hidden md:block" />
+            Become Partner <br className="hidden md:block" />
             <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
               Platformy PMO + AI
             </span>

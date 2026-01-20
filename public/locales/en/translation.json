@@ -1,4 +1,82 @@
 {
+  "landing": {
+    "hero": {
+      "title": "Think bigger.Do smarter",
+      "subtitleLine1": "Your",
+      "subtitleLine1End": "for Enterprise Strategy.",
+      "slogans": {
+        "1": "Months of consulting. Minutes of AI. Better results.",
+        "2": "Transform decisions. Accelerate outcomes.",
+        "3": "Enterprise intelligence. Instant clarity.",
+        "4": "AI-powered strategy. Real-time insights.",
+        "5": "Consulting reimagined. Results delivered."
+      },
+      "tagline": {
+        "line1": "AI consulting.",
+        "line2": "No slides.",
+        "line3": "Just decisions."
+      },
+      "cards": {
+        "demo": {
+          "title": "Interactive Demo",
+          "description": "Explore Consultinity with AI-guided walkthrough. No signup required.",
+          "meta": "GUIDED EXPERIENCE",
+          "cta": "Start Demo"
+        },
+        "trial": {
+          "title": "Free Trial",
+          "description": "14-day full access to all features. Start your transformation today.",
+          "meta": "14 DAYS FREE",
+          "cta": "Start Free Trial"
+        },
+        "video": {
+          "title": "Watch How It Works",
+          "description": "See Consultinity in action with real enterprise transformation examples.",
+          "meta": "3 MIN VIDEO",
+          "cta": "Play Video"
+        },
+        "expert": {
+          "title": "Talk to Expert",
+          "description": "Schedule a personalized consultation with our strategy specialists.",
+          "meta": "HUMAN TOUCH",
+          "cta": "Book Consultation"
+        },
+        "login": {
+          "title": "Welcome Back",
+          "description": "Continue your transformation journey. Your workspace awaits.",
+          "meta": "EXISTING USER",
+          "cta": "Log In"
+        }
+      }
+    },
+    "topBar": {
+      "demo": "Demo",
+      "trial": "Trial",
+      "login": "Log in",
+      "signUp": "Sign up"
+    },
+    "methodology": {
+      "badge": "Our Methodology",
+      "heading": "AI-Driven Strategic Transformation"
+    },
+    "steps": {
+      "diagnostic": {
+        "title": "Diagnostic Assessment",
+        "desc": "AI analyzes your organization's digital maturity, identifies gaps, and benchmarks against industry standards."
+      },
+      "roadmap": {
+        "title": "Strategic Roadmap",
+        "desc": "Generate actionable transformation roadmap with prioritized initiatives, timelines, and resource requirements."
+      },
+      "approval": {
+        "title": "Human Governance",
+        "desc": "Every strategic decision requires human approval. Full accountability and control remain with your leadership."
+      }
+    }
+  },
+  "partner": {
+    "becomePartner": "Become Partner"
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",

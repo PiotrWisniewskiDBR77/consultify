@@ -110,7 +110,7 @@ const getContextConfig = (
     },
     report: {
       icon: ClipboardList,
-      label: t('aiChat.context.report', 'Raport'),
+      label: t('aiChat.context.report', 'Report'),
       color: 'text-indigo-600 dark:text-indigo-400',
       bgColor: 'bg-indigo-50 dark:bg-indigo-900/20',
       borderColor: 'border-indigo-200 dark:border-indigo-800',
@@ -213,7 +213,7 @@ export const ContextBadge: React.FC<ContextBadgeProps> = ({
             <div className="flex items-center gap-2">
               <span className={`text-xs font-semibold ${config.color}`}>{config.label}:</span>
               <span className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
-                {context.entityName || t('aiChat.context.unnamed', 'Bez nazwy')}
+                {context.entityName || t('aiChat.context.unnamed', 'Unnamed')}
               </span>
             </div>
 
@@ -318,7 +318,7 @@ export const InputContextBadge: React.FC<InputContextBadgeProps> = ({
       <Icon size={14} className={config.color} />
       <span className="text-xs text-slate-600 dark:text-slate-300">
         <span className={`font-medium ${config.color}`}>{config.label}:</span>{' '}
-        {context.entityName || t('aiChat.context.unnamed', 'Bez nazwy')}
+        {context.entityName || t('aiChat.context.unnamed', 'Unnamed')}
       </span>
       {context.projectName && context.type !== 'project' && (
         <>
