@@ -110,14 +110,21 @@ export const useChatProjectStore = create<ChatProjectState>()(
       // ==================== FETCH ====================
 
       fetchProjects: async () => {
-        set({ isLoading: true, error: null });
         try {
+          set({ isLoading: true, error: null });
           const result = await Api.getChatProjects();
-          const projects = result.projects.map(mapApiProject);
+          // Defensive check: ensure projects is an array
+          const projectsArray = Array.isArray(result?.projects) ? result.projects : [];
+          const projects = projectsArray.map(mapApiProject);
           set({ projects, isLoading: false });
         } catch (err: any) {
           console.error('[ChatProjectStore] Fetch error:', err);
-          set({ error: err.message || 'Failed to fetch projects', isLoading: false });
+          try {
+            set({ error: err.message || 'Failed to fetch projects', isLoading: false, projects: [] });
+          } catch (setError) {
+            // Fallback if set fails (shouldn't happen, but safety first)
+            console.error('[ChatProjectStore] Failed to update state:', setError);
+          }
         }
       },
 

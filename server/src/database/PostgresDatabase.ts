@@ -77,6 +77,143 @@ function getReadPool(): Pool {
   return getPool();
 }
 
+// Cache for tables we've attempted to create to avoid infinite loops
+const tableCreationAttempts = new Set<string>();
+
+async function ensureColumnExists(tableName: string, columnName: string, columnDef: string): Promise<boolean> {
+  try {
+    // Validate table and column names to prevent SQL injection (they should only contain alphanumeric and underscore)
+    if (!/^[a-z_][a-z0-9_]*$/i.test(tableName) || !/^[a-z_][a-z0-9_]*$/i.test(columnName)) {
+      logger.error(`[Postgres] Invalid table or column name: ${tableName}.${columnName}`);
+      return false;
+    }
+
+    const checkResult = await getPool().query(
+      `SELECT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2
+      )`,
+      [tableName, columnName]
+    );
+
+    if (checkResult.rows[0]?.exists) {
+      return true; // Column exists
+    }
+
+    logger.warn(`[Postgres] Column ${tableName}.${columnName} does not exist, attempting to add...`);
+    // Since table/column names are validated, we can safely use them in SQL
+    // Use format() with %I for identifier quoting to handle special characters safely
+    await getPool().query(
+      `ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDef}`
+    );
+    logger.info(`[Postgres] Added column ${tableName}.${columnName} on-the-fly`);
+    return true;
+  } catch (err) {
+    const error = err as Error;
+    // Ignore error if column already exists (could happen due to race condition)
+    if (error.message.includes('already exists') || 
+        error.message.includes('duplicate column') ||
+        error.message.includes('column') && error.message.includes('of relation') && error.message.includes('already exists')) {
+      logger.debug(`[Postgres] Column ${tableName}.${columnName} already exists (race condition)`);
+      return true;
+    }
+    logger.error(`[Postgres] Failed to add column ${tableName}.${columnName}:`, error.message);
+    return false;
+  }
+}
+
+async function ensureTableExists(tableName: string): Promise<boolean> {
+  if (tableCreationAttempts.has(tableName)) {
+    return false; // Already attempted, avoid infinite loop
+  }
+
+  try {
+    // Check if table exists
+    const checkResult = await getPool().query(
+      `SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' AND table_name = $1
+      )`,
+      [tableName]
+    );
+
+    if (checkResult.rows[0]?.exists) {
+      // Table exists, but check for critical missing columns
+      if (tableName === 'decisions') {
+        // Add missing columns silently - failures are logged but don't prevent table usage
+        // Use Promise.allSettled to ensure all promises complete even if some fail
+        const results = await Promise.allSettled([
+          ensureColumnExists('decisions', 'title', 'TEXT'),
+          ensureColumnExists('decisions', 'priority', 'TEXT DEFAULT \'MEDIUM\''),
+          ensureColumnExists('decisions', 'impact', 'TEXT DEFAULT \'MEDIUM\''),
+          ensureColumnExists('decisions', 'escalation_level', 'TEXT DEFAULT \'none\''),
+          ensureColumnExists('decisions', 'pmo_domain', 'TEXT'),
+          ensureColumnExists('decisions', 'required', 'INTEGER DEFAULT 0'),
+        ]);
+        // Log any failures but don't throw
+        results.forEach((result, index) => {
+          if (result.status === 'rejected') {
+            logger.debug(`[Postgres] Failed to ensure column ${index} in decisions table:`, result.reason);
+          }
+        });
+      }
+      return true; // Table exists
+    }
+
+    tableCreationAttempts.add(tableName);
+    logger.warn(`[Postgres] Table ${tableName} does not exist, attempting to create...`);
+
+    // Create table based on name
+    if (tableName === 'decision_impacts') {
+      await getPool().query(`CREATE TABLE IF NOT EXISTS decision_impacts(
+        id TEXT PRIMARY KEY,
+        decision_id TEXT NOT NULL,
+        impacted_type TEXT NOT NULL,
+        impacted_id TEXT NOT NULL,
+        impact_description TEXT,
+        is_blocker INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`);
+      await getPool().query(`CREATE INDEX IF NOT EXISTS idx_decision_impacts_decision ON decision_impacts(decision_id)`);
+      await getPool().query(`CREATE INDEX IF NOT EXISTS idx_decision_impacts_blocker ON decision_impacts(is_blocker)`);
+      await getPool().query(`CREATE INDEX IF NOT EXISTS idx_decision_impacts_impacted ON decision_impacts(impacted_type, impacted_id)`);
+      logger.info(`[Postgres] Created table ${tableName} on-the-fly`);
+      return true;
+    } else if (tableName === 'ai_actions') {
+      await getPool().query(`CREATE TABLE IF NOT EXISTS ai_actions(
+        id TEXT PRIMARY KEY,
+        user_id TEXT,
+        organization_id TEXT,
+        project_id TEXT,
+        action_type TEXT,
+        payload TEXT,
+        draft_content TEXT,
+        required_policy_level TEXT,
+        current_policy_level TEXT,
+        requires_approval INTEGER DEFAULT 0,
+        status TEXT DEFAULT 'PENDING',
+        approved_at TIMESTAMP,
+        approved_by TEXT,
+        executed_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`);
+      await getPool().query(`CREATE INDEX IF NOT EXISTS idx_ai_actions_user ON ai_actions(user_id)`);
+      await getPool().query(`CREATE INDEX IF NOT EXISTS idx_ai_actions_org ON ai_actions(organization_id)`);
+      await getPool().query(`CREATE INDEX IF NOT EXISTS idx_ai_actions_project ON ai_actions(project_id)`);
+      await getPool().query(`CREATE INDEX IF NOT EXISTS idx_ai_actions_status ON ai_actions(status)`);
+      await getPool().query(`CREATE INDEX IF NOT EXISTS idx_ai_actions_type ON ai_actions(action_type)`);
+      await getPool().query(`CREATE INDEX IF NOT EXISTS idx_ai_actions_created ON ai_actions(created_at)`);
+      logger.info(`[Postgres] Created table ${tableName} on-the-fly`);
+      return true;
+    }
+
+    return false; // Unknown table, can't create automatically
+  } catch (createErr) {
+    logger.error(`[Postgres] Failed to create table ${tableName} on-the-fly:`, (createErr as Error).message);
+    return false;
+  }
+}
+
 async function executeWithLogging<T>(
   poolFn: () => Pool,
   sql: string,
@@ -95,8 +232,132 @@ async function executeWithLogging<T>(
 
     return { rows: res.rows as T[], rowCount: res.rowCount };
   } catch (err) {
+    const error = err as Error;
+    const errorMessage = error.message || '';
+    
+    // Check if this is a "relation does not exist" error for a table we can create
+    const relationNotFoundMatch = errorMessage.match(/relation "([^"]+)" does not exist/);
+    if (relationNotFoundMatch) {
+      const missingTable = relationNotFoundMatch[1];
+      try {
+        const created = await ensureTableExists(missingTable);
+        
+        if (created) {
+          // Retry the query after creating the table
+          logger.info(`[Postgres] Retrying query after creating table ${missingTable}`);
+          try {
+            const pool = poolFn();
+            const res = await pool.query(sql, params);
+            const duration = Date.now() - start;
+            if (duration > SLOW_QUERY_THRESHOLD_MS) {
+              logger.warn(`[Postgres] SLOW QUERY (${duration}ms) [${method}]: ${sql.substring(0, 200)}...`);
+            }
+            return { rows: res.rows as T[], rowCount: res.rowCount };
+          } catch (retryErr) {
+            logger.error(`[Postgres] Query still failed after creating table ${missingTable}:`, (retryErr as Error).message);
+          }
+        }
+      } catch (tableErr) {
+        logger.error(`[Postgres] Failed to ensure table ${missingTable} exists:`, (tableErr as Error).message);
+        // Don't throw - let original error propagate
+      }
+    }
+    
+    // Check if this is a "column does not exist" error for a column we can add
+    const columnNotFoundMatch = errorMessage.match(/column "([^"]+)" does not exist/);
+    if (columnNotFoundMatch) {
+      const missingColumn = columnNotFoundMatch[1].toLowerCase();
+      
+      // Try to infer table name from SQL query - improved regex to handle more patterns
+      let tableName: string | null = null;
+      
+      // Pattern 1: FROM table_name or FROM table_name alias
+      const fromMatch = sql.match(/FROM\s+([a-z_][a-z0-9_]*)(?:\s|$|WHERE|JOIN|LEFT|RIGHT|INNER|OUTER)/i);
+      if (fromMatch) {
+        tableName = fromMatch[1].toLowerCase();
+      }
+      
+      // Pattern 2: UPDATE table_name
+      if (!tableName) {
+        const updateMatch = sql.match(/UPDATE\s+([a-z_][a-z0-9_]*)(?:\s|$|SET)/i);
+        if (updateMatch) {
+          tableName = updateMatch[1].toLowerCase();
+        }
+      }
+      
+      // Pattern 3: INSERT INTO table_name
+      if (!tableName) {
+        const insertMatch = sql.match(/INSERT\s+INTO\s+([a-z_][a-z0-9_]*)(?:\s|$|\()/i);
+        if (insertMatch) {
+          tableName = insertMatch[1].toLowerCase();
+        }
+      }
+      
+      // Pattern 4: Check if column is mentioned in context of known tables
+      // If we can't infer, try common tables that use 'title' column
+      if (!tableName) {
+        // Common tables with 'title' column
+        const commonTablesWithTitle = ['decisions', 'tasks', 'initiatives', 'projects'];
+        for (const table of commonTablesWithTitle) {
+          if (sql.toLowerCase().includes(table)) {
+            tableName = table;
+            break;
+          }
+        }
+      }
+      
+      if (tableName) {
+        logger.info(`[Postgres] Detected missing column ${missingColumn} in table ${tableName}`);
+        
+        try {
+          // Add common missing columns for decisions table
+          let columnAdded = false;
+          if (tableName === 'decisions') {
+            if (missingColumn === 'title') {
+              columnAdded = await ensureColumnExists('decisions', 'title', 'TEXT');
+            } else if (missingColumn === 'priority') {
+              columnAdded = await ensureColumnExists('decisions', 'priority', 'TEXT DEFAULT \'MEDIUM\'');
+            } else if (missingColumn === 'impact') {
+              columnAdded = await ensureColumnExists('decisions', 'impact', 'TEXT DEFAULT \'MEDIUM\'');
+            } else if (missingColumn === 'escalation_level') {
+              columnAdded = await ensureColumnExists('decisions', 'escalation_level', 'TEXT DEFAULT \'none\'');
+            } else if (missingColumn === 'pmo_domain') {
+              columnAdded = await ensureColumnExists('decisions', 'pmo_domain', 'TEXT');
+            } else if (missingColumn === 'required') {
+              columnAdded = await ensureColumnExists('decisions', 'required', 'INTEGER DEFAULT 0');
+            } else if (missingColumn === 'decision_owner_id') {
+              columnAdded = await ensureColumnExists('decisions', 'decision_owner_id', 'TEXT');
+            }
+          }
+          
+          if (columnAdded) {
+            // Retry the query after adding the column
+            logger.info(`[Postgres] Retrying query after adding column ${tableName}.${missingColumn}`);
+            try {
+              const pool = poolFn();
+              const res = await pool.query(sql, params);
+              const duration = Date.now() - start;
+              if (duration > SLOW_QUERY_THRESHOLD_MS) {
+                logger.warn(`[Postgres] SLOW QUERY (${duration}ms) [${method}]: ${sql.substring(0, 200)}...`);
+              }
+              return { rows: res.rows as T[], rowCount: res.rowCount };
+            } catch (retryErr) {
+              logger.error(`[Postgres] Query still failed after adding column ${tableName}.${missingColumn}:`, (retryErr as Error).message);
+            }
+          } else {
+            logger.warn(`[Postgres] Cannot auto-add column ${missingColumn} to table ${tableName} - not in known column list`);
+          }
+        } catch (columnErr) {
+          logger.error(`[Postgres] Failed to add column ${tableName}.${missingColumn}:`, (columnErr as Error).message);
+          // Don't throw - let original error propagate
+        }
+      } else {
+        logger.warn(`[Postgres] Cannot infer table name from SQL for missing column ${missingColumn}: ${sql.substring(0, 200)}`);
+      }
+    }
+    
     // Log query error with context
-    logger.error(`[Postgres] Query Error [${method}]:`, (err as Error).message);
+    logger.error(`[Postgres] Query Error [${method}]:`, error.message);
     logger.error(`[Postgres] Failed SQL: ${sql.substring(0, 500)}`);
     throw err;
   }
@@ -1387,6 +1648,31 @@ export async function initDb(): Promise<void> {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
 
+    // AI Actions (for AI action executor service)
+    await query(`CREATE TABLE IF NOT EXISTS ai_actions(
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            organization_id TEXT,
+            project_id TEXT,
+            action_type TEXT,
+            payload TEXT,
+            draft_content TEXT,
+            required_policy_level TEXT,
+            current_policy_level TEXT,
+            requires_approval INTEGER DEFAULT 0,
+            status TEXT DEFAULT 'PENDING',
+            approved_at TIMESTAMP,
+            approved_by TEXT,
+            executed_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_ai_actions_user ON ai_actions(user_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_ai_actions_org ON ai_actions(organization_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_ai_actions_project ON ai_actions(project_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_ai_actions_status ON ai_actions(status)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_ai_actions_type ON ai_actions(action_type)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_ai_actions_created ON ai_actions(created_at)`);
+
     // Approval Assignments
     await query(`CREATE TABLE IF NOT EXISTS approval_assignments(
             id TEXT PRIMARY KEY,
@@ -1419,6 +1705,22 @@ export async function initDb(): Promise<void> {
     await query(
       `CREATE INDEX IF NOT EXISTS idx_approval_assignments_sla ON approval_assignments(sla_due_at, status)`
     );
+
+    // Decision Impacts (for decision management - tracks blocked items, governance impacts)
+    // Create table without FK constraint initially (migrations will add FK if needed)
+    // This ensures table exists even if decisions table doesn't exist yet
+    await query(`CREATE TABLE IF NOT EXISTS decision_impacts(
+            id TEXT PRIMARY KEY,
+            decision_id TEXT NOT NULL,
+            impacted_type TEXT NOT NULL,
+            impacted_id TEXT NOT NULL,
+            impact_description TEXT,
+            is_blocker INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_decision_impacts_decision ON decision_impacts(decision_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_decision_impacts_blocker ON decision_impacts(is_blocker)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_decision_impacts_impacted ON decision_impacts(impacted_type, impacted_id)`);
 
     // MFA Attempts
     await query(`CREATE TABLE IF NOT EXISTS mfa_attempts(

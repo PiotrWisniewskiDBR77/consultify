@@ -4664,8 +4664,16 @@ export const Api = {
   // Chat projects - Real API implementations
   getChatProjects: async () => {
     const response = await fetch(`${API_URL}/chat-projects`, { headers: getHeaders() });
-    if (!response.ok) throw new Error('Failed to fetch chat projects');
-    return response.json();
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to fetch chat projects');
+    }
+    const data = await response.json();
+    // Ensure response has the expected structure
+    return {
+      projects: Array.isArray(data?.projects) ? data.projects : [],
+      total: data?.total ?? (Array.isArray(data?.projects) ? data.projects.length : 0),
+    };
   },
   getChatProject: async (id: string) => {
     const response = await fetch(`${API_URL}/chat-projects/${id}`, { headers: getHeaders() });

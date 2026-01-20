@@ -32,7 +32,7 @@ export class UserController {
 
       // Select only columns that exist in the users table
       let sql =
-        'SELECT id, email, first_name, last_name, role, status, avatar_url, last_login, title FROM users WHERE organization_id = ?';
+        'SELECT id, email, first_name, last_name, role, status, avatar_url, last_login FROM users WHERE organization_id = ?';
       type SQLParam = string | number | boolean | null | undefined;
       const params: SQLParam[] = [orgId];
 
@@ -54,7 +54,7 @@ export class UserController {
         status: u.status || 'active',
         avatarUrl: u.avatar_url,
         lastLogin: u.last_login,
-        title: u.title,
+        title: null, // Title column doesn't exist in users table
         // Default values for columns that may not exist
         aiConfig: {},
         licensePlanId: null,

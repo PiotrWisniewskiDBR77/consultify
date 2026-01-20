@@ -320,14 +320,16 @@ export const useConversationStore = create<ConversationState>()(
       // ==================== FETCH ====================
 
       fetchConversations: async (options) => {
-        set({ isLoading: true });
         try {
+          set({ isLoading: true });
           const result = await Api.getConversations({
             archived: options?.archived,
             projectId: options?.projectId,
           });
 
-          const conversations = result.conversations.map(mapApiConversation);
+          // Defensive check: ensure conversations is an array
+          const conversationsArray = Array.isArray(result?.conversations) ? result.conversations : [];
+          const conversations = conversationsArray.map(mapApiConversation);
           set({
             conversations,
             groupedConversations: groupConversations(conversations),
@@ -335,7 +337,11 @@ export const useConversationStore = create<ConversationState>()(
           });
         } catch (err) {
           console.error('[ConversationStore] Fetch error:', err);
-          set({ isLoading: false });
+          try {
+            set({ isLoading: false });
+          } catch (setError) {
+            console.error('[ConversationStore] Failed to update state:', setError);
+          }
         }
       },
 

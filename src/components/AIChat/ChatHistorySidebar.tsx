@@ -80,8 +80,12 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
 
   // Fetch conversations and projects on mount
   useEffect(() => {
-    fetchConversations({ projectId });
-    fetchProjects();
+    fetchConversations({ projectId }).catch((err) => {
+      console.error('[ChatHistorySidebar] Failed to fetch conversations:', err);
+    });
+    fetchProjects().catch((err) => {
+      console.error('[ChatHistorySidebar] Failed to fetch projects:', err);
+    });
   }, [projectId, fetchConversations, fetchProjects]);
 
   // Filter conversations based on search
