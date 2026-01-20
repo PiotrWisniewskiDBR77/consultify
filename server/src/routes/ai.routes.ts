@@ -230,13 +230,19 @@ router.post(
 
         if (partial) {
           accumulatedContent = partial;
-          res.write(
-            `data: ${JSON.stringify({
-              type: 'resume',
-              text: partial,
-              sessionId: streamSessionId,
-            })}\n\n`
-          );
+          try {
+            if (isClientConnected && !res.destroyed) {
+              res.write(
+                `data: ${JSON.stringify({
+                  type: 'resume',
+                  text: partial,
+                  sessionId: streamSessionId,
+                })}\n\n`
+              );
+            }
+          } catch (writeError: any) {
+            logger.warn(`[Stream] Resume write error for ${streamSessionId}:`, writeError.message);
+          }
         }
 
         // Partial resume logic handled by sending previous content to client
@@ -294,54 +300,93 @@ router.post(
       const response = await (aiPipeline as any).process(
         pipelineRequest,
         (progress: Record<string, unknown>) => {
-          if (!isClientConnected || res.destroyed) return;
+          if (!isClientConnected || res.destroyed || streamAborted) return;
 
-          res.write(
-            `data: ${JSON.stringify({
-              type: 'thought',
-              ...progress,
-            })}\n\n`
-          );
+          try {
+            res.write(
+              `data: ${JSON.stringify({
+                type: 'thought',
+                ...progress,
+              })}\n\n`
+            );
+          } catch (writeError: any) {
+            logger.warn(`[Stream] Progress write error for ${streamSessionId}:`, writeError.message);
+            streamAborted = true;
+            isClientConnected = false;
+          }
         }
       );
 
       if ((response as { stream?: AsyncIterable<string> }).stream) {
-        for await (const chunk of (response as { stream: AsyncIterable<string> }).stream) {
-          if (!isClientConnected || res.destroyed || streamAborted) {
-            logger.info(`[Stream] Aborting stream - client disconnected: ${streamSessionId}`);
-            break;
-          }
+        try {
+          for await (const chunk of (response as { stream: AsyncIterable<string> }).stream) {
+            if (!isClientConnected || res.destroyed || streamAborted) {
+              logger.info(`[Stream] Aborting stream - client disconnected: ${streamSessionId}`);
+              break;
+            }
 
-          if (chunk) {
-            accumulatedContent += chunk;
-            res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+            if (chunk) {
+              accumulatedContent += chunk;
+              
+              // Safely write chunk with error handling
+              try {
+                if (isClientConnected && !res.destroyed && !streamAborted) {
+                  res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+                }
+              } catch (writeError: any) {
+                logger.warn(`[Stream] Write error for ${streamSessionId}:`, writeError.message);
+                streamAborted = true;
+                isClientConnected = false;
+                break;
+              }
 
-            if (Date.now() - lastSaveTime > 2000) {
-              savePartialResponse(
-                streamSessionId,
-                accumulatedContent,
-                req.userId!,
-                req.organizationId!
-              ).catch((err: Error | null) =>
-                logger.warn('[Stream] Partial save failed:', (err as Error).message)
-              );
-              lastSaveTime = Date.now();
+              if (Date.now() - lastSaveTime > 2000) {
+                savePartialResponse(
+                  streamSessionId,
+                  accumulatedContent,
+                  req.userId!,
+                  req.organizationId!
+                ).catch((err: Error | null) =>
+                  logger.warn('[Stream] Partial save failed:', (err as Error).message)
+                );
+                lastSaveTime = Date.now();
+              }
             }
           }
+        } catch (streamError: any) {
+          logger.error(`[Stream] Error during stream iteration for ${streamSessionId}:`, {
+            error: streamError.message,
+            stack: streamError.stack,
+            accumulatedLength: accumulatedContent.length,
+          });
+          // Don't rethrow - let the outer catch handle it
+          throw streamError;
         }
 
-        if (isClientConnected && !streamAborted) {
-          res.write('data: [DONE]\n\n');
+        if (isClientConnected && !streamAborted && !res.destroyed) {
+          try {
+            res.write('data: [DONE]\n\n');
+          } catch (writeError: any) {
+            logger.warn(`[Stream] Failed to write [DONE] for ${streamSessionId}:`, writeError.message);
+          }
 
-          await dbRun(`DELETE FROM ai_partial_responses WHERE session_id = ?`, [streamSessionId]);
+          try {
+            await dbRun(`DELETE FROM ai_partial_responses WHERE session_id = ?`, [streamSessionId]);
+          } catch (dbError: any) {
+            logger.warn(`[Stream] Failed to delete partial response for ${streamSessionId}:`, dbError.message);
+          }
         }
         return res.end();
       } else {
-        if (isClientConnected && !res.destroyed) {
-          res.write(
-            `data: ${JSON.stringify({ text: (response as { content?: string }).content || '' })}\n\n`
-          );
-          res.write('data: [DONE]\n\n');
+        if (isClientConnected && !res.destroyed && !streamAborted) {
+          try {
+            res.write(
+              `data: ${JSON.stringify({ text: (response as { content?: string }).content || '' })}\n\n`
+            );
+            res.write('data: [DONE]\n\n');
+          } catch (writeError: any) {
+            logger.warn(`[Stream] Non-stream write error for ${streamSessionId}:`, writeError.message);
+          }
         }
         return res.end();
       }
@@ -359,15 +404,23 @@ router.post(
         );
       }
 
-      if (isClientConnected && !res.destroyed) {
-        res.write(
-          `data: ${JSON.stringify({
-            error: (err as Error).message,
-            sessionId: streamSessionId,
-            canResume: accumulatedContent.length > 0,
-          })}\n\n`
-        );
-        return res.end();
+      if (isClientConnected && !res.destroyed && !streamAborted) {
+        try {
+          res.write(
+            `data: ${JSON.stringify({
+              error: (err as Error).message,
+              sessionId: streamSessionId,
+              canResume: accumulatedContent.length > 0,
+            })}\n\n`
+          );
+        } catch (writeError: any) {
+          logger.warn(`[Stream] Error write failed for ${streamSessionId}:`, writeError.message);
+        }
+        try {
+          return res.end();
+        } catch (endError: any) {
+          logger.warn(`[Stream] Response end failed for ${streamSessionId}:`, endError.message);
+        }
       }
     } finally {
       req.socket?.removeListener('close', connectionCleanup);

@@ -43,7 +43,28 @@ export const validateBody = (schema: z.ZodSchema) => {
         return;
       }
 
-      const result = schema.safeParse(req.body);
+      let result;
+      try {
+        result = schema.safeParse(req.body);
+      } catch (parseError: any) {
+        // Catch errors during schema parsing (e.g., undefined nested schemas, corrupted schema structure)
+        // This specifically handles the "Cannot read properties of undefined (reading '_zod')" error
+        logger.error('[ValidationMiddleware] Error during schema.safeParse', {
+          path: req.path,
+          method: req.method,
+          error: parseError?.message || String(parseError),
+          stack: parseError?.stack,
+          errorType: parseError?.constructor?.name,
+          schemaType: typeof schema,
+          schemaConstructor: schema?.constructor?.name,
+          isZodError: parseError?.message?.includes('_zod') || false
+        });
+        res.status(500).json({ 
+          error: 'Internal Server Error during validation',
+          details: parseError?.message || 'Schema validation error'
+        });
+        return;
+      }
       if (!result.success) {
         // Format Zod errors into a readable structure
         const errors =
@@ -95,7 +116,44 @@ export const validateBody = (schema: z.ZodSchema) => {
 export const validateQuery = (schema: z.ZodSchema) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     try {
-      const result = schema.safeParse(req.query);
+      // Guard against undefined or invalid schemas
+      if (!schema) {
+        logger.error('[ValidationMiddleware] Schema is undefined', { 
+          path: req.path, 
+          method: req.method 
+        });
+        res.status(500).json({ error: 'Validation schema is undefined' });
+        return;
+      }
+
+      if (typeof schema.safeParse !== 'function') {
+        logger.error('[ValidationMiddleware] Schema does not have safeParse method', { 
+          path: req.path, 
+          method: req.method,
+          schemaType: typeof schema,
+          schemaKeys: schema ? Object.keys(schema) : []
+        });
+        res.status(500).json({ error: 'Invalid validation schema - missing safeParse method' });
+        return;
+      }
+
+      let result;
+      try {
+        result = schema.safeParse(req.query);
+      } catch (parseError: any) {
+        logger.error('[ValidationMiddleware] Error during schema.safeParse', {
+          path: req.path,
+          method: req.method,
+          error: parseError?.message || String(parseError),
+          stack: parseError?.stack,
+          errorType: parseError?.constructor?.name
+        });
+        res.status(500).json({ 
+          error: 'Internal Server Error during validation',
+          details: parseError?.message || 'Schema validation error'
+        });
+        return;
+      }
       if (!result.success) {
         const errors =
           result.error?.issues?.map((err: any) => ({
@@ -140,7 +198,44 @@ export const validateQuery = (schema: z.ZodSchema) => {
 export const validateParams = (schema: z.ZodSchema) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     try {
-      const result = schema.safeParse(req.params);
+      // Guard against undefined or invalid schemas
+      if (!schema) {
+        logger.error('[ValidationMiddleware] Schema is undefined', { 
+          path: req.path, 
+          method: req.method 
+        });
+        res.status(500).json({ error: 'Validation schema is undefined' });
+        return;
+      }
+
+      if (typeof schema.safeParse !== 'function') {
+        logger.error('[ValidationMiddleware] Schema does not have safeParse method', { 
+          path: req.path, 
+          method: req.method,
+          schemaType: typeof schema,
+          schemaKeys: schema ? Object.keys(schema) : []
+        });
+        res.status(500).json({ error: 'Invalid validation schema - missing safeParse method' });
+        return;
+      }
+
+      let result;
+      try {
+        result = schema.safeParse(req.params);
+      } catch (parseError: any) {
+        logger.error('[ValidationMiddleware] Error during schema.safeParse', {
+          path: req.path,
+          method: req.method,
+          error: parseError?.message || String(parseError),
+          stack: parseError?.stack,
+          errorType: parseError?.constructor?.name
+        });
+        res.status(500).json({ 
+          error: 'Internal Server Error during validation',
+          details: parseError?.message || 'Schema validation error'
+        });
+        return;
+      }
       if (!result.success) {
         const errors =
           result.error?.issues?.map((err: any) => ({

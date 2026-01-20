@@ -256,6 +256,34 @@ async function ensureTableExists(tableName: string): Promise<boolean> {
       await getPool().query(`CREATE INDEX IF NOT EXISTS idx_ai_actions_created ON ai_actions(created_at)`);
       logger.info(`[Postgres] Created table ${tableName} on-the-fly`);
       return true;
+    } else if (tableName === 'ai_user_style_profiles') {
+      await getPool().query(`CREATE TABLE IF NOT EXISTS ai_user_style_profiles(
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL UNIQUE,
+        organization_id TEXT,
+        preferred_depth TEXT DEFAULT 'balanced',
+        preferred_format TEXT DEFAULT 'structured',
+        technical_level TEXT DEFAULT 'intermediate',
+        response_length TEXT DEFAULT 'medium',
+        detected_expertise_areas TEXT DEFAULT '[]',
+        common_question_types TEXT DEFAULT '[]',
+        peak_activity_hours TEXT DEFAULT '[]',
+        preferred_focus_modes TEXT DEFAULT '[]',
+        context_preferences TEXT DEFAULT '{}',
+        total_interactions INTEGER DEFAULT 0,
+        positive_feedback_count INTEGER DEFAULT 0,
+        negative_feedback_count INTEGER DEFAULT 0,
+        last_profile_update TEXT,
+        confidence_score REAL DEFAULT 0.5,
+        auto_adapt_enabled INTEGER DEFAULT 1,
+        manual_overrides TEXT DEFAULT '{}',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`);
+      await getPool().query(`CREATE INDEX IF NOT EXISTS idx_style_profiles_user ON ai_user_style_profiles(user_id)`);
+      await getPool().query(`CREATE INDEX IF NOT EXISTS idx_style_profiles_org ON ai_user_style_profiles(organization_id)`);
+      logger.info(`[Postgres] Created table ${tableName} on-the-fly`);
+      return true;
     }
 
     return false; // Unknown table, can't create automatically
@@ -361,7 +389,7 @@ async function executeWithLogging<T>(
         logger.info(`[Postgres] Detected missing column ${missingColumn} in table ${tableName}`);
         
         try {
-          // Add common missing columns for decisions table
+          // Add common missing columns for various tables
           let columnAdded = false;
           if (tableName === 'decisions') {
             if (missingColumn === 'title') {
@@ -378,6 +406,26 @@ async function executeWithLogging<T>(
               columnAdded = await ensureColumnExists('decisions', 'required', 'INTEGER DEFAULT 0');
             } else if (missingColumn === 'decision_owner_id') {
               columnAdded = await ensureColumnExists('decisions', 'decision_owner_id', 'TEXT');
+            }
+          } else if (tableName === 'projects') {
+            if (missingColumn === 'is_closed') {
+              columnAdded = await ensureColumnExists('projects', 'is_closed', 'INTEGER DEFAULT 0');
+            }
+          } else if (tableName === 'ai_policies') {
+            if (missingColumn === 'internet_enabled') {
+              columnAdded = await ensureColumnExists('ai_policies', 'internet_enabled', 'INTEGER DEFAULT 1');
+            }
+          } else if (tableName === 'ai_partial_responses') {
+            if (missingColumn === 'session_id') {
+              columnAdded = await ensureColumnExists('ai_partial_responses', 'session_id', 'TEXT');
+              // Also create index if column was added
+              if (columnAdded) {
+                try {
+                  await getPool().query(`CREATE INDEX IF NOT EXISTS idx_partial_responses_session ON ai_partial_responses(session_id)`);
+                } catch (idxErr) {
+                  // Index might already exist, ignore
+                }
+              }
             }
           }
           
