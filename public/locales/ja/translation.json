@@ -3344,11 +3344,53 @@
       }
     },
     "sidePanel": {
+      "title": "ヘルプセンター",
+      "fullDocs": "完全なドキュメント",
       "tabs": {
         "overview": "概要",
-        "howto": "使い方",
         "faq": "よくある質問",
-        "video": "動画"
+        "knowledge": "ナレッジベース"
+      },
+      "overview": {
+        "title": "Consultinityへようこそ",
+        "intro": "デジタル変革のための完全なPMOプラットフォームです。AI駆動のインサイトと実証済みの方法論で、組織のデジタルエクセレンスへの旅を評価、計画、追跡します。",
+        "watchVideo": "紹介動画を見る",
+        "videoDuration": "3分の概要",
+        "guides": "クイックガイド",
+        "guidesList": {
+          "gettingStarted": "はじめに",
+          "assessment": "評価の実施方法",
+          "initiatives": "イニシアチブの管理",
+          "reports": "レポートの作成",
+          "aiFeatures": "AI機能ガイド"
+        },
+        "whatToKnow": "知っておくべきこと",
+        "tip1": "デジタル成熟度を理解するために評価から始める",
+        "tip2": "AIインサイトを使用してイニシアチブに優先順位を付ける",
+        "tip3": "リアルタイムダッシュボードとレポートで進捗を追跡する"
+      },
+      "faq": {
+        "searchPlaceholder": "質問を検索...",
+        "noResults": "一致する質問が見つかりません。",
+        "noFAQ": "FAQはありません。"
+      },
+      "knowledge": {
+        "title": "ナレッジベース",
+        "description": "デジタル変革ツール、方法論、ベストプラクティスに関する包括的なリソース。",
+        "comingSoon": "近日公開",
+        "categories": {
+          "tools": "デジタル変革ツール",
+          "methodologies": "方法論（DRD、SIRI、Lean）",
+          "caseStudies": "ケーススタディ",
+          "bestPractices": "ベストプラクティス"
+        },
+        "notify": {
+          "title": "準備ができたら通知を受け取る",
+          "placeholder": "あなたのメール",
+          "button": "通知する",
+          "success": "ナレッジベースが公開されたら通知します！",
+          "description": "ツール、方法論、ケーススタディを含む包括的なナレッジベースの準備ができたらメールを受け取ります。"
+        }
       },
       "modules": {
         "dashboard": {
