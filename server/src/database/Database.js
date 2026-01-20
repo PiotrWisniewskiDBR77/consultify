@@ -1,2 +1,2 @@
-export * from './Database.js';
-export { default } from './Database.js';
+export * from './Database.ts';
+export { default } from './Database.ts';

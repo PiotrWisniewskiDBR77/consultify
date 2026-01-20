@@ -1,0 +1,60 @@
+{
+  "common": {
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集",
+    "close": "閉じる",
+    "loading": "読み込み中",
+    "error": "エラー",
+    "success": "成功",
+    "back": "戻る",
+    "next": "次へ",
+    "previous": "前へ",
+    "of": "/"
+  },
+  "sidebar": {
+    "dashboard": "ダッシュボード",
+    "settings": "設定",
+    "help": "ヘルプ",
+    "knowledge": "ナレッジベース"
+  },
+  "auth": {
+    "logIn": "ログイン",
+    "welcomeBack": "おかえりなさい"
+  },
+  "help": {
+    "title": "ヘルプセンター",
+    "knowledge": {
+      "title": "ナレッジベース",
+      "searchPlaceholder": "記事を検索...",
+      "allCategories": "すべて",
+      "noSearchResults": "検索に一致する記事が見つかりませんでした。",
+      "noArticles": "このカテゴリには記事がありません。",
+      "articleNotFound": "記事が見つかりません。",
+      "minRead": "分で読めます",
+      "views": "閲覧数",
+      "relatedModules": "関連モジュール",
+      "shareArticle": "記事を共有",
+      "featured": "おすすめ",
+      "popular": "人気",
+      "recent": "最新",
+      "readMore": "続きを読む",
+      "backToLibrary": "ライブラリに戻る",
+      "categories": "カテゴリ",
+      "articles": "記事",
+      "searchResults": "検索結果",
+      "tableOfContents": "目次",
+      "wasHelpful": "この記事は役に立ちましたか？",
+      "yes": "はい",
+      "no": "いいえ",
+      "feedbackThanks": "フィードバックありがとうございます！",
+      "relatedArticles": "関連記事",
+      "gettingStarted": "はじめに",
+      "tutorials": "チュートリアル",
+      "bestPractices": "ベストプラクティス",
+      "faq": "よくある質問",
+      "troubleshooting": "トラブルシューティング"
+    }
+  }
+}

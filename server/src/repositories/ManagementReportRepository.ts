@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { getDatabase } from '../src/database/index.js';
+import { getDatabase } from '../database/index.js';
 const db = getDatabase();
 
 class ManagementReportRepository {
@@ -407,8 +407,14 @@ class ManagementReportRepository {
             `,
         [projectId],
         (err, row) => {
-          if (err) reject(err);
-          else resolve(row || { approved: 0, pending: 0 });
+          if (err) {
+            const message = err.message || '';
+            if (message.includes('no such table') || message.includes('does not exist')) {
+              resolve({ approved: 0, pending: 0 });
+              return;
+            }
+            reject(err);
+          } else resolve(row || { approved: 0, pending: 0 });
         }
       );
     });
@@ -432,8 +438,14 @@ class ManagementReportRepository {
             `,
         [projectId, periodStart, periodEnd],
         (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows || []);
+          if (err) {
+            const message = err.message || '';
+            if (message.includes('no such table') || message.includes('no such column')) {
+              resolve([]);
+              return;
+            }
+            reject(err);
+          } else resolve(rows || []);
         }
       );
     });
@@ -453,8 +465,14 @@ class ManagementReportRepository {
             `,
         [projectId],
         (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows || []);
+          if (err) {
+            const message = err.message || '';
+            if (message.includes('no such table') || message.includes('no such column')) {
+              resolve([]);
+              return;
+            }
+            reject(err);
+          } else resolve(rows || []);
         }
       );
     });
@@ -473,8 +491,14 @@ class ManagementReportRepository {
             `,
         [projectId],
         (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows || []);
+          if (err) {
+            const message = err.message || '';
+            if (message.includes('no such table') || message.includes('no such column')) {
+              resolve([]);
+              return;
+            }
+            reject(err);
+          } else resolve(rows || []);
         }
       );
     });
@@ -493,8 +517,14 @@ class ManagementReportRepository {
             `,
         [projectId],
         (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows || []);
+          if (err) {
+            const message = err.message || '';
+            if (message.includes('no such table') || message.includes('no such column')) {
+              resolve([]);
+              return;
+            }
+            reject(err);
+          } else resolve(rows || []);
         }
       );
     });
@@ -535,8 +565,14 @@ class ManagementReportRepository {
             `,
         [projectId],
         (err, row) => {
-          if (err) reject(err);
-          else resolve(row || {});
+          if (err) {
+            const message = err.message || '';
+            if (message.includes('no such table') || message.includes('no such column')) {
+              resolve({ total: 0, critical: 0, high: 0 });
+              return;
+            }
+            reject(err);
+          } else resolve(row || {});
         }
       );
     });

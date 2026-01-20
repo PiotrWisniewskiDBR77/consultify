@@ -225,12 +225,7 @@ export default defineConfig({
     ],
     // Optimize test execution
     pool: 'forks', // Use forks instead of threads to avoid napi_throw with SQLite native bindings
-    poolOptions: {
-      forks: {
-        singleFork: false,
-        isolate: false,
-      },
-    },
+    singleFork: false,
     // Enable test file parallelization (but not within files)
     fileParallelism: true,
     // Enhanced timeout configuration for stability
@@ -247,7 +242,6 @@ export default defineConfig({
 
     // Additional stability options
     bail: 0, // Don't bail on first failure
-    isolate: true, // Isolate tests better
     order: 'random', // Random order to catch dependencies
     // Flaky test detection - mark tests that fail intermittently
     // bail: 0, // Don't bail on first failure (Already defined above)

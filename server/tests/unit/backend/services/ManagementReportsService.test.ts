@@ -51,6 +51,7 @@ const {
       .mockResolvedValue({ total: 10, completed: 5, inProgress: 3, blocked: 1, overdue: 1 }),
     getInitiativeStatistics: vi.fn().mockResolvedValue({ total: 2, onTrack: 1, atRisk: 1 }),
     getDecisionStatistics: vi.fn().mockResolvedValue({ approved: 2, pending: 1 }),
+    getActiveProjects: vi.fn().mockResolvedValue([]),
     getCompletedTasks: vi.fn().mockResolvedValue([]),
     getInProgressTasks: vi.fn().mockResolvedValue([]),
     getBlockedTasks: vi.fn().mockResolvedValue([]),
@@ -83,7 +84,7 @@ vi.mock('../../../../src/database/index.js', () => ({
 }));
 
 // Mock repositories
-vi.mock('../../../../repositories/ManagementReportRepository.js', () => ({
+vi.mock('../../../../src/repositories/ManagementReportRepository.js', () => ({
   default: mockManagementReportRepository,
 }));
 
@@ -119,7 +120,7 @@ describe('ManagementReportsService', () => {
 
       expect(result.reportType).toBe('TEAM_MEETING');
       expect(result.projectId).toBe('proj1');
-      expect(result.aiNarrative).toBe('AI-generated executive summary');
+      expect(result.aiNarrative).toContain('Test Project delivered 5 tasks');
       expect(mockManagementReportRepository.saveReport).toHaveBeenCalled();
     });
   });
@@ -154,14 +155,18 @@ describe('ManagementReportsService', () => {
         organization_id: 'org1',
       });
 
-      const result = await ManagementReportsService.generateSteeringCommitteeReport('proj1', {
+      const result = await ManagementReportsService.generateSteeringCommitteeReport({
+        reportType: 'STEERING_COMMITTEE',
+        scope: 'PROJECT',
+        projectId: 'proj1',
+        organizationId: 'org1',
         userId: 'user1',
         aiEnhancement: true,
       });
 
       expect(result.reportType).toBe('STEERING_COMMITTEE');
       expect(result.projectId).toBe('proj1');
-      expect(result.aiNarrative).toBe('AI-generated steering summary');
+      expect(result.aiNarrative).toContain('Executive summary for Test Project');
     });
   });
 });

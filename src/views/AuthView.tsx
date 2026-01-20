@@ -637,6 +637,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             required
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            data-testid="email-input"
             className="w-full px-3 py-2.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-sm"
           />
         </div>
@@ -659,6 +660,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             required
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            data-testid="password-input"
             className="w-full px-3 py-2.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-sm"
           />
         </div>
@@ -672,6 +674,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
         <button
           type="submit"
+          data-testid="login-button"
           className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-purple-500/20 dark:shadow-purple-900/20 mt-2 text-sm"
         >
           {t('auth.logIn')}

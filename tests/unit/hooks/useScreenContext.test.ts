@@ -16,7 +16,7 @@ vi.mock('@/contexts/AIContext', () => ({
   }),
 }));
 
-import { useScreenContext } from '@/hooks/useScreenContext';
+import { useScreenContext } from '../../../src/hooks/useScreenContext';
 
 describe('useScreenContext', () => {
   beforeEach(() => {

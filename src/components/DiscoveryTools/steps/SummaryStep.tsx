@@ -7,7 +7,15 @@
 import { FileText, Lightbulb, Target, TrendingUp } from 'lucide-react';
 import React from 'react';
 
-import { PorterData, SWOTData, ToolSession, ToolType } from '@/store/useToolStore';
+import {
+  GrowthPathsData,
+  PortfolioPriorityData,
+  PorterData,
+  RiskUncertaintyData,
+  SWOTData,
+  ToolSession,
+  ToolType,
+} from '@/store/useToolStore';
 
 import { PorterRadar } from '../visualizations/PorterRadar';
 import { SWOTMatrix } from '../visualizations/SWOTMatrix';
@@ -49,6 +57,64 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isP
         metrics: {
           attractiveness: porterData.overallAttractiveness || 0,
           avgForceScore: Object.values(porterData.forces).reduce((sum, f) => sum + f.score, 0) / 5,
+        },
+      };
+    } else if (toolType === 'growth-paths') {
+      const growthData = inputData as GrowthPathsData;
+      return {
+        summary: growthData.summary?.keyInsights?.join(' ') || '',
+        insights: growthData.summary?.keyInsights || [],
+        metrics: {
+          marketPenetration: growthData.quadrants.marketPenetration.length,
+          marketDevelopment: growthData.quadrants.marketDevelopment.length,
+          productDevelopment: growthData.quadrants.productDevelopment.length,
+          diversification: growthData.quadrants.diversification.length,
+        },
+      };
+    } else if (toolType === 'portfolio-priority') {
+      const portfolioData = inputData as PortfolioPriorityData;
+      return {
+        summary: portfolioData.summary?.keyInsights?.join(' ') || '',
+        insights: portfolioData.summary?.keyInsights || [],
+        metrics: {
+          total: portfolioData.initiatives.length,
+          stars: portfolioData.initiatives.filter((i) => i.category === 'star').length,
+          cashCows: portfolioData.initiatives.filter((i) => i.category === 'cash-cow').length,
+          questionMarks: portfolioData.initiatives.filter((i) => i.category === 'question-mark')
+            .length,
+          dogs: portfolioData.initiatives.filter((i) => i.category === 'dog').length,
+        },
+      };
+    } else if (toolType === 'risk-uncertainty') {
+      const riskData = inputData as RiskUncertaintyData;
+      return {
+        summary: riskData.summary?.keyInsights?.join(' ') || '',
+        insights: riskData.summary?.keyInsights || [],
+        metrics: {
+          assumptions: riskData.assumptions.length,
+          risks: riskData.risks.length,
+          scenarios: riskData.scenarios.length,
+        },
+      };
+    } else if (
+      ['sop-builder', 'a3-problem-solving', 'smed-planner', 'dms-builder', 'inventory-autopilot'].includes(
+        toolType
+      )
+    ) {
+      const operational = inputData as any;
+      const sections = operational.sections || {};
+      const totalItems = Object.values(sections).reduce(
+        (sum: number, items: any[]) => sum + items.length,
+        0
+      );
+      const sectionsWithItems = Object.values(sections).filter((items: any[]) => items.length > 0)
+        .length;
+      return {
+        summary: operational.summary?.keyInsights?.join(' ') || '',
+        insights: operational.summary?.keyInsights || [],
+        metrics: {
+          totalItems,
+          sectionsWithItems,
         },
       };
     }
@@ -122,6 +188,89 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isP
             />
           </>
         )}
+        {toolType === 'growth-paths' && (
+          <>
+            <MetricCard
+              label={isPolish ? 'Penetracja' : 'Penetration'}
+              value={(summaryData.metrics as any).marketPenetration || 0}
+              color="emerald"
+            />
+            <MetricCard
+              label={isPolish ? 'Rozwój rynku' : 'Market dev.'}
+              value={(summaryData.metrics as any).marketDevelopment || 0}
+              color="blue"
+            />
+            <MetricCard
+              label={isPolish ? 'Rozwój produktu' : 'Product dev.'}
+              value={(summaryData.metrics as any).productDevelopment || 0}
+              color="purple"
+            />
+            <MetricCard
+              label={isPolish ? 'Dywersyfikacja' : 'Diversification'}
+              value={(summaryData.metrics as any).diversification || 0}
+              color="amber"
+            />
+          </>
+        )}
+        {toolType === 'portfolio-priority' && (
+          <>
+            <MetricCard
+              label={isPolish ? 'Stars' : 'Stars'}
+              value={(summaryData.metrics as any).stars || 0}
+              color="emerald"
+            />
+            <MetricCard
+              label={isPolish ? 'Cash Cows' : 'Cash Cows'}
+              value={(summaryData.metrics as any).cashCows || 0}
+              color="blue"
+            />
+            <MetricCard
+              label={isPolish ? 'Question Marks' : 'Question Marks'}
+              value={(summaryData.metrics as any).questionMarks || 0}
+              color="amber"
+            />
+            <MetricCard
+              label={isPolish ? 'Dogs' : 'Dogs'}
+              value={(summaryData.metrics as any).dogs || 0}
+              color="red"
+            />
+          </>
+        )}
+        {toolType === 'risk-uncertainty' && (
+          <>
+            <MetricCard
+              label={isPolish ? 'Założenia' : 'Assumptions'}
+              value={(summaryData.metrics as any).assumptions || 0}
+              color="emerald"
+            />
+            <MetricCard
+              label={isPolish ? 'Ryzyka' : 'Risks'}
+              value={(summaryData.metrics as any).risks || 0}
+              color="amber"
+            />
+            <MetricCard
+              label={isPolish ? 'Scenariusze' : 'Scenarios'}
+              value={(summaryData.metrics as any).scenarios || 0}
+              color="blue"
+            />
+          </>
+        )}
+        {['sop-builder', 'a3-problem-solving', 'smed-planner', 'dms-builder', 'inventory-autopilot'].includes(
+          toolType
+        ) && (
+          <>
+            <MetricCard
+              label={isPolish ? 'Elementy' : 'Items'}
+              value={(summaryData.metrics as any).totalItems || 0}
+              color="emerald"
+            />
+            <MetricCard
+              label={isPolish ? 'Sekcje' : 'Sections'}
+              value={(summaryData.metrics as any).sectionsWithItems || 0}
+              color="blue"
+            />
+          </>
+        )}
       </div>
 
       {/* Visualization */}
@@ -134,6 +283,36 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isP
         )}
         {toolType === 'market-forces' && (
           <PorterRadar data={inputData as PorterData} isPolish={isPolish} />
+        )}
+        {toolType === 'growth-paths' && (
+          <div className="text-sm text-slate-500 dark:text-slate-400">
+            {isPolish
+              ? 'Podsumowanie ścieżek wzrostu znajduje się w metrykach powyżej.'
+              : 'Growth paths summary is reflected in the metrics above.'}
+          </div>
+        )}
+        {toolType === 'portfolio-priority' && (
+          <div className="text-sm text-slate-500 dark:text-slate-400">
+            {isPolish
+              ? 'Macierz BCG jest dostępna w kroku Portfolio Matrix.'
+              : 'BCG matrix is available in the Portfolio Matrix step.'}
+          </div>
+        )}
+        {toolType === 'risk-uncertainty' && (
+          <div className="text-sm text-slate-500 dark:text-slate-400">
+            {isPolish
+              ? 'Podsumowanie ryzyk jest widoczne w metrykach powyżej.'
+              : 'Risk summary is reflected in the metrics above.'}
+          </div>
+        )}
+        {['sop-builder', 'a3-problem-solving', 'smed-planner', 'dms-builder', 'inventory-autopilot'].includes(
+          toolType
+        ) && (
+          <div className="text-sm text-slate-500 dark:text-slate-400">
+            {isPolish
+              ? 'Podsumowanie operacyjne jest widoczne w metrykach powyżej.'
+              : 'Operational summary is reflected in the metrics above.'}
+          </div>
         )}
       </div>
 

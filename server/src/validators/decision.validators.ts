@@ -52,6 +52,16 @@ export const CreateDecisionSchema = z.object({
   impact: z.enum(['low', 'medium', 'high']).optional(),
   decisionType: z.string().optional(),
   type: z.string().optional(),
+  impacts: z
+    .array(
+      z.object({
+        impactedType: z.enum(['task', 'initiative', 'project', 'gate']),
+        impactedId: z.string().min(1),
+        impactDescription: z.string().max(1000).optional(),
+        isBlocker: z.boolean().optional(),
+      })
+    )
+    .optional(),
 });
 
 export const DecideSchema = z

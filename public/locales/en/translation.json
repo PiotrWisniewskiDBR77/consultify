@@ -1,0 +1,60 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "loading": "Loading",
+    "error": "Error",
+    "success": "Success",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "of": "of"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "settings": "Settings",
+    "help": "Help",
+    "knowledge": "Knowledge Base"
+  },
+  "auth": {
+    "logIn": "Log in",
+    "welcomeBack": "Welcome back"
+  },
+  "help": {
+    "title": "Help Center",
+    "knowledge": {
+      "title": "Knowledge Base",
+      "searchPlaceholder": "Search articles...",
+      "allCategories": "All",
+      "noSearchResults": "No articles found for your search.",
+      "noArticles": "No articles available in this category.",
+      "articleNotFound": "Article not found.",
+      "minRead": "min read",
+      "views": "views",
+      "relatedModules": "Related Modules",
+      "shareArticle": "Share Article",
+      "featured": "Featured",
+      "popular": "Popular",
+      "recent": "Recent",
+      "readMore": "Read more",
+      "backToLibrary": "Back to Library",
+      "categories": "Categories",
+      "articles": "Articles",
+      "searchResults": "Search Results",
+      "tableOfContents": "Table of Contents",
+      "wasHelpful": "Was this article helpful?",
+      "yes": "Yes",
+      "no": "No",
+      "feedbackThanks": "Thank you for your feedback!",
+      "relatedArticles": "Related Articles",
+      "gettingStarted": "Getting Started",
+      "tutorials": "Tutorials",
+      "bestPractices": "Best Practices",
+      "faq": "FAQ",
+      "troubleshooting": "Troubleshooting"
+    }
+  }
+}

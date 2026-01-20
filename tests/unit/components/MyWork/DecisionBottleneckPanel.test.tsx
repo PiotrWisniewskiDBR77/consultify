@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DecisionBottleneckPanel } from '@/components/MyWork/DecisionBottleneckPanel';
 import { Api } from '@/services/api';
@@ -99,7 +99,9 @@ describe('DecisionBottleneckPanel', () => {
     await waitFor(() => expect(screen.getByText('Decision Bottlenecks')).toBeTruthy());
 
     const refreshBtn = screen.getAllByRole('button')[0]; // Header refresh button
-    fireEvent.click(refreshBtn);
+    await act(async () => {
+      fireEvent.click(refreshBtn);
+    });
 
     expect(Api.get).toHaveBeenCalledTimes(2); // Initial + Refresh
   });

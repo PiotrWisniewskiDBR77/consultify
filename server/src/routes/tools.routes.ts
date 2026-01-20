@@ -15,6 +15,8 @@ import {
   CreateToolSessionSchema,
   UpdateToolSessionSchema,
   GenerateInitiativesSchema,
+  RequestReviewSchema,
+  ApproveToolSchema,
   SendBackSchema,
 } from '../validators/tool.validators.js';
 
@@ -27,8 +29,8 @@ router.use(demoContextMiddleware);
 router.post('/', validateBody(CreateToolSessionSchema), ToolController.createToolSession);
 router.get('/:toolId', ToolController.getToolSession);
 router.put('/:toolId', validateBody(UpdateToolSessionSchema), ToolController.updateToolSession);
-router.post('/:toolId/request-review', ToolController.requestReview);
-router.post('/:toolId/approve', ToolController.approveTool);
+router.post('/:toolId/request-review', validateBody(RequestReviewSchema), ToolController.requestReview);
+router.post('/:toolId/approve', validateBody(ApproveToolSchema), ToolController.approveTool);
 router.post('/:toolId/send-back', validateBody(SendBackSchema), ToolController.sendBackToDraft);
 router.post(
   '/:toolId/generate-initiatives',

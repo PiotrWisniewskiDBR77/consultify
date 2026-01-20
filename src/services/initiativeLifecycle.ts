@@ -69,7 +69,13 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
     id: 'initiatives',
     name: 'Initiatives',
     route: '/initiatives',
-    statuses: [InitiativeStatus.PLANNING, InitiativeStatus.REVIEW, InitiativeStatus.APPROVED],
+    statuses: [
+      InitiativeStatus.PLANNING,
+      InitiativeStatus.REVIEW,
+      InitiativeStatus.APPROVED,
+      InitiativeStatus.CANCELLED,
+      InitiativeStatus.ARCHIVED,
+    ],
     color: 'purple',
   },
   execution: {
@@ -83,7 +89,7 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
     id: 'benefits',
     name: 'Benefits',
     route: '/benefits',
-    statuses: [InitiativeStatus.DONE, InitiativeStatus.CANCELLED, InitiativeStatus.ARCHIVED],
+    statuses: [InitiativeStatus.DONE],
     color: 'green',
   },
 };

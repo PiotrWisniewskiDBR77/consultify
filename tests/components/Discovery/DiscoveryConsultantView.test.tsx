@@ -74,6 +74,7 @@ vi.mock('react-i18next', () => ({
 vi.mock('reactflow', () => ({
   ReactFlow: ({ children }: any) => <div data-testid="react-flow">{children}</div>,
   Background: () => <div data-testid="background" />,
+  BackgroundVariant: { Dots: 'dots' },
   Controls: () => <div data-testid="controls" />,
   MiniMap: () => <div data-testid="minimap" />,
   Panel: ({ children }: any) => <div data-testid="panel">{children}</div>,

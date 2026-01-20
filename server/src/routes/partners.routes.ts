@@ -17,7 +17,7 @@
 
 import { NextFunction, Request, Response, Router } from 'express';
 
-import { authenticateToken } from '../middleware/authMiddleware.js';
+import { verifyToken } from '../middleware/auth.middleware.js';
 import PartnerCommissionService from '../services/partnerCommissionService.js';
 import PartnerReferralService from '../services/partnerReferralService.js';
 import logger from '../utils/Logger.js';
@@ -25,7 +25,7 @@ import logger from '../utils/Logger.js';
 const router = Router();
 
 // Apply authentication to all routes
-router.use(authenticateToken);
+router.use(verifyToken);
 
 // =============================================================================
 // PARTNER ORGANIZATION ROUTES

@@ -7,7 +7,7 @@
 
 import { Request, Response, Router } from 'express';
 
-import verifyToken from '../middleware/AuthMiddleware.js';
+import { verifyToken } from '../middleware/auth.middleware.js';
 import KnowledgeBaseService from '../services/KnowledgeBaseService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';

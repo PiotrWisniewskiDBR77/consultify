@@ -13,7 +13,11 @@ import { useDiscoveryStore } from '@/store/useDiscoveryStore';
 // Version selector dropdown
 const VersionSelector: React.FC = () => {
   const { t } = useTranslation('discovery');
-  const { getVersions, loadVersion, saveVersion, activeSessionId } = useDiscoveryStore();
+  const store = useDiscoveryStore();
+  const getVersions = store.getVersions || (() => []);
+  const loadVersion = store.loadVersion || (() => {});
+  const saveVersion = store.saveVersion || (() => 0);
+  const activeSessionId = store.activeSessionId;
   const [isOpen, setIsOpen] = useState(false);
 
   const versions = getVersions();

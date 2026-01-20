@@ -1577,18 +1577,26 @@ export const Api = {
     return handleResponse(res, 'Failed to update tool session');
   },
 
-  requestToolReview: async (toolId: string): Promise<any> => {
+  requestToolReview: async (
+    toolId: string,
+    payload?: { decisionOwnerId?: string; dueDate?: string; priority?: string }
+  ): Promise<any> => {
     const res = await fetch(`${API_URL}/tools/${toolId}/request-review`, {
       method: 'POST',
       headers: getHeaders(),
+      body: JSON.stringify(payload || {}),
     });
     return handleResponse(res, 'Failed to request review');
   },
 
-  approveTool: async (toolId: string): Promise<any> => {
+  approveTool: async (
+    toolId: string,
+    payload?: { decisionOwnerId?: string; dueDate?: string; priority?: string }
+  ): Promise<any> => {
     const res = await fetch(`${API_URL}/tools/${toolId}/approve`, {
       method: 'POST',
       headers: getHeaders(),
+      body: JSON.stringify(payload || {}),
     });
     return handleResponse(res, 'Failed to approve tool');
   },

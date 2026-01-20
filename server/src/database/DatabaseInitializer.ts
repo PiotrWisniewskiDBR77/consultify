@@ -7,11 +7,21 @@
  * Prevents table loss by verifying schema integrity
  */
 
+import fs from 'fs';
 import { databaseConfig } from '../config/DatabaseConfig.js';
 import logger from '../utils/Logger.js';
 import { getDatabase, getDatabaseAsync } from './Database.js';
 // @ts-ignore - Dynamic import of legacy module
 const getLegacySqlite = async () => import('../../legacy_archive/database.sqlite.js');
+
+const resolveTestSchemaPath = async () => {
+  const path = await import('path');
+  const cwdPath = path.resolve(process.cwd(), 'tests/utils/testSchema.js');
+  const repoPath = path.resolve(process.cwd(), '..', 'tests/utils/testSchema.js');
+  if (fs.existsSync(cwdPath)) return cwdPath;
+  if (fs.existsSync(repoPath)) return repoPath;
+  return cwdPath;
+};
 
 // ==========================================
 // SCHEMA VERIFICATION
@@ -387,9 +397,8 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
 
           // Use TEST_SCHEMA if available
           try {
-            const path = await import('path');
             const { pathToFileURL } = await import('url');
-            const schemaPath = path.resolve(process.cwd(), 'tests/utils/testSchema.js');
+            const schemaPath = await resolveTestSchemaPath();
             logger.info(`[DatabaseInitializer] Attempting to load TEST_SCHEMA from: ${schemaPath}`);
             const { TEST_SCHEMA } = await import(pathToFileURL(schemaPath).href);
             logger.info('[DatabaseInitializer] Using TEST_SCHEMA for initialization');
@@ -459,9 +468,8 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       // (Moved outside the 'missing tables' block to ensure seeds run on existing DBs too)
       if (process.env.E2E_MODE === 'true') {
         try {
-          const path = await import('path');
           const { pathToFileURL } = await import('url');
-          const schemaPath = path.resolve(process.cwd(), 'tests/utils/testSchema.js');
+          const schemaPath = await resolveTestSchemaPath();
           const { TEST_SCHEMA } = await import(pathToFileURL(schemaPath).href);
           logger.info('[DatabaseInitializer] E2E_MODE: Ensuring seed data from TEST_SCHEMA');
           for (const sql of TEST_SCHEMA) {

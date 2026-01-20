@@ -107,6 +107,12 @@ interface UnifiedChatPanelProps {
 
   /** Callback when user clicks "View All Actions" */
   onNavigateToActions?: () => void;
+
+  /** Optional system prompt override */
+  systemPrompt?: string;
+
+  /** Optional role name override */
+  roleName?: string;
 }
 
 // ============================================================================
@@ -127,6 +133,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   maxHeight,
   onMessageSent,
   onNavigateToActions,
+  systemPrompt,
+  roleName,
 }) => {
   const { t } = useTranslation();
 
@@ -334,7 +342,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         content: m.content,
       }));
 
-      await startStream(content, history, undefined, context, focusMode);
+      await startStream(content, history, systemPrompt, context, focusMode, roleName);
 
       // Callback
       onMessageSent?.(content);

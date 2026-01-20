@@ -1,5 +1,16 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const backendUrl = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
+const frontendUrl = process.env.E2E_BASE_URL || 'http://localhost:3000';
+const useWebServer = process.env.E2E_USE_WEB_SERVER === 'true';
+const backendPort = (() => {
+  try {
+    return new URL(backendUrl).port || '3001';
+  } catch {
+    return '3001';
+  }
+})();
+
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
@@ -12,7 +23,7 @@ export default defineConfig({
   },
   reporter: [['list'], ['junit', { outputFile: 'e2e-results.xml' }]],
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: frontendUrl,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     actionTimeout: 15000, // 15 seconds for actions
@@ -34,10 +45,20 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command: 'E2E_MODE=true npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-  },
+  webServer: useWebServer
+    ? [
+        {
+          command: `PORT=${backendPort} npm run dev:backend`,
+          url: `${backendUrl.replace(/\/$/, '')}/api/health`,
+          reuseExistingServer: true,
+          timeout: 120000,
+        },
+        {
+          command: `VITE_API_TARGET=${backendUrl} npm run dev:frontend`,
+          url: frontendUrl,
+          reuseExistingServer: true,
+          timeout: 120000,
+        },
+      ]
+    : undefined,
 });

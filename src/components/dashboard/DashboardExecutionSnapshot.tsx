@@ -29,15 +29,7 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
     if (safeSession.step2Completed) score += 20;
     if (safeSession.step3Completed) score += 25;
     if (safeSession.step5Completed) score += 15;
-
-    const initiatives = safeSession.initiatives || [];
-    const totalInit = initiatives.length;
-    const completedInit = initiatives.filter(
-      (i) => i.status === InitiativeStatus.DONE || i.status === InitiativeStatus.ARCHIVED
-    ).length;
-    const executionScore = totalInit > 0 ? (completedInit / totalInit) * 20 : 0;
-
-    return Math.min(100, score + executionScore);
+    return Math.min(100, score);
   }, [safeSession]);
 
   const currentPhase = useMemo(() => {

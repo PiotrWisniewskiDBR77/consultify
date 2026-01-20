@@ -10,6 +10,14 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import decisionService from '../services/decisionService.js';
+import {
+  applyScenarioAdjustments,
+  calculateFinancialMetrics,
+  defaultFinancialData,
+  normalizeFinancialData,
+  type FinancialData,
+  validateFinancialData,
+} from '../services/economicsFinancials.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -29,177 +37,24 @@ function safeJsonParse(str: string | null | undefined, fallback: any = {}): any 
   }
 }
 
-type FinancialData = {
-  initialInvestment: number;
-  implementationCost: number;
-  annualOperatingCost: number;
-  trainingCost: number;
-  contingencyPercent: number;
-  annualCostSavings: number;
-  annualRevenueIncrease: number;
-  productivityGainsPercent: number;
-  riskReductionValue: number;
-  implementationMonths: number;
-  benefitRealizationMonths: number;
-  analysisHorizonYears: number;
-  discountRate: number;
-  currency: string;
-  assumptions: string[];
+const normalizeAnalysisStatus = (status?: string | null) => {
+  if (!status) return 'DRAFT';
+  const upper = String(status).toUpperCase();
+  if (['DRAFT', 'REVIEW', 'APPROVED'].includes(upper)) {
+    return upper;
+  }
+  if (upper === 'IN_PROGRESS') return 'REVIEW';
+  if (upper === 'COMPLETED') return 'APPROVED';
+  return 'DRAFT';
 };
 
-const defaultFinancialData: FinancialData = {
-  initialInvestment: 0,
-  implementationCost: 0,
-  annualOperatingCost: 0,
-  trainingCost: 0,
-  contingencyPercent: 15,
-  annualCostSavings: 0,
-  annualRevenueIncrease: 0,
-  productivityGainsPercent: 0,
-  riskReductionValue: 0,
-  implementationMonths: 12,
-  benefitRealizationMonths: 6,
-  analysisHorizonYears: 5,
-  discountRate: 10,
-  currency: 'PLN',
-  assumptions: [],
+const normalizeStatusForDb = (status?: string | null) => {
+  const upper = normalizeAnalysisStatus(status);
+  if (upper === 'REVIEW') return 'in_progress';
+  if (upper === 'APPROVED') return 'completed';
+  return 'draft';
 };
 
-const normalizeFinancialData = (input: any): FinancialData => ({
-  ...defaultFinancialData,
-  ...(input || {}),
-  assumptions: Array.isArray(input?.assumptions) ? input.assumptions : [],
-});
-
-const calculateFinancialMetrics = (data: FinancialData) => {
-  const horizon = Math.max(1, data.analysisHorizonYears || 1);
-  const discountRate = (data.discountRate || 0) / 100;
-
-  const totalInitialCost =
-    (data.initialInvestment || 0) + (data.implementationCost || 0) + (data.trainingCost || 0);
-  const contingency = totalInitialCost * ((data.contingencyPercent || 0) / 100);
-  const totalUpfront = totalInitialCost + contingency;
-
-  const baseAnnualBenefits =
-    (data.annualCostSavings || 0) + (data.annualRevenueIncrease || 0) + (data.riskReductionValue || 0);
-  const productivityMultiplier = 1 + (data.productivityGainsPercent || 0) / 100;
-  const annualBenefits = baseAnnualBenefits * productivityMultiplier;
-
-  const cashFlows: Array<{
-    year: number;
-    costs: number;
-    benefits: number;
-    netCashFlow: number;
-    cumulativeCashFlow: number;
-  }> = [];
-
-  let cumulativeCashFlow = 0;
-  cumulativeCashFlow -= totalUpfront;
-  cashFlows.push({
-    year: 0,
-    costs: totalUpfront,
-    benefits: 0,
-    netCashFlow: -totalUpfront,
-    cumulativeCashFlow,
-  });
-
-  for (let year = 1; year <= horizon; year++) {
-    const yearBenefits = annualBenefits;
-    const yearCosts = data.annualOperatingCost || 0;
-    const netCashFlow = yearBenefits - yearCosts;
-    cumulativeCashFlow += netCashFlow;
-    cashFlows.push({
-      year,
-      costs: yearCosts,
-      benefits: yearBenefits,
-      netCashFlow,
-      cumulativeCashFlow,
-    });
-  }
-
-  let npv = -totalUpfront;
-  for (let year = 1; year <= horizon; year++) {
-    const netCashFlow = annualBenefits - (data.annualOperatingCost || 0);
-    npv += netCashFlow / Math.pow(1 + discountRate, year);
-  }
-
-  let irr: number | null = null;
-  const irrCashFlows = [
-    -totalUpfront,
-    ...Array(horizon).fill(annualBenefits - (data.annualOperatingCost || 0)),
-  ];
-
-  const calculateNPVForRate = (rate: number) => {
-    let npvCalc = 0;
-    for (let i = 0; i < irrCashFlows.length; i++) {
-      npvCalc += irrCashFlows[i] / Math.pow(1 + rate, i);
-    }
-    return npvCalc;
-  };
-
-  let irrGuess = 0.1;
-  for (let iteration = 0; iteration < 100; iteration++) {
-    const npvAtGuess = calculateNPVForRate(irrGuess);
-    const npvAtGuessPlus = calculateNPVForRate(irrGuess + 0.0001);
-    const derivative = (npvAtGuessPlus - npvAtGuess) / 0.0001;
-
-    if (Math.abs(npvAtGuess) < 0.01) {
-      irr = irrGuess;
-      break;
-    }
-    if (derivative === 0) break;
-    irrGuess = irrGuess - npvAtGuess / derivative;
-    if (irrGuess < -1 || irrGuess > 10) break;
-  }
-
-  let paybackPeriod: number | null = null;
-  for (let i = 1; i < cashFlows.length; i++) {
-    if (cashFlows[i].cumulativeCashFlow >= 0 && cashFlows[i - 1].cumulativeCashFlow < 0) {
-      const previousCumulative = Math.abs(cashFlows[i - 1].cumulativeCashFlow);
-      const currentNet = cashFlows[i].netCashFlow || 1;
-      paybackPeriod = i - 1 + previousCumulative / currentNet;
-      break;
-    }
-  }
-
-  const totalCosts = totalUpfront + (data.annualOperatingCost || 0) * horizon;
-  const totalBenefits = annualBenefits * horizon;
-  const netBenefit = totalBenefits - totalCosts;
-  const roi = totalCosts > 0 ? netBenefit / totalCosts : null;
-
-  return {
-    npv,
-    irr,
-    paybackPeriod,
-    roi,
-    totalCosts,
-    totalBenefits,
-    netBenefit,
-    cashFlows,
-  };
-};
-
-const applyScenarioAdjustments = (data: FinancialData, scenarioType: string): FinancialData => {
-  if (scenarioType === 'optimistic') {
-    return {
-      ...data,
-      annualCostSavings: data.annualCostSavings * 1.15,
-      annualRevenueIncrease: data.annualRevenueIncrease * 1.2,
-      annualOperatingCost: data.annualOperatingCost * 0.9,
-      discountRate: Math.max(0, data.discountRate - 1),
-    };
-  }
-  if (scenarioType === 'conservative') {
-    return {
-      ...data,
-      annualCostSavings: data.annualCostSavings * 0.85,
-      annualRevenueIncrease: data.annualRevenueIncrease * 0.85,
-      annualOperatingCost: data.annualOperatingCost * 1.1,
-      discountRate: data.discountRate + 1,
-    };
-  }
-  return { ...data };
-};
 
 /**
  * GET /api/economics/analyses
@@ -236,8 +91,8 @@ router.get(
       const params: any[] = [orgId];
 
       if (status && status !== 'all') {
-        sql += ' AND da.status = ?';
-        params.push(status);
+        sql += ' AND UPPER(da.status) = ?';
+        params.push(normalizeAnalysisStatus(String(status)));
       }
 
       if (search) {
@@ -268,7 +123,7 @@ router.get(
         id: row.id,
         name: row.name,
         description: row.description,
-        status: row.status,
+        status: normalizeAnalysisStatus(row.status),
         projectId: row.project_id,
         projectName: row.project_name,
         initiativeId: row.initiative_id,
@@ -320,17 +175,17 @@ router.get(
       );
 
       const draft = await dbGet<{ count: number }>(
-        `SELECT COUNT(*) as count FROM digitization_analyses WHERE organization_id = ? AND status = 'draft'`,
+        `SELECT COUNT(*) as count FROM digitization_analyses WHERE organization_id = ? AND UPPER(status) = 'DRAFT'`,
         [orgId]
       );
 
       const inProgress = await dbGet<{ count: number }>(
-        `SELECT COUNT(*) as count FROM digitization_analyses WHERE organization_id = ? AND status = 'in_progress'`,
+        `SELECT COUNT(*) as count FROM digitization_analyses WHERE organization_id = ? AND UPPER(status) = 'REVIEW'`,
         [orgId]
       );
 
       const completed = await dbGet<{ count: number }>(
-        `SELECT COUNT(*) as count FROM digitization_analyses WHERE organization_id = ? AND status = 'completed'`,
+        `SELECT COUNT(*) as count FROM digitization_analyses WHERE organization_id = ? AND UPPER(status) = 'APPROVED'`,
         [orgId]
       );
 
@@ -390,16 +245,20 @@ router.post(
         `INSERT INTO digitization_analyses (
           id, name, description, status, project_id, initiative_id, analysis_type, organization_id, created_by,
           overall_score, completion_percent, axis_scores, created_at, updated_at
-        ) VALUES (?, ?, ?, 'draft', ?, ?, ?, NULL, 0, '{}', ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           name,
           description || null,
+          normalizeStatusForDb('DRAFT'),
           projectId || null,
           initiativeId || null,
           analysisType || 'financial',
           orgId,
           userId,
+          null,
+          0,
+          '{}',
           now,
           now,
         ]
@@ -411,7 +270,7 @@ router.post(
           id,
           name,
           description,
-          status: 'draft',
+          status: 'DRAFT',
           projectId,
         initiativeId,
         analysisType: analysisType || 'financial',
@@ -468,7 +327,7 @@ router.get(
         id: row.id,
         name: row.name,
         description: row.description,
-        status: row.status,
+        status: normalizeAnalysisStatus(row.status),
         projectId: row.project_id,
         projectName: row.project_name,
         initiativeId: row.initiative_id,
@@ -544,7 +403,7 @@ router.put(
       }
       if (status !== undefined) {
         updates.push('status = ?');
-        params.push(status);
+        params.push(normalizeStatusForDb(status));
       }
       if (projectId !== undefined) {
         updates.push('project_id = ?');
@@ -742,7 +601,23 @@ router.put(
       };
     }
 
+    const insights = validateFinancialData(financialData);
+    if (insights.errors.length > 0) {
+      return res.status(400).json({
+        error: 'Invalid financial data',
+        details: insights.errors,
+        warnings: insights.warnings,
+      });
+    }
+
     const metrics = calculateFinancialMetrics(financialData);
+    const warnings = [...insights.warnings];
+    if (metrics.paybackPeriod === null) {
+      warnings.push('Payback period not achieved within analysis horizon.');
+    }
+    if (metrics.cashFlows.some((flow) => flow.year > 0 && flow.netCashFlow < 0)) {
+      warnings.push('Negative net cashflow detected after year 0.');
+    }
     const now = new Date().toISOString();
     const cashFlowJson = JSON.stringify(metrics.cashFlows || []);
     const assumptionsJson = JSON.stringify(financialData.assumptions || []);
@@ -837,10 +712,17 @@ router.put(
     await dbRun(`UPDATE digitization_analyses SET updated_at = ? WHERE id = ?`, [now, id]);
 
     const scenarioTypes = ['base', 'optimistic', 'conservative'];
+    const scenarioSummaries: Array<{ scenarioType: string; npv: number | null; roi: number | null }> =
+      [];
     for (const scenarioType of scenarioTypes) {
       const scenarioData =
         scenarioType === 'base' ? financialData : applyScenarioAdjustments(financialData, scenarioType);
       const scenarioMetrics = calculateFinancialMetrics(scenarioData);
+      scenarioSummaries.push({
+        scenarioType,
+        npv: scenarioMetrics.npv ?? null,
+        roi: scenarioMetrics.roi ?? null,
+      });
       const scenarioRow = await dbGet<any>(
         `SELECT id FROM analysis_financial_scenarios WHERE analysis_id = ? AND scenario_type = ?`,
         [id, scenarioType]
@@ -897,7 +779,27 @@ router.put(
       }
     }
 
-    return res.json({ success: true, metrics });
+    const recommendedScenario = scenarioSummaries.reduce(
+      (best, current) => {
+        if (best === null) return current;
+        if ((current.npv ?? -Infinity) > (best.npv ?? -Infinity)) return current;
+        return best;
+      },
+      null as { scenarioType: string; npv: number | null; roi: number | null } | null
+    );
+
+    return res.json({
+      success: true,
+      metrics,
+      warnings,
+      recommendations: insights.recommendations,
+      scenarioRecommendation: recommendedScenario
+        ? {
+            scenarioType: recommendedScenario.scenarioType,
+            reason: 'Highest NPV across scenarios',
+          }
+        : null,
+    });
   })
 );
 
@@ -1206,13 +1108,23 @@ router.post(
       assumptions: safeJsonParse(row.assumptions, []),
     };
 
+    const insights = validateFinancialData(financialData);
     const metrics = calculateFinancialMetrics(financialData);
+    const warnings = [...insights.warnings];
+    if (metrics.paybackPeriod === null) {
+      warnings.push('Payback period not achieved within analysis horizon.');
+    }
+    if (metrics.cashFlows.some((flow) => flow.year > 0 && flow.netCashFlow < 0)) {
+      warnings.push('Negative net cashflow detected after year 0.');
+    }
 
     return res.json({
       npv: metrics.npv,
       irr: metrics.irr,
       paybackPeriod: metrics.paybackPeriod,
       roi: metrics.roi,
+      warnings,
+      recommendations: insights.recommendations,
       cashFlows: metrics.cashFlows.map((flow) => ({
         year: flow.year,
         amount: flow.netCashFlow,
@@ -1327,7 +1239,7 @@ router.post(
         analysis.project_id || null,
         analysis.name,
         analysis.description || null,
-        'planning',
+        normalizeStatusForDb('DRAFT'),
         costCapex,
         costOpex,
         expectedRoi,
@@ -1485,11 +1397,12 @@ router.post(
         `INSERT INTO digitization_analyses (
           id, name, description, status, project_id, organization_id, created_by,
           overall_score, completion_percent, axis_scores, created_at, updated_at
-        ) VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           newId,
           name || `${source.name} (Copy)`,
           source.description,
+          normalizeStatusForDb(source.status),
           source.project_id,
           orgId,
           userId,
@@ -1545,7 +1458,7 @@ router.get(
           id: row.id,
           name: row.name,
           description: row.description,
-          status: row.status,
+          status: normalizeAnalysisStatus(row.status),
           overallScore: row.overall_score,
           completionPercent: row.completion_percent,
           axisScores: safeJsonParse(row.axis_scores, {}),

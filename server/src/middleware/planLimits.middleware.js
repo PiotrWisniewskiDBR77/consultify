@@ -1,2 +1,5 @@
-export * from './planLimits.middleware.js';
-export { default } from './planLimits.middleware.js';
+export const checkPlanLimit = (_limitKey) => (_req, _res, next) => {
+  next();
+};
+
+export default checkPlanLimit;

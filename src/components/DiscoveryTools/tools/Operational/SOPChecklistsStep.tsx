@@ -1,0 +1,149 @@
+/**
+ * SOPChecklistsStep - Define checklists and verification steps
+ */
+import { Plus, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+
+import { OperationalItem, OperationalToolData, ToolSession, useToolStore } from '@/store/useToolStore';
+
+import { InlineAssist } from '../../InlineAssist';
+
+interface SOPChecklistsStepProps {
+  session: ToolSession;
+  isPolish: boolean;
+}
+
+const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+export const SOPChecklistsStep: React.FC<SOPChecklistsStepProps> = ({ session, isPolish }) => {
+  const { updateInputData } = useToolStore();
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [owner, setOwner] = useState('');
+
+  const data = session.inputData as OperationalToolData;
+  const items = data.sections?.checklists || [];
+
+  const handleAdd = () => {
+    if (!title.trim()) return;
+    const newItem: OperationalItem = {
+      id: generateId(),
+      title: title.trim(),
+      description: description.trim(),
+      impact: 'medium',
+      effort: 'medium',
+      owner: owner.trim(),
+    };
+    updateInputData({
+      sections: {
+        ...data.sections,
+        checklists: [...items, newItem],
+      },
+    });
+    setTitle('');
+    setDescription('');
+    setOwner('');
+  };
+
+  const handleRemove = (itemId: string) => {
+    updateInputData({
+      sections: {
+        ...data.sections,
+        checklists: items.filter((item) => item.id !== itemId),
+      },
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+          {isPolish ? 'Checklisty i weryfikacja' : 'Checklists & verification'}
+        </h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          {isPolish
+            ? 'Zdefiniuj kroki kontrolne i odpowiedzialnych.'
+            : 'Define checklist steps and owners.'}
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder={isPolish ? 'Nazwa checklisty...' : 'Checklist item...'}
+          className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+        />
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder={isPolish ? 'Opis kroku...' : 'Step description...'}
+          rows={2}
+          className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white resize-none"
+        />
+        <input
+          type="text"
+          value={owner}
+          onChange={(e) => setOwner(e.target.value)}
+          placeholder={isPolish ? 'Owner / Rola...' : 'Owner / Role...'}
+          className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+        />
+        <button
+          onClick={handleAdd}
+          disabled={!title.trim()}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50"
+        >
+          <Plus className="w-4 h-4" />
+          {isPolish ? 'Dodaj' : 'Add'}
+        </button>
+        <InlineAssist
+          hint={
+            isPolish
+              ? 'Każdy punkt powinien mieć odpowiedzialną rolę.'
+              : 'Each checklist item should have an owner role.'
+          }
+        />
+      </div>
+
+      <div className="space-y-3">
+        {items.length === 0 ? (
+          <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-400">
+            {isPolish ? 'Brak checklist' : 'No checklists yet'}
+          </div>
+        ) : (
+          items.map((item) => (
+            <div
+              key={item.id}
+              className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h4 className="font-medium text-slate-900 dark:text-white">{item.title}</h4>
+                  {item.description && (
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                      {item.description}
+                    </p>
+                  )}
+                  {item.owner && (
+                    <div className="text-xs text-slate-500 mt-2">
+                      {isPolish ? 'Owner' : 'Owner'}: {item.owner}
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={() => handleRemove(item.id)}
+                  className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-slate-400 hover:text-red-500"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default SOPChecklistsStep;

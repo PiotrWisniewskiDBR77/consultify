@@ -8,19 +8,16 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import { DecisionBottleneckPanel } from './DecisionBottleneckPanel';
 import { DecisionDetailModal } from './DecisionDetailModal';
-import { DecisionsList } from './DecisionsList';
+import { DecisionsPanel } from './DecisionsPanel';
 import { MyProjects } from './MyProjects';
 import { MyTasksList } from './MyTasksList';
 import { PillNavigation, WorkTab } from './PillNavigation';
 import { QuickFilter, QuickFilterBar } from './QuickFilterBar';
 import { TaskTimeGroup } from './WorkSidebar';
-import { DecisionGroup } from './WorkSidebar';
 
 interface WorkCenterProps {
   onTaskClick: (taskId: string) => void;
-  onDecisionClick?: (decisionId: string) => void;
   onCreateTask: () => void;
-  onCreateDecision?: () => void;
   onNavigateToObject?: (type: string, id: string) => void;
 }
 
@@ -50,9 +47,7 @@ const filterToTimeGroup: Record<QuickFilter, TaskTimeGroup> = {
 
 export const WorkCenter: React.FC<WorkCenterProps> = ({
   onTaskClick,
-  onDecisionClick,
   onCreateTask,
-  onCreateDecision,
   onNavigateToObject,
 }) => {
   // Tab state
@@ -66,6 +61,7 @@ export const WorkCenter: React.FC<WorkCenterProps> = ({
 
   // Refresh trigger for decision list
   const [decisionRefreshKey, setDecisionRefreshKey] = useState(0);
+  const [isCreateDecisionOpen, setIsCreateDecisionOpen] = useState(false);
 
   // Counts
   const [taskCounts, setTaskCounts] = useState<TaskCounts>({
@@ -119,10 +115,10 @@ export const WorkCenter: React.FC<WorkCenterProps> = ({
   const handleCreateNew = useCallback(() => {
     if (activeTab === 'tasks') {
       onCreateTask();
-    } else if (activeTab === 'decisions' && onCreateDecision) {
-      onCreateDecision();
+    } else if (activeTab === 'decisions') {
+      setIsCreateDecisionOpen(true);
     }
-  }, [activeTab, onCreateTask, onCreateDecision]);
+  }, [activeTab, onCreateTask]);
 
   // Handle decision click - open modal
   const handleDecisionClick = useCallback((decisionId: string) => {
@@ -143,12 +139,6 @@ export const WorkCenter: React.FC<WorkCenterProps> = ({
   const activeTimeGroup: TaskTimeGroup = useMemo(() => {
     return filterToTimeGroup[activeQuickFilter];
   }, [activeQuickFilter]);
-
-  // Calculate active decision group
-  const activeDecisionGroup: DecisionGroup = useMemo(() => {
-    // For now, show all decisions
-    return 'all';
-  }, []);
 
   return (
     <>
@@ -209,11 +199,13 @@ export const WorkCenter: React.FC<WorkCenterProps> = ({
                 transition={{ duration: 0.15 }}
                 className="h-full"
               >
-                <DecisionsList
-                  activeGroup={activeDecisionGroup}
-                  onCountsChange={handleDecisionCountsChange}
+                <DecisionsPanel
+                  key={`decisions-panel-${decisionRefreshKey}`}
                   onDecisionClick={handleDecisionClick}
-                  onCreateDecision={onCreateDecision}
+                  createModalOpen={isCreateDecisionOpen}
+                  onCreateModalOpen={() => setIsCreateDecisionOpen(true)}
+                  onCreateModalClose={() => setIsCreateDecisionOpen(false)}
+                  onCountsChange={handleDecisionCountsChange}
                 />
               </motion.div>
             )}

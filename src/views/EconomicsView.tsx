@@ -212,22 +212,22 @@ export const EconomicsView: React.FC = () => {
                   • Status:{' '}
                   <span
                     className={`capitalize ${
-                      selectedAnalysis.status === 'completed'
+                      selectedAnalysis.status === 'APPROVED'
                         ? 'text-green-400'
-                        : selectedAnalysis.status === 'in_progress'
+                        : selectedAnalysis.status === 'REVIEW'
                           ? 'text-yellow-400'
                           : 'text-slate-400 dark:text-slate-500'
                     }`}
                   >
                     {selectedAnalysis.analysisType === 'financial'
-                      ? selectedAnalysis.status === 'completed'
+                      ? selectedAnalysis.status === 'APPROVED'
                         ? 'Approved'
-                        : selectedAnalysis.status === 'in_progress'
+                        : selectedAnalysis.status === 'REVIEW'
                           ? 'Review'
                           : 'Draft'
-                      : selectedAnalysis.status === 'completed'
+                      : selectedAnalysis.status === 'APPROVED'
                         ? 'Zakończona'
-                        : selectedAnalysis.status === 'in_progress'
+                        : selectedAnalysis.status === 'REVIEW'
                           ? 'W trakcie'
                           : 'Szkic'}
                   </span>{' '}

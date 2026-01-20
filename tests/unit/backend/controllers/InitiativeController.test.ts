@@ -35,6 +35,7 @@ vi.mock('uuid', () => ({
 describe('InitiativeController', () => {
   let mockReq: any;
   let mockRes: any;
+  let mockNext: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -53,6 +54,7 @@ describe('InitiativeController', () => {
       json: vi.fn(),
       status: vi.fn().mockReturnThis(),
     };
+    mockNext = vi.fn();
   });
 
   describe('getInitiatives', () => {
@@ -61,14 +63,14 @@ describe('InitiativeController', () => {
         {
           id: 'i1',
           title: 'Initiative 1',
-          status: 'ACTIVE',
+          status: 'PLANNING',
           progress: 50,
           organization_id: 'org-123',
         },
         {
           id: 'i2',
           title: 'Initiative 2',
-          status: 'COMPLETED',
+          status: 'DONE',
           progress: 100,
           organization_id: 'org-123',
         },
@@ -77,7 +79,7 @@ describe('InitiativeController', () => {
 
       const { InitiativeController } =
         await import('../../../../server/src/controllers/InitiativeController.js');
-      await InitiativeController.getInitiatives(mockReq, mockRes);
+      await InitiativeController.getInitiatives(mockReq, mockRes, mockNext);
 
       expect(mockQueryAll).toHaveBeenCalled();
       expect(mockRes.json).toHaveBeenCalled();
@@ -91,7 +93,7 @@ describe('InitiativeController', () => {
 
       const { InitiativeController } =
         await import('../../../../server/src/controllers/InitiativeController.js');
-      await InitiativeController.getInitiatives(mockReq, mockRes);
+      await InitiativeController.getInitiatives(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(401);
     });
@@ -110,7 +112,7 @@ describe('InitiativeController', () => {
 
       const { InitiativeController } =
         await import('../../../../server/src/controllers/InitiativeController.js');
-      await InitiativeController.getInitiatives(mockReq, mockRes);
+      await InitiativeController.getInitiatives(mockReq, mockRes, mockNext);
 
       const result = mockRes.json.mock.calls[0][0];
       expect(result[0].deliverables).toEqual(['item1', 'item2']);
@@ -130,7 +132,7 @@ describe('InitiativeController', () => {
 
       const { InitiativeController } =
         await import('../../../../server/src/controllers/InitiativeController.js');
-      await InitiativeController.getInitiativeById(mockReq, mockRes);
+      await InitiativeController.getInitiativeById(mockReq, mockRes, mockNext);
 
       expect(mockQueryOne).toHaveBeenCalled();
       expect(mockRes.json).toHaveBeenCalled();
@@ -142,7 +144,7 @@ describe('InitiativeController', () => {
 
       const { InitiativeController } =
         await import('../../../../server/src/controllers/InitiativeController.js');
-      await InitiativeController.getInitiativeById(mockReq, mockRes);
+      await InitiativeController.getInitiativeById(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(404);
       expect(mockRes.json).toHaveBeenCalledWith({ error: 'Initiative not found' });
@@ -164,7 +166,7 @@ describe('InitiativeController', () => {
 
       const { InitiativeController } =
         await import('../../../../server/src/controllers/InitiativeController.js');
-      await InitiativeController.createInitiative(mockReq, mockRes);
+      await InitiativeController.createInitiative(mockReq, mockRes, mockNext);
 
       expect(mockQueryRun).toHaveBeenCalled();
       expect(mockRes.json).toHaveBeenCalledWith(
@@ -182,7 +184,7 @@ describe('InitiativeController', () => {
 
       const { InitiativeController } =
         await import('../../../../server/src/controllers/InitiativeController.js');
-      await InitiativeController.createInitiative(mockReq, mockRes);
+      await InitiativeController.createInitiative(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(401);
     });
@@ -192,7 +194,7 @@ describe('InitiativeController', () => {
 
       const { InitiativeController } =
         await import('../../../../server/src/controllers/InitiativeController.js');
-      await InitiativeController.createInitiative(mockReq, mockRes);
+      await InitiativeController.createInitiative(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({ error: 'Title is required' });
@@ -211,7 +213,7 @@ describe('InitiativeController', () => {
 
       const { InitiativeController } =
         await import('../../../../server/src/controllers/InitiativeController.js');
-      await InitiativeController.createInitiative(mockReq, mockRes);
+      await InitiativeController.createInitiative(mockReq, mockRes, mockNext);
 
       const callArgs = mockQueryRun.mock.calls[0][1];
       expect(callArgs).toContain('["D1","D2"]');
@@ -226,7 +228,7 @@ describe('InitiativeController', () => {
 
       const { InitiativeController } =
         await import('../../../../server/src/controllers/InitiativeController.js');
-      await InitiativeController.updateInitiative(mockReq, mockRes);
+      await InitiativeController.updateInitiative(mockReq, mockRes, mockNext);
 
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Initiative updated' });
     });
@@ -237,7 +239,7 @@ describe('InitiativeController', () => {
 
       const { InitiativeController } =
         await import('../../../../server/src/controllers/InitiativeController.js');
-      await InitiativeController.updateInitiative(mockReq, mockRes);
+      await InitiativeController.updateInitiative(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(401);
     });
@@ -246,18 +248,19 @@ describe('InitiativeController', () => {
   describe('updateInitiativeStatus', () => {
     it('should update initiative status', async () => {
       mockReq.params.id = 'i1';
-      mockReq.body = { status: 'COMPLETED', reason: 'All tasks done' };
+      mockReq.body = { status: 'DONE', reason: 'All tasks done' };
+      mockQueryOne.mockResolvedValue({ status: 'PLANNING' });
       mockQueryRun.mockResolvedValue({ changes: 1 });
 
       const { InitiativeController } =
         await import('../../../../server/src/controllers/InitiativeController.js');
-      await InitiativeController.updateInitiativeStatus(mockReq, mockRes);
+      await InitiativeController.updateInitiativeStatus(mockReq, mockRes, mockNext);
 
       expect(mockQueryRun).toHaveBeenCalled();
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
           id: 'i1',
-          status: 'COMPLETED',
+          status: 'DONE',
           message: 'Status updated',
         })
       );
@@ -266,11 +269,11 @@ describe('InitiativeController', () => {
     it('should return 401 when user not authenticated', async () => {
       mockReq.user = { id: 'user-123' };
       mockReq.params.id = 'i1';
-      mockReq.body = { status: 'ACTIVE' };
+      mockReq.body = { status: 'PLANNING' };
 
       const { InitiativeController } =
         await import('../../../../server/src/controllers/InitiativeController.js');
-      await InitiativeController.updateInitiativeStatus(mockReq, mockRes);
+      await InitiativeController.updateInitiativeStatus(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(401);
     });

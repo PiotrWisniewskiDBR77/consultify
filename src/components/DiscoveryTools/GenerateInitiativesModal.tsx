@@ -14,6 +14,17 @@ const METHODOLOGIES = [
   { id: 'operational-efficiency', label: 'Operational Efficiency' },
 ];
 
+const METHODOLOGY_PREVIEW: Record<
+  string,
+  { category: string; priority: string; risk: string }
+> = {
+  'impact-feasibility': { category: 'Strategy', priority: 'P1', risk: 'Medium' },
+  'value-effort': { category: 'Operations', priority: 'P2', risk: 'Low' },
+  'risk-compliance': { category: 'Process Auto', priority: 'P1', risk: 'High' },
+  'customer-market': { category: 'Digital', priority: 'P2', risk: 'Medium' },
+  'operational-efficiency': { category: 'Operations', priority: 'P2', risk: 'Low' },
+};
+
 interface GenerateInitiativesModalProps {
   isPolish: boolean;
   defaults: { methodologyId: string; count: number; includeChatContext: boolean };
@@ -32,11 +43,22 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
   onGenerate,
 }) => {
   const [count, setCount] = useState(defaults.count);
+  const [customCount, setCustomCount] = useState('');
   const [methodologyId, setMethodologyId] = useState(defaults.methodologyId);
   const [includeChatContext, setIncludeChatContext] = useState(defaults.includeChatContext);
+  const previewMeta = METHODOLOGY_PREVIEW[methodologyId] || {
+    category: 'Operations',
+    priority: 'P3',
+    risk: 'Medium',
+  };
+  const customValue = Number(customCount);
+  const finalCount =
+    customCount !== '' && Number.isFinite(customValue)
+      ? Math.min(7, Math.max(1, customValue))
+      : count;
 
   const handleGenerate = () => {
-    onGenerate({ methodologyId, count, includeChatContext });
+    onGenerate({ methodologyId, count: finalCount, includeChatContext });
   };
 
   return (
@@ -71,6 +93,17 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                 </button>
               ))}
             </div>
+            <div className="mt-3">
+              <input
+                type="number"
+                min={1}
+                max={7}
+                value={customCount}
+                onChange={(e) => setCustomCount(e.target.value)}
+                placeholder={isPolish ? 'Custom (1-7)' : 'Custom (1-7)'}
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 text-sm bg-white dark:bg-navy-900"
+              />
+            </div>
           </div>
 
           <div>
@@ -101,6 +134,20 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
             />
             {isPolish ? 'Include AI chat context' : 'Include AI chat context'}
           </label>
+
+          <div className="p-3 rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700">
+            <div className="text-xs text-slate-500 mb-2">
+              {isPolish ? 'Preview list' : 'Preview list'}
+            </div>
+            <div className="space-y-1 text-xs text-slate-600 dark:text-slate-400">
+              {Array.from({ length: finalCount }).map((_, idx) => (
+                <div key={idx}>
+                  • Initiative {idx + 1} · {previewMeta.category} · {previewMeta.priority} ·{' '}
+                  {previewMeta.risk}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="px-5 py-4 border-t border-slate-200 dark:border-navy-700 flex justify-end gap-2">

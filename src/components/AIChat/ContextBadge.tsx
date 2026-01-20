@@ -314,6 +314,7 @@ export const InputContextBadge: React.FC<InputContextBadgeProps> = ({
                 ${className}
             `}
     >
+      <span className="sr-only">Context-aware</span>
       <Icon size={14} className={config.color} />
       <span className="text-xs text-slate-600 dark:text-slate-300">
         <span className={`font-medium ${config.color}`}>{config.label}:</span>{' '}

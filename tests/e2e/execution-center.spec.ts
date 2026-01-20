@@ -5,17 +5,34 @@
  */
 import { expect, Page, test } from '@playwright/test';
 
-const testUser = {
-  email: 'e2e-test@consultinity.dev',
-  password: 'TestPassword123!',
-};
+const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 
 async function login(page: Page) {
-  await page.goto('/login');
-  await page.fill('[data-testid="email-input"]', testUser.email);
-  await page.fill('[data-testid="password-input"]', testUser.password);
-  await page.click('[data-testid="login-button"]');
-  await page.waitForURL('/dashboard');
+  const response = await page.request.post(`${API_BASE_URL}/api/auth/demo-login`);
+  if (!response.ok()) {
+    let errorDetail = '';
+    try {
+      const data = await response.json();
+      errorDetail = JSON.stringify(data);
+    } catch {
+      errorDetail = await response.text();
+    }
+    throw new Error(`Demo login failed: ${response.status()} ${errorDetail}`);
+  }
+  const data = await response.json();
+
+  await page.addInitScript(
+    ({ token, refreshToken }) => {
+      localStorage.setItem('token', token);
+      if (refreshToken) {
+        localStorage.setItem('refreshToken', refreshToken);
+      }
+      sessionStorage.setItem('isDemo', 'true');
+    },
+    { token: data.token, refreshToken: data.refreshToken }
+  );
+
+  await page.goto('/dashboard');
 }
 
 async function getAuthToken(page: Page) {
@@ -49,18 +66,18 @@ test.describe('Execution Center', () => {
 
   test('renders portfolio health panel', async ({ page }) => {
     await page.goto('/execution');
-    await expect(page.getByText('Portfolio Health')).toBeVisible();
+    await expect(page.locator('[data-testid="portfolio-health"]')).toBeVisible();
   });
 
   test('blocks execution completion when gate decisions are pending', async ({ page }) => {
     const token = await getAuthToken(page);
     const headers = { Authorization: `Bearer ${token}` };
 
-    const projectsResponse = await page.request.get('/api/projects', { headers });
+    const projectsResponse = await page.request.get(`${API_BASE_URL}/api/projects`, { headers });
     const projectsData = await projectsResponse.json();
     const projectId = projectsData?.projects?.[0]?.id || projectsData?.[0]?.id;
 
-    const initResponse = await page.request.post('/api/initiatives', {
+    const initResponse = await page.request.post(`${API_BASE_URL}/api/initiatives`, {
       headers,
       data: {
         title: 'E2E Execution Initiative',
@@ -72,7 +89,7 @@ test.describe('Execution Center', () => {
     const initData = await initResponse.json();
     const initiativeId = initData?.id;
 
-    const decisionResponse = await page.request.post('/api/decisions', {
+    const decisionResponse = await page.request.post(`${API_BASE_URL}/api/decisions`, {
       headers,
       data: {
         title: 'Scope Change Gate',
@@ -85,10 +102,13 @@ test.describe('Execution Center', () => {
     });
     expect(decisionResponse.ok()).toBeTruthy();
 
-    const closeResponse = await page.request.patch(`/api/initiatives/${initiativeId}/status`, {
-      headers,
-      data: { status: 'DONE' },
-    });
+    const closeResponse = await page.request.patch(
+      `${API_BASE_URL}/api/initiatives/${initiativeId}/status`,
+      {
+        headers,
+        data: { status: 'DONE' },
+      }
+    );
     expect(closeResponse.status()).toBe(400);
   });
 
@@ -96,11 +116,11 @@ test.describe('Execution Center', () => {
     const token = await getAuthToken(page);
     const headers = { Authorization: `Bearer ${token}` };
 
-    const projectsResponse = await page.request.get('/api/projects', { headers });
+    const projectsResponse = await page.request.get(`${API_BASE_URL}/api/projects`, { headers });
     const projectsData = await projectsResponse.json();
     const projectId = projectsData?.projects?.[0]?.id || projectsData?.[0]?.id;
 
-    const initResponse = await page.request.post('/api/initiatives', {
+    const initResponse = await page.request.post(`${API_BASE_URL}/api/initiatives`, {
       headers,
       data: {
         title: 'E2E Execution to Benefits',
@@ -112,13 +132,16 @@ test.describe('Execution Center', () => {
     const initData = await initResponse.json();
     const initiativeId = initData?.id;
 
-    const closeResponse = await page.request.patch(`/api/initiatives/${initiativeId}/status`, {
-      headers,
-      data: { status: 'DONE' },
-    });
+    const closeResponse = await page.request.patch(
+      `${API_BASE_URL}/api/initiatives/${initiativeId}/status`,
+      {
+        headers,
+        data: { status: 'DONE' },
+      }
+    );
     expect(closeResponse.ok()).toBeTruthy();
 
     await page.goto('/benefits');
-    await expect(page.getByText('E2E Execution to Benefits')).toBeVisible();
+    await expect(page.getByText('E2E Execution to Benefits').first()).toBeVisible();
   });
 });

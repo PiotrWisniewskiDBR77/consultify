@@ -6,6 +6,10 @@ import { setupAutoCleanup } from './helpers/testCleanup';
 // Setup automatic cleanup for all tests
 setupAutoCleanup();
 
+// Provide jest compatibility for legacy tests
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(globalThis as any).jest = vi;
+
 // Global mock for react-i18next to prevent "Cannot read properties of undefined (reading 'en')" errors
 vi.mock('react-i18next', () => {
   // Helper function to create nested translation objects with language properties

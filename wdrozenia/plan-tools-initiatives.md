@@ -212,6 +212,29 @@ Fallback:
 - zapis batcha inicjatyw (DRAFT) z powiazaniem do toola
 - panel "Generated from this tool" + link do Initiatives
 
+## 1.4 Inwentarz narzedzi (aktualny stan w kodzie)
+Zrodlo: `src/views/discovery-tools/StrategicToolsView.tsx`
+### Lista narzedzi (10)
+1) Dynamic SWOT (implemented)
+2) Market Forces / Porter (implemented)
+3) Growth Paths / Ansoff (coming soon)
+4) Value Chain (coming soon)
+5) Portfolio Priority / BCG (coming soon)
+6) Ambition Decomposer (coming soon)
+7) Focus & Trade-off (coming soon)
+8) Risk & Uncertainty (coming soon)
+9) Capability-to-Outcome (coming soon)
+10) Narrative & Alignment (coming soon)
+
+### Stan implementacji (wg kodu)
+- Implemented: `dynamic-swot`, `market-forces`, `growth-paths`, `portfolio-priority`, `risk-uncertainty`
+- Coming soon: pozostale narzedzia (karty w UI z badge)
+
+### Wniosek wdrozeniowy
+Agent wdraza mechanike dla narzedzi implemented + framework “coming soon”
+bez edycji formularzy. Docelowo kolejne narzedzia dziedzicza wspolny
+Tool Workspace i format odpowiedzi.
+
 ## 2) UX / UI - specyfikacja ekranow
 ### 2.1 Tool Workspace (ClickUp-like)
 Layout:

@@ -13,7 +13,27 @@ import { ContextStep } from './steps/ContextStep';
 import { SummaryStep } from './steps/SummaryStep';
 import { SWOTCorrelationsStep } from './tools/DynamicSWOT/SWOTCorrelationsStep';
 import { SWOTQuadrantStep } from './tools/DynamicSWOT/SWOTQuadrantStep';
+import { GrowthPathQuadrantStep } from './tools/GrowthPaths/GrowthPathQuadrantStep';
 import { ForceStep } from './tools/MarketForces/ForceStep';
+import { PortfolioItemsStep } from './tools/PortfolioPriority/PortfolioItemsStep';
+import { PortfolioMatrixStep } from './tools/PortfolioPriority/PortfolioMatrixStep';
+import { AssumptionsStep } from './tools/RiskUncertainty/AssumptionsStep';
+import { RisksStep } from './tools/RiskUncertainty/RisksStep';
+import { ScenariosStep } from './tools/RiskUncertainty/ScenariosStep';
+import {
+  A3CountermeasuresStep,
+  A3ProblemStep,
+  A3RootCauseStep,
+  DMSEscalationStep,
+  DMSKPIsStep,
+  InventoryClassificationStep,
+  InventoryReplenishmentStep,
+  OperationalSectionStep,
+  SOPChecklistsStep,
+  SOPStandardsStep,
+  SMEDImprovementsStep,
+  SMEDStepsStep,
+} from './tools/Operational';
 
 // ==================== TYPES ====================
 
@@ -29,6 +49,8 @@ interface ToolCanvasProps {
   onOpenChat: () => void;
   onOpenInitiatives?: () => void;
   generatedInitiatives?: { id: string; title: string; status?: string }[];
+  recentInitiatives?: { id: string; title: string; status?: string }[];
+  chatSnippets?: { role: string; content: string }[];
 }
 
 // ==================== COMPONENT ====================
@@ -45,6 +67,8 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
   onOpenChat,
   onOpenInitiatives,
   generatedInitiatives,
+  recentInitiatives,
+  chatSnippets,
 }) => {
   // Render step-specific content
   const renderStepContent = () => {
@@ -109,6 +133,115 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
       }
     }
 
+    if (toolType === 'growth-paths') {
+      if (
+        ['market-penetration', 'market-development', 'product-development', 'diversification'].includes(
+          stepDefinition.id
+        )
+      ) {
+        return (
+          <GrowthPathQuadrantStep
+            quadrant={
+              stepDefinition.id as
+                | 'market-penetration'
+                | 'market-development'
+                | 'product-development'
+                | 'diversification'
+            }
+            session={session}
+            isPolish={isPolish}
+          />
+        );
+      }
+    }
+
+    if (toolType === 'portfolio-priority') {
+      if (stepDefinition.id === 'portfolio-items') {
+        return <PortfolioItemsStep session={session} isPolish={isPolish} />;
+      }
+      if (stepDefinition.id === 'portfolio-matrix') {
+        return <PortfolioMatrixStep session={session} isPolish={isPolish} />;
+      }
+    }
+
+    if (toolType === 'risk-uncertainty') {
+      if (stepDefinition.id === 'assumptions') {
+        return <AssumptionsStep session={session} isPolish={isPolish} />;
+      }
+      if (stepDefinition.id === 'risks') {
+        return <RisksStep session={session} isPolish={isPolish} />;
+      }
+      if (stepDefinition.id === 'scenarios') {
+        return <ScenariosStep session={session} isPolish={isPolish} />;
+      }
+    }
+
+    if (toolType === 'sop-builder') {
+      if (stepDefinition.id === 'standards') {
+        return <SOPStandardsStep session={session} isPolish={isPolish} />;
+      }
+      if (stepDefinition.id === 'checklists') {
+        return <SOPChecklistsStep session={session} isPolish={isPolish} />;
+      }
+    }
+
+    if (toolType === 'a3-problem-solving') {
+      if (stepDefinition.id === 'problem') {
+        return <A3ProblemStep session={session} isPolish={isPolish} />;
+      }
+      if (stepDefinition.id === 'root-cause') {
+        return <A3RootCauseStep session={session} isPolish={isPolish} />;
+      }
+      if (stepDefinition.id === 'countermeasures') {
+        return <A3CountermeasuresStep session={session} isPolish={isPolish} />;
+      }
+    }
+
+    if (toolType === 'smed-planner') {
+      if (stepDefinition.id === 'changeover-steps') {
+        return <SMEDStepsStep session={session} isPolish={isPolish} />;
+      }
+      if (stepDefinition.id === 'improvements') {
+        return <SMEDImprovementsStep session={session} isPolish={isPolish} />;
+      }
+    }
+
+    if (toolType === 'dms-builder') {
+      if (stepDefinition.id === 'kpis') {
+        return <DMSKPIsStep session={session} isPolish={isPolish} />;
+      }
+      if (stepDefinition.id === 'escalation') {
+        return <DMSEscalationStep session={session} isPolish={isPolish} />;
+      }
+    }
+
+    if (toolType === 'inventory-autopilot') {
+      if (stepDefinition.id === 'sku-classification') {
+        return <InventoryClassificationStep session={session} isPolish={isPolish} />;
+      }
+      if (stepDefinition.id === 'replenishment') {
+        return <InventoryReplenishmentStep session={session} isPolish={isPolish} />;
+      }
+    }
+
+    if (
+      ['sop-builder', 'a3-problem-solving', 'smed-planner', 'dms-builder', 'inventory-autopilot'].includes(
+        toolType
+      )
+    ) {
+      if (stepDefinition.id !== 'context' && stepDefinition.id !== 'summary') {
+        return (
+          <OperationalSectionStep
+            sectionId={stepDefinition.id}
+            title={isPolish ? stepDefinition.namePl : stepDefinition.name}
+            description={isPolish ? stepDefinition.descriptionPl : stepDefinition.description}
+            session={session}
+            isPolish={isPolish}
+          />
+        );
+      }
+    }
+
     // Default fallback
     return (
       <div className="flex items-center justify-center h-full text-slate-400">
@@ -131,6 +264,8 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
         onOpenChat={onOpenChat}
         onOpenInitiatives={onOpenInitiatives}
         generatedInitiatives={generatedInitiatives}
+        recentInitiatives={recentInitiatives}
+        chatSnippets={chatSnippets}
       />
     </div>
   );

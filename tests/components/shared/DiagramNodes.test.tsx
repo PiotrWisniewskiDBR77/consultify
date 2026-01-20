@@ -7,6 +7,7 @@
 
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { vi } from 'vitest';
 
 import {
   ProcessStepNode,
@@ -17,7 +18,7 @@ import {
 } from '../../../src/components/shared/DiagramNodes';
 
 // Mock React Flow
-jest.mock('reactflow', () => ({
+vi.mock('reactflow', () => ({
   Handle: ({ type, position }: any) => (
     <div data-testid={`handle-${type}-${position}`} />
   ),

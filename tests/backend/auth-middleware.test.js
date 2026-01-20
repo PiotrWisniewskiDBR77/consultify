@@ -130,7 +130,7 @@ const createAuthMiddleware = (jwtSecret = 'test-secret') => {
 };
 
 // Mock request/response
-const createMockReq = (headers = {}, user = null) => ({
+const createMockReq = (headers = {}, user = undefined) => ({
   headers,
   user,
 });

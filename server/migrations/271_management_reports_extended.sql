@@ -4,6 +4,8 @@
 
 PRAGMA foreign_keys=off;
 
+DROP VIEW IF EXISTS v_multi_framework_assessment_summary;
+
 -- =====================================================
 -- Update management_reports for new report types
 -- =====================================================

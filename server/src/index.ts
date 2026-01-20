@@ -39,7 +39,6 @@ import {
   shutdownConnectionPool,
 } from './database/index.js';
 // TypeScript routes (migrated)
-import { apiGateway } from './Gateway.js';
 import { get as dbGet } from './utils/DbPromise.js';
 import logger from './utils/Logger.js';
 import RedisRateLimitStore from './utils/RedisRateLimitStore.js';
@@ -241,46 +240,52 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
   // LLM STARTUP VALIDATION - Single Source of Truth
   // ============================================================
   // Validate LLM configuration
-  (async () => {
-    try {
-      const startupValidatorModule = await import('./services/ai/startupValidator.js');
-      // Handle both named exports and default export wrapping (CJS/ESM interop)
-      let validateOnStartup: any =
-        (startupValidatorModule as any).validateOnStartup ||
-        (startupValidatorModule as any).default?.validateOnStartup;
+  if (!process.env.SKIP_STARTUP_VALIDATOR) {
+    (async () => {
+      try {
+        const startupValidatorModule = await import('./services/ai/startupValidator.js');
+        // Handle both named exports and default export wrapping (CJS/ESM interop)
+        let validateOnStartup: any =
+          (startupValidatorModule as any).validateOnStartup ||
+          (startupValidatorModule as any).default?.validateOnStartup;
 
-      // Handle case where default export is a Promise (async module init)
-      if (!validateOnStartup && (startupValidatorModule as any).default instanceof Promise) {
-        const resolvedDefault = (await (startupValidatorModule as any).default) as any;
-        validateOnStartup = resolvedDefault.validateOnStartup;
-      }
-
-      if (typeof validateOnStartup === 'function') {
-        const healthReport = await validateOnStartup({
-          testConnectivity: true,
-          parallel: true,
-        });
-
-        // Store health report for API access
-        (global as typeof globalThis & { llmHealthReport?: unknown }).llmHealthReport =
-          healthReport;
-
-        if (healthReport.criticalErrors && healthReport.criticalErrors.length > 0) {
-          logger.error('[Server] ⚠️  LLM CRITICAL: Some AI features may not work');
-          healthReport.criticalErrors.forEach((err: string) => logger.error(`  - ${err}`));
+        // Handle case where default export is a Promise (async module init)
+        if (!validateOnStartup && (startupValidatorModule as any).default instanceof Promise) {
+          const resolvedDefault = (await (startupValidatorModule as any).default) as any;
+          validateOnStartup = resolvedDefault.validateOnStartup;
         }
 
-        if (healthReport.summary && healthReport.summary.healthy > 0) {
-          logger.info(`[Server] ✅ LLM Ready: ${healthReport.summary.healthy} provider(s) healthy`);
+        if (typeof validateOnStartup === 'function') {
+          const healthReport = await validateOnStartup({
+            testConnectivity: true,
+            parallel: true,
+          });
+
+          // Store health report for API access
+          (global as typeof globalThis & { llmHealthReport?: unknown }).llmHealthReport =
+            healthReport;
+
+          if (healthReport.criticalErrors && healthReport.criticalErrors.length > 0) {
+            logger.error('[Server] ⚠️  LLM CRITICAL: Some AI features may not work');
+            healthReport.criticalErrors.forEach((err: string) => logger.error(`  - ${err}`));
+          }
+
+          if (healthReport.summary && healthReport.summary.healthy > 0) {
+            logger.info(
+              `[Server] ✅ LLM Ready: ${healthReport.summary.healthy} provider(s) healthy`
+            );
+          }
+        } else {
+          logger.warn('[Server] Startup validation skipped (function not found)');
         }
-      } else {
-        logger.warn('[Server] Startup validation skipped (function not found)');
+      } catch (err: any) {
+        const error = err as Error;
+        logger.error('[Server] LLM Startup Validation failed:', error.message);
       }
-    } catch (err: any) {
-      const error = err as Error;
-      logger.error('[Server] LLM Startup Validation failed:', error.message);
-    }
-  })();
+    })();
+  } else {
+    logger.info('[Server] Startup validation skipped via SKIP_STARTUP_VALIDATOR');
+  }
 
   // Init LLM Provider Health Monitoring (Auto-Fallback)
   try {
@@ -610,7 +615,15 @@ app.use((req, res, next) => {
   }
   next();
 });
-apiGateway.initializeRoutes(app);
+if (isTest && process.env.ENABLE_TEST_GATEWAY !== 'true') {
+  const managementReportsRoutes = await import('./routes/managementReports.routes.ts').then(
+    (m) => m.default || m
+  );
+  app.use('/api/management-reports', managementReportsRoutes);
+} else {
+  const { apiGateway } = await import('./Gateway.ts');
+  apiGateway.initializeRoutes(app);
+}
 
 // ============================================================
 // STATIC FILES & CATCHALL
@@ -783,7 +796,9 @@ app.use(sentryHandlers.errorHandler);
 
 // Alert Watchdog: Catch 500 errors and trigger System Alerts
 import alertWatchdog from './middleware/alertWatchdog.middleware.js';
-app.use(alertWatchdog);
+if (typeof alertWatchdog === 'function') {
+  app.use(alertWatchdog);
+}
 
 // Error Handler Middleware (must be last, after all routes)
 import { errorHandlerMiddleware } from './utils/ErrorHandler.js';

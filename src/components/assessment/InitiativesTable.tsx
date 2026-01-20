@@ -25,6 +25,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { InitiativeStatus } from '../../types';
+import { getStatusMeta, getStatusesForModule } from '../../services/initiativeLifecycle';
 import { InitiativeCompletenessChecker } from '../PMO/InitiativeCompletenessChecker';
 import { StatusTransitionDropdown } from '../PMO/StatusTransitionDropdown';
 import { GenerateInitiativesModal } from './modals/GenerateInitiativesModal';
@@ -117,7 +118,10 @@ const mapApiToInitiative = (item: any): Initiative => ({
   createdBy: item.createdBy || undefined,
 });
 
-type FilterStatus = 'all' | 'draft' | 'planning';
+const ASSESSMENT_STATUSES = getStatusesForModule('assessment');
+const STATUS_TABS = ASSESSMENT_STATUSES.length ? ASSESSMENT_STATUSES : [InitiativeStatus.DRAFT];
+
+type FilterStatus = 'all' | InitiativeStatus;
 
 type AssessmentFramework = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
 
@@ -162,8 +166,9 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      // Fetch only DRAFT and PLANNING initiatives for Assessment module
-      const url = `/api/initiatives/by-status/DRAFT,PLANNING${projectId ? `?projectId=${projectId}` : ''}`;
+      // Fetch only assessment module initiatives
+      const statuses = STATUS_TABS.join(',');
+      const url = `/api/initiatives/by-status/${statuses}${projectId ? `?projectId=${projectId}` : ''}`;
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -239,9 +244,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
     }
     // Status filter
     if (filterStatus !== 'all') {
-      if (filterStatus === 'draft' && initiative.status !== InitiativeStatus.DRAFT) return false;
-      if (filterStatus === 'planning' && initiative.status !== InitiativeStatus.PLANNING)
-        return false;
+      if (initiative.status !== filterStatus) return false;
     }
 
     // Project filter
@@ -276,10 +279,22 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
   };
 
   // Stats
-  const stats = {
-    total: initiatives.length,
-    draft: initiatives.filter((i) => i.status === InitiativeStatus.DRAFT).length,
-    planning: initiatives.filter((i) => i.status === InitiativeStatus.PLANNING).length,
+  const stats = STATUS_TABS.reduce(
+    (acc, status) => {
+      acc.byStatus[status] = initiatives.filter((i) => i.status === status).length;
+      return acc;
+    },
+    {
+      total: initiatives.length,
+      byStatus: {} as Record<InitiativeStatus, number>,
+    }
+  );
+
+  const formatStatusList = (statuses: InitiativeStatus[]) => {
+    const labels = statuses.map((status) => getStatusMeta(status).label.toLowerCase());
+    if (labels.length <= 1) return labels[0] || 'draft';
+    if (labels.length === 2) return `${labels[0]} and ${labels[1]}`;
+    return `${labels.slice(0, -1).join(', ')}, and ${labels[labels.length - 1]}`;
   };
 
   return (
@@ -292,7 +307,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
               Strategic Initiatives Board
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Initiatives in draft and planning phase • {stats.total} total
+              Initiatives in {formatStatusList(STATUS_TABS)} phase • {stats.total} total
             </p>
           </div>
           <button
@@ -318,26 +333,19 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
             >
               All ({stats.total})
             </button>
-            <button
-              onClick={() => setFilterStatus('draft')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                filterStatus === 'draft'
-                  ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
-              }`}
-            >
-              Draft ({stats.draft})
-            </button>
-            <button
-              onClick={() => setFilterStatus('planning')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                filterStatus === 'planning'
-                  ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
-              }`}
-            >
-              Planning ({stats.planning})
-            </button>
+            {STATUS_TABS.map((status) => (
+              <button
+                key={status}
+                onClick={() => setFilterStatus(status)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  filterStatus === status
+                    ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
+                }`}
+              >
+                {getStatusMeta(status).label} ({stats.byStatus[status] ?? 0})
+              </button>
+            ))}
           </div>
 
           <div className="h-6 w-px bg-slate-200 dark:bg-white/10" />

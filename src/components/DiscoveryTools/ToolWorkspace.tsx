@@ -7,6 +7,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-hot-toast';
 
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -100,6 +101,36 @@ const TOOL_METADATA: Record<
     color: 'teal',
     badge: 'NAR',
   },
+  'sop-builder': {
+    name: 'SOP Builder',
+    namePl: 'Kreator SOP',
+    color: 'blue',
+    badge: 'SOP',
+  },
+  'a3-problem-solving': {
+    name: 'A3 Problem Solving',
+    namePl: 'A3 Rozwiązywanie',
+    color: 'amber',
+    badge: 'A3',
+  },
+  'smed-planner': {
+    name: 'SMED Planner',
+    namePl: 'Planer SMED',
+    color: 'orange',
+    badge: 'SMD',
+  },
+  'dms-builder': {
+    name: 'DMS Builder',
+    namePl: 'Kreator DMS',
+    color: 'emerald',
+    badge: 'DMS',
+  },
+  'inventory-autopilot': {
+    name: 'Inventory Autopilot',
+    namePl: 'Autopilot Zapasów',
+    color: 'purple',
+    badge: 'INV',
+  },
 };
 
 // ==================== COMPONENT ====================
@@ -112,14 +143,35 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const { currentOrganization, activeChatMessages, navigateWithChatContext, setCurrentView } =
-    useAppStore();
+  const {
+    currentOrganization,
+    activeChatMessages,
+    navigateWithChatContext,
+    setCurrentView,
+    currentProjectId,
+  } = useAppStore();
   const [toolSessionId, setToolSessionId] = useState<string | null>(sessionId || null);
   const [toolStatus, setToolStatus] = useState<'DRAFT' | 'REVIEW' | 'APPROVED'>('DRAFT');
   const [generatedInitiatives, setGeneratedInitiatives] = useState<
     { id: string; title: string; status?: string }[]
   >([]);
+  const [recentInitiatives, setRecentInitiatives] = useState<
+    { id: string; title: string; status?: string }[]
+  >([]);
+  const [toolDecisions, setToolDecisions] = useState<
+    { decision_type: string; status: string; decision_id?: string; decision_status?: string }[]
+  >([]);
+  const [toolPermissions, setToolPermissions] = useState<{
+    canRequestReview?: boolean;
+    canApproveTool?: boolean;
+    canGenerate?: boolean;
+  }>({});
   const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [showRequestReviewModal, setShowRequestReviewModal] = useState(false);
+  const [reviewDueDate, setReviewDueDate] = useState('');
+  const [reviewPriority, setReviewPriority] = useState<'low' | 'medium' | 'high' | 'critical'>(
+    'medium'
+  );
   const [generationDefaults, setGenerationDefaults] = useState<{
     methodologyId: string;
     count: number;
@@ -169,12 +221,16 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     const ensureToolSession = async () => {
       if (toolSessionId || !currentSession) return;
       const name = `${toolMeta.name} - ${new Date().toLocaleDateString()}`;
-      const created = await Api.createToolSession({ toolType, name });
+      const created = await Api.createToolSession({
+        toolType,
+        name,
+        projectId: currentProjectId || null,
+      });
       setToolSessionId(created.id);
       setToolStatus(created.status as 'DRAFT');
     };
     ensureToolSession();
-  }, [toolSessionId, currentSession, toolType]);
+  }, [toolSessionId, currentSession, toolType, currentProjectId]);
 
   // Sync backend tool session data
   useEffect(() => {
@@ -183,19 +239,28 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       const completionPercent = calculateProgress();
       const contextSnapshot = {
         org: currentOrganization || null,
-        chat: activeChatMessages.slice(-30).map((m) => ({ role: m.role, content: m.content })),
+        chat: activeChatMessages.slice(-50).map((m) => ({ role: m.role, content: m.content })),
+        initiatives: recentInitiatives,
       };
 
       await Api.updateToolSession(toolSessionId, {
         answers: currentSession.inputData,
-        completionPercent,
-        confidenceAvg: Math.min(5, Math.max(1, Math.round(completionPercent / 20))),
+        completionPercent: completionReady ? 100 : completionPercent,
+        confidenceAvg: calculateConfidenceAvg(),
         contextSnapshot,
       });
     };
     const timeout = setTimeout(syncSession, 1500);
     return () => clearTimeout(timeout);
-  }, [currentSession, toolSessionId, currentOrganization, activeChatMessages, calculateProgress]);
+  }, [
+    currentSession,
+    toolSessionId,
+    currentOrganization,
+    activeChatMessages,
+    calculateProgress,
+    completionReady,
+    recentInitiatives,
+  ]);
 
   // Load generated initiatives when tool session exists
   useEffect(() => {
@@ -204,9 +269,39 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       const data = await Api.getToolSession(toolSessionId);
       setToolStatus((data.status || 'DRAFT').toUpperCase());
       setGeneratedInitiatives(data.generatedInitiatives || []);
+      setToolDecisions(data.decisions || []);
+      setToolPermissions(data.permissions || {});
     };
     loadGenerated();
   }, [toolSessionId]);
+
+  const refreshToolSession = async () => {
+    if (!toolSessionId) return;
+    const data = await Api.getToolSession(toolSessionId);
+    setToolStatus((data.status || 'DRAFT').toUpperCase());
+    setGeneratedInitiatives(data.generatedInitiatives || []);
+    setToolDecisions(data.decisions || []);
+    setToolPermissions(data.permissions || {});
+  };
+
+  useEffect(() => {
+    const loadRecentInitiatives = async () => {
+      try {
+        const initiatives = await Api.getInitiatives(currentProjectId || undefined);
+        const list = Array.isArray(initiatives) ? initiatives : initiatives?.items || [];
+        setRecentInitiatives(
+          list.slice(0, 5).map((item: any) => ({
+            id: item.id,
+            title: item.title || item.name || 'Untitled initiative',
+            status: item.status,
+          }))
+        );
+      } catch {
+        setRecentInitiatives([]);
+      }
+    };
+    loadRecentInitiatives();
+  }, [currentProjectId]);
 
   // Auto-save on changes
   useEffect(() => {
@@ -222,8 +317,6 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   const toolMeta = TOOL_METADATA[toolType];
   const stepDefs = getStepDefinitions();
   const progress = calculateProgress();
-
-  const completionReady = progress >= 100;
 
   const reviewGaps = useMemo(() => {
     if (!currentSession) return [];
@@ -247,6 +340,14 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     }
     return gaps;
   }, [currentSession, toolType]);
+
+  const completionReady = reviewGaps.length === 0;
+
+  const calculateConfidenceAvg = () => {
+    if (!currentSession) return 1;
+    if (completionReady) return 4;
+    return Math.max(1, Math.min(5, Math.round(progress / 20)));
+  };
 
   // Handle step navigation
   const handleNextStep = () => {
@@ -278,26 +379,61 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   };
 
   const handleOpenInitiatives = () => {
+    if (onCreateInitiative) {
+      onCreateInitiative();
+      return;
+    }
     setCurrentView(AppView.FULL_STEP2_INITIATIVES);
   };
 
   const handleRequestReview = async () => {
     if (!toolSessionId) return;
-    const result = await Api.requestToolReview(toolSessionId);
-    setToolStatus(result.status || 'REVIEW');
+    if (!completionReady) {
+      toast.error(isPolish ? 'Brak wymagan DoD' : 'DoD not satisfied');
+      return;
+    }
+    setShowRequestReviewModal(true);
+  };
+
+  const handleConfirmRequestReview = async () => {
+    if (!toolSessionId) return;
+    try {
+      const result = await Api.requestToolReview(toolSessionId, {
+        dueDate: reviewDueDate || undefined,
+        priority: reviewPriority,
+      });
+      setToolStatus(result.status || 'REVIEW');
+      toast.success(isPolish ? 'Review requested' : 'Review requested');
+      await refreshToolSession();
+      setShowRequestReviewModal(false);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to request review');
+    }
   };
 
   const handleApprove = async () => {
     if (!toolSessionId) return;
-    const result = await Api.approveTool(toolSessionId);
-    setToolStatus(result.status || 'APPROVED');
-    setShowGenerateModal(true);
+    try {
+      const result = await Api.approveTool(toolSessionId);
+      setToolStatus(result.status || 'APPROVED');
+      setShowGenerateModal(true);
+      toast.success(isPolish ? 'Tool approved' : 'Tool approved');
+      await refreshToolSession();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to approve tool');
+    }
   };
 
-  const handleSendBack = async () => {
+  const handleSendBack = async (comment?: string) => {
     if (!toolSessionId) return;
-    const result = await Api.sendToolBackToDraft(toolSessionId);
-    setToolStatus(result.status || 'DRAFT');
+    try {
+      const result = await Api.sendToolBackToDraft(toolSessionId, comment);
+      setToolStatus(result.status || 'DRAFT');
+      toast.success(isPolish ? 'Sent back to draft' : 'Sent back to draft');
+      await refreshToolSession();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to send back');
+    }
   };
 
   const handleGenerate = async (payload: {
@@ -306,11 +442,21 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     includeChatContext: boolean;
   }) => {
     if (!toolSessionId) return;
-    setGenerationDefaults(payload);
-    await Api.generateToolInitiatives(toolSessionId, payload);
-    const updated = await Api.getToolGeneratedInitiatives(toolSessionId);
-    setGeneratedInitiatives(updated.initiatives || []);
-    setShowGenerateModal(false);
+    if (toolPermissions.canGenerate === false) {
+      toast.error(isPolish ? 'Brak uprawnien' : 'Permission denied');
+      return;
+    }
+    try {
+      setGenerationDefaults(payload);
+      await Api.generateToolInitiatives(toolSessionId, payload);
+      const updated = await Api.getToolGeneratedInitiatives(toolSessionId);
+      setGeneratedInitiatives(updated.initiatives || []);
+      await refreshToolSession();
+      setShowGenerateModal(false);
+      toast.success(isPolish ? 'Generated initiatives' : 'Generated initiatives');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to generate initiatives');
+    }
   };
 
   if (!currentSession) {
@@ -342,7 +488,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         onExport={() => console.log('Export clicked')}
         onCreateInitiative={onCreateInitiative}
         onRequestReview={handleRequestReview}
-        canRequestReview={completionReady}
+        canRequestReview={completionReady && toolPermissions.canRequestReview !== false}
         isPolish={isPolish}
       />
 
@@ -358,6 +504,9 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
             onSendBack={handleSendBack}
             onConfigureGenerate={() => setShowGenerateModal(true)}
             generationDefaults={generationDefaults}
+            decisions={toolDecisions}
+            canApprove={toolPermissions.canApproveTool !== false}
+            canGenerate={toolPermissions.canGenerate !== false}
           />
         ) : (
           <ToolCanvas
@@ -372,6 +521,11 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
             onOpenChat={handleOpenChat}
             onOpenInitiatives={handleOpenInitiatives}
             generatedInitiatives={generatedInitiatives}
+            recentInitiatives={recentInitiatives}
+            chatSnippets={activeChatMessages.slice(-3).map((m) => ({
+              role: m.role,
+              content: m.content,
+            }))}
           />
         )}
       </div>
@@ -400,6 +554,74 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
           onClose={() => setShowGenerateModal(false)}
           onGenerate={handleGenerate}
         />
+      )}
+
+      {showRequestReviewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
+            <div className="p-6 border-b border-slate-200 dark:border-navy-700">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                {isPolish ? 'Request review' : 'Request review'}
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                {isPolish
+                  ? 'Sprawdz kompletność i potwierdz wysłanie do review.'
+                  : 'Check completeness and confirm sending to review.'}
+              </p>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
+                {reviewGaps.length === 0
+                  ? isPolish
+                    ? 'Brak braków w DoD.'
+                    : 'No DoD gaps.'
+                  : `${isPolish ? 'Braki' : 'Gaps'}: ${reviewGaps.join(', ')}`}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {isPolish ? 'Due date' : 'Due date'}
+                </label>
+                <input
+                  type="date"
+                  value={reviewDueDate}
+                  onChange={(e) => setReviewDueDate(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {isPolish ? 'Priorytet' : 'Priority'}
+                </label>
+                <select
+                  value={reviewPriority}
+                  onChange={(e) =>
+                    setReviewPriority(e.target.value as 'low' | 'medium' | 'high' | 'critical')
+                  }
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                >
+                  <option value="low">{isPolish ? 'Niski' : 'Low'}</option>
+                  <option value="medium">{isPolish ? 'Sredni' : 'Medium'}</option>
+                  <option value="high">{isPolish ? 'Wysoki' : 'High'}</option>
+                  <option value="critical">{isPolish ? 'Krytyczny' : 'Critical'}</option>
+                </select>
+              </div>
+            </div>
+            <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end gap-3">
+              <button
+                onClick={() => setShowRequestReviewModal(false)}
+                className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg"
+              >
+                {isPolish ? 'Anuluj' : 'Cancel'}
+              </button>
+              <button
+                onClick={handleConfirmRequestReview}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium"
+              >
+                {isPolish ? 'Wyślij do review' : 'Send to review'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

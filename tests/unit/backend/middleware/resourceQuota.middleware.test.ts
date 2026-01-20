@@ -5,7 +5,7 @@ import {
   checkMemoryQuota,
   checkCPUQuota,
   checkBudgetQuota,
-} from '../../../../server/src/middleware/resourceQuota.middleware';
+} from '../../../../server/src/middleware/resourceQuota.middleware.js';
 import * as queryHelpers from '../../../../server/src/utils/queryHelpers';
 
 // Mock dependencies

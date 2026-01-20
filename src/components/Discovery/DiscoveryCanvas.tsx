@@ -157,6 +157,7 @@ const DiscoveryCanvasInner: React.FC = () => {
   const { fitView } = useReactFlow();
 
   // Get data from store
+  const store = useDiscoveryStore();
   const {
     nodes,
     edges,
@@ -165,8 +166,24 @@ const DiscoveryCanvasInner: React.FC = () => {
     moveNode,
     autoLayout,
     saveVersion,
-    getNodesInCategory,
-  } = useDiscoveryStore();
+  } = store;
+  const getNodesInCategory =
+    store.getNodesInCategory ||
+    ((category: CanvasCategory) =>
+      nodes.filter((node) => {
+        switch (node.type) {
+          case 'painPoint':
+            return category === 'pains';
+          case 'insight':
+            return category === 'insights';
+          case 'opportunity':
+            return category === 'opportunities';
+          case 'recommendation':
+            return category === 'recommendations';
+          default:
+            return false;
+        }
+      }));
 
   // Convert store nodes to React Flow format
   const rfNodes: Node[] = useMemo(

@@ -8,12 +8,26 @@ usr AS (
     SELECT id, email, first_name, last_name FROM users ORDER BY created_at LIMIT 1
 )
 
--- Extra sessions
-INSERT OR IGNORE INTO user_sessions (id, user_id, token_jti, device_info, ip_address, user_agent, location, created_at, last_active_at, expires_at, is_current)
-SELECT 'sess-mock-3', usr.id, 'jti-mock-3', 'Windows Edge', '172.16.0.10', 'Edge/120', 'Gdansk, PL', datetime('now','-12 hours'), datetime('now','-30 minutes'), datetime('now','+10 days'), 0 FROM usr;
+-- Extra sessions (SQLite-friendly schema)
+INSERT OR IGNORE INTO user_sessions (
+    id, user_id, organization_id, session_token, ip_address, user_agent,
+    device_type, browser, os, location_country, location_city, login_method,
+    started_at, last_activity_at, expires_at, is_active
+)
+SELECT 'sess-mock-3', usr.id, org.id, 'sess-token-3', '172.16.0.10', 'Edge/120',
+       'desktop', 'Edge', 'Windows', 'PL', 'Gdansk', 'password',
+       datetime('now','-12 hours'), datetime('now','-30 minutes'), datetime('now','+10 days'), 0
+FROM org, usr;
 
-INSERT OR IGNORE INTO user_sessions (id, user_id, token_jti, device_info, ip_address, user_agent, location, created_at, last_active_at, expires_at, is_current)
-SELECT 'sess-mock-4', usr.id, 'jti-mock-4', 'iPad Safari', '172.16.0.11', 'Mobile Safari', 'Poznan, PL', datetime('now','-3 days'), datetime('now','-2 days'), datetime('now','+3 days'), 0 FROM usr;
+INSERT OR IGNORE INTO user_sessions (
+    id, user_id, organization_id, session_token, ip_address, user_agent,
+    device_type, browser, os, location_country, location_city, login_method,
+    started_at, last_activity_at, expires_at, is_active
+)
+SELECT 'sess-mock-4', usr.id, org.id, 'sess-token-4', '172.16.0.11', 'Mobile Safari',
+       'tablet', 'Safari', 'iOS', 'PL', 'Poznan', 'password',
+       datetime('now','-3 days'), datetime('now','-2 days'), datetime('now','+3 days'), 0
+FROM org, usr;
 
 -- Extra login history
 INSERT OR IGNORE INTO login_history (id, user_id, organization_id, ip_address, user_agent, location, status, failure_reason, created_at)

@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import {
   calculateFinancialMetrics,
   normalizeFinancialData,
-} from '../../../../src/services/economicsFinancials.js';
+} from '../../../server/src/services/economicsFinancials.js';
 
 describe('economicsFinancials helpers', () => {
   it('calculates positive NPV for strong benefits', () => {

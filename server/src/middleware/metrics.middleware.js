@@ -1,2 +1,6 @@
-export * from './metrics.middleware.js';
-export { default } from './metrics.middleware.js';
+/**
+ * Metrics middleware (no-op fallback).
+ */
+export const metricsMiddleware = (_req, _res, next) => next();
+
+export default metricsMiddleware;

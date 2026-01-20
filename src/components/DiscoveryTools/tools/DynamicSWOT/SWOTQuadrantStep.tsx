@@ -9,6 +9,8 @@ import React, { useState } from 'react';
 
 import { SWOTData, SWOTItem, ToolSession, useToolStore } from '@/store/useToolStore';
 
+import { InlineAssist } from '../../InlineAssist';
+
 // ==================== TYPES ====================
 
 interface SWOTQuadrantStepProps {
@@ -127,6 +129,13 @@ export const SWOTQuadrantStep: React.FC<SWOTQuadrantStepProps> = ({
           <Plus className="w-5 h-5" />
         </button>
       </div>
+      <InlineAssist
+        hint={
+          isPolish
+            ? 'Dodaj konkretne, mierzalne elementy, nie ogolniki.'
+            : 'Add concrete, measurable items, avoid general statements.'
+        }
+      />
 
       {/* Items list */}
       <div className="space-y-3">

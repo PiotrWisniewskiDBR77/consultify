@@ -17,6 +17,9 @@ INSERT OR IGNORE INTO compliance_settings (
     1,
     usr.id
 FROM org, usr;
+WHERE EXISTS (
+    SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'compliance_settings'
+);
 
 -- Compliance settings: Cookies
 INSERT OR IGNORE INTO compliance_settings (
@@ -27,6 +30,9 @@ INSERT OR IGNORE INTO compliance_settings (
     1,
     usr.id
 FROM org, usr;
+WHERE EXISTS (
+    SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'compliance_settings'
+);
 
 -- Compliance settings: Data Requests (dummy feature flags)
 INSERT OR IGNORE INTO compliance_settings (
@@ -37,9 +43,15 @@ INSERT OR IGNORE INTO compliance_settings (
     1,
     usr.id
 FROM org, usr;
+WHERE EXISTS (
+    SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'compliance_settings'
+);
 
 -- Organization data retention defaults
 INSERT OR IGNORE INTO organization_data_retention (
     organization_id, audit_log_retention, auto_delete_inactive, inactive_days, updated_by
-) SELECT org.id, 'forever', 0, 365, usr.id FROM org, usr;
+) SELECT org.id, 'forever', 0, 365, usr.id FROM org, usr
+WHERE EXISTS (
+    SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'organization_data_retention'
+);
 

@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
 
 import { useAppStore } from '../../store/useAppStore';
 import { InitiativeStatus, PortfolioFilters, PortfolioInitiative } from '../../types';
@@ -35,31 +36,11 @@ import {
 // Dynamic card for full initiative view
 import { InitiativeDetailCard } from './InitiativeDetailCard';
 
-// Status metadata for filters
-const STATUS_META: Record<
-  InitiativeStatus,
-  {
-    color: string;
-    label: string;
-    dotColor: string;
-  }
-> = {
-  [InitiativeStatus.DRAFT]: { color: 'slate', label: 'Draft', dotColor: 'bg-slate-400' },
-  [InitiativeStatus.PLANNING]: { color: 'blue', label: 'Planning', dotColor: 'bg-blue-400' },
-  [InitiativeStatus.REVIEW]: { color: 'amber', label: 'In Review', dotColor: 'bg-amber-400' },
-  [InitiativeStatus.APPROVED]: { color: 'emerald', label: 'Approved', dotColor: 'bg-emerald-400' },
-  [InitiativeStatus.EXECUTING]: { color: 'cyan', label: 'Executing', dotColor: 'bg-cyan-400' },
-  [InitiativeStatus.BLOCKED]: { color: 'red', label: 'Blocked', dotColor: 'bg-red-400' },
-  [InitiativeStatus.DONE]: { color: 'green', label: 'Done', dotColor: 'bg-green-400' },
-  [InitiativeStatus.CANCELLED]: { color: 'gray', label: 'Cancelled', dotColor: 'bg-gray-400' },
-  [InitiativeStatus.ARCHIVED]: { color: 'slate', label: 'Archived', dotColor: 'bg-slate-500' },
-};
-
-const ALLOWED_STATUSES: InitiativeStatus[] = [
-  InitiativeStatus.PLANNING,
-  InitiativeStatus.REVIEW,
-  InitiativeStatus.APPROVED,
-];
+const MODULE_STATUSES = getStatusesForModule('initiatives');
+const ALLOWED_STATUSES: InitiativeStatus[] =
+  MODULE_STATUSES.length > 0
+    ? MODULE_STATUSES
+    : [InitiativeStatus.PLANNING, InitiativeStatus.REVIEW, InitiativeStatus.APPROVED];
 
 interface InitiativesHubProps {
   initialTab?: ModuleTab;
@@ -198,8 +179,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       { id: 'all', label: 'All', color: 'bg-slate-400', count: initiatives.length },
       ...ALLOWED_STATUSES.map((status) => ({
         id: status,
-        label: STATUS_META[status].label,
-        color: STATUS_META[status].dotColor,
+        label: STATUS_METADATA[status].label,
+        color: STATUS_METADATA[status].dotColor,
         count: counts[status] || 0,
       })),
     ];

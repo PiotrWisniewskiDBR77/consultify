@@ -52,7 +52,7 @@ describe('InitiativeController', () => {
                 {
                     id: 'init-1',
                     title: 'Digital Transformation',
-                    status: 'ACTIVE',
+                    status: 'EXECUTING',
                     progress_percentage: 65,
                     start_date: '2024-01-01',
                     end_date: '2024-06-30'
@@ -120,7 +120,7 @@ describe('InitiativeController', () => {
                 id: 'init-789',
                 title: 'Process Automation',
                 description: 'Automate manual processes',
-                status: 'ACTIVE',
+                status: 'EXECUTING',
                 progress_percentage: 75,
                 owner_id: 'user-123',
                 start_date: '2024-01-15',
@@ -337,22 +337,22 @@ describe('InitiativeController', () => {
     describe('updateInitiativeStatus()', () => {
         it('should update initiative status', async () => {
             mockReq.params.id = 'init-222';
-            mockReq.body = { status: 'COMPLETED' };
+            mockReq.body = { status: 'DONE' };
 
             mockInitiativeService.updateInitiativeStatus.mockResolvedValue(true);
 
             await InitiativeController.updateInitiativeStatus(mockReq, mockRes);
 
-            expect(mockInitiativeService.updateInitiativeStatus).toHaveBeenCalledWith('init-222', 'COMPLETED', 'org-456');
+            expect(mockInitiativeService.updateInitiativeStatus).toHaveBeenCalledWith('init-222', 'DONE', 'org-456');
             expect(mockRes.json).toHaveBeenCalledWith({
                 message: 'Initiative status updated successfully',
-                newStatus: 'COMPLETED'
+                newStatus: 'DONE'
             });
         });
 
         it('should return 404 when initiative not found', async () => {
             mockReq.params.id = 'init-999';
-            mockReq.body = { status: 'ON_HOLD' };
+            mockReq.body = { status: 'CANCELLED' };
 
             mockInitiativeService.updateInitiativeStatus.mockResolvedValue(false);
 
@@ -388,7 +388,7 @@ describe('InitiativeController', () => {
 
         it('should handle service errors', async () => {
             mockReq.params.id = 'init-123';
-            mockReq.body = { status: 'ACTIVE' };
+            mockReq.body = { status: 'PLANNING' };
 
             const serviceError = new Error('Status update failed');
             mockInitiativeService.updateInitiativeStatus.mockRejectedValue(serviceError);
@@ -433,13 +433,13 @@ describe('InitiativeController', () => {
         it('should track initiative lifecycle changes', async () => {
             // Status changes should be auditable
             mockReq.params.id = 'init-audit';
-            mockReq.body = { status: 'COMPLETED' };
+            mockReq.body = { status: 'DONE' };
 
             mockInitiativeService.updateInitiativeStatus.mockResolvedValue(true);
 
             await InitiativeController.updateInitiativeStatus(mockReq, mockRes);
 
-            expect(mockInitiativeService.updateInitiativeStatus).toHaveBeenCalledWith('init-audit', 'COMPLETED', 'org-456');
+            expect(mockInitiativeService.updateInitiativeStatus).toHaveBeenCalledWith('init-audit', 'DONE', 'org-456');
             // In real implementation, this should create audit trail
         });
     });
@@ -449,7 +449,7 @@ describe('InitiativeController', () => {
             const largeDataset = Array(100).fill().map((_, i) => ({
                 id: `init-${i}`,
                 title: `Initiative ${i}`,
-                status: 'ACTIVE',
+                status: 'PLANNING',
                 progress_percentage: Math.floor(Math.random() * 100)
             }));
 

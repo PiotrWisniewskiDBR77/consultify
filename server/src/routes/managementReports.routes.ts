@@ -163,6 +163,14 @@ router.delete(
 );
 
 router.get(
+  '/pending-approvals',
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    const pending = await managementReportsService.getPendingApprovals();
+    return res.json({ success: true, pending });
+  })
+);
+
+router.get(
   '/:id',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const report = await managementReportsService.getReport(req.params.id);
@@ -194,14 +202,6 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     await managementReportsService.approveReport(req.params.id, req.userId, req.body.comment);
     return res.json({ success: true });
-  })
-);
-
-router.get(
-  '/pending-approvals',
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
-    const pending = await managementReportsService.getPendingApprovals();
-    return res.json({ success: true, pending });
   })
 );
 

@@ -254,9 +254,9 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
                                 dark:border-navy-700 rounded-xl text-sm cursor-pointer"
             >
               <option value="all">Wszystkie statusy</option>
-              <option value="draft">Szkic</option>
-              <option value="in_progress">W trakcie</option>
-              <option value="completed">Ukończone</option>
+              <option value="DRAFT">Szkic</option>
+              <option value="REVIEW">W trakcie</option>
+              <option value="APPROVED">Ukończone</option>
             </select>
             <ChevronDown
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
@@ -335,19 +335,19 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
                                 dark:border-navy-700 rounded-xl shadow-xl z-10 py-1 hidden group-hover:block"
               >
                 <button
-                  onClick={() => handleBulkStatusChange('draft')}
+                  onClick={() => handleBulkStatusChange('DRAFT')}
                   className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5"
                 >
                   Szkic
                 </button>
                 <button
-                  onClick={() => handleBulkStatusChange('in_progress')}
+                  onClick={() => handleBulkStatusChange('REVIEW')}
                   className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5"
                 >
                   W trakcie
                 </button>
                 <button
-                  onClick={() => handleBulkStatusChange('completed')}
+                  onClick={() => handleBulkStatusChange('APPROVED')}
                   className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5"
                 >
                   Ukończone
@@ -501,21 +501,21 @@ const AnalysisCard: React.FC<{
   const [showMenu, setShowMenu] = useState(false);
 
   const statusColors: Record<string, string> = {
-    draft: 'bg-slate-500/10 text-slate-400 dark:text-slate-500',
-    in_progress: 'bg-yellow-500/10 text-yellow-500',
-    completed: 'bg-green-500/10 text-green-500',
+    DRAFT: 'bg-slate-500/10 text-slate-400 dark:text-slate-500',
+    REVIEW: 'bg-yellow-500/10 text-yellow-500',
+    APPROVED: 'bg-green-500/10 text-green-500',
   };
 
   const statusLabels: Record<string, string> = {
-    draft: 'Szkic',
-    in_progress: 'W trakcie',
-    completed: 'Ukończona',
+    DRAFT: 'Szkic',
+    REVIEW: 'W trakcie',
+    APPROVED: 'Ukończona',
   };
 
   const statusLabelsFinancial: Record<string, string> = {
-    draft: 'Draft',
-    in_progress: 'Review',
-    completed: 'Approved',
+    DRAFT: 'Draft',
+    REVIEW: 'Review',
+    APPROVED: 'Approved',
   };
 
   return (
@@ -681,14 +681,14 @@ const AnalysisTable: React.FC<{
   onExport: (id: string) => void;
 }> = ({ analyses, selectedIds, onSelect, onToggleSelect, onDelete, onDuplicate, onExport }) => {
   const statusLabels: Record<string, string> = {
-    draft: 'Szkic',
-    in_progress: 'W trakcie',
-    completed: 'Ukończona',
+    DRAFT: 'Szkic',
+    REVIEW: 'W trakcie',
+    APPROVED: 'Ukończona',
   };
   const statusLabelsFinancial: Record<string, string> = {
-    draft: 'Draft',
-    in_progress: 'Review',
-    completed: 'Approved',
+    DRAFT: 'Draft',
+    REVIEW: 'Review',
+    APPROVED: 'Approved',
   };
 
   return (
@@ -771,9 +771,9 @@ const AnalysisTable: React.FC<{
               <td className="px-4 py-3 text-center">
                 <span
                   className={`text-xs px-2 py-1 rounded-full ${
-                    analysis.status === 'completed'
+                    analysis.status === 'APPROVED'
                       ? 'bg-green-500/10 text-green-500'
-                      : analysis.status === 'in_progress'
+                      : analysis.status === 'REVIEW'
                         ? 'bg-yellow-500/10 text-yellow-500'
                         : 'bg-slate-500/10 text-slate-400 dark:text-slate-500'
                   }`}

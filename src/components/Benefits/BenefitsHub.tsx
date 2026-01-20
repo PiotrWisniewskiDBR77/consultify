@@ -22,6 +22,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
 
 import { InitiativeKPI, InitiativeStatus } from '../../types';
 import {
@@ -56,34 +57,58 @@ interface BenefitsInitiative {
   updatedAt?: string;
 }
 
-// Status metadata
+const MODULE_STATUSES = getStatusesForModule('benefits');
+const BENEFITS_STATUSES: InitiativeStatus[] =
+  MODULE_STATUSES.length > 0 ? MODULE_STATUSES : [InitiativeStatus.DONE];
+
 const STATUS_META: Record<
-  string,
-  { color: string; label: string; dotColor: string; icon: React.ReactNode }
+  InitiativeStatus,
+  { label: string; dotColor: string; icon: React.ReactNode }
 > = {
   [InitiativeStatus.DONE]: {
-    color: 'green',
-    label: 'Done',
-    dotColor: 'bg-green-400',
+    label: STATUS_METADATA[InitiativeStatus.DONE].label,
+    dotColor: STATUS_METADATA[InitiativeStatus.DONE].dotColor,
     icon: <CheckCircle2 size={14} />,
   },
   [InitiativeStatus.BLOCKED]: {
-    color: 'red',
-    label: 'Blocked',
-    dotColor: 'bg-red-400',
+    label: STATUS_METADATA[InitiativeStatus.BLOCKED].label,
+    dotColor: STATUS_METADATA[InitiativeStatus.BLOCKED].dotColor,
     icon: <AlertCircle size={14} />,
   },
   [InitiativeStatus.CANCELLED]: {
-    color: 'gray',
-    label: 'Cancelled',
-    dotColor: 'bg-gray-400',
+    label: STATUS_METADATA[InitiativeStatus.CANCELLED].label,
+    dotColor: STATUS_METADATA[InitiativeStatus.CANCELLED].dotColor,
     icon: <Ban size={14} />,
   },
   [InitiativeStatus.ARCHIVED]: {
-    color: 'slate',
-    label: 'Archived',
-    dotColor: 'bg-slate-500',
+    label: STATUS_METADATA[InitiativeStatus.ARCHIVED].label,
+    dotColor: STATUS_METADATA[InitiativeStatus.ARCHIVED].dotColor,
     icon: <Archive size={14} />,
+  },
+  [InitiativeStatus.PLANNING]: {
+    label: STATUS_METADATA[InitiativeStatus.PLANNING].label,
+    dotColor: STATUS_METADATA[InitiativeStatus.PLANNING].dotColor,
+    icon: <Target size={14} />,
+  },
+  [InitiativeStatus.REVIEW]: {
+    label: STATUS_METADATA[InitiativeStatus.REVIEW].label,
+    dotColor: STATUS_METADATA[InitiativeStatus.REVIEW].dotColor,
+    icon: <FileText size={14} />,
+  },
+  [InitiativeStatus.APPROVED]: {
+    label: STATUS_METADATA[InitiativeStatus.APPROVED].label,
+    dotColor: STATUS_METADATA[InitiativeStatus.APPROVED].dotColor,
+    icon: <CheckCircle2 size={14} />,
+  },
+  [InitiativeStatus.EXECUTING]: {
+    label: STATUS_METADATA[InitiativeStatus.EXECUTING].label,
+    dotColor: STATUS_METADATA[InitiativeStatus.EXECUTING].dotColor,
+    icon: <Target size={14} />,
+  },
+  [InitiativeStatus.DRAFT]: {
+    label: STATUS_METADATA[InitiativeStatus.DRAFT].label,
+    dotColor: STATUS_METADATA[InitiativeStatus.DRAFT].dotColor,
+    icon: <FileText size={14} />,
   },
 };
 
@@ -128,7 +153,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const response = await Api.get('/initiatives/by-status/DONE,BLOCKED,CANCELLED,ARCHIVED');
+        const response = await Api.get(`/initiatives/by-status/${BENEFITS_STATUSES.join(',')}`);
         const mapped = (response.initiatives || []) as BenefitsInitiative[];
         setInitiatives(mapped);
 
@@ -259,10 +284,10 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
         label: 'Status',
         width: '130px',
         filterable: true,
-        filterOptions: Object.entries(STATUS_META).map(([value, meta]) => ({
-          value,
-          label: meta.label,
-          color: meta.dotColor,
+        filterOptions: BENEFITS_STATUSES.map((status) => ({
+          value: status,
+          label: STATUS_META[status].label,
+          color: STATUS_META[status].dotColor,
         })),
       },
       {
@@ -304,7 +329,6 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
   // Handlers
   const handleOpenDocument = useCallback((row: BenefitsInitiative) => {
     const code = getTypeCode(row.axis);
-    const statusMeta = STATUS_META[row.status] || STATUS_META[InitiativeStatus.DONE];
 
     const doc: OpenDocument = {
       id: row.id,

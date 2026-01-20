@@ -672,9 +672,9 @@ export interface GovernancePolicy {
  * - PLANNING: Transferred to Initiative Management Module (Module 3)
  * - REVIEW: Pending approval reviews
  * - APPROVED: Ready for execution, transfers to Execution Module (Module 4/5)
- * - EXECUTING: Active work in progress
+ * - EXECUTING: Active work in progress (Execution Module)
  * - BLOCKED: Temporarily blocked (requires reason)
- * - DONE: Successfully completed
+ * - DONE: Successfully completed (Benefits Module)
  * - CANCELLED: Terminated before completion
  * - ARCHIVED: Historical record (post-completion or post-cancellation)
  *

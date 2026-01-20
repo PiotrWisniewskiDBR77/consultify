@@ -53,10 +53,13 @@ const OrgSwitcher: React.FC<OrgSwitcherProps> = ({ className = '', compact = fal
 
   // Don't show if only one org
   if (!isLoading && availableOrgs.length <= 1) {
+    const singleOrg = availableOrgs[0];
     if (compact) return null;
     return (
       <div className={`px-3 py-2 text-sm text-slate-400 dark:text-slate-500 ${className}`}>
-        {currentOrg?.name || t('common.noOrganization', 'No organization')}
+        {singleOrg?.name ||
+          currentOrg?.name ||
+          t('common.noOrganization', 'No organization')}
       </div>
     );
   }

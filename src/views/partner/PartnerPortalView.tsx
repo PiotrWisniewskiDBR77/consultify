@@ -2456,7 +2456,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
   onNavigate,
 }) => {
   const { t } = useTranslation();
-  const [activeSection, setActiveSection] = useState<PartnerSection>('partner-home');
+  const [activeSection, setActiveSection] = useState<PartnerSection>('dashboard');
 
   // Get breadcrumbs based on active section
   const breadcrumbs = useMemo((): Breadcrumb[] => {

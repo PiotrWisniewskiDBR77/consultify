@@ -10,12 +10,40 @@ const testUser = {
   password: 'TestPassword123!',
 };
 
+const apiBaseUrl = process.env.E2E_API_BASE_URL || 'http://127.0.0.1:3005';
+
 async function login(page: Page) {
-  await page.goto('/login');
-  await page.fill('[data-testid="email-input"]', testUser.email);
-  await page.fill('[data-testid="password-input"]', testUser.password);
-  await page.click('[data-testid="login-button"]');
-  await page.waitForURL('/dashboard');
+  const response = await page.request.post(`${apiBaseUrl}/api/auth/login`, {
+    data: { email: testUser.email, password: testUser.password },
+  });
+  const rawText = await response.text();
+  if (!response.ok()) {
+    throw new Error(`Login failed: ${response.status()} ${rawText}`);
+  }
+  let data: any = {};
+  if (rawText) {
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      throw new Error(`Login response is not JSON: ${rawText}`);
+    }
+  }
+  const token = data?.token;
+  const refreshToken = data?.refreshToken;
+  const user = data?.user;
+  if (!token) {
+    throw new Error('Missing auth token');
+  }
+  await page.addInitScript(({ tokenValue, refreshTokenValue, userValue }) => {
+    localStorage.setItem('token', tokenValue);
+    if (refreshTokenValue) {
+      localStorage.setItem('refreshToken', refreshTokenValue);
+    }
+    if (userValue) {
+      localStorage.setItem('user', JSON.stringify(userValue));
+    }
+  }, { tokenValue: token, refreshTokenValue: refreshToken, userValue: user });
+  await page.goto('/initiatives');
 }
 
 async function getAuthToken(page: Page) {
@@ -32,7 +60,6 @@ test.describe('Initiatives + Roadmap', () => {
   });
 
   test('shows only planning/review/approved status filters', async ({ page }) => {
-    await page.goto('/initiatives');
     await expect(page.locator('[data-testid="initiatives-hub"]')).toBeVisible();
     await expect(page.locator('[data-testid="status-filter-PLANNING"]')).toBeVisible();
     await expect(page.locator('[data-testid="status-filter-REVIEW"]')).toBeVisible();
@@ -45,27 +72,34 @@ test.describe('Initiatives + Roadmap', () => {
     const token = await getAuthToken(page);
     const headers = { Authorization: `Bearer ${token}` };
 
-    const meResponse = await page.request.get('/api/auth/me', { headers });
+  const meResponse = await page.request.get(`${apiBaseUrl}/api/auth/me`, { headers });
     const meData = await meResponse.json();
     const userId = meData?.user?.id;
 
-    const initResponse = await page.request.post('/api/initiatives', {
+    const initResponse = await page.request.post(`${apiBaseUrl}/api/initiatives`, {
       headers,
       data: {
         title: 'E2E Initiative - Gate Flow',
         summary: 'E2E gate validation',
       },
     });
-    const initData = await initResponse.json();
+    const initRaw = await initResponse.text();
+    if (!initResponse.ok()) {
+      throw new Error(`Initiative create failed: ${initResponse.status()} ${initRaw}`);
+    }
+    const initData = initRaw ? JSON.parse(initRaw) : {};
     const initiativeId = initData?.id;
+    if (!initiativeId) {
+      throw new Error(`Initiative create missing id: ${initRaw}`);
+    }
 
-    await page.request.patch(`/api/initiatives/${initiativeId}/status`, {
+  await page.request.patch(`${apiBaseUrl}/api/initiatives/${initiativeId}/status`, {
       headers,
       data: { status: 'REVIEW' },
     });
 
-    const approveWithoutDecision = await page.request.patch(
-      `/api/initiatives/${initiativeId}/status`,
+  const approveWithoutDecision = await page.request.patch(
+    `${apiBaseUrl}/api/initiatives/${initiativeId}/status`,
       {
         headers,
         data: { status: 'APPROVED' },
@@ -73,7 +107,7 @@ test.describe('Initiatives + Roadmap', () => {
     );
     expect(approveWithoutDecision.status()).toBe(400);
 
-    const goNoGoDecision = await page.request.post('/api/decisions', {
+  const goNoGoDecision = await page.request.post(`${apiBaseUrl}/api/decisions`, {
       headers,
       data: {
         title: 'Go/No-Go Decision',
@@ -86,13 +120,13 @@ test.describe('Initiatives + Roadmap', () => {
       },
     });
     const goNoGoData = await goNoGoDecision.json();
-    await page.request.patch(`/api/decisions/${goNoGoData.id}/decide`, {
+  await page.request.patch(`${apiBaseUrl}/api/decisions/${goNoGoData.id}/decide`, {
       headers,
       data: { decision: 'approved', rationale: 'Approved for E2E test' },
     });
 
-    const approveWithDecision = await page.request.patch(
-      `/api/initiatives/${initiativeId}/status`,
+  const approveWithDecision = await page.request.patch(
+    `${apiBaseUrl}/api/initiatives/${initiativeId}/status`,
       {
         headers,
         data: { status: 'APPROVED' },
@@ -100,7 +134,7 @@ test.describe('Initiatives + Roadmap', () => {
     );
     expect(approveWithDecision.ok()).toBeTruthy();
 
-    const resourcesDecision = await page.request.post('/api/decisions', {
+  const resourcesDecision = await page.request.post(`${apiBaseUrl}/api/decisions`, {
       headers,
       data: {
         title: 'Resources Commit',
@@ -113,12 +147,12 @@ test.describe('Initiatives + Roadmap', () => {
       },
     });
     const resourcesData = await resourcesDecision.json();
-    await page.request.patch(`/api/decisions/${resourcesData.id}/decide`, {
+  await page.request.patch(`${apiBaseUrl}/api/decisions/${resourcesData.id}/decide`, {
       headers,
       data: { decision: 'approved', rationale: 'Approved resources' },
     });
 
-    const scheduleDecision = await page.request.post('/api/decisions', {
+  const scheduleDecision = await page.request.post(`${apiBaseUrl}/api/decisions`, {
       headers,
       data: {
         title: 'Schedule Lock',
@@ -131,13 +165,13 @@ test.describe('Initiatives + Roadmap', () => {
       },
     });
     const scheduleData = await scheduleDecision.json();
-    await page.request.patch(`/api/decisions/${scheduleData.id}/decide`, {
+  await page.request.patch(`${apiBaseUrl}/api/decisions/${scheduleData.id}/decide`, {
       headers,
       data: { decision: 'approved', rationale: 'Schedule locked' },
     });
 
-    const startExecution = await page.request.patch(
-      `/api/initiatives/${initiativeId}/status`,
+  const startExecution = await page.request.patch(
+    `${apiBaseUrl}/api/initiatives/${initiativeId}/status`,
       {
         headers,
         data: { status: 'EXECUTING' },

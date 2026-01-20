@@ -39,10 +39,12 @@ import {
   Trash2,
   Users,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { Api } from '@/services/api';
+import { sendMessageToAI } from '@/services/ai/gemini';
+import { INSIGHT_DETECTION_PROMPT, INTERVIEW_SYSTEM_PROMPT } from '@/services/ai/intelligence';
 
 import {
   CATEGORY_CONFIG,
@@ -103,8 +105,30 @@ const CATEGORY_ORDER: InsightCategory[] = [
   'success_criteria',
 ];
 
+const normalizeInsightCategory = (raw: string | undefined): InsightCategory | null => {
+  if (!raw) return null;
+  const normalized = raw.toLowerCase().trim().replace(/\s+/g, '_');
+  if (CATEGORY_ORDER.includes(normalized as InsightCategory)) {
+    return normalized as InsightCategory;
+  }
+  if (normalized === 'successcriteria' || normalized === 'success-criteria') {
+    return 'success_criteria';
+  }
+  return null;
+};
+
+const parseDetectionJson = (raw: string): unknown[] => {
+  const cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();
+  try {
+    const parsed = JSON.parse(cleaned);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
 export const ProjectIntelligenceView: React.FC = () => {
-  const { currentProjectId, isChatCollapsed, toggleChatCollapse } = useAppStore();
+  const { currentProjectId, isChatCollapsed, toggleChatCollapse, activeChatMessages } = useAppStore();
   const [activeTab, setActiveTab] = useState<TabType>('interview');
   const [insights, setInsights] = useState<ProjectInsight[]>([]);
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
@@ -113,6 +137,11 @@ export const ProjectIntelligenceView: React.FC = () => {
   const [selectedInsight, setSelectedInsight] = useState<ProjectInsight | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [isSeeding, setIsSeeding] = useState(false);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [isSessionInitializing, setIsSessionInitializing] = useState(false);
+
+  const lastProcessedMessageIdRef = useRef<string | null>(null);
+  const extractionInProgressRef = useRef(false);
 
   // Get current project name
   const currentProject = projects?.find((p) => p.id === currentProjectId);
@@ -147,8 +176,16 @@ export const ProjectIntelligenceView: React.FC = () => {
         Api.get(`/intelligence/projects/${currentProjectId}/insights`),
         Api.get(`/intelligence/projects/${currentProjectId}/sessions`),
       ]);
-      setInsights(insightsRes || []);
-      setSessions(sessionsRes || []);
+      const resolvedInsights = insightsRes || [];
+      const resolvedSessions = sessionsRes || [];
+      setInsights(resolvedInsights);
+      setSessions(resolvedSessions);
+
+      const activeSession =
+        resolvedSessions.find((session: InterviewSession) => session.status === 'active') ||
+        resolvedSessions[0] ||
+        null;
+      setActiveSessionId(activeSession?.id || null);
     } catch (error) {
       console.error('[ProjectIntelligence] Error fetching data:', error);
       // Don't show error toast if no data yet
@@ -160,6 +197,124 @@ export const ProjectIntelligenceView: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const createInterviewSession = useCallback(async () => {
+    if (!currentProjectId || isSessionInitializing) return;
+    setIsSessionInitializing(true);
+    try {
+      const response = await Api.post(`/intelligence/projects/${currentProjectId}/sessions`, {
+        topic: currentProject?.name || 'Project Interview',
+      });
+      if (response?.id) {
+        const newSession = response as InterviewSession;
+        setSessions((prev) => [newSession, ...prev]);
+        setActiveSessionId(newSession.id);
+      }
+    } catch (error) {
+      console.error('[ProjectIntelligence] Failed to create session:', error);
+    } finally {
+      setIsSessionInitializing(false);
+    }
+  }, [currentProjectId, currentProject?.name, isSessionInitializing]);
+
+  useEffect(() => {
+    if (!currentProjectId) return;
+    if (activeSessionId) return;
+    if (sessions.length > 0) {
+      const fallback = sessions.find((session) => session.status === 'active') || sessions[0];
+      setActiveSessionId(fallback?.id || null);
+      return;
+    }
+    createInterviewSession();
+  }, [currentProjectId, sessions, activeSessionId, createInterviewSession]);
+
+  const extractInsightsFromConversation = useCallback(
+    async (conversation: string, sourceText: string) => {
+      if (!currentProjectId || !activeSessionId) return;
+
+      const response = await sendMessageToAI([], conversation, INSIGHT_DETECTION_PROMPT);
+      const detections = parseDetectionJson(response);
+      if (!detections.length) return;
+
+      const existingKeys = new Set(
+        insights.map((insight) => `${insight.category}:${insight.title}`.toLowerCase())
+      );
+      let createdCount = 0;
+
+      for (const detection of detections.slice(0, 6)) {
+        const category = normalizeInsightCategory((detection as any)?.category);
+        if (!category) continue;
+
+        const title = String((detection as any)?.title || '').trim();
+        if (!title) continue;
+
+        const key = `${category}:${title}`.toLowerCase();
+        if (existingKeys.has(key)) continue;
+
+        const content = (detection as any)?.content;
+        const normalizedContent =
+          content && typeof content === 'object'
+            ? content
+            : { description: String(content || (detection as any)?.description || '') };
+        const confidenceRaw = String((detection as any)?.confidence || 'medium').toLowerCase();
+        const confidence =
+          confidenceRaw === 'high' || confidenceRaw === 'low' ? confidenceRaw : 'medium';
+        const detectedSource =
+          (detection as any)?.sourceQuote || (detection as any)?.source || sourceText;
+
+        await Api.post('/intelligence/insights', {
+          projectId: currentProjectId,
+          sessionId: activeSessionId,
+          category,
+          title,
+          content: normalizedContent,
+          confidence,
+          source: { type: 'chat', text: detectedSource },
+          status: 'draft',
+        });
+
+        existingKeys.add(key);
+        createdCount += 1;
+      }
+
+      if (createdCount > 0) {
+        fetchData();
+      }
+    },
+    [activeSessionId, currentProjectId, fetchData, insights]
+  );
+
+  useEffect(() => {
+    if (!currentProjectId || !activeSessionId) return;
+    if (extractionInProgressRef.current) return;
+
+    const lastAiMessage = [...activeChatMessages]
+      .reverse()
+      .find((message) => message.role === 'ai' && message.content?.trim());
+    if (!lastAiMessage) return;
+
+    if (lastAiMessage.id === lastProcessedMessageIdRef.current) return;
+
+    extractionInProgressRef.current = true;
+    const conversation = activeChatMessages
+      .slice(-12)
+      .map((message) => `${message.role === 'user' ? 'USER' : 'AI'}: ${message.content}`)
+      .join('\n');
+
+    extractInsightsFromConversation(conversation, lastAiMessage.content)
+      .catch((error) => {
+        console.error('[ProjectIntelligence] Insight extraction failed:', error);
+      })
+      .finally(() => {
+        extractionInProgressRef.current = false;
+        lastProcessedMessageIdRef.current = lastAiMessage.id;
+      });
+  }, [
+    activeChatMessages,
+    activeSessionId,
+    currentProjectId,
+    extractInsightsFromConversation,
+  ]);
 
   // Seed demo data
   const handleSeedDemoData = async () => {
@@ -229,6 +384,7 @@ export const ProjectIntelligenceView: React.FC = () => {
           </div>
         }
         subtitle="AI-powered knowledge capture"
+        chatSystemPrompt={INTERVIEW_SYSTEM_PROMPT}
       >
         <div className="h-full flex flex-col items-center justify-center bg-slate-50 dark:bg-navy-950 p-8">
           <div className="w-20 h-20 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-6">
@@ -257,6 +413,7 @@ export const ProjectIntelligenceView: React.FC = () => {
         </div>
       }
       subtitle={currentProject?.name || 'AI-powered knowledge capture'}
+      chatSystemPrompt={INTERVIEW_SYSTEM_PROMPT}
     >
       <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950">
         {/* Header */}

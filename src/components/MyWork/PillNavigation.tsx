@@ -85,6 +85,7 @@ export const PillNavigation: React.FC<PillNavigationProps> = ({
               key={tab.key}
               onClick={() => onTabChange(tab.key)}
               disabled={tab.comingSoon}
+              data-testid={`mywork-tab-${tab.key}`}
               className={`
                                 flex items-center gap-1.5 h-8 px-3 rounded-md text-[12px] font-medium
                                 transition-all duration-150
@@ -126,6 +127,7 @@ export const PillNavigation: React.FC<PillNavigationProps> = ({
       {activeTab !== 'projects' && (
         <button
           onClick={onCreateNew}
+          data-testid="mywork-create-button"
           className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 rounded-lg shadow-sm hover:shadow transition-all duration-150"
         >
           <Plus size={14} />

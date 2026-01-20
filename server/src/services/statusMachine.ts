@@ -243,21 +243,21 @@ const StatusMachine = {
 
   getInitiativeModule: (
     status: string
-  ): 'ASSESSMENT' | 'INITIATIVE_MANAGEMENT' | 'EXECUTION' | 'TERMINAL' | 'UNKNOWN' => {
+  ): 'ASSESSMENT' | 'INITIATIVE_MANAGEMENT' | 'EXECUTION' | 'BENEFITS' | 'UNKNOWN' => {
     switch (status) {
       case INITIATIVE_STATUSES.DRAFT:
         return 'ASSESSMENT';
       case INITIATIVE_STATUSES.PLANNING:
       case INITIATIVE_STATUSES.REVIEW:
       case INITIATIVE_STATUSES.APPROVED:
+      case INITIATIVE_STATUSES.CANCELLED:
+      case INITIATIVE_STATUSES.ARCHIVED:
         return 'INITIATIVE_MANAGEMENT';
       case INITIATIVE_STATUSES.EXECUTING:
       case INITIATIVE_STATUSES.BLOCKED:
         return 'EXECUTION';
       case INITIATIVE_STATUSES.DONE:
-      case INITIATIVE_STATUSES.CANCELLED:
-      case INITIATIVE_STATUSES.ARCHIVED:
-        return 'TERMINAL';
+        return 'BENEFITS';
       default:
         return 'UNKNOWN';
     }

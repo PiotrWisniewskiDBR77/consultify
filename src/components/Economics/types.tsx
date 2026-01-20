@@ -9,7 +9,7 @@
 // Core Types
 // ============================================
 
-export type AnalysisStatus = 'draft' | 'in_progress' | 'completed';
+export type AnalysisStatus = 'DRAFT' | 'REVIEW' | 'APPROVED';
 
 export interface DigitizationAnalysis {
   id: string;

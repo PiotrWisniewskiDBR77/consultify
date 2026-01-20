@@ -8,19 +8,38 @@
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import {
-  checkUserDemoPreference,
-  DEMO_ORG_ID,
-  DEMO_ORG_NAME,
-  getDemoOrganization,
-  getDemoStats,
-  setUserDemoPreference,
-} from '../middleware/demoGuard.middleware.js';
+import * as demoGuard from '../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
+
+const demoModule =
+  demoGuard.default && typeof demoGuard.default === 'object' ? demoGuard.default : demoGuard;
+const DEMO_ORG_ID = demoModule.DEMO_ORG_ID || 'demo-org';
+const DEMO_ORG_NAME = demoModule.DEMO_ORG_NAME || 'Demo Organization';
+const checkUserDemoPreference =
+  demoModule.checkUserDemoPreference || (async () => false);
+const setUserDemoPreference =
+  demoModule.setUserDemoPreference || (async () => {});
+const getDemoOrganization =
+  demoModule.getDemoOrganization ||
+  (async () => ({
+    id: DEMO_ORG_ID,
+    name: DEMO_ORG_NAME,
+    slug: 'demo-org',
+    description: 'Demo organization',
+    settings: {},
+  }));
+const getDemoStats =
+  demoModule.getDemoStats ||
+  (async () => ({
+    initiatives: 0,
+    tasks: 0,
+    decisions: 0,
+    users: 0,
+  }));
 
 // Apply rate limiting
 router.use(authRateLimiter);
@@ -51,13 +70,13 @@ router.post(
 
     try {
       // Save preference to database
-      await setUserDemoPreference(userId, isDemoEnabled);
+      await demoGuard.setUserDemoPreference(userId, isDemoEnabled);
 
       if (isDemoEnabled) {
         // Get demo organization details and stats
         const [demoOrganization, stats] = await Promise.all([
-          getDemoOrganization(),
-          getDemoStats(),
+          demoGuard.getDemoOrganization(),
+          demoGuard.getDemoStats(),
         ]);
 
         logger.info(`[DemoMode] User ${userId} enabled demo mode`);
@@ -125,12 +144,12 @@ router.get(
     }
 
     try {
-      const isDemoEnabled = await checkUserDemoPreference(userId);
+      const isDemoEnabled = await demoGuard.checkUserDemoPreference(userId);
 
       if (isDemoEnabled) {
         const [demoOrganization, stats] = await Promise.all([
-          getDemoOrganization(),
-          getDemoStats(),
+          demoGuard.getDemoOrganization(),
+          demoGuard.getDemoStats(),
         ]);
 
         return res.json({
@@ -174,13 +193,16 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const [demoOrganization, stats] = await Promise.all([getDemoOrganization(), getDemoStats()]);
+      const [demoOrganization, stats] = await Promise.all([
+        demoGuard.getDemoOrganization(),
+        demoGuard.getDemoStats(),
+      ]);
 
       return res.json({
         success: true,
         organization: {
-          id: DEMO_ORG_ID,
-          name: DEMO_ORG_NAME,
+          id: demoGuard.DEMO_ORG_ID,
+          name: demoGuard.DEMO_ORG_NAME,
           slug: 'acme-demo',
           industry: 'Manufacturing & Technology',
           size: '500-1000 employees',

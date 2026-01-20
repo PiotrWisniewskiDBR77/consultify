@@ -1,2 +1,2 @@
-export * from './DbPromise.js';
-export { default } from './DbPromise.js';
+export * from './DbPromise.ts';
+export { default } from './DbPromise.ts';

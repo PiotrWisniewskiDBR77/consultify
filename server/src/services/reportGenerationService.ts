@@ -4,7 +4,11 @@
  */
 
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import PDFDocument from 'pdfkit';
+import PptxGenJS from 'pptxgenjs';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
@@ -76,6 +80,42 @@ class ReportGenerationService {
       this.db = await getDatabase();
     }
     return this.db;
+  }
+
+  private async ensureExportDir(): Promise<string> {
+    const exportDir = path.resolve(process.cwd(), 'exports', 'reports');
+    await fs.promises.mkdir(exportDir, { recursive: true });
+    return exportDir;
+  }
+
+  private formatDecisions(decisions: { title?: string; deadline?: string; status?: string }[]): string {
+    if (!decisions || decisions.length === 0) {
+      return 'No pending decisions.';
+    }
+    return decisions
+      .slice(0, 10)
+      .map((d, index) => {
+        const due = d.deadline ? ` (due ${d.deadline})` : '';
+        const status = d.status ? ` [${String(d.status).toUpperCase()}]` : '';
+        return `${index + 1}. ${d.title || 'Decision'}${status}${due}`;
+      })
+      .join('\n');
+  }
+
+  private formatEscalations(decisions: { title?: string; deadline?: string; status?: string }[]): string {
+    const escalated = decisions.filter(
+      (d) => String(d.status || '').toLowerCase() === 'escalated'
+    );
+    if (!escalated.length) {
+      return 'No escalations.';
+    }
+    return escalated
+      .slice(0, 10)
+      .map((d, index) => {
+        const due = d.deadline ? ` (due ${d.deadline})` : '';
+        return `${index + 1}. ${d.title || 'Decision'}${due}`;
+      })
+      .join('\n');
   }
 
   /**
@@ -303,7 +343,7 @@ class ReportGenerationService {
   }
 
   /**
-   * Generate project report (stub)
+   * Generate project report
    */
   private async generateProjectReport(
     projectId: string,
@@ -312,7 +352,14 @@ class ReportGenerationService {
   ): Promise<GeneratedReport> {
     const db = await this.getDb();
 
-    const project = await db.get<{ id: string; name: string }>(
+    const project = await db.get<{
+      id: string;
+      name: string;
+      description?: string | null;
+      status?: string | null;
+      start_date?: string | null;
+      end_date?: string | null;
+    }>(
       'SELECT * FROM projects WHERE id = ? AND organization_id = ?',
       [projectId, orgId]
     );
@@ -321,46 +368,217 @@ class ReportGenerationService {
       throw new Error('Project not found');
     }
 
+    const decisions = await db.all<{
+      title: string;
+      deadline: string | null;
+      status: string;
+    }>(
+      `SELECT title, deadline, status FROM decisions 
+       WHERE project_id = ? AND organization_id = ? AND status IN ('pending', 'escalated')`,
+      [projectId, orgId]
+    );
+
+    const initiativeCounts = await db.all<{ status: string; count: number }>(
+      `SELECT UPPER(status) as status, COUNT(*) as count
+       FROM initiatives
+       WHERE project_id = ? AND organization_id = ?
+       GROUP BY UPPER(status)`,
+      [projectId, orgId]
+    );
+    const initiativeSummary = initiativeCounts.length
+      ? initiativeCounts.map((row) => `${row.status}: ${row.count}`).join(', ')
+      : 'No initiatives.';
+
     return {
       id: `report-${uuidv4()}`,
       type: 'project',
       title: `Project Report: ${project.name}`,
-      executiveSummary: `Status report for project ${project.name}.`,
-      sections: [],
+      executiveSummary:
+        language === 'pl'
+          ? `Raport statusu dla projektu ${project.name}.`
+          : `Status report for project ${project.name}.`,
+      sections: [
+        {
+          id: 'overview',
+          title: language === 'pl' ? 'Podsumowanie projektu' : 'Project Overview',
+          content: [
+            project.description ? `Description: ${project.description}` : null,
+            project.status ? `Status: ${String(project.status).toUpperCase()}` : null,
+            project.start_date ? `Start: ${project.start_date}` : null,
+            project.end_date ? `End: ${project.end_date}` : null,
+          ]
+            .filter(Boolean)
+            .join('\n') || `Project ${project.name}.`,
+        },
+        {
+          id: 'initiative-status',
+          title: language === 'pl' ? 'Status inicjatyw' : 'Initiatives Status',
+          content: initiativeSummary,
+        },
+        {
+          id: 'decisions-required',
+          title: language === 'pl' ? 'Decyzje wymagane' : 'Decisions Required',
+          content: this.formatDecisions(decisions || []),
+        },
+        {
+          id: 'escalations',
+          title: language === 'pl' ? 'Eskalacje' : 'Escalations',
+          content: this.formatEscalations(decisions || []),
+        },
+      ],
       generatedAt: new Date().toISOString(),
       language,
     };
   }
 
   /**
-   * Generate portfolio report (stub)
+   * Generate portfolio report
    */
   private async generatePortfolioReport(orgId: string, language: string): Promise<GeneratedReport> {
+    const db = await this.getDb();
+    const projectCountRow = await db.get<{ count: number }>(
+      `SELECT COUNT(*) as count FROM projects WHERE organization_id = ?`,
+      [orgId]
+    );
+    const initiativeCountRow = await db.get<{ count: number }>(
+      `SELECT COUNT(*) as count FROM initiatives WHERE organization_id = ?`,
+      [orgId]
+    );
+    const initiativeStatusRows = await db.all<{ status: string; count: number }>(
+      `SELECT UPPER(status) as status, COUNT(*) as count
+       FROM initiatives
+       WHERE organization_id = ?
+       GROUP BY UPPER(status)`,
+      [orgId]
+    );
+    const decisionCountRow = await db.get<{ count: number }>(
+      `SELECT COUNT(*) as count FROM decisions WHERE organization_id = ? AND status IN ('pending', 'escalated')`,
+      [orgId]
+    );
+    const escalatedCountRow = await db.get<{ count: number }>(
+      `SELECT COUNT(*) as count FROM decisions WHERE organization_id = ? AND status = 'escalated'`,
+      [orgId]
+    );
+
     return {
       id: `report-${uuidv4()}`,
       type: 'portfolio',
       title: 'Portfolio Overview Report',
-      executiveSummary: 'Organization-wide portfolio status.',
-      sections: [],
+      executiveSummary:
+        language === 'pl' ? 'Status portfela w skali organizacji.' : 'Organization-wide portfolio status.',
+      sections: [
+        {
+          id: 'portfolio-summary',
+          title: language === 'pl' ? 'Podsumowanie portfela' : 'Portfolio Summary',
+          content: `Projects: ${projectCountRow?.count || 0}, Initiatives: ${
+            initiativeCountRow?.count || 0
+          }, Pending decisions: ${decisionCountRow?.count || 0}, Escalated: ${
+            escalatedCountRow?.count || 0
+          }.`,
+        },
+        {
+          id: 'initiative-status',
+          title: language === 'pl' ? 'Status inicjatyw' : 'Initiatives Status',
+          content: initiativeStatusRows.length
+            ? initiativeStatusRows.map((row) => `${row.status}: ${row.count}`).join(', ')
+            : 'No initiatives.',
+        },
+      ],
       generatedAt: new Date().toISOString(),
       language,
     };
   }
 
   /**
-   * Generate initiative report (stub)
+   * Generate initiative report
    */
   private async generateInitiativeReport(
     initiativeId: string,
     language: string,
     orgId: string
   ): Promise<GeneratedReport> {
+    const db = await this.getDb();
+    const initiative = await db.get<{
+      id: string;
+      title?: string | null;
+      name?: string | null;
+      summary?: string | null;
+      status?: string | null;
+      progress?: number | null;
+      project_id?: string | null;
+      planned_start_date?: string | null;
+      planned_end_date?: string | null;
+    }>(
+      `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, orgId]
+    );
+    if (!initiative) {
+      throw new Error('Initiative not found');
+    }
+
+    const decisions = await db.all<{
+      title: string;
+      deadline: string | null;
+      status: string;
+    }>(
+      `SELECT title, deadline, status FROM decisions 
+       WHERE initiative_id = ? AND organization_id = ? AND status IN ('pending', 'escalated')`,
+      [initiativeId, orgId]
+    );
+
+    const taskCounts = await db.all<{ status: string; count: number }>(
+      `SELECT UPPER(status) as status, COUNT(*) as count
+       FROM tasks
+       WHERE initiative_id = ? AND organization_id = ?
+       GROUP BY UPPER(status)`,
+      [initiativeId, orgId]
+    );
+
+    const initiativeName = initiative.title || initiative.name || 'Initiative';
+    const taskSummary = taskCounts.length
+      ? taskCounts.map((row) => `${row.status}: ${row.count}`).join(', ')
+      : 'No tasks.';
+
     return {
       id: `report-${uuidv4()}`,
       type: 'initiative',
-      title: 'Initiative Report',
-      executiveSummary: `Report for initiative ${initiativeId}.`,
-      sections: [],
+      title: `Initiative Report: ${initiativeName}`,
+      executiveSummary:
+        language === 'pl'
+          ? `Raport dla inicjatywy ${initiativeName}.`
+          : `Report for initiative ${initiativeName}.`,
+      sections: [
+        {
+          id: 'initiative-summary',
+          title: language === 'pl' ? 'Podsumowanie inicjatywy' : 'Initiative Summary',
+          content: [
+            initiative.summary ? `Summary: ${initiative.summary}` : null,
+            initiative.status ? `Status: ${String(initiative.status).toUpperCase()}` : null,
+            initiative.progress !== null && initiative.progress !== undefined
+              ? `Progress: ${initiative.progress}%`
+              : null,
+            initiative.planned_start_date ? `Start: ${initiative.planned_start_date}` : null,
+            initiative.planned_end_date ? `End: ${initiative.planned_end_date}` : null,
+          ]
+            .filter(Boolean)
+            .join('\n') || `Initiative ${initiativeName} overview.`,
+        },
+        {
+          id: 'task-status',
+          title: language === 'pl' ? 'Status zadań' : 'Task Status',
+          content: taskSummary,
+        },
+        {
+          id: 'decisions-required',
+          title: language === 'pl' ? 'Decyzje wymagane' : 'Decisions Required',
+          content: this.formatDecisions(decisions || []),
+        },
+        {
+          id: 'escalations',
+          title: language === 'pl' ? 'Eskalacje' : 'Escalations',
+          content: this.formatEscalations(decisions || []),
+        },
+      ],
       generatedAt: new Date().toISOString(),
       language,
     };
@@ -492,19 +710,140 @@ class ReportGenerationService {
     const db = await this.getDb();
     const exportId = uuidv4();
 
-    // For now, just record the export request
-    // Actual file generation would use pdfkit, pptxgenjs, etc.
-    const filePath = `/exports/${reportId}.${format}`;
+    const userRow = await db.get<{ organization_id: string }>(
+      `SELECT organization_id FROM users WHERE id = ?`,
+      [userId]
+    );
+    if (!userRow?.organization_id) {
+      throw new Error('User organization not found');
+    }
+
+    const orgId = userRow.organization_id;
+    const assessment = await db.get<{ id: string }>(
+      `SELECT id FROM assessments WHERE id = ? AND organization_id = ?`,
+      [reportId, orgId]
+    );
+    const project = await db.get<{ id: string }>(
+      `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+      [reportId, orgId]
+    );
+    const initiative = await db.get<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [reportId, orgId]
+    );
+
+    const reportType: ReportGenerationParams['reportType'] = assessment
+      ? 'assessment'
+      : project
+        ? 'project'
+        : initiative
+          ? 'initiative'
+          : 'portfolio';
+
+    const report = await this.generateReport(
+      {
+        reportType,
+        sourceId: reportType === 'portfolio' ? orgId : reportId,
+      },
+      orgId
+    );
+
+    const exportDir = await this.ensureExportDir();
+    const fileName = `${exportId}.${format}`;
+    const absolutePath = path.join(exportDir, fileName);
+    const publicPath = `/exports/reports/${fileName}`;
+
+    if (format === 'pdf') {
+      await this.writePdfReport(report, absolutePath);
+    } else if (format === 'pptx') {
+      await this.writePptxReport(report, absolutePath);
+    } else {
+      throw new Error(`Unsupported export format: ${format}`);
+    }
 
     await db.run(
       `INSERT INTO report_exports (id, report_id, report_type, format, file_path, exported_by)
-             VALUES (?, ?, 'assessment', ?, ?, ?)`,
-      [exportId, reportId, format, filePath, userId]
+             VALUES (?, ?, ?, ?, ?, ?)`,
+      [exportId, reportId, reportType, format, publicPath, userId]
     );
 
     logger.info(`[ReportGenerationService] Export queued: ${exportId} (${format})`);
 
-    return { exportId, filePath };
+    return { exportId, filePath: publicPath };
+  }
+
+  private async writePdfReport(report: GeneratedReport, filePath: string): Promise<void> {
+    const doc = new PDFDocument({ margin: 48 });
+    const stream = fs.createWriteStream(filePath);
+    doc.pipe(stream);
+
+    doc.fontSize(18).text(report.title || 'Report');
+    doc.moveDown(0.5);
+    doc.fontSize(11).fillColor('#555555');
+    doc.text(`Generated: ${report.generatedAt}`);
+    doc.text(`Language: ${report.language}`);
+    doc.moveDown();
+
+    doc.fillColor('#000000').fontSize(13).text('Executive Summary');
+    doc.fontSize(11).text(report.executiveSummary || 'No summary available.');
+    doc.moveDown();
+
+    report.sections.forEach((section) => {
+      doc.fontSize(13).fillColor('#000000').text(section.title);
+      doc.fontSize(11).fillColor('#333333').text(section.content || 'No content.');
+      doc.moveDown();
+    });
+
+    doc.end();
+    await new Promise<void>((resolve, reject) => {
+      stream.on('finish', resolve);
+      stream.on('error', reject);
+    });
+  }
+
+  private async writePptxReport(report: GeneratedReport, filePath: string): Promise<void> {
+    const pptx = new PptxGenJS();
+    pptx.layout = 'LAYOUT_WIDE';
+
+    const titleSlide = pptx.addSlide();
+    titleSlide.addText(report.title || 'Report', {
+      x: 0.5,
+      y: 0.6,
+      w: 12.3,
+      h: 1,
+      fontSize: 32,
+      bold: true,
+    });
+    titleSlide.addText(report.executiveSummary || 'Executive summary', {
+      x: 0.5,
+      y: 1.8,
+      w: 12.3,
+      h: 3.5,
+      fontSize: 16,
+      color: '666666',
+    });
+
+    report.sections.forEach((section) => {
+      const slide = pptx.addSlide();
+      slide.addText(section.title, {
+        x: 0.5,
+        y: 0.4,
+        w: 12.3,
+        h: 0.6,
+        fontSize: 22,
+        bold: true,
+      });
+      slide.addText(section.content || 'No content.', {
+        x: 0.5,
+        y: 1.2,
+        w: 12.3,
+        h: 5.0,
+        fontSize: 14,
+        color: '444444',
+      });
+    });
+
+    await pptx.writeFile({ fileName: filePath });
   }
 }
 

@@ -484,6 +484,7 @@ export class DecisionController {
         impact,
         decisionType,
         type,
+        impacts,
       } = req.body;
 
       if (!title) {
@@ -514,6 +515,41 @@ export class DecisionController {
         return;
       }
 
+      const impactEntries = Array.isArray(impacts)
+        ? impacts.map((entry: any) => ({
+            impactedType: entry.impactedType,
+            impactedId: entry.impactedId,
+            impactDescription: entry.impactDescription,
+            isBlocker: Boolean(entry.isBlocker),
+          }))
+        : [];
+
+      const defaultBlockerTypes = [
+        'SCOPE_CHANGE',
+        'RISK_ACCEPTANCE',
+        'BLOCKER_RESOLUTION',
+        'PHASE_TRANSITION',
+        'EXECUTION',
+      ];
+
+      if (impactEntries.length === 0 && defaultBlockerTypes.includes(normalizedType)) {
+        if (taskIdValue) {
+          impactEntries.push({
+            impactedType: 'task',
+            impactedId: taskIdValue,
+            impactDescription: 'Blocking task until decision is resolved',
+            isBlocker: true,
+          });
+        } else if (initiativeIdValue) {
+          impactEntries.push({
+            impactedType: 'initiative',
+            impactedId: initiativeIdValue,
+            impactDescription: 'Blocking initiative until decision is resolved',
+            isBlocker: true,
+          });
+        }
+      }
+
       const escalationDeadline =
         normalizedDueDate &&
         new Date(new Date(normalizedDueDate).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -526,26 +562,58 @@ export class DecisionController {
             created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`;
 
-      await queryHelpers.queryRun(sql, [
-        id,
-        orgId,
-        projectIdValue,
-        initiativeIdValue,
-        taskIdValue,
-        title,
-        description || null,
-        normalizedType,
-        decisionOwnerId || userId,
-        normalizedDueDate,
-        escalationDeadline || null,
-        'pending',
-        userId,
-        normalizedPriority,
-        normalizedImpact,
-        'none',
-        pmoDomain || null,
-        shouldRequireDecision ? 1 : 0,
-      ]);
+      const relatedObjectTypeValue =
+        relatedObjectType ||
+        (initiativeIdValue ? 'initiative' : taskIdValue ? 'task' : projectIdValue ? 'project' : null);
+      const relatedObjectIdValue =
+        relatedObjectId || initiativeIdValue || taskIdValue || projectIdValue || null;
+
+      try {
+        await queryHelpers.queryRun(sql, [
+          id,
+          orgId,
+          projectIdValue,
+          initiativeIdValue,
+          taskIdValue,
+          title,
+          description || null,
+          normalizedType,
+          decisionOwnerId || userId,
+          normalizedDueDate,
+          escalationDeadline || null,
+          'pending',
+          userId,
+          normalizedPriority,
+          normalizedImpact,
+          'none',
+          pmoDomain || null,
+          shouldRequireDecision ? 1 : 0,
+        ]);
+      } catch (error) {
+        const legacySql = `INSERT INTO decisions (
+              id, organization_id, project_id, title, description, pmo_domain,
+              decision_owner_id, related_object_type, related_object_id, due_date,
+              priority, status, required, audit_trail, impact, escalation_level, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`;
+        await queryHelpers.queryRun(legacySql, [
+          id,
+          orgId,
+          projectIdValue,
+          title,
+          description || null,
+          pmoDomain || null,
+          decisionOwnerId || userId,
+          relatedObjectTypeValue,
+          relatedObjectIdValue,
+          normalizedDueDate,
+          normalizedPriority,
+          'pending',
+          shouldRequireDecision ? 1 : 0,
+          JSON.stringify({ decisionType: normalizedType, createdBy: userId }),
+          normalizedImpact,
+          'none',
+        ]);
+      }
 
       await queryHelpers.queryRun(
         `INSERT INTO decision_history (id, decision_id, action, old_status, new_status, changed_by, details)
@@ -557,6 +625,23 @@ export class DecisionController {
           JSON.stringify({ notes: 'Decision created', priority: normalizedPriority }),
         ]
       );
+
+      if (impactEntries.length > 0) {
+        for (const entry of impactEntries) {
+          await queryHelpers.queryRun(
+            `INSERT INTO decision_impacts (id, decision_id, impacted_type, impacted_id, impact_description, is_blocker)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [
+              uuidv4(),
+              id,
+              entry.impactedType,
+              entry.impactedId,
+              entry.impactDescription || null,
+              entry.isBlocker ? 1 : 0,
+            ]
+          );
+        }
+      }
 
       res.status(201).json({ id, projectId: projectIdValue, title, status: 'PENDING' });
     }

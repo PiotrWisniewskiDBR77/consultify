@@ -1,2 +1,2 @@
-export * from './Gateway.js';
-export { default } from './Gateway.js';
+export * from './Gateway.ts';
+export { default } from './Gateway.ts';

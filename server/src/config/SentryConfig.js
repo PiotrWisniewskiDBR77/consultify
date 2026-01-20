@@ -1,2 +1,2 @@
-export * from './SentryConfig.js';
-export { default } from './SentryConfig.js';
+export * from './SentryConfig.ts';
+export { default } from './SentryConfig.ts';

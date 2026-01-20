@@ -11,10 +11,11 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
+import { vi } from 'vitest';
 import i18n from '../../../i18n';
 
 // Mock framer-motion
-jest.mock('framer-motion', () => ({
+vi.mock('framer-motion', () => ({
     motion: {
         div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
         button: ({ children, ...props }: any) => <button {...props}>{children}</button>,

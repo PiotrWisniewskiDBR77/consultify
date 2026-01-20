@@ -3,8 +3,13 @@
  * API endpoints for assessment report lifecycle
  */
 
+import fs from 'fs';
+import path from 'path';
 import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import PDFDocument from 'pdfkit';
+import PptxGenJS from 'pptxgenjs';
+import * as xlsx from 'xlsx';
 
 import { getDatabase } from '../database/index.js';
 import logger from '../utils/Logger.js';
@@ -26,6 +31,96 @@ const safeJsonParse = <T = unknown>(value: string | null | undefined, fallback: 
   } catch {
     return fallback;
   }
+};
+
+const ensureExportDir = async (): Promise<string> => {
+  const exportDir = path.resolve(process.cwd(), 'exports', 'assessment-reports');
+  await fs.promises.mkdir(exportDir, { recursive: true });
+  return exportDir;
+};
+
+const writePdfReport = async (report: any, filePath: string): Promise<void> => {
+  const doc = new PDFDocument({ margin: 48 });
+  const stream = fs.createWriteStream(filePath);
+  doc.pipe(stream);
+
+  doc.fontSize(18).text(report.name || 'Assessment Report');
+  doc.moveDown(0.5);
+  doc.fontSize(11).fillColor('#555555');
+  doc.text(`Assessment: ${report.assessmentName || 'Assessment'}`);
+  doc.text(`Status: ${(report.status || 'DRAFT').toUpperCase()}`);
+  doc.text(`Created: ${report.created_at || report.createdAt || '-'}`);
+
+  doc.moveDown();
+  doc.fillColor('#000000').fontSize(13).text('Executive Summary');
+  doc.fontSize(11).text(report.executive_summary || report.executiveSummary || 'No summary available.');
+
+  doc.moveDown();
+  doc.fontSize(13).text('Key Findings');
+  const detailed = safeJsonParse(report.detailed_analysis, {});
+  const keyFindings = detailed.keyFindings || [];
+  if (keyFindings.length === 0) {
+    doc.fontSize(11).text('None');
+  } else {
+    keyFindings.slice(0, 10).forEach((item: string, index: number) => {
+      doc.fontSize(11).text(`${index + 1}. ${item}`);
+    });
+  }
+
+  doc.end();
+  await new Promise<void>((resolve, reject) => {
+    stream.on('finish', resolve);
+    stream.on('error', reject);
+  });
+};
+
+const writePptxReport = async (report: any, filePath: string): Promise<void> => {
+  const pptx = new PptxGenJS();
+  pptx.layout = 'LAYOUT_WIDE';
+
+  const title = report.name || 'Assessment Report';
+  const summary = report.executive_summary || report.executiveSummary || 'No summary available.';
+  const detailed = safeJsonParse(report.detailed_analysis, {});
+  const keyFindings = detailed.keyFindings || [];
+  const findingsText = keyFindings.length ? keyFindings.slice(0, 10).join('\n') : 'None';
+
+  const titleSlide = pptx.addSlide();
+  titleSlide.addText(title, {
+    x: 0.6,
+    y: 0.6,
+    w: 12.0,
+    h: 1.0,
+    fontSize: 30,
+    bold: true,
+  });
+  titleSlide.addText(summary, {
+    x: 0.6,
+    y: 1.8,
+    w: 12.0,
+    h: 3.6,
+    fontSize: 16,
+    color: '555555',
+  });
+
+  const findingsSlide = pptx.addSlide();
+  findingsSlide.addText('Key Findings', {
+    x: 0.6,
+    y: 0.6,
+    w: 12.0,
+    h: 0.8,
+    fontSize: 22,
+    bold: true,
+  });
+  findingsSlide.addText(findingsText, {
+    x: 0.6,
+    y: 1.6,
+    w: 12.0,
+    h: 4.5,
+    fontSize: 14,
+    color: '444444',
+  });
+
+  await pptx.writeFile({ fileName: filePath });
 };
 
 // =============================================================================
@@ -325,16 +420,136 @@ router.post('/:reportId/finalize', async (req: AuthRequest, res: Response) => {
 });
 
 // =============================================================================
-// EXPORT (PLACEHOLDER)
+// EXPORT
 // =============================================================================
 router.get('/:reportId/export/pdf', async (_req: AuthRequest, res: Response) => {
-  res.setHeader('Content-Type', 'application/pdf');
-  res.send(Buffer.from('Report export (PDF) placeholder'));
+  try {
+    const db = getDatabase();
+    const organizationId = _req.user?.organizationId || 'org-dbr77-system';
+    const { reportId } = _req.params;
+
+    const report = await new Promise<any>((resolve, reject) => {
+      db.get(
+        `SELECT r.*, a.name as assessmentName
+         FROM assessment_reports r
+         LEFT JOIN assessments a ON r.assessment_id = a.id
+         WHERE r.id = ? AND r.organization_id = ?`,
+        [reportId, organizationId],
+        (err: Error | null, row: any) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    const exportDir = await ensureExportDir();
+    const filePath = path.join(exportDir, `${reportId}.pdf`);
+    await writePdfReport(report, filePath);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    return res.sendFile(filePath);
+  } catch (err: any) {
+    logger.error('[AssessmentReports] Error exporting PDF:', err);
+    return res.status(500).json({ error: 'Failed to export report', message: err.message });
+  }
+});
+
+router.get('/:reportId/export/pptx', async (_req: AuthRequest, res: Response) => {
+  try {
+    const db = getDatabase();
+    const organizationId = _req.user?.organizationId || 'org-dbr77-system';
+    const { reportId } = _req.params;
+
+    const report = await new Promise<any>((resolve, reject) => {
+      db.get(
+        `SELECT r.*, a.name as assessmentName
+         FROM assessment_reports r
+         LEFT JOIN assessments a ON r.assessment_id = a.id
+         WHERE r.id = ? AND r.organization_id = ?`,
+        [reportId, organizationId],
+        (err: Error | null, row: any) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    const exportDir = await ensureExportDir();
+    const filePath = path.join(exportDir, `${reportId}.pptx`);
+    await writePptxReport(report, filePath);
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    );
+    return res.sendFile(filePath);
+  } catch (err: any) {
+    logger.error('[AssessmentReports] Error exporting PPTX:', err);
+    return res.status(500).json({ error: 'Failed to export report', message: err.message });
+  }
 });
 
 router.get('/:reportId/export/excel', async (_req: AuthRequest, res: Response) => {
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.send(Buffer.from('Report export (Excel) placeholder'));
+  try {
+    const db = getDatabase();
+    const organizationId = _req.user?.organizationId || 'org-dbr77-system';
+    const { reportId } = _req.params;
+
+    const report = await new Promise<any>((resolve, reject) => {
+      db.get(
+        `SELECT r.*, a.name as assessmentName
+         FROM assessment_reports r
+         LEFT JOIN assessments a ON r.assessment_id = a.id
+         WHERE r.id = ? AND r.organization_id = ?`,
+        [reportId, organizationId],
+        (err: Error | null, row: any) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    const workbook = xlsx.utils.book_new();
+    const detailed = safeJsonParse(report.detailed_analysis, {});
+    const recommendations = safeJsonParse<string[]>(report.recommendations, []);
+
+    const rows = [
+      ['Assessment Report', report.name || 'Assessment Report'],
+      ['Assessment', report.assessmentName || 'Assessment'],
+      ['Status', (report.status || 'DRAFT').toUpperCase()],
+      ['Executive Summary', report.executive_summary || ''],
+      ['Key Findings', ...(detailed.keyFindings || [])],
+      ['Recommendations', ...(recommendations || [])],
+    ];
+
+    const sheet = xlsx.utils.aoa_to_sheet(rows);
+    xlsx.utils.book_append_sheet(workbook, sheet, 'Report');
+
+    const exportDir = await ensureExportDir();
+    const filePath = path.join(exportDir, `${reportId}.xlsx`);
+    xlsx.writeFile(workbook, filePath);
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    return res.sendFile(filePath);
+  } catch (err: any) {
+    logger.error('[AssessmentReports] Error exporting Excel:', err);
+    return res.status(500).json({ error: 'Failed to export report', message: err.message });
+  }
 });
 
 export default router;

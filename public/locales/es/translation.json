@@ -1,0 +1,60 @@
+{
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "close": "Cerrar",
+    "loading": "Cargando",
+    "error": "Error",
+    "success": "Éxito",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "of": "de"
+  },
+  "sidebar": {
+    "dashboard": "Panel",
+    "settings": "Configuración",
+    "help": "Ayuda",
+    "knowledge": "Base de Conocimientos"
+  },
+  "auth": {
+    "logIn": "Iniciar sesión",
+    "welcomeBack": "Bienvenido de nuevo"
+  },
+  "help": {
+    "title": "Centro de Ayuda",
+    "knowledge": {
+      "title": "Base de Conocimientos",
+      "searchPlaceholder": "Buscar artículos...",
+      "allCategories": "Todos",
+      "noSearchResults": "No se encontraron artículos para su búsqueda.",
+      "noArticles": "No hay artículos disponibles en esta categoría.",
+      "articleNotFound": "Artículo no encontrado.",
+      "minRead": "min de lectura",
+      "views": "vistas",
+      "relatedModules": "Módulos Relacionados",
+      "shareArticle": "Compartir Artículo",
+      "featured": "Destacados",
+      "popular": "Populares",
+      "recent": "Recientes",
+      "readMore": "Leer más",
+      "backToLibrary": "Volver a la Biblioteca",
+      "categories": "Categorías",
+      "articles": "Artículos",
+      "searchResults": "Resultados de búsqueda",
+      "tableOfContents": "Tabla de Contenidos",
+      "wasHelpful": "¿Fue útil este artículo?",
+      "yes": "Sí",
+      "no": "No",
+      "feedbackThanks": "¡Gracias por su opinión!",
+      "relatedArticles": "Artículos Relacionados",
+      "gettingStarted": "Primeros Pasos",
+      "tutorials": "Tutoriales",
+      "bestPractices": "Mejores Prácticas",
+      "faq": "Preguntas Frecuentes",
+      "troubleshooting": "Solución de Problemas"
+    }
+  }
+}

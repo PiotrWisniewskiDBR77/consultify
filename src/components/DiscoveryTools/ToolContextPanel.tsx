@@ -70,6 +70,12 @@ const calcConfidence = (items: CompletionItem[]) => {
   return 1;
 };
 
+const calcSectionConfidence = (items: CompletionItem[], keys: string[]) => {
+  const filtered = items.filter((i) => keys.some((k) => i.label.includes(k)));
+  if (filtered.length === 0) return 1;
+  return calcConfidence(filtered);
+};
+
 interface ToolContextPanelProps {
   toolType: ToolType;
   session: ToolSession;
@@ -79,6 +85,8 @@ interface ToolContextPanelProps {
   onOpenChat: () => void;
   onOpenInitiatives?: () => void;
   generatedInitiatives?: { id: string; title: string; status?: string }[];
+  recentInitiatives?: { id: string; title: string; status?: string }[];
+  chatSnippets?: { role: string; content: string }[];
 }
 
 export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
@@ -90,9 +98,21 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
   onOpenChat,
   onOpenInitiatives,
   generatedInitiatives = [],
+  recentInitiatives = [],
+  chatSnippets = [],
 }) => {
   const completionItems = getCompletionItems(toolType, session, isPolish);
   const confidence = calcConfidence(completionItems);
+  const sectionConfidence = [
+    {
+      label: isPolish ? 'Kontekst' : 'Context',
+      score: calcSectionConfidence(completionItems, ['Strategic', 'Industry', 'Geographic', 'Cel']),
+    },
+    {
+      label: isPolish ? 'Analiza' : 'Analysis',
+      score: calcSectionConfidence(completionItems, ['Items', 'Drivers', 'Korelacje']),
+    },
+  ];
 
   return (
     <div className="w-96 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex flex-col">
@@ -135,6 +155,13 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
               </div>
             ))}
           </div>
+          <div className="mt-2 text-xs text-slate-500">
+            {sectionConfidence.map((section) => (
+              <div key={section.label}>
+                {section.label}: {section.score}/5
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
@@ -158,6 +185,16 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
                 ? 'Uzyj przycisku AI Sugestie, aby otrzymac podpowiedzi.'
                 : 'Use AI Suggest to receive inline recommendations.')}
           </p>
+          {chatSnippets.length > 0 && (
+            <div className="mt-2 space-y-1 text-[11px] text-slate-500">
+              {chatSnippets.map((snippet, idx) => (
+                <div key={idx}>
+                  {snippet.role}: {snippet.content.slice(0, 80)}
+                  {snippet.content.length > 80 ? '...' : ''}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
@@ -183,6 +220,25 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
           ) : (
             <p className="text-xs text-slate-500">
               {isPolish ? 'Brak wygenerowanych inicjatyw' : 'No initiatives generated yet'}
+            </p>
+          )}
+        </div>
+
+        <div className="p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
+          <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            {isPolish ? 'Ostatnie inicjatywy' : 'Recent initiatives'}
+          </div>
+          {recentInitiatives.length > 0 ? (
+            <div className="space-y-2">
+              {recentInitiatives.map((initiative) => (
+                <div key={initiative.id} className="text-xs text-slate-600 dark:text-slate-400">
+                  {initiative.title}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-slate-500">
+              {isPolish ? 'Brak inicjatyw w projekcie' : 'No initiatives for this project'}
             </p>
           )}
         </div>

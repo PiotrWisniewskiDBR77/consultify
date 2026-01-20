@@ -21,6 +21,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
 
 import { useAppStore } from '../../store/useAppStore';
 import { FullInitiative, InitiativeStatus, Task, TaskStatus } from '../../types';
@@ -40,14 +41,17 @@ import {
 import { ExecutionDetailPanel } from './ExecutionDetailPanel';
 import { ExecutionTimelineView } from './ExecutionTimelineView';
 
-// Status metadata for execution
-const STATUS_META: Record<string, { color: string; label: string; dotColor: string }> = {
-  [InitiativeStatus.EXECUTING]: { color: 'cyan', label: 'Executing', dotColor: 'bg-cyan-400' },
-  [InitiativeStatus.BLOCKED]: { color: 'red', label: 'Blocked', dotColor: 'bg-red-400' },
-  [InitiativeStatus.DONE]: { color: 'green', label: 'Done', dotColor: 'bg-green-400' },
-  [InitiativeStatus.CANCELLED]: { color: 'gray', label: 'Cancelled', dotColor: 'bg-gray-400' },
-  [InitiativeStatus.ARCHIVED]: { color: 'slate', label: 'Archived', dotColor: 'bg-slate-500' },
-};
+const MODULE_STATUSES = getStatusesForModule('execution');
+const EXECUTION_STATUS_FALLBACK: InitiativeStatus[] = [
+  InitiativeStatus.EXECUTING,
+  InitiativeStatus.BLOCKED,
+  InitiativeStatus.DONE,
+  InitiativeStatus.CANCELLED,
+  InitiativeStatus.ARCHIVED,
+];
+const EXECUTION_STATUSES: InitiativeStatus[] = Array.from(
+  new Set([...MODULE_STATUSES, ...EXECUTION_STATUS_FALLBACK])
+);
 
 // Type codes
 const getTypeCode = (axis: string): string => {
@@ -152,15 +156,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         const data = Array.isArray(response) ? response : (response as any)?.initiatives || [];
 
         // Filter to execution-relevant statuses
-        const executionStatuses = [
-          InitiativeStatus.EXECUTING,
-          InitiativeStatus.BLOCKED,
-          InitiativeStatus.DONE,
-          InitiativeStatus.CANCELLED,
-          InitiativeStatus.ARCHIVED,
-        ];
         const executionInitiatives = data.filter((i: FullInitiative) =>
-          executionStatuses.includes(i.status)
+          EXECUTION_STATUSES.includes(i.status)
         );
 
         setInitiatives(executionInitiatives);
@@ -168,13 +165,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         console.error('[ExecutionHub] Failed to load:', err);
         // Fallback to session data
         const executionInitiatives = (fullSessionData?.initiatives || []).filter((i: FullInitiative) =>
-          [
-            InitiativeStatus.EXECUTING,
-            InitiativeStatus.BLOCKED,
-            InitiativeStatus.DONE,
-            InitiativeStatus.CANCELLED,
-            InitiativeStatus.ARCHIVED,
-          ].includes(i.status)
+          EXECUTION_STATUSES.includes(i.status)
         );
         setInitiatives(executionInitiatives);
       } finally {
@@ -237,15 +228,26 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   }, [currentProjectId]);
 
   // Calculate stats
+  const statusCounts = useMemo(() => {
+    const counts = EXECUTION_STATUSES.reduce(
+      (acc, status) => {
+        acc[status] = 0;
+        return acc;
+      },
+      {} as Record<InitiativeStatus, number>
+    );
+    initiatives.forEach((initiative) => {
+      if (counts[initiative.status] !== undefined) counts[initiative.status] += 1;
+    });
+    return counts;
+  }, [initiatives]);
+
   const stats = useMemo(
     () => ({
-      executing: initiatives.filter((i) => i.status === InitiativeStatus.EXECUTING).length,
-      blocked: initiatives.filter((i) => i.status === InitiativeStatus.BLOCKED).length,
-      done: initiatives.filter((i) => i.status === InitiativeStatus.DONE).length,
-      cancelled: initiatives.filter((i) => i.status === InitiativeStatus.CANCELLED).length,
-      archived: initiatives.filter((i) => i.status === InitiativeStatus.ARCHIVED).length,
+      executing: statusCounts[InitiativeStatus.EXECUTING] ?? 0,
+      blocked: statusCounts[InitiativeStatus.BLOCKED] ?? 0,
     }),
-    [initiatives]
+    [statusCounts]
   );
 
   // Filter initiatives
@@ -273,6 +275,25 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
     return result;
   }, [initiatives, searchQuery, activeFilters, activeStatusFilter]);
+
+  const tasksByInitiative = useMemo(() => {
+    return tasks.reduce<Record<string, Task[]>>((acc, task) => {
+      if (!task.initiativeId) return acc;
+      if (!acc[task.initiativeId]) acc[task.initiativeId] = [];
+      acc[task.initiativeId].push(task);
+      return acc;
+    }, {});
+  }, [tasks]);
+
+  const decisionsByInitiative = useMemo(() => {
+    return decisions.reduce<Record<string, ExecutionDecision[]>>((acc, decision) => {
+      const relatedId = (decision as any).relatedObjectId;
+      if (!relatedId) return acc;
+      if (!acc[relatedId]) acc[relatedId] = [];
+      acc[relatedId].push(decision);
+      return acc;
+    }, {});
+  }, [decisions]);
 
   // Tab configuration
   const tabs = useMemo(
@@ -314,10 +335,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         label: 'Status',
         width: '130px',
         filterable: true,
-        filterOptions: Object.entries(STATUS_META).map(([value, meta]) => ({
-          value,
-          label: meta.label,
-          color: meta.dotColor,
+        filterOptions: EXECUTION_STATUSES.map((status) => ({
+          value: status,
+          label: STATUS_METADATA[status].label,
+          color: STATUS_METADATA[status].dotColor,
         })),
       },
       {
@@ -426,53 +447,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const statusFilters = useMemo(
     () => [
       { id: 'all', label: 'All', color: 'bg-slate-400', count: initiatives.length },
-      {
-        id: InitiativeStatus.EXECUTING,
-        label: 'Executing',
-        color: 'bg-cyan-400',
-        count: stats.executing,
-      },
-      {
-        id: InitiativeStatus.BLOCKED,
-        label: 'Blocked',
-        color: 'bg-red-400',
-        count: stats.blocked,
-      },
-      { id: InitiativeStatus.DONE, label: 'Done', color: 'bg-emerald-400', count: stats.done },
-      {
-        id: InitiativeStatus.CANCELLED,
-        label: 'Cancelled',
-        color: 'bg-slate-500',
-        count: stats.cancelled,
-      },
-      {
-        id: InitiativeStatus.ARCHIVED,
-        label: 'Archived',
-        color: 'bg-slate-600',
-        count: stats.archived,
-      },
+      ...EXECUTION_STATUSES.map((status) => ({
+        id: status,
+        label: STATUS_METADATA[status].label,
+        color: STATUS_METADATA[status].dotColor,
+        count: statusCounts[status] ?? 0,
+      })),
     ],
-    [initiatives.length, stats]
+    [initiatives.length, statusCounts]
   );
-
-  const tasksByInitiative = useMemo(() => {
-    return tasks.reduce<Record<string, Task[]>>((acc, task) => {
-      if (!task.initiativeId) return acc;
-      if (!acc[task.initiativeId]) acc[task.initiativeId] = [];
-      acc[task.initiativeId].push(task);
-      return acc;
-    }, {});
-  }, [tasks]);
-
-  const decisionsByInitiative = useMemo(() => {
-    return decisions.reduce<Record<string, ExecutionDecision[]>>((acc, decision) => {
-      const relatedId = (decision as any).relatedObjectId;
-      if (!relatedId) return acc;
-      if (!acc[relatedId]) acc[relatedId] = [];
-      acc[relatedId].push(decision);
-      return acc;
-    }, {});
-  }, [decisions]);
 
   const portfolioMetrics = useMemo(() => {
     const totalInitiatives = initiatives.length;
@@ -828,15 +811,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     try {
       const response = await Api.getInitiatives(currentProjectId || undefined);
       const data = Array.isArray(response) ? response : (response as any)?.initiatives || [];
-      const executionStatuses = [
-        InitiativeStatus.EXECUTING,
-        InitiativeStatus.BLOCKED,
-        InitiativeStatus.DONE,
-        InitiativeStatus.CANCELLED,
-        InitiativeStatus.ARCHIVED,
-      ];
       const executionInitiatives = data.filter((i: FullInitiative) =>
-        executionStatuses.includes(i.status)
+        EXECUTION_STATUSES.includes(i.status)
       );
       setInitiatives(executionInitiatives);
     } catch (err) {

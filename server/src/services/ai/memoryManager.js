@@ -1,2 +1,2 @@
-export * from './memoryManager.js';
-export { default } from './memoryManager.js';
+export * from '../../../services/ai/memoryManager.js';
+export { default } from '../../../services/ai/memoryManager.js';

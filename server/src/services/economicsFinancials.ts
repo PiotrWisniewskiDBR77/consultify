@@ -169,3 +169,76 @@ export const applyScenarioAdjustments = (data: FinancialData, scenarioType: stri
   }
   return { ...data };
 };
+
+type FinancialInsights = {
+  errors: string[];
+  warnings: string[];
+  recommendations: string[];
+};
+
+const pushIf = (list: string[], condition: boolean, message: string) => {
+  if (condition) list.push(message);
+};
+
+export const validateFinancialData = (data: FinancialData): FinancialInsights => {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const recommendations: string[] = [];
+
+  const safeNumber = (value: number) => Number.isFinite(value) ? value : 0;
+
+  const initialInvestment = safeNumber(data.initialInvestment);
+  const implementationCost = safeNumber(data.implementationCost);
+  const trainingCost = safeNumber(data.trainingCost);
+  const annualOperatingCost = safeNumber(data.annualOperatingCost);
+  const annualCostSavings = safeNumber(data.annualCostSavings);
+  const annualRevenueIncrease = safeNumber(data.annualRevenueIncrease);
+  const riskReductionValue = safeNumber(data.riskReductionValue);
+  const analysisHorizonYears = safeNumber(data.analysisHorizonYears);
+  const discountRate = safeNumber(data.discountRate);
+
+  pushIf(errors, analysisHorizonYears <= 0, 'analysis_horizon_years must be greater than 0');
+  pushIf(errors, discountRate < 0 || discountRate > 100, 'discount_rate must be between 0 and 100');
+
+  const nonNegativeFields = [
+    ['initial_investment', initialInvestment],
+    ['implementation_cost', implementationCost],
+    ['training_cost', trainingCost],
+    ['annual_operating_cost', annualOperatingCost],
+    ['annual_cost_savings', annualCostSavings],
+    ['annual_revenue_increase', annualRevenueIncrease],
+    ['risk_reduction_value', riskReductionValue],
+  ] as const;
+
+  for (const [field, value] of nonNegativeFields) {
+    if (value < 0) {
+      errors.push(`${field} must be greater than or equal to 0`);
+    }
+  }
+
+  const totalBenefits = annualCostSavings + annualRevenueIncrease + riskReductionValue;
+  pushIf(warnings, totalBenefits === 0, 'No annual benefits defined; ROI and payback may be negative.');
+  pushIf(
+    warnings,
+    totalBenefits > 0 && totalBenefits <= annualOperatingCost,
+    'Annual benefits are not higher than operating costs; cashflow may stay negative.'
+  );
+  pushIf(
+    warnings,
+    data.implementationMonths > analysisHorizonYears * 12,
+    'Implementation time exceeds the analysis horizon.'
+  );
+
+  pushIf(
+    recommendations,
+    totalBenefits > 0 && initialInvestment > 0 && discountRate <= 15,
+    'Consider approving after scenario review.'
+  );
+  pushIf(
+    recommendations,
+    totalBenefits === 0 || initialInvestment === 0,
+    'Provide complete cost and benefit inputs for more reliable metrics.'
+  );
+
+  return { errors, warnings, recommendations };
+};

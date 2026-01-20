@@ -8,6 +8,7 @@ import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { SplitLayout } from '../components/layout/SplitLayout';
+import { DecisionDetailModal } from '../components/MyWork/DecisionDetailModal';
 import { NotificationsHub } from '../components/MyWork/NotificationsHub';
 import { TaskDetailModal } from '../components/MyWork/TaskDetailModal';
 import { WorkCenter } from '../components/MyWork/WorkCenter';
@@ -28,6 +29,7 @@ export const MyWorkView: React.FC<MyWorkViewProps> = ({ currentUser, onNavigate 
   // Task modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedDecisionId, setSelectedDecisionId] = useState<string | null>(null);
 
   // Handlers
   const handleCreateTask = useCallback(() => {
@@ -38,16 +40,6 @@ export const MyWorkView: React.FC<MyWorkViewProps> = ({ currentUser, onNavigate 
   const handleTaskClick = useCallback((taskId: string) => {
     setSelectedTaskId(taskId);
     setIsCreateModalOpen(true);
-  }, []);
-
-  const handleDecisionClick = useCallback((decisionId: string) => {
-    // Could open decision detail modal or navigate
-    console.log('Decision clicked:', decisionId);
-  }, []);
-
-  const handleCreateDecision = useCallback(() => {
-    // Could open decision creation modal
-    console.log('Create decision');
   }, []);
 
   const handleCloseModal = useCallback(() => {
@@ -61,8 +53,16 @@ export const MyWorkView: React.FC<MyWorkViewProps> = ({ currentUser, onNavigate 
     // TasksList will auto-refresh via its own useEffect
   }, []);
 
+  const handleDecisionClick = useCallback((decisionId: string) => {
+    setSelectedDecisionId(decisionId);
+  }, []);
+
+  const handleDecisionClose = useCallback(() => {
+    setSelectedDecisionId(null);
+  }, []);
+
   return (
-    <>
+    <div data-testid="mywork-view">
       <SplitLayout
         title={
           <div className="flex items-center gap-2">
@@ -77,9 +77,7 @@ export const MyWorkView: React.FC<MyWorkViewProps> = ({ currentUser, onNavigate 
           <div className="w-[65%] flex flex-col bg-white dark:bg-navy-900 shadow-sm">
             <WorkCenter
               onTaskClick={handleTaskClick}
-              onDecisionClick={handleDecisionClick}
               onCreateTask={handleCreateTask}
-              onCreateDecision={handleCreateDecision}
             />
           </div>
 
@@ -98,8 +96,12 @@ export const MyWorkView: React.FC<MyWorkViewProps> = ({ currentUser, onNavigate 
             onTaskSaved={handleTaskSaved}
           />
         )}
+
+        {selectedDecisionId && (
+          <DecisionDetailModal decisionId={selectedDecisionId} onClose={handleDecisionClose} />
+        )}
       </SplitLayout>
-    </>
+    </div>
   );
 };
 

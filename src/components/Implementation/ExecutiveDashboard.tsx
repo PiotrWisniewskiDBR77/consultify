@@ -38,6 +38,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { Api } from '../../services/api';
+import { getStatusesForModule } from '../../services/initiativeLifecycle';
 import { Initiative, InitiativeStatus } from '../../types';
 
 interface ExecutiveDashboardProps {
@@ -97,9 +98,16 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
     setIsRefreshing(true);
 
     try {
+      const executionStatuses = getStatusesForModule('execution');
+      const statusParam =
+        (executionStatuses.length
+          ? executionStatuses
+          : [InitiativeStatus.EXECUTING, InitiativeStatus.BLOCKED]
+        ).join(',');
+
       // Fetch all data in parallel
       const [initiativesRes, decisionsRes, raidRes, budgetRes] = await Promise.all([
-        Api.get('/initiatives/by-status/EXECUTING,BLOCKED').catch(() => ({ initiatives: [] })),
+        Api.get(`/initiatives/by-status/${statusParam}`).catch(() => ({ initiatives: [] })),
         Api.get('/decisions').catch(() => []),
         Api.get('/raid/summary').catch(() => ({
           openCount: 0,

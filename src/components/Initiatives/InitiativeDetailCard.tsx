@@ -128,6 +128,8 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
           decisionToMake: data.decisionToMake || data.decision_to_make,
           decisionOwnerId: data.decisionOwnerId || data.decision_owner_id,
           strategicFit: data.strategicFit || data.strategic_fit,
+          sourceType: data.sourceType || data.source_type,
+          sourceId: data.sourceId || data.source_id,
         };
         setInitiative(mapped);
       } catch (err: any) {
@@ -321,9 +323,15 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
             },
             {
               module: 'Execution & Risks',
-              statuses: ['EXECUTING', 'BLOCKED', 'DONE'],
+              statuses: ['EXECUTING', 'BLOCKED'],
               color: 'blue',
               icon: '3',
+            },
+            {
+              module: 'Benefits & Closure',
+              statuses: ['DONE', 'CANCELLED', 'ARCHIVED'],
+              color: 'green',
+              icon: '4',
             },
           ].map((mod, idx, arr) => {
             const isActive = mod.statuses.includes(initiative.status || 'DRAFT');
@@ -579,6 +587,20 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
                 </div>
               </div>
             </div>
+
+            {initiative.sourceType === 'tool' && (
+              <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles size={16} className="text-amber-400" />
+                  <span className="text-xs font-semibold text-slate-400 uppercase">
+                    Source tool
+                  </span>
+                </div>
+                <div className="text-sm text-slate-300">
+                  Tool session: {initiative.sourceId}
+                </div>
+              </div>
+            )}
 
             {/* Summary */}
             <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">

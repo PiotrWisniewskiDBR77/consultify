@@ -23,7 +23,12 @@ export type ToolType =
   | 'focus-tradeoff'
   | 'risk-uncertainty'
   | 'capability-mapper'
-  | 'narrative-engine';
+  | 'narrative-engine'
+  | 'sop-builder'
+  | 'a3-problem-solving'
+  | 'smed-planner'
+  | 'dms-builder'
+  | 'inventory-autopilot';
 
 export type StepStatus = 'pending' | 'in_progress' | 'completed' | 'skipped';
 
@@ -106,6 +111,122 @@ export interface PorterData {
   };
 }
 
+// Growth Paths (Ansoff) types
+export interface GrowthPathItem {
+  id: string;
+  title: string;
+  description: string;
+  impact: 'high' | 'medium' | 'low';
+  effort: 'high' | 'medium' | 'low';
+}
+
+export interface GrowthPathsData {
+  context: {
+    goal: string;
+    scope: string;
+    timeframe: 'short' | 'medium' | 'long';
+  };
+  quadrants: {
+    marketPenetration: GrowthPathItem[];
+    marketDevelopment: GrowthPathItem[];
+    productDevelopment: GrowthPathItem[];
+    diversification: GrowthPathItem[];
+  };
+  summary?: {
+    keyInsights: string[];
+    recommendedInitiatives: InitiativeDraft[];
+  };
+}
+
+// Portfolio Priority (BCG) types
+export interface PortfolioItem {
+  id: string;
+  title: string;
+  description: string;
+  marketGrowth: number; // 1-5
+  marketShare: number; // 1-5
+  investmentLevel: number; // 1-5
+  category: 'star' | 'cash-cow' | 'question-mark' | 'dog';
+}
+
+export interface PortfolioPriorityData {
+  context: {
+    goal: string;
+    scope: string;
+    timeframe: 'short' | 'medium' | 'long';
+  };
+  initiatives: PortfolioItem[];
+  summary?: {
+    keyInsights: string[];
+    recommendedInitiatives: InitiativeDraft[];
+  };
+}
+
+// Risk & Uncertainty types
+export interface RiskAssumption {
+  id: string;
+  text: string;
+  confidence: number; // 1-5
+}
+
+export interface RiskItem {
+  id: string;
+  description: string;
+  probability: number; // 1-5
+  impact: number; // 1-5
+  mitigation: string;
+}
+
+export interface ScenarioItem {
+  id: string;
+  title: string;
+  likelihood: number; // 1-5
+  notes: string;
+}
+
+export interface RiskUncertaintyData {
+  context: {
+    goal: string;
+    scope: string;
+    timeframe: 'short' | 'medium' | 'long';
+  };
+  assumptions: RiskAssumption[];
+  risks: RiskItem[];
+  scenarios: ScenarioItem[];
+  summary?: {
+    keyInsights: string[];
+    recommendedInitiatives: InitiativeDraft[];
+  };
+}
+
+// Operational tools generic types
+export interface OperationalItem {
+  id: string;
+  title: string;
+  description: string;
+  impact: 'high' | 'medium' | 'low';
+  effort: 'high' | 'medium' | 'low';
+  category?: string;
+  durationMinutes?: number;
+  owner?: string;
+  target?: string;
+  frequency?: string;
+  threshold?: string;
+}
+
+export interface OperationalToolData {
+  context: {
+    goal: string;
+    scope: string;
+    timeframe: 'short' | 'medium' | 'long';
+  };
+  sections: Record<string, OperationalItem[]>;
+  summary?: {
+    keyInsights: string[];
+    recommendedInitiatives: InitiativeDraft[];
+  };
+}
+
 // Initiative draft from tool analysis
 export interface InitiativeDraft {
   id: string;
@@ -137,7 +258,14 @@ export interface ToolSession {
   updatedAt: string;
   currentStep: number;
   steps: ToolStep[];
-  inputData: SWOTData | PorterData | Record<string, unknown>;
+  inputData:
+    | SWOTData
+    | PorterData
+    | GrowthPathsData
+    | PortfolioPriorityData
+    | RiskUncertaintyData
+    | OperationalToolData
+    | Record<string, unknown>;
   chatHistory: ToolChatMessage[];
   generatedInitiatives: InitiativeDraft[];
   status: 'draft' | 'in_progress' | 'completed';
@@ -277,6 +405,354 @@ export const PORTER_STEPS: StepDefinition[] = [
   },
 ];
 
+export const GROWTH_PATHS_STEPS: StepDefinition[] = [
+  {
+    id: 'context',
+    name: 'Growth Context',
+    namePl: 'Kontekst Wzrostu',
+    description: 'Define the growth goal, scope, and time horizon',
+    descriptionPl: 'Zdefiniuj cel wzrostu, zakres i horyzont czasowy',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'market-penetration',
+    name: 'Market Penetration',
+    namePl: 'Penetracja Rynku',
+    description: 'Opportunities to grow in current markets with current products',
+    descriptionPl: 'Możliwości wzrostu na obecnych rynkach z obecnymi produktami',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'market-development',
+    name: 'Market Development',
+    namePl: 'Rozwój Rynku',
+    description: 'Opportunities to enter new markets with current products',
+    descriptionPl: 'Wejście na nowe rynki z obecnymi produktami',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'product-development',
+    name: 'Product Development',
+    namePl: 'Rozwój Produktu',
+    description: 'Opportunities to develop new products for current markets',
+    descriptionPl: 'Nowe produkty dla obecnych rynków',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'diversification',
+    name: 'Diversification',
+    namePl: 'Dywersyfikacja',
+    description: 'Opportunities to enter new markets with new products',
+    descriptionPl: 'Wejście na nowe rynki z nowymi produktami',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'summary',
+    name: 'Summary & Initiatives',
+    namePl: 'Podsumowanie i Inicjatywy',
+    description: 'Review growth paths and generate initiatives',
+    descriptionPl: 'Przegląd ścieżek wzrostu i generowanie inicjatyw',
+    required: true,
+    aiAssisted: true,
+  },
+];
+
+export const PORTFOLIO_PRIORITY_STEPS: StepDefinition[] = [
+  {
+    id: 'context',
+    name: 'Portfolio Context',
+    namePl: 'Kontekst Portfolio',
+    description: 'Define the portfolio scope and constraints',
+    descriptionPl: 'Zdefiniuj zakres portfolio i ograniczenia',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'portfolio-items',
+    name: 'Portfolio Items',
+    namePl: 'Elementy Portfolio',
+    description: 'List initiatives with growth and share assessments',
+    descriptionPl: 'Lista inicjatyw z oceną wzrostu i udziału',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'portfolio-matrix',
+    name: 'BCG Matrix',
+    namePl: 'Macierz BCG',
+    description: 'Review portfolio categories and priorities',
+    descriptionPl: 'Przegląd kategorii i priorytetów portfolio',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'summary',
+    name: 'Summary & Initiatives',
+    namePl: 'Podsumowanie i Inicjatywy',
+    description: 'Summarize portfolio priorities and initiatives',
+    descriptionPl: 'Podsumowanie priorytetów i inicjatyw',
+    required: true,
+    aiAssisted: true,
+  },
+];
+
+export const RISK_UNCERTAINTY_STEPS: StepDefinition[] = [
+  {
+    id: 'context',
+    name: 'Risk Context',
+    namePl: 'Kontekst Ryzyka',
+    description: 'Define scope and time horizon for risk analysis',
+    descriptionPl: 'Zdefiniuj zakres i horyzont czasowy analizy ryzyka',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'assumptions',
+    name: 'Key Assumptions',
+    namePl: 'Kluczowe Założenia',
+    description: 'List critical assumptions and confidence levels',
+    descriptionPl: 'Lista kluczowych założeń i poziomu pewności',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'risks',
+    name: 'Strategic Risks',
+    namePl: 'Ryzyka Strategiczne',
+    description: 'Identify and score risks with mitigation actions',
+    descriptionPl: 'Identyfikuj ryzyka i działania mitygujące',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'scenarios',
+    name: 'Scenarios',
+    namePl: 'Scenariusze',
+    description: 'Describe possible scenarios and likelihood',
+    descriptionPl: 'Opisz scenariusze i prawdopodobieństwo',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'summary',
+    name: 'Summary & Initiatives',
+    namePl: 'Podsumowanie i Inicjatywy',
+    description: 'Summarize risks and resilience initiatives',
+    descriptionPl: 'Podsumowanie ryzyk i inicjatyw odporności',
+    required: true,
+    aiAssisted: true,
+  },
+];
+
+export const SOP_STEPS: StepDefinition[] = [
+  {
+    id: 'context',
+    name: 'SOP Context',
+    namePl: 'Kontekst SOP',
+    description: 'Define scope and critical operations',
+    descriptionPl: 'Zdefiniuj zakres i krytyczne operacje',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'standards',
+    name: 'Standards',
+    namePl: 'Standardy',
+    description: 'List key standards and quality criteria',
+    descriptionPl: 'Lista standardów i kryteriów jakości',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'checklists',
+    name: 'Checklists',
+    namePl: 'Checklisty',
+    description: 'Define checklists and verification steps',
+    descriptionPl: 'Zdefiniuj checklisty i kroki weryfikacji',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'summary',
+    name: 'Summary & Initiatives',
+    namePl: 'Podsumowanie i Inicjatywy',
+    description: 'Summarize SOP and generate initiatives',
+    descriptionPl: 'Podsumuj SOP i wygeneruj inicjatywy',
+    required: true,
+    aiAssisted: true,
+  },
+];
+
+export const A3_STEPS: StepDefinition[] = [
+  {
+    id: 'context',
+    name: 'Problem Context',
+    namePl: 'Kontekst Problemu',
+    description: 'Define the problem and scope',
+    descriptionPl: 'Zdefiniuj problem i zakres',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'problem',
+    name: 'Problem Statement',
+    namePl: 'Opis Problemu',
+    description: 'Describe the problem and current impact',
+    descriptionPl: 'Opisz problem i wpływ',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'root-cause',
+    name: 'Root Cause',
+    namePl: 'Przyczyna Źródłowa',
+    description: 'Identify root causes (5 Why)',
+    descriptionPl: 'Zidentyfikuj przyczyny źródłowe (5 Why)',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'countermeasures',
+    name: 'Countermeasures',
+    namePl: 'Środki Zaradcze',
+    description: 'Define countermeasures and follow-up',
+    descriptionPl: 'Zdefiniuj środki zaradcze i follow-up',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'summary',
+    name: 'Summary & Initiatives',
+    namePl: 'Podsumowanie i Inicjatywy',
+    description: 'Summarize A3 and generate initiatives',
+    descriptionPl: 'Podsumuj A3 i wygeneruj inicjatywy',
+    required: true,
+    aiAssisted: true,
+  },
+];
+
+export const SMED_STEPS: StepDefinition[] = [
+  {
+    id: 'context',
+    name: 'Changeover Context',
+    namePl: 'Kontekst Przezbrojen',
+    description: 'Define scope and changeover baseline',
+    descriptionPl: 'Zdefiniuj zakres i bazę przezbrojeń',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'changeover-steps',
+    name: 'Changeover Steps',
+    namePl: 'Kroki Przezbrojenia',
+    description: 'List internal/external steps and durations',
+    descriptionPl: 'Lista kroków wewnętrznych/zewnętrznych i czasu',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'improvements',
+    name: 'Improvements',
+    namePl: 'Usprawnienia',
+    description: 'Identify quick wins and investments',
+    descriptionPl: 'Zidentyfikuj quick wins i inwestycje',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'summary',
+    name: 'Summary & Initiatives',
+    namePl: 'Podsumowanie i Inicjatywy',
+    description: 'Summarize SMED and generate initiatives',
+    descriptionPl: 'Podsumuj SMED i wygeneruj inicjatywy',
+    required: true,
+    aiAssisted: true,
+  },
+];
+
+export const DMS_STEPS: StepDefinition[] = [
+  {
+    id: 'context',
+    name: 'DMS Context',
+    namePl: 'Kontekst DMS',
+    description: 'Define scope and governance',
+    descriptionPl: 'Zdefiniuj zakres i governance',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'kpis',
+    name: 'KPIs',
+    namePl: 'KPI',
+    description: 'Define KPI boards and thresholds',
+    descriptionPl: 'Zdefiniuj KPI i progi',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'escalation',
+    name: 'Escalation Rules',
+    namePl: 'Reguły Eskalacji',
+    description: 'Define escalation rules and cadence',
+    descriptionPl: 'Zdefiniuj reguły eskalacji i rytm',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'summary',
+    name: 'Summary & Initiatives',
+    namePl: 'Podsumowanie i Inicjatywy',
+    description: 'Summarize DMS and generate initiatives',
+    descriptionPl: 'Podsumuj DMS i wygeneruj inicjatywy',
+    required: true,
+    aiAssisted: true,
+  },
+];
+
+export const INVENTORY_STEPS: StepDefinition[] = [
+  {
+    id: 'context',
+    name: 'Inventory Context',
+    namePl: 'Kontekst Zapasów',
+    description: 'Define scope and inventory objectives',
+    descriptionPl: 'Zdefiniuj zakres i cele zapasów',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'sku-classification',
+    name: 'SKU Classification',
+    namePl: 'Klasyfikacja SKU',
+    description: 'Define ABC/XYZ classification',
+    descriptionPl: 'Zdefiniuj klasyfikację ABC/XYZ',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'replenishment',
+    name: 'Replenishment Policies',
+    namePl: 'Polityki Uzupełniania',
+    description: 'Define policies and reorder triggers',
+    descriptionPl: 'Zdefiniuj polityki i punkty uzupełniania',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'summary',
+    name: 'Summary & Initiatives',
+    namePl: 'Podsumowanie i Inicjatywy',
+    description: 'Summarize inventory and generate initiatives',
+    descriptionPl: 'Podsumuj zapasy i wygeneruj inicjatywy',
+    required: true,
+    aiAssisted: true,
+  },
+];
+
 // ==================== STORE STATE ====================
 
 interface ToolStoreState {
@@ -300,7 +776,16 @@ interface ToolStoreState {
   canAdvanceStep: () => boolean;
 
   // Data updates
-  updateInputData: (data: Partial<SWOTData | PorterData>) => void;
+  updateInputData: (
+    data: Partial<
+      | SWOTData
+      | PorterData
+      | GrowthPathsData
+      | PortfolioPriorityData
+      | RiskUncertaintyData
+      | OperationalToolData
+    >
+  ) => void;
   addSWOTItem: (item: Omit<SWOTItem, 'id'>) => void;
   removeSWOTItem: (itemId: string) => void;
   updateSWOTItem: (itemId: string, updates: Partial<SWOTItem>) => void;
@@ -357,6 +842,97 @@ const createInitialPorterData = (): PorterData => ({
   },
 });
 
+const createInitialGrowthPathsData = (): GrowthPathsData => ({
+  context: {
+    goal: '',
+    scope: '',
+    timeframe: 'medium',
+  },
+  quadrants: {
+    marketPenetration: [],
+    marketDevelopment: [],
+    productDevelopment: [],
+    diversification: [],
+  },
+});
+
+const createInitialPortfolioPriorityData = (): PortfolioPriorityData => ({
+  context: {
+    goal: '',
+    scope: '',
+    timeframe: 'medium',
+  },
+  initiatives: [],
+});
+
+const createInitialRiskUncertaintyData = (): RiskUncertaintyData => ({
+  context: {
+    goal: '',
+    scope: '',
+    timeframe: 'medium',
+  },
+  assumptions: [],
+  risks: [],
+  scenarios: [],
+});
+
+const createInitialOperationalData = (steps: StepDefinition[]): OperationalToolData => {
+  const sections = steps
+    .filter((step) => !['context', 'summary'].includes(step.id))
+    .reduce<Record<string, OperationalItem[]>>((acc, step) => {
+      acc[step.id] = [];
+      return acc;
+    }, {});
+
+  return {
+    context: {
+      goal: '',
+      scope: '',
+      timeframe: 'medium',
+    },
+    sections,
+  };
+};
+
+const TOOL_STEP_DEFINITIONS: Record<ToolType, StepDefinition[]> = {
+  'dynamic-swot': SWOT_STEPS,
+  'market-forces': PORTER_STEPS,
+  'growth-paths': GROWTH_PATHS_STEPS,
+  'value-chain': PORTER_STEPS,
+  'portfolio-priority': PORTFOLIO_PRIORITY_STEPS,
+  'ambition-decomposer': PORTER_STEPS,
+  'focus-tradeoff': PORTER_STEPS,
+  'risk-uncertainty': RISK_UNCERTAINTY_STEPS,
+  'capability-mapper': PORTER_STEPS,
+  'narrative-engine': PORTER_STEPS,
+  'sop-builder': SOP_STEPS,
+  'a3-problem-solving': A3_STEPS,
+  'smed-planner': SMED_STEPS,
+  'dms-builder': DMS_STEPS,
+  'inventory-autopilot': INVENTORY_STEPS,
+};
+
+const TOOL_INITIAL_DATA: Record<
+  ToolType,
+  SWOTData | PorterData | GrowthPathsData | PortfolioPriorityData | RiskUncertaintyData | Record<string, unknown>
+> = {
+  'dynamic-swot': createInitialSWOTData(),
+  'market-forces': createInitialPorterData(),
+  'growth-paths': createInitialGrowthPathsData(),
+  'value-chain': createInitialPorterData(),
+  'portfolio-priority': createInitialPortfolioPriorityData(),
+  'ambition-decomposer': createInitialPorterData(),
+  'focus-tradeoff': createInitialPorterData(),
+  'risk-uncertainty': createInitialRiskUncertaintyData(),
+  'capability-mapper': createInitialPorterData(),
+  'narrative-engine': createInitialPorterData(),
+  'sop-builder': createInitialOperationalData(SOP_STEPS),
+  'a3-problem-solving': createInitialOperationalData(A3_STEPS),
+  'smed-planner': createInitialOperationalData(SMED_STEPS),
+  'dms-builder': createInitialOperationalData(DMS_STEPS),
+  'inventory-autopilot': createInitialOperationalData(INVENTORY_STEPS),
+};
+
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 // ==================== STORE ====================
@@ -369,9 +945,8 @@ export const useToolStore = create<ToolStoreState>()(
       savedSessions: [],
 
       createSession: (toolType: ToolType) => {
-        const steps = toolType === 'dynamic-swot' ? SWOT_STEPS : PORTER_STEPS;
-        const initialData =
-          toolType === 'dynamic-swot' ? createInitialSWOTData() : createInitialPorterData();
+        const steps = TOOL_STEP_DEFINITIONS[toolType] || PORTER_STEPS;
+        const initialData = TOOL_INITIAL_DATA[toolType] || createInitialPorterData();
 
         const session: ToolSession = {
           id: generateId(),
@@ -432,7 +1007,7 @@ export const useToolStore = create<ToolStoreState>()(
         const { currentSession } = get();
         if (!currentSession) return;
 
-        const steps = currentSession.toolType === 'dynamic-swot' ? SWOT_STEPS : PORTER_STEPS;
+        const steps = TOOL_STEP_DEFINITIONS[currentSession.toolType] || PORTER_STEPS;
         if (step >= 1 && step <= steps.length) {
           set({
             currentStep: step,
@@ -445,7 +1020,7 @@ export const useToolStore = create<ToolStoreState>()(
         const { currentStep, currentSession } = get();
         if (!currentSession) return;
 
-        const steps = currentSession.toolType === 'dynamic-swot' ? SWOT_STEPS : PORTER_STEPS;
+        const steps = TOOL_STEP_DEFINITIONS[currentSession.toolType] || PORTER_STEPS;
         if (currentStep < steps.length) {
           // Mark current step as completed
           const updatedSteps = currentSession.steps.map((s, i) =>
@@ -479,12 +1054,17 @@ export const useToolStore = create<ToolStoreState>()(
         const { currentSession, currentStep } = get();
         if (!currentSession) return false;
 
-        const steps = currentSession.toolType === 'dynamic-swot' ? SWOT_STEPS : PORTER_STEPS;
+        const steps = TOOL_STEP_DEFINITIONS[currentSession.toolType] || PORTER_STEPS;
         const stepDef = steps[currentStep - 1];
 
         // Context step: check if required fields are filled
         if (stepDef.id === 'context') {
-          const data = currentSession.inputData as SWOTData | PorterData;
+          const data = currentSession.inputData as
+            | SWOTData
+            | PorterData
+            | GrowthPathsData
+            | PortfolioPriorityData
+            | RiskUncertaintyData;
           if ('goal' in data.context) {
             return data.context.goal.length > 0 && data.context.scope.length > 0;
           }
@@ -497,6 +1077,49 @@ export const useToolStore = create<ToolStoreState>()(
         if (['strengths', 'weaknesses', 'opportunities', 'threats'].includes(stepDef.id)) {
           const swotData = currentSession.inputData as SWOTData;
           return swotData.items.some((item) => item.quadrant === stepDef.id);
+        }
+
+        // Growth Paths quadrants: require at least one item
+        if (
+          ['market-penetration', 'market-development', 'product-development', 'diversification'].includes(
+            stepDef.id
+          )
+        ) {
+          const growthData = currentSession.inputData as GrowthPathsData;
+          const keyMap: Record<string, keyof GrowthPathsData['quadrants']> = {
+            'market-penetration': 'marketPenetration',
+            'market-development': 'marketDevelopment',
+            'product-development': 'productDevelopment',
+            diversification: 'diversification',
+          };
+          const key = keyMap[stepDef.id];
+          return growthData.quadrants[key].length > 0;
+        }
+
+        // Portfolio items step: require at least one initiative
+        if (stepDef.id === 'portfolio-items') {
+          const portfolioData = currentSession.inputData as PortfolioPriorityData;
+          return portfolioData.initiatives.length > 0;
+        }
+
+        // Risk & Uncertainty steps: require at least one item
+        if (stepDef.id === 'assumptions') {
+          const riskData = currentSession.inputData as RiskUncertaintyData;
+          return riskData.assumptions.length > 0;
+        }
+        if (stepDef.id === 'risks') {
+          const riskData = currentSession.inputData as RiskUncertaintyData;
+          return riskData.risks.length > 0;
+        }
+        if (stepDef.id === 'scenarios') {
+          const riskData = currentSession.inputData as RiskUncertaintyData;
+          return riskData.scenarios.length > 0;
+        }
+
+        // Operational tools: sections with list items
+        const operationalData = currentSession.inputData as OperationalToolData;
+        if (operationalData.sections && stepDef.id in operationalData.sections) {
+          return operationalData.sections[stepDef.id].length > 0;
         }
 
         return true;
@@ -634,7 +1257,7 @@ export const useToolStore = create<ToolStoreState>()(
       getStepDefinitions: () => {
         const { currentSession } = get();
         if (!currentSession) return [];
-        return currentSession.toolType === 'dynamic-swot' ? SWOT_STEPS : PORTER_STEPS;
+        return TOOL_STEP_DEFINITIONS[currentSession.toolType] || PORTER_STEPS;
       },
 
       calculateProgress: () => {

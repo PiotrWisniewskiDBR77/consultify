@@ -132,7 +132,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
       setLinkedAnalysis({
         id: newAnalysis.id,
         name: newAnalysis.name,
-        status: 'draft',
+        status: 'DRAFT',
         overallScore: null,
         completionPercent: 0,
         createdAt: new Date().toISOString(),
@@ -218,22 +218,22 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
             </span>
             <span
               className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                linkedAnalysis.status === 'completed'
+                linkedAnalysis.status === 'APPROVED'
                   ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
-                  : linkedAnalysis.status === 'in_progress'
+                  : linkedAnalysis.status === 'REVIEW'
                     ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400'
                     : 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-400'
               }`}
             >
               {linkedAnalysis.analysisType === 'financial'
-                ? linkedAnalysis.status === 'completed'
+                ? linkedAnalysis.status === 'APPROVED'
                   ? 'Approved'
-                  : linkedAnalysis.status === 'in_progress'
+                  : linkedAnalysis.status === 'REVIEW'
                     ? 'Review'
                     : 'Draft'
-                : linkedAnalysis.status === 'completed'
+                : linkedAnalysis.status === 'APPROVED'
                   ? 'Zakończona'
-                  : linkedAnalysis.status === 'in_progress'
+                  : linkedAnalysis.status === 'REVIEW'
                     ? 'W trakcie'
                     : 'Szkic'}
             </span>

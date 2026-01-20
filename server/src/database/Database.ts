@@ -190,93 +190,104 @@ function createMockDatabase(): MockDatabase {
 /**
  * Global Database Instance Proxy
  */
-export const dbProxy = new Proxy({} as IDatabase, {
+function createProxyMethod(prop: string) {
+  return (...args: any[]) => {
+    const callWithRetry = (retryCount = 0): any => {
+      const currentDb = getDatabaseInstance();
+      const fn = (currentDb as any)[prop];
+
+      if (!fn) {
+        throw new Error(`Database instance does not have method: ${String(prop)}`);
+      }
+
+      const lastArgIndex = args.length - 1;
+      const lastArg = args[lastArgIndex];
+
+      if (typeof lastArg === 'function') {
+        const originalCallback = lastArg;
+        const wrappedArgs = [...args];
+        wrappedArgs[lastArgIndex] = function (this: any, err: any, ...results: any[]) {
+          if (
+            err &&
+            err.message &&
+            err.message.includes('Database is closed') &&
+            retryCount < 1
+          ) {
+            resetConnectionLocally();
+            return callWithRetry(retryCount + 1);
+          }
+          return originalCallback.apply(this, [err, ...results]);
+        };
+        return fn.apply(currentDb, wrappedArgs);
+      }
+
+      if (['get', 'all', 'run', 'exec'].includes(prop)) {
+        return new Promise((resolve, reject) => {
+          const callback = function (this: any, err: any, result: any) {
+            if (err) {
+              if (err.message && err.message.includes('Database is closed') && retryCount < 1) {
+                resetConnectionLocally();
+                return resolve(callWithRetry(retryCount + 1));
+              }
+              return reject(err);
+            }
+            if (prop === 'run') {
+              return resolve({ lastID: this.lastID, changes: this.changes });
+            }
+            return resolve(result);
+          };
+          fn.apply(currentDb, [...args, callback]);
+        });
+      }
+
+      try {
+        const result = fn.apply(currentDb, args);
+        if (result instanceof Promise) {
+          return result.catch((err: any) => {
+            if (err.message && err.message.includes('Database is closed') && retryCount < 1) {
+              resetConnectionLocally();
+              return callWithRetry(retryCount + 1);
+            }
+            throw err;
+          });
+        }
+        return result;
+      } catch (err: any) {
+        if (err.message && err.message.includes('Database is closed') && retryCount < 1) {
+          resetConnectionLocally();
+          return callWithRetry(retryCount + 1);
+        }
+        throw err;
+      }
+    };
+
+    return callWithRetry();
+  };
+}
+
+const dbProxyTarget = {
+  get: createProxyMethod('get'),
+  all: createProxyMethod('all'),
+  run: createProxyMethod('run'),
+  exec: createProxyMethod('exec'),
+} as IDatabase;
+
+export const dbProxy = new Proxy(dbProxyTarget, {
   get(_, prop) {
     if (prop === '__CLOSED__') {
       const current = getFromGlobal();
       return current ? (current as any).__CLOSED__ : false;
     }
 
+    if (typeof prop === 'string' && prop in dbProxyTarget) {
+      return (dbProxyTarget as any)[prop];
+    }
+
     const instance = getDatabaseInstance();
     const value = (instance as any)[prop];
 
     if (typeof value === 'function') {
-      return (...args: any[]) => {
-        const callWithRetry = (retryCount = 0): any => {
-          const currentDb = getDatabaseInstance();
-          const fn = (currentDb as any)[prop];
-
-          if (!fn) {
-            throw new Error(`Database instance does not have method: ${String(prop)}`);
-          }
-
-          // Handle callback-based methods
-          const lastArgIndex = args.length - 1;
-          const lastArg = args[lastArgIndex];
-
-          // If a callback is provided, use the original function
-          if (typeof lastArg === 'function') {
-            const originalCallback = lastArg;
-            const wrappedArgs = [...args];
-            wrappedArgs[lastArgIndex] = function (this: any, err: any, ...results: any[]) {
-              if (
-                err &&
-                err.message &&
-                err.message.includes('Database is closed') &&
-                retryCount < 1
-              ) {
-                resetConnectionLocally();
-                return callWithRetry(retryCount + 1);
-              }
-              return originalCallback.apply(this, [err, ...results]);
-            };
-            return fn.apply(currentDb, wrappedArgs);
-          }
-
-          // If NO callback is provided, and it's a common method, wrap in a Promise
-          if (['get', 'all', 'run', 'exec'].includes(prop as string)) {
-            return new Promise((resolve, reject) => {
-              const callback = function (this: any, err: any, result: any) {
-                if (err) {
-                  if (err.message && err.message.includes('Database is closed') && retryCount < 1) {
-                    resetConnectionLocally();
-                    // This is tricky inside a callback, but we try
-                    return resolve(callWithRetry(retryCount + 1));
-                  }
-                  return reject(err);
-                }
-                if (prop === 'run') {
-                  return resolve({ lastID: this.lastID, changes: this.changes });
-                }
-                return resolve(result);
-              };
-              fn.apply(currentDb, [...args, callback]);
-            });
-          }
-
-          // Handle already Promise-based methods or other methods
-          try {
-            const result = fn.apply(currentDb, args);
-            if (result instanceof Promise) {
-              return result.catch((err: any) => {
-                if (err.message && err.message.includes('Database is closed') && retryCount < 1) {
-                  resetConnectionLocally();
-                  return callWithRetry(retryCount + 1);
-                }
-                throw err;
-              });
-            }
-            return result;
-          } catch (err: any) {
-            if (err.message && err.message.includes('Database is closed') && retryCount < 1) {
-              resetConnectionLocally();
-              return callWithRetry(retryCount + 1);
-            }
-            throw err;
-          }
-        };
-        return callWithRetry();
-      };
+      return createProxyMethod(String(prop));
     }
     return value;
   },

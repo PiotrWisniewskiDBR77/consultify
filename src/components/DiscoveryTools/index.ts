@@ -10,6 +10,7 @@ export { ToolCanvas } from './ToolCanvas';
 export { ToolContextPanel } from './ToolContextPanel';
 export { ToolReviewPanel } from './ToolReviewPanel';
 export { GenerateInitiativesModal } from './GenerateInitiativesModal';
+export { InlineAssist } from './InlineAssist';
 export { ToolHeader } from './ToolHeader';
 export { ToolWorkspace } from './ToolWorkspace';
 

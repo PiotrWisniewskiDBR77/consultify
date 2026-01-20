@@ -1,0 +1,60 @@
+{
+  "common": {
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "close": "إغلاق",
+    "loading": "جاري التحميل",
+    "error": "خطأ",
+    "success": "نجاح",
+    "back": "رجوع",
+    "next": "التالي",
+    "previous": "السابق",
+    "of": "من"
+  },
+  "sidebar": {
+    "dashboard": "لوحة التحكم",
+    "settings": "الإعدادات",
+    "help": "المساعدة",
+    "knowledge": "قاعدة المعرفة"
+  },
+  "auth": {
+    "logIn": "تسجيل الدخول",
+    "welcomeBack": "مرحباً بعودتك"
+  },
+  "help": {
+    "title": "مركز المساعدة",
+    "knowledge": {
+      "title": "قاعدة المعرفة",
+      "searchPlaceholder": "البحث في المقالات...",
+      "allCategories": "الكل",
+      "noSearchResults": "لم يتم العثور على مقالات لبحثك.",
+      "noArticles": "لا توجد مقالات متاحة في هذه الفئة.",
+      "articleNotFound": "المقال غير موجود.",
+      "minRead": "دقيقة قراءة",
+      "views": "مشاهدات",
+      "relatedModules": "الوحدات ذات الصلة",
+      "shareArticle": "مشاركة المقال",
+      "featured": "مميز",
+      "popular": "شائع",
+      "recent": "حديث",
+      "readMore": "اقرأ المزيد",
+      "backToLibrary": "العودة إلى المكتبة",
+      "categories": "الفئات",
+      "articles": "المقالات",
+      "searchResults": "نتائج البحث",
+      "tableOfContents": "جدول المحتويات",
+      "wasHelpful": "هل كان هذا المقال مفيداً؟",
+      "yes": "نعم",
+      "no": "لا",
+      "feedbackThanks": "شكراً لملاحظاتك!",
+      "relatedArticles": "مقالات ذات صلة",
+      "gettingStarted": "البدء",
+      "tutorials": "دروس تعليمية",
+      "bestPractices": "أفضل الممارسات",
+      "faq": "الأسئلة الشائعة",
+      "troubleshooting": "استكشاف الأخطاء وإصلاحها"
+    }
+  }
+}

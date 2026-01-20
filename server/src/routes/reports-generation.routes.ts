@@ -69,8 +69,8 @@ router.post(
 
     const { reportId, format } = req.params;
 
-    if (!['pdf', 'pptx', 'docx', 'xlsx'].includes(format)) {
-      return res.status(400).json({ error: 'Invalid format. Supported: pdf, pptx, docx, xlsx' });
+    if (!['pdf', 'pptx'].includes(format)) {
+      return res.status(400).json({ error: 'Invalid format. Supported: pdf, pptx' });
     }
 
     const result = await reportGenerationService.exportReport(
@@ -83,7 +83,9 @@ router.post(
       success: true,
       ...result,
       message:
-        format === 'pdf' ? 'Export ready' : 'Export queued. This format will be available soon.',
+        format === 'pdf' || format === 'pptx'
+          ? 'Export ready'
+          : 'Export queued. This format will be available soon.',
     });
   })
 );

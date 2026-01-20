@@ -9,6 +9,8 @@ import React, { useState } from 'react';
 
 import { ForceData, PorterData, ToolSession, useToolStore } from '@/store/useToolStore';
 
+import { InlineAssist } from '../../InlineAssist';
+
 // ==================== TYPES ====================
 
 interface ForceStepProps {
@@ -205,6 +207,13 @@ export const ForceStep: React.FC<ForceStepProps> = ({ forceId, session, isPolish
             </button>
           ))}
         </div>
+        <InlineAssist
+          hint={
+            isPolish
+              ? 'Ocena powinna byc oparta o dane rynkowe.'
+              : 'Score should be grounded in market data.'
+          }
+        />
       </div>
 
       {/* Trend selector */}
@@ -256,6 +265,13 @@ export const ForceStep: React.FC<ForceStepProps> = ({ forceId, session, isPolish
             {isPolish ? 'Malejący' : 'Decreasing'}
           </button>
         </div>
+        <InlineAssist
+          hint={
+            isPolish
+              ? 'Wskaz czy sila rosnie czy maleje i dlaczego.'
+              : 'Indicate if the force is increasing or decreasing and why.'
+          }
+        />
       </div>
 
       {/* Drivers */}
@@ -306,6 +322,13 @@ export const ForceStep: React.FC<ForceStepProps> = ({ forceId, session, isPolish
             </p>
           )}
         </div>
+        <InlineAssist
+          hint={
+            isPolish
+              ? 'Dodaj 2-4 konkretne czynniki dla kazdej sily.'
+              : 'Add 2-4 concrete drivers for each force.'
+          }
+        />
       </div>
 
       {/* Guiding questions */}

@@ -48,9 +48,11 @@ const generateAuthToken = (user: typeof testUser) => {
 };
 
 beforeAll(async () => {
+  process.env.JWT_SECRET =
+    process.env.JWT_SECRET || 'test-secret-test-secret-test-secret-123';
   // 1. Instantiate the raw SQLite database directly (avoids loading Database.ts prematurely)
   // process.env.MOCK_DB is NOT used by database.sqlite.active.js, it just creates a DB
-  const sqliteModule = await import('../../database.sqlite.active.js');
+  const sqliteModule = await import('../../legacy_archive/database.sqlite.js');
   const realDb = sqliteModule.default || sqliteModule;
 
   // 2. Shim .query() method (which Database.ts usually does)
@@ -70,7 +72,7 @@ beforeAll(async () => {
   (global as any).__TEST_DB_MOCK__ = realDb;
 
   // 4. Now import the app, which will use the global mock (our real DB)
-  const appModule = await import('../../src/index.js');
+  const appModule = await import('../../src/index.ts');
   app = appModule.default || appModule;
 
   // 5. Use the same instance for test assertions

@@ -109,6 +109,45 @@ When generating initiatives, focus on:
 - Reducing substitute threat
 - Improving bargaining power`;
 
+const GROWTH_PATHS_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}
+
+You are guiding the user through the Ansoff Matrix (Growth Paths).
+
+QUADRANTS:
+1. Market Penetration - current products, current markets
+2. Market Development - current products, new markets
+3. Product Development - new products, current markets
+4. Diversification - new products, new markets
+
+When generating initiatives, return JSON:
+{"initiatives": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low"}]}`;
+
+const PORTFOLIO_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}
+
+You are guiding the user through a BCG-style portfolio prioritization.
+
+DIMENSIONS:
+- Market Growth (1-5)
+- Market Share (1-5)
+
+Categories: star, cash-cow, question-mark, dog.
+Provide priority and rationale where relevant.`;
+
+const RISK_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}
+
+You are guiding the user through a Strategic Risk & Uncertainty assessment.
+
+Provide assumptions, risks, scenarios, and mitigation suggestions.
+Use concise, actionable entries.`;
+
+const OPERATIONAL_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}
+
+You are guiding the user through an Operational Excellence tool.
+
+Provide concise, actionable items for each operational section.
+When generating items, return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low"}]}`;
+
 // ==================== HOOK ====================
 
 export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
@@ -128,7 +167,24 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
 
   // Get the appropriate system prompt
   const getSystemPrompt = useCallback(() => {
-    const basePrompt = toolType === 'dynamic-swot' ? SWOT_SYSTEM_PROMPT : PORTER_SYSTEM_PROMPT;
+    const promptMap: Record<ToolType, string> = {
+      'dynamic-swot': SWOT_SYSTEM_PROMPT,
+      'market-forces': PORTER_SYSTEM_PROMPT,
+      'growth-paths': GROWTH_PATHS_SYSTEM_PROMPT,
+      'portfolio-priority': PORTFOLIO_SYSTEM_PROMPT,
+      'risk-uncertainty': RISK_SYSTEM_PROMPT,
+      'value-chain': PORTER_SYSTEM_PROMPT,
+      'ambition-decomposer': PORTER_SYSTEM_PROMPT,
+      'focus-tradeoff': PORTER_SYSTEM_PROMPT,
+      'capability-mapper': PORTER_SYSTEM_PROMPT,
+      'narrative-engine': PORTER_SYSTEM_PROMPT,
+      'sop-builder': OPERATIONAL_SYSTEM_PROMPT,
+      'a3-problem-solving': OPERATIONAL_SYSTEM_PROMPT,
+      'smed-planner': OPERATIONAL_SYSTEM_PROMPT,
+      'dms-builder': OPERATIONAL_SYSTEM_PROMPT,
+      'inventory-autopilot': OPERATIONAL_SYSTEM_PROMPT,
+    };
+    const basePrompt = promptMap[toolType] || PORTER_SYSTEM_PROMPT;
     const orgContext = formatForPrompt();
 
     return `${basePrompt}
@@ -222,6 +278,48 @@ Provide:
 
 Be specific to the organization's industry and market position.`;
       }
+    } else if (toolType === 'growth-paths') {
+      if (
+        ['market-penetration', 'market-development', 'product-development', 'diversification'].includes(
+          currentStepDef.id
+        )
+      ) {
+        prompt = `Suggest 3-5 initiatives for the ${currentStepDef.name} quadrant.
+
+Return JSON:
+{"initiatives": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low"}]}`;
+      }
+    } else if (toolType === 'portfolio-priority') {
+      if (currentStepDef.id === 'portfolio-items') {
+        prompt = `Propose 3-5 portfolio initiatives with market growth and share scores.
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "marketGrowth": 3, "marketShare": 3, "investmentLevel": 3}]}`;
+      }
+    } else if (toolType === 'risk-uncertainty') {
+      if (currentStepDef.id === 'assumptions') {
+        prompt = `List 3-5 key assumptions with confidence (1-5). Return JSON:
+{"assumptions": [{"text": "...", "confidence": 3}]}`;
+      }
+      if (currentStepDef.id === 'risks') {
+        prompt = `List 3-5 strategic risks with probability/impact (1-5) and mitigation. Return JSON:
+{"risks": [{"description": "...", "probability": 3, "impact": 3, "mitigation": "..."}]}`;
+      }
+      if (currentStepDef.id === 'scenarios') {
+        prompt = `List 2-4 scenarios with likelihood (1-5) and notes. Return JSON:
+{"scenarios": [{"title": "...", "likelihood": 3, "notes": "..."}]}`;
+      }
+    } else if (
+      ['sop-builder', 'a3-problem-solving', 'smed-planner', 'dms-builder', 'inventory-autopilot'].includes(
+        toolType
+      )
+    ) {
+      if (currentStepDef.id !== 'context' && currentStepDef.id !== 'summary') {
+        prompt = `Provide 3-5 concise items for ${currentStepDef.name}.
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low"}]}`;
+      }
     }
 
     if (prompt) {
@@ -309,6 +407,42 @@ Provide:
 
 Return as JSON:
 {"attractiveness": 3, "summary": "executive summary", "insights": ["insight 1", "insight 2"], "initiatives": [{"title": "...", "description": "...", "type": "...", "rationale": "..."}]}`;
+    } else if (toolType === 'growth-paths') {
+      prompt = `Summarize the Ansoff Matrix analysis:
+1. Executive Summary (3-4 sentences)
+2. Top 3 insights
+3. 3-5 initiative recommendations (with impact/effort)
+
+Return JSON:
+{"summary": "...", "insights": ["..."], "initiatives": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low"}]}`;
+    } else if (toolType === 'portfolio-priority') {
+      prompt = `Summarize portfolio priorities:
+1. Executive Summary
+2. Top 3 insights
+3. 3-5 initiatives (with rationale)
+
+Return JSON:
+{"summary": "...", "insights": ["..."], "initiatives": [{"title": "...", "description": "...", "rationale": "..."}]}`;
+    } else if (toolType === 'risk-uncertainty') {
+      prompt = `Summarize risks and scenarios:
+1. Executive Summary
+2. Top 3 insights
+3. 3-5 resilience initiatives
+
+Return JSON:
+{"summary": "...", "insights": ["..."], "initiatives": [{"title": "...", "description": "...", "rationale": "..."}]}`;
+    } else if (
+      ['sop-builder', 'a3-problem-solving', 'smed-planner', 'dms-builder', 'inventory-autopilot'].includes(
+        toolType
+      )
+    ) {
+      prompt = `Summarize the operational analysis:
+1. Executive Summary
+2. Top 3 insights
+3. 3-5 operational initiatives
+
+Return JSON:
+{"summary": "...", "insights": ["..."], "initiatives": [{"title": "...", "description": "...", "rationale": "..."}]}`;
     }
 
     if (prompt) {
@@ -342,6 +476,58 @@ Return as JSON:
         buyerPower: 'How much bargaining power do your customers have?',
         supplierPower: 'How much bargaining power do your suppliers have?',
         summary: 'Let me summarize the competitive landscape and propose initiatives.',
+      },
+      'growth-paths': {
+        context: 'What growth goal and scope are you analyzing?',
+        'market-penetration': 'What initiatives grow in current markets with current products?',
+        'market-development': 'What initiatives expand into new markets?',
+        'product-development': 'What new products could accelerate growth?',
+        diversification: 'What initiatives combine new products and new markets?',
+        summary: 'Let me summarize growth paths and propose initiatives.',
+      },
+      'portfolio-priority': {
+        context: 'What portfolio scope and constraints are you analyzing?',
+        'portfolio-items': 'List initiatives and assess growth and share.',
+        'portfolio-matrix': 'Let me summarize the portfolio matrix.',
+        summary: 'Let me summarize portfolio priorities and initiatives.',
+      },
+      'risk-uncertainty': {
+        context: 'What risk scope and time horizon are you analyzing?',
+        assumptions: 'What key assumptions underpin the strategy?',
+        risks: 'What are the strategic risks and mitigations?',
+        scenarios: 'What scenarios could materially impact outcomes?',
+        summary: 'Let me summarize risks and propose resilience initiatives.',
+      },
+      'sop-builder': {
+        context: 'What operational scope are you standardizing?',
+        standards: 'What standards and quality criteria are required?',
+        checklists: 'What checklist items ensure compliance?',
+        summary: 'Let me summarize SOP and propose initiatives.',
+      },
+      'a3-problem-solving': {
+        context: 'What problem scope are you analyzing?',
+        problem: 'Describe the problem and its impact.',
+        'root-cause': 'What are the root causes?',
+        countermeasures: 'What countermeasures will address root causes?',
+        summary: 'Let me summarize A3 and propose initiatives.',
+      },
+      'smed-planner': {
+        context: 'What changeover process are you improving?',
+        'changeover-steps': 'List key changeover steps and durations.',
+        improvements: 'What quick wins and investments reduce time?',
+        summary: 'Let me summarize SMED and propose initiatives.',
+      },
+      'dms-builder': {
+        context: 'What DMS scope and teams are involved?',
+        kpis: 'What KPIs should be tracked daily?',
+        escalation: 'What escalation rules should apply?',
+        summary: 'Let me summarize DMS and propose initiatives.',
+      },
+      'inventory-autopilot': {
+        context: 'What inventory scope are you optimizing?',
+        'sku-classification': 'What SKU classes and criteria apply?',
+        replenishment: 'What replenishment policies are needed?',
+        summary: 'Let me summarize inventory and propose initiatives.',
       },
     };
 

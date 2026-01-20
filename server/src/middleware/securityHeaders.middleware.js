@@ -1,2 +1,2 @@
-export * from './securityHeaders.middleware.js';
-export { default } from './securityHeaders.middleware.js';
+export * from './securityHeaders.middleware.ts';
+export { default } from './securityHeaders.middleware.ts';

@@ -67,17 +67,53 @@ const hasPendingExecutionGateDecisions = async (
   orgId: string,
   initiativeId: string
 ): Promise<boolean> => {
-  const sql = `
+  const columns = await queryHelpers.queryAll<{ name: string }>('PRAGMA table_info(decisions)');
+  const hasColumn = (column: string) => columns.some((col) => col.name === column);
+  const hasInitiativeId = hasColumn('initiative_id');
+  const hasTaskId = hasColumn('task_id');
+  const hasRelatedObjectType = hasColumn('related_object_type');
+  const hasRelatedObjectId = hasColumn('related_object_id');
+  const hasType = hasColumn('type');
+
+  const params: Array<string> = [orgId];
+  let sql = `
         SELECT d.id
         FROM decisions d
-        LEFT JOIN tasks t ON d.task_id = t.id
-        WHERE d.organization_id = ?
-          AND (d.initiative_id = ? OR t.initiative_id = ?)
-          AND d.status IN ('pending', 'escalated')
-          AND d.type IN ('SCOPE_CHANGE', 'RISK_ACCEPTANCE', 'BLOCKER_RESOLUTION', 'PHASE_TRANSITION')
-        LIMIT 1
     `;
-  const rows = await queryHelpers.queryAll(sql, [orgId, initiativeId, initiativeId]);
+
+  if (hasTaskId) {
+    sql += ' LEFT JOIN tasks t ON d.task_id = t.id';
+  }
+
+  sql += ' WHERE d.organization_id = ?';
+
+  const scopeConditions: string[] = [];
+  if (hasInitiativeId) {
+    scopeConditions.push('d.initiative_id = ?');
+    params.push(initiativeId);
+  }
+  if (hasTaskId) {
+    scopeConditions.push('t.initiative_id = ?');
+    params.push(initiativeId);
+  }
+  if (hasRelatedObjectType && hasRelatedObjectId) {
+    scopeConditions.push("(d.related_object_type = 'initiative' AND d.related_object_id = ?)");
+    params.push(initiativeId);
+  }
+
+  if (scopeConditions.length === 0) {
+    return false;
+  }
+
+  sql += ` AND (${scopeConditions.join(' OR ')})`;
+  sql += ` AND d.status IN ('pending', 'escalated')`;
+
+  if (hasType) {
+    sql += ` AND d.type IN ('SCOPE_CHANGE', 'RISK_ACCEPTANCE', 'BLOCKER_RESOLUTION', 'PHASE_TRANSITION')`;
+  }
+
+  sql += ' LIMIT 1';
+  const rows = await queryHelpers.queryAll(sql, params);
   return rows.length > 0;
 };
 
@@ -169,6 +205,8 @@ export class InitiativeController {
         status: i.status,
         progress: i.progress || 0,
         currentStage: i.current_stage,
+        sourceType: i.source_type,
+        sourceId: i.source_id,
         businessValue: i.business_value,
         costCapex: i.cost_capex,
         costOpex: i.cost_opex,
@@ -256,6 +294,8 @@ export class InitiativeController {
         scopeIn: safeJsonParse(i.scope_in as string, []),
         scopeOut: safeJsonParse(i.scope_out as string, []),
         keyRisks: safeJsonParse(i.key_risks as string, []),
+        sourceType: i.source_type,
+        sourceId: i.source_id,
       };
 
       res.json(parsed);
@@ -287,6 +327,7 @@ export class InitiativeController {
         valueDriver,
         confidenceLevel,
         valueTiming,
+        status,
         plannedStartDate,
         plannedEndDate,
         ownerBusinessId,
@@ -311,45 +352,86 @@ export class InitiativeController {
 
       const sql = `
             INSERT INTO initiatives (
-                id, organization_id, project_id, title, axis, area, summary, hypothesis,
+                id, organization_id, project_id, title, axis, area, summary, hypothesis, status,
                 business_value, cost_capex, cost_opex, expected_roi,
                 value_driver, confidence_level, value_timing,
                 planned_start_date, planned_end_date,
                 owner_business_id, owner_execution_id,
                 problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
                 created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
-      await queryHelpers.queryRun(sql, [
-        id,
-        orgId,
-        projectId,
-        title,
-        axis ?? null,
-        area ?? null,
-        summary ?? null,
-        hypothesis ?? null,
-        businessValue ?? null,
-        costCapex ?? null,
-        costOpex ?? null,
-        expectedRoi ?? null,
-        valueDriver ?? null,
-        confidenceLevel ?? null,
-        valueTiming ?? null,
-        plannedStartDate ?? null,
-        plannedEndDate ?? null,
-        ownerBusinessId ?? null,
-        ownerExecutionId ?? null,
-        problemStatement ?? null,
-        JSON.stringify(deliverables || []),
-        JSON.stringify(successCriteria || []),
-        JSON.stringify(scopeIn || []),
-        JSON.stringify(scopeOut || []),
-        JSON.stringify(keyRisks || []),
-        now,
-        now,
-      ]);
+      try {
+        await queryHelpers.queryRun(sql, [
+          id,
+          orgId,
+          projectId ?? null,
+          title,
+          axis ?? null,
+          area ?? null,
+          summary ?? null,
+          hypothesis ?? null,
+          status ?? null,
+          businessValue ?? null,
+          costCapex ?? null,
+          costOpex ?? null,
+          expectedRoi ?? null,
+          valueDriver ?? null,
+          confidenceLevel ?? null,
+          valueTiming ?? null,
+          plannedStartDate ?? null,
+          plannedEndDate ?? null,
+          ownerBusinessId ?? null,
+          ownerExecutionId ?? null,
+          problemStatement ?? null,
+          JSON.stringify(deliverables || []),
+          JSON.stringify(successCriteria || []),
+          JSON.stringify(scopeIn || []),
+          JSON.stringify(scopeOut || []),
+          JSON.stringify(keyRisks || []),
+          now,
+          now,
+        ]);
+      } catch (error) {
+        const legacySql = `
+              INSERT INTO initiatives (
+                  id, organization_id, project_id, name, axis, area, summary, hypothesis, status,
+                  business_value, cost_capex, cost_opex, expected_roi,
+                  start_date, end_date,
+                  owner_business_id, owner_execution_id,
+                  problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
+                  created_at, updated_at
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `;
+        await queryHelpers.queryRun(legacySql, [
+          id,
+          orgId,
+          projectId ?? null,
+          title,
+          axis ?? null,
+          area ?? null,
+          summary ?? null,
+          hypothesis ?? null,
+          status ?? null,
+          businessValue ?? null,
+          costCapex ?? null,
+          costOpex ?? null,
+          expectedRoi ?? null,
+          plannedStartDate ?? null,
+          plannedEndDate ?? null,
+          ownerBusinessId ?? null,
+          ownerExecutionId ?? null,
+          problemStatement ?? null,
+          JSON.stringify(deliverables || []),
+          JSON.stringify(successCriteria || []),
+          JSON.stringify(scopeIn || []),
+          JSON.stringify(scopeOut || []),
+          JSON.stringify(keyRisks || []),
+          now,
+          now,
+        ]);
+      }
 
       res.json({ id, name: title, message: 'Initiative created' });
     }
@@ -1410,12 +1492,26 @@ export class InitiativeController {
         return;
       }
 
-      // Parse comma-separated statuses and map DONE to COMPLETED
-      const statusList = statuses.split(',').map((s: string) => {
-        const trimmed = s.trim().toUpperCase();
-        if (trimmed === 'DONE') return 'COMPLETED';
-        return trimmed;
+      // Parse comma-separated statuses and support DONE/COMPLETED interchangeably
+      const rawStatuses = statuses
+        .split(',')
+        .map((s: string) => s.trim().toUpperCase())
+        .filter(Boolean);
+      const statusSet = new Set<string>();
+      rawStatuses.forEach((status) => {
+        if (status === 'DONE') {
+          statusSet.add('DONE');
+          statusSet.add('COMPLETED');
+          return;
+        }
+        if (status === 'COMPLETED') {
+          statusSet.add('COMPLETED');
+          statusSet.add('DONE');
+          return;
+        }
+        statusSet.add(status);
       });
+      const statusList = Array.from(statusSet);
 
       const placeholders = statusList.map(() => '?').join(',');
       const sql = `

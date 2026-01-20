@@ -32,6 +32,10 @@ interface SplitLayoutProps {
   hideSidebar?: boolean;
   /** Use the new UnifiedChatPanel instead of legacy ChatPanel */
   useUnifiedChat?: boolean;
+  /** Optional system prompt override for chat */
+  chatSystemPrompt?: string;
+  /** Optional role name override for chat */
+  chatRoleName?: string;
   /** Current view for workspace context (optional) */
   currentView?: AppView;
   /** Entity ID for workspace context (optional) */
@@ -46,6 +50,8 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
   onSendMessage,
   hideSidebar = true, // Default to true since MainLayout already provides chat panel
   useUnifiedChat = true, // Default to unified chat panel
+  chatSystemPrompt,
+  chatRoleName,
   currentView,
   contextEntityId,
 }) => {
@@ -198,7 +204,9 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
     }));
 
     // System prompt for consulting context
-    const systemPrompt = `You are Consultinity AI, an expert Digital Transformation Consultant.
+    const systemPrompt =
+      chatSystemPrompt ||
+      `You are Consultinity AI, an expert Digital Transformation Consultant.
 Your role is to guide the user through strategic discovery and provide actionable insights.
 Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
 
@@ -266,6 +274,8 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
               showHistoryTrigger={true}
               showFocusMode={true}
               title={typeof title === 'string' ? title : undefined}
+              systemPrompt={chatSystemPrompt}
+              roleName={chatRoleName}
             />
           ) : (
             <ChatPanel
@@ -378,6 +388,8 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                   onModeToggle={handleExpandToFullChat}
                   showHistoryTrigger={true}
                   showFocusMode={false} // Compact on mobile
+                  systemPrompt={chatSystemPrompt}
+                  roleName={chatRoleName}
                 />
               ) : (
                 <ChatPanel

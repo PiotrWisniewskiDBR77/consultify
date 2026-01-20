@@ -180,10 +180,32 @@ export class ProjectController {
             LIMIT ? OFFSET ?
         `;
 
-      const [rows, countResult] = await Promise.all([
-        queryHelpers.queryAll(sql, [orgId, limit, offset]),
-        queryHelpers.queryOne<{ total: number }>(countSql, [orgId]),
-      ]);
+      let rows: any[] = [];
+      let countResult: { total?: number } | null = null;
+
+      try {
+        [rows, countResult] = await Promise.all([
+          queryHelpers.queryAll(sql, [orgId, limit, offset]),
+          queryHelpers.queryOne<{ total: number }>(countSql, [orgId]),
+        ]);
+      } catch (error) {
+        console.warn('[ProjectController] Falling back to basic project query:', error);
+        const fallbackSql = `
+              SELECT 
+                  p.*, 
+                  u.first_name as owner_first_name, 
+                  u.last_name as owner_last_name
+              FROM projects p
+              LEFT JOIN users u ON p.owner_id = u.id
+              WHERE p.organization_id = ?
+              ORDER BY p.created_at DESC
+              LIMIT ? OFFSET ?
+          `;
+        [rows, countResult] = await Promise.all([
+          queryHelpers.queryAll(fallbackSql, [orgId, limit, offset]),
+          queryHelpers.queryOne<{ total: number }>(countSql, [orgId]),
+        ]);
+      }
 
       const total = countResult?.total || 0;
       const totalPages = Math.ceil(total / limit);
@@ -199,10 +221,10 @@ export class ProjectController {
           ...row,
           name: getMultilingualText(row.name as string, lang),
           description: getMultilingualText(row.description as string, lang),
-          memberCount: row.real_member_count,
-          initiativeCount: row.real_initiative_count,
-          assessmentCount: row.real_assessment_count,
-          documentCount: row.real_document_count,
+          memberCount: row.real_member_count ?? 0,
+          initiativeCount: row.real_initiative_count ?? 0,
+          assessmentCount: row.real_assessment_count ?? 0,
+          documentCount: row.real_document_count ?? 0,
         }))
       );
     }

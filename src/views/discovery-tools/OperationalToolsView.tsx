@@ -34,7 +34,9 @@ import {
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ToolWorkspace } from '@/components/DiscoveryTools';
 import { useAppStore } from '@/store/useAppStore';
+import { ToolType } from '@/store/useToolStore';
 import { AppView } from '@/types';
 
 interface OperationalTool {
@@ -192,15 +194,34 @@ export const OperationalToolsView: React.FC = () => {
   const { setCurrentView } = useAppStore();
   const isPolish = i18n.language === 'pl';
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
+  const [activeTool, setActiveTool] = useState<ToolType | null>(null);
 
   const handleBack = () => {
-    setCurrentView(AppView.DISCOVERY_TOOLS);
+    if (activeTool) {
+      setActiveTool(null);
+      setSelectedTool(null);
+    } else {
+      setCurrentView(AppView.DISCOVERY_TOOLS);
+    }
   };
 
   const handleStartTool = (toolId: string) => {
     console.log('Starting tool:', toolId);
     setSelectedTool(toolId);
+    if (
+      toolId === 'sop-builder' ||
+      toolId === 'a3-problem-solving' ||
+      toolId === 'smed-planner' ||
+      toolId === 'dms-builder' ||
+      toolId === 'inventory-autopilot'
+    ) {
+      setActiveTool(toolId as ToolType);
+    }
   };
+
+  if (activeTool) {
+    return <ToolWorkspace toolType={activeTool} onBack={handleBack} />;
+  }
 
   return (
     <div className="min-h-full bg-slate-50 dark:bg-navy-950">
@@ -240,20 +261,32 @@ export const OperationalToolsView: React.FC = () => {
           {OPERATIONAL_TOOLS.map((tool) => {
             const Icon = tool.icon;
             const isSelected = selectedTool === tool.id;
+            const isImplemented =
+              tool.id === 'sop-builder' ||
+              tool.id === 'a3-problem-solving' ||
+              tool.id === 'smed-planner' ||
+              tool.id === 'dms-builder' ||
+              tool.id === 'inventory-autopilot';
 
             return (
               <div
                 key={tool.id}
                 className={`
-                  p-5 rounded-xl border-2 transition-all cursor-pointer
+                  p-5 rounded-xl border-2 transition-all cursor-pointer relative
                   ${
                     isSelected
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                       : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-blue-300'
                   }
+                  ${!isImplemented ? 'opacity-60' : ''}
                 `}
                 onClick={() => handleStartTool(tool.id)}
               >
+                {!isImplemented && (
+                  <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-slate-200 dark:bg-navy-700 text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Wkrótce' : 'Coming Soon'}
+                  </div>
+                )}
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0">
                     <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">

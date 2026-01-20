@@ -1,2 +1,2 @@
-export * from './onboardingService.js';
-export { default } from './onboardingService.js';
+export * from './onboardingService.ts';
+export { default } from './onboardingService.ts';

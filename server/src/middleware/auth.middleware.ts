@@ -121,15 +121,47 @@ const mapRole = (role?: string): UserRole => {
     case 'admin':
       return 'administrator';
     case 'superadmin':
+    case 'super_admin':
       return 'owner';
     case 'user':
       return 'team_member';
+    case 'member':
+      return 'team_member';
     case 'client':
+      return 'guest';
+    case 'guest':
       return 'guest';
     case 'manager':
       return 'project_manager';
     default:
       return role as UserRole;
+  }
+};
+
+const normalizePermissionRole = (role?: string): string => {
+  if (!role) return 'VIEWER';
+  const r = role.toString().trim().toUpperCase();
+  switch (r) {
+    case 'OWNER':
+    case 'SUPER_ADMIN':
+    case 'SUPERADMIN':
+      return 'SUPERADMIN';
+    case 'ADMINISTRATOR':
+    case 'ADMIN':
+      return 'ADMIN';
+    case 'PROJECT_MANAGER':
+    case 'MANAGER':
+      return 'PROJECT_MANAGER';
+    case 'TEAM_MEMBER':
+    case 'MEMBER':
+    case 'USER':
+      return 'TEAM_MEMBER';
+    case 'VIEWER':
+    case 'GUEST':
+    case 'CLIENT':
+      return 'VIEWER';
+    default:
+      return r;
   }
 };
 
@@ -145,7 +177,7 @@ const attachUser = async (
 
   req.userId = decoded.id;
   req.userRole = decoded.role || decoded.userRole;
-  req.organizationId = decoded.organizationId;
+  req.organizationId = decoded.organizationId || (decoded as any).organization_id;
 
   const user: AuthenticatedUser = {
     id: decoded.id,
@@ -161,10 +193,18 @@ const attachUser = async (
   req.user = user;
 
   // Attach permission helper
+  const permissionRole = normalizePermissionRole(decoded.role || decoded.userRole || user.role);
   req.can = (capability: string): boolean => {
-    return PermissionService.can(user, capability, {
-      organizationId: req.organizationId,
-    });
+    return PermissionService.can(
+      {
+        ...user,
+        role: permissionRole as UserRole,
+      },
+      capability,
+      {
+        organizationId: req.organizationId,
+      }
+    );
   };
 
   next();

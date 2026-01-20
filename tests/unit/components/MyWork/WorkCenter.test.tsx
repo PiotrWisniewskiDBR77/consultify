@@ -32,8 +32,8 @@ vi.mock('@/components/MyWork/MyTasksList', () => ({
   ),
 }));
 
-vi.mock('@/components/MyWork/DecisionsList', () => ({
-  DecisionsList: () => <div data-testid="decisions-list">Decisions List</div>,
+vi.mock('@/components/MyWork/DecisionsPanel', () => ({
+  DecisionsPanel: () => <div data-testid="decisions-list">Decisions List</div>,
 }));
 
 vi.mock('@/components/MyWork/MyProjects', () => ({

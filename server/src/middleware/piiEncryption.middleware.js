@@ -1,2 +1,2 @@
-export * from './piiEncryption.middleware.js';
-export { default } from './piiEncryption.middleware.js';
+export * from './piiEncryption.middleware.ts';
+export { default } from './piiEncryption.middleware.ts';

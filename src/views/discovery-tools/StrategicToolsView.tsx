@@ -207,7 +207,13 @@ export const StrategicToolsView: React.FC = () => {
     if (toolParam) {
       console.log('[StrategicToolsView] Tool param from URL:', toolParam);
       // Auto-open the tool if it's supported
-      if (toolParam === 'dynamic-swot' || toolParam === 'market-forces') {
+      if (
+        toolParam === 'dynamic-swot' ||
+        toolParam === 'market-forces' ||
+        toolParam === 'growth-paths' ||
+        toolParam === 'portfolio-priority' ||
+        toolParam === 'risk-uncertainty'
+      ) {
         setActiveTool(toolParam as ToolType);
         setSelectedTool(toolParam);
       }
@@ -231,7 +237,13 @@ export const StrategicToolsView: React.FC = () => {
     console.log('[StrategicToolsView] Starting tool:', toolId);
     setSelectedTool(toolId);
     // Only open workspace for implemented tools
-    if (toolId === 'dynamic-swot' || toolId === 'market-forces') {
+    if (
+      toolId === 'dynamic-swot' ||
+      toolId === 'market-forces' ||
+      toolId === 'growth-paths' ||
+      toolId === 'portfolio-priority' ||
+      toolId === 'risk-uncertainty'
+    ) {
       console.log('[StrategicToolsView] Setting active tool:', toolId);
       setActiveTool(toolId as ToolType);
     }
@@ -288,7 +300,12 @@ export const StrategicToolsView: React.FC = () => {
           {STRATEGIC_TOOLS.map((tool) => {
             const Icon = tool.icon;
             const isSelected = selectedTool === tool.id;
-            const isImplemented = tool.id === 'dynamic-swot' || tool.id === 'market-forces';
+            const isImplemented =
+              tool.id === 'dynamic-swot' ||
+              tool.id === 'market-forces' ||
+              tool.id === 'growth-paths' ||
+              tool.id === 'portfolio-priority' ||
+              tool.id === 'risk-uncertainty';
 
             return (
               <div

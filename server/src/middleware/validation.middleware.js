@@ -1,2 +1,2 @@
-export * from './validation.middleware.js';
-export { default } from './validation.middleware.js';
+export * from './validation.middleware.ts';
+export { default } from './validation.middleware.ts';

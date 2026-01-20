@@ -20,7 +20,7 @@ const SeverityDots: React.FC<{ level: 1 | 2 | 3 | 4 | 5 }> = ({ level }) => {
         <span
           key={i}
           className={`w-1.5 h-1.5 rounded-full ${
-            i <= level ? 'bg-red-500 dark:bg-red-400' : 'bg-red-200 dark:bg-red-800'
+            i <= level ? 'bg-red-400 dark:bg-red-400' : 'bg-slate-300 dark:bg-red-800'
           }`}
         />
       ))}
@@ -51,7 +51,11 @@ const AreaBadge: React.FC<{ area: PainArea }> = ({ area }) => {
     },
   };
 
-  const config = areaConfig[area];
+  const config =
+    areaConfig[area] || {
+      color: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+      icon: '⚠️',
+    };
 
   return (
     <span

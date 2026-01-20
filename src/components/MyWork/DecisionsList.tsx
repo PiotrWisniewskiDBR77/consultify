@@ -13,6 +13,7 @@ import {
   Clock,
   Hourglass,
   Loader2,
+  Plus,
   Scale,
   Target,
   User,
@@ -260,10 +261,14 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-900">
+    <div
+      className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-900"
+      data-testid="mywork-decisions-list"
+    >
       {/* View Toggle */}
       <div className="shrink-0 px-4 py-2 border-b border-slate-100 dark:border-navy-700">
-        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-navy-800 rounded-lg">
+        <div className="flex items-center gap-2">
+          <div className="flex-1 flex items-center gap-1 p-1 bg-slate-100 dark:bg-navy-800 rounded-lg">
           <button
             onClick={() => {
               /* Parent controls this via activeGroup */
@@ -308,13 +313,26 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
               {awaitingDecisions.length}
             </span>
           </button>
+          </div>
+          {onCreateDecision && (
+            <button
+              onClick={onCreateDecision}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-600 text-white hover:bg-purple-700 transition-colors"
+            >
+              <Plus size={12} />
+              {t('decisions.create', 'New decision')}
+            </button>
+          )}
         </div>
       </div>
 
       {/* Decisions List */}
       <div className="flex-1 overflow-y-auto p-4">
         {displayedDecisions.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
+          <div
+            className="flex flex-col items-center justify-center h-full text-center"
+            data-testid="mywork-decisions-empty"
+          >
             <CheckCircle2 size={48} className="text-green-400 dark:text-green-600 mb-4" />
             <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
               {activeGroup === 'my'
@@ -324,6 +342,15 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
             <p className="text-sm text-slate-400 dark:text-slate-500">
               {t('decisions.allCaughtUp', 'All caught up!')}
             </p>
+            {onCreateDecision && (
+              <button
+                onClick={onCreateDecision}
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 transition-colors"
+              >
+                <Plus size={14} />
+                {t('decisions.create', 'New decision')}
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-2">

@@ -8,7 +8,19 @@
 import { Calendar, MapPin, Target } from 'lucide-react';
 import React from 'react';
 
-import { PorterData, SWOTData, ToolSession, ToolType, useToolStore } from '@/store/useToolStore';
+import {
+  GrowthPathsData,
+  OperationalToolData,
+  PortfolioPriorityData,
+  PorterData,
+  RiskUncertaintyData,
+  SWOTData,
+  ToolSession,
+  ToolType,
+  useToolStore,
+} from '@/store/useToolStore';
+
+import { InlineAssist } from '../InlineAssist';
 
 // ==================== TYPES ====================
 
@@ -59,6 +71,118 @@ const LABELS: Record<string, ToolLabels> = {
     },
     positionLabel: { en: 'Market Position', pl: 'Pozycja Rynkowa' },
   },
+  'growth-paths': {
+    title: { en: 'Growth Context', pl: 'Kontekst Wzrostu' },
+    goalLabel: { en: 'Growth Goal', pl: 'Cel Wzrostu' },
+    goalPlaceholder: {
+      en: 'e.g., Increase revenue in core segment by 20%',
+      pl: 'np. Zwiększenie przychodów w segmencie core o 20%',
+    },
+    scopeLabel: { en: 'Scope / Business Area', pl: 'Zakres / Obszar Biznesowy' },
+    scopePlaceholder: {
+      en: 'e.g., Existing products for SMB customers',
+      pl: 'np. Obecne produkty dla klientów SMB',
+    },
+    timeframeLabel: { en: 'Time Horizon', pl: 'Horyzont Czasowy' },
+  },
+  'portfolio-priority': {
+    title: { en: 'Portfolio Context', pl: 'Kontekst Portfolio' },
+    goalLabel: { en: 'Portfolio Goal', pl: 'Cel Portfolio' },
+    goalPlaceholder: {
+      en: 'e.g., Balance growth and cash generation',
+      pl: 'np. Balans wzrostu i generowania gotówki',
+    },
+    scopeLabel: { en: 'Portfolio Scope', pl: 'Zakres Portfolio' },
+    scopePlaceholder: {
+      en: 'e.g., Strategic initiatives for 2026',
+      pl: 'np. Inicjatywy strategiczne na 2026',
+    },
+    timeframeLabel: { en: 'Time Horizon', pl: 'Horyzont Czasowy' },
+  },
+  'risk-uncertainty': {
+    title: { en: 'Risk Context', pl: 'Kontekst Ryzyka' },
+    goalLabel: { en: 'Risk Scope', pl: 'Zakres Ryzyk' },
+    goalPlaceholder: {
+      en: 'e.g., Transformation program risks',
+      pl: 'np. Ryzyka programu transformacji',
+    },
+    scopeLabel: { en: 'Business Scope', pl: 'Zakres Biznesowy' },
+    scopePlaceholder: {
+      en: 'e.g., Enterprise transformation',
+      pl: 'np. Transformacja całej organizacji',
+    },
+    timeframeLabel: { en: 'Time Horizon', pl: 'Horyzont Czasowy' },
+  },
+  'sop-builder': {
+    title: { en: 'SOP Context', pl: 'Kontekst SOP' },
+    goalLabel: { en: 'Operational Goal', pl: 'Cel Operacyjny' },
+    goalPlaceholder: {
+      en: 'e.g., Standardize order picking process',
+      pl: 'np. Standaryzacja procesu kompletacji zamówień',
+    },
+    scopeLabel: { en: 'Scope / Process', pl: 'Zakres / Proces' },
+    scopePlaceholder: {
+      en: 'e.g., Warehouse operations',
+      pl: 'np. Operacje magazynowe',
+    },
+    timeframeLabel: { en: 'Time Horizon', pl: 'Horyzont Czasowy' },
+  },
+  'a3-problem-solving': {
+    title: { en: 'Problem Context', pl: 'Kontekst Problemu' },
+    goalLabel: { en: 'Problem Statement', pl: 'Opis Problemu' },
+    goalPlaceholder: {
+      en: 'e.g., Late deliveries exceed SLA by 12%',
+      pl: 'np. Opóźnienia dostaw przekraczają SLA o 12%',
+    },
+    scopeLabel: { en: 'Scope / Area', pl: 'Zakres / Obszar' },
+    scopePlaceholder: {
+      en: 'e.g., Fulfillment operations',
+      pl: 'np. Operacje realizacji zamówień',
+    },
+    timeframeLabel: { en: 'Time Horizon', pl: 'Horyzont Czasowy' },
+  },
+  'smed-planner': {
+    title: { en: 'Changeover Context', pl: 'Kontekst Przezbrojeń' },
+    goalLabel: { en: 'Changeover Goal', pl: 'Cel Przezbrojeń' },
+    goalPlaceholder: {
+      en: 'e.g., Reduce changeover time by 30%',
+      pl: 'np. Redukcja czasu przezbrojeń o 30%',
+    },
+    scopeLabel: { en: 'Scope / Line', pl: 'Zakres / Linia' },
+    scopePlaceholder: {
+      en: 'e.g., Packaging line 2',
+      pl: 'np. Linia pakowania 2',
+    },
+    timeframeLabel: { en: 'Time Horizon', pl: 'Horyzont Czasowy' },
+  },
+  'dms-builder': {
+    title: { en: 'DMS Context', pl: 'Kontekst DMS' },
+    goalLabel: { en: 'DMS Goal', pl: 'Cel DMS' },
+    goalPlaceholder: {
+      en: 'e.g., Improve daily KPI tracking',
+      pl: 'np. Usprawnienie codziennego monitoringu KPI',
+    },
+    scopeLabel: { en: 'Scope / Teams', pl: 'Zakres / Zespoły' },
+    scopePlaceholder: {
+      en: 'e.g., Production + Maintenance',
+      pl: 'np. Produkcja + Utrzymanie ruchu',
+    },
+    timeframeLabel: { en: 'Time Horizon', pl: 'Horyzont Czasowy' },
+  },
+  'inventory-autopilot': {
+    title: { en: 'Inventory Context', pl: 'Kontekst Zapasów' },
+    goalLabel: { en: 'Inventory Goal', pl: 'Cel Zapasów' },
+    goalPlaceholder: {
+      en: 'e.g., Reduce stockouts below 2%',
+      pl: 'np. Redukcja braków poniżej 2%',
+    },
+    scopeLabel: { en: 'Scope / SKUs', pl: 'Zakres / SKU' },
+    scopePlaceholder: {
+      en: 'e.g., Top 500 SKUs',
+      pl: 'np. Top 500 SKU',
+    },
+    timeframeLabel: { en: 'Time Horizon', pl: 'Horyzont Czasowy' },
+  },
 };
 
 // ==================== COMPONENT ====================
@@ -70,7 +194,15 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
   const lang = isPolish ? 'pl' : 'en';
 
   // Get current context data
-  const contextData = (session.inputData as SWOTData | PorterData).context;
+  const contextData = (
+    session.inputData as
+      | SWOTData
+      | PorterData
+      | GrowthPathsData
+      | PortfolioPriorityData
+      | RiskUncertaintyData
+      | OperationalToolData
+  ).context;
 
   // Handle input changes
   const handleChange = (field: string, value: string) => {
@@ -89,7 +221,9 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
         ...contextData,
         timeframe: value,
       },
-    } as Partial<SWOTData>);
+    } as Partial<
+      SWOTData | GrowthPathsData | PortfolioPriorityData | RiskUncertaintyData | OperationalToolData
+    >);
   };
 
   // Handle position change (Porter)
@@ -128,6 +262,13 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
           rows={3}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
         />
+        <InlineAssist
+          hint={
+            isPolish
+              ? 'Dodaj konkretne KPI lub oczekiwany wynik.'
+              : 'Add concrete KPIs or expected outcome.'
+          }
+        />
       </div>
 
       {/* Scope / Geographic */}
@@ -143,6 +284,13 @@ export const ContextStep: React.FC<ContextStepProps> = ({ toolType, session, isP
           placeholder={labels.scopePlaceholder[lang]}
           rows={2}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+        />
+        <InlineAssist
+          hint={
+            isPolish
+              ? 'Wskaz obszar biznesowy i interesariuszy.'
+              : 'Specify business area and stakeholders.'
+          }
         />
       </div>
 

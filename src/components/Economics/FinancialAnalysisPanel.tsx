@@ -334,7 +334,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
     }
   };
 
-  const handleStatusChange = async (status: 'draft' | 'in_progress' | 'completed') => {
+  const handleStatusChange = async (status: 'DRAFT' | 'REVIEW' | 'APPROVED') => {
     try {
       await Api.updateDigitizationAnalysis(analysis.id, { status });
       if (onUpdate) {
@@ -509,9 +509,9 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           {([
-            { value: 'draft', label: 'Draft' },
-            { value: 'in_progress', label: 'Review' },
-            { value: 'completed', label: 'Approved' },
+            { value: 'DRAFT', label: 'Draft' },
+            { value: 'REVIEW', label: 'Review' },
+            { value: 'APPROVED', label: 'Approved' },
           ] as const).map((item) => (
             <button
               key={item.value}

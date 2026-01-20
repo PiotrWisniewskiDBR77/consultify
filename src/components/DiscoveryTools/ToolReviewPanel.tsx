@@ -6,7 +6,16 @@
 import { AlertTriangle, CheckCircle2, ClipboardList } from 'lucide-react';
 import React from 'react';
 
-import { PorterData, SWOTData, ToolSession, ToolType } from '@/store/useToolStore';
+import {
+  GrowthPathsData,
+  OperationalToolData,
+  PortfolioPriorityData,
+  PorterData,
+  RiskUncertaintyData,
+  SWOTData,
+  ToolSession,
+  ToolType,
+} from '@/store/useToolStore';
 
 interface ToolReviewPanelProps {
   toolType: ToolType;
@@ -14,9 +23,12 @@ interface ToolReviewPanelProps {
   gaps: string[];
   isPolish: boolean;
   onApprove: () => void;
-  onSendBack: () => void;
+  onSendBack: (comment?: string) => void;
   onConfigureGenerate: () => void;
   generationDefaults: { methodologyId: string; count: number; includeChatContext: boolean };
+  decisions?: { decision_type: string; status: string; decision_id?: string; decision_status?: string }[];
+  canApprove?: boolean;
+  canGenerate?: boolean;
 }
 
 export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
@@ -28,40 +40,106 @@ export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
   onSendBack,
   onConfigureGenerate,
   generationDefaults,
+  decisions = [],
+  canApprove = true,
+  canGenerate = true,
 }) => {
   const inputData = session.inputData;
 
-  const summary =
-    toolType === 'dynamic-swot'
-      ? (() => {
-          const swot = inputData as SWOTData;
-          return [
-            `${isPolish ? 'Mocne strony' : 'Strengths'}: ${
-              swot.items.filter((i) => i.quadrant === 'strengths').length
-            }`,
-            `${isPolish ? 'Slabe strony' : 'Weaknesses'}: ${
-              swot.items.filter((i) => i.quadrant === 'weaknesses').length
-            }`,
-            `${isPolish ? 'Szanse' : 'Opportunities'}: ${
-              swot.items.filter((i) => i.quadrant === 'opportunities').length
-            }`,
-            `${isPolish ? 'Zagrozenia' : 'Threats'}: ${
-              swot.items.filter((i) => i.quadrant === 'threats').length
-            }`,
-            `${isPolish ? 'Korelacje' : 'Correlations'}: ${swot.correlations.length}`,
-          ];
-        })()
-      : (() => {
-          const porter = inputData as PorterData;
-          const scores = Object.values(porter.forces || {}).map((f) => f.score || 0);
-          const avg = scores.length ? scores.reduce((s, v) => s + v, 0) / scores.length : 0;
-          return [
-            `${isPolish ? 'Atrakcyjnosc' : 'Attractiveness'}: ${avg.toFixed(1)}/5`,
-            `${isPolish ? 'Sila konkurencji' : 'Competitive intensity'}: ${scores.length}`,
-          ];
-        })();
+  const summary = (() => {
+    if (toolType === 'dynamic-swot') {
+      const swot = inputData as SWOTData;
+      return [
+        `${isPolish ? 'Mocne strony' : 'Strengths'}: ${
+          swot.items.filter((i) => i.quadrant === 'strengths').length
+        }`,
+        `${isPolish ? 'Slabe strony' : 'Weaknesses'}: ${
+          swot.items.filter((i) => i.quadrant === 'weaknesses').length
+        }`,
+        `${isPolish ? 'Szanse' : 'Opportunities'}: ${
+          swot.items.filter((i) => i.quadrant === 'opportunities').length
+        }`,
+        `${isPolish ? 'Zagrozenia' : 'Threats'}: ${
+          swot.items.filter((i) => i.quadrant === 'threats').length
+        }`,
+        `${isPolish ? 'Korelacje' : 'Correlations'}: ${swot.correlations.length}`,
+      ];
+    }
+    if (toolType === 'market-forces') {
+      const porter = inputData as PorterData;
+      const scores = Object.values(porter.forces || {}).map((f) => f.score || 0);
+      const avg = scores.length ? scores.reduce((s, v) => s + v, 0) / scores.length : 0;
+      return [
+        `${isPolish ? 'Atrakcyjnosc' : 'Attractiveness'}: ${avg.toFixed(1)}/5`,
+        `${isPolish ? 'Sila konkurencji' : 'Competitive intensity'}: ${scores.length}`,
+      ];
+    }
+    if (toolType === 'growth-paths') {
+      const growth = inputData as GrowthPathsData;
+      return [
+        `${isPolish ? 'Penetracja' : 'Penetration'}: ${growth.quadrants.marketPenetration.length}`,
+        `${isPolish ? 'Rozwój rynku' : 'Market dev.'}: ${
+          growth.quadrants.marketDevelopment.length
+        }`,
+        `${isPolish ? 'Rozwój produktu' : 'Product dev.'}: ${
+          growth.quadrants.productDevelopment.length
+        }`,
+        `${isPolish ? 'Dywersyfikacja' : 'Diversification'}: ${
+          growth.quadrants.diversification.length
+        }`,
+      ];
+    }
+    if (toolType === 'portfolio-priority') {
+      const portfolio = inputData as PortfolioPriorityData;
+      return [
+        `${isPolish ? 'Inicjatywy' : 'Initiatives'}: ${portfolio.initiatives.length}`,
+        `Stars: ${portfolio.initiatives.filter((i) => i.category === 'star').length}`,
+        `Cash Cows: ${portfolio.initiatives.filter((i) => i.category === 'cash-cow').length}`,
+        `Question Marks: ${portfolio.initiatives.filter((i) => i.category === 'question-mark').length}`,
+        `Dogs: ${portfolio.initiatives.filter((i) => i.category === 'dog').length}`,
+      ];
+    }
+    if (toolType === 'risk-uncertainty') {
+      const risk = inputData as RiskUncertaintyData;
+      return [
+        `${isPolish ? 'Założenia' : 'Assumptions'}: ${risk.assumptions.length}`,
+        `${isPolish ? 'Ryzyka' : 'Risks'}: ${risk.risks.length}`,
+        `${isPolish ? 'Scenariusze' : 'Scenarios'}: ${risk.scenarios.length}`,
+      ];
+    }
+    if (
+      ['sop-builder', 'a3-problem-solving', 'smed-planner', 'dms-builder', 'inventory-autopilot'].includes(
+        toolType
+      )
+    ) {
+      const operational = inputData as OperationalToolData;
+      const sections = operational.sections || {};
+      const totalItems = Object.values(sections).reduce(
+        (sum, items) => sum + items.length,
+        0
+      );
+      return [
+        `${isPolish ? 'Sekcje' : 'Sections'}: ${Object.keys(sections).length}`,
+        `${isPolish ? 'Elementy' : 'Items'}: ${totalItems}`,
+      ];
+    }
+    const porter = inputData as PorterData;
+    const scores = Object.values(porter.forces || {}).map((f) => f.score || 0);
+    const avg = scores.length ? scores.reduce((s, v) => s + v, 0) / scores.length : 0;
+    return [
+      `${isPolish ? 'Atrakcyjnosc' : 'Attractiveness'}: ${avg.toFixed(1)}/5`,
+      `${isPolish ? 'Sila konkurencji' : 'Competitive intensity'}: ${scores.length}`,
+    ];
+  })();
 
   const ready = gaps.length === 0;
+  const [comment, setComment] = React.useState('');
+  const [confirmApprove, setConfirmApprove] = React.useState(false);
+
+  const decisionStatus = (type: string) => {
+    const match = decisions.find((d) => d.decision_type === type);
+    return match?.decision_status || match?.status || 'UNKNOWN';
+  };
 
   return (
     <div className="flex h-full">
@@ -120,19 +198,60 @@ export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
           </div>
           <button
             onClick={onConfigureGenerate}
-            className="mt-3 text-sm text-primary-600 hover:text-primary-700"
+            disabled={!canGenerate}
+            className={`mt-3 text-sm ${
+              canGenerate
+                ? 'text-primary-600 hover:text-primary-700'
+                : 'text-slate-400 cursor-not-allowed'
+            }`}
           >
             {isPolish ? 'Konfiguruj' : 'Configure'}
           </button>
         </div>
+
+        <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
+          <h3 className="font-medium text-slate-900 dark:text-white mb-2">
+            {isPolish ? 'Decision gates' : 'Decision gates'}
+          </h3>
+          <div className="text-sm text-slate-600 dark:text-slate-400">
+            Request Review: {decisionStatus('REQUEST_REVIEW')}
+          </div>
+          <div className="text-sm text-slate-600 dark:text-slate-400">
+            Approve Tool: {decisionStatus('APPROVE_TOOL')}
+          </div>
+          <div className="text-sm text-slate-600 dark:text-slate-400">
+            Generate Initiatives: {decisionStatus('GENERATE_INITIATIVES')}
+          </div>
+        </div>
+
+        <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            {isPolish ? 'Komentarz' : 'Comment'}
+          </label>
+          <textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            rows={3}
+            className="w-full text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-2 resize-none"
+            placeholder={isPolish ? 'Powod odeslania do Draft' : 'Reason for sending back'}
+          />
+        </div>
       </div>
 
       <div className="w-80 border-l border-slate-200 dark:border-navy-700 p-4 flex flex-col gap-3 bg-slate-50 dark:bg-navy-900">
+        <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+          <input
+            type="checkbox"
+            checked={confirmApprove}
+            onChange={(e) => setConfirmApprove(e.target.checked)}
+          />
+          {isPolish ? 'Potwierdzam zatwierdzenie' : 'I confirm approval'}
+        </label>
         <button
           onClick={onApprove}
-          disabled={!ready}
+          disabled={!ready || !canApprove || !confirmApprove}
           className={`px-4 py-2 rounded-lg text-sm font-medium ${
-            ready
+            ready && canApprove && confirmApprove
               ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
               : 'bg-slate-200 dark:bg-navy-800 text-slate-400 cursor-not-allowed'
           }`}
@@ -140,8 +259,13 @@ export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
           {isPolish ? 'Approve' : 'Approve'}
         </button>
         <button
-          onClick={onSendBack}
-          className="px-4 py-2 rounded-lg text-sm font-medium bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300"
+          onClick={() => onSendBack(comment)}
+          disabled={!comment.trim() || !canApprove}
+          className={`px-4 py-2 rounded-lg text-sm font-medium border ${
+            comment.trim() && canApprove
+              ? 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300'
+              : 'bg-slate-100 dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-400 cursor-not-allowed'
+          }`}
         >
           {isPolish ? 'Send back to Draft' : 'Send back to Draft'}
         </button>

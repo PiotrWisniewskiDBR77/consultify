@@ -82,6 +82,10 @@ type FilterType = 'all' | 'overdue' | 'thisWeek' | 'blocking' | 'critical' | 'hi
 
 interface DecisionsPanelProps {
   onDecisionClick?: (id: string) => void;
+  createModalOpen?: boolean;
+  onCreateModalOpen?: () => void;
+  onCreateModalClose?: () => void;
+  onCountsChange?: (counts: { total: number; my: number; awaiting: number }) => void;
 }
 
 /**
@@ -819,7 +823,13 @@ const DecisionCard: React.FC<{
 /**
  * Decisions Panel - Main Export
  */
-export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick }) => {
+export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
+  onDecisionClick,
+  createModalOpen,
+  onCreateModalOpen,
+  onCreateModalClose,
+  onCountsChange,
+}) => {
   const { t } = useTranslation();
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [loading, setLoading] = useState(true);
@@ -838,6 +848,25 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
     fetchDecisions();
   }, [currentProjectId]);
 
+  const isCreateModalControlled = createModalOpen !== undefined;
+  const resolvedCreateModalOpen = isCreateModalControlled ? createModalOpen : showNewModal;
+
+  const openCreateModal = () => {
+    if (isCreateModalControlled) {
+      onCreateModalOpen?.();
+    } else {
+      setShowNewModal(true);
+    }
+  };
+
+  const closeCreateModal = () => {
+    if (isCreateModalControlled) {
+      onCreateModalClose?.();
+    } else {
+      setShowNewModal(false);
+    }
+  };
+
   const fetchDecisions = async () => {
     try {
       setLoading(true);
@@ -845,8 +874,9 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
         ? `/decisions?projectId=${currentProjectId}&includeAll=true`
         : `/decisions?includeAll=true`;
       const data = await Api.get(url);
+      const decisionsList = Array.isArray(data) ? data : data?.decisions || [];
 
-      const enhanced = (data || []).map((d: Decision) => {
+      const enhanced = decisionsList.map((d: Decision) => {
         const daysWaiting =
           d.daysWaiting ||
           Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24));
@@ -862,6 +892,20 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
       });
 
       setDecisions(enhanced);
+      const myCount = enhanced.filter(
+        (d: Decision) => ['PENDING', 'ESCALATED'].includes(d.status) && d.decisionOwnerId === currentUserId
+      ).length;
+      const awaitingCount = enhanced.filter(
+        (d: Decision) =>
+          ['PENDING', 'ESCALATED'].includes(d.status) &&
+          d.requestedById === currentUserId &&
+          d.decisionOwnerId !== currentUserId
+      ).length;
+      onCountsChange?.({
+        total: myCount + awaitingCount,
+        my: myCount,
+        awaiting: awaitingCount,
+      });
     } catch (error) {
       console.error('Failed to fetch decisions:', error);
     } finally {
@@ -871,7 +915,10 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
 
   const handleApprove = async (id: string) => {
     try {
-      await Api.put(`/decisions/${id}/decide`, { status: 'APPROVED', outcome: '' });
+      await Api.put(`/decisions/${id}/decide`, {
+        status: 'APPROVED',
+        outcome: t('decisions.defaultApproveRationale', 'Approved via quick action'),
+      });
       toast.success(t('decisions.approved', 'Decision approved'));
       fetchDecisions();
     } catch (error) {
@@ -882,7 +929,10 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
 
   const handleReject = async (id: string) => {
     try {
-      await Api.put(`/decisions/${id}/decide`, { status: 'REJECTED', outcome: '' });
+      await Api.put(`/decisions/${id}/decide`, {
+        status: 'REJECTED',
+        outcome: t('decisions.defaultRejectRationale', 'Rejected via quick action'),
+      });
       toast.success(t('decisions.rejected', 'Decision rejected'));
       fetchDecisions();
     } catch (error) {
@@ -1021,14 +1071,20 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8 flex items-center justify-center">
+      <div
+        className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8 flex items-center justify-center"
+        data-testid="decisions-list"
+      >
         <Loader2 className="animate-spin text-purple-500" size={24} />
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm h-full flex flex-col">
+    <div
+      className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm h-full flex flex-col"
+      data-testid="decisions-list"
+    >
       {/* Header */}
       <div className="p-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between mb-4">
@@ -1051,7 +1107,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
 
           {/* New Button */}
           <button
-            onClick={() => setShowNewModal(true)}
+            onClick={openCreateModal}
             className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm flex items-center gap-2"
           >
             <Plus size={16} />
@@ -1265,8 +1321,8 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick 
 
       {/* Modals */}
       <NewDecisionModal
-        isOpen={showNewModal}
-        onClose={() => setShowNewModal(false)}
+        isOpen={resolvedCreateModalOpen}
+        onClose={closeCreateModal}
         onSubmit={handleCreateDecision}
       />
 

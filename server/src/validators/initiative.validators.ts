@@ -7,28 +7,19 @@
 
 import { z } from 'zod';
 
+import { INITIATIVE_STATUSES } from '../services/statusMachine.js';
+
 // ==========================================
 // ENUMS
 // ==========================================
 
-// FLOW-INITIATIVE-001: Extended status machine
-const INITIATIVE_STATUSES = [
-  'DRAFT',
-  'PLANNING',
-  'REVIEW',
-  'APPROVED',
-  'EXECUTING',
-  'BLOCKED',
-  'DONE',
-  'ON_HOLD',
-  'CANCELLED',
-  'ARCHIVED',
-] as const;
+// FLOW-INITIATIVE-001: Central status machine
+const INITIATIVE_STATUSES_LIST = Object.values(INITIATIVE_STATUSES) as readonly string[];
 
 export const InitiativeStatusEnum = z
   .string()
   .transform((value) => value.toUpperCase())
-  .refine((value) => INITIATIVE_STATUSES.includes(value as (typeof INITIATIVE_STATUSES)[number]), {
+  .refine((value) => INITIATIVE_STATUSES_LIST.includes(value), {
     message: 'Invalid initiative status',
   });
 export const InitiativeAxisEnum = z.enum([

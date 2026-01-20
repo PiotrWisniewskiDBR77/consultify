@@ -1,2 +1,2 @@
-export * from './apiKeyAuth.middleware.js';
-export { default } from './apiKeyAuth.middleware.js';
+export * from './apiKeyAuth.middleware.ts';
+export { default } from './apiKeyAuth.middleware.ts';

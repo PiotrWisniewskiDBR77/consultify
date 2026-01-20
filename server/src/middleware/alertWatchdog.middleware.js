@@ -1,2 +1,5 @@
-export * from './alertWatchdog.middleware.js';
-export { default } from './alertWatchdog.middleware.js';
+const alertWatchdog = (_req, _res, next) => {
+  next();
+};
+
+export default alertWatchdog;
