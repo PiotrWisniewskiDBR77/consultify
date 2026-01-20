@@ -585,7 +585,6 @@ class AILearningService {
 
     logger.info(`[AILearningService] Suggestion ${suggestionId} ${action}d by ${reviewerId}`);
   }
-}
 
   // ==========================================
   // STYLE PATTERN EXTRACTION (v2.0)

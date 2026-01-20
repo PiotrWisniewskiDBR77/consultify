@@ -1710,7 +1710,7 @@ export const Api = {
     return handleResponse(res, 'Failed to request review');
   },
 
-  generateAssessmentReport: async (
+  generateAssessmentWorkflowReport: async (
     assessmentId: string,
     payload?: { includeRecommendations?: boolean; includeGapAnalysis?: boolean }
   ): Promise<any> => {
