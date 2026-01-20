@@ -75,6 +75,7 @@ export { default as initiativeGeneratorRoutes } from './initiative-generator.rou
 export { default as intelligenceRoutes } from './intelligence.routes.js';
 export { default as journeyAnalyticsRoutes } from './journeyAnalytics.routes.js';
 export { default as knowledgeRoutes } from './knowledge.routes.js';
+export { default as knowledgeBaseRoutes } from './knowledgeBase.routes.js';
 export { default as legalRoutes } from './legal.routes.js';
 export { default as llmRoutes } from './llm.routes.js';
 export { default as llmHealthRoutes } from './llmHealth.routes.js';
