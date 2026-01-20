@@ -69,18 +69,18 @@ router.get('/partner-attribution', authenticateToken, async (req: Request, res: 
       data: {
         id: attribution.id,
         partnerOrgId: attribution.partnerOrgId,
-        partnerName: partnerOrg?.partner_name || 'Partner',
-        partnerEmail: partnerOrg?.contact_email,
-        referralCode: attribution.referralCodeUsed || partnerOrg?.referral_code,
+        partnerName: (partnerOrg as any)?.partner_name || 'Partner',
+        partnerEmail: (partnerOrg as any)?.contact_email,
+        referralCode: attribution.referralCodeUsed || (partnerOrg as any)?.referral_code,
         attributionType: attribution.attributionType,
-        discountPercent: discount?.discount_type === 'PERCENTAGE' ? discount.discount_value : null,
-        discountMonths: discount?.end_date
+        discountPercent: (discount as any)?.discount_type === 'PERCENTAGE' ? (discount as any)?.discount_value : null,
+        discountMonths: (discount as any)?.end_date
           ? Math.ceil(
-              (new Date(discount.end_date).getTime() - new Date().getTime()) /
+              (new Date((discount as any).end_date).getTime() - new Date().getTime()) /
                 (1000 * 60 * 60 * 24 * 30)
             )
           : null,
-        discountExpiresAt: discount?.end_date,
+        discountExpiresAt: (discount as any)?.end_date,
         attributedAt: attribution.attributedAt,
         status: attribution.status,
       },
@@ -135,7 +135,7 @@ router.post('/partner-code', authenticateToken, async (req: Request, res: Respon
     if (!validation.valid || !validation.partnerOrgId) {
       return res.status(400).json({
         success: false,
-        error: validation.error || 'Invalid partner code',
+        error: (validation as any).error || 'Invalid partner code',
       });
     }
 
@@ -145,6 +145,7 @@ router.post('/partner-code', authenticateToken, async (req: Request, res: Respon
       organizationId,
       attributionType: 'PROMO_CODE',
       referralCodeUsed: partnerCode,
+      commissionRatePercent: 0, // Default commission rate for promo codes
     });
 
     // Create discount if applicable (check partner discount config)
@@ -160,7 +161,7 @@ router.post('/partner-code', authenticateToken, async (req: Request, res: Respon
 
     if (discountConfig) {
       const endDate = new Date();
-      endDate.setMonth(endDate.getMonth() + (discountConfig.duration_months || 12));
+      endDate.setMonth(endDate.getMonth() + ((discountConfig as any).duration_months || 12));
 
       await DbPromise.run(
         db,
@@ -171,8 +172,8 @@ router.post('/partner-code', authenticateToken, async (req: Request, res: Respon
           crypto.randomUUID(),
           organizationId,
           validation.partnerOrgId,
-          discountConfig.discount_type,
-          discountConfig.discount_value,
+          (discountConfig as any).discount_type,
+          (discountConfig as any).discount_value,
           endDate.toISOString(),
         ]
       );

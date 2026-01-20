@@ -170,7 +170,7 @@ router.post('/complete', async (req: AuthRequest, res: Response) => {
       userId,
     ]);
 
-    const status = statusResult.rows[0];
+    const status = statusResult.rows[0] as { terms_accepted?: boolean; privacy_accepted?: boolean; pricing_tier?: string } | undefined;
     if (!status) {
       return res.status(400).json({ error: 'No onboarding status found' });
     }

@@ -6,8 +6,8 @@ declare module 'sharp' {
   }
 
   interface Sharp {
-    metadata(): Promise<{ width?: number; height?: number; format?: string }>;
-    resize(width?: number, height?: number, options?: { fit?: string }): Sharp;
+    metadata(): Promise<{ width?: number; height?: number; format?: string; hasAlpha?: boolean }>;
+    resize(width?: number, height?: number, options?: { fit?: string; withoutEnlargement?: boolean }): Sharp;
     png(options?: SharpOptions): Sharp;
     jpeg(options?: SharpOptions): Sharp;
     gif(): Sharp;

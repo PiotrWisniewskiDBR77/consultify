@@ -61,7 +61,7 @@ function hashPassword(password: string): string {
 
 router.post('/conversations/:id/share', authenticate, async (req: Request, res: Response) => {
   const { id: conversationId } = req.params;
-  const userId = req.user?.id;
+  const userId = (req as any).user?.id;
   const { title, description, expiresIn, password, settings } = req.body;
 
   try {
@@ -72,7 +72,7 @@ router.post('/conversations/:id/share', authenticate, async (req: Request, res: 
           SELECT organization_id FROM organization_members WHERE user_id = ?
         ))`,
       [conversationId, userId, userId]
-    );
+    ) as { title?: string } | undefined;
 
     if (!conversation) {
       return res.status(404).json({ error: 'Conversation not found' });
@@ -81,7 +81,7 @@ router.post('/conversations/:id/share', authenticate, async (req: Request, res: 
     const existingShare = await db.get(
       'SELECT * FROM conversation_shares WHERE conversation_id = ? AND is_active = 1',
       [conversationId]
-    );
+    ) as { share_token?: string } | undefined;
 
     if (existingShare) {
       return res.status(400).json({
@@ -140,7 +140,7 @@ router.post('/conversations/:id/share', authenticate, async (req: Request, res: 
 
 router.get('/conversations/:id/share', authenticate, async (req: Request, res: Response) => {
   const { id: conversationId } = req.params;
-  const userId = req.user?.id;
+  const userId = (req as any).user?.id;
 
   try {
     const db = getDatabase();
@@ -154,7 +154,17 @@ router.get('/conversations/:id/share', authenticate, async (req: Request, res: R
            SELECT organization_id FROM organization_members WHERE user_id = ?
          ))`,
       [conversationId, userId, userId]
-    );
+    ) as {
+      id?: string;
+      share_token?: string;
+      title?: string;
+      conversation_title?: string;
+      description?: string;
+      view_count?: number;
+      expires_at?: string;
+      settings?: string;
+      created_at?: string;
+    } | undefined;
 
     if (!share) {
       return res.status(404).json({ error: 'No active share found' });
@@ -189,7 +199,16 @@ router.get('/share/:token', optionalAuth, async (req: Request, res: Response) =>
   try {
     const db = getDatabase();
 
-    const share = await db.get('SELECT * FROM conversation_shares WHERE share_token = ?', [token]);
+    const share = await db.get('SELECT * FROM conversation_shares WHERE share_token = ?', [token]) as {
+      id?: string;
+      conversation_id?: string;
+      is_active?: number | boolean;
+      expires_at?: string;
+      settings?: string;
+      title?: string;
+      description?: string;
+      view_count?: number;
+    } | undefined;
 
     if (!share) {
       return res.status(404).json({ error: 'Share not found' });
@@ -203,7 +222,7 @@ router.get('/share/:token', optionalAuth, async (req: Request, res: Response) =>
       return res.status(410).json({ error: 'Share has expired' });
     }
 
-    const settings = JSON.parse(share.settings || '{}');
+    const settings = JSON.parse(share.settings || '{}') as ShareSettings;
 
     if (settings.passwordHash) {
       if (!password) {
@@ -219,7 +238,7 @@ router.get('/share/:token', optionalAuth, async (req: Request, res: Response) =>
 
     const conversation = await db.get('SELECT * FROM conversations WHERE id = ?', [
       share.conversation_id,
-    ]);
+    ]) as { title?: string; user_id?: string } | undefined;
 
     if (!conversation) {
       return res.status(404).json({ error: 'Conversation not found' });
@@ -231,7 +250,14 @@ router.get('/share/:token', optionalAuth, async (req: Request, res: Response) =>
          WHERE conversation_id = ?
          ORDER BY created_at ASC`,
       [share.conversation_id]
-    );
+    ) as Array<{
+      id: string;
+      role: string;
+      content: string;
+      message_type?: string;
+      metadata?: string;
+      created_at?: string;
+    }>;
 
     await db.run(
       'UPDATE conversation_shares SET view_count = view_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
@@ -252,7 +278,7 @@ router.get('/share/:token', optionalAuth, async (req: Request, res: Response) =>
         allowCopy: settings.allowCopy ?? true,
         showTimestamps: settings.showTimestamps ?? true,
       },
-      messages: messages.map((m: any) => ({
+      messages: messages.map((m) => ({
         id: m.id,
         role: m.role,
         content: m.content,
@@ -260,7 +286,7 @@ router.get('/share/:token', optionalAuth, async (req: Request, res: Response) =>
         metadata: m.metadata ? JSON.parse(m.metadata) : undefined,
         timestamp: settings.showTimestamps ? m.created_at : undefined,
       })),
-      viewCount: share.view_count + 1,
+      viewCount: (share.view_count || 0) + 1,
     };
 
     if (!settings.anonymize) {
@@ -282,7 +308,7 @@ router.get('/share/:token', optionalAuth, async (req: Request, res: Response) =>
 
 router.patch('/conversations/:id/share', authenticate, async (req: Request, res: Response) => {
   const { id: conversationId } = req.params;
-  const userId = req.user?.id;
+  const userId = (req as any).user?.id;
   const { title, description, expiresIn, password, settings } = req.body;
 
   try {
@@ -294,13 +320,19 @@ router.patch('/conversations/:id/share', authenticate, async (req: Request, res:
          WHERE cs.conversation_id = ? AND cs.is_active = 1
          AND (c.user_id = ? OR cs.created_by = ?)`,
       [conversationId, userId, userId]
-    );
+    ) as {
+      id?: string;
+      settings?: string;
+      expires_at?: string;
+      title?: string;
+      description?: string;
+    } | undefined;
 
     if (!share) {
       return res.status(404).json({ error: 'Share not found' });
     }
 
-    const currentSettings = JSON.parse(share.settings || '{}');
+    const currentSettings = JSON.parse(share.settings || '{}') as ShareSettings;
     const newSettings = { ...currentSettings, ...settings };
 
     if (password !== undefined) {
@@ -346,7 +378,7 @@ router.patch('/conversations/:id/share', authenticate, async (req: Request, res:
 
 router.delete('/conversations/:id/share', authenticate, async (req: Request, res: Response) => {
   const { id: conversationId } = req.params;
-  const userId = req.user?.id;
+  const userId = (req as any).user?.id;
 
   try {
     const db = getDatabase();
@@ -357,7 +389,7 @@ router.delete('/conversations/:id/share', authenticate, async (req: Request, res
          WHERE cs.conversation_id = ? AND cs.is_active = 1
          AND (c.user_id = ? OR cs.created_by = ?)`,
       [conversationId, userId, userId]
-    );
+    ) as { id?: string } | undefined;
 
     if (!share) {
       return res.status(404).json({ error: 'Share not found' });
@@ -382,7 +414,7 @@ router.delete('/conversations/:id/share', authenticate, async (req: Request, res
 // ==========================================
 
 router.get('/shares', authenticate, async (req: Request, res: Response) => {
-  const userId = req.user?.id;
+  const userId = (req as any).user?.id;
 
   try {
     const db = getDatabase();

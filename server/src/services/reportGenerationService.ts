@@ -843,7 +843,7 @@ class ReportGenerationService {
       });
     });
 
-    await pptx.writeFile({ fileName: filePath });
+    await pptx.writeFile(filePath);
   }
 }
 

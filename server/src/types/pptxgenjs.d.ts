@@ -17,7 +17,7 @@ declare module 'pptxgenjs' {
   class PptxGenJS {
     layout: string;
     addSlide(): Slide;
-    writeFile(fileName: string): Promise<void>;
+    writeFile(fileName: string | { fileName: string }): Promise<void>;
   }
 
   export default PptxGenJS;

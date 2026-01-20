@@ -155,9 +155,9 @@ router.delete('/subscription-plans/:id', verifyToken, requireSuperAdmin, async (
     const usage = await db.get(
       'SELECT COUNT(*) as count FROM organization_billing WHERE subscription_plan_id = ?',
       [id]
-    );
+    ) as { count?: number } | undefined;
 
-    if (usage && usage.count > 0) {
+    if (usage && (usage.count || 0) > 0) {
       return res.status(400).json({
         error: 'Cannot delete plan in use',
         organizationsUsing: usage.count,
@@ -310,7 +310,7 @@ router.post(
           changeType,
           oldValue,
           newValue,
-          changedBy: req.user?.userId,
+          changedBy: (req as AuthRequest).user?.id,
           changedAt: new Date().toISOString(),
         },
       });
@@ -340,7 +340,7 @@ router.post(
  */
 router.get('/admin/budget', verifyToken, async (req, res) => {
   try {
-    const orgId = req.user?.organizationId;
+    const orgId = (req as AuthRequest).user?.organizationId;
     if (!orgId) {
       return res.status(403).json({ error: 'No organization found' });
     }
@@ -360,7 +360,7 @@ router.get('/admin/budget', verifyToken, async (req, res) => {
  */
 router.get('/admin/budget/expenses', verifyToken, async (req, res) => {
   try {
-    const orgId = req.user?.organizationId;
+    const orgId = (req as AuthRequest).user?.organizationId;
     if (!orgId) {
       return res.status(403).json({ error: 'No organization found' });
     }

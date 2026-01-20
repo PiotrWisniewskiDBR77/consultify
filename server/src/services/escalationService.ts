@@ -516,7 +516,7 @@ export class EscalationService {
   static async runAutoEscalation(projectId: string): Promise<any> {
     try {
       // Get project organization
-      const project = await queryHelpers.queryGet<{ organization_id: string }>(
+      const project = await queryHelpers.queryOne<{ organization_id: string }>(
         `SELECT organization_id FROM projects WHERE id = ?`,
         [projectId]
       );

@@ -616,10 +616,11 @@ app.use((req, res, next) => {
   next();
 });
 if (isTest && process.env.ENABLE_TEST_GATEWAY !== 'true') {
-  const managementReportsRoutes = await import('./routes/managementReports.routes.js').then(
-    (m) => m.default || m
-  );
-  app.use('/api/management-reports', managementReportsRoutes);
+  const managementReportsModule = await import('./routes/managementReports.routes.js');
+  const managementReportsRoutes = managementReportsModule.default || managementReportsModule;
+  if (managementReportsRoutes && typeof managementReportsRoutes === 'object' && 'use' in managementReportsRoutes) {
+    app.use('/api/management-reports', managementReportsRoutes as any);
+  }
 } else {
   const { apiGateway } = await import('./Gateway.js');
   apiGateway.initializeRoutes(app);

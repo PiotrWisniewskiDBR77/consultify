@@ -238,13 +238,14 @@ Return a JSON array with exactly ${count} initiatives in this format:
   private static async callAI(prompt: string, count: number): Promise<GeneratedInitiative[]> {
     // Try to import and use existing AI service
     try {
-      const { generateChatResponse } = await import('./aiService.js');
+      const { AIPipeline } = await import('./ai/AIPipeline.js');
+      const aiPipeline = AIPipeline.getInstance();
       
-      const response = await generateChatResponse({
-        messages: [{ role: 'user', content: prompt }],
-        systemPrompt: 'You are an expert consultant. Return only valid JSON arrays.',
-        model: 'gpt-4o-mini',
-        maxTokens: 2000,
+      const response = await aiPipeline.process({
+        capability: 'generateInitiatives',
+        prompt,
+        userId: 'system',
+        organizationId: 'system',
       });
 
       if (response?.content) {

@@ -120,7 +120,7 @@ const writePptxReport = async (report: any, filePath: string): Promise<void> => 
     color: '444444',
   });
 
-  await pptx.writeFile({ fileName: filePath });
+  await pptx.writeFile(filePath);
 };
 
 // =============================================================================
