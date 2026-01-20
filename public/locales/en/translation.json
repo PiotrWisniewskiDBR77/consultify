@@ -813,21 +813,23 @@
       },
       "overview": {
         "title": "Welcome to Consultinity",
-        "intro": "Your complete PMO platform for digital transformation. Assess, plan, and track your organization's journey to digital excellence with AI-powered insights and proven methodologies.",
+        "intro": "Consultinity is your complete PMO platform for digital transformation. Using AI-powered insights and proven methodologies like DRD, SIRI, and Lean 4.0, you can assess your organization's digital maturity, generate strategic initiatives, and track implementation progress - all in one place.",
         "watchVideo": "Watch Introduction Video",
         "videoDuration": "3 min overview",
         "guides": "Quick Guides",
         "guidesList": {
-          "gettingStarted": "Getting Started",
-          "assessment": "How to Run an Assessment",
-          "initiatives": "Managing Initiatives",
-          "reports": "Creating Reports",
-          "aiFeatures": "AI Features Guide"
+          "gettingStarted": "Getting Started - First Steps",
+          "assessment": "How to Run a Digital Assessment",
+          "initiatives": "Managing Strategic Initiatives",
+          "reports": "Creating Executive Reports",
+          "aiFeatures": "Using AI Features & Insights"
         },
-        "whatToKnow": "What to Know",
-        "tip1": "Start with an assessment to understand your digital maturity",
-        "tip2": "Use AI insights to prioritize initiatives",
-        "tip3": "Track progress with real-time dashboards and reports"
+        "whatToKnow": "Key Things to Know",
+        "tip1": "Start with Quick Assessment (5 min) to get instant AI recommendations, or run a Full Assessment for detailed analysis",
+        "tip2": "AI generates initiatives automatically from assessment gaps - review, prioritize and approve them in the Roadmap view",
+        "tip3": "Track implementation in the Execution module - dashboards update in real-time as tasks are completed",
+        "tip4": "Use the AI Chat (top bar) anytime to ask questions about your data or get strategic recommendations",
+        "tip5": "Export professional reports in PDF/PowerPoint format for stakeholder presentations"
       },
       "faq": {
         "searchPlaceholder": "Search questions...",

@@ -326,20 +326,28 @@ export const HelpSidePanel: React.FC = () => {
               <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 rounded-xl p-4">
                 <h4 className="flex items-center gap-2 text-sm font-semibold text-amber-800 dark:text-amber-200 mb-3">
                   <Sparkles size={16} className="text-amber-600 dark:text-amber-400" />
-                  {t('help.sidePanel.overview.whatToKnow', 'What to Know')}
+                  {t('help.sidePanel.overview.whatToKnow', 'Key Things to Know')}
                 </h4>
-                <ul className="space-y-2">
+                <ul className="space-y-2.5">
                   <li className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-100">
                     <CheckCircle2 size={14} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                    {t('help.sidePanel.overview.tip1', 'Start with an assessment to understand your digital maturity')}
+                    {t('help.sidePanel.overview.tip1', 'Start with Quick Assessment (5 min) for instant AI recommendations')}
                   </li>
                   <li className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-100">
                     <CheckCircle2 size={14} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                    {t('help.sidePanel.overview.tip2', 'Use AI insights to prioritize initiatives')}
+                    {t('help.sidePanel.overview.tip2', 'AI generates initiatives from assessment gaps - review in Roadmap')}
                   </li>
                   <li className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-100">
                     <CheckCircle2 size={14} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                    {t('help.sidePanel.overview.tip3', 'Track progress with real-time dashboards and reports')}
+                    {t('help.sidePanel.overview.tip3', 'Track implementation in Execution module with real-time dashboards')}
+                  </li>
+                  <li className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-100">
+                    <CheckCircle2 size={14} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                    {t('help.sidePanel.overview.tip4', 'Use AI Chat anytime to ask questions or get recommendations')}
+                  </li>
+                  <li className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-100">
+                    <CheckCircle2 size={14} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                    {t('help.sidePanel.overview.tip5', 'Export reports in PDF/PowerPoint for stakeholder presentations')}
                   </li>
                 </ul>
               </div>

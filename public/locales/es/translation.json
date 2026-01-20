@@ -68,7 +68,7 @@
     "pilotPhase": "Pilot (Preliminary Phase)",
     "fullImplementation": "Full Implementation",
     "standardReports": "Standard Reports",
-    "executiveView": "Executive View",
+    "executiveView": "Executive Ver",
     "aiAdvisor": "AI Advisor",
     "automationScheme": "Automation Scheme",
     "implementation": "Implementation",
@@ -135,7 +135,7 @@
       "invalidToken": "Invalid verification link.",
       "failedMessage": "Verification failed. Token may be expired."
     },
-    "backToLogin": "Back to Login",
+    "backToLogin": "Volver to Iniciar sesión",
     "privacyLink": "Privacy Policy",
     "termsLink": "Terms of Service",
     "orRegisterWith": "or register with",
@@ -154,7 +154,7 @@
       "success": "Authentication Successful!",
       "redirecting": "Redirecting...",
       "failed": "Authentication Failed",
-      "backToHome": "Back to Home",
+      "backToHome": "Volver to Home",
       "googleFailed": "Google authentication failed",
       "linkedinFailed": "LinkedIn authentication failed",
       "tokenFailed": "Token generation failed. Please try again."
@@ -185,14 +185,14 @@
     "enterDemo": "Enter Demo Mode",
     "contactSales": "Contact Sales for Full Access",
     "back": "Back",
-    "loading": "Loading..."
+    "loading": "Cargando..."
   },
   "common": {
     "locked": "Locked",
     "complete": "Complete",
     "first": "first",
     "previousStep": "previous step",
-    "backToDashboard": "Back to Dashboard",
+    "backToDashboard": "Volver to Panel",
     "level": "Level",
     "status": {
       "saved": "Auto-saved",
@@ -206,14 +206,14 @@
       "stop": "Stop Impersonating"
     },
     "underConstruction": "Component Under Construction",
-    "backToHome": "Back to Home",
+    "backToHome": "Volver to Home",
     "close": "Close",
     "cancel": "Cancel",
     "save": "Save Changes",
     "add": "Add",
     "apply": "Apply",
     "confirm": "Confirm",
-    "loading": "Loading...",
+    "loading": "Cargando...",
     "analysis": "Analysis",
     "statusLabel": "Status:",
     "notDefined": "Not defined",
@@ -239,15 +239,15 @@
     "processing": "Processing...",
     "verify": "Verify",
     "copy": "Copy",
-    "loadingOnboarding": "Loading Onboarding...",
-    "loadingConsultantPanel": "Loading Consultant Panel...",
-    "loadingInviteTool": "Loading Invite Tool...",
-    "loadingOrgSetup": "Loading Organization Setup...",
+    "loadingOnboarding": "Cargando Onboarding...",
+    "loadingConsultantPanel": "Cargando Consultant Panel...",
+    "loadingInviteTool": "Cargando Invite Tool...",
+    "loadingOrgSetup": "Cargando Organización Setup...",
     "back": "Back",
     "next": "Next",
-    "delete": "Delete",
+    "delete": "Eliminar",
     "edit": "Edit",
-    "view": "View"
+    "view": "Ver"
   },
   "step1": {
     "title": "Paso 1 de 3 — Empresa y Expectativas",
@@ -337,15 +337,15 @@
       "company": "Company",
       "role": "Role / Job Title",
       "email": {
-        "title": "Email & Communication",
+        "title": "Correo & Communication",
         "description": "Manage your email signature, aliases, and notification preferences",
         "signature": "Email Signature",
         "signatureText": "Signature Text",
         "signaturePlaceholder": "Best regards,\nYour Name\nTitle | Company",
         "signatureHint": "This signature will be added to your outgoing emails",
         "aliases": "Email Aliases",
-        "addAlias": "Add email alias...",
-        "digest": "Email Digest Frequency",
+        "addAlias": "Añadir email alias...",
+        "digest": "Correo Digest Frequency",
         "outOfOffice": "Out of Office",
         "enableOOO": "Enable Out of Office",
         "enableOOODesc": "Automatically respond when you are away",
@@ -377,7 +377,7 @@
         "longBioHint": "Markdown formatting supported",
         "skills": "Skills & Expertise",
         "noSkills": "No skills added yet",
-        "addSkill": "Add a skill...",
+        "addSkill": "Añadir a skill...",
         "experience": "Experience",
         "yearsExperience": "Years of Experience",
         "tip": "Profile Tip",
@@ -436,7 +436,7 @@
     },
     "title": "SETTINGS",
     "subtitle": "Preferences",
-    "backToApp": "Back to App",
+    "backToApp": "Volver to App",
     "user": "User",
     "modules": {
       "profile": "Profile",
@@ -453,7 +453,7 @@
       "appearanceDesc": "Customize theme, language, accessibility, and work preferences"
     },
     "tabs": {
-      "personal": "Personal Info",
+      "personal": "Personal Información",
       "avatar": "Avatar",
       "password": "Password",
       "billing": "Billing",
@@ -532,8 +532,8 @@
         "title": "Notification Rules",
         "description": "Customize notifications for different projects and scenarios",
         "projectRules": "Project Rules",
-        "addRule": "Add Project Rule",
-        "selectProject": "Select a project...",
+        "addRule": "Añadir Proyecto Rule",
+        "selectProject": "Seleccionar a project...",
         "ruleType": "Notification Mode",
         "all": "All",
         "mentions_only": "Mentions only",
@@ -612,7 +612,7 @@
       "shareAnalyticsDesc": "Help us improve by sharing anonymous usage analytics",
       "shareUsageData": "Share detailed usage data",
       "shareUsageDataDesc": "Include more detailed interaction data for product improvement",
-      "improveAI": "Help improve AI",
+      "improveAI": "Ayuda improve AI",
       "improveAIDesc": "Allow your interactions to help train better AI models",
       "communications": "Communication Preferences",
       "productUpdates": "Product updates",
@@ -628,12 +628,12 @@
       "piiRedactionDesc": "Automatically redact personally identifiable information in AI interactions",
       "thirdParty": "Allow third-party integrations",
       "thirdPartyDesc": "Enable connections to external services and apps",
-      "exportData": "Export Your Data",
+      "exportData": "Exportar Your Data",
       "exportDataDesc": "Download a copy of all your data. This may take some time to prepare.",
       "exportRequested": "Data export requested. You will receive an email when ready.",
       "exportFailed": "Failed to request data export. Please try again.",
       "preparing": "Preparing...",
-      "requestExport": "Request Data Export",
+      "requestExport": "Request Data Exportar",
       "exportNote": "You will receive an email with a download link within 24 hours. The link expires after 7 days.",
       "dangerZone": "Danger Zone",
       "deleteDesc": "Permanently delete your account and all associated data. This action cannot be undone.",
@@ -642,7 +642,7 @@
       "requestDeletion": "Request Account Deletion",
       "confirmDelete": "Are you sure?",
       "confirmDeleteDesc": "Type your email address to confirm account deletion.",
-      "confirmDeleteButton": "Delete My Account"
+      "confirmDeleteButton": "Eliminar My Account"
     },
     "accessibility": {
       "title": "Accessibility",
@@ -1095,7 +1095,7 @@
     "intro": "Welcome to Execution Mode. Here you can track progress, assign owners, and manage blockers. Drag or update statuses to move initiatives forward.",
     "columns": {
       "todo": "To Do",
-      "inProgress": "In Progress",
+      "inProgress": "En progreso",
       "blocked": "Blocked",
       "done": "Done"
     },
@@ -1114,7 +1114,7 @@
     "header": "Transformation Report",
     "sections": {
       "exec": "Executive Summary",
-      "maturity": "Digital Maturity Profile",
+      "maturity": "Digital Maturity Perfil",
       "initiatives": "Key Initiatives",
       "roadmap": "Transformation Roadmap",
       "economics": "Economics & ROI",
@@ -1157,7 +1157,7 @@
       "senseCheck": "AI Sense Check",
       "analyzing": "Analyzing...",
       "logicVerified": "Logic Verified",
-      "logicWarning": "Logic Warning",
+      "logicWarning": "Logic Advertencia",
       "actual": "Actual",
       "target": "Target",
       "maturityLevels": "Maturity Levels",
@@ -1169,7 +1169,7 @@
       "strategicRationale": "Strategic Rationale",
       "rationalePlaceholder": "Why is this target critical for your business strategy?",
       "proMode": "PRO Mode Active: Logic Validation Enabled",
-      "confirmNext": "Confirm & Next",
+      "confirmNext": "Confirmar & Siguiente",
       "validated": "Assessment Validated",
       "levelDetailsHint": "Select a level to view details",
       "actual_target": "ACTUAL + TARGET",
@@ -1177,7 +1177,7 @@
       "target_only": "TARGET",
       "dashboardHeader": "Assessment Dashboard",
       "tabs": {
-        "summary": "Assessment & Gaps",
+        "summary": "Evaluación & Gaps",
         "audits": "Additional Audits"
       },
       "generateInitiatives": "Generate Initiatives",
@@ -1186,7 +1186,7 @@
       "remaining": "Remaining",
       "assessmentArea": "ASSESSMENT AREA",
       "functionalArea": "FUNCTIONAL AREA",
-      "selectArea": "Select Area"
+      "selectArea": "Seleccionar Area"
     },
     "wizard": {
       "startTitle": "Start Assessment",
@@ -1641,7 +1641,7 @@
             "level7Formula": "AI recommends and optimizes, human supervises strategy."
           },
           "hr": {
-            "title": "HR & Admin",
+            "title": "HR & Administrador",
             "levels": {
               "1": "Paper Records",
               "2": "Basic HR Software",
@@ -1721,8 +1721,8 @@
             "title": "Community Based",
             "levels": {
               "1": "No Community",
-              "2": "Basic User Forum",
-              "3": "Active User Community",
+              "2": "Basic Usuario Forum",
+              "3": "Activo Usuario Community",
               "4": "Community Support",
               "5": "Co-Creation with Community",
               "6": "Community-Led Development",
@@ -3052,7 +3052,7 @@
     "emptyState": {
       "title": "No assessments yet",
       "noMatch": "No assessments match your search",
-      "createFirst": "Create First Assessment"
+      "createFirst": "Create First Evaluación"
     },
     "table": {
       "assessment": "Assessment",
@@ -3069,7 +3069,7 @@
       "type": "Attachment type",
       "description": "Description (optional)",
       "descriptionPlaceholder": "Brief description of the attachment...",
-      "selectFile": "Select file",
+      "selectFile": "Seleccionar file",
       "uploading": "Uploading...",
       "allowedTypes": "Allowed: PDF, Word, Excel, PowerPoint, images, CSV, TXT, JSON (max 25MB)",
       "deleteConfirm": "Are you sure you want to delete this attachment?",
@@ -3107,7 +3107,7 @@
       "createInvite": "Create Invite",
       "linkedOrgs": "Linked Organizations",
       "activeCount": "{{count}} Active",
-      "loading": "Loading...",
+      "loading": "Cargando...",
       "noOrgsTitle": "No Organizations Linked",
       "noOrgsMessage": "You don't have access to any organizations yet. Invite a client to get started.",
       "inviteClient": "Invite Client",
@@ -3115,16 +3115,16 @@
       "role": "Role: {{role}}"
     },
     "invites": {
-      "backToPanel": "Back to Panel",
+      "backToPanel": "Volver to Panel",
       "generateInvites": "Generate Invites",
       "newInvitation": "New Invitation",
       "inviteType": "Invite Type",
       "typeTrialOrg": "New Trial Company (Org)",
-      "typeTrialUser": "Existing Trial User",
+      "typeTrialUser": "Existing Trial Usuario",
       "typeAddMe": "Add Me to Organization",
-      "companyName": "Company Name (Optional)",
+      "companyName": "Company Nombre (Optional)",
       "companyPlaceholder": "e.g. Acme Corp",
-      "targetEmail": "Target Email (Optional)",
+      "targetEmail": "Target Correo (Optional)",
       "emailPlaceholder": "user@example.com",
       "emailHint": "Leave empty for a generic code.",
       "generateCode": "Generate Code",
@@ -3152,10 +3152,10 @@
     "quickSteps": "3 Steps",
     "quickTime": "~5 minutes",
     "quickDesc": "Instant auto-analysis of your firm. Get personalized recommendations and quick-win ideas generated by AI immediately.",
-    "quickBtn": "Start Quick Assessment",
-    "fullTitle": "Full Transformation Project",
+    "quickBtn": "Start Quick Evaluación",
+    "fullTitle": "Full Transformation Proyecto",
     "fullSteps": "5 Steps",
-    "fullTime": "Complete Consulting Flow",
+    "fullTime": "Completado Consulting Flow",
     "fullDesc": "Deep strategic assessment, financial analysis (ROI), roadmap creation, and execution monitoring.",
     "fullFeatures": {
       "drd": "Full maturity assessment (DRD)",
@@ -3169,7 +3169,7 @@
     "consultingTag": "Custom Engagement",
     "masterclassTitle": "Want to deepen your knowledge?",
     "masterclassDesc": "Join our Masterclass program and learn proven tools from transformation leaders.",
-    "masterclassLink": "View Masterclass Details",
+    "masterclassLink": "Ver Masterclass Detalles",
     "videoTitle": "See how CONSULTINITY works",
     "videoPerson": "Dr. Piotr Wiśniewski",
     "videoRole": "Your guide to digital transformation"
@@ -3371,8 +3371,8 @@
       },
       "faq": {
         "searchPlaceholder": "Buscar preguntas...",
-        "noResults": "No se encontraron preguntas coincidentes.",
-        "noFAQ": "No hay FAQ disponibles."
+        "noResults": "No se encontraron preguntas.",
+        "noFAQ": "No hay FAQ disponibles para este módulo."
       },
       "knowledge": {
         "title": "Base de Conocimiento",
@@ -3933,11 +3933,6 @@
         "progress": "Watch Progress",
         "progressSummary": "{{watched}} / {{total}}"
       },
-      "faq": {
-        "searchPlaceholder": "Buscar preguntas...",
-        "noResults": "No se encontraron preguntas.",
-        "noFAQ": "No hay FAQ disponibles para este módulo."
-      },
       "content": {
         "help": "Ayuda",
         "helpCenter": "Centro de ayuda",
@@ -4299,7 +4294,8 @@
               "Usa modelos económicos para tareas simples de procesamiento de texto",
               "Implementa límites de tokens estrictos para evitar costos inesperados",
               "Revisa regularmente la salud de los proveedores para garantizar la redundancia",
-              "Prueba las nuevas configuraciones de modelos en un entorno de desarrollo primero"
+              "Prueba las nuevas configuraciones de modelos en un entorno de desarrollo primero",
+              "[TODO:ES] Review costs weekly to prevent budget overruns"
             ]
           },
           "playbookTemplates": {
@@ -4334,18 +4330,22 @@
               "Análisis de evaluaciones",
               "Recomendaciones de iniciativas",
               "Generación de contenido",
-              "Análisis de brechas"
+              "Análisis de brechas",
+              "[TODO:ES] Risk analysis",
+              "[TODO:ES] What-if scenarios"
             ],
             "workflow": [
               "Describe tu pregunta o necesidad",
               "Revisar sugerencias de IA",
               "Refinar y aplicar recomendaciones",
-              "Proporcionar comentarios para mejorar"
+              "Proporcionar comentarios para mejorar",
+              "[TODO:ES] Provide feedback to improve AI"
             ],
             "tips": [
               "Sé específico en tus preguntas",
               "Proporciona contexto para mejores resultados",
-              "Usa sugerencias de IA como puntos de partida"
+              "Usa sugerencias de IA como puntos de partida",
+              "[TODO:ES] Check evidence before accepting recommendations"
             ]
           },
           "knowledge": {
@@ -4357,18 +4357,24 @@
               "Marcos de la industria",
               "Casos de estudio",
               "Repositorio de documentos",
-              "Búsqueda y descubrimiento"
+              "Búsqueda y descubrimiento",
+              "[TODO:ES] External resource links",
+              "[TODO:ES] Searchable article database",
+              "[TODO:ES] Downloadable assets"
             ],
             "workflow": [
               "Buscar temas relevantes",
               "Explorar categorías",
               "Leer y aplicar conocimientos",
-              "Contribuir con documentación"
+              "Contribuir con documentación",
+              "[TODO:ES] Share useful articles with team",
+              "[TODO:ES] Suggest new topics"
             ],
             "tips": [
               "Marca los recursos utilizados con frecuencia",
               "Comparte contenido relevante con el equipo",
-              "Contribuye con tus aprendizajes"
+              "Contribuye con tus aprendizajes",
+              "[TODO:ES] Contribute your own learnings"
             ]
           },
           "onboarding": {
@@ -4850,7 +4856,7 @@
     },
     "stats": {
       "total": "Total Initiatives",
-      "inProgress": "In Progress",
+      "inProgress": "En progreso",
       "approved": "Approved",
       "totalBudget": "Total Budget"
     },
@@ -4957,7 +4963,7 @@
         "description": "Tasks, decisions, and accountability—all tracked. Your team stays aligned with AI-managed workflows and reminders."
       },
       "complete": {
-        "title": "You're All Set!",
+        "title": "You're Todos Set!",
         "description": "Explore freely. Remember: AI recommends, but you decide. Every strategic decision remains in your hands."
       }
     }
@@ -4966,7 +4972,7 @@
     "title": "ADMIN",
     "panel": "Panel",
     "role": "Admin",
-    "backToApp": "Back to App",
+    "backToApp": "Volver to App",
     "modules": {
       "overview": "Overview",
       "overviewDesc": "Dashboard, metrics, and analytics for your organization",
@@ -5032,7 +5038,7 @@
       "bulkAssign": "Assign",
       "bulkAssignTitle": "Bulk Assign Licenses",
       "bulkAssignDesc": "Assign license to selected users",
-      "selectLicense": "Select License Type",
+      "selectLicense": "Seleccionar License Type",
       "removeLicense": "Remove License",
       "assign": "Assign",
       "fetchError": "Failed to load license data",
@@ -5071,18 +5077,18 @@
       "startDate": "Start Date",
       "endDate": "End Date",
       "format": "Format",
-      "exportBtn": "Export Audit Log",
+      "exportBtn": "Exportar Audit Log",
       "complianceReports": "Compliance Reports",
       "generateReport": "Generate Report",
       "recentExports": "Recent Exports",
-      "addSchedule": "Add Scheduled Report",
-      "anomalyInfo": "Anomaly Detection Active",
+      "addSchedule": "Añadir Scheduled Informe",
+      "anomalyInfo": "Anomaly Detection Activo",
       "anomalyInfoDesc": "AI-powered monitoring detects unusual patterns in user activity and data access.",
       "resolve": "Mark Resolved",
       "resolved": "Resolved",
       "exportStarted": "Export started. You will be notified when ready.",
       "exportError": "Failed to start export",
-      "reportStarted": "Report generation started.",
+      "reportStarted": "Informe generation started.",
       "reportError": "Failed to generate report"
     },
     "feedback": {
@@ -5108,8 +5114,8 @@
         "transfer": "Transfer Ownership",
         "transferTitle": "Transfer Ownership",
         "transferWarning": "Transferring ownership will give another user full control over this organization, including billing and the ability to delete the organization. This action cannot be undone by you.",
-        "selectNewOwner": "Select New Owner",
-        "selectAdmin": "Select an Admin...",
+        "selectNewOwner": "Seleccionar New Owner",
+        "selectAdmin": "Seleccionar an Administrador...",
         "noEligible": "No eligible candidates. The new owner must be an Admin.",
         "reason": "Reason (optional)",
         "reasonPlaceholder": "e.g., Leaving the company, Role change...",
@@ -5141,7 +5147,7 @@
         "title": "Two-Factor Authentication",
         "require": "Require 2FA for All Users",
         "requireDesc": "When enabled, all users must set up two-factor authentication to access the system.",
-        "status": "User 2FA Status",
+        "status": "Usuario 2FA Estado",
         "enabled": "Enabled",
         "notEnabled": "Not Enabled",
         "adoption": "2FA Adoption",
@@ -5149,7 +5155,7 @@
       },
       "password": {
         "title": "Password Requirements",
-        "minLength": "Minimum Password Length",
+        "minLength": "Minimum Contraseña Length",
         "characters": "characters",
         "requireUppercase": "Require uppercase letter (A-Z)",
         "requireNumber": "Require number (0-9)",
@@ -5185,7 +5191,7 @@
       "title": "Organization",
       "subtitle": "Profile, branding, ownership, and regional settings",
       "tabs": {
-        "profile": "Profile & Branding",
+        "profile": "Perfil & Branding",
         "ownership": "Ownership"
       }
     },
@@ -5202,7 +5208,7 @@
       "subtitle": "Plans, payments, invoices, and spending controls"
     },
     "roles": {
-      "title": "Roles & Permissions",
+      "title": "Roles & Permisos",
       "subtitle": "Manage access levels and permissions for your organization",
       "infoTitle": "About Roles",
       "infoContent": "Roles define what actions users can perform. System roles provide a base set of permissions, while custom roles can be tailored to your organization's needs.",
@@ -5213,11 +5219,11 @@
       "permissions": "permissions",
       "edit": "Edit",
       "duplicate": "Duplicate",
-      "delete": "Delete",
-      "createRole": "Create Role",
-      "createNewRole": "Create New Role",
+      "delete": "Eliminar",
+      "createRole": "Create Rol",
+      "createNewRole": "Create New Rol",
       "editRole": "Edit Role",
-      "selectToEdit": "Select a Role",
+      "selectToEdit": "Seleccionar a Rol",
       "selectToEditDesc": "Select a role from the list to view or edit its permissions",
       "name": "Role Name",
       "namePlaceholder": "Enter role name",
@@ -5226,13 +5232,13 @@
       "description": "Description",
       "descriptionPlaceholder": "Describe this role",
       "permissionsMatrix": "Permissions",
-      "selectAll": "Select All",
+      "selectAll": "Seleccionar Todos",
       "deselectAll": "Deselect All",
       "systemWarning": "System roles cannot be renamed or deleted. You can only customize permissions.",
-      "created": "Role created successfully",
-      "updated": "Role updated successfully",
-      "deleted": "Role deleted successfully",
-      "permissionsUpdated": "Role permissions updated",
+      "created": "Rol created successfully",
+      "updated": "Rol updated successfully",
+      "deleted": "Rol deleted successfully",
+      "permissionsUpdated": "Rol permissions updated",
       "cannotDeleteSystem": "Cannot delete system roles",
       "hasUsers": "Cannot delete role with assigned users",
       "loadError": "Failed to load roles",
@@ -5248,7 +5254,7 @@
       "create": "Create Template",
       "createNew": "Create Template",
       "editTemplate": "Edit Template",
-      "selectToEdit": "Select a Template",
+      "selectToEdit": "Seleccionar a Template",
       "selectToEditDesc": "Select a template from the list to edit or create a new one",
       "name": "Template Name",
       "namePlaceholder": "Enter template name",
@@ -5283,10 +5289,10 @@
       "taskDefaults": "Task Defaults",
       "taskDefaultsDesc": "Settings for new tasks",
       "workflowStates": "Workflow States",
-      "workflowStatesDesc": "Default task statuses",
-      "timeDateSettings": "Time & Date",
+      "workflowStatesDesc": "Predeterminado task statuses",
+      "timeDateSettings": "Time & Fecha",
       "timeDateSettingsDesc": "Regional preferences",
-      "defaultView": "Default View",
+      "defaultView": "Predeterminado Ver",
       "defaultPrivacy": "Default Privacy",
       "public": "Public (visible to all)",
       "team": "Team (visible to team members)",
@@ -5313,7 +5319,7 @@
       "workingDays": "Working Days",
       "workingHours": "Working Hours",
       "unsavedChanges": "You have unsaved changes",
-      "saved": "Settings saved successfully",
+      "saved": "Configuración saved successfully",
       "loadError": "Failed to load settings",
       "saveError": "Failed to save settings"
     },
@@ -5348,24 +5354,24 @@
       "typographyTitle": "Typography Settings",
       "bodyFont": "Body Font",
       "headingsFont": "Headings Font",
-      "customCss": "Custom CSS (Advanced)",
+      "customCss": "Personalizado CSS (Advanced)",
       "customCssNote": "Use with caution. May override default styles.",
       "typographyPreview": "Typography Preview",
-      "loginPageTitle": "Login Page Customization",
-      "loginTitle": "Login Page Title",
+      "loginPageTitle": "Iniciar sesión Page Customization",
+      "loginTitle": "Iniciar sesión Page Título",
       "loginTitlePlaceholder": "Welcome to Your Workspace",
-      "loginSubtitle": "Login Page Subtitle",
+      "loginSubtitle": "Iniciar sesión Page Subtitle",
       "loginSubtitlePlaceholder": "Sign in to continue",
-      "loginLogo": "Login Page Logo",
+      "loginLogo": "Iniciar sesión Page Logo",
       "loginLogoDesc": "Logo shown on the login page",
       "customDomain": "Custom Domain",
       "customDomainNote": "Contact support to configure DNS for custom domains.",
-      "emailTitle": "Email Template Branding",
-      "emailLogo": "Email Header Logo",
+      "emailTitle": "Correo Template Branding",
+      "emailLogo": "Correo Header Logo",
       "emailLogoDesc": "Logo shown in email headers",
-      "emailFromName": "Email From Name",
-      "emailFromNamePlaceholder": "Your Company Name",
-      "emailFooter": "Email Footer Text",
+      "emailFromName": "Correo From Nombre",
+      "emailFromNamePlaceholder": "Your Company Nombre",
+      "emailFooter": "Correo Footer Text",
       "emailFooterPlaceholder": "Company Name\n123 Street, City, Country\ncontact@company.com",
       "emailPreview": "Email Preview",
       "unsavedChanges": "You have unsaved changes",
@@ -5385,7 +5391,7 @@
       "addWebhook": "Add Webhook",
       "createWebhook": "Create Webhook",
       "editWebhook": "Edit Webhook",
-      "selectOrCreate": "Select or Create",
+      "selectOrCreate": "Seleccionar or Create",
       "selectOrCreateDesc": "Select a webhook to edit or create a new one",
       "webhookName": "Webhook Name",
       "webhookNamePlaceholder": "My Webhook",
@@ -5439,7 +5445,7 @@
       "unstar": "Unpin",
       "archive": "Archive",
       "unarchive": "Unarchive",
-      "delete": "Delete",
+      "delete": "Eliminar",
       "export": "Export"
     },
     "history": "History",
@@ -5459,7 +5465,7 @@
       "lastMonth": "Last 30 Days",
       "older": "Older",
       "archived": "Archived",
-      "byProject": "By Project"
+      "byProject": "By Proyecto"
     },
     "menu": {
       "addFiles": "Add Files & Media",
@@ -5515,7 +5521,7 @@
       "fetchError": "Failed to load payment methods"
     },
     "addCard": {
-      "title": "Add Payment Method",
+      "title": "Añadir Payment Method",
       "subtitle": "Securely add a new card",
       "secureNote": "Secured by Stripe",
       "holderName": "Cardholder Name",
@@ -5542,9 +5548,9 @@
       "yourPlan": "Your Current Plan",
       "upgrade": "Upgrade",
       "switch": "Switch",
-      "select": "Select",
+      "select": "Seleccionar",
       "confirmUpgrade": "Confirm Upgrade",
-      "confirmChange": "Confirm Plan Change",
+      "confirmChange": "Confirmar Plan Change",
       "newPrice": "New Monthly Price",
       "discountCode": "Discount Code",
       "apply": "Apply",
@@ -5574,7 +5580,7 @@
       "noCap": "No limit",
       "autoUpgrade": "Auto-Upgrade",
       "autoUpgradeDesc": "Automatically upgrade plan when limits are reached",
-      "selectPlan": "Select upgrade plan...",
+      "selectPlan": "Seleccionar upgrade plan...",
       "saved": "Alert settings saved",
       "saveError": "Failed to save settings",
       "fetchError": "Failed to load settings"
@@ -5584,12 +5590,12 @@
       "description": "Configure your tax ID and billing information for invoices",
       "taxId": "Tax ID / VAT Number",
       "taxIdType": "Tax ID Type",
-      "selectType": "Select type...",
+      "selectType": "Seleccionar type...",
       "taxIdNumber": "Tax ID Number",
       "taxExempt": "Tax Exempt",
       "taxExemptDesc": "Check if your organization is tax exempt",
       "billingAddress": "Billing Address",
-      "billingName": "Company / Name",
+      "billingName": "Company / Nombre",
       "billingEmail": "Billing Email",
       "addressLine1": "Address Line 1",
       "addressLine2": "Address Line 2",
@@ -5597,10 +5603,10 @@
       "state": "State / Region",
       "postalCode": "Postal Code",
       "country": "Country",
-      "selectCountry": "Select...",
+      "selectCountry": "Seleccionar...",
       "invoiceCustomization": "Invoice Customization",
       "invoicePrefix": "Invoice Prefix",
-      "poNumber": "Default PO Number",
+      "poNumber": "Predeterminado PO Number",
       "saved": "Tax settings saved",
       "saveError": "Failed to save settings",
       "fetchError": "Failed to load tax settings"
@@ -5617,7 +5623,7 @@
       "overview": "Overview",
       "tasks": "Tasks",
       "definition": "Definition & Scope",
-      "execution": "Execution & Risks",
+      "execution": "Ejecución & Risks",
       "economics": "Value & Finance",
       "governance": "Governance",
       "team": "Team",
@@ -5632,7 +5638,7 @@
     "symptom": "Symptom",
     "rootCause": "Root Cause",
     "costOfInaction": "Cost of Inaction",
-    "fullDescription": "Full Description (Legacy)",
+    "fullDescription": "Full Descripción (Legacy)",
     "nameLabel": "Initiative Name",
     "strategicIntentLabel": "Strategic Intent",
     "strategicFitTitle": "Strategic Fit",
@@ -5645,34 +5651,34 @@
     "processChanges": "Process Changes",
     "behaviorChanges": "Behavior Changes",
     "capabilityChanges": "Capability Changes",
-    "addBullet": "+ Add bullet",
+    "addBullet": "+ Añadir bullet",
     "evidenceTitle": "Evidence & Attachments",
     "strategicChangeLog": "Strategic Change Log",
     "addAttachmentMock": "+ Add Attachment (Mock)",
     "addLogEntry": "+ Add Log Entry",
-    "strategicRoadmapAttributes": "Strategic Roadmap Attributes",
+    "strategicRoadmapAttributes": "Strategic Hoja de ruta Attributes",
     "strategicRole": "Strategic Role",
     "placementReason": "Placement Reason",
     "autoFillWithAI": "Auto-fill with AI",
-    "effortProfileLabel": "Effort Profile (1-5)",
+    "effortProfileLabel": "Effort Perfil (1-5)",
     "analytical": "Analytical",
     "operational": "Operational",
     "changeMgmt": "Change Mgmt",
-    "successCriteriaTyped": "Success Criteria (Typed)",
+    "successCriteriaTyped": "Éxito Criteria (Typed)",
     "autoSuggest": "Auto-Suggest",
     "metric": "Metric",
     "behavior": "Behavior",
     "process": "Process",
     "capability": "Capability",
     "criteriaDescriptionPlaceholder": "Criteria description...",
-    "addCriteria": "+ Add Criteria",
+    "addCriteria": "+ Añadir Criteria",
     "explicitAssumptions": "Explicit Assumptions",
     "organizational": "Organizational",
     "dataTech": "Data / Tech",
     "budgetResources": "Budget / Resources",
     "peopleSkills": "People / Skills",
     "keyDeliverables": "Key Deliverables",
-    "addDeliverable": "+ Add Deliverable",
+    "addDeliverable": "+ Añadir Deliverable",
     "scopeGuard": "Scope Guard (Target)",
     "inScope": "In Scope",
     "outOfScope": "Out of Scope",
@@ -5698,14 +5704,14 @@
     "riskDescriptionPlaceholder": "Risk description...",
     "mitigationStrategyPlaceholder": "Mitigation strategy...",
     "maxRisksReached": "Max 5 Risks reached",
-    "addRisk": "+ Add Risk",
+    "addRisk": "+ Añadir Risk",
     "financialCase": "Financial Case",
     "capexLabel": "CAPEX",
     "opexLabel": "OPEX",
     "annualBenefitLabel": "Annual Benefit",
     "roiLabel": "ROI (Calculated)",
     "strategicValue": "Strategic Value",
-    "businessValueLabel": "Business Value Description",
+    "businessValueLabel": "Business Value Descripción",
     "businessValuePlaceholder": "Describe major business impact...",
     "ownershipAccountability": "Ownership & Accountability",
     "businessOwner": "Business Owner",
@@ -5718,7 +5724,7 @@
     "actions": "Actions",
     "businessValue": "Business Value",
     "valueDriver": "Value Driver",
-    "selectDriverPlaceholder": "Select Driver...",
+    "selectDriverPlaceholder": "Seleccionar Driver...",
     "costOptimization": "Cost Optimization",
     "revenueGrowth": "Revenue Growth",
     "capitalEfficiency": "Capital Efficiency",
@@ -5743,9 +5749,9 @@
     "businessOwnerDescription": "Accountable for VALUE delivery",
     "executionOwnerDescription": "Accountable for DELIVERY",
     "sponsorDescription": "Final APPROVAL authority",
-    "selectBusinessOwnerPlaceholder": "Select Business Owner...",
-    "selectExecutionOwnerPlaceholder": "Select Execution Owner...",
-    "selectSponsorPlaceholder": "Select Sponsor...",
+    "selectBusinessOwnerPlaceholder": "Seleccionar Business Owner...",
+    "selectExecutionOwnerPlaceholder": "Seleccionar Ejecución Owner...",
+    "selectSponsorPlaceholder": "Seleccionar Sponsor...",
     "approvalWorkflow": "Approval Workflow",
     "currentStatus": "Current Status",
     "nextAction": "Next Action",
@@ -5755,13 +5761,13 @@
     "sponsorApproval": "Sponsor approval",
     "nextActionApproved": "Ready to start",
     "nextActionExecuting": "Complete all tasks to mark as",
-    "completedSuccessfully": "Initiative completed successfully",
+    "completedSuccessfully": "Iniciativa completed successfully",
     "decisionRequired": "Decision Required",
-    "viewBrief": "View Brief",
+    "viewBrief": "Ver Brief",
     "governanceAuditTrail": "Governance Audit Trail",
     "noGovernanceEvents": "No governance events recorded yet.",
     "teamMembers": "Team Members",
-    "selectMember": "Select member...",
+    "selectMember": "Seleccionar member...",
     "noTeamMembersAssigned": "No team members assigned yet",
     "allocation": "Allocation",
     "relatedInitiatives": "Related Initiatives",
@@ -5797,7 +5803,7 @@
     "knowledgeGraphTitle": "BCG Knowledge Graph",
     "knowledgeGraphSharing": "This initiative shares",
     "knowledgeGraphSimilarity": "similarity in \"Change Resistance\" patterns with",
-    "viewRelated": "View Related Initiative"
+    "viewRelated": "Ver Related Iniciativa"
   },
   "dashboard": {
     "title": "Execution Dashboard",
@@ -5819,7 +5825,7 @@
           "description": "Begin your digital readiness diagnosis"
         },
         "roadmap": {
-          "title": "View Roadmap",
+          "title": "Ver Hoja de ruta",
           "description": "Explore your transformation timeline"
         }
       }
@@ -5834,7 +5840,7 @@
       "healthScore": "Health Score",
       "healthy": "Transformation Healthy",
       "activeInitiatives": "Active Initiatives",
-      "inProgress": "In Progress",
+      "inProgress": "En progreso",
       "valueRealized": "Value Realized",
       "ofTarget": "of Target",
       "criticalRisks": "Critical Risks",
@@ -5874,14 +5880,14 @@
       "options": "Options",
       "ready": "READY",
       "soon": "SOON",
-      "generate": "Generate Final Report",
+      "generate": "Generate Final Informe",
       "pdfDoc": "PDF Document",
       "powerPoint": "PowerPoint"
     },
     "reportSections": {
       "summary": "Executive Summary",
-      "maturity": "Maturity Assessment Results",
-      "roadmap": "Strategic Initiatives Roadmap",
+      "maturity": "Maturity Evaluación Results",
+      "roadmap": "Strategic Iniciativas Hoja de ruta",
       "financial": "Financial Case (ROI, NPV)",
       "risk": "Risk & Change Management"
     },
@@ -5935,7 +5941,7 @@
       "importPDF": "Import PDF",
       "manualEntry": "Manual Entry",
       "generateReport": "Generate Report",
-      "viewReport": "View Report",
+      "viewReport": "Ver Informe",
       "exportPDF": "Export PDF",
       "saveProgress": "Save Progress",
       "legalNotice": "Legal Notice",
@@ -5990,7 +5996,7 @@
       "description": "European Digital Innovation Hubs framework - 5 Pillars × 12 Dimensions",
       "legalNotice": "ADMA (Advanced Digital Maturity Assessment) is a tool developed by the European Commission as part of the Digital Innovation Hubs program. Use in Consultinity is for educational purposes.",
       "pillars": {
-        "strategy": "Strategy & Organization",
+        "strategy": "Strategy & Organización",
         "smartProducts": "Smart Products",
         "smartOperations": "Smart Operations",
         "smartSupply": "Smart Supply Chain",
@@ -6121,7 +6127,7 @@
       "more": "more steps",
       "dismiss": "I'll explore on my own",
       "profile": {
-        "title": "Complete your profile",
+        "title": "Completado your profile",
         "description": "Add your name and company info"
       },
       "firstChat": {
@@ -6206,11 +6212,11 @@
       "description": "Description",
       "descPlaceholder": "Describe the feature and how it would help you...",
       "impact": "Business Impact",
-      "submit": "Submit Feature Request"
+      "submit": "Enviar Feature Request"
     },
     "ai": {
       "insights": "AI Insights",
-      "loading": "Loading AI insights..."
+      "loading": "Cargando AI insights..."
     }
   },
   "documents": {
@@ -6223,7 +6229,7 @@
     "noUserDocs": "No user documents",
     "download": "Download",
     "moveToProject": "Move to project",
-    "delete": "Delete",
+    "delete": "Eliminar",
     "projectHint": "Documents available to everyone in the project",
     "userHint": "Your private documents",
     "confirmDelete": "Are you sure you want to delete this document?"
