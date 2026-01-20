@@ -5,14 +5,12 @@
  * on the Discovery Canvas.
  */
 
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { InsightNode } from '../../../../src/components/Discovery/nodes/InsightNode';
-
 // Mock React Flow
-jest.mock('reactflow', () => ({
-  ...jest.requireActual('reactflow'),
+vi.mock('reactflow', () => ({
   Handle: ({ type, position }: any) => (
     <div data-testid={`handle-${type}-${position}`} />
   ),
@@ -25,11 +23,14 @@ jest.mock('reactflow', () => ({
 }));
 
 // Mock i18n
-jest.mock('react-i18next', () => ({
+vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, fallback?: string) => fallback || key,
   }),
 }));
+
+// Import after mocks
+import { InsightNode } from '../../../../src/components/Discovery/nodes/InsightNode';
 
 describe('InsightNode', () => {
   const defaultProps = {

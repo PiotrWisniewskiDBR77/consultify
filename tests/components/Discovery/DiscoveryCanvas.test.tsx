@@ -5,16 +5,14 @@
  * insights, and recommendations as nodes on a React Flow canvas.
  */
 
+import { describe, it, expect, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { ReactFlowProvider } from 'reactflow';
 
-import { DiscoveryCanvas } from '../../../src/components/Discovery/DiscoveryCanvas';
 import { DiscoveryNode, DiscoveryEdge } from '../../../src/types/discovery';
 
 // Mock React Flow
-jest.mock('reactflow', () => ({
-  ...jest.requireActual('reactflow'),
+vi.mock('reactflow', () => ({
   ReactFlow: ({ children, nodes, edges }: any) => (
     <div data-testid="react-flow">
       <div data-testid="nodes-count">{nodes?.length || 0}</div>
@@ -27,21 +25,24 @@ jest.mock('reactflow', () => ({
   MiniMap: () => <div data-testid="minimap" />,
   Panel: ({ children }: any) => <div data-testid="panel">{children}</div>,
   useReactFlow: () => ({
-    fitView: jest.fn(),
-    zoomIn: jest.fn(),
-    zoomOut: jest.fn(),
-    getNodes: jest.fn(() => []),
+    fitView: vi.fn(),
+    zoomIn: vi.fn(),
+    zoomOut: vi.fn(),
+    getNodes: vi.fn(() => []),
   }),
   ReactFlowProvider: ({ children }: any) => <div>{children}</div>,
 }));
 
 // Mock i18n
-jest.mock('react-i18next', () => ({
+vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, fallback?: string) => fallback || key,
     i18n: { language: 'en' },
   }),
 }));
+
+// Import after mocks
+import { DiscoveryCanvas } from '../../../src/components/Discovery/DiscoveryCanvas';
 
 const mockNodes: DiscoveryNode[] = [
   {

@@ -5,16 +5,8 @@
  * session state, nodes, edges, and recommendations.
  */
 
+import { describe, it, expect, beforeEach } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
-
-// Mock the store module
-jest.mock('../../../src/store/useDiscoveryStore', () => {
-  const actual = jest.requireActual('../../../src/store/useDiscoveryStore');
-  return {
-    ...actual,
-  };
-});
-
 import { useDiscoveryStore } from '../../../src/store/useDiscoveryStore';
 
 describe('useDiscoveryStore', () => {
@@ -22,7 +14,7 @@ describe('useDiscoveryStore', () => {
     // Reset store state before each test
     const { result } = renderHook(() => useDiscoveryStore());
     act(() => {
-      result.current.actions.reset();
+      result.current.reset();
     });
   });
 
@@ -31,7 +23,7 @@ describe('useDiscoveryStore', () => {
       const { result } = renderHook(() => useDiscoveryStore());
 
       act(() => {
-        const sessionId = result.current.actions.createSession();
+        const sessionId = result.current.createSession();
         expect(sessionId).toBeDefined();
         expect(typeof sessionId).toBe('string');
       });
@@ -43,7 +35,7 @@ describe('useDiscoveryStore', () => {
       const { result } = renderHook(() => useDiscoveryStore());
 
       act(() => {
-        result.current.actions.createSession();
+        result.current.createSession();
       });
 
       expect(result.current.currentPhase).toBe('welcome');
@@ -53,8 +45,8 @@ describe('useDiscoveryStore', () => {
       const { result } = renderHook(() => useDiscoveryStore());
 
       act(() => {
-        result.current.actions.createSession();
-        result.current.actions.reset();
+        result.current.createSession();
+        result.current.reset();
       });
 
       expect(result.current.activeSessionId).toBeNull();
@@ -68,8 +60,8 @@ describe('useDiscoveryStore', () => {
       const { result } = renderHook(() => useDiscoveryStore());
 
       act(() => {
-        result.current.actions.createSession();
-        result.current.actions.setPhase('pain_discovery');
+        result.current.createSession();
+        result.current.setPhase('pain_discovery');
       });
 
       expect(result.current.currentPhase).toBe('pain_discovery');
@@ -79,14 +71,14 @@ describe('useDiscoveryStore', () => {
       const { result } = renderHook(() => useDiscoveryStore());
 
       act(() => {
-        result.current.actions.createSession();
+        result.current.createSession();
       });
 
       // Start at welcome
       expect(result.current.currentPhase).toBe('welcome');
 
       act(() => {
-        result.current.actions.setPhase('ice_breaking');
+        result.current.setPhase('ice_breaking');
       });
 
       expect(result.current.currentPhase).toBe('ice_breaking');
@@ -98,8 +90,8 @@ describe('useDiscoveryStore', () => {
       const { result } = renderHook(() => useDiscoveryStore());
 
       act(() => {
-        result.current.actions.createSession();
-        result.current.actions.addNode({
+        result.current.createSession();
+        result.current.addNode({
           type: 'painPoint',
           position: { x: 100, y: 100 },
           data: {
@@ -119,8 +111,8 @@ describe('useDiscoveryStore', () => {
       const { result } = renderHook(() => useDiscoveryStore());
 
       act(() => {
-        result.current.actions.createSession();
-        result.current.actions.addNode({
+        result.current.createSession();
+        result.current.addNode({
           type: 'insight',
           position: { x: 200, y: 100 },
           data: {
@@ -140,8 +132,8 @@ describe('useDiscoveryStore', () => {
       let nodeId: string;
 
       act(() => {
-        result.current.actions.createSession();
-        nodeId = result.current.actions.addNode({
+        result.current.createSession();
+        nodeId = result.current.addNode({
           type: 'painPoint',
           position: { x: 100, y: 100 },
           data: {
@@ -156,7 +148,7 @@ describe('useDiscoveryStore', () => {
       expect(result.current.nodes).toHaveLength(1);
 
       act(() => {
-        result.current.actions.removeNode(nodeId);
+        result.current.removeNode(nodeId);
       });
 
       expect(result.current.nodes).toHaveLength(0);
@@ -167,8 +159,8 @@ describe('useDiscoveryStore', () => {
       let nodeId: string;
 
       act(() => {
-        result.current.actions.createSession();
-        nodeId = result.current.actions.addNode({
+        result.current.createSession();
+        nodeId = result.current.addNode({
           type: 'painPoint',
           position: { x: 100, y: 100 },
           data: {
@@ -181,7 +173,7 @@ describe('useDiscoveryStore', () => {
       });
 
       act(() => {
-        result.current.actions.moveNode(nodeId, { x: 200, y: 300 });
+        result.current.moveNode(nodeId, { x: 200, y: 300 });
       });
 
       expect(result.current.nodes[0].position).toEqual({ x: 200, y: 300 });
@@ -193,8 +185,8 @@ describe('useDiscoveryStore', () => {
       const { result } = renderHook(() => useDiscoveryStore());
 
       act(() => {
-        result.current.actions.createSession();
-        result.current.actions.addEdge({
+        result.current.createSession();
+        result.current.addEdge({
           source: 'node-1',
           target: 'node-2',
           type: 'smoothstep',
@@ -209,8 +201,8 @@ describe('useDiscoveryStore', () => {
       let edgeId: string;
 
       act(() => {
-        result.current.actions.createSession();
-        edgeId = result.current.actions.addEdge({
+        result.current.createSession();
+        edgeId = result.current.addEdge({
           source: 'node-1',
           target: 'node-2',
         });
@@ -219,7 +211,7 @@ describe('useDiscoveryStore', () => {
       expect(result.current.edges).toHaveLength(1);
 
       act(() => {
-        result.current.actions.removeEdge(edgeId);
+        result.current.removeEdge(edgeId);
       });
 
       expect(result.current.edges).toHaveLength(0);
@@ -231,8 +223,8 @@ describe('useDiscoveryStore', () => {
       const { result } = renderHook(() => useDiscoveryStore());
 
       act(() => {
-        result.current.actions.createSession();
-        result.current.actions.updateClientContext({
+        result.current.createSession();
+        result.current.updateClientContext({
           companyName: 'Acme Corp',
           industry: 'Manufacturing',
           size: 'medium',
@@ -248,9 +240,9 @@ describe('useDiscoveryStore', () => {
       const { result } = renderHook(() => useDiscoveryStore());
 
       act(() => {
-        result.current.actions.createSession();
-        result.current.actions.updateClientContext({ companyName: 'Acme Corp' });
-        result.current.actions.updateClientContext({ industry: 'Tech' });
+        result.current.createSession();
+        result.current.updateClientContext({ companyName: 'Acme Corp' });
+        result.current.updateClientContext({ industry: 'Tech' });
       });
 
       expect(result.current.clientContext.companyName).toBe('Acme Corp');
@@ -263,8 +255,8 @@ describe('useDiscoveryStore', () => {
       const { result } = renderHook(() => useDiscoveryStore());
 
       act(() => {
-        result.current.actions.createSession();
-        result.current.actions.setRecommendations({
+        result.current.createSession();
+        result.current.setRecommendations({
           transformationType: 'digital',
           matchScore: 85,
           reasoning: 'Strong digital transformation potential',
@@ -285,8 +277,8 @@ describe('useDiscoveryStore', () => {
       const { result } = renderHook(() => useDiscoveryStore());
 
       act(() => {
-        result.current.actions.createSession();
-        result.current.actions.addNode({
+        result.current.createSession();
+        result.current.addNode({
           type: 'painPoint',
           position: { x: 100, y: 100 },
           data: {
@@ -296,7 +288,7 @@ describe('useDiscoveryStore', () => {
             source: 'user',
           },
         });
-        const version = result.current.actions.saveVersion();
+        const version = result.current.saveVersion();
         expect(version).toBe(1);
       });
     });

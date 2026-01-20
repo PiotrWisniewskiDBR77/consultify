@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { BudgetTrackingService } from '../../../server/src/services/budgetTrackingService';
-import type { IDatabase } from '../../../server/src/database/IDatabase';
+import { BudgetTrackingService } from '../../../../server/src/services/budgetTrackingService';
+import type { IDatabase } from '../../../../server/src/database/IDatabase';
 import type {
   BudgetConfig,
   ExpenseRecord,
   BudgetStatus,
-} from '../../../server/src/services/budgetTrackingService';
+} from '../../../../server/src/services/budgetTrackingService';
 
 // Mock logger
-vi.mock('../../../server/src/utils/Logger.js', () => ({
+vi.mock('../../../../server/src/utils/Logger.js', () => ({
   default: {
     info: vi.fn(),
     warn: vi.fn(),

@@ -5,15 +5,12 @@
  * on the Discovery Canvas.
  */
 
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { ReactFlowProvider } from 'reactflow';
-
-import { PainPointNode } from '../../../../src/components/Discovery/nodes/PainPointNode';
 
 // Mock React Flow
-jest.mock('reactflow', () => ({
-  ...jest.requireActual('reactflow'),
+vi.mock('reactflow', () => ({
   Handle: ({ type, position }: any) => (
     <div data-testid={`handle-${type}-${position}`} />
   ),
@@ -27,11 +24,14 @@ jest.mock('reactflow', () => ({
 }));
 
 // Mock i18n
-jest.mock('react-i18next', () => ({
+vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, fallback?: string) => fallback || key,
   }),
 }));
+
+// Import after mocks
+import { PainPointNode } from '../../../../src/components/Discovery/nodes/PainPointNode';
 
 describe('PainPointNode', () => {
   const defaultProps = {

@@ -17,6 +17,13 @@ const MockSwitch: React.FC<{
   label?: string;
   size?: 'sm' | 'md' | 'lg';
 }> = ({ checked = false, onChange = () => {}, disabled = false, label, size = 'md' }) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Don't call onChange if disabled
+    if (!disabled) {
+      onChange(e.target.checked);
+    }
+  };
+
   return (
     <label data-testid="switch-wrapper">
       <input
@@ -26,7 +33,7 @@ const MockSwitch: React.FC<{
         data-size={size}
         checked={checked}
         disabled={disabled}
-        onChange={(e) => onChange(e.target.checked)}
+        onChange={handleChange}
         aria-checked={checked}
       />
       {label && <span data-testid="switch-label">{label}</span>}

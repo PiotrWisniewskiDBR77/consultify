@@ -16,6 +16,18 @@ vi.mock('@/store/useAppStore', () => ({
     setCurrentStreamContent: vi.fn(),
     currentStreamContent: '',
     isBotTyping: false,
+    aiConfig: {
+      textToSpeech: false,
+      ttsVoice: null,
+      ttsRate: 1.0,
+      ttsPitch: 1.0,
+      deepResearch: false,
+      webSearch: false,
+      showReasoning: false,
+      maxMode: false,
+      knowledgeSources: [],
+      responseStyle: 'normal',
+    },
   })),
 }));
 
@@ -51,6 +63,18 @@ describe('useAIStream', () => {
       setCurrentStreamContent: mockSetCurrentStreamContent,
       currentStreamContent: '',
       isBotTyping: false,
+      aiConfig: {
+        textToSpeech: false,
+        ttsVoice: null,
+        ttsRate: 1.0,
+        ttsPitch: 1.0,
+        deepResearch: false,
+        webSearch: false,
+        showReasoning: false,
+        maxMode: false,
+        knowledgeSources: [],
+        responseStyle: 'normal',
+      },
     });
   });
 

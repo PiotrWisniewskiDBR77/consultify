@@ -120,7 +120,8 @@ describe('DataTable Component', () => {
     it('should mark sortable columns', () => {
       render(<MockDataTable />);
       expect(screen.getByTestId('header-name')).toHaveAttribute('data-sortable', 'true');
-      expect(screen.getByTestId('header-status')).toHaveAttribute('data-sortable', 'undefined');
+      // Non-sortable columns have data-sortable as undefined (null in DOM)
+      expect(screen.getByTestId('header-status')).not.toHaveAttribute('data-sortable', 'true');
     });
   });
 

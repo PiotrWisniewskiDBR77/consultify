@@ -22,7 +22,7 @@ const MockFileUpload: React.FC<{
     accept = '*',
     multiple = false,
     maxSize,
-    disabled = false;
+    disabled = false,
 }) => {
     return (
         <div

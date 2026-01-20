@@ -25,6 +25,13 @@ const MockCheckbox: React.FC<{
   label,
   error,
 }) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Don't call onChange if disabled
+    if (!disabled) {
+      onChange(e.target.checked);
+    }
+  };
+
   return (
     <div data-testid="checkbox-wrapper" data-error={!!error}>
       <label data-testid="checkbox-label">
@@ -34,7 +41,7 @@ const MockCheckbox: React.FC<{
           checked={checked}
           disabled={disabled}
           data-indeterminate={indeterminate}
-          onChange={(e) => onChange(e.target.checked)}
+          onChange={handleChange}
           aria-checked={indeterminate ? 'mixed' : checked}
         />
         {label && <span data-testid="checkbox-label-text">{label}</span>}

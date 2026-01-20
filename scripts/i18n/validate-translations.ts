@@ -5,11 +5,15 @@
  * This script compares the English (source) translation files with target locales
  * and identifies missing, untranslated, or problematic translations.
  *
+ * Validates all namespaces: translation, assessment-module, discovery
+ *
  * Usage:
  *   npx ts-node scripts/i18n/validate-translations.ts --check          # Check only
  *   npx ts-node scripts/i18n/validate-translations.ts --fix            # Fix missing translations
  *   npx ts-node scripts/i18n/validate-translations.ts --report         # Generate detailed report
  *   npx ts-node scripts/i18n/validate-translations.ts --locale=ja      # Check specific locale
+ *   npx ts-node scripts/i18n/validate-translations.ts --namespace=translation  # Check specific namespace
+ *   npx ts-node scripts/i18n/validate-translations.ts --all            # Check all namespaces (default)
  */
 
 import * as fs from 'fs';
@@ -84,6 +88,318 @@ const CONFIG = {
   ],
   // Glossary for consistent translations
   glossary: {
+    pl: {
+      Dashboard: 'Dashboard',
+      Assessment: 'Ocena',
+      Initiative: 'Inicjatywa',
+      Initiatives: 'Inicjatywy',
+      Roadmap: 'Roadmapa',
+      Implementation: 'Implementacja',
+      Execution: 'Wykonanie',
+      Settings: 'Ustawienia',
+      Profile: 'Profil',
+      Organization: 'Organizacja',
+      Project: 'Projekt',
+      User: 'Użytkownik',
+      Admin: 'Administrator',
+      Save: 'Zapisz',
+      Cancel: 'Anuluj',
+      Delete: 'Usuń',
+      Edit: 'Edytuj',
+      Add: 'Dodaj',
+      Remove: 'Usuń',
+      Close: 'Zamknij',
+      Open: 'Otwórz',
+      View: 'Widok',
+      Download: 'Pobierz',
+      Upload: 'Prześlij',
+      Export: 'Eksportuj',
+      Import: 'Importuj',
+      Search: 'Szukaj',
+      Filter: 'Filtruj',
+      Sort: 'Sortuj',
+      Loading: 'Ładowanie',
+      Error: 'Błąd',
+      Warning: 'Ostrzeżenie',
+      Success: 'Sukces',
+      Info: 'Informacja',
+      Confirm: 'Potwierdź',
+      Submit: 'Wyślij',
+      Back: 'Wstecz',
+      Next: 'Dalej',
+      Previous: 'Poprzedni',
+      Continue: 'Kontynuuj',
+      Yes: 'Tak',
+      No: 'Nie',
+      Status: 'Status',
+      Progress: 'Postęp',
+      Complete: 'Ukończone',
+      Completed: 'Ukończone',
+      Pending: 'Oczekujące',
+      'In Progress': 'W trakcie',
+      Active: 'Aktywne',
+      Required: 'Wymagane',
+      Optional: 'Opcjonalne',
+      Select: 'Wybierz',
+      Name: 'Nazwa',
+      Description: 'Opis',
+      Title: 'Tytuł',
+      Date: 'Data',
+      Email: 'Email',
+      Password: 'Hasło',
+      Login: 'Zaloguj',
+      Logout: 'Wyloguj',
+      Help: 'Pomoc',
+      Overview: 'Przegląd',
+      Details: 'Szczegóły',
+      Summary: 'Podsumowanie',
+      Report: 'Raport',
+      Reports: 'Raporty',
+      Analytics: 'Analityka',
+      Team: 'Zespół',
+      Members: 'Członkowie',
+      Role: 'Rola',
+      Permissions: 'Uprawnienia',
+      All: 'Wszystkie',
+      None: 'Brak',
+      Other: 'Inne',
+      Custom: 'Własne',
+      Default: 'Domyślne',
+    },
+    de: {
+      Dashboard: 'Dashboard',
+      Assessment: 'Bewertung',
+      Initiative: 'Initiative',
+      Initiatives: 'Initiativen',
+      Roadmap: 'Roadmap',
+      Implementation: 'Implementierung',
+      Execution: 'Ausführung',
+      Settings: 'Einstellungen',
+      Profile: 'Profil',
+      Organization: 'Organisation',
+      Project: 'Projekt',
+      User: 'Benutzer',
+      Admin: 'Administrator',
+      Save: 'Speichern',
+      Cancel: 'Abbrechen',
+      Delete: 'Löschen',
+      Edit: 'Bearbeiten',
+      Add: 'Hinzufügen',
+      Remove: 'Entfernen',
+      Close: 'Schließen',
+      Open: 'Öffnen',
+      View: 'Ansicht',
+      Download: 'Herunterladen',
+      Upload: 'Hochladen',
+      Export: 'Exportieren',
+      Import: 'Importieren',
+      Search: 'Suchen',
+      Filter: 'Filtern',
+      Sort: 'Sortieren',
+      Loading: 'Wird geladen',
+      Error: 'Fehler',
+      Warning: 'Warnung',
+      Success: 'Erfolg',
+      Info: 'Information',
+      Confirm: 'Bestätigen',
+      Submit: 'Absenden',
+      Back: 'Zurück',
+      Next: 'Weiter',
+      Previous: 'Vorherige',
+      Continue: 'Fortsetzen',
+      Yes: 'Ja',
+      No: 'Nein',
+      Status: 'Status',
+      Progress: 'Fortschritt',
+      Complete: 'Abgeschlossen',
+      Completed: 'Abgeschlossen',
+      Pending: 'Ausstehend',
+      'In Progress': 'In Bearbeitung',
+      Active: 'Aktiv',
+      Required: 'Erforderlich',
+      Optional: 'Optional',
+      Select: 'Auswählen',
+      Name: 'Name',
+      Description: 'Beschreibung',
+      Title: 'Titel',
+      Date: 'Datum',
+      Email: 'E-Mail',
+      Password: 'Passwort',
+      Login: 'Anmelden',
+      Logout: 'Abmelden',
+      Help: 'Hilfe',
+      Overview: 'Übersicht',
+      Details: 'Details',
+      Summary: 'Zusammenfassung',
+      Report: 'Bericht',
+      Reports: 'Berichte',
+      Analytics: 'Analytik',
+      Team: 'Team',
+      Members: 'Mitglieder',
+      Role: 'Rolle',
+      Permissions: 'Berechtigungen',
+      All: 'Alle',
+      None: 'Keine',
+      Other: 'Andere',
+      Custom: 'Benutzerdefiniert',
+      Default: 'Standard',
+    },
+    es: {
+      Dashboard: 'Panel',
+      Assessment: 'Evaluación',
+      Initiative: 'Iniciativa',
+      Initiatives: 'Iniciativas',
+      Roadmap: 'Hoja de ruta',
+      Implementation: 'Implementación',
+      Execution: 'Ejecución',
+      Settings: 'Configuración',
+      Profile: 'Perfil',
+      Organization: 'Organización',
+      Project: 'Proyecto',
+      User: 'Usuario',
+      Admin: 'Administrador',
+      Save: 'Guardar',
+      Cancel: 'Cancelar',
+      Delete: 'Eliminar',
+      Edit: 'Editar',
+      Add: 'Añadir',
+      Remove: 'Eliminar',
+      Close: 'Cerrar',
+      Open: 'Abrir',
+      View: 'Ver',
+      Download: 'Descargar',
+      Upload: 'Subir',
+      Export: 'Exportar',
+      Import: 'Importar',
+      Search: 'Buscar',
+      Filter: 'Filtrar',
+      Sort: 'Ordenar',
+      Loading: 'Cargando',
+      Error: 'Error',
+      Warning: 'Advertencia',
+      Success: 'Éxito',
+      Info: 'Información',
+      Confirm: 'Confirmar',
+      Submit: 'Enviar',
+      Back: 'Volver',
+      Next: 'Siguiente',
+      Previous: 'Anterior',
+      Continue: 'Continuar',
+      Yes: 'Sí',
+      No: 'No',
+      Status: 'Estado',
+      Progress: 'Progreso',
+      Complete: 'Completado',
+      Completed: 'Completado',
+      Pending: 'Pendiente',
+      'In Progress': 'En progreso',
+      Active: 'Activo',
+      Required: 'Obligatorio',
+      Optional: 'Opcional',
+      Select: 'Seleccionar',
+      Name: 'Nombre',
+      Description: 'Descripción',
+      Title: 'Título',
+      Date: 'Fecha',
+      Email: 'Correo',
+      Password: 'Contraseña',
+      Login: 'Iniciar sesión',
+      Logout: 'Cerrar sesión',
+      Help: 'Ayuda',
+      Overview: 'Resumen',
+      Details: 'Detalles',
+      Summary: 'Resumen',
+      Report: 'Informe',
+      Reports: 'Informes',
+      Analytics: 'Analítica',
+      Team: 'Equipo',
+      Members: 'Miembros',
+      Role: 'Rol',
+      Permissions: 'Permisos',
+      All: 'Todos',
+      None: 'Ninguno',
+      Other: 'Otro',
+      Custom: 'Personalizado',
+      Default: 'Predeterminado',
+    },
+    ar: {
+      Dashboard: 'لوحة القيادة',
+      Assessment: 'تقييم',
+      Initiative: 'مبادرة',
+      Initiatives: 'المبادرات',
+      Roadmap: 'خارطة الطريق',
+      Implementation: 'التنفيذ',
+      Execution: 'التنفيذ',
+      Settings: 'الإعدادات',
+      Profile: 'الملف الشخصي',
+      Organization: 'المنظمة',
+      Project: 'مشروع',
+      User: 'مستخدم',
+      Admin: 'مدير',
+      Save: 'حفظ',
+      Cancel: 'إلغاء',
+      Delete: 'حذف',
+      Edit: 'تحرير',
+      Add: 'إضافة',
+      Remove: 'إزالة',
+      Close: 'إغلاق',
+      Open: 'فتح',
+      View: 'عرض',
+      Download: 'تحميل',
+      Upload: 'رفع',
+      Export: 'تصدير',
+      Import: 'استيراد',
+      Search: 'بحث',
+      Filter: 'تصفية',
+      Sort: 'ترتيب',
+      Loading: 'جارٍ التحميل',
+      Error: 'خطأ',
+      Warning: 'تحذير',
+      Success: 'نجاح',
+      Info: 'معلومات',
+      Confirm: 'تأكيد',
+      Submit: 'إرسال',
+      Back: 'رجوع',
+      Next: 'التالي',
+      Previous: 'السابق',
+      Continue: 'متابعة',
+      Yes: 'نعم',
+      No: 'لا',
+      Status: 'الحالة',
+      Progress: 'التقدم',
+      Complete: 'مكتمل',
+      Completed: 'مكتمل',
+      Pending: 'معلق',
+      'In Progress': 'قيد التنفيذ',
+      Active: 'نشط',
+      Required: 'مطلوب',
+      Optional: 'اختياري',
+      Select: 'اختر',
+      Name: 'الاسم',
+      Description: 'الوصف',
+      Title: 'العنوان',
+      Date: 'التاريخ',
+      Email: 'البريد الإلكتروني',
+      Password: 'كلمة المرور',
+      Login: 'تسجيل الدخول',
+      Logout: 'تسجيل الخروج',
+      Help: 'مساعدة',
+      Overview: 'نظرة عامة',
+      Details: 'تفاصيل',
+      Summary: 'ملخص',
+      Report: 'تقرير',
+      Reports: 'تقارير',
+      Analytics: 'تحليلات',
+      Team: 'فريق',
+      Members: 'الأعضاء',
+      Role: 'دور',
+      Permissions: 'الصلاحيات',
+      All: 'الكل',
+      None: 'لا شيء',
+      Other: 'أخرى',
+      Custom: 'مخصص',
+      Default: 'افتراضي',
+    },
     ja: {
       Dashboard: 'ダッシュボード',
       Assessment: '評価',
@@ -532,10 +848,11 @@ const CONFIG = {
 
 interface TranslationIssue {
   path: string;
-  type: 'missing' | 'untranslated' | 'empty' | 'placeholder_mismatch';
+  type: 'missing' | 'untranslated' | 'empty' | 'placeholder_mismatch' | 'type_mismatch' | 'invalid_json' | 'extra_key';
   sourceValue?: string;
   targetValue?: string;
   suggestion?: string;
+  details?: string;
 }
 
 interface ValidationResult {
@@ -546,8 +863,13 @@ interface ValidationResult {
   untranslatedKeys: number;
   emptyKeys: number;
   placeholderMismatches: number;
+  typeMismatches: number;
+  extraKeys: number;
   issues: TranslationIssue[];
 }
+
+// All translation namespaces
+const ALL_NAMESPACES = ['translation.json', 'assessment-module.json', 'discovery.json'];
 
 // Helper functions
 function flattenObject(obj: any, prefix = ''): Record<string, string> {
@@ -721,6 +1043,107 @@ function saveTranslationFile(locale: string, filename: string, data: any): void 
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + '\n', 'utf-8');
 }
 
+// Check type consistency between source and target values
+function checkTypeConsistency(sourceObj: any, targetObj: any, prefix = ''): TranslationIssue[] {
+  const issues: TranslationIssue[] = [];
+  
+  for (const key in sourceObj) {
+    const path = prefix ? `${prefix}.${key}` : key;
+    const sourceVal = sourceObj[key];
+    const targetVal = targetObj?.[key];
+    
+    if (targetVal === undefined) continue; // Handled by missing keys check
+    
+    const sourceType = Array.isArray(sourceVal) ? 'array' : typeof sourceVal;
+    const targetType = Array.isArray(targetVal) ? 'array' : typeof targetVal;
+    
+    if (sourceType !== targetType) {
+      issues.push({
+        path,
+        type: 'type_mismatch',
+        details: `Expected ${sourceType}, got ${targetType}`,
+        sourceValue: JSON.stringify(sourceVal).substring(0, 50),
+        targetValue: JSON.stringify(targetVal).substring(0, 50),
+      });
+    } else if (sourceType === 'object' && !Array.isArray(sourceVal)) {
+      issues.push(...checkTypeConsistency(sourceVal, targetVal, path));
+    } else if (sourceType === 'array') {
+      if (sourceVal.length !== targetVal.length) {
+        issues.push({
+          path,
+          type: 'type_mismatch',
+          details: `Array length mismatch: source has ${sourceVal.length}, target has ${targetVal.length}`,
+        });
+      }
+    }
+  }
+  
+  return issues;
+}
+
+// Find extra keys in target that don't exist in source
+function findExtraKeys(sourceObj: any, targetObj: any, prefix = ''): TranslationIssue[] {
+  const issues: TranslationIssue[] = [];
+  
+  for (const key in targetObj) {
+    const path = prefix ? `${prefix}.${key}` : key;
+    const sourceVal = sourceObj?.[key];
+    const targetVal = targetObj[key];
+    
+    if (sourceVal === undefined) {
+      issues.push({
+        path,
+        type: 'extra_key',
+        targetValue: typeof targetVal === 'string' ? targetVal : JSON.stringify(targetVal).substring(0, 50),
+        details: 'Key exists in target but not in source (may be orphaned)',
+      });
+    } else if (typeof targetVal === 'object' && !Array.isArray(targetVal)) {
+      issues.push(...findExtraKeys(sourceVal, targetVal, path));
+    }
+  }
+  
+  return issues;
+}
+
+// Validate JSON structure
+function validateJsonStructure(locale: string, filename: string): TranslationIssue[] {
+  const filePath = path.join(CONFIG.localesDir, locale, filename);
+  const issues: TranslationIssue[] = [];
+  
+  try {
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf-8');
+      JSON.parse(content);
+      
+      // Check for BOM or other encoding issues
+      if (content.charCodeAt(0) === 0xFEFF) {
+        issues.push({
+          path: filename,
+          type: 'invalid_json',
+          details: 'File contains BOM (Byte Order Mark) - should be removed',
+        });
+      }
+      
+      // Check for trailing commas (common JSON error)
+      if (/,\s*[}\]]/.test(content)) {
+        issues.push({
+          path: filename,
+          type: 'invalid_json',
+          details: 'File may contain trailing commas',
+        });
+      }
+    }
+  } catch (error: any) {
+    issues.push({
+      path: filename,
+      type: 'invalid_json',
+      details: `JSON parse error: ${error.message}`,
+    });
+  }
+  
+  return issues;
+}
+
 function validateTranslations(locale: string, filename: string): ValidationResult {
   const sourceData = loadTranslationFile(CONFIG.sourceLocale, filename);
   const targetData = loadTranslationFile(locale, filename);
@@ -733,12 +1156,32 @@ function validateTranslations(locale: string, filename: string): ValidationResul
     untranslatedKeys: 0,
     emptyKeys: 0,
     placeholderMismatches: 0,
+    typeMismatches: 0,
+    extraKeys: 0,
     issues: [],
   };
+
+  // First validate JSON structure
+  const jsonIssues = validateJsonStructure(locale, filename);
+  if (jsonIssues.length > 0) {
+    result.issues.push(...jsonIssues);
+  }
 
   if (!sourceData) {
     console.error(`Source file not found: ${CONFIG.sourceLocale}/${filename}`);
     return result;
+  }
+
+  // Check type consistency
+  if (targetData) {
+    const typeIssues = checkTypeConsistency(sourceData, targetData);
+    result.typeMismatches = typeIssues.length;
+    result.issues.push(...typeIssues);
+    
+    // Check for extra keys
+    const extraKeyIssues = findExtraKeys(sourceData, targetData);
+    result.extraKeys = extraKeyIssues.length;
+    result.issues.push(...extraKeyIssues);
   }
 
   const sourceFlat = flattenObject(sourceData);
@@ -870,16 +1313,54 @@ function generateReport(results: ValidationResult[]): string {
   let report = '# Translation Validation Report\n\n';
   report += `Generated: ${new Date().toISOString()}\n\n`;
 
-  report += '## Summary\n\n';
+  // Overall statistics
+  const totalKeys = results.reduce((sum, r) => sum + r.totalKeys, 0);
+  const totalMissing = results.reduce((sum, r) => sum + r.missingKeys, 0);
+  const totalUntranslated = results.reduce((sum, r) => sum + r.untranslatedKeys, 0);
+  const totalEmpty = results.reduce((sum, r) => sum + r.emptyKeys, 0);
+  const totalPlaceholder = results.reduce((sum, r) => sum + r.placeholderMismatches, 0);
+  const totalTypeMismatch = results.reduce((sum, r) => sum + r.typeMismatches, 0);
+  const totalExtra = results.reduce((sum, r) => sum + r.extraKeys, 0);
+
+  report += '## Overall Statistics\n\n';
+  report += `- **Total Keys Checked**: ${totalKeys}\n`;
+  report += `- **Missing Keys**: ${totalMissing}\n`;
+  report += `- **Untranslated Keys**: ${totalUntranslated}\n`;
+  report += `- **Empty Values**: ${totalEmpty}\n`;
+  report += `- **Placeholder Mismatches**: ${totalPlaceholder}\n`;
+  report += `- **Type Mismatches**: ${totalTypeMismatch}\n`;
+  report += `- **Extra/Orphaned Keys**: ${totalExtra}\n\n`;
+
+  report += '## Summary by File\n\n';
   report +=
-    '| Locale | File | Total | Missing | Untranslated | Empty | Placeholders | Coverage |\n';
+    '| Locale | File | Total | Missing | Untranslated | Empty | Placeholders | Types | Extra | Coverage |\n';
   report +=
-    '|--------|------|-------|---------|--------------|-------|--------------|----------|\n';
+    '|--------|------|-------|---------|--------------|-------|--------------|-------|-------|----------|\n';
 
   for (const result of results) {
     const issues = result.missingKeys + result.untranslatedKeys + result.emptyKeys;
-    const coverage = (((result.totalKeys - issues) / result.totalKeys) * 100).toFixed(1);
-    report += `| ${result.locale} | ${result.file} | ${result.totalKeys} | ${result.missingKeys} | ${result.untranslatedKeys} | ${result.emptyKeys} | ${result.placeholderMismatches} | ${coverage}% |\n`;
+    const coverage = result.totalKeys > 0
+      ? (((result.totalKeys - issues) / result.totalKeys) * 100).toFixed(1)
+      : '0.0';
+    report += `| ${result.locale} | ${result.file} | ${result.totalKeys} | ${result.missingKeys} | ${result.untranslatedKeys} | ${result.emptyKeys} | ${result.placeholderMismatches} | ${result.typeMismatches} | ${result.extraKeys} | ${coverage}% |\n`;
+  }
+
+  // Summary by locale
+  report += '\n## Coverage by Locale\n\n';
+  const localeStats: Record<string, { total: number; issues: number }> = {};
+  for (const result of results) {
+    if (!localeStats[result.locale]) {
+      localeStats[result.locale] = { total: 0, issues: 0 };
+    }
+    localeStats[result.locale].total += result.totalKeys;
+    localeStats[result.locale].issues += result.missingKeys + result.untranslatedKeys + result.emptyKeys;
+  }
+  
+  report += '| Locale | Coverage | Issues |\n';
+  report += '|--------|----------|--------|\n';
+  for (const [locale, stats] of Object.entries(localeStats)) {
+    const coverage = ((stats.total - stats.issues) / stats.total * 100).toFixed(1);
+    report += `| ${locale.toUpperCase()} | ${coverage}% | ${stats.issues} |\n`;
   }
 
   report += '\n## Detailed Issues\n\n';
@@ -895,12 +1376,20 @@ function generateReport(results: ValidationResult[]): string {
       byType[issue.type].push(issue);
     }
 
-    for (const type in byType) {
-      report += `#### ${type.replace('_', ' ').toUpperCase()} (${byType[type].length})\n\n`;
+    // Priority order for issue types
+    const typeOrder = ['missing', 'untranslated', 'empty', 'placeholder_mismatch', 'type_mismatch', 'extra_key', 'invalid_json'];
+    
+    for (const type of typeOrder) {
+      if (!byType[type] || byType[type].length === 0) continue;
+      
+      report += `#### ${type.replace(/_/g, ' ').toUpperCase()} (${byType[type].length})\n\n`;
 
-      const shown = byType[type].slice(0, 20);
+      const shown = byType[type].slice(0, 30);
       for (const issue of shown) {
         report += `- \`${issue.path}\`\n`;
+        if (issue.details) {
+          report += `  - Details: ${issue.details}\n`;
+        }
         if (issue.sourceValue) {
           report += `  - EN: "${issue.sourceValue.substring(0, 100)}${issue.sourceValue.length > 100 ? '...' : ''}"\n`;
         }
@@ -912,12 +1401,30 @@ function generateReport(results: ValidationResult[]): string {
         }
       }
 
-      if (byType[type].length > 20) {
-        report += `\n... and ${byType[type].length - 20} more\n`;
+      if (byType[type].length > 30) {
+        report += `\n... and ${byType[type].length - 30} more\n`;
       }
 
       report += '\n';
     }
+  }
+
+  // Recommendations
+  report += '## Recommendations\n\n';
+  if (totalMissing > 0) {
+    report += `1. **Add ${totalMissing} missing keys** - Run with \`--fix\` to auto-add placeholders\n`;
+  }
+  if (totalUntranslated > 0) {
+    report += `2. **Translate ${totalUntranslated} untranslated strings** - These appear to be English text in non-English locales\n`;
+  }
+  if (totalPlaceholder > 0) {
+    report += `3. **Fix ${totalPlaceholder} placeholder mismatches** - Ensure {{variables}} match between source and target\n`;
+  }
+  if (totalTypeMismatch > 0) {
+    report += `4. **Fix ${totalTypeMismatch} type mismatches** - Ensure arrays/objects match structure\n`;
+  }
+  if (totalExtra > 0) {
+    report += `5. **Review ${totalExtra} extra keys** - These may be orphaned translations no longer needed\n`;
   }
 
   return report;
@@ -929,18 +1436,32 @@ async function main() {
   const isCheck = args.includes('--check');
   const isFix = args.includes('--fix');
   const isReport = args.includes('--report');
+  const isAll = args.includes('--all');
   const localeArg = args.find((a) => a.startsWith('--locale='));
+  const namespaceArg = args.find((a) => a.startsWith('--namespace='));
   const targetLocale = localeArg ? localeArg.split('=')[1] : null;
+  const targetNamespace = namespaceArg ? namespaceArg.split('=')[1] + '.json' : null;
 
   const locales = targetLocale ? [targetLocale] : CONFIG.targetLocales;
-  const files = ['translation.json'];
+  
+  // Determine which files to check
+  let files: string[];
+  if (targetNamespace) {
+    files = [targetNamespace];
+  } else if (isAll || args.length === 0) {
+    files = ALL_NAMESPACES;
+  } else {
+    files = ['translation.json']; // Default to main translation file
+  }
 
-  console.log('🔍 Translation Validation Script\n');
+  console.log('🔍 Translation Validation Script (Extended)\n');
   console.log(`Source locale: ${CONFIG.sourceLocale}`);
   console.log(`Target locales: ${locales.join(', ')}`);
-  console.log(`Files: ${files.join(', ')}\n`);
+  console.log(`Namespaces: ${files.join(', ')}\n`);
 
   const allResults: ValidationResult[] = [];
+  let grandTotalKeys = 0;
+  let grandTotalIssues = 0;
 
   for (const locale of locales) {
     console.log(`\n📝 Checking ${locale}...`);
@@ -950,40 +1471,67 @@ async function main() {
       allResults.push(result);
 
       const issues = result.missingKeys + result.untranslatedKeys + result.emptyKeys;
-      const coverage = (((result.totalKeys - issues) / result.totalKeys) * 100).toFixed(1);
+      const coverage = result.totalKeys > 0 
+        ? (((result.totalKeys - issues) / result.totalKeys) * 100).toFixed(1)
+        : '0.0';
 
-      console.log(`   ${file}: ${coverage}% coverage`);
-      console.log(`   - Missing: ${result.missingKeys}`);
-      console.log(`   - Untranslated: ${result.untranslatedKeys}`);
-      console.log(`   - Empty: ${result.emptyKeys}`);
-      console.log(`   - Placeholder issues: ${result.placeholderMismatches}`);
+      grandTotalKeys += result.totalKeys;
+      grandTotalIssues += issues + result.placeholderMismatches + result.typeMismatches;
+
+      console.log(`   📄 ${file}: ${coverage}% coverage (${result.totalKeys} keys)`);
+      if (result.missingKeys > 0) console.log(`      ❌ Missing: ${result.missingKeys}`);
+      if (result.untranslatedKeys > 0) console.log(`      ⚠️  Untranslated: ${result.untranslatedKeys}`);
+      if (result.emptyKeys > 0) console.log(`      🔸 Empty: ${result.emptyKeys}`);
+      if (result.placeholderMismatches > 0) console.log(`      🔀 Placeholder issues: ${result.placeholderMismatches}`);
+      if (result.typeMismatches > 0) console.log(`      🔧 Type mismatches: ${result.typeMismatches}`);
+      if (result.extraKeys > 0) console.log(`      📌 Extra/orphaned keys: ${result.extraKeys}`);
 
       if (isFix && result.issues.length > 0) {
         const fixed = fixTranslations(locale, file, result.issues);
-        console.log(`   ✅ Fixed ${fixed} issues with glossary`);
+        console.log(`      ✅ Fixed ${fixed} issues with glossary`);
       }
     }
+  }
+
+  // Summary by locale
+  console.log('\n📊 Summary by Locale:\n');
+  const localeStats: Record<string, { total: number; issues: number }> = {};
+  for (const result of allResults) {
+    if (!localeStats[result.locale]) {
+      localeStats[result.locale] = { total: 0, issues: 0 };
+    }
+    localeStats[result.locale].total += result.totalKeys;
+    localeStats[result.locale].issues += result.missingKeys + result.untranslatedKeys + result.emptyKeys;
+  }
+  
+  for (const [locale, stats] of Object.entries(localeStats)) {
+    const coverage = ((stats.total - stats.issues) / stats.total * 100).toFixed(1);
+    const bar = '█'.repeat(Math.floor(parseFloat(coverage) / 5)) + '░'.repeat(20 - Math.floor(parseFloat(coverage) / 5));
+    console.log(`   ${locale.toUpperCase()}: ${bar} ${coverage}% (${stats.issues} issues)`);
   }
 
   if (isReport) {
     const report = generateReport(allResults);
     const reportPath = path.join(__dirname, 'translation-report.md');
     fs.writeFileSync(reportPath, report);
-    console.log(`\n📊 Report saved to: ${reportPath}`);
+    console.log(`\n📋 Report saved to: ${reportPath}`);
   }
 
   const totalIssues = allResults.reduce(
-    (sum, r) => sum + r.missingKeys + r.untranslatedKeys + r.emptyKeys + r.placeholderMismatches,
+    (sum, r) => sum + r.missingKeys + r.untranslatedKeys + r.emptyKeys + r.placeholderMismatches + r.typeMismatches,
     0
   );
 
+  console.log(`\n${'─'.repeat(50)}`);
   if (isCheck && totalIssues > 0) {
-    console.log(`\n❌ Found ${totalIssues} translation issues`);
+    console.log(`❌ Found ${totalIssues} translation issues across ${allResults.length} file(s)`);
     process.exit(1);
   } else if (totalIssues === 0) {
-    console.log('\n✅ All translations are complete!');
+    console.log('✅ All translations are complete!');
   } else {
-    console.log(`\n⚠️  Found ${totalIssues} translation issues`);
+    console.log(`⚠️  Found ${totalIssues} translation issues across ${allResults.length} file(s)`);
+    console.log('   Run with --fix to auto-fix using glossary');
+    console.log('   Run with --report to generate detailed report');
   }
 }
 
