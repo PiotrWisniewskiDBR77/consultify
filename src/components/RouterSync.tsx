@@ -86,6 +86,9 @@ export const RouterSync: React.FC = () => {
         }
         return;
       }
+      // Reset sessionMode to FREE when on /login to prevent demo auto-trigger
+      setSessionMode(SessionMode.FREE);
+      setAuthInitialStep(AuthStep.LOGIN);
       // Don't change currentView - let React Router handle /login directly
       console.log('[RouterSync] At /login - React Router handles this');
       return; // IMPORTANT: Stop here, don't let other effects interfere

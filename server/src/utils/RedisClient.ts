@@ -4,22 +4,13 @@
  *
  * Full TypeScript migration of redisClient.js
  * Provides Redis client with fallback to mock client
+ * 
+ * Uses LAZY initialization to ensure dotenv is loaded before checking env vars.
  */
 
 import { createClient, type RedisClientType } from 'redis';
 
 import logger from './Logger.js';
-
-let redisUrl: string | null = process.env.REDIS_URL || 'redis://localhost:6379';
-
-// Check if Railway variable expansion didn't work (still contains ${{)
-if (redisUrl && redisUrl.includes('${{')) {
-  logger.warn('[Redis] REDIS_URL appears to contain unexpanded Railway variable:', redisUrl);
-  logger.warn('[Redis] Falling back to individual REDIS_* variables or mock client');
-  redisUrl = null; // Force fallback
-}
-
-logger.info('[Redis] Initializing client...');
 
 // Mock client interface
 interface MockRedisClient {
@@ -54,46 +45,78 @@ function createMockClient(): MockRedisClient {
   return mockClient;
 }
 
-let client: RedisClientType | MockRedisClient;
+let client: RedisClientType | MockRedisClient | null = null;
+let initialized = false;
 
-if (process.env.MOCK_REDIS === 'true' || !redisUrl) {
+/**
+ * Lazy initialization - called on first use to ensure dotenv is loaded
+ */
+function initializeClient(): RedisClientType | MockRedisClient {
+  if (client && initialized) {
+    return client;
+  }
+
+  logger.info('[Redis] Initializing client (lazy)...');
+
+  // Check MOCK_REDIS first - this is set in .env
+  if (process.env.MOCK_REDIS === 'true') {
+    logger.info('[Redis] MOCK_REDIS=true, using Mock Client');
+    client = createMockClient();
+    initialized = true;
+    return client;
+  }
+
+  let redisUrl: string | null = process.env.REDIS_URL || 'redis://localhost:6379';
+
+  // Check if Railway variable expansion didn't work (still contains ${{)
+  if (redisUrl && redisUrl.includes('${{')) {
+    logger.warn('[Redis] REDIS_URL appears to contain unexpanded Railway variable:', redisUrl);
+    logger.warn('[Redis] Falling back to Mock Client');
+    redisUrl = null;
+  }
+
   if (!redisUrl) {
     logger.info('[Redis] No REDIS_URL configured, using Mock Client');
-  } else {
-    logger.info('[Redis] Using Mock Client');
+    client = createMockClient();
+    initialized = true;
+    return client;
   }
-  client = createMockClient();
-} else {
-  const connectTimeout = parseInt(process.env.REDIS_CONNECT_TIMEOUT || '30000', 10); // 30 seconds default for Railway
-  const commandTimeout = parseInt(process.env.REDIS_COMMAND_TIMEOUT || '10000', 10); // 10 seconds for commands
 
-  logger.info(`[Redis] Connecting to: ${redisUrl.replace(/:[^:@]+@/, ':****@')}`); // Hide password in logs
+  const connectTimeout = parseInt(process.env.REDIS_CONNECT_TIMEOUT || '5000', 10); // 5 seconds for dev
+
+  logger.info(`[Redis] Connecting to: ${redisUrl.replace(/:[^:@]+@/, ':****@')}`);
 
   client = createClient({
     url: redisUrl,
     socket: {
       connectTimeout: connectTimeout,
       reconnectStrategy: (retries: number) => {
-        if (retries > 10) {
-          logger.error('[Redis] Max reconnection attempts exceeded');
+        if (retries > 3) {
+          logger.warn('[Redis] Max reconnection attempts exceeded, using Mock Client');
           return new Error('Max reconnection attempts exceeded');
         }
-        const delay = Math.min(1000 * Math.pow(2, retries), 30000);
+        const delay = Math.min(1000 * Math.pow(2, retries), 5000);
         logger.info(`[Redis] Reconnecting in ${delay}ms (attempt ${retries})`);
         return delay;
       },
     },
   }) as RedisClientType;
 
-  client.on('error', (err: Error) => logger.error('[Redis] Client Error', err.message));
+  client.on('error', (err: Error) => {
+    logger.warn('[Redis] Client Error:', err.message);
+    // On error, fallback to mock
+    if (!initialized || !(client as MockRedisClient).isOpen) {
+      logger.info('[Redis] Falling back to Mock Client due to error');
+      client = createMockClient();
+    }
+  });
   client.on('connect', () => logger.info('[Redis] Connecting...'));
   client.on('ready', () => logger.info('[Redis] Connected and ready'));
 
-  // Connect immediately with timeout
+  // Connect with short timeout
   (async () => {
     try {
       if (!(client as RedisClientType).isOpen) {
-        // Add timeout to prevent hanging
         const connectPromise = (client as RedisClientType).connect();
         const timeoutPromise = new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('Redis connection timeout')), connectTimeout)
@@ -102,15 +125,23 @@ if (process.env.MOCK_REDIS === 'true' || !redisUrl) {
         logger.info('[Redis] Successfully connected');
       }
     } catch (err: any) {
-      logger.error('[Redis] Connection Failed:', (err as Error).message);
-      // Fallback to mock on connection failure
+      logger.warn('[Redis] Connection Failed:', (err as Error).message);
       logger.info('[Redis] Falling back to Mock Client');
-      const mockClient = createMockClient();
-      // Replace the broken client with mock
-      client = mockClient;
+      client = createMockClient();
     }
   })();
+
+  initialized = true;
+  return client;
 }
 
-export default client;
+// Export a proxy that lazily initializes on first use
+const clientProxy = new Proxy({} as RedisClientType | MockRedisClient, {
+  get(_, prop) {
+    const realClient = initializeClient();
+    return (realClient as any)[prop];
+  },
+});
+
+export default clientProxy;
 export type { MockRedisClient };

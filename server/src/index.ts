@@ -71,6 +71,16 @@ if (!isTest && !process.env.SKIP_ENV_VALIDATION) {
   }
 }
 
+// Run startup configuration checks
+if (!isTest) {
+  try {
+    const { runStartupChecks } = await import('./utils/startupChecks.js');
+    await runStartupChecks();
+  } catch (error: any) {
+    logger.warn('[Server] Startup checks failed:', error.message);
+  }
+}
+
 // Trust proxy (required for Railway and other reverse proxies)
 app.set('trust proxy', 1);
 
@@ -347,42 +357,42 @@ app.use(
   helmet({
     contentSecurityPolicy: isProduction
       ? {
-          directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com'],
-            styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-            imgSrc: [
-              "'self'",
-              'data:',
-              'blob:',
-              'https://www.transparenttextures.com',
-              'https://*.stripe.com',
-              'https://www.gravatar.com',
-              'https://*.googleusercontent.com',
-            ],
-            connectSrc: [
-              "'self'",
-              'wss:',
-              'https://api.openai.com',
-              'https://generativelanguage.googleapis.com',
-              'https://api.anthropic.com',
-              'https://api.mistral.ai',
-              'https://api.stripe.com',
-              'https://*.sentry.io',
-            ],
-            fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
-            objectSrc: ["'none'"],
-            mediaSrc: ["'self'", 'blob:'],
-            frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
-            workerSrc: ["'self'", 'blob:'],
-            childSrc: ["'self'", 'blob:'],
-            formAction: ["'self'"],
-            frameAncestors: ["'none'"],
-            baseUri: ["'self'"],
-            upgradeInsecureRequests: isProduction ? [] : null,
-          },
-          reportOnly: false,
-        }
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com'],
+          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+          imgSrc: [
+            "'self'",
+            'data:',
+            'blob:',
+            'https://www.transparenttextures.com',
+            'https://*.stripe.com',
+            'https://www.gravatar.com',
+            'https://*.googleusercontent.com',
+          ],
+          connectSrc: [
+            "'self'",
+            'wss:',
+            'https://api.openai.com',
+            'https://generativelanguage.googleapis.com',
+            'https://api.anthropic.com',
+            'https://api.mistral.ai',
+            'https://api.stripe.com',
+            'https://*.sentry.io',
+          ],
+          fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
+          objectSrc: ["'none'"],
+          mediaSrc: ["'self'", 'blob:'],
+          frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
+          workerSrc: ["'self'", 'blob:'],
+          childSrc: ["'self'", 'blob:'],
+          formAction: ["'self'"],
+          frameAncestors: ["'none'"],
+          baseUri: ["'self'"],
+          upgradeInsecureRequests: isProduction ? [] : null,
+        },
+        reportOnly: false,
+      }
       : false,
     hsts: {
       maxAge: 31536000,

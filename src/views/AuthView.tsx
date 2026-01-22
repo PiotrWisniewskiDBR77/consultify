@@ -94,10 +94,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
     }
   }, [showQuickAccess]);
 
-  // Auto-trigger demo redirect when in DEMO mode
-  // Auto-trigger demo Login when in DEMO mode
+  // Auto-trigger demo login ONLY when explicitly navigating to /demo
+  // Don't auto-trigger on /login - user wants to log in with credentials
   React.useEffect(() => {
-    if (targetMode === SessionMode.DEMO) {
+    const isOnDemoRoute = window.location.pathname === '/demo';
+    if (targetMode === SessionMode.DEMO && isOnDemoRoute) {
       // Auto-login for seamless demo experience
       startDemo();
     }

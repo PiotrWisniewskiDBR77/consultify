@@ -38,6 +38,7 @@
     "test:cleanup": "node scripts/testing/cleanup-test-artifacts.js",
     "test:audit": "npx tsx scripts/testing/run-audit.ts --quick",
     "test:audit:full": "npx tsx scripts/testing/run-audit.ts --full --report --update-registry",
+    "test:flaky": "npx tsx scripts/testing/flaky-test-tracker.ts --report",
     "test:coverage": "npm run test:all -- --coverage",
     "test:coverage:check": "npm run test:coverage && node --loader ts-node/esm scripts/check-coverage.ts",
     "test:coverage:lcov": "npm run test:coverage -- --reporter=lcov",

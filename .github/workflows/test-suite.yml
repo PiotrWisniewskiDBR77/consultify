@@ -383,3 +383,33 @@ jobs:
           echo "| E2E Tests | ${{ needs.e2e-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Performance Tests | ${{ needs.performance-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Critical Path Coverage | ${{ needs.critical-path-coverage.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+
+  # ═══════════════════════════════════════════════════════════════
+  # FLAKY TEST ANALYSIS
+  # ═══════════════════════════════════════════════════════════════
+  flaky-check:
+    name: 🎯 Flaky Test Analysis
+    runs-on: ubuntu-latest
+    needs: [unit-tests, component-tests, integration-tests]
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run flaky test analysis
+        run: npx tsx scripts/testing/flaky-test-tracker.ts --report
+      
+      - name: Upload flaky registry
+        uses: actions/upload-artifact@v4
+        with:
+          name: flaky-tests-registry
+          path: test-results/flaky-tests.json
+          retention-days: 90

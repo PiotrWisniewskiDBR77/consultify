@@ -18,6 +18,7 @@ import { useDemo } from '../../hooks/useDemo';
 import { changeLanguage, SUPPORTED_LANGUAGES } from '../../i18n';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, SessionMode } from '../../types';
+import { languageStartsWith } from '../../utils/i18nHelpers';
 
 interface UserProfileMenuProps {
   className?: string;
@@ -182,7 +183,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                       changeLanguage(lang);
                     }}
                     className={`text-[10px] px-2 py-1 rounded border transition-colors font-medium uppercase min-w-[32px] ${
-                      i18n.language?.startsWith(lang)
+                      languageStartsWith(lang)
                         ? 'bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-900/20 dark:border-purple-500/30 dark:text-purple-300'
                         : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-navy-700 dark:hover:bg-white/5 dark:text-slate-400'
                     }`}
