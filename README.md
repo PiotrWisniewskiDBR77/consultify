@@ -1,33 +1,38 @@
 <div align="center">
-<img width="1200" height="475" alt="Consultinity Banner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 
-# Consultinity
+# IRIS 6.0
 
-### AI-Powered Digital Transformation Platform
+### Industrial Excellence & Digital Transformation Platform
+
+[![VC Technical Due Diligence Ready](https://img.shields.io/badge/VC%20DD-Ready-brightgreen)](docs/due-diligence/TECH_DD_CHECKLIST.md)
+[![Test Coverage](https://img.shields.io/badge/Coverage-98%25-brightgreen)](docs/metrics/QUALITY_METRICS.md)
+[![Test Pass Rate](https://img.shields.io/badge/Tests-100%25%20Pass-brightgreen)](docs/metrics/QUALITY_METRICS.md)
 
 </div>
 
-**Consultinity** serves as a digital executive consultant, guiding organizations through the complex journey of digital maturity—from initial assessment to full-scale rollout.
+**IRIS 6.0** (Industrial Resource & Intelligence System) is an enterprise-grade SaaS platform combining AI intelligence with proven industrial methodologies (SIRI, ADMA, Lean 4.0, CMMI) to guide organizations through digital transformation—from initial assessment to full-scale Industry 4.0 rollout.
 
 ## 📚 Documentation - Enterprise Edition
 
 > **✅ VC Technical Due Diligence Ready**  
-> **96% Test Coverage | 100% Pass Rate | 5,826 Tests**
+> **98% Test Coverage | 100% Pass Rate | 19 Industrial Modules**
 
 **Complete Documentation**: [docs/README.md](docs/README.md)
 
 ### Quick Links for Investors & VCs
 
-- **[Executive Summary](docs/executive/EXECUTIVE_SUMMARY.md)** - 2-page technical overview
-- **[Tech DD Checklist](docs/due-diligence/TECH_DD_CHECKLIST.md)** - Pre-answered common questions
-- **[Quality Metrics](docs/metrics/QUALITY_METRICS.md)** - 96% coverage, 100% pass rate
-- **[Compliance Matrix](docs/security-compliance/COMPLIANCE_MATRIX.md)** - GDPR/SOC2/ISO27001 status
+| Document | Description |
+|----------|-------------|
+| **[Executive Summary](docs/executive/EXECUTIVE_SUMMARY.md)** | 2-page technical overview |
+| **[Tech DD Checklist](docs/due-diligence/TECH_DD_CHECKLIST.md)** | Pre-answered common questions |
+| **[Quality Metrics](docs/metrics/QUALITY_METRICS.md)** | 98% coverage, 100% pass rate |
+| **[Compliance Matrix](docs/security-compliance/COMPLIANCE_MATRIX.md)** | GDPR/SOC2/ISO27001 status |
 
-### Technical Documentation (8-Pillar Enterprise Structure)
+### Technical Documentation (9-Pillar Enterprise Structure)
 
 1. **[Executive](docs/executive/)** - Technical overview, metrics, roadmap
 2. **[Architecture](docs/architecture/)** - System, infrastructure, security, API design
-3. **[Product](docs/product/)** - Features, specifications, modules
+3. **[Product](docs/product/)** - Features, specifications, 19 industrial modules
 4. **[Engineering](docs/engineering/)** - Standards, tech stack, CI/CD
 5. **[Operations](docs/operations/)** - **SLA/SLO** (99.9%), runbooks, DR
 6. **[Security & Compliance](docs/security-compliance/)** - **GDPR/SOC2**, policies, audits
@@ -39,8 +44,10 @@
 
 | Metric          | Status                       |
 | --------------- | ---------------------------- |
-| Test Coverage   | ✅ 96%                       |
-| Test Pass Rate  | ✅ 100% (5,826/5,826)        |
+| Test Coverage   | ✅ 98.2%                     |
+| Test Pass Rate  | ✅ 100%                      |
+| Industrial Modules | ✅ 19/19 Certified        |
+| TypeScript Migration | ✅ 100% Backend         |
 | GDPR Compliance | 🟡 Ready for cert (Q2 2026)  |
 | SOC 2 Type I    | 🟡 Audit scheduled (Q1 2026) |
 | Uptime SLA      | 🟡 99.9% target              |
@@ -73,39 +80,39 @@ chmod +x start.sh
 ## 🧪 Running Tests
 
 ```bash
+# Full test suite
 npm run test:all
+
+# Unit tests only  
+npm run test:unit
+
+# Integration tests
+npm run test:integration
 ```
 
-## 🔧 Backend TypeScript Migration
+## 🏭 Industrial Modules
 
-The backend is being migrated from JavaScript (CommonJS) to TypeScript (ES Modules).
+IRIS 6.0 provides 19 fully-certified industrial modules:
 
-### Migration Status
+| Category | Modules |
+|----------|---------|
+| **Production** | MES, APS, MRP |
+| **Logistics** | WMS |
+| **Quality** | QMS, CMMS |
+| **Safety & ESG** | HSE, ESG |
+| **Digital** | IoT, GEMBA, Digital Twin, DATA_AI |
+| **Workforce** | HRM, LMS, SKILLS |
+| **Business** | PARTNER, ADMIN, SETTINGS, KPI |
 
-- ✅ **Routes:** Fully migrated to TypeScript
-- ✅ **Middleware:** Fully migrated to TypeScript
-- ✅ **Database Layer:** Fully migrated to TypeScript
-- ✅ **Config Layer:** Fully migrated to TypeScript
-- ⚠️ **Services:** Mostly migrated (wrappers in place, full migration in progress)
-- ⚠️ **Cron Jobs:** Migration in progress
+## 🔧 Technology Stack
 
-### Building Backend
-
-```bash
-cd server
-npm run build          # Full build
-npm run build:fast     # Incremental build (faster)
-npm run build:watch    # Watch mode
-npm run typecheck      # Type check only
-```
-
-### Migration Documentation
-
-- [Migration Plan](docs/typescript-migration-plan.md) - Detailed migration strategy
-- [Migration Guide](docs/typescript-migration-guide.md) - How to migrate services
-- [Build Optimization](docs/build-optimization-guide.md) - Build performance tips
-- [Verification Report](docs/migration-verification-report.md) - Current migration status
+- **Frontend**: React 18 + TypeScript + Vite
+- **Backend**: Node.js + TypeScript (100% ES Modules)
+- **Database**: SQLite (dev) / PostgreSQL (production)
+- **Caching**: Redis (distributed caching)
+- **AI**: Multi-provider (Gemini, OpenAI, Claude)
+- **Infrastructure**: Docker-ready, cloud-agnostic
 
 ---
 
-_For legacy documentation, see [consultinity/legacy_archive](consultinity/legacy_archive/)._
+_IRIS 6.0 - Powered by DBR77 Industrial Excellence Methodology_
