@@ -1,0 +1,103 @@
+{
+  "locale": "es",
+  "translations": {
+    "organization": {
+      "name": "TechnoLex Industries",
+      "description": "TechnoLex Industries es un fabricante europeo líder de componentes automotrices de precisión, sirviendo a los principales OEM en todo el continente. Con 30 años de excelencia en ingeniería y un compromiso con la innovación, TechnoLex está emprendiendo un ambicioso viaje de transformación digital para convertirse en líder de Smart Factory.",
+      "vision": "Convertirse en el fabricante de componentes automotrices más digitalmente avanzado de Europa Central para 2027",
+      "mission": "Entrega de componentes automotrices de precisión a través de la innovación, calidad y prácticas sostenibles"
+    },
+    "project": {
+      "name": "Programa de Transformación Digital 2027",
+      "description": "Una iniciativa integral de transformación digital de 3 años para modernizar las operaciones de fabricación de TechnoLex, aprovechando las tecnologías de la Industria 4.0 para lograr la excelencia operativa y la ventaja competitiva."
+    },
+    "initiatives": {
+      "init-001": {
+        "name": "Implementación de Smart Factory 4.0",
+        "summary": "Transformar las instalaciones de producción de Varsovia y Breslavia en fábricas inteligentes completamente conectadas con monitoreo en tiempo real, flujos de trabajo automatizados y optimización impulsada por IA.",
+        "description": "Esta iniciativa insignia tiene como objetivo digitalizar nuestras operaciones de piso de fabricación a través del despliegue integral de IoT, conectividad de máquinas y análisis de datos en tiempo real."
+      },
+      "init-002": {
+        "name": "Sistema de Mantenimiento Predictivo",
+        "summary": "Implementar mantenimiento predictivo impulsado por IA para reducir el tiempo de inactividad no planificado en un 50% y extender la vida útil del equipo.",
+        "description": "Aprovechar modelos de aprendizaje automático entrenados con datos de vibración, temperatura y rendimiento para predecir fallas de equipos antes de que ocurran."
+      },
+      "init-003": {
+        "name": "Plataforma de Gemelo Digital",
+        "summary": "Crear réplicas virtuales de líneas de producción para simulación, optimización y análisis de escenarios hipotéticos.",
+        "description": "Implementar tecnología de gemelo digital para simular escenarios de producción, optimizar el balanceo de líneas y probar cambios virtualmente antes de la implementación física."
+      },
+      "init-004": {
+        "name": "Migración ERP a la Nube (SAP S/4HANA)",
+        "summary": "Migrar del SAP ECC heredado a S/4HANA Cloud para procesos empresariales modernos en tiempo real.",
+        "description": "Modernización integral de ERP que incluye finanzas, compras, planificación de producción y ventas."
+      },
+      "init-005": {
+        "name": "Quality Vision AI",
+        "summary": "Implementar inspección de calidad basada en visión por computadora para reducir las tasas de defectos del 1,2% al 0,3%.",
+        "description": "Implementar estaciones de inspección visual impulsadas por IA en puntos críticos de control de calidad."
+      },
+      "init-006": {
+        "name": "Plataforma de Visibilidad de la Cadena de Suministro",
+        "summary": "Implementar visibilidad de extremo a extremo de la cadena de suministro con seguimiento en tiempo real y alertas automatizadas.",
+        "description": "Desplegar una torre de control de cadena de suministro basada en la nube que proporcione visibilidad a través de más de 120 proveedores."
+      },
+      "init-007": {
+        "name": "Espacio de Trabajo Digital del Empleado",
+        "summary": "Lanzar un portal de empleados moderno con autoservicio, herramientas de colaboración y acceso móvil.",
+        "description": "Reemplazar la intranet heredada con un espacio de trabajo digital basado en Microsoft 365."
+      },
+      "init-008": {
+        "name": "Gestión y Optimización de Energía",
+        "summary": "Implementar monitoreo inteligente de energía y optimización impulsada por IA para reducir los costos de energía en un 20%.",
+        "description": "Instalar medidores inteligentes, integrar con APIs de servicios públicos y usar ML para optimizar patrones de consumo de energía."
+      }
+    },
+    "assessments": {
+      "drd-strategy": {
+        "name": "Estrategia Digital",
+        "description": "Claridad y alineación de la visión de transformación digital con los objetivos empresariales"
+      },
+      "drd-leadership": {
+        "name": "Liderazgo y Cultura",
+        "description": "Patrocinio ejecutivo y preparación organizacional para el cambio digital"
+      },
+      "drd-technology": {
+        "name": "Infraestructura Tecnológica",
+        "description": "Estado de los sistemas de TI, adopción de la nube y deuda técnica"
+      },
+      "drd-data": {
+        "name": "Datos y Análisis",
+        "description": "Calidad de datos, accesibilidad y capacidades analíticas"
+      },
+      "drd-operations": {
+        "name": "Operaciones Conectadas",
+        "description": "Nivel de automatización, adopción de IoT y digitalización de procesos"
+      },
+      "drd-people": {
+        "name": "Habilidades Digitales",
+        "description": "Competencias digitales de los empleados y cultura de aprendizaje continuo"
+      }
+    },
+    "roadmap": {
+      "phases": {
+        "phase-1": {
+          "name": "Fundamento",
+          "description": "Establecer infraestructura digital y marco de gobernanza"
+        },
+        "phase-2": {
+          "name": "Aceleración",
+          "description": "Escalar iniciativas digitales y construir capacidades"
+        },
+        "phase-3": {
+          "name": "Optimización",
+          "description": "Optimizar operaciones y expandir a todas las instalaciones"
+        },
+        "phase-4": {
+          "name": "Excelencia",
+          "description": "Lograr excelencia operativa e innovación continua"
+        }
+      }
+    }
+  }
+}

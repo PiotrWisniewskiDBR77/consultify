@@ -1,0 +1,507 @@
+/**
+ * Premium Report Print CSS
+ * 
+ * McKinsey/BCG-grade print styles for Puppeteer PDF generation.
+ */
+
+/* Base Reset */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* Typography */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: #1e293b;
+    background: white;
+}
+
+h1 {
+    font-family: 'Fraunces', 'Georgia', serif;
+    font-size: 32pt;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 16px;
+    line-height: 1.2;
+}
+
+h2 {
+    font-family: 'Inter', sans-serif;
+    font-size: 18pt;
+    font-weight: 600;
+    color: #1e293b;
+    margin-top: 0;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+h3 {
+    font-size: 14pt;
+    font-weight: 600;
+    color: #334155;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+h4 {
+    font-size: 12pt;
+    font-weight: 600;
+    color: #475569;
+    margin-top: 16px;
+    margin-bottom: 8px;
+}
+
+p {
+    margin-bottom: 12px;
+}
+
+strong {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+/* Cover Page */
+.cover-page {
+    page-break-after: always;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+    color: white;
+    padding: 60px;
+    position: relative;
+}
+
+.cover-page::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.cover-page h1 {
+    font-size: 42pt;
+    color: white;
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+.cover-page .subtitle {
+    font-size: 16pt;
+    font-weight: 400;
+    opacity: 0.9;
+    margin-bottom: 32px;
+    position: relative;
+    z-index: 1;
+}
+
+.cover-page .cover-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 12pt;
+    opacity: 0.8;
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 1;
+}
+
+.cover-page .organization-name {
+    font-size: 14pt;
+    font-weight: 500;
+    margin-top: 40px;
+    position: relative;
+    z-index: 1;
+}
+
+.cover-page .confidential-badge {
+    position: absolute;
+    bottom: 40px;
+    right: 40px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    font-size: 9pt;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.org-logo {
+    max-width: 180px;
+    max-height: 80px;
+    margin-bottom: 40px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Table of Contents */
+.toc {
+    page-break-after: always;
+}
+
+.toc-list {
+    margin-top: 24px;
+}
+
+.toc-item {
+    display: flex;
+    align-items: baseline;
+    padding: 8px 0;
+    border-bottom: 1px dotted #e2e8f0;
+}
+
+.toc-title {
+    font-weight: 500;
+}
+
+.toc-dots {
+    flex: 1;
+    border-bottom: 1px dotted #cbd5e1;
+    margin: 0 8px;
+}
+
+.toc-page {
+    font-weight: 600;
+    color: #6366f1;
+}
+
+/* Sections */
+.section {
+    page-break-before: always;
+    padding: 0;
+}
+
+.section:first-of-type {
+    page-break-before: avoid;
+}
+
+.section-intro {
+    font-size: 12pt;
+    color: #475569;
+    margin-bottom: 24px;
+    line-height: 1.7;
+}
+
+/* Metrics Grid */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin: 24px 0;
+}
+
+.metric-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 16px;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border-radius: 12px;
+    color: white;
+    text-align: center;
+}
+
+.metric-card.primary {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+}
+
+.metric-card.success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.metric-card.warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.metric-card.danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.metric-value {
+    font-size: 32pt;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.metric-label {
+    font-size: 10pt;
+    opacity: 0.95;
+    margin-top: 8px;
+}
+
+.metric-sublabel {
+    font-size: 8pt;
+    opacity: 0.7;
+    margin-top: 4px;
+}
+
+/* Charts */
+.chart-container {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 24px 0;
+}
+
+.chart-container h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+.chart-note {
+    text-align: center;
+    color: #64748b;
+    font-size: 10pt;
+    margin-bottom: 16px;
+}
+
+.radar-svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 10pt;
+}
+
+thead tr {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+    color: white;
+}
+
+th {
+    padding: 12px 16px;
+    font-weight: 600;
+    text-align: left;
+}
+
+th.center {
+    text-align: center;
+}
+
+td {
+    padding: 12px 16px;
+    border: 1px solid #e5e7eb;
+    background: white;
+}
+
+td.center {
+    text-align: center;
+}
+
+tr:nth-child(even) td {
+    background: #f8fafc;
+}
+
+.axis-name {
+    font-weight: 500;
+}
+
+/* Gap Badge */
+.gap-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 11pt;
+}
+
+/* Progress Bar */
+.progress-bar {
+    position: relative;
+    height: 20px;
+    background: #e5e7eb;
+    border-radius: 10px;
+    overflow: visible;
+}
+
+.progress-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    border-radius: 10px;
+}
+
+.progress-target {
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    width: 3px;
+    background: #10b981;
+    border-radius: 2px;
+}
+
+/* Key Insights */
+.key-insights {
+    margin: 24px 0;
+}
+
+.insight-box {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-left: 4px solid #0284c7;
+    padding: 20px 24px;
+    border-radius: 0 12px 12px 0;
+    margin: 16px 0;
+}
+
+.insight-lead {
+    font-size: 12pt;
+    line-height: 1.7;
+    color: #0c4a6e;
+    margin: 0;
+}
+
+/* Priority List */
+.priority-list {
+    margin: 16px 0 16px 24px;
+}
+
+.priority-list li {
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+.priority-indicator {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 8pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-left: 8px;
+}
+
+.priority-indicator.critical {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.priority-indicator.high {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* Priority Matrix */
+.priority-matrix {
+    margin: 24px 0;
+}
+
+.matrix-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    background: #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.matrix-quadrant {
+    padding: 20px;
+    text-align: center;
+}
+
+.matrix-quadrant h4 {
+    margin: 0 0 8px 0;
+    font-size: 12pt;
+}
+
+.matrix-quadrant p {
+    margin: 0;
+    font-size: 9pt;
+    color: #64748b;
+}
+
+.matrix-quadrant.quick-wins {
+    background: #ecfdf5;
+}
+
+.matrix-quadrant.strategic {
+    background: #dbeafe;
+}
+
+.matrix-quadrant.maintain {
+    background: #f1f5f9;
+}
+
+.matrix-quadrant.avoid {
+    background: #fef3c7;
+}
+
+/* User Sections */
+.user-section {
+    page-break-inside: avoid;
+}
+
+.section-content {
+    margin-top: 16px;
+}
+
+/* Footer */
+.report-footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+    font-size: 9pt;
+    color: #64748b;
+}
+
+.generated-info {
+    margin-bottom: 8px;
+}
+
+.disclaimer {
+    font-style: italic;
+}
+
+/* Page Breaks */
+@page {
+    size: A4;
+    margin: 20mm 15mm 25mm 15mm;
+}
+
+@page :first {
+    margin: 0;
+}
+
+/* Print Utilities */
+.no-print {
+    display: none !important;
+}
+
+.page-break-before {
+    page-break-before: always;
+}
+
+.page-break-after {
+    page-break-after: always;
+}
+
+.avoid-break {
+    page-break-inside: avoid;
+}

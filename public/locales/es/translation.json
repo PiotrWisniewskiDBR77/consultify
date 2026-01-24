@@ -1,0 +1,200 @@
+{
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "close": "Cerrar",
+    "loading": "Cargando",
+    "error": "Error",
+    "success": "Éxito",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "of": "de",
+    "add": "Añadir",
+    "remove": "Eliminar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "view": "Ver",
+    "download": "Descargar",
+    "upload": "Subir",
+    "submit": "Enviar",
+    "confirm": "Confirmar",
+    "yes": "Sí",
+    "no": "No"
+  },
+  "sidebar": {
+    "dashboard": "Panel",
+    "settings": "Configuración",
+    "help": "Ayuda",
+    "knowledge": "Base de Conocimiento",
+    "organization": "Organización",
+    "adminPanel": "Panel de Admin",
+    "logOut": "Cerrar Sesión",
+    "chat": "Chat IA",
+    "aiChat": "Chat",
+    "myWork": "Mi Trabajo",
+    "interview": "Entrevista",
+    "tools": "Herramientas",
+    "discoveryTools": "Herramientas",
+    "assessment": "Evaluación",
+    "assessmentOverview": "Resumen",
+    "myAssessments": "Mis Evaluaciones",
+    "reviewerDashboard": "Panel del Revisor",
+    "initiatives": "Iniciativas",
+    "execution": "Ejecución",
+    "benefits": "Beneficios",
+    "economics": "Economía",
+    "reports": "Informes",
+    "partnerPortal": "Portal de Socios"
+  },
+  "widgets": {
+    "help": {
+      "title": "Centro de Ayuda",
+      "tooltip": "Centro de Ayuda"
+    },
+    "feedback": {
+      "title": "Comentarios",
+      "tooltip": "Comentarios"
+    },
+    "documents": {
+      "title": "Documentos",
+      "tooltip": "Documentos"
+    }
+  },
+  "myWork": {
+    "title": "Mi Trabajo",
+    "inbox": "Bandeja de Entrada",
+    "focus": "Enfoque",
+    "calendar": "Calendario",
+    "tasks": "Tareas"
+  },
+  "step1": {
+    "title": "Paso 1"
+  },
+  "interview": {
+    "title": "Entrevista de Descubrimiento",
+    "newSession": "Nueva Sesión",
+    "history": "Historial",
+    "categories": {
+      "strategy": "Estrategia",
+      "operations": "Operaciones",
+      "digital": "Digital",
+      "people": "Personal",
+      "finance": "Finanzas"
+    },
+    "tabs": {
+      "questions": "Preguntas",
+      "notes": "Notas",
+      "evidence": "Evidencia",
+      "summary": "Resumen"
+    },
+    "actions": {
+      "addQuestion": "Añadir pregunta",
+      "addNote": "Añadir nota",
+      "complete": "Completar Entrevista"
+    },
+    "status": {
+      "inProgress": "En Progreso",
+      "completed": "Completado",
+      "archived": "Archivado"
+    },
+    "companyFacts": {
+      "title": "Datos de la Empresa",
+      "profile": "Perfil de la Empresa",
+      "metrics": "Métricas Clave",
+      "stakeholders": "Partes Interesadas",
+      "gaps": "Brechas de Información"
+    }
+  },
+  "assessment": {
+    "title": "Evaluación",
+    "overview": "Resumen",
+    "drd": "Evaluación DRD",
+    "siri": "Marco SIRI",
+    "adma": "Marco ADMA",
+    "cmmi": "Marco CMMI",
+    "lean": "Lean 4.0"
+  },
+  "initiatives": {
+    "title": "Iniciativas",
+    "roadmap": "Hoja de Ruta",
+    "portfolio": "Portafolio"
+  },
+  "execution": {
+    "title": "Centro de Ejecución",
+    "dashboard": "Panel",
+    "calendar": "Calendario",
+    "decisions": "Decisiones"
+  },
+  "benefits": {
+    "title": "Realización de Beneficios",
+    "kpis": "KPIs",
+    "lessons": "Lecciones Aprendidas"
+  },
+  "economics": {
+    "title": "Economía",
+    "analysis": "Análisis",
+    "scenarios": "Escenarios"
+  },
+  "reports": {
+    "title": "Informes",
+    "management": "Informes de Gestión",
+    "assessment": "Informes de Evaluación"
+  },
+  "auth": {
+    "logIn": "Iniciar Sesión",
+    "logOut": "Cerrar Sesión",
+    "welcomeBack": "Bienvenido de nuevo",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "register": "Registrarse"
+  },
+  "help": {
+    "title": "Centro de Ayuda",
+    "knowledge": {
+      "title": "Base de Conocimiento",
+      "searchPlaceholder": "Buscar artículos...",
+      "allCategories": "Todos",
+      "noSearchResults": "No se encontraron artículos para tu búsqueda.",
+      "noArticles": "No hay artículos disponibles en esta categoría.",
+      "articleNotFound": "Artículo no encontrado.",
+      "minRead": "min de lectura",
+      "views": "vistas",
+      "relatedModules": "Módulos Relacionados",
+      "shareArticle": "Compartir Artículo",
+      "featured": "Destacados",
+      "popular": "Popular",
+      "recent": "Reciente",
+      "readMore": "Leer más",
+      "backToLibrary": "Volver a la Biblioteca",
+      "categories": "Categorías",
+      "articles": "Artículos",
+      "searchResults": "Resultados de Búsqueda",
+      "tableOfContents": "Tabla de Contenidos",
+      "wasHelpful": "¿Te fue útil este artículo?",
+      "yes": "Sí",
+      "no": "No",
+      "feedbackThanks": "¡Gracias por tu comentario!",
+      "relatedArticles": "Artículos Relacionados",
+      "gettingStarted": "Primeros Pasos",
+      "tutorials": "Tutoriales",
+      "bestPractices": "Mejores Prácticas",
+      "faq": "Preguntas Frecuentes",
+      "troubleshooting": "Solución de Problemas"
+    }
+  },
+  "settings": {
+    "title": "Configuración",
+    "profile": "Perfil",
+    "billing": "Facturación",
+    "ai": "Configuración de IA",
+    "notifications": "Notificaciones",
+    "integrations": "Integraciones",
+    "security": "Seguridad",
+    "appearance": "Apariencia"
+  }
+}

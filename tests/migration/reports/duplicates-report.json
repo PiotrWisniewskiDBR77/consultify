@@ -1,0 +1,1187 @@
+{
+  "timestamp": "2026-01-04T12:09:46.035Z",
+  "duplicates": [
+    {
+      "oldJs": "services/BaseService.js",
+      "newTs": "services/BaseService.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 1,
+      "commonFunctions": 1,
+      "commonFunctionNames": ["BaseService"],
+      "recommendation": "Potential duplicate - verify migration completeness before removing"
+    },
+    {
+      "oldJs": "services/accessCodeService.js",
+      "newTs": "services/accessCodeService.ts",
+      "jsFunctions": 8,
+      "tsFunctions": 13,
+      "commonFunctions": 5,
+      "commonFunctionNames": [
+        "hashCode",
+        "generateHumanCode",
+        "safeParseJson",
+        "withImmediateTransaction",
+        "exhausted"
+      ],
+      "recommendation": "Potential duplicate - verify migration completeness before removing"
+    },
+    {
+      "oldJs": "services/accessPolicyService.js",
+      "newTs": "services/accessPolicyService.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 1,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/adkarService.js",
+      "newTs": "services/adkarService.ts",
+      "jsFunctions": 2,
+      "tsFunctions": 9,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/adminAlertService.js",
+      "newTs": "services/adminAlertService.ts",
+      "jsFunctions": 15,
+      "tsFunctions": 15,
+      "commonFunctions": 15,
+      "commonFunctionNames": [
+        "setDependencies",
+        "createAdminAlert",
+        "checkAndTriggerAlerts",
+        "checkAlert",
+        "checkCostSpike",
+        "checkUsageAnomaly",
+        "checkBudgetExceeded",
+        "checkSeatLimit",
+        "triggerAlert",
+        "sendAlert"
+      ],
+      "recommendation": "Potential duplicate - verify migration completeness before removing"
+    },
+    {
+      "oldJs": "services/adminAuditService.js",
+      "newTs": "services/adminAuditService.ts",
+      "jsFunctions": 11,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/adminSessionService.js",
+      "newTs": "services/adminSessionService.ts",
+      "jsFunctions": 11,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/abTesting.js",
+      "newTs": "services/ai/abTesting.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/actionExecutor.js",
+      "newTs": "services/ai/actionExecutor.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/adaptiveResponseService.js",
+      "newTs": "services/ai/adaptiveResponseService.ts",
+      "jsFunctions": 3,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/agents/agentCoordinator.js",
+      "newTs": "services/ai/agents/agentCoordinator.ts",
+      "jsFunctions": 3,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/agents/baseAgent.js",
+      "newTs": "services/ai/agents/baseAgent.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/agents/changeAgent.js",
+      "newTs": "services/ai/agents/changeAgent.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/agents/financeAgent.js",
+      "newTs": "services/ai/agents/financeAgent.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/agents/index.js",
+      "newTs": "services/ai/agents/index.ts",
+      "jsFunctions": 3,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/agents/pmoAgent.js",
+      "newTs": "services/ai/agents/pmoAgent.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/agents/riskAgent.js",
+      "newTs": "services/ai/agents/riskAgent.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/agents/strategyAgent.js",
+      "newTs": "services/ai/agents/strategyAgent.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/aiContext.js",
+      "newTs": "services/ai/aiContext.ts",
+      "jsFunctions": 6,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/aiGateway.js",
+      "newTs": "services/ai/aiGateway.ts",
+      "jsFunctions": 2,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/aiHealthAlertService.js",
+      "newTs": "services/ai/aiHealthAlertService.ts",
+      "jsFunctions": 0,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/aiHealthService.js",
+      "newTs": "services/ai/aiHealthService.ts",
+      "jsFunctions": 3,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/aiMemoryMetricsService.js",
+      "newTs": "services/ai/aiMemoryMetricsService.ts",
+      "jsFunctions": 2,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/aiPipeline.js",
+      "newTs": "services/ai/AIPipeline.ts",
+      "jsFunctions": 15,
+      "tsFunctions": 1,
+      "commonFunctions": 1,
+      "commonFunctionNames": ["AIPipeline"],
+      "recommendation": "Potential duplicate - verify migration completeness before removing"
+    },
+    {
+      "oldJs": "services/ai/alerting.js",
+      "newTs": "services/ai/alerting.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 1,
+      "commonFunctions": 1,
+      "commonFunctionNames": ["AlertingService"],
+      "recommendation": "Potential duplicate - verify migration completeness before removing"
+    },
+    {
+      "oldJs": "services/ai/bcgReportGenerator.js",
+      "newTs": "services/ai/bcgReportGenerator.ts",
+      "jsFunctions": 4,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/cacheService.js",
+      "newTs": "services/ai/cacheService.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/circuitBreaker.js",
+      "newTs": "services/ai/circuitBreaker.ts",
+      "jsFunctions": 8,
+      "tsFunctions": 7,
+      "commonFunctions": 7,
+      "commonFunctionNames": [
+        "canExecute",
+        "recordSuccess",
+        "recordFailure",
+        "reset",
+        "getStatus",
+        "execute",
+        "initialize"
+      ],
+      "recommendation": "Potential duplicate - verify migration completeness before removing"
+    },
+    {
+      "oldJs": "services/ai/citationExtractor.js",
+      "newTs": "services/ai/citationExtractor.ts",
+      "jsFunctions": 7,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/citationVerifier.js",
+      "newTs": "services/ai/citationVerifier.ts",
+      "jsFunctions": 5,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/coThinker/index.js",
+      "newTs": "services/ai/agents/index.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/coThinkerPrompts.js",
+      "newTs": "services/ai/coThinkerPrompts.ts",
+      "jsFunctions": 4,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/comprehensiveReportGenerator.js",
+      "newTs": "services/ai/comprehensiveReportGenerator.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/consultingFlowEngine.js",
+      "newTs": "services/ai/consultingFlowEngine.ts",
+      "jsFunctions": 2,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/conversationStateMachine.js",
+      "newTs": "services/ai/conversationStateMachine.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/conversationTracker.js",
+      "newTs": "services/ai/conversationTracker.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/docIndexer.js",
+      "newTs": "services/ai/docIndexer.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/draftService.js",
+      "newTs": "services/ai/draftService.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/embeddingService.js",
+      "newTs": "services/ai/embeddingService.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 1,
+      "commonFunctions": 1,
+      "commonFunctionNames": ["EmbeddingService"],
+      "recommendation": "Potential duplicate - verify migration completeness before removing"
+    },
+    {
+      "oldJs": "services/ai/enhancedContextBuilder.js",
+      "newTs": "services/ai/enhancedContextBuilder.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/enterpriseSecurity.js",
+      "newTs": "services/ai/enterpriseSecurity.ts",
+      "jsFunctions": 5,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/frameworks/consultingFrameworks.js",
+      "newTs": "services/ai/frameworks/consultingFrameworks.ts",
+      "jsFunctions": 5,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/frameworks/frameworkEngine.js",
+      "newTs": "services/ai/frameworks/frameworkEngine.ts",
+      "jsFunctions": 2,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/frameworks/index.js",
+      "newTs": "services/ai/agents/index.ts",
+      "jsFunctions": 0,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/frameworks/strategicRecommendationService.js",
+      "newTs": "services/ai/frameworks/strategicRecommendationService.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/harvardConsultantPrompts.js",
+      "newTs": "services/ai/harvardConsultantPrompts.ts",
+      "jsFunctions": 3,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/healthMonitor.js",
+      "newTs": "services/ai/healthMonitor.ts",
+      "jsFunctions": 9,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/ingestionPipeline.js",
+      "newTs": "services/ai/ingestionPipeline.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 1,
+      "commonFunctions": 1,
+      "commonFunctionNames": ["IngestionPipeline"],
+      "recommendation": "Potential duplicate - verify migration completeness before removing"
+    },
+    {
+      "oldJs": "services/ai/intelligence/benchmarkDataService.js",
+      "newTs": "services/ai/intelligence/benchmarkDataService.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/intelligence/index.js",
+      "newTs": "services/ai/agents/index.ts",
+      "jsFunctions": 0,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/intelligence/industryIntelligenceService.js",
+      "newTs": "services/ai/intelligence/industryIntelligenceService.ts",
+      "jsFunctions": 3,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/intelligentResearch.js",
+      "newTs": "services/ai/intelligentResearch.ts",
+      "jsFunctions": 3,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/intentEngine.js",
+      "newTs": "services/ai/intentEngine.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/knowledgeIndexer.js",
+      "newTs": "services/ai/knowledgeIndexer.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 4,
+      "commonFunctions": 1,
+      "commonFunctionNames": ["KnowledgeIndexer"],
+      "recommendation": "Potential duplicate - verify migration completeness before removing"
+    },
+    {
+      "oldJs": "services/ai/learningSystem.js",
+      "newTs": "services/ai/learningSystem.ts",
+      "jsFunctions": 3,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/llmConfigService.js",
+      "newTs": "services/ai/llmConfigService.ts",
+      "jsFunctions": 2,
+      "tsFunctions": 2,
+      "commonFunctions": 2,
+      "commonFunctionNames": ["healthDiff", "LLMConfigService"],
+      "recommendation": "Potential duplicate - verify migration completeness before removing"
+    },
+    {
+      "oldJs": "services/ai/llmHealthMonitor.js",
+      "newTs": "services/ai/llmHealthMonitor.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/llmService.js",
+      "newTs": "services/ai/llmService.ts",
+      "jsFunctions": 2,
+      "tsFunctions": 10,
+      "commonFunctions": 2,
+      "commonFunctionNames": ["modelLower", "LLMService"],
+      "recommendation": "Potential duplicate - verify migration completeness before removing"
+    },
+    {
+      "oldJs": "services/ai/logger.js",
+      "newTs": "services/ai/logger.ts",
+      "jsFunctions": 4,
+      "tsFunctions": 3,
+      "commonFunctions": 3,
+      "commonFunctionNames": ["getCurrentLevel", "formatMessage", "TraceContext"],
+      "recommendation": "Potential duplicate - verify migration completeness before removing"
+    },
+    {
+      "oldJs": "services/ai/magicWandService.js",
+      "newTs": "services/ai/magicWandService.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/mcpServer.js",
+      "newTs": "services/ai/mcpServer.ts",
+      "jsFunctions": 2,
+      "tsFunctions": 4,
+      "commonFunctions": 1,
+      "commonFunctionNames": ["MCPServer"],
+      "recommendation": "Potential duplicate - verify migration completeness before removing"
+    },
+    {
+      "oldJs": "services/ai/mediaIngestionService.js",
+      "newTs": "services/ai/mediaIngestionService.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/memoryManager.js",
+      "newTs": "services/ai/memoryManager.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/metrics.js",
+      "newTs": "services/ai/metrics.ts",
+      "jsFunctions": 11,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/modelRouter.js",
+      "newTs": "services/ai/modelRouter.ts",
+      "jsFunctions": 3,
+      "tsFunctions": 4,
+      "commonFunctions": 3,
+      "commonFunctionNames": ["getLLMConfigService", "nextIndex", "ModelRouter"],
+      "recommendation": "Potential duplicate - verify migration completeness before removing"
+    },
+    {
+      "oldJs": "services/ai/observability.js",
+      "newTs": "services/ai/observability.ts",
+      "jsFunctions": 9,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/organizationMemoryStore.js",
+      "newTs": "services/ai/organizationMemoryStore.ts",
+      "jsFunctions": 2,
+      "tsFunctions": 3,
+      "commonFunctions": 2,
+      "commonFunctionNames": ["rows", "OrganizationMemoryStore"],
+      "recommendation": "Potential duplicate - verify migration completeness before removing"
+    },
+    {
+      "oldJs": "services/ai/performanceOptimizer.js",
+      "newTs": "services/ai/performanceOptimizer.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/persistentSessionStore.js",
+      "newTs": "services/ai/persistentSessionStore.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/personalizationEngine.js",
+      "newTs": "services/ai/personalizationEngine.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/pipeline/index.js",
+      "newTs": "services/ai/agents/index.ts",
+      "jsFunctions": 0,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/pipeline/reportAgents.js",
+      "newTs": "services/ai/pipeline/reportAgents.ts",
+      "jsFunctions": 6,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/pipeline/reportPipeline.js",
+      "newTs": "services/ai/pipeline/reportPipeline.ts",
+      "jsFunctions": 2,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/proactiveNudges.js",
+      "newTs": "services/ai/proactiveNudges.ts",
+      "jsFunctions": 1,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/proactiveSuggestionsService.js",
+      "newTs": "services/ai/proactiveSuggestionsService.ts",
+      "jsFunctions": 2,
+      "tsFunctions": 0,
+      "commonFunctions": 0,
+      "commonFunctionNames": [],
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    }
+  ],
+  "summary": {
+    "total": 75,
+    "withCommonFunctions": 15,
+    "sameFilename": 60
+  },
+  "recommendations": [
+    {
+      "oldFile": "services/BaseService.js",
+      "newFile": "services/BaseService.ts",
+      "action": "Potential duplicate - verify migration completeness before removing",
+      "commonFunctions": ["BaseService"]
+    },
+    {
+      "oldFile": "services/accessCodeService.js",
+      "newFile": "services/accessCodeService.ts",
+      "action": "Potential duplicate - verify migration completeness before removing",
+      "commonFunctions": [
+        "hashCode",
+        "generateHumanCode",
+        "safeParseJson",
+        "withImmediateTransaction",
+        "exhausted"
+      ]
+    },
+    {
+      "oldFile": "services/accessPolicyService.js",
+      "newFile": "services/accessPolicyService.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/adkarService.js",
+      "newFile": "services/adkarService.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/adminAlertService.js",
+      "newFile": "services/adminAlertService.ts",
+      "action": "Potential duplicate - verify migration completeness before removing",
+      "commonFunctions": [
+        "setDependencies",
+        "createAdminAlert",
+        "checkAndTriggerAlerts",
+        "checkAlert",
+        "checkCostSpike",
+        "checkUsageAnomaly",
+        "checkBudgetExceeded",
+        "checkSeatLimit",
+        "triggerAlert",
+        "sendAlert"
+      ]
+    },
+    {
+      "oldFile": "services/adminAuditService.js",
+      "newFile": "services/adminAuditService.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/adminSessionService.js",
+      "newFile": "services/adminSessionService.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/abTesting.js",
+      "newFile": "services/ai/abTesting.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/actionExecutor.js",
+      "newFile": "services/ai/actionExecutor.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/adaptiveResponseService.js",
+      "newFile": "services/ai/adaptiveResponseService.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/agents/agentCoordinator.js",
+      "newFile": "services/ai/agents/agentCoordinator.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/agents/baseAgent.js",
+      "newFile": "services/ai/agents/baseAgent.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/agents/changeAgent.js",
+      "newFile": "services/ai/agents/changeAgent.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/agents/financeAgent.js",
+      "newFile": "services/ai/agents/financeAgent.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/agents/index.js",
+      "newFile": "services/ai/agents/index.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/agents/pmoAgent.js",
+      "newFile": "services/ai/agents/pmoAgent.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/agents/riskAgent.js",
+      "newFile": "services/ai/agents/riskAgent.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/agents/strategyAgent.js",
+      "newFile": "services/ai/agents/strategyAgent.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/aiContext.js",
+      "newFile": "services/ai/aiContext.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/aiGateway.js",
+      "newFile": "services/ai/aiGateway.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/aiHealthAlertService.js",
+      "newFile": "services/ai/aiHealthAlertService.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/aiHealthService.js",
+      "newFile": "services/ai/aiHealthService.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/aiMemoryMetricsService.js",
+      "newFile": "services/ai/aiMemoryMetricsService.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/aiPipeline.js",
+      "newFile": "services/ai/AIPipeline.ts",
+      "action": "Potential duplicate - verify migration completeness before removing",
+      "commonFunctions": ["AIPipeline"]
+    },
+    {
+      "oldFile": "services/ai/alerting.js",
+      "newFile": "services/ai/alerting.ts",
+      "action": "Potential duplicate - verify migration completeness before removing",
+      "commonFunctions": ["AlertingService"]
+    },
+    {
+      "oldFile": "services/ai/bcgReportGenerator.js",
+      "newFile": "services/ai/bcgReportGenerator.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/cacheService.js",
+      "newFile": "services/ai/cacheService.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/circuitBreaker.js",
+      "newFile": "services/ai/circuitBreaker.ts",
+      "action": "Potential duplicate - verify migration completeness before removing",
+      "commonFunctions": [
+        "canExecute",
+        "recordSuccess",
+        "recordFailure",
+        "reset",
+        "getStatus",
+        "execute",
+        "initialize"
+      ]
+    },
+    {
+      "oldFile": "services/ai/citationExtractor.js",
+      "newFile": "services/ai/citationExtractor.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/citationVerifier.js",
+      "newFile": "services/ai/citationVerifier.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/coThinker/index.js",
+      "newFile": "services/ai/agents/index.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/coThinkerPrompts.js",
+      "newFile": "services/ai/coThinkerPrompts.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/comprehensiveReportGenerator.js",
+      "newFile": "services/ai/comprehensiveReportGenerator.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/consultingFlowEngine.js",
+      "newFile": "services/ai/consultingFlowEngine.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/conversationStateMachine.js",
+      "newFile": "services/ai/conversationStateMachine.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/conversationTracker.js",
+      "newFile": "services/ai/conversationTracker.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/docIndexer.js",
+      "newFile": "services/ai/docIndexer.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/draftService.js",
+      "newFile": "services/ai/draftService.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/embeddingService.js",
+      "newFile": "services/ai/embeddingService.ts",
+      "action": "Potential duplicate - verify migration completeness before removing",
+      "commonFunctions": ["EmbeddingService"]
+    },
+    {
+      "oldFile": "services/ai/enhancedContextBuilder.js",
+      "newFile": "services/ai/enhancedContextBuilder.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/enterpriseSecurity.js",
+      "newFile": "services/ai/enterpriseSecurity.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/frameworks/consultingFrameworks.js",
+      "newFile": "services/ai/frameworks/consultingFrameworks.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/frameworks/frameworkEngine.js",
+      "newFile": "services/ai/frameworks/frameworkEngine.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/frameworks/index.js",
+      "newFile": "services/ai/agents/index.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/frameworks/strategicRecommendationService.js",
+      "newFile": "services/ai/frameworks/strategicRecommendationService.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/harvardConsultantPrompts.js",
+      "newFile": "services/ai/harvardConsultantPrompts.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/healthMonitor.js",
+      "newFile": "services/ai/healthMonitor.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/ingestionPipeline.js",
+      "newFile": "services/ai/ingestionPipeline.ts",
+      "action": "Potential duplicate - verify migration completeness before removing",
+      "commonFunctions": ["IngestionPipeline"]
+    },
+    {
+      "oldFile": "services/ai/intelligence/benchmarkDataService.js",
+      "newFile": "services/ai/intelligence/benchmarkDataService.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/intelligence/index.js",
+      "newFile": "services/ai/agents/index.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/intelligence/industryIntelligenceService.js",
+      "newFile": "services/ai/intelligence/industryIntelligenceService.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/intelligentResearch.js",
+      "newFile": "services/ai/intelligentResearch.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/intentEngine.js",
+      "newFile": "services/ai/intentEngine.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/knowledgeIndexer.js",
+      "newFile": "services/ai/knowledgeIndexer.ts",
+      "action": "Potential duplicate - verify migration completeness before removing",
+      "commonFunctions": ["KnowledgeIndexer"]
+    },
+    {
+      "oldFile": "services/ai/learningSystem.js",
+      "newFile": "services/ai/learningSystem.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/llmConfigService.js",
+      "newFile": "services/ai/llmConfigService.ts",
+      "action": "Potential duplicate - verify migration completeness before removing",
+      "commonFunctions": ["healthDiff", "LLMConfigService"]
+    },
+    {
+      "oldFile": "services/ai/llmHealthMonitor.js",
+      "newFile": "services/ai/llmHealthMonitor.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/llmService.js",
+      "newFile": "services/ai/llmService.ts",
+      "action": "Potential duplicate - verify migration completeness before removing",
+      "commonFunctions": ["modelLower", "LLMService"]
+    },
+    {
+      "oldFile": "services/ai/logger.js",
+      "newFile": "services/ai/logger.ts",
+      "action": "Potential duplicate - verify migration completeness before removing",
+      "commonFunctions": ["getCurrentLevel", "formatMessage", "TraceContext"]
+    },
+    {
+      "oldFile": "services/ai/magicWandService.js",
+      "newFile": "services/ai/magicWandService.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/mcpServer.js",
+      "newFile": "services/ai/mcpServer.ts",
+      "action": "Potential duplicate - verify migration completeness before removing",
+      "commonFunctions": ["MCPServer"]
+    },
+    {
+      "oldFile": "services/ai/mediaIngestionService.js",
+      "newFile": "services/ai/mediaIngestionService.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/memoryManager.js",
+      "newFile": "services/ai/memoryManager.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/metrics.js",
+      "newFile": "services/ai/metrics.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/modelRouter.js",
+      "newFile": "services/ai/modelRouter.ts",
+      "action": "Potential duplicate - verify migration completeness before removing",
+      "commonFunctions": ["getLLMConfigService", "nextIndex", "ModelRouter"]
+    },
+    {
+      "oldFile": "services/ai/observability.js",
+      "newFile": "services/ai/observability.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/organizationMemoryStore.js",
+      "newFile": "services/ai/organizationMemoryStore.ts",
+      "action": "Potential duplicate - verify migration completeness before removing",
+      "commonFunctions": ["rows", "OrganizationMemoryStore"]
+    },
+    {
+      "oldFile": "services/ai/performanceOptimizer.js",
+      "newFile": "services/ai/performanceOptimizer.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/persistentSessionStore.js",
+      "newFile": "services/ai/persistentSessionStore.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/personalizationEngine.js",
+      "newFile": "services/ai/personalizationEngine.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/pipeline/index.js",
+      "newFile": "services/ai/agents/index.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/pipeline/reportAgents.js",
+      "newFile": "services/ai/pipeline/reportAgents.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/pipeline/reportPipeline.js",
+      "newFile": "services/ai/pipeline/reportPipeline.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/proactiveNudges.js",
+      "newFile": "services/ai/proactiveNudges.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    },
+    {
+      "oldFile": "services/ai/proactiveSuggestionsService.js",
+      "newFile": "services/ai/proactiveSuggestionsService.ts",
+      "action": "Same filename - likely migrated, verify before removing",
+      "commonFunctions": []
+    }
+  ]
+}

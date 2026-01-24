@@ -1,0 +1,35 @@
+# Cursor AI Rules for this project
+
+## CRITICAL - NEVER DO THESE:
+
+1. **NEVER run `git reset --hard`** without explicit user confirmation and backup
+2. **NEVER run `git clean -fd`** - this permanently deletes untracked files
+3. **NEVER run `rm -rf`** on directories with code
+4. **NEVER run destructive commands** without first:
+   - Listing what will be affected
+   - Creating a backup
+   - Getting explicit "YES" from user
+
+## Before any git operation:
+
+1. Run `git status` to see current state
+2. If there are untracked files, WARN the user they might be lost
+3. Suggest `checkpoint` command for quick backup commit
+
+## Safe alternatives:
+
+- Instead of `git reset --hard` → use `git stash push -m "backup" --include-untracked`
+- Instead of `git clean -fd` → use `git clean -fdn` (dry run) first, then ask user
+- Instead of deleting files → move them to `_backup/` directory
+
+## When recovering from stash:
+
+1. First check what's in the stash: `git stash show --stat stash@{N}`
+2. Check for untracked files that might conflict
+3. Use `git stash apply` not `git stash pop` (keeps stash as backup)
+4. NEVER use `git reset --hard` to "clean up" before applying stash
+
+## Commit frequently:
+
+- Suggest commits every 15-30 minutes
+- Use `checkpoint "description"` alias for quick WIP commits

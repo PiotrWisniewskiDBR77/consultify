@@ -1,0 +1,145 @@
+{
+  "locale": "de",
+  "translations": {
+    "organization": {
+      "name": "TechnoLex Industries",
+      "description": "TechnoLex Industries ist ein führender europäischer Hersteller von Präzisions-Automobilkomponenten und beliefert große OEMs auf dem gesamten Kontinent. Mit 30 Jahren Erfahrung in der Ingenieurskunst und einem Engagement für Innovation begibt sich TechnoLex auf eine ambitionierte digitale Transformationsreise, um ein Smart Factory-Leader zu werden.",
+      "vision": "Bis 2027 der digital fortschrittlichste Automobilkomponentenhersteller in Mitteleuropa zu werden",
+      "mission": "Lieferung von präzisionsgefertigten Automobilkomponenten durch Innovation, Qualität und nachhaltige Praktiken"
+    },
+    "project": {
+      "name": "Digitales Transformationsprogramm 2027",
+      "description": "Eine umfassende 3-Jahres-Initiative zur digitalen Transformation zur Modernisierung der Fertigungsabläufe von TechnoLex unter Nutzung von Industrie 4.0-Technologien zur Erreichung operativer Exzellenz und Wettbewerbsvorteilen."
+    },
+    "initiatives": {
+      "init-001": {
+        "name": "Smart Factory 4.0 Implementierung",
+        "summary": "Transformation der Produktionsanlagen in Warschau und Breslau zu vollständig vernetzten Smart Factories mit Echtzeitüberwachung, automatisierten Workflows und KI-gesteuerter Optimierung.",
+        "description": "Diese Flaggschiff-Initiative zielt darauf ab, unsere Fertigungsabläufe durch umfassenden IoT-Einsatz, Maschinenkonnektivität und Echtzeit-Datenanalyse zu digitalisieren. Das Projekt wird über 200 Maschinen vernetzen, MES-Integration implementieren und prädiktive Qualitätskontrolle ermöglichen."
+      },
+      "init-002": {
+        "name": "Prädiktives Wartungssystem",
+        "summary": "Implementierung einer KI-gesteuerten prädiktiven Wartung zur Reduzierung ungeplanter Ausfallzeiten um 50% und Verlängerung der Anlagenlebensdauer.",
+        "description": "Nutzung von Machine-Learning-Modellen, die auf Vibrations-, Temperatur- und Leistungsdaten trainiert wurden, um Anlagenausfälle vorherzusagen, bevor sie auftreten. Anfänglicher Fokus auf 30 kritische CNC-Maschinen und Montageroboter."
+      },
+      "init-003": {
+        "name": "Digital Twin Plattform",
+        "summary": "Erstellung virtueller Replikate von Produktionslinien für Simulation, Optimierung und Was-wäre-wenn-Analysen.",
+        "description": "Implementierung der Digital-Twin-Technologie zur Simulation von Produktionsszenarien, Optimierung der Linienbalancierung und virtuelles Testen von Änderungen vor der physischen Umsetzung. Start mit der Warschauer Montagelinie 3."
+      },
+      "init-004": {
+        "name": "ERP Cloud-Migration (SAP S/4HANA)",
+        "summary": "Migration vom Legacy SAP ECC zu S/4HANA Cloud für moderne Echtzeit-Geschäftsprozesse.",
+        "description": "Umfassende ERP-Modernisierung einschließlich Finanzen, Beschaffung, Produktionsplanung und Vertrieb. Brownfield-Migrationsansatz mit selektiver Datenmigration und Prozessoptimierung."
+      },
+      "init-005": {
+        "name": "Quality Vision AI",
+        "summary": "Einsatz von Computer-Vision-basierter Qualitätsprüfung zur Reduzierung der Fehlerquote von 1,2% auf 0,3%.",
+        "description": "Implementierung von KI-gestützten visuellen Inspektionsstationen an kritischen Qualitätskontrollpunkten. Das System erkennt Oberflächenfehler, Maßprobleme und Montagefehler in Echtzeit."
+      },
+      "init-006": {
+        "name": "Supply Chain Visibility Plattform",
+        "summary": "Implementierung einer End-to-End Supply Chain Visibility mit Echtzeit-Tracking und automatisierten Warnungen.",
+        "description": "Bereitstellung eines cloudbasierten Supply Chain Tower mit Transparenz über 120+ Lieferanten. Ermöglichung von Echtzeit-Bestandsverfolgung, Lieferzeitüberwachung und risikobasiertem Lieferanten-Scoring."
+      },
+      "init-007": {
+        "name": "Digitaler Arbeitsplatz für Mitarbeiter",
+        "summary": "Start eines modernen Mitarbeiterportals mit Self-Service, Kollaborationstools und mobilen Zugang.",
+        "description": "Ersetzung des Legacy-Intranets durch einen auf Microsoft 365 basierenden digitalen Arbeitsplatz. Ermöglichung von Schichtplanung, Schulungszugang, HR-Self-Service und Teamzusammenarbeit von jedem Gerät."
+      },
+      "init-008": {
+        "name": "Energiemanagement und -optimierung",
+        "summary": "Einsatz von intelligentem Energiemonitoring und KI-gesteuerter Optimierung zur Reduzierung der Energiekosten um 20%.",
+        "description": "Installation von Smart Metern, Integration mit Versorger-APIs und Nutzung von ML zur Optimierung von Energieverbrauchsmustern. Fokus auf energieintensive Anlagen und Produktionsplanung."
+      }
+    },
+    "tasks": {
+      "task-001-01": {
+        "title": "Maschinenkonnektivitätsbewertung",
+        "description": "Audit aller Produktionsanlagen auf Konnektivitätsoptionen und Nachrüstungsbedarf"
+      },
+      "task-001-02": {
+        "title": "IoT-Plattformauswahl",
+        "description": "Bewertung und Auswahl der industriellen IoT-Plattform (Azure IoT, AWS IoT, Siemens MindSphere)"
+      },
+      "task-001-03": {
+        "title": "Edge-Infrastruktur-Deployment",
+        "description": "Installation von Edge-Computing-Knoten und Netzwerkinfrastruktur im Warschauer Werk"
+      },
+      "task-001-04": {
+        "title": "MES-Integration Phase 1",
+        "description": "Integration von 50 kritischen Maschinen mit dem Manufacturing Execution System"
+      },
+      "task-001-05": {
+        "title": "Echtzeit-Dashboard-Entwicklung",
+        "description": "Erstellung von Shop-Floor-Visualisierungs-Dashboards für Live-Produktionsüberwachung"
+      },
+      "task-001-06": {
+        "title": "Bediener-Schulungsprogramm",
+        "description": "Schulung von 200+ Bedienern zu neuen digitalen Tools und Dashboards"
+      },
+      "task-002-01": {
+        "title": "Historische Ausfalldatenanalyse",
+        "description": "Analyse von 3 Jahren Wartungsaufzeichnungen zur Identifizierung von Ausfallmustern"
+      },
+      "task-002-02": {
+        "title": "Sensorinstallation - Phase 1",
+        "description": "Installation von Vibrations- und Temperatursensoren an 30 kritischen Maschinen"
+      },
+      "task-002-03": {
+        "title": "ML-Modellentwicklung",
+        "description": "Entwicklung und Training von prädiktiven Modellen zur Vorhersage von Anlagenausfällen"
+      },
+      "task-002-04": {
+        "title": "Wartungsworkflow-Integration",
+        "description": "Integration der Vorhersagen mit CMMS für automatisierte Arbeitsauftragsgenerierung"
+      }
+    },
+    "assessments": {
+      "drd-strategy": {
+        "name": "Digitale Strategie",
+        "description": "Klarheit und Ausrichtung der digitalen Transformationsvision an Geschäftszielen"
+      },
+      "drd-leadership": {
+        "name": "Führung & Kultur",
+        "description": "Executive Sponsorship und organisatorische Bereitschaft für digitalen Wandel"
+      },
+      "drd-technology": {
+        "name": "Technologie-Infrastruktur",
+        "description": "Zustand der IT-Systeme, Cloud-Adoption und technische Schulden"
+      },
+      "drd-data": {
+        "name": "Daten & Analytics",
+        "description": "Datenqualität, Zugänglichkeit und analytische Fähigkeiten"
+      },
+      "drd-operations": {
+        "name": "Vernetzte Operationen",
+        "description": "Automatisierungsgrad, IoT-Adoption und Prozessdigitalisierung"
+      },
+      "drd-people": {
+        "name": "Digitale Kompetenzen",
+        "description": "Digitale Kompetenzen der Mitarbeiter und Kultur des kontinuierlichen Lernens"
+      }
+    },
+    "roadmap": {
+      "phases": {
+        "phase-1": {
+          "name": "Fundament",
+          "description": "Aufbau der digitalen Infrastruktur und des Governance-Frameworks"
+        },
+        "phase-2": {
+          "name": "Beschleunigung",
+          "description": "Skalierung digitaler Initiativen und Aufbau von Fähigkeiten"
+        },
+        "phase-3": {
+          "name": "Optimierung",
+          "description": "Optimierung der Abläufe und Erweiterung auf alle Standorte"
+        },
+        "phase-4": {
+          "name": "Exzellenz",
+          "description": "Erreichen operativer Exzellenz und kontinuierlicher Innovation"
+        }
+      }
+    }
+  }
+}

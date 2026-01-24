@@ -1,0 +1,64 @@
+# Consultinity Kubernetes Services
+# Exposes deployments within the cluster
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: consultinity-api
+  labels:
+    app: consultinity
+    component: api
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3001
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: consultinity
+    component: api
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: consultinity-frontend
+  labels:
+    app: consultinity
+    component: frontend
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: consultinity
+    component: frontend
+---
+# Headless service for direct pod access (useful for debugging)
+apiVersion: v1
+kind: Service
+metadata:
+  name: consultinity-api-headless
+  labels:
+    app: consultinity
+    component: api
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 3001
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: consultinity
+    component: api
+
+
+
+
+
+

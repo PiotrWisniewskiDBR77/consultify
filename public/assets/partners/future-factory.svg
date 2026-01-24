@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80" fill="none">
+  <defs>
+    <linearGradient id="mobiusGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#9CA3AF;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#6B7280;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4B5563;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Möbius strip stylized shape -->
+  <path d="M85 25 C95 35, 95 55, 80 60 C65 65, 50 55, 45 45 C40 35, 35 25, 20 25 C5 25, 5 45, 15 55 C25 65, 40 65, 55 55 C70 45, 75 35, 85 25 Z" 
+        fill="url(#mobiusGrad)" 
+        stroke="#374151" 
+        stroke-width="1"/>
+  <path d="M15 55 C5 45, 10 30, 25 25 C40 20, 55 30, 60 40 C65 50, 75 55, 85 50" 
+        fill="none" 
+        stroke="#9CA3AF" 
+        stroke-width="3"
+        stroke-linecap="round"/>
+</svg>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

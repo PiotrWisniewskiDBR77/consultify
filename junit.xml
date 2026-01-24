@@ -1,0 +1,897 @@
+{"numTotalTestSuites":190,"numPassedTestSuites":185,"numFailedTestSuites":5,"numPendingTestSuites":0,"numTotalTests":360,"numPass    <testsuite name="tests/unit/backend/InitiativeService.test.ts" timestamp="2026-01-23T15:00:53.974Z" hostname="MacBook-Pro-Piotr.local" tests="3" failures="0" errors="0" skipped="0" time="0.032086541">
+        <testcase classname="tests/unit/backend/InitiativeService.test.ts" name="InitiativeService &gt; should create initiative" time="0.002944416">
+        </testcase>
+        <testcase classname="tests/unit/backend/InitiativeService.test.ts" name="InitiativeService &gt; should track progress" time="0.00037975">
+        </testcase>
+        <testcase classname="tests/unit/backend/InitiativeService.test.ts" name="InitiativeService &gt; should list initiatives" time="0.000205833">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/decisions.test.ts" timestamp="2026-01-23T15:00:54.008Z" hostname="MacBook-Pro-Piotr.local" tests="53" failures="0" errors="0" skipped="0" time="2.782834666">
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; calculateEscalationLevel &gt; should return &quot;none&quot; when no due date is provided" time="0.16286075">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; calculateEscalationLevel &gt; should return &quot;none&quot; when due date is invalid" time="0.0158035">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; calculateEscalationLevel &gt; should return &quot;none&quot; when not overdue" time="0.109134458">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; calculateEscalationLevel &gt; should return &quot;amber&quot; when overdue by 1-5 days" time="0.001831792">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; calculateEscalationLevel &gt; should return &quot;amber&quot; when overdue by 6-7 days" time="0.006281209">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; calculateEscalationLevel &gt; should return &quot;red&quot; when overdue by more than 7 days" time="0.003369875">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; calculateEscalationLevel &gt; should return &quot;red&quot; immediately for CRITICAL priority" time="0.000578041">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; calculateEscalationLevel &gt; should return &quot;red&quot; immediately for HIGH impact" time="0.0003475">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; calculateEscalationLevel &gt; should respect custom thresholds" time="0.000387791">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; calculateEscalationLevel &gt; should return &quot;red&quot; when exceeding custom red threshold" time="0.000410375">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; getDefaultThresholds &gt; should return default thresholds for unknown type" time="0.000489417">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; getDefaultThresholds &gt; should return specific thresholds for BLOCKER_RESOLUTION" time="0.00456425">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; getDefaultThresholds &gt; should return specific thresholds for INITIATIVE_APPROVAL" time="0.00239325">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; getDefaultThresholds &gt; should return specific thresholds for PHASE_TRANSITION" time="0.000754416">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; EscalationService &gt; getEscalationStatus &gt; should return none level for decision without deadline" time="0.002728334">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; EscalationService &gt; getEscalationStatus &gt; should return blocking status when decision has blockers" time="0.000496083">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; EscalationService &gt; getEscalationStatus &gt; should return none for non-existent decision" time="0.0004445">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; EscalationService &gt; processEscalations &gt; should return empty summary when no decisions" time="0.008818834">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; EscalationService &gt; processEscalations &gt; should process decisions and update escalation levels" time="0.004509541">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; EscalationService &gt; getDecisionsNeedingAttention &gt; should categorize decisions by escalation level" time="0.001598542">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; EscalationService &gt; getDecisionsNeedingAttention &gt; should return empty arrays when no decisions" time="0.003287875">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; EscalationService &gt; escalateDecision &gt; should manually escalate a decision" time="0.009765917">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Management &gt; EscalationService &gt; escalateDecision &gt; should throw error for non-existent decision" time="0.452881459">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Status Transitions &gt; should allow PENDING -&gt; APPROVED transition" time="1.687686083">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Status Transitions &gt; should allow PENDING -&gt; REJECTED transition" time="0.016230333">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Status Transitions &gt; should allow ESCALATED -&gt; APPROVED transition" time="0.001726292">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Status Transitions &gt; should not allow transitions from APPROVED" time="0.000587083">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Decision Types &gt; should recognize INITIATIVE_APPROVAL as valid decision type" time="0.000886042">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Decision Types &gt; should recognize PHASE_TRANSITION as valid decision type" time="0.0341965">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Decision Types &gt; should recognize BUDGET as valid decision type" time="0.007313458">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Decision Types &gt; should recognize SCOPE_CHANGE as valid decision type" time="0.018428458">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Decision Types &gt; should recognize RISK_ACCEPTANCE as valid decision type" time="0.000415792">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Decision Types &gt; should recognize BLOCKER_RESOLUTION as valid decision type" time="0.055646583">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Decision Types &gt; should recognize RESOURCE_ALLOCATION as valid decision type" time="0.018388792">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Decision Types &gt; should recognize EXECUTION as valid decision type" time="0.036680833">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Decision Types &gt; should recognize GENERAL as valid decision type" time="0.026236208">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Impact Levels &gt; should recognize LOW as valid impact level" time="0.023883">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Impact Levels &gt; should recognize MEDIUM as valid impact level" time="0.00079675">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Impact Levels &gt; should recognize HIGH as valid impact level" time="0.000349708">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Priority Levels &gt; should recognize LOW as valid priority level" time="0.01426525">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Priority Levels &gt; should recognize MEDIUM as valid priority level" time="0.000633833">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Priority Levels &gt; should recognize HIGH as valid priority level" time="0.000222042">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Priority Levels &gt; should recognize CRITICAL as valid priority level" time="0.000203625">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Escalation Levels &gt; should recognize none as valid escalation level" time="0.000205542">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Escalation Levels &gt; should recognize amber as valid escalation level" time="0.0001485">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Lifecycle &gt; Escalation Levels &gt; should recognize red as valid escalation level" time="0.000156">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Context Types &gt; should support initiative as context type" time="0.000156875">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Context Types &gt; should support task as context type" time="0.000130916">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Context Types &gt; should support analysis as context type" time="0.000153083">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Context Types &gt; should support assessment as context type" time="0.000140458">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Context Types &gt; should support tool as context type" time="0.000128541">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Context Types &gt; should support project as context type" time="0.00013025">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions.test.ts" name="Decision Context Types &gt; should have exactly 6 context types" time="0.000158291">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/initiativeService.legacy.test.js" timestamp="2026-01-23T15:00:54.338Z" hostname="MacBook-Pro-Piotr.local" tests="4" failures="0" errors="0" skipped="0" time="0.1868845">
+        <testcase classname="tests/unit/backend/initiativeService.legacy.test.js" name="InitiativeService &gt; recalculateProgress &gt; should return 0 when no initiativeId provided" time="0.016726584">
+        </testcase>
+        <testcase classname="tests/unit/backend/initiativeService.legacy.test.js" name="InitiativeService &gt; recalculateProgress &gt; should handle database error during fetch" time="0.000297458">
+        </testcase>
+        <testcase classname="tests/unit/backend/initiativeService.legacy.test.js" name="InitiativeService &gt; recalculateProgress &gt; should set progress to 0 if no tasks found" time="0.001191208">
+        </testcase>
+        <testcase classname="tests/unit/backend/initiativeService.legacy.test.js" name="InitiativeService &gt; recalculateProgress &gt; should calculate weighted progress correctly" time="0.038054042">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/decisions/decisionService.test.ts" timestamp="2026-01-23T15:00:54.344Z" hostname="MacBook-Pro-Piotr.local" tests="19" failures="0" errors="0" skipped="0" time="0.067173625">
+        <testcase classname="tests/unit/backend/decisions/decisionService.test.ts" name="DecisionService - Real Production Tests &gt; createDecision &gt; should create decision with generated ID" time="0.025802875">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions/decisionService.test.ts" name="DecisionService - Real Production Tests &gt; createDecision &gt; should create default options for GO_NO_GO type" time="0.024493084">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions/decisionService.test.ts" name="DecisionService - Real Production Tests &gt; createDecision &gt; should record history after creation" time="0.005408625">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions/decisionService.test.ts" name="DecisionService - Real Production Tests &gt; createDecision &gt; should add stakeholders when provided" time="0.00077875">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions/decisionService.test.ts" name="DecisionService - Real Production Tests &gt; getDecision &gt; should return null for non-existent decision" time="0.000305083">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions/decisionService.test.ts" name="DecisionService - Real Production Tests &gt; getDecision &gt; should return properly mapped decision" time="0.000435458">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions/decisionService.test.ts" name="DecisionService - Real Production Tests &gt; makeDecision &gt; should throw error for non-existent decision" time="0.001251833">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions/decisionService.test.ts" name="DecisionService - Real Production Tests &gt; makeDecision &gt; should throw error for already decided decision" time="0.000314334">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions/decisionService.test.ts" name="DecisionService - Real Production Tests &gt; makeDecision &gt; should approve decision with approve option" time="0.000499167">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions/decisionService.test.ts" name="DecisionService - Real Production Tests &gt; makeDecision &gt; should reject decision with reject option" time="0.000297417">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions/decisionService.test.ts" name="DecisionService - Real Production Tests &gt; makeDecision &gt; should reject decision with no-go option" time="0.000234292">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions/decisionService.test.ts" name="DecisionService - Real Production Tests &gt; getPendingDecisions &gt; should return empty array when no pending decisions" time="0.00030275">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions/decisionService.test.ts" name="DecisionService - Real Production Tests &gt; getPendingDecisions &gt; should return mapped pending decisions" time="0.000322459">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions/decisionService.test.ts" name="DecisionService - Real Production Tests &gt; getPendingDecisions &gt; should query with correct filters" time="0.0002775">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions/decisionService.test.ts" name="DecisionService - Real Production Tests &gt; escalateDecision &gt; should throw error for non-existent decision" time="0.00029775">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions/decisionService.test.ts" name="DecisionService - Real Production Tests &gt; escalateDecision &gt; should throw error for non-pending decision" time="0.000247333">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions/decisionService.test.ts" name="DecisionService - Real Production Tests &gt; escalateDecision &gt; should escalate pending decision" time="0.000396916">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions/decisionService.test.ts" name="DecisionService - Real Production Tests &gt; cancelDecision &gt; should throw error for made decision" time="0.000290667">
+        </testcase>
+        <testcase classname="tests/unit/backend/decisions/decisionService.test.ts" name="DecisionService - Real Production Tests &gt; cancelDecision &gt; should cancel pending decision" time="0.000265083">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/initiative/initiativeService.test.ts" timestamp="2026-01-23T15:00:54.363Z" hostname="MacBook-Pro-Piotr.local" tests="17" failures="0" errors="0" skipped="0" time="0.497010375">
+        <testcase classname="tests/unit/backend/initiative/initiativeService.test.ts" name="InitiativeService - Real Production Tests &gt; Service Structure &gt; should have all subservices initialized" time="0.013002542">
+        </testcase>
+        <testcase classname="tests/unit/backend/initiative/initiativeService.test.ts" name="InitiativeService - Real Production Tests &gt; Service Structure &gt; should accept dependency injection via setDependencies" time="0.003612125">
+        </testcase>
+        <testcase classname="tests/unit/backend/initiative/initiativeService.test.ts" name="InitiativeService - Real Production Tests &gt; getInitiatives &gt; should call definition.getInitiatives with correct params" time="0.023115167">
+        </testcase>
+        <testcase classname="tests/unit/backend/initiative/initiativeService.test.ts" name="InitiativeService - Real Production Tests &gt; getInitiatives &gt; should return initiatives from definition service" time="0.021079541">
+        </testcase>
+        <testcase classname="tests/unit/backend/initiative/initiativeService.test.ts" name="InitiativeService - Real Production Tests &gt; getInitiativeById &gt; should return null for non-existent initiative" time="0.029345792">
+        </testcase>
+        <testcase classname="tests/unit/backend/initiative/initiativeService.test.ts" name="InitiativeService - Real Production Tests &gt; getInitiativeById &gt; should return initiative when found" time="0.092188125">
+        </testcase>
+        <testcase classname="tests/unit/backend/initiative/initiativeService.test.ts" name="InitiativeService - Real Production Tests &gt; createInitiative &gt; should call definition.createInitiative" time="0.020153458">
+        </testcase>
+        <testcase classname="tests/unit/backend/initiative/initiativeService.test.ts" name="InitiativeService - Real Production Tests &gt; createInitiative &gt; should return created initiative" time="0.001987042">
+        </testcase>
+        <testcase classname="tests/unit/backend/initiative/initiativeService.test.ts" name="InitiativeService - Real Production Tests &gt; updateInitiative &gt; should return true on successful update" time="0.010679583">
+        </testcase>
+        <testcase classname="tests/unit/backend/initiative/initiativeService.test.ts" name="InitiativeService - Real Production Tests &gt; updateInitiative &gt; should return false on failed update" time="0.074180541">
+        </testcase>
+        <testcase classname="tests/unit/backend/initiative/initiativeService.test.ts" name="InitiativeService - Real Production Tests &gt; deleteInitiative &gt; should return true on successful delete" time="0.18622125">
+        </testcase>
+        <testcase classname="tests/unit/backend/initiative/initiativeService.test.ts" name="InitiativeService - Real Production Tests &gt; recalculateProgress &gt; should accept string parameter (legacy)" time="0.0019745">
+        </testcase>
+        <testcase classname="tests/unit/backend/initiative/initiativeService.test.ts" name="InitiativeService - Real Production Tests &gt; recalculateProgress &gt; should accept object parameter (new API)" time="0.00035425">
+        </testcase>
+        <testcase classname="tests/unit/backend/initiative/initiativeService.test.ts" name="InitiativeService - Real Production Tests &gt; recalculateProgress &gt; should return calculated progress percentage" time="0.000229959">
+        </testcase>
+        <testcase classname="tests/unit/backend/initiative/initiativeService.test.ts" name="InitiativeService - Real Production Tests &gt; updateFinancials &gt; should call financial.updateFinancials with all params" time="0.000293875">
+        </testcase>
+        <testcase classname="tests/unit/backend/initiative/initiativeService.test.ts" name="InitiativeService - Real Production Tests &gt; updateFinancials &gt; should return true on successful update" time="0.000217083">
+        </testcase>
+        <testcase classname="tests/unit/backend/initiative/initiativeService.test.ts" name="InitiativeService - Real Production Tests &gt; getFinancialStats &gt; should return financial statistics" time="0.000562959">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/economics/economicsFinancials.test.ts" timestamp="2026-01-23T15:00:54.373Z" hostname="MacBook-Pro-Piotr.local" tests="36" failures="0" errors="0" skipped="0" time="0.112687666">
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; normalizeFinancialData &gt; should return default values for null input" time="0.042714667">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; normalizeFinancialData &gt; should return default values for undefined input" time="0.000378292">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; normalizeFinancialData &gt; should merge partial input with defaults" time="0.000343042">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; normalizeFinancialData &gt; should handle non-array assumptions" time="0.000226833">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; normalizeFinancialData &gt; should preserve valid assumptions array" time="0.002519292">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; calculateFinancialMetrics &gt; should calculate positive NPV for profitable investment" time="0.001451208">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; calculateFinancialMetrics &gt; should calculate negative NPV for unprofitable investment" time="0.000414625">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; calculateFinancialMetrics &gt; should calculate correct total costs" time="0.000223791">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; calculateFinancialMetrics &gt; should calculate cash flows for each year" time="0.001905292">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; calculateFinancialMetrics &gt; should calculate cumulative cash flow correctly" time="0.002166666">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; calculateFinancialMetrics &gt; should calculate payback period when investment is recovered" time="0.004103041">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; calculateFinancialMetrics &gt; should return null payback period when investment is never recovered" time="0.000665875">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; calculateFinancialMetrics &gt; should calculate positive ROI for profitable investment" time="0.003133583">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; calculateFinancialMetrics &gt; should calculate IRR for valid cash flows" time="0.000506417">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; calculateFinancialMetrics &gt; should handle zero discount rate" time="0.000315792">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; calculateFinancialMetrics &gt; should handle single year analysis horizon" time="0.002021625">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; calculateFinancialMetrics &gt; should apply productivity gains multiplier correctly" time="0.000540917">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; applyScenarioAdjustments &gt; should increase benefits for optimistic scenario" time="0.000470375">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; applyScenarioAdjustments &gt; should decrease operating costs for optimistic scenario" time="0.000537542">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; applyScenarioAdjustments &gt; should lower discount rate for optimistic scenario" time="0.000212958">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; applyScenarioAdjustments &gt; should decrease benefits for conservative scenario" time="0.000705167">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; applyScenarioAdjustments &gt; should increase operating costs for conservative scenario" time="0.000183208">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; applyScenarioAdjustments &gt; should increase discount rate for conservative scenario" time="0.00016">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; applyScenarioAdjustments &gt; should return unchanged data for unknown scenario" time="0.000134792">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; applyScenarioAdjustments &gt; should return unchanged data for base scenario" time="0.000155">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; validateFinancialData &gt; should return no errors for valid data" time="0.000840833">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; validateFinancialData &gt; should report error for zero analysis horizon" time="0.000312417">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; validateFinancialData &gt; should report error for negative analysis horizon" time="0.002332666">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; validateFinancialData &gt; should report error for discount rate over 100" time="0.015586542">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; validateFinancialData &gt; should report error for negative discount rate" time="0.000235125">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; validateFinancialData &gt; should report error for negative investment values" time="0.000153">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; validateFinancialData &gt; should warn when no annual benefits defined" time="0.000134167">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; validateFinancialData &gt; should warn when benefits are less than operating costs" time="0.00013325">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; validateFinancialData &gt; should warn when implementation time exceeds horizon" time="0.000129">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; validateFinancialData &gt; should recommend approval for complete valid data" time="0.000137208">
+        </testcase>
+        <testcase classname="tests/unit/backend/economics/economicsFinancials.test.ts" name="EconomicsFinancials Service &gt; validateFinancialData &gt; should recommend complete inputs when data is incomplete" time="0.000123458">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/adminMiddleware.test.js" timestamp="2026-01-23T15:00:54.384Z" hostname="MacBook-Pro-Piotr.local" tests="9" failures="0" errors="0" skipped="0" time="4.499090083">
+        <testcase classname="tests/unit/backend/middleware/adminMiddleware.test.js" name="Admin Middleware &gt; Admin Access &gt; should allow admin users to access admin endpoints" time="0.011608334">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/adminMiddleware.test.js" name="Admin Middleware &gt; Admin Access &gt; should allow superadmin users to access admin endpoints" time="0.000509334">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/adminMiddleware.test.js" name="Admin Middleware &gt; Non-Admin Access &gt; should reject regular users with 403 from admin endpoints" time="0.005112417">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/adminMiddleware.test.js" name="Admin Middleware &gt; Non-Admin Access &gt; should reject unauthenticated requests with 401" time="0.107113708">
+            <system-out>
+2026-01-23 10:00:53:053 [35mhttp[39m: [35mGET /api/admin/users[39m
+2026-01-23 10:00:53:053 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/admin/users[39m
+
+2026-01-23 10:00:53:053 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;GET&quot;,&quot;path&quot;:&quot;/api/admin/users&quot;,&quot;statusCode&quot;:404,&quot;responseTime&quot;:88,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:92392,&quot;external&quot;:294,&quot;rss&quot;:32768},&quot;userId&quot;:null,&quot;organizationId&quot;:null,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/adminMiddleware.test.js" name="Admin Middleware &gt; Token Validation &gt; should reject expired or invalid tokens" time="0.044142708">
+            <system-out>
+2026-01-23 10:00:53:053 [35mhttp[39m: [35mGET /api/admin/users[39m
+2026-01-23 10:00:53:053 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/admin/users[39m
+
+2026-01-23 10:00:53:053 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;GET&quot;,&quot;path&quot;:&quot;/api/admin/users&quot;,&quot;statusCode&quot;:404,&quot;responseTime&quot;:3,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:77072,&quot;external&quot;:294,&quot;rss&quot;:16384},&quot;userId&quot;:null,&quot;organizationId&quot;:null,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/adminMiddleware.test.js" name="Admin Middleware &gt; Token Validation &gt; should reject malformed authorization header" time="0.0486355">
+            <system-out>
+2026-01-23 10:00:53:053 [35mhttp[39m: [35mGET /api/admin/users[39m
+2026-01-23 10:00:53:053 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/admin/users[39m
+
+2026-01-23 10:00:53:053 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;GET&quot;,&quot;path&quot;:&quot;/api/admin/users&quot;,&quot;statusCode&quot;:404,&quot;responseTime&quot;:12,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:73632,&quot;external&quot;:294,&quot;rss&quot;:16384},&quot;userId&quot;:null,&quot;organizationId&quot;:null,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/adminMiddleware.test.js" name="Admin Middleware &gt; Role-Based Access Control &gt; should return correct user role in /me endpoint" time="0.002563916">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/adminMiddleware.test.js" name="Admin Middleware &gt; Role-Based Access Control &gt; should return USER role for regular user" time="0.000467625">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/adminMiddleware.test.js" name="Admin Middleware &gt; Role-Based Access Control &gt; should return SUPERADMIN role for superadmin" time="0.007749083">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/auditLog.test.ts" timestamp="2026-01-23T15:00:54.388Z" hostname="MacBook-Pro-Piotr.local" tests="17" failures="5" errors="0" skipped="0" time="4.572892542">
+        <testcase classname="tests/unit/backend/middleware/auditLog.test.ts" name="AuditLog Middleware - Real Production Tests &gt; Skip non-mutating methods &gt; should skip GET requests" time="0.011851917">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/auditLog.test.ts" name="AuditLog Middleware - Real Production Tests &gt; Skip non-mutating methods &gt; should skip OPTIONS requests" time="0.023299083">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/auditLog.test.ts" name="AuditLog Middleware - Real Production Tests &gt; Skip non-mutating methods &gt; should skip HEAD requests" time="0.016642791">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/auditLog.test.ts" name="AuditLog Middleware - Real Production Tests &gt; Process mutating methods &gt; should wrap response end for POST requests" time="0.010902125">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/auditLog.test.ts" name="AuditLog Middleware - Real Production Tests &gt; Process mutating methods &gt; should wrap response end for PUT requests" time="0.00192275">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/auditLog.test.ts" name="AuditLog Middleware - Real Production Tests &gt; Process mutating methods &gt; should wrap response end for PATCH requests" time="0.000361333">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/auditLog.test.ts" name="AuditLog Middleware - Real Production Tests &gt; Process mutating methods &gt; should wrap response end for DELETE requests" time="0.002326708">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/auditLog.test.ts" name="AuditLog Middleware - Real Production Tests &gt; Log on successful response &gt; should log when response status is 2xx" time="0.394106375">
+            <failure message="expected &quot;vi.fn()&quot; to be called with arguments: [ ObjectContaining{…} ][90m
+
+Number of calls: [1m0[22m
+[39m" type="AssertionError">
+AssertionError: expected &quot;vi.fn()&quot; to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ❯ tests/unit/backend/middleware/auditLog.test.ts:146:45
+            </failure>
+            <failure message="expected &quot;vi.fn()&quot; to be called with arguments: [ ObjectContaining{…} ][90m
+
+Number of calls: [1m0[22m
+[39m" type="AssertionError">
+AssertionError: expected &quot;vi.fn()&quot; to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ❯ tests/unit/backend/middleware/auditLog.test.ts:146:45
+            </failure>
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/auditLog.test.ts" name="AuditLog Middleware - Real Production Tests &gt; Log on successful response &gt; should not log when response status is 4xx" time="0.06174975">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/auditLog.test.ts" name="AuditLog Middleware - Real Production Tests &gt; Log on successful response &gt; should not log when response status is 5xx" time="0.081087375">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/auditLog.test.ts" name="AuditLog Middleware - Real Production Tests &gt; Action mapping &gt; should map POST to created action" time="0.285207459">
+            <failure message="expected &quot;vi.fn()&quot; to be called with arguments: [ ObjectContaining{…} ][90m
+
+Number of calls: [1m0[22m
+[39m" type="AssertionError">
+AssertionError: expected &quot;vi.fn()&quot; to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ❯ tests/unit/backend/middleware/auditLog.test.ts:190:45
+            </failure>
+            <failure message="expected &quot;vi.fn()&quot; to be called with arguments: [ ObjectContaining{…} ][90m
+
+Number of calls: [1m0[22m
+[39m" type="AssertionError">
+AssertionError: expected &quot;vi.fn()&quot; to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ❯ tests/unit/backend/middleware/auditLog.test.ts:190:45
+            </failure>
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/auditLog.test.ts" name="AuditLog Middleware - Real Production Tests &gt; Action mapping &gt; should map PUT to updated action" time="1.942533625">
+            <failure message="expected &quot;vi.fn()&quot; to be called with arguments: [ ObjectContaining{…} ][90m
+
+Number of calls: [1m0[22m
+[39m" type="AssertionError">
+AssertionError: expected &quot;vi.fn()&quot; to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ❯ tests/unit/backend/middleware/auditLog.test.ts:204:45
+            </failure>
+            <failure message="expected &quot;vi.fn()&quot; to be called with arguments: [ ObjectContaining{…} ][90m
+
+Number of calls: [1m0[22m
+[39m" type="AssertionError">
+AssertionError: expected &quot;vi.fn()&quot; to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ❯ tests/unit/backend/middleware/auditLog.test.ts:204:45
+            </failure>
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/auditLog.test.ts" name="AuditLog Middleware - Real Production Tests &gt; Action mapping &gt; should map DELETE to deleted action" time="0.133682167">
+            <failure message="expected &quot;vi.fn()&quot; to be called with arguments: [ ObjectContaining{…} ][90m
+
+Number of calls: [1m0[22m
+[39m" type="AssertionError">
+AssertionError: expected &quot;vi.fn()&quot; to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ❯ tests/unit/backend/middleware/auditLog.test.ts:218:45
+            </failure>
+            <failure message="expected &quot;vi.fn()&quot; to be called with arguments: [ ObjectContaining{…} ][90m
+
+Number of calls: [1m0[22m
+[39m" type="AssertionError">
+AssertionError: expected &quot;vi.fn()&quot; to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ❯ tests/unit/backend/middleware/auditLog.test.ts:218:45
+            </failure>
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/auditLog.test.ts" name="AuditLog Middleware - Real Production Tests &gt; Entity extraction &gt; should extract entity type from URL" time="0.303608208">
+            <failure message="expected &quot;vi.fn()&quot; to be called with arguments: [ ObjectContaining{…} ][90m
+
+Number of calls: [1m0[22m
+[39m" type="AssertionError">
+AssertionError: expected &quot;vi.fn()&quot; to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ❯ tests/unit/backend/middleware/auditLog.test.ts:234:45
+            </failure>
+            <failure message="expected &quot;vi.fn()&quot; to be called with arguments: [ ObjectContaining{…} ][90m
+
+Number of calls: [1m0[22m
+[39m" type="AssertionError">
+AssertionError: expected &quot;vi.fn()&quot; to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ❯ tests/unit/backend/middleware/auditLog.test.ts:234:45
+            </failure>
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/auditLog.test.ts" name="AuditLog Middleware - Real Production Tests &gt; Entity extraction &gt; should extract entity name from body" time="0.711045959">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/auditLog.test.ts" name="AuditLog Middleware - Real Production Tests &gt; Error handling &gt; should handle ActivityService errors gracefully" time="0.388234042">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/auditLog.test.ts" name="AuditLog Middleware - Real Production Tests &gt; Error handling &gt; should handle anonymous users" time="0.052654875">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/demoGuard.test.js" timestamp="2026-01-23T15:00:54.405Z" hostname="MacBook-Pro-Piotr.local" tests="8" failures="0" errors="0" skipped="0" time="0.106177667">
+        <testcase classname="tests/unit/backend/middleware/demoGuard.test.js" name="Demo Guard Middleware &gt; Demo Organization &gt; should allow GET requests in demo mode" time="0.063690583">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/demoGuard.test.js" name="Demo Guard Middleware &gt; Demo Organization &gt; should block POST requests in demo mode" time="0.021843958">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/demoGuard.test.js" name="Demo Guard Middleware &gt; Demo Organization &gt; should block PUT requests in demo mode" time="0.002433833">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/demoGuard.test.js" name="Demo Guard Middleware &gt; Demo Organization &gt; should block DELETE requests in demo mode" time="0.000488625">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/demoGuard.test.js" name="Demo Guard Middleware &gt; Non-Demo Organization &gt; should allow all operations for non-demo org" time="0.000284667">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/demoGuard.test.js" name="Demo Guard Middleware &gt; Non-Demo Organization &gt; should allow when no organization set" time="0.000234625">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/demoGuard.test.js" name="Demo Guard Middleware &gt; Allowed Paths &gt; should allow logout in demo mode" time="0.0002155">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/demoGuard.test.js" name="Demo Guard Middleware &gt; Allowed Paths &gt; should allow demo feedback in demo mode" time="0.000197834">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/economicsValidation.test.js" timestamp="2026-01-23T15:00:54.412Z" hostname="MacBook-Pro-Piotr.local" tests="7" failures="0" errors="0" skipped="0" time="0.413616959">
+        <testcase classname="tests/unit/backend/middleware/economicsValidation.test.js" name="Economics Validation Middleware &gt; Valid Data &gt; should allow valid economics data" time="0.158153375">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/economicsValidation.test.js" name="Economics Validation Middleware &gt; Valid Data &gt; should skip non-economics paths" time="0.001280625">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/economicsValidation.test.js" name="Economics Validation Middleware &gt; Amount Validation &gt; should reject non-numeric amount" time="0.02757075">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/economicsValidation.test.js" name="Economics Validation Middleware &gt; Amount Validation &gt; should reject negative amount" time="0.009260958">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/economicsValidation.test.js" name="Economics Validation Middleware &gt; Amount Validation &gt; should reject excessive amount" time="0.180717917">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/economicsValidation.test.js" name="Economics Validation Middleware &gt; Currency Validation &gt; should reject invalid currency" time="0.007005042">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/economicsValidation.test.js" name="Economics Validation Middleware &gt; Period Validation &gt; should reject invalid period" time="0.001032708">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/featureGate.test.js" timestamp="2026-01-23T15:00:54.415Z" hostname="MacBook-Pro-Piotr.local" tests="18" failures="0" errors="0" skipped="0" time="0.068937">
+        <testcase classname="tests/unit/backend/middleware/featureGate.test.js" name="Feature Gate Middleware &gt; isFeatureEnabled() &gt; should return true for enabled feature with matching plan" time="0.003414583">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/featureGate.test.js" name="Feature Gate Middleware &gt; isFeatureEnabled() &gt; should return false for disabled feature" time="0.000541541">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/featureGate.test.js" name="Feature Gate Middleware &gt; isFeatureEnabled() &gt; should return false for non-existent feature" time="0.000270167">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/featureGate.test.js" name="Feature Gate Middleware &gt; isFeatureEnabled() &gt; should return false for wrong plan level" time="0.000347375">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/featureGate.test.js" name="Feature Gate Middleware &gt; isFeatureEnabled() &gt; should return true for enterprise features with enterprise plan" time="0.000681583">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/featureGate.test.js" name="Feature Gate Middleware &gt; isFeatureEnabled() &gt; should respect beta access flag" time="0.000369792">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/featureGate.test.js" name="Feature Gate Middleware &gt; isFeatureEnabled() &gt; should respect user overrides" time="0.000292">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/featureGate.test.js" name="Feature Gate Middleware &gt; isFeatureEnabled() &gt; should respect org overrides" time="0.000216416">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/featureGate.test.js" name="Feature Gate Middleware &gt; requireFeature() middleware &gt; should return 401 for missing user" time="0.008720792">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/featureGate.test.js" name="Feature Gate Middleware &gt; requireFeature() middleware &gt; should return 403 for unavailable feature" time="0.00655175">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/featureGate.test.js" name="Feature Gate Middleware &gt; requireFeature() middleware &gt; should call next for available feature" time="0.000623125">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/featureGate.test.js" name="Feature Gate Middleware &gt; requireFeature() middleware &gt; should use custom upgrade message" time="0.000702584">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/featureGate.test.js" name="Feature Gate Middleware &gt; setFeatureOverride() / removeFeatureOverride() &gt; should set and remove user overrides" time="0.000352875">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/featureGate.test.js" name="Feature Gate Middleware &gt; getFeatureConfig() &gt; should return feature configuration" time="0.001254166">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/featureGate.test.js" name="Feature Gate Middleware &gt; getFeatureConfig() &gt; should return null for unknown feature" time="0.000448916">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/featureGate.test.js" name="Feature Gate Middleware &gt; getAllFeatures() &gt; should return all feature names" time="0.000998375">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/featureGate.test.js" name="Feature Gate Middleware &gt; setFeatureConfig() &gt; should add new feature configuration" time="0.00027675">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/featureGate.test.js" name="Feature Gate Middleware &gt; toggleFeature() &gt; should toggle feature enabled state" time="0.000815542">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/fileUploadMiddleware.test.js" timestamp="2026-01-23T15:00:54.429Z" hostname="MacBook-Pro-Piotr.local" tests="7" failures="0" errors="0" skipped="0" time="0.212151375">
+        <testcase classname="tests/unit/backend/middleware/fileUploadMiddleware.test.js" name="File Upload Middleware &gt; Valid Files &gt; should allow valid image upload" time="0.027204292">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/fileUploadMiddleware.test.js" name="File Upload Middleware &gt; Valid Files &gt; should allow PDF upload" time="0.000430292">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/fileUploadMiddleware.test.js" name="File Upload Middleware &gt; Valid Files &gt; should skip when no files" time="0.000249833">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/fileUploadMiddleware.test.js" name="File Upload Middleware &gt; File Size Validation &gt; should reject files over size limit" time="0.002188875">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/fileUploadMiddleware.test.js" name="File Upload Middleware &gt; File Type Validation &gt; should reject disallowed file types" time="0.128581375">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/fileUploadMiddleware.test.js" name="File Upload Middleware &gt; Filename Validation &gt; should reject path traversal attempts" time="0.0114455">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/fileUploadMiddleware.test.js" name="File Upload Middleware &gt; Multiple Files &gt; should reject too many files" time="0.012127917">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/invitationRateLimiter.test.js" timestamp="2026-01-23T15:00:54.436Z" hostname="MacBook-Pro-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="0.133493209">
+        <testcase classname="tests/unit/backend/middleware/invitationRateLimiter.test.js" name="Invitation Rate Limiter Middleware &gt; Within Limits &gt; should allow invitation within limits" time="0.088570125">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/invitationRateLimiter.test.js" name="Invitation Rate Limiter Middleware &gt; Within Limits &gt; should skip non-invitation paths" time="0.016762084">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/invitationRateLimiter.test.js" name="Invitation Rate Limiter Middleware &gt; Within Limits &gt; should skip GET requests" time="0.0012">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/invitationRateLimiter.test.js" name="Invitation Rate Limiter Middleware &gt; Hourly Limit &gt; should block when hourly limit exceeded" time="0.003233959">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/invitationRateLimiter.test.js" name="Invitation Rate Limiter Middleware &gt; Daily Limit &gt; should block when daily limit exceeded" time="0.001890042">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/invitationRateLimiter.test.js" name="Invitation Rate Limiter Middleware &gt; Tracking &gt; should provide trackInvitation function" time="0.000458833">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/legalComplianceMiddleware.test.js" timestamp="2026-01-23T15:00:54.457Z" hostname="MacBook-Pro-Piotr.local" tests="7" failures="0" errors="0" skipped="0" time="0.21310825">
+        <testcase classname="tests/unit/backend/middleware/legalComplianceMiddleware.test.js" name="Legal Compliance Middleware &gt; Unaccepted Documents &gt; should block user who has not accepted TOS" time="0.066718333">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/legalComplianceMiddleware.test.js" name="Legal Compliance Middleware &gt; Unaccepted Documents &gt; should block user with partial acceptance" time="0.050252083">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/legalComplianceMiddleware.test.js" name="Legal Compliance Middleware &gt; Accepted Documents &gt; should allow user who accepted all documents" time="0.000891166">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/legalComplianceMiddleware.test.js" name="Legal Compliance Middleware &gt; Excluded Paths &gt; should skip check for legal endpoints" time="0.00235675">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/legalComplianceMiddleware.test.js" name="Legal Compliance Middleware &gt; Excluded Paths &gt; should skip check for logout" time="0.000762417">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/legalComplianceMiddleware.test.js" name="Legal Compliance Middleware &gt; No User &gt; should skip check when no user attached" time="0.004290916">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/legalComplianceMiddleware.test.js" name="Legal Compliance Middleware &gt; Admin Bypass &gt; should bypass for admin when configured" time="0.000424833">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/performanceMetrics.test.js" timestamp="2026-01-23T15:00:54.518Z" hostname="MacBook-Pro-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.2362285">
+        <testcase classname="tests/unit/backend/middleware/performanceMetrics.test.js" name="Performance Metrics Middleware &gt; Metrics Collection &gt; should call next and allow request to proceed" time="0.002501875">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/performanceMetrics.test.js" name="Performance Metrics Middleware &gt; Metrics Collection &gt; should record metrics when response ends" time="0.005998541">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/performanceMetrics.test.js" name="Performance Metrics Middleware &gt; Metrics Collection &gt; should capture user agent" time="0.000593792">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/performanceMetrics.test.js" name="Performance Metrics Middleware &gt; Slow Request Detection &gt; should mark slow requests" time="0.151947875">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/performanceMetrics.test.js" name="Performance Metrics Middleware &gt; Aggregate Metrics &gt; should calculate average response time" time="0.066496459">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/permissionMiddleware.test.ts" timestamp="2026-01-23T15:00:54.523Z" hostname="MacBook-Pro-Piotr.local" tests="11" failures="0" errors="0" skipped="0" time="2.393697625">
+        <testcase classname="tests/unit/backend/middleware/permissionMiddleware.test.ts" name="Permission Middleware - Real Production Tests &gt; requirePermission &gt; should call next() when user has permission" time="1.241608">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/permissionMiddleware.test.ts" name="Permission Middleware - Real Production Tests &gt; requirePermission &gt; should return 403 when user lacks permission" time="0.470512833">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/permissionMiddleware.test.ts" name="Permission Middleware - Real Production Tests &gt; requirePermission &gt; should return 401 when no user on request" time="0.000670458">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/permissionMiddleware.test.ts" name="Permission Middleware - Real Production Tests &gt; requirePermission &gt; should handle permission check errors gracefully" time="0.00132775">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/permissionMiddleware.test.ts" name="Permission Middleware - Real Production Tests &gt; requireAnyPermission &gt; should allow when user has any of the permissions" time="0.003460209">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/permissionMiddleware.test.ts" name="Permission Middleware - Real Production Tests &gt; requireAnyPermission &gt; should deny when user has none of the permissions" time="0.001748583">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/permissionMiddleware.test.ts" name="Permission Middleware - Real Production Tests &gt; requireAnyPermission &gt; should return 401 for empty permission array" time="0.001266041">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/permissionMiddleware.test.ts" name="Permission Middleware - Real Production Tests &gt; requireAllPermissions &gt; should allow when user has all permissions" time="0.004534833">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/permissionMiddleware.test.ts" name="Permission Middleware - Real Production Tests &gt; requireAllPermissions &gt; should deny when user lacks any permission" time="0.004889">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/permissionMiddleware.test.ts" name="Permission Middleware - Real Production Tests &gt; Role-based scenarios &gt; should pass role to permission service" time="0.00201025">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/permissionMiddleware.test.ts" name="Permission Middleware - Real Production Tests &gt; Role-based scenarios &gt; should handle user without organizationId" time="0.002217416">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/planLimits.test.js" timestamp="2026-01-23T15:00:54.536Z" hostname="MacBook-Pro-Piotr.local" tests="8" failures="0" errors="0" skipped="0" time="0.169412333">
+        <testcase classname="tests/unit/backend/middleware/planLimits.test.js" name="Plan Limits Middleware &gt; Plan Limits Attachment &gt; should attach plan limits to request" time="0.138308916">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/planLimits.test.js" name="Plan Limits Middleware &gt; Plan Limits Attachment &gt; should use correct limits for pro plan" time="0.002825459">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/planLimits.test.js" name="Plan Limits Middleware &gt; Plan Limits Attachment &gt; should use unlimited for enterprise" time="0.008140916">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/planLimits.test.js" name="Plan Limits Middleware &gt; Feature Access &gt; should allow basic_analytics for free plan" time="0.003285542">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/planLimits.test.js" name="Plan Limits Middleware &gt; Feature Access &gt; should block ai_assistant for free plan" time="0.00306725">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/planLimits.test.js" name="Plan Limits Middleware &gt; Feature Access &gt; should allow ai_assistant for pro plan" time="0.000436292">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/planLimits.test.js" name="Plan Limits Middleware &gt; Feature Access &gt; should allow all features for enterprise" time="0.001461083">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/planLimits.test.js" name="Plan Limits Middleware &gt; Default Plan &gt; should default to free when no organization" time="0.00031925">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/pmoValidation.test.js" timestamp="2026-01-23T15:00:54.559Z" hostname="MacBook-Pro-Piotr.local" tests="7" failures="0" errors="0" skipped="0" time="0.045900042">
+        <testcase classname="tests/unit/backend/middleware/pmoValidation.test.js" name="PMO Validation Middleware &gt; Valid Data &gt; should allow valid project data" time="0.007075417">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/pmoValidation.test.js" name="PMO Validation Middleware &gt; Valid Data &gt; should skip non-PMO paths" time="0.000823583">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/pmoValidation.test.js" name="PMO Validation Middleware &gt; Status Validation &gt; should reject invalid status" time="0.014065583">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/pmoValidation.test.js" name="PMO Validation Middleware &gt; Priority Validation &gt; should reject invalid priority" time="0.002062458">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/pmoValidation.test.js" name="PMO Validation Middleware &gt; Date Validation &gt; should reject end date before start date" time="0.017275083">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/pmoValidation.test.js" name="PMO Validation Middleware &gt; Date Validation &gt; should allow valid date range" time="0.00054525">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/pmoValidation.test.js" name="PMO Validation Middleware &gt; Budget Validation &gt; should reject negative budget" time="0.000852">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/projectQuotaMiddleware.test.js" timestamp="2026-01-23T15:00:54.574Z" hostname="MacBook-Pro-Piotr.local" tests="7" failures="0" errors="0" skipped="0" time="0.069731458">
+        <testcase classname="tests/unit/backend/middleware/projectQuotaMiddleware.test.js" name="Project Quota Middleware &gt; Within Quota &gt; should allow project creation within free limit" time="0.048975542">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/projectQuotaMiddleware.test.js" name="Project Quota Middleware &gt; Within Quota &gt; should allow project creation for pro plan" time="0.0007855">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/projectQuotaMiddleware.test.js" name="Project Quota Middleware &gt; Quota Exceeded &gt; should block when free quota exceeded" time="0.003156333">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/projectQuotaMiddleware.test.js" name="Project Quota Middleware &gt; Quota Exceeded &gt; should block when pro quota exceeded" time="0.002944875">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/projectQuotaMiddleware.test.js" name="Project Quota Middleware &gt; Enterprise Plan &gt; should allow unlimited projects for enterprise" time="0.000386583">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/projectQuotaMiddleware.test.js" name="Project Quota Middleware &gt; Non-Create Requests &gt; should skip for GET requests" time="0.000254584">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/projectQuotaMiddleware.test.js" name="Project Quota Middleware &gt; Non-Create Requests &gt; should skip for other paths" time="0.000190791">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/quotaMiddleware.test.js" timestamp="2026-01-23T15:00:54.579Z" hostname="MacBook-Pro-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="0.2214435">
+        <testcase classname="tests/unit/backend/middleware/quotaMiddleware.test.js" name="Quota Middleware &gt; Within Quota &gt; should allow requests within quota" time="0.057205083">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/quotaMiddleware.test.js" name="Quota Middleware &gt; Within Quota &gt; should set correct remaining quota" time="0.003093417">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/quotaMiddleware.test.js" name="Quota Middleware &gt; Quota Exceeded &gt; should block when quota exceeded" time="0.0404475">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/quotaMiddleware.test.js" name="Quota Middleware &gt; Different Plans &gt; should use pro limits for pro plan" time="0.001015083">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/quotaMiddleware.test.js" name="Quota Middleware &gt; Different Plans &gt; should allow unlimited for enterprise" time="0.002365834">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/quotaMiddleware.test.js" name="Quota Middleware &gt; No User &gt; should skip when no user attached" time="0.00548775">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/rapidLeanUploadMiddleware.test.js" timestamp="2026-01-23T15:00:54.584Z" hostname="MacBook-Pro-Piotr.local" tests="7" failures="0" errors="0" skipped="0" time="0.0351405">
+        <testcase classname="tests/unit/backend/middleware/rapidLeanUploadMiddleware.test.js" name="RapidLean Upload Middleware &gt; Valid Upload &gt; should allow valid file upload" time="0.01299525">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rapidLeanUploadMiddleware.test.js" name="RapidLean Upload Middleware &gt; Valid Upload &gt; should skip non-RapidLean paths" time="0.001370417">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rapidLeanUploadMiddleware.test.js" name="RapidLean Upload Middleware &gt; File Validation &gt; should reject oversized files" time="0.0104895">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rapidLeanUploadMiddleware.test.js" name="RapidLean Upload Middleware &gt; File Validation &gt; should reject invalid file types" time="0.003621125">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rapidLeanUploadMiddleware.test.js" name="RapidLean Upload Middleware &gt; Location Validation &gt; should require location for observations" time="0.00111725">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rapidLeanUploadMiddleware.test.js" name="RapidLean Upload Middleware &gt; Location Validation &gt; should reject empty location" time="0.000310542">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rapidLeanUploadMiddleware.test.js" name="RapidLean Upload Middleware &gt; Template Validation &gt; should reject invalid template" time="0.000409041">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/rbac.test.js" timestamp="2026-01-23T15:00:54.603Z" hostname="MacBook-Pro-Piotr.local" tests="36" failures="0" errors="0" skipped="0" time="0.15766925">
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; checkRole() &gt; should return true for matching role" time="0.032833209">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; checkRole() &gt; should return false for non-matching role" time="0.002188792">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; checkRole() &gt; should return true for super_admin checking any role" time="0.002517667">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; checkRole() &gt; should return false for missing user" time="0.028078375">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; checkRole() &gt; should check inherited roles" time="0.000793375">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; checkRole() &gt; should not allow lower role to access higher" time="0.000505">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; checkPermission() &gt; should return true for super_admin wildcard permission" time="0.000651083">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; checkPermission() &gt; should check exact permission match" time="0.000194167">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; checkPermission() &gt; should deny missing permissions" time="0.000198333">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; checkPermission() &gt; should check inherited permissions" time="0.000537875">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; checkPermission() &gt; should handle scoped permissions correctly" time="0.000291458">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; checkPermission() &gt; should handle viewer role" time="0.000174959">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; checkAllPermissions() &gt; should return true when all permissions are met" time="0.000382958">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; checkAllPermissions() &gt; should return false when any permission is missing" time="0.00042975">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; checkAllPermissions() &gt; should return false for null user" time="0.000276875">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; checkAnyPermission() &gt; should return true when at least one permission is met" time="0.000502125">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; checkAnyPermission() &gt; should return false when no permissions are met" time="0.014431542">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; checkAnyPermission() &gt; should return false for null user" time="0.000237208">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; requireRole() middleware &gt; should return 401 for missing user" time="0.015862375">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; requireRole() middleware &gt; should return 403 for insufficient role" time="0.000828167">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; requireRole() middleware &gt; should call next() for authorized user" time="0.000451791">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; requireRole() middleware &gt; should allow super_admin for any role" time="0.005169625">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; requirePermission() middleware &gt; should call next() when user has permission" time="0.000662958">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; requirePermission() middleware &gt; should return 403 when user lacks permission" time="0.000812208">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; requirePermission() middleware &gt; should return 401 for missing user" time="0.000566875">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; requireAnyPermission() middleware &gt; should call next() when user has at least one permission" time="0.000903917">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; requireAnyPermission() middleware &gt; should return 403 when user has no permissions" time="0.021298584">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; getEffectivePermissions() &gt; should return direct permissions" time="0.001240083">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; getEffectivePermissions() &gt; should include inherited permissions" time="0.000373">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; getEffectivePermissions() &gt; should deduplicate permissions" time="0.000144584">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; getEffectivePermissions() &gt; should return empty array for unknown role" time="0.000173292">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; addRole() &gt; should add new role" time="0.000147917">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; addRole() &gt; should add role with inheritance" time="0.000146667">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; getRoles() &gt; should return all role names" time="0.000312667">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; getRoleConfig() &gt; should return role configuration" time="0.000204">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/rbac.test.js" name="RBAC Middleware &gt; getRoleConfig() &gt; should return null for unknown role" time="0.000150875">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" timestamp="2026-01-23T15:00:54.635Z" hostname="MacBook-Pro-Piotr.local" tests="30" failures="0" errors="0" skipped="0" time="0.728326292">
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; checkMemoryQuota &gt; should pass when no organization ID present" time="0.046093708">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; checkMemoryQuota &gt; should pass when no subscription plan found" time="0.00059125">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; checkMemoryQuota &gt; should pass when subscription plan has no memory limit" time="0.001878291">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; checkMemoryQuota &gt; should pass when memory usage is within quota" time="0.000364125">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; checkMemoryQuota &gt; should block when memory quota exceeded" time="0.129829208">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; checkMemoryQuota &gt; should block when exactly at memory limit" time="0.00288225">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; checkMemoryQuota &gt; should return error when organization not found in database" time="0.002602375">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; checkMemoryQuota &gt; should pass through on database error" time="0.001497709">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; checkCPUQuota &gt; should pass when no organization ID present" time="0.03694625">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; checkCPUQuota &gt; should pass when no subscription plan found" time="0.001039334">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; checkCPUQuota &gt; should pass when subscription plan has no CPU limit" time="0.055341667">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; checkCPUQuota &gt; should pass when CPU usage is within quota" time="0.253064334">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; checkCPUQuota &gt; should block when CPU quota exceeded" time="0.00314275">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; checkCPUQuota &gt; should return error when organization not found" time="0.00069775">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; checkCPUQuota &gt; should pass through on database error" time="0.002567541">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; checkBudgetQuota &gt; should pass when no organization ID present" time="0.010499625">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; checkBudgetQuota &gt; should return error when organization not found" time="0.028083584">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; checkBudgetQuota &gt; should pass when no budget set" time="0.037637166">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; checkBudgetQuota &gt; should pass when budget not exceeded" time="0.021363042">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; checkBudgetQuota &gt; should block when budget exceeded" time="0.002959125">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; checkBudgetQuota &gt; should pass through on database error" time="0.001752833">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; Edge Cases &gt; should handle memory quota at exact boundary (1 MB over)" time="0.003952125">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; Edge Cases &gt; should handle CPU quota at exact boundary (1% over)" time="0.006780416">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; Edge Cases &gt; should handle budget quota at exact boundary ($0.01 over)" time="0.020387708">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; Edge Cases &gt; should handle zero memory usage" time="0.001722875">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; Edge Cases &gt; should handle zero budget spent" time="0.002883959">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; Multi-tenant Isolation &gt; should check quota for correct organization" time="0.001418875">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; Multi-tenant Isolation &gt; should isolate budget checks per organization" time="0.000364334">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; Error Response Format &gt; should return detailed error for memory quota exceeded" time="0.000351375">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/resourceQuota.middleware.test.ts" name="Resource Quota Middleware &gt; Error Response Format &gt; should use status code 429 (Too Many Requests) for quota exceeded" time="0.000275917">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/securityHeadersMiddleware.test.js" timestamp="2026-01-23T15:00:54.689Z" hostname="MacBook-Pro-Piotr.local" tests="11" failures="0" errors="0" skipped="0" time="0.284491834">
+        <testcase classname="tests/unit/backend/middleware/securityHeadersMiddleware.test.js" name="Security Headers Middleware &gt; HSTS Header &gt; should set Strict-Transport-Security header" time="0.09479225">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/securityHeadersMiddleware.test.js" name="Security Headers Middleware &gt; HSTS Header &gt; should use custom max-age" time="0.004027875">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/securityHeadersMiddleware.test.js" name="Security Headers Middleware &gt; X-Content-Type-Options &gt; should set nosniff header" time="0.001672584">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/securityHeadersMiddleware.test.js" name="Security Headers Middleware &gt; X-Frame-Options &gt; should set DENY by default" time="0.000441084">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/securityHeadersMiddleware.test.js" name="Security Headers Middleware &gt; X-Frame-Options &gt; should use custom frame policy" time="0.000273917">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/securityHeadersMiddleware.test.js" name="Security Headers Middleware &gt; XSS Protection &gt; should set X-XSS-Protection header" time="0.004880167">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/securityHeadersMiddleware.test.js" name="Security Headers Middleware &gt; Content Security Policy &gt; should set CSP header" time="0.00852475">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/securityHeadersMiddleware.test.js" name="Security Headers Middleware &gt; Additional Headers &gt; should set Referrer-Policy" time="0.013310583">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/securityHeadersMiddleware.test.js" name="Security Headers Middleware &gt; Additional Headers &gt; should set Permissions-Policy" time="0.000344375">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/securityHeadersMiddleware.test.js" name="Security Headers Middleware &gt; Configurable Options &gt; should skip HSTS when disabled" time="0.002789709">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/securityHeadersMiddleware.test.js" name="Security Headers Middleware &gt; should call next" time="0.016665209">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/superAdminMiddleware.test.js" timestamp="2026-01-23T15:00:54.706Z" hostname="MacBook-Pro-Piotr.local" tests="5" failures="0" errors="0" skipped="0" time="0.311184959">
+        <testcase classname="tests/unit/backend/middleware/superAdminMiddleware.test.js" name="Super Admin Middleware &gt; SuperAdmin Access &gt; should allow superadmin users" time="0.141682375">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/superAdminMiddleware.test.js" name="Super Admin Middleware &gt; SuperAdmin Access &gt; should handle uppercase SUPERADMIN role" time="0.000918667">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/superAdminMiddleware.test.js" name="Super Admin Middleware &gt; Non-SuperAdmin Access &gt; should reject admin users with 403" time="0.032223375">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/superAdminMiddleware.test.js" name="Super Admin Middleware &gt; Non-SuperAdmin Access &gt; should reject regular users with 403" time="0.129230458">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/superAdminMiddleware.test.js" name="Super Admin Middleware &gt; No Authentication &gt; should return 401 when no user attached" time="0.000595959">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/trialEntryGuard.test.js" timestamp="2026-01-23T15:00:54.727Z" hostname="MacBook-Pro-Piotr.local" tests="6" failures="0" errors="0" skipped="0" time="0.106103666">
+        <testcase classname="tests/unit/backend/middleware/trialEntryGuard.test.js" name="Trial Entry Guard Middleware &gt; Active Trial &gt; should allow access during active trial" time="0.002150875">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/trialEntryGuard.test.js" name="Trial Entry Guard Middleware &gt; Active Trial &gt; should set trial access info for premium features" time="0.001615458">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/trialEntryGuard.test.js" name="Trial Entry Guard Middleware &gt; Expired Trial &gt; should block access when trial expired" time="0.012620333">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/trialEntryGuard.test.js" name="Trial Entry Guard Middleware &gt; Non-Trial Plans &gt; should skip for free plan" time="0.000609375">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/trialEntryGuard.test.js" name="Trial Entry Guard Middleware &gt; Non-Trial Plans &gt; should skip for pro plan" time="0.086065792">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/trialEntryGuard.test.js" name="Trial Entry Guard Middleware &gt; Non-Trial Plans &gt; should skip when no organization" time="0.00072575">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/middleware/userStateGuard.test.js" timestamp="2026-01-23T15:00:54.738Z" hostname="MacBook-Pro-Piotr.local" tests="10" failures="0" errors="0" skipped="0" time="0.012433042">
+        <testcase classname="tests/unit/backend/middleware/userStateGuard.test.js" name="User State Guard Middleware &gt; Active Users &gt; should allow active users to proceed" time="0.002789875">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/userStateGuard.test.js" name="User State Guard Middleware &gt; Active Users &gt; should call next without error for active user" time="0.000644208">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/userStateGuard.test.js" name="User State Guard Middleware &gt; Blocked Users &gt; should reject blocked users with 403" time="0.001796208">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/userStateGuard.test.js" name="User State Guard Middleware &gt; Suspended Users &gt; should reject suspended users with 403" time="0.00045475">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/userStateGuard.test.js" name="User State Guard Middleware &gt; Pending Verification &gt; should reject unverified users by default" time="0.000446">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/userStateGuard.test.js" name="User State Guard Middleware &gt; Pending Verification &gt; should allow unverified users when configured" time="0.000257083">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/userStateGuard.test.js" name="User State Guard Middleware &gt; Excluded Paths &gt; should skip check for logout path" time="0.000225125">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/userStateGuard.test.js" name="User State Guard Middleware &gt; Excluded Paths &gt; should skip check for verify-email path" time="0.000200708">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/userStateGuard.test.js" name="User State Guard Middleware &gt; No User Attached &gt; should skip check when no user is attached" time="0.000212667">
+        </testcase>
+        <testcase classname="tests/unit/backend/middleware/userStateGuard.test.js" name="User State Guard Middleware &gt; Custom Configuration &gt; should use custom allowed statuses" time="0.000260458">
+        </testcase>
+    </testsuite>
+</testsuites>
+436740.4878,"status":"passed","message":"","name":"/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/unit/backend/middleware/quotaMiddleware.test.js"},{"assertionResults":[{"ancestorTitles":["RapidLean Upload Middleware","Valid Upload"],"fullName":"RapidLean Upload Middleware Valid Upload should allow valid file upload","status":"passed","title":"should allow valid file upload","duration":12.995249999999942,"failureMessages":[],"meta":{}},{"ancestorTitles":["RapidLean Upload Middleware","Valid Upload"],"fullName":"RapidLean Upload Middleware Valid Upload should skip non-RapidLean paths","status":"passed","title":"should skip non-RapidLean paths","duration":1.3704170000019076,"failureMessages":[],"meta":{}},{"ancestorTitles":["RapidLean Upload Middleware","File Validation"],"fullName":"RapidLean Upload Middleware File Validation should reject oversized files","status":"passed","title":"should reject oversized files","duration":10.48949999999968,"failureMessages":[],"meta":{}},{"ancestorTitles":["RapidLean Upload Middleware","File Validation"],"fullName":"RapidLean Upload Middleware File Validation should reject invalid file types","status":"passed","title":"should reject invalid file types","duration":3.6211250000014843,"failureMessages":[],"meta":{}},{"ancestorTitles":["RapidLean Upload Middleware","Location Validation"],"fullName":"RapidLean Upload Middleware Location Validation should require location for observations","status":"passed","title":"should require location for observations","duration":1.1172499999993306,"failureMessages":[],"meta":{}},{"ancestorTitles":["RapidLean Upload Middleware","Location Validation"],"fullName":"RapidLean Upload Middleware Location Validation should reject empty location","status":"passed","title":"should reject empty location","duration":0.31054199999925913,"failureMessages":[],"meta":{}},{"ancestorTitles":["RapidLean Upload Middleware","Template Validation"],"fullName":"RapidLean Upload Middleware Template Validation should reject invalid template","status":"passed","title":"should reject invalid template","duration":0.4090409999989788,"failureMessages":[],"meta":{}}],"startTime":1769180439156,"endTime":1769180439187.409,"status":"passed","message":"","name":"/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/unit/backend/middleware/rapidLeanUploadMiddleware.test.js"},{"assertionResults":[{"ancestorTitles":["RBAC Middleware","checkRole()"],"fullName":"RBAC Middleware checkRole() should return true for matching role","status":"passed","title":"should return true for matching role","duration":32.83320899999853,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","checkRole()"],"fullName":"RBAC Middleware checkRole() should return false for non-matching role","status":"passed","title":"should return false for non-matching role","duration":2.1887919999990118,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","checkRole()"],"fullName":"RBAC Middleware checkRole() should return true for super_admin checking any role","status":"passed","title":"should return true for super_admin checking any role","duration":2.517667000000074,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","checkRole()"],"fullName":"RBAC Middleware checkRole() should return false for missing user","status":"passed","title":"should return false for missing user","duration":28.07837499999914,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","checkRole()"],"fullName":"RBAC Middleware checkRole() should check inherited roles","status":"passed","title":"should check inherited roles","duration":0.793374999999287,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","checkRole()"],"fullName":"RBAC Middleware checkRole() should not allow lower role to access higher","status":"passed","title":"should not allow lower role to access higher","duration":0.5049999999991996,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","checkPermission()"],"fullName":"RBAC Middleware checkPermission() should return true for super_admin wildcard permission","status":"passed","title":"should return true for super_admin wildcard permission","duration":0.6510829999988346,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","checkPermission()"],"fullName":"RBAC Middleware checkPermission() should check exact permission match","status":"passed","title":"should check exact permission match","duration":0.19416700000147102,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","checkPermission()"],"fullName":"RBAC Middleware checkPermission() should deny missing permissions","status":"passed","title":"should deny missing permissions","duration":0.1983330000002752,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","checkPermission()"],"fullName":"RBAC Middleware checkPermission() should check inherited permissions","status":"passed","title":"should check inherited permissions","duration":0.5378749999999854,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","checkPermission()"],"fullName":"RBAC Middleware checkPermission() should handle scoped permissions correctly","status":"passed","title":"should handle scoped permissions correctly","duration":0.29145799999969313,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","checkPermission()"],"fullName":"RBAC Middleware checkPermission() should handle viewer role","status":"passed","title":"should handle viewer role","duration":0.17495899999994435,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","checkAllPermissions()"],"fullName":"RBAC Middleware checkAllPermissions() should return true when all permissions are met","status":"passed","title":"should return true when all permissions are met","duration":0.38295800000014424,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","checkAllPermissions()"],"fullName":"RBAC Middleware checkAllPermissions() should return false when any permission is missing","status":"passed","title":"should return false when any permission is missing","duration":0.4297499999993306,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","checkAllPermissions()"],"fullName":"RBAC Middleware checkAllPermissions() should return false for null user","status":"passed","title":"should return false for null user","duration":0.27687499999956344,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","checkAnyPermission()"],"fullName":"RBAC Middleware checkAnyPermission() should return true when at least one permission is met","status":"passed","title":"should return true when at least one permission is met","duration":0.5021249999990687,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","checkAnyPermission()"],"fullName":"RBAC Middleware checkAnyPermission() should return false when no permissions are met","status":"passed","title":"should return false when no permissions are met","duration":14.431542000000263,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","checkAnyPermission()"],"fullName":"RBAC Middleware checkAnyPermission() should return false for null user","status":"passed","title":"should return false for null user","duration":0.23720800000046438,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","requireRole() middleware"],"fullName":"RBAC Middleware requireRole() middleware should return 401 for missing user","status":"passed","title":"should return 401 for missing user","duration":15.862375000000611,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","requireRole() middleware"],"fullName":"RBAC Middleware requireRole() middleware should return 403 for insufficient role","status":"passed","title":"should return 403 for insufficient role","duration":0.8281670000014856,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","requireRole() middleware"],"fullName":"RBAC Middleware requireRole() middleware should call next() for authorized user","status":"passed","title":"should call next() for authorized user","duration":0.45179100000132166,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","requireRole() middleware"],"fullName":"RBAC Middleware requireRole() middleware should allow super_admin for any role","status":"passed","title":"should allow super_admin for any role","duration":5.169625000000451,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","requirePermission() middleware"],"fullName":"RBAC Middleware requirePermission() middleware should call next() when user has permission","status":"passed","title":"should call next() when user has permission","duration":0.6629579999989801,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","requirePermission() middleware"],"fullName":"RBAC Middleware requirePermission() middleware should return 403 when user lacks permission","status":"passed","title":"should return 403 when user lacks permission","duration":0.812207999999373,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","requirePermission() middleware"],"fullName":"RBAC Middleware requirePermission() middleware should return 401 for missing user","status":"passed","title":"should return 401 for missing user","duration":0.5668749999986176,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","requireAnyPermission() middleware"],"fullName":"RBAC Middleware requireAnyPermission() middleware should call next() when user has at least one permission","status":"passed","title":"should call next() when user has at least one permission","duration":0.9039169999996375,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","requireAnyPermission() middleware"],"fullName":"RBAC Middleware requireAnyPermission() middleware should return 403 when user has no permissions","status":"passed","title":"should return 403 when user has no permissions","duration":21.29858400000012,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","getEffectivePermissions()"],"fullName":"RBAC Middleware getEffectivePermissions() should return direct permissions","status":"passed","title":"should return direct permissions","duration":1.2400830000005953,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","getEffectivePermissions()"],"fullName":"RBAC Middleware getEffectivePermissions() should include inherited permissions","status":"passed","title":"should include inherited permissions","duration":0.37299999999959255,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","getEffectivePermissions()"],"fullName":"RBAC Middleware getEffectivePermissions() should deduplicate permissions","status":"passed","title":"should deduplicate permissions","duration":0.14458400000148686,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","getEffectivePermissions()"],"fullName":"RBAC Middleware getEffectivePermissions() should return empty array for unknown role","status":"passed","title":"should return empty array for unknown role","duration":0.17329199999949196,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","addRole()"],"fullName":"RBAC Middleware addRole() should add new role","status":"passed","title":"should add new role","duration":0.1479170000002341,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","addRole()"],"fullName":"RBAC Middleware addRole() should add role with inheritance","status":"passed","title":"should add role with inheritance","duration":0.14666699999906996,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","getRoles()"],"fullName":"RBAC Middleware getRoles() should return all role names","status":"passed","title":"should return all role names","duration":0.3126670000001468,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","getRoleConfig()"],"fullName":"RBAC Middleware getRoleConfig() should return role configuration","status":"passed","title":"should return role configuration","duration":0.2039999999997235,"failureMessages":[],"meta":{}},{"ancestorTitles":["RBAC Middleware","getRoleConfig()"],"fullName":"RBAC Middleware getRoleConfig() should return null for unknown role","status":"passed","title":"should return null for unknown role","duration":0.1508750000011787,"failureMessages":[],"meta":{}}],"startTime":1769180411960,"endTime":1769180412101.3127,"status":"passed","message":"","name":"/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/unit/backend/middleware/rbac.test.js"},{"assertionResults":[{"ancestorTitles":["Resource Quota Middleware","checkMemoryQuota"],"fullName":"Resource Quota Middleware checkMemoryQuota should pass when no organization ID present","status":"passed","title":"should pass when no organization ID present","duration":46.09370800000033,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","checkMemoryQuota"],"fullName":"Resource Quota Middleware checkMemoryQuota should pass when no subscription plan found","status":"passed","title":"should pass when no subscription plan found","duration":0.5912500000013097,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","checkMemoryQuota"],"fullName":"Resource Quota Middleware checkMemoryQuota should pass when subscription plan has no memory limit","status":"passed","title":"should pass when subscription plan has no memory limit","duration":1.8782910000008997,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","checkMemoryQuota"],"fullName":"Resource Quota Middleware checkMemoryQuota should pass when memory usage is within quota","status":"passed","title":"should pass when memory usage is within quota","duration":0.3641250000000582,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","checkMemoryQuota"],"fullName":"Resource Quota Middleware checkMemoryQuota should block when memory quota exceeded","status":"passed","title":"should block when memory quota exceeded","duration":129.8292079999992,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","checkMemoryQuota"],"fullName":"Resource Quota Middleware checkMemoryQuota should block when exactly at memory limit","status":"passed","title":"should block when exactly at memory limit","duration":2.8822500000023865,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","checkMemoryQuota"],"fullName":"Resource Quota Middleware checkMemoryQuota should return error when organization not found in database","status":"passed","title":"should return error when organization not found in database","duration":2.602374999998574,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","checkMemoryQuota"],"fullName":"Resource Quota Middleware checkMemoryQuota should pass through on database error","status":"passed","title":"should pass through on database error","duration":1.497708999999304,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","checkCPUQuota"],"fullName":"Resource Quota Middleware checkCPUQuota should pass when no organization ID present","status":"passed","title":"should pass when no organization ID present","duration":36.94625000000087,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","checkCPUQuota"],"fullName":"Resource Quota Middleware checkCPUQuota should pass when no subscription plan found","status":"passed","title":"should pass when no subscription plan found","duration":1.039334000000963,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","checkCPUQuota"],"fullName":"Resource Quota Middleware checkCPUQuota should pass when subscription plan has no CPU limit","status":"passed","title":"should pass when subscription plan has no CPU limit","duration":55.3416670000006,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","checkCPUQuota"],"fullName":"Resource Quota Middleware checkCPUQuota should pass when CPU usage is within quota","status":"passed","title":"should pass when CPU usage is within quota","duration":253.06433399999878,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","checkCPUQuota"],"fullName":"Resource Quota Middleware checkCPUQuota should block when CPU quota exceeded","status":"passed","title":"should block when CPU quota exceeded","duration":3.1427500000027067,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","checkCPUQuota"],"fullName":"Resource Quota Middleware checkCPUQuota should return error when organization not found","status":"passed","title":"should return error when organization not found","duration":0.6977499999993597,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","checkCPUQuota"],"fullName":"Resource Quota Middleware checkCPUQuota should pass through on database error","status":"passed","title":"should pass through on database error","duration":2.5675410000003467,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","checkBudgetQuota"],"fullName":"Resource Quota Middleware checkBudgetQuota should pass when no organization ID present","status":"passed","title":"should pass when no organization ID present","duration":10.499625000000378,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","checkBudgetQuota"],"fullName":"Resource Quota Middleware checkBudgetQuota should return error when organization not found","status":"passed","title":"should return error when organization not found","duration":28.083583999999973,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","checkBudgetQuota"],"fullName":"Resource Quota Middleware checkBudgetQuota should pass when no budget set","status":"passed","title":"should pass when no budget set","duration":37.637165999996796,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","checkBudgetQuota"],"fullName":"Resource Quota Middleware checkBudgetQuota should pass when budget not exceeded","status":"passed","title":"should pass when budget not exceeded","duration":21.363041999997222,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","checkBudgetQuota"],"fullName":"Resource Quota Middleware checkBudgetQuota should block when budget exceeded","status":"passed","title":"should block when budget exceeded","duration":2.9591249999975844,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","checkBudgetQuota"],"fullName":"Resource Quota Middleware checkBudgetQuota should pass through on database error","status":"passed","title":"should pass through on database error","duration":1.7528330000022834,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","Edge Cases"],"fullName":"Resource Quota Middleware Edge Cases should handle memory quota at exact boundary (1 MB over)","status":"passed","title":"should handle memory quota at exact boundary (1 MB over)","duration":3.9521249999997963,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","Edge Cases"],"fullName":"Resource Quota Middleware Edge Cases should handle CPU quota at exact boundary (1% over)","status":"passed","title":"should handle CPU quota at exact boundary (1% over)","duration":6.7804159999977855,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","Edge Cases"],"fullName":"Resource Quota Middleware Edge Cases should handle budget quota at exact boundary ($0.01 over)","status":"passed","title":"should handle budget quota at exact boundary ($0.01 over)","duration":20.387707999998383,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","Edge Cases"],"fullName":"Resource Quota Middleware Edge Cases should handle zero memory usage","status":"passed","title":"should handle zero memory usage","duration":1.7228749999994761,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","Edge Cases"],"fullName":"Resource Quota Middleware Edge Cases should handle zero budget spent","status":"passed","title":"should handle zero budget spent","duration":2.8839590000025055,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","Multi-tenant Isolation"],"fullName":"Resource Quota Middleware Multi-tenant Isolation should check quota for correct organization","status":"passed","title":"should check quota for correct organization","duration":1.4188749999993888,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","Multi-tenant Isolation"],"fullName":"Resource Quota Middleware Multi-tenant Isolation should isolate budget checks per organization","status":"passed","title":"should isolate budget checks per organization","duration":0.3643339999980526,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","Error Response Format"],"fullName":"Resource Quota Middleware Error Response Format should return detailed error for memory quota exceeded","status":"passed","title":"should return detailed error for memory quota exceeded","duration":0.35137500000200816,"failureMessages":[],"meta":{}},{"ancestorTitles":["Resource Quota Middleware","Error Response Format"],"fullName":"Resource Quota Middleware Error Response Format should use status code 429 (Too Many Requests) for quota exceeded","status":"passed","title":"should use status code 429 (Too Many Requests) for quota exceeded","duration":0.2759169999990263,"failureMessages":[],"meta":{}}],"startTime":1769180423221,"endTime":1769180423940.276,"status":"passed","message":"","name":"/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/unit/backend/middleware/resourceQuota.middleware.test.ts"},{"assertionResults":[{"ancestorTitles":["Security Headers Middleware","HSTS Header"],"fullName":"Security Headers Middleware HSTS Header should set Strict-Transport-Security header","status":"passed","title":"should set Strict-Transport-Security header","duration":94.7922499999986,"failureMessages":[],"meta":{}},{"ancestorTitles":["Security Headers Middleware","HSTS Header"],"fullName":"Security Headers Middleware HSTS Header should use custom max-age","status":"passed","title":"should use custom max-age","duration":4.027874999999767,"failureMessages":[],"meta":{}},{"ancestorTitles":["Security Headers Middleware","X-Content-Type-Options"],"fullName":"Security Headers Middleware X-Content-Type-Options should set nosniff header","status":"passed","title":"should set nosniff header","duration":1.6725839999999152,"failureMessages":[],"meta":{}},{"ancestorTitles":["Security Headers Middleware","X-Frame-Options"],"fullName":"Security Headers Middleware X-Frame-Options should set DENY by default","status":"passed","title":"should set DENY by default","duration":0.4410839999982272,"failureMessages":[],"meta":{}},{"ancestorTitles":["Security Headers Middleware","X-Frame-Options"],"fullName":"Security Headers Middleware X-Frame-Options should use custom frame policy","status":"passed","title":"should use custom frame policy","duration":0.27391699999861885,"failureMessages":[],"meta":{}},{"ancestorTitles":["Security Headers Middleware","XSS Protection"],"fullName":"Security Headers Middleware XSS Protection should set X-XSS-Protection header","status":"passed","title":"should set X-XSS-Protection header","duration":4.8801669999993464,"failureMessages":[],"meta":{}},{"ancestorTitles":["Security Headers Middleware","Content Security Policy"],"fullName":"Security Headers Middleware Content Security Policy should set CSP header","status":"passed","title":"should set CSP header","duration":8.524749999996857,"failureMessages":[],"meta":{}},{"ancestorTitles":["Security Headers Middleware","Additional Headers"],"fullName":"Security Headers Middleware Additional Headers should set Referrer-Policy","status":"passed","title":"should set Referrer-Policy","duration":13.310583000002225,"failureMessages":[],"meta":{}},{"ancestorTitles":["Security Headers Middleware","Additional Headers"],"fullName":"Security Headers Middleware Additional Headers should set Permissions-Policy","status":"passed","title":"should set Permissions-Policy","duration":0.3443750000005821,"failureMessages":[],"meta":{}},{"ancestorTitles":["Security Headers Middleware","Configurable Options"],"fullName":"Security Headers Middleware Configurable Options should skip HSTS when disabled","status":"passed","title":"should skip HSTS when disabled","duration":2.7897090000005846,"failureMessages":[],"meta":{}},{"ancestorTitles":["Security Headers Middleware"],"fullName":"Security Headers Middleware should call next","status":"passed","title":"should call next","duration":16.665209000002505,"failureMessages":[],"meta":{}}],"startTime":1769180437364,"endTime":1769180437523.6653,"status":"passed","message":"","name":"/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/unit/backend/middleware/securityHeadersMiddleware.test.js"},{"assertionResults":[{"ancestorTitles":["Super Admin Middleware","SuperAdmin Access"],"fullName":"Super Admin Middleware SuperAdmin Access should allow superadmin users","status":"passed","title":"should allow superadmin users","duration":141.68237500000032,"failureMessages":[],"meta":{}},{"ancestorTitles":["Super Admin Middleware","SuperAdmin Access"],"fullName":"Super Admin Middleware SuperAdmin Access should handle uppercase SUPERADMIN role","status":"passed","title":"should handle uppercase SUPERADMIN role","duration":0.918666999998095,"failureMessages":[],"meta":{}},{"ancestorTitles":["Super Admin Middleware","Non-SuperAdmin Access"],"fullName":"Super Admin Middleware Non-SuperAdmin Access should reject admin users with 403","status":"passed","title":"should reject admin users with 403","duration":32.22337499999776,"failureMessages":[],"meta":{}},{"ancestorTitles":["Super Admin Middleware","Non-SuperAdmin Access"],"fullName":"Super Admin Middleware Non-SuperAdmin Access should reject regular users with 403","status":"passed","title":"should reject regular users with 403","duration":129.23045799999818,"failureMessages":[],"meta":{}},{"ancestorTitles":["Super Admin Middleware","No Authentication"],"fullName":"Super Admin Middleware No Authentication should return 401 when no user attached","status":"passed","title":"should return 401 when no user attached","duration":0.5959590000020398,"failureMessages":[],"meta":{}}],"startTime":1769180437096,"endTime":1769180437401.596,"status":"passed","message":"","name":"/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/unit/backend/middleware/superAdminMiddleware.test.js"},{"assertionResults":[{"ancestorTitles":["Trial Entry Guard Middleware","Active Trial"],"fullName":"Trial Entry Guard Middleware Active Trial should allow access during active trial","status":"passed","title":"should allow access during active trial","duration":2.1508749999993597,"failureMessages":[],"meta":{}},{"ancestorTitles":["Trial Entry Guard Middleware","Active Trial"],"fullName":"Trial Entry Guard Middleware Active Trial should set trial access info for premium features","status":"passed","title":"should set trial access info for premium features","duration":1.615458000000217,"failureMessages":[],"meta":{}},{"ancestorTitles":["Trial Entry Guard Middleware","Expired Trial"],"fullName":"Trial Entry Guard Middleware Expired Trial should block access when trial expired","status":"passed","title":"should block access when trial expired","duration":12.620332999998936,"failureMessages":[],"meta":{}},{"ancestorTitles":["Trial Entry Guard Middleware","Non-Trial Plans"],"fullName":"Trial Entry Guard Middleware Non-Trial Plans should skip for free plan","status":"passed","title":"should skip for free plan","duration":0.609375,"failureMessages":[],"meta":{}},{"ancestorTitles":["Trial Entry Guard Middleware","Non-Trial Plans"],"fullName":"Trial Entry Guard Middleware Non-Trial Plans should skip for pro plan","status":"passed","title":"should skip for pro plan","duration":86.0657919999976,"failureMessages":[],"meta":{}},{"ancestorTitles":["Trial Entry Guard Middleware","Non-Trial Plans"],"fullName":"Trial Entry Guard Middleware Non-Trial Plans should skip when no organization","status":"passed","title":"should skip when no organization","duration":0.7257499999977881,"failureMessages":[],"meta":{}}],"startTime":1769180437254,"endTime":1769180437357.7258,"status":"passed","message":"","name":"/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/unit/backend/middleware/trialEntryGuard.test.js"},{"assertionResults":[{"ancestorTitles":["User State Guard Middleware","Active Users"],"fullName":"User State Guard Middleware Active Users should allow active users to proceed","status":"passed","title":"should allow active users to proceed","duration":2.789875000002212,"failureMessages":[],"meta":{}},{"ancestorTitles":["User State Guard Middleware","Active Users"],"fullName":"User State Guard Middleware Active Users should call next without error for active user","status":"passed","title":"should call next without error for active user","duration":0.6442080000015267,"failureMessages":[],"meta":{}},{"ancestorTitles":["User State Guard Middleware","Blocked Users"],"fullName":"User State Guard Middleware Blocked Users should reject blocked users with 403","status":"passed","title":"should reject blocked users with 403","duration":1.7962079999997513,"failureMessages":[],"meta":{}},{"ancestorTitles":["User State Guard Middleware","Suspended Users"],"fullName":"User State Guard Middleware Suspended Users should reject suspended users with 403","status":"passed","title":"should reject suspended users with 403","duration":0.4547500000007858,"failureMessages":[],"meta":{}},{"ancestorTitles":["User State Guard Middleware","Pending Verification"],"fullName":"User State Guard Middleware Pending Verification should reject unverified users by default","status":"passed","title":"should reject unverified users by default","duration":0.4459999999999127,"failureMessages":[],"meta":{}},{"ancestorTitles":["User State Guard Middleware","Pending Verification"],"fullName":"User State Guard Middleware Pending Verification should allow unverified users when configured","status":"passed","title":"should allow unverified users when configured","duration":0.2570830000004207,"failureMessages":[],"meta":{}},{"ancestorTitles":["User State Guard Middleware","Excluded Paths"],"fullName":"User State Guard Middleware Excluded Paths should skip check for logout path","status":"passed","title":"should skip check for logout path","duration":0.225125000000844,"failureMessages":[],"meta":{}},{"ancestorTitles":["User State Guard Middleware","Excluded Paths"],"fullName":"User State Guard Middleware Excluded Paths should skip check for verify-email path","status":"passed","title":"should skip check for verify-email path","duration":0.2007080000003043,"failureMessages":[],"meta":{}},{"ancestorTitles":["User State Guard Middleware","No User Attached"],"fullName":"User State Guard Middleware No User Attached should skip check when no user is attached","status":"passed","title":"should skip check when no user is attached","duration":0.212666999999783,"failureMessages":[],"meta":{}},{"ancestorTitles":["User State Guard Middleware","Custom Configuration"],"fullName":"User State Guard Middleware Custom Configuration should use custom allowed statuses","status":"passed","title":"should use custom allowed statuses","duration":0.2604579999970156,"failureMessages":[],"meta":{}}],"startTime":1769180437082,"endTime":1769180437089.2605,"status":"passed","message":"","name":"/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/unit/backend/middleware/userStateGuard.test.js"}]}

@@ -1,0 +1,268 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const SRC_ROOT = path.resolve(__dirname, '..');
+
+// Debug: Log SRC_ROOT in development to verify it's correct
+if (process.env.NODE_ENV !== 'production') {
+  console.debug(`[LazyServiceLoader] SRC_ROOT: ${SRC_ROOT}, __dirname: ${__dirname}`);
+}
+
+export async function createLazyService<T = unknown>(servicePath: string): Promise<T> {
+  // In test mode, try to use mocks first
+  if (process.env.NODE_ENV === 'test') {
+    try {
+      const mockModule = await tryLoadMock<T>(servicePath);
+      if (mockModule) {
+        console.log(`[LazyServiceLoader] Using mock for: ${servicePath}`);
+        return mockModule;
+      }
+    } catch (error) {
+      // Continue to normal loading if mock not found
+    }
+  }
+
+  // Try to find the file
+  let absolutePath: string;
+  if (servicePath.startsWith('./') || servicePath.startsWith('../')) {
+    // Handle relative paths - resolve from services directory
+    // IMPORTANT: Strip ALL ../ BEFORE path.resolve, otherwise path.resolve will
+    // process them and go outside the services/ directory
+    let cleanPath = servicePath;
+
+    // Remove all leading ../ (these incorrectly go outside services/)
+    // Must do this BEFORE path.resolve, not after
+    while (cleanPath.startsWith('../')) {
+      cleanPath = cleanPath.slice(3); // Remove '../'
+    }
+
+    // Remove leading ./ if present
+    if (cleanPath.startsWith('./')) {
+      cleanPath = cleanPath.slice(2);
+    }
+
+    // Remove any remaining ../ that might be in the middle (shouldn't happen, but be safe)
+    cleanPath = cleanPath.replace(/\/\.\.\//g, '/').replace(/\/\.\.$/g, '');
+
+    // Always resolve from services/ directory
+    // Now cleanPath should be something like "ai/healthMonitor.js"
+    absolutePath = path.resolve(SRC_ROOT, 'services', cleanPath);
+  } else {
+    // Absolute path from SRC_ROOT
+    absolutePath = path.resolve(SRC_ROOT, servicePath);
+  }
+
+  // Verify path is correct and handle TS mapping
+  const expectedServicesPath = path.resolve(SRC_ROOT, 'services');
+  const normalizedAbsolutePath = path.normalize(absolutePath);
+
+  // Double-check path is correct before TS mapping
+  // If path doesn't start with expected services path, recalculate
+  if (
+    !normalizedAbsolutePath.startsWith(expectedServicesPath) &&
+    !normalizedAbsolutePath.includes('node_modules')
+  ) {
+    // Path resolution went wrong - recalculate
+    let cleanPath = servicePath;
+    while (cleanPath.startsWith('../')) {
+      cleanPath = cleanPath.slice(3);
+    }
+    if (cleanPath.startsWith('./')) {
+      cleanPath = cleanPath.slice(2);
+    }
+    cleanPath = cleanPath.replace(/\/\.\.\//g, '/').replace(/\/\.\.$/g, '');
+    absolutePath = path.resolve(SRC_ROOT, 'services', cleanPath);
+  }
+
+  // Handle TS mapping for dynamic imports
+  if (absolutePath.endsWith('.js')) {
+    const tsPath = absolutePath.slice(0, -3) + '.ts';
+    if (fs.existsSync(tsPath)) {
+      absolutePath = tsPath;
+    } else if (absolutePath.endsWith('.legacy.js')) {
+      const nonLegacyTsPath = absolutePath.slice(0, -10) + '.ts';
+      if (fs.existsSync(nonLegacyTsPath)) {
+        absolutePath = nonLegacyTsPath;
+      }
+    }
+  } else if (!absolutePath.endsWith('.ts')) {
+    const tsPath = absolutePath + '.ts';
+    if (fs.existsSync(tsPath)) {
+      absolutePath = tsPath;
+    }
+  }
+
+  // Check if we are trying to load the same file that is currently executing
+  // This prevents infinite recursion/hangs in wrappers
+  if (absolutePath === fileURLToPath(import.meta.url)) {
+    console.warn(
+      `[LazyServiceLoader] Circular load detected for: ${absolutePath}. Returning stub.`
+    );
+    return createStubProxy(servicePath);
+  }
+
+  // Final verification: ensure path is correct before attempting import
+  const finalNormalizedPath = path.normalize(absolutePath);
+
+  // If the path doesn't start with expectedServicesPath, path resolution went wrong
+  // This should not happen with our fix, but add safety check
+  if (
+    !finalNormalizedPath.startsWith(expectedServicesPath) &&
+    !finalNormalizedPath.includes('node_modules')
+  ) {
+    console.warn(
+      `[LazyServiceLoader] Path resolution issue detected: ${servicePath} resolved to ${finalNormalizedPath}, expected under ${expectedServicesPath}. SRC_ROOT=${SRC_ROOT}, __dirname=${__dirname}`
+    );
+    // Try one more time with absolute path from services/
+    const fallbackPath = path.resolve(SRC_ROOT, 'services', servicePath.replace(/^(\.\.\/)+/, ''));
+    if (fs.existsSync(fallbackPath) || fs.existsSync(fallbackPath.replace('.js', '.ts'))) {
+      absolutePath = fallbackPath;
+      console.log(`[LazyServiceLoader] Using fallback path: ${absolutePath}`);
+    }
+  }
+
+  console.log(`[LazyServiceLoader] Loading: ${servicePath} -> ${absolutePath}`);
+  try {
+    const module = await import(absolutePath);
+    return (module.default || module) as T;
+  } catch (error) {
+    // One last try: if it's mfaService.js, try MFAService.ts
+    if (absolutePath.endsWith('mfaService.ts')) {
+      const capitalPath = absolutePath.replace('mfaService.ts', 'MFAService.ts');
+      if (fs.existsSync(capitalPath) && capitalPath !== fileURLToPath(import.meta.url)) {
+        try {
+          const module = await import(capitalPath);
+          return (module.default || module) as T;
+        } catch (e) {
+          /* ignore */
+        }
+      }
+    }
+
+    // Only log error if it's not a "module not found" error for expected missing files
+    const err = error as Error & { code?: string };
+    const isModuleNotFound =
+      err.code === 'ERR_MODULE_NOT_FOUND' || err.message.includes('Cannot find module');
+    const isExpectedMissingFile =
+      servicePath.includes('.legacy.js') ||
+      servicePath.includes('trialService') ||
+      absolutePath.includes('.legacy.js');
+
+    if (!isExpectedMissingFile || !isModuleNotFound) {
+      console.error(`[LazyServiceLoader] Failed to load: ${absolutePath}`);
+      console.error(`[LazyServiceLoader] Error:`, error);
+    } else {
+      // For expected missing files, just log at debug level
+      console.debug(`[LazyServiceLoader] Expected missing file (returning stub): ${servicePath}`);
+    }
+
+    return createStubProxy(servicePath, absolutePath, isExpectedMissingFile && isModuleNotFound);
+  }
+}
+
+/**
+ * Try to load a mock service in test mode
+ */
+async function tryLoadMock<T>(servicePath: string): Promise<T | null> {
+  // Extract service name from path
+  const serviceName = path.basename(servicePath, path.extname(servicePath));
+
+  // Try to load from serviceMocks helper
+  try {
+    // Use path.resolve to get absolute path to tests directory
+    const testsDir = path.resolve(SRC_ROOT, '../../tests');
+    const mockPath = path.join(testsDir, 'helpers/serviceMocks.js');
+    const { serviceMocks } = await import(mockPath);
+
+    // Map common service names to mocks
+    const mockMap: Record<string, any> = {
+      enhancedContextBuilder: serviceMocks.EnhancedContextBuilder,
+      regulatoryModeGuard: serviceMocks.RegulatoryModeGuard,
+      pmoDomainRegistry: serviceMocks.PMODomainRegistry,
+      integrationService: serviceMocks.IntegrationService,
+      workqueueService: serviceMocks.WorkqueueService,
+      organizationService: serviceMocks.OrganizationService,
+      aiActionExecutor: serviceMocks.AIActionExecutor,
+      persistentSessionStore: serviceMocks.PersistentSessionStore,
+      summarizationService: serviceMocks.SummarizationService,
+      aiExplainabilityService: serviceMocks.AIExplainabilityService,
+      docIndexer: serviceMocks.DocIndexer,
+    };
+
+    const mockKey = serviceName.replace(/Service$/, '').toLowerCase();
+    if (mockMap[mockKey]) {
+      return mockMap[mockKey] as T;
+    }
+  } catch (error) {
+    // Mock file not available, continue to normal loading
+  }
+
+  return null;
+}
+
+function createStubProxy<T>(
+  servicePath: string,
+  absolutePath?: string,
+  isExpectedMissingFile = false
+): T {
+  // Only log warnings/errors for unexpected missing files
+  if (!isExpectedMissingFile) {
+    if (absolutePath) {
+      // Error already logged in createLazyService, just log the stub creation
+      console.warn(`[LazyServiceLoader] Returning stub proxy for: ${servicePath}`);
+    } else {
+      console.warn(`[LazyServiceLoader] Returning stub proxy for: ${servicePath}`);
+    }
+  }
+  // For expected missing files, no logging needed (already logged at debug level in createLazyService)
+
+  // Return a Proxy that provides stub methods for any property access
+  const stubTarget = {} as Record<string | symbol, any>;
+  return new Proxy(stubTarget, {
+    get(_target, prop) {
+      if (prop === 'then') return undefined; // Prevent it from looking like a promise
+      if (typeof prop === 'string' || typeof prop === 'symbol') {
+        return (..._args: any[]) => {
+          const propName = typeof prop === 'symbol' ? prop.toString() : prop;
+          console.debug(`[LazyServiceLoader] Stub method called: ${servicePath}.${propName}()`);
+          return Promise.resolve(null);
+        };
+      }
+      return undefined;
+    },
+    set(_target, prop, _value) {
+      const propName = typeof prop === 'symbol' ? prop.toString() : String(prop);
+      console.debug(`[LazyServiceLoader] Stub property set: ${servicePath}.${propName}`);
+      return true;
+    },
+    construct(_target, _args) {
+      console.debug(`[LazyServiceLoader] Stub constructor called: new ${servicePath}()`);
+      return createStubProxy(servicePath);
+    },
+  }) as T;
+}
+
+/**
+ * Create a cached lazy service loader
+ * This ensures the service is only loaded once and cached for subsequent calls
+ */
+export function createCachedLazyService<T = unknown>(servicePath: string): () => Promise<T> {
+  let serviceCache: T | null = null;
+  let servicePromise: Promise<T> | null = null;
+
+  return async (): Promise<T> => {
+    if (serviceCache) {
+      return serviceCache;
+    }
+    if (!servicePromise) {
+      servicePromise = createLazyService<T>(servicePath).then((service) => {
+        serviceCache = service;
+        return service;
+      });
+    }
+    return servicePromise;
+  };
+}

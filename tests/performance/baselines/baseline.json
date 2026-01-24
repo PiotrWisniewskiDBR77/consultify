@@ -1,0 +1,44 @@
+{
+  "version": "1.0.0",
+  "created": "2025-01-XX",
+  "metrics": {
+    "first-contentful-paint": {
+      "baseline": 1500,
+      "threshold": 2000,
+      "unit": "ms"
+    },
+    "largest-contentful-paint": {
+      "baseline": 2000,
+      "threshold": 2500,
+      "unit": "ms"
+    },
+    "total-blocking-time": {
+      "baseline": 200,
+      "threshold": 300,
+      "unit": "ms"
+    },
+    "cumulative-layout-shift": {
+      "baseline": 0.05,
+      "threshold": 0.1,
+      "unit": "score"
+    },
+    "speed-index": {
+      "baseline": 2500,
+      "threshold": 3000,
+      "unit": "ms"
+    },
+    "bundle-size": {
+      "main": {
+        "baseline": 1200,
+        "threshold": 1536,
+        "unit": "KB"
+      },
+      "total-js": {
+        "baseline": 4000,
+        "threshold": 5120,
+        "unit": "KB"
+      }
+    }
+  },
+  "notes": "Baseline metrics for performance comparison. Update when performance improves."
+}

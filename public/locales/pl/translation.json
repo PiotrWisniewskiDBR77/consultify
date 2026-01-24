@@ -1,0 +1,213 @@
+{
+  "common": {
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "delete": "Usuń",
+    "edit": "Edytuj",
+    "close": "Zamknij",
+    "loading": "Ładowanie",
+    "error": "Błąd",
+    "success": "Sukces",
+    "back": "Wstecz",
+    "next": "Dalej",
+    "previous": "Poprzedni",
+    "of": "z",
+    "add": "Dodaj",
+    "remove": "Usuń",
+    "search": "Szukaj",
+    "filter": "Filtruj",
+    "sort": "Sortuj",
+    "view": "Widok",
+    "download": "Pobierz",
+    "upload": "Wyślij",
+    "submit": "Wyślij",
+    "confirm": "Potwierdź",
+    "yes": "Tak",
+    "no": "Nie",
+    "goals": "Cele",
+    "challenges": "Wyzwania",
+    "megatrends": "Megatrendy",
+    "strategy": "Strategia",
+    "rollout": "Wdrożenie",
+    "users": "Użytkownicy",
+    "projects": "Projekty",
+    "analytics": "Analityka",
+    "team": "Zespół",
+    "workspace": "Przestrzeń robocza",
+    "consultant": "Konsultant",
+    "invites": "Zaproszenia",
+    "affiliate": "Partner"
+  },
+  "sidebar": {
+    "dashboard": "Panel",
+    "settings": "Ustawienia",
+    "help": "Pomoc",
+    "knowledge": "Baza Wiedzy",
+    "organization": "Organizacja",
+    "adminPanel": "Panel Administratora",
+    "logOut": "Wyloguj się",
+    "chat": "AI Chat",
+    "aiChat": "Chat",
+    "myWork": "Moja Praca",
+    "interview": "Wywiad",
+    "tools": "Narzędzia",
+    "discoveryTools": "Narzędzia",
+    "assessment": "Ocena",
+    "assessmentOverview": "Przegląd",
+    "myAssessments": "Moje Oceny",
+    "reviewerDashboard": "Panel Recenzenta",
+    "initiatives": "Inicjatywy",
+    "execution": "Realizacja",
+    "benefits": "Korzyści",
+    "economics": "Ekonomia",
+    "reports": "Raporty",
+    "partnerPortal": "Portal Partnerski"
+  },
+  "widgets": {
+    "help": {
+      "title": "Centrum Pomocy",
+      "tooltip": "Centrum Pomocy"
+    },
+    "feedback": {
+      "title": "Opinie",
+      "tooltip": "Opinie"
+    },
+    "documents": {
+      "title": "Dokumenty",
+      "tooltip": "Dokumenty"
+    }
+  },
+  "myWork": {
+    "title": "Moja Praca",
+    "inbox": "Skrzynka",
+    "focus": "Fokus",
+    "calendar": "Kalendarz",
+    "tasks": "Zadania"
+  },
+  "step1": {
+    "title": "Krok 1"
+  },
+  "interview": {
+    "title": "Wywiad Discovery",
+    "newSession": "Nowa Sesja",
+    "history": "Historia",
+    "categories": {
+      "strategy": "Strategia",
+      "operations": "Operacje",
+      "digital": "Cyfryzacja",
+      "people": "Ludzie",
+      "finance": "Finanse"
+    },
+    "tabs": {
+      "questions": "Pytania",
+      "notes": "Notatki",
+      "evidence": "Dowody",
+      "summary": "Podsumowanie"
+    },
+    "actions": {
+      "addQuestion": "Dodaj pytanie",
+      "addNote": "Dodaj notatkę",
+      "complete": "Zakończ Wywiad"
+    },
+    "status": {
+      "inProgress": "W trakcie",
+      "completed": "Zakończony",
+      "archived": "Zarchiwizowany"
+    },
+    "companyFacts": {
+      "title": "Dane Firmy",
+      "profile": "Profil Firmy",
+      "metrics": "Kluczowe Metryki",
+      "stakeholders": "Interesariusze",
+      "gaps": "Luki Informacyjne"
+    }
+  },
+  "assessment": {
+    "title": "Ocena",
+    "overview": "Przegląd",
+    "drd": "Ocena DRD",
+    "siri": "Framework SIRI",
+    "adma": "Framework ADMA",
+    "cmmi": "Framework CMMI",
+    "lean": "Lean 4.0"
+  },
+  "initiatives": {
+    "title": "Inicjatywy",
+    "roadmap": "Mapa Drogowa",
+    "portfolio": "Portfolio"
+  },
+  "execution": {
+    "title": "Centrum Realizacji",
+    "dashboard": "Panel",
+    "calendar": "Kalendarz",
+    "decisions": "Decyzje"
+  },
+  "benefits": {
+    "title": "Realizacja Korzyści",
+    "kpis": "KPI",
+    "lessons": "Wnioski"
+  },
+  "economics": {
+    "title": "Ekonomia",
+    "analysis": "Analiza",
+    "scenarios": "Scenariusze"
+  },
+  "reports": {
+    "title": "Raporty",
+    "management": "Raporty Zarządcze",
+    "assessment": "Raporty z Ocen"
+  },
+  "auth": {
+    "logIn": "Zaloguj się",
+    "logOut": "Wyloguj się",
+    "welcomeBack": "Witamy ponownie",
+    "email": "Email",
+    "password": "Hasło",
+    "forgotPassword": "Zapomniałeś hasła?",
+    "register": "Zarejestruj się"
+  },
+  "help": {
+    "title": "Centrum Pomocy",
+    "knowledge": {
+      "title": "Baza Wiedzy",
+      "searchPlaceholder": "Szukaj artykułów...",
+      "allCategories": "Wszystkie",
+      "noSearchResults": "Nie znaleziono artykułów dla Twojego zapytania.",
+      "noArticles": "Brak artykułów w tej kategorii.",
+      "articleNotFound": "Artykuł nie został znaleziony.",
+      "minRead": "min czytania",
+      "views": "wyświetleń",
+      "relatedModules": "Powiązane moduły",
+      "shareArticle": "Udostępnij artykuł",
+      "featured": "Wyróżnione",
+      "popular": "Popularne",
+      "recent": "Ostatnio dodane",
+      "readMore": "Czytaj więcej",
+      "backToLibrary": "Powrót do biblioteki",
+      "categories": "Kategorie",
+      "articles": "Artykuły",
+      "searchResults": "Wyniki wyszukiwania",
+      "tableOfContents": "Spis treści",
+      "wasHelpful": "Czy ten artykuł był pomocny?",
+      "yes": "Tak",
+      "no": "Nie",
+      "feedbackThanks": "Dziękujemy za opinię!",
+      "relatedArticles": "Powiązane artykuły",
+      "gettingStarted": "Pierwsze kroki",
+      "tutorials": "Samouczki",
+      "bestPractices": "Najlepsze praktyki",
+      "faq": "Często zadawane pytania",
+      "troubleshooting": "Rozwiązywanie problemów"
+    }
+  },
+  "settings": {
+    "title": "Ustawienia",
+    "profile": "Profil",
+    "billing": "Rozliczenia",
+    "ai": "Ustawienia AI",
+    "notifications": "Powiadomienia",
+    "integrations": "Integracje",
+    "security": "Bezpieczeństwo",
+    "appearance": "Wygląd"
+  }
+}

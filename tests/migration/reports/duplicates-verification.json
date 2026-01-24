@@ -1,0 +1,517 @@
+{
+  "timestamp": "2026-01-04T12:20:06.463Z",
+  "summary": {
+    "totalChecked": 20,
+    "safeToRemove": 14,
+    "needsVerification": 2,
+    "stillUsed": 4
+  },
+  "safeToRemove": [
+    {
+      "oldJs": "services/accessPolicyService.js",
+      "newTs": "services/accessPolicyService.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing",
+      "reason": "New .ts exists, not imported, no common functions"
+    },
+    {
+      "oldJs": "services/adkarService.js",
+      "newTs": "services/adkarService.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing",
+      "reason": "New .ts exists, not imported, no common functions"
+    },
+    {
+      "oldJs": "services/ai/abTesting.js",
+      "newTs": "services/ai/abTesting.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing",
+      "reason": "New .ts exists, not imported, no common functions"
+    },
+    {
+      "oldJs": "services/ai/actionExecutor.js",
+      "newTs": "services/ai/actionExecutor.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing",
+      "reason": "New .ts exists, not imported, no common functions"
+    },
+    {
+      "oldJs": "services/ai/adaptiveResponseService.js",
+      "newTs": "services/ai/adaptiveResponseService.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing",
+      "reason": "New .ts exists, not imported, no common functions"
+    },
+    {
+      "oldJs": "services/ai/agents/agentCoordinator.js",
+      "newTs": "services/ai/agents/agentCoordinator.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing",
+      "reason": "New .ts exists, not imported, no common functions"
+    },
+    {
+      "oldJs": "services/ai/agents/baseAgent.js",
+      "newTs": "services/ai/agents/baseAgent.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing",
+      "reason": "New .ts exists, not imported, no common functions"
+    },
+    {
+      "oldJs": "services/ai/agents/changeAgent.js",
+      "newTs": "services/ai/agents/changeAgent.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing",
+      "reason": "New .ts exists, not imported, no common functions"
+    },
+    {
+      "oldJs": "services/ai/agents/financeAgent.js",
+      "newTs": "services/ai/agents/financeAgent.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing",
+      "reason": "New .ts exists, not imported, no common functions"
+    },
+    {
+      "oldJs": "services/ai/agents/index.js",
+      "newTs": "services/ai/agents/index.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing",
+      "reason": "New .ts exists, not imported, no common functions"
+    },
+    {
+      "oldJs": "services/ai/agents/pmoAgent.js",
+      "newTs": "services/ai/agents/pmoAgent.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing",
+      "reason": "New .ts exists, not imported, no common functions"
+    },
+    {
+      "oldJs": "services/ai/agents/riskAgent.js",
+      "newTs": "services/ai/agents/riskAgent.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing",
+      "reason": "New .ts exists, not imported, no common functions"
+    },
+    {
+      "oldJs": "services/ai/agents/strategyAgent.js",
+      "newTs": "services/ai/agents/strategyAgent.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing",
+      "reason": "New .ts exists, not imported, no common functions"
+    },
+    {
+      "oldJs": "services/ai/aiGateway.js",
+      "newTs": "services/ai/aiGateway.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing",
+      "reason": "New .ts exists, not imported, no common functions"
+    }
+  ],
+  "needsVerification": [
+    {
+      "oldJs": "services/BaseService.js",
+      "newTs": "services/BaseService.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 1,
+      "recommendation": "Potential duplicate - verify migration completeness before removing",
+      "reason": "Has common functions - needs manual verification"
+    },
+    {
+      "oldJs": "services/accessCodeService.js",
+      "newTs": "services/accessCodeService.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 5,
+      "recommendation": "Potential duplicate - verify migration completeness before removing",
+      "reason": "Has common functions - needs manual verification"
+    }
+  ],
+  "stillUsed": [
+    {
+      "oldJs": "services/adminAlertService.js",
+      "newTs": "services/adminAlertService.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": true,
+      "importLocations": [
+        {
+          "file": "controllers/AdminAlertController.ts",
+          "matches": [
+            {
+              "line": 10,
+              "code": "import { createAdminAlert, getAlertHistory } from '../services/adminAlertService.js';"
+            }
+          ]
+        }
+      ],
+      "commonFunctions": 15,
+      "recommendation": "Potential duplicate - verify migration completeness before removing",
+      "reason": "Still imported in TypeScript files"
+    },
+    {
+      "oldJs": "services/adminAuditService.js",
+      "newTs": "services/adminAuditService.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": true,
+      "importLocations": [
+        {
+          "file": "services/adminAuditService.ts",
+          "matches": [
+            {
+              "line": 9,
+              "code": "import service from '../../services/adminAuditService.js';"
+            }
+          ]
+        }
+      ],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing",
+      "reason": "Still imported in TypeScript files"
+    },
+    {
+      "oldJs": "services/adminSessionService.js",
+      "newTs": "services/adminSessionService.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": true,
+      "importLocations": [
+        {
+          "file": "services/adminSessionService.ts",
+          "matches": [
+            {
+              "line": 9,
+              "code": "import service from '../../services/adminSessionService.js';"
+            }
+          ]
+        }
+      ],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing",
+      "reason": "Still imported in TypeScript files"
+    },
+    {
+      "oldJs": "services/ai/aiContext.js",
+      "newTs": "services/ai/aiContext.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": true,
+      "importLocations": [
+        {
+          "file": "services/ai/aiContext.ts",
+          "matches": [
+            {
+              "line": 10,
+              "code": "import service from '../../../services/ai/aiContext.js';"
+            }
+          ]
+        }
+      ],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing",
+      "reason": "Still imported in TypeScript files"
+    }
+  ],
+  "allResults": [
+    {
+      "oldJs": "services/BaseService.js",
+      "newTs": "services/BaseService.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 1,
+      "recommendation": "Potential duplicate - verify migration completeness before removing"
+    },
+    {
+      "oldJs": "services/accessCodeService.js",
+      "newTs": "services/accessCodeService.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 5,
+      "recommendation": "Potential duplicate - verify migration completeness before removing"
+    },
+    {
+      "oldJs": "services/accessPolicyService.js",
+      "newTs": "services/accessPolicyService.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/adkarService.js",
+      "newTs": "services/adkarService.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/adminAlertService.js",
+      "newTs": "services/adminAlertService.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": true,
+      "importLocations": [
+        {
+          "file": "controllers/AdminAlertController.ts",
+          "matches": [
+            {
+              "line": 10,
+              "code": "import { createAdminAlert, getAlertHistory } from '../services/adminAlertService.js';"
+            }
+          ]
+        }
+      ],
+      "commonFunctions": 15,
+      "recommendation": "Potential duplicate - verify migration completeness before removing"
+    },
+    {
+      "oldJs": "services/adminAuditService.js",
+      "newTs": "services/adminAuditService.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": true,
+      "importLocations": [
+        {
+          "file": "services/adminAuditService.ts",
+          "matches": [
+            {
+              "line": 9,
+              "code": "import service from '../../services/adminAuditService.js';"
+            }
+          ]
+        }
+      ],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/adminSessionService.js",
+      "newTs": "services/adminSessionService.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": true,
+      "importLocations": [
+        {
+          "file": "services/adminSessionService.ts",
+          "matches": [
+            {
+              "line": 9,
+              "code": "import service from '../../services/adminSessionService.js';"
+            }
+          ]
+        }
+      ],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/abTesting.js",
+      "newTs": "services/ai/abTesting.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/actionExecutor.js",
+      "newTs": "services/ai/actionExecutor.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/adaptiveResponseService.js",
+      "newTs": "services/ai/adaptiveResponseService.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/agents/agentCoordinator.js",
+      "newTs": "services/ai/agents/agentCoordinator.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/agents/baseAgent.js",
+      "newTs": "services/ai/agents/baseAgent.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/agents/changeAgent.js",
+      "newTs": "services/ai/agents/changeAgent.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/agents/financeAgent.js",
+      "newTs": "services/ai/agents/financeAgent.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/agents/index.js",
+      "newTs": "services/ai/agents/index.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/agents/pmoAgent.js",
+      "newTs": "services/ai/agents/pmoAgent.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/agents/riskAgent.js",
+      "newTs": "services/ai/agents/riskAgent.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/agents/strategyAgent.js",
+      "newTs": "services/ai/agents/strategyAgent.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/aiContext.js",
+      "newTs": "services/ai/aiContext.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": true,
+      "importLocations": [
+        {
+          "file": "services/ai/aiContext.ts",
+          "matches": [
+            {
+              "line": 10,
+              "code": "import service from '../../../services/ai/aiContext.js';"
+            }
+          ]
+        }
+      ],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    },
+    {
+      "oldJs": "services/ai/aiGateway.js",
+      "newTs": "services/ai/aiGateway.ts",
+      "oldJsExists": true,
+      "newTsExists": true,
+      "stillImported": false,
+      "importLocations": [],
+      "commonFunctions": 0,
+      "recommendation": "Same filename - likely migrated, verify before removing"
+    }
+  ]
+}

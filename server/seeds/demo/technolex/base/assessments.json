@@ -1,0 +1,217 @@
+{
+  "assessments": [
+    {
+      "framework": "DRD",
+      "framework_name": "Digital Readiness Diagnostic",
+      "assessment_date": "2025-02-15",
+      "assessor_id": "demo-user-cto",
+      "overall_score": 2.8,
+      "target_score": 4.2,
+      "axes": [
+        {
+          "id": "drd-strategy",
+          "name": "Digital Strategy",
+          "description": "Clarity and alignment of digital transformation vision with business objectives",
+          "actual_score": 3.2,
+          "target_score": 4.5,
+          "weight": 15,
+          "maturity_notes": "Clear vision exists but not fully communicated to all levels"
+        },
+        {
+          "id": "drd-leadership",
+          "name": "Leadership & Culture",
+          "description": "Executive sponsorship and organizational readiness for digital change",
+          "actual_score": 3.5,
+          "target_score": 4.0,
+          "weight": 15,
+          "maturity_notes": "Strong C-level support, middle management needs more engagement"
+        },
+        {
+          "id": "drd-technology",
+          "name": "Technology Infrastructure",
+          "description": "State of IT systems, cloud adoption, and technical debt",
+          "actual_score": 2.2,
+          "target_score": 4.2,
+          "weight": 20,
+          "maturity_notes": "Legacy ERP and significant technical debt in OT systems"
+        },
+        {
+          "id": "drd-data",
+          "name": "Data & Analytics",
+          "description": "Data quality, accessibility, and analytical capabilities",
+          "actual_score": 2.5,
+          "target_score": 4.5,
+          "weight": 20,
+          "maturity_notes": "Data silos, limited self-service analytics, no data governance"
+        },
+        {
+          "id": "drd-operations",
+          "name": "Connected Operations",
+          "description": "Level of automation, IoT adoption, and process digitization",
+          "actual_score": 2.0,
+          "target_score": 4.5,
+          "weight": 20,
+          "maturity_notes": "Manual processes prevalent, limited machine connectivity"
+        },
+        {
+          "id": "drd-people",
+          "name": "Digital Skills & Workforce",
+          "description": "Employee digital competencies and continuous learning culture",
+          "actual_score": 2.8,
+          "target_score": 4.0,
+          "weight": 10,
+          "maturity_notes": "Basic digital literacy, gaps in advanced analytics and AI skills"
+        }
+      ]
+    },
+    {
+      "framework": "SIRI",
+      "framework_name": "Smart Industry Readiness Index",
+      "assessment_date": "2025-03-01",
+      "assessor_id": "demo-user-coo",
+      "overall_score": 2.1,
+      "target_score": 3.8,
+      "axes": [
+        {
+          "id": "siri-operations",
+          "name": "Operations",
+          "description": "Shop floor automation, vertical integration, and production optimization",
+          "actual_score": 1.8,
+          "target_score": 4.0,
+          "weight": 30,
+          "sub_dimensions": [
+            {
+              "name": "Automated Material Flow",
+              "actual": 2,
+              "target": 4
+            },
+            {
+              "name": "Asset Digitization",
+              "actual": 1.5,
+              "target": 4
+            },
+            {
+              "name": "Production Visibility",
+              "actual": 2,
+              "target": 4
+            }
+          ]
+        },
+        {
+          "id": "siri-supply-chain",
+          "name": "Supply Chain",
+          "description": "Supplier integration, logistics optimization, and demand sensing",
+          "actual_score": 2.0,
+          "target_score": 3.5,
+          "weight": 25,
+          "sub_dimensions": [
+            {
+              "name": "Supplier Connectivity",
+              "actual": 1.5,
+              "target": 3.5
+            },
+            {
+              "name": "Inventory Optimization",
+              "actual": 2.5,
+              "target": 3.5
+            },
+            {
+              "name": "Delivery Tracking",
+              "actual": 2,
+              "target": 3.5
+            }
+          ]
+        },
+        {
+          "id": "siri-lifecycle",
+          "name": "Product Lifecycle",
+          "description": "Digital design, simulation, and end-to-end traceability",
+          "actual_score": 2.5,
+          "target_score": 3.8,
+          "weight": 20,
+          "sub_dimensions": [
+            {
+              "name": "Digital Design (CAD/CAE)",
+              "actual": 3.5,
+              "target": 4
+            },
+            {
+              "name": "Product Traceability",
+              "actual": 2,
+              "target": 4
+            },
+            {
+              "name": "Quality Data Integration",
+              "actual": 2,
+              "target": 3.5
+            }
+          ]
+        },
+        {
+          "id": "siri-technology",
+          "name": "Technology",
+          "description": "IT/OT convergence, cybersecurity, and platform architecture",
+          "actual_score": 2.2,
+          "target_score": 4.0,
+          "weight": 25,
+          "sub_dimensions": [
+            {
+              "name": "IT/OT Integration",
+              "actual": 1.5,
+              "target": 4
+            },
+            {
+              "name": "Cloud & Edge Computing",
+              "actual": 2.5,
+              "target": 4
+            },
+            {
+              "name": "Cybersecurity",
+              "actual": 2.5,
+              "target": 4
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "gap_analysis": {
+    "critical_gaps": [
+      {
+        "area": "Connected Operations",
+        "current_state": "40% of equipment lacks digital connectivity; manual data entry",
+        "target_state": "95% machine connectivity with real-time data streaming",
+        "gap_magnitude": "HIGH",
+        "initiative_mapping": "init-001"
+      },
+      {
+        "area": "Predictive Capabilities",
+        "current_state": "Reactive maintenance only; no predictive models",
+        "target_state": "AI-driven predictive maintenance for critical assets",
+        "gap_magnitude": "HIGH",
+        "initiative_mapping": "init-002"
+      },
+      {
+        "area": "Data Architecture",
+        "current_state": "12+ siloed systems; no data warehouse; limited reporting",
+        "target_state": "Unified data platform with self-service analytics",
+        "gap_magnitude": "HIGH",
+        "initiative_mapping": "init-004"
+      },
+      {
+        "area": "Quality Assurance",
+        "current_state": "Manual visual inspection; 1.2% defect rate",
+        "target_state": "AI-powered 100% inspection; <0.3% defect rate",
+        "gap_magnitude": "MEDIUM",
+        "initiative_mapping": "init-005"
+      },
+      {
+        "area": "Supply Chain Visibility",
+        "current_state": "Limited visibility beyond Tier 1; spreadsheet tracking",
+        "target_state": "Real-time visibility across supply network",
+        "gap_magnitude": "MEDIUM",
+        "initiative_mapping": "init-006"
+      }
+    ]
+  }
+}

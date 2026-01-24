@@ -1,0 +1,2802 @@
+/**
+ * InterviewController - v2.0 ClickUp-like Redesign
+ * 
+ * Handles:
+ * - Interview sessions (5 categories: Strategy, Operations, Digital, People, Finance)
+ * - Questions (task-list style with status, confidence, tags)
+ * - Notes
+ * - Evidence (files, links)
+ * - Summary (ONLY facts - no recommendations)
+ * - Organization context (Company Facts)
+ */
+
+import type { Response } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+import { z } from 'zod';
+
+import type { AuthenticatedRequest } from '../types/index.js';
+import { llmService } from '../services/ai/llmService.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
+import logger from '../utils/Logger.js';
+
+// 5 Interview Categories (new spec)
+const INTERVIEW_CATEGORIES = ['strategy', 'operations', 'digital', 'people', 'finance'] as const;
+type InterviewCategory = typeof INTERVIEW_CATEGORIES[number];
+
+// Question statuses (task-list style)
+const QUESTION_STATUSES = ['not_started', 'in_progress', 'answered', 'needs_follow_up'] as const;
+type QuestionStatus = typeof QUESTION_STATUSES[number];
+
+// Helpers
+const parseJson = <T>(value: string | null | undefined, fallback: T): T => {
+  if (!value) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+};
+
+const requireUser = (req: AuthenticatedRequest) => {
+  const user = req.user;
+  if (!user) throw new Error('Unauthorized');
+  return user;
+};
+
+// Response builders
+const buildSessionResponse = (row: any) => {
+  if (!row) return null;
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    projectId: row.project_id || undefined,
+    name: row.name || 'Discovery Interview',
+    ownerId: row.owner_id,
+    status: row.status,
+    templateId: row.template_id || undefined,
+    templateVersion: row.template_version || undefined,
+    assignmentId: row.assignment_id || undefined,
+    progress: parseJson(row.progress_json, {}),
+    totalQuestions: row.total_questions || 0,
+    answeredQuestions: row.answered_questions || 0,
+    summaryFacts: parseJson(row.summary_facts, []),
+    summaryGaps: parseJson(row.summary_gaps, []),
+    summaryConstraints: parseJson(row.summary_constraints, []),
+    summaryPainPoints: parseJson(row.summary_pain_points, []),
+    startedAt: row.started_at,
+    completedAt: row.completed_at,
+    lastActivityAt: row.last_activity_at,
+  };
+};
+
+const buildQuestionResponse = (row: any) => {
+  if (!row) return null;
+  return {
+    id: row.id,
+    sessionId: row.session_id,
+    category: row.category,
+    questionText: row.question_text,
+    answerText: row.answer_text || '',
+    status: row.status,
+    confidenceScore: row.confidence_score || 0,
+    answeredBy: row.answered_by,
+    answeredAt: row.answered_at,
+    tags: parseJson(row.tags, []),
+    sortOrder: row.sort_order || 0,
+    isTemplate: row.is_template === 1,
+  };
+};
+
+const buildNoteResponse = (row: any) => {
+  if (!row) return null;
+  return {
+    id: row.id,
+    sessionId: row.session_id,
+    category: row.category,
+    title: row.title,
+    content: row.content,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+};
+
+const buildEvidenceResponse = (row: any) => {
+  if (!row) return null;
+  return {
+    id: row.id,
+    sessionId: row.session_id,
+    questionId: row.question_id,
+    evidenceType: row.evidence_type,
+    title: row.title,
+    description: row.description,
+    filePath: row.file_path,
+    fileName: row.file_name,
+    fileSize: row.file_size,
+    fileType: row.file_type,
+    url: row.url,
+    uploadedBy: row.uploaded_by,
+    createdAt: row.created_at,
+  };
+};
+
+// Template response builders (Interview templates library)
+const buildTemplateResponse = (row: any) => {
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description || '',
+    questionCount: row.question_count ?? 0,
+    category: typeof row.category === 'string' ? row.category.toLowerCase() : row.category,
+    isDefault: row.is_default === 1,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at || row.created_at,
+    status: row.status || 'approved',
+    sessionsUsed: row.sessions_used ?? 0,
+  };
+};
+
+const buildTemplateQuestionResponse = (row: any) => {
+  if (!row) return null;
+  return {
+    id: row.id,
+    templateId: row.template_id,
+    category: row.category,
+    questionText: row.question_text,
+    sortOrder: row.sort_order || 0,
+    answerType: row.answer_type || 'open',
+    isRequired: row.is_required === 1,
+    helpHint: row.help_hint || null,
+    answerOptions: parseJson(row.answer_options, [] as unknown[]),
+  };
+};
+
+async function createSessionFromTemplate(params: {
+  user: any;
+  templateId: string;
+  projectId?: string;
+  name?: string;
+  assignmentId?: string;
+}): Promise<any> {
+  const { user, templateId, projectId, name, assignmentId } = params;
+
+  const template = await queryHelpers.queryOne(
+    `SELECT * FROM interview_library_templates
+     WHERE id = ?
+       AND (organization_id IS NULL OR organization_id = ?)`,
+    [templateId, user.organizationId]
+  );
+
+  if (!template) throw new Error('Template not found');
+
+  // Minimal visibility guard
+  if (template.visibility === 'admin_only' && !['ADMIN', 'SUPERADMIN'].includes(user.role)) {
+    throw new Error('Permission denied');
+  }
+
+  // Only approved templates can be used to create sessions
+  if (String(template.status || '').toLowerCase() !== 'approved') {
+    throw new Error('Template is not approved yet');
+  }
+
+  const id = uuidv4();
+  const now = new Date().toISOString();
+
+  // Create session from template (snapshot)
+  await queryHelpers.queryRun(
+    `INSERT INTO interview_sessions
+     (id, organization_id, project_id, name, owner_id, status, progress_json,
+      template_id, template_version,
+      assignment_id,
+      started_at, last_activity_at, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      user.organizationId,
+      projectId || null,
+      name || `Interview ${new Date().toLocaleDateString()}`,
+      user.id,
+      'in_progress',
+      JSON.stringify({ strategy: 0, operations: 0, digital: 0, people: 0, finance: 0 }),
+      template.id,
+      template.version || 1,
+      assignmentId || null,
+      now,
+      now,
+      now,
+      now,
+    ]
+  );
+
+  const templateQuestions = await queryHelpers.queryAll(
+    `SELECT * FROM interview_library_template_questions WHERE template_id = ? ORDER BY category, sort_order`,
+    [template.id]
+  );
+
+  let questionCount = 0;
+  for (const tq of templateQuestions as any[]) {
+    const questionId = uuidv4();
+    await queryHelpers.queryRun(
+      `INSERT INTO interview_questions
+       (id, session_id, organization_id, category, question_text, status, sort_order, is_template, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        questionId,
+        id,
+        user.organizationId,
+        tq.category,
+        tq.question_text,
+        'not_started',
+        tq.sort_order,
+        1,
+        now,
+        now,
+      ]
+    );
+    questionCount++;
+  }
+
+  await queryHelpers.queryRun(`UPDATE interview_sessions SET total_questions = ? WHERE id = ?`, [
+    questionCount,
+    id,
+  ]);
+
+  const session = await queryHelpers.queryOne(`SELECT * FROM interview_sessions WHERE id = ?`, [id]);
+  return buildSessionResponse(session);
+}
+
+// ==========================================
+// ASSIGNMENTS HELPERS
+// ==========================================
+
+const LOCKED_SESSION_STATUSES = ['submitted', 'completed'] as const;
+
+const calcCompletenessRatio = (answered: number, total: number): number => {
+  if (!total || total <= 0) return 0;
+  return Math.max(0, Math.min(1, answered / total));
+};
+
+const isLockedSessionStatus = (status?: string): boolean => {
+  const s = String(status || '').toLowerCase();
+  return (LOCKED_SESSION_STATUSES as unknown as string[]).includes(s);
+};
+
+async function assertSessionEditable(sessionId: string, organizationId: string): Promise<any> {
+  const session = await queryHelpers.queryOne(
+    `SELECT id, status, owner_id FROM interview_sessions WHERE id = ? AND organization_id = ?`,
+    [sessionId, organizationId]
+  );
+  if (!session) throw new Error('Session not found');
+  if (isLockedSessionStatus((session as any).status)) throw new Error('Session is locked');
+  return session;
+}
+
+async function assertSessionOwnedByUser(
+  sessionId: string,
+  organizationId: string,
+  userId: string
+): Promise<void> {
+  const session = await queryHelpers.queryOne(
+    `SELECT id, owner_id FROM interview_sessions WHERE id = ? AND organization_id = ?`,
+    [sessionId, organizationId]
+  );
+  if (!session) throw new Error('Session not found');
+  if (String((session as any).owner_id) !== String(userId)) throw new Error('Forbidden');
+}
+
+async function getAssignmentForSession(sessionId: string, organizationId: string): Promise<any | null> {
+  const row = await queryHelpers.queryOne(
+    `SELECT * FROM interview_assignments WHERE session_id = ? AND organization_id = ?`,
+    [sessionId, organizationId]
+  );
+  return row || null;
+}
+
+export const InterviewController = {
+  // ==========================================
+  // SESSIONS
+  // ==========================================
+
+  getSessions: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { status } = req.query;
+
+    let query = `SELECT * FROM interview_sessions WHERE organization_id = ?`;
+    const params: unknown[] = [user.organizationId];
+
+    if (status) {
+      query += ` AND status = ?`;
+      params.push(status);
+    }
+
+    query += ` ORDER BY last_activity_at DESC`;
+
+    const rows = await queryHelpers.queryAll(query, params);
+    res.json(rows.map(buildSessionResponse));
+  }),
+
+  getSession: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+
+    const row = await queryHelpers.queryOne(
+      `SELECT * FROM interview_sessions WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+
+    if (!row) {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+
+    res.json(buildSessionResponse(row));
+  }),
+
+  createSession: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { name, projectId, templateId } = req.body;
+
+    // If templateId provided, create from template library (snapshot)
+    if (templateId) {
+      const session = await createSessionFromTemplate({ user, templateId, projectId, name });
+      res.status(201).json(session);
+      return;
+    }
+
+    const id = uuidv4();
+    const now = new Date().toISOString();
+
+    // Create session
+    await queryHelpers.queryRun(
+      `INSERT INTO interview_sessions
+       (id, organization_id, project_id, name, owner_id, status, progress_json,
+        started_at, last_activity_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        user.organizationId,
+        projectId || null,
+        name || 'Discovery Interview',
+        user.id,
+        'in_progress',
+        JSON.stringify({ strategy: 0, operations: 0, digital: 0, people: 0, finance: 0 }),
+        now,
+        now,
+        now,
+        now,
+      ]
+    );
+
+    // Load question templates and create questions for session
+    const templates = await queryHelpers.queryAll(
+      `SELECT * FROM interview_question_templates ORDER BY category, sort_order`
+    );
+
+    let questionCount = 0;
+    for (const template of templates as any[]) {
+      const questionId = uuidv4();
+      await queryHelpers.queryRun(
+        `INSERT INTO interview_questions
+         (id, session_id, organization_id, category, question_text, status, sort_order, is_template, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          questionId,
+          id,
+          user.organizationId,
+          template.category,
+          template.question_text,
+          'not_started',
+          template.sort_order,
+          1,
+          now,
+          now,
+        ]
+      );
+      questionCount++;
+    }
+
+    // Update total questions
+    await queryHelpers.queryRun(
+      `UPDATE interview_sessions SET total_questions = ? WHERE id = ?`,
+      [questionCount, id]
+    );
+
+    const session = await queryHelpers.queryOne(`SELECT * FROM interview_sessions WHERE id = ?`, [id]);
+    logger.info(`[InterviewController] Created session ${id} with ${questionCount} questions`);
+    res.status(201).json(buildSessionResponse(session));
+  }),
+
+  updateSession: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+    const { name, status, summaryFacts, summaryGaps, summaryConstraints, summaryPainPoints } = req.body;
+
+    const updates: string[] = [];
+    const params: unknown[] = [];
+
+    if (name) {
+      updates.push('name = ?');
+      params.push(name);
+    }
+    if (status) {
+      updates.push('status = ?');
+      params.push(status);
+      if (status === 'completed') {
+        updates.push('completed_at = ?');
+        params.push(new Date().toISOString());
+      }
+    }
+    if (summaryFacts) {
+      updates.push('summary_facts = ?');
+      params.push(JSON.stringify(summaryFacts));
+    }
+    if (summaryGaps) {
+      updates.push('summary_gaps = ?');
+      params.push(JSON.stringify(summaryGaps));
+    }
+    if (summaryConstraints) {
+      updates.push('summary_constraints = ?');
+      params.push(JSON.stringify(summaryConstraints));
+    }
+    if (summaryPainPoints) {
+      updates.push('summary_pain_points = ?');
+      params.push(JSON.stringify(summaryPainPoints));
+    }
+
+    if (updates.length === 0) {
+      res.status(400).json({ error: 'No updates provided' });
+      return;
+    }
+
+    updates.push('last_activity_at = ?', 'updated_at = ?');
+    params.push(new Date().toISOString(), new Date().toISOString());
+    params.push(id, user.organizationId);
+
+    await queryHelpers.queryRun(
+      `UPDATE interview_sessions SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`,
+      params
+    );
+
+    const updated = await queryHelpers.queryOne(`SELECT * FROM interview_sessions WHERE id = ?`, [id]);
+    res.json(buildSessionResponse(updated));
+  }),
+
+  // ==========================================
+  // ASSIGNMENTS (Workflow)
+  // ==========================================
+
+  getMyAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { status, includeCompleted } = req.query as any;
+
+    const params: unknown[] = [user.organizationId, user.id];
+    let where = `WHERE a.organization_id = ? AND a.assignee_user_id = ?`;
+
+    if (status) {
+      where += ` AND a.status = ?`;
+      params.push(status);
+    } else if (!includeCompleted) {
+      where += ` AND a.status != 'completed'`;
+    }
+
+    const rows = await queryHelpers.queryAll(
+      `SELECT
+         a.*,
+         t.name as template_name,
+         t.description as template_description,
+         t.category as template_category,
+         s.status as session_status,
+         s.answered_questions as answered_questions,
+         s.total_questions as total_questions
+       FROM interview_assignments a
+       LEFT JOIN interview_library_templates t ON t.id = a.template_id
+       LEFT JOIN interview_sessions s ON s.id = a.session_id
+       ${where}
+       ORDER BY
+         CASE a.status WHEN 'assigned' THEN 0 WHEN 'sent_back' THEN 1 WHEN 'in_progress' THEN 2 WHEN 'submitted' THEN 3 ELSE 4 END,
+         COALESCE(a.due_at, '9999-12-31') ASC,
+         a.created_at DESC`,
+      params
+    );
+
+    const mapped = (rows || []).map((r: any) => {
+      const answered = Number(r.answered_questions || 0);
+      const total = Number(r.total_questions || 0);
+      const completenessRatio = calcCompletenessRatio(answered, total);
+      return {
+        id: r.id,
+        status: r.status,
+        projectId: r.project_id || null,
+        dueAt: r.due_at || null,
+        startedAt: r.started_at || null,
+        submittedAt: r.submitted_at || null,
+        sentBackAt: r.sent_back_at || null,
+        sentBackReason: r.sent_back_reason || null,
+        processRef: r.process_ref || null,
+        template: {
+          id: r.template_id,
+          version: r.template_version,
+          name: r.template_name || '',
+          description: r.template_description || '',
+          category: typeof r.template_category === 'string' ? r.template_category.toLowerCase() : r.template_category,
+        },
+        session: r.session_id
+          ? {
+              id: r.session_id,
+              status: r.session_status,
+              answeredQuestions: answered,
+              totalQuestions: total,
+              completenessPercent: Math.round(completenessRatio * 100),
+            }
+          : null,
+      };
+    });
+
+    res.json(mapped);
+  }),
+
+  createAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const admin = requireUser(req);
+    const { 
+      assigneeUserId,      // Single user (legacy support)
+      assigneeUserIds,     // Array of users (new - supports teams)
+      templateId, 
+      dueAt, 
+      processRef, 
+      projectId,
+      priority,
+      escalateTo,
+      notes,
+      teamLeadId,
+    } = req.body || {};
+
+    // Support both singular and plural assignee fields
+    const userIds: string[] = assigneeUserIds 
+      ? (Array.isArray(assigneeUserIds) ? assigneeUserIds : [assigneeUserIds])
+      : (assigneeUserId ? [assigneeUserId] : []);
+
+    if (userIds.length === 0 || !templateId) {
+      res.status(400).json({ error: 'assigneeUserId(s) and templateId are required' });
+      return;
+    }
+
+    // Validate template
+    const template = await queryHelpers.queryOne(
+      `SELECT id, name, version, status FROM interview_library_templates WHERE id = ?`,
+      [templateId]
+    );
+    if (!template) {
+      res.status(404).json({ error: 'Template not found' });
+      return;
+    }
+    if (String((template as any).status || '').toLowerCase() !== 'approved') {
+      res.status(400).json({ error: 'Template is not approved yet' });
+      return;
+    }
+
+    // Use InterviewAssignmentService for proper handling of teams, notifications, escalation
+    const { default: interviewAssignmentService } = await import('../services/InterviewAssignmentService.js');
+    
+    const assignment = await interviewAssignmentService.create({
+      organizationId: admin.organizationId,
+      projectId: projectId || undefined,
+      templateId,
+      templateVersion: (template as any).version || 1,
+      assigneeUserIds: userIds,
+      teamLeadId: teamLeadId || undefined,
+      dueAt: dueAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Default 7 days
+      priority: priority || 'medium',
+      escalateTo: escalateTo || admin.id, // Default to creator
+      notes: notes || undefined,
+      processRef: processRef || undefined,
+      createdBy: admin.id,
+    });
+
+    // Return with full details
+    const assignmentWithDetails = await interviewAssignmentService.getByIdWithDetails(assignment.id);
+    res.status(201).json(assignmentWithDetails);
+  }),
+
+  listAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const admin = requireUser(req);
+    const { status, assigneeUserId, createdBy, projectId, overdue } = req.query as any;
+
+    const params: unknown[] = [admin.organizationId];
+    let where = `WHERE a.organization_id = ?`;
+    if (status) {
+      where += ` AND a.status = ?`;
+      params.push(status);
+    }
+    if (assigneeUserId) {
+      where += ` AND a.assignee_user_id = ?`;
+      params.push(assigneeUserId);
+    }
+    if (createdBy) {
+      where += ` AND a.created_by = ?`;
+      params.push(createdBy);
+    }
+    if (projectId) {
+      where += ` AND a.project_id = ?`;
+      params.push(projectId);
+    }
+    if (String(overdue) === '1' || String(overdue).toLowerCase() === 'true') {
+      where += ` AND a.due_at IS NOT NULL AND a.due_at < datetime('now') AND a.status != 'completed'`;
+    }
+
+    const rows = await queryHelpers.queryAll(
+      `SELECT
+         a.*,
+         t.name as template_name,
+         t.category as template_category,
+         s.status as session_status,
+         s.answered_questions as answered_questions,
+         s.total_questions as total_questions
+       FROM interview_assignments a
+       LEFT JOIN interview_library_templates t ON t.id = a.template_id
+       LEFT JOIN interview_sessions s ON s.id = a.session_id
+       ${where}
+       ORDER BY a.updated_at DESC`,
+      params
+    );
+
+    const mapped = (rows || []).map((r: any) => {
+      const answered = Number(r.answered_questions || 0);
+      const total = Number(r.total_questions || 0);
+      return {
+        ...r,
+        template: {
+          id: r.template_id,
+          name: r.template_name || '',
+          category: typeof r.template_category === 'string' ? r.template_category.toLowerCase() : r.template_category,
+          version: r.template_version,
+        },
+        session: r.session_id
+          ? {
+              id: r.session_id,
+              status: r.session_status,
+              answeredQuestions: answered,
+              totalQuestions: total,
+              completenessPercent: Math.round(calcCompletenessRatio(answered, total) * 100),
+            }
+          : null,
+      };
+    });
+
+    res.json(mapped);
+  }),
+
+  startAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+    const { projectId, name } = req.body || {};
+
+    const assignment = await queryHelpers.queryOne(
+      `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ? AND assignee_user_id = ?`,
+      [id, user.organizationId, user.id]
+    );
+    if (!assignment) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+    if (String((assignment as any).status) === 'completed') {
+      res.status(409).json({ error: 'Assignment already completed' });
+      return;
+    }
+
+    if ((assignment as any).session_id) {
+      const session = await queryHelpers.queryOne(`SELECT * FROM interview_sessions WHERE id = ?`, [
+        (assignment as any).session_id,
+      ]);
+      res.json({ assignmentId: id, session: buildSessionResponse(session) });
+      return;
+    }
+
+    const session = await createSessionFromTemplate({
+      user,
+      templateId: (assignment as any).template_id,
+      projectId: (assignment as any).project_id || projectId,
+      name: name || `Interview ${new Date().toLocaleDateString()}`,
+      assignmentId: id,
+    });
+
+    const now = new Date().toISOString();
+    await queryHelpers.queryRun(
+      `UPDATE interview_assignments
+       SET session_id = ?, status = 'in_progress', started_at = ?, updated_at = ?, project_id = COALESCE(project_id, ?)
+       WHERE id = ?`,
+      [(session as any).id, now, now, (assignment as any).project_id || projectId || null, id]
+    );
+
+    // Mirror into task status/description
+    if ((assignment as any).task_id) {
+      await queryHelpers.queryRun(
+        `UPDATE tasks SET status = ?, description = ?, updated_at = ? WHERE id = ?`,
+        [
+          'in_progress',
+          JSON.stringify({
+            type: 'interview_assignment',
+            assignmentId: id,
+            templateId: (assignment as any).template_id,
+            templateVersion: (assignment as any).template_version,
+            sessionId: (session as any).id,
+          }),
+          now,
+          (assignment as any).task_id,
+        ]
+      );
+    }
+
+    res.json({ assignmentId: id, session });
+  }),
+
+  submitAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+
+    const assignment = await queryHelpers.queryOne(
+      `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ? AND assignee_user_id = ?`,
+      [id, user.organizationId, user.id]
+    );
+    if (!assignment) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+    if (!(assignment as any).session_id) {
+      res.status(400).json({ error: 'Assignment has no session yet' });
+      return;
+    }
+
+    const sessionRow = await queryHelpers.queryOne(
+      `SELECT * FROM interview_sessions WHERE id = ? AND organization_id = ?`,
+      [(assignment as any).session_id, user.organizationId]
+    );
+    if (!sessionRow) {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+
+    const answered = Number((sessionRow as any).answered_questions || 0);
+    const total = Number((sessionRow as any).total_questions || 0);
+    const completenessRatio = calcCompletenessRatio(answered, total);
+    const completenessPercent = Math.round(completenessRatio * 100);
+    const now = new Date().toISOString();
+
+    const isCompleted = completenessRatio >= 0.5;
+    const newAssignmentStatus = isCompleted ? 'completed' : 'submitted';
+    const newSessionStatus = isCompleted ? 'completed' : 'submitted';
+
+    await queryHelpers.queryRun(
+      `UPDATE interview_assignments
+       SET status = ?, submitted_at = ?, updated_at = ?
+       WHERE id = ?`,
+      [newAssignmentStatus, now, now, id]
+    );
+
+    const sessionUpdates: string[] = [`status = ?`, `updated_at = ?`];
+    const sessionParams: unknown[] = [newSessionStatus, now];
+    if (isCompleted) {
+      sessionUpdates.push(`completed_at = ?`);
+      sessionParams.push(now);
+    }
+    sessionParams.push((assignment as any).session_id);
+    await queryHelpers.queryRun(
+      `UPDATE interview_sessions SET ${sessionUpdates.join(', ')} WHERE id = ?`,
+      sessionParams
+    );
+
+    if ((assignment as any).task_id) {
+      await queryHelpers.queryRun(
+        `UPDATE tasks SET status = ?, progress = ?, updated_at = ? WHERE id = ?`,
+        [isCompleted ? 'done' : 'in_progress', completenessPercent, now, (assignment as any).task_id]
+      );
+    }
+
+    const updatedAssignment = await queryHelpers.queryOne(`SELECT * FROM interview_assignments WHERE id = ?`, [id]);
+    const updatedSession = await queryHelpers.queryOne(`SELECT * FROM interview_sessions WHERE id = ?`, [
+      (assignment as any).session_id,
+    ]);
+
+    res.json({
+      assignment: updatedAssignment,
+      session: buildSessionResponse(updatedSession),
+      completenessPercent,
+      entersContext: isCompleted,
+    });
+  }),
+
+  sendBackAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const admin = requireUser(req);
+    const { id } = req.params;
+    const { reason } = req.body || {};
+
+    const assignment = await queryHelpers.queryOne(
+      `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+      [id, admin.organizationId]
+    );
+    if (!assignment) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+    if (!(assignment as any).session_id) {
+      res.status(400).json({ error: 'Assignment has no session yet' });
+      return;
+    }
+
+    const sessionRow = await queryHelpers.queryOne(
+      `SELECT answered_questions, total_questions FROM interview_sessions WHERE id = ? AND organization_id = ?`,
+      [(assignment as any).session_id, admin.organizationId]
+    );
+    if (!sessionRow) {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+
+    const answered = Number((sessionRow as any).answered_questions || 0);
+    const total = Number((sessionRow as any).total_questions || 0);
+    const completenessRatio = calcCompletenessRatio(answered, total);
+    if (completenessRatio >= 0.5) {
+      res.status(409).json({ error: 'Cannot send back: completeness is already >= 50%' });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    await queryHelpers.queryRun(
+      `UPDATE interview_assignments
+       SET status = 'sent_back', sent_back_at = ?, sent_back_reason = ?, updated_at = ?
+       WHERE id = ?`,
+      [now, reason || 'Please complete the interview', now, id]
+    );
+
+    await queryHelpers.queryRun(
+      `UPDATE interview_sessions SET status = 'in_progress', updated_at = ? WHERE id = ?`,
+      [now, (assignment as any).session_id]
+    );
+
+    if ((assignment as any).task_id) {
+      await queryHelpers.queryRun(`UPDATE tasks SET status = ?, updated_at = ? WHERE id = ?`, [
+        'in_progress',
+        now,
+        (assignment as any).task_id,
+      ]);
+    }
+
+    const updated = await queryHelpers.queryOne(`SELECT * FROM interview_assignments WHERE id = ?`, [id]);
+    res.json(updated);
+  }),
+
+  // ==========================================
+  // EXTENDED ASSIGNMENTS (Team, Reminders, Counts)
+  // ==========================================
+
+  getManagedAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { status, projectId } = req.query as any;
+
+    const params: unknown[] = [user.organizationId, user.id];
+    let where = `WHERE a.organization_id = ? AND a.created_by = ?`;
+
+    if (status) {
+      where += ` AND a.status = ?`;
+      params.push(status);
+    }
+    if (projectId) {
+      where += ` AND a.project_id = ?`;
+      params.push(projectId);
+    }
+
+    const rows = await queryHelpers.queryAll(
+      `SELECT
+         a.*,
+         t.name as template_name,
+         t.description as template_description,
+         t.category as template_category,
+         s.status as session_status,
+         s.answered_questions,
+         s.total_questions,
+         u.name as assignee_name,
+         u.email as assignee_email
+       FROM interview_assignments a
+       LEFT JOIN interview_library_templates t ON t.id = a.template_id
+       LEFT JOIN interview_sessions s ON s.id = a.session_id
+       LEFT JOIN users u ON u.id = a.assignee_user_id
+       ${where}
+       ORDER BY a.created_at DESC`,
+      params
+    );
+
+    const mapped = (rows || []).map((r: any) => {
+      const answered = Number(r.answered_questions || 0);
+      const total = Number(r.total_questions || 0);
+      return {
+        id: r.id,
+        organizationId: r.organization_id,
+        projectId: r.project_id || null,
+        status: r.status,
+        priority: r.priority || 'medium',
+        dueAt: r.due_at || null,
+        startedAt: r.started_at || null,
+        submittedAt: r.submitted_at || null,
+        sentBackAt: r.sent_back_at || null,
+        sentBackReason: r.sent_back_reason || null,
+        isTeamAssignment: r.is_team_assignment === 1,
+        reminderCount: r.reminder_count || 0,
+        escalationCount: r.escalation_count || 0,
+        createdAt: r.created_at,
+        template: {
+          id: r.template_id,
+          version: r.template_version,
+          name: r.template_name || '',
+          description: r.template_description || '',
+          category: typeof r.template_category === 'string' ? r.template_category.toLowerCase() : r.template_category,
+        },
+        session: r.session_id
+          ? {
+              id: r.session_id,
+              status: r.session_status,
+              answeredQuestions: answered,
+              totalQuestions: total,
+              completenessPercent: Math.round(calcCompletenessRatio(answered, total) * 100),
+            }
+          : null,
+        assignee: r.assignee_name
+          ? {
+              id: r.assignee_user_id,
+              name: r.assignee_name,
+              email: r.assignee_email,
+            }
+          : null,
+      };
+    });
+
+    res.json(mapped);
+  }),
+
+  getOverdueAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const now = new Date().toISOString();
+
+    const rows = await queryHelpers.queryAll(
+      `SELECT
+         a.*,
+         t.name as template_name,
+         t.category as template_category,
+         s.status as session_status,
+         s.answered_questions,
+         s.total_questions,
+         u.name as assignee_name,
+         u.email as assignee_email
+       FROM interview_assignments a
+       LEFT JOIN interview_library_templates t ON t.id = a.template_id
+       LEFT JOIN interview_sessions s ON s.id = a.session_id
+       LEFT JOIN users u ON u.id = a.assignee_user_id
+       WHERE a.organization_id = ?
+         AND a.created_by = ?
+         AND a.due_at IS NOT NULL
+         AND a.due_at < ?
+         AND a.status NOT IN ('completed', 'submitted')
+       ORDER BY a.due_at ASC`,
+      [user.organizationId, user.id, now]
+    );
+
+    const mapped = (rows || []).map((r: any) => {
+      const answered = Number(r.answered_questions || 0);
+      const total = Number(r.total_questions || 0);
+      const dueAt = new Date(r.due_at);
+      const overdueDays = Math.floor((Date.now() - dueAt.getTime()) / (1000 * 60 * 60 * 24));
+      return {
+        id: r.id,
+        status: r.status,
+        priority: r.priority || 'medium',
+        dueAt: r.due_at,
+        overdueDays,
+        template: {
+          id: r.template_id,
+          name: r.template_name || '',
+          category: r.template_category,
+        },
+        session: r.session_id
+          ? {
+              id: r.session_id,
+              status: r.session_status,
+              completenessPercent: Math.round(calcCompletenessRatio(answered, total) * 100),
+            }
+          : null,
+        assignee: {
+          id: r.assignee_user_id,
+          name: r.assignee_name,
+          email: r.assignee_email,
+        },
+      };
+    });
+
+    res.json(mapped);
+  }),
+
+  getAssignmentCounts: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const now = new Date().toISOString();
+
+    // My assignments count (including team memberships)
+    const myResult = await queryHelpers.queryOne(
+      `SELECT COUNT(DISTINCT a.id) as count
+       FROM interview_assignments a
+       LEFT JOIN interview_assignment_members m ON m.assignment_id = a.id
+       WHERE a.organization_id = ?
+         AND (a.assignee_user_id = ? OR m.user_id = ?)
+         AND a.status NOT IN ('completed')`,
+      [user.organizationId, user.id, user.id]
+    );
+
+    // Managed assignments count
+    const managedResult = await queryHelpers.queryOne(
+      `SELECT COUNT(*) as count
+       FROM interview_assignments
+       WHERE organization_id = ? AND created_by = ?`,
+      [user.organizationId, user.id]
+    );
+
+    // Overdue count (managed only)
+    const overdueResult = await queryHelpers.queryOne(
+      `SELECT COUNT(*) as count
+       FROM interview_assignments
+       WHERE organization_id = ?
+         AND created_by = ?
+         AND due_at IS NOT NULL
+         AND due_at < ?
+         AND status NOT IN ('completed', 'submitted')`,
+      [user.organizationId, user.id, now]
+    );
+
+    res.json({
+      my: (myResult as any)?.count || 0,
+      managed: (managedResult as any)?.count || 0,
+      overdue: (overdueResult as any)?.count || 0,
+    });
+  }),
+
+  getAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+
+    const row = await queryHelpers.queryOne(
+      `SELECT
+         a.*,
+         t.name as template_name,
+         t.description as template_description,
+         t.category as template_category,
+         s.status as session_status,
+         s.answered_questions,
+         s.total_questions,
+         u.name as assignee_name,
+         u.email as assignee_email,
+         creator.name as creator_name
+       FROM interview_assignments a
+       LEFT JOIN interview_library_templates t ON t.id = a.template_id
+       LEFT JOIN interview_sessions s ON s.id = a.session_id
+       LEFT JOIN users u ON u.id = a.assignee_user_id
+       LEFT JOIN users creator ON creator.id = a.created_by
+       WHERE a.id = ? AND a.organization_id = ?`,
+      [id, user.organizationId]
+    );
+
+    if (!row) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+
+    const r = row as any;
+    const answered = Number(r.answered_questions || 0);
+    const total = Number(r.total_questions || 0);
+
+    // Load team members if team assignment
+    let members: any[] = [];
+    if (r.is_team_assignment === 1) {
+      members = await queryHelpers.queryAll(
+        `SELECT m.*, u.name as user_name, u.email as user_email
+         FROM interview_assignment_members m
+         LEFT JOIN users u ON u.id = m.user_id
+         WHERE m.assignment_id = ?`,
+        [id]
+      );
+    }
+
+    res.json({
+      id: r.id,
+      organizationId: r.organization_id,
+      projectId: r.project_id || null,
+      status: r.status,
+      priority: r.priority || 'medium',
+      dueAt: r.due_at || null,
+      startedAt: r.started_at || null,
+      submittedAt: r.submitted_at || null,
+      sentBackAt: r.sent_back_at || null,
+      sentBackReason: r.sent_back_reason || null,
+      notes: r.notes || null,
+      isTeamAssignment: r.is_team_assignment === 1,
+      reminderSentAt: r.reminder_sent_at || null,
+      reminderCount: r.reminder_count || 0,
+      escalatedAt: r.escalated_at || null,
+      escalationCount: r.escalation_count || 0,
+      createdBy: r.created_by,
+      creatorName: r.creator_name,
+      createdAt: r.created_at,
+      template: {
+        id: r.template_id,
+        version: r.template_version,
+        name: r.template_name || '',
+        description: r.template_description || '',
+        category: typeof r.template_category === 'string' ? r.template_category.toLowerCase() : r.template_category,
+      },
+      session: r.session_id
+        ? {
+            id: r.session_id,
+            status: r.session_status,
+            answeredQuestions: answered,
+            totalQuestions: total,
+            completenessPercent: Math.round(calcCompletenessRatio(answered, total) * 100),
+          }
+        : null,
+      assignee: {
+        id: r.assignee_user_id,
+        name: r.assignee_name,
+        email: r.assignee_email,
+      },
+      members: (members || []).map((m: any) => ({
+        id: m.id,
+        userId: m.user_id,
+        userName: m.user_name,
+        userEmail: m.user_email,
+        role: m.role,
+        progressPercent: m.progress_percent || 0,
+        joinedAt: m.joined_at,
+        completedAt: m.completed_at,
+      })),
+    });
+  }),
+
+  updateAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+    const { dueAt, priority, notes, assigneeUserId } = req.body || {};
+
+    const existing = await queryHelpers.queryOne(
+      `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+
+    if (!existing) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+
+    const updates: string[] = [];
+    const params: unknown[] = [];
+    const now = new Date().toISOString();
+
+    if (dueAt !== undefined) {
+      updates.push('due_at = ?');
+      params.push(dueAt);
+    }
+    if (priority !== undefined) {
+      updates.push('priority = ?');
+      params.push(priority);
+    }
+    if (notes !== undefined) {
+      updates.push('notes = ?');
+      params.push(notes);
+    }
+    if (assigneeUserId !== undefined && (existing as any).status === 'assigned') {
+      // Can only reassign if not started
+      updates.push('assignee_user_id = ?');
+      params.push(assigneeUserId);
+    }
+
+    if (updates.length === 0) {
+      res.status(400).json({ error: 'No updates provided' });
+      return;
+    }
+
+    updates.push('updated_at = ?');
+    params.push(now);
+    params.push(id);
+
+    await queryHelpers.queryRun(
+      `UPDATE interview_assignments SET ${updates.join(', ')} WHERE id = ?`,
+      params
+    );
+
+    // Update mirror task if deadline changed
+    if (dueAt !== undefined && (existing as any).task_id) {
+      await queryHelpers.queryRun(
+        `UPDATE tasks SET due_date = ?, updated_at = ? WHERE id = ?`,
+        [dueAt, now, (existing as any).task_id]
+      );
+    }
+
+    const updated = await queryHelpers.queryOne(`SELECT * FROM interview_assignments WHERE id = ?`, [id]);
+    res.json(updated);
+  }),
+
+  deleteAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+
+    const existing = await queryHelpers.queryOne(
+      `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+
+    if (!existing) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+
+    if ((existing as any).status !== 'assigned') {
+      res.status(409).json({ error: 'Cannot delete assignment that has been started' });
+      return;
+    }
+
+    // Delete mirror task
+    if ((existing as any).task_id) {
+      await queryHelpers.queryRun(`DELETE FROM tasks WHERE id = ?`, [(existing as any).task_id]);
+    }
+
+    // Delete team members
+    await queryHelpers.queryRun(`DELETE FROM interview_assignment_members WHERE assignment_id = ?`, [id]);
+
+    // Delete assignment
+    await queryHelpers.queryRun(`DELETE FROM interview_assignments WHERE id = ?`, [id]);
+
+    res.json({ success: true, deletedId: id });
+  }),
+
+  sendAssignmentReminder: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+
+    const assignment = await queryHelpers.queryOne(
+      `SELECT a.*, t.name as template_name
+       FROM interview_assignments a
+       LEFT JOIN interview_library_templates t ON t.id = a.template_id
+       WHERE a.id = ? AND a.organization_id = ?`,
+      [id, user.organizationId]
+    );
+
+    if (!assignment) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+
+    // Import service dynamically to avoid circular deps
+    const { default: interviewAssignmentService } = await import('../services/InterviewAssignmentService.js');
+    await interviewAssignmentService.sendReminder(id, user.id);
+
+    res.json({ success: true, message: 'Reminder sent' });
+  }),
+
+  // ==========================================
+  // TEAM MEMBER MANAGEMENT
+  // ==========================================
+
+  getAssignmentMembers: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+
+    const assignment = await queryHelpers.queryOne(
+      `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+
+    if (!assignment) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+
+    const members = await queryHelpers.queryAll(
+      `SELECT m.*, u.name as user_name, u.email as user_email
+       FROM interview_assignment_members m
+       LEFT JOIN users u ON u.id = m.user_id
+       WHERE m.assignment_id = ?`,
+      [id]
+    );
+
+    res.json((members || []).map((m: any) => ({
+      id: m.id,
+      userId: m.user_id,
+      userName: m.user_name,
+      userEmail: m.user_email,
+      role: m.role,
+      progressPercent: m.progress_percent || 0,
+      joinedAt: m.joined_at,
+      completedAt: m.completed_at,
+    })));
+  }),
+
+  addAssignmentMember: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+    const { userId, role = 'member' } = req.body || {};
+
+    if (!userId) {
+      res.status(400).json({ error: 'userId is required' });
+      return;
+    }
+
+    const assignment = await queryHelpers.queryOne(
+      `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+
+    if (!assignment) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+
+    // Check if user already a member
+    const existing = await queryHelpers.queryOne(
+      `SELECT * FROM interview_assignment_members WHERE assignment_id = ? AND user_id = ?`,
+      [id, userId]
+    );
+
+    if (existing) {
+      res.status(409).json({ error: 'User is already a member of this assignment' });
+      return;
+    }
+
+    const memberId = uuidv4();
+    const now = new Date().toISOString();
+
+    await queryHelpers.queryRun(
+      `INSERT INTO interview_assignment_members
+       (id, assignment_id, user_id, role, progress_percent, joined_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [memberId, id, userId, role, 0, now, now, now]
+    );
+
+    // Mark assignment as team if not already
+    await queryHelpers.queryRun(
+      `UPDATE interview_assignments SET is_team_assignment = 1, updated_at = ? WHERE id = ?`,
+      [now, id]
+    );
+
+    const member = await queryHelpers.queryOne(
+      `SELECT m.*, u.name as user_name, u.email as user_email
+       FROM interview_assignment_members m
+       LEFT JOIN users u ON u.id = m.user_id
+       WHERE m.id = ?`,
+      [memberId]
+    );
+
+    res.status(201).json({
+      id: (member as any).id,
+      userId: (member as any).user_id,
+      userName: (member as any).user_name,
+      userEmail: (member as any).user_email,
+      role: (member as any).role,
+      progressPercent: 0,
+      joinedAt: now,
+    });
+  }),
+
+  removeAssignmentMember: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id, userId } = req.params;
+
+    const assignment = await queryHelpers.queryOne(
+      `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+
+    if (!assignment) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+
+    // Cannot remove primary assignee
+    if ((assignment as any).assignee_user_id === userId) {
+      res.status(409).json({ error: 'Cannot remove primary assignee. Reassign the assignment first.' });
+      return;
+    }
+
+    await queryHelpers.queryRun(
+      `DELETE FROM interview_assignment_members WHERE assignment_id = ? AND user_id = ?`,
+      [id, userId]
+    );
+
+    // Check remaining members
+    const remaining = await queryHelpers.queryOne(
+      `SELECT COUNT(*) as count FROM interview_assignment_members WHERE assignment_id = ?`,
+      [id]
+    );
+
+    // If only one member left, mark as non-team
+    if ((remaining as any)?.count <= 1) {
+      await queryHelpers.queryRun(
+        `UPDATE interview_assignments SET is_team_assignment = 0, updated_at = ? WHERE id = ?`,
+        [new Date().toISOString(), id]
+      );
+    }
+
+    res.json({ success: true, removedUserId: userId });
+  }),
+
+  // ==========================================
+  // TEMPLATES (Library)
+  // ==========================================
+
+  getTemplates: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+
+    const rows = await queryHelpers.queryAll(
+      `SELECT
+         t.*,
+         (SELECT COUNT(1) FROM interview_library_template_questions q WHERE q.template_id = t.id) as question_count,
+         (SELECT COUNT(1) FROM interview_sessions s WHERE s.template_id = t.id AND s.organization_id = ?) as sessions_used
+       FROM interview_library_templates t
+       WHERE (t.organization_id IS NULL OR t.organization_id = ?)
+         AND (t.visibility != 'admin_only' OR ? IN ('ADMIN', 'SUPERADMIN'))
+       ORDER BY
+         CASE t.status WHEN 'approved' THEN 0 WHEN 'in_review' THEN 1 ELSE 2 END,
+         t.is_default DESC,
+         t.category ASC,
+         t.name ASC`,
+      [user.organizationId, user.organizationId, user.role]
+    );
+
+    res.json((rows || []).map(buildTemplateResponse));
+  }),
+
+  getTemplate: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+
+    const row = await queryHelpers.queryOne(
+      `SELECT
+         t.*,
+         (SELECT COUNT(1) FROM interview_library_template_questions q WHERE q.template_id = t.id) as question_count
+       FROM interview_library_templates t
+       WHERE t.id = ?
+         AND (t.organization_id IS NULL OR t.organization_id = ?)
+         AND (t.visibility != 'admin_only' OR ? IN ('ADMIN', 'SUPERADMIN'))`,
+      [id, user.organizationId, user.role]
+    );
+
+    if (!row) {
+      res.status(404).json({ error: 'Template not found' });
+      return;
+    }
+
+    res.json(buildTemplateResponse(row));
+  }),
+
+  getTemplateQuestions: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+
+    const tpl = await queryHelpers.queryOne(
+      `SELECT * FROM interview_library_templates
+       WHERE id = ?
+         AND (organization_id IS NULL OR organization_id = ?)
+         AND (visibility != 'admin_only' OR ? IN ('ADMIN', 'SUPERADMIN'))`,
+      [id, user.organizationId, user.role]
+    );
+    if (!tpl) {
+      res.status(404).json({ error: 'Template not found' });
+      return;
+    }
+
+    const rows = await queryHelpers.queryAll(
+      `SELECT * FROM interview_library_template_questions WHERE template_id = ? ORDER BY category, sort_order`,
+      [id]
+    );
+
+    res.json((rows || []).map(buildTemplateQuestionResponse));
+  }),
+
+  useTemplate: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+    const { projectId, name } = req.body || {};
+
+    try {
+      const tpl = await queryHelpers.queryOne(
+        `SELECT status FROM interview_library_templates
+         WHERE id = ? AND (organization_id IS NULL OR organization_id = ?)`,
+        [id, user.organizationId]
+      );
+      if (!tpl) {
+        res.status(404).json({ error: 'Template not found' });
+        return;
+      }
+      if (String((tpl as any).status || '').toLowerCase() !== 'approved') {
+        res.status(400).json({ error: 'Template is not approved yet' });
+        return;
+      }
+
+      const session = await createSessionFromTemplate({ user, templateId: id, projectId, name });
+      res.status(201).json(session);
+    } catch (err: any) {
+      const msg = String(err?.message || 'Failed to use template');
+      if (msg.toLowerCase().includes('not found')) {
+        res.status(404).json({ error: msg });
+        return;
+      }
+      if (msg.toLowerCase().includes('permission')) {
+        res.status(403).json({ error: msg });
+        return;
+      }
+      logger.error('[InterviewController] useTemplate error:', err);
+      res.status(500).json({ error: msg });
+    }
+  }),
+
+  // ==========================================
+  // TEMPLATES MANAGEMENT (edit)
+  // ==========================================
+
+  updateTemplate: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+    const { name, description, category, status, visibility, isDefault } = req.body || {};
+
+    const existing = await queryHelpers.queryOne(
+      `SELECT * FROM interview_library_templates
+       WHERE id = ? AND (organization_id IS NULL OR organization_id = ?)`,
+      [id, user.organizationId]
+    );
+    if (!existing) {
+      res.status(404).json({ error: 'Template not found' });
+      return;
+    }
+
+    const updates: string[] = [];
+    const params: unknown[] = [];
+
+    if (name !== undefined) {
+      updates.push('name = ?');
+      params.push(name);
+    }
+    if (description !== undefined) {
+      updates.push('description = ?');
+      params.push(description);
+    }
+    if (category !== undefined) {
+      updates.push('category = ?');
+      params.push(category);
+    }
+    if (status !== undefined) {
+      updates.push('status = ?');
+      params.push(status);
+    }
+    if (visibility !== undefined) {
+      updates.push('visibility = ?');
+      params.push(visibility);
+    }
+    if (isDefault !== undefined) {
+      updates.push('is_default = ?');
+      params.push(isDefault ? 1 : 0);
+    }
+
+    if (updates.length === 0) {
+      res.status(400).json({ error: 'No updates provided' });
+      return;
+    }
+
+    // bump version on any edit
+    updates.push('version = version + 1', 'updated_at = ?');
+    params.push(new Date().toISOString());
+    params.push(id);
+
+    await queryHelpers.queryRun(
+      `UPDATE interview_library_templates SET ${updates.join(', ')} WHERE id = ?`,
+      params
+    );
+
+    const updated = await queryHelpers.queryOne(
+      `SELECT
+         t.*,
+         (SELECT COUNT(1) FROM interview_library_template_questions q WHERE q.template_id = t.id) as question_count,
+         (SELECT COUNT(1) FROM interview_sessions s WHERE s.template_id = t.id AND s.organization_id = ?) as sessions_used
+       FROM interview_library_templates t
+       WHERE t.id = ?`,
+      [user.organizationId, id]
+    );
+
+    res.json(buildTemplateResponse(updated));
+  }),
+
+  addTemplateQuestion: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params; // template id
+    const { category, questionText, sortOrder, answerType, isRequired, helpHint, answerOptions } = req.body || {};
+
+    const template = await queryHelpers.queryOne(
+      `SELECT * FROM interview_library_templates WHERE id = ? AND (organization_id IS NULL OR organization_id = ?)`,
+      [id, user.organizationId]
+    );
+    if (!template) {
+      res.status(404).json({ error: 'Template not found' });
+      return;
+    }
+    if (!category || !questionText) {
+      res.status(400).json({ error: 'category and questionText are required' });
+      return;
+    }
+
+    const qid = uuidv4();
+    await queryHelpers.queryRun(
+      `INSERT INTO interview_library_template_questions
+       (id, template_id, category, question_text, sort_order, answer_type, is_required, help_hint, answer_options, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        qid,
+        id,
+        category,
+        questionText,
+        typeof sortOrder === 'number' ? sortOrder : 0,
+        answerType || 'open',
+        isRequired ? 1 : 0,
+        helpHint || null,
+        JSON.stringify(Array.isArray(answerOptions) ? answerOptions : []),
+        new Date().toISOString(),
+      ]
+    );
+
+    await queryHelpers.queryRun(
+      `UPDATE interview_library_templates SET version = version + 1, updated_at = ? WHERE id = ?`,
+      [new Date().toISOString(), id]
+    );
+
+    const created = await queryHelpers.queryOne(
+      `SELECT * FROM interview_library_template_questions WHERE id = ?`,
+      [qid]
+    );
+    res.status(201).json(buildTemplateQuestionResponse(created));
+  }),
+
+  updateTemplateQuestion: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id, questionId } = req.params;
+    const { category, questionText, sortOrder, answerType, isRequired, helpHint, answerOptions } = req.body || {};
+
+    const existing = await queryHelpers.queryOne(
+      `SELECT * FROM interview_library_template_questions WHERE id = ? AND template_id = ?`,
+      [questionId, id]
+    );
+    if (!existing) {
+      res.status(404).json({ error: 'Template question not found' });
+      return;
+    }
+
+    const updates: string[] = [];
+    const params: unknown[] = [];
+
+    if (category !== undefined) {
+      updates.push('category = ?');
+      params.push(category);
+    }
+    if (questionText !== undefined) {
+      updates.push('question_text = ?');
+      params.push(questionText);
+    }
+    if (sortOrder !== undefined) {
+      updates.push('sort_order = ?');
+      params.push(sortOrder);
+    }
+    if (answerType !== undefined) {
+      updates.push('answer_type = ?');
+      params.push(answerType);
+    }
+    if (isRequired !== undefined) {
+      updates.push('is_required = ?');
+      params.push(isRequired ? 1 : 0);
+    }
+    if (helpHint !== undefined) {
+      updates.push('help_hint = ?');
+      params.push(helpHint);
+    }
+    if (answerOptions !== undefined) {
+      updates.push('answer_options = ?');
+      params.push(JSON.stringify(Array.isArray(answerOptions) ? answerOptions : []));
+    }
+
+    if (updates.length === 0) {
+      res.status(400).json({ error: 'No updates provided' });
+      return;
+    }
+
+    await queryHelpers.queryRun(
+      `UPDATE interview_library_template_questions SET ${updates.join(', ')} WHERE id = ?`,
+      [...params, questionId]
+    );
+
+    await queryHelpers.queryRun(
+      `UPDATE interview_library_templates SET version = version + 1, updated_at = ? WHERE id = ?`,
+      [new Date().toISOString(), id]
+    );
+
+    const updated = await queryHelpers.queryOne(
+      `SELECT * FROM interview_library_template_questions WHERE id = ?`,
+      [questionId]
+    );
+    res.json(buildTemplateQuestionResponse(updated));
+  }),
+
+  deleteTemplateQuestion: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id, questionId } = req.params;
+
+    const existing = await queryHelpers.queryOne(
+      `SELECT id FROM interview_library_template_questions WHERE id = ? AND template_id = ?`,
+      [questionId, id]
+    );
+    if (!existing) {
+      res.status(404).json({ error: 'Template question not found' });
+      return;
+    }
+
+    await queryHelpers.queryRun(`DELETE FROM interview_library_template_questions WHERE id = ?`, [
+      questionId,
+    ]);
+
+    await queryHelpers.queryRun(
+      `UPDATE interview_library_templates SET version = version + 1, updated_at = ? WHERE id = ?`,
+      [new Date().toISOString(), id]
+    );
+
+    res.json({ success: true });
+  }),
+
+  // ==========================================
+  // AI ASSIST (human-in-the-loop)
+  // ==========================================
+
+  aiSuggestQuestion: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { questionId } = req.params;
+
+    const question = await queryHelpers.queryOne(
+      `SELECT q.*, s.owner_id as session_owner_id
+       FROM interview_questions q
+       JOIN interview_sessions s ON s.id = q.session_id
+       WHERE q.id = ? AND q.organization_id = ? AND s.organization_id = ?`,
+      [questionId, user.organizationId, user.organizationId]
+    );
+    if (!question) {
+      res.status(404).json({ error: 'Question not found' });
+      return;
+    }
+    if (String((question as any).session_owner_id) !== String(user.id)) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const context = await queryHelpers.queryOne(
+      `SELECT * FROM organization_context WHERE organization_id = ?`,
+      [user.organizationId]
+    );
+
+    const answered = await queryHelpers.queryAll(
+      `SELECT category, question_text, answer_text
+       FROM interview_questions
+       WHERE session_id = ? AND status = 'answered'
+       ORDER BY updated_at DESC
+       LIMIT 10`,
+      [question.session_id]
+    );
+
+    const SuggestionSchema = z.object({
+      answerText: z.string().min(1),
+      tags: z.array(z.enum(['risk', 'opportunity', 'constraint', 'priority'])).default([]),
+      confidenceScore: z.number().min(1).max(5).default(3),
+    });
+
+    const systemPrompt = `
+You are a senior manufacturing transformation consultant helping fill a structured interview.
+Goal: Draft a concise, factual answer to the question based on provided context and prior answers.
+Rules:
+- Facts only. No recommendations or action plans.
+- If information is missing, write a short best-effort draft and add one explicit missing-data sentence.
+- Keep it practical and business-relevant.
+- Return ONLY a JSON object matching the schema: { answerText, tags, confidenceScore }.
+`;
+
+    const userPrompt = `
+Question category: ${question.category}
+Question: ${question.question_text}
+
+Organization context (raw DB row, may include nulls):
+${JSON.stringify(context || {}, null, 2)}
+
+Recent answered Q&A (may be empty):
+${JSON.stringify(answered || [], null, 2)}
+`;
+
+    const result = await llmService.call({
+      type: 'structured',
+      modelConfig: { id: 'standard' },
+      systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+      schema: SuggestionSchema,
+      maxTokens: 600,
+      temperature: 0.3,
+      cache: false,
+    });
+
+    res.json((result as any).object || { answerText: '', tags: [], confidenceScore: 3 });
+  }),
+
+  aiParseSessionAnswers: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { sessionId } = req.params;
+    const { text, questionIds } = req.body || {};
+
+    if (!text || typeof text !== 'string') {
+      res.status(400).json({ error: 'text is required' });
+      return;
+    }
+
+    const session = await queryHelpers.queryOne(
+      `SELECT * FROM interview_sessions WHERE id = ? AND organization_id = ?`,
+      [sessionId, user.organizationId]
+    );
+    if (!session) {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+    if (String((session as any).owner_id) !== String(user.id)) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const restrict = Array.isArray(questionIds) && questionIds.length > 0;
+    const inClause = restrict ? `AND id IN (${questionIds.map(() => '?').join(', ')})` : '';
+
+    const questions = await queryHelpers.queryAll(
+      `SELECT id, category, question_text FROM interview_questions
+       WHERE session_id = ? AND organization_id = ?
+       ${inClause}
+       ORDER BY category, sort_order`,
+      restrict ? [sessionId, user.organizationId, ...questionIds] : [sessionId, user.organizationId]
+    );
+
+    const MappingSchema = z.object({
+      answers: z.array(
+        z.object({
+          questionId: z.string().min(1),
+          answerText: z.string().min(1),
+        })
+      ),
+    });
+
+    const systemPrompt = `
+You are a senior consultant. Your task is to map a chat transcript into structured interview answers.
+Rules:
+- Facts only. No recommendations or plans.
+- Only answer questions that are clearly supported by the transcript.
+- Keep answers concise, in the same language as the transcript.
+- Return ONLY JSON: { answers: [{questionId, answerText}] }.
+`;
+
+    const userPrompt = `
+Transcript:
+${text}
+
+Questions to map:
+${JSON.stringify(questions || [], null, 2)}
+`;
+
+    const result = await llmService.call({
+      type: 'structured',
+      modelConfig: { id: 'standard' },
+      systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+      schema: MappingSchema,
+      maxTokens: 1200,
+      temperature: 0.2,
+      cache: false,
+    });
+
+    res.json((result as any).object || { answers: [] });
+  }),
+
+  // ==========================================
+  // QUESTIONS (Task-list style)
+  // ==========================================
+
+  getQuestions: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { sessionId } = req.params;
+    const { category } = req.query;
+
+    let query = `SELECT * FROM interview_questions WHERE session_id = ? AND organization_id = ?`;
+    const params: unknown[] = [sessionId, user.organizationId];
+
+    if (category) {
+      query += ` AND category = ?`;
+      params.push(category);
+    }
+
+    query += ` ORDER BY category, sort_order`;
+
+    const rows = await queryHelpers.queryAll(query, params);
+    res.json(rows.map(buildQuestionResponse));
+  }),
+
+  updateQuestion: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { questionId } = req.params;
+    const { answerText, status, confidenceScore, tags } = req.body;
+
+    // Lock edits when session is submitted/completed
+    const qSession = await queryHelpers.queryOne(
+      `SELECT q.session_id as session_id, s.status as session_status, s.owner_id as owner_id
+       FROM interview_questions q
+       JOIN interview_sessions s ON s.id = q.session_id
+       WHERE q.id = ? AND q.organization_id = ? AND s.organization_id = ?`,
+      [questionId, user.organizationId, user.organizationId]
+    );
+    if (!qSession) {
+      res.status(404).json({ error: 'Question not found' });
+      return;
+    }
+    if (String((qSession as any).owner_id) !== String(user.id)) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+    if (isLockedSessionStatus((qSession as any).session_status)) {
+      res.status(409).json({ error: 'Session is locked' });
+      return;
+    }
+
+    const updates: string[] = [];
+    const params: unknown[] = [];
+
+    if (answerText !== undefined) {
+      updates.push('answer_text = ?');
+      params.push(answerText);
+    }
+    if (status && QUESTION_STATUSES.includes(status)) {
+      updates.push('status = ?');
+      params.push(status);
+      if (status === 'answered') {
+        updates.push('answered_by = ?', 'answered_at = ?');
+        params.push(user.id, new Date().toISOString());
+      }
+    }
+    if (confidenceScore !== undefined) {
+      updates.push('confidence_score = ?');
+      params.push(Math.max(0, Math.min(5, confidenceScore)));
+    }
+    if (tags) {
+      updates.push('tags = ?');
+      params.push(JSON.stringify(tags));
+    }
+
+    if (updates.length === 0) {
+      res.status(400).json({ error: 'No updates provided' });
+      return;
+    }
+
+    updates.push('updated_at = ?');
+    params.push(new Date().toISOString());
+    params.push(questionId, user.organizationId);
+
+    await queryHelpers.queryRun(
+      `UPDATE interview_questions SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`,
+      params
+    );
+
+    // Update session progress
+    const question = await queryHelpers.queryOne(
+      `SELECT session_id FROM interview_questions WHERE id = ?`,
+      [questionId]
+    ) as { session_id: string } | null;
+
+    if (question) {
+      await InterviewController.updateSessionProgress(question.session_id);
+    }
+
+    const updated = await queryHelpers.queryOne(`SELECT * FROM interview_questions WHERE id = ?`, [questionId]);
+    res.json(buildQuestionResponse(updated));
+  }),
+
+  addQuestion: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { sessionId } = req.params;
+    const { category, questionText } = req.body;
+
+    try {
+      await assertSessionEditable(sessionId, user.organizationId);
+      await assertSessionOwnedByUser(sessionId, user.organizationId, user.id);
+    } catch (e: any) {
+      const msg = String(e?.message || '');
+      if (msg.toLowerCase().includes('not found')) {
+        res.status(404).json({ error: 'Session not found' });
+        return;
+      }
+      if (msg.toLowerCase().includes('forbidden')) {
+        res.status(403).json({ error: 'Forbidden' });
+        return;
+      }
+      if (msg.toLowerCase().includes('locked')) {
+        res.status(409).json({ error: 'Session is locked' });
+        return;
+      }
+      throw e;
+    }
+
+    if (!category || !INTERVIEW_CATEGORIES.includes(category)) {
+      res.status(400).json({ error: 'Invalid category' });
+      return;
+    }
+    if (!questionText) {
+      res.status(400).json({ error: 'questionText is required' });
+      return;
+    }
+
+    const id = uuidv4();
+    const now = new Date().toISOString();
+
+    // Get max sort order
+    const maxOrder = await queryHelpers.queryOne(
+      `SELECT MAX(sort_order) as max_order FROM interview_questions WHERE session_id = ? AND category = ?`,
+      [sessionId, category]
+    ) as { max_order: number } | null;
+
+    await queryHelpers.queryRun(
+      `INSERT INTO interview_questions
+       (id, session_id, organization_id, category, question_text, status, sort_order, is_template, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        sessionId,
+        user.organizationId,
+        category,
+        questionText,
+        'not_started',
+        (maxOrder?.max_order || 0) + 1,
+        0,
+        now,
+        now,
+      ]
+    );
+
+    // Update total questions
+    await queryHelpers.queryRun(
+      `UPDATE interview_sessions SET total_questions = total_questions + 1 WHERE id = ?`,
+      [sessionId]
+    );
+
+    const created = await queryHelpers.queryOne(`SELECT * FROM interview_questions WHERE id = ?`, [id]);
+    res.status(201).json(buildQuestionResponse(created));
+  }),
+
+  // Helper to update session progress
+  updateSessionProgress: async (sessionId: string) => {
+    const questions = await queryHelpers.queryAll(
+      `SELECT category, status FROM interview_questions WHERE session_id = ?`,
+      [sessionId]
+    ) as { category: string; status: string }[];
+
+    const progress: Record<string, number> = { strategy: 0, operations: 0, digital: 0, people: 0, finance: 0 };
+    const categoryCount: Record<string, number> = { strategy: 0, operations: 0, digital: 0, people: 0, finance: 0 };
+    let answeredTotal = 0;
+
+    for (const q of questions) {
+      if (INTERVIEW_CATEGORIES.includes(q.category as InterviewCategory)) {
+        categoryCount[q.category]++;
+        if (q.status === 'answered') {
+          progress[q.category]++;
+          answeredTotal++;
+        }
+      }
+    }
+
+    // Calculate percentage per category
+    for (const cat of INTERVIEW_CATEGORIES) {
+      if (categoryCount[cat] > 0) {
+        progress[cat] = Math.round((progress[cat] / categoryCount[cat]) * 100);
+      }
+    }
+
+    await queryHelpers.queryRun(
+      `UPDATE interview_sessions SET progress_json = ?, answered_questions = ?, last_activity_at = ? WHERE id = ?`,
+      [JSON.stringify(progress), answeredTotal, new Date().toISOString(), sessionId]
+    );
+  },
+
+  // ==========================================
+  // NOTES
+  // ==========================================
+
+  getNotes: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { sessionId } = req.params;
+
+    const rows = await queryHelpers.queryAll(
+      `SELECT * FROM interview_notes WHERE session_id = ? AND organization_id = ? ORDER BY created_at DESC`,
+      [sessionId, user.organizationId]
+    );
+    res.json(rows.map(buildNoteResponse));
+  }),
+
+  createNote: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { sessionId } = req.params;
+    const { category, title, content } = req.body;
+
+    try {
+      await assertSessionEditable(sessionId, user.organizationId);
+      await assertSessionOwnedByUser(sessionId, user.organizationId, user.id);
+    } catch (e: any) {
+      const msg = String(e?.message || '');
+      if (msg.toLowerCase().includes('not found')) {
+        res.status(404).json({ error: 'Session not found' });
+        return;
+      }
+      if (msg.toLowerCase().includes('forbidden')) {
+        res.status(403).json({ error: 'Forbidden' });
+        return;
+      }
+      if (msg.toLowerCase().includes('locked')) {
+        res.status(409).json({ error: 'Session is locked' });
+        return;
+      }
+      throw e;
+    }
+
+    if (!content) {
+      res.status(400).json({ error: 'content is required' });
+      return;
+    }
+
+    const id = uuidv4();
+    const now = new Date().toISOString();
+
+    await queryHelpers.queryRun(
+      `INSERT INTO interview_notes (id, session_id, organization_id, category, title, content, created_by, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, sessionId, user.organizationId, category || null, title || null, content, user.id, now, now]
+    );
+
+    const created = await queryHelpers.queryOne(`SELECT * FROM interview_notes WHERE id = ?`, [id]);
+    res.status(201).json(buildNoteResponse(created));
+  }),
+
+  updateNote: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { noteId } = req.params;
+    const { title, content } = req.body;
+
+    // Lock edits when note's session is submitted/completed
+    const noteSession = await queryHelpers.queryOne(
+      `SELECT n.session_id as session_id, s.status as session_status
+       FROM interview_notes n
+       JOIN interview_sessions s ON s.id = n.session_id
+       WHERE n.id = ? AND n.organization_id = ? AND s.organization_id = ?`,
+      [noteId, user.organizationId, user.organizationId]
+    );
+    if (!noteSession) {
+      res.status(404).json({ error: 'Note not found' });
+      return;
+    }
+    if (String((await queryHelpers.queryOne(
+      `SELECT owner_id FROM interview_sessions WHERE id = ? AND organization_id = ?`,
+      [(noteSession as any).session_id, user.organizationId]
+    ) as any)?.owner_id) !== String(user.id)) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+    if (isLockedSessionStatus((noteSession as any).session_status)) {
+      res.status(409).json({ error: 'Session is locked' });
+      return;
+    }
+
+    const updates: string[] = [];
+    const params: unknown[] = [];
+
+    if (title !== undefined) {
+      updates.push('title = ?');
+      params.push(title);
+    }
+    if (content !== undefined) {
+      updates.push('content = ?');
+      params.push(content);
+    }
+
+    if (updates.length === 0) {
+      res.status(400).json({ error: 'No updates provided' });
+      return;
+    }
+
+    updates.push('updated_at = ?');
+    params.push(new Date().toISOString());
+    params.push(noteId, user.organizationId);
+
+    await queryHelpers.queryRun(
+      `UPDATE interview_notes SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`,
+      params
+    );
+
+    const updated = await queryHelpers.queryOne(`SELECT * FROM interview_notes WHERE id = ?`, [noteId]);
+    res.json(buildNoteResponse(updated));
+  }),
+
+  deleteNote: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { noteId } = req.params;
+
+    // Lock deletes when note's session is submitted/completed
+    const noteSession = await queryHelpers.queryOne(
+      `SELECT n.session_id as session_id, s.status as session_status
+       FROM interview_notes n
+       JOIN interview_sessions s ON s.id = n.session_id
+       WHERE n.id = ? AND n.organization_id = ? AND s.organization_id = ?`,
+      [noteId, user.organizationId, user.organizationId]
+    );
+    if (!noteSession) {
+      res.status(404).json({ error: 'Note not found' });
+      return;
+    }
+    if (String((await queryHelpers.queryOne(
+      `SELECT owner_id FROM interview_sessions WHERE id = ? AND organization_id = ?`,
+      [(noteSession as any).session_id, user.organizationId]
+    ) as any)?.owner_id) !== String(user.id)) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+    if (isLockedSessionStatus((noteSession as any).session_status)) {
+      res.status(409).json({ error: 'Session is locked' });
+      return;
+    }
+
+    await queryHelpers.queryRun(
+      `DELETE FROM interview_notes WHERE id = ? AND organization_id = ?`,
+      [noteId, user.organizationId]
+    );
+
+    res.json({ success: true });
+  }),
+
+  // ==========================================
+  // EVIDENCE
+  // ==========================================
+
+  getEvidence: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { sessionId } = req.params;
+
+    const rows = await queryHelpers.queryAll(
+      `SELECT * FROM interview_evidence WHERE session_id = ? AND organization_id = ? ORDER BY created_at DESC`,
+      [sessionId, user.organizationId]
+    );
+    res.json(rows.map(buildEvidenceResponse));
+  }),
+
+  createEvidence: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { sessionId } = req.params;
+    const { questionId, evidenceType, title, description, fileName, fileSize, fileType, url } = req.body;
+
+    try {
+      await assertSessionEditable(sessionId, user.organizationId);
+      await assertSessionOwnedByUser(sessionId, user.organizationId, user.id);
+    } catch (e: any) {
+      const msg = String(e?.message || '');
+      if (msg.toLowerCase().includes('not found')) {
+        res.status(404).json({ error: 'Session not found' });
+        return;
+      }
+      if (msg.toLowerCase().includes('forbidden')) {
+        res.status(403).json({ error: 'Forbidden' });
+        return;
+      }
+      if (msg.toLowerCase().includes('locked')) {
+        res.status(409).json({ error: 'Session is locked' });
+        return;
+      }
+      throw e;
+    }
+
+    if (!evidenceType || !title) {
+      res.status(400).json({ error: 'evidenceType and title are required' });
+      return;
+    }
+
+    const id = uuidv4();
+    const now = new Date().toISOString();
+
+    await queryHelpers.queryRun(
+      `INSERT INTO interview_evidence
+       (id, session_id, organization_id, question_id, evidence_type, title, description, file_name, file_size, file_type, url, uploaded_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        sessionId,
+        user.organizationId,
+        questionId || null,
+        evidenceType,
+        title,
+        description || null,
+        fileName || null,
+        fileSize || null,
+        fileType || null,
+        url || null,
+        user.id,
+        now,
+      ]
+    );
+
+    const created = await queryHelpers.queryOne(`SELECT * FROM interview_evidence WHERE id = ?`, [id]);
+    res.status(201).json(buildEvidenceResponse(created));
+  }),
+
+  deleteEvidence: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { evidenceId } = req.params;
+
+    // Lock deletes when evidence session is submitted/completed
+    const evSession = await queryHelpers.queryOne(
+      `SELECT e.session_id as session_id, s.status as session_status
+       FROM interview_evidence e
+       JOIN interview_sessions s ON s.id = e.session_id
+       WHERE e.id = ? AND e.organization_id = ? AND s.organization_id = ?`,
+      [evidenceId, user.organizationId, user.organizationId]
+    );
+    if (!evSession) {
+      res.status(404).json({ error: 'Evidence not found' });
+      return;
+    }
+    if (String((await queryHelpers.queryOne(
+      `SELECT owner_id FROM interview_sessions WHERE id = ? AND organization_id = ?`,
+      [(evSession as any).session_id, user.organizationId]
+    ) as any)?.owner_id) !== String(user.id)) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+    if (isLockedSessionStatus((evSession as any).session_status)) {
+      res.status(409).json({ error: 'Session is locked' });
+      return;
+    }
+
+    await queryHelpers.queryRun(
+      `DELETE FROM interview_evidence WHERE id = ? AND organization_id = ?`,
+      [evidenceId, user.organizationId]
+    );
+
+    res.json({ success: true });
+  }),
+
+  // ==========================================
+  // ORGANIZATION CONTEXT (Company Facts)
+  // ==========================================
+
+  getOrganizationContext: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+
+    const row = await queryHelpers.queryOne(
+      `SELECT * FROM organization_context WHERE organization_id = ?`,
+      [user.organizationId]
+    );
+
+    if (!row) {
+      res.json({
+        organizationId: user.organizationId,
+        companyName: null,
+        industry: null,
+        companySize: null,
+        location: null,
+        employeeCount: null,
+        annualRevenue: null,
+        keyMetrics: [],
+        stakeholders: [],
+        openGaps: [],
+        completenessPercent: 0,
+      });
+      return;
+    }
+
+    res.json({
+      id: (row as any).id,
+      organizationId: (row as any).organization_id,
+      companyName: (row as any).company_name,
+      industry: (row as any).industry,
+      companySize: (row as any).company_size,
+      location: (row as any).location,
+      employeeCount: (row as any).employee_count,
+      annualRevenue: (row as any).annual_revenue,
+      keyMetrics: parseJson((row as any).key_metrics, []),
+      stakeholders: parseJson((row as any).stakeholders, []),
+      openGaps: parseJson((row as any).open_gaps, []),
+      completenessPercent: (row as any).completeness_percent || 0,
+      lastInterviewId: (row as any).last_interview_id,
+    });
+  }),
+
+  updateOrganizationContext: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const {
+      companyName, industry, companySize, location, employeeCount, annualRevenue,
+      keyMetrics, stakeholders, openGaps, lastInterviewId
+    } = req.body;
+
+    const existing = await queryHelpers.queryOne(
+      `SELECT id FROM organization_context WHERE organization_id = ?`,
+      [user.organizationId]
+    );
+
+    const now = new Date().toISOString();
+
+    // Calculate completeness
+    let completeness = 0;
+    if (companyName) completeness += 15;
+    if (industry) completeness += 15;
+    if (companySize) completeness += 10;
+    if (location) completeness += 10;
+    if (employeeCount) completeness += 10;
+    if (keyMetrics && keyMetrics.length > 0) completeness += 20;
+    if (stakeholders && stakeholders.length > 0) completeness += 20;
+
+    if (existing) {
+      await queryHelpers.queryRun(
+        `UPDATE organization_context SET
+         company_name = COALESCE(?, company_name),
+         industry = COALESCE(?, industry),
+         company_size = COALESCE(?, company_size),
+         location = COALESCE(?, location),
+         employee_count = COALESCE(?, employee_count),
+         annual_revenue = COALESCE(?, annual_revenue),
+         key_metrics = COALESCE(?, key_metrics),
+         stakeholders = COALESCE(?, stakeholders),
+         open_gaps = COALESCE(?, open_gaps),
+         completeness_percent = ?,
+         last_interview_id = COALESCE(?, last_interview_id),
+         updated_at = ?
+         WHERE organization_id = ?`,
+        [
+          companyName || null,
+          industry || null,
+          companySize || null,
+          location || null,
+          employeeCount || null,
+          annualRevenue || null,
+          keyMetrics ? JSON.stringify(keyMetrics) : null,
+          stakeholders ? JSON.stringify(stakeholders) : null,
+          openGaps ? JSON.stringify(openGaps) : null,
+          completeness,
+          lastInterviewId || null,
+          now,
+          user.organizationId,
+        ]
+      );
+    } else {
+      const id = uuidv4();
+      await queryHelpers.queryRun(
+        `INSERT INTO organization_context
+         (id, organization_id, company_name, industry, company_size, location, employee_count, annual_revenue,
+          key_metrics, stakeholders, open_gaps, completeness_percent, last_interview_id, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          user.organizationId,
+          companyName || null,
+          industry || null,
+          companySize || null,
+          location || null,
+          employeeCount || null,
+          annualRevenue || null,
+          JSON.stringify(keyMetrics || []),
+          JSON.stringify(stakeholders || []),
+          JSON.stringify(openGaps || []),
+          completeness,
+          lastInterviewId || null,
+          now,
+          now,
+        ]
+      );
+    }
+
+    const updated = await queryHelpers.queryOne(
+      `SELECT * FROM organization_context WHERE organization_id = ?`,
+      [user.organizationId]
+    );
+
+    res.json({
+      id: (updated as any).id,
+      organizationId: (updated as any).organization_id,
+      companyName: (updated as any).company_name,
+      industry: (updated as any).industry,
+      companySize: (updated as any).company_size,
+      location: (updated as any).location,
+      employeeCount: (updated as any).employee_count,
+      annualRevenue: (updated as any).annual_revenue,
+      keyMetrics: parseJson((updated as any).key_metrics, []),
+      stakeholders: parseJson((updated as any).stakeholders, []),
+      openGaps: parseJson((updated as any).open_gaps, []),
+      completenessPercent: (updated as any).completeness_percent,
+    });
+  }),
+
+  // ==========================================
+  // EXPORT CONTEXT
+  // ==========================================
+
+  exportContext: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { sessionId } = req.params;
+    const { targetType, targetId } = req.body;
+
+    if (!targetType || !targetId) {
+      res.status(400).json({ error: 'targetType and targetId are required' });
+      return;
+    }
+
+    // Context gating: only allow when assignment is completed OR completeness>=50% after submit
+    const sessionRow = await queryHelpers.queryOne(
+      `SELECT id, status, assignment_id, answered_questions, total_questions FROM interview_sessions
+       WHERE id = ? AND organization_id = ?`,
+      [sessionId, user.organizationId]
+    );
+    if (!sessionRow) {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+    if ((sessionRow as any).assignment_id) {
+      const assignment = await queryHelpers.queryOne(
+        `SELECT status FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+        [(sessionRow as any).assignment_id, user.organizationId]
+      );
+      const answered = Number((sessionRow as any).answered_questions || 0);
+      const total = Number((sessionRow as any).total_questions || 0);
+      const ratio = calcCompletenessRatio(answered, total);
+      const allowed =
+        String((assignment as any)?.status || '').toLowerCase() === 'completed' ||
+        (String((assignment as any)?.status || '').toLowerCase() === 'submitted' && ratio >= 0.5);
+      if (!allowed) {
+        res.status(409).json({ error: 'Interview not completed (>=50%) - cannot export yet' });
+        return;
+      }
+    }
+
+    const context = await queryHelpers.queryOne(
+      `SELECT * FROM organization_context WHERE organization_id = ?`,
+      [user.organizationId]
+    );
+
+    const id = uuidv4();
+    const now = new Date().toISOString();
+
+    await queryHelpers.queryRun(
+      `INSERT INTO interview_context_exports
+       (id, interview_session_id, organization_id, target_type, target_id, context_snapshot, exported_by, exported_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, sessionId, user.organizationId, targetType, targetId, JSON.stringify(context || {}), user.id, now]
+    );
+
+    logger.info(`[InterviewController] Exported context to ${targetType}:${targetId}`);
+    res.json({ success: true, exportId: id });
+  }),
+
+  // ==========================================
+  // GENERATE SUMMARY (ONLY FACTS - no recommendations)
+  // ==========================================
+
+  generateSummary: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { sessionId } = req.params;
+
+    // Context gating: only allow when assignment is completed OR completeness>=50% after submit
+    const sessionRow = await queryHelpers.queryOne(
+      `SELECT id, status, assignment_id, answered_questions, total_questions FROM interview_sessions
+       WHERE id = ? AND organization_id = ?`,
+      [sessionId, user.organizationId]
+    );
+    if (!sessionRow) {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+    if ((sessionRow as any).assignment_id) {
+      const assignment = await queryHelpers.queryOne(
+        `SELECT status FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+        [(sessionRow as any).assignment_id, user.organizationId]
+      );
+      const answered = Number((sessionRow as any).answered_questions || 0);
+      const total = Number((sessionRow as any).total_questions || 0);
+      const ratio = calcCompletenessRatio(answered, total);
+      const allowed =
+        String((assignment as any)?.status || '').toLowerCase() === 'completed' ||
+        (String((assignment as any)?.status || '').toLowerCase() === 'submitted' && ratio >= 0.5);
+      if (!allowed) {
+        res.status(409).json({ error: 'Interview not completed (>=50%) - cannot generate summary yet' });
+        return;
+      }
+    }
+
+    // Get all answered questions
+    const questions = await queryHelpers.queryAll(
+      `SELECT * FROM interview_questions WHERE session_id = ? AND status = 'answered' ORDER BY category, sort_order`,
+      [sessionId]
+    ) as any[];
+
+    // Group by category and extract facts
+    const facts: { category: string; fact: string }[] = [];
+    const gaps: { category: string; gap: string }[] = [];
+    const constraints: { category: string; constraint: string }[] = [];
+    const painPoints: { category: string; painPoint: string }[] = [];
+
+    for (const q of questions) {
+      if (q.answer_text) {
+        // Add as fact
+        facts.push({ category: q.category, fact: `${q.question_text}: ${q.answer_text}` });
+
+        // Check tags for constraints/pain points
+        const tags = parseJson(q.tags, []) as string[];
+        if (tags.includes('constraint')) {
+          constraints.push({ category: q.category, constraint: q.answer_text });
+        }
+        if (tags.includes('pain_point') || tags.includes('risk')) {
+          painPoints.push({ category: q.category, painPoint: q.answer_text });
+        }
+      }
+    }
+
+    // Find gaps (unanswered required questions or low confidence)
+    const allQuestions = await queryHelpers.queryAll(
+      `SELECT * FROM interview_questions WHERE session_id = ?`,
+      [sessionId]
+    ) as any[];
+
+    for (const q of allQuestions) {
+      if (q.status !== 'answered' || (q.confidence_score && q.confidence_score < 3)) {
+        gaps.push({ category: q.category, gap: q.question_text });
+      }
+    }
+
+    // Update session with summary (ONLY FACTS)
+    await queryHelpers.queryRun(
+      `UPDATE interview_sessions SET
+       summary_facts = ?, summary_gaps = ?, summary_constraints = ?, summary_pain_points = ?, updated_at = ?
+       WHERE id = ?`,
+      [
+        JSON.stringify(facts),
+        JSON.stringify(gaps),
+        JSON.stringify(constraints),
+        JSON.stringify(painPoints),
+        new Date().toISOString(),
+        sessionId,
+      ]
+    );
+
+    res.json({
+      facts,
+      gaps,
+      constraints,
+      painPoints,
+      message: 'Summary generated (facts only, no recommendations)',
+    });
+  }),
+
+  // ==========================================
+  // COMPLETED SESSIONS (for Insights tab)
+  // ==========================================
+
+  getCompletedSessions: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+
+    const rows = await queryHelpers.queryAll(
+      `SELECT 
+        s.id, s.name, s.template_id, s.status, s.completed_at, s.user_id,
+        s.answered_questions, s.total_questions,
+        t.name as template_name, t.category as template_category,
+        u.name as respondent_name
+       FROM interview_sessions s
+       LEFT JOIN interview_library_templates t ON t.id = s.template_id
+       LEFT JOIN users u ON u.id = s.user_id
+       WHERE s.organization_id = ? AND s.status = 'completed'
+       ORDER BY s.completed_at DESC`,
+      [user.organizationId]
+    );
+
+    const sessions = (rows || []).map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      templateId: row.template_id,
+      templateName: row.template_name,
+      templateCategory: row.template_category,
+      status: row.status,
+      completedAt: row.completed_at,
+      respondentId: row.user_id,
+      respondentName: row.respondent_name,
+      answeredQuestions: row.answered_questions,
+      totalQuestions: row.total_questions,
+    }));
+
+    res.json(sessions);
+  }),
+
+  // ==========================================
+  // INSIGHTS (AI-generated summaries)
+  // ==========================================
+
+  listInsights: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { limit = 50, offset = 0 } = req.query;
+
+    const interviewInsightService = await import('../services/InterviewInsightService.js');
+    const insights = await interviewInsightService.list(
+      user.organizationId,
+      { limit: Number(limit), offset: Number(offset) }
+    );
+
+    res.json(insights);
+  }),
+
+  getInsight: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const { id } = req.params;
+
+    const interviewInsightService = await import('../services/InterviewInsightService.js');
+    const insight = await interviewInsightService.getById(id);
+
+    if (!insight) {
+      res.status(404).json({ error: 'Insight not found' });
+      return;
+    }
+
+    res.json(insight);
+  }),
+
+  createInsight: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { title, sessionIds, promptType, filters } = req.body;
+
+    if (!title || !sessionIds || !Array.isArray(sessionIds) || sessionIds.length === 0) {
+      res.status(400).json({ error: 'title and sessionIds are required' });
+      return;
+    }
+
+    const interviewInsightService = await import('../services/InterviewInsightService.js');
+    const insight = await interviewInsightService.create({
+      organizationId: user.organizationId,
+      title,
+      sessionIds,
+      promptType: promptType || 'summary',
+      filters,
+      createdBy: user.id,
+    });
+
+    res.status(201).json(insight);
+  }),
+
+  regenerateInsight: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const { id } = req.params;
+
+    const interviewInsightService = await import('../services/InterviewInsightService.js');
+    const insight = await interviewInsightService.regenerate(id);
+
+    if (!insight) {
+      res.status(404).json({ error: 'Insight not found' });
+      return;
+    }
+
+    res.json(insight);
+  }),
+
+  deleteInsight: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const { id } = req.params;
+
+    const interviewInsightService = await import('../services/InterviewInsightService.js');
+    const deleted = await interviewInsightService.deleteInsight(id);
+
+    if (!deleted) {
+      res.status(404).json({ error: 'Insight not found' });
+      return;
+    }
+
+    res.json({ success: true });
+  }),
+};
+
+export default InterviewController;

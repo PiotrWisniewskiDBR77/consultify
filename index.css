@@ -1,0 +1,1260 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========================================
+   Admin Module Design System
+   Elegant minimalist tech aesthetic
+   ======================================== */
+
+/* ========================================
+   LIGHT MODE - Navy Blue Theme
+   Inspired by Outlook's clear visibility
+   ======================================== */
+:root {
+    /* ========================================
+       APPLE HIG DESIGN TOKENS
+       Premium, elegant, depth-focused design
+       ======================================== */
+    
+    /* HIG Typography Scale */
+    --hig-font-caption: 11px;
+    --hig-font-footnote: 13px;
+    --hig-font-subhead: 15px;
+    --hig-font-body: 17px;
+    --hig-font-headline: 17px;
+    --hig-font-title3: 20px;
+    --hig-font-title2: 22px;
+    --hig-font-title1: 28px;
+    --hig-font-large-title: 34px;
+    
+    /* HIG Spacing Scale */
+    --hig-space-xs: 4px;
+    --hig-space-sm: 8px;
+    --hig-space-md: 12px;
+    --hig-space-lg: 16px;
+    --hig-space-xl: 20px;
+    --hig-space-2xl: 24px;
+    --hig-space-3xl: 32px;
+    --hig-space-4xl: 40px;
+    --hig-space-5xl: 48px;
+    
+    /* HIG Border Radius */
+    --hig-radius-xs: 6px;
+    --hig-radius-sm: 8px;
+    --hig-radius-md: 12px;
+    --hig-radius-lg: 16px;
+    --hig-radius-xl: 20px;
+    --hig-radius-2xl: 24px;
+    --hig-radius-full: 9999px;
+    
+    /* HIG Animation Durations */
+    --hig-duration-fast: 100ms;
+    --hig-duration-normal: 200ms;
+    --hig-duration-slow: 300ms;
+    --hig-duration-slower: 400ms;
+    
+    /* HIG Easing Functions */
+    --hig-ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+    --hig-ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --hig-ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --hig-ease-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);
+    
+    /* Light Mode Primary Colors - Navy Blue Accents */
+    --light-navy-900: #0F172A;
+    --light-navy-800: #1E293B;
+    --light-navy-700: #334155;
+    --light-navy-600: #475569;
+    --light-navy-500: #64748B;
+    --light-navy-400: #94A3B8;
+
+    /* Light Mode Backgrounds */
+    --light-bg-primary: #F8FAFC;
+    --light-bg-card: #FFFFFF;
+    --light-bg-elevated: #F1F5F9;
+    --light-bg-hover: #E2E8F0;
+
+    /* Light Mode Borders */
+    --light-border: #CBD5E1;
+    --light-border-strong: #94A3B8;
+    --light-border-subtle: #E2E8F0;
+
+    /* Navy Blue Accent for Light Mode */
+    --light-accent-navy: #1E3A5F;
+    --light-accent-navy-hover: #0F2744;
+    --light-accent-navy-surface: rgba(30, 58, 95, 0.08);
+
+    /* Admin tokens - Dark mode defaults */
+    --admin-bg: #030712;
+    --admin-card: rgba(255, 255, 255, 0.02);
+    --admin-card-hover: rgba(255, 255, 255, 0.04);
+    --admin-border: rgba(255, 255, 255, 0.05);
+    --admin-border-strong: rgba(255, 255, 255, 0.1);
+    --admin-accent: #8b5cf6;
+    --admin-accent-muted: rgba(139, 92, 246, 0.15);
+    --admin-accent-subtle: rgba(139, 92, 246, 0.08);
+    --admin-text-primary: #f8fafc;
+    --admin-text-secondary: #94a3b8;
+    --admin-text-muted: #64748b;
+    --admin-success: #10b981;
+    --admin-warning: #f59e0b;
+    --admin-error: #ef4444;
+    
+    /* HIG Light Mode Semantic Colors */
+    --hig-bg-primary: #FFFFFF;
+    --hig-bg-secondary: #F8FAFC;
+    --hig-bg-tertiary: #F1F5F9;
+    --hig-bg-elevated: #FFFFFF;
+    --hig-bg-overlay: rgba(0, 0, 0, 0.3);
+    --hig-text-primary: #0F172A;
+    --hig-text-secondary: #475569;
+    --hig-text-tertiary: #64748B;
+    --hig-text-quaternary: #94A3B8;
+    --hig-border-default: rgba(0, 0, 0, 0.06);
+    --hig-border-strong: rgba(0, 0, 0, 0.12);
+    --hig-separator: rgba(0, 0, 0, 0.08);
+}
+
+/* HIG Dark Mode Colors */
+html.dark {
+    --hig-bg-primary: #0A0F1E;
+    --hig-bg-secondary: #0F172A;
+    --hig-bg-tertiary: #1E293B;
+    --hig-bg-elevated: #151E32;
+    --hig-bg-overlay: rgba(0, 0, 0, 0.6);
+    --hig-text-primary: #F8FAFC;
+    --hig-text-secondary: #94A3B8;
+    --hig-text-tertiary: #64748B;
+    --hig-text-quaternary: #475569;
+    --hig-border-default: rgba(255, 255, 255, 0.06);
+    --hig-border-strong: rgba(255, 255, 255, 0.12);
+    --hig-separator: rgba(255, 255, 255, 0.08);
+}
+
+@layer utilities {
+    .animate-fade-up {
+        animation: fadeUp 0.5s ease-out forwards;
+    }
+
+    .animate-fade-in {
+        animation: fadeIn 0.4s ease-out forwards;
+    }
+
+    .animate-breathing-glow {
+        animation: breathing-glow 4s ease-in-out infinite;
+    }
+
+    @keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes breathing-glow {
+
+        0%,
+        100% {
+            opacity: 0.4;
+        }
+
+        50% {
+            opacity: 0.6;
+        }
+    }
+
+    /* ========================================
+       Global Light Mode Contrast Improvements
+       Navy Blue Theme - Better Visibility
+       ======================================== */
+
+    /* Note: Light mode text contrast is handled via component-level styles
+       to avoid circular dependency issues with @apply */
+
+    /* ========================================
+       Mobile/Tablet Touch-Friendly Utilities
+       ======================================== */
+
+    /* Touch target - minimum 44x44px for accessibility */
+    .touch-target {
+        @apply min-h-[44px] min-w-[44px];
+    }
+
+    /* Safe area insets for notched devices */
+    .safe-area-pb {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    .safe-area-pt {
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    .safe-area-pl {
+        padding-left: env(safe-area-inset-left, 0px);
+    }
+
+    .safe-area-pr {
+        padding-right: env(safe-area-inset-right, 0px);
+    }
+
+    /* Hide scrollbar but keep functionality */
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Horizontal scroll snap for touch navigation */
+    .scroll-snap-x {
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .scroll-snap-item {
+        scroll-snap-align: start;
+    }
+
+    /* Touch feedback ripple effect */
+    .touch-ripple {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .touch-ripple::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+        opacity: 0;
+        transform: scale(0);
+        transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    }
+
+    .touch-ripple:active::after {
+        opacity: 1;
+        transform: scale(2);
+    }
+
+    /* Prevent text selection on touch */
+    .no-select {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+    }
+
+    /* Smooth momentum scrolling */
+    .momentum-scroll {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+
+    /* Bottom navigation height placeholder */
+    .bottom-nav-spacer {
+        height: calc(64px + env(safe-area-inset-bottom, 0px));
+    }
+}
+
+@layer base {
+    body {
+        @apply bg-gray-50 dark:bg-navy-950 text-navy-900 dark:text-white antialiased text-sm leading-relaxed;
+        /* Subtle global gradient in dark mode for depth */
+        background-image: radial-gradient(circle at 50% 0%, rgba(124, 58, 237, 0.03) 0%, transparent 50%),
+            radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.03) 0%, transparent 50%);
+        background-attachment: fixed;
+    }
+}
+
+@layer components {
+    /* ========================================
+       APPLE HIG COMPONENT SYSTEM
+       Premium depth-based design language
+       ======================================== */
+    
+    /* HIG Card - Elevated surface with depth */
+    .hig-card {
+        @apply bg-white dark:bg-navy-800 rounded-hig-lg transition-all duration-hig-normal ease-hig;
+        box-shadow: var(--hig-shadow-md, 0 4px 6px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.06));
+    }
+    
+    .hig-card:hover {
+        box-shadow: var(--hig-shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.04), 0 4px 6px rgba(0, 0, 0, 0.05));
+        transform: translateY(-1px);
+    }
+    
+    html.dark .hig-card {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    
+    html.dark .hig-card:hover {
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3), 0 4px 6px rgba(0, 0, 0, 0.25);
+    }
+    
+    /* HIG Card Variants */
+    .hig-card-filled {
+        @apply bg-slate-50 dark:bg-navy-900 rounded-hig-lg;
+    }
+    
+    .hig-card-glass {
+        @apply rounded-hig-lg backdrop-blur-hig;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.06);
+    }
+    
+    html.dark .hig-card-glass {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.6) 100%);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* HIG Surface - Subtle elevation */
+    .hig-surface {
+        @apply bg-white dark:bg-navy-900 rounded-hig-md;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+    }
+    
+    html.dark .hig-surface {
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* HIG Input Base */
+    .hig-input {
+        @apply w-full px-4 py-3 bg-slate-50 dark:bg-navy-900 rounded-hig-md text-navy-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all duration-hig-fast ease-hig;
+        border: 1px solid transparent;
+    }
+    
+    .hig-input:hover {
+        @apply bg-slate-100 dark:bg-navy-800;
+    }
+    
+    .hig-input:focus {
+        @apply bg-white dark:bg-navy-900 outline-none;
+        border-color: #7C3AED;
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+    }
+    
+    .hig-input-error {
+        border-color: #DC2626;
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+    }
+    
+    /* HIG Button Base */
+    .hig-btn {
+        @apply inline-flex items-center justify-center font-medium rounded-hig-md transition-all duration-hig-fast ease-hig outline-none;
+        @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none;
+    }
+    
+    .hig-btn:active:not(:disabled) {
+        transform: scale(0.97);
+    }
+    
+    /* HIG Button Sizes */
+    .hig-btn-sm {
+        @apply px-3 py-1.5 text-sm gap-1.5;
+    }
+    
+    .hig-btn-md {
+        @apply px-4 py-2.5 text-sm gap-2;
+    }
+    
+    .hig-btn-lg {
+        @apply px-6 py-3 text-base gap-2.5;
+    }
+    
+    /* HIG Button Primary */
+    .hig-btn-primary {
+        @apply hig-btn text-white;
+        background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%);
+        box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
+    }
+    
+    .hig-btn-primary:hover:not(:disabled) {
+        background: linear-gradient(135deg, #6D28D9 0%, #7C3AED 100%);
+        box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+    }
+    
+    .hig-btn-primary:focus-visible {
+        box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25), 0 0 0 3px rgba(124, 58, 237, 0.3);
+    }
+    
+    /* HIG Button Secondary */
+    .hig-btn-secondary {
+        @apply hig-btn bg-slate-100 dark:bg-navy-800 text-navy-900 dark:text-white;
+    }
+    
+    .hig-btn-secondary:hover:not(:disabled) {
+        @apply bg-slate-200 dark:bg-navy-700;
+    }
+    
+    .hig-btn-secondary:focus-visible {
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+    }
+    
+    /* HIG Button Ghost */
+    .hig-btn-ghost {
+        @apply hig-btn bg-transparent text-slate-600 dark:text-slate-400;
+    }
+    
+    .hig-btn-ghost:hover:not(:disabled) {
+        @apply bg-slate-100 dark:bg-white/5 text-navy-900 dark:text-white;
+    }
+    
+    /* HIG Button Danger */
+    .hig-btn-danger {
+        @apply hig-btn text-white;
+        background: linear-gradient(135deg, #DC2626 0%, #EF4444 100%);
+        box-shadow: 0 4px 14px rgba(220, 38, 38, 0.2);
+    }
+    
+    .hig-btn-danger:hover:not(:disabled) {
+        background: linear-gradient(135deg, #B91C1C 0%, #DC2626 100%);
+        box-shadow: 0 6px 20px rgba(220, 38, 38, 0.3);
+    }
+    
+    /* HIG Badge */
+    .hig-badge {
+        @apply inline-flex items-center px-2 py-0.5 rounded-hig-full text-xs font-medium;
+    }
+    
+    .hig-badge-primary {
+        @apply hig-badge bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300;
+    }
+    
+    .hig-badge-success {
+        @apply hig-badge bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-300;
+    }
+    
+    .hig-badge-danger {
+        @apply hig-badge bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300;
+    }
+    
+    .hig-badge-neutral {
+        @apply hig-badge bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300;
+    }
+    
+    /* HIG Separator */
+    .hig-separator {
+        @apply h-px w-full bg-slate-200 dark:bg-white/10;
+    }
+    
+    .hig-separator-vertical {
+        @apply w-px h-full bg-slate-200 dark:bg-white/10;
+    }
+    
+    /* HIG Modal Overlay */
+    .hig-overlay {
+        @apply fixed inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm;
+        animation: higFadeIn 0.15s ease-out forwards;
+    }
+    
+    /* HIG Modal Content */
+    .hig-modal {
+        @apply fixed bg-white dark:bg-navy-900 rounded-hig-xl overflow-hidden;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15), 0 12px 24px rgba(0, 0, 0, 0.1);
+        animation: higScaleIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    
+    html.dark .hig-modal {
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), 0 12px 24px rgba(0, 0, 0, 0.4);
+    }
+    
+    /* HIG Skeleton Loading */
+    .hig-skeleton {
+        @apply bg-slate-200 dark:bg-slate-700 rounded-hig-sm;
+        background-size: 200% 100%;
+        animation: higSkeleton 1.5s ease-in-out infinite;
+        background-image: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
+    }
+    
+    html.dark .hig-skeleton {
+        background-image: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
+    }
+    
+    /* HIG Tooltip */
+    .hig-tooltip {
+        @apply px-3 py-2 bg-navy-900 dark:bg-slate-100 text-white dark:text-navy-900 text-sm rounded-hig-sm;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+        animation: higFadeIn 0.1s ease-out forwards;
+    }
+    
+    /* HIG Avatar */
+    .hig-avatar {
+        @apply inline-flex items-center justify-center rounded-full bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 font-medium overflow-hidden;
+    }
+    
+    .hig-avatar-sm {
+        @apply w-8 h-8 text-xs;
+    }
+    
+    .hig-avatar-md {
+        @apply w-10 h-10 text-sm;
+    }
+    
+    .hig-avatar-lg {
+        @apply w-12 h-12 text-base;
+    }
+    
+    .hig-avatar-xl {
+        @apply w-16 h-16 text-lg;
+    }
+    
+    /* HIG Tabs */
+    .hig-tabs {
+        @apply flex gap-1 p-1 bg-slate-100 dark:bg-navy-900 rounded-hig-lg;
+    }
+    
+    .hig-tab {
+        @apply px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 rounded-hig-md transition-all duration-hig-fast;
+    }
+    
+    .hig-tab:hover:not(.hig-tab-active) {
+        @apply text-navy-900 dark:text-white;
+    }
+    
+    .hig-tab-active {
+        @apply bg-white dark:bg-navy-800 text-navy-900 dark:text-white;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+    
+    /* HIG Progress Bar */
+    .hig-progress {
+        @apply h-1.5 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden;
+    }
+    
+    .hig-progress-bar {
+        @apply h-full bg-primary-500 rounded-full transition-all duration-hig-slow ease-hig;
+    }
+    
+    /* HIG Spinner */
+    .hig-spinner {
+        @apply w-5 h-5 border-2 border-slate-200 dark:border-slate-700 border-t-primary-500 rounded-full;
+        animation: higSpin 0.8s linear infinite;
+    }
+    
+    .hig-spinner-sm {
+        @apply w-4 h-4;
+    }
+    
+    .hig-spinner-lg {
+        @apply w-8 h-8 border-3;
+    }
+    
+    /* Legacy glass components */
+    .glass-panel {
+        @apply bg-white/70 dark:bg-navy-900/60 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-sm dark:shadow-2xl;
+    }
+
+    .glass-card {
+        @apply bg-white/40 dark:bg-navy-800/20 backdrop-blur-xl border border-slate-200/50 dark:border-white/5 transition-all duration-500 hover:border-brand/40 dark:hover:border-white/10 hover:shadow-glow-lg hover:-translate-y-0.5;
+    }
+
+    /* ========================================
+       DBR77 BUTTON SYSTEM
+       See: docs/00_foundation/COLOR_SYSTEM_STANDARD.md
+       ======================================== */
+
+    /* Button Base Utilities */
+    .btn-base {
+        @apply inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none active:scale-[0.98];
+    }
+
+    /* PRIMARY Button - Fiolet (główna akcja na stronie) */
+    .btn-primary {
+        @apply btn-base text-white shadow-lg border border-white/10 relative overflow-hidden;
+        background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%);
+        box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.25);
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #6D28D9 0%, #7C3AED 100%);
+    }
+
+    .btn-primary:focus-visible {
+        --tw-ring-color: #7C3AED;
+    }
+
+    /* SECONDARY Button - Navy (akcja drugorzędna) */
+    .btn-secondary {
+        @apply btn-base text-white border shadow-lg hover:shadow-xl;
+        background-color: #1E3A5F;
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-secondary:hover {
+        background-color: #0F2744;
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-secondary:focus-visible {
+        --tw-ring-color: #1E3A5F;
+    }
+
+    /* GHOST Button - Transparentny (akcja trzeciorzędna) */
+    .btn-ghost {
+        @apply btn-base bg-transparent hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white border border-transparent;
+    }
+
+    .btn-ghost:focus-visible {
+        --tw-ring-color: #7C3AED;
+    }
+
+    /* DANGER Button - Czerwony (TYLKO destrukcyjne akcje!) */
+    .btn-danger {
+        @apply btn-base text-white shadow-lg border border-transparent;
+        background-color: #DC2626;
+        box-shadow: 0 10px 25px -5px rgba(220, 38, 38, 0.2);
+    }
+
+    .btn-danger:hover {
+        background-color: #B91C1C;
+    }
+
+    .btn-danger:focus-visible {
+        --tw-ring-color: #DC2626;
+    }
+
+    /* OUTLINE Button - Obramowanie (alternatywa secondary) */
+    .btn-outline {
+        @apply btn-base bg-transparent border text-slate-700 dark:text-slate-200;
+        border-color: #CBD5E1;
+    }
+
+    html.dark .btn-outline {
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-outline:hover {
+        border-color: #7C3AED;
+        color: #7C3AED;
+    }
+
+    html.dark .btn-outline:hover {
+        color: white;
+    }
+
+    /* GLASS Button - Szklany efekt */
+    .btn-glass {
+        @apply btn-base bg-white/5 hover:bg-white/10 text-navy-900 dark:text-white border border-white/10 backdrop-blur-sm shadow-sm;
+    }
+
+    /* ========================================
+       DBR77 TEXT COLOR CLASSES
+       Semantic text colors - use sparingly!
+       ======================================== */
+
+    /* Status text - ONLY for semantic meaning */
+    .text-status-success {
+        @apply dark:text-success-400;
+        color: #059669;
+    }
+
+    .text-status-danger {
+        @apply dark:text-danger-400;
+        color: #DC2626;
+    }
+
+    .text-status-primary {
+        @apply dark:text-primary-400;
+        color: #7C3AED;
+    }
+
+    .text-status-muted {
+        @apply dark:text-navy-400;
+        color: #64748B;
+    }
+
+    /* Compact layout utilities */
+    .compact-card {
+        @apply p-3 gap-2;
+    }
+
+    .compact-section {
+        @apply py-3 px-4;
+    }
+
+    .compact-header {
+        @apply py-2 px-3;
+    }
+
+    /* ========================================
+       PMO Priority System - My Work Module
+       Updated to DBR77 Color Standard
+       ======================================== */
+
+    /* PMO Category Cards - Strategic Priority Visualization */
+    .pmo-blocking-phase {
+        /* DANGER - Czerwony dla blokujących faz */
+        @apply border-l-4 bg-danger-50/50 dark:bg-danger-900/10;
+        border-color: #DC2626;
+    }
+
+    .pmo-blocking-initiative {
+        /* PRIMARY - Fiolet dla blokujących inicjatyw */
+        @apply border-l-4 bg-primary-50/50 dark:bg-primary-900/10;
+        border-color: #7C3AED;
+    }
+
+    .pmo-decision-required {
+        /* PRIMARY LIGHT - Jaśniejszy fiolet dla decyzji */
+        @apply border-l-4 bg-primary-100/50 dark:bg-primary-900/20;
+        border-color: #8B5CF6;
+    }
+
+    .pmo-deadline-critical {
+        /* NEUTRAL - Szary dla deadline'ów */
+        @apply border-l-4 border-slate-700 bg-slate-50/50 dark:bg-slate-800/50;
+    }
+
+    .pmo-high-strategic {
+        /* SECONDARY - Navy dla strategicznych */
+        @apply border-l-4 bg-secondary-50/50 dark:bg-secondary-900/10;
+        border-color: #1E3A5F;
+    }
+
+    .pmo-routine {
+        /* SUCCESS - Zielony dla rutynowych */
+        @apply border-l-4 bg-success-50/50 dark:bg-success-900/10;
+        border-color: #059669;
+    }
+
+    /* Focus Board Time Block Headers - DBR77 Colors */
+    .time-block-morning {
+        @apply bg-gradient-to-r from-primary-100 to-primary-50 dark:from-primary-900/20 dark:to-primary-900/10;
+    }
+
+    .time-block-afternoon {
+        @apply bg-gradient-to-r from-secondary-100 to-secondary-50 dark:from-secondary-900/20 dark:to-secondary-900/10;
+    }
+
+    .time-block-buffer {
+        @apply bg-gradient-to-r from-slate-100 to-gray-100 dark:from-slate-800/50 dark:to-gray-800/50;
+    }
+
+    /* Inbox Item Urgency Indicators - DBR77 Colors */
+    .inbox-critical {
+        /* DANGER - Czerwony dla krytycznych */
+        @apply bg-danger-50 dark:bg-danger-900/20 border-l-4;
+        border-color: #DC2626;
+    }
+
+    .inbox-high {
+        /* PRIMARY - Fiolet dla wysokiego priorytetu */
+        @apply bg-primary-50 dark:bg-primary-900/20 border-l-4;
+        border-color: #7C3AED;
+    }
+
+    .inbox-normal {
+        @apply bg-white dark:bg-navy-900 border-l-4 border-slate-300 dark:border-slate-600;
+    }
+
+    .inbox-low {
+        @apply bg-slate-50 dark:bg-slate-800/50 border-l-4 border-slate-200 dark:border-slate-700;
+    }
+
+    /* Execution Score Gauge */
+    .execution-score-ring {
+        @apply rounded-full;
+        background: conic-gradient(from 0deg,
+                theme('colors.green.500') 0%,
+                theme('colors.green.500') var(--score-percent, 0%),
+                theme('colors.slate.200') var(--score-percent, 0%),
+                theme('colors.slate.200') 100%);
+    }
+
+    .dark .execution-score-ring {
+        background: conic-gradient(from 0deg,
+                theme('colors.green.400') 0%,
+                theme('colors.green.400') var(--score-percent, 0%),
+                theme('colors.slate.700') var(--score-percent, 0%),
+                theme('colors.slate.700') 100%);
+    }
+
+    /* Workload Heatmap Cells - DBR77 Colors */
+    .workload-available {
+        /* SUCCESS - Zielony dla dostępnego */
+        @apply bg-success-100 dark:bg-success-900/30;
+    }
+
+    .workload-normal {
+        /* SECONDARY - Navy dla normalnego */
+        @apply bg-secondary-100 dark:bg-secondary-900/30;
+    }
+
+    .workload-high {
+        /* PRIMARY - Fiolet dla wysokiego */
+        @apply bg-primary-100 dark:bg-primary-900/30;
+    }
+
+    .workload-overloaded {
+        /* DANGER - Czerwony dla przeciążonego */
+        @apply bg-danger-100 dark:bg-danger-900/30;
+    }
+
+    /* Triage Action Buttons - DBR77 Colors */
+    .triage-accept {
+        /* SUCCESS */
+        @apply bg-success-100 hover:bg-success-200 text-success-700 dark:bg-success-900/30 dark:hover:bg-success-900/50 dark:text-success-300;
+    }
+
+    .triage-schedule {
+        /* SECONDARY */
+        @apply bg-secondary-100 hover:bg-secondary-200 text-secondary-700 dark:bg-secondary-900/30 dark:hover:bg-secondary-900/50 dark:text-secondary-300;
+    }
+
+    .triage-delegate {
+        /* PRIMARY */
+        @apply bg-primary-100 hover:bg-primary-200 text-primary-700 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 dark:text-primary-300;
+    }
+
+    .triage-archive {
+        /* NEUTRAL */
+        @apply bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300;
+    }
+
+    .triage-reject {
+        /* DANGER */
+        @apply bg-danger-100 hover:bg-danger-200 text-danger-700 dark:bg-danger-900/30 dark:hover:bg-danger-900/50 dark:text-danger-300;
+    }
+
+    /* Notification Badge Pulse */
+    .notification-pulse {
+        @apply animate-pulse;
+    }
+
+    .notification-badge {
+        @apply absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full px-1 border-2 border-white dark:border-navy-900;
+    }
+
+    /* Focus Task Card States */
+    .focus-task-active {
+        @apply ring-2 ring-brand/50 dark:ring-brand/30;
+    }
+
+    .focus-task-completed {
+        @apply opacity-60 bg-green-50/50 dark:bg-green-900/10;
+    }
+
+    .focus-task-dragging {
+        @apply shadow-xl scale-105 ring-2 ring-brand;
+    }
+
+    /* Streak Badge - DBR77 Primary Gradient */
+    .streak-badge {
+        @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-white text-xs font-bold;
+        background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+    }
+
+    /* Custom scrollbar for My Work panels */
+    .mywork-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: theme('colors.slate.300') transparent;
+    }
+
+    .mywork-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .mywork-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .mywork-scrollbar::-webkit-scrollbar-thumb {
+        background-color: theme('colors.slate.300');
+        border-radius: 3px;
+    }
+
+    .dark .mywork-scrollbar {
+        scrollbar-color: theme('colors.slate.600') transparent;
+    }
+
+    .dark .mywork-scrollbar::-webkit-scrollbar-thumb {
+        background-color: theme('colors.slate.600');
+    }
+
+    /* ========================================
+       Admin Module UI Components
+       ======================================== */
+
+    /* Admin Card - Clean minimal style */
+    .admin-card {
+        @apply bg-white border border-slate-200 dark:bg-[var(--admin-card)] dark:border-[var(--admin-border)] rounded-lg transition-colors;
+    }
+
+    .admin-card-hover:hover {
+        @apply bg-[var(--admin-card-hover)] border-[var(--admin-border-strong)];
+    }
+
+    /* Admin Metric Card */
+    .admin-metric {
+        @apply bg-white border border-slate-200 dark:bg-[var(--admin-card)] dark:border-[var(--admin-border)] rounded-lg p-4;
+    }
+
+    .admin-metric-label {
+        @apply text-xs text-slate-500 uppercase tracking-wider;
+    }
+
+    .admin-metric-value {
+        @apply text-2xl font-semibold text-navy-900 dark:text-white mt-1;
+    }
+
+    .admin-metric-subtitle {
+        @apply text-xs text-slate-500 mt-1;
+    }
+
+    /* Admin Table */
+    .admin-table {
+        @apply w-full text-left text-sm;
+    }
+
+    .admin-table thead {
+        @apply bg-slate-50 dark:bg-black/20;
+    }
+
+    .admin-table th {
+        @apply px-4 py-3 text-xs uppercase text-slate-500 font-medium tracking-wider;
+    }
+
+    .admin-table tbody tr {
+        @apply border-b border-slate-100 dark:border-white/5 transition-colors;
+    }
+
+    .admin-table tbody tr:hover {
+        @apply hover:bg-slate-50 dark:hover:bg-white/[0.02];
+    }
+
+    .admin-table td {
+        @apply px-4 py-3 text-slate-600 dark:text-slate-300;
+    }
+
+    /* Admin Status Indicator */
+    .admin-status {
+        @apply inline-flex items-center gap-1.5 text-xs;
+    }
+
+    .admin-status-dot {
+        @apply w-1.5 h-1.5 rounded-full;
+    }
+
+    .admin-status-healthy {
+        @apply text-emerald-400;
+    }
+
+    .admin-status-healthy .admin-status-dot {
+        @apply bg-emerald-400;
+    }
+
+    .admin-status-warning {
+        @apply text-amber-400;
+    }
+
+    .admin-status-warning .admin-status-dot {
+        @apply bg-amber-400;
+    }
+
+    .admin-status-error {
+        @apply text-red-400;
+    }
+
+    .admin-status-error .admin-status-dot {
+        @apply bg-red-400;
+    }
+
+    /* Admin Section Header */
+    .admin-section-header {
+        @apply flex items-center justify-between pb-4 border-b border-[var(--admin-border)];
+    }
+
+    .admin-section-title {
+        @apply text-sm font-medium text-white flex items-center gap-2;
+    }
+
+    /* Admin Tab Underline Style */
+    .admin-tabs {
+        @apply flex gap-1 border-b border-[var(--admin-border)];
+    }
+
+    .admin-tab {
+        @apply px-4 py-2.5 text-sm font-medium text-slate-400 border-b-2 border-transparent transition-colors hover:text-white;
+    }
+
+    .admin-tab-active {
+        @apply text-[var(--admin-accent)] border-[var(--admin-accent)];
+    }
+
+    /* Admin Button Minimal */
+    .admin-btn {
+        @apply inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors;
+    }
+
+    .admin-btn-ghost {
+        @apply bg-transparent text-slate-400 hover:text-white hover:bg-white/5;
+    }
+
+    .admin-btn-subtle {
+        @apply bg-[var(--admin-card)] border border-[var(--admin-border)] text-slate-300 hover:bg-[var(--admin-card-hover)] hover:text-white;
+    }
+
+    .admin-btn-accent {
+        @apply bg-[var(--admin-accent)] text-white hover:opacity-90;
+    }
+
+}
+
+/* ========================================
+   LIGHT MODE NAVY BLUE VISIBILITY ENHANCEMENTS
+   Using html:not(.dark) selector for proper dark mode support
+   ======================================== */
+
+/* Admin Metric Cards - Darker text and borders */
+html:not(.dark) .admin-metric {
+    background-color: white;
+    border-color: #CBD5E1;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+html:not(.dark) .admin-metric-label {
+    color: #475569;
+}
+
+html:not(.dark) .admin-metric-value {
+    color: #0F172A;
+}
+
+html:not(.dark) .admin-metric-subtitle {
+    color: #475569;
+}
+
+/* Admin Tables - Better contrast */
+html:not(.dark) .admin-table thead {
+    background-color: #F1F5F9;
+}
+
+html:not(.dark) .admin-table th {
+    color: #334155;
+    border-bottom: 1px solid #CBD5E1;
+}
+
+html:not(.dark) .admin-table tbody tr {
+    border-bottom: 1px solid #E2E8F0;
+}
+
+html:not(.dark) .admin-table tbody tr:hover {
+    background-color: #F8FAFC;
+}
+
+html:not(.dark) .admin-table td {
+    color: #334155;
+}
+
+/* Status Colors - More vibrant in light mode */
+html:not(.dark) .admin-status-healthy {
+    color: #059669;
+}
+
+html:not(.dark) .admin-status-healthy .admin-status-dot {
+    background-color: #059669;
+}
+
+html:not(.dark) .admin-status-warning {
+    color: #D97706;
+}
+
+html:not(.dark) .admin-status-warning .admin-status-dot {
+    background-color: #D97706;
+}
+
+html:not(.dark) .admin-status-error {
+    color: #DC2626;
+}
+
+html:not(.dark) .admin-status-error .admin-status-dot {
+    background-color: #DC2626;
+}
+
+/* Section headers - Navy accent */
+html:not(.dark) .admin-section-header {
+    border-bottom-color: #CBD5E1;
+}
+
+html:not(.dark) .admin-section-title {
+    color: #0F172A;
+}
+
+/* Tabs - Navy blue accent in light mode */
+html:not(.dark) .admin-tabs {
+    border-bottom-color: #CBD5E1;
+}
+
+html:not(.dark) .admin-tab {
+    color: #475569;
+}
+
+html:not(.dark) .admin-tab:hover {
+    color: #0F172A;
+}
+
+html:not(.dark) .admin-tab-active {
+    color: #1E3A5F;
+    border-bottom-color: #1E3A5F;
+}
+
+/* Buttons in light mode - Navy styling */
+html:not(.dark) .admin-btn-ghost {
+    color: #475569;
+}
+
+html:not(.dark) .admin-btn-ghost:hover {
+    color: #0F172A;
+    background-color: #F1F5F9;
+}
+
+html:not(.dark) .admin-btn-subtle {
+    background-color: white;
+    border-color: #CBD5E1;
+    color: #334155;
+}
+
+html:not(.dark) .admin-btn-subtle:hover {
+    background-color: #F8FAFC;
+    color: #0F172A;
+}
+
+/* Glass panels - Stronger borders */
+html:not(.dark) .glass-panel {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-color: #CBD5E1;
+    box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.1);
+}
+
+html:not(.dark) .glass-card {
+    background-color: white;
+    border-color: #CBD5E1;
+}
+
+html:not(.dark) .glass-card:hover {
+    border-color: #94A3B8;
+    box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.12);
+}
+
+/* Text colors - Darker for better visibility in light mode */
+html:not(.dark) .text-slate-400 {
+    color: #475569;
+}
+
+html:not(.dark) .text-slate-500 {
+    color: #334155;
+}
+
+html:not(.dark) .text-gray-400 {
+    color: #475569;
+}
+
+html:not(.dark) .text-gray-500 {
+    color: #334155;
+}
+
+/* Border colors - More visible in light mode */
+html:not(.dark) .border-slate-200 {
+    border-color: #CBD5E1;
+}
+
+html:not(.dark) .border-white\/10,
+html:not(.dark) .border-white\/5 {
+    border-color: #CBD5E1;
+}
+
+/* ========================================
+   LIGHT MODE TYPOGRAPHY - Dark headings
+   ======================================== */
+
+/* Headings - Force dark text in light mode */
+html:not(.dark) h1,
+html:not(.dark) h2,
+html:not(.dark) h3,
+html:not(.dark) h4 {
+    color: #0F172A;
+}
+
+/* Override text-white in light mode */
+html:not(.dark) .text-white {
+    color: #0F172A;
+}
+
+/* Override specific slate colors used for text */
+html:not(.dark) .text-slate-200,
+html:not(.dark) .text-slate-300 {
+    color: #334155;
+}
+
+html:not(.dark) .text-navy-900 {
+    color: #0F172A;
+}
+
+/* Sidebar text in light mode */
+html:not(.dark) .sidebar-link,
+html:not(.dark) aside a,
+html:not(.dark) nav button span {
+    color: #334155;
+}
+
+/* Main content headings */
+html:not(.dark) main h1,
+html:not(.dark) main h2 {
+    color: #0F172A;
+}
+
+/* Descriptions and paragraphs */
+html:not(.dark) main p {
+    color: #475569;
+}
+
+/* Tab text in light mode */
+html:not(.dark) [role="tab"] {
+    color: #334155;
+}
+
+html:not(.dark) [role="tab"][aria-selected="true"] {
+    color: #1E3A5F;
+}
+
+/* Cards text - darker in light mode */
+html:not(.dark) .bg-white\/5 h1,
+html:not(.dark) .bg-white\/5 h2,
+html:not(.dark) .bg-white\/5 h3,
+html:not(.dark) .bg-navy-800\/40 h1,
+html:not(.dark) .bg-navy-800\/40 h2,
+html:not(.dark) .bg-navy-800\/40 h3 {
+    color: #0F172A;
+}
+
+/* Background overrides for light mode */
+html:not(.dark) .bg-navy-950,
+html:not(.dark) .bg-navy-900 {
+    background-color: #F8FAFC;
+}
+
+html:not(.dark) .bg-navy-800,
+html:not(.dark) .bg-navy-800\/40 {
+    background-color: white;
+}
+
+html:not(.dark) .bg-white\/5,
+html:not(.dark) .bg-white\/3 {
+    background-color: white;
+}

@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3005:3005'
+    env_file:
+      - .env.production
+    environment:
+      - DATABASE_URL=postgres://consultinity:consultinity@postgres:5432/consultinity
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      # Persist uploaded files
+      - ./data/uploads:/app/server/uploads
+    restart: unless-stopped
+    healthcheck:
+      test:
+        ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3005/api/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: consultinity
+      POSTGRES_PASSWORD: consultinity
+      POSTGRES_DB: consultinity
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./server/migrations/init-pgvector.sql:/docker-entrypoint-initdb.d/01-init-pgvector.sql
+    ports:
+      - '5432:5432'
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U consultinity']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

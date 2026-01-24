@@ -1,0 +1,30 @@
+{
+  "name": "@consultinity/new-app-frontend",
+  "version": "0.0.1",
+  "description": "New Application Fork - React Frontend (Skeleton)",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite --port 3001",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "lint": "eslint src/ --ext .ts,.tsx"
+  },
+  "dependencies": {
+    "@consultinity/shared": "*",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "vite": "^6.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "directory": "apps/new-app/frontend"
+  }
+}

@@ -1,0 +1,184 @@
+{
+  "discovery": {
+    "title": "Discovery Consultant",
+    "subtitle": "AI-powered consultant conversation",
+    "chatTitle": "AI Consultant",
+    "chatSubtitle": "Your virtual transformation partner",
+
+    "phases": {
+      "welcome": "Welcome",
+      "ice_breaking": "Context Gathering",
+      "pain_discovery": "Pain Discovery",
+      "impact_assessment": "Impact Assessment",
+      "recommendations": "Recommendations",
+      "decision": "Decision",
+      "completed": "Completed"
+    },
+
+    "phaseDescriptions": {
+      "welcome": "Introduction to discovery session",
+      "ice_breaking": "Understanding company and role",
+      "pain_discovery": "Identifying key challenges",
+      "impact_assessment": "Quantifying business impact",
+      "recommendations": "Presenting transformation path",
+      "decision": "Next steps and conversion",
+      "completed": "Session completed"
+    },
+
+    "canvas": {
+      "title": "Discovery Canvas",
+      "categories": {
+        "pains": "Pain Points",
+        "insights": "Insights",
+        "opportunities": "Opportunities",
+        "recommendations": "Recommendations"
+      },
+      "emptyState": "Start the conversation and AI will automatically add findings to the board",
+      "autoLayout": "Auto-arrange",
+      "export": "Export image",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "fitView": "Fit view"
+    },
+
+    "nodes": {
+      "painPoint": {
+        "title": "Pain Point",
+        "severity": "Severity",
+        "impact": "Impact",
+        "area": "Area"
+      },
+      "insight": {
+        "title": "Insight",
+        "linkedTo": "Linked to"
+      },
+      "opportunity": {
+        "title": "Opportunity",
+        "potentialValue": "Potential value"
+      },
+      "quote": {
+        "title": "Quote",
+        "sentiment": "Sentiment"
+      },
+      "recommendation": {
+        "title": "Recommendation",
+        "confidence": "Confidence",
+        "type": "Transformation type"
+      },
+      "tool": {
+        "title": "Tool",
+        "category": "Category",
+        "effort": "Effort",
+        "impact": "Impact"
+      },
+      "assessment": {
+        "title": "Assessment",
+        "framework": "Framework"
+      },
+      "initiative": {
+        "title": "Initiative",
+        "quickWin": "Quick Win"
+      }
+    },
+
+    "severity": {
+      "1": "Minor",
+      "2": "Noticeable",
+      "3": "Significant",
+      "4": "Critical",
+      "5": "Blocking"
+    },
+
+    "areas": {
+      "process": "Process",
+      "technology": "Technology",
+      "people": "People",
+      "data": "Data"
+    },
+
+    "transformationType": {
+      "strategic": "Strategic transformation",
+      "operational": "Operational transformation",
+      "digital": "Digital transformation"
+    },
+
+    "recommendations": {
+      "title": "Recommendations",
+      "matchScore": "Match score",
+      "suggestedAssessments": "Suggested assessments",
+      "suggestedTools": "Recommended tools",
+      "initiativeIdeas": "Initiative ideas",
+      "noRecommendations": "Continue the conversation to receive recommendations"
+    },
+
+    "actions": {
+      "startProject": "Start Project",
+      "startProjectDesc": "Create transformation project with this data",
+      "attachToProject": "Attach to Project",
+      "attachToProjectDesc": "Add this conversation to an active project",
+      "save": "Save Conversation",
+      "saveDesc": "Keep for later use",
+      "continueChat": "Continue Conversation",
+      "continueChatDesc": "I want to learn more",
+      "exportPdf": "Export PDF"
+    },
+
+    "conversion": {
+      "title": "Create Project from Discovery",
+      "projectName": "Project name",
+      "defaultName": "Discovery: {{company}}",
+      "whatWillBeTransferred": "What will be transferred",
+      "painPointsCount": "{{count}} pain points",
+      "insightsCount": "{{count}} insights",
+      "recommendedTransformation": "Recommended transformation",
+      "suggestedAssessments": "{{count}} suggested assessments",
+      "conversationHistory": "Full conversation history",
+      "createInitiatives": "Create initiatives from ideas",
+      "converting": "Creating project...",
+      "success": "Project created!",
+      "error": "Failed to create project"
+    },
+
+    "version": {
+      "title": "Versions",
+      "current": "Current",
+      "save": "Save version",
+      "load": "Load version",
+      "saved": "Version saved",
+      "noVersions": "No saved versions"
+    },
+
+    "header": {
+      "newSession": "New session",
+      "client": "Client",
+      "industry": "Industry",
+      "size": "Size",
+      "phase": "Phase"
+    },
+
+    "prompts": {
+      "welcome": "Hello! I'm your virtual transformation consultant. I'll help you understand where the biggest opportunities for improvement lie in your organization.\n\nBefore we begin - tell me about yourself and your company. What's your role?",
+      "askIndustry": "What industry is your company in and what size is it?",
+      "askGoals": "What prompted you to talk about transformation? What's the most important business goal for the next 12 months?",
+      "askPain": "Now the key question: What's slowing down the achievement of this goal the most today? What 'hurts' operationally?",
+      "askMorePains": "Is there anything else that's making it difficult to achieve the goal?",
+      "askImpact": "How much does this cost the company monthly/yearly? (even a rough estimate helps)",
+      "recommendationIntro": "Based on our conversation, I see that your situation indicates a need for"
+    },
+
+    "errors": {
+      "loadFailed": "Failed to load session",
+      "saveFailed": "Failed to save session",
+      "conversionFailed": "Failed to create project",
+      "extractionFailed": "Failed to process response"
+    },
+
+    "tooltips": {
+      "addNode": "Add element",
+      "deleteNode": "Delete element",
+      "editNode": "Edit element",
+      "connectNodes": "Connect elements",
+      "severity": "How much this problem affects the business"
+    }
+  }
+}

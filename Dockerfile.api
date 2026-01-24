@@ -1,0 +1,197 @@
+# Consultify Combined Backend + Frontend Dockerfile
+# Production-optimized build for Railway deployment (single service)
+
+# ==========================================
+# STAGE 1: Dependencies
+# ==========================================
+FROM node:20-alpine AS deps
+WORKDIR /app
+
+# Install security updates
+RUN apk update && apk upgrade --no-cache
+
+# Copy package files
+COPY package.json package-lock.json ./
+COPY server/package.json server/package-lock.json ./server/
+
+# Install dependencies (ignore scripts as they're not needed in Docker builds)
+# Use npm ci for deterministic builds, fallback to npm install if lock file is out of sync
+RUN npm ci --omit=dev --ignore-scripts || (echo "Lock file out of sync, updating..." && npm install --omit=dev --ignore-scripts)
+RUN cd server && npm ci --omit=dev --ignore-scripts || (echo "Server lock file out of sync, updating..." && cd server && npm install --omit=dev --ignore-scripts)
+# Install cookie-parser at root level (needed for runtime, installed in backend-builder for build)
+RUN npm install --save --omit=dev --ignore-scripts cookie-parser@^1.4.7 || true
+
+# ==========================================
+# STAGE 2: Frontend Builder
+# ==========================================
+FROM node:20-alpine AS frontend-builder
+WORKDIR /app
+
+# Copy package files and workspace structure for npm workspaces
+COPY package.json package-lock.json ./
+COPY packages/ ./packages/
+# Use npm ci for deterministic builds, fallback to npm install if lock file is out of sync
+# Ignore scripts (like husky) as they're not needed in Docker builds
+RUN npm ci --ignore-scripts || (echo "Lock file out of sync, updating..." && npm install --ignore-scripts)
+
+# Copy remaining source and build
+COPY . .
+RUN npm run build
+
+# ==========================================
+# STAGE 3: Backend Builder
+# ==========================================
+FROM node:20-alpine AS backend-builder
+WORKDIR /app
+
+# Copy root package files first (server dependencies are in root package.json due to monorepo/workspace setup)
+COPY package.json package-lock.json ./
+# Copy server package.json - some dependencies like cookie-parser are only in server/package.json
+COPY server/package.json ./server-package.json
+# Install dependencies from root package.json (includes most server runtime dependencies)
+# Install devDependencies too since we need TypeScript and type definitions for the build
+# Use npm ci for deterministic builds, fallback to npm install if lock file is out of sync
+# Ignore scripts (like husky) as they're not needed in Docker builds
+RUN npm ci --ignore-scripts || (echo "Lock file out of sync, updating..." && npm install --ignore-scripts)
+# Install server-specific dependencies that aren't in root package.json (e.g., cookie-parser)
+# Install them at root level so TypeScript can find them during compilation
+RUN npm install --save --ignore-scripts cookie-parser@^1.4.7 @types/cookie-parser@^1.4.10 || true
+
+# Copy TypeScript config files explicitly (needed for build)
+COPY server/tsconfig.json ./
+# Copy all server files first (tsconfig.build.json should be included)
+COPY server/ .
+# Create tsconfig.build.json if it doesn't exist (fallback for git-untracked files)
+RUN if [ ! -f tsconfig.build.json ]; then \
+      echo '{"extends":"./tsconfig.json","compilerOptions":{"noUnusedLocals":false,"noUnusedParameters":false,"noImplicitReturns":false,"noImplicitAny":false,"strictNullChecks":false,"strictFunctionTypes":false,"strictBindCallApply":false,"strictPropertyInitialization":false,"noImplicitThis":false,"skipLibCheck":true}}' > tsconfig.build.json; \
+    fi
+# Verify tsconfig.build.json exists before building
+RUN test -f tsconfig.build.json || (echo "ERROR: tsconfig.build.json not found!" && ls -la tsconfig*.json && exit 1)
+# Build TypeScript - use --build flag with tsconfig.build.json to ensure proper compilation
+# Use node_modules/.bin/tsc to ensure we use the locally installed TypeScript
+RUN ./node_modules/.bin/tsc --build tsconfig.build.json || (echo "TypeScript build failed!" && exit 1)
+# Verify dist directory was created
+RUN test -d dist || (echo "ERROR: dist directory not created after build!" && ls -la && exit 1)
+# Verify critical modules exist in dist
+RUN echo "Checking compiled modules..." && \
+    (test -f dist/index.js || test -f dist/src/index.js) || (echo "ERROR: index.js not found!" && exit 1) && \
+    (test -f dist/config/index.js || test -f dist/src/config/index.js) || (echo "WARNING: config/index.js not found" && find dist -name "index.js" -path "*/config/*" || echo "config/index.js not found anywhere") && \
+    (test -f dist/Gateway.js || test -f dist/src/Gateway.js) || (echo "WARNING: Gateway.js not found" && find dist -name "Gateway.js" || echo "Gateway.js not found anywhere") && \
+    echo "Build verification complete"
+
+# ==========================================
+# STAGE 4: Production (Backend + Frontend)
+# ==========================================
+FROM node:20-alpine AS api
+WORKDIR /app
+
+# Security: Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 -G nodejs
+
+# Install security updates and required tools
+RUN apk update && \
+    apk upgrade --no-cache && \
+    apk add --no-cache dumb-init curl
+
+# Production dependencies will be copied later
+
+# Copy built frontend (at /app/dist) with correct ownership
+# Backend code serves from: path.join(__dirname, '../dist')
+# Structure: backend at /app/server/index.js, frontend at /app/dist
+# So: path.join('/app/server', '../dist') = /app/dist ✓
+COPY --from=frontend-builder --chown=nodejs:nodejs /app/dist /app/dist
+
+# Copy built backend (server code) to /app/server/
+# Backend compiled output is in dist/ directory
+RUN mkdir -p /app/server
+# Copy dist directory from backend-builder with correct ownership
+# TypeScript preserves src/ directory structure, so we need to handle it correctly
+COPY --from=backend-builder --chown=nodejs:nodejs /app/dist /app/server/dist-temp
+# Check where index.js actually is and set up the correct structure
+RUN if [ -f /app/server/dist-temp/index.js ]; then \
+      echo "Found index.js at root level"; \
+      mv /app/server/dist-temp /app/server/dist; \
+    elif [ -f /app/server/dist-temp/src/index.js ]; then \
+      echo "Found index.js in src/ subdirectory, preserving structure"; \
+      mv /app/server/dist-temp /app/server/dist; \
+      echo "Structure preserved: dist/src/index.js"; \
+    else \
+      echo "ERROR: index.js not found!" && \
+      echo "Contents of /app/server/dist-temp:" && ls -la /app/server/dist-temp/ && \
+      find /app/server/dist-temp -name "index.js" 2>/dev/null || echo "No index.js found anywhere" && \
+      exit 1; \
+    fi
+# Verify index.js exists and check for required modules
+RUN if [ -f /app/server/dist/index.js ]; then \
+      echo "✓ index.js found at /app/server/dist/index.js"; \
+      echo "Checking required modules from index.js location..."; \
+      test -f /app/server/dist/config/index.js || echo "WARNING: dist/config/index.js not found"; \
+      test -f /app/server/dist/Gateway.js || echo "WARNING: dist/Gateway.js not found"; \
+      test -f /app/server/dist/database/index.js || echo "WARNING: dist/database/index.js not found"; \
+      echo "Listing dist structure:" && ls -la /app/server/dist/ | head -20; \
+      echo "Module check complete"; \
+    elif [ -f /app/server/dist/src/index.js ]; then \
+      echo "✓ index.js found at /app/server/dist/src/index.js"; \
+      echo "Checking required modules from src/ location..."; \
+      test -f /app/server/dist/src/config/index.js || echo "WARNING: dist/src/config/index.js not found"; \
+      test -f /app/server/dist/src/Gateway.js || echo "WARNING: dist/src/Gateway.js not found"; \
+      test -f /app/server/dist/src/database/index.js || echo "WARNING: dist/src/database/index.js not found"; \
+      echo "Listing dist/src structure:" && ls -la /app/server/dist/src/ | head -20; \
+      echo "Module check complete"; \
+    else \
+      echo "ERROR: index.js not found in expected locations!" && \
+      echo "Searching for index.js:" && \
+      find /app/server/dist -name "index.js" 2>/dev/null || echo "No index.js found" && \
+      echo "Dist directory structure:" && \
+      ls -la /app/server/dist/ && \
+      exit 1; \
+    fi
+COPY --from=backend-builder --chown=nodejs:nodejs /app/package.json /app/server/
+# Copy node_modules from backend-builder (has all dependencies including cookie-parser)
+# This ensures all dependencies needed at runtime are available
+# Note: Includes devDependencies but ensures no missing runtime dependencies
+# Use --chown to set ownership during copy (much faster than chown -R afterwards)
+COPY --from=backend-builder --chown=nodejs:nodejs /app/node_modules /app/server/node_modules
+# Verify critical dependencies are present
+RUN test -d /app/server/node_modules/cookie-parser || (echo "ERROR: cookie-parser not found!" && ls -la /app/server/node_modules/ | head -20 && exit 1)
+RUN test -d /app/server/node_modules/express || (echo "ERROR: express not found!" && exit 1)
+RUN test -d /app/server/node_modules/zod || (echo "ERROR: zod not found!" && exit 1)
+
+WORKDIR /app/server
+
+# Set ownership only for directories that weren't copied with --chown
+# This is much faster than chown -R on the entire /app directory
+# Only chown the server directory itself and any runtime-created directories
+RUN chown nodejs:nodejs /app/server /app/dist || true
+
+# Switch to non-root user
+USER nodejs
+
+# Environment
+ENV NODE_ENV=production
+ENV PORT=3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:3001/api/health || exit 1
+
+# Expose port
+EXPOSE 3001
+
+# Use dumb-init for proper signal handling
+ENTRYPOINT ["dumb-init", "--"]
+# Backend entry point - check both possible locations
+# TypeScript may output to dist/index.js or dist/src/index.js depending on structure
+RUN if [ -f /app/server/dist/index.js ]; then \
+      echo '#!/bin/sh' > /app/server/start.sh && \
+      echo 'exec node dist/index.js "$@"' >> /app/server/start.sh && \
+      chmod +x /app/server/start.sh; \
+    elif [ -f /app/server/dist/src/index.js ]; then \
+      echo '#!/bin/sh' > /app/server/start.sh && \
+      echo 'exec node dist/src/index.js "$@"' >> /app/server/start.sh && \
+      chmod +x /app/server/start.sh; \
+    else \
+      echo "ERROR: Cannot determine entry point!" && exit 1; \
+    fi
+CMD ["sh", "/app/server/start.sh"]

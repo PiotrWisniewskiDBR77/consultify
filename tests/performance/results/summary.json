@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-01-04T18:31:10.709Z",
+  "duration": 25.422,
+  "vus": 0,
+  "requests": {
+    "total": 1,
+    "rate": 39.3360081818897
+  },
+  "errors": {
+    "rate": 0,
+    "count": 0
+  },
+  "latency": {
+    "avg": 0,
+    "p95": 0,
+    "p99": 0,
+    "max": 0
+  },
+  "thresholds": {
+    "passed": [],
+    "failed": []
+  }
+}

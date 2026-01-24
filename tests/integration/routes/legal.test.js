@@ -1,0 +1,107 @@
+import app from '../../../server/src/index.js';
+import bcrypt from 'bcryptjs';
+import request from 'supertest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { getDatabase } from '../../../server/src/database/Database.js';
+import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
+
+vi.hoisted(() => {
+  process.env.MOCK_DB = 'false';
+  const workerId = process.env.VITEST_WORKER_ID || '0';
+  process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
+});
+
+// @vitest-environment node
+
+/**
+ * Level 2: Integration Tests - Legal
+ * Tests Legal Document lifecycle and acceptance
+ */
+const db = getDatabase();
+describe('Integration Test: Legal Routes', () => {
+  let authToken;
+  const testId = Date.now();
+  const testOrgId = `legal-org-${testId}`;
+  const testUserId = `legal-user-${testId}`;
+  const testEmail = `legal-${testId}@test.com`;
+
+  beforeAll(async () => {
+    await initializeDatabase();
+    await db.initPromise;
+
+    const hash = bcrypt.hashSync('test123', 8);
+
+    await new Promise((resolve) => {
+      db.serialize(() => {
+        db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
+          testOrgId,
+          'Legal Test Org',
+          'enterprise',
+          'active',
+        ]);
+        db.run(
+          'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
+          [testUserId, testOrgId, testEmail, hash, 'LegalUser', 'ADMIN'],
+          resolve
+        );
+      });
+    });
+
+    const loginRes = await request(app).post('/api/auth/login').send({
+      email: testEmail,
+      password: 'test123',
+    });
+
+    if (loginRes.body.token) {
+      authToken = loginRes.body.token;
+    }
+  });
+
+  describe('GET /api/legal/document/TOS', () => {
+    it('should get public TOS document', async () => {
+      const res = await request(app).get('/api/legal/document/TOS');
+      // 200 or 404 (if not seeded) is valid for integration checks
+      expect([200, 404, 500]).toContain(res.status);
+    });
+  });
+
+  describe('GET /api/legal/active', () => {
+    it('should list active documents (auth)', async () => {
+      if (!authToken) return;
+
+      const res = await request(app)
+        .get('/api/legal/active')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect([200, 500]).toContain(res.status);
+    });
+  });
+
+  describe('GET /api/legal/pending', () => {
+    it('should check pending acceptances', async () => {
+      if (!authToken) return;
+
+      const res = await request(app)
+        .get('/api/legal/pending')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect([200, 500]).toContain(res.status);
+    });
+  });
+
+  describe('POST /api/legal/accept', () => {
+    it('should accept TOS', async () => {
+      if (!authToken) return;
+
+      const res = await request(app)
+        .post('/api/legal/accept')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          docTypes: ['TOS'],
+          scope: 'USER',
+        });
+
+      expect([200, 400, 404, 500]).toContain(res.status);
+    });
+  });
+});

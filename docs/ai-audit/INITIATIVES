@@ -1,0 +1,491 @@
+# Lista Inicjatyw i Rekomendacji - Enterprise AI System
+
+**Data:** 2025-01-02  
+**Status:** Kompletna lista inicjatyw z priority, effort i impact
+
+---
+
+## P0 (Blocker) - Must Fix Before Enterprise Deployment
+
+### 1. Memory Token Control Implementation
+
+**Area:** Functional - Memory Management  
+**Priority:** P0 (Blocker)  
+**Effort:** 8-12h  
+**Impact:** 🔴 Critical - Zapobiega przekroczeniu limitów modelu
+
+**Problem:**
+- Context window może przekroczyć limity modelu (np. GPT-4: 128k tokens)
+- Memory + Context + History mogą być zbyt duże
+- Brak mechanizmu trimowania/przycinania
+
+**Solution:**
+```javascript
+// Dodaj token counting przed wysłaniem
+const tokenCount = estimateTokens(systemPrompt + userMessage + history);
+const maxTokens = getModelMaxTokens(modelUsed);
+
+if (tokenCount > maxTokens * 0.9) { // 90% threshold
+    // Trim memory lub history
+    projectMemory = trimMemory(projectMemory, maxTokens * 0.3);
+    history = trimHistory(history, maxTokens * 0.4);
+}
+```
+
+**Deliverables:**
+- `estimateTokens()` function
+- `trimMemory()` function
+- `trimHistory()` function
+- Integration w `_buildPrompt()` przed wysłaniem do LLM
+- Monitoring token usage
+
+**Files to Modify:**
+- `server/services/aiOrchestrator.js`
+- `server/services/aiMemoryManager.js`
+- `server/services/aiContextBuilder.js`
+
+---
+
+### 2. Feedback Integration with UnifiedChatPanel
+
+**Area:** UX - Feedback Loops  
+**Priority:** P0 (Blocker)  
+**Effort:** 4-6h  
+**Impact:** 🔴 Critical - Brak learning z user feedback
+
+**Problem:**
+- `InlineResponseFeedback` jest importowany, ale nie używany
+- Thumbs up/down buttons nie mają handlerów
+- Feedback nie jest zapisywany
+
+**Solution:**
+```typescript
+// W UnifiedChatPanel.tsx
+const handleFeedback = useCallback(async (feedback: ResponseFeedback) => {
+    try {
+        await Api.submitFeedback({
+            messageId: msg.id,
+            conversationId: activeConversationId,
+            rating: feedback.rating === 'positive' ? 5 : 1,
+            lengthFeedback: feedback.lengthFeedback,
+            detailFeedback: feedback.detailFeedback,
+            wantedMode: feedback.wantedMode,
+            customFeedback: feedback.customFeedback
+        });
+    } catch (err) {
+        console.error('[UnifiedChatPanel] Failed to submit feedback:', err);
+    }
+}, [activeConversationId]);
+
+// Dodaj component do render
+{msg.role === 'ai' && !msg.isStreaming && (
+    <InlineResponseFeedback
+        messageId={msg.id}
+        conversationId={activeConversationId}
+        onFeedback={handleFeedback}
+    />
+)}
+```
+
+**Deliverables:**
+- Handler dla feedback w UnifiedChatPanel
+- Integracja z API endpoint
+- Testy end-to-end
+
+**Files to Modify:**
+- `components/AIChat/UnifiedChatPanel.tsx`
+- `services/api.ts` (jeśli brakuje endpoint)
+
+---
+
+### 3. Learning System Bug Fix
+
+**Area:** UX - Feedback Loops  
+**Priority:** P0 (Blocker)  
+**Effort:** 1-2h  
+**Impact:** 🔴 Critical - Learning examples nie są używane
+
+**Problem:**
+- Warunek `examples.length > 50` jest błędny (examples jest stringiem)
+- Learning examples mogą nie być używane
+
+**Solution:**
+```javascript
+// Poprawka w aiService.js
+const examples = await deps.FeedbackService.getLearningExamples(contextType);
+if (examples && examples.trim().length > 0) { // Poprawka: sprawdź długość stringa
+    systemPrompt += `\n\n### LEARNED BEST PRACTICES (FROM FEEDBACK):\n${examples}\n### END LEARNED PRACTICES\n`;
+}
+```
+
+**Deliverables:**
+- Poprawka warunku w `enhancePrompt()`
+- Testy weryfikujące że examples są dodawane
+
+**Files to Modify:**
+- `server/services/aiService.js`
+
+---
+
+## P1 (Critical) - High Priority Improvements
+
+### 4. Memory Cleanup Job
+
+**Area:** Functional - Memory Management  
+**Priority:** P1 (Critical)  
+**Effort:** 4-6h  
+**Impact:** 🟡 High - Kontroluje wzrost DB
+
+**Problem:**
+- `ai_project_memory` może rosnąć bez limitów
+- Brak automatycznego cleanup starych entries
+- Tylko limit w `getProjectMemory()` (20), ale DB może mieć tysiące
+
+**Solution:**
+```javascript
+// Dodaj cleanup job
+cleanupOldMemory: async (projectId, maxAgeDays = 90) => {
+    await deps.db.run(`
+        DELETE FROM ai_project_memory 
+        WHERE project_id = ? 
+        AND created_at < datetime('now', '-' || ? || ' days')
+    `, [projectId, maxAgeDays]);
+}
+
+// Scheduled job (cron)
+cron.schedule('0 2 * * 0', async () => {
+    // Cleanup dla wszystkich projektów
+    const projects = await getAllProjects();
+    for (const project of projects) {
+        await AIMemoryManager.cleanupOldMemory(project.id, 90);
+    }
+});
+```
+
+**Deliverables:**
+- `cleanupOldMemory()` function
+- Scheduled job (cron)
+- Config dla maxAgeDays per project
+- Monitoring cleanup stats
+
+**Files to Modify:**
+- `server/services/aiMemoryManager.js`
+- `server/cronJobs.js` (lub podobny)
+
+---
+
+### 5. Streaming Resilience - Partial Save & Reconnection
+
+**Area:** Stability - Streaming  
+**Priority:** P1 (Critical)  
+**Effort:** 8-12h  
+**Impact:** 🟡 High - Poprawia UX na niestabilnych sieciach
+
+**Problem:**
+- Zerwane połączenia powodują utratę danych
+- Brak partial save
+- Brak reconnection logic
+
+**Solution:**
+```javascript
+// Partial save podczas streamingu
+let accumulatedContent = '';
+for await (const chunk of stream) {
+    accumulatedContent += chunk;
+    // Save partial content co 1s
+    if (Date.now() - lastSave > 1000) {
+        await savePartialResponse(conversationId, accumulatedContent);
+        lastSave = Date.now();
+    }
+}
+
+// Reconnection logic
+if (connectionLost) {
+    const partial = await getPartialResponse(conversationId);
+    // Resume stream from partial content
+    await resumeStream(conversationId, partial);
+}
+```
+
+**Deliverables:**
+- Partial save mechanism
+- Reconnection logic
+- Frontend handling dla reconnection
+- Testy dla broken connections
+
+**Files to Modify:**
+- `server/services/ai/aiPipeline.js`
+- `hooks/useAIStream.ts`
+- `server/routes/ai.js`
+
+---
+
+### 6. Workspace Context Enhancement
+
+**Area:** UX - Unified Chat  
+**Priority:** P1 (Critical)  
+**Effort:** 4-6h  
+**Impact:** 🟡 High - Poprawia jakość odpowiedzi AI
+
+**Problem:**
+- Workspace context jest przekazywany, ale może nie być w pełni wykorzystywany
+- AI może nie wiedzieć dokładnie co użytkownik widzi
+
+**Solution:**
+```javascript
+// W aiOrchestrator.js, dodaj workspace context do prompt
+if (context.currentScreen) {
+    systemPrompt += `
+CURRENT WORKSPACE:
+- User is viewing: ${context.currentScreen}
+- Selected object: ${context.selectedObjectId || 'none'}
+- Object type: ${context.selectedObjectType || 'none'}
+
+You can reference this workspace context in your response.`;
+}
+```
+
+**Deliverables:**
+- Enhancement w `_buildPrompt()`
+- Testy weryfikujące wykorzystanie workspace context
+- Dokumentacja
+
+**Files to Modify:**
+- `server/services/aiOrchestrator.js`
+
+---
+
+## P2 (Important) - Medium Priority Enhancements
+
+### 7. Memory Relevance Filtering
+
+**Area:** Functional - Memory Management  
+**Priority:** P2 (Important)  
+**Effort:** 6-8h  
+**Impact:** 🟠 Medium - Poprawia jakość context
+
+**Problem:**
+- Memory jest pobierana tylko po `created_at DESC` (najnowsze)
+- Brak filtrowania po relevance dla konkretnego query
+- Wszystkie memory entries są dodawane do context, nawet jeśli nie są istotne
+
+**Solution:**
+```javascript
+// Dodaj relevance scoring
+getRelevantMemory: async (projectId, query, limit = 10) => {
+    const allMemory = await AIMemoryManager.getProjectMemory(projectId, null, 100);
+    // Score memory entries by relevance to query
+    const scored = allMemory.map(m => ({
+        ...m,
+        relevanceScore: calculateRelevance(m.content, query)
+    }));
+    return scored.sort((a, b) => b.relevanceScore - a.relevanceScore).slice(0, limit);
+}
+```
+
+**Deliverables:**
+- `calculateRelevance()` function
+- `getRelevantMemory()` function
+- Integration w `buildProjectMemorySummary()`
+- Config dla relevance threshold
+
+**Files to Modify:**
+- `server/services/aiMemoryManager.js`
+- `server/services/aiOrchestrator.js`
+
+---
+
+### 8. Action Notifications
+
+**Area:** UX - Action Clarity  
+**Priority:** P2 (Important)  
+**Effort:** 4-6h  
+**Impact:** 🟠 Medium - Użytkownik wie o pending actions
+
+**Problem:**
+- Użytkownik może nie wiedzieć że ma pending actions
+- Brak powiadomień dla nowych pending actions
+
+**Solution:**
+```javascript
+// W aiActionExecutor.js, dodaj notification
+if (requiresApproval) {
+    await NotificationService.create({
+        userId: userId,
+        type: 'AI_ACTION_PENDING',
+        title: `AI Action Pending: ${actionType}`,
+        message: `AI wants to perform: ${actionType}. Review and approve.`,
+        actionUrl: `/actions/${id}`
+    });
+}
+```
+
+**Deliverables:**
+- Notification creation w `requestAction()`
+- Notification UI component
+- Testy
+
+**Files to Modify:**
+- `server/services/aiActionExecutor.js`
+- `components/Notifications/NotificationList.tsx`
+
+---
+
+### 9. Feedback Scheduled Job
+
+**Area:** UX - Feedback Loops  
+**Priority:** P2 (Important)  
+**Effort:** 2-4h  
+**Impact:** 🟠 Medium - Automatyczne uruchamianie consolidation
+
+**Problem:**
+- `consolidateLearning()` wymaga manualnego wywołania
+- Brak automatycznego uruchamiania
+
+**Solution:**
+```javascript
+// Dodaj scheduled job (np. cron)
+const cron = require('node-cron');
+
+// Uruchamiaj co tydzień
+cron.schedule('0 2 * * 0', async () => {
+    console.log('[FeedbackService] Running weekly consolidation...');
+    await FeedbackService.consolidateLearning();
+});
+```
+
+**Deliverables:**
+- Scheduled job dla consolidation
+- Monitoring i logging
+- Error handling
+
+**Files to Modify:**
+- `server/services/feedbackService.js`
+- `server/cronJobs.js`
+
+---
+
+### 10. Performance Metrics - P95/P99 Tracking
+
+**Area:** Stability - Performance  
+**Priority:** P2 (Important)  
+**Effort:** 6-8h  
+**Impact:** 🟠 Medium - Umożliwia wykrycie performance degradation
+
+**Problem:**
+- Brak P95/P99 latency tracking
+- Brak kompleksowych testów load testing
+- Brak metryk throughput
+
+**Solution:**
+```javascript
+// Dodaj percentyle tracking
+trackLatency: async (capability, latency) => {
+    await deps.db.run(`
+        INSERT INTO ai_latency_metrics 
+        (capability, latency_ms, created_at)
+        VALUES (?, ?, CURRENT_TIMESTAMP)
+    `, [capability, latency]);
+    
+    // Calculate percentiles
+    const percentiles = await calculatePercentiles(capability);
+    return percentiles; // { p50, p95, p99 }
+}
+```
+
+**Deliverables:**
+- Percentile calculation
+- Latency tracking
+- Dashboard dla metrics
+- Load testing suite
+
+**Files to Modify:**
+- `server/services/ai/aiHealthService.js`
+- `server/routes/metrics.js`
+
+---
+
+## P3 (Nice to Have) - Low Priority Features
+
+### 11. Memory Metrics Dashboard
+
+**Area:** Functional - Memory Management  
+**Priority:** P3 (Nice to have)  
+**Effort:** 4-6h  
+**Impact:** 🟢 Low - Ułatwia monitoring i optymalizację
+
+**Solution:**
+- Dodaj tabelę `ai_memory_metrics`
+- Track token count per request
+- Track memory size per project
+- Dashboard w Admin panel
+
+---
+
+### 12. Action Inline Visibility in Chat
+
+**Area:** UX - Action Clarity  
+**Priority:** P3 (Nice to have)  
+**Effort:** 4-6h  
+**Impact:** 🟢 Low - Lepsza visibility actions w chat
+
+**Solution:**
+```typescript
+// W UnifiedChatPanel, dodaj action indicator
+{msg.metadata?.actions && msg.metadata.actions.length > 0 && (
+    <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+        <div className="flex items-center gap-2 text-xs">
+            <Zap size={12} className="text-amber-600 dark:text-amber-400" />
+            <span className="text-amber-700 dark:text-amber-300">
+                AI wants to perform {msg.metadata.actions.length} action(s)
+            </span>
+            <Link to="/actions" className="text-amber-600 dark:text-amber-400 hover:underline">
+                Review →
+            </Link>
+        </div>
+    </div>
+)}
+```
+
+---
+
+### 13. Circuit Breaker Consolidation
+
+**Area:** Stability - Circuit Breakers  
+**Priority:** P3 (Nice to have)  
+**Effort:** 8-12h  
+**Impact:** 🟢 Low - Konsolidacja dwóch implementacji
+
+**Solution:**
+- Wybierz jedną implementację (zaawansowaną z persistence)
+- Migruj wszystkie użycia do jednej implementacji
+- Usuń deprecated code
+
+---
+
+## Summary Table
+
+| Priority | Count | Total Effort | Critical Impact |
+| :--- | :---: | :---: | :--- |
+| **P0 (Blocker)** | 3 | 13-20h | 🔴 Critical |
+| **P1 (Critical)** | 3 | 16-24h | 🟡 High |
+| **P2 (Important)** | 4 | 18-26h | 🟠 Medium |
+| **P3 (Nice to have)** | 3 | 16-24h | 🟢 Low |
+| **TOTAL** | **13** | **63-94h** | |
+
+---
+
+**Raport przygotowany przez:** AI Audit System  
+**Data:** 2025-01-02  
+**Wersja:** 1.0
+
+
+
+
+
+
+
+
+
+
+

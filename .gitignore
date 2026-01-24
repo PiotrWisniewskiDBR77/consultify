@@ -1,0 +1,136 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment files (NEVER commit these!)
+.env
+.env.local
+.env.production
+server/.env
+
+# Database files
+*.db
+*.db-journal
+*.db.bak
+*.db-wal
+*.db-shm
+# data/
+uploads/
+
+# Test artifacts
+coverage
+playwright-report
+test-results
+
+# Build logs
+*.log
+backend_*.log
+frontend_*.log
+server/consultify.db
+server/database.sqlite
+junit.xml
+
+# Garbage / Backup files
+node_modules_trash
+trash_node_modules_*
+package-lock 2.json
+verify_all_apis.cjs
+
+# Temporary helper scripts (should be in scripts/)
+# Allow .cjs files in scripts directories, but ignore in root
+*.cjs
+!scripts/**/*.cjs
+!server/scripts/**/*.cjs
+!tests/**/*.cjs
+
+# Backup and converted files
+*.bak
+*.bak.broken
+*_converted.*
+* 2.*
+*_trash*
+
+# Test output files
+test_output*.txt
+test_output*.log
+coverage_*.txt
+unit_tests_report.txt
+verification_results.txt
+lint_report.txt
+
+# Auto-fix marker
+.auto-fix-applied
+
+# Temporary documentation files (move to docs/ if needed)
+*_SUMMARY.md
+*_PROGRESS.md
+*_COMPLETE.md
+*_FIX*.md
+PLAN_*.md
+FAZA*.md
+SETUP_*.md
+
+# Debug and trace files
+trace_*.cjs
+analyze_*.cjs
+find_*.cjs
+fix_*.cjs
+check_*.cjs
+switch_*.cjs
+update_*.cjs
+list_*.cjs
+reproduce_*.cjs
+verify_*.cjs
+verify_*.sh
+debug-*.cjs
+extract_*.cjs
+migrate_*.cjs
+read_*.js
+parse_*.py
+test-*.js
+test-*.cjs
+secure_backups/
+
+# Legacy and archived files
+archive/
+consultinity/
+cursor_zadania/
+backup/
+quarantine/
+
+# Additional log files
+dev_server.log
+server_stdout.log
+test_results*.log
+tests_*.log
+integration-results.json
+e2e-results.xml# Debug screenshots
+debug-*.png# Test result files
+test-results-*.txt# Coverage directories
+coverage-*/# Additional ignores
+*.bak
+coverage/.tmp
+.nx/
+junit.xml# Quarantine folder for duplicate files
+_quarantine/

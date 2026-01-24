@@ -1,0 +1,204 @@
+import { ChevronDown, Clock, Cpu, Database, HardDrive } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '@/services/api';
+
+interface SystemMetrics {
+  latency: number;
+  dbStatus: 'online' | 'offline';
+  dbResponseTime: number;
+  storageUsed: number;
+  storageLimit: number;
+  apiCallsUsed: number;
+  apiCallsLimit: number;
+}
+
+export const SystemHealth = () => {
+  const { t } = useTranslation();
+  const [status, setStatus] = useState<'online' | 'offline' | 'loading'>('loading');
+  const [metrics, setMetrics] = useState<SystemMetrics>({
+    latency: 0,
+    dbStatus: 'online',
+    dbResponseTime: 0,
+    storageUsed: 0,
+    storageLimit: 1000,
+    apiCallsUsed: 0,
+    apiCallsLimit: 10000,
+  });
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const startTime = performance.now();
+        const data = await Api.checkSystemHealth();
+        const endTime = performance.now();
+        const measuredLatency = Math.round(endTime - startTime);
+
+        setStatus('online');
+        setMetrics((prev) => ({
+          ...prev,
+          latency: data.latency ?? measuredLatency,
+          dbStatus: 'online',
+          dbResponseTime: data.dbResponseTime ?? measuredLatency,
+          storageUsed: data.storageUsed ?? prev.storageUsed,
+          storageLimit: data.storageLimit ?? prev.storageLimit,
+          apiCallsUsed: data.apiCallsUsed ?? prev.apiCallsUsed,
+          apiCallsLimit: data.apiCallsLimit ?? prev.apiCallsLimit,
+        }));
+      } catch {
+        setStatus('offline');
+        setMetrics((prev) => ({ ...prev, dbStatus: 'offline' }));
+      }
+    };
+
+    checkHealth();
+    const interval = setInterval(checkHealth, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  if (status === 'loading') return null;
+
+  const storagePercent = Math.round((metrics.storageUsed / metrics.storageLimit) * 100);
+  const apiPercent = Math.round((metrics.apiCallsUsed / metrics.apiCallsLimit) * 100);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-transparent border border-slate-200 dark:border-navy-700 hover:border-brand/50 hover:bg-slate-50 dark:hover:bg-white/5 transition-all duration-200"
+      >
+        <div
+          className={`w-2 h-2 rounded-full ${status === 'online' ? 'bg-green-500' : 'bg-red-500'}`}
+        />
+        <span className="text-xs font-medium text-navy-900 dark:text-white">
+          {status === 'online' ? t('system.online', 'Online') : t('system.offline', 'Offline')}
+        </span>
+        <ChevronDown
+          size={14}
+          className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full right-0 mt-2 w-72 bg-white dark:bg-navy-800 rounded-xl shadow-xl border border-slate-200 dark:border-navy-700 z-50 overflow-hidden">
+          {/* Header */}
+          <div className="px-4 py-3 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
+            <div className="flex items-center gap-2">
+              <div
+                className={`w-2.5 h-2.5 rounded-full ${status === 'online' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}
+              />
+              <span className="text-sm font-semibold text-navy-900 dark:text-white">
+                {t('system.status', 'System Status')}
+              </span>
+            </div>
+          </div>
+
+          {/* Database Section */}
+          <div className="px-4 py-3 border-b border-slate-100 dark:border-navy-700/50">
+            <div className="flex items-center gap-2 mb-2">
+              <Database size={14} className="text-brand" />
+              <span className="text-xs font-medium text-navy-900 dark:text-white">
+                {t('system.database', 'Database')}
+              </span>
+            </div>
+            <div className="space-y-1.5 pl-5">
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-500 dark:text-slate-400">
+                  {t('system.status', 'Status')}
+                </span>
+                <span className={metrics.dbStatus === 'online' ? 'text-green-500' : 'text-red-500'}>
+                  {metrics.dbStatus === 'online'
+                    ? t('system.connected', 'Connected')
+                    : t('system.disconnected', 'Disconnected')}
+                </span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-500 dark:text-slate-400">
+                  {t('system.responseTime', 'Response Time')}
+                </span>
+                <span className="text-navy-900 dark:text-white">{metrics.dbResponseTime}ms</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-500 dark:text-slate-400">
+                  {t('system.latency', 'API Latency')}
+                </span>
+                <span className="text-navy-900 dark:text-white">{metrics.latency}ms</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Resources Section */}
+          <div className="px-4 py-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Cpu size={14} className="text-violet-500" />
+              <span className="text-xs font-medium text-navy-900 dark:text-white">
+                {t('system.resources', 'Your Resources')}
+              </span>
+            </div>
+            <div className="space-y-3 pl-5">
+              {/* Storage */}
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                    <HardDrive size={12} />
+                    {t('system.storage', 'Storage')}
+                  </span>
+                  <span className="text-navy-900 dark:text-white">
+                    {metrics.storageUsed} / {metrics.storageLimit} MB
+                  </span>
+                </div>
+                <div className="h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${storagePercent > 80 ? 'bg-amber-500' : 'bg-brand'}`}
+                    style={{ width: `${Math.min(storagePercent, 100)}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* API Calls */}
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                    <Clock size={12} />
+                    {t('system.apiCalls', 'API Calls (month)')}
+                  </span>
+                  <span className="text-navy-900 dark:text-white">
+                    {metrics.apiCallsUsed.toLocaleString()} /{' '}
+                    {metrics.apiCallsLimit.toLocaleString()}
+                  </span>
+                </div>
+                <div className="h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${apiPercent > 80 ? 'bg-amber-500' : 'bg-violet-500'}`}
+                    style={{ width: `${Math.min(apiPercent, 100)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-t border-slate-200 dark:border-navy-700">
+            <span className="text-[10px] text-slate-400 dark:text-slate-500">
+              {t('system.lastUpdate', 'Auto-refresh every 30s')}
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

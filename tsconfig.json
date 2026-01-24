@@ -1,0 +1,49 @@
+{
+  "compilerOptions": {
+    // Build settings
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    // Module resolution
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "allowJs": true,
+    "noEmit": true,
+    // Path aliases
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    // Type checking - STRICT MODE (Enterprise SaaS Standard)
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "useUnknownInCatchVariables": false,
+    "alwaysStrict": true,
+    // Code quality checks
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": false,
+    "noPropertyAccessFromIndexSignature": false,
+    "forceConsistentCasingInFileNames": true,
+    "exactOptionalPropertyTypes": false,
+    // Decorators (for DI/ORM if needed)
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    // Performance
+    "skipLibCheck": true,
+    // Types
+    "types": ["node", "vite/client", "@testing-library/jest-dom", "vitest/globals"]
+  },
+  "include": ["src", "*.ts", "*.tsx"],
+  "exclude": ["node_modules", "node_modules_trash", "dist", "server", "server/**/*"]
+}

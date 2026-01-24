@@ -1,0 +1,291 @@
+{
+  "landing": {
+    "hero": {
+      "title": "Think bigger.Do smarter",
+      "subtitleLine1": "Your",
+      "subtitleLine1End": "for Enterprise Strategy.",
+      "slogans": {
+        "1": "Months of consulting. Minutes of AI. Better results.",
+        "2": "Transform decisions. Accelerate outcomes.",
+        "3": "Enterprise intelligence. Instant clarity.",
+        "4": "AI-powered strategy. Real-time insights.",
+        "5": "Consulting reimagined. Results delivered."
+      },
+      "tagline": {
+        "line1": "AI consulting.",
+        "line2": "No slides.",
+        "line3": "Just decisions."
+      },
+      "cards": {
+        "demo": {
+          "title": "Interactive Demo",
+          "description": "Explore Consultinity with AI-guided walkthrough. No signup required.",
+          "meta": "GUIDED EXPERIENCE",
+          "cta": "Start Demo"
+        },
+        "trial": {
+          "title": "Free Trial",
+          "description": "14-day full access to all features. Start your transformation today.",
+          "meta": "14 DAYS FREE",
+          "cta": "Start Free Trial"
+        },
+        "video": {
+          "title": "Watch How It Works",
+          "description": "See Consultinity in action with real enterprise transformation examples.",
+          "meta": "3 MIN VIDEO",
+          "cta": "Play Video"
+        },
+        "expert": {
+          "title": "Talk to Expert",
+          "description": "Schedule a personalized consultation with our strategy specialists.",
+          "meta": "HUMAN TOUCH",
+          "cta": "Book Consultation"
+        },
+        "login": {
+          "title": "Welcome Back",
+          "description": "Continue your transformation journey. Your workspace awaits.",
+          "meta": "EXISTING USER",
+          "cta": "Log In"
+        }
+      }
+    },
+    "topBar": {
+      "demo": "Demo",
+      "trial": "Trial",
+      "login": "Log in",
+      "signUp": "Sign up"
+    },
+    "methodology": {
+      "badge": "Our Methodology",
+      "heading": "AI-Driven Strategic Transformation"
+    },
+    "steps": {
+      "diagnostic": {
+        "title": "Diagnostic Assessment",
+        "desc": "AI analyzes your organization's digital maturity, identifies gaps, and benchmarks against industry standards."
+      },
+      "roadmap": {
+        "title": "Strategic Roadmap",
+        "desc": "Generate actionable transformation roadmap with prioritized initiatives, timelines, and resource requirements."
+      },
+      "approval": {
+        "title": "Human Governance",
+        "desc": "Every strategic decision requires human approval. Full accountability and control remain with your leadership."
+      }
+    }
+  },
+  "partner": {
+    "becomePartner": "Become Partner"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "loading": "Loading",
+    "error": "Error",
+    "success": "Success",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "of": "of",
+    "add": "Add",
+    "remove": "Remove",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "view": "View",
+    "download": "Download",
+    "upload": "Upload",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "goals": "Goals",
+    "challenges": "Challenges",
+    "megatrends": "Megatrends",
+    "strategy": "Strategy",
+    "rollout": "Rollout",
+    "users": "Users",
+    "projects": "Projects",
+    "analytics": "Analytics",
+    "team": "Team",
+    "workspace": "Workspace",
+    "consultant": "Consultant",
+    "invites": "Invites",
+    "affiliate": "Affiliate"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "settings": "Settings",
+    "help": "Help",
+    "knowledge": "Knowledge Base",
+    "organization": "Organization",
+    "adminPanel": "Admin Panel",
+    "logOut": "Log Out",
+    "chat": "AI Chat",
+    "aiChat": "Chat",
+    "myWork": "My Work",
+    "interview": "Interview",
+    "tools": "Tools",
+    "discoveryTools": "Tools",
+    "assessment": "Assessment",
+    "assessmentOverview": "Overview",
+    "myAssessments": "My Assessments",
+    "reviewerDashboard": "Reviewer Dashboard",
+    "initiatives": "Initiatives",
+    "execution": "Execution",
+    "benefits": "Benefits",
+    "economics": "Economics",
+    "reports": "Reports",
+    "partnerPortal": "Partner Portal"
+  },
+  "widgets": {
+    "help": {
+      "title": "Help Center",
+      "tooltip": "Help Center"
+    },
+    "feedback": {
+      "title": "Feedback",
+      "tooltip": "Feedback"
+    },
+    "documents": {
+      "title": "Documents",
+      "tooltip": "Documents"
+    }
+  },
+  "myWork": {
+    "title": "My Work",
+    "inbox": "Inbox",
+    "focus": "Focus",
+    "calendar": "Calendar",
+    "tasks": "Tasks"
+  },
+  "step1": {
+    "title": "Step 1"
+  },
+  "interview": {
+    "title": "Discovery Interview",
+    "newSession": "New Session",
+    "history": "History",
+    "categories": {
+      "strategy": "Strategy",
+      "operations": "Operations",
+      "digital": "Digital",
+      "people": "People",
+      "finance": "Finance"
+    },
+    "tabs": {
+      "questions": "Questions",
+      "notes": "Notes",
+      "evidence": "Evidence",
+      "summary": "Summary"
+    },
+    "actions": {
+      "addQuestion": "Add question",
+      "addNote": "Add note",
+      "complete": "Complete Interview"
+    },
+    "status": {
+      "inProgress": "In Progress",
+      "completed": "Completed",
+      "archived": "Archived"
+    },
+    "companyFacts": {
+      "title": "Company Facts",
+      "profile": "Company Profile",
+      "metrics": "Key Metrics",
+      "stakeholders": "Stakeholders",
+      "gaps": "Open Gaps"
+    }
+  },
+  "assessment": {
+    "title": "Assessment",
+    "overview": "Overview",
+    "drd": "DRD Assessment",
+    "siri": "SIRI Framework",
+    "adma": "ADMA Framework",
+    "cmmi": "CMMI Framework",
+    "lean": "Lean 4.0"
+  },
+  "initiatives": {
+    "title": "Initiatives",
+    "roadmap": "Roadmap",
+    "portfolio": "Portfolio"
+  },
+  "execution": {
+    "title": "Execution Center",
+    "dashboard": "Dashboard",
+    "calendar": "Calendar",
+    "decisions": "Decisions"
+  },
+  "benefits": {
+    "title": "Benefits Realization",
+    "kpis": "KPIs",
+    "lessons": "Lessons Learned"
+  },
+  "economics": {
+    "title": "Economics",
+    "analysis": "Analysis",
+    "scenarios": "Scenarios"
+  },
+  "reports": {
+    "title": "Reports",
+    "management": "Management Reports",
+    "assessment": "Assessment Reports"
+  },
+  "auth": {
+    "logIn": "Log in",
+    "logOut": "Log out",
+    "welcomeBack": "Welcome back",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "register": "Register"
+  },
+  "help": {
+    "title": "Help Center",
+    "knowledge": {
+      "title": "Knowledge Base",
+      "searchPlaceholder": "Search articles...",
+      "allCategories": "All",
+      "noSearchResults": "No articles found for your search.",
+      "noArticles": "No articles available in this category.",
+      "articleNotFound": "Article not found.",
+      "minRead": "min read",
+      "views": "views",
+      "relatedModules": "Related Modules",
+      "shareArticle": "Share Article",
+      "featured": "Featured",
+      "popular": "Popular",
+      "recent": "Recent",
+      "readMore": "Read more",
+      "backToLibrary": "Back to Library",
+      "categories": "Categories",
+      "articles": "Articles",
+      "searchResults": "Search Results",
+      "tableOfContents": "Table of Contents",
+      "wasHelpful": "Was this article helpful?",
+      "yes": "Yes",
+      "no": "No",
+      "feedbackThanks": "Thank you for your feedback!",
+      "relatedArticles": "Related Articles",
+      "gettingStarted": "Getting Started",
+      "tutorials": "Tutorials",
+      "bestPractices": "Best Practices",
+      "faq": "FAQ",
+      "troubleshooting": "Troubleshooting"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "billing": "Billing",
+    "ai": "AI Settings",
+    "notifications": "Notifications",
+    "integrations": "Integrations",
+    "security": "Security",
+    "appearance": "Appearance"
+  }
+}

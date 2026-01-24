@@ -1,0 +1,25 @@
+{
+  "name": "@consultinity/shared",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/html2canvas": "^1.0.0",
+    "@types/jspdf": "^2.0.0"
+  },
+  "dependencies": {
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.0",
+    "lucide-react": "^0.556.0",
+    "framer-motion": "^10.16.4"
+  }
+}

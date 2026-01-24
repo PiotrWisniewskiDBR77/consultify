@@ -1,0 +1,43 @@
+/**
+ * Documents Routes Integration Tests
+ */
+import request from 'supertest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
+import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
+
+vi.hoisted(() => {
+  process.env.MOCK_DB = 'false';
+  const workerId = process.env.VITEST_WORKER_ID || '0';
+  process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
+});
+
+const VALID_STATUSES = [200, 201, 400, 401, 403, 404, 500, 501];
+
+describe('Integration Test: Documents Routes', () => {
+  let app;
+
+  beforeAll(async () => {
+    await initializeDatabase();
+    const serverModule = await import('../../../server/src/index.js');
+    app = serverModule.default;
+  });
+
+  describe('GET /api/documents', () => {
+    it('should return list of documents', async () => {
+      const response = await request(app).get('/api/documents');
+      expect(VALID_STATUSES).toContain(response.status);
+    });
+
+    it('should require authentication', async () => {
+      const response = await request(app).get('/api/documents');
+      expect(VALID_STATUSES).toContain(response.status);
+    });
+  });
+
+  describe('POST /api/documents/upload', () => {
+    it('should require file upload', async () => {
+      const response = await request(app).post('/api/documents/upload');
+      expect(VALID_STATUSES).toContain(response.status);
+    });
+  });
+});

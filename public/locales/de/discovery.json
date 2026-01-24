@@ -1,0 +1,169 @@
+{
+  "discovery": {
+    "title": "[DE] Discovery Consultant",
+    "subtitle": "[DE] AI-powered consultant conversation",
+    "chatTitle": "[DE] AI Consultant",
+    "chatSubtitle": "[DE] Your virtual transformation partner",
+    "phases": {
+      "welcome": "[DE] Welcome",
+      "ice_breaking": "[DE] Context Gathering",
+      "pain_discovery": "[DE] Pain Discovery",
+      "impact_assessment": "[DE] Impact Assessment",
+      "recommendations": "[DE] Recommendations",
+      "decision": "[DE] Decision",
+      "completed": "[DE] Completed"
+    },
+    "phaseDescriptions": {
+      "welcome": "[DE] Introduction to discovery session",
+      "ice_breaking": "[DE] Understanding company and role",
+      "pain_discovery": "[DE] Identifying key challenges",
+      "impact_assessment": "[DE] Quantifying business impact",
+      "recommendations": "[DE] Presenting transformation path",
+      "decision": "[DE] Next steps and conversion",
+      "completed": "[DE] Session completed"
+    },
+    "canvas": {
+      "title": "[DE] Discovery Canvas",
+      "categories": {
+        "pains": "[DE] Pain Points",
+        "insights": "[DE] Insights",
+        "opportunities": "[DE] Opportunities",
+        "recommendations": "[DE] Recommendations"
+      },
+      "emptyState": "[DE] Start the conversation and AI will automatically add findings to the board",
+      "autoLayout": "[DE] Auto-arrange",
+      "export": "[DE] Export image",
+      "zoomIn": "[DE] Zoom in",
+      "zoomOut": "[DE] Zoom out",
+      "fitView": "[DE] Fit view"
+    },
+    "nodes": {
+      "painPoint": {
+        "title": "[DE] Pain Point",
+        "severity": "[DE] Severity",
+        "impact": "[DE] Impact",
+        "area": "[DE] Area"
+      },
+      "insight": {
+        "title": "[DE] Insight",
+        "linkedTo": "[DE] Linked to"
+      },
+      "opportunity": {
+        "title": "[DE] Opportunity",
+        "potentialValue": "[DE] Potential value"
+      },
+      "quote": {
+        "title": "[DE] Quote",
+        "sentiment": "[DE] Sentiment"
+      },
+      "recommendation": {
+        "title": "[DE] Recommendation",
+        "confidence": "[DE] Confidence",
+        "type": "[DE] Transformation type"
+      },
+      "tool": {
+        "title": "[DE] Tool",
+        "category": "[DE] Category",
+        "effort": "[DE] Effort",
+        "impact": "[DE] Impact"
+      },
+      "assessment": {
+        "title": "[DE] Assessment",
+        "framework": "[DE] Framework"
+      },
+      "initiative": {
+        "title": "[DE] Initiative",
+        "quickWin": "[DE] Quick Win"
+      }
+    },
+    "severity": {
+      "1": "[DE] Minor",
+      "2": "[DE] Noticeable",
+      "3": "[DE] Significant",
+      "4": "[DE] Critical",
+      "5": "[DE] Blocking"
+    },
+    "areas": {
+      "process": "[DE] Process",
+      "technology": "[DE] Technology",
+      "people": "[DE] People",
+      "data": "[DE] Data"
+    },
+    "transformationType": {
+      "strategic": "[DE] Strategic transformation",
+      "operational": "[DE] Operational transformation",
+      "digital": "[DE] Digital transformation"
+    },
+    "recommendations": {
+      "title": "[DE] Recommendations",
+      "matchScore": "[DE] Match score",
+      "suggestedAssessments": "[DE] Suggested assessments",
+      "suggestedTools": "[DE] Recommended tools",
+      "initiativeIdeas": "[DE] Initiative ideas",
+      "noRecommendations": "[DE] Continue the conversation to receive recommendations"
+    },
+    "actions": {
+      "startProject": "[DE] Start Project",
+      "startProjectDesc": "[DE] Create transformation project with this data",
+      "attachToProject": "[DE] Attach to Project",
+      "attachToProjectDesc": "[DE] Add this conversation to an active project",
+      "save": "[DE] Save Conversation",
+      "saveDesc": "[DE] Keep for later use",
+      "continueChat": "[DE] Continue Conversation",
+      "continueChatDesc": "[DE] I want to learn more",
+      "exportPdf": "[DE] Export PDF"
+    },
+    "conversion": {
+      "title": "[DE] Create Project from Discovery",
+      "projectName": "[DE] Project name",
+      "defaultName": "[DE] Discovery: {{company}}",
+      "whatWillBeTransferred": "[DE] What will be transferred",
+      "painPointsCount": "[DE] {{count}} pain points",
+      "insightsCount": "[DE] {{count}} insights",
+      "recommendedTransformation": "[DE] Recommended transformation",
+      "suggestedAssessments": "[DE] {{count}} suggested assessments",
+      "conversationHistory": "[DE] Full conversation history",
+      "createInitiatives": "[DE] Create initiatives from ideas",
+      "converting": "[DE] Creating project...",
+      "success": "[DE] Project created!",
+      "error": "[DE] Failed to create project"
+    },
+    "version": {
+      "title": "[DE] Versions",
+      "current": "[DE] Current",
+      "save": "[DE] Save version",
+      "load": "[DE] Load version",
+      "saved": "[DE] Version saved",
+      "noVersions": "[DE] No saved versions"
+    },
+    "header": {
+      "newSession": "[DE] New session",
+      "client": "[DE] Client",
+      "industry": "[DE] Industry",
+      "size": "[DE] Size",
+      "phase": "[DE] Phase"
+    },
+    "prompts": {
+      "welcome": "[DE] Hello! I'm your virtual transformation consultant. I'll help you understand where the biggest opportunities for improvement lie in your organization.\n\nBefore we begin - tell me about yourself and your company. What's your role?",
+      "askIndustry": "[DE] What industry is your company in and what size is it?",
+      "askGoals": "[DE] What prompted you to talk about transformation? What's the most important business goal for the next 12 months?",
+      "askPain": "[DE] Now the key question: What's slowing down the achievement of this goal the most today? What 'hurts' operationally?",
+      "askMorePains": "[DE] Is there anything else that's making it difficult to achieve the goal?",
+      "askImpact": "[DE] How much does this cost the company monthly/yearly? (even a rough estimate helps)",
+      "recommendationIntro": "[DE] Based on our conversation, I see that your situation indicates a need for"
+    },
+    "errors": {
+      "loadFailed": "[DE] Failed to load session",
+      "saveFailed": "[DE] Failed to save session",
+      "conversionFailed": "[DE] Failed to create project",
+      "extractionFailed": "[DE] Failed to process response"
+    },
+    "tooltips": {
+      "addNode": "[DE] Add element",
+      "deleteNode": "[DE] Delete element",
+      "editNode": "[DE] Edit element",
+      "connectNodes": "[DE] Connect elements",
+      "severity": "[DE] How much this problem affects the business"
+    }
+  }
+}

@@ -1,0 +1,4269 @@
+/**
+ * Settings Routes
+ * API endpoints for settings including user preferences
+ */
+
+import { Response, Router } from 'express';
+
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
+
+const router = Router();
+
+/**
+ * GET /api/settings
+ * Get system/user settings
+ */
+router.get(
+  '/',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const sql = `SELECT * FROM settings`;
+      const rows = await dbAll(sql, []);
+
+      // Convert to key-value object
+      const settings: Record<string, any> = {};
+      rows.forEach((row: any) => {
+        settings[row.key] = row.value;
+      });
+
+      return res.json(settings);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * POST /api/settings
+ * Update system/user settings
+ */
+router.post(
+  '/',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { key, value } = req.body;
+
+    if (!key) {
+      return res.status(400).json({ error: 'Key is required' });
+    }
+
+    try {
+      const sql = `INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)`;
+      const result = await dbRun(sql, [
+        key,
+        typeof value === 'object' ? JSON.stringify(value) : String(value),
+      ]);
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to save setting');
+      }
+
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// ===========================================
+// USER PREFERENCES
+// ===========================================
+
+/**
+ * Ensure user_preferences table exists
+ */
+const ensureUserPreferencesTable = async () => {
+  await dbRun(`
+        CREATE TABLE IF NOT EXISTS user_preferences (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL UNIQUE,
+            preferences_type TEXT NOT NULL,
+            preferences_data TEXT NOT NULL,
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    `);
+  await dbRun(`CREATE INDEX IF NOT EXISTS idx_user_prefs_user ON user_preferences(user_id)`);
+  await dbRun(
+    `CREATE INDEX IF NOT EXISTS idx_user_prefs_type ON user_preferences(preferences_type)`
+  );
+};
+
+/**
+ * GET /api/settings/preferences/regional
+ * Get user's regional preferences
+ */
+router.get(
+  '/preferences/regional',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const prefs = await dbGet<{ preferences_data: string }>(
+        `SELECT preferences_data FROM user_preferences 
+                 WHERE user_id = ? AND preferences_type = 'regional'`,
+        [userId]
+      );
+
+      if (prefs?.preferences_data) {
+        return res.json({ preferences: JSON.parse(prefs.preferences_data) });
+      }
+
+      // Return defaults
+      return res.json({
+        preferences: {
+          timezone: 'UTC',
+          units: 'metric',
+          currency: 'USD',
+          numberFormat: 'en-US',
+          dateFormat: 'DD/MM/YYYY',
+          timeFormat: '24h',
+          firstDayOfWeek: 'monday',
+        },
+      });
+    } catch (err: any) {
+      logger.error('[settings] Error fetching regional preferences:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * PUT /api/settings/preferences/regional
+ * Update user's regional preferences
+ */
+router.put(
+  '/preferences/regional',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { preferences } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    if (!preferences) {
+      return res.status(400).json({ error: 'Preferences object is required' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      // Upsert preferences
+      const existing = await dbGet(
+        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'regional'`,
+        [userId]
+      );
+
+      if (existing) {
+        await dbRun(
+          `UPDATE user_preferences SET 
+                        preferences_data = ?,
+                        updated_at = datetime('now')
+                     WHERE user_id = ? AND preferences_type = 'regional'`,
+          [JSON.stringify(preferences), userId]
+        );
+      } else {
+        const { v4: uuidv4 } = await import('uuid');
+        await dbRun(
+          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data)
+                     VALUES (?, ?, 'regional', ?)`,
+          [uuidv4(), userId, JSON.stringify(preferences)]
+        );
+      }
+
+      logger.info(`[settings] Regional preferences updated for user ${userId}`);
+
+      return res.json({ success: true });
+    } catch (err: any) {
+      logger.error('[settings] Error updating regional preferences:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * GET /api/settings/preferences/notifications
+ * Get user's notification preferences
+ */
+router.get(
+  '/preferences/notifications',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const prefs = await dbGet<{ preferences_data: string }>(
+        `SELECT preferences_data FROM user_preferences 
+                 WHERE user_id = ? AND preferences_type = 'notifications'`,
+        [userId]
+      );
+
+      if (prefs?.preferences_data) {
+        return res.json({ preferences: JSON.parse(prefs.preferences_data) });
+      }
+
+      // Return defaults
+      return res.json({
+        preferences: {
+          email: true,
+          push: true,
+          inApp: true,
+          digest: 'daily',
+        },
+      });
+    } catch (err: any) {
+      logger.error('[settings] Error fetching notification preferences:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * PUT /api/settings/preferences/notifications
+ * Update user's notification preferences
+ */
+router.put(
+  '/preferences/notifications',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { preferences } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    if (!preferences) {
+      return res.status(400).json({ error: 'Preferences object is required' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const existing = await dbGet(
+        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'notifications'`,
+        [userId]
+      );
+
+      if (existing) {
+        await dbRun(
+          `UPDATE user_preferences SET 
+                        preferences_data = ?,
+                        updated_at = datetime('now')
+                     WHERE user_id = ? AND preferences_type = 'notifications'`,
+          [JSON.stringify(preferences), userId]
+        );
+      } else {
+        const { v4: uuidv4 } = await import('uuid');
+        await dbRun(
+          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data)
+                     VALUES (?, ?, 'notifications', ?)`,
+          [uuidv4(), userId, JSON.stringify(preferences)]
+        );
+      }
+
+      logger.info(`[settings] Notification preferences updated for user ${userId}`);
+
+      return res.json({ success: true });
+    } catch (err: any) {
+      logger.error('[settings] Error updating notification preferences:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// ===========================================
+// QUIET HOURS PREFERENCES
+// ===========================================
+
+/**
+ * GET /api/settings/preferences/quietHours
+ * Get user's quiet hours settings
+ */
+router.get(
+  '/preferences/quietHours',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const prefs = await dbGet<{ preferences_data: string }>(
+        `SELECT preferences_data FROM user_preferences 
+                 WHERE user_id = ? AND preferences_type = 'quietHours'`,
+        [userId]
+      );
+
+      if (prefs?.preferences_data) {
+        return res.json({ preferences: JSON.parse(prefs.preferences_data) });
+      }
+
+      // Return defaults
+      return res.json({
+        preferences: {
+          enabled: false,
+          startTime: '22:00',
+          endTime: '08:00',
+          daysOfWeek: [0, 6],
+          allowUrgent: true,
+          allowMentions: false,
+          allowDirectMessages: false,
+          autoReplyEnabled: false,
+          autoReplyMessage: '',
+        },
+      });
+    } catch (err: any) {
+      logger.error('[settings] Error fetching quiet hours:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * PUT /api/settings/preferences/quietHours
+ * Update user's quiet hours settings
+ */
+router.put(
+  '/preferences/quietHours',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const preferences = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const existing = await dbGet(
+        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'quietHours'`,
+        [userId]
+      );
+
+      if (existing) {
+        await dbRun(
+          `UPDATE user_preferences SET 
+                        preferences_data = ?,
+                        updated_at = datetime('now')
+                     WHERE user_id = ? AND preferences_type = 'quietHours'`,
+          [JSON.stringify(preferences), userId]
+        );
+      } else {
+        const { v4: uuidv4 } = await import('uuid');
+        await dbRun(
+          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data)
+                     VALUES (?, ?, 'quietHours', ?)`,
+          [uuidv4(), userId, JSON.stringify(preferences)]
+        );
+      }
+
+      logger.info(`[settings] Quiet hours updated for user ${userId}`);
+
+      return res.json({ success: true });
+    } catch (err: any) {
+      logger.error('[settings] Error updating quiet hours:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// ===========================================
+// DND (DO NOT DISTURB) SETTINGS
+// ===========================================
+
+/**
+ * GET /api/settings/notifications/dnd
+ * Get user's DND settings
+ */
+router.get(
+  '/notifications/dnd',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const prefs = await dbGet<{ preferences_data: string }>(
+        `SELECT preferences_data FROM user_preferences 
+                 WHERE user_id = ? AND preferences_type = 'dnd'`,
+        [userId]
+      );
+
+      if (prefs?.preferences_data) {
+        return res.json(JSON.parse(prefs.preferences_data));
+      }
+
+      // Return defaults
+      return res.json({
+        enabled: false,
+        until: null,
+      });
+    } catch (err: any) {
+      logger.error('[settings] Error fetching DND settings:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * PUT /api/settings/notifications/dnd
+ * Update user's DND settings
+ */
+router.put(
+  '/notifications/dnd',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { enabled, until } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const data = JSON.stringify({ enabled, until });
+
+      const existing = await dbGet(
+        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'dnd'`,
+        [userId]
+      );
+
+      if (existing) {
+        await dbRun(
+          `UPDATE user_preferences SET 
+                        preferences_data = ?,
+                        updated_at = datetime('now')
+                     WHERE user_id = ? AND preferences_type = 'dnd'`,
+          [data, userId]
+        );
+      } else {
+        const { v4: uuidv4 } = await import('uuid');
+        await dbRun(
+          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data)
+                     VALUES (?, ?, 'dnd', ?)`,
+          [uuidv4(), userId, data]
+        );
+      }
+
+      logger.info(`[settings] DND settings updated for user ${userId}`);
+
+      return res.json({ success: true });
+    } catch (err: any) {
+      logger.error('[settings] Error updating DND settings:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// ===========================================
+// NOTIFICATION PREFERENCES (Overview)
+// ===========================================
+
+const defaultNotificationPreferences = {
+  taskAssignment: { email: true, inApp: true },
+  taskUpdates: { email: false, inApp: true },
+  milestones: { email: true, inApp: true },
+  mentions: { email: true, inApp: true },
+};
+
+/**
+ * GET /api/settings/notifications
+ * Get notification channel preferences
+ */
+router.get(
+  '/notifications',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = (req.query.userId as string) || req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const prefs = await dbGet<{ preferences_data: string }>(
+        `SELECT preferences_data FROM user_preferences 
+                 WHERE user_id = ? AND preferences_type = 'notifications'`,
+        [userId]
+      );
+
+      if (prefs?.preferences_data) {
+        return res.json(JSON.parse(prefs.preferences_data));
+      }
+
+      return res.json(defaultNotificationPreferences);
+    } catch (err: any) {
+      logger.error('[settings] Error fetching notification preferences:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * POST /api/settings/notifications
+ * Save notification channel preferences
+ */
+router.post(
+  '/notifications',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { userId, preferences } = req.body;
+    const requesterId = req.user?.id;
+
+    if (!userId || !preferences) {
+      return res.status(400).json({ error: 'Missing userId or preferences' });
+    }
+
+    // Only owner or admin/superadmin
+    if (requesterId !== userId && req.user?.role !== 'SUPERADMIN' && req.user?.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const existing = await dbGet(
+        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'notifications'`,
+        [userId]
+      );
+
+      const data = JSON.stringify(preferences);
+
+      if (existing) {
+        await dbRun(
+          `UPDATE user_preferences SET 
+                        preferences_data = ?, 
+                        updated_at = datetime('now')
+                     WHERE user_id = ? AND preferences_type = 'notifications'`,
+          [data, userId]
+        );
+      } else {
+        const { v4: uuidv4 } = await import('uuid');
+        await dbRun(
+          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data)
+                     VALUES (?, ?, 'notifications', ?)`,
+          [uuidv4(), userId, data]
+        );
+      }
+
+      logger.info(`[settings] Notification preferences updated for user ${userId}`);
+      return res.json({ success: true });
+    } catch (err: any) {
+      logger.error('[settings] Error saving notification preferences:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// ===========================================
+// NOTIFICATION SOUNDS
+// ===========================================
+
+const defaultSoundPreferences = {
+  soundEnabled: true,
+  soundPerType: {},
+  desktopPosition: 'top-right',
+  desktopDuration: 5000,
+};
+
+/**
+ * GET /api/settings/notifications/sounds
+ * Get sound/desktop notification settings
+ */
+router.get(
+  '/notifications/sounds',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const prefs = await dbGet<{ preferences_data: string }>(
+        `SELECT preferences_data FROM user_preferences 
+                 WHERE user_id = ? AND preferences_type = 'notification-sounds'`,
+        [userId]
+      );
+
+      if (prefs?.preferences_data) {
+        return res.json(JSON.parse(prefs.preferences_data));
+      }
+
+      return res.json(defaultSoundPreferences);
+    } catch (err: any) {
+      logger.error('[settings] Error fetching sound preferences:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * PUT /api/settings/notifications/sounds
+ * Update sound/desktop notification settings
+ */
+router.put(
+  '/notifications/sounds',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const preferences = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const existing = await dbGet(
+        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'notification-sounds'`,
+        [userId]
+      );
+
+      const data = JSON.stringify(preferences || defaultSoundPreferences);
+
+      if (existing) {
+        await dbRun(
+          `UPDATE user_preferences SET 
+                        preferences_data = ?, 
+                        updated_at = datetime('now')
+                     WHERE user_id = ? AND preferences_type = 'notification-sounds'`,
+          [data, userId]
+        );
+      } else {
+        const { v4: uuidv4 } = await import('uuid');
+        await dbRun(
+          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data)
+                     VALUES (?, ?, 'notification-sounds', ?)`,
+          [uuidv4(), userId, data]
+        );
+      }
+
+      logger.info(`[settings] Notification sounds updated for user ${userId}`);
+      return res.json({ success: true });
+    } catch (err: any) {
+      logger.error('[settings] Error updating sound preferences:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// ===========================================
+// NOTIFICATION DIGEST
+// ===========================================
+
+const defaultDigestPreferences = {
+  frequency: 'instant',
+  content: 'summary',
+  format: 'html',
+};
+
+/**
+ * GET /api/settings/notifications/digest
+ * Get email digest preferences
+ */
+router.get(
+  '/notifications/digest',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const prefs = await dbGet<{ preferences_data: string }>(
+        `SELECT preferences_data FROM user_preferences 
+                 WHERE user_id = ? AND preferences_type = 'notification-digest'`,
+        [userId]
+      );
+
+      if (prefs?.preferences_data) {
+        return res.json(JSON.parse(prefs.preferences_data));
+      }
+
+      return res.json(defaultDigestPreferences);
+    } catch (err: any) {
+      logger.error('[settings] Error fetching digest preferences:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * PUT /api/settings/notifications/digest
+ * Update email digest preferences
+ */
+router.put(
+  '/notifications/digest',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const preferences = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const existing = await dbGet(
+        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'notification-digest'`,
+        [userId]
+      );
+
+      const data = JSON.stringify(preferences || defaultDigestPreferences);
+
+      if (existing) {
+        await dbRun(
+          `UPDATE user_preferences SET 
+                        preferences_data = ?, 
+                        updated_at = datetime('now')
+                     WHERE user_id = ? AND preferences_type = 'notification-digest'`,
+          [data, userId]
+        );
+      } else {
+        const { v4: uuidv4 } = await import('uuid');
+        await dbRun(
+          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data)
+                     VALUES (?, ?, 'notification-digest', ?)`,
+          [uuidv4(), userId, data]
+        );
+      }
+
+      logger.info(`[settings] Notification digest updated for user ${userId}`);
+      return res.json({ success: true });
+    } catch (err: any) {
+      logger.error('[settings] Error updating digest preferences:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// ===========================================
+// INTEGRATIONS (User-level)
+// ===========================================
+
+const defaultIntegrationProviders = [
+  { id: 'slack', name: 'Slack', capabilities: ['notifications', 'actions'] },
+  { id: 'teams', name: 'Microsoft Teams', capabilities: ['notifications'] },
+  { id: 'jira', name: 'Jira', capabilities: ['sync', 'notifications'] },
+  { id: 'clickup', name: 'ClickUp', capabilities: ['sync', 'notifications'] },
+  { id: 'asana', name: 'Asana', capabilities: ['sync'] },
+  { id: 'notion', name: 'Notion', capabilities: ['sync'] },
+  { id: 'trello', name: 'Trello', capabilities: ['sync'] },
+];
+
+type IntegrationEntry = {
+  id: string;
+  userId: string;
+  provider: string;
+  providerName: string;
+  status: 'active' | 'expired' | 'revoked' | 'error' | 'pending';
+  config: Record<string, any>;
+  capabilities: string[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+const loadIntegrations = async (userId: string): Promise<IntegrationEntry[]> => {
+  await ensureUserPreferencesTable();
+  const row = await dbGet<{ preferences_data: string }>(
+    `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'integrations'`,
+    [userId]
+  );
+  if (row?.preferences_data) {
+    try {
+      return JSON.parse(row.preferences_data) as IntegrationEntry[];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
+const saveIntegrations = async (userId: string, data: IntegrationEntry[]) => {
+  await ensureUserPreferencesTable();
+  const existing = await dbGet(
+    `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'integrations'`,
+    [userId]
+  );
+  const payload = JSON.stringify(data);
+  if (existing) {
+    await dbRun(
+      `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'integrations'`,
+      [payload, userId]
+    );
+  } else {
+    const { v4: uuidv4 } = await import('uuid');
+    await dbRun(
+      `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'integrations', ?)`,
+      [uuidv4(), userId, payload]
+    );
+  }
+};
+
+/**
+ * GET /api/settings/integrations
+ */
+router.get(
+  '/integrations',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    const integrations = await loadIntegrations(userId);
+    const connectedCount = integrations.filter((i) => i.status === 'active').length;
+
+    return res.json({
+      integrations,
+      providers: defaultIntegrationProviders,
+      connectedCount,
+    });
+  })
+);
+
+/**
+ * POST /api/settings/integrations/:provider/connect
+ */
+router.post(
+  '/integrations/:provider/connect',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { provider } = req.params;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    const providers = defaultIntegrationProviders;
+    const providerMeta = providers.find((p) => p.id === provider);
+    if (!providerMeta) return res.status(404).json({ error: 'Provider not found' });
+
+    const integrations = await loadIntegrations(userId);
+    const now = new Date().toISOString();
+    const entry: IntegrationEntry = {
+      id: `${provider}-${userId}`,
+      userId,
+      provider,
+      providerName: providerMeta.name,
+      status: 'active',
+      config: {},
+      capabilities: providerMeta.capabilities,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const filtered = integrations.filter((i) => i.provider !== provider);
+    filtered.push(entry);
+    await saveIntegrations(userId, filtered);
+
+    return res.json({ success: true, authUrl: null });
+  })
+);
+
+/**
+ * DELETE /api/settings/integrations/:provider
+ */
+router.delete(
+  '/integrations/:provider',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { provider } = req.params;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    const integrations = await loadIntegrations(userId);
+    const filtered = integrations.filter((i) => i.provider !== provider);
+    await saveIntegrations(userId, filtered);
+
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * POST /api/settings/integrations/:provider/test
+ */
+router.post(
+  '/integrations/:provider/test',
+  verifyToken,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * POST /api/settings/integrations/:provider/refresh
+ */
+router.post(
+  '/integrations/:provider/refresh',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * PUT /api/settings/integrations/:provider/config
+ */
+router.put(
+  '/integrations/:provider/config',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { provider } = req.params;
+    const { config } = req.body;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    const integrations = await loadIntegrations(userId);
+    const updated = integrations.map((i) =>
+      i.provider === provider
+        ? { ...i, config: config || {}, updatedAt: new Date().toISOString() }
+        : i
+    );
+    await saveIntegrations(userId, updated);
+
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * GET /api/settings/integrations/:provider/status
+ */
+router.get(
+  '/integrations/:provider/status',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { provider } = req.params;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    const integrations = await loadIntegrations(userId);
+    const item = integrations.find((i) => i.provider === provider);
+    return res.json({ status: item ? { ...item, isConnected: item.status === 'active' } : null });
+  })
+);
+
+/**
+ * GET /api/settings/integrations/:provider/logs
+ */
+router.get(
+  '/integrations/:provider/logs',
+  verifyToken,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    return res.json({ logs: [] });
+  })
+);
+
+// ===========================================
+// CALENDAR SYNC
+// ===========================================
+
+type CalendarConnection = {
+  provider: string;
+  connected: boolean;
+  externalEmail?: string;
+  calendarName?: string;
+  lastSyncAt?: string;
+  syncTasks?: boolean;
+  syncMeetings?: boolean;
+};
+
+const loadCalendarConnections = async (userId: string): Promise<CalendarConnection[]> => {
+  await ensureUserPreferencesTable();
+  const row = await dbGet<{ preferences_data: string }>(
+    `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'calendar-connections'`,
+    [userId]
+  );
+  if (row?.preferences_data) {
+    try {
+      return JSON.parse(row.preferences_data) as CalendarConnection[];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
+const saveCalendarConnections = async (userId: string, data: CalendarConnection[]) => {
+  await ensureUserPreferencesTable();
+  const existing = await dbGet(
+    `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'calendar-connections'`,
+    [userId]
+  );
+  const payload = JSON.stringify(data);
+  if (existing) {
+    await dbRun(
+      `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'calendar-connections'`,
+      [payload, userId]
+    );
+  } else {
+    const { v4: uuidv4 } = await import('uuid');
+    await dbRun(
+      `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'calendar-connections', ?)`,
+      [uuidv4(), userId, payload]
+    );
+  }
+};
+
+/**
+ * GET /api/settings/calendar/providers
+ */
+router.get(
+  '/calendar/providers',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    const connections = await loadCalendarConnections(userId);
+    const providers = ['google', 'outlook', 'apple'].map((id) => {
+      const existing = connections.find((c) => c.provider === id);
+      return {
+        id,
+        name: id === 'google' ? 'Google Calendar' : id === 'outlook' ? 'Outlook' : 'Apple Calendar',
+        icon: id === 'google' ? '📅' : id === 'outlook' ? '📆' : '🍎',
+        connected: !!existing?.connected,
+        connection: existing || null,
+      };
+    });
+
+    return res.json({ providers });
+  })
+);
+
+/**
+ * POST /api/settings/calendar/connect
+ */
+router.post(
+  '/calendar/connect',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { provider } = req.body;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!provider) return res.status(400).json({ error: 'provider required' });
+
+    const connections = await loadCalendarConnections(userId);
+    const now = new Date().toISOString();
+    const updated = connections.filter((c) => c.provider !== provider);
+    updated.push({
+      provider,
+      connected: true,
+      externalEmail: req.user?.email || 'user@example.com',
+      calendarName: 'Primary',
+      lastSyncAt: now,
+      syncTasks: true,
+      syncMeetings: true,
+    });
+    await saveCalendarConnections(userId, updated);
+
+    return res.json({ success: true, authUrl: null });
+  })
+);
+
+/**
+ * POST /api/settings/calendar/disconnect
+ */
+router.post(
+  '/calendar/disconnect',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { provider } = req.body;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!provider) return res.status(400).json({ error: 'provider required' });
+
+    const connections = await loadCalendarConnections(userId);
+    const updated = connections.filter((c) => c.provider !== provider);
+    await saveCalendarConnections(userId, updated);
+
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * GET /api/settings/calendar/settings
+ */
+router.get(
+  '/calendar/settings',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserPreferencesTable();
+    const row = await dbGet<{ preferences_data: string }>(
+      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'calendar-settings'`,
+      [userId]
+    );
+    if (row?.preferences_data) {
+      try {
+        return res.json(JSON.parse(row.preferences_data));
+      } catch {
+        // fallthrough
+      }
+    }
+
+    return res.json({ syncTasks: true, syncMeetings: true });
+  })
+);
+
+/**
+ * PUT /api/settings/calendar/settings
+ */
+router.put(
+  '/calendar/settings',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const preferences = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserPreferencesTable();
+    const existing = await dbGet(
+      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'calendar-settings'`,
+      [userId]
+    );
+    const payload = JSON.stringify(preferences);
+    if (existing) {
+      await dbRun(
+        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'calendar-settings'`,
+        [payload, userId]
+      );
+    } else {
+      const { v4: uuidv4 } = await import('uuid');
+      await dbRun(
+        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'calendar-settings', ?)`,
+        [uuidv4(), userId, payload]
+      );
+    }
+
+    return res.json({ success: true });
+  })
+);
+
+// ===========================================
+// PRIVACY PREFERENCES
+// ===========================================
+
+const defaultPrivacyPreferences = {
+  showOnlineStatus: true,
+  activityVisibility: 'team',
+  profileVisibility: 'organization',
+  allowMentions: true,
+  showInDirectory: true,
+  shareActivityWithAI: true,
+};
+
+/**
+ * GET /api/settings/preferences/privacy
+ */
+router.get(
+  '/preferences/privacy',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserPreferencesTable();
+    const row = await dbGet<{ preferences_data: string }>(
+      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'privacy'`,
+      [userId]
+    );
+    if (row?.preferences_data) {
+      try {
+        return res.json({ preferences: JSON.parse(row.preferences_data) });
+      } catch {
+        // fallthrough
+      }
+    }
+    return res.json({ preferences: defaultPrivacyPreferences });
+  })
+);
+
+/**
+ * PUT /api/settings/preferences/privacy
+ */
+router.put(
+  '/preferences/privacy',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { preferences } = req.body || {};
+
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!preferences || typeof preferences !== 'object') {
+      return res.status(400).json({ error: 'Invalid preferences payload' });
+    }
+
+    await ensureUserPreferencesTable();
+    const existing = await dbGet(
+      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'privacy'`,
+      [userId]
+    );
+    const payload = JSON.stringify(preferences);
+    if (existing) {
+      await dbRun(
+        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'privacy'`,
+        [payload, userId]
+      );
+    } else {
+      const { v4: uuidv4 } = await import('uuid');
+      await dbRun(
+        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'privacy', ?)`,
+        [uuidv4(), userId, payload]
+      );
+    }
+
+    logger.info(`[settings] Privacy preferences updated for user ${userId}`);
+    return res.json({ success: true });
+  })
+);
+
+// ===========================================
+// ACCESSIBILITY PREFERENCES
+// ===========================================
+
+const defaultAccessibilityPreferences = {
+  fontSize: 'medium',
+  highContrastMode: false,
+  reduceMotion: false,
+  underlineLinks: false,
+  colorBlindMode: 'none',
+  lineHeight: 'default',
+  letterSpacing: 'default',
+  fontFamily: 'system',
+  textSpacing: 'default',
+  textCursorWidth: 'default',
+  showShortcuts: true,
+  focusIndicator: 'default',
+  cursorSize: 'default',
+  screenReaderOptimized: false,
+  voiceCommands: false,
+  speechToText: false,
+  textToSpeech: false,
+};
+
+router.get(
+  '/preferences/accessibility',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserPreferencesTable();
+    const row = await dbGet<{ preferences_data: string }>(
+      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'accessibility'`,
+      [userId]
+    );
+    if (row?.preferences_data) {
+      try {
+        return res.json({ preferences: JSON.parse(row.preferences_data) });
+      } catch {
+        // fallthrough
+      }
+    }
+    return res.json({ preferences: defaultAccessibilityPreferences });
+  })
+);
+
+router.put(
+  '/preferences/accessibility',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { preferences } = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!preferences || typeof preferences !== 'object') {
+      return res.status(400).json({ error: 'Invalid preferences payload' });
+    }
+
+    await ensureUserPreferencesTable();
+    const existing = await dbGet(
+      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'accessibility'`,
+      [userId]
+    );
+    const payload = JSON.stringify(preferences);
+    if (existing) {
+      await dbRun(
+        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'accessibility'`,
+        [payload, userId]
+      );
+    } else {
+      const { v4: uuidv4 } = await import('uuid');
+      await dbRun(
+        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'accessibility', ?)`,
+        [uuidv4(), userId, payload]
+      );
+    }
+
+    logger.info(`[settings] Accessibility preferences updated for user ${userId}`);
+    return res.json({ success: true });
+  })
+);
+
+// ===========================================
+// KEYBOARD SHORTCUTS
+// ===========================================
+
+const defaultShortcuts = {
+  aiAssistant: 'cmd+j',
+  aiSummarize: 'cmd+shift+s',
+  toggleSidebar: 'cmd+\\',
+  notifications: 'n n',
+  help: '?',
+};
+
+router.get(
+  '/preferences/shortcuts',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserPreferencesTable();
+    const row = await dbGet<{ preferences_data: string }>(
+      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'shortcuts'`,
+      [userId]
+    );
+    if (row?.preferences_data) {
+      try {
+        return res.json({ preferences: JSON.parse(row.preferences_data) });
+      } catch {
+        // fallthrough
+      }
+    }
+    return res.json({ preferences: defaultShortcuts });
+  })
+);
+
+router.put(
+  '/preferences/shortcuts',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const shortcuts = req.body;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!shortcuts || typeof shortcuts !== 'object') {
+      return res.status(400).json({ error: 'Invalid shortcuts payload' });
+    }
+
+    await ensureUserPreferencesTable();
+    const existing = await dbGet(
+      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'shortcuts'`,
+      [userId]
+    );
+    const payload = JSON.stringify(shortcuts);
+    if (existing) {
+      await dbRun(
+        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'shortcuts'`,
+        [payload, userId]
+      );
+    } else {
+      const { v4: uuidv4 } = await import('uuid');
+      await dbRun(
+        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'shortcuts', ?)`,
+        [uuidv4(), userId, payload]
+      );
+    }
+
+    logger.info(`[settings] Shortcuts updated for user ${userId}`);
+    return res.json({ success: true });
+  })
+);
+
+// ===========================================
+// DATA EXPORT & ACCOUNT DELETION (GDPR)
+// ===========================================
+
+/**
+ * POST /api/settings/export-data
+ * Create data export request (stub)
+ */
+router.post(
+  '/export-data',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    const { format, include } = req.body || {};
+    const requestId = `export-${Date.now()}`;
+
+    logger.info(`[settings] Export requested by user ${userId} format=${format || 'json'}`);
+
+    return res.json({
+      requestId,
+      status: 'processing',
+      etaHours: 48,
+      include,
+    });
+  })
+);
+
+/**
+ * POST /api/settings/request-deletion
+ * Account deletion request (stub)
+ */
+router.post(
+  '/request-deletion',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    const { reason } = req.body || {};
+    logger.warn(
+      `[settings] Account deletion requested by user ${userId}, reason=${reason || 'n/a'}`
+    );
+
+    return res.json({ success: true, message: 'Deletion request received' });
+  })
+);
+
+// ===========================================
+// GDPR CONSENTS & RETENTION
+// ===========================================
+
+const defaultConsents = {
+  usageAnalytics: true,
+  personalization: true,
+  marketingCommunications: false,
+  thirdPartySharing: false,
+  aiTraining: true,
+};
+
+const defaultRetention = {
+  period: '365d',
+};
+
+router.get(
+  '/gdpr/consents',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserPreferencesTable();
+    const row = await dbGet<{ preferences_data: string }>(
+      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'gdpr-consents'`,
+      [userId]
+    );
+    if (row?.preferences_data) {
+      try {
+        return res.json({ consents: JSON.parse(row.preferences_data) });
+      } catch {
+        // fallthrough
+      }
+    }
+    return res.json({ consents: defaultConsents });
+  })
+);
+
+router.put(
+  '/gdpr/consents',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { consents } = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!consents || typeof consents !== 'object')
+      return res.status(400).json({ error: 'Invalid consents payload' });
+
+    await ensureUserPreferencesTable();
+    const existing = await dbGet(
+      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'gdpr-consents'`,
+      [userId]
+    );
+    const payload = JSON.stringify(consents);
+    if (existing) {
+      await dbRun(
+        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'gdpr-consents'`,
+        [payload, userId]
+      );
+    } else {
+      const { v4: uuidv4 } = await import('uuid');
+      await dbRun(
+        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'gdpr-consents', ?)`,
+        [uuidv4(), userId, payload]
+      );
+    }
+
+    return res.json({ success: true });
+  })
+);
+
+router.get(
+  '/gdpr/retention',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserPreferencesTable();
+    const row = await dbGet<{ preferences_data: string }>(
+      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'gdpr-retention'`,
+      [userId]
+    );
+    if (row?.preferences_data) {
+      try {
+        return res.json({ retention: JSON.parse(row.preferences_data) });
+      } catch {
+        // fallthrough
+      }
+    }
+    return res.json({ retention: defaultRetention });
+  })
+);
+
+router.put(
+  '/gdpr/retention',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { retention } = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!retention || typeof retention !== 'object') {
+      return res.status(400).json({ error: 'Invalid retention payload' });
+    }
+
+    await ensureUserPreferencesTable();
+    const existing = await dbGet(
+      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'gdpr-retention'`,
+      [userId]
+    );
+    const payload = JSON.stringify(retention);
+    if (existing) {
+      await dbRun(
+        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'gdpr-retention'`,
+        [payload, userId]
+      );
+    } else {
+      const { v4: uuidv4 } = await import('uuid');
+      await dbRun(
+        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'gdpr-retention', ?)`,
+        [uuidv4(), userId, payload]
+      );
+    }
+
+    return res.json({ success: true });
+  })
+);
+
+// ===========================================
+// GDPR REQUESTS TABLE
+// ===========================================
+
+const ensureGdprRequestsTable = async () => {
+  await dbRun(`
+        CREATE TABLE IF NOT EXISTS gdpr_requests (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            type TEXT NOT NULL,
+            status TEXT DEFAULT 'pending',
+            reason TEXT,
+            download_url TEXT,
+            file_path TEXT,
+            expires_at TEXT,
+            scheduled_at TEXT,
+            processed_at TEXT,
+            completed_at TEXT,
+            error_message TEXT,
+            metadata TEXT DEFAULT '{}',
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    `);
+};
+
+/**
+ * GET /api/settings/gdpr/export-status
+ * Check status of user's export requests
+ */
+router.get(
+  '/gdpr/export-status',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureGdprRequestsTable();
+
+    const request = await dbGet<{
+      id: string;
+      status: string;
+      download_url: string;
+      expires_at: string;
+      created_at: string;
+    }>(
+      `SELECT id, status, download_url, expires_at, created_at 
+             FROM gdpr_requests 
+             WHERE user_id = ? AND type = 'export' 
+             ORDER BY created_at DESC LIMIT 1`,
+      [userId]
+    );
+
+    if (!request) {
+      return res.json({ request: null });
+    }
+
+    return res.json({
+      request: {
+        id: request.id,
+        status: request.status,
+        downloadUrl: request.download_url,
+        expiresAt: request.expires_at,
+        requestedAt: request.created_at,
+      },
+    });
+  })
+);
+
+/**
+ * POST /api/settings/gdpr/export-request
+ * Create a new data export request
+ */
+router.post(
+  '/gdpr/export-request',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureGdprRequestsTable();
+    await ensureUserPreferencesTable();
+
+    // Check for existing pending request
+    const existingRequest = await dbGet(
+      `SELECT id FROM gdpr_requests WHERE user_id = ? AND type = 'export' AND status IN ('pending', 'processing')`,
+      [userId]
+    );
+
+    if (existingRequest) {
+      return res.status(400).json({ error: 'An export request is already in progress' });
+    }
+
+    const { v4: uuidv4 } = await import('uuid');
+    const requestId = uuidv4();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days
+
+    // Create request record
+    await dbRun(
+      `INSERT INTO gdpr_requests (id, user_id, type, status, expires_at) VALUES (?, ?, 'export', 'processing', ?)`,
+      [requestId, userId, expiresAt]
+    );
+
+    // Gather user data (this would ideally be done async in a job queue)
+    try {
+      // Get user profile
+      const user = await dbGet(
+        `SELECT id, email, name, created_at, updated_at FROM users WHERE id = ?`,
+        [userId]
+      );
+
+      // Get user preferences
+      const preferences = await dbAll(
+        `SELECT preferences_type, preferences_data, created_at, updated_at FROM user_preferences WHERE user_id = ?`,
+        [userId]
+      );
+
+      // Get email signatures
+      const signatures = await dbAll(
+        `SELECT name, content, is_default, created_at FROM email_signatures WHERE user_id = ?`,
+        [userId]
+      );
+
+      // Get settings templates
+      const templates = await dbAll(
+        `SELECT name, description, settings_data, created_at FROM settings_templates WHERE user_id = ?`,
+        [userId]
+      );
+
+      // Compile export data
+      const exportData = {
+        version: '1.0.0',
+        exportedAt: new Date().toISOString(),
+        requestId,
+        user,
+        preferences: (preferences as any[]).map((p) => ({
+          type: p.preferences_type,
+          data: JSON.parse(p.preferences_data || '{}'),
+          createdAt: p.created_at,
+          updatedAt: p.updated_at,
+        })),
+        emailSignatures: signatures,
+        settingsTemplates: (templates as any[]).map((t) => ({
+          ...t,
+          settingsData: JSON.parse(t.settings_data || '{}'),
+        })),
+      };
+
+      // In a real implementation, we'd save this to a file and provide a download link
+      // For now, we'll store it in the metadata field
+      const exportJson = JSON.stringify(exportData, null, 2);
+
+      await dbRun(
+        `UPDATE gdpr_requests SET status = 'completed', metadata = ?, completed_at = datetime('now'), updated_at = datetime('now') WHERE id = ?`,
+        [exportJson, requestId]
+      );
+
+      logger.info(`[settings] GDPR export completed for user ${userId}, request ${requestId}`);
+
+      return res.json({
+        request: {
+          id: requestId,
+          status: 'completed',
+          requestedAt: new Date().toISOString(),
+          expiresAt,
+        },
+        success: true,
+      });
+    } catch (err: any) {
+      await dbRun(
+        `UPDATE gdpr_requests SET status = 'failed', error_message = ?, updated_at = datetime('now') WHERE id = ?`,
+        [err.message, requestId]
+      );
+      throw err;
+    }
+  })
+);
+
+/**
+ * GET /api/settings/gdpr/export-download/:requestId
+ * Download exported data
+ */
+router.get(
+  '/gdpr/export-download/:requestId',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { requestId } = req.params;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureGdprRequestsTable();
+
+    const request = await dbGet<{ metadata: string; expires_at: string; status: string }>(
+      `SELECT metadata, expires_at, status FROM gdpr_requests WHERE id = ? AND user_id = ? AND type = 'export'`,
+      [requestId, userId]
+    );
+
+    if (!request) {
+      return res.status(404).json({ error: 'Export request not found' });
+    }
+
+    if (request.status !== 'completed') {
+      return res.status(400).json({ error: 'Export is not yet ready' });
+    }
+
+    if (new Date(request.expires_at) < new Date()) {
+      return res.status(410).json({ error: 'Export has expired' });
+    }
+
+    // Return the data as JSON download
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="consultinity-data-export-${requestId}.json"`
+    );
+    return res.send(request.metadata);
+  })
+);
+
+/**
+ * POST /api/settings/gdpr/deletion-request
+ * Create a new account deletion request
+ */
+router.post(
+  '/gdpr/deletion-request',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { reason, password } = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureGdprRequestsTable();
+
+    // Check for existing pending deletion request
+    const existingRequest = await dbGet(
+      `SELECT id FROM gdpr_requests WHERE user_id = ? AND type = 'deletion' AND status IN ('pending', 'scheduled')`,
+      [userId]
+    );
+
+    if (existingRequest) {
+      return res.status(400).json({ error: 'A deletion request is already pending' });
+    }
+
+    // In production, verify password here
+    // const user = await dbGet('SELECT password_hash FROM users WHERE id = ?', [userId]);
+    // const isValid = await bcrypt.compare(password, user.password_hash);
+
+    const { v4: uuidv4 } = await import('uuid');
+    const requestId = uuidv4();
+    // Schedule deletion for 30 days from now (grace period)
+    const scheduledAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    await dbRun(
+      `INSERT INTO gdpr_requests (id, user_id, type, status, reason, scheduled_at) VALUES (?, ?, 'deletion', 'scheduled', ?, ?)`,
+      [requestId, userId, reason || '', scheduledAt]
+    );
+
+    logger.info(
+      `[settings] GDPR deletion request created for user ${userId}, scheduled for ${scheduledAt}`
+    );
+
+    return res.json({
+      request: {
+        id: requestId,
+        status: 'scheduled',
+        scheduledAt,
+        requestedAt: new Date().toISOString(),
+      },
+      success: true,
+    });
+  })
+);
+
+/**
+ * GET /api/settings/gdpr/deletion-status
+ * Check status of user's deletion request
+ */
+router.get(
+  '/gdpr/deletion-status',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureGdprRequestsTable();
+
+    const request = await dbGet<{
+      id: string;
+      status: string;
+      scheduled_at: string;
+      reason: string;
+      created_at: string;
+    }>(
+      `SELECT id, status, scheduled_at, reason, created_at 
+             FROM gdpr_requests 
+             WHERE user_id = ? AND type = 'deletion' AND status IN ('pending', 'scheduled')
+             ORDER BY created_at DESC LIMIT 1`,
+      [userId]
+    );
+
+    if (!request) {
+      return res.json({ request: null });
+    }
+
+    return res.json({
+      request: {
+        id: request.id,
+        status: request.status,
+        scheduledAt: request.scheduled_at,
+        reason: request.reason,
+        requestedAt: request.created_at,
+      },
+    });
+  })
+);
+
+/**
+ * POST /api/settings/gdpr/cancel-deletion
+ * Cancel a pending deletion request
+ */
+router.post(
+  '/gdpr/cancel-deletion',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { requestId } = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureGdprRequestsTable();
+
+    // Find active deletion request
+    const request = await dbGet(
+      `SELECT id FROM gdpr_requests WHERE user_id = ? AND type = 'deletion' AND status IN ('pending', 'scheduled')`,
+      [userId]
+    );
+
+    if (!request) {
+      return res.status(404).json({ error: 'No pending deletion request found' });
+    }
+
+    await dbRun(
+      `UPDATE gdpr_requests SET status = 'cancelled', updated_at = datetime('now') WHERE id = ?`,
+      [(request as any).id]
+    );
+
+    logger.info(`[settings] GDPR deletion request cancelled for user ${userId}`);
+
+    return res.json({ success: true });
+  })
+);
+
+// ===========================================
+// DASHBOARD PREFERENCES
+// ===========================================
+
+/**
+ * GET /api/settings/preferences/dashboard
+ * Get user's dashboard preferences
+ */
+router.get(
+  '/preferences/dashboard',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const prefs = await dbGet<{ preferences_data: string }>(
+        `SELECT preferences_data FROM user_preferences 
+                 WHERE user_id = ? AND preferences_type = 'dashboard'`,
+        [userId]
+      );
+
+      if (prefs?.preferences_data) {
+        return res.json({ preferences: JSON.parse(prefs.preferences_data) });
+      }
+
+      // Return defaults
+      return res.json({
+        preferences: {
+          defaultLandingPage: 'dashboard',
+          showGreeting: true,
+          compactMode: false,
+          autoRefreshInterval: 60,
+          widgets: {
+            tasks: true,
+            initiatives: true,
+            calendar: true,
+            aiInsights: true,
+            recentActivity: true,
+            quickActions: true,
+            metrics: true,
+          },
+        },
+      });
+    } catch (err: any) {
+      logger.error('[settings] Error fetching dashboard preferences:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * PUT /api/settings/preferences/dashboard
+ * Update user's dashboard preferences
+ */
+router.put(
+  '/preferences/dashboard',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { preferences } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    if (!preferences) {
+      return res.status(400).json({ error: 'Preferences object is required' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const existing = await dbGet(
+        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'dashboard'`,
+        [userId]
+      );
+
+      if (existing) {
+        await dbRun(
+          `UPDATE user_preferences SET 
+                        preferences_data = ?,
+                        updated_at = datetime('now')
+                     WHERE user_id = ? AND preferences_type = 'dashboard'`,
+          [JSON.stringify(preferences), userId]
+        );
+      } else {
+        const { v4: uuidv4 } = await import('uuid');
+        await dbRun(
+          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data)
+                     VALUES (?, ?, 'dashboard', ?)`,
+          [uuidv4(), userId, JSON.stringify(preferences)]
+        );
+      }
+
+      logger.info(`[settings] Dashboard preferences updated for user ${userId}`);
+
+      return res.json({ success: true });
+    } catch (err: any) {
+      logger.error('[settings] Error updating dashboard preferences:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// ===========================================
+// WORK PREFERENCES
+// ===========================================
+
+/**
+ * GET /api/settings/preferences/work
+ * Get user's work preferences
+ */
+router.get(
+  '/preferences/work',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const prefs = await dbGet<{ preferences_data: string }>(
+        `SELECT preferences_data FROM user_preferences 
+                 WHERE user_id = ? AND preferences_type = 'work'`,
+        [userId]
+      );
+
+      if (prefs?.preferences_data) {
+        return res.json({ preferences: JSON.parse(prefs.preferences_data) });
+      }
+
+      // Return defaults
+      return res.json({
+        preferences: {
+          defaultProjectView: 'kanban',
+          defaultTaskSort: 'priority',
+          weekStartDay: 'monday',
+          showCompletedTasks: false,
+          showSubtasks: true,
+          autoArchiveDays: 30,
+          taskDefaultDueDays: 7,
+          defaultTimeTracking: 'none',
+          defaultTaskPriority: 'medium',
+          defaultReminderBefore: '1day',
+          defaultSnoozeDuration: '1hour',
+          autoSnoozeOverdue: false,
+          enableFocusMode: true,
+          focusModeBlocksNotifications: true,
+          defaultFocusDuration: 25,
+        },
+      });
+    } catch (err: any) {
+      logger.error('[settings] Error fetching work preferences:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * PUT /api/settings/preferences/work
+ * Update user's work preferences
+ */
+router.put(
+  '/preferences/work',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { preferences } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    if (!preferences) {
+      return res.status(400).json({ error: 'Preferences object is required' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const existing = await dbGet(
+        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'work'`,
+        [userId]
+      );
+
+      if (existing) {
+        await dbRun(
+          `UPDATE user_preferences SET 
+                        preferences_data = ?,
+                        updated_at = datetime('now')
+                     WHERE user_id = ? AND preferences_type = 'work'`,
+          [JSON.stringify(preferences), userId]
+        );
+      } else {
+        const { v4: uuidv4 } = await import('uuid');
+        await dbRun(
+          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data)
+                     VALUES (?, ?, 'work', ?)`,
+          [uuidv4(), userId, JSON.stringify(preferences)]
+        );
+      }
+
+      logger.info(`[settings] Work preferences updated for user ${userId}`);
+
+      return res.json({ success: true });
+    } catch (err: any) {
+      logger.error('[settings] Error updating work preferences:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// ===========================================
+// WORKING HOURS
+// ===========================================
+
+/**
+ * GET /api/settings/working-hours
+ * Get user's working hours schedule
+ */
+router.get(
+  '/working-hours',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const prefs = await dbGet<{ preferences_data: string }>(
+        `SELECT preferences_data FROM user_preferences 
+                 WHERE user_id = ? AND preferences_type = 'working-hours'`,
+        [userId]
+      );
+
+      if (prefs?.preferences_data) {
+        const data = JSON.parse(prefs.preferences_data);
+        return res.json(data);
+      }
+
+      // Return defaults
+      return res.json({
+        timezone: 'Europe/Warsaw',
+        schedule: {
+          monday: { enabled: true, startTime: '09:00', endTime: '17:00' },
+          tuesday: { enabled: true, startTime: '09:00', endTime: '17:00' },
+          wednesday: { enabled: true, startTime: '09:00', endTime: '17:00' },
+          thursday: { enabled: true, startTime: '09:00', endTime: '17:00' },
+          friday: { enabled: true, startTime: '09:00', endTime: '17:00' },
+          saturday: { enabled: false, startTime: '09:00', endTime: '17:00' },
+          sunday: { enabled: false, startTime: '09:00', endTime: '17:00' },
+        },
+      });
+    } catch (err: any) {
+      logger.error('[settings] Error fetching working hours:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * PUT /api/settings/working-hours
+ * Update user's working hours schedule
+ */
+router.put(
+  '/working-hours',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { timezone, schedule } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    if (!schedule) {
+      return res.status(400).json({ error: 'Schedule is required' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const data = JSON.stringify({ timezone, schedule });
+
+      const existing = await dbGet(
+        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'working-hours'`,
+        [userId]
+      );
+
+      if (existing) {
+        await dbRun(
+          `UPDATE user_preferences SET 
+                        preferences_data = ?,
+                        updated_at = datetime('now')
+                     WHERE user_id = ? AND preferences_type = 'working-hours'`,
+          [data, userId]
+        );
+      } else {
+        const { v4: uuidv4 } = await import('uuid');
+        await dbRun(
+          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data)
+                     VALUES (?, ?, 'working-hours', ?)`,
+          [uuidv4(), userId, data]
+        );
+      }
+
+      logger.info(`[settings] Working hours updated for user ${userId}`);
+
+      return res.json({ success: true });
+    } catch (err: any) {
+      logger.error('[settings] Error updating working hours:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// ===========================================
+// EMAIL SIGNATURES
+// ===========================================
+
+/**
+ * Ensure email_signatures table exists
+ */
+const ensureEmailSignaturesTable = async () => {
+  await dbRun(`
+        CREATE TABLE IF NOT EXISTS email_signatures (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            content TEXT NOT NULL,
+            is_default INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    `);
+  await dbRun(`CREATE INDEX IF NOT EXISTS idx_email_sig_user ON email_signatures(user_id)`);
+};
+
+/**
+ * GET /api/settings/signatures
+ * Get user's email signatures
+ */
+router.get(
+  '/signatures',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureEmailSignaturesTable();
+
+      const signatures = await dbAll(
+        `SELECT id, name, content, is_default as isDefault, created_at as createdAt 
+                 FROM email_signatures WHERE user_id = ? ORDER BY is_default DESC, created_at DESC`,
+        [userId]
+      );
+
+      return res.json({
+        signatures: signatures.map((s: any) => ({ ...s, isDefault: !!s.isDefault })),
+      });
+    } catch (err: any) {
+      logger.error('[settings] Error fetching signatures:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * POST /api/settings/signatures
+ * Create a new email signature
+ */
+router.post(
+  '/signatures',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { name, content, isDefault } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    if (!name || !content) {
+      return res.status(400).json({ error: 'Name and content are required' });
+    }
+
+    try {
+      await ensureEmailSignaturesTable();
+
+      const { v4: uuidv4 } = await import('uuid');
+      const id = uuidv4();
+
+      // If setting as default, unset other defaults
+      if (isDefault) {
+        await dbRun(`UPDATE email_signatures SET is_default = 0 WHERE user_id = ?`, [userId]);
+      }
+
+      await dbRun(
+        `INSERT INTO email_signatures (id, user_id, name, content, is_default)
+                 VALUES (?, ?, ?, ?, ?)`,
+        [id, userId, name, content, isDefault ? 1 : 0]
+      );
+
+      logger.info(`[settings] Signature created for user ${userId}`);
+
+      return res.json({
+        signature: {
+          id,
+          name,
+          content,
+          isDefault: !!isDefault,
+          createdAt: new Date().toISOString(),
+        },
+      });
+    } catch (err: any) {
+      logger.error('[settings] Error creating signature:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * PUT /api/settings/signatures/:id
+ * Update an email signature
+ */
+router.put(
+  '/signatures/:id',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { id } = req.params;
+    const { name, content } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureEmailSignaturesTable();
+
+      const existing = await dbGet(`SELECT id FROM email_signatures WHERE id = ? AND user_id = ?`, [
+        id,
+        userId,
+      ]);
+
+      if (!existing) {
+        return res.status(404).json({ error: 'Signature not found' });
+      }
+
+      await dbRun(
+        `UPDATE email_signatures SET 
+                    name = COALESCE(?, name),
+                    content = COALESCE(?, content),
+                    updated_at = datetime('now')
+                 WHERE id = ? AND user_id = ?`,
+        [name, content, id, userId]
+      );
+
+      logger.info(`[settings] Signature ${id} updated for user ${userId}`);
+
+      return res.json({ success: true });
+    } catch (err: any) {
+      logger.error('[settings] Error updating signature:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * PUT /api/settings/signatures/:id/default
+ * Set signature as default
+ */
+router.put(
+  '/signatures/:id/default',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { id } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureEmailSignaturesTable();
+
+      // Unset all defaults for user
+      await dbRun(`UPDATE email_signatures SET is_default = 0 WHERE user_id = ?`, [userId]);
+
+      // Set this one as default
+      await dbRun(
+        `UPDATE email_signatures SET is_default = 1, updated_at = datetime('now') 
+                 WHERE id = ? AND user_id = ?`,
+        [id, userId]
+      );
+
+      logger.info(`[settings] Signature ${id} set as default for user ${userId}`);
+
+      return res.json({ success: true });
+    } catch (err: any) {
+      logger.error('[settings] Error setting default signature:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * DELETE /api/settings/signatures/:id
+ * Delete an email signature
+ */
+router.delete(
+  '/signatures/:id',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { id } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureEmailSignaturesTable();
+
+      await dbRun(`DELETE FROM email_signatures WHERE id = ? AND user_id = ?`, [id, userId]);
+
+      logger.info(`[settings] Signature ${id} deleted for user ${userId}`);
+
+      return res.json({ success: true });
+    } catch (err: any) {
+      logger.error('[settings] Error deleting signature:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// ===========================================
+// AI SETTINGS PREFERENCES
+// ===========================================
+
+const defaultAIInstructions = {
+  systemPrompt: '',
+  responseStyle: 'balanced',
+  includeContext: true,
+  maxContextLength: 4000,
+};
+
+const defaultAIModel = {
+  preferredModel: 'gpt-4',
+  fallbackModel: 'gpt-3.5-turbo',
+  autoSelect: true,
+  preferSpeed: false,
+  preferQuality: true,
+};
+
+const defaultAIParameters = {
+  temperature: 0.7,
+  maxTokens: 2048,
+  topP: 1,
+  frequencyPenalty: 0,
+  presencePenalty: 0,
+  streamResponse: true,
+};
+
+const defaultAIPersonality = {
+  tone: 'professional',
+  formality: 'balanced',
+  verbosity: 'concise',
+  creativity: 'moderate',
+  customInstructions: '',
+};
+
+const defaultAIAutoComplete = {
+  enabled: true,
+  triggerDelay: 500,
+  minChars: 3,
+  suggestions: 3,
+  contexts: ['tasks', 'comments', 'documents'],
+};
+
+const defaultAIMemory = {
+  enabled: true,
+  retentionDays: 30,
+  includeConversations: true,
+  includePreferences: true,
+  includeContext: true,
+};
+
+const defaultAIVoice = {
+  ttsEnabled: false,
+  sttEnabled: false,
+  voice: 'alloy',
+  speed: 1.0,
+  autoPlay: false,
+};
+
+/**
+ * GET /api/settings/preferences/ai-instructions
+ */
+router.get(
+  '/preferences/ai-instructions',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserPreferencesTable();
+    const row = await dbGet<{ preferences_data: string }>(
+      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-instructions'`,
+      [userId]
+    );
+    if (row?.preferences_data) {
+      try {
+        return res.json({ preferences: JSON.parse(row.preferences_data) });
+      } catch {
+        // fallthrough
+      }
+    }
+    return res.json({ preferences: defaultAIInstructions });
+  })
+);
+
+/**
+ * PUT /api/settings/preferences/ai-instructions
+ */
+router.put(
+  '/preferences/ai-instructions',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { preferences } = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!preferences || typeof preferences !== 'object') {
+      return res.status(400).json({ error: 'Invalid preferences payload' });
+    }
+
+    await ensureUserPreferencesTable();
+    const existing = await dbGet(
+      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-instructions'`,
+      [userId]
+    );
+    const payload = JSON.stringify(preferences);
+    if (existing) {
+      await dbRun(
+        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'ai-instructions'`,
+        [payload, userId]
+      );
+    } else {
+      const { v4: uuidv4 } = await import('uuid');
+      await dbRun(
+        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'ai-instructions', ?)`,
+        [uuidv4(), userId, payload]
+      );
+    }
+
+    logger.info(`[settings] AI instructions updated for user ${userId}`);
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * GET /api/settings/preferences/ai-model
+ */
+router.get(
+  '/preferences/ai-model',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserPreferencesTable();
+    const row = await dbGet<{ preferences_data: string }>(
+      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-model'`,
+      [userId]
+    );
+    if (row?.preferences_data) {
+      try {
+        return res.json({ preferences: JSON.parse(row.preferences_data) });
+      } catch {
+        // fallthrough
+      }
+    }
+    return res.json({ preferences: defaultAIModel });
+  })
+);
+
+/**
+ * PUT /api/settings/preferences/ai-model
+ */
+router.put(
+  '/preferences/ai-model',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { preferences } = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!preferences || typeof preferences !== 'object') {
+      return res.status(400).json({ error: 'Invalid preferences payload' });
+    }
+
+    await ensureUserPreferencesTable();
+    const existing = await dbGet(
+      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-model'`,
+      [userId]
+    );
+    const payload = JSON.stringify(preferences);
+    if (existing) {
+      await dbRun(
+        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'ai-model'`,
+        [payload, userId]
+      );
+    } else {
+      const { v4: uuidv4 } = await import('uuid');
+      await dbRun(
+        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'ai-model', ?)`,
+        [uuidv4(), userId, payload]
+      );
+    }
+
+    logger.info(`[settings] AI model preferences updated for user ${userId}`);
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * GET /api/settings/preferences/ai-parameters
+ */
+router.get(
+  '/preferences/ai-parameters',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserPreferencesTable();
+    const row = await dbGet<{ preferences_data: string }>(
+      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-parameters'`,
+      [userId]
+    );
+    if (row?.preferences_data) {
+      try {
+        return res.json({ preferences: JSON.parse(row.preferences_data) });
+      } catch {
+        // fallthrough
+      }
+    }
+    return res.json({ preferences: defaultAIParameters });
+  })
+);
+
+/**
+ * PUT /api/settings/preferences/ai-parameters
+ */
+router.put(
+  '/preferences/ai-parameters',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { preferences } = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!preferences || typeof preferences !== 'object') {
+      return res.status(400).json({ error: 'Invalid preferences payload' });
+    }
+
+    await ensureUserPreferencesTable();
+    const existing = await dbGet(
+      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-parameters'`,
+      [userId]
+    );
+    const payload = JSON.stringify(preferences);
+    if (existing) {
+      await dbRun(
+        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'ai-parameters'`,
+        [payload, userId]
+      );
+    } else {
+      const { v4: uuidv4 } = await import('uuid');
+      await dbRun(
+        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'ai-parameters', ?)`,
+        [uuidv4(), userId, payload]
+      );
+    }
+
+    logger.info(`[settings] AI parameters updated for user ${userId}`);
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * GET /api/settings/preferences/ai-personality
+ */
+router.get(
+  '/preferences/ai-personality',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserPreferencesTable();
+    const row = await dbGet<{ preferences_data: string }>(
+      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-personality'`,
+      [userId]
+    );
+    if (row?.preferences_data) {
+      try {
+        return res.json({ preferences: JSON.parse(row.preferences_data) });
+      } catch {
+        // fallthrough
+      }
+    }
+    return res.json({ preferences: defaultAIPersonality });
+  })
+);
+
+/**
+ * PUT /api/settings/preferences/ai-personality
+ */
+router.put(
+  '/preferences/ai-personality',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { preferences } = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!preferences || typeof preferences !== 'object') {
+      return res.status(400).json({ error: 'Invalid preferences payload' });
+    }
+
+    await ensureUserPreferencesTable();
+    const existing = await dbGet(
+      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-personality'`,
+      [userId]
+    );
+    const payload = JSON.stringify(preferences);
+    if (existing) {
+      await dbRun(
+        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'ai-personality'`,
+        [payload, userId]
+      );
+    } else {
+      const { v4: uuidv4 } = await import('uuid');
+      await dbRun(
+        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'ai-personality', ?)`,
+        [uuidv4(), userId, payload]
+      );
+    }
+
+    logger.info(`[settings] AI personality updated for user ${userId}`);
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * GET /api/settings/preferences/ai-autocomplete
+ */
+router.get(
+  '/preferences/ai-autocomplete',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserPreferencesTable();
+    const row = await dbGet<{ preferences_data: string }>(
+      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-autocomplete'`,
+      [userId]
+    );
+    if (row?.preferences_data) {
+      try {
+        return res.json({ preferences: JSON.parse(row.preferences_data) });
+      } catch {
+        // fallthrough
+      }
+    }
+    return res.json({ preferences: defaultAIAutoComplete });
+  })
+);
+
+/**
+ * PUT /api/settings/preferences/ai-autocomplete
+ */
+router.put(
+  '/preferences/ai-autocomplete',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { preferences } = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!preferences || typeof preferences !== 'object') {
+      return res.status(400).json({ error: 'Invalid preferences payload' });
+    }
+
+    await ensureUserPreferencesTable();
+    const existing = await dbGet(
+      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-autocomplete'`,
+      [userId]
+    );
+    const payload = JSON.stringify(preferences);
+    if (existing) {
+      await dbRun(
+        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'ai-autocomplete'`,
+        [payload, userId]
+      );
+    } else {
+      const { v4: uuidv4 } = await import('uuid');
+      await dbRun(
+        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'ai-autocomplete', ?)`,
+        [uuidv4(), userId, payload]
+      );
+    }
+
+    logger.info(`[settings] AI autocomplete updated for user ${userId}`);
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * GET /api/settings/preferences/ai-memory
+ */
+router.get(
+  '/preferences/ai-memory',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserPreferencesTable();
+    const row = await dbGet<{ preferences_data: string }>(
+      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-memory'`,
+      [userId]
+    );
+    if (row?.preferences_data) {
+      try {
+        return res.json({ preferences: JSON.parse(row.preferences_data) });
+      } catch {
+        // fallthrough
+      }
+    }
+    return res.json({ preferences: defaultAIMemory });
+  })
+);
+
+/**
+ * PUT /api/settings/preferences/ai-memory
+ */
+router.put(
+  '/preferences/ai-memory',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { preferences } = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!preferences || typeof preferences !== 'object') {
+      return res.status(400).json({ error: 'Invalid preferences payload' });
+    }
+
+    await ensureUserPreferencesTable();
+    const existing = await dbGet(
+      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-memory'`,
+      [userId]
+    );
+    const payload = JSON.stringify(preferences);
+    if (existing) {
+      await dbRun(
+        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'ai-memory'`,
+        [payload, userId]
+      );
+    } else {
+      const { v4: uuidv4 } = await import('uuid');
+      await dbRun(
+        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'ai-memory', ?)`,
+        [uuidv4(), userId, payload]
+      );
+    }
+
+    logger.info(`[settings] AI memory preferences updated for user ${userId}`);
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * DELETE /api/settings/preferences/ai-memory/clear
+ * Clear AI memory/context
+ */
+router.delete(
+  '/preferences/ai-memory/clear',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    // Clear user's AI conversation history if exists
+    try {
+      await dbRun(`DELETE FROM conversations WHERE user_id = ?`, [userId]);
+    } catch {
+      // Table may not exist, ignore
+    }
+
+    logger.info(`[settings] AI memory cleared for user ${userId}`);
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * GET /api/settings/preferences/ai-voice
+ */
+router.get(
+  '/preferences/ai-voice',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserPreferencesTable();
+    const row = await dbGet<{ preferences_data: string }>(
+      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-voice'`,
+      [userId]
+    );
+    if (row?.preferences_data) {
+      try {
+        return res.json({ preferences: JSON.parse(row.preferences_data) });
+      } catch {
+        // fallthrough
+      }
+    }
+    return res.json({ preferences: defaultAIVoice });
+  })
+);
+
+/**
+ * PUT /api/settings/preferences/ai-voice
+ */
+router.put(
+  '/preferences/ai-voice',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { preferences } = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!preferences || typeof preferences !== 'object') {
+      return res.status(400).json({ error: 'Invalid preferences payload' });
+    }
+
+    await ensureUserPreferencesTable();
+    const existing = await dbGet(
+      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-voice'`,
+      [userId]
+    );
+    const payload = JSON.stringify(preferences);
+    if (existing) {
+      await dbRun(
+        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'ai-voice'`,
+        [payload, userId]
+      );
+    } else {
+      const { v4: uuidv4 } = await import('uuid');
+      await dbRun(
+        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'ai-voice', ?)`,
+        [uuidv4(), userId, payload]
+      );
+    }
+
+    logger.info(`[settings] AI voice preferences updated for user ${userId}`);
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * GET /api/settings/ai-usage
+ * Get AI usage statistics for the user
+ */
+router.get(
+  '/ai-usage',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const period = (req.query.period as string) || '30d';
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    // Calculate date range
+    const days = period === '7d' ? 7 : period === '90d' ? 90 : 30;
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    const startDateStr = startDate.toISOString();
+
+    try {
+      // Try to get real usage from llm_logs if available
+      const usageStats = await dbGet<{
+        total_requests: number;
+        total_tokens: number;
+        total_cost: number;
+      }>(
+        `SELECT 
+                    COUNT(*) as total_requests,
+                    COALESCE(SUM(tokens_used), 0) as total_tokens,
+                    COALESCE(SUM(cost), 0) as total_cost
+                 FROM llm_logs 
+                 WHERE user_id = ? AND created_at >= ?`,
+        [userId, startDateStr]
+      );
+
+      // Get usage by feature
+      const usageByFeature = await dbAll(
+        `SELECT 
+                    COALESCE(feature, 'general') as feature,
+                    COUNT(*) as count,
+                    COALESCE(SUM(tokens_used), 0) as tokens,
+                    COALESCE(SUM(cost), 0) as cost
+                 FROM llm_logs 
+                 WHERE user_id = ? AND created_at >= ?
+                 GROUP BY feature`,
+        [userId, startDateStr]
+      );
+
+      // Get daily usage
+      const dailyUsage = await dbAll(
+        `SELECT 
+                    DATE(created_at) as date,
+                    COUNT(*) as requests,
+                    COALESCE(SUM(tokens_used), 0) as tokens
+                 FROM llm_logs 
+                 WHERE user_id = ? AND created_at >= ?
+                 GROUP BY DATE(created_at)
+                 ORDER BY date`,
+        [userId, startDateStr]
+      );
+
+      return res.json({
+        period,
+        stats: {
+          totalRequests: usageStats?.total_requests || 0,
+          totalTokens: usageStats?.total_tokens || 0,
+          totalCost: usageStats?.total_cost || 0,
+          avgResponseTime: 1.5,
+          successRate: 99.5,
+          limit: 1000000,
+          used: usageStats?.total_tokens || 0,
+        },
+        usageByFeature: usageByFeature || [],
+        dailyUsage: dailyUsage || [],
+      });
+    } catch (err: any) {
+      // If llm_logs table doesn't exist, return empty stats
+      logger.warn('[settings] Could not fetch AI usage stats:', err.message);
+      return res.json({
+        period,
+        stats: {
+          totalRequests: 0,
+          totalTokens: 0,
+          totalCost: 0,
+          avgResponseTime: 0,
+          successRate: 100,
+          limit: 1000000,
+          used: 0,
+        },
+        usageByFeature: [],
+        dailyUsage: [],
+      });
+    }
+  })
+);
+
+// ===========================================
+// ADVANCED: SETTINGS TEMPLATES
+// ===========================================
+
+const ensureSettingsTemplatesTable = async () => {
+  await dbRun(`
+        CREATE TABLE IF NOT EXISTS settings_templates (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            icon TEXT DEFAULT '📋',
+            type TEXT DEFAULT 'custom',
+            settings_data TEXT NOT NULL,
+            is_active INTEGER DEFAULT 1,
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    `);
+};
+
+/**
+ * GET /api/settings/templates
+ */
+router.get(
+  '/templates',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureSettingsTemplatesTable();
+
+    const templates = await dbAll(
+      `SELECT id, name, description, icon, type, settings_data as settingsData, created_at as createdAt
+             FROM settings_templates 
+             WHERE user_id = ? AND is_active = 1
+             ORDER BY created_at DESC`,
+      [userId]
+    );
+
+    // Add system templates
+    const systemTemplates = [
+      {
+        id: 'minimal',
+        name: 'Minimal',
+        description: 'Clean, distraction-free settings',
+        icon: '🎯',
+        type: 'system',
+      },
+      {
+        id: 'power-user',
+        name: 'Power User',
+        description: 'All features enabled',
+        icon: '⚡',
+        type: 'system',
+        isRecommended: true,
+      },
+      {
+        id: 'privacy-focused',
+        name: 'Privacy Focused',
+        description: 'Maximum privacy settings',
+        icon: '🔒',
+        type: 'system',
+      },
+      {
+        id: 'enterprise',
+        name: 'Enterprise',
+        description: 'Security and compliance focused',
+        icon: '🏢',
+        type: 'system',
+      },
+    ];
+
+    return res.json({ templates: [...systemTemplates, ...templates] });
+  })
+);
+
+/**
+ * POST /api/settings/templates
+ */
+router.post(
+  '/templates',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { name, description, icon, settingsData } = req.body;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!name || !settingsData)
+      return res.status(400).json({ error: 'Name and settingsData required' });
+
+    await ensureSettingsTemplatesTable();
+    const { v4: uuidv4 } = await import('uuid');
+    const id = uuidv4();
+
+    await dbRun(
+      `INSERT INTO settings_templates (id, user_id, name, description, icon, type, settings_data)
+             VALUES (?, ?, ?, ?, ?, 'custom', ?)`,
+      [id, userId, name, description || '', icon || '📋', JSON.stringify(settingsData)]
+    );
+
+    logger.info(`[settings] Template created for user ${userId}`);
+    return res.json({ success: true, template: { id, name, description, icon, type: 'custom' } });
+  })
+);
+
+/**
+ * PUT /api/settings/templates/:id
+ */
+router.put(
+  '/templates/:id',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { id } = req.params;
+    const { name, description, icon, settingsData } = req.body;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureSettingsTemplatesTable();
+    await dbRun(
+      `UPDATE settings_templates SET 
+                name = COALESCE(?, name),
+                description = COALESCE(?, description),
+                icon = COALESCE(?, icon),
+                settings_data = COALESCE(?, settings_data),
+                updated_at = datetime('now')
+             WHERE id = ? AND user_id = ?`,
+      [name, description, icon, settingsData ? JSON.stringify(settingsData) : null, id, userId]
+    );
+
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * DELETE /api/settings/templates/:id
+ */
+router.delete(
+  '/templates/:id',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { id } = req.params;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureSettingsTemplatesTable();
+    await dbRun(`UPDATE settings_templates SET is_active = 0 WHERE id = ? AND user_id = ?`, [
+      id,
+      userId,
+    ]);
+
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * POST /api/settings/templates/:id/apply
+ */
+router.post(
+  '/templates/:id/apply',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { id } = req.params;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureSettingsTemplatesTable();
+
+    // System templates have predefined settings
+    const systemSettings: Record<string, any> = {
+      minimal: { notifications: { email: false, push: false }, aiAutoComplete: { enabled: false } },
+      'power-user': { aiAutoComplete: { enabled: true }, shortcuts: { enabled: true } },
+      'privacy-focused': { privacy: { shareActivityWithAI: false, showOnlineStatus: false } },
+      enterprise: { privacy: { showOnlineStatus: false }, security: { mfaRequired: true } },
+    };
+
+    if (systemSettings[id]) {
+      // Apply system template (would update user_preferences)
+      logger.info(`[settings] Applied system template ${id} for user ${userId}`);
+      return res.json({ success: true, applied: systemSettings[id] });
+    }
+
+    // Custom template
+    const template = await dbGet<{ settings_data: string }>(
+      `SELECT settings_data FROM settings_templates WHERE id = ? AND user_id = ?`,
+      [id, userId]
+    );
+
+    if (!template) return res.status(404).json({ error: 'Template not found' });
+
+    logger.info(`[settings] Applied custom template ${id} for user ${userId}`);
+    return res.json({ success: true, applied: JSON.parse(template.settings_data) });
+  })
+);
+
+// ===========================================
+// ADVANCED: SETTINGS HISTORY
+// ===========================================
+
+const ensureSettingsAuditLogTable = async () => {
+  await dbRun(`
+        CREATE TABLE IF NOT EXISTS settings_audit_log (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            category TEXT NOT NULL,
+            setting_key TEXT NOT NULL,
+            action TEXT NOT NULL,
+            old_value TEXT,
+            new_value TEXT,
+            device TEXT,
+            ip_address TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    `);
+};
+
+/**
+ * GET /api/settings/history
+ */
+router.get(
+  '/history',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const category = req.query.category as string;
+    const days = parseInt(req.query.days as string) || 30;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureSettingsAuditLogTable();
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    let query = `SELECT id, category, setting_key as setting, action, old_value as oldValue, 
+                     new_value as newValue, device, ip_address as ipAddress, created_at as timestamp
+                     FROM settings_audit_log 
+                     WHERE user_id = ? AND created_at >= ?`;
+    const params: any[] = [userId, startDate.toISOString()];
+
+    if (category && category !== 'all') {
+      query += ` AND category = ?`;
+      params.push(category);
+    }
+
+    query += ` ORDER BY created_at DESC LIMIT 100`;
+
+    const entries = await dbAll(query, params);
+
+    // Get stats
+    const stats = await dbGet<{ total: number; today: number }>(
+      `SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN DATE(created_at) = DATE('now') THEN 1 ELSE 0 END) as today
+             FROM settings_audit_log WHERE user_id = ?`,
+      [userId]
+    );
+
+    return res.json({
+      entries,
+      stats: {
+        total: stats?.total || 0,
+        today: stats?.today || 0,
+        categories: 7,
+      },
+    });
+  })
+);
+
+/**
+ * POST /api/settings/history/restore/:id
+ */
+router.post(
+  '/history/restore/:id',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { id } = req.params;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureSettingsAuditLogTable();
+
+    const entry = await dbGet<{ old_value: string; category: string; setting_key: string }>(
+      `SELECT old_value, category, setting_key FROM settings_audit_log WHERE id = ? AND user_id = ?`,
+      [id, userId]
+    );
+
+    if (!entry || !entry.old_value) {
+      return res.status(404).json({ error: 'History entry not found or cannot be restored' });
+    }
+
+    // Log the restore action
+    const { v4: uuidv4 } = await import('uuid');
+    await dbRun(
+      `INSERT INTO settings_audit_log (id, user_id, category, setting_key, action, old_value, new_value)
+             VALUES (?, ?, ?, ?, 'restored', NULL, ?)`,
+      [uuidv4(), userId, entry.category, entry.setting_key, entry.old_value]
+    );
+
+    logger.info(`[settings] Restored setting ${entry.setting_key} for user ${userId}`);
+    return res.json({ success: true, restoredValue: JSON.parse(entry.old_value) });
+  })
+);
+
+// ===========================================
+// ADVANCED: SETTINGS EXPORT/IMPORT
+// ===========================================
+
+/**
+ * POST /api/settings/export
+ */
+router.post(
+  '/export',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { categories } = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserPreferencesTable();
+
+    // Get all user preferences
+    const preferences = await dbAll(
+      `SELECT preferences_type, preferences_data FROM user_preferences WHERE user_id = ?`,
+      [userId]
+    );
+
+    const exportData: Record<string, any> = {};
+    for (const pref of preferences as { preferences_type: string; preferences_data: string }[]) {
+      // Filter by categories if specified
+      if (categories && !categories.includes(pref.preferences_type)) continue;
+      try {
+        exportData[pref.preferences_type] = JSON.parse(pref.preferences_data);
+      } catch {
+        exportData[pref.preferences_type] = pref.preferences_data;
+      }
+    }
+
+    const exportPayload = {
+      version: '1.0.0',
+      exportedAt: new Date().toISOString(),
+      userId,
+      settings: exportData,
+    };
+
+    logger.info(`[settings] Exported settings for user ${userId}`);
+    return res.json({ success: true, data: exportPayload });
+  })
+);
+
+/**
+ * POST /api/settings/import
+ */
+router.post(
+  '/import',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { data, overwrite = false } = req.body;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!data || !data.settings) return res.status(400).json({ error: 'Invalid import data' });
+
+    await ensureUserPreferencesTable();
+
+    const imported: string[] = [];
+    const skipped: string[] = [];
+
+    for (const [type, value] of Object.entries(data.settings)) {
+      const existing = await dbGet(
+        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = ?`,
+        [userId, type]
+      );
+
+      if (existing && !overwrite) {
+        skipped.push(type);
+        continue;
+      }
+
+      const payload = JSON.stringify(value);
+
+      if (existing) {
+        await dbRun(
+          `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') 
+                     WHERE user_id = ? AND preferences_type = ?`,
+          [payload, userId, type]
+        );
+      } else {
+        const { v4: uuidv4 } = await import('uuid');
+        await dbRun(
+          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, ?, ?)`,
+          [uuidv4(), userId, type, payload]
+        );
+      }
+      imported.push(type);
+    }
+
+    logger.info(`[settings] Imported ${imported.length} settings for user ${userId}`);
+    return res.json({ success: true, imported, skipped });
+  })
+);
+
+// ===========================================
+// ADVANCED: USER API KEYS
+// ===========================================
+
+const ensureUserApiKeysTable = async () => {
+  await dbRun(`
+        CREATE TABLE IF NOT EXISTS user_api_keys (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            key_hash TEXT NOT NULL,
+            key_prefix TEXT NOT NULL,
+            permissions TEXT DEFAULT '[]',
+            rate_limit INTEGER DEFAULT 1000,
+            last_used_at TEXT,
+            expires_at TEXT,
+            is_active INTEGER DEFAULT 1,
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    `);
+};
+
+const generateApiKey = (): string => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let key = 'ck_'; // consultinity key prefix
+  for (let i = 0; i < 32; i++) {
+    key += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return key;
+};
+
+/**
+ * GET /api/settings/api-keys
+ */
+router.get(
+  '/api-keys',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserApiKeysTable();
+
+    const keys = await dbAll(
+      `SELECT id, name, key_prefix as keyPrefix, permissions, rate_limit as rateLimit,
+                    last_used_at as lastUsedAt, expires_at as expiresAt, is_active as isActive,
+                    created_at as createdAt
+             FROM user_api_keys WHERE user_id = ? ORDER BY created_at DESC`,
+      [userId]
+    );
+
+    return res.json({ keys });
+  })
+);
+
+/**
+ * POST /api/settings/api-keys
+ */
+router.post(
+  '/api-keys',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { name, permissions, rateLimit, expiresAt } = req.body;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!name) return res.status(400).json({ error: 'Name is required' });
+
+    await ensureUserApiKeysTable();
+
+    const { v4: uuidv4 } = await import('uuid');
+    const id = uuidv4();
+    const apiKey = generateApiKey();
+    const keyPrefix = apiKey.substring(0, 10);
+
+    // In production, hash the key before storing
+    const keyHash = apiKey; // Should use bcrypt in production
+
+    await dbRun(
+      `INSERT INTO user_api_keys (id, user_id, name, key_hash, key_prefix, permissions, rate_limit, expires_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        userId,
+        name,
+        keyHash,
+        keyPrefix,
+        JSON.stringify(permissions || []),
+        rateLimit || 1000,
+        expiresAt || null,
+      ]
+    );
+
+    logger.info(`[settings] API key created for user ${userId}`);
+
+    // Return the full key only once (during creation)
+    return res.json({
+      success: true,
+      key: { id, name, key: apiKey, keyPrefix, createdAt: new Date().toISOString() },
+    });
+  })
+);
+
+/**
+ * PUT /api/settings/api-keys/:id
+ */
+router.put(
+  '/api-keys/:id',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { id } = req.params;
+    const { name, permissions, rateLimit, isActive } = req.body;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserApiKeysTable();
+
+    await dbRun(
+      `UPDATE user_api_keys SET 
+                name = COALESCE(?, name),
+                permissions = COALESCE(?, permissions),
+                rate_limit = COALESCE(?, rate_limit),
+                is_active = COALESCE(?, is_active),
+                updated_at = datetime('now')
+             WHERE id = ? AND user_id = ?`,
+      [name, permissions ? JSON.stringify(permissions) : null, rateLimit, isActive, id, userId]
+    );
+
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * DELETE /api/settings/api-keys/:id
+ */
+router.delete(
+  '/api-keys/:id',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { id } = req.params;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserApiKeysTable();
+    await dbRun(`DELETE FROM user_api_keys WHERE id = ? AND user_id = ?`, [id, userId]);
+
+    logger.info(`[settings] API key ${id} deleted for user ${userId}`);
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * POST /api/settings/api-keys/:id/rotate
+ */
+router.post(
+  '/api-keys/:id/rotate',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { id } = req.params;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserApiKeysTable();
+
+    const newKey = generateApiKey();
+    const keyPrefix = newKey.substring(0, 10);
+
+    await dbRun(
+      `UPDATE user_api_keys SET key_hash = ?, key_prefix = ?, updated_at = datetime('now')
+             WHERE id = ? AND user_id = ?`,
+      [newKey, keyPrefix, id, userId]
+    );
+
+    logger.info(`[settings] API key ${id} rotated for user ${userId}`);
+    return res.json({ success: true, key: newKey, keyPrefix });
+  })
+);
+
+// ===========================================
+// ADVANCED: USER WEBHOOKS
+// ===========================================
+
+const ensureUserWebhooksTable = async () => {
+  await dbRun(`
+        CREATE TABLE IF NOT EXISTS user_webhooks (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            url TEXT NOT NULL,
+            events TEXT NOT NULL,
+            secret TEXT,
+            headers TEXT DEFAULT '{}',
+            is_active INTEGER DEFAULT 1,
+            last_triggered_at TEXT,
+            last_status INTEGER,
+            failure_count INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    `);
+};
+
+/**
+ * GET /api/settings/webhooks
+ */
+router.get(
+  '/webhooks',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserWebhooksTable();
+
+    const webhooks = await dbAll(
+      `SELECT id, name, url, events, is_active as isActive, 
+                    last_triggered_at as lastTriggeredAt, last_status as lastStatus,
+                    failure_count as failureCount, created_at as createdAt
+             FROM user_webhooks WHERE user_id = ? ORDER BY created_at DESC`,
+      [userId]
+    );
+
+    // Parse events JSON
+    const parsed = (webhooks as any[]).map((w) => ({
+      ...w,
+      events: JSON.parse(w.events || '[]'),
+    }));
+
+    return res.json({ webhooks: parsed });
+  })
+);
+
+/**
+ * POST /api/settings/webhooks
+ */
+router.post(
+  '/webhooks',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { name, url, events, headers } = req.body;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!name || !url || !events?.length) {
+      return res.status(400).json({ error: 'Name, URL, and events are required' });
+    }
+
+    await ensureUserWebhooksTable();
+
+    const { v4: uuidv4 } = await import('uuid');
+    const id = uuidv4();
+    const secret = `whsec_${generateApiKey().replace('ck_', '')}`;
+
+    await dbRun(
+      `INSERT INTO user_webhooks (id, user_id, name, url, events, secret, headers)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [id, userId, name, url, JSON.stringify(events), secret, JSON.stringify(headers || {})]
+    );
+
+    logger.info(`[settings] Webhook created for user ${userId}`);
+    return res.json({ success: true, webhook: { id, name, url, events, secret } });
+  })
+);
+
+/**
+ * PUT /api/settings/webhooks/:id
+ */
+router.put(
+  '/webhooks/:id',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { id } = req.params;
+    const { name, url, events, headers, isActive } = req.body;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserWebhooksTable();
+
+    await dbRun(
+      `UPDATE user_webhooks SET 
+                name = COALESCE(?, name),
+                url = COALESCE(?, url),
+                events = COALESCE(?, events),
+                headers = COALESCE(?, headers),
+                is_active = COALESCE(?, is_active),
+                updated_at = datetime('now')
+             WHERE id = ? AND user_id = ?`,
+      [
+        name,
+        url,
+        events ? JSON.stringify(events) : null,
+        headers ? JSON.stringify(headers) : null,
+        isActive,
+        id,
+        userId,
+      ]
+    );
+
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * DELETE /api/settings/webhooks/:id
+ */
+router.delete(
+  '/webhooks/:id',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { id } = req.params;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserWebhooksTable();
+    await dbRun(`DELETE FROM user_webhooks WHERE id = ? AND user_id = ?`, [id, userId]);
+
+    logger.info(`[settings] Webhook ${id} deleted for user ${userId}`);
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * POST /api/settings/webhooks/:id/test
+ */
+router.post(
+  '/webhooks/:id/test',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { id } = req.params;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserWebhooksTable();
+
+    const webhook = await dbGet<{ url: string; secret: string }>(
+      `SELECT url, secret FROM user_webhooks WHERE id = ? AND user_id = ?`,
+      [id, userId]
+    );
+
+    if (!webhook) return res.status(404).json({ error: 'Webhook not found' });
+
+    try {
+      const testPayload = {
+        event: 'test',
+        timestamp: new Date().toISOString(),
+        data: { message: 'This is a test webhook from Consultinity' },
+      };
+
+      const response = await fetch(webhook.url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Webhook-Secret': webhook.secret || '',
+        },
+        body: JSON.stringify(testPayload),
+      });
+
+      await dbRun(
+        `UPDATE user_webhooks SET last_triggered_at = datetime('now'), last_status = ?
+                 WHERE id = ?`,
+        [response.status, id]
+      );
+
+      return res.json({
+        success: response.ok,
+        status: response.status,
+        message: response.ok ? 'Webhook test successful' : 'Webhook returned non-200 status',
+      });
+    } catch (err: any) {
+      await dbRun(`UPDATE user_webhooks SET failure_count = failure_count + 1 WHERE id = ?`, [id]);
+      return res.json({ success: false, error: err.message });
+    }
+  })
+);
+
+// ===========================================
+// APPEARANCE & THEME SETTINGS
+// ===========================================
+
+/**
+ * GET /api/settings/preferences/appearance
+ * Get user's appearance preferences (theme, UI density, font scale, etc.)
+ */
+router.get(
+  '/preferences/appearance',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserPreferencesTable();
+
+    const row = await dbGet<{ preferences_data: string }>(
+      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'appearance'`,
+      [userId]
+    );
+
+    const defaultPreferences = {
+      theme: 'system',
+      accentColor: '#6366f1',
+      uiDensity: 'comfortable',
+      fontScale: 1,
+      startPage: 'dashboard',
+      sidebarCollapsed: false,
+      animations: true,
+      reducedMotion: false,
+    };
+
+    if (!row) {
+      return res.json({ preferences: defaultPreferences });
+    }
+
+    try {
+      const preferences = JSON.parse(row.preferences_data);
+      return res.json({ preferences: { ...defaultPreferences, ...preferences } });
+    } catch {
+      return res.json({ preferences: defaultPreferences });
+    }
+  })
+);
+
+/**
+ * PUT /api/settings/preferences/appearance
+ * Update user's appearance preferences
+ */
+router.put(
+  '/preferences/appearance',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const preferences = req.body;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserPreferencesTable();
+
+    // Get existing preferences
+    const existing = await dbGet<{ preferences_data: string; id: string }>(
+      `SELECT id, preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'appearance'`,
+      [userId]
+    );
+
+    let merged = preferences;
+    if (existing) {
+      try {
+        const existingData = JSON.parse(existing.preferences_data);
+        merged = { ...existingData, ...preferences };
+      } catch {
+        // ignore parse error
+      }
+    }
+
+    const { v4: uuidv4 } = await import('uuid');
+    const id = existing?.id || uuidv4();
+
+    await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (id, user_id, preferences_type, preferences_data, updated_at)
+             VALUES (?, ?, 'appearance', ?, datetime('now'))`,
+      [id, userId, JSON.stringify(merged)]
+    );
+
+    // Log to audit
+    await logSettingsChange(userId, 'appearance', 'preferences', 'updated', null, merged);
+
+    logger.info(`[settings] Appearance preferences updated for user ${userId}`);
+    return res.json({ success: true, preferences: merged });
+  })
+);
+
+// ===========================================
+// DEVELOPER SETTINGS
+// ===========================================
+
+/**
+ * Ensure developer_settings table exists
+ */
+const ensureDeveloperSettingsTable = async () => {
+  await dbRun(`
+        CREATE TABLE IF NOT EXISTS developer_settings (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL UNIQUE,
+            developer_mode INTEGER DEFAULT 0,
+            api_logging INTEGER DEFAULT 0,
+            verbose_errors INTEGER DEFAULT 0,
+            show_debug_info INTEGER DEFAULT 0,
+            beta_features TEXT DEFAULT '[]',
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    `);
+  await dbRun(
+    `CREATE INDEX IF NOT EXISTS idx_developer_settings_user ON developer_settings(user_id)`
+  );
+};
+
+/**
+ * GET /api/settings/developer
+ * Get user's developer settings
+ */
+router.get(
+  '/developer',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureDeveloperSettingsTable();
+
+    const row = await dbGet<any>(`SELECT * FROM developer_settings WHERE user_id = ?`, [userId]);
+
+    const defaultSettings = {
+      developerMode: false,
+      apiLogging: false,
+      verboseErrors: false,
+      showDebugInfo: false,
+      betaFeatures: [],
+    };
+
+    if (!row) {
+      return res.json({ settings: defaultSettings });
+    }
+
+    return res.json({
+      settings: {
+        developerMode: !!row.developer_mode,
+        apiLogging: !!row.api_logging,
+        verboseErrors: !!row.verbose_errors,
+        showDebugInfo: !!row.show_debug_info,
+        betaFeatures: JSON.parse(row.beta_features || '[]'),
+      },
+    });
+  })
+);
+
+/**
+ * PUT /api/settings/developer
+ * Update user's developer settings
+ */
+router.put(
+  '/developer',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { developerMode, apiLogging, verboseErrors, showDebugInfo, betaFeatures } = req.body;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureDeveloperSettingsTable();
+
+    const existing = await dbGet<{ id: string }>(
+      `SELECT id FROM developer_settings WHERE user_id = ?`,
+      [userId]
+    );
+
+    const { v4: uuidv4 } = await import('uuid');
+    const id = existing?.id || uuidv4();
+
+    await dbRun(
+      `INSERT OR REPLACE INTO developer_settings 
+             (id, user_id, developer_mode, api_logging, verbose_errors, show_debug_info, beta_features, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+      [
+        id,
+        userId,
+        developerMode ? 1 : 0,
+        apiLogging ? 1 : 0,
+        verboseErrors ? 1 : 0,
+        showDebugInfo ? 1 : 0,
+        JSON.stringify(betaFeatures || []),
+      ]
+    );
+
+    // Log to audit
+    await logSettingsChange(userId, 'developer', 'settings', 'updated', null, req.body);
+
+    logger.info(`[settings] Developer settings updated for user ${userId}`);
+    return res.json({ success: true });
+  })
+);
+
+// ===========================================
+// API KEY USAGE STATS
+// ===========================================
+
+/**
+ * GET /api/settings/api-keys/:id/usage
+ * Get usage statistics for an API key
+ */
+router.get(
+  '/api-keys/:id/usage',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { id } = req.params;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserApiKeysTable();
+
+    // Verify key belongs to user
+    const key = await dbGet<{ id: string }>(
+      `SELECT id FROM user_api_keys WHERE id = ? AND user_id = ?`,
+      [id, userId]
+    );
+
+    if (!key) {
+      return res.status(404).json({ error: 'API key not found' });
+    }
+
+    // Check if api_logs table exists and get usage
+    try {
+      const usageStats = await dbGet<{ requests: number; tokens: number }>(
+        `SELECT 
+                    COUNT(*) as requests,
+                    COALESCE(SUM(CAST(json_extract(metadata, '$.tokens') AS INTEGER)), 0) as tokens
+                 FROM api_logs 
+                 WHERE api_key_id = ? AND created_at > datetime('now', '-30 days')`,
+        [id]
+      );
+
+      // Estimate cost (rough: $0.002 per 1K tokens)
+      const tokens = usageStats?.tokens || 0;
+      const cost = (tokens / 1000) * 0.002;
+
+      return res.json({
+        requests: usageStats?.requests || 0,
+        tokens: tokens,
+        cost: Math.round(cost * 100) / 100,
+        period: '30d',
+      });
+    } catch {
+      // api_logs table might not exist
+      return res.json({ requests: 0, tokens: 0, cost: 0, period: '30d' });
+    }
+  })
+);
+
+// ===========================================
+// LOGIN HISTORY
+// ===========================================
+
+/**
+ * GET /api/settings/login-history
+ * Get user's login history
+ */
+router.get(
+  '/login-history',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    try {
+      // Try to get from security_events table
+      const events = await dbAll(
+        `SELECT id, type, title, description, ip_address, location, device, created_at
+                 FROM security_events 
+                 WHERE user_id = ? AND type IN ('login', 'logout', 'login_failed')
+                 ORDER BY created_at DESC
+                 LIMIT ?`,
+        [userId, limit]
+      );
+
+      if (events.length > 0) {
+        return res.json({
+          history: events.map((e: any) => ({
+            id: e.id,
+            type: e.type,
+            title: e.title,
+            description: e.description,
+            ipAddress: e.ip_address,
+            location: e.location,
+            device: e.device,
+            timestamp: e.created_at,
+          })),
+        });
+      }
+
+      // Fallback: try login_history table
+      const history = await dbAll(
+        `SELECT * FROM login_history WHERE user_id = ? ORDER BY created_at DESC LIMIT ?`,
+        [userId, limit]
+      );
+
+      return res.json({
+        history: history.map((h: any) => ({
+          id: h.id,
+          type: 'login',
+          title: 'Login',
+          description: h.status === 'success' ? 'Successful login' : 'Failed login attempt',
+          ipAddress: h.ip_address,
+          location: h.location,
+          device: h.device || h.user_agent,
+          timestamp: h.created_at,
+        })),
+      });
+    } catch {
+      // Tables might not exist
+      return res.json({ history: [] });
+    }
+  })
+);
+
+/**
+ * Helper function to log settings changes to audit log
+ */
+async function logSettingsChange(
+  userId: string,
+  category: string,
+  settingKey: string,
+  action: string,
+  oldValue: any,
+  newValue: any
+) {
+  try {
+    await ensureSettingsAuditLogTable();
+    const { v4: uuidv4 } = await import('uuid');
+    await dbRun(
+      `INSERT INTO settings_audit_log (id, user_id, category, setting_key, action, old_value, new_value)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        uuidv4(),
+        userId,
+        category,
+        settingKey,
+        action,
+        oldValue ? JSON.stringify(oldValue) : null,
+        newValue ? JSON.stringify(newValue) : null,
+      ]
+    );
+  } catch (err) {
+    logger.warn(`[settings] Failed to log settings change: ${err}`);
+  }
+}
+
+export default router;

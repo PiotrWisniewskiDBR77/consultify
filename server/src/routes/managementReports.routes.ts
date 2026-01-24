@@ -1,0 +1,384 @@
+/**
+ * Management Reports Routes
+ * Reporting module for management-level reports
+ */
+import type { Response } from 'express';
+import { Router } from 'express';
+
+import type { AuthRequest } from '../middleware/auth.middleware.js';
+import { verifyToken } from '../middleware/auth.middleware.js';
+import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
+import managementReportsService from '../services/managementReportsService.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+
+const router = Router();
+
+router.use(verifyToken);
+router.use(demoContextMiddleware);
+
+const validTypes = [
+  'TEAM_MEETING',
+  'TEAM_WEEKLY',
+  'STEERING_COMMITTEE',
+  'PORTFOLIO_HEALTH',
+  'RAID',
+];
+
+router.post(
+  '/generate',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId;
+    const organizationId = req.organizationId || req.body.organizationId;
+    const {
+      reportType,
+      scope,
+      projectId,
+      periodDays,
+      includeSections,
+      excludeSections,
+      aiEnhancement,
+      requiresApproval,
+      approvalConfig,
+    } = req.body;
+
+    if (!userId || !organizationId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (!reportType || !validTypes.includes(reportType)) {
+      return res.status(400).json({ error: 'Invalid report type' });
+    }
+
+    if (!scope) {
+      return res.status(400).json({ error: 'scope is required' });
+    }
+
+    if (scope === 'PROJECT' && !projectId) {
+      return res.status(400).json({ error: 'projectId is required for project scope' });
+    }
+
+    const report = await managementReportsService.generateReport({
+      reportType,
+      scope,
+      projectId,
+      organizationId,
+      periodDays,
+      includeSections,
+      excludeSections,
+      aiEnhancement,
+      requiresApproval,
+      approvalConfig,
+      userId,
+    });
+
+    return res.json({ success: true, report });
+  })
+);
+
+router.get(
+  '/history',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const organizationId = req.organizationId || (req.query.organizationId as string);
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { reportType, scope, status, limit, offset } = req.query;
+    const result = await managementReportsService.getReportHistory({
+      organizationId,
+      reportType,
+      scope,
+      status,
+      limit: limit ? Number(limit) : 20,
+      offset: offset ? Number(offset) : 0,
+    });
+    return res.json({ success: true, ...result });
+  })
+);
+
+// Templates
+router.get(
+  '/templates',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const templates = await managementReportsService.listTemplates(req.organizationId);
+    return res.json({ success: true, templates });
+  })
+);
+
+router.post(
+  '/templates',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const template = await managementReportsService.createTemplate(
+      req.organizationId,
+      req.userId,
+      req.body
+    );
+    return res.json({ success: true, template });
+  })
+);
+
+router.put(
+  '/templates/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    await managementReportsService.updateTemplate(req.params.id, req.organizationId, req.body);
+    return res.json({ success: true });
+  })
+);
+
+router.delete(
+  '/templates/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    await managementReportsService.deleteTemplate(req.params.id, req.organizationId);
+    return res.json({ success: true });
+  })
+);
+
+// Schedules
+router.get(
+  '/schedules',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const schedules = await managementReportsService.listSchedules(req.organizationId);
+    return res.json({ success: true, schedules });
+  })
+);
+
+router.post(
+  '/schedules',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const schedule = await managementReportsService.createSchedule(
+      req.organizationId,
+      req.userId,
+      req.body
+    );
+    return res.json({ success: true, schedule });
+  })
+);
+
+router.delete(
+  '/schedules/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    await managementReportsService.deleteSchedule(req.params.id, req.organizationId);
+    return res.json({ success: true });
+  })
+);
+
+router.get(
+  '/pending-approvals',
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    const pending = await managementReportsService.getPendingApprovals();
+    return res.json({ success: true, pending });
+  })
+);
+
+router.get(
+  '/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const report = await managementReportsService.getReport(req.params.id);
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+    return res.json({ success: true, report });
+  })
+);
+
+router.post(
+  '/:id/submit',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    await managementReportsService.submitForApproval(req.params.id, req.userId);
+    return res.json({ success: true });
+  })
+);
+
+router.get(
+  '/:id/approval-status',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const status = await managementReportsService.getApprovalStatus(req.params.id);
+    return res.json({ success: true, ...status });
+  })
+);
+
+router.post(
+  '/:id/approve',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    await managementReportsService.approveReport(req.params.id, req.userId, req.body.comment);
+    return res.json({ success: true });
+  })
+);
+
+router.get(
+  '/:id/versions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const versions = await managementReportsService.getVersions(req.params.id);
+    return res.json({ success: true, versions });
+  })
+);
+
+router.get(
+  '/:id/versions/:versionNumber',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const version = await managementReportsService.getVersion(
+      req.params.id,
+      Number(req.params.versionNumber)
+    );
+    if (!version) {
+      return res.status(404).json({ error: 'Version not found' });
+    }
+    return res.json({ success: true, version });
+  })
+);
+
+router.get(
+  '/:id/versions/compare',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const comparison = await managementReportsService.compareVersions(
+        req.params.id,
+        Number(req.query.v1),
+        Number(req.query.v2)
+      );
+      return res.json({ success: true, comparison });
+    } catch (error) {
+      return res.status(400).json({ error: 'Unable to compare versions' });
+    }
+  })
+);
+
+router.patch(
+  '/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const report = await managementReportsService.updateReport(req.params.id, req.body, req.userId);
+      return res.json({ success: true, report });
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message || 'Unable to update report' });
+    }
+  })
+);
+
+router.post(
+  '/:id/comments',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const comment = await managementReportsService.addComment(req.params.id, req.body, req.userId);
+    return res.status(201).json({ success: true, comment });
+  })
+);
+
+router.get(
+  '/:id/comments',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const comments = await managementReportsService.getComments(req.params.id);
+    return res.json({ success: true, comments });
+  })
+);
+
+router.patch(
+  '/:id/comments/:commentId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const comment = await managementReportsService.updateComment(
+      req.params.commentId,
+      req.body,
+      req.userId
+    );
+    return res.json({ success: true, comment });
+  })
+);
+
+router.delete(
+  '/:id/comments/:commentId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    await managementReportsService.deleteComment(req.params.commentId);
+    return res.json({ success: true });
+  })
+);
+
+router.get(
+  '/:id/audit-log',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const log = await managementReportsService.getAuditLog(req.params.id, req.query.action);
+    return res.json({ success: true, log });
+  })
+);
+
+router.post(
+  '/:id/finalize',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const report = await managementReportsService.finalizeReport(req.params.id, req.userId);
+    return res.json({ success: true, report });
+  })
+);
+
+router.post(
+  '/:id/unlock',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const report = await managementReportsService.unlockReport(
+      req.params.id,
+      req.userId,
+      req.body.reason
+    );
+    return res.json({ success: true, report });
+  })
+);
+
+router.get(
+  '/:id/pdf',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const result = await managementReportsService.generateExport(req.params.id, 'pdf', req.userId);
+    return res.json({ success: true, pdfUrl: result.filePath });
+  })
+);
+
+router.get(
+  '/:id/pptx',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const result = await managementReportsService.generateExport(req.params.id, 'pptx', req.userId);
+    return res.json({ success: true, pptxUrl: result.filePath });
+  })
+);
+
+router.post(
+  '/:id/share',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { shareToken, expiresAt } = await managementReportsService.createShareLink(
+      req.params.id,
+      req.body.expiresInDays,
+      req.userId
+    );
+    return res.json({
+      success: true,
+      shareUrl: `/reports/share/${shareToken}`,
+      expiresAt,
+    });
+  })
+);
+
+router.get(
+  '/analytics/usage',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const organizationId = req.organizationId || (req.query.organizationId as string);
+    const data = await managementReportsService.getUsageAnalytics(organizationId);
+    return res.json({ success: true, data });
+  })
+);
+
+router.get(
+  '/analytics/types',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const organizationId = req.organizationId || (req.query.organizationId as string);
+    const data = await managementReportsService.getTypesAnalytics(organizationId);
+    return res.json({ success: true, data });
+  })
+);
+
+router.post(
+  '/bulk-export',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { reportIds, format } = req.body;
+    if (!reportIds || !Array.isArray(reportIds)) {
+      return res.status(400).json({ error: 'reportIds are required' });
+    }
+    const result = await managementReportsService.bulkExport(reportIds, format || 'pdf', req.userId);
+    return res.json({ success: true, ...result });
+  })
+);
+
+export default router;

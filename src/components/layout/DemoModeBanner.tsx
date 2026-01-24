@@ -1,0 +1,212 @@
+/**
+ * DemoModeBanner Component
+ *
+ * Displays a prominent banner when demo mode is active.
+ * Shows demo organization info and provides quick exit action.
+ */
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  AlertTriangle,
+  Building2,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  FlaskConical,
+  HelpCircle,
+  Lightbulb,
+  Users,
+  X,
+} from 'lucide-react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+
+import { useDemo } from '../../hooks/useDemo';
+import { useAppStore } from '../../store/useAppStore';
+
+interface DemoModeBannerProps {
+  className?: string;
+}
+
+export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }) => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { currentUser } = useAppStore();
+  const { isDemoMode, demoOrganization, demoStats, demoHints, isDemoLoading, exitDemoMode } =
+    useDemo();
+
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Don't show demo banner for SuperAdmin - they have access to all orgs including demo
+  const isSuperAdmin = currentUser?.role?.toUpperCase() === 'SUPERADMIN';
+
+  if (!isDemoMode || isSuperAdmin) return null;
+
+  // Common button styles for uniform size
+  const buttonBaseClass =
+    'flex items-center gap-1.5 text-xs font-medium rounded-lg px-3 py-1.5 transition-colors';
+  const buttonPrimaryClass = `${buttonBaseClass} bg-white/20 hover:bg-white/30`;
+  const buttonSecondaryClass = `${buttonBaseClass} bg-white/15 hover:bg-white/25`;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: -100, opacity: 0 }}
+        transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+        className={`bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-lg ${className}`}
+      >
+        {/* Main Banner Row */}
+        <div className="px-4 py-2">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            {/* Left: Demo indicator */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 bg-white/20 rounded-full px-3 py-1.5">
+                <FlaskConical className="w-4 h-4" />
+                <span className="text-xs font-semibold uppercase">
+                  {t('demo.banner.mode', 'Demo Mode')}
+                </span>
+              </div>
+
+              <div className="hidden sm:flex items-center gap-2">
+                <Building2 className="w-4 h-4" />
+                <span className="font-medium text-sm">
+                  {demoOrganization?.name || 'Acme Digital Corp'}
+                </span>
+              </div>
+
+              {/* Stats badges */}
+              {demoStats && (
+                <div className="hidden md:flex items-center gap-2 text-xs">
+                  <span className="bg-white/15 rounded-lg px-3 py-1.5">
+                    {demoStats.projects} {t('demo.banner.projects', 'projects')}
+                  </span>
+                  <span className="bg-white/15 rounded-lg px-3 py-1.5">
+                    {demoStats.initiatives} {t('demo.banner.initiatives', 'initiatives')}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Right: Actions */}
+            <div className="flex items-center gap-2">
+              {/* Expand/collapse button */}
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className={`hidden sm:flex ${buttonSecondaryClass}`}
+              >
+                <Lightbulb className="w-3.5 h-3.5" />
+                <span>{t('demo.banner.hints', 'Hints')}</span>
+                {isExpanded ? (
+                  <ChevronUp className="w-3.5 h-3.5" />
+                ) : (
+                  <ChevronDown className="w-3.5 h-3.5" />
+                )}
+              </button>
+
+              {/* Exit demo button */}
+              <button
+                onClick={exitDemoMode}
+                disabled={isDemoLoading}
+                className={`${buttonPrimaryClass} disabled:opacity-50`}
+              >
+                {isDemoLoading ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <X className="w-4 h-4" />
+                )}
+                <span className="hidden sm:inline">{t('demo.banner.exit', 'Exit Demo')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Expanded hints section */}
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="px-4 py-3 bg-black/20 border-t border-white/10">
+                <div className="max-w-7xl mx-auto">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    {/* Info Cards */}
+                    <div className="flex flex-wrap items-center gap-6">
+                      {/* Warning */}
+                      <div className="flex items-center gap-2 text-sm">
+                        <AlertTriangle className="w-4 h-4 text-yellow-300 flex-shrink-0" />
+                        <div>
+                          <p className="font-medium text-yellow-300">
+                            {t('demo.banner.readOnlyTitle', 'Read-only mode')}
+                          </p>
+                          <p className="text-white/70 text-xs">
+                            {t('demo.banner.readOnlyDesc', 'Changes are not saved')}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex items-center gap-2 text-sm">
+                        <Eye className="w-4 h-4 text-blue-300 flex-shrink-0" />
+                        <div>
+                          <p className="font-medium text-blue-300">
+                            {t('demo.banner.exploreTitle', 'Explore features')}
+                          </p>
+                          <p className="text-white/70 text-xs">
+                            {t('demo.banner.exploreDesc', 'Browse all modules')}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Hints */}
+                      <div className="flex items-center gap-2 text-sm">
+                        <Lightbulb className="w-4 h-4 text-green-300 flex-shrink-0" />
+                        <div>
+                          <p className="font-medium text-green-300">
+                            {t('demo.banner.hintTitle', 'Hint')}
+                          </p>
+                          <p className="text-white/70 text-xs">
+                            {demoHints?.[0] ||
+                              t('demo.banner.defaultHint', 'Click on initiatives to see details')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2">
+                      {/* Help Button */}
+                      <button
+                        onClick={() => navigate('/help')}
+                        className={`${buttonSecondaryClass} bg-white/10 hover:bg-white/20`}
+                      >
+                        <HelpCircle className="w-3.5 h-3.5" />
+                        <span>{t('demo.banner.help', 'Help')}</span>
+                      </button>
+
+                      {/* Partner Program Button */}
+                      <button
+                        onClick={() => navigate('/partner')}
+                        className={`${buttonSecondaryClass} bg-white/10 hover:bg-white/20`}
+                      >
+                        <Users className="w-3.5 h-3.5" />
+                        <span>{t('demo.banner.partnerProgram', 'Partner Program')}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+export default DemoModeBanner;

@@ -1,0 +1,484 @@
+/**
+ * CompanyFactsPanel - Right sidebar for Interview
+ * 
+ * Shows:
+ * - Company Facts (name, industry, size, location)
+ * - Key Metrics extracted from interview
+ * - Stakeholders identified
+ * - Open Gaps that need follow-up
+ */
+
+import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+  AlertTriangle,
+  Building2,
+  ChevronDown,
+  ChevronRight,
+  Edit3,
+  MapPin,
+  Plus,
+  Save,
+  Users,
+  X,
+} from 'lucide-react';
+
+// Types
+export interface CompanyProfile {
+  name?: string;
+  industry?: string;
+  size?: string;
+  location?: string;
+  founded?: string;
+  employees?: number;
+  revenue?: string;
+  website?: string;
+}
+
+export interface KeyMetric {
+  id: string;
+  name: string;
+  value: string;
+  category?: string;
+}
+
+export interface Stakeholder {
+  id: string;
+  name: string;
+  role: string;
+  department?: string;
+  influence?: 'high' | 'medium' | 'low';
+}
+
+export interface OpenGap {
+  id: string;
+  category: string;
+  description: string;
+  priority: 'high' | 'medium' | 'low';
+}
+
+export interface CompanyFactsPanelProps {
+  companyProfile: CompanyProfile;
+  keyMetrics: KeyMetric[];
+  stakeholders: Stakeholder[];
+  openGaps: OpenGap[];
+  onUpdateProfile: (profile: CompanyProfile) => Promise<void>;
+  onAddMetric?: (metric: Omit<KeyMetric, 'id'>) => Promise<void>;
+  onAddStakeholder?: (stakeholder: Omit<Stakeholder, 'id'>) => Promise<void>;
+  isLoading?: boolean;
+  readOnly?: boolean;
+}
+
+// Size options
+const SIZE_OPTIONS = [
+  { value: '1-10', label: '1-10' },
+  { value: '11-50', label: '11-50' },
+  { value: '51-200', label: '51-200' },
+  { value: '201-500', label: '201-500' },
+  { value: '501-1000', label: '501-1000' },
+  { value: '1001-5000', label: '1001-5000' },
+  { value: '5000+', label: '5000+' },
+];
+
+export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
+  companyProfile,
+  keyMetrics,
+  stakeholders,
+  openGaps,
+  onUpdateProfile,
+  onAddMetric,
+  onAddStakeholder,
+  isLoading = false,
+  readOnly = false,
+}) => {
+  const { i18n } = useTranslation();
+  const isPolish = i18n.language === 'pl';
+
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editedProfile, setEditedProfile] = useState<CompanyProfile>(companyProfile);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(
+    new Set(['profile', 'gaps'])
+  );
+
+  // Toggle section
+  const toggleSection = (section: string) => {
+    setExpandedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(section)) {
+        next.delete(section);
+      } else {
+        next.add(section);
+      }
+      return next;
+    });
+  };
+
+  // Save profile
+  const handleSaveProfile = useCallback(async () => {
+    await onUpdateProfile(editedProfile);
+    setIsEditingProfile(false);
+  }, [editedProfile, onUpdateProfile]);
+
+  // Cancel edit
+  const handleCancelEdit = useCallback(() => {
+    setEditedProfile(companyProfile);
+    setIsEditingProfile(false);
+  }, [companyProfile]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-48">
+        <div className="animate-spin w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-72 shrink-0 bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 flex flex-col h-full overflow-hidden">
+      {/* Header */}
+      <div className="p-4 border-b border-slate-200 dark:border-navy-700">
+        <h2 className="font-bold text-navy-900 dark:text-white flex items-center gap-2">
+          <Building2 size={18} className="text-blue-500" />
+          {isPolish ? 'Fakty o firmie' : 'Company Facts'}
+        </h2>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Company Profile Section */}
+        <div className="border-b border-slate-200 dark:border-navy-700">
+          <button
+            onClick={() => toggleSection('profile')}
+            className="w-full flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-navy-800"
+          >
+            <span className="text-sm font-medium text-navy-900 dark:text-white">
+              {isPolish ? 'Profil firmy' : 'Company Profile'}
+            </span>
+            <ChevronRight
+              size={16}
+              className={`text-slate-400 transition-transform ${
+                expandedSections.has('profile') ? 'rotate-90' : ''
+              }`}
+            />
+          </button>
+
+          {expandedSections.has('profile') && (
+            <div className="px-3 pb-3 space-y-3">
+              {isEditingProfile ? (
+                <>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                      {isPolish ? 'Nazwa' : 'Name'}
+                    </label>
+                    <input
+                      type="text"
+                      value={editedProfile.name || ''}
+                      onChange={(e) => setEditedProfile({ ...editedProfile, name: e.target.value })}
+                      className="w-full px-2 py-1.5 text-sm border border-slate-200 dark:border-navy-700 rounded bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                      {isPolish ? 'Branża' : 'Industry'}
+                    </label>
+                    <input
+                      type="text"
+                      value={editedProfile.industry || ''}
+                      onChange={(e) => setEditedProfile({ ...editedProfile, industry: e.target.value })}
+                      className="w-full px-2 py-1.5 text-sm border border-slate-200 dark:border-navy-700 rounded bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                      {isPolish ? 'Wielkość' : 'Size'}
+                    </label>
+                    <select
+                      value={editedProfile.size || ''}
+                      onChange={(e) => setEditedProfile({ ...editedProfile, size: e.target.value })}
+                      className="w-full px-2 py-1.5 text-sm border border-slate-200 dark:border-navy-700 rounded bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white"
+                    >
+                      <option value="">{isPolish ? 'Wybierz...' : 'Select...'}</option>
+                      {SIZE_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label} {isPolish ? 'pracowników' : 'employees'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                      {isPolish ? 'Lokalizacja' : 'Location'}
+                    </label>
+                    <input
+                      type="text"
+                      value={editedProfile.location || ''}
+                      onChange={(e) => setEditedProfile({ ...editedProfile, location: e.target.value })}
+                      className="w-full px-2 py-1.5 text-sm border border-slate-200 dark:border-navy-700 rounded bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      onClick={handleCancelEdit}
+                      className="px-2 py-1 text-xs text-slate-600 hover:text-slate-800 dark:text-slate-400"
+                    >
+                      {isPolish ? 'Anuluj' : 'Cancel'}
+                    </button>
+                    <button
+                      onClick={handleSaveProfile}
+                      className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded"
+                    >
+                      <Save size={12} />
+                      {isPolish ? 'Zapisz' : 'Save'}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    {companyProfile.name ? (
+                      <div className="flex items-center gap-2">
+                        <Building2 size={14} className="text-slate-400 shrink-0" />
+                        <span className="text-sm text-navy-900 dark:text-white font-medium">
+                          {companyProfile.name}
+                        </span>
+                      </div>
+                    ) : null}
+                    
+                    {companyProfile.industry && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          {isPolish ? 'Branża:' : 'Industry:'}
+                        </span>
+                        <span className="text-sm text-navy-900 dark:text-white">
+                          {companyProfile.industry}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {companyProfile.size && (
+                      <div className="flex items-center gap-2">
+                        <Users size={14} className="text-slate-400 shrink-0" />
+                        <span className="text-sm text-navy-900 dark:text-white">
+                          {companyProfile.size} {isPolish ? 'pracowników' : 'employees'}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {companyProfile.location && (
+                      <div className="flex items-center gap-2">
+                        <MapPin size={14} className="text-slate-400 shrink-0" />
+                        <span className="text-sm text-navy-900 dark:text-white">
+                          {companyProfile.location}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {!readOnly && (
+                    <button
+                      onClick={() => setIsEditingProfile(true)}
+                      className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 mt-2"
+                    >
+                      <Edit3 size={12} />
+                      {isPolish ? 'Edytuj profil' : 'Edit profile'}
+                    </button>
+                  )}
+
+                  {!companyProfile.name && !companyProfile.industry && !companyProfile.size && (
+                    <p className="text-xs text-slate-400 dark:text-slate-500 italic">
+                      {isPolish 
+                        ? 'Brak danych o firmie. Kliknij Edytuj, aby dodać.'
+                        : 'No company data. Click Edit to add.'
+                      }
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Key Metrics Section */}
+        <div className="border-b border-slate-200 dark:border-navy-700">
+          <button
+            onClick={() => toggleSection('metrics')}
+            className="w-full flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-navy-800"
+          >
+            <span className="text-sm font-medium text-navy-900 dark:text-white">
+              {isPolish ? 'Kluczowe metryki' : 'Key Metrics'}
+              <span className="ml-1 text-xs text-slate-400">({keyMetrics.length})</span>
+            </span>
+            <ChevronRight
+              size={16}
+              className={`text-slate-400 transition-transform ${
+                expandedSections.has('metrics') ? 'rotate-90' : ''
+              }`}
+            />
+          </button>
+
+          {expandedSections.has('metrics') && (
+            <div className="px-3 pb-3">
+              {keyMetrics.length > 0 ? (
+                <div className="space-y-2">
+                  {keyMetrics.map((metric) => (
+                    <div
+                      key={metric.id}
+                      className="p-2 bg-slate-50 dark:bg-navy-950 rounded-lg"
+                    >
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {metric.name}
+                      </p>
+                      <p className="text-sm font-medium text-navy-900 dark:text-white">
+                        {metric.value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 dark:text-slate-500 italic">
+                  {isPolish 
+                    ? 'Metryki będą wyodrębnione z wywiadów'
+                    : 'Metrics will be extracted from interviews'
+                  }
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Stakeholders Section */}
+        <div className="border-b border-slate-200 dark:border-navy-700">
+          <button
+            onClick={() => toggleSection('stakeholders')}
+            className="w-full flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-navy-800"
+          >
+            <span className="text-sm font-medium text-navy-900 dark:text-white">
+              {isPolish ? 'Interesariusze' : 'Stakeholders'}
+              <span className="ml-1 text-xs text-slate-400">({stakeholders.length})</span>
+            </span>
+            <ChevronRight
+              size={16}
+              className={`text-slate-400 transition-transform ${
+                expandedSections.has('stakeholders') ? 'rotate-90' : ''
+              }`}
+            />
+          </button>
+
+          {expandedSections.has('stakeholders') && (
+            <div className="px-3 pb-3">
+              {stakeholders.length > 0 ? (
+                <div className="space-y-2">
+                  {stakeholders.map((person) => (
+                    <div
+                      key={person.id}
+                      className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-navy-950 rounded-lg"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                        <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                          {person.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-navy-900 dark:text-white truncate">
+                          {person.name}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                          {person.role}
+                        </p>
+                      </div>
+                      {person.influence && (
+                        <span className={`px-1.5 py-0.5 text-xs rounded ${
+                          person.influence === 'high'
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                            : person.influence === 'medium'
+                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                        }`}>
+                          {person.influence}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 dark:text-slate-500 italic">
+                  {isPolish 
+                    ? 'Interesariusze zostaną zidentyfikowani z wywiadów'
+                    : 'Stakeholders will be identified from interviews'
+                  }
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Open Gaps Section */}
+        <div>
+          <button
+            onClick={() => toggleSection('gaps')}
+            className="w-full flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-navy-800"
+          >
+            <span className="text-sm font-medium text-navy-900 dark:text-white flex items-center gap-2">
+              <AlertTriangle size={14} className="text-amber-500" />
+              {isPolish ? 'Otwarte luki' : 'Open Gaps'}
+              <span className="text-xs text-slate-400">({openGaps.length})</span>
+            </span>
+            <ChevronRight
+              size={16}
+              className={`text-slate-400 transition-transform ${
+                expandedSections.has('gaps') ? 'rotate-90' : ''
+              }`}
+            />
+          </button>
+
+          {expandedSections.has('gaps') && (
+            <div className="px-3 pb-3">
+              {openGaps.length > 0 ? (
+                <div className="space-y-2">
+                  {openGaps.map((gap) => (
+                    <div
+                      key={gap.id}
+                      className={`p-2 rounded-lg border-l-2 ${
+                        gap.priority === 'high'
+                          ? 'bg-red-50 dark:bg-red-900/10 border-red-500'
+                          : gap.priority === 'medium'
+                            ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-500'
+                            : 'bg-slate-50 dark:bg-navy-950 border-slate-300'
+                      }`}
+                    >
+                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                        {gap.category}
+                      </p>
+                      <p className="text-sm text-navy-900 dark:text-white">
+                        {gap.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 dark:text-slate-500 italic">
+                  {isPolish 
+                    ? 'Brak zidentyfikowanych luk informacyjnych'
+                    : 'No information gaps identified'
+                  }
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="p-3 border-t border-slate-200 dark:border-navy-700">
+        <p className="text-xs text-slate-400 dark:text-slate-500 text-center">
+          {isPolish 
+            ? 'Dane aktualizowane automatycznie' 
+            : 'Data updated automatically'
+          }
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default CompanyFactsPanel;
