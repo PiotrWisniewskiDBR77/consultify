@@ -10,6 +10,7 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" --names \"BACKEND,FRONTEND\" --prefix-colors \"blue,green\"",
+    "dev:londyn": "bash ./start-londyn.sh",
     "dev:frontend": "vite --port 3000",
     "lint": "eslint . --report-unused-disable-directives",
     "type-check": "tsc --noEmit",
