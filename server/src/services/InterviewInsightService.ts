@@ -1,6 +1,6 @@
 /**
  * Interview Insight Service
- * 
+ *
  * Generates AI-powered insights from completed interview sessions.
  * Supports multiple analysis types: summary, trends, problems, recommendations.
  */
@@ -167,17 +167,17 @@ class InterviewInsightService {
    */
   async getById(id: string): Promise<Insight | null> {
     const db = await this.getDb();
-    const row = await db.get<any>(
-      `SELECT * FROM interview_insights WHERE id = ?`,
-      [id]
-    );
+    const row = await db.get<any>(`SELECT * FROM interview_insights WHERE id = ?`, [id]);
     return row ? this.mapRowToInsight(row) : null;
   }
 
   /**
    * List insights for an organization
    */
-  async list(organizationId: string, options?: { limit?: number; offset?: number }): Promise<Insight[]> {
+  async list(
+    organizationId: string,
+    options?: { limit?: number; offset?: number }
+  ): Promise<Insight[]> {
     const db = await this.getDb();
     const limit = options?.limit || 50;
     const offset = options?.offset || 0;
@@ -222,10 +222,7 @@ class InterviewInsightService {
    */
   async delete(id: string): Promise<boolean> {
     const db = await this.getDb();
-    const result = await db.run(
-      `DELETE FROM interview_insights WHERE id = ?`,
-      [id]
-    );
+    const result = await db.run(`DELETE FROM interview_insights WHERE id = ?`, [id]);
     return (result as any)?.changes > 0;
   }
 
@@ -247,7 +244,7 @@ class InterviewInsightService {
     try {
       // Fetch session data
       const sessionData = await this.fetchSessionData(sessionIds);
-      
+
       if (sessionData.length === 0) {
         throw new Error('No session data available for analysis');
       }
@@ -264,7 +261,7 @@ class InterviewInsightService {
         prompt,
         temperature: 0.3,
         maxTokens: 4000,
-      });
+      } as any);
 
       const content = (response as any)?.text || (response as any)?.content || '';
       const tokensUsed = (response as any)?.usage?.totalTokens || 0;
@@ -278,7 +275,9 @@ class InterviewInsightService {
         [content, tokensUsed, generationTime, new Date().toISOString(), insightId]
       );
 
-      logger.info(`[InterviewInsightService] Generated insight ${insightId} in ${generationTime}ms`);
+      logger.info(
+        `[InterviewInsightService] Generated insight ${insightId} in ${generationTime}ms`
+      );
     } catch (error) {
       const err = error as Error;
       logger.error(`[InterviewInsightService] Failed to generate insight ${insightId}:`, err);
@@ -338,12 +337,16 @@ class InterviewInsightService {
    * Format session data for the AI prompt
    */
   private formatSessionDataForPrompt(sessionData: any[]): string {
-    return sessionData.map((session, index) => {
-      const answerText = session.answers
-        .map((a: any) => `Q: ${a.question_text}\nA: ${a.answer_text || a.answer_value || 'No answer'}`)
-        .join('\n\n');
+    return sessionData
+      .map((session, index) => {
+        const answerText = session.answers
+          .map(
+            (a: any) =>
+              `Q: ${a.question_text}\nA: ${a.answer_text || a.answer_value || 'No answer'}`
+          )
+          .join('\n\n');
 
-      return `
+        return `
 --- Interview ${index + 1} ---
 Template: ${session.template_name || 'Unknown'}
 Category: ${session.template_category || 'General'}
@@ -352,7 +355,8 @@ Date: ${session.completed_at || 'Unknown'}
 
 ${answerText}
 `;
-    }).join('\n\n');
+      })
+      .join('\n\n');
   }
 
   // ==========================================

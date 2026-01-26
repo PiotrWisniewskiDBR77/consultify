@@ -14,6 +14,7 @@ import logger from '../../utils/Logger.js';
 const router = Router();
 
 interface AuthRequest extends Request {
+  params: any;
   user?: {
     id: string;
     organizationId: string;
@@ -317,9 +318,7 @@ router.post('/:assessmentId/approve', async (req: AuthRequest, res: Response) =>
     });
 
     if (!report || String(report.status || '').toUpperCase() !== 'FINAL') {
-      return res
-        .status(400)
-        .json({ error: 'Report must be finalized before approval' });
+      return res.status(400).json({ error: 'Report must be finalized before approval' });
     }
 
     // Get workflow

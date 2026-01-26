@@ -585,7 +585,6 @@ class AILearningService {
 
     logger.info(`[AILearningService] Suggestion ${suggestionId} ${action}d by ${reviewerId}`);
   }
-}
 
   // ==========================================
   // STYLE PATTERN EXTRACTION (v2.0)
@@ -637,7 +636,12 @@ class AILearningService {
     );
 
     const patterns: Array<{ type: string; value: string; confidence: number; count: number }> = [];
-    const profileSuggestions: Array<{ field: string; suggestedValue: string; confidence: number; reason: string }> = [];
+    const profileSuggestions: Array<{
+      field: string;
+      suggestedValue: string;
+      confidence: number;
+      reason: string;
+    }> = [];
 
     // Analyze length preferences
     const lengthCounts = { too_short: 0, too_long: 0 };
@@ -648,7 +652,12 @@ class AILearningService {
 
     if (lengthCounts.too_short >= 3) {
       const confidence = Math.min(0.9, lengthCounts.too_short * 0.15);
-      patterns.push({ type: 'length_preference', value: 'comprehensive', confidence, count: lengthCounts.too_short });
+      patterns.push({
+        type: 'length_preference',
+        value: 'comprehensive',
+        confidence,
+        count: lengthCounts.too_short,
+      });
       if (confidence >= 0.6) {
         profileSuggestions.push({
           field: 'responseLength',
@@ -659,7 +668,12 @@ class AILearningService {
       }
     } else if (lengthCounts.too_long >= 3) {
       const confidence = Math.min(0.9, lengthCounts.too_long * 0.15);
-      patterns.push({ type: 'length_preference', value: 'concise', confidence, count: lengthCounts.too_long });
+      patterns.push({
+        type: 'length_preference',
+        value: 'concise',
+        confidence,
+        count: lengthCounts.too_long,
+      });
       if (confidence >= 0.6) {
         profileSuggestions.push({
           field: 'responseLength',
@@ -679,7 +693,12 @@ class AILearningService {
 
     if (detailCounts.too_little >= 3) {
       const confidence = Math.min(0.9, detailCounts.too_little * 0.15);
-      patterns.push({ type: 'depth_preference', value: 'deep_dive', confidence, count: detailCounts.too_little });
+      patterns.push({
+        type: 'depth_preference',
+        value: 'deep_dive',
+        confidence,
+        count: detailCounts.too_little,
+      });
       if (confidence >= 0.6) {
         profileSuggestions.push({
           field: 'preferredDepth',
@@ -690,7 +709,12 @@ class AILearningService {
       }
     } else if (detailCounts.too_much >= 3) {
       const confidence = Math.min(0.9, detailCounts.too_much * 0.15);
-      patterns.push({ type: 'depth_preference', value: 'executive_summary', confidence, count: detailCounts.too_much });
+      patterns.push({
+        type: 'depth_preference',
+        value: 'executive_summary',
+        confidence,
+        count: detailCounts.too_much,
+      });
       if (confidence >= 0.6) {
         profileSuggestions.push({
           field: 'preferredDepth',
@@ -712,7 +736,12 @@ class AILearningService {
     const topFormat = Object.entries(formatCounts).sort((a, b) => b[1] - a[1])[0];
     if (topFormat && topFormat[1] >= 3) {
       const confidence = Math.min(0.9, topFormat[1] * 0.15);
-      patterns.push({ type: 'format_preference', value: topFormat[0], confidence, count: topFormat[1] });
+      patterns.push({
+        type: 'format_preference',
+        value: topFormat[0],
+        confidence,
+        count: topFormat[1],
+      });
       if (confidence >= 0.6) {
         profileSuggestions.push({
           field: 'preferredFormat',
@@ -760,7 +789,9 @@ class AILearningService {
 
       if (Object.keys(updates).length > 0) {
         await userStyleProfileService.updateProfile(userId, updates as any);
-        logger.info(`[AILearningService] Applied ${applied} profile suggestions for user ${userId}`);
+        logger.info(
+          `[AILearningService] Applied ${applied} profile suggestions for user ${userId}`
+        );
       }
 
       skipped = profileSuggestions.length - applied;

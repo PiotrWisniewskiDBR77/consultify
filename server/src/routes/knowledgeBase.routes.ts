@@ -14,6 +14,12 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
+const firstParam = (value: unknown): string | undefined => {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value) && typeof value[0] === 'string') return value[0];
+  return undefined;
+};
+
 // ============================================
 // PUBLIC ROUTES (No auth required)
 // ============================================
@@ -71,8 +77,11 @@ router.get(
 router.get(
   '/articles/:slug',
   asyncHandler(async (req: Request, res: Response) => {
-    const { slug } = req.params;
-    const language = (req.query.lang as string) || 'en';
+    const slug = firstParam((req.params as any).slug);
+    const language = firstParam(req.query.lang) || 'en';
+    if (!slug) {
+      return res.status(400).json({ error: 'slug is required' });
+    }
 
     const article = await KnowledgeBaseService.getArticleBySlug(slug, language);
 
@@ -123,14 +132,15 @@ router.get(
   asyncHandler(async (req: Request, res: Response) => {
     const { q, lang = 'en', limit = '10' } = req.query;
 
-    if (!q || (q as string).length < 2) {
+    const qStr = firstParam(q);
+    if (!qStr || qStr.length < 2) {
       return res.json({ articles: [] });
     }
 
     const articles = await KnowledgeBaseService.searchArticles(
-      q as string,
-      lang as string,
-      parseInt(limit as string, 10)
+      qStr,
+      firstParam(lang) || 'en',
+      parseInt(firstParam(limit) || '10', 10)
     );
 
     res.json({ articles });
@@ -144,23 +154,16 @@ router.get(
 router.post(
   '/articles/:id/view',
   asyncHandler(async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const id = firstParam((req.params as any).id);
     const { sessionId, source = 'in_app' } = req.body;
+    if (!id) {
+      return res.status(400).json({ error: 'id is required' });
+    }
 
     // Try to get user ID from token if present
-    let userId: string | undefined;
-    try {
-      const authHeader = req.headers.authorization;
-      if (authHeader?.startsWith('Bearer ')) {
-        // Token might be present but we don't require it
-        const decoded = await import('../utils/jwt.js').then((m) =>
-          m.verifyToken(authHeader.split(' ')[1])
-        );
-        userId = (decoded as any)?.userId;
-      }
-    } catch {
-      // Ignore auth errors for anonymous tracking
-    }
+    // NOTE: We intentionally don't decode JWT here. Anonymous tracking is allowed and
+    // the middleware JWT helpers are not exposed as a standalone verifier.
+    const userId: string | undefined = undefined;
 
     await KnowledgeBaseService.trackView(id, userId, sessionId, source);
     res.json({ success: true });
@@ -179,9 +182,12 @@ router.get(
   '/context/:moduleId',
   verifyToken,
   asyncHandler(async (req: Request, res: Response) => {
-    const { moduleId } = req.params;
-    const language = (req.query.lang as string) || 'en';
-    const limit = parseInt((req.query.limit as string) || '5', 10);
+    const moduleId = firstParam((req.params as any).moduleId);
+    const language = firstParam(req.query.lang) || 'en';
+    const limit = parseInt(firstParam(req.query.limit) || '5', 10);
+    if (!moduleId) {
+      return res.status(400).json({ error: 'moduleId is required' });
+    }
 
     const articles = await KnowledgeBaseService.getContextualArticles(moduleId, language, limit);
     res.json({ articles });

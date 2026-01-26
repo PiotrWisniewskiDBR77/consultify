@@ -1,10 +1,10 @@
 /**
  * AssessmentController
  * Assessment -> Initiatives workflow
- * 
+ *
  * Workflow: DRAFT -> IN_REVIEW -> AWAITING_APPROVAL -> APPROVED
  * Mapped to simplified: DRAFT -> REVIEW -> APPROVED
- * 
+ *
  * Gate Decisions:
  * - Request Review (owner: Project Lead)
  * - Approve Report (owner: PMO/Owner) - required before APPROVED
@@ -15,15 +15,21 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import AssessmentInitiativeService from '../services/assessmentInitiativeService.js';
+import { hasPermission } from '../services/permissionService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
-import { hasPermission } from '../services/permissionService.js';
-import AssessmentInitiativeService from '../services/AssessmentInitiativeService.js';
 
 // Types
 type AssessmentType = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
-type AssessmentStatus = 'DRAFT' | 'IN_REVIEW' | 'AWAITING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'ARCHIVED';
+type AssessmentStatus =
+  | 'DRAFT'
+  | 'IN_REVIEW'
+  | 'AWAITING_APPROVAL'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'ARCHIVED';
 type SimplifiedStatus = 'DRAFT' | 'REVIEW' | 'APPROVED';
 
 interface AssessmentRow {
@@ -67,7 +73,10 @@ const normalizeStatus = (status: string | null | undefined): SimplifiedStatus =>
   return 'DRAFT';
 };
 
-const toBackendStatus = (simplified: SimplifiedStatus, hasReportApproved: boolean): AssessmentStatus => {
+const toBackendStatus = (
+  simplified: SimplifiedStatus,
+  hasReportApproved: boolean
+): AssessmentStatus => {
   if (simplified === 'APPROVED') return 'APPROVED';
   if (simplified === 'REVIEW') {
     return hasReportApproved ? 'AWAITING_APPROVAL' : 'IN_REVIEW';
@@ -81,9 +90,9 @@ let decisionColumnsCache: Set<string> | null = null;
 const getDecisionColumns = async (): Promise<Set<string>> => {
   if (decisionColumnsCache) return decisionColumnsCache;
   try {
-    const rows = (await queryHelpers.queryAll(
-      `PRAGMA table_info(decisions)`
-    )) as Array<{ name?: string }>;
+    const rows = (await queryHelpers.queryAll(`PRAGMA table_info(decisions)`)) as Array<{
+      name?: string;
+    }>;
     const cols = new Set((rows || []).map((row) => row.name).filter(Boolean) as string[]);
     if (cols.size > 0) {
       decisionColumnsCache = cols;
@@ -185,7 +194,12 @@ const ensurePermission = async (
     const key = String(permissionKey || '').toUpperCase();
     if (key.startsWith('ASSESSMENT_')) return true;
   }
-  const allowed = await hasPermission(user.id, user.organizationId, permissionKey, user.role as any);
+  const allowed = await hasPermission(
+    user.id,
+    user.organizationId,
+    permissionKey,
+    user.role as any
+  );
   if (allowed) return true;
   const role = String(user.role || '').toUpperCase();
   const key = String(permissionKey || '').toUpperCase();
@@ -428,7 +442,8 @@ const createDecisionRecord = async (params: {
   pmoDomain?: string | null;
 }) => {
   const escalationDeadline =
-    params.dueDate && new Date(new Date(params.dueDate).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    params.dueDate &&
+    new Date(new Date(params.dueDate).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
   const insert = await buildDecisionInsert({
     ...params,
@@ -443,7 +458,11 @@ const createDecisionRecord = async (params: {
     [
       uuidv4(),
       insert.id,
-      params.status === 'approved' ? 'decided' : params.status === 'rejected' ? 'decided' : 'created',
+      params.status === 'approved'
+        ? 'decided'
+        : params.status === 'rejected'
+          ? 'decided'
+          : 'created',
       null,
       params.status,
       params.createdBy,
@@ -479,7 +498,16 @@ const upsertAssessmentDecision = async (params: {
   await queryHelpers.queryRun(
     `INSERT INTO assessment_decisions (id, assessment_id, decision_type, status, decision_id, comment, created_by, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id, assessmentId, decisionType, status, decisionId || null, comment || null, createdBy, new Date().toISOString()]
+    [
+      id,
+      assessmentId,
+      decisionType,
+      status,
+      decisionId || null,
+      comment || null,
+      createdBy,
+      new Date().toISOString(),
+    ]
   );
   return id;
 };
@@ -612,10 +640,12 @@ export class AssessmentController {
         scoreSummary: assessment.score_summary ? JSON.parse(assessment.score_summary) : {},
         generatedInitiatives: initiatives,
         decisions,
-        report: report ? {
-          ...report,
-          content: report.content_json ? JSON.parse(report.content_json) : {},
-        } : null,
+        report: report
+          ? {
+              ...report,
+              content: report.content_json ? JSON.parse(report.content_json) : {},
+            }
+          : null,
         permissions,
       });
     }
@@ -633,7 +663,14 @@ export class AssessmentController {
         return;
       }
 
-      const { answers, completionPercent, confidenceAvg, contextSnapshot, scoreSummary, currentSectionId } = req.body;
+      const {
+        answers,
+        completionPercent,
+        confidenceAvg,
+        contextSnapshot,
+        scoreSummary,
+        currentSectionId,
+      } = req.body;
 
       const now = new Date().toISOString();
       await queryHelpers.queryRun(
@@ -693,7 +730,9 @@ export class AssessmentController {
       }
 
       if (!requireDoD(assessment)) {
-        res.status(409).json({ error: 'DoD not satisfied (completion >= 100% and confidence >= 3)' });
+        res
+          .status(409)
+          .json({ error: 'DoD not satisfied (completion >= 100% and confidence >= 3)' });
         return;
       }
 
@@ -773,7 +812,9 @@ export class AssessmentController {
       );
 
       if (!report) {
-        res.status(409).json({ error: 'No report found for this assessment. Generate report first.' });
+        res
+          .status(409)
+          .json({ error: 'No report found for this assessment. Generate report first.' });
         return;
       }
 
@@ -823,7 +864,12 @@ export class AssessmentController {
         reportId: report.id,
       });
 
-      res.json({ id: assessmentId, status: 'REVIEW', backendStatus: 'AWAITING_APPROVAL', reportApproved: true });
+      res.json({
+        id: assessmentId,
+        status: 'REVIEW',
+        backendStatus: 'AWAITING_APPROVAL',
+        reportApproved: true,
+      });
     }
   );
 
@@ -856,7 +902,9 @@ export class AssessmentController {
       }
 
       if (assessment.status !== 'AWAITING_APPROVAL') {
-        res.status(409).json({ error: 'Assessment not in awaiting approval status. Report must be approved first.' });
+        res.status(409).json({
+          error: 'Assessment not in awaiting approval status. Report must be approved first.',
+        });
         return;
       }
 
@@ -1003,7 +1051,8 @@ export class AssessmentController {
         return;
       }
 
-      const { methodologyId, count, includeChatContext, decisionOwnerId, dueDate, priority } = req.body;
+      const { methodologyId, count, includeChatContext, decisionOwnerId, dueDate, priority } =
+        req.body;
       if (!methodologyId || !count) {
         res.status(400).json({ error: 'methodologyId and count are required' });
         return;
@@ -1024,7 +1073,9 @@ export class AssessmentController {
       }
 
       if (assessment.status !== 'APPROVED') {
-        res.status(409).json({ error: 'Assessment not approved. Must be APPROVED to generate initiatives.' });
+        res
+          .status(409)
+          .json({ error: 'Assessment not approved. Must be APPROVED to generate initiatives.' });
         return;
       }
 
@@ -1033,7 +1084,11 @@ export class AssessmentController {
         return;
       }
 
-      if (!assessment.answers_json || assessment.answers_json === '{}' || assessment.answers_json === 'null') {
+      if (
+        !assessment.answers_json ||
+        assessment.answers_json === '{}' ||
+        assessment.answers_json === 'null'
+      ) {
         res.status(409).json({ error: 'Missing assessment data for generation' });
         return;
       }
@@ -1045,15 +1100,7 @@ export class AssessmentController {
         `INSERT INTO assessment_initiative_batches (
           id, assessment_id, methodology_id, initiatives_count, include_chat_context, generated_by, created_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
-          batchId,
-          assessmentId,
-          methodologyId,
-          count,
-          includeChatContext ? 1 : 0,
-          user.id,
-          now,
-        ]
+        [batchId, assessmentId, methodologyId, count, includeChatContext ? 1 : 0, user.id, now]
       );
 
       const decisionId = await createDecisionRecord({
@@ -1093,11 +1140,17 @@ export class AssessmentController {
         userId: user.id,
       });
 
-      await logAudit(user.organizationId, user.id, 'assessment_initiatives_generated', assessmentId, {
-        batchId,
-        count: initiatives.length,
-        decisionId,
-      });
+      await logAudit(
+        user.organizationId,
+        user.id,
+        'assessment_initiatives_generated',
+        assessmentId,
+        {
+          batchId,
+          count: initiatives.length,
+          decisionId,
+        }
+      );
 
       res.json({ batchId, initiatives: created });
     }

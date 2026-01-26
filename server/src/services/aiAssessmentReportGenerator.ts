@@ -1,13 +1,40 @@
 // @ts-nocheck
 /**
- * Aiassessmentreportgenerator Service
- * Enterprise SaaS Architecture - TypeScript Backend
+ * aiAssessmentReportGenerator
  *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
+ * NOTE:
+ * The previous `.js` shim was self-re-exporting (circular) and broke both runtime
+ * resolution (tsx) and typechecking. Until the full generator is migrated, we
+ * expose a minimal, stable surface used by `routes/assessment/assessment-ai.routes.ts`.
  */
 
-// Lazy load the JS service module
-import service from './aiAssessmentReportGenerator.js';
+export const REPORT_TYPES = {
+  full: 'full',
+  stakeholder: 'stakeholder',
+  benchmark: 'benchmark',
+  initiativePlan: 'initiative_plan',
+} as const;
 
-// Export default instance (for backward compatibility)
-export default service;
+export const STAKEHOLDER_ROLES = {
+  owner: 'owner',
+  pmo: 'pmo',
+  consultant: 'consultant',
+  sponsor: 'sponsor',
+} as const;
+
+export const aiAssessmentReportGenerator = {
+  async generateFullReport(_assessment: any, _options?: any) {
+    return { status: 'not_implemented', report: null };
+  },
+  async generateStakeholderReport(_assessment: any, _role: any, _options?: any) {
+    return { status: 'not_implemented', report: null };
+  },
+  async generateBenchmarkReport(_assessment: any, _benchmarkId?: any, _options?: any) {
+    return { status: 'not_implemented', report: null };
+  },
+  async generateInitiativePlan(_assessment: any, _planTypeOrOptions?: any, _optionsMaybe?: any) {
+    return { status: 'not_implemented', plan: null };
+  },
+} as const;
+
+export default aiAssessmentReportGenerator;
