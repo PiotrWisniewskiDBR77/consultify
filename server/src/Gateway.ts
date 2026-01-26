@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { Express, Router } from 'express';
+import type { Express } from 'express';
 
 import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGuard.middleware.js';
 import accessControlRoutes from './routes/access-control.routes.js';
@@ -12,29 +11,22 @@ import adminDataRoutes from './routes/admin-data.routes.js';
 import adminAlertsRoutes from './routes/adminAlerts.routes.js';
 import agentsRoutes from './routes/agents.routes.js';
 import aiRoutes from './routes/ai.routes.js';
-import aiAbTestingRoutes from './routes/ai/ai-ab-testing.routes.js';
 import aiAnalyticsRoutes from './routes/ai/ai-analytics.routes.js';
 import aiBudgetsRoutes from './routes/ai/ai-budgets.routes.js';
 import aiDevelopmentRoutes from './routes/ai/ai-development.routes.js';
 import aiDraftsRoutes from './routes/ai/ai-drafts.routes.js';
-import aiExperimentsRoutes from './routes/ai/ai-experiments.routes.js';
 import aiFeedbackRoutes from './routes/ai/ai-feedback.routes.js';
 import aiInfrastructureRoutes from './routes/ai/ai-infrastructure.routes.js';
 import aiMemoryRoutes from './routes/ai/ai-memory.routes.js';
-import aiNudgesRoutes from './routes/ai/ai-nudges.routes.js';
 import aiOperationsRoutes from './routes/ai/ai-operations.routes.js';
 import aiPreferencesExtendedRoutes from './routes/ai/ai-preferences-extended.routes.js';
 import aiPromptsRoutes from './routes/ai/ai-prompts.routes.js';
 import aiSecurityRoutes from './routes/ai/ai-security.routes.js';
 import aiSettingsRoutes from './routes/ai/ai-settings.routes.js';
 import aiTrainingRoutes from './routes/ai/ai-training.routes.js';
-import aiActionsRoutes from './routes/ai/aiActions.routes.js';
 import aiAnalyticsRoutesV2 from './routes/ai/aiAnalytics.routes.js';
 import aiAsyncRoutes from './routes/ai/aiAsync.routes.js';
-import aiCoachRoutes from './routes/ai/aiCoach.routes.js';
-import aiExplainRoutes from './routes/ai/aiExplain.routes.js';
-import aiLearningRoutes from './routes/ai/aiLearning.routes.js';
-import aiPlaybooksRoutes from './routes/ai/aiPlaybooks.routes.js';
+import aiDomainRoutes from './routes/ai/index.js';
 import analyticsRoutes from './routes/analytics.routes.js';
 import analyticsSuperadminRoutes from './routes/analytics-superadmin.routes.js';
 import advancedAnalyticsRoutes from './routes/analyticsAdvanced.routes.js';
@@ -45,6 +37,7 @@ import assessmentHubRoutes from './routes/assessment/assessment-hub.routes.js';
 import assessmentLevelAttachmentsRoutes from './routes/assessment/assessment-level-attachments.routes.js';
 import assessmentReportsRoutes from './routes/assessment/assessment-reports.routes.js';
 import assessmentWorkflowRoutes from './routes/assessment/assessment-workflow.routes.js';
+import assessmentWorkflowV2Routes from './routes/assessment-workflow-v2.routes.js';
 import auditRoutes from './routes/audit.routes.js';
 import auditLogRoutes from './routes/auditLog.routes.js';
 // Route Imports
@@ -83,8 +76,6 @@ import helpAnalyticsRoutes from './routes/helpAnalytics.routes.js';
 import helpChatRoutes from './routes/helpChat.routes.js';
 import helpFeedbackRoutes from './routes/helpFeedback.routes.js';
 import initiativeGeneratorRoutes from './routes/initiative-generator.routes.js';
-import toolsRoutes from './routes/tools.routes.js';
-import assessmentWorkflowV2Routes from './routes/assessment-workflow-v2.routes.js';
 import calendarIntegrationsRoutes from './routes/integrations/calendarIntegrations.routes.js';
 import connectorRoutes from './routes/integrations/connectors.routes.js';
 import integrationsRoutes from './routes/integrations/integrations.routes.js';
@@ -169,6 +160,7 @@ import superAdminRoutes from './routes/superadmin.routes.js';
 import systemConfigRoutes from './routes/systemConfig.routes.js';
 import systemHealthRoutes from './routes/systemHealth.routes.js';
 import taskAdvisorRoutes from './routes/task-advisor.routes.js';
+import toolsRoutes from './routes/tools.routes.js';
 import trialRoutes from './routes/trial.routes.js';
 import loginHistoryRoutes from './routes/user/loginHistory.routes.js';
 import preferencesRoutes from './routes/user/preferences.routes.js';
@@ -218,25 +210,8 @@ export class ApiGateway {
       app.use('/api/analytics/ai', aiAnalyticsRoutesV2);
       console.log('[ApiGateway] Mounting /api/ai');
       app.use('/api/ai', aiRoutes);
-      app.use('/api/ai/prompts', aiPromptsRoutes);
-      app.use('/api/ai/experiments', aiExperimentsRoutes);
-      app.use('/api/ai/analytics', aiAnalyticsRoutesV2);
-      app.use('/api/ai/async', aiAsyncRoutes);
-      app.use('/api/ai/coach', aiCoachRoutes);
-      app.use('/api/ai/playbooks', aiPlaybooksRoutes);
-      app.use('/api/ai/explain', aiExplainRoutes);
-      app.use('/api/ai/training', aiTrainingRoutes);
-      app.use('/api/ai/ab-testing', aiAbTestingRoutes);
-      app.use('/api/ai/nudges', aiNudgesRoutes);
-      app.use('/api/ai/learning', aiLearningRoutes);
-      app.use('/api/ai/memory', aiMemoryRoutes);
-      app.use('/api/ai/security', aiSecurityRoutes);
-      app.use('/api/ai/settings', aiSettingsRoutes);
-      app.use('/api/ai/budgets', aiBudgetsRoutes);
-      app.use('/api/ai/infrastructure', aiInfrastructureRoutes);
-      app.use('/api/ai/development', aiDevelopmentRoutes);
-      app.use('/api/ai/operations', aiOperationsRoutes);
-      app.use('/api/ai/actions', aiActionsRoutes);
+      // Aggregated AI sub-routes (reduces drift & duplication)
+      app.use('/api/ai', aiDomainRoutes);
       app.use('/api/ai/performance', performanceRoutes);
       console.log('[ApiGateway] Mounting /api/tools');
       app.use('/api/tools', toolsRoutes);
@@ -341,7 +316,6 @@ export class ApiGateway {
       app.use('/api/webhooks', webhookRoutes);
 
       // Billing routes
-      app.use('/api/billing', billingRoutes);
       app.use('/api/revenue', revenueRoutes);
       console.log('[ApiGateway] Mounting /api/revenue');
       app.use('/api/superadmin/analytics', analyticsSuperadminRoutes);
@@ -401,7 +375,6 @@ export class ApiGateway {
       app.use('/api/external-assessments', externalAssessmentsRoutes);
       app.use('/api/generic-reports', genericReportsRoutes);
       app.use('/api/initiatives', initiativeGeneratorRoutes);
-      app.use('/api/assessment-workflow', assessmentWorkflowRoutes);
       app.use('/api/assessments', assessmentHubRoutes);
       app.use('/api/assessment-reports', assessmentReportsRoutes);
       app.use('/api/assessment-level-attachments', assessmentLevelAttachmentsRoutes);

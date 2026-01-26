@@ -10,9 +10,9 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 
 // Mock queryHelpers
 vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
-    runQuery: vi.fn().mockResolvedValue({ lastID: 1, changes: 1 }),
-    getOne: vi.fn().mockResolvedValue(null),
-    getAll: vi.fn().mockResolvedValue([]),
+    queryRun: vi.fn().mockResolvedValue({ lastID: 1, changes: 1 }),
+    queryOne: vi.fn().mockResolvedValue(null),
+    queryAll: vi.fn().mockResolvedValue([]),
 }));
 
 // Mock uuid

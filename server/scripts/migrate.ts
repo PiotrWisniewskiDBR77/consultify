@@ -113,10 +113,16 @@ async function applyMigration(migration: Migration): Promise<boolean> {
         .replace(/END IF;/gi, '');
 
       // 3. Strip PostgreSQL 'ON table_name' from DROP TRIGGER
-      cleanContent = cleanContent.replace(/DROP TRIGGER IF EXISTS ([a-zA-Z0-9_]+) ON ([a-zA-Z0-9_]+)/gi, 'DROP TRIGGER IF EXISTS $1');
+      cleanContent = cleanContent.replace(
+        /DROP TRIGGER IF EXISTS ([a-zA-Z0-9_]+) ON ([a-zA-Z0-9_]+)/gi,
+        'DROP TRIGGER IF EXISTS $1'
+      );
 
       // 4. Remove PL/pgSQL functions and triggers
-      cleanContent = cleanContent.replace(/CREATE OR REPLACE FUNCTION[\s\S]*?LANGUAGE\s+'?plpgsql'?;/gi, '');
+      cleanContent = cleanContent.replace(
+        /CREATE OR REPLACE FUNCTION[\s\S]*?LANGUAGE\s+'?plpgsql'?;/gi,
+        ''
+      );
       cleanContent = cleanContent.replace(/CREATE TRIGGER[\s\S]*?EXECUTE FUNCTION.*?;/gi, '');
 
       // 4b. Strip Postgres extensions (e.g., pgvector)
@@ -139,9 +145,9 @@ async function applyMigration(migration: Migration): Promise<boolean> {
         .replace(/\b(BIG)?SERIAL\s+PRIMARY\s+KEY\b/gi, 'INTEGER PRIMARY KEY AUTOINCREMENT')
         .replace(/\b(BIG)?SERIAL\b/gi, 'INTEGER PRIMARY KEY AUTOINCREMENT')
         .replace(/\bINET\b/gi, 'TEXT')
-        .replace(/\bgen_random_uuid\(\)/gi, "(hex(randomblob(16)))")
-        .replace(/\bNOW\(\)/gi, "CURRENT_TIMESTAMP")
-        .replace(/\bCURRENT_TIMESTAMP\(\)/gi, "CURRENT_TIMESTAMP")
+        .replace(/\bgen_random_uuid\(\)/gi, '(hex(randomblob(16)))')
+        .replace(/\bNOW\(\)/gi, 'CURRENT_TIMESTAMP')
+        .replace(/\bCURRENT_TIMESTAMP\(\)/gi, 'CURRENT_TIMESTAMP')
         .replace(/\bTRUE\b/gi, '1')
         .replace(/\bFALSE\b/gi, '0');
 
@@ -199,11 +205,13 @@ async function applyMigration(migration: Migration): Promise<boolean> {
         const full = (buffer + stmt).trim();
         if (!full) continue;
 
-        // Check for BEGIN/END blocks (triggers) 
+        // Check for BEGIN/END blocks (triggers)
         // We ignore BEGIN TRANSACTION/DEFERRED/IMMEDIATE/EXCLUSIVE as they don't have an END clause
         // We also count CASE...END as a block to avoid premature END matching
         const stmtUpper = stmt.toUpperCase();
-        const beginMatches = stmtUpper.match(/\b(BEGIN|CASE)\b(?!\s+(TRANSACTION|DEFERRED|IMMEDIATE|EXCLUSIVE))/g) || [];
+        const beginMatches =
+          stmtUpper.match(/\b(BEGIN|CASE)\b(?!\s+(TRANSACTION|DEFERRED|IMMEDIATE|EXCLUSIVE))/g) ||
+          [];
         const beginCount = beginMatches.length;
         const endCount = (stmtUpper.match(/\bEND\b/g) || []).length;
         inBlock += beginCount - endCount;
@@ -249,7 +257,10 @@ async function applyMigration(migration: Migration): Promise<boolean> {
                 msg.includes('syntax error') ||
                 msg.includes('constraint failed'))) ||
             (isSeedMigration && isInsert) ||
-            (isInsert && (isMissingSchema || msg.includes('no such function') || msg.includes('syntax error'))) ||
+            (isInsert &&
+              (isMissingSchema ||
+                msg.includes('no such function') ||
+                msg.includes('syntax error'))) ||
             (msg.includes('no such function') &&
               (statement.toLowerCase().includes('to_tsvector') ||
                 statement.toLowerCase().includes('setweight') ||

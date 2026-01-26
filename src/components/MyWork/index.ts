@@ -71,8 +71,7 @@ export {
   PMOCategoryDot,
   PMOPriorityBadge,
 } from './shared/PMOPriorityBadge';
-export type { QuickActionType } from './shared/QuickActions';
-export { MoreActionsButton, QuickActionButton, QuickActions } from './shared/QuickActions';
+export { QuickActions } from './shared/QuickActions';
 
 // ============================================================================
 // LEGACY COMPONENTS (kept for backward compatibility)

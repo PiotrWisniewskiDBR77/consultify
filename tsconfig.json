@@ -45,5 +45,19 @@
     "types": ["node", "vite/client", "@testing-library/jest-dom", "vitest/globals"]
   },
   "include": ["src", "*.ts", "*.tsx"],
-  "exclude": ["node_modules", "node_modules_trash", "dist", "server", "server/**/*"]
+  "exclude": [
+    "node_modules",
+    "node_modules_trash",
+    "dist",
+    "server",
+    "server/**/*",
+    "_backup/**",
+    "_quarantine/**",
+    "Piotr_Tools/**",
+    "config/tours/**",
+    // Exclude duplicate/copy files like \"file 2.tsx\"
+    "**/* *.ts",
+    "**/* *.tsx",
+    "**/* *.js"
+  ]
 }

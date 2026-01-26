@@ -65,20 +65,7 @@
     "**/*.test.ts",
     "**/*.spec.ts",
     "src/**/* *.ts",
-    "src/**/* 2.ts",
-    "src/**/* 3.ts",
-    "src/**/* 4.ts",
-    "src/**/* 5.ts",
-    "src/**/* 6.ts",
-    "src/**/* 7.ts",
-    "src/**/* 8.ts",
-    "src/**/* 9.ts",
-    "src/**/* 10.ts",
-    "src/**/* 11.ts",
-    "src/**/* 12.ts",
-    "src/**/* 13.ts",
-    "src/**/* 14.ts",
-    "src/**/* 15.ts",
+    "src/_backup/**",
     "**/*.js"
   ]
 }

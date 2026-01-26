@@ -219,11 +219,17 @@ class AssessmentInitiativeService {
     const categories = ASSESSMENT_CATEGORY_MAPPING[assessment.assessment_type] || ['general'];
 
     // Parse assessment data
-    const answers = assessment.answers_json ? JSON.parse(assessment.answers_json) : {};
-    const scoreSummary = assessment.score_summary ? JSON.parse(assessment.score_summary) : {};
-    const contextSnapshot = assessment.context_snapshot
-      ? JSON.parse(assessment.context_snapshot)
-      : {};
+    const safeParseJson = <T>(value: string | null | undefined, fallback: T): T => {
+      if (!value || typeof value !== 'string') return fallback;
+      try {
+        return JSON.parse(value) as T;
+      } catch {
+        return fallback;
+      }
+    };
+    const answers = safeParseJson<Record<string, any>>(assessment.answers_json, {});
+    const scoreSummary = safeParseJson<Record<string, any>>(assessment.score_summary, {});
+    const contextSnapshot = safeParseJson<Record<string, any>>(assessment.context_snapshot, {});
 
     // Build prompt for AI
     const prompt = this.buildPrompt({
@@ -375,10 +381,16 @@ Return a JSON array with exactly ${count} initiatives in this format:
       title: String(init.title || 'Untitled Initiative').slice(0, 200),
       description: String(init.description || ''),
       category: categories.includes(init.category) ? init.category : categories[0],
-      priority: ['low', 'medium', 'high', 'critical'].includes(init.priority)
-        ? init.priority
-        : 'medium',
-      risk: ['low', 'medium', 'high'].includes(init.risk) ? init.risk : 'medium',
+      priority: (() => {
+        const raw = String(init.priority || '').toLowerCase();
+        return ['low', 'medium', 'high', 'critical'].includes(raw)
+          ? (raw as GeneratedInitiative['priority'])
+          : 'medium';
+      })(),
+      risk: (() => {
+        const raw = String(init.risk || '').toLowerCase();
+        return ['low', 'medium', 'high'].includes(raw) ? (raw as GeneratedInitiative['risk']) : 'medium';
+      })(),
       estimatedEffort: init.estimatedEffort || 'M',
       expectedOutcome: init.expectedOutcome || '',
       relatedAxis: init.relatedAxis || '',

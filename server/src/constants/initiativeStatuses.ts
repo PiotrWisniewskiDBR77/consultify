@@ -285,29 +285,21 @@ export function getModuleConfigForStatus(status: InitiativeStatusType): ModuleCo
 /**
  * Check if a status transition is valid
  */
-export function isValidTransition(
-  from: InitiativeStatusType,
-  to: InitiativeStatusType
-): boolean {
+export function isValidTransition(from: InitiativeStatusType, to: InitiativeStatusType): boolean {
   return VALID_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
 /**
  * Get valid next statuses from current status
  */
-export function getValidNextStatuses(
-  currentStatus: InitiativeStatusType
-): InitiativeStatusType[] {
+export function getValidNextStatuses(currentStatus: InitiativeStatusType): InitiativeStatusType[] {
   return VALID_TRANSITIONS[currentStatus] || [];
 }
 
 /**
  * Check if transitioning to a new status will change the module
  */
-export function willChangeModule(
-  from: InitiativeStatusType,
-  to: InitiativeStatusType
-): boolean {
+export function willChangeModule(from: InitiativeStatusType, to: InitiativeStatusType): boolean {
   return getModuleForStatus(from) !== getModuleForStatus(to);
 }
 
