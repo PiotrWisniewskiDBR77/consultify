@@ -410,9 +410,12 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
     params?: TriageParams[TriageAction]
   ) => {
     try {
+      const item = items.find((i) => i.id === itemId);
+      const itemKey = (item as any)?._key;
+
       // Optimistic update - remove from UI immediately
       setItems((prev) => prev.filter((i) => i.id !== itemId));
-      await Api.post(`/my-work/inbox/${itemId}/triage`, { action, params });
+      await Api.post(`/my-work/inbox/${itemId}/triage`, { action, params, itemKey });
 
       onTriage?.(itemId, action, params);
       toast.success(t('myWork.inbox.triaged', 'Item processed'));
@@ -429,12 +432,17 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
 
     try {
       const ids = Array.from(selectedIds);
+      const itemKeys = ids
+        .map((id) => items.find((i) => i.id === id))
+        .map((i: any) => i?._key)
+        .filter(Boolean);
 
       // Optimistic update
       setItems((prev) => prev.filter((i) => !selectedIds.has(i.id)));
       setSelectedIds(new Set());
       await Api.post('/my-work/inbox/bulk-triage', {
         itemIds: ids,
+        itemKeys,
         action,
       });
 

@@ -157,9 +157,9 @@ const ProjectIntelligenceView = React.lazy(() =>
   import('@/views/ProjectIntelligenceView').then((m) => ({ default: m.ProjectIntelligenceView }))
 );
 
-// Interview Module - New Hub (ModuleHub pattern)
+// Interview Module - New Hub (ModuleHub pattern) - BCG Enterprise Level
 const InterviewHub = React.lazy(() =>
-  import('@/components/Discovery/InterviewHub').then((m) => ({ default: m.InterviewHub }))
+  import('@/components/Interview/InterviewHub').then((m) => ({ default: m.InterviewHub }))
 );
 
 // AI Actions

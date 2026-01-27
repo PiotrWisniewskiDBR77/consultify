@@ -201,37 +201,8 @@ export const ActionRequiredStrip: React.FC<ActionRequiredStripProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  // Default/mock items if none provided
-  const displayItems: ActionItem[] =
-    items.length > 0
-      ? items
-      : [
-          {
-            id: '1',
-            type: 'decision',
-            title: 'Budget Approval: Q1 Marketing Campaign',
-            urgency: 'critical',
-            daysOverdue: 2,
-            projectName: 'Marketing 2025',
-            owner: 'Anna K.',
-          },
-          {
-            id: '2',
-            type: 'escalation',
-            title: 'Vendor Delay: Server Infrastructure',
-            description: '2-week delay on cloud migration',
-            urgency: 'high',
-            projectName: 'IT Modernization',
-          },
-          {
-            id: '3',
-            type: 'task',
-            title: 'Review Architecture Documentation',
-            urgency: 'medium',
-            dueDate: new Date(Date.now() + 86400000).toISOString(),
-            owner: 'Tomasz K.',
-          },
-        ];
+  // Real data only - no mock fallbacks
+  const displayItems: ActionItem[] = items;
 
   const criticalCount = displayItems.filter((i) => i.urgency === 'critical').length;
   const highCount = displayItems.filter((i) => i.urgency === 'high').length;

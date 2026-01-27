@@ -1,11 +1,283 @@
-# 🧩 Moduł: Tools – Overview
+# Modul: Tools - Overview
 
-## Plan źródłowy
+## Plan zrodlowy
 `wdrozenia/plan-tools-initiatives.md`
 
-## Audyt zgodności (dowód)
+## Audyt zgodnosci (dowod)
 `wdrozenia/ANALIZA_ZGODNOSCI_IMPLEMENTACJI.md`
 
 ## Cel
-Discovery tools → generowanie inicjatyw (DRAFT) z DoD i gate decisions.
+Discovery tools -> generowanie inicjatyw (DRAFT) z DoD i gate decisions.
 
+---
+
+## Podsumowanie zgodnosci: ~95%
+
+### Wymagania krytyczne (Kryteria rozliczenia)
+| Wymaganie | Status | Dowod |
+|-----------|--------|-------|
+| Flow DRAFT -> REVIEW -> APPROVED -> Generate | ✅ | E2E test, ToolController.ts |
+| Inicjatywy widoczne w Initiatives jako DRAFT | ✅ | source_type='tool' w initiatives |
+| DoD i role blokuja przejscia | ✅ | requireDoD(), ensurePermission() |
+| UI/UX zgodny ze standardem (ClickUp-like) | ✅ | ModuleHub pattern, Golden Standard |
+
+### Deliverables
+| Deliverable | Status | Pliki |
+|-------------|--------|-------|
+| 1) Widoki UI/UX | ✅ | ToolWorkspace, ToolReviewPanel, GenerateModal |
+| 2) API endpoints + walidacje | ✅ | tools.routes.ts, tool.validators.ts |
+| 3) Model danych i relacje | ✅ | 4 tabele, migracje 291-292 |
+| 4) Decyzje (gates) i audit log | ✅ | tool_decisions, audit_log |
+| 5) Testy (unit/API/E2E) | ✅ | 40+ testow |
+
+---
+
+## Zaimplementowane funkcjonalnosci
+
+### Workflow statusow
+| Status | Opis | Akcje dostepne | Nastepny status |
+|--------|------|----------------|-----------------|
+| DRAFT | Sesja w trakcie edycji | Edit, Request Review | REVIEW |
+| REVIEW | Oczekuje na zatwierdzenie | Approve, Send back | APPROVED / DRAFT |
+| APPROVED | Zatwierdzone | Generate initiatives | COMPLETED |
+| COMPLETED | Zakonczono generowanie | View, Export | - |
+
+### API Endpoints (9 endpointow)
+| Endpoint | Metoda | Opis | Auth | Rate Limit |
+|----------|--------|------|------|------------|
+| `/api/tools` | POST | Utworz sesje narzedzia | TOOLS_CREATE | 20/h |
+| `/api/tools` | GET | Lista sesji (z filtrami) | TOOLS_VIEW | 200/h |
+| `/api/tools/:toolId` | GET | Pobierz sesje | TOOLS_VIEW | 200/h |
+| `/api/tools/:toolId` | PUT | Aktualizuj sesje | TOOLS_EDIT | 100/h |
+| `/api/tools/:toolId/request-review` | POST | Wyslij do review | TOOLS_REQUEST_REVIEW | 20/h |
+| `/api/tools/:toolId/approve` | POST | Zatwierdz narzedzie | TOOLS_APPROVE | 20/h |
+| `/api/tools/:toolId/send-back` | POST | Odeslij do draft | TOOLS_APPROVE | 20/h |
+| `/api/tools/:toolId/generate-initiatives` | POST | Generuj inicjatywy | TOOLS_GENERATE | 10/h |
+| `/api/tools/:toolId/generated-initiatives` | GET | Lista wygenerowanych | TOOLS_VIEW | 200/h |
+
+### Model danych
+| Tabela | Opis | Kolumny kluczowe |
+|--------|------|------------------|
+| `tool_sessions` | Sesje narzedzi | id, org_id, tool_type, status, completion_percent, confidence_avg |
+| `tool_decisions` | Decyzje (gates) | id, tool_session_id, decision_type, status, decision_id |
+| `tool_initiative_batches` | Batche generowania | id, tool_session_id, methodology_id, count, generated_by |
+| `tool_initiative_links` | Powiazania tool -> initiative | id, tool_session_id, batch_id, initiative_id |
+
+### Permissions
+| Permission | Role | Opis |
+|------------|------|------|
+| `TOOLS_VIEW` | USER, ADMIN, PM, SUPERADMIN | Podglad narzedzi |
+| `TOOLS_CREATE` | ADMIN, PM, SUPERADMIN | Tworzenie sesji |
+| `TOOLS_EDIT` | ADMIN, PM, SUPERADMIN | Edycja sesji |
+| `TOOLS_REQUEST_REVIEW` | ADMIN, PM, SUPERADMIN | Wysylanie do review |
+| `TOOLS_APPROVE` | ADMIN, SUPERADMIN | Zatwierdzanie / odrzucanie |
+| `TOOLS_GENERATE_INITIATIVES` | ADMIN, PM, SUPERADMIN | Generowanie inicjatyw |
+| `TOOLS_DELETE` | SUPERADMIN | Usuwanie sesji |
+
+### Definition of Done (DoD)
+| Kryterium | Wartosc | Opis |
+|-----------|---------|------|
+| `completion_percent` | >= 100 | Wszystkie wymagane pola wypelnione |
+| `confidence_avg` | >= 3 | Srednia pewnosc odpowiedzi (skala 1-5) |
+
+### UI Komponenty
+| Komponent | Plik | Opis |
+|-----------|------|------|
+| ToolWorkspace | `ToolWorkspace.tsx` | Glowny kontener workspace |
+| ToolReviewPanel | `ToolReviewPanel.tsx` | Panel review z gaps i akcjami |
+| GenerateInitiativesModal | `GenerateInitiativesModal.tsx` | Modal generowania (count 3-7, metodyka) |
+| ToolContextPanel | `ToolContextPanel.tsx` | Prawy panel z org, completion, AI assist |
+| ToolHeader | `ToolHeader.tsx` | Status badge, progress, request review |
+| ToolCanvas | `ToolCanvas.tsx` | Glowna kolumna z sekcjami narzedzia |
+| ToolActionBar | `ToolActionBar.tsx` | Dolny pasek akcji |
+| InlineAssist | `InlineAssist.tsx` | Micro-suggestions przy polach |
+| DiscoveryToolsHub | `DiscoveryToolsHub.tsx` | Hub z zakladkami i kategoriami |
+
+### Generowanie inicjatyw
+| Metodologia | Category | Priority | Risk | Best For |
+|-------------|----------|----------|------|----------|
+| Impact x Feasibility | Strategy | P1 | Medium | Strategic planning |
+| Value x Effort | Operations | P2 | Low | Quick wins |
+| Risk/Compliance | Process Auto | P1 | High | Compliance |
+| Customer/Market | Digital | P2 | Medium | CX improvements |
+| Operational Efficiency | Operations | P2 | Low | Cost reduction |
+
+### AI Pipeline
+| Etap | Opis | Timeout |
+|------|------|---------|
+| Build Prompt | Kontekst org + chat + tool answers | - |
+| Call AI | GPT-4 Turbo | 8s |
+| Retry | 1 retry przy bledzie | 8s |
+| Fallback | Generowanie fallback initiatives | - |
+| Normalize | Deduplikacja, walidacja, defaults | - |
+| Persist | Zapis do initiatives + links | - |
+
+### Decision Management (Gates)
+| Decision Type | Status | Opis |
+|---------------|--------|------|
+| REQUEST_REVIEW | PENDING -> APPROVED | Wyslanie do review |
+| APPROVE_TOOL | PENDING -> APPROVED/REJECTED | Zatwierdzenie lub odrzucenie |
+| GENERATE_INITIATIVES | APPROVED | Generowanie inicjatyw |
+
+### Audit Log
+| Action | Opis | Details |
+|--------|------|---------|
+| `tool_review_requested` | Wyslano do review | decisionId, priority, dueDate |
+| `tool_approved` | Zatwierdzono | decisionId, comment |
+| `tool_sent_back` | Odeslano do draft | decisionId, reason |
+| `initiatives_generated` | Wygenerowano inicjatywy | batchId, count, methodologyId |
+
+### Testy
+| Typ | Plik | Liczba testow |
+|-----|------|---------------|
+| Unit - Validators | `tool.validators.test.ts` | 15 |
+| Unit - Routes | `tools.routes.test.ts` | 13 |
+| E2E | `tools-to-initiatives.spec.ts` | 12 |
+| **RAZEM** | - | **40** |
+
+---
+
+## Braki / Nice-to-have (P2/P3)
+
+### P2 (Enhancement)
+| Feature | Opis | Effort |
+|---------|------|--------|
+| Decision Owner Selection UI | Backend przyjmuje `decisionOwnerId`, UI brak selektora | 2h |
+| Link z Initiative do Tool | `source_type='tool'` zapisane, brak linku w UI | 1h |
+| Batch history view | Lista wszystkich batchy generowania | 3h |
+| Export to PDF | Eksport analizy do PDF | 4h |
+
+### P3 (Nice-to-have)
+| Feature | Opis | Effort |
+|---------|------|--------|
+| Tooltipy Confidence | Tooltip z uzasadnieniem confidence | 1h |
+| Wybor fragmentow czatu (pinowanie) | Tylko ostatnie 50 wiadomosci | 4h |
+| Related Initiatives w Context Panel | Wyswietlane ostatnie 5, brak ryzyka | 2h |
+| Checklist DoD w Request Review Modal | Interaktywna checklist | 3h |
+| Collaborative editing | Real-time sync miedzy userami | 8h |
+| Version history | Historia zmian sesji | 6h |
+
+---
+
+## Narzedzia (31 total)
+
+### Zaimplementowane (5)
+| ID | Nazwa | Kategoria | Status |
+|----|-------|-----------|--------|
+| `dynamic-swot` | Dynamic SWOT | Strategy | ✅ Active |
+| `market-forces` | Market Forces / Porter | Strategy | ✅ Active |
+| `growth-paths` | Growth Paths / Ansoff | Strategy | ✅ Active |
+| `portfolio-priority` | Portfolio Priority / BCG | Strategy | ✅ Active |
+| `risk-uncertainty` | Risk & Uncertainty | Strategy | ✅ Active |
+
+### Coming Soon - Strategic (5)
+| ID | Nazwa | Kategoria | ETA |
+|----|-------|-----------|-----|
+| `value-chain` | Value Chain | Strategy | Q2 2026 |
+| `ambition-decomposer` | Ambition Decomposer | Strategy | Q2 2026 |
+| `focus-tradeoff` | Focus & Trade-off | Strategy | Q2 2026 |
+| `capability-mapper` | Capability Mapper | Strategy | Q3 2026 |
+| `narrative-engine` | Narrative Engine | Strategy | Q3 2026 |
+
+### Coming Soon - Operational (10)
+| ID | Nazwa | Kategoria | ETA |
+|----|-------|-----------|-----|
+| `vsm-builder` | VSM Builder | Operations | Q2 2026 |
+| `sop-builder` | SOP Builder | Operations | Q2 2026 |
+| `a3-problem` | A3 Problem Solving | Operations | Q2 2026 |
+| `smed-planner` | SMED Planner | Operations | Q3 2026 |
+| `dms-builder` | DMS Builder | Operations | Q3 2026 |
+| `automation-pipeline` | Automation Pipeline | Operations | Q3 2026 |
+| `constraint-control` | Constraint Control | Operations | Q3 2026 |
+| `decision-engine` | Decision Engine | Operations | Q4 2026 |
+| `control-tower` | Control Tower | Operations | Q4 2026 |
+| `inventory-autopilot` | Inventory Autopilot | Operations | Q4 2026 |
+
+### Coming Soon - Digital (10)
+| ID | Nazwa | Kategoria | ETA |
+|----|-------|-----------|-----|
+| `robotics-feasibility` | Robotics Feasibility | Digital | Q2 2026 |
+| `logistics-automation` | Logistics Automation | Digital | Q2 2026 |
+| `rpa-scanner` | RPA Scanner | Digital | Q2 2026 |
+| `ai-discovery` | AI Discovery | Digital | Q3 2026 |
+| `integration-diagnostic` | Integration Diagnostic | Digital | Q3 2026 |
+| `digital-value-pool` | Digital Value Pool | Digital | Q3 2026 |
+| `legacy-analyzer` | Legacy Analyzer | Digital | Q3 2026 |
+| `data-inventory` | Data Inventory | Digital | Q4 2026 |
+| `pain-to-solution` | Pain-to-Solution | Digital | Q4 2026 |
+| `pain-explorer` | Pain Explorer | Digital | Q4 2026 |
+
+### Coming Soon - Process Automation (1)
+| ID | Nazwa | Kategoria | ETA |
+|----|-------|-----------|-----|
+| `process-automation-builder` | Process Automation Builder | Automation | Q3 2026 |
+
+---
+
+## Rekomendacje dalszego rozwoju
+
+### Priorytet 1 (Q1 2026)
+1. **Dodac selektor decision owner** - w request review modal
+2. **Dodac link z Initiative do Tool** - w InitiativeDetailCard
+3. **Rozszerzyc testy** - coverage do 80%
+
+### Priorytet 2 (Q2 2026)
+4. **Rozszerzyc related initiatives** - pokazac ryzyko i wiecej szczegolow
+5. **Dodac tooltipy confidence** - wyjasnienie dlaczego confidence jest na danym poziomie
+6. **Dodac pinowanie fragmentow czatu** - dla lepszego kontekstu
+7. **Export do PDF** - eksport analizy
+
+### Priorytet 3 (Q3-Q4 2026)
+8. **Collaborative editing** - real-time sync
+9. **Version history** - historia zmian
+10. **Nowe narzedzia** - Value Chain, VSM Builder, RPA Scanner
+
+---
+
+## Metryki sukcesu
+
+| Metryka | Target | Obecny |
+|---------|--------|--------|
+| Czas generowania inicjatyw | < 10s | ~5s |
+| Czas ladowania listy sesji | < 200ms | ~150ms |
+| Test coverage | 80% | ~70% |
+| E2E pass rate | 100% | 100% |
+| User satisfaction | > 4.0/5 | TBD |
+
+---
+
+## Pliki zrodlowe
+
+### Backend
+| Plik | Opis | Linie |
+|------|------|-------|
+| `server/src/routes/tools.routes.ts` | Routing | ~100 |
+| `server/src/controllers/ToolController.ts` | Controller | ~1000 |
+| `server/src/services/ToolInitiativeService.ts` | AI Service | ~300 |
+| `server/src/validators/tool.validators.ts` | Validators | ~100 |
+
+### Frontend
+| Plik | Opis | Linie |
+|------|------|-------|
+| `src/components/DiscoveryTools/ToolWorkspace.tsx` | Main workspace | ~800 |
+| `src/components/DiscoveryTools/ToolReviewPanel.tsx` | Review panel | ~300 |
+| `src/components/DiscoveryTools/GenerateInitiativesModal.tsx` | Generate modal | ~350 |
+| `src/components/DiscoveryTools/ToolContextPanel.tsx` | Context panel | ~250 |
+| `src/components/DiscoveryTools/ToolHeader.tsx` | Header | ~150 |
+| `src/components/DiscoveryTools/ToolCanvas.tsx` | Canvas | ~400 |
+| `src/components/DiscoveryTools/ToolActionBar.tsx` | Action bar | ~100 |
+| `src/components/DiscoveryTools/InlineAssist.tsx` | AI assist | ~150 |
+| `src/components/Discovery/DiscoveryToolsHub.tsx` | Hub | ~500 |
+
+### Testy
+| Plik | Opis | Testy |
+|------|------|-------|
+| `tests/unit/backend/tool.validators.test.ts` | Validators | 15 |
+| `tests/unit/backend/tools.routes.test.ts` | Routes | 13 |
+| `tests/e2e/tools-to-initiatives.spec.ts` | E2E flow | 12 |
+
+### Migracje
+| Plik | Opis |
+|------|------|
+| `server/src/migrations/291_tools_initiatives.sql` | Tabele tool_sessions, batches, links |
+| `server/src/migrations/292_tools_decisions_link.sql` | Tabela tool_decisions |

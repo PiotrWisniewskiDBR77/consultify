@@ -16,6 +16,18 @@ export { InterviewHub } from './InterviewHub';
 // Main workspace
 export { InterviewWorkspace } from './InterviewWorkspace';
 
+// Assignment Modal
+export { AssignInterviewModal } from './AssignInterviewModal';
+
+// Template Builder
+export { TemplateBuilder } from './TemplateBuilder';
+
+// Insight Creator Modal
+export { InsightCreatorModal } from './InsightCreatorModal';
+
+// Insight Viewer
+export { InsightViewer } from './InsightViewer';
+
 // Components
 export { CategorySidebar, CATEGORY_CONFIG, CATEGORY_ORDER } from './CategorySidebar';
 export { QuestionsList } from './QuestionsList';

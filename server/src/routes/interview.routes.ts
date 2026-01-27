@@ -151,6 +151,13 @@ router.delete(
 /** GET /interview/templates - List templates (library) */
 router.get('/templates', requirePermission('INTERVIEW_TEMPLATE_VIEW'), InterviewController.getTemplates);
 
+/** POST /interview/templates - Create new template */
+router.post(
+  '/templates',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  InterviewController.createTemplate
+);
+
 /** GET /interview/templates/:id - Get template metadata */
 router.get('/templates/:id', requirePermission('INTERVIEW_TEMPLATE_VIEW'), InterviewController.getTemplate);
 
@@ -164,11 +171,25 @@ router.get(
 /** POST /interview/templates/:id/use - Create new session from template */
 router.post('/templates/:id/use', requirePermission('INTERVIEW_TEMPLATE_USE'), InterviewController.useTemplate);
 
+/** POST /interview/templates/:id/clone - Clone template */
+router.post(
+  '/templates/:id/clone',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  InterviewController.cloneTemplate
+);
+
 /** PATCH /interview/templates/:id - Update template (metadata, status) */
 router.patch(
   '/templates/:id',
   requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
   InterviewController.updateTemplate
+);
+
+/** DELETE /interview/templates/:id - Delete template */
+router.delete(
+  '/templates/:id',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  InterviewController.deleteTemplate
 );
 
 /** POST /interview/templates/:id/questions - Add template question */
@@ -279,6 +300,12 @@ router.post('/insights', InterviewController.createInsight);
 
 /** POST /interview/insights/:id/regenerate - Regenerate an insight */
 router.post('/insights/:id/regenerate', InterviewController.regenerateInsight);
+
+/** PATCH /interview/insights/:id - Update insight (status, etc.) */
+router.patch('/insights/:id', InterviewController.updateInsight);
+
+/** POST /interview/insights/:id/export - Export insight to Tools or Assessment */
+router.post('/insights/:id/export', InterviewController.exportInsight);
 
 /** DELETE /interview/insights/:id - Delete insight */
 router.delete('/insights/:id', InterviewController.deleteInsight);

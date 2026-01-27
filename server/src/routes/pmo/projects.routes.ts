@@ -150,6 +150,17 @@ router.post('/:id/archive', validateBody(ArchiveProjectSchema), ProjectControlle
 router.post('/:id/unarchive', ProjectController.unarchiveProject);
 
 // ==========================================
+// MY MEMBERSHIPS
+// ==========================================
+
+/**
+ * GET /api/pmo/projects/my-memberships
+ * Get all project memberships for current user
+ * Used by useInterviewPermissions hook
+ */
+router.get('/my-memberships', ProjectController.getMyMemberships);
+
+// ==========================================
 // PMO ROLES
 // ==========================================
 

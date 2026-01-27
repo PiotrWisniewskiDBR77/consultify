@@ -4709,7 +4709,7 @@ export const Api = {
     const data = await res.json();
     return data.reports || [];
   },
-  generateAssessmentReport: async (projectId: string, type?: string) => {
+  generateProjectAssessmentReport: async (projectId: string, type?: string) => {
     const res = await fetch(`${API_URL}/assessment-reports`, {
       method: 'POST',
       headers: getHeaders(),

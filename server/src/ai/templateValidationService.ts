@@ -38,8 +38,14 @@ const ERROR_CODES = {
  * @param {Object} template - Template with templateGraph or template_graph
  * @returns {Object} { ok: boolean, errors: [{code, message, nodeId}] }
  */
-function validate(template) {
-  const errors = [];
+function validate(template: {
+  templateGraph?: unknown;
+  template_graph?: unknown;
+  triggerSignal?: string;
+  trigger_signal?: string;
+  [key: string]: unknown;
+}) {
+  const errors: Array<{ code: string; message: string; nodeId: string | null }> = [];
 
   // Get graph from template
   const graph = template.templateGraph || template.template_graph;
@@ -54,10 +60,16 @@ function validate(template) {
   }
 
   // Parse graph if it's a string
-  let parsedGraph = graph;
+  type GraphType = {
+    nodes?: Array<{ id: string; type: string; [key: string]: unknown }>;
+    edges?: Array<{ from: string; to: string; [key: string]: unknown }>;
+    meta?: { trigger_signal?: string; [key: string]: unknown };
+    [key: string]: unknown;
+  };
+  let parsedGraph: GraphType;
   if (typeof graph === 'string') {
     try {
-      parsedGraph = JSON.parse(graph);
+      parsedGraph = JSON.parse(graph) as GraphType;
     } catch (e) {
       errors.push({
         code: 'INVALID_GRAPH_JSON',
@@ -66,6 +78,8 @@ function validate(template) {
       });
       return { ok: false, errors };
     }
+  } else {
+    parsedGraph = graph as GraphType;
   }
 
   // Validate graph structure
@@ -94,7 +108,11 @@ function validate(template) {
  * @param {Object} graph - Graph { nodes, edges, meta }
  * @returns {Array} Array of error objects
  */
-function validateGraph(graph) {
+function validateGraph(graph: {
+  nodes?: Array<{ id: string; type: string; [key: string]: unknown }>;
+  edges?: Array<{ from: string; to: string; [key: string]: unknown }>;
+  [key: string]: unknown;
+}) {
   const errors = [];
 
   if (!graph.nodes || !Array.isArray(graph.nodes)) {
@@ -118,8 +136,8 @@ function validateGraph(graph) {
   const { nodes, edges } = graph;
 
   // Check for duplicate node IDs
-  const nodeIds = new Set();
-  nodes.forEach((node) => {
+  const nodeIds = new Set<string>();
+  nodes.forEach((node: { id: string; type: string; [key: string]: unknown }) => {
     if (nodeIds.has(node.id)) {
       errors.push({
         code: ERROR_CODES.DUPLICATE_NODE_ID,
@@ -131,7 +149,7 @@ function validateGraph(graph) {
   });
 
   // Rule 1: Must have exactly 1 START node
-  const startNodes = nodes.filter((n) => n.type === templateGraphService.NODE_TYPES.START);
+  const startNodes = nodes.filter((n: { id: string; type: string; [key: string]: unknown }) => n.type === templateGraphService.NODE_TYPES.START);
   if (startNodes.length === 0) {
     errors.push({
       code: ERROR_CODES.NO_START_NODE,
@@ -149,7 +167,7 @@ function validateGraph(graph) {
   }
 
   // Must have at least 1 END node
-  const endNodes = nodes.filter((n) => n.type === templateGraphService.NODE_TYPES.END);
+  const endNodes = nodes.filter((n: { id: string; type: string; [key: string]: unknown }) => n.type === templateGraphService.NODE_TYPES.END);
   if (endNodes.length === 0) {
     errors.push({
       code: ERROR_CODES.NO_END_NODE,
@@ -172,8 +190,8 @@ function validateGraph(graph) {
 
   // Rule 3: Every node (except END) must have outgoing edge
   const deadEnds = templateGraphService.findDeadEnds(graph);
-  deadEnds.forEach((nodeId) => {
-    const node = nodes.find((n) => n.id === nodeId);
+  deadEnds.forEach((nodeId: string) => {
+    const node = nodes.find((n: { id: string; type: string; title?: string; [key: string]: unknown }) => n.id === nodeId);
     errors.push({
       code: ERROR_CODES.DEAD_END_NODE,
       message: `Node "${node?.title || nodeId}" has no outgoing connection`,
@@ -183,8 +201,8 @@ function validateGraph(graph) {
 
   // Rule 4: BRANCH nodes must have else path
   const branchesWithoutElse = templateGraphService.findBranchesWithoutElse(graph);
-  branchesWithoutElse.forEach((nodeId) => {
-    const node = nodes.find((n) => n.id === nodeId);
+  branchesWithoutElse.forEach((nodeId: string) => {
+    const node = nodes.find((n: { id: string; type: string; title?: string; [key: string]: unknown }) => n.id === nodeId);
     errors.push({
       code: ERROR_CODES.BRANCH_MISSING_ELSE,
       message: `Branch node "${node?.title || nodeId}" must have an 'else' path`,
@@ -193,7 +211,7 @@ function validateGraph(graph) {
   });
 
   // Validate edge references
-  edges.forEach((edge) => {
+  edges.forEach((edge: { from: string; to: string; [key: string]: unknown }) => {
     if (!nodeIds.has(edge.from)) {
       errors.push({
         code: ERROR_CODES.INVALID_EDGE_REFERENCE,
@@ -211,9 +229,10 @@ function validateGraph(graph) {
   });
 
   // Validate ACTION nodes have actionType
-  nodes.forEach((node) => {
+  nodes.forEach((node: { id: string; type: string; title?: string; data?: { actionType?: string; [key: string]: unknown }; [key: string]: unknown }) => {
     if (node.type === templateGraphService.NODE_TYPES.ACTION) {
-      if (!node.data?.actionType) {
+      const nodeData = node.data as { actionType?: string; [key: string]: unknown } | undefined;
+      if (!nodeData?.actionType) {
         errors.push({
           code: ERROR_CODES.MISSING_ACTION_TYPE,
           message: `Action node "${node.title || node.id}" must have an action type`,
@@ -225,7 +244,7 @@ function validateGraph(graph) {
 
   // Check for unreachable nodes
   const reachableNodes = findReachableNodes(graph);
-  nodes.forEach((node) => {
+  nodes.forEach((node: { id: string; type: string; title?: string; [key: string]: unknown }) => {
     if (!reachableNodes.has(node.id)) {
       errors.push({
         code: ERROR_CODES.UNREACHABLE_NODE,
@@ -243,35 +262,40 @@ function validateGraph(graph) {
  * @param {Object} graph - Graph { nodes, edges }
  * @returns {Set} Set of reachable node IDs
  */
-function findReachableNodes(graph) {
-  const { nodes, edges } = graph;
-  const reachable = new Set();
+function findReachableNodes(graph: {
+  nodes?: Array<{ id: string; type: string; [key: string]: unknown }>;
+  edges?: Array<{ from: string; to: string; [key: string]: unknown }>;
+  [key: string]: unknown;
+}) {
+  const { nodes = [], edges = [] } = graph;
+  const reachable = new Set<string>();
 
   // Build adjacency list
-  const adjacency = new Map();
-  nodes.forEach((node) => adjacency.set(node.id, []));
-  edges.forEach((edge) => {
-    if (adjacency.has(edge.from)) {
-      adjacency.get(edge.from).push(edge.to);
+  const adjacency = new Map<string, string[]>();
+  nodes.forEach((node: { id: string; type: string; [key: string]: unknown }) => adjacency.set(node.id, []));
+  edges.forEach((edge: { from: string; to: string; [key: string]: unknown }) => {
+    const neighbors = adjacency.get(edge.from);
+    if (neighbors) {
+      neighbors.push(edge.to);
     }
   });
 
   // Find START node
-  const startNode = nodes.find((n) => n.type === templateGraphService.NODE_TYPES.START);
+  const startNode = nodes.find((n: { id: string; type: string; [key: string]: unknown }) => n.type === templateGraphService.NODE_TYPES.START);
   if (!startNode) {
     return reachable;
   }
 
   // BFS from START
-  const queue = [startNode.id];
+  const queue: string[] = [startNode.id];
   while (queue.length > 0) {
     const currentId = queue.shift();
-    if (reachable.has(currentId)) continue;
+    if (!currentId || reachable.has(currentId)) continue;
 
     reachable.add(currentId);
 
     const neighbors = adjacency.get(currentId) || [];
-    neighbors.forEach((neighbor) => {
+    neighbors.forEach((neighbor: string) => {
       if (!reachable.has(neighbor)) {
         queue.push(neighbor);
       }
@@ -287,29 +311,40 @@ function findReachableNodes(graph) {
  * @param {Object} template - Template to validate
  * @returns {Object} { canSave: boolean, warnings: Array }
  */
-function quickValidate(template) {
-  const warnings = [];
+function quickValidate(template: {
+  templateGraph?: unknown;
+  template_graph?: unknown;
+  [key: string]: unknown;
+}) {
+  const warnings: Array<{ message: string }> = [];
 
   const graph = template.templateGraph || template.template_graph;
   if (!graph) {
     return { canSave: true, warnings: [{ message: 'No graph data yet' }] };
   }
 
-  let parsedGraph = graph;
+  type GraphType = {
+    nodes?: Array<unknown>;
+    edges?: Array<unknown>;
+    [key: string]: unknown;
+  };
+  let parsedGraph: GraphType;
   if (typeof graph === 'string') {
     try {
-      parsedGraph = JSON.parse(graph);
+      parsedGraph = JSON.parse(graph) as GraphType;
     } catch (e) {
       return { canSave: false, warnings: [{ message: 'Invalid JSON in graph' }] };
     }
+  } else {
+    parsedGraph = graph as GraphType;
   }
 
   // Check basic structure
-  if (!parsedGraph.nodes || parsedGraph.nodes.length === 0) {
+  if (!parsedGraph.nodes || !Array.isArray(parsedGraph.nodes) || parsedGraph.nodes.length === 0) {
     warnings.push({ message: 'Graph has no nodes' });
   }
 
-  if (!parsedGraph.edges) {
+  if (!parsedGraph.edges || !Array.isArray(parsedGraph.edges)) {
     warnings.push({ message: 'Graph has no edges' });
   }
 

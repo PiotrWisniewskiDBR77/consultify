@@ -16,7 +16,17 @@ import { llmService } from './ai/llmService.js';
 // TYPES
 // ==========================================
 
-export type InsightPromptType = 'summary' | 'trends' | 'problems' | 'recommendations';
+export type InsightPromptType = 
+  | 'summary' 
+  | 'trends' 
+  | 'problems' 
+  | 'recommendations'
+  | 'comparison'
+  | 'gaps'
+  | 'risk_assessment'
+  | 'opportunity_scan'
+  | 'maturity'
+  | 'stakeholder_map';
 export type InsightStatus = 'generating' | 'completed' | 'failed';
 
 export interface CreateInsightInput {
@@ -107,6 +117,115 @@ Interview Data:
 {DATA}
 
 Provide the analysis in a clear, professional consulting format using markdown.`,
+
+  comparison: `Analyze and compare the following interview responses from different respondents.
+
+Structure your response as follows:
+1. **Alignment Areas** - Topics where respondents agree
+2. **Divergent Perspectives** - Areas where opinions differ significantly
+3. **Perspective by Role/Department** - How views vary by respondent background
+4. **Consensus Opportunities** - Where alignment could be built
+5. **Key Differences Table** - Summary comparison matrix
+
+Interview Data:
+{DATA}
+
+Provide the analysis in a clear, professional consulting format using markdown. Use tables where appropriate.`,
+
+  gaps: `Analyze the following interview responses to identify information gaps and missing data.
+
+Structure your response as follows:
+1. **Critical Information Gaps** - Essential information that is missing
+2. **Unanswered Questions** - Questions that were not adequately addressed
+3. **Areas Requiring Follow-up** - Topics needing deeper exploration
+4. **Low Confidence Answers** - Responses that seem uncertain or incomplete
+5. **Recommended Next Steps** - Suggested follow-up interviews or research
+
+Interview Data:
+{DATA}
+
+Provide the analysis in a clear, professional consulting format using markdown.`,
+
+  risk_assessment: `Analyze the following interview responses to identify and assess risks.
+
+Structure your response as follows:
+1. **Critical Risks** - High-impact, high-probability risks requiring immediate attention
+2. **Operational Risks** - Day-to-day operational concerns
+3. **Strategic Risks** - Long-term threats to business objectives
+4. **People & Change Risks** - Human factors and change management concerns
+5. **Risk Matrix** - Summary table with likelihood, impact, and mitigation suggestions
+
+| Risk | Category | Likelihood | Impact | Mitigation |
+|------|----------|------------|--------|------------|
+
+Interview Data:
+{DATA}
+
+Provide the analysis in a clear, professional consulting format using markdown. Include the risk matrix table.`,
+
+  opportunity_scan: `Analyze the following interview responses to identify opportunities and quick wins.
+
+Structure your response as follows:
+1. **Quick Wins** - Low-effort, high-impact opportunities (implement within 30 days)
+2. **Growth Opportunities** - Areas for expansion or improvement
+3. **Efficiency Gains** - Process improvements and cost savings
+4. **Innovation Potential** - New ideas and transformative possibilities
+5. **Opportunity Prioritization** - Ranked list by value and feasibility
+
+| Opportunity | Category | Effort | Impact | Timeline |
+|-------------|----------|--------|--------|----------|
+
+Interview Data:
+{DATA}
+
+Provide the analysis in a clear, professional consulting format using markdown. Be specific and actionable.`,
+
+  maturity: `Analyze the following interview responses to assess organizational maturity.
+
+Structure your response as follows:
+1. **Overall Maturity Score** - Rating from 1-5 with justification
+2. **Maturity by Dimension**:
+   - Strategy & Vision (1-5)
+   - Processes & Operations (1-5)
+   - Technology & Digital (1-5)
+   - People & Culture (1-5)
+   - Data & Analytics (1-5)
+3. **Strengths** - Areas of high maturity
+4. **Development Areas** - Areas requiring improvement
+5. **Maturity Roadmap** - Path to next maturity level
+
+**Maturity Scale:**
+- 1: Initial/Ad-hoc
+- 2: Developing/Reactive
+- 3: Defined/Proactive
+- 4: Managed/Optimized
+- 5: Leading/Innovative
+
+Interview Data:
+{DATA}
+
+Provide the analysis in a clear, professional consulting format using markdown. Include radar chart data if possible.`,
+
+  stakeholder_map: `Analyze the following interview responses to map key stakeholders.
+
+Structure your response as follows:
+1. **Key Stakeholders Identified** - List of important players mentioned
+2. **Influence & Interest Matrix**:
+   - High Influence / High Interest (Key Players)
+   - High Influence / Low Interest (Keep Satisfied)
+   - Low Influence / High Interest (Keep Informed)
+   - Low Influence / Low Interest (Monitor)
+3. **Stakeholder Positions** - Support, neutral, or resistance to change
+4. **Relationships & Dynamics** - How stakeholders interact
+5. **Engagement Strategy** - Recommended approach for each stakeholder group
+
+| Stakeholder | Role | Influence | Interest | Position | Strategy |
+|-------------|------|-----------|----------|----------|----------|
+
+Interview Data:
+{DATA}
+
+Provide the analysis in a clear, professional consulting format using markdown. Include the stakeholder table.`,
 };
 
 // ==========================================

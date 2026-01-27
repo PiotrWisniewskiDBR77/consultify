@@ -5,17 +5,11 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  AlertCircle,
   Calendar,
   CheckCircle2,
   CheckSquare,
-  ChevronDown,
-  ChevronRight,
-  Circle,
-  Clock,
   Edit,
   Eye,
-  Filter,
   Loader2,
   Minus,
   MoreVertical,
@@ -172,40 +166,6 @@ const categorizeTask = (task: Task): TaskTimeGroup => {
   if (dueDate < endOfWeek) return 'week';
   return 'later';
 };
-
-// Time group configs
-const timeGroupConfigs = [
-  {
-    key: 'overdue' as TaskTimeGroup,
-    label: 'Overdue',
-    color: 'text-red-700 dark:text-red-400',
-    bg: 'bg-red-50 dark:bg-red-900/20',
-  },
-  {
-    key: 'today' as TaskTimeGroup,
-    label: 'Today',
-    color: 'text-blue-700 dark:text-blue-400',
-    bg: 'bg-blue-50 dark:bg-blue-900/20',
-  },
-  {
-    key: 'week' as TaskTimeGroup,
-    label: 'This Week',
-    color: 'text-slate-700 dark:text-slate-400',
-    bg: 'bg-slate-50 dark:bg-navy-800/50',
-  },
-  {
-    key: 'later' as TaskTimeGroup,
-    label: 'Later',
-    color: 'text-slate-700 dark:text-slate-500',
-    bg: 'bg-slate-50 dark:bg-navy-900',
-  },
-  {
-    key: 'no-date' as TaskTimeGroup,
-    label: 'No Date',
-    color: 'text-slate-700 dark:text-slate-500',
-    bg: 'bg-slate-50 dark:bg-navy-900',
-  },
-];
 
 // Task table column definitions
 const TASK_COLUMNS: ColumnDef[] = [
@@ -528,9 +488,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const { t } = useTranslation();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedGroups, setExpandedGroups] = useState<Set<TaskTimeGroup>>(
-    new Set(['overdue', 'today', 'week', 'later', 'no-date'])
-  );
   
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -638,15 +595,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   }, [groupedTasks, urgentCount, onCountsChange]);
 
   // Handlers
-  const toggleGroup = (group: TaskTimeGroup) => {
-    setExpandedGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(group)) next.delete(group);
-      else next.add(group);
-      return next;
-    });
-  };
-
   const handleToggleComplete = async (taskId: string, completed: boolean) => {
     try {
       await Api.updateTask(taskId, { status: completed ? 'completed' : 'todo' });
@@ -676,20 +624,10 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     }
   };
 
-  // Get visible groups based on filter (need this before handlers)
-  const visibleGroups = activeFilter === 'all' || activeFilter === 'urgent'
-    ? timeGroupConfigs
-    : timeGroupConfigs.filter((g) => g.key === activeFilter);
-
   // Calculate total visible tasks for select all
   const allVisibleTaskIds = useMemo(() => {
-    const ids = new Set<string>();
-    visibleGroups.forEach((config) => {
-      const groupTasks = groupedTasks[config.key];
-      groupTasks.forEach((task) => ids.add(task.id));
-    });
-    return ids;
-  }, [visibleGroups, groupedTasks]);
+    return new Set(groupedTasks.all.map(task => task.id));
+  }, [groupedTasks]);
 
   // Selection helpers
   const allSelected = selectedIds.size > 0 && selectedIds.size === allVisibleTaskIds.size;
@@ -778,15 +716,8 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
   // Flat list of all visible tasks for keyboard navigation
   const flatTaskList = useMemo(() => {
-    const list: Task[] = [];
-    visibleGroups.forEach((config) => {
-      const groupTasks = groupedTasks[config.key];
-      if (expandedGroups.has(config.key)) {
-        list.push(...groupTasks);
-      }
-    });
-    return list;
-  }, [visibleGroups, groupedTasks, expandedGroups]);
+    return groupedTasks.all;
+  }, [groupedTasks]);
 
   // Get focused task
   const focusedTask = focusedIndex >= 0 && focusedIndex < flatTaskList.length 
@@ -864,6 +795,24 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     },
   });
 
+  // Flat list of all tasks (no grouping) - must be before early returns
+  const allFilteredTasks = useMemo(() => {
+    let result: Task[] = [...groupedTasks.all];
+    
+    // Apply table filters
+    const statusFilter = tableFilters.status as string[] | undefined;
+    const priorityFilter = tableFilters.priority as string[] | undefined;
+    
+    if (statusFilter?.length) {
+      result = result.filter(task => statusFilter.includes(task.status?.toLowerCase() || ''));
+    }
+    if (priorityFilter?.length) {
+      result = result.filter(task => priorityFilter.includes(task.priority?.toLowerCase() || ''));
+    }
+    
+    return result;
+  }, [groupedTasks, tableFilters]);
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center h-64">
@@ -891,171 +840,124 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
-      <div className="flex-1 overflow-y-auto">
-        {visibleGroups.map((config) => {
-          const groupTasks = groupedTasks[config.key];
-          if (groupTasks.length === 0) return null;
-
-          const isExpanded = expandedGroups.has(config.key);
-
-          return (
-            <div key={config.key} className="mb-0">
-              {/* Group Header */}
-              <button
-                onClick={() => toggleGroup(config.key)}
-                className={`w-full flex items-center gap-2 px-4 py-2 ${config.bg} border-b border-slate-200 dark:border-navy-700/50 transition-colors hover:opacity-90`}
-              >
-                {isExpanded ? (
-                  <ChevronDown size={14} className="text-slate-500" />
-                ) : (
-                  <ChevronRight size={14} className="text-slate-500" />
-                )}
-                <Clock size={14} className={config.color} />
-                <span className={`text-xs font-medium uppercase tracking-wide ${config.color}`}>
-                  {config.label}
-                </span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400">
-                  {groupTasks.length}
-                </span>
-              </button>
-
-              {/* Table */}
-              {isExpanded && (
-                <div className="overflow-x-auto">
-                  <table className="w-full" style={{ minWidth: 900 }}>
-                    <thead>
-                      <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
-                        {/* Select All */}
-                        <th className="w-10 px-2 py-2">
-                          <button
-                            onClick={() => handleSelectAll(!allSelected)}
-                            className={`
-                              w-5 h-5 rounded border flex items-center justify-center transition-colors
-                              ${
-                                allSelected
-                                  ? 'bg-primary-500 border-primary-500 text-white'
-                                  : someSelected
-                                    ? 'bg-primary-500/50 border-primary-500 text-white'
-                                    : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-400'
-                              }
-                            `}
-                          >
-                            {allSelected ? (
-                              <CheckSquare size={14} />
-                            ) : someSelected ? (
-                              <Minus size={14} />
-                            ) : (
-                              <Square size={14} />
-                            )}
-                          </button>
-                        </th>
-                        <th className="w-8 px-1 py-2"></th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Task</th>
-                        
-                        {/* Status with Filter */}
-                        <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.status }}>
-                          <div className="flex items-center gap-1">
-                            <span className={(tableFilters.status as string[])?.length ? 'text-primary-500' : ''}>Status</span>
-                            <FilterDropdown
-                              column={TASK_COLUMNS.find(c => c.id === 'status')!}
-                              value={tableFilters.status as string[]}
-                              onChange={(val) => handleFilterChange('status', val as string[])}
-                              isOpen={openFilterId === 'status'}
-                              onToggle={() => setOpenFilterId(openFilterId === 'status' ? null : 'status')}
-                              onClose={() => setOpenFilterId(null)}
-                            />
-                          </div>
-                          <ColumnResizer
-                            columnId="status"
-                            currentWidth={columnWidths.status}
-                            minWidth={100}
-                            maxWidth={160}
-                            onResize={handleColumnResize}
-                          />
-                        </th>
-                        
-                        {/* Priority with Filter */}
-                        <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.priority }}>
-                          <div className="flex items-center gap-1">
-                            <span className={(tableFilters.priority as string[])?.length ? 'text-primary-500' : ''}>Priority</span>
-                            <FilterDropdown
-                              column={TASK_COLUMNS.find(c => c.id === 'priority')!}
-                              value={tableFilters.priority as string[]}
-                              onChange={(val) => handleFilterChange('priority', val as string[])}
-                              isOpen={openFilterId === 'priority'}
-                              onToggle={() => setOpenFilterId(openFilterId === 'priority' ? null : 'priority')}
-                              onClose={() => setOpenFilterId(null)}
-                            />
-                          </div>
-                          <ColumnResizer
-                            columnId="priority"
-                            currentWidth={columnWidths.priority}
-                            minWidth={80}
-                            maxWidth={130}
-                            onResize={handleColumnResize}
-                          />
-                        </th>
-                        
-                        <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.date }}>
-                          <span>Due Date</span>
-                          <ColumnResizer
-                            columnId="date"
-                            currentWidth={columnWidths.date}
-                            minWidth={90}
-                            maxWidth={140}
-                            onResize={handleColumnResize}
-                          />
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.assignee }}>
-                          <span>Assignee</span>
-                          <ColumnResizer
-                            columnId="assignee"
-                            currentWidth={columnWidths.assignee}
-                            minWidth={100}
-                            maxWidth={180}
-                            onResize={handleColumnResize}
-                          />
-                        </th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: columnWidths.actions }}>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <AnimatePresence>
-                        {groupTasks
-                          // Apply table filters
-                          .filter((task) => {
-                            const statusFilter = tableFilters.status as string[] | undefined;
-                            const priorityFilter = tableFilters.priority as string[] | undefined;
-                            
-                            if (statusFilter?.length && !statusFilter.includes(task.status?.toLowerCase() || '')) {
-                              return false;
-                            }
-                            if (priorityFilter?.length && !priorityFilter.includes(task.priority?.toLowerCase() || '')) {
-                              return false;
-                            }
-                            return true;
-                          })
-                          .map((task, index) => (
-                          <TaskTableRow
-                            key={task.id}
-                            task={task}
-                            isSelected={selectedIds.has(task.id)}
-                            isFocused={focusedTask?.id === task.id}
-                            onSelect={handleSelectTask}
-                            onToggleComplete={handleToggleComplete}
-                            onDelete={handleDelete}
-                            onClick={onTaskClick}
-                            columnWidths={columnWidths}
-                          />
-                        ))}
-                      </AnimatePresence>
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          );
-        })}
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+          <table className="w-full" style={{ minWidth: 900 }}>
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
+                {/* Select All */}
+                <th className="w-10 px-2 py-2">
+                  <button
+                    onClick={() => handleSelectAll(!allSelected)}
+                    className={`
+                      w-5 h-5 rounded border flex items-center justify-center transition-colors
+                      ${
+                        allSelected
+                          ? 'bg-primary-500 border-primary-500 text-white'
+                          : someSelected
+                            ? 'bg-primary-500/50 border-primary-500 text-white'
+                            : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-400'
+                      }
+                    `}
+                  >
+                    {allSelected ? (
+                      <CheckSquare size={14} />
+                    ) : someSelected ? (
+                      <Minus size={14} />
+                    ) : (
+                      <Square size={14} />
+                    )}
+                  </button>
+                </th>
+                <th className="w-8 px-1 py-2"></th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Task</th>
+                
+                {/* Status with Filter */}
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.status }}>
+                  <div className="flex items-center gap-1">
+                    <span className={(tableFilters.status as string[])?.length ? 'text-primary-500' : ''}>Status</span>
+                    <FilterDropdown
+                      column={TASK_COLUMNS.find(c => c.id === 'status')!}
+                      value={tableFilters.status as string[]}
+                      onChange={(val) => handleFilterChange('status', val as string[])}
+                      isOpen={openFilterId === 'status'}
+                      onToggle={() => setOpenFilterId(openFilterId === 'status' ? null : 'status')}
+                      onClose={() => setOpenFilterId(null)}
+                    />
+                  </div>
+                  <ColumnResizer
+                    columnId="status"
+                    currentWidth={columnWidths.status}
+                    minWidth={100}
+                    maxWidth={160}
+                    onResize={handleColumnResize}
+                  />
+                </th>
+                
+                {/* Priority with Filter */}
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.priority }}>
+                  <div className="flex items-center gap-1">
+                    <span className={(tableFilters.priority as string[])?.length ? 'text-primary-500' : ''}>Priority</span>
+                    <FilterDropdown
+                      column={TASK_COLUMNS.find(c => c.id === 'priority')!}
+                      value={tableFilters.priority as string[]}
+                      onChange={(val) => handleFilterChange('priority', val as string[])}
+                      isOpen={openFilterId === 'priority'}
+                      onToggle={() => setOpenFilterId(openFilterId === 'priority' ? null : 'priority')}
+                      onClose={() => setOpenFilterId(null)}
+                    />
+                  </div>
+                  <ColumnResizer
+                    columnId="priority"
+                    currentWidth={columnWidths.priority}
+                    minWidth={80}
+                    maxWidth={130}
+                    onResize={handleColumnResize}
+                  />
+                </th>
+                
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.date }}>
+                  <span>Due Date</span>
+                  <ColumnResizer
+                    columnId="date"
+                    currentWidth={columnWidths.date}
+                    minWidth={90}
+                    maxWidth={140}
+                    onResize={handleColumnResize}
+                  />
+                </th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.assignee }}>
+                  <span>Assignee</span>
+                  <ColumnResizer
+                    columnId="assignee"
+                    currentWidth={columnWidths.assignee}
+                    minWidth={100}
+                    maxWidth={180}
+                    onResize={handleColumnResize}
+                  />
+                </th>
+                <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: columnWidths.actions }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <AnimatePresence>
+                {allFilteredTasks.map((task) => (
+                  <TaskTableRow
+                    key={task.id}
+                    task={task}
+                    isSelected={selectedIds.has(task.id)}
+                    isFocused={focusedTask?.id === task.id}
+                    onSelect={handleSelectTask}
+                    onToggleComplete={handleToggleComplete}
+                    onDelete={handleDelete}
+                    onClick={onTaskClick}
+                    columnWidths={columnWidths}
+                  />
+                ))}
+              </AnimatePresence>
+            </tbody>
+          </table>
+        </div>
       </div>
       
       {/* Bulk Action Bar */}

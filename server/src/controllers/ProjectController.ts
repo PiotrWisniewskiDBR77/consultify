@@ -794,6 +794,58 @@ export class ProjectController {
   );
 
   // ==========================================
+  // MY MEMBERSHIPS
+  // ==========================================
+
+  /**
+   * Get all project memberships for current user
+   * Used by useInterviewPermissions hook to determine assignment scope
+   */
+  static getMyMemberships = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      // Get all project memberships for this user
+      const memberships = await queryHelpers.dbAll<{
+        project_id: string;
+        project_name: string;
+        project_role: string;
+        workstream_id: string | null;
+        workstream_name: string | null;
+      }>(
+        `SELECT 
+          pm.project_id,
+          p.name as project_name,
+          pm.project_role,
+          pm.workstream_id,
+          w.name as workstream_name
+        FROM project_members pm
+        JOIN projects p ON p.id = pm.project_id
+        LEFT JOIN workstreams w ON w.id = pm.workstream_id
+        WHERE pm.user_id = ? AND p.organization_id = ?
+        ORDER BY p.name`,
+        [userId, orgId]
+      );
+
+      res.json({
+        memberships: (memberships || []).map((m) => ({
+          projectId: m.project_id,
+          projectName: m.project_name,
+          projectRole: m.project_role,
+          workstreamId: m.workstream_id,
+          workstreamName: m.workstream_name,
+        })),
+      });
+    }
+  );
+
+  // ==========================================
   // PMO ROLES
   // ==========================================
 

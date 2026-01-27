@@ -13,12 +13,11 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
-  ArrowLeft,
   Bell,
   Calendar,
   CalendarDays,
-  CheckCheck,
   CheckSquare,
+  ChevronDown,
   FileText,
   Flame,
   Hourglass,
@@ -28,6 +27,7 @@ import {
   Plus,
   Scale,
   Search,
+  Target,
   User,
   X,
 } from 'lucide-react';
@@ -39,6 +39,8 @@ import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
 import { DecisionsPanelContent } from './DecisionsPanelContent';
+import { ExecutiveDashboard } from './Executive/ExecutiveDashboard';
+import { FocusView, type FocusItem } from './Focus/FocusView';
 import { MyTasksListContent } from './MyTasksListContent';
 import { NotificationsContent } from './NotificationsContent';
 import { TaskDetailView } from './TaskDetailView';
@@ -46,13 +48,15 @@ import { DecisionDetailView } from './DecisionDetailView';
 import { NotificationDetailView } from './NotificationDetailView';
 
 // Types
-type ModuleTab = 'tasks' | 'decisions' | 'notifications';
+type ModuleTab = 'executive' | 'focus' | 'tasks' | 'decisions' | 'notifications';
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
 type DecisionFilter = 'my' | 'awaiting';
 type NotificationFilter = 'all' | 'unread' | 'today' | 'week';
 type ItemStatus = 'todo' | 'in_progress' | 'completed' | 'blocked' | 'pending' | 'approved' | 'rejected' | 'read' | 'unread';
 
 interface TabCounts {
+  executive: number;
+  focus: number;
   tasks: number;
   decisions: number;
   notifications: number;
@@ -148,26 +152,6 @@ const STATUS_COLORS: Record<ItemStatus, string> = {
   unread: 'bg-amber-400',
 };
 
-// Filter chip styles
-const FILTER_CHIP_BASE = `
-  flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium
-  border transition-all duration-200
-`;
-
-const FILTER_CHIP_INACTIVE = `
-  ${FILTER_CHIP_BASE}
-  bg-slate-50 dark:bg-navy-800/50
-  border-slate-200 dark:border-navy-600
-  text-slate-600 dark:text-slate-400
-  hover:text-slate-900 dark:hover:text-white
-  hover:border-slate-300 dark:hover:border-slate-500
-`;
-
-const FILTER_CHIP_ACTIVE = `
-  ${FILTER_CHIP_BASE}
-  bg-primary-500/15 border-primary-500 text-primary-400
-`;
-
 interface MyWorkHubProps {
   onNavigate?: (view: string) => void;
 }
@@ -189,6 +173,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
   // Counts
   const [tabCounts, setTabCounts] = useState<TabCounts>({
+    executive: 0,
+    focus: 0,
     tasks: 0,
     decisions: 0,
     notifications: 0,
@@ -219,6 +205,20 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // Tab configuration
   const tabs = useMemo(
     () => [
+      {
+        id: 'executive' as ModuleTab,
+        label: isPolish ? 'Executive' : 'Executive',
+        icon: <FileText size={16} />,
+        count: tabCounts.executive,
+        color: 'bg-violet-500',
+      },
+      {
+        id: 'focus' as ModuleTab,
+        label: isPolish ? 'Focus' : 'Focus',
+        icon: <Target size={16} />,
+        count: tabCounts.focus,
+        color: 'bg-amber-500',
+      },
       {
         id: 'tasks' as ModuleTab,
         label: isPolish ? 'Zadania' : 'Tasks',
@@ -426,17 +426,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     });
   }, [handleOpenDocument]);
 
-  const handleMarkAllRead = useCallback(async () => {
-    try {
-      await Api.markAllNotificationsRead();
-      toast.success(isPolish ? 'Wszystkie oznaczone jako przeczytane' : 'All marked as read');
-      setNotificationFilterCounts((prev) => ({ ...prev, unread: 0 }));
-    } catch (error) {
-      console.error('Failed to mark all as read:', error);
-      toast.error(isPolish ? 'Nie udało się oznaczyć' : 'Failed to mark as read');
-    }
-  }, [isPolish]);
-
   // Handle document saved/updated
   const handleDocumentSaved = useCallback((docId: string, updatedData?: any) => {
     if (updatedData) {
@@ -495,6 +484,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     if (activeDocumentId) return null;
 
     switch (activeTab) {
+      case 'executive':
+      case 'focus':
+        return null;
       case 'tasks':
         return {
           label: isPolish ? 'Nowe zadanie' : 'New Task',
@@ -526,18 +518,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     }
   }, [activeTab, isPolish, handleCreateTask, handleCreateDecision, activeDocumentId]);
 
-  // Secondary action button (Mark all read for notifications)
-  const secondaryActionButton = useMemo(() => {
-    if (activeDocumentId) return null;
-    if (activeTab === 'notifications' && notificationFilterCounts.unread > 0) {
-      return {
-        label: isPolish ? 'Oznacz wszystkie' : 'Mark all read',
-        icon: <CheckCheck size={16} />,
-        onClick: handleMarkAllRead,
-      };
-    }
-    return null;
-  }, [activeTab, isPolish, handleMarkAllRead, notificationFilterCounts.unread, activeDocumentId]);
 
   // Get current filters based on active tab
   const currentFilters = useMemo(() => {
@@ -549,6 +529,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         return decisionFilters;
       case 'notifications':
         return notificationFilters;
+      case 'executive':
+      case 'focus':
       default:
         return [];
     }
@@ -690,6 +672,31 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // Render list content based on active tab
   const renderListContent = () => {
     switch (activeTab) {
+      case 'executive':
+        return (
+          <ExecutiveDashboard
+            onNavigate={(section) => {
+              if (section === 'tasks') setActiveTab('tasks');
+              if (section === 'decisions') setActiveTab('decisions');
+              if (section === 'focus') setActiveTab('focus');
+            }}
+          />
+        );
+      case 'focus':
+        return (
+          <FocusView
+            onItemClick={(item: FocusItem) => {
+              // FocusView uses ids like task-<id> / decision-<id>
+              if (item.type === 'task') {
+                const id = String(item.id).replace(/^task-/, '');
+                handleTaskClick(id);
+              } else if (item.type === 'decision') {
+                const id = String(item.id).replace(/^decision-/, '');
+                handleDecisionClick(id);
+              }
+            }}
+          />
+        );
       case 'tasks':
         return (
           <MyTasksListContent
@@ -789,44 +796,28 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
           {/* Right: Context Filters + Action Buttons */}
           <div className="flex items-center gap-3">
-            {/* Context-sensitive Filters (only show when viewing list) */}
+            {/* Context-sensitive Filter Dropdown (only show when viewing list) */}
             {currentFilters.length > 0 && (
-              <div className="flex items-center gap-1.5">
-                {currentFilters.map((filter) => {
-                  const isActive = currentFilterValue === filter.id;
-                  return (
-                    <button
-                      key={filter.id}
-                      onClick={() => handleFilterChange(filter.id)}
-                      className={isActive ? FILTER_CHIP_ACTIVE : FILTER_CHIP_INACTIVE}
-                    >
-                      <span className={`w-2 h-2 rounded-full ${filter.color}`} />
-                      {filter.icon}
-                      <span>{filter.label}</span>
-                      {filter.count !== undefined && filter.count > 0 && (
-                        <span className="text-slate-500">{filter.count}</span>
-                      )}
-                    </button>
-                  );
-                })}
+              <div className="relative">
+                <select
+                  value={currentFilterValue}
+                  onChange={(e) => handleFilterChange(e.target.value)}
+                  className="appearance-none pl-4 pr-10 py-2.5 rounded-xl text-sm font-medium bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-500 text-slate-700 dark:text-slate-200 hover:border-primary-300 dark:hover:border-primary-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer min-w-[140px]"
+                >
+                  {currentFilters.map((filter) => (
+                    <option key={filter.id} value={filter.id}>
+                      {filter.label}
+                      {filter.count !== undefined && filter.count > 0 ? ` (${filter.count})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
               </div>
             )}
 
             {/* Separator */}
-            {(currentFilters.length > 0 || secondaryActionButton || actionButton) && (
+            {(currentFilters.length > 0 || actionButton) && (
               <div className="w-px h-6 bg-slate-200 dark:bg-navy-600" />
-            )}
-
-            {/* Secondary Action Button (Mark all read - outline style) */}
-            {secondaryActionButton && (
-              <button
-                onClick={secondaryActionButton.onClick}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-transparent text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-navy-500 hover:border-slate-300 dark:hover:border-slate-400 hover:text-slate-900 dark:hover:text-white transition-all duration-200"
-                data-testid="mywork-secondary-action-button"
-              >
-                {secondaryActionButton.icon}
-                <span>{secondaryActionButton.label}</span>
-              </button>
             )}
 
             {/* Primary Action Button (New Task/Decision/Notification) */}

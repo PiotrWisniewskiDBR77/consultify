@@ -23,7 +23,7 @@ const router = Router();
 router.get(
   '/',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { category, search, is_active } = req.query;
@@ -88,7 +88,7 @@ router.get(
 router.get(
   '/categories',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
       const categories = await dbAll(`
@@ -119,7 +119,7 @@ router.get(
 router.get(
   '/:id',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -177,7 +177,7 @@ router.get(
 router.post(
   '/',
   verifyToken,
-  requireRole(['super_admin']),
+  requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { name, category, description, template, variables, is_active } = req.body;
@@ -248,7 +248,7 @@ router.post(
 router.put(
   '/:id',
   verifyToken,
-  requireRole(['super_admin']),
+  requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -334,7 +334,7 @@ router.put(
 router.delete(
   '/:id',
   verifyToken,
-  requireRole(['super_admin']),
+  requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -370,7 +370,7 @@ router.delete(
 router.post(
   '/:id/test',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -422,7 +422,7 @@ router.post(
 router.post(
   '/:id/restore-version',
   verifyToken,
-  requireRole(['super_admin']),
+  requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;

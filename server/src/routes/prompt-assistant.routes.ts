@@ -231,7 +231,7 @@ router.post('/blocks/preview', async (req: AuthRequest, res: Response) => {
  */
 router.post(
   '/test',
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   async (req: AuthRequest, res: Response) => {
     try {
       const { templateCode, sampleInput, languages } = req.body;

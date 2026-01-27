@@ -40,6 +40,7 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import { InterviewWorkspace } from '../Interview/InterviewWorkspace';
+import { InsightDetailView } from './InsightDetailView';
 
 // Types
 type AssignmentStatus = 'assigned' | 'in_progress' | 'submitted' | 'sent_back' | 'completed';
@@ -790,28 +791,11 @@ export const InterviewHub: React.FC<InterviewHubProps> = ({ initialTab = 'list' 
       if (doc?.subType === 'INSIGHT') {
         const insight = insights.find((x: any) => x.id === doc.id);
         return (
-          <div className="p-6 max-w-4xl mx-auto">
-            <div className="bg-navy-900 border border-navy-700 rounded-xl p-6">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
-                  <Lightbulb size={24} className="text-amber-400" />
-                </div>
-                <div className="flex-1">
-                  <h1 className="text-xl font-semibold text-white mb-2">{insight?.title || doc.name}</h1>
-                  <div className="flex items-center gap-3 text-sm text-slate-400">
-                    <span>{insight?.sourceSessionCount || 0} sessions analyzed</span>
-                    <span>•</span>
-                    <span>Generated {insight?.createdAt ? new Date(insight.createdAt).toLocaleDateString() : ''}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="border-t border-navy-700 pt-6">
-                <div className="prose prose-invert prose-sm max-w-none">
-                  {insight?.content || 'No content available.'}
-                </div>
-              </div>
-            </div>
-          </div>
+          <InsightDetailView
+            insightId={doc.id}
+            insight={insight}
+            onRefresh={loadInsights}
+          />
         );
       }
 

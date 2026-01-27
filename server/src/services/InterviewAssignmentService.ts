@@ -226,7 +226,7 @@ class InterviewAssignmentService {
          s.status as session_status,
          s.answered_questions,
          s.total_questions,
-         u.name as assignee_name,
+         (u.first_name || ' ' || u.last_name) as assignee_name,
          u.email as assignee_email
        FROM interview_assignments a
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
@@ -531,7 +531,7 @@ class InterviewAssignmentService {
          s.status as session_status,
          s.answered_questions,
          s.total_questions,
-         u.name as assignee_name,
+         (u.first_name || ' ' || u.last_name) as assignee_name,
          u.email as assignee_email
        FROM interview_assignments a
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
@@ -569,9 +569,9 @@ class InterviewAssignmentService {
          s.status as session_status,
          s.answered_questions,
          s.total_questions,
-         u.name as assignee_name,
+         (u.first_name || ' ' || u.last_name) as assignee_name,
          u.email as assignee_email,
-         creator.name as creator_name,
+         (creator.first_name || ' ' || creator.last_name) as creator_name,
          creator.email as creator_email
        FROM interview_assignments a
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
@@ -711,10 +711,10 @@ class InterviewAssignmentService {
 
     // Get overdue assignments that need escalation
     const assignments = await db.all<any>(
-      `SELECT a.*, t.name as template_name, u.name as assignee_name, 
+      `SELECT a.*, t.name as template_name, (u.first_name || ' ' || u.last_name) as assignee_name, 
               escalation_target.id as escalation_user_id,
               escalation_target.email as escalation_email,
-              escalation_target.name as escalation_name
+              (escalation_target.first_name || ' ' || escalation_target.last_name) as escalation_name
        FROM interview_assignments a
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
        LEFT JOIN users u ON u.id = a.assignee_user_id

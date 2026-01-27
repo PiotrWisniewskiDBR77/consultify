@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Authentication Middleware
  * Enterprise SaaS Architecture - TypeScript Backend Auth
@@ -50,14 +49,8 @@ export interface AuthRequest extends AuthenticatedRequest {
 
 interface Dependencies {
   jwt: typeof jwt;
-  config: { JWT_SECRET: string };
-  PermissionService: {
-    can: (
-      user: AuthenticatedUser,
-      capability: string,
-      context?: { organizationId?: string }
-    ) => boolean;
-  };
+  config: { JWT_SECRET: string } | { JWT_SECRET?: string } | any;
+  PermissionService: any; // PermissionService has many methods, we only use 'can'
   dbGet: <T>(sql: string, params?: any[]) => Promise<T | undefined>;
 }
 
@@ -276,12 +269,11 @@ const checkTokenRevocation = async (
  */
 export const verifyToken = asyncHandler(
   async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-    console.log(`[AuthMiddleware] Verifying token for path: ${req.path}`);
+    logger.debug(`[AuthMiddleware] Verifying token for path: ${req.path}`);
     const { jwt: jwtLib, config } = await getDeps();
-    console.log('[AuthMiddleware] Deps loaded');
 
     const token = extractToken(req);
-    console.log('[AuthMiddleware] Token extracted:', token ? 'YES' : 'NO');
+    logger.debug(`[AuthMiddleware] Token extracted: ${token ? 'YES' : 'NO'}`);
 
     if (!token) {
       // Test mode bypass
@@ -310,18 +302,19 @@ export const verifyToken = asyncHandler(
     try {
       const { jwt: jwtLib, config } = await getDeps();
 
-      if (!config || !config.JWT_SECRET) {
+      const jwtSecret = (config as { JWT_SECRET: string })?.JWT_SECRET || (config as any)?.JWT_SECRET;
+      if (!config || !jwtSecret) {
         logger.error(
           `[AuthMiddleware] CRITICAL: config object is ${typeof config}, keys: ${config ? Object.keys(config) : 'none'}, JWT_SECRET is ${config?.JWT_SECRET ? 'present' : 'missing'}`
         );
       }
 
       logger.info(
-        `[AuthMiddleware] Verifying token: ${token.substring(0, 10)}... with secret length: ${config.JWT_SECRET?.length}`
+        `[AuthMiddleware] Verifying token: ${token.substring(0, 10)}... with secret length: ${jwtSecret?.length}`
       );
 
       const decoded = await new Promise<JWTPayload>((resolve, reject) => {
-        jwtLib.verify(token, config.JWT_SECRET, (err: any, decoded: any) => {
+        jwtLib.verify(token, jwtSecret, (err: any, decoded: any) => {
           if (err) return reject(err);
           resolve(decoded as JWTPayload);
         });
@@ -346,14 +339,15 @@ export const verifyToken = asyncHandler(
 export const optionalAuth = asyncHandler(
   async (req: AuthRequest, _res: Response, next: NextFunction): Promise<void> => {
     const { jwt: jwtLib, config } = await getDeps();
+    const jwtSecret = (config as { JWT_SECRET: string })?.JWT_SECRET || (config as any)?.JWT_SECRET;
 
     const token = extractToken(req);
 
-    if (!token) {
+    if (!token || !jwtSecret) {
       return next();
     }
 
-    jwtLib.verify(token, config.JWT_SECRET, async (err: any, decoded: any) => {
+    jwtLib.verify(token, jwtSecret, async (err: any, decoded: any) => {
       if (err) {
         // Invalid token, but optional - continue without user
         return next();

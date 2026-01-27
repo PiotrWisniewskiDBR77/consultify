@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-nocheck
 /**
  * ExecutiveDashboard - Main executive command center
  * BCG/McKinsey style: Data-dense, scannable, actionable
@@ -128,10 +126,11 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           const stats = statsRes.value;
           const completionRate =
             stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+          const onTimeRate = stats.onTimeRate || 0;
 
           setHealthScore({
-            score: Math.round((completionRate + (stats.onTimeRate || 70)) / 2),
-            previousScore: Math.round((completionRate + (stats.onTimeRate || 70)) / 2) - 5,
+            score: Math.round((completionRate + onTimeRate) / 2),
+            previousScore: Math.max(0, Math.round((completionRate + onTimeRate) / 2) - 5),
             trend: stats.trend || 'stable',
             breakdown: {
               execution: completionRate,
@@ -154,11 +153,14 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         }
 
         // Process decisions
+        console.log('[ExecutiveDashboard] decisionsRes:', decisionsRes);
         if (decisionsRes.status === 'fulfilled' && decisionsRes.value) {
           const decisionList = Array.isArray(decisionsRes.value) ? decisionsRes.value : [];
+          console.log('[ExecutiveDashboard] decisionList:', decisionList);
           const pendingDecisions = decisionList.filter((d: any) =>
             ['PENDING', 'ESCALATED'].includes(d.status)
           );
+          console.log('[ExecutiveDashboard] pendingDecisions:', pendingDecisions);
 
           setDecisions(
             pendingDecisions.map((d: any) => ({
@@ -177,11 +179,22 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           const criticalCount = pendingDecisions.filter(
             (d: any) => d.priority === 'CRITICAL'
           ).length;
+          
+          // Calculate real average wait days
+          const avgWaitDays = pendingDecisions.length > 0
+            ? Math.round(
+                pendingDecisions.reduce((sum: number, d: any) => {
+                  const days = Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+                  return sum + days;
+                }, 0) / pendingDecisions.length * 10
+              ) / 10
+            : 0;
+          
           setKpiData((prev) => ({
             ...prev,
             decisions: {
               pending: pendingDecisions.length,
-              avgWaitDays: 2.4,
+              avgWaitDays,
               critical: criticalCount,
               trend: 'stable',
             },
@@ -209,18 +222,20 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         }
 
         // Process team data
-        if (teamRes.status === 'fulfilled' && Array.isArray(teamRes.value)) {
+        console.log('[ExecutiveDashboard] teamRes:', teamRes);
+        if (teamRes.status === 'fulfilled' && Array.isArray(teamRes.value) && teamRes.value.length > 0) {
+          console.log('[ExecutiveDashboard] Setting teamMembers:', teamRes.value);
           setTeamMembers(
             teamRes.value.map((m: any) => ({
               id: m.id,
-              name: m.name,
+              name: m.name || 'Unknown',
               initials:
                 m.initials ||
-                m.name
+                (m.name || 'U')
                   .split(' ')
                   .map((n: string) => n[0])
                   .join(''),
-              capacity: m.capacity || 80,
+              capacity: m.capacity || 0,
               tasksCompleted: m.tasksCompleted || 0,
               tasksTotal: m.tasksAssigned || 0,
               trend: 'stable',
@@ -228,11 +243,11 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           );
 
           const avgCapacity = Math.round(
-            teamRes.value.reduce((sum: number, m: any) => sum + (m.capacity || 80), 0) /
+            teamRes.value.reduce((sum: number, m: any) => sum + (m.capacity || 0), 0) /
               teamRes.value.length
           );
           const overloadedCount = teamRes.value.filter((m: any) => (m.capacity || 0) > 100).length;
-          const availableCount = teamRes.value.filter((m: any) => (m.capacity || 100) < 50).length;
+          const availableCount = teamRes.value.filter((m: any) => (m.capacity || 0) < 50).length;
 
           setKpiData((prev) => ({
             ...prev,
@@ -245,7 +260,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           }));
         }
 
-        // Process tasks for risk assessment
+        // Process tasks for risk assessment and action items
         if (tasksRes.status === 'fulfilled' && Array.isArray(tasksRes.value)) {
           const overdueTasks = tasksRes.value.filter((t: any) => {
             if (!t.dueDate) return false;
@@ -264,6 +279,28 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               trend: 'stable',
             },
           }));
+          
+          // Add overdue tasks to action items
+          const overdueTaskItems = overdueTasks
+            .slice(0, 3)
+            .map((t: any) => {
+              const daysOverdue = Math.floor((Date.now() - new Date(t.dueDate).getTime()) / (1000 * 60 * 60 * 24));
+              return {
+                id: t.id,
+                type: 'task' as const,
+                title: t.title,
+                urgency: daysOverdue > 7 ? 'critical' : daysOverdue > 3 ? 'high' : 'medium',
+                projectName: t.projectName || t.initiativeName,
+                owner: t.assigneeName,
+                daysOverdue,
+              };
+            });
+          
+          // Merge with decision action items
+          setActionItems((prev) => {
+            const decisionItems = prev.filter((i) => i.type === 'decision');
+            return [...decisionItems, ...overdueTaskItems].slice(0, 5);
+          });
         }
 
         setLastUpdated(new Date());

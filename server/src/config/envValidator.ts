@@ -98,6 +98,49 @@ const validationRules: EnvValidationRule[] = [
     },
     errorMessage: 'PORT must be a valid port number (1-65535)',
   },
+  // Optional flags (boolean-like)
+  {
+    key: 'SKIP_ENV_VALIDATION',
+    required: false,
+    validator: (value) => !value || value === 'true' || value === 'false',
+    errorMessage: 'SKIP_ENV_VALIDATION must be "true" or "false"',
+  },
+  {
+    key: 'FRONTEND_URL',
+    required: false,
+    validator: (value) => !value || /^https?:\/\//.test(value),
+    errorMessage: 'FRONTEND_URL must be a valid URL starting with http:// or https://',
+  },
+  {
+    key: 'DISABLE_CONNECTION_POOL',
+    required: false,
+    validator: (value) => !value || value === 'true' || value === 'false',
+    errorMessage: 'DISABLE_CONNECTION_POOL must be "true" or "false"',
+  },
+  {
+    key: 'DISABLE_SCHEDULER',
+    required: false,
+    validator: (value) => !value || value === 'true' || value === 'false',
+    errorMessage: 'DISABLE_SCHEDULER must be "true" or "false"',
+  },
+  {
+    key: 'SKIP_STARTUP_VALIDATOR',
+    required: false,
+    validator: (value) => !value || value === 'true' || value === 'false',
+    errorMessage: 'SKIP_STARTUP_VALIDATOR must be "true" or "false"',
+  },
+  {
+    key: 'E2E_MODE',
+    required: false,
+    validator: (value) => !value || value === 'true' || value === 'false',
+    errorMessage: 'E2E_MODE must be "true" or "false"',
+  },
+  {
+    key: 'ENABLE_TEST_GATEWAY',
+    required: false,
+    validator: (value) => !value || value === 'true' || value === 'false',
+    errorMessage: 'ENABLE_TEST_GATEWAY must be "true" or "false"',
+  },
 ];
 
 interface ValidationResult {

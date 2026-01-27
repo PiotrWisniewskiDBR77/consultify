@@ -37,7 +37,7 @@ const EDGE_LABELS = {
  * @param {string} triggerSignal - The trigger signal for this template
  * @returns {Object} Graph { nodes, edges, meta }
  */
-function stepsToGraph(steps, triggerSignal = '') {
+function stepsToGraph(steps: any[], triggerSignal = '') {
   const nodes = [];
   const edges = [];
 
@@ -147,7 +147,11 @@ function stepsToGraph(steps, triggerSignal = '') {
  * @param {Object} graph - Graph { nodes, edges, meta }
  * @returns {Array} Array of template step objects in order
  */
-function graphToSteps(graph) {
+function graphToSteps(graph: {
+  nodes?: Array<{ id: string; type: string; title?: string; data?: unknown }>;
+  edges?: Array<{ from: string; to: string; label?: string }>;
+  meta?: unknown;
+}) {
   if (!graph || !graph.nodes || !graph.edges) {
     return [];
   }
@@ -183,26 +187,34 @@ function graphToSteps(graph) {
     }
     visited.add(currentId);
 
-    const currentNode = nodes.find((n) => n.id === currentId);
+    const currentNode = nodes.find((n: { id: string; type: string; title?: string; data?: unknown }) => n.id === currentId);
     if (!currentNode) continue;
 
     // Skip START and END nodes from step output
     if (currentNode.type !== NODE_TYPES.START && currentNode.type !== NODE_TYPES.END) {
+      const nodeData = currentNode.data as {
+        actionType?: string;
+        description?: string;
+        payloadTemplate?: unknown;
+        isOptional?: boolean;
+        waitForPrevious?: boolean;
+      } | undefined;
+      
       orderedSteps.push({
         id: currentNode.id,
         stepOrder: stepOrder++,
-        actionType: currentNode.data?.actionType || currentNode.type,
-        title: currentNode.title,
-        description: currentNode.data?.description || '',
-        payloadTemplate: currentNode.data?.payloadTemplate || {},
-        isOptional: currentNode.data?.isOptional || false,
-        waitForPrevious: currentNode.data?.waitForPrevious !== false,
+        actionType: nodeData?.actionType || currentNode.type,
+        title: currentNode.title || '',
+        description: nodeData?.description || '',
+        payloadTemplate: nodeData?.payloadTemplate || {},
+        isOptional: nodeData?.isOptional || false,
+        waitForPrevious: nodeData?.waitForPrevious !== false,
       });
     }
 
     // Add all outgoing edges to queue
     const outgoing = adjacency.get(currentId) || [];
-    outgoing.forEach(({ to }) => {
+    outgoing.forEach(({ to }: { to: string; label?: string }) => {
       if (!visited.has(to)) {
         queue.push(to);
       }
@@ -218,7 +230,10 @@ function graphToSteps(graph) {
  * @param {Object} graph - Graph { nodes, edges }
  * @returns {Object} { isValid: boolean, cycles: Array<string[]> }
  */
-function validateDAG(graph) {
+function validateDAG(graph: {
+  nodes?: Array<{ id: string; type: string }>;
+  edges?: Array<{ from: string; to: string }>;
+}) {
   if (!graph || !graph.nodes || !graph.edges) {
     return { isValid: false, cycles: [], error: 'Invalid graph structure' };
   }
@@ -226,11 +241,12 @@ function validateDAG(graph) {
   const { nodes, edges } = graph;
 
   // Build adjacency list
-  const adjacency = new Map();
-  nodes.forEach((node) => adjacency.set(node.id, []));
-  edges.forEach((edge) => {
-    if (adjacency.has(edge.from)) {
-      adjacency.get(edge.from).push(edge.to);
+  const adjacency = new Map<string, string[]>();
+  nodes.forEach((node: { id: string; type: string }) => adjacency.set(node.id, []));
+  edges.forEach((edge: { from: string; to: string }) => {
+    const neighbors = adjacency.get(edge.from);
+    if (neighbors) {
+      neighbors.push(edge.to);
     }
   });
 
@@ -241,10 +257,10 @@ function validateDAG(graph) {
   const color = new Map();
   nodes.forEach((node) => color.set(node.id, WHITE));
 
-  const cycles = [];
-  const path = [];
+  const cycles: string[][] = [];
+  const path: string[] = [];
 
-  function dfs(nodeId) {
+  function dfs(nodeId: string): boolean {
     color.set(nodeId, GRAY);
     path.push(nodeId);
 
@@ -288,7 +304,10 @@ function validateDAG(graph) {
  * @param {Object} graph - Graph { nodes, edges }
  * @returns {Array} Array of paths (each path is array of node IDs)
  */
-function getAllPaths(graph) {
+function getAllPaths(graph: {
+  nodes?: Array<{ id: string; type: string }>;
+  edges?: Array<{ from: string; to: string }>;
+}) {
   if (!graph || !graph.nodes || !graph.edges) {
     return [];
   }
@@ -296,26 +315,27 @@ function getAllPaths(graph) {
   const { nodes, edges } = graph;
 
   // Build adjacency list
-  const adjacency = new Map();
-  nodes.forEach((node) => adjacency.set(node.id, []));
-  edges.forEach((edge) => {
-    if (adjacency.has(edge.from)) {
-      adjacency.get(edge.from).push(edge.to);
+  const adjacency = new Map<string, string[]>();
+  nodes.forEach((node: { id: string; type: string }) => adjacency.set(node.id, []));
+  edges.forEach((edge: { from: string; to: string }) => {
+    const neighbors = adjacency.get(edge.from);
+    if (neighbors) {
+      neighbors.push(edge.to);
     }
   });
 
   // Find START and END nodes
-  const startNode = nodes.find((n) => n.type === NODE_TYPES.START);
-  const endNodes = nodes.filter((n) => n.type === NODE_TYPES.END).map((n) => n.id);
+  const startNode = nodes.find((n: { id: string; type: string }) => n.type === NODE_TYPES.START);
+  const endNodes = nodes.filter((n: { id: string; type: string }) => n.type === NODE_TYPES.END).map((n: { id: string }) => n.id);
 
   if (!startNode || endNodes.length === 0) {
     return [];
   }
 
-  const allPaths = [];
+  const allPaths: string[][] = [];
   const maxDepth = nodes.length * 2; // Prevent infinite loops
 
-  function dfs(currentId, path, depth) {
+  function dfs(currentId: string, path: string[], depth: number): void {
     if (depth > maxDepth) return;
 
     path.push(currentId);
@@ -345,7 +365,10 @@ function getAllPaths(graph) {
  * @param {Object} graph - Graph { nodes, edges }
  * @returns {Array} Array of node IDs that are dead ends
  */
-function findDeadEnds(graph) {
+function findDeadEnds(graph: {
+  nodes?: Array<{ id: string; type: string }>;
+  edges?: Array<{ from: string; to: string }>;
+}) {
   if (!graph || !graph.nodes || !graph.edges) {
     return [];
   }
@@ -353,11 +376,11 @@ function findDeadEnds(graph) {
   const { nodes, edges } = graph;
 
   // Get all source nodes from edges
-  const nodesWithOutgoing = new Set(edges.map((e) => e.from));
+  const nodesWithOutgoing = new Set(edges.map((e: { from: string; to: string }) => e.from));
 
   // Find nodes without outgoing edges
   const deadEnds = nodes.filter(
-    (node) => node.type !== NODE_TYPES.END && !nodesWithOutgoing.has(node.id)
+    (node: { id: string; type: string }) => node.type !== NODE_TYPES.END && !nodesWithOutgoing.has(node.id)
   );
 
   return deadEnds.map((n) => n.id);
@@ -368,7 +391,10 @@ function findDeadEnds(graph) {
  * @param {Object} graph - Graph { nodes, edges }
  * @returns {Array} Array of BRANCH node IDs missing else paths
  */
-function findBranchesWithoutElse(graph) {
+function findBranchesWithoutElse(graph: {
+  nodes?: Array<{ id: string; type: string }>;
+  edges?: Array<{ from: string; to: string; label?: string }>;
+}) {
   if (!graph || !graph.nodes || !graph.edges) {
     return [];
   }
@@ -376,14 +402,14 @@ function findBranchesWithoutElse(graph) {
   const { nodes, edges } = graph;
 
   // Get all BRANCH nodes
-  const branchNodes = nodes.filter((n) => n.type === NODE_TYPES.BRANCH);
+  const branchNodes = nodes.filter((n: { id: string; type: string }) => n.type === NODE_TYPES.BRANCH);
 
-  const missingElse = [];
+  const missingElse: string[] = [];
 
   branchNodes.forEach((branch) => {
-    const outgoingEdges = edges.filter((e) => e.from === branch.id);
+    const outgoingEdges = edges.filter((e: { from: string; to: string; label?: string }) => e.from === branch.id);
     const hasElse = outgoingEdges.some(
-      (e) => e.label === EDGE_LABELS.ELSE || e.label?.toLowerCase().includes('else')
+      (e: { from: string; to: string; label?: string }) => e.label === EDGE_LABELS.ELSE || e.label?.toLowerCase().includes('else')
     );
 
     if (!hasElse) {

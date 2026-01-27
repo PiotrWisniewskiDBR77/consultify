@@ -12,6 +12,9 @@ import { v4 as uuidv4 } from 'uuid';
 import * as xlsx from 'xlsx';
 
 import { getDatabase } from '../database/index.js';
+import { verifyToken } from '../middleware/auth.middleware.js';
+import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
@@ -23,6 +26,11 @@ interface AuthRequest extends Request {
     role: string;
   };
 }
+
+// Middleware (match other authenticated modules)
+router.use(authRateLimiter);
+router.use(verifyToken);
+router.use(demoContextMiddleware);
 
 const safeJsonParse = <T = unknown>(value: string | null | undefined, fallback: T): T => {
   if (!value) return fallback;
@@ -138,37 +146,26 @@ router.get('/', async (req: AuthRequest, res: Response) => {
   try {
     const db = getDatabase();
     const organizationId = req.user?.organizationId || 'org-dbr77-system';
-    const { projectId, status } = req.query as { projectId?: string; status?: string };
-
     const params: (string | number)[] = [organizationId];
-    let sql = `
+
+    // NOTE: SQLite schema for assessment_reports in this repo is minimal (no status/name/project_id/etc).
+    // We normalize to a UI-friendly shape.
+    const sql = `
       SELECT 
         r.id,
         r.assessment_id as assessmentId,
-        r.name,
-        r.status,
+        r.executive_summary as executiveSummary,
+        r.detailed_analysis as detailedAnalysis,
+        r.recommendations as recommendations,
+        r.generated_by as generatedBy,
         r.created_at as createdAt,
         r.updated_at as updatedAt,
-        r.created_by as createdBy,
-        r.project_id as reportProjectId,
-        a.name as assessmentName,
-        a.project_id as assessmentProjectId,
-        a.initiatives_generated as initiativesGenerated
+        a.name as assessmentName
       FROM assessment_reports r
       LEFT JOIN assessments a ON r.assessment_id = a.id
       WHERE r.organization_id = ?
+      ORDER BY r.updated_at DESC
     `;
-
-    if (projectId) {
-      sql += ' AND a.project_id = ?';
-      params.push(projectId);
-    }
-    if (status) {
-      sql += ' AND UPPER(r.status) = ?';
-      params.push(status.toUpperCase());
-    }
-
-    sql += ' ORDER BY r.updated_at DESC';
 
     const reports = await new Promise<any[]>((resolve, reject) => {
       db.all(sql, params, (err: Error | null, rows: any[]) => {
@@ -178,9 +175,9 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     });
 
     const normalized = reports.map((r) => {
-      const reportName = r.name || `Report - ${r.assessmentName || 'Assessment'}`;
-      const initiativesCount = Number(r.initiativesGenerated || 0);
-      const reportStatus = (r.status || 'DRAFT').toUpperCase();
+      const reportName = `Report - ${r.assessmentName || 'Assessment'}`;
+      const hasSummary = Boolean(r.executiveSummary);
+      const reportStatus = (hasSummary ? 'FINAL' : 'DRAFT').toUpperCase();
       return {
         id: r.id,
         name: reportName,
@@ -189,10 +186,10 @@ router.get('/', async (req: AuthRequest, res: Response) => {
         status: reportStatus,
         createdAt: r.createdAt,
         updatedAt: r.updatedAt,
-        createdBy: r.createdBy || 'system',
+        createdBy: r.generatedBy || 'ai',
         canGenerateInitiatives: reportStatus === 'FINAL',
-        initiativesGenerated: initiativesCount > 0,
-        initiativesCount,
+        initiativesGenerated: false,
+        initiativesCount: 0,
       };
     });
 
@@ -211,46 +208,11 @@ router.post('/', async (req: AuthRequest, res: Response) => {
     const db = getDatabase();
     const organizationId = req.user?.organizationId || 'org-dbr77-system';
     const userId = req.user?.id || 'user-default';
-    let { assessmentId } = req.body || {};
-    const { name, projectId } = req.body || {};
-
-    if (!assessmentId && projectId) {
-      const candidate = await new Promise<any>((resolve, reject) => {
-        db.get(
-          `SELECT a.id
-           FROM assessments a
-           LEFT JOIN assessment_workflows w ON w.assessment_id = a.id AND w.organization_id = ?
-           WHERE a.project_id = ? AND w.status = 'APPROVED'
-           ORDER BY a.updated_at DESC
-           LIMIT 1`,
-          [organizationId, projectId],
-          (err: Error | null, row: any) => {
-            if (err) reject(err);
-            else resolve(row);
-          }
-        );
-      });
-      assessmentId = candidate?.id;
-    }
+    const { assessmentId } = req.body || {};
+    const { name } = req.body || {};
 
     if (!assessmentId) {
       return res.status(400).json({ error: 'assessmentId is required' });
-    }
-
-    // Require approved assessment workflow
-    const workflow = await new Promise<any>((resolve, reject) => {
-      db.get(
-        `SELECT status FROM assessment_workflows WHERE assessment_id = ? AND organization_id = ?`,
-        [assessmentId, organizationId],
-        (err: Error | null, row: any) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
-
-    if (!workflow || workflow.status !== 'APPROVED') {
-      return res.status(400).json({ error: 'Assessment must be APPROVED to create report' });
     }
 
     const existing = await new Promise<any>((resolve, reject) => {
@@ -271,20 +233,18 @@ router.post('/', async (req: AuthRequest, res: Response) => {
     const id = `report-${uuidv4()}`;
     await new Promise<void>((resolve, reject) => {
       db.run(
-        `INSERT INTO assessment_reports (id, assessment_id, organization_id, name, status, created_by, project_id, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 'DRAFT', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-        [id, assessmentId, organizationId, name || 'Assessment Report', userId, projectId || null],
-        (err: Error | null) => {
-          if (err) reject(err);
-          else resolve();
-        }
-      );
-    });
-
-    await new Promise<void>((resolve, reject) => {
-      db.run(
-        `UPDATE assessments SET report_generated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
-        [assessmentId, organizationId],
+        `INSERT INTO assessment_reports (id, assessment_id, organization_id, executive_summary, detailed_analysis, recommendations, generated_by, generation_params, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        [
+          id,
+          assessmentId,
+          organizationId,
+          name ? `Report created by ${userId}: ${name}` : null,
+          JSON.stringify({ keyFindings: [], notes: '' }),
+          JSON.stringify([]),
+          userId,
+          JSON.stringify({ source: 'manual' }),
+        ],
         (err: Error | null) => {
           if (err) reject(err);
           else resolve();

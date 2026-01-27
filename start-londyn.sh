@@ -59,17 +59,19 @@ fi
 
 DB_PATH="$ROOT_DIR/data/dev/consultinity.db"
 if [[ ! -f "$DB_PATH" ]]; then
-  echo "ERROR: Expected SQLite DB not found at: $DB_PATH"
-  echo "This is the seeded DB used by the 'Friday' screenshots."
-  exit 1
+  echo "WARNING: SQLite DB not found at: $DB_PATH"
+  echo "Creating empty database directory..."
+  mkdir -p "$ROOT_DIR/data/dev"
+  echo "The database will be initialized on first run."
 fi
 
 echo "Starting Londyn (frontend:3000, backend:3001) ..."
-echo "Login: (use seeded dev credentials)"
+echo "Login: piotr.wisniewski@dbr77.com / 123456"
 
 # IMPORTANT:
 # - dotenv in backend loads .env, but does NOT override existing env vars
 # - so we force DB_TYPE/SQLITE_PATH here to always use the seeded DB
+# - Use ABSOLUTE path to avoid issues with server running from different CWD
 DB_TYPE=sqlite \
 SQLITE_PATH="$DB_PATH" \
 PORT=3001 \

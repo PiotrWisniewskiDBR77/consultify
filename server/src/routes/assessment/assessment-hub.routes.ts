@@ -6,6 +6,9 @@
 import { Request, Response, Router } from 'express';
 
 import { getDatabase } from '../../database/index.js';
+import { verifyToken } from '../../middleware/auth.middleware.js';
+import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
+import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
@@ -17,6 +20,20 @@ interface AuthRequest extends Request {
     role: string;
   };
 }
+
+const safeJsonParse = <T = unknown>(value: string | null | undefined, fallback: T): T => {
+  if (!value) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+};
+
+// Middleware (keep consistent with other modules like Interview/Initiatives)
+router.use(authRateLimiter);
+router.use(verifyToken);
+router.use(demoContextMiddleware);
 
 /**
  * GET /api/assessments/my-assessments
@@ -30,6 +47,7 @@ router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
     logger.info(`[AssessmentHub] Fetching assessments for org: ${organizationId}`);
 
     // Get assessments from database
+    // Uses framework_type and framework_data from seeded data
     const assessments = await new Promise<any[]>((resolve, reject) => {
       db.all(
         `SELECT 
@@ -40,13 +58,19 @@ router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
                     status,
                     created_at as createdAt,
                     updated_at as updatedAt,
-                    'DRD' as type,
-                    'Digital Readiness Diagnosis' as projectName,
-                    75 as progress,
-                    3.2 as overallScore
+                    COALESCE(framework_type, 'DRD') as type,
+                    CASE COALESCE(framework_type, 'DRD')
+                      WHEN 'DRD' THEN 'Digital Readiness Diagnosis'
+                      WHEN 'SIRI' THEN 'Smart Industry Readiness Index'
+                      WHEN 'ADMA' THEN 'Advanced Digital Maturity Assessment'
+                      WHEN 'CMMI' THEN 'Capability Maturity Model Integration'
+                      WHEN 'LEAN' THEN 'Lean 4.0 Assessment'
+                      ELSE 'Assessment'
+                    END as projectName,
+                    framework_data as frameworkData
                 FROM assessments 
                 WHERE organization_id = ?
-                ORDER BY created_at DESC`,
+                ORDER BY updated_at DESC`,
         [organizationId],
         (err: Error | null, rows: any[]) => {
           if (err) reject(err);
@@ -55,9 +79,18 @@ router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
       );
     });
 
-    logger.info(`[AssessmentHub] Found ${assessments.length} assessments`);
+    const normalized = (assessments || []).map((a: any) => {
+      const data = safeJsonParse<{ progress?: number; overallScore?: number }>(a.frameworkData, {});
+      return {
+        ...a,
+        progress: Number(data.progress || 0),
+        overallScore: Number(data.overallScore || 0),
+      };
+    });
 
-    res.json({ assessments });
+    logger.info(`[AssessmentHub] Found ${normalized.length} assessments`);
+
+    res.json({ assessments: normalized });
   } catch (err: any) {
     logger.error('[AssessmentHub] Error fetching assessments:', err);
     res.status(500).json({ error: 'Failed to fetch assessments', message: err.message });
@@ -84,10 +117,16 @@ router.get('/', async (req: AuthRequest, res: Response) => {
                     COALESCE(w.status, a.status) as status,
                     a.created_at as createdAt,
                     a.updated_at as updatedAt,
-                    'DRD' as type,
-                    'Digital Readiness Diagnosis' as projectName,
-                    75 as progress,
-                    3.2 as overallScore
+                    COALESCE(a.framework_type, 'DRD') as type,
+                    CASE COALESCE(a.framework_type, 'DRD')
+                      WHEN 'DRD' THEN 'Digital Readiness Diagnosis'
+                      WHEN 'SIRI' THEN 'Smart Industry Readiness Index'
+                      WHEN 'ADMA' THEN 'Advanced Digital Maturity Assessment'
+                      WHEN 'CMMI' THEN 'Capability Maturity Model Integration'
+                      WHEN 'LEAN' THEN 'Lean 4.0 Assessment'
+                      ELSE 'Assessment'
+                    END as projectName,
+                    a.framework_data as frameworkData
                 FROM assessments a
                 LEFT JOIN assessment_workflows w ON w.assessment_id = a.id
                 WHERE a.organization_id = ?`;
@@ -114,7 +153,16 @@ router.get('/', async (req: AuthRequest, res: Response) => {
       );
     });
 
-    res.json({ assessments });
+    const normalized = (assessments || []).map((a: any) => {
+      const data = safeJsonParse<{ progress?: number; overallScore?: number }>(a.frameworkData, {});
+      return {
+        ...a,
+        progress: Number(data.progress || 0),
+        overallScore: Number(data.overallScore || 0),
+      };
+    });
+
+    res.json({ assessments: normalized });
   } catch (err: any) {
     logger.error('[AssessmentHub] Error:', err);
     res.status(500).json({ error: 'Failed to fetch assessments', message: err.message });
@@ -141,8 +189,16 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
                     status,
                     created_at as createdAt,
                     updated_at as updatedAt,
-                    'DRD' as type,
-                    'Digital Readiness Diagnosis' as projectName
+                    COALESCE(framework_type, 'DRD') as type,
+                    CASE COALESCE(framework_type, 'DRD')
+                      WHEN 'DRD' THEN 'Digital Readiness Diagnosis'
+                      WHEN 'SIRI' THEN 'Smart Industry Readiness Index'
+                      WHEN 'ADMA' THEN 'Advanced Digital Maturity Assessment'
+                      WHEN 'CMMI' THEN 'Capability Maturity Model Integration'
+                      WHEN 'LEAN' THEN 'Lean 4.0 Assessment'
+                      ELSE 'Assessment'
+                    END as projectName,
+                    framework_data as frameworkData
                 FROM assessments 
                 WHERE id = ? AND organization_id = ?`,
         [id, organizationId],
@@ -157,7 +213,14 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Assessment not found' });
     }
 
-    res.json({ assessment });
+    const data = safeJsonParse<{ progress?: number; overallScore?: number }>(assessment.frameworkData, {});
+    res.json({
+      assessment: {
+        ...assessment,
+        progress: Number(data.progress || 0),
+        overallScore: Number(data.overallScore || 0),
+      },
+    });
   } catch (err: any) {
     logger.error('[AssessmentHub] Error fetching assessment:', err);
     res.status(500).json({ error: 'Failed to fetch assessment', message: err.message });
