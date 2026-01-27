@@ -67,6 +67,7 @@ export const ColumnResizer: React.FC<ColumnResizerProps> = ({
         window.removeEventListener('mouseup', handleMouseUp);
       };
     }
+    return undefined;
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
   return (

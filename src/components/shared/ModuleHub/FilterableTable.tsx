@@ -40,6 +40,7 @@ interface FilterableTableProps {
 const StatusBadge: React.FC<{ status: ItemStatus }> = ({ status }) => {
   const config: Record<ItemStatus, { bg: string; text: string; dot: string; label: string }> = {
     DRAFT: { bg: 'bg-slate-500/20', text: 'text-slate-300', dot: 'bg-slate-400', label: 'Draft' },
+    PENDING_REVIEW: { bg: 'bg-yellow-500/20', text: 'text-yellow-300', dot: 'bg-yellow-400', label: 'Pending Review' },
     REVIEW: { bg: 'bg-amber-500/20', text: 'text-amber-300', dot: 'bg-amber-400', label: 'In Review' },
     PROMOTED: { bg: 'bg-blue-500/20', text: 'text-blue-300', dot: 'bg-blue-400', label: 'Promoted' },
     PLANNING: { bg: 'bg-indigo-500/20', text: 'text-indigo-300', dot: 'bg-indigo-400', label: 'Planning' },
@@ -50,6 +51,7 @@ const StatusBadge: React.FC<{ status: ItemStatus }> = ({ status }) => {
     DONE: { bg: 'bg-green-500/20', text: 'text-green-300', dot: 'bg-green-400', label: 'Done' },
     TRACKING: { bg: 'bg-teal-500/20', text: 'text-teal-300', dot: 'bg-teal-400', label: 'Tracking' },
     CANCELLED: { bg: 'bg-gray-500/20', text: 'text-gray-300', dot: 'bg-gray-400', label: 'Cancelled' },
+    ARCHIVED: { bg: 'bg-slate-500/20', text: 'text-slate-500', dot: 'bg-slate-500', label: 'Archived' },
   };
 
   const { bg, text, dot, label } = config[status] || config.DRAFT;

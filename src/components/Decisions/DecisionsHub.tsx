@@ -41,10 +41,10 @@ const STATUS_META: Record<
   string,
   { label: string; dotColor: string; itemStatus: ItemStatus }
 > = {
-  PENDING: { label: 'Pending', dotColor: 'bg-amber-400', itemStatus: 'in_review' },
-  APPROVED: { label: 'Approved', dotColor: 'bg-emerald-400', itemStatus: 'completed' },
-  REJECTED: { label: 'Rejected', dotColor: 'bg-red-400', itemStatus: 'completed' },
-  ESCALATED: { label: 'Escalated', dotColor: 'bg-orange-400', itemStatus: 'in_review' },
+  PENDING: { label: 'Pending', dotColor: 'bg-amber-400', itemStatus: 'REVIEW' },
+  APPROVED: { label: 'Approved', dotColor: 'bg-emerald-400', itemStatus: 'DONE' },
+  REJECTED: { label: 'Rejected', dotColor: 'bg-red-400', itemStatus: 'CANCELLED' },
+  ESCALATED: { label: 'Escalated', dotColor: 'bg-orange-400', itemStatus: 'REVIEW' },
 };
 
 // Priority badge colors
@@ -611,7 +611,6 @@ export const DecisionsHub: React.FC<DecisionsHubProps> = ({
 
   return (
     <ModuleHub
-      persistViewModeKey="decisions"
       tabs={tabs}
       activeTab={activeTab}
       onTabChange={setActiveTab}

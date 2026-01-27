@@ -49,6 +49,7 @@ import {
   FilterChip,
   GridItem,
   GridView,
+  ItemStatus,
   ModuleHub,
   ModuleTab,
   OpenDocument,
@@ -58,7 +59,7 @@ import {
 
 // Tool category types
 type ToolCategory = 'strategic' | 'operational' | 'digital' | 'automation';
-type ItemStatus = 'draft' | 'in_review' | 'approved' | 'completed';
+// Use canonical ItemStatus from ModuleHub/types.ts instead of local type
 
 // Status filter options per tab context
 interface StatusFilterOption {
@@ -505,17 +506,19 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
   const transformToolSession = useCallback((session: ToolSessionData): DisplayItem => {
     const mapping = TOOL_TYPE_TO_SHORT[session.toolType] || { short: 'SWT' as ToolType, category: 'strategic' as ToolCategory };
     const statusMap: Record<string, ItemStatus> = {
-      'DRAFT': 'draft',
-      'REVIEW': 'in_review',
-      'APPROVED': 'approved',
-      'COMPLETED': 'completed',
+      'DRAFT': 'DRAFT',
+      'REVIEW': 'REVIEW',
+      'PENDING_REVIEW': 'PENDING_REVIEW',
+      'APPROVED': 'APPROVED',
+      'COMPLETED': 'DONE',
+      'DONE': 'DONE',
     };
     return {
       id: session.id,
       name: session.name,
       toolType: mapping.short,
       category: mapping.category,
-      status: statusMap[session.status?.toUpperCase()] || 'draft',
+      status: statusMap[session.status?.toUpperCase()] || 'DRAFT',
       progress: session.progress || 0,
       updatedAt: session.updatedAt ? new Date(session.updatedAt) : new Date(),
       apiToolType: session.toolType,
@@ -541,13 +544,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       // Split by status for different tabs
       // Discovery: DRAFT, REVIEW (work in progress)
       const discoveryItems = allSessions.filter(
-        (s) => s.status === 'draft' || s.status === 'in_review'
+        (s) => s.status === 'DRAFT' || s.status === 'REVIEW' || s.status === 'PENDING_REVIEW'
       );
       setDiscoveries(discoveryItems);
 
-      // Reports: APPROVED, COMPLETED (finished analyses)
+      // Reports: APPROVED, DONE (finished analyses)
       const reportItems = allSessions.filter(
-        (s) => s.status === 'approved' || s.status === 'completed'
+        (s) => s.status === 'APPROVED' || s.status === 'DONE'
       );
       setReports(reportItems);
 
@@ -565,7 +568,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
             category: (i.axis === 'strategic' ? 'strategic' : 
                       i.axis === 'operational' ? 'operational' : 
                       i.axis === 'digital' ? 'digital' : 'strategic') as ToolCategory,
-            status: 'draft' as ItemStatus,
+            status: 'DRAFT' as ItemStatus,
             progress: i.progress || 0,
             updatedAt: i.updatedAt ? new Date(i.updatedAt) : new Date(),
             apiToolType: 'initiative',

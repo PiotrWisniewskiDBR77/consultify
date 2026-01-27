@@ -521,7 +521,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
           type: 'report',
           subType: meta.shortLabel,
           name: report.title,
-          status: report.status === 'FINAL' ? 'completed' : 'draft',
+          status: report.status === 'FINAL' ? 'DONE' : 'DRAFT',
         };
 
         setOpenDocuments((prev) => {
@@ -620,7 +620,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       type: 'report',
       subType: meta.shortLabel,
       name: report.title,
-      status: 'draft',
+      status: 'DRAFT',
     };
 
     setOpenDocuments((prev) => [...prev, doc]);

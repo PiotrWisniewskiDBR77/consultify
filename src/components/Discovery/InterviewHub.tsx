@@ -672,7 +672,7 @@ export const InterviewHub: React.FC<InterviewHubProps> = ({ initialTab = 'list' 
       handleOpenDocument(row);
     }
     if (action === 'remind' && activeTab === 'assignments') {
-      Api.post(`/interview/assignments/${row.id}/remind`)
+      Api.post(`/interview/assignments/${row.id}/remind`, {})
         .then(() => toast.success('Reminder sent'))
         .catch(() => toast.error('Failed to send reminder'));
     }
@@ -711,7 +711,7 @@ export const InterviewHub: React.FC<InterviewHubProps> = ({ initialTab = 'list' 
       if (doc?.subType === 'INTERVIEW_SESSION') {
         return (
           <div className="h-full">
-            <InterviewWorkspace sessionId={doc.id} projectId={currentProjectId} />
+            <InterviewWorkspace sessionId={doc.id} projectId={currentProjectId || undefined} />
           </div>
         );
       }

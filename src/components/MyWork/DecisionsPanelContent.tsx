@@ -1010,7 +1010,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
       await Api.post('/api/notifications', {
         type: 'DECISION_REMINDER',
         title: `Reminder: Decision needed - ${decision.title}`,
-        message: `${currentUser?.name || 'Someone'} is waiting for your decision on "${decision.title}"`,
+        message: `${currentUser?.firstName && currentUser?.lastName ? `${currentUser.firstName} ${currentUser.lastName}` : 'Someone'} is waiting for your decision on "${decision.title}"`,
         severity: decision.priority === 'HIGH' || decision.priority === 'CRITICAL' ? 'WARNING' : 'INFO',
         userId: decision.decisionOwnerId,
         relatedObjectType: 'DECISION',
@@ -1049,7 +1049,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
       await Api.post('/api/notifications', {
         type: 'DECISION_ESCALATION',
         title: `Escalation: ${decision.title}`,
-        message: `Decision "${decision.title}" has been escalated by ${currentUser?.name || 'a team member'}. Immediate attention required.`,
+        message: `Decision "${decision.title}" has been escalated by ${currentUser?.firstName && currentUser?.lastName ? `${currentUser.firstName} ${currentUser.lastName}` : 'a team member'}. Immediate attention required.`,
         severity: 'CRITICAL',
         userId: decision.decisionOwnerId,
         relatedObjectType: 'DECISION',

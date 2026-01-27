@@ -395,7 +395,7 @@ export const InterviewHub: React.FC = () => {
     if (!searchQuery) return insights;
     const query = searchQuery.toLowerCase();
     return insights.filter(
-      (i) => i.title.toLowerCase().includes(query) || i.content.toLowerCase().includes(query)
+      (i) => i.title.toLowerCase().includes(query) || (i.content || '').toLowerCase().includes(query)
     );
   }, [insights, searchQuery]);
 

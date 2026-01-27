@@ -46,6 +46,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
+    return undefined;
   }, [isOpen, onClose]);
 
   const handleSelectOption = (optionValue: string) => {

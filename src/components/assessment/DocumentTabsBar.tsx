@@ -21,6 +21,8 @@ export interface OpenDocument {
   name: string;
   status?: string;
   isDirty?: boolean;
+  progress?: number;
+  subType?: string;
 }
 
 interface DocumentTabsBarProps {

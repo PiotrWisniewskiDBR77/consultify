@@ -56,9 +56,9 @@ const STATUS_META: Record<
   string,
   { label: string; dotColor: string; itemStatus: ItemStatus }
 > = {
-  DRAFT: { label: 'Draft', dotColor: 'bg-slate-400', itemStatus: 'draft' },
-  REVIEW: { label: 'In Review', dotColor: 'bg-amber-400', itemStatus: 'in_review' },
-  APPROVED: { label: 'Completed', dotColor: 'bg-emerald-400', itemStatus: 'completed' },
+  DRAFT: { label: 'Draft', dotColor: 'bg-slate-400', itemStatus: 'DRAFT' },
+  REVIEW: { label: 'In Review', dotColor: 'bg-amber-400', itemStatus: 'REVIEW' },
+  APPROVED: { label: 'Completed', dotColor: 'bg-emerald-400', itemStatus: 'DONE' },
 };
 
 // Type codes for analysis types
@@ -178,7 +178,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
         label: 'Type',
         width: '80px',
         render: (row: DigitizationAnalysis) => {
-          const code = getTypeCode(row.analysisType);
+          const code = getTypeCode(row.analysisType || '');
           return (
             <div className="flex items-center gap-2">
               <Calculator size={14} className="text-emerald-400" />
@@ -254,7 +254,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
 
   // Handlers
   const handleOpenDocument = useCallback((row: DigitizationAnalysis) => {
-    const code = getTypeCode(row.analysisType);
+    const code = getTypeCode(row.analysisType || '');
     const statusMeta = STATUS_META[row.status] || STATUS_META.DRAFT;
 
     const doc: OpenDocument = {
@@ -347,7 +347,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
       return {
         id: item.id,
         name: item.name,
-        type: getTypeCode(item.analysisType),
+        type: getTypeCode(item.analysisType || ''),
         typeColor: 'emerald',
         status: statusMeta.itemStatus,
         progress: Math.round((item.overallScore || 0) / 7 * 100),

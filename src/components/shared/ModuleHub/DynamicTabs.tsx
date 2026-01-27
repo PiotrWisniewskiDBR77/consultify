@@ -28,6 +28,7 @@ const MAX_VISIBLE_TABS = 6;
 // Status dot colors - uses canonical 11-status initiative lifecycle
 const STATUS_COLORS: Record<ItemStatus, string> = {
   DRAFT: 'bg-slate-400',
+  PENDING_REVIEW: 'bg-yellow-400',
   REVIEW: 'bg-amber-400',
   PROMOTED: 'bg-blue-400',
   PLANNING: 'bg-indigo-400',
@@ -38,6 +39,7 @@ const STATUS_COLORS: Record<ItemStatus, string> = {
   DONE: 'bg-green-400',
   TRACKING: 'bg-teal-400',
   CANCELLED: 'bg-gray-400',
+  ARCHIVED: 'bg-slate-500',
 };
 
 // Type colors for left border accent
@@ -155,8 +157,8 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
       {/* Visible Document Tabs */}
       {visibleDocs.map((doc) => {
         const isActive = doc.id === activeDocumentId;
-        const leftBorderColor = TYPE_BORDER_COLORS[doc.subType] || 'border-l-slate-500';
-        const statusColor = STATUS_COLORS[doc.status];
+        const leftBorderColor = doc.subType ? (TYPE_BORDER_COLORS[doc.subType] || 'border-l-slate-500') : 'border-l-slate-500';
+        const statusColor = doc.status && doc.status in STATUS_COLORS ? STATUS_COLORS[doc.status as ItemStatus] : undefined;
 
         return (
           <div
@@ -232,7 +234,7 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
               <div className="absolute top-full right-0 mt-1 z-50 min-w-[200px] bg-navy-800 border border-navy-600 rounded-lg shadow-xl overflow-hidden">
                 {overflowDocs.map((doc) => {
                   const isActive = doc.id === activeDocumentId;
-                  const statusColor = STATUS_COLORS[doc.status];
+                  const statusColor = doc.status && doc.status in STATUS_COLORS ? STATUS_COLORS[doc.status as ItemStatus] : undefined;
 
                   return (
                     <div

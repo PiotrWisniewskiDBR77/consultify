@@ -9,6 +9,7 @@ import {
   Archive,
   Ban,
   BarChart3,
+  Calendar,
   CheckCircle2,
   FileText,
   Loader2,
@@ -109,6 +110,26 @@ const STATUS_META: Record<
     label: STATUS_METADATA[InitiativeStatus.DRAFT].label,
     dotColor: STATUS_METADATA[InitiativeStatus.DRAFT].dotColor,
     icon: <FileText size={14} />,
+  },
+  [InitiativeStatus.PENDING_REVIEW]: {
+    label: STATUS_METADATA[InitiativeStatus.PENDING_REVIEW]?.label || 'Pending Review',
+    dotColor: STATUS_METADATA[InitiativeStatus.PENDING_REVIEW]?.dotColor || 'bg-yellow-400',
+    icon: <FileText size={14} />,
+  },
+  [InitiativeStatus.PROMOTED]: {
+    label: STATUS_METADATA[InitiativeStatus.PROMOTED]?.label || 'Promoted',
+    dotColor: STATUS_METADATA[InitiativeStatus.PROMOTED]?.dotColor || 'bg-blue-400',
+    icon: <Target size={14} />,
+  },
+  [InitiativeStatus.SCHEDULED]: {
+    label: STATUS_METADATA[InitiativeStatus.SCHEDULED]?.label || 'Scheduled',
+    dotColor: STATUS_METADATA[InitiativeStatus.SCHEDULED]?.dotColor || 'bg-purple-400',
+    icon: <Calendar size={14} />,
+  },
+  [InitiativeStatus.TRACKING]: {
+    label: STATUS_METADATA[InitiativeStatus.TRACKING]?.label || 'Tracking',
+    dotColor: STATUS_METADATA[InitiativeStatus.TRACKING]?.dotColor || 'bg-teal-400',
+    icon: <CheckCircle2 size={14} />,
   },
 };
 
@@ -337,10 +358,12 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
       name: row.name,
       status:
         row.status === InitiativeStatus.DONE
-          ? 'completed'
+          ? 'DONE'
           : row.status === InitiativeStatus.BLOCKED
-            ? 'in_review'
-            : 'draft',
+            ? 'BLOCKED'
+            : row.status === InitiativeStatus.TRACKING
+              ? 'TRACKING'
+              : 'DRAFT',
     };
 
     setOpenDocuments((prev) => {

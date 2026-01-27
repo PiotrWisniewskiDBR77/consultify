@@ -359,6 +359,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       subType: row.framework || row.sourceType,
       name: row.name,
       status: row.status,
+      progress: row.progress,
     };
 
     setOpenDocuments((prev) => {

@@ -54,6 +54,7 @@ import {
   FilterChip,
   GridItem,
   GridView,
+  ItemStatus,
   ModuleHub,
   ModuleTab,
   OpenDocument,
@@ -849,10 +850,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       name: row.name,
       status:
         row.status === InitiativeStatus.BLOCKED
-          ? 'in_review'
+          ? 'BLOCKED'
           : row.status === InitiativeStatus.DONE
-            ? 'completed'
-            : 'draft',
+            ? 'DONE'
+            : row.status === InitiativeStatus.EXECUTING
+              ? 'EXECUTING'
+              : row.status === InitiativeStatus.SCHEDULED
+                ? 'SCHEDULED'
+                : 'DRAFT',
     };
 
     setOpenDocuments((prev) => {
@@ -910,12 +915,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       typeColor: 'cyan',
       status:
         item.status === InitiativeStatus.BLOCKED
-          ? ('in_review' as const)
+          ? ('BLOCKED' as ItemStatus)
           : item.status === InitiativeStatus.DONE
-            ? ('completed' as const)
+            ? ('DONE' as ItemStatus)
             : item.status === InitiativeStatus.EXECUTING
-              ? ('approved' as const)
-              : ('draft' as const),
+              ? ('EXECUTING' as ItemStatus)
+              : item.status === InitiativeStatus.SCHEDULED
+                ? ('SCHEDULED' as ItemStatus)
+                : ('DRAFT' as ItemStatus),
       progress: item.progress || 0,
       updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
     }));

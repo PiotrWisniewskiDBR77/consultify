@@ -1590,6 +1590,14 @@ export const Api = {
     return res.json();
   },
 
+  deleteDecision: async (id: string): Promise<void> => {
+    const res = await fetch(`${API_URL}/decisions/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to delete decision');
+  },
+
   // ==========================================
   // PHASE 6: AI INTEGRATION
   // ==========================================

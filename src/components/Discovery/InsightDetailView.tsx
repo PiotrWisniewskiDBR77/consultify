@@ -218,7 +218,7 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
     if (!insight) return;
     setExporting('regenerate');
     try {
-      await Api.post(`/interview/insights/${insight.id}/regenerate`);
+      await Api.post(`/interview/insights/${insight.id}/regenerate`, {});
       toast.success('Regeneration started');
       onRefresh?.();
     } catch (err) {

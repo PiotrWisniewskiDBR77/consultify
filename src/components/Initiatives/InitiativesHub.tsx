@@ -503,7 +503,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   return (
     <div className="h-full" data-testid="initiatives-hub">
       <ModuleHub
-        persistViewModeKey="initiatives"
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -520,7 +519,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         onClearFilters={handleClearFilters}
         onNewItem={() => setShowNewModal(true)}
         newItemLabel="+ New Initiative"
-        filterActions={filterActions}
         statusFilters={statusFilters}
         activeStatusFilter={activeStatusFilter}
         onStatusFilterChange={setActiveStatusFilter}
@@ -547,12 +545,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       {/* Full-width view (Open Wider mode) */}
       {isFullView && selectedInitiative && (
         <InitiativeFullView
-          initiative={selectedInitiative}
-          onClose={handleCloseFullView}
-          onCollapse={handleCollapseToDrawer}
-          onUpdate={(updated) => {
-            setSelectedInitiative(updated);
-            setInitiatives((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+          initiativeId={selectedInitiative.id}
+          onBack={handleCloseFullView}
+          onStatusChange={() => {
             fetchData(true);
           }}
         />

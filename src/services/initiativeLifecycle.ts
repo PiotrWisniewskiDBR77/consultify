@@ -22,28 +22,38 @@ import { InitiativeStatus } from '../types';
  */
 export const VALID_TRANSITIONS: Record<InitiativeStatus, InitiativeStatus[]> = {
   // DRAFT is created in Tools/Assessment, then submitted for REVIEW
-  [InitiativeStatus.DRAFT]: [InitiativeStatus.REVIEW, InitiativeStatus.CANCELLED],
+  [InitiativeStatus.DRAFT]: [InitiativeStatus.PENDING_REVIEW, InitiativeStatus.REVIEW, InitiativeStatus.CANCELLED],
+  // PENDING_REVIEW: intermediate state between DRAFT and REVIEW
+  [InitiativeStatus.PENDING_REVIEW]: [InitiativeStatus.REVIEW, InitiativeStatus.DRAFT, InitiativeStatus.CANCELLED],
   // REVIEW: awaiting Go/No-Go decision, can be approved or sent back to draft
   [InitiativeStatus.REVIEW]: [
+    InitiativeStatus.PROMOTED,
     InitiativeStatus.APPROVED,
     InitiativeStatus.DRAFT,
     InitiativeStatus.CANCELLED,
   ],
+  // PROMOTED: promoted from review, moves to PLANNING
+  [InitiativeStatus.PROMOTED]: [InitiativeStatus.PLANNING, InitiativeStatus.REVIEW, InitiativeStatus.CANCELLED],
   // APPROVED: awaiting Resources Commit and Schedule Lock, then moves to PLANNING
   [InitiativeStatus.APPROVED]: [
     InitiativeStatus.PLANNING,
+    InitiativeStatus.SCHEDULED,
     InitiativeStatus.REVIEW, // Can be sent back for re-review
     InitiativeStatus.CANCELLED,
   ],
-  // PLANNING: detailed planning, then moves to EXECUTING
-  [InitiativeStatus.PLANNING]: [InitiativeStatus.EXECUTING, InitiativeStatus.APPROVED],
+  // PLANNING: detailed planning, then moves to SCHEDULED or EXECUTING
+  [InitiativeStatus.PLANNING]: [InitiativeStatus.SCHEDULED, InitiativeStatus.EXECUTING, InitiativeStatus.APPROVED],
+  // SCHEDULED: scheduled for execution, moves to EXECUTING
+  [InitiativeStatus.SCHEDULED]: [InitiativeStatus.EXECUTING, InitiativeStatus.PLANNING, InitiativeStatus.CANCELLED],
   [InitiativeStatus.EXECUTING]: [
     InitiativeStatus.BLOCKED,
     InitiativeStatus.DONE,
     InitiativeStatus.CANCELLED,
   ],
   [InitiativeStatus.BLOCKED]: [InitiativeStatus.EXECUTING, InitiativeStatus.CANCELLED],
-  [InitiativeStatus.DONE]: [InitiativeStatus.ARCHIVED],
+  [InitiativeStatus.DONE]: [InitiativeStatus.TRACKING, InitiativeStatus.ARCHIVED],
+  // TRACKING: benefits tracking phase, can be archived
+  [InitiativeStatus.TRACKING]: [InitiativeStatus.ARCHIVED],
   [InitiativeStatus.CANCELLED]: [InitiativeStatus.ARCHIVED],
   [InitiativeStatus.ARCHIVED]: [],
 };
@@ -180,6 +190,34 @@ export const STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = {
     dotColor: 'bg-slate-500',
     description: 'Archived for reference',
   },
+  [InitiativeStatus.PENDING_REVIEW]: {
+    label: 'Pending Review',
+    color: 'text-yellow-500',
+    bgColor: 'bg-yellow-500/10',
+    dotColor: 'bg-yellow-400',
+    description: 'Submitted for review',
+  },
+  [InitiativeStatus.PROMOTED]: {
+    label: 'Promoted',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10',
+    dotColor: 'bg-blue-400',
+    description: 'Promoted from review',
+  },
+  [InitiativeStatus.SCHEDULED]: {
+    label: 'Scheduled',
+    color: 'text-purple-500',
+    bgColor: 'bg-purple-500/10',
+    dotColor: 'bg-purple-400',
+    description: 'Scheduled for execution',
+  },
+  [InitiativeStatus.TRACKING]: {
+    label: 'Tracking',
+    color: 'text-teal-500',
+    bgColor: 'bg-teal-500/10',
+    dotColor: 'bg-teal-400',
+    description: 'Tracking benefits',
+  },
 };
 
 /**
@@ -258,12 +296,16 @@ export function isStatusInModule(status: InitiativeStatus, moduleId: ModuleId): 
 export function getLifecycleProgress(status: InitiativeStatus): number {
   const progressMap: Record<InitiativeStatus, number> = {
     [InitiativeStatus.DRAFT]: 10,
+    [InitiativeStatus.PENDING_REVIEW]: 15,
     [InitiativeStatus.REVIEW]: 25,
+    [InitiativeStatus.PROMOTED]: 30,
     [InitiativeStatus.APPROVED]: 40,
     [InitiativeStatus.PLANNING]: 55,
+    [InitiativeStatus.SCHEDULED]: 60,
     [InitiativeStatus.EXECUTING]: 70,
     [InitiativeStatus.BLOCKED]: 65, // Same as executing but blocked
     [InitiativeStatus.DONE]: 100,
+    [InitiativeStatus.TRACKING]: 95,
     [InitiativeStatus.CANCELLED]: 0,
     [InitiativeStatus.ARCHIVED]: 100,
   };

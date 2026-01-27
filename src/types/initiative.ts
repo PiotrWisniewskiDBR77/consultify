@@ -387,6 +387,28 @@ export const INITIATIVE_STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = 
     icon: 'XCircle',
     order: 11,
   },
+  [InitiativeStatus.PENDING_REVIEW]: {
+    label: 'Pending Review',
+    labelPL: 'Oczekuje na przegląd',
+    color: 'text-yellow-500',
+    bgColor: 'bg-yellow-500/10',
+    dotColor: 'bg-yellow-400',
+    description: 'Submitted for review',
+    descriptionPL: 'Złożona do przeglądu',
+    icon: 'Clock',
+    order: 1.5,
+  },
+  [InitiativeStatus.ARCHIVED]: {
+    label: 'Archived',
+    labelPL: 'Zarchiwizowana',
+    color: 'text-slate-400',
+    bgColor: 'bg-slate-400/10',
+    dotColor: 'bg-slate-500',
+    description: 'Archived for reference',
+    descriptionPL: 'Zarchiwizowana do celów referencyjnych',
+    icon: 'Archive',
+    order: 12,
+  },
 };
 
 /**

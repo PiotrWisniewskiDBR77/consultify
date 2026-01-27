@@ -78,6 +78,30 @@ const STATUS_COLORS: Record<
     text: 'text-slate-400',
     progress: 'bg-slate-500',
   },
+  [InitiativeStatus.PENDING_REVIEW]: {
+    bg: 'bg-yellow-500/20',
+    border: 'border-yellow-500/50',
+    text: 'text-yellow-400',
+    progress: 'bg-yellow-500',
+  },
+  [InitiativeStatus.PROMOTED]: {
+    bg: 'bg-blue-500/20',
+    border: 'border-blue-500/50',
+    text: 'text-blue-400',
+    progress: 'bg-blue-500',
+  },
+  [InitiativeStatus.SCHEDULED]: {
+    bg: 'bg-purple-500/20',
+    border: 'border-purple-500/50',
+    text: 'text-purple-400',
+    progress: 'bg-purple-500',
+  },
+  [InitiativeStatus.TRACKING]: {
+    bg: 'bg-teal-500/20',
+    border: 'border-teal-500/50',
+    text: 'text-teal-400',
+    progress: 'bg-teal-500',
+  },
 };
 
 // ============================================

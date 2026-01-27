@@ -343,8 +343,8 @@ const TaskTableRow: React.FC<{
           >
             {task.title}
           </span>
-          {task.projectName && (
-            <span className="text-xs text-slate-500 mt-0.5">{task.projectName}</span>
+          {(task as any).projectName && (
+            <span className="text-xs text-slate-500 mt-0.5">{(task as any).projectName}</span>
           )}
         </div>
       </td>
@@ -597,10 +597,10 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   // Handlers
   const handleToggleComplete = async (taskId: string, completed: boolean) => {
     try {
-      await Api.updateTask(taskId, { status: completed ? 'completed' : 'todo' });
+      await Api.updateTask(taskId, { status: completed ? 'DONE' : 'TODO' });
       setTasks((prev) =>
         prev.map((t) =>
-          t.id === taskId ? { ...t, status: completed ? 'completed' : 'todo' } as Task : t
+          t.id === taskId ? { ...t, status: completed ? 'DONE' : 'TODO' } as Task : t
         )
       );
       toast.success(completed ? 'Task completed' : 'Task reopened');
@@ -679,12 +679,12 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     try {
       await Promise.all(
         Array.from(selectedIds).map((id) =>
-          Api.updateTask(id, { status: 'completed' })
+          Api.updateTask(id, { status: 'DONE' })
         )
       );
       setTasks((prev) =>
         prev.map((t) =>
-          selectedIds.has(t.id) ? { ...t, status: 'completed' } as Task : t
+          selectedIds.has(t.id) ? { ...t, status: 'DONE' } as Task : t
         )
       );
       toast.success(`${selectedIds.size} tasks completed`);
