@@ -1,271 +1,409 @@
 /**
- * QuickActions - Reusable quick action buttons for tasks
- * Part of My Work Module PMO Upgrade
+ * QuickActions
+ * Hover actions component for quick task/decision management
+ * ClickUp-style inline actions
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Archive,
   Calendar,
-  CheckCircle,
-  ExternalLink,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  Clock,
+  Copy,
   Flag,
-  MessageSquare,
   MoreHorizontal,
-  Pause,
+  Pencil,
   Play,
   Trash2,
-  UserPlus,
+  User,
+  X,
 } from 'lucide-react';
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export type QuickActionType =
-  | 'complete'
-  | 'schedule'
-  | 'delegate'
-  | 'archive'
-  | 'delete'
-  | 'start'
-  | 'pause'
-  | 'flag'
-  | 'comment'
-  | 'open';
+// Priority configuration
+const PRIORITIES = [
+  { value: 'low', label: { en: 'Low', pl: 'Niski' }, color: 'bg-slate-400', textColor: 'text-slate-500' },
+  { value: 'medium', label: { en: 'Medium', pl: 'Średni' }, color: 'bg-blue-400', textColor: 'text-blue-500' },
+  { value: 'high', label: { en: 'High', pl: 'Wysoki' }, color: 'bg-orange-400', textColor: 'text-orange-500' },
+  { value: 'critical', label: { en: 'Critical', pl: 'Krytyczny' }, color: 'bg-red-500', textColor: 'text-red-500' },
+];
 
-interface QuickAction {
-  type: QuickActionType;
-  label: string;
-  icon: React.ReactNode;
-  className: string;
-  confirmRequired?: boolean;
-}
+// Status configuration
+const STATUSES = [
+  { value: 'todo', label: { en: 'To Do', pl: 'Do zrobienia' }, color: 'bg-slate-400' },
+  { value: 'in_progress', label: { en: 'In Progress', pl: 'W trakcie' }, color: 'bg-blue-500' },
+  { value: 'review', label: { en: 'Review', pl: 'Przegląd' }, color: 'bg-purple-500' },
+  { value: 'done', label: { en: 'Done', pl: 'Ukończone' }, color: 'bg-emerald-500' },
+  { value: 'blocked', label: { en: 'Blocked', pl: 'Zablokowane' }, color: 'bg-red-500' },
+];
 
 interface QuickActionsProps {
-  visible?: boolean;
-  actions?: QuickActionType[];
-  onAction: (action: QuickActionType) => void;
-  size?: 'sm' | 'md';
-  direction?: 'horizontal' | 'vertical';
+  // Current values
+  status?: string;
+  priority?: string;
+  assigneeId?: string;
+  dueDate?: string;
+  
+  // Available options
+  users?: { id: string; name: string; avatar?: string }[];
+  
+  // Callbacks
+  onStatusChange?: (status: string) => void;
+  onPriorityChange?: (priority: string) => void;
+  onAssigneeChange?: (assigneeId: string | null) => void;
+  onDueDateChange?: (date: string | null) => void;
+  onEdit?: () => void;
+  onDuplicate?: () => void;
+  onDelete?: () => void;
+  onStartTimer?: () => void;
+  onMarkComplete?: () => void;
+  
+  // Display options
+  compact?: boolean;
+  showTimer?: boolean;
+  showComplete?: boolean;
   className?: string;
 }
 
-/**
- * Action configurations
- */
-const actionConfig: Record<QuickActionType, Omit<QuickAction, 'type'>> = {
-  complete: {
-    label: 'Complete',
-    icon: <CheckCircle />,
-    className:
-      'hover:bg-green-100 hover:text-green-600 dark:hover:bg-green-900/30 dark:hover:text-green-400',
-  },
-  schedule: {
-    label: 'Schedule',
-    icon: <Calendar />,
-    className:
-      'hover:bg-blue-100 hover:text-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400',
-  },
-  delegate: {
-    label: 'Delegate',
-    icon: <UserPlus />,
-    className:
-      'hover:bg-purple-100 hover:text-purple-600 dark:hover:bg-purple-900/30 dark:hover:text-purple-400',
-  },
-  archive: {
-    label: 'Archive',
-    icon: <Archive />,
-    className:
-      'hover:bg-slate-200 dark:hover:bg-navy-700 hover:text-slate-600 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-300',
-  },
-  delete: {
-    label: 'Delete',
-    icon: <Trash2 />,
-    className:
-      'hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400',
-    confirmRequired: true,
-  },
-  start: {
-    label: 'Start',
-    icon: <Play />,
-    className:
-      'hover:bg-green-100 hover:text-green-600 dark:hover:bg-green-900/30 dark:hover:text-green-400',
-  },
-  pause: {
-    label: 'Pause',
-    icon: <Pause />,
-    className:
-      'hover:bg-amber-100 hover:text-amber-600 dark:hover:bg-amber-900/30 dark:hover:text-amber-400',
-  },
-  flag: {
-    label: 'Flag',
-    icon: <Flag />,
-    className:
-      'hover:bg-orange-100 hover:text-orange-600 dark:hover:bg-orange-900/30 dark:hover:text-orange-400',
-  },
-  comment: {
-    label: 'Comment',
-    icon: <MessageSquare />,
-    className:
-      'hover:bg-blue-100 hover:text-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400',
-  },
-  open: {
-    label: 'Open',
-    icon: <ExternalLink />,
-    className:
-      'hover:bg-slate-200 dark:hover:bg-navy-700 hover:text-slate-600 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-300',
-  },
-};
-
-/**
- * QuickActions Component
- */
 export const QuickActions: React.FC<QuickActionsProps> = ({
-  visible = true,
-  actions = ['complete', 'schedule', 'delegate', 'archive'],
-  onAction,
-  size = 'sm',
-  direction = 'horizontal',
+  status,
+  priority,
+  assigneeId,
+  dueDate,
+  users = [],
+  onStatusChange,
+  onPriorityChange,
+  onAssigneeChange,
+  onDueDateChange,
+  onEdit,
+  onDuplicate,
+  onDelete,
+  onStartTimer,
+  onMarkComplete,
+  compact = false,
+  showTimer = false,
+  showComplete = true,
   className = '',
 }) => {
-  const { t } = useTranslation();
+  const { i18n } = useTranslation();
+  const isPolish = i18n.language === 'pl';
+  
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const sizeClasses = {
-    sm: 'p-1.5',
-    md: 'p-2',
-  };
-
-  const iconSizes = {
-    sm: 14,
-    md: 16,
-  };
-
-  const handleAction = (action: QuickActionType) => {
-    const config = actionConfig[action];
-    if (config.confirmRequired) {
-      if (confirm(t('myWork.actions.confirmDelete', 'Are you sure?'))) {
-        onAction(action);
-      }
-    } else {
-      onAction(action);
+  const handleClickOutside = (e: MouseEvent) => {
+    if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      setOpenDropdown(null);
+      setShowMoreMenu(false);
     }
   };
 
+  React.useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const currentPriority = PRIORITIES.find((p) => p.value === priority) || PRIORITIES[1];
+  const currentStatus = STATUSES.find((s) => s.value === status) || STATUSES[0];
+  const currentAssignee = users.find((u) => u.id === assigneeId);
+  const isComplete = status === 'done';
+
+  const DropdownButton: React.FC<{
+    id: string;
+    icon: React.ReactNode;
+    label?: string;
+    color?: string;
+    children: React.ReactNode;
+  }> = ({ id, icon, label, color, children }) => (
+    <div className="relative">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpenDropdown(openDropdown === id ? null : id);
+        }}
+        className={`
+          flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium
+          transition-all hover:bg-slate-100 dark:hover:bg-navy-700
+          ${openDropdown === id ? 'bg-slate-100 dark:bg-navy-700' : ''}
+          ${color || 'text-slate-600 dark:text-slate-400'}
+        `}
+        title={label}
+      >
+        {icon}
+        {!compact && label && <span className="hidden sm:inline">{label}</span>}
+        <ChevronDown size={12} className="opacity-50" />
+      </button>
+      
+      <AnimatePresence>
+        {openDropdown === id && (
+          <motion.div
+            initial={{ opacity: 0, y: -4, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="absolute z-50 top-full left-0 mt-1 min-w-[160px] bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-navy-600 py-1 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+
   return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 0.15 }}
+    <div
+      ref={containerRef}
+      className={`flex items-center gap-1 ${className}`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Complete Button */}
+      {showComplete && onMarkComplete && (
+        <button
+          onClick={onMarkComplete}
           className={`
-                        flex gap-1
-                        ${direction === 'vertical' ? 'flex-col' : 'flex-row'}
-                        ${className}
-                    `}
+            p-1.5 rounded-lg transition-all
+            ${isComplete
+              ? 'bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30'
+              : 'text-slate-400 hover:text-emerald-500 hover:bg-emerald-500/10'
+            }
+          `}
+          title={isPolish ? (isComplete ? 'Oznacz jako nieukończone' : 'Oznacz jako ukończone') : (isComplete ? 'Mark incomplete' : 'Mark complete')}
         >
-          {actions.map((actionType) => {
-            const config = actionConfig[actionType];
-            return (
-              <button
-                key={actionType}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAction(actionType);
-                }}
-                className={`
-                                    rounded-lg text-slate-400 dark:text-slate-500 transition-all duration-200
-                                    ${sizeClasses[size]}
-                                    ${config.className}
-                                `}
-                title={t(`myWork.actions.${actionType}`, config.label)}
-              >
-                {React.cloneElement(config.icon as any, {
-                  size: iconSizes[size],
-                })}
-              </button>
-            );
-          })}
-        </motion.div>
+          {isComplete ? <CheckCircle2 size={16} /> : <Check size={16} />}
+        </button>
       )}
-    </AnimatePresence>
-  );
-};
 
-/**
- * Single quick action button
- */
-export const QuickActionButton: React.FC<{
-  action: QuickActionType;
-  onClick: () => void;
-  size?: 'sm' | 'md' | 'lg';
-  showLabel?: boolean;
-  className?: string;
-}> = ({ action, onClick, size = 'md', showLabel = false, className = '' }) => {
-  const { t } = useTranslation();
-  const config = actionConfig[action];
+      {/* Status Dropdown */}
+      {onStatusChange && (
+        <DropdownButton
+          id="status"
+          icon={<div className={`w-2.5 h-2.5 rounded-full ${currentStatus.color}`} />}
+          label={isPolish ? currentStatus.label.pl : currentStatus.label.en}
+        >
+          {STATUSES.map((s) => (
+            <button
+              key={s.value}
+              onClick={() => {
+                onStatusChange(s.value);
+                setOpenDropdown(null);
+              }}
+              className={`
+                w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700
+                ${status === s.value ? 'bg-primary-50 dark:bg-primary-500/10' : ''}
+              `}
+            >
+              <div className={`w-2.5 h-2.5 rounded-full ${s.color}`} />
+              <span className="text-slate-700 dark:text-slate-300">
+                {isPolish ? s.label.pl : s.label.en}
+              </span>
+            </button>
+          ))}
+        </DropdownButton>
+      )}
 
-  const sizeClasses = {
-    sm: 'p-1.5 text-xs gap-1',
-    md: 'p-2 text-sm gap-1.5',
-    lg: 'p-2.5 text-sm gap-2',
-  };
+      {/* Priority Dropdown */}
+      {onPriorityChange && (
+        <DropdownButton
+          id="priority"
+          icon={<Flag size={14} />}
+          label={isPolish ? currentPriority.label.pl : currentPriority.label.en}
+          color={currentPriority.textColor}
+        >
+          {PRIORITIES.map((p) => (
+            <button
+              key={p.value}
+              onClick={() => {
+                onPriorityChange(p.value);
+                setOpenDropdown(null);
+              }}
+              className={`
+                w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700
+                ${priority === p.value ? 'bg-primary-50 dark:bg-primary-500/10' : ''}
+              `}
+            >
+              <Flag size={14} className={p.textColor} />
+              <span className="text-slate-700 dark:text-slate-300">
+                {isPolish ? p.label.pl : p.label.en}
+              </span>
+            </button>
+          ))}
+        </DropdownButton>
+      )}
 
-  const iconSizes = {
-    sm: 12,
-    md: 14,
-    lg: 16,
-  };
-
-  return (
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
-      className={`
-                inline-flex items-center rounded-lg text-slate-500 dark:text-slate-400 transition-all duration-200
-                ${sizeClasses[size]}
-                ${config.className}
-                ${className}
+      {/* Assignee Dropdown */}
+      {onAssigneeChange && users.length > 0 && (
+        <DropdownButton
+          id="assignee"
+          icon={
+            currentAssignee ? (
+              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
+                <span className="text-[10px] font-medium text-white">
+                  {currentAssignee.name.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            ) : (
+              <User size={14} />
+            )
+          }
+          label={currentAssignee?.name || (isPolish ? 'Nieprzypisane' : 'Unassigned')}
+        >
+          <button
+            onClick={() => {
+              onAssigneeChange(null);
+              setOpenDropdown(null);
+            }}
+            className={`
+              w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700
+              ${!assigneeId ? 'bg-primary-50 dark:bg-primary-500/10' : ''}
             `}
-      title={t(`myWork.actions.${action}`, config.label)}
-    >
-      {React.cloneElement(config.icon as any, {
-        size: iconSizes[size],
-      })}
-      {showLabel && <span>{t(`myWork.actions.${action}`, config.label)}</span>}
-    </button>
-  );
-};
+          >
+            <User size={14} className="text-slate-400" />
+            <span className="text-slate-700 dark:text-slate-300">
+              {isPolish ? 'Nieprzypisane' : 'Unassigned'}
+            </span>
+          </button>
+          <div className="border-t border-slate-200 dark:border-navy-600 my-1" />
+          {users.map((user) => (
+            <button
+              key={user.id}
+              onClick={() => {
+                onAssigneeChange(user.id);
+                setOpenDropdown(null);
+              }}
+              className={`
+                w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700
+                ${assigneeId === user.id ? 'bg-primary-50 dark:bg-primary-500/10' : ''}
+              `}
+            >
+              {user.avatar ? (
+                <img src={user.avatar} alt={user.name} className="w-5 h-5 rounded-full" />
+              ) : (
+                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
+                  <span className="text-[10px] font-medium text-white">
+                    {user.name.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+              <span className="text-slate-700 dark:text-slate-300">{user.name}</span>
+            </button>
+          ))}
+        </DropdownButton>
+      )}
 
-/**
- * More actions dropdown trigger
- */
-export const MoreActionsButton: React.FC<{
-  onClick: (e: React.MouseEvent) => void;
-  size?: 'sm' | 'md';
-  className?: string;
-}> = ({ onClick, size = 'sm', className = '' }) => {
-  const sizeClasses = {
-    sm: 'p-1.5',
-    md: 'p-2',
-  };
-
-  return (
-    <button
-      onClick={onClick}
-      className={`
-                rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/30 hover:text-slate-600 dark:text-slate-400
-                dark:hover:bg-white/5 dark:hover:text-slate-300
-                transition-colors
-                ${sizeClasses[size]}
-                ${className}
+      {/* Due Date */}
+      {onDueDateChange && (
+        <div className="relative">
+          <input
+            type="date"
+            value={dueDate || ''}
+            onChange={(e) => onDueDateChange(e.target.value || null)}
+            className="
+              w-8 h-8 opacity-0 absolute cursor-pointer
+            "
+          />
+          <button
+            className={`
+              flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium
+              transition-all hover:bg-slate-100 dark:hover:bg-navy-700
+              ${dueDate ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500'}
             `}
-      title="More actions"
-    >
-      <MoreHorizontal size={size === 'sm' ? 14 : 16} />
-    </button>
+            title={isPolish ? 'Ustaw termin' : 'Set due date'}
+          >
+            <Calendar size={14} />
+            {!compact && dueDate && (
+              <span className="hidden sm:inline">
+                {new Date(dueDate).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </span>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Timer Button */}
+      {showTimer && onStartTimer && (
+        <button
+          onClick={onStartTimer}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-primary-500 hover:bg-primary-500/10 transition-all"
+          title={isPolish ? 'Uruchom timer' : 'Start timer'}
+        >
+          <Play size={14} />
+        </button>
+      )}
+
+      {/* More Actions Menu */}
+      <div className="relative">
+        <button
+          onClick={() => setShowMoreMenu(!showMoreMenu)}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-all"
+          title={isPolish ? 'Więcej akcji' : 'More actions'}
+        >
+          <MoreHorizontal size={16} />
+        </button>
+        
+        <AnimatePresence>
+          {showMoreMenu && (
+            <motion.div
+              initial={{ opacity: 0, y: -4, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -4, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="absolute z-50 top-full right-0 mt-1 min-w-[140px] bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-navy-600 py-1 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {onEdit && (
+                <button
+                  onClick={() => {
+                    onEdit();
+                    setShowMoreMenu(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+                >
+                  <Pencil size={14} />
+                  <span>{isPolish ? 'Edytuj' : 'Edit'}</span>
+                </button>
+              )}
+              {onDuplicate && (
+                <button
+                  onClick={() => {
+                    onDuplicate();
+                    setShowMoreMenu(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+                >
+                  <Copy size={14} />
+                  <span>{isPolish ? 'Duplikuj' : 'Duplicate'}</span>
+                </button>
+              )}
+              {onDelete && (
+                <>
+                  <div className="border-t border-slate-200 dark:border-navy-600 my-1" />
+                  <button
+                    onClick={() => {
+                      onDelete();
+                      setShowMoreMenu(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+                  >
+                    <Trash2 size={14} />
+                    <span>{isPolish ? 'Usuń' : 'Delete'}</span>
+                  </button>
+                </>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
   );
 };
 

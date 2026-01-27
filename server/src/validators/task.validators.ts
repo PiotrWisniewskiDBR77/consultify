@@ -30,6 +30,7 @@ export const TaskTypeEnum = z.enum([
   'build',
   'test',
   'deploy',
+  'interview',
   'other',
 ]);
 
@@ -64,8 +65,7 @@ export const CreateTaskSchema = z.object({
   raidItemId: z.string().uuid().optional().nullable(),
 });
 
-// UpdateTaskSchema: All fields optional, organizationId explicitly omitted
-export const UpdateTaskSchema = CreateTaskSchema.omit({ organizationId: true }).partial();
+export const UpdateTaskSchema = CreateTaskSchema.partial().omit({ organizationId: true });
 
 export const AssignTaskSchema = z.object({
   assigneeId: z.string().uuid(),
@@ -102,8 +102,10 @@ export const GetTasksQuerySchema = z.object({
   projectId: z.string().uuid().optional(),
   status: TaskStatusEnum.optional(),
   assigneeId: z.string().uuid().optional(),
+  reporterId: z.string().uuid().optional(),
   priority: PriorityEnum.optional(),
   initiativeId: z.string().uuid().optional(),
+  taskType: TaskTypeEnum.optional(),
   search: z.string().optional(),
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).max(100).optional().default(100),

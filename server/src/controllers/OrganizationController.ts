@@ -46,7 +46,7 @@ export class OrganizationController {
   static createOrganization = asyncHandler(
     async (req: AuthenticatedRequest<CreateOrganizationRequest>, res: Response): Promise<void> => {
       const userId = req.user?.id;
-      const { name } = req.body;
+      const { name, industry, domain, vatNumber, attributionData } = req.body;
       if (!userId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
@@ -58,7 +58,14 @@ export class OrganizationController {
       }
 
       const { createOrganization } = await import('../services/organizationService.js');
-      const org = await createOrganization({ userId, name });
+      const org = await createOrganization({
+        userId,
+        name,
+        industry: industry || null,
+        domain: domain || null,
+        vatNumber: vatNumber || null,
+        attributionData: (attributionData as any) || null,
+      });
 
       res.status(201).json(org);
     }
@@ -97,10 +104,33 @@ export class OrganizationController {
   static updateOrganization = asyncHandler(
     async (req: AuthenticatedRequest<UpdateOrganizationRequest>, res: Response): Promise<void> => {
       const { orgId } = req.params;
-      const _updates = req.body;
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
 
-      // TODO: Implement full update logic
-      res.json({ id: orgId, message: 'Organization updated' });
+      const { getMembers, updateOrganization } = await import('../services/organizationService.js');
+      const members = await getMembers(orgId);
+      const member = members.find((m) => m.user_id === userId);
+      const isAdmin = member && ['OWNER', 'ADMIN'].includes(member.role);
+      const isSuperAdmin = req.user?.role === 'SUPERADMIN';
+      if (!isAdmin && !isSuperAdmin) {
+        res.status(403).json({ error: 'Only organization admins can update organization' });
+        return;
+      }
+
+      const { name, industry, domain, vatNumber, attributionData, onboardingStatus } = req.body;
+      const result = await updateOrganization(orgId, {
+        name,
+        industry,
+        domain,
+        vatNumber,
+        attributionData: attributionData as any,
+        onboardingStatus,
+      });
+
+      res.json({ ...result, message: 'Organization updated' });
     }
   );
 

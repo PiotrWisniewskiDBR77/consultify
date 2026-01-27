@@ -75,24 +75,8 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
         setInitiatives(normalized);
       } catch (error) {
         console.error('Failed to load initiatives:', error);
-        // Mock data for development
-        setInitiatives([
-          {
-            id: '1',
-            name: 'ERP System Implementation',
-            status: 'active',
-            priority: 'high',
-            projectName: 'Transformacja cyfrowa',
-          },
-          {
-            id: '2',
-            name: 'HR Process Automation',
-            status: 'planned',
-            priority: 'medium',
-            projectName: 'HR 2025',
-          },
-          { id: '3', name: 'Modernizacja infrastruktury IT', status: 'active', priority: 'high' },
-        ]);
+        setInitiatives([]);
+        toast.error('Failed to load initiatives');
       } finally {
         setIsLoading(false);
       }
@@ -404,9 +388,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
         <div className="w-16 h-16 mx-auto rounded-xl bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-700 flex items-center justify-center mb-4">
           <Link2 size={32} className="text-slate-400 dark:text-slate-500" />
         </div>
-        <h4 className="font-medium text-navy-900 dark:text-white mb-2">
-          No linked initiative
-        </h4>
+        <h4 className="font-medium text-navy-900 dark:text-white mb-2">No linked initiative</h4>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 max-w-sm mx-auto">
           Link this analysis financial to initiative, to track benefits realization and integrate
           dane.

@@ -89,9 +89,7 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
   // Fetch conversations and pinned prompts when menu opens
   useEffect(() => {
     if (isOpen) {
-      fetchConversations({ projectId }).catch((err) => {
-        console.error('[ChatMenu] Failed to fetch conversations:', err);
-      });
+      fetchConversations({ projectId });
       fetchPinnedPrompts();
     }
   }, [isOpen, projectId, fetchConversations]);

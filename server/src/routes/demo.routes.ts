@@ -8,19 +8,39 @@
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import {
-  DEMO_ORG_ID,
-  DEMO_ORG_NAME,
-  checkUserDemoPreference,
-  setUserDemoPreference,
-  getDemoOrganization,
-  getDemoStats,
-} from '../middleware/demoGuard.middleware.js';
+import * as demoGuard from '../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
+
+const demoGuardAny = demoGuard as any;
+const demoModule =
+  demoGuardAny?.default && typeof demoGuardAny.default === 'object'
+    ? demoGuardAny.default
+    : demoGuardAny;
+const DEMO_ORG_ID = demoModule.DEMO_ORG_ID || 'demo-org';
+const DEMO_ORG_NAME = demoModule.DEMO_ORG_NAME || 'Demo Organization';
+const checkUserDemoPreference = demoModule.checkUserDemoPreference || (async () => false);
+const setUserDemoPreference = demoModule.setUserDemoPreference || (async () => {});
+const getDemoOrganization =
+  demoModule.getDemoOrganization ||
+  (async () => ({
+    id: DEMO_ORG_ID,
+    name: DEMO_ORG_NAME,
+    slug: 'demo-org',
+    description: 'Demo organization',
+    settings: {},
+  }));
+const getDemoStats =
+  demoModule.getDemoStats ||
+  (async () => ({
+    initiatives: 0,
+    tasks: 0,
+    decisions: 0,
+    users: 0,
+  }));
 
 // Apply rate limiting
 router.use(authRateLimiter);
@@ -174,10 +194,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const [demoOrganization, stats] = await Promise.all([
-        getDemoOrganization(),
-        getDemoStats(),
-      ]);
+      const [demoOrganization, stats] = await Promise.all([getDemoOrganization(), getDemoStats()]);
 
       return res.json({
         success: true,

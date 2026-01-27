@@ -17,8 +17,9 @@ const SECRET_PATTERNS = [
   /apikey\s*[=:]\s*['"]?[a-zA-Z0-9]{20,}['"]?/gi,
 
   // Passwords
-  /password\s*[=:]\s*['"]?[^'"]{8,}['"]?/gi,
-  /pwd\s*[=:]\s*['"]?[^'"]{8,}['"]?/gi,
+  // Require quotes to avoid false positives from TypeScript annotations like `password: string): ...`
+  /password\s*[=:]\s*['"][^'"]{8,}['"]/gi,
+  /pwd\s*[=:]\s*['"][^'"]{8,}['"]/gi,
 
   // Tokens
   /token\s*[=:]\s*['"]?[a-zA-Z0-9]{20,}['"]?/gi,

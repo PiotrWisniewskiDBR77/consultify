@@ -15,6 +15,7 @@
 import { ArrowLeft, Menu, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 // Profile components
 import { MFASetup } from '../components/Profile/MFASetup';
@@ -73,6 +74,7 @@ import { cn } from '../lib/utils';
 // Store and types
 import { useAppStore } from '../store/useAppStore';
 import { AppView, User } from '../types';
+import { ROUTES } from '../routes/routeConfig';
 
 interface SettingsViewProps {
   currentUser: User;
@@ -179,24 +181,31 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 }) => {
   const { setCurrentView } = useAppStore();
   const { t } = useTranslation();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Get section from URL path
-  const location = typeof window !== 'undefined' ? window.location.pathname : '';
-  const pathSection = location.replace('/settings/', '').replace(/^\/+|\/+$/g, '') || 'profile';
-  const activeSection = (Object.keys(sectionMeta).includes(pathSection) ? pathSection : 'profile') as SettingsSection;
+  const activeSection = useMemo(() => {
+    const pathSection =
+      location.pathname.replace('/settings/', '').replace(/^\/+|\/+$/g, '') || 'profile';
+    return (Object.keys(sectionMeta).includes(pathSection) ? pathSection : 'profile') as SettingsSection;
+  }, [location.pathname]);
 
   // Handle section change - update URL
-  const handleSectionChange = useCallback((section: SettingsSection) => {
-    window.history.pushState({}, '', `/settings/${section}`);
-    // Force re-render by triggering state change
-    setSidebarOpen(false);
-  }, []);
+  const handleSectionChange = useCallback(
+    (section: SettingsSection) => {
+      navigate(`${ROUTES.SETTINGS.ROOT}/${section}`);
+      setSidebarOpen(false);
+    },
+    [navigate]
+  );
 
   // Handle back to dashboard
   const handleBackToDashboard = useCallback(() => {
     setCurrentView(AppView.DASHBOARD);
-  }, [setCurrentView]);
+    navigate(ROUTES.DASHBOARD);
+  }, [navigate, setCurrentView]);
 
   // Get current section metadata
   const currentMeta = useMemo(() => {

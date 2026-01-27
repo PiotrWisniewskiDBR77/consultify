@@ -15,6 +15,9 @@ import logger from '../../utils/Logger.js';
 const router = Router();
 
 interface AuthRequest extends Request {
+  // Some environments in this repo treat params as `string | string[]`.
+  // We normalize at runtime where needed; for routing this avoids noisy type errors.
+  params: any;
   user?: {
     id: string;
     organizationId: string;

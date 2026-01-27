@@ -11,6 +11,7 @@ import { Router } from 'express';
 import { InterviewController } from '../controllers/InterviewController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
+import { requirePermission } from '../middleware/permission.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 
 const router = Router();
@@ -27,6 +28,9 @@ router.use(demoContextMiddleware);
 /** GET /interview/sessions - Get all sessions */
 router.get('/sessions', InterviewController.getSessions);
 
+/** GET /interview/sessions/completed - Get completed sessions (for Insights tab) */
+router.get('/sessions/completed', InterviewController.getCompletedSessions);
+
 /** GET /interview/sessions/:id - Get single session */
 router.get('/sessions/:id', InterviewController.getSession);
 
@@ -35,6 +39,179 @@ router.post('/sessions', InterviewController.createSession);
 
 /** PATCH /interview/sessions/:id - Update session */
 router.patch('/sessions/:id', InterviewController.updateSession);
+
+// ==========================================
+// ASSIGNMENTS ROUTES (Workflow)
+// ==========================================
+
+/** GET /interview/assignments/my - Get my assigned interviews */
+router.get('/assignments/my', InterviewController.getMyAssignments);
+
+/** GET /interview/assignments/managed - Get assignments created by current user (manager view) */
+router.get(
+  '/assignments/managed',
+  requirePermission('INTERVIEW_ASSIGN_VIEW'),
+  InterviewController.getManagedAssignments
+);
+
+/** GET /interview/assignments/overdue - Get overdue assignments */
+router.get(
+  '/assignments/overdue',
+  requirePermission('INTERVIEW_ASSIGN_VIEW'),
+  InterviewController.getOverdueAssignments
+);
+
+/** GET /interview/assignments/counts - Get assignment counts for current user */
+router.get('/assignments/counts', InterviewController.getAssignmentCounts);
+
+/** POST /interview/assignments/:id/start - Start assigned interview (create session) */
+router.post('/assignments/:id/start', InterviewController.startAssignment);
+
+/** POST /interview/assignments/:id/submit - Submit assigned interview */
+router.post('/assignments/:id/submit', InterviewController.submitAssignment);
+
+/** POST /interview/assignments/:id/remind - Send reminder to assignees */
+router.post(
+  '/assignments/:id/remind',
+  requirePermission('INTERVIEW_REMIND'),
+  InterviewController.sendAssignmentReminder
+);
+
+/** POST /interview/assignments - Admin create assignment */
+router.post(
+  '/assignments',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  InterviewController.createAssignment
+);
+
+/** GET /interview/assignments - Admin list assignments */
+router.get(
+  '/assignments',
+  requirePermission('INTERVIEW_ASSIGN_VIEW'),
+  InterviewController.listAssignments
+);
+
+/** GET /interview/assignments/:id - Get single assignment with details */
+router.get(
+  '/assignments/:id',
+  requirePermission('INTERVIEW_ASSIGN_VIEW'),
+  InterviewController.getAssignment
+);
+
+/** PATCH /interview/assignments/:id - Update assignment (deadline, priority, etc) */
+router.patch(
+  '/assignments/:id',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  InterviewController.updateAssignment
+);
+
+/** DELETE /interview/assignments/:id - Delete assignment (only if not started) */
+router.delete(
+  '/assignments/:id',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  InterviewController.deleteAssignment
+);
+
+/** POST /interview/assignments/:id/send-back - Admin send back incomplete submission */
+router.post(
+  '/assignments/:id/send-back',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  InterviewController.sendBackAssignment
+);
+
+// ==========================================
+// TEAM MEMBER ROUTES (for team assignments)
+// ==========================================
+
+/** GET /interview/assignments/:id/members - Get team members for assignment */
+router.get(
+  '/assignments/:id/members',
+  requirePermission('INTERVIEW_ASSIGN_VIEW'),
+  InterviewController.getAssignmentMembers
+);
+
+/** POST /interview/assignments/:id/members - Add team member to assignment */
+router.post(
+  '/assignments/:id/members',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  InterviewController.addAssignmentMember
+);
+
+/** DELETE /interview/assignments/:id/members/:userId - Remove team member from assignment */
+router.delete(
+  '/assignments/:id/members/:userId',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  InterviewController.removeAssignmentMember
+);
+
+// ==========================================
+// TEMPLATES ROUTES (Library)
+// ==========================================
+
+/** GET /interview/templates - List templates (library) */
+router.get('/templates', requirePermission('INTERVIEW_TEMPLATE_VIEW'), InterviewController.getTemplates);
+
+/** POST /interview/templates - Create new template */
+router.post(
+  '/templates',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  InterviewController.createTemplate
+);
+
+/** GET /interview/templates/:id - Get template metadata */
+router.get('/templates/:id', requirePermission('INTERVIEW_TEMPLATE_VIEW'), InterviewController.getTemplate);
+
+/** GET /interview/templates/:id/questions - Get template questions (read-only) */
+router.get(
+  '/templates/:id/questions',
+  requirePermission('INTERVIEW_TEMPLATE_VIEW'),
+  InterviewController.getTemplateQuestions
+);
+
+/** POST /interview/templates/:id/use - Create new session from template */
+router.post('/templates/:id/use', requirePermission('INTERVIEW_TEMPLATE_USE'), InterviewController.useTemplate);
+
+/** POST /interview/templates/:id/clone - Clone template */
+router.post(
+  '/templates/:id/clone',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  InterviewController.cloneTemplate
+);
+
+/** PATCH /interview/templates/:id - Update template (metadata, status) */
+router.patch(
+  '/templates/:id',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  InterviewController.updateTemplate
+);
+
+/** DELETE /interview/templates/:id - Delete template */
+router.delete(
+  '/templates/:id',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  InterviewController.deleteTemplate
+);
+
+/** POST /interview/templates/:id/questions - Add template question */
+router.post(
+  '/templates/:id/questions',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  InterviewController.addTemplateQuestion
+);
+
+/** PATCH /interview/templates/:id/questions/:questionId - Update template question */
+router.patch(
+  '/templates/:id/questions/:questionId',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  InterviewController.updateTemplateQuestion
+);
+
+/** DELETE /interview/templates/:id/questions/:questionId - Delete template question */
+router.delete(
+  '/templates/:id/questions/:questionId',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  InterviewController.deleteTemplateQuestion
+);
 
 // ==========================================
 // QUESTION ROUTES (Task-list style)
@@ -48,6 +225,16 @@ router.post('/sessions/:sessionId/questions', InterviewController.addQuestion);
 
 /** PATCH /interview/questions/:questionId - Update question (answer, status, confidence) */
 router.patch('/questions/:questionId', InterviewController.updateQuestion);
+
+// ==========================================
+// AI ASSIST ROUTES (human-in-the-loop)
+// ==========================================
+
+/** POST /interview/questions/:questionId/ai-suggest - Suggest answer draft for a question */
+router.post('/questions/:questionId/ai-suggest', InterviewController.aiSuggestQuestion);
+
+/** POST /interview/sessions/:sessionId/ai-parse - Map chat transcript to answers */
+router.post('/sessions/:sessionId/ai-parse', InterviewController.aiParseSessionAnswers);
 
 // ==========================================
 // NOTES ROUTES
@@ -97,5 +284,30 @@ router.post('/sessions/:sessionId/summary', InterviewController.generateSummary)
 
 /** POST /interview/sessions/:sessionId/export - Export context to Tools/Assessment */
 router.post('/sessions/:sessionId/export', InterviewController.exportContext);
+
+// ==========================================
+// INSIGHTS ROUTES (AI-generated summaries)
+// ==========================================
+
+/** GET /interview/insights - List insights */
+router.get('/insights', InterviewController.listInsights);
+
+/** GET /interview/insights/:id - Get single insight */
+router.get('/insights/:id', InterviewController.getInsight);
+
+/** POST /interview/insights - Create new insight (starts AI generation) */
+router.post('/insights', InterviewController.createInsight);
+
+/** POST /interview/insights/:id/regenerate - Regenerate an insight */
+router.post('/insights/:id/regenerate', InterviewController.regenerateInsight);
+
+/** PATCH /interview/insights/:id - Update insight (status, etc.) */
+router.patch('/insights/:id', InterviewController.updateInsight);
+
+/** POST /interview/insights/:id/export - Export insight to Tools or Assessment */
+router.post('/insights/:id/export', InterviewController.exportInsight);
+
+/** DELETE /interview/insights/:id - Delete insight */
+router.delete('/insights/:id', InterviewController.deleteInsight);
 
 export default router;

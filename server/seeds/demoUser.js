@@ -1,105 +1,18 @@
 /**
- * Demo User Seed Script
- * Creates the demo@legolex.com user and organization if they don't exist
+ * Demo User Seed Script (compat wrapper)
+ * Prefer generic demo seed: piotr.wisniewski@demo.com
  *
- * Run: node server/seeds/demoUser.js
+ * Run:
+ *   node server/seeds/demoUser.js
  */
 
-import { getDatabase } from '../src/database/Database.js';
-const db = getDatabase();
-import bcrypt from 'bcryptjs';
-import { v4 as uuidv4 } from 'uuid';
+import demoSeed from './demoUser_demo.js';
 
-const DEMO_ORG_ID = 'org-legolex-demo';
-const DEMO_USER_ID = 'user-demo-admin';
-const DEMO_EMAIL = 'demo@legolex.com';
-const DEMO_PASSWORD = 'Demo123!';
-
-async function seedDemoUser() {
-  console.log('🚀 Seeding Demo User...');
-
-  return new Promise((resolve, reject) => {
-    // Check if demo user exists
-    db.get(`SELECT id FROM users WHERE email = ?`, [DEMO_EMAIL], (err, user) => {
-      if (err) {
-        console.error('❌ Error checking for demo user:', err);
-        return reject(err);
-      }
-
-      if (user) {
-        console.log('✅ Demo user already exists:', DEMO_EMAIL);
-        return resolve();
-      }
-
-      // Check if demo organization exists
-      db.get(`SELECT id FROM organizations WHERE id = ?`, [DEMO_ORG_ID], (err, org) => {
-        if (err) {
-          console.error('❌ Error checking for demo org:', err);
-          return reject(err);
-        }
-
-        const createUser = () => {
-          const hashedPassword = bcrypt.hashSync(DEMO_PASSWORD, 8);
-          db.run(
-            `INSERT INTO users(id, organization_id, email, password, first_name, last_name, role, status) 
-                         VALUES(?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              DEMO_USER_ID,
-              DEMO_ORG_ID,
-              DEMO_EMAIL,
-              hashedPassword,
-              'Demo',
-              'User',
-              'ADMIN',
-              'active',
-            ],
-            function (err) {
-              if (err) {
-                console.error('❌ Error creating demo user:', err);
-                return reject(err);
-              }
-              console.log('✅ Created demo user:', DEMO_EMAIL);
-
-              // Create a sample project
-              const projectId = 'project-demo-001';
-              db.run(
-                `INSERT OR IGNORE INTO projects(id, organization_id, name, status, owner_id) VALUES(?, ?, ?, ?, ?)`,
-                [projectId, DEMO_ORG_ID, 'Strategic Transformation Demo', 'active', DEMO_USER_ID],
-                function (err) {
-                  if (err) {
-                    console.warn('⚠️ Could not create demo project:', err);
-                  } else {
-                    console.log('✅ Created demo project');
-                  }
-                  resolve();
-                }
-              );
-            }
-          );
-        };
-
-        if (!org) {
-          // Create organization first
-          db.run(
-            `INSERT INTO organizations(id, name, plan, status) VALUES(?, ?, ?, ?)`,
-            [DEMO_ORG_ID, 'Legolex Demo Corp', 'enterprise', 'active'],
-            function (err) {
-              if (err) {
-                console.error('❌ Error creating demo org:', err);
-                return reject(err);
-              }
-              console.log('✅ Created demo organization');
-              createUser();
-            }
-          );
-        } else {
-          console.log('✅ Demo organization already exists');
-          createUser();
-        }
-      });
-    });
-  });
-}
+export const seedDemoUser = demoSeed.seedDemoUser || demoSeed.seedDemoUserDBR77;
+export const DEMO_EMAIL = demoSeed.DEMO_EMAIL || 'piotr.wisniewski@demo.com';
+export const DEMO_PASSWORD = demoSeed.DEMO_PASSWORD || '123456';
+export const DEMO_ORG_ID = demoSeed.DEMO_ORG_ID || 'org-demo-public';
+export const DEMO_USER_ID = demoSeed.DEMO_USER_ID || 'user-demo-public-admin';
 
 // Run if called directly (ES module compatible)
 const isMainModule = import.meta.url === `file://${process.argv[1]}`;
@@ -114,7 +27,5 @@ if (isMainModule) {
       process.exit(1);
     });
 }
-
-export { seedDemoUser, DEMO_EMAIL, DEMO_PASSWORD, DEMO_ORG_ID, DEMO_USER_ID };
 
 export default { seedDemoUser, DEMO_EMAIL, DEMO_PASSWORD, DEMO_ORG_ID, DEMO_USER_ID };

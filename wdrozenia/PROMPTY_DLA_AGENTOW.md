@@ -24,12 +24,79 @@ INTERVIEW → TOOLS/ASSESSMENT → INITIATIVES → EXECUTION → BENEFITS
                                   PLANNING)     CANCELLED)
 ```
 
-### 🎨 Standard UI/UX (obowiązuje wszystkie moduły)
-- Interfejs ClickUp-like: lewy sidebar, środek, prawy panel
-- Dynamiczne menu: max 6 otwartych elementów
-- Drawer inicjatyw: 50% viewport + "Open wider"
-- Spójne przyciski, kolory, typografia
-- Task-list pattern dla list
+### 🎨 UI/UX GOLDEN STANDARD (obowiązuje wszystkie moduły)
+
+**Pełna dokumentacja:** `wdrozenia/UI_UX_GOLDEN_STANDARD.md`
+
+#### Główny kontener: ModuleHub
+Wszystkie moduły listowe muszą używać `src/components/shared/ModuleHub/`:
+```tsx
+import { ModuleHub, ModuleNavBar, DynamicTabs, FilterableTable, GridView } from '@/components/shared/ModuleHub';
+```
+
+#### Elementy obowiązkowe:
+
+1. **ModuleNavBar** (górny pasek):
+   - Search button (ikona lupy)
+   - Taby główne z licznikami: `[Tab1 N] [Tab2 N] [Tab3 N]`
+   - View mode toggle: `[≡] [⊞] [⊟] [📅]` (table/grid/kanban/timeline)
+   - Przycisk akcji: `+ New Item` (gradient primary)
+
+2. **DynamicTabs** (dynamiczne menu dokumentów):
+   - Max 6 widocznych tabów
+   - Przycisk "List" do powrotu
+   - Tab: TYPE badge + nazwa + status dot + X
+   - Overflow dropdown dla >6 dokumentów
+
+3. **Widok tabeli (FilterableTable)**:
+   ```
+   | TYPE | NAME | STATUS | PROGRESS | UPDATED | ACTIONS |
+   ```
+   - Status badges: Draft (szary), In Review (żółty), Approved (zielony), Completed (zielony)
+   - Progress bar z kolorami wg postępu
+   - Actions visible on hover
+
+4. **Widok kart (GridView)**:
+   - Karta z gradientowym tłem wg typu
+   - Header: TYPE + menu (3 kropki)
+   - Progress bar + procent
+   - Footer: status + data
+   - Quick view button (eye) on hover
+
+#### Style przycisków:
+```tsx
+// Primary (akcja główna)
+className="bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/25"
+
+// Secondary (nieaktywny)
+className="bg-navy-800 border-navy-600 text-slate-300 hover:bg-navy-700"
+
+// Active tab
+className="bg-primary-500/15 border-primary-500 text-primary-400"
+```
+
+#### Kolory statusów:
+| Status | Dot | Background |
+|--------|-----|------------|
+| Draft | `bg-slate-400` | `bg-slate-500/20` |
+| In Review | `bg-amber-400` | `bg-amber-500/20` |
+| Approved | `bg-emerald-400` | `bg-emerald-500/20` |
+| Completed | `bg-emerald-400` | `bg-emerald-500/20` |
+| Blocked | `bg-rose-400` | `bg-rose-500/20` |
+| Executing | `bg-cyan-400` | `bg-cyan-500/20` |
+
+#### Moduły zgodne z ModuleHub:
+- ✅ Assessment (`AssessmentModuleHub.tsx`)
+- ✅ Initiatives (`InitiativesHub.tsx`)
+- ✅ Execution (`ExecutionHub.tsx`)
+- ✅ Benefits (`BenefitsHub.tsx`)
+- ✅ Reports (`ReportsHub.tsx`)
+
+#### Moduły z uzasadnionymi różnicami:
+- ⚠️ My Work - dashboard (SplitLayout 65/35)
+- ⚠️ Interview - workspace pattern
+- ⚠️ Tools - landing page z kategoriami
+- ❌ Economics - **DO MIGRACJI na ModuleHub**
 
 ---
 
@@ -435,8 +502,7 @@ FORMAT ANALIZY FINANSOWEJ:
 
 ---
 
-## 🎯 PROMPT 5: MODUŁ REPORTING
-
+Prompt 6 decyzje 
 ### Kontekst dla agenta
 
 ```
@@ -671,19 +737,7 @@ REGUŁY WIDOCZNOŚCI:
 
 ---
 
-## 🎯 PROMPT 8: MODUŁ INTERVIEW (Discovery) - WYMAGANY
-
-### Kontekst dla agenta
-
-```
-ZADANIE: PEŁNA PRZEBUDOWA modułu Interview jako pierwszy krok Discovery
-
-PRZECZYTAJ NAJPIERW:
-1. src/views/InterviewView.tsx (istniejący - do przebudowy)
-2. src/components/Interview/ (istniejące - do przebudowy)
-3. src/components/DiscoveryTools/ (wzorzec UI - ClickUp-like)
-4. server/src/controllers/InterviewController.ts (istniejący)
-5. server/src/routes/interview.routes.ts (istniejące)
+## - nie a/interview.routes.ts (istniejące)
 
 CEL: Interview zbiera kontekst organizacji "as-is" przed Tools/Assessment.
 TYLKO FAKTY - bez rekomendacji, planów działań, analiz.
@@ -909,7 +963,13 @@ Po każdym module agent powinien wygenerować audyt:
 ---
 
 *Dokument zaktualizowany: 2026-01-20*
-*Wersja: 2.0*
+*Wersja: 2.1*
+*Zmiany w v2.1:*
+- *Rozbudowano sekcję UI/UX Golden Standard*
+- *Dodano referencję do pełnej dokumentacji: `wdrozenia/UI_UX_GOLDEN_STANDARD.md`*
+- *Dodano audyt zgodności modułów z ModuleHub*
+- *Dodano szczegóły stylów przycisków i statusów*
+
 *Zmiany w v2.0:*
 - *Dodano PROMPT 3: Execution Center (brakowało)*
 - *Dodano PROMPT 3.5: Benefits (brakowało)*

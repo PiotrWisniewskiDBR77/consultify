@@ -25,6 +25,10 @@ type ToolSessionRow = {
   context_snapshot?: string | null;
   review_requested_at?: string | null;
   approved_at?: string | null;
+  created_by?: string | null;
+  updated_by?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 };
 
 const normalizeStatus = (status: string | null | undefined) =>
@@ -445,6 +449,118 @@ export class ToolController {
       );
 
       res.json({ id, status: 'DRAFT' });
+    }
+  );
+
+  /**
+   * List all tool sessions for the organization
+   * Supports filters: projectId, status, toolType, category
+   * Supports pagination: limit, offset
+   */
+  static listToolSessions = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      await ensureToolsSchema();
+
+      const { projectId, status, toolType, category, limit = '50', offset = '0' } = req.query;
+
+      // Build query with filters
+      let sql = `SELECT 
+          id, organization_id, project_id, tool_type, name, status,
+          completion_percent, confidence_avg, created_by, updated_by,
+          created_at, updated_at, review_requested_at, approved_at
+        FROM tool_sessions 
+        WHERE organization_id = ?`;
+      const params: unknown[] = [user.organizationId];
+
+      if (projectId) {
+        sql += ` AND project_id = ?`;
+        params.push(projectId);
+      }
+
+      if (status) {
+        // Support comma-separated statuses
+        const statuses = String(status).split(',').map(s => s.trim().toUpperCase());
+        sql += ` AND UPPER(status) IN (${statuses.map(() => '?').join(', ')})`;
+        params.push(...statuses);
+      }
+
+      if (toolType) {
+        sql += ` AND tool_type = ?`;
+        params.push(toolType);
+      }
+
+      // Category filter maps to tool_type prefixes
+      if (category) {
+        const categoryMap: Record<string, string[]> = {
+          strategic: ['dynamic-swot', 'market-forces', 'growth-paths', 'value-chain', 'portfolio-priority', 'ambition-decomposer', 'focus-tradeoff', 'risk-uncertainty', 'capability-mapper', 'narrative-engine'],
+          operational: ['sop-builder', 'a3-problem-solving', 'smed-planner', 'dms-builder', 'inventory-autopilot', 'vsm-builder', 'automation-pipeline', 'constraint-control', 'decision-engine', 'control-tower'],
+          digital: ['robotics-feasibility', 'logistics-automation', 'rpa-scanner', 'ai-discovery', 'integration-diagnostic', 'digital-value-pool', 'legacy-analyzer', 'data-inventory', 'pain-to-solution', 'pain-explorer'],
+          automation: ['process-automation'],
+        };
+        const toolTypes = categoryMap[String(category).toLowerCase()] || [];
+        if (toolTypes.length > 0) {
+          sql += ` AND tool_type IN (${toolTypes.map(() => '?').join(', ')})`;
+          params.push(...toolTypes);
+        }
+      }
+
+      sql += ` ORDER BY updated_at DESC`;
+
+      // Pagination
+      const limitNum = Math.min(parseInt(String(limit), 10) || 50, 100);
+      const offsetNum = parseInt(String(offset), 10) || 0;
+      sql += ` LIMIT ? OFFSET ?`;
+      params.push(limitNum, offsetNum);
+
+      const sessions = (await queryHelpers.queryAll(sql, params)) as ToolSessionRow[];
+
+      // Count total for pagination
+      let countSql = `SELECT COUNT(*) as total FROM tool_sessions WHERE organization_id = ?`;
+      const countParams: unknown[] = [user.organizationId];
+      if (projectId) {
+        countSql += ` AND project_id = ?`;
+        countParams.push(projectId);
+      }
+      if (status) {
+        const statuses = String(status).split(',').map(s => s.trim().toUpperCase());
+        countSql += ` AND UPPER(status) IN (${statuses.map(() => '?').join(', ')})`;
+        countParams.push(...statuses);
+      }
+      if (toolType) {
+        countSql += ` AND tool_type = ?`;
+        countParams.push(toolType);
+      }
+      const countResult = (await queryHelpers.queryOne(countSql, countParams)) as { total: number } | null;
+      const total = countResult?.total || 0;
+
+      // Transform to frontend format
+      const items = sessions.map(session => ({
+        id: session.id,
+        name: session.name,
+        toolType: session.tool_type,
+        status: normalizeStatus(session.status),
+        progress: session.completion_percent || 0,
+        confidenceAvg: session.confidence_avg || 0,
+        projectId: session.project_id,
+        createdBy: session.created_by,
+        createdAt: session.created_at,
+        updatedAt: session.updated_at,
+        reviewRequestedAt: session.review_requested_at,
+        approvedAt: session.approved_at,
+      }));
+
+      res.json({
+        items,
+        total,
+        limit: limitNum,
+        offset: offsetNum,
+      });
     }
   );
 

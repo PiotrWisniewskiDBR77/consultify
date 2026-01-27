@@ -390,17 +390,100 @@ router.post(
   })
 );
 
-// DEMO LOGIN - Auto-login as demo@legolex.com
+// DEMO LOGIN - Auto-login as demo account
 router.post(
   '/demo-login',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const DEMO_EMAIL = 'demo@legolex.com';
-    const DEMO_PASSWORD = 'Demo123!';
+    // Single demo account (do not use DBR77 domain)
+    const DEMO_EMAILS = ['piotr.wisniewski@demo.com'];
 
     logger.info('[Auth] Demo login request');
 
     try {
-      const user = await dbGet<{
+      let user = null as any;
+      let matchedEmail = DEMO_EMAILS[0];
+      for (const email of DEMO_EMAILS) {
+        const found = await dbGet<{
+          id: string;
+          email: string;
+          role: string;
+          organization_id: string;
+          first_name: string;
+          last_name: string;
+          status: string;
+        }>('SELECT * FROM users WHERE email = ?', [email]);
+        if (found) {
+          user = found;
+          matchedEmail = email;
+          break;
+        }
+      }
+
+      if (!user) {
+        logger.error('[Auth] Demo user not found - please run seed script');
+        return res.status(404).json({
+          error: 'Demo user not found. Please contact support.',
+          code: 'DEMO_USER_NOT_FOUND',
+        });
+        return;
+      }
+
+      const org = await dbGet<{
+        id: string;
+        name: string;
+      }>('SELECT * FROM organizations WHERE id = ?', [user.organization_id]);
+
+      const tokenResult = await refreshTokenService.generateTokenPair(user, {
+        deviceInfo: 'Demo Session',
+        ip: req.ip,
+        userAgent: req.get('user-agent') || null,
+      });
+
+      ActivityService.log({
+        organizationId: user.organization_id,
+        userId: user.id,
+        action: 'demo_login',
+        entityType: 'user',
+        entityId: user.id,
+        entityName: matchedEmail,
+        metadata: { ip: req.ip },
+      });
+
+      const safeUser = {
+        id: user.id,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        role: user.role,
+        status: user.status,
+        organizationId: user.organization_id,
+        companyName: org?.name || 'Demo Company',
+        isDemo: true,
+        hasWorkspace: true,
+        isAuthenticated: true,
+        accessLevel: 'full' as const, // Demo user should have full access
+      };
+
+      logger.info('[Auth] Demo login successful');
+      return res.json({
+        user: safeUser,
+        token: tokenResult.accessToken,
+        refreshToken: tokenResult.refreshToken,
+        isDemo: true,
+      });
+    } catch (error: unknown) {
+      logger.error('[Auth] Demo login error:', error);
+      return res.status(500).json({ error: 'Demo login failed. Please try again.' });
+    }
+  })
+);
+
+/*
+ * Legacy implementation (kept in git history) used a fixed DEMO_EMAIL and DEMO_PASSWORD.
+ * Demo login now selects the first available account from DEMO_EMAILS.
+ */
+/*
+    const user = await dbGet<{
         id: string;
         email: string;
         role: string;
@@ -468,6 +551,7 @@ router.post(
     }
   })
 );
+*/
 
 // REGISTER (New Company)
 router.post(

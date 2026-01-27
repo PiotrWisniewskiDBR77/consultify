@@ -6,6 +6,20 @@ import { createRoot } from 'react-dom/client';
 
 import App from './App';
 
+// Vite React Refresh fallback (prevents HMR preamble runtime errors)
+if (import.meta.hot && typeof window !== 'undefined') {
+  const win = window as unknown as {
+    $RefreshReg$?: () => void;
+    $RefreshSig$?: () => (type: unknown) => unknown;
+  };
+  if (!win.$RefreshReg$) {
+    win.$RefreshReg$ = () => {};
+  }
+  if (!win.$RefreshSig$) {
+    win.$RefreshSig$ = () => (type: unknown) => type;
+  }
+}
+
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error('Root element not found');

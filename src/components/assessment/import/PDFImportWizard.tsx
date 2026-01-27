@@ -590,25 +590,10 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
       setDetectedFramework(result.framework);
       setConfidence(result.confidence);
     } catch (err) {
-      // Fallback: simulate detection for demo
-      console.warn('API not available, using mock detection');
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Detect based on filename or default to SIRI
-      const fileName = file.name.toLowerCase();
-      if (fileName.includes('siri')) {
-        setDetectedFramework('SIRI');
-        setConfidence(0.92);
-      } else if (fileName.includes('adma')) {
-        setDetectedFramework('ADMA');
-        setConfidence(0.88);
-      } else if (fileName.includes('cmmi')) {
-        setDetectedFramework('CMMI');
-        setConfidence(0.85);
-      } else {
-        setDetectedFramework('SIRI');
-        setConfidence(0.65);
-      }
+      console.error('[PDFImportWizard] Detect framework error:', err);
+      setDetectedFramework(null);
+      setConfidence(0);
+      setError('Nie udało się wykryć frameworka. Sprawdź czy backend /api/pdf-import działa.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -637,90 +622,9 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
       const result = await response.json();
       setExtractedScores(result.scores);
     } catch (err) {
-      // Fallback: generate mock scores for demo
-      console.warn('API not available, using mock extraction');
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      const mockScores: ExtractedScore[] = [];
-      const config = FRAMEWORK_CONFIGS[detectedFramework];
-
-      // Generate mock scores based on framework
-      if (detectedFramework === 'SIRI') {
-        const dimensions = [
-          'Operations',
-          'Supply Chain',
-          'Product Lifecycle',
-          'Automation',
-          'Connectivity',
-          'Intelligence',
-          'Talent Readiness',
-          'Structure & Management',
-        ];
-        dimensions.forEach((name, i) => {
-          mockScores.push({
-            dimensionId: `dim_${i}`,
-            dimensionName: name,
-            score: Math.round(Math.random() * 4 + 1),
-            confidence: 0.6 + Math.random() * 0.35,
-          });
-        });
-      } else if (detectedFramework === 'ADMA') {
-        const dimensions = [
-          'Digital Strategy',
-          'Digital Investments',
-          'Digital Culture',
-          'Product Features',
-          'Product Data',
-          'Production Tech',
-          'Production IT',
-          'Supply Integration',
-          'Supply Visibility',
-          'Data Collection',
-          'Data Analytics',
-          'Data Services',
-        ];
-        dimensions.forEach((name, i) => {
-          mockScores.push({
-            dimensionId: `dim_${i}`,
-            dimensionName: name,
-            score: Math.round(Math.random() * 4 + 1),
-            confidence: 0.6 + Math.random() * 0.35,
-          });
-        });
-      } else if (detectedFramework === 'CMMI') {
-        const practiceAreas = [
-          'EST',
-          'PAD',
-          'MC',
-          'PI',
-          'PQA',
-          'RDM',
-          'RM',
-          'TS',
-          'VER',
-          'VAL',
-          'CAR',
-          'CM',
-          'DAR',
-          'RSKM',
-          'SAM',
-          'GOV',
-          'II',
-          'OT',
-          'PCM',
-          'MPM',
-        ];
-        practiceAreas.forEach((code, i) => {
-          mockScores.push({
-            dimensionId: code,
-            dimensionName: code,
-            score: Math.round(Math.random() * 4 + 1),
-            confidence: 0.6 + Math.random() * 0.35,
-          });
-        });
-      }
-
-      setExtractedScores(mockScores);
+      console.error('[PDFImportWizard] Extract scores error:', err);
+      setExtractedScores([]);
+      setError('Nie udało się wyekstrahować ocen. Sprawdź czy backend /api/pdf-import działa.');
     } finally {
       setIsExtracting(false);
     }

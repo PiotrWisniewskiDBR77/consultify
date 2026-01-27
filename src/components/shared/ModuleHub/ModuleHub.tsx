@@ -51,6 +51,9 @@ interface ModuleHubProps {
   // Available view modes (default: table, grid)
   availableViewModes?: ViewMode[];
 
+  // Extra controls rendered on the right, just before view mode buttons
+  rightControls?: React.ReactNode;
+
   // Content
   children: React.ReactNode;
 }
@@ -77,6 +80,7 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
   activeStatusFilter,
   onStatusFilterChange,
   availableViewModes,
+  rightControls,
   children,
 }) => {
   return (
@@ -96,6 +100,7 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
         activeStatusFilter={activeStatusFilter}
         onStatusFilterChange={onStatusFilterChange}
         availableViewModes={availableViewModes}
+        rightControls={rightControls}
       />
 
       {/* Dynamic Tabs (open documents) */}

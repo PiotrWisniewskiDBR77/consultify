@@ -36,31 +36,23 @@ interface FilterableTableProps {
   emptyMessage?: string;
 }
 
-// Status badge component
+// Status badge component - uses canonical 11-status initiative lifecycle
 const StatusBadge: React.FC<{ status: ItemStatus }> = ({ status }) => {
   const config: Record<ItemStatus, { bg: string; text: string; dot: string; label: string }> = {
-    draft: { bg: 'bg-slate-500/20', text: 'text-slate-300', dot: 'bg-slate-400', label: 'Draft' },
-    in_review: {
-      bg: 'bg-amber-500/20',
-      text: 'text-amber-300',
-      dot: 'bg-amber-400',
-      label: 'In Review',
-    },
-    approved: {
-      bg: 'bg-emerald-500/20',
-      text: 'text-emerald-300',
-      dot: 'bg-emerald-400',
-      label: 'Approved',
-    },
-    completed: {
-      bg: 'bg-emerald-500/20',
-      text: 'text-emerald-300',
-      dot: 'bg-emerald-400',
-      label: 'Completed',
-    },
+    DRAFT: { bg: 'bg-slate-500/20', text: 'text-slate-300', dot: 'bg-slate-400', label: 'Draft' },
+    REVIEW: { bg: 'bg-amber-500/20', text: 'text-amber-300', dot: 'bg-amber-400', label: 'In Review' },
+    PROMOTED: { bg: 'bg-blue-500/20', text: 'text-blue-300', dot: 'bg-blue-400', label: 'Promoted' },
+    PLANNING: { bg: 'bg-indigo-500/20', text: 'text-indigo-300', dot: 'bg-indigo-400', label: 'Planning' },
+    APPROVED: { bg: 'bg-emerald-500/20', text: 'text-emerald-300', dot: 'bg-emerald-400', label: 'Approved' },
+    SCHEDULED: { bg: 'bg-purple-500/20', text: 'text-purple-300', dot: 'bg-purple-400', label: 'Scheduled' },
+    EXECUTING: { bg: 'bg-cyan-500/20', text: 'text-cyan-300', dot: 'bg-cyan-400', label: 'Executing' },
+    BLOCKED: { bg: 'bg-red-500/20', text: 'text-red-300', dot: 'bg-red-400', label: 'Blocked' },
+    DONE: { bg: 'bg-green-500/20', text: 'text-green-300', dot: 'bg-green-400', label: 'Done' },
+    TRACKING: { bg: 'bg-teal-500/20', text: 'text-teal-300', dot: 'bg-teal-400', label: 'Tracking' },
+    CANCELLED: { bg: 'bg-gray-500/20', text: 'text-gray-300', dot: 'bg-gray-400', label: 'Cancelled' },
   };
 
-  const { bg, text, dot, label } = config[status] || config.draft;
+  const { bg, text, dot, label } = config[status] || config.DRAFT;
 
   return (
     <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full ${bg}`}>
@@ -252,10 +244,11 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   };
 
   return (
-    <div className="overflow-hidden">
+    <div className="p-4">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
       <table className="w-full">
         <thead>
-          <tr className="bg-navy-800/50">
+          <tr className="bg-slate-50 dark:bg-navy-900/50">
             {columns.map((column) => (
               <th
                 key={column.id}
@@ -279,7 +272,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-navy-700">
+        <tbody className="divide-y divide-slate-200 dark:divide-navy-700/50">
           {filteredData.length === 0 ? (
             <tr>
               <td colSpan={columns.length + 1} className="px-4 py-12 text-center text-slate-500">
@@ -407,6 +400,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
           )}
         </tbody>
       </table>
+      </div>
     </div>
   );
 };

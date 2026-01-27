@@ -40,9 +40,11 @@ import {
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { type Breadcrumb, PartnerLayout } from '../../components/Partner/PartnerLayout';
 import { PartnerSection } from '../../components/Partner/PartnerSidebar';
+import { ROUTES } from '../../routes/routeConfig';
 import { Api } from '../../services/api';
 import { cn } from '../../utils/cn';
 
@@ -2456,7 +2458,23 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
   onNavigate,
 }) => {
   const { t } = useTranslation();
-  const [activeSection, setActiveSection] = useState<PartnerSection>('dashboard');
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const activeSection = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const section = params.get('tab');
+    return (section ? section : 'dashboard') as PartnerSection;
+  }, [location.search]);
+
+  const handleSectionChange = useCallback(
+    (section: PartnerSection) => {
+      const params = new URLSearchParams(location.search);
+      params.set('tab', section);
+      navigate({ pathname: ROUTES.PARTNER.LANDING, search: params.toString() });
+    },
+    [location.search, navigate]
+  );
 
   // Get breadcrumbs based on active section
   const breadcrumbs = useMemo((): Breadcrumb[] => {
@@ -2598,7 +2616,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
   return (
     <PartnerLayout
       activeSection={activeSection}
-      onSectionChange={setActiveSection}
+      onSectionChange={handleSectionChange}
       breadcrumbs={breadcrumbs}
       activeClients={12}
       pendingCertifications={2}

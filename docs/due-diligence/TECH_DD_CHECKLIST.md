@@ -1,6 +1,6 @@
 # Technical Due Diligence - Pre-Answered Checklist
 
-**Platform**: IRIS 6.0 - Industrial Resource & Intelligence System  
+**Platform**: Consultify - AI-Powered Digital Transformation SaaS  
 **Date**: January 2026  
 **Status**: ✅ VC DD Ready
 

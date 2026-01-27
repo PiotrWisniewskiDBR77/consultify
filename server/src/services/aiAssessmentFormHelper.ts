@@ -64,47 +64,43 @@ export class AIAssessmentFormHelper {
   }
 
   /**
-   * Validate a field value with context
+   * Validate a single field value (used by assessment-ai routes)
    */
-  async validateFieldValue(fieldType: string, value: any, context: any = {}) {
-    console.log('[AIAssessmentFormHelper] validateFieldValue called:', fieldType, value);
-    return {
-      isValid: true,
-      errors: [],
-      warnings: [],
-    };
+  async validateFieldValue(fieldId: string, value: any, schema: any) {
+    console.log('[AIAssessmentFormHelper] validateFieldValue called:', fieldId);
+    return { valid: true, errors: [] };
   }
 
   /**
-   * Get quick actions for form state
+   * Get quick actions for current assessment context
    */
-  async getQuickActions(formState: any) {
+  async getQuickActions(context: any = {}) {
     console.log('[AIAssessmentFormHelper] getQuickActions called');
     return [];
   }
 
   /**
-   * Get contextual help for form state
+   * Get contextual help for a specific field/axis
    */
-  async getContextualHelp(formState: any) {
-    console.log('[AIAssessmentFormHelper] getContextualHelp called');
-    return { help: [] };
+  async getContextualHelp(fieldId: string, context: any = {}) {
+    console.log('[AIAssessmentFormHelper] getContextualHelp called:', fieldId);
+    return { tips: [], examples: [] };
   }
 
   /**
-   * Fill missing fields with AI suggestions
+   * Fill missing fields with AI suggestions (stub)
    */
-  async fillMissingFields(assessment: any, strategy: string = 'suggest-only') {
-    console.log('[AIAssessmentFormHelper] fillMissingFields called:', strategy);
-    return { filled: [], suggestions: [] };
+  async fillMissingFields(formData: any, schema: any, context: any = {}) {
+    console.log('[AIAssessmentFormHelper] fillMissingFields called');
+    return { updated: formData, suggestions: [] };
   }
 
   /**
-   * Review all justifications for quality
+   * Review all justifications (stub)
    */
-  async reviewAllJustifications(assessment: any, options: any = {}) {
+  async reviewAllJustifications(formData: any, schema: any, context: any = {}) {
     console.log('[AIAssessmentFormHelper] reviewAllJustifications called');
-    return { reviews: [], issues: [] };
+    return { feedback: [], score: null };
   }
 }
 

@@ -10,21 +10,25 @@
  *   node server/seed/seed_dbr77_complete.js
  */
 
+import dotenv from 'dotenv';
+import bcrypt from 'bcryptjs';
+import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 
+import { getDatabaseInstance as getSqliteDatabaseInstance } from '../legacy_archive/database.sqlite.js';
+
 // Detect database type
+dotenv.config();
 const isPostgres = process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgres');
 
 let db;
 if (isPostgres) {
-  require('dotenv').config();
-  const { Pool } = require('pg');
   db = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
   });
 } else {
-  db = require('../database');
+  db = getSqliteDatabaseInstance();
 }
 
 // ============================================================
@@ -741,7 +745,6 @@ async function seedDBR77Complete() {
 
     if (!existingCto) {
       ctoId = uuidv4();
-      const bcrypt = require('bcryptjs');
       const password = bcrypt.hashSync('123456', 8);
       await dbRun(
         `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status) 
@@ -755,7 +758,6 @@ async function seedDBR77Complete() {
 
     if (!existingCfo) {
       cfoId = uuidv4();
-      const bcrypt = require('bcryptjs');
       const password = bcrypt.hashSync('123456', 8);
       await dbRun(
         `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status) 
@@ -1089,7 +1091,7 @@ async function seedDBR77Complete() {
 }
 
 // Run
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   seedDBR77Complete()
     .then(() => {
       console.log('\n🎉 Done!');

@@ -9,6 +9,8 @@ export type { Breadcrumb } from './AdminLayout';
 export { AdminLayout } from './AdminLayout';
 export type { AdminSection } from './AdminSidebar';
 export { AdminSidebar } from './AdminSidebar';
+export type { AdminSettingsSection } from './AdminSettingsSidebar';
+export { AdminSettingsSidebar } from './AdminSettingsSidebar';
 
 // Shared components
 export * from './shared';

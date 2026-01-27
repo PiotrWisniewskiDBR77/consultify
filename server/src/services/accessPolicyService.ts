@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
+import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 // Import Sub-Services
 import { AccessLimitService } from './access/AccessLimitService.js';
@@ -192,6 +193,27 @@ class AccessPolicyServiceClass {
         }
       }
 
+      // Trial gating: require org setup completion before using AI
+      if (orgInfo.organizationType === ORG_TYPES.TRIAL && action === 'ai_call') {
+        try {
+          const row = await DbPromise.get<{ onboarding_status?: string | null }>(
+            this.deps.db,
+            `SELECT onboarding_status FROM organizations WHERE id = ?`,
+            [organizationId],
+            { fallback: false }
+          );
+          if ((row as any)?.onboarding_status !== 'ORG_SETUP_COMPLETED') {
+            return {
+              allowed: false,
+              reason: 'Please complete organization setup to start your trial AI experience.',
+              errorCode: 'TRIAL_PROFILE_INCOMPLETE',
+            };
+          }
+        } catch {
+          // fail open if schema mismatch
+        }
+      }
+
       // Paid check
       if (orgInfo.organizationType === ORG_TYPES.PAID) return { allowed: true };
 
@@ -241,9 +263,26 @@ class AccessPolicyServiceClass {
             };
           }
           if (limits.maxTotalTokens && trialUsage.tokensUsed >= limits.maxTotalTokens) {
+            // Hybrid trial: if a payment method exists, allow AI beyond free budget (PAYG/hybrid)
+            try {
+              if (orgInfo.organizationType === ORG_TYPES.TRIAL) {
+                const row = await DbPromise.get<{ count: number | string }>(
+                  this.deps.db,
+                  `SELECT COUNT(*) as count FROM payment_methods WHERE organization_id = ?`,
+                  [organizationId],
+                  { fallback: false }
+                );
+                const count = parseInt(String((row as any)?.count ?? 0), 10) || 0;
+                if (count > 0) {
+                  break;
+                }
+              }
+            } catch (pmErr) {
+              // fail closed for token budget enforcement
+            }
             return {
               allowed: false,
-              reason: `Trial AI token budget exceeded (${limits.maxTotalTokens}). Upgrade to continue using AI features.`,
+              reason: `Trial AI token budget exceeded (${limits.maxTotalTokens}). Add a payment method or upgrade to continue using AI features.`,
               errorCode: 'AI_TOKEN_BUDGET_EXCEEDED',
             };
           }

@@ -5,8 +5,8 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import * as queryHelpers from '../utils/queryHelpers.js';
 import logger from '../utils/Logger.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 
 // ==========================================
 // TYPES
@@ -96,9 +96,7 @@ export function calculateEscalationLevel(
   }
 
   // Critical priority or high impact decisions escalate to red faster
-  const isCritical =
-    (priority?.toUpperCase() === 'CRITICAL') ||
-    (impact?.toUpperCase() === 'HIGH');
+  const isCritical = priority?.toUpperCase() === 'CRITICAL' || impact?.toUpperCase() === 'HIGH';
 
   if (isCritical) {
     // Critical decisions: any overdue = red
@@ -147,7 +145,12 @@ export function getDefaultThresholds(decisionType?: string): { amber: number; re
     EXECUTION: { amber: 2, red: 5 },
   };
 
-  return thresholds[decisionType || ''] || { amber: DEFAULT_AMBER_THRESHOLD_DAYS, red: DEFAULT_RED_THRESHOLD_DAYS };
+  return (
+    thresholds[decisionType || ''] || {
+      amber: DEFAULT_AMBER_THRESHOLD_DAYS,
+      red: DEFAULT_RED_THRESHOLD_DAYS,
+    }
+  );
 }
 
 // ==========================================
@@ -155,6 +158,83 @@ export function getDefaultThresholds(decisionType?: string): { amber: number; re
 // ==========================================
 
 export class EscalationService {
+  /**
+   * Get escalations for a project (used by notifications routes)
+   */
+  static async getEscalations(projectId: string, status?: string) {
+    const params: any[] = [projectId];
+    let sql = `
+      SELECT *
+      FROM decisions
+      WHERE project_id = ?
+        AND (status = 'escalated' OR escalation_level IS NOT NULL)
+    `;
+    if (status) {
+      sql += ` AND status = ?`;
+      params.push(status);
+    }
+    sql += ` ORDER BY deadline ASC, created_at DESC`;
+    return await queryHelpers.queryAll(sql, params);
+  }
+
+  /**
+   * Run auto-escalation for a specific project (used by notifications routes)
+   */
+  static async runAutoEscalation(projectId: string) {
+    const decisions = await queryHelpers.queryAll<DecisionRow>(
+      `SELECT * FROM decisions
+       WHERE project_id = ?
+         AND status IN ('pending', 'escalated')
+         AND deadline IS NOT NULL`,
+      [projectId]
+    );
+
+    let processed = 0;
+    let escalated = 0;
+    let amberAlerts = 0;
+    let redAlerts = 0;
+    let errors = 0;
+
+    for (const decision of decisions || []) {
+      try {
+        const { level, overdueDays } = calculateEscalationLevel(
+          decision.deadline,
+          decision.priority,
+          decision.impact
+        );
+        processed++;
+
+        const prev = (decision.escalation_level || 'none') as any;
+        if (level === prev) continue;
+
+        if (level === 'amber') amberAlerts++;
+        if (level === 'red') redAlerts++;
+
+        await queryHelpers.queryRun(
+          `UPDATE decisions SET escalation_level = ?, updated_at = datetime('now') WHERE id = ?`,
+          [level, decision.id]
+        );
+
+        if (level === 'red' && decision.status !== 'escalated') {
+          await queryHelpers.queryRun(
+            `UPDATE decisions SET status = 'escalated', updated_at = datetime('now') WHERE id = ?`,
+            [decision.id]
+          );
+          escalated++;
+        }
+
+        logger.info(
+          `[EscalationService] Project ${projectId}: decision ${decision.id} ${prev} -> ${level} (overdueDays=${overdueDays})`
+        );
+      } catch (err) {
+        errors++;
+        logger.warn('[EscalationService] runAutoEscalation decision error:', err);
+      }
+    }
+
+    return { projectId, processed, amberAlerts, redAlerts, escalated, errors };
+  }
+
   /**
    * Process escalations for all pending decisions in an organization
    */
@@ -399,9 +479,7 @@ export class EscalationService {
   /**
    * Create a new escalation rule
    */
-  static async createEscalationRule(
-    rule: Omit<EscalationRule, 'id'>
-  ): Promise<EscalationRule> {
+  static async createEscalationRule(rule: Omit<EscalationRule, 'id'>): Promise<EscalationRule> {
     const id = uuidv4();
 
     try {
@@ -480,57 +558,6 @@ export class EscalationService {
         }),
       ]
     );
-  }
-
-  /**
-   * Get escalations for a project
-   */
-  static async getEscalations(projectId: string, status?: string): Promise<any[]> {
-    try {
-      let query = `
-        SELECT e.*, d.title as decision_title, d.type as decision_type
-        FROM escalations e
-        LEFT JOIN decisions d ON e.decision_id = d.id
-        WHERE e.project_id = ?
-      `;
-      const params: any[] = [projectId];
-      
-      if (status) {
-        query += ` AND e.status = ?`;
-        params.push(status);
-      }
-      
-      query += ` ORDER BY e.created_at DESC`;
-      
-      const escalations = await queryHelpers.queryAll(query, params);
-      return escalations || [];
-    } catch (error) {
-      logger.error('Failed to get escalations:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Run auto-escalation for a project
-   */
-  static async runAutoEscalation(projectId: string): Promise<any> {
-    try {
-      // Get project organization
-      const project = await queryHelpers.queryOne<{ organization_id: string }>(
-        `SELECT organization_id FROM projects WHERE id = ?`,
-        [projectId]
-      );
-      
-      if (!project) {
-        throw new Error('Project not found');
-      }
-      
-      const summary = await this.processEscalations(project.organization_id);
-      return { success: true, summary };
-    } catch (error) {
-      logger.error('Failed to run auto-escalation:', error);
-      throw error;
-    }
   }
 }
 

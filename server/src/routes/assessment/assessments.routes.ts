@@ -29,6 +29,7 @@ router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
     logger.info(`[Assessments] Fetching assessments for org: ${organizationId}`);
 
     // Get assessments from database
+    // Uses framework_type and framework_data from seeded data
     const assessments = await new Promise<any[]>((resolve, reject) => {
       db.all(
         `SELECT 
@@ -39,13 +40,20 @@ router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
                     status,
                     created_at as createdAt,
                     updated_at as updatedAt,
-                    'DRD' as type,
-                    'Digital Readiness Diagnosis' as projectName,
-                    75 as progress,
-                    3.2 as overallScore
+                    COALESCE(framework_type, 'DRD') as type,
+                    CASE COALESCE(framework_type, 'DRD')
+                      WHEN 'DRD' THEN 'Digital Readiness Diagnosis'
+                      WHEN 'SIRI' THEN 'Smart Industry Readiness Index'
+                      WHEN 'ADMA' THEN 'Advanced Digital Maturity Assessment'
+                      WHEN 'CMMI' THEN 'Capability Maturity Model Integration'
+                      WHEN 'LEAN' THEN 'Lean 4.0 Assessment'
+                      ELSE 'Assessment'
+                    END as projectName,
+                    COALESCE(json_extract(framework_data, '$.progress'), 0) as progress,
+                    COALESCE(json_extract(framework_data, '$.overallScore'), 0) as overallScore
                 FROM assessments 
                 WHERE organization_id = ?
-                ORDER BY created_at DESC`,
+                ORDER BY updated_at DESC`,
         [organizationId],
         (err: Error | null, rows: any[]) => {
           if (err) reject(err);
@@ -219,11 +227,11 @@ router.post('/:id/complete', async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const organizationId = req.user?.organizationId || 'org-dbr77-system';
 
-    const AssessmentInitiativeService = (
-      await import('../../services/AssessmentInitiativeService.js')
+    const assessmentInitiativeService = (
+      await import('../../services/assessmentInitiativeService.js')
     ).default;
     const assessmentId = Array.isArray(id) ? id[0] : id;
-    const result = await AssessmentInitiativeService.completeAssessment(
+    const result = await assessmentInitiativeService.completeAssessment(
       assessmentId,
       organizationId
     );
@@ -282,11 +290,11 @@ router.post('/:id/generate-initiatives', async (req: AuthRequest, res: Response)
       return res.status(400).json({ error: 'Final report required before initiatives' });
     }
 
-    const AssessmentInitiativeService = (
-      await import('../../services/AssessmentInitiativeService.js')
+    const assessmentInitiativeService = (
+      await import('../../services/assessmentInitiativeService.js')
     ).default;
     const assessmentId = Array.isArray(id) ? id[0] : id;
-    const result = await AssessmentInitiativeService.generateInitiatives(
+    const result = await assessmentInitiativeService.generateInitiatives(
       assessmentId,
       projectId,
       organizationId,

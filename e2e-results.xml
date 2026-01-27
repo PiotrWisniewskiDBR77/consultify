@@ -1,0 +1,46 @@
+<testsuites id="" name="" tests="1" failures="1" skipped="0" errors="0" time="13.592828">
+<testsuite name="tools-to-initiatives.spec.ts" timestamp="2026-01-20T18:14:33.475Z" hostname="chromium" tests="1" failures="1" skipped="0" time="6.505" errors="0">
+<testcase name="Tools -&gt; Initiatives Flow › creates initiatives after tool approval" classname="tools-to-initiatives.spec.ts" time="6.505">
+<failure message="tools-to-initiatives.spec.ts:51:3 creates initiatives after tool approval" type="FAILURE">
+<![CDATA[  [chromium] › tools-to-initiatives.spec.ts:51:3 › Tools -> Initiatives Flow › creates initiatives after tool approval 
+
+    Error: expect(received).toBeTruthy()
+
+    Received: false
+
+      94 |       }
+      95 |     );
+    > 96 |     expect(reviewResponse.ok()).toBeTruthy();
+         |                                 ^
+      97 |     const reviewData = await reviewResponse.json();
+      98 |     expect(reviewData.status).toBe('REVIEW');
+      99 |
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/tools-to-initiatives.spec.ts:96:33
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/tools-to-initiatives-Tools-764b4-iatives-after-tool-approval-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/tools-to-initiatives-Tools-764b4-iatives-after-tool-approval-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/tools-to-initiatives-Tools-764b4-iatives-after-tool-approval-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/tools-to-initiatives-Tools-764b4-iatives-after-tool-approval-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/tools-to-initiatives-Tools-764b4-iatives-after-tool-approval-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/tools-to-initiatives-Tools-764b4-iatives-after-tool-approval-chromium/error-context.md]]
+
+[[ATTACHMENT|test-results/tools-to-initiatives-Tools-764b4-iatives-after-tool-approval-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>

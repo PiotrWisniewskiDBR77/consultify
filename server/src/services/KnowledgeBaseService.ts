@@ -167,7 +167,7 @@ class KnowledgeBaseService {
         LEFT JOIN kb_article_translations t ON a.id = t.article_id AND t.language = ?
         WHERE ${whereClause}
       `;
-      const countResult = await dbGet(countSql, [language, ...queryParams]) as { total?: number } | null;
+      const countResult = (await dbGet(countSql, [language, ...queryParams])) as any;
       const total = countResult?.total || 0;
 
       // Data query
@@ -229,53 +229,18 @@ class KnowledgeBaseService {
         WHERE a.slug = ? AND a.status = 'published'
       `;
 
-      const row = await dbGet(sql, [language, language, slug]) as {
-        id?: string;
-        category_id?: string;
-        slug?: string;
-        status?: string;
-        is_featured?: number | boolean;
-        is_public?: number | boolean;
-        view_count?: number;
-        reading_time_minutes?: number;
-        thumbnail_url?: string;
-        video_url?: string;
-        video_teaser_url?: string;
-        related_modules?: string;
-        target_audience?: string;
-        created_at?: string;
-        updated_at?: string;
-        title?: string;
-        summary?: string;
-        content?: string;
-        video_script?: string;
-        [key: string]: any;
-      } | null;
+      const row = (await dbGet(sql, [language, language, slug])) as any;
 
-      if (!row || !row.id || !row.category_id || !row.slug || !row.status) return null;
+      if (!row) return null;
 
       // Parse JSON arrays
       return {
-        id: row.id,
-        category_id: row.category_id,
-        slug: row.slug,
-        status: row.status as 'draft' | 'published' | 'archived',
+        ...row,
         is_featured: Boolean(row.is_featured),
         is_public: Boolean(row.is_public),
-        view_count: row.view_count || 0,
-        reading_time_minutes: row.reading_time_minutes || 0,
-        thumbnail_url: row.thumbnail_url,
-        video_url: row.video_url,
-        video_teaser_url: row.video_teaser_url,
         related_modules: JSON.parse(row.related_modules || '[]'),
         target_audience: JSON.parse(row.target_audience || '[]'),
-        created_at: row.created_at || new Date().toISOString(),
-        updated_at: row.updated_at,
-        title: row.title,
-        summary: row.summary,
-        content: row.content,
-        video_script: row.video_script,
-      } as KbArticle;
+      };
     } catch (error) {
       logger.error('[KnowledgeBaseService] Error getting article:', error);
       return null;

@@ -176,7 +176,8 @@ export class TaskController {
       const limit = Number(query.limit) || 100;
       const offset = (page - 1) * limit;
 
-      const { projectId, status, assigneeId, priority, initiativeId } = query;
+      const { projectId, status, assigneeId, priority, initiativeId, reporterId, taskType, search } =
+        query as any;
 
       const sql = `
             SELECT 
@@ -217,6 +218,10 @@ export class TaskController {
           s += ` AND t.assignee_id = ?`;
           p.push(assigneeId);
         }
+        if (reporterId) {
+          s += ` AND t.reporter_id = ?`;
+          p.push(reporterId);
+        }
         if (priority) {
           s += ` AND t.priority = ?`;
           p.push(priority);
@@ -224,6 +229,14 @@ export class TaskController {
         if (initiativeId) {
           s += ` AND t.initiative_id = ?`;
           p.push(initiativeId);
+        }
+        if (taskType) {
+          s += ` AND t.task_type = ?`;
+          p.push(taskType);
+        }
+        if (search) {
+          s += ` AND (t.title LIKE ? OR t.description LIKE ?)`;
+          p.push(`%${search}%`, `%${search}%`);
         }
 
         // For regular users, show only tasks assigned to them or reported by them
@@ -480,10 +493,7 @@ export class TaskController {
       } = body;
 
       if (!projectId) {
-        res.status(400).json({ 
-          error: 'projectId is required',
-          message: 'Tasks must be associated with a project. Please select a project before creating a task.'
-        });
+        res.status(400).json({ error: 'projectId is required' });
         return;
       }
 

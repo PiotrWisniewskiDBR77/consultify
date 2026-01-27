@@ -21,19 +21,16 @@
 import {
   Bot,
   Check,
-  ChevronLeft,
   Copy,
   FileCode,
   History,
-  Maximize2,
   MessageSquare,
-  Minimize2,
-  RefreshCw,
-  Sparkles,
+  Plus,
   ThumbsDown,
   ThumbsUp,
   User,
   Volume2,
+  VolumeX,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -41,6 +38,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { useAIStream } from '../../hooks/useAIStream';
+import { useDemoSession } from '../../hooks/useDemoSession';
 import { useVoiceChat } from '../../hooks/useVoiceChat';
 import { submitAIFeedback } from '../../services/api-extensions';
 import { useAppStore } from '../../store/useAppStore';
@@ -57,10 +55,8 @@ import {
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
 import { CitationList } from './CitationList';
-import { ContextBadge, InputContextBadge } from './ContextBadge';
 import { EnhancedChatInput } from './EnhancedChatInput';
 import { InlineResponseFeedback } from './InlineResponseFeedback';
-import { FocusModeSelector } from './Input/FocusModeSelector';
 import { ThinkingBlock } from './Messages/ThinkingBlock';
 import { PendingActionsIndicator } from './PendingActionsIndicator';
 
@@ -168,6 +164,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const { addArtifact, togglePanel: toggleArtifactsPanel } = useArtifactsStore();
   const { speak, stopSpeaking, isSpeaking, voiceEnabled, ttsSupported } = useVoiceChat();
+  const {
+    isDemo,
+    timeRemainingMs: demoTimeRemainingMs,
+    aiInteractionsRemaining,
+    aiInteractionsLimit,
+    consumeAIInteraction,
+  } = useDemoSession();
 
   // ========================================================================
   // Local state
@@ -175,6 +178,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const [focusMode, setFocusMode] = useState<FocusMode>('all');
   const [voiceModeEnabled, setVoiceModeEnabled] = useState(false);
+  const [autoReadEnabled, setAutoReadEnabled] = useState(false);
   const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
@@ -183,6 +187,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const autoReadEnabledRef = useRef(autoReadEnabled);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    autoReadEnabledRef.current = autoReadEnabled;
+  }, [autoReadEnabled]);
 
   // Computed values
   const isSplitMode = mode === 'split' || displayMode === 'split';
@@ -222,6 +232,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         thinkingSteps: thinking,
         artifacts,
       });
+
+      // Auto-read AI response if enabled (use ref for current value)
+      if (autoReadEnabledRef.current && ttsSupported && fullText) {
+        speak(fullText);
+      }
 
       setThinkingSteps([]);
     },
@@ -283,6 +298,38 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const handleSendMessage = useCallback(
     async (content: string, attachments?: any[]) => {
       if (!content.trim() || isDisabled) return;
+
+      // Demo session enforcement (time + AI interactions quota)
+      if (isDemo) {
+        if (demoTimeRemainingMs <= 0) {
+          window.dispatchEvent(
+            new CustomEvent('access:blocked', {
+              detail: {
+                code: 'DEMO_TIME_EXPIRED',
+                message: 'Demo session expired. Start a free trial to continue.',
+                cta: { label: 'Start free trial', href: '/auth?mode=register' },
+              },
+            })
+          );
+          return;
+        }
+
+        if ((aiInteractionsRemaining ?? 0) <= 0) {
+          window.dispatchEvent(
+            new CustomEvent('access:blocked', {
+              detail: {
+                code: 'DEMO_AI_SESSION_LIMIT_REACHED',
+                message: `Demo AI limit reached (${aiInteractionsLimit ?? 0}). Start a free trial to continue.`,
+                cta: { label: 'Start free trial', href: '/auth?mode=register' },
+              },
+            })
+          );
+          return;
+        }
+
+        // Count this interaction once per user send
+        consumeAIInteraction();
+      }
 
       // Create conversation if none exists
       let conversationId = activeConversationId;
@@ -357,6 +404,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       workspaceContext,
       startStream,
       isDisabled,
+      isDemo,
+      demoTimeRemainingMs,
+      aiInteractionsRemaining,
+      aiInteractionsLimit,
+      consumeAIInteraction,
       onMessageSent,
     ]
   );
@@ -677,71 +729,57 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         {t('wcag.skipToInput', 'Skip to chat input')}
       </a>
 
-      {/* Header */}
+      {/* Header - Simplified */}
       <div
         className={`flex items-center justify-between ${isCompact ? 'px-3 py-2' : 'px-4 py-3'} border-b border-slate-200 dark:border-navy-800 bg-white/50 dark:bg-navy-950/50 backdrop-blur-sm`}
       >
-        <div className="flex items-center gap-2">
-          {/* Back button (split mode) */}
-          {isSplitMode && onBack && (
-            <button
-              onClick={onBack}
-              className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
-              title={t('common.back', 'Back')}
-            >
-              <ChevronLeft size={18} />
-            </button>
-          )}
+        <div className="flex items-center gap-1">
+          {/* New Chat button - first from left */}
+          <button
+            onClick={handleNewChat}
+            className="p-1.5 text-slate-400 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
+            title={t('aiChat.newChat', 'Nowa rozmowa')}
+          >
+            <Plus size={18} />
+          </button>
 
-          {/* History toggle */}
+          {/* History toggle - second from left */}
           {showHistoryTrigger && (
             <button
               onClick={() => setChatSlidingPanelOpen(!isChatSlidingPanelOpen)}
               data-chat-toggle
-              className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
-              title={t('aiChat.history', 'History')}
+              className={`p-1.5 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors ${
+                isChatSlidingPanelOpen 
+                  ? 'text-primary-600 dark:text-primary-400' 
+                  : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300'
+              }`}
+              title={t('aiChat.history', 'Historia')}
             >
               <History size={18} />
             </button>
           )}
-
-          {/* Title and Context Badge */}
-          <div className="flex items-center gap-2">
-            <div>
-              <h2
-                className={`${isCompact ? 'text-xs' : 'text-sm'} font-semibold text-navy-900 dark:text-white flex items-center gap-1.5`}
-              >
-                <Sparkles size={isCompact ? 12 : 14} className="text-primary-500" />
-                {title || t('aiChat.title', 'AI Assistant')}
-              </h2>
-            </div>
-            {/* Context Badge - shows what AI sees */}
-            {workspaceContext && workspaceContext.type !== 'empty' && (
-              <ContextBadge context={workspaceContext} variant="compact" />
-            )}
-          </div>
         </div>
 
         <div className="flex items-center gap-1">
-          {/* Focus Mode (compact in split mode) */}
-          {showFocusMode && (
-            <FocusModeSelector
-              value={focusMode}
-              onChange={setFocusMode}
-              compact={isCompact}
-              disabled={isDisabled}
-              className={isCompact ? '' : 'mr-2'}
-            />
-          )}
-
-          {/* Mode toggle */}
-          {showModeToggle && (
+          {/* Auto-read toggle (speaker) - right side */}
+          {ttsSupported && (
             <button
-              onClick={handleModeToggle}
-              className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
-              title={isSplitMode ? t('aiChat.expand', 'Expand') : t('aiChat.collapse', 'Collapse')}
+              onClick={() => {
+                if (autoReadEnabled && isSpeaking) {
+                  stopSpeaking();
+                }
+                setAutoReadEnabled(!autoReadEnabled);
+              }}
+              className={`p-1.5 rounded-lg transition-colors ${
+                autoReadEnabled
+                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30'
+                  : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+              }`}
+              title={autoReadEnabled 
+                ? t('aiChat.autoReadOff', 'Wyłącz czytanie na głos') 
+                : t('aiChat.autoReadOn', 'Włącz czytanie na głos')}
             >
-              {isSplitMode ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
+              {autoReadEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
             </button>
           )}
         </div>
@@ -809,9 +847,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         id="chat-input"
         className={`${isCompact ? 'p-2' : 'p-3'} border-t border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950`}
       >
-        {/* Context indicator above input */}
-        <InputContextBadge context={workspaceContext || null} />
-
         <EnhancedChatInput
           onSend={handleSendMessage}
           disabled={isDisabled}

@@ -157,9 +157,9 @@ const ProjectIntelligenceView = React.lazy(() =>
   import('@/views/ProjectIntelligenceView').then((m) => ({ default: m.ProjectIntelligenceView }))
 );
 
-// Interview Module (new)
-const InterviewView = React.lazy(() =>
-  import('@/views/InterviewView').then((m) => ({ default: m.InterviewView }))
+// Interview Module - New Hub (ModuleHub pattern) - BCG Enterprise Level
+const InterviewHub = React.lazy(() =>
+  import('@/components/Interview/InterviewHub').then((m) => ({ default: m.InterviewHub }))
 );
 
 // AI Actions
@@ -299,6 +299,9 @@ export const AppRoutes: React.FC = () => {
     toggleTheme,
     setNavigateFn,
     isAuthInitializing,
+    // Demo slice
+    setDemoMode,
+    resetDemoState,
   } = useAppStore();
 
   const breadcrumbs = useBreadcrumbs();
@@ -370,6 +373,41 @@ export const AppRoutes: React.FC = () => {
     }
 
     const validUser = user as User;
+    // Demo sessions should only be enabled for demo accounts and demo-button entry.
+    // If a regular user logs in after previously starting a demo session, we must clear stale flags.
+    const DEMO_EMAILS = new Set(['piotr.wisniewski@demo.com']);
+    const FORCE_DEMO_OFF_EMAIL = 'piotr.wisniewski@dbr77.com';
+    const isDemoUser = (validUser as any).isDemo === true || DEMO_EMAILS.has(validUser.email);
+
+    try {
+      if (isDemoUser) {
+        sessionStorage.setItem('isDemo', 'true');
+      } else {
+        sessionStorage.removeItem('isDemo');
+        localStorage.removeItem('consultinity_demo_session');
+        localStorage.removeItem('demo_events');
+        // Ensure "demo org overlay" mode is OFF for normal users
+        setDemoMode(false);
+        resetDemoState();
+      }
+    } catch {
+      // ignore storage errors
+    }
+
+    // Hard override: this account should never have demo mode enabled.
+    if (validUser.email === FORCE_DEMO_OFF_EMAIL) {
+      try {
+        sessionStorage.removeItem('isDemo');
+        localStorage.removeItem('consultinity_demo_session');
+        localStorage.removeItem('demo_events');
+      } catch {
+        // ignore
+      }
+      setDemoMode(false);
+      resetDemoState();
+      (validUser as any).isDemo = false;
+    }
+
     const authenticatedUser: User = {
       ...validUser,
       isAuthenticated: true,
@@ -595,15 +633,13 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Discovery Consultant - AI Discovery with Canvas */}
+        {/* Discovery Consultant - Redirects to Interview Hub */}
         <Route
           path={ROUTES.DISCOVERY_CONSULTANT}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Discovery Consultant']}>
+            <MainLayout breadcrumbs={breadcrumbs || ['Interview']} noPadding>
               <RouteErrorBoundary>
-                <AnimationWrapper variant="fade">
-                  <DiscoveryConsultantView />
-                </AnimationWrapper>
+                <InterviewHub />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -626,13 +662,13 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Interview Module */}
+        {/* Interview Module - New Hub (ModuleHub pattern) */}
         <Route
           path={ROUTES.INTERVIEW}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Interview']} noPadding>
               <RouteErrorBoundary>
-                <InterviewView />
+                <InterviewHub />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -643,7 +679,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Interview']} noPadding>
               <RouteErrorBoundary>
-                <InterviewView />
+                <InterviewHub />
               </RouteErrorBoundary>
             </MainLayout>
           }

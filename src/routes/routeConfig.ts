@@ -418,6 +418,27 @@ export function getAppViewFromRoute(path: string): AppView | null {
 }
 
 /**
+ * Maps a URL path (including nested routes) to an AppView.
+ * Uses exact route matches first, then falls back to module root prefixes.
+ */
+export function getAppViewFromPath(path: string): AppView | null {
+  const normalized = path.replace(/\/+$/, '') || '/';
+
+  const exact = getAppViewFromRoute(normalized);
+  if (exact) return exact;
+
+  if (normalized.startsWith(ROUTES.SETTINGS.ROOT)) return AppView.SETTINGS_PROFILE_MODULE;
+  if (normalized.startsWith(ROUTES.ADMIN.ROOT)) return AppView.ADMIN_DASHBOARD;
+  if (normalized.startsWith(ROUTES.PARTNER.LANDING)) return AppView.PARTNER_LANDING;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.ROOT)) return AppView.SUPERADMIN_OVERVIEW;
+  if (normalized.startsWith(ROUTES.ASSESSMENT.ROOT)) return AppView.ASSESSMENT_OVERVIEW;
+  if (normalized.startsWith(ROUTES.DISCOVERY_TOOLS.ROOT)) return AppView.DISCOVERY_TOOLS;
+  if (normalized.startsWith(ROUTES.CONTEXT_BUILDER.ROOT)) return AppView.CONTEXT_BUILDER;
+
+  return null;
+}
+
+/**
  * Validates that all AppView enum values have corresponding route mappings
  * Call this during development to catch missing mappings early
  */

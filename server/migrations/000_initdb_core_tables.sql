@@ -2150,7 +2150,8 @@ CREATE TABLE IF NOT EXISTS report_edit_history (
 );
 
 -- Add missing columns to existing tables
-ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS token_jti TEXT UNIQUE;
+ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS token_jti TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_sessions_token_unique ON user_sessions(token_jti);
 ALTER TABLE login_history ADD COLUMN IF NOT EXISTS organization_id TEXT REFERENCES organizations(id) ON DELETE SET NULL;
 ALTER TABLE system_feedback ADD COLUMN IF NOT EXISTS type TEXT;
 ALTER TABLE system_feedback ADD COLUMN IF NOT EXISTS user_name TEXT;

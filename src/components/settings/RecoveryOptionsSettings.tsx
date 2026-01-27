@@ -29,7 +29,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
 import { User } from '../../types';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/primitives/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import {
   Dialog,

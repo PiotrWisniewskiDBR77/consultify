@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { UnifiedChatPanel } from '../components/AIChat/UnifiedChatPanel';
 import { AIFreezeBanner } from '../components/AIFreezeBanner';
+import { AccessBlockedModal } from '../components/access/AccessBlockedModal';
 import { DemoSessionManager } from '../components/demo/DemoSessionManager';
 import { DocumentSidePanel } from '../components/documents/DocumentSidePanel';
 import { DocumentToggleButton } from '../components/documents/DocumentToggleButton';
@@ -16,10 +17,8 @@ import { UserProfileMenu } from '../components/layout/UserProfileMenu';
 import { LLMSelector } from '../components/LLMSelector';
 import { BottomNavigation } from '../components/navigation/BottomNavigation';
 import { Sidebar } from '../components/navigation/Sidebar';
-import { PMOStatusBar } from '../components/PMO/PMOStatusBar';
 import { SystemHealth } from '../components/SystemHealth';
 import { TaskDropdown } from '../components/TaskDropdown';
-import { TrialBanner } from '../components/Trial/TrialBanner';
 import { TrialExpiredGate } from '../components/Trial/TrialExpiredGate';
 import { useAppStore } from '../store/useAppStore';
 import { useConversationStore } from '../store/useConversationStore';
@@ -163,6 +162,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       <DocumentSidePanel />
       <FeedbackSidePanel />
 
+      {/* Global access/paywall modal */}
+      <AccessBlockedModal />
+
       {/* Demo Session Manager - Handles banner, tour, prompts, exit intent */}
       <DemoSessionManager />
 
@@ -184,7 +186,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
       <main
         className={`
-                    flex-1 flex flex-col overflow-hidden relative w-full h-full transition-all duration-300
+                    flex-1 flex flex-col overflow-hidden relative w-full h-full min-h-0 transition-all duration-300
                     ${isSidebarCollapsed ? 'lg:ltr:pl-16 lg:rtl:pr-16' : 'lg:ltr:pl-64 lg:rtl:pr-64'}
                     ${currentUser?.isDemo ? 'mt-10' : ''}
                     pb-16 md:pb-0
@@ -193,7 +195,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         {/* Header */}
         <div className="flex flex-col z-30 shrink-0">
           <AIFreezeBanner />
-          <TrialBanner />
 
           <div className="h-12 border-b border-slate-100 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-sm dark:shadow-none flex items-center justify-between px-3 transition-colors duration-300">
             <div className="flex items-center gap-3">
@@ -245,8 +246,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         </div>
 
         <TrialExpiredGate>
-          {!noPadding && currentView !== AppView.AI_CHAT && <PMOStatusBar />}
-          <div className={`flex-1 overflow-hidden relative flex ${noPadding ? '' : 'p-0'}`}>
+          <div className={`flex-1 overflow-hidden relative flex min-h-0 ${noPadding ? '' : 'p-0'}`}>
             {/* Chat Panel - Left Side */}
             {shouldShowChatPanel && !isChatCollapsed && (
               <>
@@ -272,7 +272,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             )}
 
             {/* Main Content */}
-            <div className="flex-1 overflow-hidden flex flex-col">{children}</div>
+            <div className="flex-1 overflow-hidden flex flex-col min-h-0 min-w-0">{children}</div>
           </div>
         </TrialExpiredGate>
       </main>

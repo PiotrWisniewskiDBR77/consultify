@@ -1,0 +1,483 @@
+/**
+ * NewAssessmentModal
+ * Modal component for creating new assessments with framework selection and name input
+ */
+
+import { Activity, AlertCircle, Cpu, Database, Layers, Loader2, Workflow, X } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
+
+import { Api } from '@/services/api';
+import { useAppStore } from '@/store/useAppStore';
+
+// Types
+export type AssessmentFramework = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
+
+export interface NewAssessmentData {
+  id: string;
+  name: string;
+  assessmentType: AssessmentFramework;
+  status: string;
+}
+
+interface NewAssessmentModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess?: (assessment: NewAssessmentData) => void;
+}
+
+// Framework metadata
+const FRAMEWORKS: {
+  value: AssessmentFramework;
+  name: string;
+  shortName: string;
+  description: string;
+  icon: React.ReactNode;
+  gradient: string;
+  border: string;
+  textColor: string;
+}[] = [
+  {
+    value: 'DRD',
+    name: 'Digital Readiness Diagnosis',
+    shortName: 'DRD',
+    description: 'Comprehensive digital maturity assessment across 8 key dimensions',
+    icon: <Activity size={20} />,
+    gradient: 'from-purple-500/20 to-purple-600/10',
+    border: 'border-purple-500/30 hover:border-purple-500/60',
+    textColor: 'text-purple-400',
+  },
+  {
+    value: 'SIRI',
+    name: 'Smart Industry Readiness Index',
+    shortName: 'SIRI',
+    description:
+      'Industry 4.0 readiness framework focusing on process, technology and organization',
+    icon: <Cpu size={20} />,
+    gradient: 'from-blue-500/20 to-blue-600/10',
+    border: 'border-blue-500/30 hover:border-blue-500/60',
+    textColor: 'text-blue-400',
+  },
+  {
+    value: 'ADMA',
+    name: 'Advanced Digital Maturity Assessment',
+    shortName: 'ADMA',
+    description: 'Advanced assessment model for digital transformation capabilities',
+    icon: <Database size={20} />,
+    gradient: 'from-teal-500/20 to-teal-600/10',
+    border: 'border-teal-500/30 hover:border-teal-500/60',
+    textColor: 'text-teal-400',
+  },
+  {
+    value: 'CMMI',
+    name: 'Capability Maturity Model Integration',
+    shortName: 'CMMI',
+    description: 'Process improvement framework for software and product development',
+    icon: <Layers size={20} />,
+    gradient: 'from-orange-500/20 to-orange-600/10',
+    border: 'border-orange-500/30 hover:border-orange-500/60',
+    textColor: 'text-orange-400',
+  },
+  {
+    value: 'LEAN',
+    name: 'Lean 4.0',
+    shortName: 'LEAN',
+    description: 'Lean manufacturing principles integrated with Industry 4.0 technologies',
+    icon: <Workflow size={20} />,
+    gradient: 'from-green-500/20 to-green-600/10',
+    border: 'border-green-500/30 hover:border-green-500/60',
+    textColor: 'text-green-400',
+  },
+];
+
+export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
+  isOpen,
+  onClose,
+  onSuccess,
+}) => {
+  const { currentProjectId } = useAppStore();
+  const modalRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  // Form state
+  const [selectedFramework, setSelectedFramework] = useState<AssessmentFramework | null>(null);
+  const [assessmentName, setAssessmentName] = useState('');
+  const [assessmentDescription, setAssessmentDescription] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Step state (1: select framework, 2: enter details)
+  const [step, setStep] = useState<1 | 2>(1);
+
+  // Reset form when modal opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedFramework(null);
+      setAssessmentName('');
+      setAssessmentDescription('');
+      setError(null);
+      setStep(1);
+    }
+  }, [isOpen]);
+
+  // Focus name input when entering step 2
+  useEffect(() => {
+    if (step === 2 && nameInputRef.current) {
+      nameInputRef.current.focus();
+    }
+  }, [step]);
+
+  // Handle ESC key to close
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Handle click outside
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.target === e.currentTarget) {
+        onClose();
+      }
+    },
+    [onClose]
+  );
+
+  // Handle framework selection
+  const handleFrameworkSelect = useCallback((framework: AssessmentFramework) => {
+    setSelectedFramework(framework);
+    // Auto-generate a default name
+    const frameworkData = FRAMEWORKS.find((f) => f.value === framework);
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    setAssessmentName(`${frameworkData?.shortName || framework} Assessment - ${dateStr}`);
+    setStep(2);
+  }, []);
+
+  // Handle back to framework selection
+  const handleBack = useCallback(() => {
+    setStep(1);
+    setError(null);
+  }, []);
+
+  // Handle form submission
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+
+      if (!selectedFramework) {
+        setError('Please select a framework');
+        return;
+      }
+
+      if (!assessmentName.trim()) {
+        setError('Please enter an assessment name');
+        return;
+      }
+
+      if (assessmentName.trim().length > 200) {
+        setError('Assessment name must be 200 characters or less');
+        return;
+      }
+
+      setIsSubmitting(true);
+      setError(null);
+
+      try {
+        const response = await Api.createAssessmentSession({
+          assessmentType: selectedFramework,
+          name: assessmentName.trim(),
+          description: assessmentDescription.trim() || undefined,
+          projectId: currentProjectId || null,
+        });
+
+        toast.success('Assessment created successfully');
+
+        onSuccess?.({
+          id: response.id,
+          name: assessmentName.trim(),
+          assessmentType: selectedFramework,
+          status: response.status || 'DRAFT',
+        });
+
+        onClose();
+      } catch (err: any) {
+        const message = err?.message || 'Failed to create assessment';
+        setError(message);
+        toast.error(message);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [selectedFramework, assessmentName, currentProjectId, onSuccess, onClose]
+  );
+
+  // Get selected framework data
+  const selectedFrameworkData = FRAMEWORKS.find((f) => f.value === selectedFramework);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onClick={handleBackdropClick}
+    >
+      <div
+        ref={modalRef}
+        className="bg-navy-900 border border-navy-700 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl"
+        role="dialog"
+        aria-labelledby="modal-title"
+        aria-modal="true"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-navy-700">
+          <div>
+            <h2 id="modal-title" className="text-lg font-semibold text-white">
+              {step === 1 ? 'Select Framework' : 'New Assessment'}
+            </h2>
+            <p className="text-sm text-slate-400 mt-0.5">
+              {step === 1
+                ? 'Choose an assessment framework to get started'
+                : `Creating ${selectedFrameworkData?.shortName} assessment`}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-navy-700 transition-colors"
+            aria-label="Close modal"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+          {step === 1 ? (
+            /* Step 1: Framework Selection */
+            <div className="grid grid-cols-1 gap-3">
+              {FRAMEWORKS.map((framework) => (
+                <button
+                  key={framework.value}
+                  onClick={() => handleFrameworkSelect(framework.value)}
+                  className={`
+                    flex items-start gap-4 w-full p-4 rounded-xl text-left
+                    bg-gradient-to-br ${framework.gradient}
+                    border ${framework.border}
+                    transition-all duration-200
+                    hover:shadow-lg hover:-translate-y-0.5
+                  `}
+                >
+                  <div
+                    className={`
+                      flex-shrink-0 p-2.5 rounded-lg
+                      bg-navy-800/50 ${framework.textColor}
+                    `}
+                  >
+                    {framework.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className={`font-mono text-sm font-bold ${framework.textColor}`}>
+                        {framework.shortName}
+                      </span>
+                      <span className="text-white font-medium">{framework.name}</span>
+                    </div>
+                    <p className="text-sm text-slate-400 mt-1 line-clamp-2">
+                      {framework.description}
+                    </p>
+                  </div>
+                  <svg
+                    className="flex-shrink-0 w-5 h-5 text-slate-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </button>
+              ))}
+            </div>
+          ) : (
+            /* Step 2: Assessment Details Form */
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Selected Framework Display */}
+              {selectedFrameworkData && (
+                <div
+                  className={`
+                    flex items-center gap-3 p-3 rounded-lg
+                    bg-gradient-to-br ${selectedFrameworkData.gradient}
+                    border ${selectedFrameworkData.border.replace('hover:', '')}
+                  `}
+                >
+                  <div
+                    className={`p-2 rounded-lg bg-navy-800/50 ${selectedFrameworkData.textColor}`}
+                  >
+                    {selectedFrameworkData.icon}
+                  </div>
+                  <div>
+                    <div
+                      className={`font-mono text-sm font-bold ${selectedFrameworkData.textColor}`}
+                    >
+                      {selectedFrameworkData.shortName}
+                    </div>
+                    <div className="text-sm text-slate-300">{selectedFrameworkData.name}</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    className="ml-auto text-sm text-slate-400 hover:text-white transition-colors"
+                  >
+                    Change
+                  </button>
+                </div>
+              )}
+
+              {/* Assessment Name Input */}
+              <div>
+                <label
+                  htmlFor="assessment-name"
+                  className="block text-sm font-medium text-slate-300 mb-2"
+                >
+                  Assessment Name
+                </label>
+                <input
+                  ref={nameInputRef}
+                  id="assessment-name"
+                  type="text"
+                  value={assessmentName}
+                  onChange={(e) => setAssessmentName(e.target.value)}
+                  placeholder="Enter assessment name..."
+                  maxLength={200}
+                  className="
+                    w-full h-11 px-4 bg-navy-800 border border-navy-600 rounded-lg
+                    text-white placeholder-slate-500
+                    focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/25
+                    transition-colors
+                  "
+                />
+                <div className="flex justify-between mt-1.5">
+                  <span className="text-xs text-slate-500">
+                    Give your assessment a descriptive name
+                  </span>
+                  <span
+                    className={`text-xs ${assessmentName.length > 180 ? 'text-amber-400' : 'text-slate-500'}`}
+                  >
+                    {assessmentName.length}/200
+                  </span>
+                </div>
+              </div>
+
+              {/* Assessment Description Input */}
+              <div>
+                <label
+                  htmlFor="assessment-description"
+                  className="block text-sm font-medium text-slate-300 mb-2"
+                >
+                  Description <span className="text-slate-500">(optional)</span>
+                </label>
+                <textarea
+                  id="assessment-description"
+                  value={assessmentDescription}
+                  onChange={(e) => setAssessmentDescription(e.target.value)}
+                  placeholder="Describe the scope and objectives of this assessment..."
+                  maxLength={1000}
+                  rows={3}
+                  className="
+                    w-full px-4 py-3 bg-navy-800 border border-navy-600 rounded-lg
+                    text-white placeholder-slate-500 resize-none
+                    focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/25
+                    transition-colors
+                  "
+                />
+                <div className="flex justify-between mt-1.5">
+                  <span className="text-xs text-slate-500">
+                    Optional context for this assessment
+                  </span>
+                  <span
+                    className={`text-xs ${assessmentDescription.length > 900 ? 'text-amber-400' : 'text-slate-500'}`}
+                  >
+                    {assessmentDescription.length}/1000
+                  </span>
+                </div>
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="flex items-center gap-2 p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg">
+                  <AlertCircle size={16} className="text-rose-400 flex-shrink-0" />
+                  <span className="text-sm text-rose-400">{error}</span>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="
+                    px-4 py-2.5 rounded-lg text-sm font-medium
+                    text-slate-400 hover:text-white
+                    border border-navy-600 hover:bg-navy-800
+                    transition-colors
+                  "
+                  disabled={isSubmitting}
+                >
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  className="
+                    flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium
+                    bg-gradient-to-r from-primary-500 to-primary-600
+                    text-white
+                    hover:from-primary-400 hover:to-primary-500
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    transition-all
+                  "
+                  disabled={isSubmitting || !assessmentName.trim()}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Assessment'
+                  )}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+
+        {/* Footer - Step 1 only */}
+        {step === 1 && (
+          <div className="px-6 py-4 border-t border-navy-700 bg-navy-950/50">
+            <button
+              onClick={onClose}
+              className="w-full py-2.5 text-sm text-slate-400 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default NewAssessmentModal;

@@ -23,7 +23,7 @@ describe('DemoBanner Component', () => {
     it('displays demo email', () => {
         render(<DemoBanner />);
 
-        expect(screen.getByText(/demo@legolex.com/i)).toBeInTheDocument();
+        expect(screen.getByText(/piotr\.wisniewski@demo\.com/i)).toBeInTheDocument();
     });
 
     it('shows limitations button', () => {

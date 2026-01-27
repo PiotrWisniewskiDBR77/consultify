@@ -1,13 +1,31 @@
 /**
  * ModuleHub Types
  * Shared types for Assessment and Discovery Tools modules
+ *
+ * ItemStatus uses canonical 11-status initiative lifecycle.
+ * Documentation: wdrozenia/standards/03-STATUS-WORKFLOW.md
  */
 
-export type ModuleTab = 'list' | 'reports' | 'initiatives' | 'raid' | 'decisions';
+export type ModuleTab = 'list' | 'reports' | 'initiatives' | 'raid' | 'decisions' | 'assignments';
 
 export type ViewMode = 'table' | 'grid' | 'kanban' | 'timeline' | 'calendar' | 'matrix';
 
-export type ItemStatus = 'draft' | 'in_review' | 'approved' | 'completed';
+/**
+ * Canonical Initiative Status (11 statuses)
+ * Lifecycle: DRAFT → REVIEW → PROMOTED → PLANNING → APPROVED → SCHEDULED → EXECUTING → DONE → TRACKING
+ */
+export type ItemStatus =
+  | 'DRAFT'
+  | 'REVIEW'
+  | 'PROMOTED'
+  | 'PLANNING'
+  | 'APPROVED'
+  | 'SCHEDULED'
+  | 'EXECUTING'
+  | 'BLOCKED'
+  | 'DONE'
+  | 'TRACKING'
+  | 'CANCELLED';
 
 export interface OpenDocument {
   id: string;

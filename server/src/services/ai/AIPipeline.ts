@@ -753,40 +753,12 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
     request: AIPipelineRequest,
     capability: AICapability
   ): Promise<{ provider: string; model: string; maxTokens: number; endpoint?: string }> {
-    // Use Ollama as default local provider if available, but check for fallback
-    // Change these defaults to use a different provider/model:
-    // Examples: 'openai', 'google', 'deepseek', 'anthropic', etc.
-    // For models: 'gpt-4o', 'gpt-4o-mini', 'gemini-2.0-flash', 'deepseek-chat', etc.
-    let provider = request.options?.provider || process.env.DEFAULT_AI_PROVIDER || 'openai';
-    let model = request.options?.model || process.env.DEFAULT_AI_MODEL || 'gpt-4o-mini';
-    let endpoint: string | undefined = undefined;
+    // Use Ollama as default local provider if available
+    const provider = request.options?.provider || 'ollama';
+    const model = request.options?.model || 'gemma3:27b';
 
     // For Ollama, use local endpoint
-    if (provider === 'ollama') {
-      endpoint = 'http://localhost:11434/v1';
-      
-      // Try to get a fallback provider if Ollama is not explicitly requested
-      // This allows graceful fallback when Ollama is unavailable
-      if (!request.options?.provider) {
-        try {
-          const configService = await import('./llmConfigService.js').then(m => m.llmConfigService).catch(() => null);
-          if (configService) {
-            const fallback = await configService.getNextFallback(['ollama'], 'STANDARD');
-            if (fallback) {
-              logger.info(
-                `[AIPipeline] Ollama not explicitly requested, using fallback: ${fallback.provider}/${fallback.model_id}`
-              );
-              provider = fallback.provider;
-              model = fallback.model_id || model;
-              endpoint = fallback.endpoint || undefined;
-            }
-          }
-        } catch (error) {
-          // If fallback lookup fails, continue with Ollama (will fail gracefully later)
-          logger.warn(`[AIPipeline] Fallback lookup failed: ${(error as Error).message}`);
-        }
-      }
-    }
+    const endpoint = provider === 'ollama' ? 'http://localhost:11434/v1' : undefined;
 
     logger.info(
       `[AIPipeline] Selected model: ${provider}/${model}, endpoint: ${endpoint || 'default'}`

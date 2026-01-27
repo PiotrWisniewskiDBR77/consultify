@@ -71,16 +71,6 @@ if (!isTest && !process.env.SKIP_ENV_VALIDATION) {
   }
 }
 
-// Run startup configuration checks
-if (!isTest) {
-  try {
-    const { runStartupChecks } = await import('./utils/startupChecks.js');
-    await runStartupChecks();
-  } catch (error: any) {
-    logger.warn('[Server] Startup checks failed:', error.message);
-  }
-}
-
 // Trust proxy (required for Railway and other reverse proxies)
 app.set('trust proxy', 1);
 
@@ -179,7 +169,8 @@ if (!isTest || process.env.E2E_MODE === 'true') {
       }
 
       // Schedule periodic schema verification (every 5 minutes)
-      setInterval(
+      // Store interval reference for cleanup on shutdown
+      const healthCheckInterval = setInterval(
         async () => {
           try {
             const { verifyDatabaseHealth } = await import('./database/DatabaseInitializer.js');
@@ -193,7 +184,10 @@ if (!isTest || process.env.E2E_MODE === 'true') {
           }
         },
         5 * 60 * 1000
-      ); // Every 5 minutes
+      ) as NodeJS.Timeout; // Every 5 minutes
+      
+      // Store interval in global scope for cleanup
+      (global as any).__HEALTH_CHECK_INTERVAL__ = healthCheckInterval;
     } catch (err: any) {
       const error = err as Error;
       logger.error(`[Server] Database initialization failed: ${error.message}`);
@@ -357,42 +351,42 @@ app.use(
   helmet({
     contentSecurityPolicy: isProduction
       ? {
-        directives: {
-          defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com'],
-          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-          imgSrc: [
-            "'self'",
-            'data:',
-            'blob:',
-            'https://www.transparenttextures.com',
-            'https://*.stripe.com',
-            'https://www.gravatar.com',
-            'https://*.googleusercontent.com',
-          ],
-          connectSrc: [
-            "'self'",
-            'wss:',
-            'https://api.openai.com',
-            'https://generativelanguage.googleapis.com',
-            'https://api.anthropic.com',
-            'https://api.mistral.ai',
-            'https://api.stripe.com',
-            'https://*.sentry.io',
-          ],
-          fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
-          objectSrc: ["'none'"],
-          mediaSrc: ["'self'", 'blob:'],
-          frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
-          workerSrc: ["'self'", 'blob:'],
-          childSrc: ["'self'", 'blob:'],
-          formAction: ["'self'"],
-          frameAncestors: ["'none'"],
-          baseUri: ["'self'"],
-          upgradeInsecureRequests: isProduction ? [] : null,
-        },
-        reportOnly: false,
-      }
+          directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com'],
+            styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+            imgSrc: [
+              "'self'",
+              'data:',
+              'blob:',
+              'https://www.transparenttextures.com',
+              'https://*.stripe.com',
+              'https://www.gravatar.com',
+              'https://*.googleusercontent.com',
+            ],
+            connectSrc: [
+              "'self'",
+              'wss:',
+              'https://api.openai.com',
+              'https://generativelanguage.googleapis.com',
+              'https://api.anthropic.com',
+              'https://api.mistral.ai',
+              'https://api.stripe.com',
+              'https://*.sentry.io',
+            ],
+            fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
+            objectSrc: ["'none'"],
+            mediaSrc: ["'self'", 'blob:'],
+            frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
+            workerSrc: ["'self'", 'blob:'],
+            childSrc: ["'self'", 'blob:'],
+            formAction: ["'self'"],
+            frameAncestors: ["'none'"],
+            baseUri: ["'self'"],
+            upgradeInsecureRequests: isProduction ? [] : null,
+          },
+          reportOnly: false,
+        }
       : false,
     hsts: {
       maxAge: 31536000,
@@ -626,11 +620,10 @@ app.use((req, res, next) => {
   next();
 });
 if (isTest && process.env.ENABLE_TEST_GATEWAY !== 'true') {
-  const managementReportsModule = await import('./routes/managementReports.routes.js');
-  const managementReportsRoutes = managementReportsModule.default || managementReportsModule;
-  if (managementReportsRoutes && typeof managementReportsRoutes === 'object' && 'use' in managementReportsRoutes) {
-    app.use('/api/management-reports', managementReportsRoutes as any);
-  }
+  const managementReportsRoutes = await import('./routes/managementReports.routes.js').then(
+    (m) => m.default || m
+  );
+  app.use('/api/management-reports', managementReportsRoutes as any);
 } else {
   const { apiGateway } = await import('./Gateway.js');
   apiGateway.initializeRoutes(app);
@@ -643,11 +636,6 @@ if (isTest && process.env.ENABLE_TEST_GATEWAY !== 'true') {
 // Determine frontend dist path
 // In Docker: frontend is at /app/dist, backend runs from /app/server/dist/src or /app/server/dist
 // In development: frontend is at project root /dist
-console.log('[Server] ==========================================');
-console.log('[Server] Setting up frontend static file serving...');
-console.log(`[Server] NODE_ENV: ${process.env.NODE_ENV}`);
-console.log(`[Server] __dirname: ${__dirname}`);
-
 logger.info('[Server] ==========================================');
 logger.info('[Server] Setting up frontend static file serving...');
 logger.info(`[Server] NODE_ENV: ${process.env.NODE_ENV}`);
@@ -660,34 +648,33 @@ if (process.env.NODE_ENV === 'production') {
   // Production (Docker): frontend is at /app/dist
   frontendDistPath = '/app/dist';
 
-  console.log(`[Server] Production mode - using frontend path: ${frontendDistPath}`);
+  logger.info(`[Server] Production mode - using frontend path: ${frontendDistPath}`);
   logger.info(`[Server] Production mode - using frontend path: ${frontendDistPath}`);
 
   // Verify it exists
   if (fs.existsSync(frontendDistPath)) {
     const indexPath = path.join(frontendDistPath, 'index.html');
     if (fs.existsSync(indexPath)) {
-      console.log(`[Server] ✓ Frontend index.html confirmed at: ${indexPath}`);
       logger.info(`[Server] ✓ Frontend index.html confirmed at: ${indexPath}`);
     } else {
-      console.error(`[Server] ✗ Frontend index.html NOT found at: ${indexPath}`);
+      logger.error(`[Server] ✗ Frontend index.html NOT found at: ${indexPath}`);
       logger.error(`[Server] ✗ Frontend index.html NOT found at: ${indexPath}`);
     }
   } else {
-    console.error(`[Server] ✗ Frontend dist directory NOT found at: ${frontendDistPath}`);
+    logger.error(`[Server] ✗ Frontend dist directory NOT found at: ${frontendDistPath}`);
     logger.error(`[Server] ✗ Frontend dist directory NOT found at: ${frontendDistPath}`);
   }
 } else {
   // Development: frontend is at project root /dist
   frontendDistPath = path.join(__dirname, '../../dist');
-  console.log(`[Server] Frontend dist path (dev): ${frontendDistPath}`);
+  logger.info(`[Server] Frontend dist path (dev): ${frontendDistPath}`);
   logger.info(`[Server] Frontend dist path (dev): ${frontendDistPath}`);
   const indexPath = path.join(frontendDistPath, 'index.html');
   if (fs.existsSync(indexPath)) {
-    console.log(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
+    logger.info(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
     logger.info(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
   } else {
-    console.warn(`[Server] Frontend index.html NOT found at: ${indexPath}`);
+    logger.warn(`[Server] Frontend index.html NOT found at: ${indexPath}`);
     logger.warn(`[Server] Frontend index.html NOT found at: ${indexPath}`);
   }
 }
@@ -695,14 +682,13 @@ if (process.env.NODE_ENV === 'production') {
 // Store globally for test route and ensure it's set
 try {
   (global as any).frontendDistPath = frontendDistPath;
-  console.log(`[Server] ✓ Stored frontend dist path globally: ${frontendDistPath}`);
   logger.info(`[Server] ✓ Stored frontend dist path globally: ${frontendDistPath}`);
 } catch (e) {
-  console.error(`[Server] Error storing frontend dist path: ${e}`);
+  logger.error(`[Server] Error storing frontend dist path: ${e}`);
   logger.error(`[Server] Error storing frontend dist path: ${e}`);
 }
 
-console.log(`[Server] Final frontend dist path: ${frontendDistPath}`);
+logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
 logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
 
 // Helper function to serve index.html
@@ -710,14 +696,9 @@ const serveIndexHtml = (req: Request, res: Response): void => {
   // Use absolute path for res.sendFile (required for Railway/Docker)
   const indexPath = path.resolve(frontendDistPath, 'index.html');
 
-  console.log(`[Server] Serving index.html for ${req.path}`);
-  console.log(`[Server] Frontend dist path: ${frontendDistPath}`);
-  console.log(`[Server] Index file path: ${indexPath}`);
-  console.log(`[Server] Index file exists: ${fs.existsSync(indexPath)}`);
   logger.info(`[Server] Serving index.html for ${req.path} from ${indexPath}`);
 
   if (!fs.existsSync(indexPath)) {
-    console.error(`[Server] Frontend index.html not found at: ${indexPath}`);
     logger.error(`[Server] Frontend index.html not found at: ${indexPath}`);
     res.status(500).json({
       error: {
@@ -735,7 +716,6 @@ const serveIndexHtml = (req: Request, res: Response): void => {
   // Use absolute path - res.sendFile works with absolute paths
   res.sendFile(indexPath, (err: Error | null) => {
     if (err) {
-      console.error(`[Server] Error sending index.html: ${err.message}`);
       logger.error(`[Server] Error sending index.html: ${err.message}`);
       if (!res.headersSent) {
         res.status(500).json({
@@ -748,21 +728,18 @@ const serveIndexHtml = (req: Request, res: Response): void => {
         });
       }
     } else {
-      console.log(`[Server] ✓ Successfully sent index.html for ${req.path}`);
       logger.info(`[Server] ✓ Successfully sent index.html for ${req.path}`);
     }
   });
 };
 
 // Explicit root route handler - MUST be before static middleware
-console.log(`[Server] Registering root route handler with frontendDistPath: ${frontendDistPath}`);
 logger.info(`[Server] Registering root route handler with frontendDistPath: ${frontendDistPath}`);
 
 app.get('/', (req: Request, res: Response) => {
-  console.log(`[Server] ===== Root route handler EXECUTED for: ${req.path} =====`);
   logger.info(`[Server] ===== Root route handler EXECUTED for: ${req.path} =====`);
-  console.log(`[Server] frontendDistPath: ${frontendDistPath}`);
-  console.log(`[Server] indexPath will be: ${path.join(frontendDistPath, 'index.html')}`);
+  logger.debug(`[Server] frontendDistPath: ${frontendDistPath}`);
+  logger.debug(`[Server] indexPath will be: ${path.join(frontendDistPath, 'index.html')}`);
   serveIndexHtml(req, res);
 });
 
@@ -877,36 +854,88 @@ const startServer = true; // Always start server when running via tsx
 
 if (startServer && (!isTest || process.env.E2E_MODE === 'true')) {
   logger.info('[Server] Starting HTTP server after route registration...');
-  console.log('[Server] Starting HTTP server after route registration...');
+  logger.info('[Server] Starting HTTP server after route registration...');
   const server = http.createServer(app);
-  const shutdownManager = getShutdownManager(30000); // 30 second timeout
+  // ShutdownManager will be used in graceful shutdown handler
+  // const shutdownManager = getShutdownManager(30000); // 30 second timeout
 
   // Handle server errors
   server.on('error', (err: NodeJS.ErrnoException) => {
     logger.error('[Server] HTTP Server Error:', err);
-    console.error('[Server] HTTP Server Error:', err);
     if (err.code === 'EADDRINUSE') {
       logger.error(`Port ${PORT} is already in use`);
       process.exit(1);
     }
   });
 
+  // Interval reference is stored in global scope during database initialization
+
   // Register shutdown handlers
-  process.on('SIGTERM', () => {
-    logger.info('[Shutdown] Received SIGTERM, closing server...');
-    server.close(() => process.exit(0));
-  });
-  process.on('SIGINT', () => {
-    logger.info('[Shutdown] Received SIGINT, closing server...');
-    server.close(() => process.exit(0));
-  });
+  const gracefulShutdown = async (signal: string) => {
+    logger.info(`[Shutdown] Received ${signal}, initiating graceful shutdown...`);
+    
+    // Stop accepting new connections
+    server.close(async () => {
+      logger.info('[Shutdown] HTTP server closed');
+      
+      try {
+        // Clear health check interval (stored in global scope)
+        const healthCheckInterval = (global as any).__HEALTH_CHECK_INTERVAL__;
+        if (healthCheckInterval) {
+          clearInterval(healthCheckInterval);
+          (global as any).__HEALTH_CHECK_INTERVAL__ = null;
+          logger.info('[Shutdown] Health check interval cleared');
+        }
+
+        // Close BullMQ queue
+        try {
+          const aiQueueModule = await import('./queues/aiQueue.js');
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+          const aiQueue: any = aiQueueModule.default;
+          if (aiQueue && typeof aiQueue.close === 'function') {
+            await aiQueue.close();
+            logger.info('[Shutdown] BullMQ queue closed');
+          }
+        } catch (err: any) {
+          logger.warn('[Shutdown] Error closing queue:', err.message);
+        }
+
+        // Shutdown database connection pool
+        try {
+          await shutdownConnectionPool();
+          logger.info('[Shutdown] Database connection pool closed');
+        } catch (err: any) {
+          logger.warn('[Shutdown] Error closing database pool:', err.message);
+        }
+
+        // Use ShutdownManager for any registered cleanups
+        const shutdownManager = getShutdownManager(10000); // 10 second timeout
+        await shutdownManager.shutdown(signal);
+
+        logger.info('[Shutdown] Graceful shutdown complete');
+        process.exit(0);
+      } catch (err: any) {
+        logger.error('[Shutdown] Error during cleanup:', err);
+        process.exit(1);
+      }
+    });
+
+    // Force exit after timeout
+    setTimeout(() => {
+      logger.error('[Shutdown] Forced shutdown after timeout');
+      process.exit(1);
+    }, 15000); // 15 second timeout
+  };
+
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
   // Start listening after all routes are registered
   server.listen(PORT, '0.0.0.0', () => {
     logger.info('✅ Server running on http://0.0.0.0:' + PORT);
     logger.info('✅ WebSocket available at ws://0.0.0.0:' + PORT + '/ws');
-    console.log(`[Server] ✅ Server started on port ${PORT}`);
-    console.log(`[Server] Frontend will be served from: ${frontendDistPath}`);
+    logger.info(`[Server] ✅ Server started on port ${PORT}`);
+    logger.info(`[Server] Frontend will be served from: ${frontendDistPath}`);
   });
 }
 

@@ -23,7 +23,7 @@ A gate is a formal review where stakeholders assess progress, evaluate deliverab
 Stage-Gate provides governance without micromanagement. Between gates, teams have autonomy. At gates, there's accountability."
 
 [SECTION 2: Consultinity's Stage-Gate Framework - 1:30-2:30]
-"Consultinity implements a configurable Stage-Gate framework. The default stages are:
+"Consultinity implements a configurable Stage-Gate framework. In Consultinity, gates are **Decisions** (auditable, with deadlines and escalation). The default stages are:
 
 Stage 1: Initiation – confirming scope, resources, and approach.
 Stage 2: Design – detailed solution design and planning.
@@ -50,7 +50,7 @@ Gate reviews shouldn't be surprises. The system provides early warning if you're
 [SECTION 4: Conducting Gate Reviews - 3:30-4:30]
 "When ready for a gate review, click 'Request Gate Review' on your initiative. This triggers a notification to gate reviewers.
 
-Gate reviewers are typically senior stakeholders, sponsors, or governance board members. They're defined in the initiative setup or organization settings.
+Gate reviewers are typically the **Business Owner / Sponsor** (final decision authority), sometimes supported by a committee voting configuration for high-value items. Reviewers are defined in the initiative setup or organization settings.
 
 The review can happen synchronously – a meeting where reviewers assess the initiative – or asynchronously through the platform.
 

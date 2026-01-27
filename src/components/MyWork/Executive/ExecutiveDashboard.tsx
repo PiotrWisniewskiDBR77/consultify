@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-nocheck
 /**
  * ExecutiveDashboard - Main executive command center
  * BCG/McKinsey style: Data-dense, scannable, actionable
@@ -74,6 +72,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   const user = useAppStore((state) => state.currentUser);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
   // Dashboard data state
@@ -104,177 +103,218 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   const userName = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Executive';
 
   // Fetch dashboard data
-  const fetchDashboardData = useCallback(async (isRefresh = false) => {
-    try {
-      if (isRefresh) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
+  const fetchDashboardData = useCallback(
+    async (isRefresh = false) => {
+      try {
+        setLoadError(null);
+        if (isRefresh) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
 
-      // Parallel API calls for performance
-      const [statsRes, decisionsRes, teamRes, tasksRes] = await Promise.allSettled([
-        Api.get('/my-work/stats?period=week'),
-        Api.get('/decisions?limit=10'),
-        Api.get('/my-work/team-workload'),
-        Api.getTasks({ assigneeId: user?.id, status: 'todo,in_progress' } as any),
-      ]);
+        // Parallel API calls for performance
+        const [statsRes, decisionsRes, teamRes, tasksRes] = await Promise.allSettled([
+          Api.get('/my-work/stats?period=week'),
+          Api.get('/decisions?limit=10'),
+          Api.get('/my-work/team-workload'),
+          Api.getTasks({ assigneeId: user?.id, status: 'todo,in_progress' } as any),
+        ]);
 
-      // Process stats
-      if (statsRes.status === 'fulfilled' && statsRes.value) {
-        const stats = statsRes.value;
-        const completionRate =
-          stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+        // Process stats
+        if (statsRes.status === 'fulfilled' && statsRes.value) {
+          const stats = statsRes.value;
+          const completionRate =
+            stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+          const onTimeRate = stats.onTimeRate || 0;
 
-        setHealthScore({
-          score: Math.round((completionRate + (stats.onTimeRate || 70)) / 2),
-          previousScore: Math.round((completionRate + (stats.onTimeRate || 70)) / 2) - 5,
-          trend: stats.trend || 'stable',
-          breakdown: {
-            execution: completionRate,
-            decisions: 75, // Placeholder
-            capacity: 82, // Placeholder
-            risk: 68, // Placeholder
-          },
-        });
-
-        setKpiData((prev) => ({
-          ...prev,
-          tasks: {
-            completed: stats.completed || 0,
-            total: stats.total || 0,
-            overdueCount: stats.byStatus?.overdue || 0,
-            onTimeRate: stats.onTimeRate || 0,
+          setHealthScore({
+            score: Math.round((completionRate + onTimeRate) / 2),
+            previousScore: Math.max(0, Math.round((completionRate + onTimeRate) / 2) - 5),
             trend: stats.trend || 'stable',
-          },
-        }));
-      }
+            breakdown: {
+              execution: completionRate,
+              decisions: 0,
+              capacity: 0,
+              risk: 0,
+            },
+          });
 
-      // Process decisions
-      if (decisionsRes.status === 'fulfilled' && decisionsRes.value) {
-        const decisionList = Array.isArray(decisionsRes.value) ? decisionsRes.value : [];
-        const pendingDecisions = decisionList.filter((d: any) =>
-          ['PENDING', 'ESCALATED'].includes(d.status)
-        );
+          setKpiData((prev) => ({
+            ...prev,
+            tasks: {
+              completed: stats.completed || 0,
+              total: stats.total || 0,
+              overdueCount: stats.byStatus?.overdue || 0,
+              onTimeRate: stats.onTimeRate || 0,
+              trend: stats.trend || 'stable',
+            },
+          }));
+        }
 
-        setDecisions(
-          pendingDecisions.map((d: any) => ({
-            id: d.id,
-            title: d.title,
-            type: d.decisionType || 'GENERAL',
-            priority: d.priority?.toLowerCase() || 'medium',
-            daysWaiting: Math.floor(
-              (Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)
-            ),
-            requestedBy: d.requestedByName,
-            projectName: d.projectName,
-          }))
-        );
+        // Process decisions
+        console.log('[ExecutiveDashboard] decisionsRes:', decisionsRes);
+        if (decisionsRes.status === 'fulfilled' && decisionsRes.value) {
+          const decisionList = Array.isArray(decisionsRes.value) ? decisionsRes.value : [];
+          console.log('[ExecutiveDashboard] decisionList:', decisionList);
+          const pendingDecisions = decisionList.filter((d: any) =>
+            ['PENDING', 'ESCALATED'].includes(d.status)
+          );
+          console.log('[ExecutiveDashboard] pendingDecisions:', pendingDecisions);
 
-        const criticalCount = pendingDecisions.filter((d: any) => d.priority === 'CRITICAL').length;
-        setKpiData((prev) => ({
-          ...prev,
-          decisions: {
-            pending: pendingDecisions.length,
-            avgWaitDays: 2.4,
-            critical: criticalCount,
-            trend: 'stable',
-          },
-        }));
+          setDecisions(
+            pendingDecisions.map((d: any) => ({
+              id: d.id,
+              title: d.title,
+              type: d.decisionType || 'GENERAL',
+              priority: d.priority?.toLowerCase() || 'medium',
+              daysWaiting: Math.floor(
+                (Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+              ),
+              requestedBy: d.requestedByName,
+              projectName: d.projectName,
+            }))
+          );
 
-        // Build action items from critical decisions
-        const urgentItems = pendingDecisions
-          .filter((d: any) => d.priority === 'CRITICAL' || d.priority === 'HIGH')
-          .slice(0, 3)
-          .map((d: any) => ({
-            id: d.id,
-            type: 'decision',
-            title: d.title,
-            urgency: d.priority === 'CRITICAL' ? 'critical' : 'high',
-            projectName: d.projectName,
-            owner: d.requestedByName,
-            daysOverdue: Math.max(
-              0,
-              Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)) - 7
-            ),
+          const criticalCount = pendingDecisions.filter(
+            (d: any) => d.priority === 'CRITICAL'
+          ).length;
+          
+          // Calculate real average wait days
+          const avgWaitDays = pendingDecisions.length > 0
+            ? Math.round(
+                pendingDecisions.reduce((sum: number, d: any) => {
+                  const days = Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+                  return sum + days;
+                }, 0) / pendingDecisions.length * 10
+              ) / 10
+            : 0;
+          
+          setKpiData((prev) => ({
+            ...prev,
+            decisions: {
+              pending: pendingDecisions.length,
+              avgWaitDays,
+              critical: criticalCount,
+              trend: 'stable',
+            },
           }));
 
-        setActionItems(urgentItems);
+          // Build action items from critical decisions
+          const urgentItems = pendingDecisions
+            .filter((d: any) => d.priority === 'CRITICAL' || d.priority === 'HIGH')
+            .slice(0, 3)
+            .map((d: any) => ({
+              id: d.id,
+              type: 'decision',
+              title: d.title,
+              urgency: d.priority === 'CRITICAL' ? 'critical' : 'high',
+              projectName: d.projectName,
+              owner: d.requestedByName,
+              daysOverdue: Math.max(
+                0,
+                Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)) -
+                  7
+              ),
+            }));
+
+          setActionItems(urgentItems);
+        }
+
+        // Process team data
+        console.log('[ExecutiveDashboard] teamRes:', teamRes);
+        if (teamRes.status === 'fulfilled' && Array.isArray(teamRes.value) && teamRes.value.length > 0) {
+          console.log('[ExecutiveDashboard] Setting teamMembers:', teamRes.value);
+          setTeamMembers(
+            teamRes.value.map((m: any) => ({
+              id: m.id,
+              name: m.name || 'Unknown',
+              initials:
+                m.initials ||
+                (m.name || 'U')
+                  .split(' ')
+                  .map((n: string) => n[0])
+                  .join(''),
+              capacity: m.capacity || 0,
+              tasksCompleted: m.tasksCompleted || 0,
+              tasksTotal: m.tasksAssigned || 0,
+              trend: 'stable',
+            }))
+          );
+
+          const avgCapacity = Math.round(
+            teamRes.value.reduce((sum: number, m: any) => sum + (m.capacity || 0), 0) /
+              teamRes.value.length
+          );
+          const overloadedCount = teamRes.value.filter((m: any) => (m.capacity || 0) > 100).length;
+          const availableCount = teamRes.value.filter((m: any) => (m.capacity || 0) < 50).length;
+
+          setKpiData((prev) => ({
+            ...prev,
+            team: {
+              avgCapacity,
+              overloaded: overloadedCount,
+              available: availableCount,
+              trend: 'stable',
+            },
+          }));
+        }
+
+        // Process tasks for risk assessment and action items
+        if (tasksRes.status === 'fulfilled' && Array.isArray(tasksRes.value)) {
+          const overdueTasks = tasksRes.value.filter((t: any) => {
+            if (!t.dueDate) return false;
+            return new Date(t.dueDate) < new Date();
+          });
+
+          const riskLevel =
+            overdueTasks.length > 5 ? 'high' : overdueTasks.length > 2 ? 'medium' : 'low';
+
+          setKpiData((prev) => ({
+            ...prev,
+            risk: {
+              level: riskLevel as any,
+              blockers: overdueTasks.length,
+              escalations: prev.risk.escalations,
+              trend: 'stable',
+            },
+          }));
+          
+          // Add overdue tasks to action items
+          const overdueTaskItems = overdueTasks
+            .slice(0, 3)
+            .map((t: any) => {
+              const daysOverdue = Math.floor((Date.now() - new Date(t.dueDate).getTime()) / (1000 * 60 * 60 * 24));
+              return {
+                id: t.id,
+                type: 'task' as const,
+                title: t.title,
+                urgency: daysOverdue > 7 ? 'critical' : daysOverdue > 3 ? 'high' : 'medium',
+                projectName: t.projectName || t.initiativeName,
+                owner: t.assigneeName,
+                daysOverdue,
+              };
+            });
+          
+          // Merge with decision action items
+          setActionItems((prev) => {
+            const decisionItems = prev.filter((i) => i.type === 'decision');
+            return [...decisionItems, ...overdueTaskItems].slice(0, 5);
+          });
+        }
+
+        setLastUpdated(new Date());
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error);
+        setLoadError(t('executive.loadError', 'Failed to load dashboard data'));
+        toast.error(t('executive.loadError', 'Failed to load dashboard data'));
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-
-      // Process team data
-      if (teamRes.status === 'fulfilled' && Array.isArray(teamRes.value)) {
-        setTeamMembers(
-          teamRes.value.map((m: any) => ({
-            id: m.id,
-            name: m.name,
-            initials:
-              m.initials ||
-              m.name
-                .split(' ')
-                .map((n: string) => n[0])
-                .join(''),
-            capacity: m.capacity || 80,
-            tasksCompleted: m.tasksCompleted || 0,
-            tasksTotal: m.tasksAssigned || 0,
-            trend: 'stable',
-          }))
-        );
-
-        const avgCapacity = Math.round(
-          teamRes.value.reduce((sum: number, m: any) => sum + (m.capacity || 80), 0) /
-            teamRes.value.length
-        );
-        const overloadedCount = teamRes.value.filter((m: any) => (m.capacity || 0) > 100).length;
-        const availableCount = teamRes.value.filter((m: any) => (m.capacity || 100) < 50).length;
-
-        setKpiData((prev) => ({
-          ...prev,
-          team: {
-            avgCapacity,
-            overloaded: overloadedCount,
-            available: availableCount,
-            trend: 'stable',
-          },
-        }));
-      }
-
-      // Process tasks for risk assessment
-      if (tasksRes.status === 'fulfilled' && Array.isArray(tasksRes.value)) {
-        const overdueTasks = tasksRes.value.filter((t: any) => {
-          if (!t.dueDate) return false;
-          return new Date(t.dueDate) < new Date();
-        });
-
-        const riskLevel =
-          overdueTasks.length > 5 ? 'high' : overdueTasks.length > 2 ? 'medium' : 'low';
-
-        setKpiData((prev) => ({
-          ...prev,
-          risk: {
-            level: riskLevel as any,
-            blockers: overdueTasks.length,
-            escalations: prev.risk.escalations,
-            trend: 'stable',
-          },
-        }));
-      }
-
-      setLastUpdated(new Date());
-    } catch (error) {
-      console.error('Failed to fetch dashboard data:', error);
-      // Use mock data on error
-      setHealthScore({
-        score: 76,
-        previousScore: 71,
-        trend: 'up',
-        breakdown: { execution: 78, decisions: 72, capacity: 82, risk: 68 },
-      });
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+    },
+    [t, user?.id]
+  );
 
   useEffect(() => {
     fetchDashboardData();
@@ -315,6 +355,11 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
 
   return (
     <div className="space-y-6">
+      {loadError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {loadError}
+        </div>
+      )}
       {/* Header with Greeting */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}

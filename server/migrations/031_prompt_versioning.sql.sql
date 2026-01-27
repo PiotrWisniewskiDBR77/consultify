@@ -40,8 +40,8 @@ CREATE TABLE IF NOT EXISTS prompt_versions (
 CREATE INDEX IF NOT EXISTS idx_prompt_versions_key ON prompt_versions(prompt_key);
 -- Drop index if it exists (may have been created with old INTEGER column type)
 DROP INDEX IF EXISTS idx_prompt_versions_active;
--- Recreate index - handle boolean check (PostgreSQL compatible)
-CREATE INDEX idx_prompt_versions_active ON prompt_versions(prompt_key, is_active) WHERE is_active = TRUE;
+-- Recreate index - handle boolean check in a way compatible with both DBs
+CREATE INDEX idx_prompt_versions_active ON prompt_versions(prompt_key, is_active) WHERE is_active = 1 OR is_active = TRUE;
 
 -- Prompt usage log (for A/B testing and metrics)
 CREATE TABLE IF NOT EXISTS prompt_usage_log (

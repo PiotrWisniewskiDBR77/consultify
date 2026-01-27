@@ -31,6 +31,7 @@ export interface UISlice {
 
   // Actions
   setCurrentView: (view: AppView) => void;
+  setCurrentViewState: (view: AppView) => void;
   toggleTheme: (newTheme?: 'light' | 'dark' | 'system') => void;
   setIsSidebarOpen: (isOpen: boolean) => void;
   toggleSidebarCollapse: () => void;
@@ -138,6 +139,14 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
     }
 
     console.log('[UISlice] ====== setCurrentView END ======');
+  },
+
+  setCurrentViewState: (view) => {
+    const previousView = get().currentView;
+    set({
+      previousView,
+      currentView: view,
+    });
   },
 
   toggleTheme: (newTheme) =>

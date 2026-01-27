@@ -2,7 +2,7 @@ import { AlertTriangle, ArrowRight, CheckCircle, Info, X } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from './ui/Button';
+import { Button } from './ui/primitives/Button';
 
 interface AiInsightModalProps {
   isOpen: boolean;

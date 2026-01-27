@@ -11,7 +11,7 @@ const API_URL = process.env.API_URL || 'http://localhost:3001/api';
 
 // Test user credentials (demo user)
 const TEST_USER = {
-  email: 'demo@legolex.com',
+  email: 'piotr.wisniewski@demo.com',
   password: 'demo123',
 };
 

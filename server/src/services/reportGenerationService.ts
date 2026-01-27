@@ -6,25 +6,13 @@
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
 import PDFDocument from 'pdfkit';
+import PptxGenJS from 'pptxgenjs';
+import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
-
-// Lazy load pptxgenjs to avoid runtime errors if not installed
-let PptxGenJS: any;
-const loadPptxGenJS = async () => {
-  if (!PptxGenJS) {
-    try {
-      PptxGenJS = (await import('pptxgenjs')).default;
-    } catch (error) {
-      throw new Error('pptxgenjs package is required for PPTX report generation. Please install it: npm install pptxgenjs');
-    }
-  }
-  return PptxGenJS;
-};
 
 // ==========================================
 // TYPES
@@ -100,7 +88,9 @@ class ReportGenerationService {
     return exportDir;
   }
 
-  private formatDecisions(decisions: { title?: string; deadline?: string; status?: string }[]): string {
+  private formatDecisions(
+    decisions: { title?: string; deadline?: string; status?: string }[]
+  ): string {
     if (!decisions || decisions.length === 0) {
       return 'No pending decisions.';
     }
@@ -114,10 +104,10 @@ class ReportGenerationService {
       .join('\n');
   }
 
-  private formatEscalations(decisions: { title?: string; deadline?: string; status?: string }[]): string {
-    const escalated = decisions.filter(
-      (d) => String(d.status || '').toLowerCase() === 'escalated'
-    );
+  private formatEscalations(
+    decisions: { title?: string; deadline?: string; status?: string }[]
+  ): string {
+    const escalated = decisions.filter((d) => String(d.status || '').toLowerCase() === 'escalated');
     if (!escalated.length) {
       return 'No escalations.';
     }
@@ -371,10 +361,7 @@ class ReportGenerationService {
       status?: string | null;
       start_date?: string | null;
       end_date?: string | null;
-    }>(
-      'SELECT * FROM projects WHERE id = ? AND organization_id = ?',
-      [projectId, orgId]
-    );
+    }>('SELECT * FROM projects WHERE id = ? AND organization_id = ?', [projectId, orgId]);
 
     if (!project) {
       throw new Error('Project not found');
@@ -413,14 +400,15 @@ class ReportGenerationService {
         {
           id: 'overview',
           title: language === 'pl' ? 'Podsumowanie projektu' : 'Project Overview',
-          content: [
-            project.description ? `Description: ${project.description}` : null,
-            project.status ? `Status: ${String(project.status).toUpperCase()}` : null,
-            project.start_date ? `Start: ${project.start_date}` : null,
-            project.end_date ? `End: ${project.end_date}` : null,
-          ]
-            .filter(Boolean)
-            .join('\n') || `Project ${project.name}.`,
+          content:
+            [
+              project.description ? `Description: ${project.description}` : null,
+              project.status ? `Status: ${String(project.status).toUpperCase()}` : null,
+              project.start_date ? `Start: ${project.start_date}` : null,
+              project.end_date ? `End: ${project.end_date}` : null,
+            ]
+              .filter(Boolean)
+              .join('\n') || `Project ${project.name}.`,
         },
         {
           id: 'initiative-status',
@@ -477,7 +465,9 @@ class ReportGenerationService {
       type: 'portfolio',
       title: 'Portfolio Overview Report',
       executiveSummary:
-        language === 'pl' ? 'Status portfela w skali organizacji.' : 'Organization-wide portfolio status.',
+        language === 'pl'
+          ? 'Status portfela w skali organizacji.'
+          : 'Organization-wide portfolio status.',
       sections: [
         {
           id: 'portfolio-summary',
@@ -520,10 +510,7 @@ class ReportGenerationService {
       project_id?: string | null;
       planned_start_date?: string | null;
       planned_end_date?: string | null;
-    }>(
-      `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`,
-      [initiativeId, orgId]
-    );
+    }>(`SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`, [initiativeId, orgId]);
     if (!initiative) {
       throw new Error('Initiative not found');
     }
@@ -563,17 +550,18 @@ class ReportGenerationService {
         {
           id: 'initiative-summary',
           title: language === 'pl' ? 'Podsumowanie inicjatywy' : 'Initiative Summary',
-          content: [
-            initiative.summary ? `Summary: ${initiative.summary}` : null,
-            initiative.status ? `Status: ${String(initiative.status).toUpperCase()}` : null,
-            initiative.progress !== null && initiative.progress !== undefined
-              ? `Progress: ${initiative.progress}%`
-              : null,
-            initiative.planned_start_date ? `Start: ${initiative.planned_start_date}` : null,
-            initiative.planned_end_date ? `End: ${initiative.planned_end_date}` : null,
-          ]
-            .filter(Boolean)
-            .join('\n') || `Initiative ${initiativeName} overview.`,
+          content:
+            [
+              initiative.summary ? `Summary: ${initiative.summary}` : null,
+              initiative.status ? `Status: ${String(initiative.status).toUpperCase()}` : null,
+              initiative.progress !== null && initiative.progress !== undefined
+                ? `Progress: ${initiative.progress}%`
+                : null,
+              initiative.planned_start_date ? `Start: ${initiative.planned_start_date}` : null,
+              initiative.planned_end_date ? `End: ${initiative.planned_end_date}` : null,
+            ]
+              .filter(Boolean)
+              .join('\n') || `Initiative ${initiativeName} overview.`,
         },
         {
           id: 'task-status',
@@ -802,7 +790,10 @@ class ReportGenerationService {
 
     report.sections.forEach((section) => {
       doc.fontSize(13).fillColor('#000000').text(section.title);
-      doc.fontSize(11).fillColor('#333333').text(section.content || 'No content.');
+      doc
+        .fontSize(11)
+        .fillColor('#333333')
+        .text(section.content || 'No content.');
       doc.moveDown();
     });
 
@@ -814,8 +805,7 @@ class ReportGenerationService {
   }
 
   private async writePptxReport(report: GeneratedReport, filePath: string): Promise<void> {
-    const PptxGenJSClass = await loadPptxGenJS();
-    const pptx = new PptxGenJSClass();
+    const pptx = new (PptxGenJS as any)();
     pptx.layout = 'LAYOUT_WIDE';
 
     const titleSlide = pptx.addSlide();
@@ -856,7 +846,7 @@ class ReportGenerationService {
       });
     });
 
-    await pptx.writeFile(filePath);
+    await pptx.writeFile({ fileName: filePath });
   }
 }
 

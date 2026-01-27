@@ -22,7 +22,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 
 import api from '../../services/api';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/primitives/Button';
 
 interface RateLimit {
   id: string;

@@ -5,4 +5,5 @@
 export { InitiativesHub } from './InitiativesHub';
 export { InitiativeDrawer } from './InitiativeDrawer';
 export { InitiativeDetailCard } from './InitiativeDetailCard';
+export { InitiativeFullView } from './InitiativeFullView';
 export { InitiativesTimelineView } from './InitiativesTimelineView';

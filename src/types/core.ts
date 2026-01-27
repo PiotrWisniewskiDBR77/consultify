@@ -678,27 +678,41 @@ export interface GovernancePolicy {
  * - CANCELLED: Terminated before completion
  * - ARCHIVED: Historical record (post-completion or post-cancellation)
  *
+ * Initiative Status Lifecycle (11 statuses - Canonical)
+ *
+ * Documentation: wdrozenia/standards/03-STATUS-WORKFLOW.md
+ *
+ * Lifecycle Flow:
+ * DRAFT → REVIEW → PROMOTED → PLANNING → APPROVED → SCHEDULED → EXECUTING → DONE → TRACKING
+ *                                                        ↓
+ *                                                    BLOCKED
+ *
  * Key Module Transitions:
- * - DRAFT → PLANNING: Assessment → Initiative Management
- * - APPROVED → EXECUTING: Initiative Management → Execution
+ * - DRAFT → REVIEW: Tools/Assessment → Initiatives (Gate: PROMOTE)
+ * - APPROVED → SCHEDULED: Initiatives → Execution (Gate: SCHEDULE)
+ * - DONE → TRACKING: Execution → Benefits (Gate: START_TRACKING)
  */
 export enum InitiativeStatus {
-  // Assessment Module (Module 2)
+  // Source modules (Tools/Assessment) - Draft phase
   DRAFT = 'DRAFT',
 
-  // Initiative Management Module (Module 3)
-  PLANNING = 'PLANNING',
+  // Initiative Management Module - Review & Planning phase
   REVIEW = 'REVIEW',
+  PROMOTED = 'PROMOTED',
+  PLANNING = 'PLANNING',
   APPROVED = 'APPROVED',
+  SCHEDULED = 'SCHEDULED',
 
-  // Execution Module (Module 4/5)
+  // Execution Module - Active work
   EXECUTING = 'EXECUTING',
   BLOCKED = 'BLOCKED',
   DONE = 'DONE',
 
-  // Terminal States
+  // Benefits Module - Tracking phase
+  TRACKING = 'TRACKING',
+
+  // Terminal State
   CANCELLED = 'CANCELLED',
-  ARCHIVED = 'ARCHIVED',
 }
 
 /** Task Status Lifecycle (ENFORCED) */

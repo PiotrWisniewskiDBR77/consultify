@@ -12,6 +12,7 @@ import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '@/services/api';
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
@@ -35,13 +36,20 @@ import { AppView } from '../types';
 
 type OrgType = 'OPERATING' | 'CONSULTING' | null;
 type OrgUserRole = 'EXECUTIVE' | 'DIRECTOR' | 'MANAGER' | 'SPECIALIST' | 'CONSULTANT' | null;
+type CompanySize = '1-10' | '11-50' | '51-200' | '201-1000' | '1000+' | null;
 
 interface OrgSetupState {
   step: 1 | 2 | 3 | 4;
   orgName: string;
+  domain: string;
+  country: string;
+  vatNumber: string;
   userRole: OrgUserRole;
+  userTitle: string;
+  phone: string;
   orgType: OrgType;
   industry: string;
+  companySize: CompanySize;
   memoryConsent: boolean;
   isSubmitting: boolean;
 }
@@ -53,6 +61,22 @@ const INDUSTRIES = [
   { value: 'manufacturing', label: 'Produkcja / Przemysł' },
   { value: 'professional', label: 'Usługi profesjonalne' },
   { value: 'other', label: 'Inna branża' },
+];
+
+const COMPANY_SIZES = [
+  { value: '1-10', label: '1–10' },
+  { value: '11-50', label: '11–50' },
+  { value: '51-200', label: '51–200' },
+  { value: '201-1000', label: '201–1000' },
+  { value: '1000+', label: '1000+' },
+];
+
+const COUNTRIES = [
+  { value: 'PL', label: 'Poland' },
+  { value: 'DE', label: 'Germany' },
+  { value: 'UK', label: 'United Kingdom' },
+  { value: 'US', label: 'United States' },
+  { value: 'OTHER', label: 'Other' },
 ];
 
 const USER_ROLES = [
@@ -84,14 +108,20 @@ const USER_ROLES = [
 ];
 
 export const OrgSetupWizard: React.FC = () => {
-  const { setCurrentView } = useAppStore();
+  const { setCurrentView, currentUser } = useAppStore();
 
   const [state, setState] = useState<OrgSetupState>({
     step: 1,
     orgName: '',
+    domain: '',
+    country: '',
+    vatNumber: '',
     userRole: null,
+    userTitle: '',
+    phone: '',
     orgType: null,
     industry: '',
+    companySize: null,
     memoryConsent: false,
     isSubmitting: false,
   });
@@ -103,11 +133,19 @@ export const OrgSetupWizard: React.FC = () => {
   const canProceed = (): boolean => {
     switch (state.step) {
       case 1:
-        return state.orgName.trim().length >= 3;
+        return (
+          state.orgName.trim().length >= 3 &&
+          state.country !== '' &&
+          state.domain.trim().length >= 3
+        );
       case 2:
-        return state.userRole !== null;
+        return (
+          state.userRole !== null &&
+          state.userTitle.trim().length >= 2 &&
+          state.phone.trim().length >= 6
+        );
       case 3:
-        return state.orgType !== null && state.industry !== '';
+        return state.orgType !== null && state.industry !== '' && state.companySize !== null;
       case 4:
         return state.memoryConsent === true;
       default:
@@ -133,17 +171,50 @@ export const OrgSetupWizard: React.FC = () => {
     updateState({ isSubmitting: true });
 
     try {
-      const response = await Api.post('/organizations', {
+      const org = await Api.post('/organizations', {
         name: state.orgName,
-        organizationType: state.orgType,
         industry: state.industry,
-        userRole: state.userRole,
-        memoryActivated: true,
-        memoryConsentAt: new Date().toISOString(),
+        domain: state.domain,
+        vatNumber: state.vatNumber || undefined,
+        attributionData: {
+          orgProfileType: state.orgType,
+          userRole: state.userRole,
+          companySize: state.companySize,
+          country: state.country,
+          memoryActivated: true,
+          memoryConsentAt: new Date().toISOString(),
+        },
       });
 
-      if (response.data?.id) {
-        toast.success('Organizacja utworzona. Pamięć systemu aktywna.');
+      if (org?.id) {
+        // Persist required user profile info for Trial
+        try {
+          if (currentUser?.id) {
+            await Api.put(`/users/${currentUser.id}`, {
+              title: state.userTitle,
+              phone: state.phone,
+            });
+          }
+        } catch {
+          // non-blocking
+        }
+
+        // Mark org setup completed (used for gating)
+        try {
+          await Api.put(`/organizations/${org.id}`, { onboardingStatus: 'ORG_SETUP_COMPLETED' });
+        } catch {
+          // non-blocking
+        }
+
+        toast.success('Organizacja utworzona. Dane Trial uzupełnione.');
+        trackFunnelEvent('trial_org_setup_completed', {
+          organizationId: org.id,
+          industry: state.industry,
+          orgProfileType: state.orgType,
+          userRole: state.userRole,
+          companySize: state.companySize,
+          country: state.country,
+        });
         setCurrentView(AppView.ONBOARDING_WIZARD); // Move to Phase E
       }
     } catch (error: any) {
@@ -222,6 +293,51 @@ export const OrgSetupWizard: React.FC = () => {
                 Np. "Acme Corporation" lub "Dział Strategii — Warszawa"
               </p>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                  Country
+                </label>
+                <select
+                  value={state.country}
+                  onChange={(e) => updateState({ country: e.target.value })}
+                  className="w-full px-4 py-3 border-2 border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-navy-900 text-navy-900 dark:text-white"
+                >
+                  <option value="">Select…</option>
+                  {COUNTRIES.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                  Company domain / website
+                </label>
+                <input
+                  type="text"
+                  value={state.domain}
+                  onChange={(e) => updateState({ domain: e.target.value })}
+                  placeholder="e.g. dbr77.com"
+                  className="w-full px-4 py-3 border-2 border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-navy-900 text-navy-900 dark:text-white"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                VAT number (optional)
+              </label>
+              <input
+                type="text"
+                value={state.vatNumber}
+                onChange={(e) => updateState({ vatNumber: e.target.value })}
+                placeholder="e.g. PL1234567890"
+                className="w-full px-4 py-3 border-2 border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-navy-900 text-navy-900 dark:text-white"
+              />
+            </div>
           </div>
         )}
 
@@ -236,6 +352,33 @@ export const OrgSetupWizard: React.FC = () => {
               <p className="text-slate-600 dark:text-slate-400">
                 To, jak myślisz o decyzjach, wpływa na to, jak system Cię wspiera.
               </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                  Your title
+                </label>
+                <input
+                  type="text"
+                  value={state.userTitle}
+                  onChange={(e) => updateState({ userTitle: e.target.value })}
+                  placeholder="e.g. PMO Lead"
+                  className="w-full px-4 py-3 border-2 border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-navy-900 text-navy-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  value={state.phone}
+                  onChange={(e) => updateState({ phone: e.target.value })}
+                  placeholder="+48 123 456 789"
+                  className="w-full px-4 py-3 border-2 border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-navy-900 text-navy-900 dark:text-white"
+                />
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -339,6 +482,32 @@ export const OrgSetupWizard: React.FC = () => {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Company size */}
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                Wielkość organizacji
+              </label>
+              <select
+                value={state.companySize || ''}
+                onChange={(e) =>
+                  updateState({ companySize: (e.target.value as CompanySize) || null })
+                }
+                className="
+                                    w-full px-4 py-3
+                                    border-2 border-slate-200 dark:border-slate-700
+                                    rounded-lg bg-white dark:bg-navy-900
+                                    text-navy-900 dark:text-white
+                                "
+              >
+                <option value="">Wybierz...</option>
+                {COMPANY_SIZES.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         )}

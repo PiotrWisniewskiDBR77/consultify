@@ -31,7 +31,7 @@ test.describe('Demo Flow - Landing Page to Demo', () => {
         
         // Modal should appear
         await expect(page.getByText(/Experience Consultinity/i)).toBeVisible();
-        await expect(page.getByText(/demo@legolex.com/i)).toBeVisible();
+        await expect(page.getByText(/piotr\.wisniewski@demo\.com/i)).toBeVisible();
     });
 
     test('should show Enter Demo and Contact Sales options', async ({ page }) => {
@@ -79,7 +79,7 @@ test.describe('Demo Banner Functionality', () => {
     });
 
     test('should display demo email in banner', async ({ page }) => {
-        await expect(page.getByText(/demo@legolex.com/i)).toBeVisible();
+        await expect(page.getByText(/piotr\.wisniewski@demo\.com/i)).toBeVisible();
     });
 
     test('should have Get Full Access button', async ({ page }) => {

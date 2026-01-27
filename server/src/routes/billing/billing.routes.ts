@@ -2124,6 +2124,47 @@ router.post(
 // PAYMENT METHODS
 // ==========================================
 
+// SetupIntent (Stripe in production, stub in dev)
+router.post(
+  '/setup-intent',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const stripeKey =
+      process.env.STRIPE_SECRET_KEY ||
+      process.env.STRIPE_API_KEY ||
+      process.env.STRIPE_SECRET ||
+      process.env.STRIPE_KEY;
+
+    if (!stripeKey) {
+      const id = `seti_${uuidv4().slice(0, 12)}`;
+      return res.json({ clientSecret: `${id}_secret_dev`, id, mode: 'stub' });
+    }
+
+    try {
+      const stripeMod = await import('stripe');
+      const Stripe = (stripeMod as any).default || (stripeMod as any);
+      const stripe = new Stripe(stripeKey, { apiVersion: '2024-06-20' });
+
+      const intent = await stripe.setupIntents.create({
+        usage: 'off_session',
+        metadata: {
+          organizationId: req.user?.organizationId || 'unknown',
+          userId: req.user?.id || 'unknown',
+        },
+      });
+
+      return res.json({
+        clientSecret: intent.client_secret,
+        id: intent.id,
+        mode: 'stripe',
+      });
+    } catch (err: any) {
+      logger.error('[Billing] SetupIntent creation failed:', err);
+      return res.status(500).json({ error: 'Failed to create setup intent' });
+    }
+  })
+);
+
 router.get(
   '/payment-methods',
   verifyToken,
@@ -2134,32 +2175,141 @@ router.get(
         `SELECT * FROM payment_methods WHERE organization_id = ? ORDER BY is_default DESC, created_at DESC`,
         [orgId]
       );
-      if (!methods || methods.length === 0) {
-        const idDefault = uuidv4();
-        const idSecondary = uuidv4();
-        await dbRun(
-          `INSERT INTO payment_methods (id, organization_id, stripe_payment_method_id, type, brand, last4, exp_month, exp_year, holder_name, is_default)
-                     VALUES (?, ?, ?, 'card', 'Visa', '4242', 12, 2026, 'Demo User', 1),
-                            (?, ?, ?, 'card', 'Mastercard', '5454', 11, 2027, 'Demo User', 0)`,
-          [
-            idDefault,
-            orgId,
-            `pm_${idDefault.slice(0, 8)}`,
-            idSecondary,
-            orgId,
-            `pm_${idSecondary.slice(0, 8)}`,
-          ]
-        );
-        const seeded = await dbAll(
-          `SELECT * FROM payment_methods WHERE organization_id = ? ORDER BY is_default DESC, created_at DESC`,
-          [orgId]
-        );
-        return res.json({ paymentMethods: seeded });
-      }
       return res.json({ paymentMethods: methods });
     } catch (error: unknown) {
       logger.error('[Billing] Get payment methods error:', error);
       return res.status(500).json({ error: 'Failed to get payment methods' });
+    }
+  })
+);
+
+router.post(
+  '/payment-methods',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const orgId = req.user!.organizationId;
+      const id = uuidv4();
+
+      // Accept either Stripe-ish id or raw card details (dev/demo mode)
+      const paymentMethodId: string | undefined = (req.body as any)?.paymentMethodId;
+      const cardNumber: string | undefined = (req.body as any)?.cardNumber;
+      const expiryMonth: number | undefined = (req.body as any)?.expiryMonth;
+      const expiryYear: number | undefined = (req.body as any)?.expiryYear;
+      const cardholderName: string | undefined = (req.body as any)?.cardholderName;
+
+      const last4 = (cardNumber || '').replace(/\s/g, '').slice(-4) || '4242';
+      const brand = 'Visa';
+      const expMonth = expiryMonth || 12;
+      const expYear = expiryYear || new Date().getFullYear() + 1;
+      const holder = cardholderName || 'Card Holder';
+
+      // First payment method becomes default
+      const countRow = (await dbGet(
+        `SELECT COUNT(*) as count FROM payment_methods WHERE organization_id = ?`,
+        [orgId]
+      )) as any;
+      const existingCount = parseInt(String(countRow?.count ?? 0), 10) || 0;
+      const isDefault = existingCount === 0 ? 1 : 0;
+
+      await dbRun(
+        `INSERT INTO payment_methods (id, organization_id, stripe_payment_method_id, type, brand, last4, exp_month, exp_year, holder_name, is_default)
+         VALUES (?, ?, ?, 'card', ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          orgId,
+          paymentMethodId || `pm_${id.slice(0, 8)}`,
+          brand,
+          last4,
+          expMonth,
+          expYear,
+          holder,
+          isDefault,
+        ]
+      );
+
+      const created = await dbGet(`SELECT * FROM payment_methods WHERE id = ?`, [id]);
+      return res.status(201).json(created);
+    } catch (error: unknown) {
+      logger.error('[Billing] Add payment method error:', error);
+      return res.status(500).json({ error: 'Failed to add payment method' });
+    }
+  })
+);
+
+router.delete(
+  '/payment-methods/:id',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const orgId = req.user!.organizationId;
+      const id = req.params.id;
+      const pm = (await dbGet(
+        `SELECT * FROM payment_methods WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      )) as any;
+      if (!pm) return res.status(404).json({ error: 'Payment method not found' });
+      if (pm.is_default === 1) {
+        return res.status(400).json({ error: 'Cannot remove default payment method' });
+      }
+      await dbRun(`DELETE FROM payment_methods WHERE id = ? AND organization_id = ?`, [id, orgId]);
+      return res.status(204).end();
+    } catch (error: unknown) {
+      logger.error('[Billing] Remove payment method error:', error);
+      return res.status(500).json({ error: 'Failed to remove payment method' });
+    }
+  })
+);
+
+router.put(
+  '/payment-methods/:id/default',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const orgId = req.user!.organizationId;
+      const id = req.params.id;
+      const pm = (await dbGet(
+        `SELECT * FROM payment_methods WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      )) as any;
+      if (!pm) return res.status(404).json({ error: 'Payment method not found' });
+
+      await dbRun(`UPDATE payment_methods SET is_default = 0 WHERE organization_id = ?`, [orgId]);
+      await dbRun(
+        `UPDATE payment_methods SET is_default = 1 WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
+      return res.json({ success: true });
+    } catch (error: unknown) {
+      logger.error('[Billing] Set default payment method error:', error);
+      return res.status(500).json({ error: 'Failed to set default payment method' });
+    }
+  })
+);
+
+// Backward-compatible alias (some clients use POST)
+router.post(
+  '/payment-methods/:id/default',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const orgId = req.user!.organizationId;
+      const id = req.params.id;
+      const pm = (await dbGet(
+        `SELECT * FROM payment_methods WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      )) as any;
+      if (!pm) return res.status(404).json({ error: 'Payment method not found' });
+
+      await dbRun(`UPDATE payment_methods SET is_default = 0 WHERE organization_id = ?`, [orgId]);
+      await dbRun(
+        `UPDATE payment_methods SET is_default = 1 WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
+      return res.json({ success: true });
+    } catch (error: unknown) {
+      logger.error('[Billing] Set default payment method error:', error);
+      return res.status(500).json({ error: 'Failed to set default payment method' });
     }
   })
 );

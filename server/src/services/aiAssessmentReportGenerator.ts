@@ -1,55 +1,40 @@
 // @ts-nocheck
 /**
- * Aiassessmentreportgenerator Service
- * Enterprise SaaS Architecture - TypeScript Backend
+ * aiAssessmentReportGenerator
  *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
+ * NOTE:
+ * The previous `.js` shim was self-re-exporting (circular) and broke both runtime
+ * resolution (tsx) and typechecking. Until the full generator is migrated, we
+ * expose a minimal, stable surface used by `routes/assessment/assessment-ai.routes.ts`.
  */
 
-// Report types constants
 export const REPORT_TYPES = {
-  EXECUTIVE_SUMMARY: 'executive_summary',
-  FULL_ASSESSMENT: 'full_assessment',
-  STAKEHOLDER_VIEW: 'stakeholder_view',
-  BENCHMARK_COMPARISON: 'benchmark_comparison',
-  GAP_ANALYSIS: 'gap_analysis',
-  TRANSFORMATION_ROADMAP: 'transformation_roadmap',
-  INITIATIVE_PLAN: 'initiative_plan',
-};
+  full: 'full',
+  stakeholder: 'stakeholder',
+  benchmark: 'benchmark',
+  initiativePlan: 'initiative_plan',
+} as const;
 
-// Stakeholder roles constants
 export const STAKEHOLDER_ROLES = {
-  CTO: 'CTO',
-  CFO: 'CFO',
-  COO: 'COO',
-  CEO: 'CEO',
-  BOARD: 'BOARD',
-  PROJECT_MANAGER: 'PROJECT_MANAGER',
-  CONSULTANT: 'CONSULTANT',
-};
+  owner: 'owner',
+  pmo: 'pmo',
+  consultant: 'consultant',
+  sponsor: 'sponsor',
+} as const;
 
-// Stub implementation for report generator methods
-const aiAssessmentReportGenerator = {
-  async generateFullReport(assessment: any, options: any = {}) {
-    console.log('[aiAssessmentReportGenerator] generateFullReport called');
-    return { report: {}, type: 'full' };
+export const aiAssessmentReportGenerator = {
+  async generateFullReport(_assessment: any, _options?: any) {
+    return { status: 'not_implemented', report: null };
   },
-  async generateStakeholderReport(assessment: any, stakeholderRole: string, options: any = {}) {
-    console.log('[aiAssessmentReportGenerator] generateStakeholderReport called');
-    return { report: {}, type: 'stakeholder', role: stakeholderRole };
+  async generateStakeholderReport(_assessment: any, _role: any, _options?: any) {
+    return { status: 'not_implemented', report: null };
   },
-  async generateBenchmarkReport(assessment: any, benchmarks: any = {}, options: any = {}) {
-    console.log('[aiAssessmentReportGenerator] generateBenchmarkReport called');
-    return { report: {}, type: 'benchmark' };
+  async generateBenchmarkReport(_assessment: any, _benchmarkId?: any, _options?: any) {
+    return { status: 'not_implemented', report: null };
   },
-  async generateInitiativePlan(assessment: any, constraints: any = {}, options: any = {}) {
-    console.log('[aiAssessmentReportGenerator] generateInitiativePlan called');
-    return { report: {}, type: 'initiative_plan' };
+  async generateInitiativePlan(_assessment: any, _planTypeOrOptions?: any, _optionsMaybe?: any) {
+    return { status: 'not_implemented', plan: null };
   },
-};
+} as const;
 
-// Export default instance (for backward compatibility)
 export default aiAssessmentReportGenerator;
-
-// Named export for convenience
-export { aiAssessmentReportGenerator };

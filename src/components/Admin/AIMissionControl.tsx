@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { Api } from '../../services/api';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/primitives/Button';
 
 interface CapabilityResult {
   capability: string;

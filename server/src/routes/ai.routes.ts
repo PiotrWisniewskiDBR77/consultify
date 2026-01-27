@@ -79,7 +79,7 @@ const getAIActionExecutor = async () =>
   (await import('../services/aiActionExecutor.js')).default as any;
 const getAIAuditLogger = async () => (await import('../services/aiAuditLogger.js')).default as any;
 const getAIPipeline = async () => {
-  const { AIPipeline } = (await import('../services/ai/AIPipeline.js')) as any;
+  const { AIPipeline } = (await import('../services/ai/aiPipeline.js')) as any;
   return new AIPipeline();
 };
 
@@ -221,6 +221,31 @@ router.post(
     };
 
     try {
+      // --------------------------------------------------------
+      // Access policy enforcement (Demo/Trial/Paid) for streaming
+      // NOTE: streaming pipeline bypasses AIOrchestrator, so enforce here.
+      // --------------------------------------------------------
+      const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
+      const aiAccessContext = await AccessPolicyService.getAIAccessContext(req.organizationId!);
+      const aiAccessCheck = await AccessPolicyService.checkAccess(req.organizationId!, 'ai_call');
+
+      if (!aiAccessCheck.allowed) {
+        res.write(
+          `data: ${JSON.stringify({
+            error: aiAccessCheck.reason || 'Access blocked',
+            code: aiAccessCheck.errorCode || 'ACCESS_BLOCKED',
+            accessContext: aiAccessContext,
+          })}\n\n`
+        );
+        res.write('data: [DONE]\n\n');
+        return res.end();
+      }
+
+      // Count the AI call for daily limits
+      AccessPolicyService.incrementUsage(req.organizationId!, 'ai_calls', 1).catch((err: any) => {
+        logger.warn('[AI Stream] Failed to increment ai_calls usage:', err?.message || err);
+      });
+
       if (resumeFromPartial && conversationId) {
         const row = (await dbGet(
           `SELECT content FROM ai_partial_responses WHERE session_id = ? AND user_id = ?`,
@@ -230,19 +255,13 @@ router.post(
 
         if (partial) {
           accumulatedContent = partial;
-          try {
-            if (isClientConnected && !res.destroyed) {
-              res.write(
-                `data: ${JSON.stringify({
-                  type: 'resume',
-                  text: partial,
-                  sessionId: streamSessionId,
-                })}\n\n`
-              );
-            }
-          } catch (writeError: any) {
-            logger.warn(`[Stream] Resume write error for ${streamSessionId}:`, writeError.message);
-          }
+          res.write(
+            `data: ${JSON.stringify({
+              type: 'resume',
+              text: partial,
+              sessionId: streamSessionId,
+            })}\n\n`
+          );
         }
 
         // Partial resume logic handled by sending previous content to client
@@ -300,127 +319,72 @@ router.post(
       const response = await (aiPipeline as any).process(
         pipelineRequest,
         (progress: Record<string, unknown>) => {
-          if (!isClientConnected || res.destroyed || streamAborted) return;
+          if (!isClientConnected || res.destroyed) return;
 
-          try {
-            res.write(
-              `data: ${JSON.stringify({
-                type: 'thought',
-                ...progress,
-              })}\n\n`
-            );
-          } catch (writeError: any) {
-            logger.warn(`[Stream] Progress write error for ${streamSessionId}:`, writeError.message);
-            streamAborted = true;
-            isClientConnected = false;
-          }
+          res.write(
+            `data: ${JSON.stringify({
+              type: 'thought',
+              ...progress,
+            })}\n\n`
+          );
         }
       );
 
       if ((response as { stream?: AsyncIterable<string> }).stream) {
-        try {
-          for await (const chunk of (response as { stream: AsyncIterable<string> }).stream) {
-            if (!isClientConnected || res.destroyed || streamAborted) {
-              logger.info(`[Stream] Aborting stream - client disconnected: ${streamSessionId}`);
-              break;
-            }
+        for await (const chunk of (response as { stream: AsyncIterable<string> }).stream) {
+          if (!isClientConnected || res.destroyed || streamAborted) {
+            logger.info(`[Stream] Aborting stream - client disconnected: ${streamSessionId}`);
+            break;
+          }
 
-            if (chunk) {
-              accumulatedContent += chunk;
-              
-              // Safely write chunk with error handling
-              try {
-                if (isClientConnected && !res.destroyed && !streamAborted) {
-                  res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
-                }
-              } catch (writeError: any) {
-                logger.warn(`[Stream] Write error for ${streamSessionId}:`, writeError.message);
-                streamAborted = true;
-                isClientConnected = false;
-                break;
-              }
+          if (chunk) {
+            accumulatedContent += chunk;
+            res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
 
-              if (Date.now() - lastSaveTime > 2000) {
-                savePartialResponse(
-                  streamSessionId,
-                  accumulatedContent,
-                  req.userId!,
-                  req.organizationId!
-                ).catch((err: Error | null) =>
-                  logger.warn('[Stream] Partial save failed:', (err as Error).message)
-                );
-                lastSaveTime = Date.now();
-              }
+            if (Date.now() - lastSaveTime > 2000) {
+              savePartialResponse(
+                streamSessionId,
+                accumulatedContent,
+                req.userId!,
+                req.organizationId!
+              ).catch((err: Error | null) =>
+                logger.warn('[Stream] Partial save failed:', (err as Error).message)
+              );
+              lastSaveTime = Date.now();
             }
           }
-        } catch (streamError: any) {
-          logger.error(`[Stream] Error during stream iteration for ${streamSessionId}:`, {
-            error: streamError.message,
-            stack: streamError.stack,
-            accumulatedLength: accumulatedContent.length,
-          });
-          // Don't rethrow - let the outer catch handle it
-          throw streamError;
         }
 
-        if (isClientConnected && !streamAborted && !res.destroyed) {
-          try {
-            res.write('data: [DONE]\n\n');
-          } catch (writeError: any) {
-            logger.warn(`[Stream] Failed to write [DONE] for ${streamSessionId}:`, writeError.message);
-          }
+        if (isClientConnected && !streamAborted) {
+          res.write('data: [DONE]\n\n');
 
+          await dbRun(`DELETE FROM ai_partial_responses WHERE session_id = ?`, [streamSessionId]);
+
+          // Track token usage for trial budget (rough estimate based on chars)
           try {
-            await dbRun(`DELETE FROM ai_partial_responses WHERE session_id = ?`, [streamSessionId]);
-          } catch (dbError: any) {
-            logger.warn(`[Stream] Failed to delete partial response for ${streamSessionId}:`, dbError.message);
+            const estimatedTokens = Math.max(
+              50,
+              Math.ceil(((message?.length || 0) + (accumulatedContent?.length || 0)) / 4)
+            );
+            if (aiAccessContext?.isTrial && !aiAccessContext?.isPaid) {
+              await AccessPolicyService.trackTokenUsage(req.organizationId!, estimatedTokens);
+            }
+          } catch (usageErr: any) {
+            logger.warn('[AI Stream] Failed to track trial token usage:', usageErr?.message || usageErr);
           }
         }
         return res.end();
       } else {
-        if (isClientConnected && !res.destroyed && !streamAborted) {
-          try {
-            res.write(
-              `data: ${JSON.stringify({ text: (response as { content?: string }).content || '' })}\n\n`
-            );
-            res.write('data: [DONE]\n\n');
-          } catch (writeError: any) {
-            logger.warn(`[Stream] Non-stream write error for ${streamSessionId}:`, writeError.message);
-          }
+        if (isClientConnected && !res.destroyed) {
+          res.write(
+            `data: ${JSON.stringify({ text: (response as { content?: string }).content || '' })}\n\n`
+          );
+          res.write('data: [DONE]\n\n');
         }
         return res.end();
       }
     } catch (err: any) {
-      const errorMessage = err?.message || 'Unknown error occurred';
-      const errorName = err?.name || 'Error';
-      const isConnectionError =
-        errorMessage.includes('ECONNREFUSED') ||
-        errorMessage.includes('ENOTFOUND') ||
-        errorMessage.includes('ETIMEDOUT') ||
-        errorMessage.includes('network') ||
-        errorMessage.includes('connect') ||
-        errorMessage.includes('timeout');
-      const isAuthError =
-        errorMessage.includes('401') ||
-        errorMessage.includes('403') ||
-        errorMessage.includes('unauthorized') ||
-        errorMessage.includes('authentication') ||
-        errorMessage.includes('API key') ||
-        errorMessage.includes('Missing API key');
-
-      logger.error('[Stream] Error occurred:', {
-        error: errorMessage,
-        errorName,
-        sessionId: streamSessionId,
-        userId: req.userId,
-        provider: (err as any)?.provider,
-        model: (err as any)?.model,
-        isConnectionError,
-        isAuthError,
-        stack: err?.stack,
-        code: err?.code,
-        status: err?.status,
-      });
+      logger.error('Stream Error:', err);
 
       if (accumulatedContent.length > 0) {
         savePartialResponse(
@@ -433,35 +397,15 @@ router.post(
         );
       }
 
-      if (isClientConnected && !res.destroyed && !streamAborted) {
-        try {
-          // Provide user-friendly error messages
-          let userMessage = errorMessage;
-          if (isConnectionError) {
-            userMessage = `Connection failed: Unable to reach AI service. Please check your network connection and try again.`;
-          } else if (isAuthError) {
-            userMessage = `Authentication failed: ${errorMessage}. Please check your API key configuration.`;
-          } else if (errorMessage.includes('Circuit breaker')) {
-            userMessage = `Service temporarily unavailable: ${errorMessage}. Please try again in a moment or use a different provider.`;
-          }
-
-          res.write(
-            `data: ${JSON.stringify({
-              error: userMessage,
-              errorType: isConnectionError ? 'connection' : isAuthError ? 'authentication' : 'unknown',
-              sessionId: streamSessionId,
-              canResume: accumulatedContent.length > 0,
-              originalError: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
-            })}\n\n`
-          );
-        } catch (writeError: any) {
-          logger.warn(`[Stream] Error write failed for ${streamSessionId}:`, writeError.message);
-        }
-        try {
-          return res.end();
-        } catch (endError: any) {
-          logger.warn(`[Stream] Response end failed for ${streamSessionId}:`, endError.message);
-        }
+      if (isClientConnected && !res.destroyed) {
+        res.write(
+          `data: ${JSON.stringify({
+            error: (err as Error).message,
+            sessionId: streamSessionId,
+            canResume: accumulatedContent.length > 0,
+          })}\n\n`
+        );
+        return res.end();
       }
     } finally {
       req.socket?.removeListener('close', connectionCleanup);

@@ -2,10 +2,26 @@
  * Async Job Service
  */
 import { getDatabase } from '../database/index.js';
-const db = getDatabase();
+import type { IDatabase } from '../database/IDatabase.js';
+const db: IDatabase = getDatabase() as IDatabase;
 import { v4 as uuidv4 } from 'uuid';
 
-import aiQueue from '../queues/aiQueue.js';
+// Type for aiQueue (BullMQ Queue or mock)
+type QueueType = {
+  add: (name: string, data?: unknown, options?: unknown) => Promise<{ id: string; name: string }>;
+  getJob: (jobId: string) => Promise<{ remove?: () => Promise<void> } | null>;
+  defaultJobOptions?: unknown;
+  on?: (event: string, handler: unknown) => void;
+  close?: () => Promise<void>;
+};
+
+// Import with type assertion (aiQueue.ts has @ts-nocheck)
+// @ts-expect-error - aiQueue.ts has @ts-nocheck, so we need to assert type
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+import aiQueueModule from '../queues/aiQueue.js';
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+const aiQueue: QueueType = (aiQueueModule as any) as QueueType;
+
 import * as auditLogger from '../utils/auditLogger.js';
 import { ACTION_ERROR_CODES } from './actionErrors.js';
 
@@ -573,7 +589,7 @@ const AsyncJobService = {
     // Try to remove from BullMQ (may fail if already picked up)
     try {
       const bullJob = await aiQueue.getJob(jobId);
-      if (bullJob) {
+      if (bullJob && bullJob.remove) {
         await bullJob.remove();
       }
     } catch (e) {
@@ -608,7 +624,7 @@ const AsyncJobService = {
       db.get(
         `SELECT * FROM async_jobs WHERE id = ?`,
         [jobId],
-        (err: Error | null, row: AsyncJob | undefined) => {
+        (err: Error | null, row: AsyncJob | null) => {
           if (err) reject(err);
           else resolve(row || null);
         }
@@ -650,7 +666,7 @@ const AsyncJobService = {
       db.get(
         `SELECT attempts FROM async_jobs WHERE id = ?`,
         [jobId],
-        (err: Error | null, row: { attempts: number } | undefined) => {
+        (err: Error | null, row: { attempts: number } | null) => {
           if (err) reject(err);
           else resolve(row || null);
         }

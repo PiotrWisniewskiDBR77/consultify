@@ -9,41 +9,26 @@
  */
 
 import {
-  Activity,
-  Bell,
   BookOpen,
   Brain,
   Briefcase,
-  Building2,
   Calculator,
   CheckCircle2,
-  ClipboardCheck,
   ClipboardList,
-  Cpu,
   CreditCard,
-  Database,
   Factory,
-  FileText,
   Globe,
-  Home,
-  Layers,
   LayoutDashboard,
   Lightbulb,
-  Link,
-  Lock,
   Map,
   MessageSquare,
-  Palette,
   Rocket,
   Scale,
   Settings,
   Shield,
-  Sparkles,
   Target,
   TrendingUp,
-  UserCircle,
   Users,
-  Workflow,
   Wrench,
   Zap,
 } from 'lucide-react';
@@ -85,32 +70,12 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       viewId: AppView.DISCOVERY_TOOLS,
       badge: 'new',
     },
-    // 4. Ocena - wybór frameworka wewnątrz modułu
+    // 4. Ocena - bezpośrednie otwarcie tablicy zarządzania assessmentami
     {
       id: 'MODULE_ASSESSMENT',
       label: t('sidebar.assessment', 'Assessment'),
       icon: React.createElement(CheckCircle2, { size: 20 }),
       viewId: AppView.ASSESSMENT_OVERVIEW,
-      subItems: [
-        {
-          id: 'ASSESSMENT_OVERVIEW_SUB',
-          label: t('sidebar.assessmentOverview', 'Overview'),
-          viewId: AppView.ASSESSMENT_OVERVIEW,
-          icon: React.createElement(CheckCircle2, { size: 16 }),
-        },
-        {
-          id: 'MY_ASSESSMENTS',
-          label: t('sidebar.myAssessments', 'My Assessments'),
-          viewId: AppView.MY_ASSESSMENTS,
-          icon: React.createElement(FileText, { size: 16 }),
-        },
-        {
-          id: 'REVIEWER_DASHBOARD',
-          label: t('sidebar.reviewerDashboard', 'Reviewer Dashboard'),
-          viewId: AppView.REVIEWER_DASHBOARD,
-          icon: React.createElement(ClipboardCheck, { size: 16 }),
-        },
-      ],
     },
     // 5. Inicjatywy - zarządzanie inicjatywami
     {

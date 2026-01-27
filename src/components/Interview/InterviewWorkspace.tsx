@@ -42,6 +42,7 @@ interface InterviewSession {
   name: string;
   ownerId: string;
   status: string;
+  assignmentId?: string;
   progress: Record<string, unknown>;
   totalQuestions: number;
   answeredQuestions: number;
@@ -100,6 +101,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  const isLocked = (session?.status || '').toLowerCase() === 'submitted' || (session?.status || '').toLowerCase() === 'completed';
 
   // Calculate progress per category
   const categoryProgress: CategoryProgress[] = CATEGORY_ORDER.map((category) => {
@@ -345,19 +348,38 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     }
   }, [isPolish]);
 
-  // Complete session
-  const handleCompleteSession = useCallback(async () => {
+  // Submit session (assignment workflow)
+  const handleSubmitSession = useCallback(async () => {
     if (!session) return;
+    if (isLocked) return;
 
     try {
+      if (session.assignmentId) {
+        const result = await Api.post(`/interview/assignments/${session.assignmentId}/submit`, {});
+        const updatedSession = (result as any)?.session;
+        const entersContext = (result as any)?.entersContext === true;
+        const completeness = (result as any)?.completenessPercent;
+        if (updatedSession) setSession(updatedSession);
+        toast.success(
+          entersContext
+            ? (isPolish ? 'Wywiad zatwierdzony!' : 'Interview submitted!')
+            : (isPolish
+                ? `Wywiad wysłany (poniżej 50%: ${completeness ?? 0}%). Admin może odesłać.`
+                : `Submitted (<50%: ${completeness ?? 0}%). Admin may send back.`)
+        );
+        if (entersContext) onComplete?.(session.id);
+        return;
+      }
+
+      // Fallback (legacy): mark session completed
       await Api.patch(`/interview/sessions/${session.id}`, { status: 'completed' });
       toast.success(isPolish ? 'Wywiad zakończony!' : 'Interview completed!');
       onComplete?.(session.id);
     } catch (error) {
-      console.error('[InterviewWorkspace] Failed to complete session:', error);
-      toast.error(isPolish ? 'Nie udało się zakończyć wywiadu' : 'Failed to complete interview');
+      console.error('[InterviewWorkspace] Failed to submit session:', error);
+      toast.error(isPolish ? 'Nie udało się zatwierdzić' : 'Failed to submit');
     }
-  }, [session, isPolish, onComplete]);
+  }, [session, isLocked, isPolish, onComplete]);
 
   // Render loading
   if (isLoading) {
@@ -446,14 +468,31 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   </span>
                 )}
                 <button
-                  onClick={handleCompleteSession}
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-sm font-medium transition-colors"
+                  onClick={handleSubmitSession}
+                  disabled={isLocked}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isLocked
+                      ? 'bg-slate-400/20 text-slate-300 cursor-not-allowed'
+                      : 'bg-emerald-500 hover:bg-emerald-600 text-white'
+                  }`}
                 >
                   <Check size={16} />
-                  {isPolish ? 'Zakończ wywiad' : 'Complete Interview'}
+                  {isPolish ? 'Zatwierdź wywiad' : 'Submit Interview'}
                 </button>
               </div>
             </div>
+
+            {isLocked && (
+              <div className="mt-3 px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-200 text-sm">
+                {(session?.status || '').toLowerCase() === 'submitted'
+                  ? (isPolish
+                      ? 'Wywiad jest wysłany i zablokowany do edycji. Admin może odesłać do uzupełnienia.'
+                      : 'Interview is submitted and locked. Admin may send back for completion.')
+                  : (isPolish
+                      ? 'Wywiad jest ukończony i zablokowany do edycji.'
+                      : 'Interview is completed and locked.')}
+              </div>
+            )}
 
             {/* Tabs */}
             <div className="flex items-center gap-1 mt-4 bg-slate-100 dark:bg-navy-800/40 rounded-lg p-1 w-fit">
@@ -488,6 +527,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               category={activeCategory}
               onUpdateQuestion={handleUpdateQuestion}
               onAddQuestion={handleAddQuestion}
+              readOnly={isLocked}
             />
           )}
 
@@ -498,6 +538,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               onCreateNote={handleCreateNote}
               onUpdateNote={handleUpdateNote}
               onDeleteNote={handleDeleteNote}
+              readOnly={isLocked}
             />
           )}
 
@@ -508,6 +549,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               onUploadFile={handleUploadFile}
               onAddLink={handleAddLink}
               onDeleteEvidence={handleDeleteEvidence}
+              readOnly={isLocked}
             />
           )}
 

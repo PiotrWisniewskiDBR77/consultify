@@ -108,7 +108,7 @@ try {
 router.get(
   '/budgets',
   verifyToken,
-  requireRole(['super_admin', 'admin', 'owner']),
+  requireRole('super_admin', 'admin', 'owner'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.getOrganizationBudgets) {
       return res.status(503).json({ success: false, error: 'AI Budget service not available' });
@@ -148,7 +148,7 @@ router.get(
 router.post(
   '/budgets',
   verifyToken,
-  requireRole(['super_admin', 'admin', 'owner']),
+  requireRole('super_admin', 'admin', 'owner'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.createBudget) {
       return res.status(503).json({ success: false, error: 'AI Budget service not available' });
@@ -218,7 +218,7 @@ router.post(
 router.get(
   '/budgets/:id',
   verifyToken,
-  requireRole(['super_admin', 'admin', 'owner']),
+  requireRole('super_admin', 'admin', 'owner'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.getBudget) {
       return res.status(503).json({ success: false, error: 'AI Budget service not available' });
@@ -256,7 +256,7 @@ router.get(
 router.put(
   '/budgets/:id',
   verifyToken,
-  requireRole(['super_admin', 'admin', 'owner']),
+  requireRole('super_admin', 'admin', 'owner'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.updateBudget) {
       return res.status(503).json({ success: false, error: 'AI Budget service not available' });
@@ -294,7 +294,7 @@ router.put(
 router.delete(
   '/budgets/:id',
   verifyToken,
-  requireRole(['super_admin', 'admin', 'owner']),
+  requireRole('super_admin', 'admin', 'owner'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.deleteBudget) {
       return res.status(503).json({ success: false, error: 'AI Budget service not available' });
@@ -332,7 +332,7 @@ router.delete(
 router.post(
   '/budgets/:id/reset',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.resetBudgetUsage) {
       return res.status(503).json({ success: false, error: 'AI Budget service not available' });
@@ -455,7 +455,7 @@ router.post(
 router.get(
   '/stats',
   verifyToken,
-  requireRole(['super_admin', 'admin', 'owner']),
+  requireRole('super_admin', 'admin', 'owner'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.getUsageStats) {
       return res.status(503).json({ success: false, error: 'AI Budget service not available' });
@@ -498,7 +498,7 @@ router.get(
 router.get(
   '/alerts',
   verifyToken,
-  requireRole(['super_admin', 'admin', 'owner']),
+  requireRole('super_admin', 'admin', 'owner'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.getAlerts) {
       return res.status(503).json({ success: false, error: 'AI Budget service not available' });
@@ -540,7 +540,7 @@ router.get(
 router.post(
   '/alerts/:id/acknowledge',
   verifyToken,
-  requireRole(['super_admin', 'admin', 'owner']),
+  requireRole('super_admin', 'admin', 'owner'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.acknowledgeAlert) {
       return res.status(503).json({ success: false, error: 'AI Budget service not available' });
@@ -583,7 +583,7 @@ router.post(
 router.post(
   '/alerts/:id/dismiss',
   verifyToken,
-  requireRole(['super_admin', 'admin', 'owner']),
+  requireRole('super_admin', 'admin', 'owner'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.dismissAlert) {
       return res.status(503).json({ success: false, error: 'AI Budget service not available' });
@@ -623,7 +623,7 @@ router.post(
 router.get(
   '/model-permissions',
   verifyToken,
-  requireRole(['super_admin', 'admin', 'owner']),
+  requireRole('super_admin', 'admin', 'owner'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.getModelPermissions) {
       return res.status(503).json({ success: false, error: 'AI Budget service not available' });
@@ -664,7 +664,7 @@ router.get(
 router.post(
   '/model-permissions',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.setModelPermission) {
       return res.status(503).json({ success: false, error: 'AI Budget service not available' });
@@ -780,7 +780,7 @@ router.get(
 router.delete(
   '/model-permissions/:id',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!aiBudgetService?.deleteModelPermission) {
       return res.status(503).json({ success: false, error: 'AI Budget service not available' });

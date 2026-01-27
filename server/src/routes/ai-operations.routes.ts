@@ -26,7 +26,7 @@ const router = Router();
 router.get(
   '/mission-control/status',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
       // Get active requests count
@@ -87,7 +87,7 @@ router.get(
 router.get(
   '/mission-control/providers',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
       const providers = (await dbAll(`
@@ -132,7 +132,7 @@ router.get(
 router.get(
   '/mission-control/alerts',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
       const alerts = await dbAll(`
@@ -160,7 +160,7 @@ router.get(
 router.post(
   '/mission-control/alerts/:id/resolve',
   verifyToken,
-  requireRole(['super_admin']),
+  requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -206,7 +206,7 @@ router.post(
 router.get(
   '/performance/metrics',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { period = '24h' } = req.query;
@@ -290,7 +290,7 @@ router.get(
 router.get(
   '/performance/trends',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { period = '24h', _granularity = 'hour' } = req.query;
@@ -365,7 +365,7 @@ router.get(
 router.get(
   '/costs/summary',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { period = 'month' } = req.query;
@@ -455,7 +455,7 @@ router.get(
 router.get(
   '/costs/trends',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { period = 'month' } = req.query;
@@ -518,7 +518,7 @@ router.get(
 router.get(
   '/costs/by-user',
   verifyToken,
-  requireRole(['super_admin']),
+  requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { period = 'month', limit = 20 } = req.query;
@@ -593,7 +593,7 @@ router.get(
 router.get(
   '/sla/status',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
       // SLA targets (could be configurable)
@@ -676,7 +676,7 @@ router.get(
 router.get(
   '/sla/history',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
       const history = (await dbAll(`
@@ -729,7 +729,7 @@ router.get(
 router.get(
   '/analytics/usage',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { period = 'month' } = req.query;
@@ -810,7 +810,7 @@ router.get(
 router.get(
   '/analytics/insights',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
       // Generate insights based on current data
@@ -916,7 +916,7 @@ router.get(
 router.get(
   '/summary',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
       const [status, costs, performance] = await Promise.all([

@@ -123,7 +123,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                   </span>
                   <br />
                   <code className="text-indigo-600 dark:text-indigo-400 font-mono">
-                    demo@legolex.com
+                    piotr.wisniewski@demo.com
                   </code>
                 </p>
               </div>

@@ -2,7 +2,7 @@ import { ArrowRight, CheckCircle, Lightbulb, Scale } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { FullInitiative, FullSession, InitiativeStatus } from '../../types';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/primitives/Button';
 
 interface PilotDecisionWorkspaceProps {
   fullSession: FullSession;

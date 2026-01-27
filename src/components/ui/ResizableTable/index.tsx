@@ -1,0 +1,241 @@
+/**
+ * ResizableTable - Main table wrapper component
+ * Unified table system for My Work module with ClickUp-style design
+ */
+
+import React, { useCallback, useMemo, useState } from 'react';
+
+import { TableHeader } from './TableHeader';
+import type {
+  ColumnDef,
+  ColumnWidths,
+  DateRange,
+  ResizableTableProps,
+  TableFilters,
+} from './types';
+
+// Re-export types
+export type { ColumnDef, ColumnWidths, DateRange, FilterOption, TableFilters } from './types';
+
+// Re-export components
+export { ColumnResizer } from './ColumnResizer';
+export { FilterDropdown } from './FilterDropdown';
+export { TableHeader } from './TableHeader';
+export {
+  BulkActionBar,
+  createTaskBulkActions,
+  createDecisionBulkActions,
+  createNotificationBulkActions,
+  type BulkAction,
+} from './BulkActionBar';
+
+export const ResizableTable: React.FC<ResizableTableProps> = ({
+  columns,
+  children,
+  onColumnWidthChange,
+  onFilterChange,
+  filters: externalFilters,
+  selectedIds,
+  onSelectAll,
+  allSelected = false,
+  someSelected = false,
+  showSelectColumn = true,
+  className = '',
+}) => {
+  // Internal column widths state (can be controlled externally via onColumnWidthChange)
+  const [internalWidths, setInternalWidths] = useState<ColumnWidths>(() =>
+    columns.reduce(
+      (acc, col) => ({
+        ...acc,
+        [col.id]: col.width,
+      }),
+      {}
+    )
+  );
+
+  // Internal filters state (can be controlled externally via onFilterChange)
+  const [internalFilters, setInternalFilters] = useState<TableFilters>({});
+
+  // Use external or internal state
+  const filters = externalFilters || internalFilters;
+
+  // Handle column resize
+  const handleColumnResize = useCallback(
+    (columnId: string, newWidth: number) => {
+      setInternalWidths((prev) => ({
+        ...prev,
+        [columnId]: newWidth,
+      }));
+      onColumnWidthChange?.(columnId, newWidth);
+    },
+    [onColumnWidthChange]
+  );
+
+  // Handle filter change
+  const handleFilterChange = useCallback(
+    (columnId: string, value: string[] | DateRange) => {
+      const newFilters = {
+        ...filters,
+        [columnId]: value,
+      };
+      setInternalFilters(newFilters);
+      onFilterChange?.(newFilters);
+    },
+    [filters, onFilterChange]
+  );
+
+  // Calculate total width for proper table sizing
+  const totalWidth = useMemo(() => {
+    let width = showSelectColumn ? 40 : 0; // Select column
+    columns.forEach((col) => {
+      if (col.id !== 'title') {
+        width += internalWidths[col.id] || col.width;
+      }
+    });
+    return width;
+  }, [columns, internalWidths, showSelectColumn]);
+
+  return (
+    <div className={`overflow-x-auto ${className}`}>
+      <table className="w-full" style={{ minWidth: `${totalWidth + 200}px` }}>
+        <TableHeader
+          columns={columns}
+          columnWidths={internalWidths}
+          onColumnResize={handleColumnResize}
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          showSelectColumn={showSelectColumn}
+          onSelectAll={onSelectAll}
+          allSelected={allSelected}
+          someSelected={someSelected}
+        />
+        <tbody>{children}</tbody>
+      </table>
+    </div>
+  );
+};
+
+// Predefined column configurations for consistency
+export const STANDARD_COLUMNS = {
+  select: {
+    id: 'select',
+    label: '',
+    width: 40,
+    minWidth: 40,
+    maxWidth: 40,
+    resizable: false,
+    filterable: false,
+  },
+  indicator: {
+    id: 'indicator',
+    label: '',
+    width: 24,
+    minWidth: 24,
+    maxWidth: 24,
+    resizable: false,
+    filterable: false,
+  },
+  type: {
+    id: 'type',
+    label: 'Type',
+    width: 100,
+    minWidth: 80,
+    maxWidth: 150,
+    resizable: true,
+    filterable: true,
+    filterType: 'multiselect' as const,
+  },
+  title: {
+    id: 'title',
+    label: 'Title',
+    width: 200,
+    minWidth: 200,
+    resizable: false,
+    filterable: false,
+  },
+  context: {
+    id: 'context',
+    label: 'Context',
+    width: 140,
+    minWidth: 100,
+    maxWidth: 200,
+    resizable: true,
+    filterable: true,
+    filterType: 'multiselect' as const,
+  },
+  status: {
+    id: 'status',
+    label: 'Status',
+    width: 110,
+    minWidth: 90,
+    maxWidth: 150,
+    resizable: true,
+    filterable: true,
+    filterType: 'multiselect' as const,
+  },
+  priority: {
+    id: 'priority',
+    label: 'Priority',
+    width: 100,
+    minWidth: 80,
+    maxWidth: 130,
+    resizable: true,
+    filterable: true,
+    filterType: 'multiselect' as const,
+  },
+  date: {
+    id: 'date',
+    label: 'Date',
+    width: 110,
+    minWidth: 90,
+    maxWidth: 150,
+    resizable: true,
+    filterable: true,
+    filterType: 'daterange' as const,
+  },
+  actions: {
+    id: 'actions',
+    label: 'Actions',
+    width: 100,
+    minWidth: 80,
+    maxWidth: 120,
+    resizable: false,
+    filterable: false,
+    align: 'right' as const,
+  },
+} as const;
+
+// Priority filter options
+export const PRIORITY_FILTER_OPTIONS = [
+  { value: 'critical', label: 'Critical', color: 'text-red-500' },
+  { value: 'high', label: 'High', color: 'text-orange-500' },
+  { value: 'medium', label: 'Medium', color: 'text-amber-500' },
+  { value: 'low', label: 'Low', color: 'text-blue-500' },
+];
+
+// Status filter options (can be customized per table)
+export const TASK_STATUS_FILTER_OPTIONS = [
+  { value: 'todo', label: 'To Do' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'review', label: 'Review' },
+  { value: 'blocked', label: 'Blocked' },
+  { value: 'completed', label: 'Completed' },
+];
+
+export const DECISION_STATUS_FILTER_OPTIONS = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'escalated', label: 'Escalated' },
+  { value: 'deferred', label: 'Deferred' },
+];
+
+export const NOTIFICATION_TYPE_FILTER_OPTIONS = [
+  { value: 'task', label: 'Task' },
+  { value: 'decision', label: 'Decision' },
+  { value: 'ai', label: 'AI Insight' },
+  { value: 'system', label: 'System' },
+  { value: 'alert', label: 'Alert' },
+];
+
+export default ResizableTable;

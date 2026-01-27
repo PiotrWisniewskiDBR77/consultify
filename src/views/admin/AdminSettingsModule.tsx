@@ -1,46 +1,56 @@
 /**
  * AdminSettingsModule - Organization Settings
  *
- * Tabs: Organization | Billing | Payment | Tax | Alerts | Security | Feedback
+ * Two-column layout with sidebar navigation (matching Settings pattern)
  */
 
-import {
-  Bell,
-  Building2,
-  CreditCard,
-  Database,
-  FileText,
-  Key,
-  MessageSquare,
-  Palette,
-  Receipt,
-  Shield,
-  Wallet,
-  Webhook,
-} from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { ArrowLeft, Menu, MessageSquare, X } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
 
+import { AdminSettingsSidebar, AdminSettingsSection } from '../../components/Admin/AdminSettingsSidebar';
 import { AuditExportPanel } from '../../components/Admin/AuditExportPanel';
 import { BrandingSettingsPanel } from '../../components/Admin/BrandingSettingsPanel';
 import { DataGovernancePanel } from '../../components/Admin/DataGovernancePanel';
 import { IntegrationsManagementPanel } from '../../components/Admin/IntegrationsManagementPanel';
+import { InterviewAssignmentsPanel } from '../../components/Admin/InterviewAssignmentsPanel';
 import { PaymentMethodsPanel } from '../../components/billing/PaymentMethodsPanel';
 import { SubscriptionManager } from '../../components/billing/SubscriptionManager';
 import { TaxSettingsForm } from '../../components/billing/TaxSettingsForm';
 import { UsageAlertsConfig } from '../../components/billing/UsageAlertsConfig';
-import { BillingSettings } from '../../components/settings/BillingSettings';
 import { OrganizationProfileForm } from '../../components/settings/OrganizationProfileForm';
 import { SecuritySettings } from '../../components/settings/SecuritySettings';
-import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import { Button } from '../../components/ui/primitives/Button';
+import { ScrollArea } from '../../components/ui/scroll-area';
+import { cn } from '../../lib/utils';
 import { Api } from '../../services/api';
-import { User } from '../../types';
+import { ROUTES } from '../../routes/routeConfig';
+import { useAppStore } from '../../store/useAppStore';
+import { AppView, User } from '../../types';
 import { ApiKeysManagementView } from './ApiKeysManagementView';
 
 interface AdminSettingsModuleProps {
-  initialTab?: string;
+  initialTab?: AdminSettingsSection;
   currentUser: User;
 }
+
+// Section metadata for headers
+const sectionMeta: Record<AdminSettingsSection, { title: string; subtitle: string }> = {
+  organization: { title: 'Strategic Profile', subtitle: 'Define your organization context for AI-powered strategic insights' },
+  branding: { title: 'Branding', subtitle: 'Customize your organization\'s visual identity' },
+  billing: { title: 'Plans', subtitle: 'Manage your subscription and plan details' },
+  payment: { title: 'Payment', subtitle: 'Manage payment methods and billing information' },
+  tax: { title: 'Tax', subtitle: 'Configure tax settings and VAT information' },
+  alerts: { title: 'Alerts', subtitle: 'Configure spending and usage alerts' },
+  security: { title: 'Security', subtitle: 'Manage security settings and access controls' },
+  governance: { title: 'Governance', subtitle: 'Configure data governance policies' },
+  audit: { title: 'Audit', subtitle: 'View and export audit logs' },
+  interviews: { title: 'Interview Assignments', subtitle: 'Assign interview templates to users and manage send-back workflow' },
+  integrations: { title: 'Integrations', subtitle: 'Manage third-party integrations' },
+  api: { title: 'API', subtitle: 'Manage API keys and access' },
+  feedback: { title: 'Feedback', subtitle: 'View and manage user feedback' },
+};
 
 // Simple Feedback View Component
 const AdminFeedbackView: React.FC = () => {
@@ -134,8 +144,18 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
   currentUser,
 }) => {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState(initialTab || 'organization');
+  const { setCurrentView } = useAppStore();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingFeedbackCount, setPendingFeedbackCount] = useState(0);
+
+  const activeSection = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const section = params.get('tab');
+    const fallback = initialTab || 'organization';
+    return (section && Object.keys(sectionMeta).includes(section) ? section : fallback) as AdminSettingsSection;
+  }, [initialTab, location.search]);
 
   // Fetch pending feedback count
   useEffect(() => {
@@ -151,168 +171,143 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
       }
     };
     fetchPendingCount();
-  }, [activeTab]);
+  }, [activeSection]);
 
-  const tabs: Tab[] = [
-    {
-      id: 'organization',
-      label: t('admin.tabs.organization', 'Organization'),
-      icon: <Building2 size={16} />,
-    },
-    {
-      id: 'branding',
-      label: t('admin.tabs.branding', 'Branding'),
-      icon: <Palette size={16} />,
-    },
-    {
-      id: 'billing',
-      label: t('admin.tabs.billing', 'Plans'),
-      icon: <CreditCard size={16} />,
-    },
-    {
-      id: 'payment',
-      label: t('admin.tabs.payment', 'Payment'),
-      icon: <Wallet size={16} />,
-    },
-    {
-      id: 'tax',
-      label: t('admin.tabs.tax', 'Tax'),
-      icon: <Receipt size={16} />,
-    },
-    {
-      id: 'alerts',
-      label: t('admin.tabs.alerts', 'Alerts'),
-      icon: <Bell size={16} />,
-    },
-    {
-      id: 'security',
-      label: t('admin.tabs.security', 'Security'),
-      icon: <Shield size={16} />,
-    },
-    {
-      id: 'governance',
-      label: t('admin.tabs.governance', 'Governance'),
-      icon: <Database size={16} />,
-    },
-    {
-      id: 'audit',
-      label: t('admin.tabs.audit', 'Audit'),
-      icon: <FileText size={16} />,
-    },
-    {
-      id: 'integrations',
-      label: t('admin.tabs.integrations', 'Integrations'),
-      icon: <Webhook size={16} />,
-    },
-    {
-      id: 'api',
-      label: t('admin.tabs.api', 'API'),
-      icon: <Key size={16} />,
-    },
-    {
-      id: 'feedback',
-      label: t('admin.tabs.feedback', 'Feedback'),
-      icon: <MessageSquare size={16} />,
-      badge: pendingFeedbackCount,
-    },
-  ];
+  // Handle section change
+  const handleSectionChange = useCallback((section: AdminSettingsSection) => {
+    const params = new URLSearchParams(location.search);
+    params.set('tab', section);
+    navigate({ pathname: location.pathname, search: params.toString() });
+    setSidebarOpen(false);
+  }, [location.pathname, location.search, navigate]);
 
-  const renderContent = () => {
-    switch (activeTab) {
+  // Handle back to dashboard
+  const handleBackToDashboard = useCallback(() => {
+    setCurrentView(AppView.DASHBOARD);
+    navigate(ROUTES.DASHBOARD);
+  }, [navigate, setCurrentView]);
+
+  // Get current section metadata
+  const currentMeta = useMemo(() => {
+    const meta = sectionMeta[activeSection];
+    return {
+      title: t(`admin.sections.${activeSection}.title`, meta.title),
+      subtitle: t(`admin.sections.${activeSection}.subtitle`, meta.subtitle),
+    };
+  }, [activeSection, t]);
+
+  // Render content based on active section
+  const renderContent = useCallback(() => {
+    switch (activeSection) {
       case 'organization':
-        return (
-          <div className="p-6 overflow-y-auto h-full">
-            <OrganizationProfileForm currentUser={currentUser} />
-          </div>
-        );
+        return <OrganizationProfileForm currentUser={currentUser} />;
       case 'branding':
-        return (
-          <div className="p-6 overflow-y-auto h-full">
-            <BrandingSettingsPanel />
-          </div>
-        );
+        return <BrandingSettingsPanel />;
       case 'billing':
-        return (
-          <div className="p-6 overflow-y-auto h-full">
-            <SubscriptionManager />
-          </div>
-        );
+        return <SubscriptionManager />;
       case 'payment':
-        return (
-          <div className="p-6 overflow-y-auto h-full">
-            <PaymentMethodsPanel />
-          </div>
-        );
+        return <PaymentMethodsPanel />;
       case 'tax':
-        return (
-          <div className="p-6 overflow-y-auto h-full">
-            <TaxSettingsForm />
-          </div>
-        );
+        return <TaxSettingsForm />;
       case 'alerts':
-        return (
-          <div className="p-6 overflow-y-auto h-full">
-            <UsageAlertsConfig />
-          </div>
-        );
+        return <UsageAlertsConfig />;
       case 'security':
-        return (
-          <div className="p-6 overflow-y-auto h-full">
-            <SecuritySettings currentUser={currentUser} />
-          </div>
-        );
+        return <SecuritySettings currentUser={currentUser} />;
       case 'governance':
-        return (
-          <div className="p-6 overflow-y-auto h-full">
-            <DataGovernancePanel />
-          </div>
-        );
+        return <DataGovernancePanel />;
       case 'audit':
-        return (
-          <div className="p-6 overflow-y-auto h-full">
-            <AuditExportPanel />
-          </div>
-        );
+        return <AuditExportPanel />;
+      case 'interviews':
+        return <InterviewAssignmentsPanel />;
       case 'integrations':
-        return (
-          <div className="p-6 overflow-y-auto h-full">
-            <IntegrationsManagementPanel />
-          </div>
-        );
+        return <IntegrationsManagementPanel />;
       case 'api':
-        return (
-          <div className="p-6 overflow-y-auto h-full">
-            <ApiKeysManagementView />
-          </div>
-        );
+        return <ApiKeysManagementView />;
       case 'feedback':
-        return (
-          <div className="p-6 overflow-y-auto h-full">
-            <AdminFeedbackView />
-          </div>
-        );
+        return <AdminFeedbackView />;
       default:
-        return (
-          <div className="p-6 overflow-y-auto h-full">
-            <OrganizationProfileForm currentUser={currentUser} />
-          </div>
-        );
+        return <OrganizationProfileForm currentUser={currentUser} />;
     }
-  };
+  }, [activeSection, currentUser]);
 
   return (
-    <TabLayout
-      tabs={tabs}
-      activeTab={activeTab}
-      onTabChange={setActiveTab}
-      title={t('admin.modules.settings', 'Settings')}
-      subtitle={t(
-        'admin.modules.settingsDesc',
-        'Organization profile, billing, security, and feedback management'
+    <div className="flex h-full bg-navy-950 relative">
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
-    >
-      {renderContent()}
-    </TabLayout>
+
+      {/* Left Sidebar */}
+      <div
+        className={cn(
+          'fixed inset-y-0 left-0 z-40 w-[280px] transform transition-transform duration-300 ease-in-out',
+          'lg:static lg:transform-none',
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        )}
+      >
+        <AdminSettingsSidebar
+          activeSection={activeSection}
+          onSectionChange={handleSectionChange}
+          pendingFeedbackCount={pendingFeedbackCount}
+          onBack={handleBackToDashboard}
+        />
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 bg-navy-900">
+        {/* Header */}
+        <header className="flex items-center justify-between px-4 lg:px-6 h-14 border-b border-white/5 bg-navy-900 sticky top-0 z-20">
+          <div className="flex items-center gap-3 lg:gap-4">
+            {/* Mobile menu button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="lg:hidden text-slate-400 dark:text-slate-500 hover:text-white p-2"
+            >
+              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBackToDashboard}
+              className="text-slate-400 dark:text-slate-500 hover:text-white hidden lg:flex"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              {t('admin.backToDashboard', 'Back to Dashboard')}
+            </Button>
+
+            <div className="h-5 w-px bg-white/10 hidden lg:block" />
+
+            <div>
+              <h1 className="text-base lg:text-lg font-semibold text-white">{currentMeta.title}</h1>
+              <p className="text-xs text-slate-400 dark:text-slate-500 hidden sm:block">
+                {currentMeta.subtitle}
+              </p>
+            </div>
+          </div>
+
+          {/* Mobile back button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBackToDashboard}
+            className="lg:hidden text-slate-400 dark:text-slate-500 hover:text-white"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+        </header>
+
+        {/* Content */}
+        <ScrollArea className="flex-1">
+          <div className="p-4 lg:p-6 max-w-5xl mx-auto w-full">{renderContent()}</div>
+        </ScrollArea>
+      </div>
+    </div>
   );
 };
 

@@ -27,6 +27,7 @@ router.use(verifyToken);
 router.use(demoContextMiddleware);
 
 router.post('/', validateBody(CreateToolSessionSchema), ToolController.createToolSession);
+router.get('/', ToolController.listToolSessions);
 router.get('/:toolId', ToolController.getToolSession);
 router.put('/:toolId', validateBody(UpdateToolSessionSchema), ToolController.updateToolSession);
 router.post('/:toolId/request-review', validateBody(RequestReviewSchema), ToolController.requestReview);

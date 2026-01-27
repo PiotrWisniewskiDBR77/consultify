@@ -6,10 +6,11 @@
 
 // Main components
 export { DiscoveryCanvas } from './DiscoveryCanvas';
-export { DiscoveryConsultantView } from './DiscoveryConsultantView';
+export { DiscoveryConsultantView } from './DiscoveryConsultantView'; // Legacy - use InterviewHub
 export { DiscoveryFooterActions } from './DiscoveryFooterActions';
 export { DiscoveryHeader } from './DiscoveryHeader';
 export { DiscoveryToolsHub } from './DiscoveryToolsHub';
+export { InterviewHub } from './InterviewHub'; // New ModuleHub pattern
 export { ProjectConversionModal } from './ProjectConversionModal';
 export { RecommendationPanel } from './RecommendationPanel';
 

@@ -185,77 +185,43 @@ function getProviderSync(modelConfig: ModelConfig) {
   const apiKey = typeof modelConfig.apiKey === 'string' ? modelConfig.apiKey : undefined;
   const endpoint = typeof modelConfig.endpoint === 'string' ? modelConfig.endpoint : undefined;
 
-  // Validate API key for providers that require it
-  const validateApiKey = (key: string | undefined, provider: string, envVar?: string): string => {
-    const finalKey = key || (envVar ? process.env[envVar] : undefined);
-    if (!finalKey || finalKey.trim() === '') {
-      const envHint = envVar ? ` (check ${envVar} env var)` : '';
-      throw new Error(
-        `Missing API key for ${provider}${envHint}. Please configure the API key in settings or environment variables.`
-      );
-    }
-    return finalKey;
-  };
-
   switch (providerName.toLowerCase()) {
     case 'openai':
       return createOpenAI({
-        apiKey: validateApiKey(apiKey, 'OpenAI', 'OPENAI_API_KEY'),
+        apiKey: apiKey || process.env.OPENAI_API_KEY,
       });
     case 'google':
     case 'gemini':
-      const googleKey = apiKey || process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
-      if (!googleKey || googleKey.trim() === '') {
-        throw new Error(
-          'Missing API key for Google/Gemini. Please set GOOGLE_API_KEY or GEMINI_API_KEY environment variable or configure in settings.'
-        );
-      }
       return createGoogleGenerativeAI({
-        apiKey: googleKey,
+        apiKey: apiKey || process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY,
       });
     case 'deepseek':
     case 'z_ai':
     case 'zai':
     case 'qwen':
     case 'mistral':
-      if (!apiKey || apiKey.trim() === '') {
-        throw new Error(
-          `Missing API key for ${providerName}. Please configure the API key in settings.`
-        );
-      }
       return createOpenAI({
         apiKey,
         baseURL: endpoint || 'https://api.deepseek.com',
       });
     case 'nvidia':
-      if (!apiKey || apiKey.trim() === '') {
-        throw new Error(
-          'Missing API key for NVIDIA. Please configure the API key in settings or set NVIDIA_API_KEY environment variable.'
-        );
-      }
       return createOpenAI({
         apiKey,
         baseURL: endpoint || 'https://integrate.api.nvidia.com/v1',
       });
     case 'cohere':
-      if (!apiKey || apiKey.trim() === '') {
-        throw new Error(
-          'Missing API key for Cohere. Please configure the API key in settings or set COHERE_API_KEY environment variable.'
-        );
-      }
       return createOpenAI({
         apiKey,
         baseURL: endpoint || 'https://api.cohere.ai/v1',
       });
     case 'ollama':
-      // Ollama doesn't require a real API key, but we should check if endpoint is reachable
       return createOpenAI({
         apiKey: 'ollama',
         baseURL: endpoint || 'http://localhost:11434/v1',
       });
     default:
       return createOpenAI({
-        apiKey: validateApiKey(apiKey, 'OpenAI', 'OPENAI_API_KEY'),
+        apiKey: apiKey || process.env.OPENAI_API_KEY,
       });
   }
 }
@@ -708,25 +674,9 @@ export class LLMService {
   ): Promise<Record<string, unknown>> {
     const { modelConfig, systemPrompt, messages } = params;
 
+    const provider = getProvider(modelConfig);
+    const model = provider(modelConfig.id as string);
     const providerId = String(modelConfig.provider || 'openai');
-    const modelId = String(modelConfig.id || 'unknown');
-
-    // Validate API key and get provider
-    let provider: ReturnType<typeof getProvider>;
-    let model: ReturnType<ReturnType<typeof getProvider>>;
-    
-    try {
-      provider = getProvider(modelConfig);
-      model = provider(modelId);
-    } catch (configError: any) {
-      // Re-throw configuration errors (like missing API key) immediately
-      aiLogger.error('LLMService', `Configuration error for ${providerId}/${modelId}:`, {
-        error: configError.message,
-        provider: providerId,
-        model: modelId,
-      });
-      throw configError;
-    }
 
     const formattedMessages: LLMMessage[] = [
       { role: 'system', content: systemPrompt || '' },
@@ -735,22 +685,13 @@ export class LLMService {
 
     const circuitCheck = await circuitBreaker.canExecute(providerId);
     if (!circuitCheck.allowed) {
-      const error = new Error(
-        `Circuit breaker is OPEN for ${providerId}. ${circuitCheck.reason}. Please try again later or use a different provider.`
-      );
-      aiLogger.warn('LLMService', `Circuit breaker blocked ${providerId}:`, {
-        reason: circuitCheck.reason,
-        state: circuitCheck.state,
-      });
-      throw error;
+      throw new Error(circuitCheck.reason);
     }
 
     try {
       let lastError: Error | null = null;
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
-          aiLogger.debug('LLMService', `Starting stream for ${providerId}/${modelId} (attempt ${attempt + 1}/2)`);
-          
           const result = await streamText({
             model,
             messages: formattedMessages as any,
@@ -758,87 +699,19 @@ export class LLMService {
           });
 
           await circuitBreaker.recordSuccess(providerId);
-          aiLogger.info('LLMService', `Stream initialized successfully for ${providerId}/${modelId}`);
           return { stream: result.textStream };
         } catch (error: unknown) {
           lastError = error as Error;
-          const errorMessage = lastError.message || 'Unknown error';
-          const errorName = (lastError as any).name || 'Error';
-          
-          // Enhanced error logging with connection diagnostics
-          aiLogger.warn('LLMService', `Stream initialization failed (attempt ${attempt + 1}/2)`, {
-            provider: providerId,
-            model: modelId,
-            error: errorMessage,
-            errorName,
-            code: (lastError as any).code,
-            status: (lastError as any).status,
-            statusCode: (lastError as any).statusCode,
-            cause: (lastError as any).cause?.message,
-          });
-
-          // Check for specific connection errors
-          if (
-            errorMessage.includes('ECONNREFUSED') ||
-            errorMessage.includes('ENOTFOUND') ||
-            errorMessage.includes('ETIMEDOUT') ||
-            errorMessage.includes('network') ||
-            errorMessage.includes('connect')
-          ) {
-            aiLogger.error('LLMService', `Network connection error for ${providerId}:`, {
-              error: errorMessage,
-              endpoint: modelConfig.endpoint,
-              provider: providerId,
-            });
-          }
-
-          // Check for authentication errors
-          if (
-            errorMessage.includes('401') ||
-            errorMessage.includes('403') ||
-            errorMessage.includes('unauthorized') ||
-            errorMessage.includes('authentication') ||
-            errorMessage.includes('API key') ||
-            errorMessage.includes('Invalid API')
-          ) {
-            aiLogger.error('LLMService', `Authentication error for ${providerId}:`, {
-              error: errorMessage,
-              hasApiKey: !!modelConfig.apiKey,
-              provider: providerId,
-            });
-          }
-
-          if (attempt === 0) {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-          }
+          aiLogger.warn(
+            'LLMService',
+            `Stream initialization failed (attempt ${attempt + 1}/2): ${lastError.message}`
+          );
+          if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       }
-      
-      // If we get here, both attempts failed
-      const finalError = lastError || new Error('Stream initialization failed after 2 attempts');
-      await circuitBreaker.recordFailure(providerId, finalError as Error);
-      
-      // Enhance error message with diagnostics
-      const enhancedError = new Error(
-        `Failed to connect to ${providerId} (${modelId}): ${finalError.message}. ` +
-        `Please check: 1) API key is configured correctly, 2) Network connectivity, 3) Provider service status.`
-      );
-      (enhancedError as any).originalError = finalError;
-      (enhancedError as any).provider = providerId;
-      (enhancedError as any).model = modelId;
-      
-      throw enhancedError;
+      throw lastError;
     } catch (error) {
-      // Re-throw configuration errors as-is
-      if ((error as Error).message.includes('Missing API key') || 
-          (error as Error).message.includes('Configuration error')) {
-        throw error;
-      }
-      
-      // For other errors, ensure circuit breaker is updated
-      if (!(error as any).originalError) {
-        await circuitBreaker.recordFailure(providerId, error as Error);
-      }
+      await circuitBreaker.recordFailure(providerId, error as Error);
       throw error;
     }
   }

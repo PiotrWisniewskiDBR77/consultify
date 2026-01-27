@@ -84,7 +84,6 @@ lint_report.txt
 
 # Temporary documentation files (move to docs/ if needed)
 *_SUMMARY.md
-!docs/executive/EXECUTIVE_SUMMARY.md
 *_PROGRESS.md
 *_COMPLETE.md
 *_FIX*.md

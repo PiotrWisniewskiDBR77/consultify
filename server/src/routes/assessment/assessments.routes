@@ -219,7 +219,7 @@ router.post('/:id/complete', async (req: AuthRequest, res: Response) => {
     const organizationId = req.user?.organizationId || 'org-dbr77-system';
 
     const assessmentInitiativeService = (
-      await import('../../services/AssessmentInitiativeService.js')
+      await import('../../services/assessmentInitiativeService.js')
     ).default;
     const assessmentId = Array.isArray(id) ? id[0] : id;
     const result = await assessmentInitiativeService.completeAssessment(assessmentId, organizationId);
@@ -248,7 +248,7 @@ router.post('/:id/generate-initiatives', async (req: AuthRequest, res: Response)
     }
 
     const assessmentInitiativeService = (
-      await import('../../services/AssessmentInitiativeService.js')
+      await import('../../services/assessmentInitiativeService.js')
     ).default;
     const assessmentId = Array.isArray(id) ? id[0] : id;
     const result = await assessmentInitiativeService.generateInitiatives(

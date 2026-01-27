@@ -32,6 +32,9 @@ export interface DemoSessionState {
   sessionStartTime: Date | null;
   sessionDurationMs: number;
   timeRemainingMs: number;
+  aiInteractionsUsed: number;
+  aiInteractionsLimit: number;
+  aiInteractionsRemaining: number;
 
   // Lifecycle stages
   hasCompletedTour: boolean;
@@ -57,6 +60,7 @@ export interface DemoSessionActions {
   markTourCompleted: () => void;
   markWelcomeSeen: () => void;
   markAIInteraction: () => void;
+  consumeAIInteraction: () => void;
   trackFeatureExplored: (featureId: string) => void;
   addMilestone: (id: string, name: string, metadata?: Record<string, unknown>) => void;
 
@@ -85,6 +89,7 @@ export interface DemoAnalytics {
 
 const DEMO_SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 const SESSION_WARNING_THRESHOLD_MS = 60 * 60 * 1000; // 1 hour before expiry
+const DEMO_AI_INTERACTIONS_LIMIT = 25; // hard session quota for demo (AI messages / interactions)
 const STORAGE_KEY = 'consultinity_demo_session';
 
 // ============================================================
@@ -97,6 +102,7 @@ interface StoredDemoSession {
   hasCompletedTour: boolean;
   hasSeenWelcome: boolean;
   hasInteractedWithAI: boolean;
+  aiInteractionsUsed: number;
   featuresExplored: string[];
   upgradePromptsShown: number;
   exitIntentTriggered: boolean;
@@ -140,12 +146,14 @@ const generateSessionId = (): string => {
 export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
   const { currentUser } = useAppStore();
 
+  // Demo account identity (single source of truth)
+  const DEMO_EMAIL = 'piotr.wisniewski@demo.com';
+
   // Determine if user is in demo mode
   const isDemo = useMemo(() => {
     return (
       currentUser?.isDemo === true ||
-      currentUser?.email === 'demo@legolex.com' ||
-      sessionStorage.getItem('isDemo') === 'true'
+      (sessionStorage.getItem('isDemo') === 'true' && currentUser?.email === DEMO_EMAIL)
     );
   }, [currentUser]);
 
@@ -154,6 +162,7 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
   const [sessionDurationMs, setSessionDurationMs] = useState(0);
   const [timeRemainingMs, setTimeRemainingMs] = useState(DEMO_SESSION_DURATION_MS);
+  const [aiInteractionsUsed, setAiInteractionsUsed] = useState(0);
 
   // Progress tracking
   const [hasCompletedTour, setHasCompletedTour] = useState(false);
@@ -194,6 +203,7 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
         setHasCompletedTour(stored.hasCompletedTour);
         setHasSeenWelcome(stored.hasSeenWelcome);
         setHasInteractedWithAI(stored.hasInteractedWithAI);
+        setAiInteractionsUsed(stored.aiInteractionsUsed || 0);
         setFeaturesExplored(stored.featuresExplored || []);
         setUpgradePromptsShown(stored.upgradePromptsShown || 0);
         setExitIntentTriggered(stored.exitIntentTriggered || false);
@@ -212,6 +222,7 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
     setSessionId(newSessionId);
     setSessionStartTime(newStartTime);
     setTimeRemainingMs(DEMO_SESSION_DURATION_MS);
+    setAiInteractionsUsed(0);
 
     saveSession({
       sessionId: newSessionId,
@@ -219,6 +230,7 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
       hasCompletedTour: false,
       hasSeenWelcome: false,
       hasInteractedWithAI: false,
+      aiInteractionsUsed: 0,
       featuresExplored: [],
       upgradePromptsShown: 0,
       exitIntentTriggered: false,
@@ -273,6 +285,7 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
       hasCompletedTour,
       hasSeenWelcome,
       hasInteractedWithAI,
+      aiInteractionsUsed,
       featuresExplored,
       upgradePromptsShown,
       exitIntentTriggered,
@@ -285,6 +298,7 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
     hasCompletedTour,
     hasSeenWelcome,
     hasInteractedWithAI,
+    aiInteractionsUsed,
     featuresExplored,
     upgradePromptsShown,
     exitIntentTriggered,
@@ -318,6 +332,7 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
     setSessionId(newSessionId);
     setSessionStartTime(newStartTime);
     setTimeRemainingMs(DEMO_SESSION_DURATION_MS);
+    setAiInteractionsUsed(0);
     setHasCompletedTour(false);
     setHasSeenWelcome(false);
     setHasInteractedWithAI(false);
@@ -341,6 +356,7 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
       durationMinutes: Math.round(sessionDurationMs / 60000),
       tourCompleted: hasCompletedTour,
       featuresExploredCount: featuresExplored.length,
+      aiInteractionsUsed,
     });
 
     clearStoredSession();
@@ -349,7 +365,8 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
     setSessionStartTime(null);
     setSessionDurationMs(0);
     setTimeRemainingMs(0);
-  }, [sessionId, sessionDurationMs, hasCompletedTour, featuresExplored]);
+    setAiInteractionsUsed(0);
+  }, [sessionId, sessionDurationMs, hasCompletedTour, featuresExplored, aiInteractionsUsed]);
 
   const extendSession = useCallback(() => {
     if (sessionStartTime) {
@@ -379,6 +396,15 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
       trackDemoEvent('demo_first_ai_interaction', { sessionId });
     }
   }, [hasInteractedWithAI, sessionId, addMilestone]);
+
+  const consumeAIInteraction = useCallback(() => {
+    setAiInteractionsUsed((prev) => {
+      const next = prev + 1;
+      trackDemoEvent('demo_ai_interaction', { sessionId, aiInteractionsUsed: next });
+      return next;
+    });
+    markAIInteraction();
+  }, [sessionId, markAIInteraction]);
 
   const trackFeatureExplored = useCallback(
     (featureId: string) => {
@@ -440,6 +466,9 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
     sessionStartTime,
     sessionDurationMs,
     timeRemainingMs,
+    aiInteractionsUsed,
+    aiInteractionsLimit: DEMO_AI_INTERACTIONS_LIMIT,
+    aiInteractionsRemaining: Math.max(0, DEMO_AI_INTERACTIONS_LIMIT - aiInteractionsUsed),
     hasCompletedTour,
     hasSeenWelcome,
     hasInteractedWithAI,
@@ -455,6 +484,7 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
     markTourCompleted,
     markWelcomeSeen,
     markAIInteraction,
+    consumeAIInteraction,
     trackFeatureExplored,
     addMilestone,
     incrementUpgradePrompts,

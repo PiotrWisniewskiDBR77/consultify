@@ -97,7 +97,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
     if (!currentProjectId) return;
     try {
       setGenerating(true);
-      const newReport = await Api.generateAssessmentReport(currentProjectId);
+      const newReport = await Api.generateProjectAssessmentReport(currentProjectId);
       toast.success('Report generated successfully');
       await loadReports();
     } catch (error: any) {
@@ -320,7 +320,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
               try {
                 setGenerating(true);
                 // Create draft report via API
-                const newReport = await Api.generateAssessmentReport(currentProjectId);
+                const newReport = await Api.generateProjectAssessmentReport(currentProjectId);
                 if (newReport?.id) {
                   setCurrentReport(newReport.id, 'new');
                   toast.success(t('assessment.reports.draftCreated', 'Draft report created'));

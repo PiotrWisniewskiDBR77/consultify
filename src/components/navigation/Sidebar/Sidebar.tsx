@@ -85,7 +85,6 @@ export const Sidebar: React.FC = () => {
     return completed;
   }, [freeSessionData, fullSessionData]);
 
-  // Navigation handlers
   const navigateToFullChat = React.useCallback(() => {
     setDisplayMode('full');
     setCurrentView(AppView.AI_CHAT);
@@ -232,6 +231,8 @@ export const Sidebar: React.FC = () => {
 
   const handleFlyoutNavigate = React.useCallback(
     (viewId: AppView) => {
+      console.log('[Sidebar FloatingMenu] Navigating:', viewId);
+
       if (activeConversationId) {
         navigateToViewWithChat(viewId);
       } else {
@@ -241,6 +242,13 @@ export const Sidebar: React.FC = () => {
       if (window.innerWidth < 1024) setIsSidebarOpen(false);
     },
     [activeConversationId, navigateToViewWithChat, setCurrentView, setIsSidebarOpen]
+  );
+
+  const handleFooterNavigate = React.useCallback(
+    (view: AppView) => {
+      setCurrentView(view);
+    },
+    [setCurrentView]
   );
 
   // Render nav item helper
@@ -281,12 +289,12 @@ export const Sidebar: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Sidebar Container */}
+      {/* Sidebar Container - z-[60] ensures it's above chat history sidebar (z-40) */}
       <motion.div
         layout
         data-tour="sidebar-nav"
         className={`
-          fixed inset-y-0 left-0 z-50
+          fixed inset-y-0 left-0 z-[60]
           bg-white/95 dark:bg-navy-900/95 backdrop-blur-hig
           border-r border-slate-200 dark:border-navy-700
           flex flex-col
@@ -337,7 +345,7 @@ export const Sidebar: React.FC = () => {
         <SidebarFooter
           showFull={showFull}
           onLogout={logout}
-          onNavigate={setCurrentView}
+          onNavigate={handleFooterNavigate}
           t={t as any}
           showPartnerPortal={currentUser?.role !== 'SUPERADMIN'}
         >

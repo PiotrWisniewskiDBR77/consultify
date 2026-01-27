@@ -12,10 +12,12 @@ import {
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useAppStore } from '../../store/useAppStore';
+
 /**
  * DemoBanner — Demo Session Indicator
  *
- * Shows when user is logged in as demo@legolex.com
+ * Shows when user is logged in as a demo user
  * Provides link to contact sales for commercial access
  */
 
@@ -25,6 +27,7 @@ interface DemoBannerProps {
 
 const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
   const { t } = useTranslation();
+  const { currentUser } = useAppStore();
   const [showLimitations, setShowLimitations] = useState(false);
 
   const DEMO_LIMITATIONS = [
@@ -65,7 +68,7 @@ const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
           </div>
           <span className="text-white/90">
             <code className="bg-white/10 px-1.5 py-0.5 rounded text-xs font-mono">
-              demo@legolex.com
+              {currentUser?.email || 'piotr.wisniewski@demo.com'}
             </code>
             <span className="ml-2 hidden sm:inline">
               {t('demo.banner.description', 'Exploring with sample data')}

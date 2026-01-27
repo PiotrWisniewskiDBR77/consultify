@@ -10,20 +10,9 @@
  * FLOW-AI-VISION: Image input processing
  */
 
-import logger from '../../utils/Logger.js';
+import sharp from 'sharp';
 
-// Lazy load sharp to avoid runtime errors if not installed
-let sharp: any;
-const loadSharp = async () => {
-  if (!sharp) {
-    try {
-      sharp = (await import('sharp')).default;
-    } catch (error) {
-      throw new Error('sharp package is required for image processing. Please install it: npm install sharp');
-    }
-  }
-  return sharp;
-};
+import logger from '../../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -206,8 +195,7 @@ export async function processImageForVision(
 
   try {
     // Get image metadata
-    const sharpLib = await loadSharp();
-    const metadata = await sharpLib(buffer).metadata();
+    const metadata = await sharp(buffer).metadata();
     let { width = 0, height = 0 } = metadata;
 
     // Check if resize needed
@@ -227,7 +215,7 @@ export async function processImageForVision(
     }
 
     // Process with sharp
-    let sharpInstance = sharpLib(buffer);
+    let sharpInstance = sharp(buffer);
 
     // Resize if needed
     if (needsResize) {
@@ -272,7 +260,7 @@ export async function processImageForVision(
     // If still too large, reduce quality further
     if (outputBuffer.length > maxSize && quality > 50) {
       const reducedQuality = Math.max(50, quality - 20);
-      outputBuffer = await sharpLib(buffer)
+      outputBuffer = await sharp(buffer)
         .resize(width, height, { fit: 'inside', withoutEnlargement: true })
         .jpeg({ quality: reducedQuality, mozjpeg: true })
         .toBuffer();

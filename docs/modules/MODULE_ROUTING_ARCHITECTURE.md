@@ -1,28 +1,72 @@
-# Module Routing Architecture
+# Module Routing Architecture (Canonical)
 
-## Źródło Prawdy - Konfiguracja Modułów
+## Purpose
+This document is the canonical source of truth for **module routing**, **sidebar modules**, and **module responsibility boundaries**.
 
-Dokument definiuje oficjalną strukturę routingu modułów aplikacji Consultinity.
+It also summarizes how the **initiative lifecycle** maps onto modules, based on the canonical governance model.
 
-**Data aktualizacji**: 2026-01-20
+**Last updated**: 2026-01-23
 
----
-
-## Przegląd Architektury
-
-Aplikacja wykorzystuje architekturę opartą na statusie inicjatywy (status-driven architecture), gdzie moduły są zorganizowane według cyklu życia inicjatyw transformacyjnych:
-
-```
-Assessment → Initiatives → Execution → Benefits
-     ↓           ↓            ↓           ↓
-   DRAFT    PLANNING     EXECUTING      DONE
-            REVIEW       BLOCKED     CANCELLED
-            APPROVED                  ARCHIVED
-```
+## Source-of-truth links
+- Governance model: `docs/product/INITIATIVE_GOVERNANCE_MODEL.md`
+- System architecture brief: `docs/product/SYSTEM_ARCHITECTURE_BRIEF.md`
+- Documentation registry: `docs/product/DOCUMENTATION_REGISTRY.md`
 
 ---
 
-## Główne Moduły Aplikacji
+## Architecture overview
+
+The application follows a **status- and gate-driven architecture**: modules are organized around the transformation initiative lifecycle and governance gates.
+
+## Canonical artefact outputs by module (closed list)
+Per `docs/product/SYSTEM_ARCHITECTURE_BRIEF.md`, modules produce and consume a **closed artefact set**:
+
+| Module | Primary outputs | Notes |
+|---|---|---|
+| Chat | Conversation context | Feeds Interview; not a governance artefact |
+| Interview | **Insights (artefact)** | Context only; does not create initiatives directly |
+| Tools | **Tool Output** (ToolSession) | Persistent tool run snapshot; can create Initiative drafts |
+| Assessment | **Assessment Report** | Draft → Review → Final (locked); creates Initiative drafts |
+| Initiatives | **Initiative** (portfolio planning + decisions) | Planning + decision moments (governance) |
+| Implementation | **Task**, **Decision**, Economic analysis updates | Flexible updates: tasks/decisions/budgets |
+| Benefits | Benefits / tracking records | Plan vs actual, financial + operational evaluation |
+| Reporting | Report packages | Aggregates artefacts; does not introduce new artefacts |
+
+### Canonical initiative lifecycle (high-level)
+
+```mermaid
+flowchart LR
+  toolsAssessment[Tools_Assessment] --> draft[DRAFT]
+  draft --> planning[PLANNING]
+  planning --> review[REVIEW]
+  review --> approved[APPROVED]
+  approved --> scheduled[SCHEDULED]
+  scheduled --> executing[EXECUTING]
+  executing --> blocked[BLOCKED]
+  executing --> done[DONE]
+  done --> tracking[TRACKING]
+  tracking --> archived[ARCHIVED]
+  draft --> cancelled[CANCELLED]
+  planning --> cancelled
+  review --> cancelled
+  approved --> cancelled
+  scheduled --> cancelled
+  executing --> cancelled
+  blocked --> cancelled
+  blocked --> executing
+```
+
+> Note: `EDITING`, `VALIDATED`, `PROMOTED` are treated as governance gate phases within Tools/Assessment (see governance model).
+
+---
+
+## Main application modules (sidebar)
+
+### Core flow order (product)
+Per `docs/product/SYSTEM_ARCHITECTURE_BRIEF.md`, the core sequential flow is:
+Chat → Interview → Tools → Assessment → Initiatives → Implementation → Benefits → Reporting
+
+Other modules can exist as **supporting / cross-cutting** UI areas.
 
 ### 1. AI Chat
 | Właściwość | Wartość |
@@ -83,7 +127,7 @@ Assessment → Initiatives → Execution → Benefits
 | **Component** | `ExecutionHub` |
 | **Ikona** | `Rocket` |
 | **Lokalizacja** | `src/components/Execution/ExecutionHub.tsx` |
-| **Statusy inicjatyw** | `APPROVED`, `EXECUTING`, `BLOCKED`, `DONE` |
+| **Initiative states handled** | `SCHEDULED`, `EXECUTING`, `BLOCKED`, `DONE` |
 
 ### 7. Benefits
 | Właściwość | Wartość |
@@ -94,7 +138,7 @@ Assessment → Initiatives → Execution → Benefits
 | **Component** | `BenefitsHub` |
 | **Ikona** | `TrendingUp` |
 | **Lokalizacja** | `src/components/Benefits/BenefitsHub.tsx` |
-| **Statusy inicjatyw** | `DONE`, `CANCELLED`, `ARCHIVED` |
+| **Initiative states handled** | `TRACKING`, `ARCHIVED` |
 
 ### 8. Economics
 | Właściwość | Wartość |
@@ -105,6 +149,8 @@ Assessment → Initiatives → Execution → Benefits
 | **Component** | `EconomicsView` |
 | **Ikona** | `Calculator` |
 | **Lokalizacja** | `src/views/EconomicsView.tsx` |
+
+> Economics is a **supporting capability** (economic analysis artefact) that can feed initiatives, but it is not part of the core sequential flow order.
 
 ### 9. Reports
 | Właściwość | Wartość |
@@ -118,7 +164,7 @@ Assessment → Initiatives → Execution → Benefits
 
 ---
 
-## Pliki Konfiguracyjne
+## Configuration files (code references)
 
 ### 1. Menu Sidebar
 **Lokalizacja**: `src/components/navigation/Sidebar/menuConfig.ts`
@@ -193,7 +239,7 @@ export enum AppView {
 
 ---
 
-## Przepływ Nawigacji
+## Navigation flow
 
 ```
 User klika w Sidebar
@@ -224,7 +270,7 @@ onClick={() => {
 
 ---
 
-## Komponenty Hub (ModuleHub Pattern)
+## Hub components (`ModuleHub` pattern)
 
 Moduły Execution i Benefits używają wzorca `ModuleHub` zapewniającego:
 
@@ -259,7 +305,7 @@ Moduły Execution i Benefits używają wzorca `ModuleHub` zapewniającego:
 
 ---
 
-## Eksporty Modułów
+## Module exports
 
 ### Benefits Module
 **Lokalizacja**: `src/components/Benefits/index.ts`
@@ -278,23 +324,30 @@ export { BenefitsTracker } from './BenefitsTracker';
 
 ---
 
-## Statusy Inicjatyw i Przypisanie do Modułów
+## Canonical lifecycle → module ownership
 
-| Status | Moduł | Opis |
+This table is the **routing-level** version of the governance model. For gate owners and UX permissions, refer to `docs/product/INITIATIVE_GOVERNANCE_MODEL.md`.
+
+| Status / Gate phase | Module | What users do here |
 |--------|-------|------|
-| `DRAFT` | Assessment | Inicjatywa w fazie definiowania |
-| `PLANNING` | Initiatives | Planowanie zasobów i harmonogramu |
-| `REVIEW` | Initiatives | Oczekuje na zatwierdzenie |
-| `APPROVED` | Initiatives/Execution | Zatwierdzona, gotowa do realizacji |
-| `EXECUTING` | Execution | Aktywnie realizowana |
-| `BLOCKED` | Execution | Zablokowana przez problem |
-| `DONE` | Benefits | Zakończona pomyślnie |
-| `CANCELLED` | Benefits | Anulowana |
-| `ARCHIVED` | Benefits | Zarchiwizowana |
+| `DRAFT` | Tools / Assessment | Auto-created draft; initial scoping and context |
+| `EDITING` (gate phase) | Tools / Assessment | Team enriches and structures the draft |
+| `VALIDATED` (gate) | Tools / Assessment | Business clarity/value validation |
+| `PROMOTED` (gate) | Tools / Assessment → Initiatives | Promote draft into portfolio pipeline |
+| `PLANNING` | Initiatives | Scope, KPIs, dependencies, readiness for review |
+| `REVIEW` (gate) | Initiatives | Business Owner / Sponsor review; prepare for approval |
+| `APPROVED` (gate) | Initiatives | Business Owner / Sponsor approves to execute |
+| `SCHEDULED` (gate) | Initiatives → Execution | Transformation Lead schedules on roadmap and baseline |
+| `EXECUTING` | Execution | Tasks executed; progress, risks, RAID, decisions |
+| `BLOCKED` (gate) | Execution | Business Owner / Sponsor controlled stop/resolution |
+| `DONE` (gate) | Execution → Benefits | Execution Lead confirms delivery completion |
+| `TRACKING` | Benefits | Business Owner measures KPI impact over time |
+| `CANCELLED` (gate) | Any | Business Owner / Sponsor cancels with rationale |
+| `ARCHIVED` | Benefits | Closed for audit/reporting and long-term retention |
 
 ---
 
-## Weryfikacja Połączeń
+## Verification checklist (routing)
 
 ### Checklist
 
@@ -306,7 +359,7 @@ export { BenefitsTracker } from './BenefitsTracker';
 
 ---
 
-## Stabilność Nawigacji (Incident: lodash/get + recharts)
+## Navigation stability (incident notes)
 
 ### Objaw
 
@@ -381,3 +434,13 @@ grep "[AppView.VIEW_NAME]" src/routes/routeConfig.ts
 - [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) - Architektura aplikacji
 - [DISCOVERY_CONSULTANT_MODULE.md](./DISCOVERY_CONSULTANT_MODULE.md) - Moduł Interview
 - [DISCOVERY_TOOLS_MODULE.md](./DISCOVERY_TOOLS_MODULE.md) - Moduł Discovery Tools
+- `docs/product/INITIATIVE_GOVERNANCE_MODEL.md` - Canonical governance + UX permissions
+- `docs/product/DOCUMENTATION_REGISTRY.md` - Canonical vs legacy docs
+
+---
+
+## Implementation delta vs current code
+This section exists so product documentation can be canonical even when code is mid-transition.
+
+- **Gate phases vs core enums**: `EDITING`, `VALIDATED`, `PROMOTED`, `SCHEDULED`, `TRACKING` may not exist as core enum states in code yet.\n  - **Required behavior**: UI locks/buttons and audit trail must behave as if they do.\n  - Preferred implementation: decisions/gates + timestamps/fields, not necessarily new core status values.\n
+- **Transition ordering**: the canonical lifecycle order is defined in `docs/product/INITIATIVE_GOVERNANCE_MODEL.md` and supersedes older flow diagrams.

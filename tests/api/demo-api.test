@@ -27,7 +27,7 @@ describe('Demo API Endpoints', () => {
             expect(data).toHaveProperty('isDemo', true);
             
             // Verify user data
-            expect(data.user.email).toBe('demo@legolex.com');
+            expect(data.user.email).toBe('piotr.wisniewski@demo.com');
             expect(data.user.isDemo).toBe(true);
             expect(data.user.role).toBeDefined();
         });
@@ -70,7 +70,7 @@ describe('Demo API Endpoints', () => {
             expect(protectedResponse.status).toBe(200);
             
             const userData = await protectedResponse.json();
-            expect(userData.email).toBe('demo@legolex.com');
+            expect(userData.email).toBe('piotr.wisniewski@demo.com');
         });
 
         it('should log demo access activity', async () => {

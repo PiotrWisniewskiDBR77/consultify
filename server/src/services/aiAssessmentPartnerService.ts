@@ -14,7 +14,7 @@ import {
   PrioritizedListSchema,
   ROIEstimateSchema,
   validateOrFallback,
-} from '../utils/AISchemaValidator.js';
+} from '../utils/aiSchemaValidator.js';
 
 // AI THINKING_PARTNER Mode Configuration
 const AI_PARTNER_CONFIG = {

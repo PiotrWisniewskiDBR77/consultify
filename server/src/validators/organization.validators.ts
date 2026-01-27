@@ -22,6 +22,10 @@ export const MemberRoleEnum = z.enum(['OWNER', 'ADMIN', 'USER', 'MEMBER', 'VIEWE
 export const CreateOrganizationSchema = z.object({
   name: z.string().min(1).max(255),
   slug: z.string().max(100).optional(),
+  industry: z.string().max(100).optional(),
+  domain: z.string().max(255).optional(),
+  vatNumber: z.string().max(50).optional(),
+  attributionData: z.record(z.string(), z.any()).optional(),
 });
 
 export const UpdateOrganizationSchema = z.object({
@@ -29,6 +33,11 @@ export const UpdateOrganizationSchema = z.object({
   slug: z.string().max(100).optional(),
   plan: OrganizationPlanEnum.optional(),
   status: OrganizationStatusEnum.optional(),
+  industry: z.string().max(100).optional(),
+  domain: z.string().max(255).optional(),
+  vatNumber: z.string().max(50).optional(),
+  attributionData: z.record(z.string(), z.any()).optional(),
+  onboardingStatus: z.string().max(50).optional(),
 });
 
 export const AddMemberSchema = z.object({

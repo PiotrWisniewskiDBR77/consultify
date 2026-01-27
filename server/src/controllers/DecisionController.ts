@@ -47,7 +47,6 @@ interface DecisionRow {
   owner_avatar_url?: string | null;
   requested_by_name?: string | null;
   project_name?: string | null;
-  location_name?: string | null;
   blocked_items_count?: number;
 }
 
@@ -148,13 +147,11 @@ export class DecisionController {
           owner.first_name || ' ' || owner.last_name as owner_name,
           requester.first_name || ' ' || requester.last_name as requested_by_name,
           p.name as project_name,
-          l.name as location_name,
           (SELECT COUNT(*) FROM decision_impacts di WHERE di.decision_id = d.id AND di.is_blocker = 1) as blocked_items_count
         FROM decisions d
         LEFT JOIN users owner ON d.decision_maker_id = owner.id
         LEFT JOIN users requester ON d.created_by = requester.id
         LEFT JOIN projects p ON d.project_id = p.id
-        LEFT JOIN locations l ON p.location_id = l.id
         WHERE 1=1`;
 
       type SQLParam = string | number | boolean | null | undefined;
@@ -233,7 +230,6 @@ export class DecisionController {
             requestedByName: row.requested_by_name || undefined,
             projectId: row.project_id || undefined,
             projectName: row.project_name || undefined,
-            locationName: row.location_name || undefined,
             createdAt,
             dueDate: dueDate || undefined,
             priority: normalizePriority(row.priority),

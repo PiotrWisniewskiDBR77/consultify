@@ -1,0 +1,111 @@
+# CODEOWNERS - Automatic Review Assignment
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# ==========================================
+# SECURITY-CRITICAL FILES
+# ==========================================
+# These files require security team review
+
+/server/src/middleware/permission.middleware.ts @security-team
+/server/src/middleware/permissionMiddleware.ts @security-team
+/server/src/middleware/permissionMiddleware.js @security-team
+/server/src/services/permissionService.ts @security-team
+/server/src/services/accessPolicyService.ts @security-team
+/server/src/services/AccessPolicyService.ts @security-team
+/server/src/utils/security.utils.ts @security-team
+/server/src/middleware/auth.middleware.ts @security-team
+/server/src/middleware/authMiddleware.ts @security-team
+/server/src/middleware/authMiddleware.js @security-team
+
+# Authentication & Authorization
+/server/src/routes/auth.routes.ts @security-team
+/server/src/controllers/AuthController.ts @security-team
+/server/src/services/RefreshTokenService.ts @security-team
+
+# Multi-tenant isolation
+/server/src/middleware/orgContext.middleware.ts @security-team
+/server/src/utils/orgColumn.ts @security-team
+
+# ==========================================
+# DATABASE & MIGRATIONS
+# ==========================================
+# Database changes require backend lead review
+
+/server/migrations/*.sql @backend-lead
+/server/src/database/ @backend-lead
+/server/src/database/**/*.ts @backend-lead
+/server/scripts/migrate*.ts @backend-lead
+/server/scripts/migrate*.js @backend-lead
+
+# ==========================================
+# API ROUTES
+# ==========================================
+# API changes require backend team review
+
+/server/src/routes/**/*.ts @backend-team
+/server/src/routes/**/*.js @backend-team
+/server/src/controllers/**/*.ts @backend-team
+
+# ==========================================
+# FRONTEND SECURITY
+# ==========================================
+# Admin and SuperAdmin components require review
+
+/src/components/Admin/** @admin-team
+/src/components/SuperAdmin/** @superadmin-team
+/src/views/admin/** @admin-team
+/src/views/superadmin/** @superadmin-team
+
+# ==========================================
+# TESTING INFRASTRUCTURE
+# ==========================================
+# Test infrastructure changes require QA review
+
+/tests/security/** @security-team @qa-team
+/tests/integration/** @backend-team @qa-team
+/vitest.config.ts @qa-team
+/playwright.config.ts @qa-team
+
+# ==========================================
+# CI/CD & INFRASTRUCTURE
+# ==========================================
+# Infrastructure changes require DevOps review
+
+/.github/workflows/** @devops-team
+/.github/workflows.disabled/** @devops-team
+/docker-compose*.yml @devops-team
+/Dockerfile @devops-team
+/server/src/config/** @devops-team
+
+# ==========================================
+# DOCUMENTATION STANDARDS
+# ==========================================
+# Quality and security standards require tech lead review
+
+/docs/QUALITY_AND_SECURITY_STANDARD.md @tech-lead @security-lead
+/docs/SECURITY_RUNBOOKS.md @security-lead
+/docs/INCIDENT_RESPONSE_PLAYBOOK.md @security-lead
+/docs/BRANCH_PROTECTION_SETUP.md @tech-lead
+/docs/GITHUB_SETUP_CHECKLIST.md @tech-lead
+
+# ==========================================
+# CONFIGURATION FILES
+# ==========================================
+# Config changes require tech lead review
+
+/package.json @tech-lead
+/tsconfig.json @tech-lead
+/vitest.config.ts @tech-lead
+/eslint.config.js @tech-lead
+/.prettierrc @tech-lead
+/.lintstagedrc.json @tech-lead
+
+# ==========================================
+# DEFAULT OWNERS
+# ==========================================
+# All other files default to backend team
+
+* @backend-team
+
+
+

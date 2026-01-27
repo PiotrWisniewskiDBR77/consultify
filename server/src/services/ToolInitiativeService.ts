@@ -5,9 +5,9 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { AIPipeline } from './ai/AIPipeline.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { AIPipeline } from './ai/aiPipeline.js';
 
 type ToolSessionRow = {
   id: string;
@@ -40,7 +40,11 @@ const parseJsonPayload = (content: string): { initiatives: GeneratedInitiative[]
   }
 };
 
-const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> => {
+const withTimeout = async <T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  label: string
+): Promise<T> => {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       reject(new Error(`${label} timed out after ${timeoutMs}ms`));

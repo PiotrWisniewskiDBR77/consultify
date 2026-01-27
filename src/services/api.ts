@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { FullSession, LLMProvider, SessionMode, User } from '../types';
 import { tokenService } from './tokenService';
+import { trackFunnelEvent } from './funnelAnalytics';
 
 // Use relative path to allow Vite proxy to handle the request (avoiding CORS)
 // or use env var if provided.
@@ -18,11 +19,18 @@ export const getHeaders = () => {
 
   // Check if demo mode is enabled from localStorage
   let isDemoMode = false;
+  let isDemoSession = false;
+  const DEMO_EMAIL = 'piotr.wisniewski@demo.com';
   try {
     const storageData = localStorage.getItem('consultinity-storage');
     if (storageData) {
       const parsed = JSON.parse(storageData);
       isDemoMode = parsed?.state?.isDemoMode === true;
+      const persistedUser = parsed?.state?.currentUser;
+      isDemoSession =
+        persistedUser?.isDemo === true ||
+        persistedUser?.email === DEMO_EMAIL ||
+        (sessionStorage.getItem('isDemo') === 'true' && persistedUser?.email === DEMO_EMAIL);
     }
   } catch {
     // Ignore parsing errors
@@ -46,8 +54,8 @@ export const getHeaders = () => {
     'Accept-Language': userLanguage, // Send user's language preference
   };
 
-  // Add demo mode header if enabled
-  if (isDemoMode) {
+  // Add demo mode header only for demo sessions/accounts
+  if (isDemoMode && isDemoSession) {
     headers['X-Demo-Mode'] = 'true';
   }
 
@@ -113,6 +121,34 @@ const handleResponse = async (res: Response, defaultError: string) => {
     throw new Error(data.error || 'AI Budget Exhausted');
   }
 
+  // Unified access-blocked handling (Trial expiry, AI limits, token budgets, etc.)
+  if (res.status === 403) {
+    const code = data.code || data.errorCode;
+    const accessBlockedCodes = new Set([
+      'TRIAL_PROFILE_INCOMPLETE',
+      'TRIAL_EXPIRED',
+      'AI_LIMIT_REACHED',
+      'AI_TOKEN_BUDGET_EXCEEDED',
+      'INSUFFICIENT_TOKENS',
+      'DEMO_READ_ONLY',
+    ]);
+    if (accessBlockedCodes.has(code)) {
+      try {
+        window.dispatchEvent(
+          new CustomEvent('access:blocked', {
+            detail: {
+              code,
+              message: data.message || data.error || defaultError,
+            },
+          })
+        );
+      } catch {
+        // ignore
+      }
+      throw new Error(data.message || data.error || defaultError);
+    }
+  }
+
   throw new Error(data.error || defaultError);
 };
 
@@ -145,7 +181,7 @@ export const Api = {
   },
 
   /**
-   * Demo Login - Automatically logs in as demo@legolex.com
+   * Demo Login - Automatically logs in as demo user
    * Used for demo/trial access from landing page
    */
   demoLogin: async (): Promise<User & { isDemo: boolean }> => {
@@ -614,8 +650,12 @@ export const Api = {
 
               if (data.text) onChunk(data.text);
               if (data.error) {
-                console.error('Stream error from server:', data.error);
-                onChunk(`Error: ${data.error}`);
+                console.error('Stream error from server:', data.error, data.code);
+
+                // Show the error inline (so the user isn't left with an empty assistant bubble)
+                onChunk(data.error);
+
+                // Budget freeze (existing behavior)
                 if (data.code === 'AI_BUDGET_EXHAUSTED') {
                   const { useAppStore } = await import('../store/useAppStore');
                   useAppStore.getState().setAiFreezeStatus({
@@ -623,6 +663,21 @@ export const Api = {
                     reason: data.error,
                     scope: data.budgetStatus?.scope || 'Global',
                   });
+                } else {
+                  // Unified access-blocked UX hook
+                  try {
+                    window.dispatchEvent(
+                      new CustomEvent('access:blocked', {
+                        detail: {
+                          code: data.code || 'ACCESS_BLOCKED',
+                          message: data.error,
+                          accessContext: data.accessContext,
+                        },
+                      })
+                    );
+                  } catch {
+                    // ignore
+                  }
                 }
               }
             } catch (e) {
@@ -1488,6 +1543,54 @@ export const Api = {
   },
 
   // ==========================================
+  // DECISIONS API
+  // ==========================================
+  getDecisions: async (projectId?: string): Promise<any[]> => {
+    let url = `${API_URL}/decisions`;
+    if (projectId) url += `?projectId=${projectId}`;
+    const res = await fetch(url, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch decisions');
+    const data = await res.json();
+    // Extract decisions array and map snake_case to camelCase
+    const decisions = Array.isArray(data) ? data : (data.decisions || []);
+    return decisions.map((d: any) => ({
+      ...d,
+      decisionOwnerId: d.decision_maker_id || d.decisionOwnerId,
+      ownerName: d.owner_name || d.ownerName,
+      projectName: d.project_name || d.projectName,
+      createdAt: d.created_at || d.createdAt,
+      dueDate: d.deadline || d.dueDate,
+      decisionType: d.type || d.decisionType,
+      priority: d.priority || 'MEDIUM',
+    }));
+  },
+
+  getDecision: async (id: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/decisions/${id}`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch decision');
+    return res.json();
+  },
+
+  updateDecision: async (id: string, updates: any): Promise<void> => {
+    const res = await fetch(`${API_URL}/decisions/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(updates),
+    });
+    if (!res.ok) throw new Error('Failed to update decision');
+  },
+
+  createDecision: async (decision: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/decisions`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(decision),
+    });
+    if (!res.ok) throw new Error('Failed to create decision');
+    return res.json();
+  },
+
+  // ==========================================
   // PHASE 6: AI INTEGRATION
   // ==========================================
   // --- INITIATIVES (Phase 2) ---
@@ -1541,6 +1644,32 @@ export const Api = {
     return response.json();
   },
 
+  /**
+   * Get initiatives filtered by status(es)
+   * @param statuses - Comma-separated status values (e.g., 'DRAFT' or 'DRAFT,PLANNING')
+   * @param projectId - Optional project filter
+   */
+  getInitiativesByStatus: async (statuses: string, projectId?: string): Promise<any[]> => {
+    let url = `${API_URL}/initiatives/by-status/${statuses}`;
+    if (projectId) url += `?projectId=${projectId}`;
+    const res = await fetch(url, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch initiatives by status');
+    const data = await res.json();
+    return data.initiatives || data || [];
+  },
+
+  /**
+   * Get tasks for an initiative
+   */
+  getInitiativeTasks: async (initiativeId: string): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/tasks?initiativeId=${initiativeId}`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch initiative tasks');
+    const data = await res.json();
+    return data.tasks || data || [];
+  },
+
   // --- TOOLS -> INITIATIVES ---
   createToolSession: async (payload: {
     toolType: string;
@@ -1553,6 +1682,46 @@ export const Api = {
       body: JSON.stringify(payload),
     });
     return handleResponse(res, 'Failed to create tool session');
+  },
+
+  listToolSessions: async (params?: {
+    projectId?: string;
+    status?: string;
+    toolType?: string;
+    category?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+    items: Array<{
+      id: string;
+      name: string;
+      toolType: string;
+      status: string;
+      progress: number;
+      confidenceAvg: number;
+      projectId?: string;
+      createdBy?: string;
+      createdAt?: string;
+      updatedAt?: string;
+      reviewRequestedAt?: string;
+      approvedAt?: string;
+    }>;
+    total: number;
+    limit: number;
+    offset: number;
+  }> => {
+    const searchParams = new URLSearchParams();
+    if (params?.projectId) searchParams.append('projectId', params.projectId);
+    if (params?.status) searchParams.append('status', params.status);
+    if (params?.toolType) searchParams.append('toolType', params.toolType);
+    if (params?.category) searchParams.append('category', params.category);
+    if (params?.limit) searchParams.append('limit', String(params.limit));
+    if (params?.offset) searchParams.append('offset', String(params.offset));
+
+    const queryString = searchParams.toString();
+    const url = `${API_URL}/tools${queryString ? `?${queryString}` : ''}`;
+    const res = await fetch(url, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to list tool sessions');
   },
 
   getToolSession: async (toolId: string): Promise<any> => {
@@ -1682,7 +1851,7 @@ export const Api = {
     if (params?.assessmentType) query.set('assessmentType', params.assessmentType);
     if (params?.limit) query.set('limit', String(params.limit));
     if (params?.offset) query.set('offset', String(params.offset));
-    
+
     const res = await fetch(`${API_URL}/assessment-workflow?${query.toString()}`, {
       headers: getHeaders(),
     });
@@ -1710,7 +1879,7 @@ export const Api = {
     return handleResponse(res, 'Failed to request review');
   },
 
-  generateAssessmentWorkflowReport: async (
+  generateAssessmentReport: async (
     assessmentId: string,
     payload?: { includeRecommendations?: boolean; includeGapAnalysis?: boolean }
   ): Promise<any> => {
@@ -4457,10 +4626,25 @@ export const Api = {
   },
   // Billing
   createSetupIntent: async () => {
-    return { clientSecret: '', id: '' };
+    const res = await fetch(`${API_URL}/billing/setup-intent`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to create setup intent');
   },
   addPaymentMethod: async (paymentMethodId: string) => {
-    return { success: true };
+    const res = await fetch(`${API_URL}/billing/payment-methods`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ paymentMethodId }),
+    });
+    const data = await handleResponse(res, 'Failed to add payment method');
+    try {
+      trackFunnelEvent('billing_payment_method_added', { paymentMethodId });
+    } catch {
+      // ignore
+    }
+    return data;
   },
   // Feature flags
   updateFeatureFlag: async (flagId: string, data: any) => {
@@ -4525,7 +4709,7 @@ export const Api = {
     const data = await res.json();
     return data.reports || [];
   },
-  generateAssessmentReport: async (projectId: string, type?: string) => {
+  generateProjectAssessmentReport: async (projectId: string, type?: string) => {
     const res = await fetch(`${API_URL}/assessment-reports`, {
       method: 'POST',
       headers: getHeaders(),
@@ -4538,7 +4722,8 @@ export const Api = {
   },
   // Payment Methods
   getPaymentMethods: async () => {
-    return { paymentMethods: [] };
+    const res = await fetch(`${API_URL}/billing/payment-methods`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch payment methods');
   },
   // Invitations
   getInvitations: async () => {
@@ -4664,16 +4849,8 @@ export const Api = {
   // Chat projects - Real API implementations
   getChatProjects: async () => {
     const response = await fetch(`${API_URL}/chat-projects`, { headers: getHeaders() });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || 'Failed to fetch chat projects');
-    }
-    const data = await response.json();
-    // Ensure response has the expected structure
-    return {
-      projects: Array.isArray(data?.projects) ? data.projects : [],
-      total: data?.total ?? (Array.isArray(data?.projects) ? data.projects.length : 0),
-    };
+    if (!response.ok) throw new Error('Failed to fetch chat projects');
+    return response.json();
   },
   getChatProject: async (id: string) => {
     const response = await fetch(`${API_URL}/chat-projects/${id}`, { headers: getHeaders() });

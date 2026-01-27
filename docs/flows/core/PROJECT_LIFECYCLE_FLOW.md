@@ -11,16 +11,19 @@
 | **Implementation Status** | Mostly implemented, needs enhancements |
 
 ## Purpose
+Manage the lifecycle of a project (create, configure, archive, move), including role scoping and governance defaults.
 
-Zarządzanie cyklem życia projektu: tworzenie, konfiguracja, archiwizacja, przenoszenie.
+Canonical references:
+- `docs/product/SYSTEM_ARCHITECTURE_BRIEF.md`
+- `docs/product/INITIATIVE_GOVERNANCE_MODEL.md`
 
 ## Triggers
 
 | Trigger         | Description                           |
 | --------------- | ------------------------------------- |
-| Create Project  | Owner/Admin tworzy nowy projekt       |
-| Update Project  | PM aktualizuje projekt                |
-| Archive Project | Projekt zakończony, idzie do archiwum |
+| Create Project  | Owner/Admin creates a new project |
+| Update Project  | Admin or authorized user updates project settings |
+| Archive Project | Completed/cancelled project is archived |
 | Delete Project  | Usunięcie (soft delete)               |
 
 ## Outcomes
@@ -34,10 +37,9 @@ Zarządzanie cyklem życia projektu: tworzenie, konfiguracja, archiwizacja, prze
 
 | Actor | Role                          |
 | ----- | ----------------------------- |
-| Owner | Tworzy projekty, pełny dostęp |
-| Admin | Tworzy projekty, zarządza     |
-| PM    | Zarządza projektem            |
-| User  | Pracuje w projekcie           |
+| Owner | System owner; full access |
+| Admin | System administration and project setup |
+| User | Access based on project role assignment |
 
 ## Involved Modules
 
@@ -77,6 +79,8 @@ Zarządzanie cyklem życia projektu: tworzenie, konfiguracja, archiwizacja, prze
                │ ON_HOLD  │────►│ CANCELLED │
                └──────────┘     └───────────┘
 ```
+
+> Note: Project lifecycle is separate from initiative lifecycle. Initiatives remain “one object = one lifecycle” within a project context.
 
 ### Proposed Addition: ARCHIVED
 

@@ -475,6 +475,7 @@ VALUES
 -- 16. ADD ROLE PERMISSIONS FOR CONTENT
 -- ==========================================
 
+PRAGMA foreign_keys = OFF;
 INSERT OR IGNORE INTO role_permissions (id, role, permission_key, description, created_at)
 VALUES 
     -- Content View
@@ -505,6 +506,7 @@ VALUES
     -- Content Analytics
     ('rp_content_analytics_admin', 'ADMIN', 'CONTENT_ANALYTICS', 'View content analytics', datetime('now')),
     ('rp_content_analytics_superadmin', 'SUPERADMIN', 'CONTENT_ANALYTICS', 'View content analytics', datetime('now'));
+PRAGMA foreign_keys = ON;
 
 -- ==========================================
 -- 17. CREATE VIEWS FOR ANALYTICS

@@ -1,0 +1,5 @@
+DB_TYPE=sqlite
+DB_PATH=:memory:
+JWT_SECRET=test_secret
+PORT=3001
+NODE_ENV=test

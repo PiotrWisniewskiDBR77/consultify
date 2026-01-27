@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { InitiativeService } from '../../services/initiativeService';
-import { useAppStore } from '../../store/useAppStore';
 
 interface TaskDetailModalProps {
   taskId: string | null;
@@ -23,7 +22,6 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   onTaskSaved,
 }) => {
   const { t } = useTranslation();
-  const currentProjectId = useAppStore((state) => state.currentProjectId);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -127,12 +125,6 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       return;
     }
 
-    // For new tasks, require a projectId
-    if (!taskId && !currentProjectId) {
-      toast.error('Please select a project first to create a task');
-      return;
-    }
-
     try {
       setSaving(true);
       const payload = {
@@ -152,14 +144,13 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         await Api.put(`/tasks/${taskId}`, payload);
         toast.success('Task updated');
       } else {
-        await Api.post('/tasks', { ...payload, projectId: currentProjectId });
+        await Api.post('/tasks', { ...payload, projectId: null }); // Global tasks might not have projectId initially
         toast.success('Task created');
       }
       onTaskSaved();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to save task', error);
-      const errorMessage = error?.response?.data?.error || error?.message || 'Failed to save task';
-      toast.error(`Failed to save task – ${errorMessage}`);
+      toast.error('Failed to save task');
     } finally {
       setSaving(false);
     }

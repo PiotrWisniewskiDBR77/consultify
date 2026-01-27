@@ -18,13 +18,17 @@ interface SmartDemoBannerProps {
   onUpgradeClick?: () => void;
   onContactSales?: () => void;
   demoEmail?: string;
+  aiInteractionsRemaining?: number;
+  aiInteractionsLimit?: number;
 }
 
 export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
   sessionStartTime = new Date(),
   onUpgradeClick,
   onContactSales,
-  demoEmail = 'demo@legolex.com',
+  demoEmail = 'piotr.wisniewski@demo.com',
+  aiInteractionsRemaining,
+  aiInteractionsLimit,
 }) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -73,6 +77,17 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
       ),
     },
     { icon: Clock, text: t('demo.banner.limitations.session', 'Session expires in 24h') },
+    ...(typeof aiInteractionsLimit === 'number'
+      ? [
+          {
+            icon: Sparkles,
+            text: t(
+              'demo.banner.limitations.aiQuota',
+              `AI interactions limited (${aiInteractionsRemaining ?? 0}/${aiInteractionsLimit})`
+            ),
+          },
+        ]
+      : []),
   ];
 
   if (isMinimized) {
@@ -123,6 +138,16 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
                 <Clock size={12} className="text-white/70" />
                 <span>{timeRemaining}</span>
               </div>
+
+              {/* AI quota */}
+              {typeof aiInteractionsLimit === 'number' && (
+                <div className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-lg text-xs font-mono">
+                  <Sparkles size={12} className="text-white/70" />
+                  <span>
+                    {aiInteractionsRemaining ?? 0}/{aiInteractionsLimit}
+                  </span>
+                </div>
+              )}
 
               {/* Expand/Collapse */}
               <button

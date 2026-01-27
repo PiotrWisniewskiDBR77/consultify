@@ -1,4 +1,4 @@
-# FLOW-DECISION-001: Decision System
+# FLOW-DECISION-001: Decision System (Canonical)
 
 > **ID:** FLOW-DECISION-001 | **Status:** ✅ Complete | **Priority:** P0
 
@@ -11,43 +11,47 @@
 
 ## Purpose
 
-System decyzji - serce Consultinity. Umożliwia formalne podejmowanie decyzji z audit trail, eskalacją i AI learning.
+The decision system is the core governance mechanism of Consultinity. It enables formal decisions with audit trail, escalation, and AI-assisted analysis.
+
+Canonical references:
+- `docs/product/SYSTEM_ARCHITECTURE_BRIEF.md`
+- `docs/product/INITIATIVE_GOVERNANCE_MODEL.md`
 
 ## Core Concept
 
-> **"Decyzje to serce systemu Consultinity"**
+> **“Decisions are the heart of Consultinity.”**
 
-Task lub inicjatywa może być zablokowana bo brak decyzji. System:
+An initiative or task can be blocked because a decision is missing. The system:
 
-- Identyfikuje blokady
-- Umożliwia formalne request for decision
-- Śledzi kto przeciąga prace
-- AI uczy się trendów decyzyjnych
+- Detects blockers
+- Enables formal requests for decision
+- Makes accountability visible (who delays which decisions)
+- Learns patterns for better recommendations (AI System never decides)
 
 ## Triggers
 
 | Trigger        | Description                                    |
 | -------------- | ---------------------------------------------- |
-| Manual Request | User tworzy request for decision               |
-| AI Detection   | AI wykrywa blokadę i sugeruje decision request |
-| Deadline       | Automatyczna eskalacja po deadline             |
-| Escalation     | Brak decyzji → eskalacja do wyższego levelu    |
+| Manual Request | A user creates a decision request |
+| AI Detection | AI detects a blocker and suggests a decision |
+| Deadline | Automatic escalation after deadline |
+| Escalation | No decision → escalation to higher authority |
 
 ## Outcomes
 
-- Formalna decyzja podjęta z uzasadnieniem
-- Blokada usunięta
-- Audit trail kompletny
-- AI nauczył się z decyzji
+- Formal decision made with rationale
+- Blocker removed (or initiative/task remains blocked by design)
+- Complete audit trail
+- AI learns patterns (recommendation only)
 
 ## Actors
 
-| Actor          | Role                                      |
-| -------------- | ----------------------------------------- |
-| Requester      | Tworzy request for decision               |
-| Decision Maker | Podejmuje decyzję                         |
-| Stakeholders   | Są informowani                            |
-| AI             | Wykrywa, analizuje, rekomenduje, uczy się |
+| Actor | Role |
+|---|---|
+| Requester | Creates a decision request |
+| Decision Maker | Makes the decision (Business Owner / Sponsor by default) |
+| Stakeholders | Informed/consulted audience |
+| AI System | Detects, analyzes, recommends, learns (never decides) |
 
 ## Decision Structure
 
@@ -55,7 +59,7 @@ Task lub inicjatywa może być zablokowana bo brak decyzji. System:
 | ----------------- | -------- | ---------------------------------------------- |
 | title             | ✅       | Krótki opis decyzji                            |
 | description       | ✅       | Pełne wyjaśnienie kontekstu                    |
-| type              | ✅       | GO_NO_GO, APPROVAL, RESOURCE_ALLOCATION, OTHER |
+| type              | ✅       | APPROVAL, CHANGE, CANCEL, CLOSURE, OTHER |
 | deadline          | ✅       | Kiedy decyzja potrzebna                        |
 | decision_maker_id | ✅       | Kto decyduje                                   |
 | stakeholders      | ○        | Kto jest informowany                           |
@@ -66,11 +70,18 @@ Task lub inicjatywa może być zablokowana bo brak decyzji. System:
 | initiative_id     | ○        | Powiązanie z inicjatywą                        |
 | task_id           | ○        | Powiązanie z taskiem (blokada)                 |
 
+### Decision as the only governance artefact
+Per `docs/product/SYSTEM_ARCHITECTURE_BRIEF.md`, **Decision** is the only governance artefact. Concepts like “stage gate” are implemented as:
+- Decision templates/types (e.g., GO_NO_GO, APPROVAL, RESOURCE_ALLOCATION)
+- Decision policies (who must decide, by when, escalation rules)
+
+They must not become separate user-facing artefacts unless explicitly designed as an extension.
+
 ## Status Machine
 
 ```
 ┌─────────┐     ┌─────────┐     ┌───────────┐
-│ PENDING │────►│  MADE   │     │ CANCELLED │
+│ PENDING │────►│APPROVED │     │ CANCELLED │
 └────┬────┘     └─────────┘     └───────────┘
      │                               ▲
      │ (after deadline)              │
@@ -84,6 +95,12 @@ Task lub inicjatywa może być zablokowana bo brak decyzji. System:
 │ EXPIRED │
 └─────────┘
 ```
+
+Canonical `decision_status` values (single-field model):
+- `PENDING`
+- `APPROVED`
+- `REJECTED`
+- `ESCALATED`
 
 ## Sequence Diagram
 
@@ -180,7 +197,7 @@ Day 14: Expiration (if still pending after escalation)
 
 ## Voting (Committee Decisions)
 
-For high-value decisions (configurable threshold):
+For high-value decisions (configurable threshold), a sponsor can require committee voting while keeping a single accountable authority.
 
 ```
 Decision Type: COMMITTEE_VOTE
@@ -265,3 +282,5 @@ decision_settings:
 - FLOW-TASK-001: Decisions can block tasks
 - FLOW-PMO-001: Stage gates are special decisions
 - FLOW-AI-001: AI assists with decisions
+- `docs/product/SYSTEM_ARCHITECTURE_BRIEF.md`
+- `docs/product/INITIATIVE_GOVERNANCE_MODEL.md`

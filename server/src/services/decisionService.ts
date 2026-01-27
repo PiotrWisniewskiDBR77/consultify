@@ -372,8 +372,12 @@ class DecisionService {
       throw new Error('Decision not found');
     }
 
-    if (decision.status === 'approved' || decision.status === 'rejected') {
-      throw new Error('Cannot cancel a decision that has already been made');
+    if (
+      decision.status === 'approved' ||
+      decision.status === 'rejected' ||
+      decision.status === 'cancelled'
+    ) {
+      throw new Error(`Cannot cancel a decision in status: ${decision.status}`);
     }
 
     await db.run(

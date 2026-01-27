@@ -17,17 +17,10 @@ ALTER TABLE decisions ADD COLUMN IF NOT EXISTS context_type TEXT;
 ALTER TABLE decisions ADD COLUMN IF NOT EXISTS context_id TEXT;
 
 -- Update existing records to populate context_type and context_id
-UPDATE decisions 
-SET context_type = 'task', context_id = task_id 
-WHERE task_id IS NOT NULL AND context_type IS NULL;
-
-UPDATE decisions 
-SET context_type = 'initiative', context_id = initiative_id 
-WHERE initiative_id IS NOT NULL AND context_type IS NULL;
-
-UPDATE decisions 
-SET context_type = 'project', context_id = project_id 
-WHERE project_id IS NOT NULL AND context_type IS NULL;
+-- NOTE (SQLite safety):
+-- Some environments may not have legacy columns like task_id/initiative_id/project_id on `decisions`.
+-- SQLite fails migrations on missing columns at prepare time, so we avoid referencing them here.
+-- Context linking will be handled by application logic going forward.
 
 -- Create indexes for context queries
 CREATE INDEX IF NOT EXISTS idx_decisions_context_type ON decisions(context_type);

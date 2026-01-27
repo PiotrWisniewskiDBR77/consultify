@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { FullInitiative } from '../types';
-import { Button } from './ui/Button';
+import { Button } from './ui/primitives/Button';
 
 interface Props {
   initiative: FullInitiative;

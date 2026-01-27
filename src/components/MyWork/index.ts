@@ -1,18 +1,35 @@
 /**
  * My Work Module - Barrel Exports
- * Unified Dashboard + My Work - 65/35 Layout
+ * Unified My Work with ModuleHub pattern (Golden Standard)
  */
 
 // ============================================================================
-// UNIFIED MYWORK COMPONENTS (NEW)
+// MODULEHUB PATTERN (GOLDEN STANDARD)
 // ============================================================================
 
-// Main orchestrators
+// Main Hub component (unified navigation)
+export { MyWorkHub } from './MyWorkHub';
+
+// Content components (used by MyWorkHub)
+export { DecisionsPanelContent } from './DecisionsPanelContent';
+export { MyTasksListContent } from './MyTasksListContent';
+export { NotificationsContent } from './NotificationsContent';
+
+// Detail view components (for dynamic tabs)
+export { TaskDetailView } from './TaskDetailView';
+export { DecisionDetailView } from './DecisionDetailView';
+export { NotificationDetailView } from './NotificationDetailView';
+
+// ============================================================================
+// LEGACY COMPONENTS (kept for backward compatibility)
+// ============================================================================
+
+// Main orchestrators (OLD - kept for reference)
 export type { NotificationMode } from './NotificationsHub';
 export { NotificationsHub } from './NotificationsHub';
 export { WorkCenter } from './WorkCenter';
 
-// Navigation components
+// Navigation components (OLD - kept for reference)
 export type { WorkTab } from './PillNavigation';
 export { PillNavigation } from './PillNavigation';
 export type { QuickFilter } from './QuickFilterBar';
@@ -54,14 +71,15 @@ export {
   PMOCategoryDot,
   PMOPriorityBadge,
 } from './shared/PMOPriorityBadge';
-export type { QuickActionType } from './shared/QuickActions';
-export { MoreActionsButton, QuickActionButton, QuickActions } from './shared/QuickActions';
+export { QuickActions } from './shared/QuickActions';
 
 // ============================================================================
 // LEGACY COMPONENTS (kept for backward compatibility)
 // ============================================================================
 export { DecisionsPanel } from './DecisionsPanel';
 export { FocusBoard } from './Focus/FocusBoard';
+export { FocusView } from './Focus/FocusView';
+export type { FocusColumn, FocusItem, FocusItemType } from './Focus/FocusView';
 export { InboxTriage } from './Inbox/InboxTriage';
 export { NotificationSettings } from './NotificationSettings';
 export { PersonalExecutionBar } from './PersonalExecutionBar';

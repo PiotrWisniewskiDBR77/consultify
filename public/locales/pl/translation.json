@@ -23,7 +23,20 @@
     "submit": "Wyślij",
     "confirm": "Potwierdź",
     "yes": "Tak",
-    "no": "Nie"
+    "no": "Nie",
+    "goals": "Cele",
+    "challenges": "Wyzwania",
+    "megatrends": "Megatrendy",
+    "strategy": "Strategia",
+    "rollout": "Wdrożenie",
+    "users": "Użytkownicy",
+    "projects": "Projekty",
+    "analytics": "Analityka",
+    "team": "Zespół",
+    "workspace": "Przestrzeń robocza",
+    "consultant": "Konsultant",
+    "invites": "Zaproszenia",
+    "affiliate": "Partner"
   },
   "sidebar": {
     "dashboard": "Panel",

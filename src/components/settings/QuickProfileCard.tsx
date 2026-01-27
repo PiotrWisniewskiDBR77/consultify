@@ -19,7 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
 import { User as UserType } from '../../types';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/primitives/Button';
 import {
   DropdownMenu,
   DropdownMenuContent,

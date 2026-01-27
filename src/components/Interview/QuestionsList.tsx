@@ -13,6 +13,7 @@ import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AlertTriangle,
+  Bot,
   Check,
   CheckCircle,
   ChevronDown,
@@ -25,12 +26,17 @@ import {
   MoreHorizontal,
   Plus,
   RefreshCw,
+  Send,
+  Sparkles,
   Star,
   Tag,
   Trash2,
   User,
   X,
 } from 'lucide-react';
+
+import { Api } from '@/services/api';
+import { sendMessageToAI } from '@/services/ai/gemini';
 
 import type { InterviewCategory } from './CategorySidebar';
 
@@ -125,6 +131,14 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
   const [showNewQuestion, setShowNewQuestion] = useState(false);
   const [showStatusMenu, setShowStatusMenu] = useState<string | null>(null);
   const [showTagMenu, setShowTagMenu] = useState<string | null>(null);
+  const [aiLoadingId, setAiLoadingId] = useState<string | null>(null);
+
+  // Chat → field insert (human-in-the-loop)
+  const [chatQuestion, setChatQuestion] = useState<InterviewQuestion | null>(null);
+  const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'ai'; content: string }>>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const [applyLoading, setApplyLoading] = useState(false);
 
   // Filter questions for current category
   const categoryQuestions = questions.filter(q => q.category === category);
@@ -180,6 +194,126 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
     setNewQuestionText('');
     setShowNewQuestion(false);
   }, [newQuestionText, category, onAddQuestion]);
+
+  const handleAISuggest = useCallback(
+    async (question: InterviewQuestion) => {
+      if (readOnly) return;
+      if (aiLoadingId) return;
+
+      setAiLoadingId(question.id);
+      try {
+        const result = await Api.post(`/interview/questions/${question.id}/ai-suggest`, {});
+        const answerText = (result as any)?.answerText;
+        if (typeof answerText === 'string' && answerText.trim().length > 0) {
+          // Ensure we're in edit mode and prefill the suggestion (human-in-the-loop)
+          setEditingId(question.id);
+          setExpandedId(question.id);
+          setEditValue(answerText.trim());
+        }
+      } catch (err) {
+        // Silent fail (avoid UX noise); console for debugging
+        console.error('[QuestionsList] AI suggest failed:', err);
+      } finally {
+        setAiLoadingId(null);
+      }
+    },
+    [aiLoadingId, readOnly]
+  );
+
+  const openChatForQuestion = useCallback(
+    (question: InterviewQuestion) => {
+      if (readOnly) return;
+      setChatQuestion(question);
+      setChatMessages([
+        {
+          role: 'ai',
+          content:
+            (isPolish
+              ? 'Opisz krótko kontekst i fakty. Ja pomogę ułożyć odpowiedź i potem możesz ją wstawić do pytania.'
+              : 'Describe the context and facts briefly. I will help draft the answer, and you can insert it into the question.') +
+            `\n\n${isPolish ? 'Pytanie:' : 'Question:'} ${question.questionText}`,
+        },
+      ]);
+      setChatInput('');
+    },
+    [isPolish, readOnly]
+  );
+
+  const closeChat = useCallback(() => {
+    setChatQuestion(null);
+    setChatMessages([]);
+    setChatInput('');
+    setChatLoading(false);
+    setApplyLoading(false);
+  }, []);
+
+  const handleChatSend = useCallback(async () => {
+    if (!chatQuestion) return;
+    if (!chatInput.trim() || chatLoading) return;
+
+    const userMsg = chatInput.trim();
+    setChatInput('');
+    setChatMessages((prev) => [...prev, { role: 'user', content: userMsg }]);
+    setChatLoading(true);
+
+    try {
+      const history = chatMessages.map((m) => ({
+        role: m.role === 'ai' ? ('model' as const) : ('user' as const),
+        parts: [{ text: m.content }],
+      }));
+
+      const systemInstruction = `
+You are a senior manufacturing transformation consultant helping complete an interview.
+Rules:
+- Facts only. No recommendations or action plans.
+- Ask clarifying questions if needed.
+- Keep it concise and structured.
+`;
+
+      const aiResponse = await sendMessageToAI(history, userMsg, systemInstruction);
+      setChatMessages((prev) => [...prev, { role: 'ai', content: aiResponse }]);
+    } catch (err) {
+      console.error('[QuestionsList] Chat send failed:', err);
+      setChatMessages((prev) => [
+        ...prev,
+        { role: 'ai', content: isPolish ? 'Wystąpił błąd. Spróbuj ponownie.' : 'An error occurred. Please try again.' },
+      ]);
+    } finally {
+      setChatLoading(false);
+    }
+  }, [chatInput, chatLoading, chatMessages, chatQuestion, isPolish]);
+
+  const handleApplyChatToQuestion = useCallback(async () => {
+    if (!chatQuestion) return;
+    if (applyLoading) return;
+
+    setApplyLoading(true);
+    try {
+      const transcript = chatMessages
+        .map((m) => `${m.role === 'ai' ? 'AI' : 'USER'}: ${m.content}`)
+        .join('\n');
+
+      const result = await Api.post(`/interview/sessions/${chatQuestion.sessionId}/ai-parse`, {
+        text: transcript,
+        questionIds: [chatQuestion.id],
+      });
+
+      const answers = (result as any)?.answers;
+      const match = Array.isArray(answers)
+        ? answers.find((a: any) => a?.questionId === chatQuestion.id)
+        : null;
+
+      if (match?.answerText && typeof match.answerText === 'string') {
+        setEditingId(chatQuestion.id);
+        setExpandedId(chatQuestion.id);
+        setEditValue(match.answerText.trim());
+      }
+    } catch (err) {
+      console.error('[QuestionsList] Apply chat to question failed:', err);
+    } finally {
+      setApplyLoading(false);
+    }
+  }, [applyLoading, chatMessages, chatQuestion]);
 
   // Render confidence selector
   const renderConfidenceSelector = (questionId: string, currentScore: number) => (
@@ -393,14 +527,39 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
                     <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                       {isPolish ? 'Odpowiedź:' : 'Answer:'}
                     </span>
-                    {!readOnly && !isEditing && (
-                      <button
-                        onClick={() => handleStartEdit(question)}
-                        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
-                      >
-                        <Edit3 size={12} />
-                        {isPolish ? 'Edytuj' : 'Edit'}
-                      </button>
+                    {!readOnly && (
+                      <div className="flex items-center gap-2">
+                        {/* AI assist (human-in-the-loop) */}
+                        <button
+                          onClick={() => handleAISuggest(question)}
+                          disabled={aiLoadingId === question.id}
+                          className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-500 disabled:opacity-50"
+                          title={isPolish ? 'Pomóż AI (wstępna propozycja)' : 'AI assist (draft suggestion)'}
+                        >
+                          <Sparkles size={12} />
+                          {aiLoadingId === question.id ? (isPolish ? 'AI...' : 'AI...') : isPolish ? 'AI' : 'AI'}
+                        </button>
+
+                        {/* Chat → field insert */}
+                        <button
+                          onClick={() => openChatForQuestion(question)}
+                          className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300"
+                          title={isPolish ? 'Czat → wstaw do pola' : 'Chat → insert into field'}
+                        >
+                          <MessageSquare size={12} />
+                          {isPolish ? 'Czat' : 'Chat'}
+                        </button>
+
+                        {!isEditing && (
+                          <button
+                            onClick={() => handleStartEdit(question)}
+                            className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+                          >
+                            <Edit3 size={12} />
+                            {isPolish ? 'Edytuj' : 'Edit'}
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
 
@@ -522,6 +681,107 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
               {isPolish ? 'Dodaj pytanie' : 'Add question'}
             </button>
           )}
+        </div>
+      )}
+
+      {/* Chat Modal (minimal, no layout changes outside overlay) */}
+      {chatQuestion && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-navy-900 w-full max-w-lg rounded-xl shadow-2xl overflow-hidden border border-slate-200 dark:border-navy-700 flex flex-col max-h-[80vh]">
+            {/* Header */}
+            <div className="p-4 bg-navy-900 flex justify-between items-center text-white border-b border-navy-700">
+              <div className="flex items-center gap-2">
+                <Bot size={18} />
+                <div className="min-w-0">
+                  <div className="font-semibold text-sm truncate">
+                    {isPolish ? 'Czat do pytania' : 'Chat for question'}
+                  </div>
+                  <div className="text-xs text-slate-300 truncate">{chatQuestion.questionText}</div>
+                </div>
+              </div>
+              <button onClick={closeChat} className="p-1 rounded hover:bg-navy-800 transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50 dark:bg-navy-950">
+              {chatMessages.map((m, idx) => (
+                <div key={idx} className={`flex gap-2 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                  <div
+                    className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
+                      m.role === 'user' ? 'bg-slate-200 dark:bg-slate-700' : 'bg-purple-500'
+                    }`}
+                  >
+                    {m.role === 'user' ? (
+                      <User size={12} className="text-slate-600 dark:text-slate-300" />
+                    ) : (
+                      <Bot size={12} className="text-white" />
+                    )}
+                  </div>
+                  <div
+                    className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${
+                      m.role === 'user'
+                        ? 'bg-white border border-slate-200 dark:border-navy-700 text-slate-800 dark:text-slate-200'
+                        : 'bg-purple-50 dark:bg-purple-900/20 text-slate-800 dark:text-slate-200'
+                    }`}
+                  >
+                    {m.content}
+                  </div>
+                </div>
+              ))}
+
+              {chatLoading && (
+                <div className="flex gap-2">
+                  <div className="w-7 h-7 rounded-full bg-purple-500 flex items-center justify-center shrink-0">
+                    <Bot size={12} className="text-white" />
+                  </div>
+                  <div className="px-3 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-sm text-slate-400">
+                    {isPolish ? 'Piszę...' : 'Typing...'}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 bg-white dark:bg-navy-900 border-t border-slate-200 dark:border-navy-700 space-y-3">
+              <div className="flex gap-2">
+                <input
+                  className="flex-1 bg-slate-100 dark:bg-navy-950 border border-transparent focus:border-purple-500 rounded-xl px-4 py-3 outline-none transition-all dark:text-white text-sm"
+                  placeholder={isPolish ? 'Wpisz odpowiedź...' : 'Type your response...'}
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleChatSend()}
+                  disabled={chatLoading}
+                />
+                <button
+                  onClick={handleChatSend}
+                  disabled={!chatInput.trim() || chatLoading}
+                  className="bg-purple-500 hover:bg-purple-600 disabled:bg-slate-300 text-white p-3 rounded-xl transition-colors"
+                  title={isPolish ? 'Wyślij' : 'Send'}
+                >
+                  <Send size={18} />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={closeChat}
+                  className="text-sm text-slate-500 hover:text-slate-300"
+                >
+                  {isPolish ? 'Zamknij' : 'Close'}
+                </button>
+                <button
+                  onClick={handleApplyChatToQuestion}
+                  disabled={applyLoading || chatMessages.length < 2}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors"
+                  title={isPolish ? 'Wstaw propozycję do pola (human-in-the-loop)' : 'Insert draft into field (human-in-the-loop)'}
+                >
+                  {applyLoading ? (isPolish ? 'Wstawiam...' : 'Applying...') : isPolish ? 'Wstaw do pytania' : 'Insert to question'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

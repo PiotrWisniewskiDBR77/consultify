@@ -37,7 +37,7 @@ import Api from '../../services/api';
 import { User } from '../../types';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Badge } from '../ui/badge';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/primitives/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Separator } from '../ui/separator';
 import { Switch } from '../ui/switch';

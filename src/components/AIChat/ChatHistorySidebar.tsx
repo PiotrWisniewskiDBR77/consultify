@@ -22,6 +22,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useAppStore } from '../../store/useAppStore';
 import { ChatProject, useChatProjectStore } from '../../store/useChatProjectStore';
 import {
   Conversation,
@@ -43,6 +44,9 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   className = '',
 }) => {
   const { t } = useTranslation();
+
+  // App store - for sidebar position awareness
+  const { isSidebarCollapsed } = useAppStore();
 
   // Conversation store
   const {
@@ -80,12 +84,8 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
 
   // Fetch conversations and projects on mount
   useEffect(() => {
-    fetchConversations({ projectId }).catch((err) => {
-      console.error('[ChatHistorySidebar] Failed to fetch conversations:', err);
-    });
-    fetchProjects().catch((err) => {
-      console.error('[ChatHistorySidebar] Failed to fetch projects:', err);
-    });
+    fetchConversations({ projectId });
+    fetchProjects();
   }, [projectId, fetchConversations, fetchProjects]);
 
   // Filter conversations based on search
@@ -153,14 +153,16 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
       )}
 
       {/* Sidebar Panel - Floating Overlay */}
+      {/* Position to the right of navigation sidebar: left-16 (64px) when collapsed, left-64 (256px) when expanded */}
       <div
         className={`
-                fixed top-0 left-0 h-full z-50
+                fixed top-0 h-full z-40
                 bg-white dark:bg-navy-900 
                 border-r border-slate-200 dark:border-navy-800
                 shadow-2xl
                 flex flex-col
-                transition-transform duration-300 ease-in-out
+                transition-all duration-300 ease-in-out
+                ${isSidebarCollapsed ? 'left-16' : 'lg:left-64 left-0'}
                 ${isSidebarOpen ? 'translate-x-0 w-80 pointer-events-auto' : '-translate-x-full w-80 pointer-events-none'}
                 ${className}
             `}

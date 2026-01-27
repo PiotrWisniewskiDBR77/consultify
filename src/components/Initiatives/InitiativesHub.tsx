@@ -23,10 +23,11 @@ import { PortfolioListView } from '../Portfolio/PortfolioListView';
 import { PortfolioMatrixView } from '../Portfolio/PortfolioMatrixView';
 // New Initiative Drawer (50% width with Open wider)
 import { InitiativeDrawer } from './InitiativeDrawer';
+// Full-width view (Open Wider mode)
+import { InitiativeFullView } from './InitiativeFullView';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
 // ModuleHub components
 import {
-  CategoryButton,
   FilterChip,
   ModuleHub,
   ModuleTab,
@@ -76,6 +77,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // Side panel state
   const [selectedInitiative, setSelectedInitiative] = useState<PortfolioInitiative | null>(null);
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
+  const [isFullView, setIsFullView] = useState(false);
 
   // Filter state for API
   const [filters, setFilters] = useState<PortfolioFilters>({});
@@ -193,21 +195,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // Empty tabs - using status filters instead
   const tabs: any[] = [];
 
-  // Category buttons - New Initiative + Bulk Edit
-  const categoryButtons: CategoryButton[] = useMemo(
-    () => [
+  // Bulk edit lives inside Filters dropdown (per contract: no extra top-level icons/buttons)
+  const filterActions = useMemo(() => {
+    return [
       {
-        id: 'new',
-        label: 'New Initiative',
-        icon: <Plus size={16} />,
-        count: 0,
-        onClick: () => setShowNewModal(true),
-      },
-      {
-        id: 'bulk',
+        id: 'bulk-edit',
         label: 'Bulk edit',
-        icon: <Edit2 size={16} />,
-        count: selectedIds.size,
+        badge: selectedIds.size,
+        disabled: selectedIds.size === 0,
         onClick: () => {
           if (selectedIds.size === 0) {
             toast.error('Select initiatives to edit');
@@ -216,9 +211,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           setShowBulkModal(true);
         },
       },
-    ],
-    [selectedIds.size]
-  );
+    ];
+  }, [selectedIds.size]);
 
   // ============================================
   // HANDLERS
@@ -230,7 +224,26 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     setIsSidePanelOpen(true);
   }, []);
 
-  // Open initiative as dynamic card - called from side panel button
+  // Open initiative in full-width view (Open Wider mode)
+  const handleOpenWider = useCallback((initiative: PortfolioInitiative) => {
+    setSelectedInitiative(initiative);
+    setIsSidePanelOpen(false);
+    setIsFullView(true);
+  }, []);
+
+  // Collapse from full view back to drawer
+  const handleCollapseToDrawer = useCallback(() => {
+    setIsFullView(false);
+    setIsSidePanelOpen(true);
+  }, []);
+
+  // Close full view completely
+  const handleCloseFullView = useCallback(() => {
+    setIsFullView(false);
+    setSelectedInitiative(null);
+  }, []);
+
+  // Open initiative as dynamic card - called from side panel button (alternative view)
   const handleOpenFullScreen = useCallback(
     (initiative: PortfolioInitiative) => {
       // Close side panel first
@@ -490,6 +503,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   return (
     <div className="h-full" data-testid="initiatives-hub">
       <ModuleHub
+        persistViewModeKey="initiatives"
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -504,7 +518,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        categoryButtons={categoryButtons}
+        onNewItem={() => setShowNewModal(true)}
+        newItemLabel="+ New Initiative"
+        filterActions={filterActions}
         statusFilters={statusFilters}
         activeStatusFilter={activeStatusFilter}
         onStatusFilterChange={setActiveStatusFilter}
@@ -516,14 +532,31 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       {/* Initiative Drawer (50% width) with Open Wider functionality */}
       <InitiativeDrawer
         initiative={selectedInitiative}
-        isOpen={isSidePanelOpen}
+        isOpen={isSidePanelOpen && !isFullView}
         onClose={handleCloseSidePanel}
         onUpdate={(updated) => {
           setInitiatives((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+          if (selectedInitiative?.id === updated.id) {
+            setSelectedInitiative(updated);
+          }
         }}
-        onOpenWider={handleOpenFullScreen}
+        onOpenWider={handleOpenWider}
         users={users}
       />
+
+      {/* Full-width view (Open Wider mode) */}
+      {isFullView && selectedInitiative && (
+        <InitiativeFullView
+          initiative={selectedInitiative}
+          onClose={handleCloseFullView}
+          onCollapse={handleCollapseToDrawer}
+          onUpdate={(updated) => {
+            setSelectedInitiative(updated);
+            setInitiatives((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+            fetchData(true);
+          }}
+        />
+      )}
 
       {/* New Initiative Modal */}
       {showNewModal && (

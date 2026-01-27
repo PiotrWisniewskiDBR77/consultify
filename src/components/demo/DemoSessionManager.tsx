@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useDemoSession } from '../../hooks/useDemoSession';
 import { trackTourCompleted, trackUpgradeClick } from '../../services/demoAnalyticsService';
+import { useAppStore } from '../../store/useAppStore';
 import { DemoLoadingOverlay } from './DemoLoadingOverlay';
 import { DemoUpgradePrompt } from './DemoUpgradePrompt';
 import { DemoWelcomeTour } from './DemoWelcomeTour';
@@ -50,11 +51,14 @@ const CONFIG = {
 
 export const DemoSessionManager: React.FC = () => {
   const { t } = useTranslation();
+  const { currentUser } = useAppStore();
   const {
     isDemo,
     sessionStartTime,
     sessionDurationMs,
     timeRemainingMs,
+    aiInteractionsRemaining,
+    aiInteractionsLimit,
     hasCompletedTour,
     hasSeenWelcome,
     featuresExplored,
@@ -247,7 +251,9 @@ export const DemoSessionManager: React.FC = () => {
         sessionStartTime={sessionStartTime || new Date()}
         onUpgradeClick={() => handleContactSales('banner_upgrade')}
         onContactSales={() => handleContactSales('banner_contact')}
-        demoEmail="demo@legolex.com"
+        demoEmail={currentUser?.email || 'piotr.wisniewski@demo.com'}
+        aiInteractionsRemaining={aiInteractionsRemaining}
+        aiInteractionsLimit={aiInteractionsLimit}
       />
 
       {/* Welcome Tour - First visit only */}

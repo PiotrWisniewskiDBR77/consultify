@@ -1855,7 +1855,7 @@ export const TEST_SCHEMA = [
   `INSERT OR IGNORE INTO organizations (id, name, plan, status)
     VALUES ('demo-org', 'Demo Organization', 'free', 'active')`,
   `INSERT OR IGNORE INTO users (id, organization_id, email, password, first_name, last_name, role, status)
-    VALUES ('demo-user', 'demo-org', 'demo@legolex.com', 'Demo123!', 'Demo', 'User', 'user', 'active')`,
+    VALUES ('demo-user', 'demo-org', 'piotr.wisniewski@demo.com', '123456', 'Demo', 'User', 'user', 'active')`,
   `INSERT OR IGNORE INTO users (id, organization_id, email, password, first_name, last_name, role, status)
     VALUES ('e2e-user', 'demo-org', 'e2e-test@consultinity.dev', '$2b$10$xKTb1.5vZT.2ThRs/iRCLuHni43AUHaG7Hf9STKRQCudtsY1ZXxTe', 'E2E', 'User', 'user', 'active')`,
 ];

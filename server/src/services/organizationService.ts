@@ -35,6 +35,10 @@ interface CreateOrganizationParams {
   name: string;
   email?: string;
   attribution?: { type: string; id: string } | null;
+  attributionData?: Record<string, unknown> | null;
+  industry?: string | null;
+  domain?: string | null;
+  vatNumber?: string | null;
 }
 
 interface CreateOrganizationResult {
@@ -50,6 +54,15 @@ interface Organization {
   billing_status: string;
   token_balance: number;
   created_at: string;
+}
+
+interface UpdateOrganizationParams {
+  name?: string;
+  industry?: string;
+  domain?: string;
+  vatNumber?: string;
+  attributionData?: Record<string, unknown>;
+  onboardingStatus?: string;
 }
 
 interface AddMemberParams {
@@ -139,10 +152,17 @@ export function setDependencies(newDeps: { db?: IDatabase } = {}): void {
 export async function createOrganization(
   params: CreateOrganizationParams
 ): Promise<CreateOrganizationResult> {
-  const { userId, name, attribution = null } = params;
+  const { userId, name, attribution = null, attributionData = null, industry = null, domain = null, vatNumber = null } =
+    params;
   const orgId = uuidv4();
   const now = new Date().toISOString();
-  const attributionJson = attribution ? JSON.stringify(attribution) : null;
+  const attributionJson =
+    attribution || attributionData
+      ? JSON.stringify({
+          ...(attributionData || {}),
+          ...(attribution ? { referral: attribution } : {}),
+        })
+      : null;
 
   // Use transaction for atomic operations
   const memberId = uuidv4();
@@ -150,10 +170,10 @@ export async function createOrganization(
     {
       sql: `INSERT INTO organizations (
                 id, name, status, billing_status, token_balance, created_by_user_id, created_at, is_active,
-                ai_assertiveness_level, ai_autonomy_level, attribution_data
+                ai_assertiveness_level, ai_autonomy_level, attribution_data, industry, domain, vat_number
             )
-             VALUES (?, ?, 'active', 'TRIAL', 0, ?, ?, 1, 'MEDIUM', 'SUGGEST_ONLY', ?)`,
-      params: [orgId, name, userId, now, attributionJson],
+             VALUES (?, ?, 'active', 'TRIAL', 0, ?, ?, 1, 'MEDIUM', 'SUGGEST_ONLY', ?, ?, ?, ?)`,
+      params: [orgId, name, userId, now, attributionJson, industry, domain, vatNumber],
     },
     {
       sql: `INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)
@@ -184,6 +204,62 @@ export async function getOrganization(orgId: string): Promise<Organization> {
   }
 
   return row;
+}
+
+/**
+ * Update organization profile fields (trial / onboarding)
+ */
+export async function updateOrganization(
+  orgId: string,
+  updates: UpdateOrganizationParams
+): Promise<{ id: string }> {
+  const set: string[] = [];
+  const params: unknown[] = [];
+
+  if (updates.name !== undefined) {
+    set.push('name = ?');
+    params.push(updates.name);
+  }
+  if (updates.industry !== undefined) {
+    set.push('industry = ?');
+    params.push(updates.industry);
+  }
+  if (updates.domain !== undefined) {
+    set.push('domain = ?');
+    params.push(updates.domain);
+  }
+  if (updates.vatNumber !== undefined) {
+    set.push('vat_number = ?');
+    params.push(updates.vatNumber);
+  }
+  if (updates.onboardingStatus !== undefined) {
+    set.push('onboarding_status = ?');
+    params.push(updates.onboardingStatus);
+  }
+  if (updates.attributionData !== undefined) {
+    set.push('attribution_data = ?');
+    params.push(JSON.stringify(updates.attributionData || {}));
+  }
+
+  if (set.length === 0) {
+    return { id: orgId };
+  }
+
+  set.push('updated_at = CURRENT_TIMESTAMP');
+  params.push(orgId);
+
+  const result = await DbPromise.run(
+    db,
+    `UPDATE organizations SET ${set.join(', ')} WHERE id = ?`,
+    params,
+    { fallback: false }
+  );
+
+  if ((result.changes || 0) === 0) {
+    throw new Error('Organization not found');
+  }
+
+  return { id: orgId };
 }
 
 /**

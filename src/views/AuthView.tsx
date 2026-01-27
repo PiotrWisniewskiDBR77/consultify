@@ -71,6 +71,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
     const quickAccessCodes: Record<string, { email: string; password: string }> = {
       '7777': { email: 'piotr.wisniewski@dbr77.com', password: '123456' }, // Admin
       '7776': { email: 'admin@dbr77.com', password: '123456' }, // SuperAdmin
+      '7778': { email: 'piotr.wisniewski@demo.com', password: '123456' }, // Demo
     };
 
     const credentials = quickAccessCodes[code];
@@ -94,11 +95,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
     }
   }, [showQuickAccess]);
 
-  // Auto-trigger demo login ONLY when explicitly navigating to /demo
-  // Don't auto-trigger on /login - user wants to log in with credentials
+  // Auto-trigger demo redirect when in DEMO mode
+  // Auto-trigger demo Login when in DEMO mode
   React.useEffect(() => {
-    const isOnDemoRoute = window.location.pathname === '/demo';
-    if (targetMode === SessionMode.DEMO && isOnDemoRoute) {
+    if (targetMode === SessionMode.DEMO) {
       // Auto-login for seamless demo experience
       startDemo();
     }

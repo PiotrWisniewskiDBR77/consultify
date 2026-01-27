@@ -1,4 +1,4 @@
-# FLOW-ASSESSMENT-001: Assessment Execution
+# FLOW-ASSESSMENT-001: Assessment Execution (Canonical)
 
 > **ID:** FLOW-ASSESSMENT-001 | **Status:** ✅ Complete | **Priority:** P0
 
@@ -12,7 +12,11 @@
 
 ## Purpose
 
-Assessment to początek każdego projektu transformacyjnego. Użytkownik wypełnia ocenę dojrzałości, otrzymuje raport, a następnie generuje inicjatywy.
+Assessment is the beginning of a transformation engagement. Users complete a maturity assessment, receive an assessment report, and generate **draft initiatives** that enter the initiative lifecycle.
+
+Canonical references:
+- `docs/product/SYSTEM_ARCHITECTURE_BRIEF.md`
+- `docs/product/INITIATIVE_GOVERNANCE_MODEL.md`
 
 ## Supported Frameworks
 
@@ -26,7 +30,7 @@ Assessment to początek każdego projektu transformacyjnego. Użytkownik wypełn
 
 ## Assessment Flow
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────────────┐
 │                      ASSESSMENT LIFECYCLE                            │
 ├──────────────────────────────────────────────────────────────────────┤
@@ -41,6 +45,13 @@ Assessment to początek każdego projektu transformacyjnego. Użytkownik wypełn
 │                                               └──────────────────┘  │
 └──────────────────────────────────────────────────────────────────────┘
 ```
+
+### Output: draft initiatives (one object, one lifecycle)
+The output of `INITIATIVES_GEN` is a set of **Initiative** objects in **DRAFT** state.
+
+Rules:
+- Assessment produces an **Assessment Report** (Draft → Review → Final) and initiatives are created from that report.
+- Initiatives then progress through the simplified status model and decision gates (see `docs/product/INITIATIVE_GOVERNANCE_MODEL.md`).
 
 ## Assessment Structure
 
@@ -89,7 +100,7 @@ Assessment
 
 ## Sequence Diagram: Assessment → Initiatives
 
-```
+```text
 ┌──────┐    ┌───────────┐    ┌──────────────┐    ┌────────┐    ┌────┐
 │ User │    │ Assessment│    │  AI Analyzer │    │ Report │    │ DB │
 │      │    │  Service  │    │              │    │ Service│    │    │
@@ -129,7 +140,7 @@ Assessment
    │─────────────►│                 │                │            │
    │              │────────────────►│                │            │
    │              │◄────────────────│                │            │
-   │              │ {draft_initiatives}              │            │
+   │              │ {draft_initiatives: Initiative[DRAFT]}        │
    │◄─────────────│                 │                │            │
 ```
 
@@ -232,7 +243,7 @@ calculated_at TIMESTAMP
 
 ## Gap Analysis
 
-### GAP-ASSESSMENT-001: Brak integracji z Initiative Generation
+### GAP-ASSESSMENT-001: Missing full integration with Initiative Generation
 
 | Attribute    | Value                                  |
 | ------------ | -------------------------------------- |
@@ -245,6 +256,7 @@ calculated_at TIMESTAMP
 - Service: `generateInitiativesFromAssessment(assessmentId)`
 - AI analyzes gaps and proposes initiatives
 - Draft initiatives created with `source_type: 'assessment'`
+- Ensure downstream governance gates are enforced (PROMOTE/APPROVE/SCHEDULE)
 
 ---
 
@@ -307,3 +319,5 @@ calculated_at TIMESTAMP
 - FLOW-REPORT-001: Assessment reports
 - FLOW-AI-001: AI assistance during assessment
 - FLOW-PROJECT-001: Assessments belong to projects
+- `docs/product/SYSTEM_ARCHITECTURE_BRIEF.md`
+- `docs/product/INITIATIVE_GOVERNANCE_MODEL.md`

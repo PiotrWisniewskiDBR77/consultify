@@ -1,4 +1,4 @@
-# FLOW-INITIATIVE-001: Initiative Management
+# FLOW-INITIATIVE-001: Initiative Management (Canonical)
 
 > **ID:** FLOW-INITIATIVE-001 | **Status:** ✅ Complete | **Priority:** P0
 
@@ -11,100 +11,125 @@
 | **Implementation Status** | Mostly implemented, needs status machine update |
 
 ## Purpose
+Define the **end-to-end initiative lifecycle** (one initiative = one object = one lifecycle), including governance decision gates, and module ownership from creation to benefits tracking.
 
-Zarządzanie cyklem życia inicjatyw - od generowania z assessmentu po realizację i tracking wyników.
+Canonical references:
+- `docs/product/SYSTEM_ARCHITECTURE_BRIEF.md`
+- `docs/product/INITIATIVE_GOVERNANCE_MODEL.md`
 
-## Initiative Flow (User's Definition)
+## Initiative flow (canonical)
 
+```mermaid
+flowchart LR
+  toolsAssessment[Tools_Assessment] --> draft[DRAFT]
+  draft --> editing[EDITING]
+  editing --> review[REVIEW]
+  review --> promoted[PROMOTED]
+  promoted --> planning[PLANNING]
+  planning --> approved[APPROVED]
+  approved --> scheduled[SCHEDULED]
+  scheduled --> executing[EXECUTING]
+  executing --> blocked[BLOCKED]
+  executing --> done[DONE]
+  done --> tracking[TRACKING]
+  draft --> cancelled[CANCELLED]
+  editing --> cancelled
+  review --> cancelled
+  promoted --> cancelled
+  planning --> cancelled
+  approved --> cancelled
+  scheduled --> cancelled
+  executing --> cancelled
+  blocked --> cancelled
+  blocked --> executing
 ```
-ASSESSMENT ──► DRAFT ──► PLANNING ──► REVIEW ──► APPROVED ──► EXECUTING ──► DONE
-                                                    │            │
-                                                    │            ▼
-                                                    │        BLOCKED
-                                                    │            │
-                                                    ▼            ▼
-                                                CANCELLED    ARCHIVED
-```
 
-### Status Definitions
+> This reflects the simplified, final initiative status model (no extra statuses).
 
-| Status        | Visibility                  | Description                                           |
-| ------------- | --------------------------- | ----------------------------------------------------- |
-| **DRAFT**     | Strategic Initiatives Board | Generowane z assessment, edycja szczegółów            |
-| **PLANNING**  | Strategic Initiatives Board | Praca nad szczegółami, completion checker             |
-| **REVIEW**    | Initiatives Module          | Lista do przeglądu, approval workflow                 |
-| **APPROVED**  | Initiatives + Roadmap       | Pojawia się na timeline, Q1-Q8                        |
-| **EXECUTING** | Roadmap + Implementation    | Nadal na timeline, Kanban                             |
-| **BLOCKED**   | Implementation (alert)      | Czerwony znacznik, kolumna "Zablokowane"              |
-| **DONE**      | Implementation → Benefits   | Kolumna "Gotowe", ZNIKA z Roadmap, pojawia w Benefits |
-| **CANCELLED** | Widoczna z flagą wszędzie   | Anulowana                                             |
-| **ARCHIVED**  | Tylko w archiwum/raportach  | Zarchiwizowana                                        |
+### Status definitions (what it means, where it lives)
+
+| Status / Gate phase | Module ownership | Description |
+|---|---|---|
+| **DRAFT** | Tools / Assessment | Initiative draft auto-created from outputs |
+| **EDITING** | Initiatives | Single initiative form; enriched and completed |
+| **REVIEW** | Initiatives | Prepared for promotion decision |
+| **PROMOTED** (Gate 1) | Initiatives | Sponsor decides “is this a real initiative?” |
+| **PLANNING** | Initiatives | Scope/KPI/dependencies/timeline readiness completed |
+| **APPROVED** (Gate 2) | Initiatives | Sponsor/Committee approves investing resources |
+| **SCHEDULED** (Gate 3) | Initiatives | PMO schedules on roadmap and baseline |
+| **EXECUTING** | Implementation | Tasks executed; changes and risks tracked |
+| **BLOCKED** | Implementation | Blocked state; requires decision to unblock/escalate |
+| **DONE** (Gate 4) | Implementation → Benefits | PMO confirms delivery completion |
+| **TRACKING** (Gate 5) | Benefits | Business Owner accepts and starts measuring benefits |
+| **CANCELLED** | Any | Sponsor cancels with rationale |
 
 ## Triggers
 
 | Trigger             | Description                                  |
 | ------------------- | -------------------------------------------- |
-| Assessment Complete | Raport assessment generuje draft initiatives |
-| Manual Creation     | PM/Admin tworzy ręcznie inicjatywę           |
-| Import PDF          | Wgranie zewnętrznego audytu → roadmap        |
-| Status Change       | Transition między statusami                  |
+| Assessment Complete | Assessment report generates draft initiatives |
+| Tool Complete | Tool outputs generate draft initiatives |
+| Manual Creation | Authorized user creates initiative manually |
+| Import PDF | External audit import can generate drafts |
+| Gate Decision | A decision gate authorizes the transition |
 
 ## Outcomes
 
-- Inicjatywa utworzona z assessment z pełnym kontekstem
-- Completion checker wymusza uzupełnienie przed review
-- Stage gates dla approval workflow
-- Tracking realizacji w Implementation
-- KPI tracking w Benefits po zakończeniu
+- Initiative created with full context from tools/assessment
+- Decision gates prevent uncontrolled lifecycle transitions
+- Execution is tracked in Implementation (tasks + decisions + RAID)
+- Benefits are tracked via KPIs in Benefits
 
 ## Actors
 
-| Actor | Role                                    |
-| ----- | --------------------------------------- |
-| Owner | Zatwierdza inicjatywy, widzi wszystko   |
-| Admin | Zarządza inicjatywami                   |
-| PM    | Tworzy, planuje, realizuje inicjatywy   |
-| User  | Pracuje nad taskami w ramach inicjatywy |
-| AI    | Generuje, sugeruje, analizuje           |
+| Actor | Role |
+|---|---|
+| Business Owner / Sponsor | Final decision authority for governance gates |
+| Transformation Lead | Owns lifecycle logic and scheduling baseline |
+| Consultant / Domain Expert | Creates drafts from tools/assessments (advisory) |
+| Execution Lead (PM / Delivery) | Owns execution delivery and closure |
+| Contributor | Executes tasks and updates progress |
+| AI System | Assists analysis, summarization, recommendations (never decides) |
 
-## Sequence Diagram: Assessment → Initiatives
+## Sequence diagram: Assessment/Tools → Initiative draft
 
-```
+```text
 ┌──────────────┐   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-│  Assessment  │   │  Initiative  │   │    Project   │   │    AI        │
-│    Module    │   │   Generator  │   │    Service   │   │   Advisor    │
+│  Tools/Assess│   │  Initiative  │   │   Project    │   │    AI        │
+│   Module     │   │   Service    │   │   Service    │   │   System     │
 └──────┬───────┘   └──────┬───────┘   └──────┬───────┘   └──────┬───────┘
        │                  │                  │                  │
-       │ Complete         │                  │                  │
-       │ Assessment       │                  │                  │
+       │ Complete tool/assessment            │                  │
        │─────────────────►│                  │                  │
        │                  │                  │                  │
-       │                  │  Analyze Results │                  │
+       │                  │  Analyze outputs │                  │
        │                  │─────────────────────────────────────►
        │                  │                  │                  │
        │                  │◄─────────────────────────────────────
-       │                  │  {recommendations}                  │
+       │                  │  {recommendations}                   │
        │                  │                  │                  │
-       │                  │  Generate Draft  │                  │
-       │                  │  Initiatives     │                  │
+       │                  │  Create DRAFT initiative             │
        │                  │─────────────────►│                  │
        │                  │                  │                  │
        │◄─────────────────│                  │                  │
-       │  {draft_initiatives}               │                  │
+       │  {draft_initiative}                 │                  │
        │                  │                  │                  │
 ```
 
 ## Database Schema Enhancements
 
-### initiatives table additions:
+### initiatives table additions (illustrative)
 
 ```sql
--- Stage gate tracking
-review_requested_at TIMESTAMP
-review_requested_by TEXT
+-- Gate tracking (decisions or explicit timestamps)
+validated_at TIMESTAMP
+validated_by TEXT
+promoted_at TIMESTAMP
+promoted_by TEXT
 approved_at TIMESTAMP
 approved_by TEXT
-approval_comment TEXT
+scheduled_at TIMESTAMP
+scheduled_by TEXT
 
 -- Execution tracking
 execution_started_at TIMESTAMP
@@ -122,14 +147,13 @@ source_type TEXT -- 'assessment', 'manual', 'pdf_import', 'ai_generated'
 source_id TEXT -- assessment_id, pdf_id, etc.
 
 -- Roadmap positioning
-roadmap_quarter TEXT -- 'Q1', 'Q2', etc.
-roadmap_year INTEGER
+roadmap_slot TEXT -- e.g. quarter/week range
 priority_order INTEGER
 ```
 
 ## Gap Analysis
 
-### GAP-INITIATIVE-001: Brakujące statusy (review, approved, executing, blocked, done)
+### GAP-INITIATIVE-001: Lifecycle + gate alignment (documentation vs implementation)
 
 | Attribute    | Value                       |
 | ------------ | --------------------------- |
@@ -137,15 +161,14 @@ priority_order INTEGER
 | **Effort**   | 4h                          |
 | **Impact**   | Status machine niekompletna |
 
-**Solution:**
-
-- Zaktualizować enum w validator
-- Dodać endpoints dla transitions
-- UI: Kanban z nowymi kolumnami
+**Solution (next implementation step):**
+- Implement gate decisions for PROMOTED/APPROVED/SCHEDULED/DONE/TRACKING
+- Ensure UI permissions match `docs/product/INITIATIVE_GOVERNANCE_MODEL.md`
+- Align status/transition validation to the canonical lifecycle
 
 ---
 
-### GAP-INITIATIVE-002: Brak completion checker
+### GAP-INITIATIVE-002: Missing readiness/completeness checker
 
 | Attribute    | Value                                      |
 | ------------ | ------------------------------------------ |
@@ -154,14 +177,12 @@ priority_order INTEGER
 | **Impact**   | Inicjatywy mogą iść do review niekompletne |
 
 **Solution:**
-
-- Service sprawdzający wymagane pola
-- Endpoint: `GET /api/initiatives/:id/readiness`
-- UI: Checklist przed wysłaniem do review
+- Add a readiness service and endpoint (e.g., `GET /api/initiatives/:id/readiness`)
+- UI checklist gates submission to REVIEW/APPROVED
 
 ---
 
-### GAP-INITIATIVE-003: Brak move between projects
+### GAP-INITIATIVE-003: Missing move between projects
 
 | Attribute    | Value                               |
 | ------------ | ----------------------------------- |
@@ -170,10 +191,7 @@ priority_order INTEGER
 | **Impact**   | Inicjatywy nie mogą być przenoszone |
 
 **Solution:**
-
-- Endpoint: `POST /api/initiatives/:id/move`
-- Przenoś taski wraz z inicjatywą
-- Audit log zmian
+- Add endpoint to move initiative between projects (with tasks and audit trail)
 
 ## Implementation Tasks
 
@@ -223,3 +241,5 @@ priority_order INTEGER
 - FLOW-DECISION-001: Decisions can block initiatives
 - FLOW-ASSESSMENT-001: Initiatives generated from assessments
 - FLOW-BENEFITS-001: Done initiatives go to benefits tracking
+- `docs/product/SYSTEM_ARCHITECTURE_BRIEF.md`
+- `docs/product/INITIATIVE_GOVERNANCE_MODEL.md`

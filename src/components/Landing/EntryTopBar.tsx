@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 
 import { changeLanguage, LANGUAGE_DISPLAY_CODES, LANGUAGE_NAMES, SUPPORTED_LANGUAGES } from '../../i18n';
 import { useAppStore } from '../../store/useAppStore';
-import { getLanguageCode, languageStartsWith } from '../../utils/i18nHelpers';
 
 interface EntryTopBarProps {
   onTrialClick: () => void;
@@ -40,7 +39,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
     displayCode: LANGUAGE_DISPLAY_CODES[code],
   }));
 
-  const currentLang = languages.find((l) => l.code === getLanguageCode()) || languages[0];
+  const currentLang = languages.find((l) => l.code === i18n.language.split('-')[0]) || languages[0];
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -210,13 +209,13 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                       key={lang.code}
                       onClick={() => handleLangChange(lang.code)}
                       className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between ${
-                        languageStartsWith(lang.code)
+                        i18n.language.startsWith(lang.code)
                           ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 font-bold'
                           : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
                       }`}
                     >
                       {lang.label}
-                      {languageStartsWith(lang.code) && (
+                      {i18n.language.startsWith(lang.code) && (
                         <div className="w-1.5 h-1.5 rounded-full bg-purple-600" />
                       )}
                     </button>
@@ -327,7 +326,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                             key={lang.code}
                             onClick={() => handleLangChange(lang.code)}
                             className={`text-xs px-2 py-1.5 rounded-lg border transition-colors font-medium ${
-                              languageStartsWith(lang.code)
+                              i18n.language.startsWith(lang.code)
                                 ? 'bg-purple-100 border-purple-300 text-purple-700 dark:bg-purple-900/30 dark:border-purple-500/30 dark:text-purple-300'
                                 : 'border-slate-200 text-slate-500 hover:bg-slate-100 dark:border-navy-700 dark:hover:bg-white/5 dark:text-slate-400'
                             }`}

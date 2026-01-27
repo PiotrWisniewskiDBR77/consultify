@@ -95,14 +95,45 @@ router.get(
 
     query += ` ORDER BY deadline ASC`;
 
-    const decisions = await db.all(query, params);
+    const rawDecisions = await db.all(query, params);
+
+    // Transform snake_case to camelCase for frontend compatibility
+    const decisions = (rawDecisions || []).map((d: Record<string, unknown>) => ({
+      id: d.id,
+      organizationId: d.organization_id,
+      projectId: d.project_id,
+      initiativeId: d.initiative_id,
+      taskId: d.task_id,
+      title: d.title,
+      description: d.description,
+      type: d.type,
+      decisionType: d.type,
+      decisionMakerId: d.decision_maker_id,
+      decisionOwnerId: d.decision_owner_id || d.decision_maker_id,
+      options: typeof d.options === 'string' ? JSON.parse(d.options as string) : d.options,
+      criteria: d.criteria,
+      deadline: d.deadline,
+      dueDate: d.deadline,
+      escalationDeadline: d.escalation_deadline,
+      status: (d.status as string)?.toUpperCase() || 'PENDING',
+      priority: d.priority || 'MEDIUM',
+      selectedOption: d.selected_option,
+      decisionRationale: d.decision_rationale,
+      decidedAt: d.decided_at,
+      createdBy: d.created_by,
+      requestedById: d.created_by,
+      createdAt: d.created_at,
+      updatedAt: d.updated_at,
+    }));
 
     return res.json({
       success: true,
-      decisions: decisions || [],
+      decisions,
     });
   })
 );
+
+
 
 /**
  * GET /api/decisions/pending

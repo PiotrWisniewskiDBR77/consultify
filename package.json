@@ -10,10 +10,11 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" --names \"BACKEND,FRONTEND\" --prefix-colors \"blue,green\"",
-    "dev:frontend": "vite --port 3000",
+    "dev:londyn": "bash ./start-londyn.sh",
+    "dev:frontend": "vite --port 3000 --strictPort",
     "lint": "eslint . --report-unused-disable-directives",
     "type-check": "tsc --noEmit",
-    "dev:backend": "cd server && npm run dev",
+    "dev:backend": "cd server && PORT=3001 DB_TYPE=sqlite SQLITE_PATH=../data/dev/consultinity.db npm run dev",
     "fix:credentials": "./server/scripts/fix-dbr77-credentials.sh",
     "seed:notifications": "./server/scripts/seed-notifications.sh",
     "build:backend": "cd server && npm run build",
@@ -38,7 +39,6 @@
     "test:cleanup": "node scripts/testing/cleanup-test-artifacts.js",
     "test:audit": "npx tsx scripts/testing/run-audit.ts --quick",
     "test:audit:full": "npx tsx scripts/testing/run-audit.ts --full --report --update-registry",
-    "test:flaky": "npx tsx scripts/testing/flaky-test-tracker.ts --report",
     "test:coverage": "npm run test:all -- --coverage",
     "test:coverage:check": "npm run test:coverage && node --loader ts-node/esm scripts/check-coverage.ts",
     "test:coverage:lcov": "npm run test:coverage -- --reporter=lcov",
@@ -139,6 +139,7 @@
     "debug": "^4.4.3",
     "dompurify": "^3.3.1",
     "dotenv": "^17.2.3",
+    "eventsource-parser": "^3.0.6",
     "exceljs": "^4.4.0",
     "express-rate-limit": "^8.2.1",
     "express-validator": "^7.3.1",
@@ -184,7 +185,7 @@
     "react-syntax-highlighter": "^16.1.0",
     "react-virtuoso": "^4.18.1",
     "reactflow": "^11.11.4",
-    "recharts": "^2.15.1",
+    "recharts": "^2.15.4",
     "redis": "^5.10.0",
     "remark-gfm": "^4.0.1",
     "speakeasy": "^2.0.0",
@@ -252,7 +253,7 @@
     "tailwindcss": "^3.4.17",
     "typescript": "~5.8.2",
     "typescript-eslint": "^8.49.0",
-    "vite": "^6.2.0",
+    "vite": "^6.0.11",
     "vitest": "^4.0.15"
   }
 }

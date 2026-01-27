@@ -1,23 +1,102 @@
 {
-  "timestamp": "2026-01-04T12:19:16.616Z",
-  "summary": {
-    "require": 1,
-    "module_exports": 0,
-    "wrong_path": 0,
-    "total_files": 914
-  },
+  "timestamp": "2026-01-26T15:50:34.719Z",
+  "totalFiles": 1439,
   "issues": [
     {
+      "file": "ai/actionProposalEngine.ts",
+      "line": 94,
+      "issue": "Found require() in TypeScript file",
+      "type": "require"
+    },
+    {
+      "file": "ai/aiPlaybookEngine.ts",
+      "line": 69,
+      "issue": "Found require() in TypeScript file",
+      "type": "require"
+    },
+    {
+      "file": "ai/policyEngine.ts",
+      "line": 392,
+      "issue": "Found require() in TypeScript file",
+      "type": "require"
+    },
+    {
+      "file": "controllers/SuperAdminController.ts",
+      "line": 2232,
+      "issue": "Found require() in TypeScript file",
+      "type": "require"
+    },
+    {
+      "file": "controllers/SuperAdminController.ts",
+      "line": 2250,
+      "issue": "Found require() in TypeScript file",
+      "type": "require"
+    },
+    {
       "file": "database/Database.ts",
-      "issues": [
-        {
-          "type": "require",
-          "line": 166,
-          "message": "Found require() in TypeScript file",
-          "code": "const sqliteModule = require('../../database.sqlite.active.js');"
-        }
-      ]
+      "line": 136,
+      "issue": "Found require() in TypeScript file",
+      "type": "require"
+    },
+    {
+      "file": "models/megatrend.ts",
+      "line": 398,
+      "issue": "Found require() in TypeScript file",
+      "type": "require"
+    },
+    {
+      "file": "routes/partners.routes.ts",
+      "line": 952,
+      "issue": "Found require() in TypeScript file",
+      "type": "require"
+    },
+    {
+      "file": "routes/partners.routes.ts",
+      "line": 1553,
+      "issue": "Found require() in TypeScript file",
+      "type": "require"
+    },
+    {
+      "file": "services/ai/AIPipeline.ts",
+      "line": 658,
+      "issue": "Found require() in TypeScript file",
+      "type": "require"
+    },
+    {
+      "file": "services/encryption/KeyManagementService.ts",
+      "line": 270,
+      "issue": "Found require() in TypeScript file",
+      "type": "require"
+    },
+    {
+      "file": "services/encryption/KeyManagementService.ts",
+      "line": 351,
+      "issue": "Found require() in TypeScript file",
+      "type": "require"
+    },
+    {
+      "file": "services/encryption/KeyManagementService.ts",
+      "line": 355,
+      "issue": "Found require() in TypeScript file",
+      "type": "require"
+    },
+    {
+      "file": "mcp/mcpServer.ts",
+      "line": 16,
+      "issue": "Import uses ../src/ but file is already in src/ - should use ../",
+      "type": "wrong_path"
+    },
+    {
+      "file": "repositories/ReportRepository.ts",
+      "line": 2,
+      "issue": "Import uses ../src/ but file is already in src/ - should use ../",
+      "type": "wrong_path"
     }
   ],
-  "total_issues": 1
+  "summary": {
+    "wrong_path": 2,
+    "require": 13,
+    "invalid_export": 0,
+    "circular": 0
+  }
 }

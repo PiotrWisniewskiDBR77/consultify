@@ -94,7 +94,7 @@ try {
 router.get(
   '/superadmin',
   verifyToken,
-  requireRole(['superadmin']),
+  requireRole('superadmin'),
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     if (!AISettingsService?.getSuperAdminSettings) {
       return res.status(503).json({ error: 'AI Settings service not available' });
@@ -121,7 +121,7 @@ router.get(
 router.put(
   '/superadmin',
   verifyToken,
-  requireRole(['superadmin']),
+  requireRole('superadmin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.updateSuperAdminSettings) {
       return res.status(503).json({ error: 'AI Settings service not available' });

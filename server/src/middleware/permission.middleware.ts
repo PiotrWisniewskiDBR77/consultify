@@ -26,6 +26,32 @@ interface PermissionService {
   ) => Promise<boolean>;
 }
 
+const normalizeRoleForDb = (role?: string): string => {
+  if (!role) return 'VIEWER';
+  const r = role.toString().trim();
+  const upper = r.toUpperCase();
+
+  // Common aliases from JWT/app layer
+  if (upper === 'ADMINISTRATOR' || upper === 'ADMIN') return 'ADMIN';
+  if (upper === 'OWNER' || upper === 'SUPER_ADMIN' || upper === 'SUPERADMIN') return 'SUPERADMIN';
+  if (upper === 'PROJECT_MANAGER' || upper === 'MANAGER') return 'PROJECT_MANAGER';
+  if (upper === 'TEAM_MEMBER' || upper === 'MEMBER') return 'TEAM_MEMBER';
+  if (upper === 'GUEST' || upper === 'CLIENT') return 'VIEWER';
+
+  // Legacy app role
+  if (upper === 'USER') return 'USER';
+
+  return upper;
+};
+
+const getRoleCandidates = (role?: string): string[] => {
+  const normalized = normalizeRoleForDb(role);
+  // Backward-compatible bridging between legacy 'USER' and newer 'TEAM_MEMBER'
+  if (normalized === 'USER') return ['USER', 'TEAM_MEMBER'];
+  if (normalized === 'TEAM_MEMBER') return ['TEAM_MEMBER', 'USER'];
+  return [normalized];
+};
+
 interface GovernanceAuditService {
   logAudit: (data: {
     actorId: string;
@@ -88,12 +114,13 @@ export const requirePermission = (permissionKey: string) => {
         return;
       }
 
-      const hasPermission = await PermissionService.hasPermission(
-        userId,
-        orgId,
-        permissionKey,
-        userRole
-      );
+      const roleCandidates = getRoleCandidates(userRole);
+      let hasPermission = false;
+      for (const candidateRole of roleCandidates) {
+        // eslint-disable-next-line no-await-in-loop
+        hasPermission = await PermissionService.hasPermission(userId, orgId, permissionKey, candidateRole);
+        if (hasPermission) break;
+      }
 
       if (!hasPermission) {
         logger.info(`[PermissionMiddleware] Denied: ${permissionKey} for user ${userId}`);
@@ -140,18 +167,21 @@ export const requireAnyPermission = (permissionKeys: string[]) => {
         return;
       }
 
+      const roleCandidates = getRoleCandidates(userRole);
       for (const permissionKey of permissionKeys) {
-        const hasPermission = await PermissionService.hasPermission(
-          userId,
-          orgId,
-          permissionKey,
-          userRole
-        );
-
-        if (hasPermission) {
-          (req as AuthRequest & { permissionChecked?: string }).permissionChecked = permissionKey;
-          next();
-          return;
+        for (const candidateRole of roleCandidates) {
+          // eslint-disable-next-line no-await-in-loop
+          const hasPermission = await PermissionService.hasPermission(
+            userId,
+            orgId,
+            permissionKey,
+            candidateRole
+          );
+          if (hasPermission) {
+            (req as AuthRequest & { permissionChecked?: string }).permissionChecked = permissionKey;
+            next();
+            return;
+          }
         }
       }
 
@@ -196,18 +226,16 @@ export const requireAllPermissions = (permissionKeys: string[]) => {
       }
 
       const missingPermissions: string[] = [];
+      const roleCandidates = getRoleCandidates(userRole);
 
       for (const permissionKey of permissionKeys) {
-        const hasPermission = await PermissionService.hasPermission(
-          userId,
-          orgId,
-          permissionKey,
-          userRole
-        );
-
-        if (!hasPermission) {
-          missingPermissions.push(permissionKey);
+        let hasPermission = false;
+        for (const candidateRole of roleCandidates) {
+          // eslint-disable-next-line no-await-in-loop
+          hasPermission = await PermissionService.hasPermission(userId, orgId, permissionKey, candidateRole);
+          if (hasPermission) break;
         }
+        if (!hasPermission) missingPermissions.push(permissionKey);
       }
 
       if (missingPermissions.length > 0) {

@@ -1,0 +1,132 @@
+#!/usr/bin/env node
+
+/**
+ * Test Mock Migration Script
+ *
+ * This script automatically migrates callback-style database mocks to Promise-style mocks
+ * in test files to fix common "callback is not a function" errors.
+ */
+
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Patterns to find and replace
+const patterns = [
+    {
+        // mockDb.run.mockImplementation(function(query, params, callback) { callback.call({ changes: 1 }, null); });
+        regex: /mockDb\.run\.mockImplementation\(function\([^)]*\) \{\s*([^}]+)\.call\(\{ changes: 1[^}]*\}, null\);\s*\}\);?/g,
+        replacement: 'mockDb.run.mockResolvedValue({ changes: 1 });'
+    },
+    {
+        // mockDb.get.mockImplementation((query, params, callback) => { callback(null, mockData); });
+        regex: /mockDb\.get\.mockImplementation\(\([^)]+\) => \{\s*callback\(null, ([^}]+)\);\s*\}\);?/g,
+        replacement: 'mockDb.get.mockResolvedValue($2);'
+    },
+    {
+        // mockDb.all.mockImplementation((query, params, callback) => { callback(null, mockData); });
+        regex: /mockDb\.all\.mockImplementation\(\([^)]+\) => \{\s*callback\(null, ([^}]+)\);\s*\}\);?/g,
+        replacement: 'mockDb.all.mockResolvedValue($2);'
+    },
+    {
+        // Generic callback pattern
+        regex: /mockDb\.(get|all|run)\.mockImplementation\([^)]*callback[^)]*\) => \{\s*callback\(null, ([^}]+)\);\s*\}\);?/g,
+        replacement: 'mockDb.$1.mockResolvedValue($2);'
+    }
+];
+
+function migrateFile(filePath) {
+    console.log(`Migrating ${filePath}...`);
+
+    let content = fs.readFileSync(filePath, 'utf8');
+    let modified = false;
+
+    for (const pattern of patterns) {
+        const originalContent = content;
+        content = content.replace(pattern.regex, pattern.replacement);
+        if (content !== originalContent) {
+            modified = true;
+            console.log(`  Applied pattern: ${pattern.regex.source}`);
+        }
+    }
+
+    if (modified) {
+        fs.writeFileSync(filePath, content);
+        console.log(`  ✅ Migrated ${filePath}`);
+        return true;
+    } else {
+        console.log(`  ⚪ No changes needed for ${filePath}`);
+        return false;
+    }
+}
+
+function findTestFiles(dir) {
+    const files = [];
+
+    function scan(directory) {
+        const items = fs.readdirSync(directory);
+
+        for (const item of items) {
+            const fullPath = path.join(directory, item);
+            const stat = fs.statSync(fullPath);
+
+            if (stat.isDirectory() && !item.startsWith('.') && item !== 'node_modules') {
+                scan(fullPath);
+            } else if (stat.isFile() && (item.endsWith('.test.js') || item.endsWith('.test.ts'))) {
+                files.push(fullPath);
+            }
+        }
+    }
+
+    scan(dir);
+    return files;
+}
+
+function main() {
+    const testDir = path.join(process.cwd(), 'tests');
+
+    if (!fs.existsSync(testDir)) {
+        console.error('Tests directory not found:', testDir);
+        process.exit(1);
+    }
+
+    console.log('🔄 Starting test mock migration...');
+    console.log('Looking for test files in:', testDir);
+
+    const testFiles = findTestFiles(testDir);
+    console.log(`Found ${testFiles.length} test files`);
+
+    let migratedCount = 0;
+    let totalFiles = testFiles.length;
+
+    for (const file of testFiles) {
+        try {
+            if (migrateFile(file)) {
+                migratedCount++;
+            }
+        } catch (error) {
+            console.error(`❌ Error migrating ${file}:`, error.message);
+        }
+    }
+
+    console.log('\n📊 Migration Summary:');
+    console.log(`  Total files processed: ${totalFiles}`);
+    console.log(`  Files migrated: ${migratedCount}`);
+    console.log(`  Files unchanged: ${totalFiles - migratedCount}`);
+
+    if (migratedCount > 0) {
+        console.log('\n✅ Migration completed!');
+        console.log('Run your tests to verify the changes.');
+    } else {
+        console.log('\nℹ️  No files needed migration.');
+    }
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+    main();
+}
+
+export { migrateFile, findTestFiles, patterns };

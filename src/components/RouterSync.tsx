@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useAppStore } from '../store/useAppStore';
+import { getAppViewFromPath } from '../routes/routeConfig';
 import { AppView, AuthStep, SessionMode } from '../types';
 
 /**
@@ -16,7 +17,7 @@ export const RouterSync: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const { setCurrentView, setSessionMode, setAuthInitialStep, currentView, currentUser } =
+  const { setCurrentViewState, setSessionMode, setAuthInitialStep, currentView, currentUser } =
     useAppStore();
 
   // 1. Attribution Capture
@@ -54,21 +55,21 @@ export const RouterSync: React.FC = () => {
         console.log('[RouterSync] Phase B: Navigating to DEMO');
         setSessionMode(SessionMode.DEMO);
         setAuthInitialStep(AuthStep.REGISTER); // Demo requires light auth
-        setCurrentView(AppView.AUTH);
+        setCurrentViewState(AppView.AUTH);
       }
     } else if (path === '/trial/start') {
       if (currentView !== AppView.AUTH) {
         console.log('[RouterSync] Navigating to TRIAL START');
         setSessionMode(SessionMode.FULL); // Trial is FULL mode
         setAuthInitialStep(AuthStep.REGISTER);
-        setCurrentView(AppView.AUTH);
+        setCurrentViewState(AppView.AUTH);
       }
     } else if (path === '/consulting') {
       console.log('[RouterSync] Navigating to CONSULTING');
       // Maybe scroll to consulting section or show modal?
       // For now, go to Welcome
       if (currentView !== AppView.WELCOME) {
-        setCurrentView(AppView.WELCOME);
+        setCurrentViewState(AppView.WELCOME);
       }
     } else if (path.startsWith('/share/')) {
       // Public share links - no auth required, handled by App.tsx directly
@@ -86,9 +87,6 @@ export const RouterSync: React.FC = () => {
         }
         return;
       }
-      // Reset sessionMode to FREE when on /login to prevent demo auto-trigger
-      setSessionMode(SessionMode.FREE);
-      setAuthInitialStep(AuthStep.LOGIN);
       // Don't change currentView - let React Router handle /login directly
       console.log('[RouterSync] At /login - React Router handles this');
       return; // IMPORTANT: Stop here, don't let other effects interfere
@@ -135,7 +133,7 @@ export const RouterSync: React.FC = () => {
         // Assuming Step 3 handles the escape, we only enforce here if "entry"
         // For now, let's keep it simple: Enforce Studio ONLY if we assume URL is truth.
         // We will rely on Step 3 to change URL if currentView changes.
-        setCurrentView(AppView.STUDIO);
+        setCurrentViewState(AppView.STUDIO);
       }
     } else if (path === '/chat') {
       // AI Chat - primary entry point for authenticated users
@@ -150,33 +148,9 @@ export const RouterSync: React.FC = () => {
         navigate('/superadmin', { replace: true });
         return;
       }
-      // Don't override Admin/SuperAdmin/Settings/etc views - they share /chat URL
-      const preservedViews = [
-        'ADMIN_',
-        'SUPERADMIN_',
-        'SETTINGS_',
-        'CONTEXT_BUILDER_',
-        'MY_WORK',
-        'PORTFOLIO_',
-        'IMPLEMENTATION',
-        'BENEFITS_',
-        'ECONOMICS',
-        'ASSESSMENT_',
-        'AI_ACTION_',
-        'KPI_OKR_',
-        'STUDIO',
-        'PROJECT_INTELLIGENCE',
-        'FULL_',
-        'AFFILIATE_',
-        'DRD_',
-        'ONBOARDING_',
-        'CONSULTANT_',
-        'ORG_SETUP_',
-      ];
-      const shouldPreserve = preservedViews.some((prefix) => currentView.startsWith(prefix));
-      if (!shouldPreserve && currentView !== AppView.AI_CHAT) {
+      if (currentView !== AppView.AI_CHAT) {
         console.log('[RouterSync] Navigating to AI Chat');
-        setCurrentView(AppView.AI_CHAT);
+        setCurrentViewState(AppView.AI_CHAT);
       }
     } else if (path === '/admin') {
       if (!currentUser?.isAuthenticated) {
@@ -186,7 +160,7 @@ export const RouterSync: React.FC = () => {
       }
       console.log('[RouterSync] Navigating to Admin Overview');
       if (currentView !== AppView.ADMIN_OVERVIEW) {
-        setCurrentView(AppView.ADMIN_OVERVIEW);
+        setCurrentViewState(AppView.ADMIN_OVERVIEW);
       }
     } else if (path === '/' || path === '') {
       if (currentUser?.isAuthenticated) {
@@ -202,10 +176,23 @@ export const RouterSync: React.FC = () => {
       }
       console.log('[RouterSync] Phase A: Product Entry Page');
       if (currentView !== AppView.WELCOME && currentView !== AppView.AUTH) {
-        setCurrentView(AppView.WELCOME);
+        setCurrentViewState(AppView.WELCOME);
+      }
+    } else {
+      const mappedView = getAppViewFromPath(path);
+      if (mappedView && mappedView !== currentView) {
+        setCurrentViewState(mappedView);
       }
     }
-  }, [location, setCurrentView, setSessionMode, setAuthInitialStep, currentUser, currentView]);
+  }, [
+    location,
+    setCurrentViewState,
+    setSessionMode,
+    setAuthInitialStep,
+    currentUser,
+    currentView,
+    navigate,
+  ]);
 
   // 3. State -> URL Sync (Escape Traps)
   useEffect(() => {

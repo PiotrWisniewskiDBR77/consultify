@@ -101,7 +101,20 @@
     "submit": "Submit",
     "confirm": "Confirm",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "goals": "Goals",
+    "challenges": "Challenges",
+    "megatrends": "Megatrends",
+    "strategy": "Strategy",
+    "rollout": "Rollout",
+    "users": "Users",
+    "projects": "Projects",
+    "analytics": "Analytics",
+    "team": "Team",
+    "workspace": "Workspace",
+    "consultant": "Consultant",
+    "invites": "Invites",
+    "affiliate": "Affiliate"
   },
   "sidebar": {
     "dashboard": "Dashboard",

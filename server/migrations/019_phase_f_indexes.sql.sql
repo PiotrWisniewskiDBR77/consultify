@@ -14,12 +14,9 @@ CREATE INDEX IF NOT EXISTS idx_initiatives_org_status
     ON initiatives(organization_id, status);
 
 -- Notifications: Org + User + Created (for user notification lists)
--- Note: Index will be skipped if organization_id column doesn't exist in notifications table
 CREATE INDEX IF NOT EXISTS idx_notifications_org_user_created 
     ON notifications(organization_id, user_id, created_at);
 
 -- Notifications: Dedupe index (for _checkDuplicate query)
--- Note: Using entity_id instead of related_object_id to match current schema
--- Index will be skipped if columns don't exist
 CREATE INDEX IF NOT EXISTS idx_notifications_dedupe 
-    ON notifications(user_id, organization_id, type, entity_id, created_at);
+    ON notifications(user_id, organization_id, type, related_object_id, created_at);

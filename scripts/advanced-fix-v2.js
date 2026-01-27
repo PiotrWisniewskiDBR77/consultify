@@ -29,7 +29,7 @@ const FIXES_V2 = [
         from: /(\s)(bg-white)(\s)/g,
         to: (match, space1, bg, space2) => {
             // Check if line already has dark:bg-
-            const hasD dark = /dark:bg-/.test(match);
+            const hasDark = /dark:bg-/.test(match);
             if (!hasDark) {
                 return `${space1}${bg} dark:bg-navy-900${space2}`;
             }
@@ -37,7 +37,7 @@ const FIXES_V2 = [
         },
         condition: (line) => {
             // Only if it doesn't already have dark:bg-
-            return !/dark:bg-/.test(line) && /bg-white(?:\s|")/test(line);
+            return !/dark:bg-/.test(line) && /bg-white(?:\s|")/.test(line);
         },
         tier: 2
     }
