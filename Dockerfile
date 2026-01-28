@@ -51,6 +51,10 @@ COPY server/ .
 RUN if [ ! -f src/services/ai/aiPipeline.js ] && [ -f src/services/ai/AIPipeline.js ]; then \
       cp src/services/ai/AIPipeline.js src/services/ai/aiPipeline.js; \
     fi
+# Create aiSchemaValidator.js for case-sensitive filesystems (macOS git can't track both AISchemaValidator.js and aiSchemaValidator.js)
+RUN if [ ! -f src/utils/aiSchemaValidator.js ] && [ -f src/utils/AISchemaValidator.js ]; then \
+      cp src/utils/AISchemaValidator.js src/utils/aiSchemaValidator.js; \
+    fi
 RUN npm run build
 
 # ==========================================
