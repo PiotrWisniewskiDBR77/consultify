@@ -69,9 +69,12 @@ COPY server/ .
 RUN if [ ! -f src/services/ai/aiPipeline.js ] && [ -f src/services/ai/AIPipeline.js ]; then \
       cp src/services/ai/AIPipeline.js src/services/ai/aiPipeline.js; \
     fi
-# Create aiSchemaValidator.js for case-sensitive filesystems (macOS git can't track both AISchemaValidator.js and aiSchemaValidator.js)
-RUN if [ ! -f src/utils/aiSchemaValidator.js ] && [ -f src/utils/AISchemaValidator.js ]; then \
-      cp src/utils/AISchemaValidator.js src/utils/aiSchemaValidator.js; \
+# Create aiSchemaValidator.js for case-sensitive filesystems (macOS git can't track both)
+# Note: We don't create AISchemaValidator.js re-export as it would overwrite the compiled output
+RUN if [ ! -f src/utils/aiSchemaValidator.js ]; then \
+      echo "Creating aiSchemaValidator.js re-export file..." && \
+      echo "// Re-export from AISchemaValidator.js (compiled) for case-sensitive file systems" > src/utils/aiSchemaValidator.js && \
+      echo "export * from './AISchemaValidator.js';" >> src/utils/aiSchemaValidator.js; \
     fi
 # Create tsconfig.build.json if it doesn't exist (fallback for git-untracked files)
 RUN if [ ! -f tsconfig.build.json ]; then \
@@ -83,18 +86,13 @@ RUN test -f tsconfig.build.json || (echo "ERROR: tsconfig.build.json not found!"
 # Use node_modules/.bin/tsc to ensure we use the locally installed TypeScript
 RUN ./node_modules/.bin/tsc --build tsconfig.build.json || (echo "TypeScript build failed!" && exit 1)
 # Copy .js re-export files to dist (TypeScript excludes .js files but we need them at runtime)
+# Note: Only copy lowercase re-export files - uppercase files are compiled outputs from TypeScript
 RUN mkdir -p dist/src/utils dist/src/services/ai && \
     if [ -f src/utils/aiSchemaValidator.js ]; then \
       cp src/utils/aiSchemaValidator.js dist/src/utils/aiSchemaValidator.js && \
       echo "✓ Copied aiSchemaValidator.js"; \
     else \
       echo "⚠️  aiSchemaValidator.js not found in src"; \
-    fi && \
-    if [ -f src/utils/AISchemaValidator.js ]; then \
-      cp src/utils/AISchemaValidator.js dist/src/utils/AISchemaValidator.js && \
-      echo "✓ Copied AISchemaValidator.js"; \
-    else \
-      echo "⚠️  AISchemaValidator.js not found in src"; \
     fi && \
     if [ -f src/services/ai/aiPipeline.js ]; then \
       cp src/services/ai/aiPipeline.js dist/src/services/ai/aiPipeline.js && \
