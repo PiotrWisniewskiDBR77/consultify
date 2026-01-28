@@ -55,8 +55,7 @@ RUN if [ ! -f src/services/ai/aiPipeline.js ] && [ -f src/services/ai/AIPipeline
 # Note: We don't create AISchemaValidator.js re-export as it would overwrite the compiled output
 RUN if [ ! -f src/utils/aiSchemaValidator.js ]; then \
       echo "Creating aiSchemaValidator.js re-export file..." && \
-      echo "// Re-export from AISchemaValidator.js (compiled) for case-sensitive file systems" > src/utils/aiSchemaValidator.js && \
-      echo "export * from './AISchemaValidator.js';" >> src/utils/aiSchemaValidator.js; \
+      printf '// Re-export from AISchemaValidator.js (compiled) for case-sensitive file systems\n// This file allows imports using lowercase '\''aiSchemaValidator'\'' to work on case-sensitive filesystems\nexport * from '\''./AISchemaValidator.js'\'';\n' > src/utils/aiSchemaValidator.js; \
     fi
 RUN npm run build
 # Copy .js re-export files to dist (TypeScript excludes .js files but we need them at runtime)
