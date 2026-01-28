@@ -454,7 +454,7 @@ router.post(
       return res.json({
         success: true,
         deletionDate: deletionDate.toISOString(),
-        message: `Organization "${org.name}" scheduled for deletion on ${deletionDate.toLocaleDateString()}. You can cancel this within 30 days.`,
+        message: `Organization "${org?.name || 'Unknown'}" scheduled for deletion on ${deletionDate.toLocaleDateString()}. You can cancel this within 30 days.`,
       });
     } catch (error: any) {
       logger.error('[ownership] Error scheduling deletion:', error);

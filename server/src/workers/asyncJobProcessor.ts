@@ -121,7 +121,7 @@ const AsyncJobProcessor = {
       }
     } catch (err) {
       const errorCode = classifyError(err);
-      const errorMessage = err.message;
+      const errorMessage = err instanceof Error ? err.message : String(err);
 
       // Step 11.1 - Non-retryable errors go straight to dead-letter
       if (!AsyncJobService.isRetryable(errorCode)) {
@@ -256,7 +256,7 @@ const AsyncJobProcessor = {
       }
     } catch (err) {
       const errorCode = classifyError(err);
-      const errorMessage = err.message;
+      const errorMessage = err instanceof Error ? err.message : String(err);
 
       // Step 11.1 - Non-retryable check
       if (!AsyncJobService.isRetryable(errorCode)) {

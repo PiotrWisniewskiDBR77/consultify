@@ -172,7 +172,7 @@ export class ToolInitiativeService {
           }),
           aiTimeoutMs,
           'AI initiative generation'
-        );
+        ) as { content?: string } | null | undefined;
 
         if (response?.content) {
           const parsed = parseJsonPayload(response.content);

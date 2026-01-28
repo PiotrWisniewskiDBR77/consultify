@@ -16,11 +16,12 @@ type QueueType = {
 };
 
 // Import with type assertion (aiQueue.ts has @ts-nocheck)
-// @ts-expect-error - aiQueue.ts has @ts-nocheck, so we need to assert type
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+// @ts-expect-error - aiQueue.ts has @ts-nocheck, module type cannot be determined
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 import aiQueueModule from '../queues/aiQueue.js';
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-const aiQueue: QueueType = (aiQueueModule as any) as QueueType;
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
+// @ts-expect-error - aiQueue.ts has @ts-nocheck, aiQueueModule type cannot be determined
+const aiQueue: QueueType = (aiQueueModule as unknown as QueueType);
 
 import * as auditLogger from '../utils/auditLogger.js';
 import { ACTION_ERROR_CODES } from './actionErrors.js';

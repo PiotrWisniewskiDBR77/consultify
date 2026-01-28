@@ -198,7 +198,7 @@ router.get(
         userCount: r.user_count,
         createdAt: r.created_at,
         updatedAt: r.updated_at,
-      }));
+      })) as typeof systemRolesWithCounts;
 
       allRoles = [...allRoles, ...formattedCustomRoles];
     }

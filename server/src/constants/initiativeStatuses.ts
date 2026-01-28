@@ -304,6 +304,7 @@ export const VALID_TRANSITIONS: Record<InitiativeStatusType, InitiativeStatusTyp
   
   // Terminal
   [InitiativeStatus.CANCELLED]: [], // Terminal state
+  [InitiativeStatus.ARCHIVED]: [], // Terminal state (archived from DONE or CANCELLED)
 };
 
 // ============================================
@@ -467,6 +468,17 @@ export const STATUS_METADATA: Record<InitiativeStatusType, StatusMeta> = {
     icon: 'XCircle',
     order: 12,
   },
+  [InitiativeStatus.ARCHIVED]: {
+    label: 'Archived',
+    labelPL: 'Zarchiwizowana',
+    color: 'text-slate-500',
+    bgColor: 'bg-slate-500/10',
+    dotColor: 'bg-slate-500',
+    description: 'Initiative has been archived',
+    descriptionPL: 'Inicjatywa została zarchiwizowana',
+    icon: 'Archive',
+    order: 13,
+  },
 };
 
 // ============================================
@@ -582,6 +594,7 @@ export function getLifecycleProgress(status: InitiativeStatusType): number {
     [InitiativeStatus.TRACKING]: 100,
     // Terminal
     [InitiativeStatus.CANCELLED]: 0,
+    [InitiativeStatus.ARCHIVED]: 0,
   };
   return progressMap[status] ?? 0;
 }

@@ -418,12 +418,12 @@ class ReportGenerationService {
         {
           id: 'decisions-required',
           title: language === 'pl' ? 'Decyzje wymagane' : 'Decisions Required',
-          content: this.formatDecisions(decisions || []),
+          content: this.formatDecisions((decisions || []).map(d => ({ ...d, deadline: d.deadline ?? undefined }))),
         },
         {
           id: 'escalations',
           title: language === 'pl' ? 'Eskalacje' : 'Escalations',
-          content: this.formatEscalations(decisions || []),
+          content: this.formatEscalations((decisions || []).map(d => ({ ...d, deadline: d.deadline ?? undefined }))),
         },
       ],
       generatedAt: new Date().toISOString(),
@@ -571,12 +571,12 @@ class ReportGenerationService {
         {
           id: 'decisions-required',
           title: language === 'pl' ? 'Decyzje wymagane' : 'Decisions Required',
-          content: this.formatDecisions(decisions || []),
+          content: this.formatDecisions((decisions || []).map(d => ({ ...d, deadline: d.deadline ?? undefined }))),
         },
         {
           id: 'escalations',
           title: language === 'pl' ? 'Eskalacje' : 'Escalations',
-          content: this.formatEscalations(decisions || []),
+          content: this.formatEscalations((decisions || []).map(d => ({ ...d, deadline: d.deadline ?? undefined }))),
         },
       ],
       generatedAt: new Date().toISOString(),

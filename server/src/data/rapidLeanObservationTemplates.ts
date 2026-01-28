@@ -463,11 +463,11 @@ const OBSERVATION_TO_DRD_MAPPING = {
 };
 
 // Helper functions
-function getTemplateById(templateId) {
+function getTemplateById(templateId: string) {
   return RAPID_LEAN_OBSERVATION_TEMPLATES.find((t) => t.id === templateId);
 }
 
-function getTemplatesByDimension(dimension) {
+function getTemplatesByDimension(dimension: string) {
   return RAPID_LEAN_OBSERVATION_TEMPLATES.filter((t) => t.dimension === dimension);
 }
 
