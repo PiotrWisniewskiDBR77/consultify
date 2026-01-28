@@ -61,6 +61,10 @@ RUN npm install --save --ignore-scripts cookie-parser@^1.4.7 @types/cookie-parse
 COPY server/tsconfig.json ./
 # Copy all server files first (tsconfig.build.json should be included)
 COPY server/ .
+# Create aiPipeline.js for case-sensitive filesystems (macOS git can't track both AIPipeline.js and aiPipeline.js)
+RUN if [ ! -f src/services/ai/aiPipeline.js ] && [ -f src/services/ai/AIPipeline.js ]; then \
+      cp src/services/ai/AIPipeline.js src/services/ai/aiPipeline.js; \
+    fi
 # Create tsconfig.build.json if it doesn't exist (fallback for git-untracked files)
 RUN if [ ! -f tsconfig.build.json ]; then \
       echo '{"extends":"./tsconfig.json","compilerOptions":{"noUnusedLocals":false,"noUnusedParameters":false,"noImplicitReturns":false,"noImplicitAny":false,"strictNullChecks":false,"strictFunctionTypes":false,"strictBindCallApply":false,"strictPropertyInitialization":false,"noImplicitThis":false,"skipLibCheck":true}}' > tsconfig.build.json; \
