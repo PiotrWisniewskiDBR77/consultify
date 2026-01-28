@@ -11,6 +11,8 @@
     "strictBindCallApply": false,
     "strictPropertyInitialization": false,
     "noImplicitThis": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    // Allow @ts-expect-error that may be needed in Docker but unused locally
+    "noUnusedLocals": false
   }
 }

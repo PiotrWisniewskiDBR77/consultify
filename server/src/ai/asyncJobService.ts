@@ -16,10 +16,10 @@ type QueueType = {
 };
 
 // Import with type assertion (aiQueue.ts has @ts-nocheck)
-// @ts-expect-error TS7034 - aiQueue.ts has @ts-nocheck, module type cannot be determined
+// @ts-ignore - aiQueue.ts has @ts-nocheck, module type cannot be determined (needed in Docker/Linux)
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 import aiQueueModule from '../queues/aiQueue.js';
-// @ts-expect-error TS7005 - aiQueueModule from @ts-nocheck file, type cannot be determined  
+// @ts-ignore - aiQueueModule from @ts-nocheck file, type cannot be determined (needed in Docker/Linux)
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
 const aiQueue: QueueType = (aiQueueModule as unknown as QueueType);
 

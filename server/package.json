@@ -11,6 +11,8 @@
     "build:clean": "rm -rf dist && tsc --build",
     "build:watch": "tsc --build --watch",
     "build:fast": "tsc --build --incremental",
+    "build:docker": "tsc --build tsconfig.build.json --force",
+    "build:check": "./scripts/check-build-errors.sh",
     "typecheck": "tsc --noEmit",
     "type-check:backend": "tsc --noEmit",
     "test": "vitest run",
