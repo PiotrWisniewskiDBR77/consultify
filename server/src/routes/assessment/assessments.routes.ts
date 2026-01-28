@@ -36,7 +36,6 @@ router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
                     id,
                     organization_id as organizationId,
                     name,
-                    description,
                     status,
                     created_at as createdAt,
                     updated_at as updatedAt,
