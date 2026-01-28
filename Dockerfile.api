@@ -53,9 +53,13 @@ COPY server/package.json ./server-package.json
 # Use npm ci for deterministic builds, fallback to npm install if lock file is out of sync
 # Ignore scripts (like husky) as they're not needed in Docker builds
 RUN npm ci --ignore-scripts || (echo "Lock file out of sync, updating..." && npm install --ignore-scripts)
-# Install server-specific dependencies that aren't in root package.json (e.g., cookie-parser)
-# Install them at root level so TypeScript can find them during compilation
-RUN npm install --save --ignore-scripts cookie-parser@^1.4.7 @types/cookie-parser@^1.4.10 || true
+# Install server-specific dependencies from server/package.json
+# Copy server/package.json to current directory and install its dependencies
+RUN cp server-package.json ./server-package-temp.json && \
+    npm install --save --ignore-scripts --package-lock-only=false $(node -p "Object.keys(require('./server-package-temp.json').dependencies || {}).join(' ')") || true && \
+    rm -f server-package-temp.json
+# Explicitly install known server dependencies that might be missing
+RUN npm install --save --ignore-scripts cookie-parser@^1.4.7 @types/cookie-parser@^1.4.10 pptxgenjs@^4.0.1 || true
 
 # Copy TypeScript config files explicitly (needed for build)
 COPY server/tsconfig.json ./
@@ -165,6 +169,7 @@ COPY --from=backend-builder --chown=nodejs:nodejs /app/node_modules /app/server/
 RUN test -d /app/server/node_modules/cookie-parser || (echo "ERROR: cookie-parser not found!" && ls -la /app/server/node_modules/ | head -20 && exit 1)
 RUN test -d /app/server/node_modules/express || (echo "ERROR: express not found!" && exit 1)
 RUN test -d /app/server/node_modules/zod || (echo "ERROR: zod not found!" && exit 1)
+RUN test -d /app/server/node_modules/pptxgenjs || (echo "ERROR: pptxgenjs not found!" && ls -la /app/server/node_modules/ | grep -i pptx || echo "pptxgenjs not in node_modules" && exit 1)
 
 WORKDIR /app/server
 
