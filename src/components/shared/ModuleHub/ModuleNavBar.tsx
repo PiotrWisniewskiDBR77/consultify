@@ -19,9 +19,26 @@ import {
   Search,
   X,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { CategoryButton, ModuleTab, TabConfig, ViewMode } from './types';
+
+// Debounce hook for search
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 // Status filter configuration
 export interface StatusFilter {
@@ -89,6 +106,22 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
 }) => {
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Debounce search query (300ms)
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // Call onSearch when debounced value changes
+  useEffect(() => {
+    onSearch(debouncedSearchQuery);
+  }, [debouncedSearchQuery, onSearch]);
+
+  // Focus search input when opened
+  useEffect(() => {
+    if (showSearch && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [showSearch]);
 
   // View mode icons and labels
   const viewModeConfig: Record<ViewMode, { icon: React.ReactNode; label: string }> = {
@@ -100,16 +133,16 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
     matrix: { icon: <LayoutGrid size={16} />, label: 'Matrix' },
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    onSearch(e.target.value);
-  };
+    // Note: onSearch is called via debounced effect, not here
+  }, []);
 
-  const handleCloseSearch = () => {
+  const handleCloseSearch = useCallback(() => {
     setShowSearch(false);
     setSearchQuery('');
-    onSearch('');
-  };
+    // onSearch('') will be called via debounced effect
+  }, []);
 
   return (
     <div className="bg-navy-900 border-b border-navy-700">
@@ -269,11 +302,11 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
+              ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={handleSearchChange}
-              placeholder="Search..."
-              autoFocus
+              placeholder="Search assessments..."
               className="
                 w-full pl-10 pr-10 py-2 rounded-lg
                 bg-navy-800 border border-navy-600

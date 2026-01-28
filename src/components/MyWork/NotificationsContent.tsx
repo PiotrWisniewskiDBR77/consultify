@@ -9,15 +9,11 @@ import {
   AlertTriangle,
   ArrowRight,
   Bell,
-  BellRing,
   Bot,
   Check,
   CheckSquare,
-  ChevronDown,
-  ChevronRight,
   Clock,
   Eye,
-  FileText,
   FolderOpen,
   Info,
   Loader2,
@@ -194,28 +190,6 @@ const getSourceConfig = (relatedType?: string) => {
     default:
       return null;
   }
-};
-
-// Group notifications by time
-const groupByTime = (notifications: Notification[]) => {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const weekAgo = new Date(today);
-  weekAgo.setDate(weekAgo.getDate() - 7);
-
-  const thisWeek: Notification[] = [];
-  const earlier: Notification[] = [];
-
-  notifications.forEach((n) => {
-    const date = new Date(n.createdAt);
-    if (date >= weekAgo) {
-      thisWeek.push(n);
-    } else {
-      earlier.push(n);
-    }
-  });
-
-  return { thisWeek, earlier };
 };
 
 // Severity filter options
@@ -550,7 +524,6 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
   const { t } = useTranslation();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['thisWeek', 'earlier']));
   
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -619,11 +592,6 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
     return result;
   }, [notifications, searchQuery, filter]);
 
-  // Group by time
-  const groupedNotifications = useMemo(() => {
-    return groupByTime(filteredNotifications);
-  }, [filteredNotifications]);
-
   // Calculate counts
   useEffect(() => {
     const now = new Date();
@@ -685,15 +653,6 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
     ) {
       onOpenDecision(notification.relatedObjectId);
     }
-  };
-
-  const toggleGroup = (group: string) => {
-    setExpandedGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(group)) next.delete(group);
-      else next.add(group);
-      return next;
-    });
   };
 
   // Selection helpers
@@ -799,9 +758,6 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
     return result;
   }, [filteredNotifications, tableFilters]);
 
-  // Group displayed notifications by time - MUST be called before any early returns
-  const displayedGrouped = useMemo(() => groupByTime(displayedNotifications), [displayedNotifications]);
-
   // Early returns AFTER all hooks
   if (loading) {
     return (
@@ -823,164 +779,128 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
     );
   }
 
-  const groups = [
-    { key: 'thisWeek', label: 'This Week', data: displayedGrouped.thisWeek },
-    { key: 'earlier', label: 'Earlier', data: displayedGrouped.earlier },
-  ];
-
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
-      <div className="flex-1 overflow-y-auto">
-        {groups.map((group) => {
-          if (group.data.length === 0) return null;
-          const isExpanded = expandedGroups.has(group.key);
-
-          return (
-            <div key={group.key}>
-              {/* Group Header */}
-              <button
-                onClick={() => toggleGroup(group.key)}
-                className="w-full flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-navy-800/50 border-b border-slate-200 dark:border-navy-700/50 transition-colors hover:opacity-90"
-              >
-                {isExpanded ? (
-                  <ChevronDown size={14} className="text-slate-500" />
-                ) : (
-                  <ChevronRight size={14} className="text-slate-500" />
-                )}
-                <Clock size={14} className="text-slate-500 dark:text-slate-400" />
-                <span className="text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-400">
-                  {group.label}
-                </span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400">
-                  {group.data.length}
-                </span>
-              </button>
-
-              {/* Table */}
-              {isExpanded && (
-                <div className="overflow-x-auto">
-                  <table className="w-full" style={{ minWidth: 800 }}>
-                    <thead>
-                      <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
-                        {/* Select All */}
-                        <th className="w-10 px-2 py-2">
-                          <button
-                            onClick={() => handleSelectAll(!allSelected)}
-                            className={`
-                              w-5 h-5 rounded border flex items-center justify-center transition-colors
-                              ${
-                                allSelected
-                                  ? 'bg-primary-500 border-primary-500 text-white'
-                                  : someSelected
-                                    ? 'bg-primary-500/50 border-primary-500 text-white'
-                                    : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-400'
-                              }
-                            `}
-                          >
-                            {allSelected ? (
-                              <CheckSquare size={14} />
-                            ) : someSelected ? (
-                              <Minus size={14} />
-                            ) : (
-                              <Square size={14} />
-                            )}
-                          </button>
-                        </th>
-                        
-                        {/* Severity with Filter */}
-                        <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.severity }}>
-                          <div className="flex items-center gap-1">
-                            <span className={(tableFilters.severity as string[])?.length ? 'text-primary-500' : ''}>Severity</span>
-                            <FilterDropdown
-                              column={NOTIFICATION_COLUMNS.find(c => c.id === 'severity')!}
-                              value={tableFilters.severity as string[]}
-                              onChange={(val) => handleFilterChange('severity', val as string[])}
-                              isOpen={openFilterId === 'severity'}
-                              onToggle={() => setOpenFilterId(openFilterId === 'severity' ? null : 'severity')}
-                              onClose={() => setOpenFilterId(null)}
-                            />
-                          </div>
-                          <ColumnResizer
-                            columnId="severity"
-                            currentWidth={columnWidths.severity}
-                            minWidth={70}
-                            maxWidth={100}
-                            onResize={handleColumnResize}
-                          />
-                        </th>
-                        
-                        {/* Type with Filter */}
-                        <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.type }}>
-                          <div className="flex items-center gap-1">
-                            <span className={(tableFilters.type as string[])?.length ? 'text-primary-500' : ''}>Type</span>
-                            <FilterDropdown
-                              column={NOTIFICATION_COLUMNS.find(c => c.id === 'type')!}
-                              value={tableFilters.type as string[]}
-                              onChange={(val) => handleFilterChange('type', val as string[])}
-                              isOpen={openFilterId === 'type'}
-                              onToggle={() => setOpenFilterId(openFilterId === 'type' ? null : 'type')}
-                              onClose={() => setOpenFilterId(null)}
-                            />
-                          </div>
-                          <ColumnResizer
-                            columnId="type"
-                            currentWidth={columnWidths.type}
-                            minWidth={80}
-                            maxWidth={130}
-                            onResize={handleColumnResize}
-                          />
-                        </th>
-                        
-                        <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                          Notification
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.source }}>
-                          <span>Source</span>
-                          <ColumnResizer
-                            columnId="source"
-                            currentWidth={columnWidths.source}
-                            minWidth={80}
-                            maxWidth={160}
-                            onResize={handleColumnResize}
-                          />
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.time }}>
-                          <span>Time</span>
-                          <ColumnResizer
-                            columnId="time"
-                            currentWidth={columnWidths.time}
-                            minWidth={80}
-                            maxWidth={140}
-                            onResize={handleColumnResize}
-                          />
-                        </th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: columnWidths.actions }}>
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <AnimatePresence>
-                        {group.data.map((notification) => (
-                          <NotificationTableRow
-                            key={notification.id}
-                            notification={notification}
-                            isSelected={selectedIds.has(notification.id)}
-                            onSelect={handleSelectNotification}
-                            onMarkRead={handleMarkRead}
-                            onDelete={handleDelete}
-                            onClick={handleClick}
-                            columnWidths={columnWidths}
-                          />
-                        ))}
-                      </AnimatePresence>
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          );
-        })}
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+          <table className="w-full" style={{ minWidth: 800 }}>
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
+                {/* Select All */}
+                <th className="w-10 px-2 py-2">
+                  <button
+                    onClick={() => handleSelectAll(!allSelected)}
+                    className={`
+                      w-5 h-5 rounded border flex items-center justify-center transition-colors
+                      ${
+                        allSelected
+                          ? 'bg-primary-500 border-primary-500 text-white'
+                          : someSelected
+                            ? 'bg-primary-500/50 border-primary-500 text-white'
+                            : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-400'
+                      }
+                    `}
+                  >
+                    {allSelected ? (
+                      <CheckSquare size={14} />
+                    ) : someSelected ? (
+                      <Minus size={14} />
+                    ) : (
+                      <Square size={14} />
+                    )}
+                  </button>
+                </th>
+                
+                {/* Severity with Filter */}
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.severity }}>
+                  <div className="flex items-center gap-1">
+                    <span className={(tableFilters.severity as string[])?.length ? 'text-primary-500' : ''}>Severity</span>
+                    <FilterDropdown
+                      column={NOTIFICATION_COLUMNS.find(c => c.id === 'severity')!}
+                      value={tableFilters.severity as string[]}
+                      onChange={(val) => handleFilterChange('severity', val as string[])}
+                      isOpen={openFilterId === 'severity'}
+                      onToggle={() => setOpenFilterId(openFilterId === 'severity' ? null : 'severity')}
+                      onClose={() => setOpenFilterId(null)}
+                    />
+                  </div>
+                  <ColumnResizer
+                    columnId="severity"
+                    currentWidth={columnWidths.severity}
+                    minWidth={70}
+                    maxWidth={100}
+                    onResize={handleColumnResize}
+                  />
+                </th>
+                
+                {/* Type with Filter */}
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.type }}>
+                  <div className="flex items-center gap-1">
+                    <span className={(tableFilters.type as string[])?.length ? 'text-primary-500' : ''}>Type</span>
+                    <FilterDropdown
+                      column={NOTIFICATION_COLUMNS.find(c => c.id === 'type')!}
+                      value={tableFilters.type as string[]}
+                      onChange={(val) => handleFilterChange('type', val as string[])}
+                      isOpen={openFilterId === 'type'}
+                      onToggle={() => setOpenFilterId(openFilterId === 'type' ? null : 'type')}
+                      onClose={() => setOpenFilterId(null)}
+                    />
+                  </div>
+                  <ColumnResizer
+                    columnId="type"
+                    currentWidth={columnWidths.type}
+                    minWidth={80}
+                    maxWidth={130}
+                    onResize={handleColumnResize}
+                  />
+                </th>
+                
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  Notification
+                </th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.source }}>
+                  <span>Source</span>
+                  <ColumnResizer
+                    columnId="source"
+                    currentWidth={columnWidths.source}
+                    minWidth={80}
+                    maxWidth={160}
+                    onResize={handleColumnResize}
+                  />
+                </th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.time }}>
+                  <span>Time</span>
+                  <ColumnResizer
+                    columnId="time"
+                    currentWidth={columnWidths.time}
+                    minWidth={80}
+                    maxWidth={140}
+                    onResize={handleColumnResize}
+                  />
+                </th>
+                <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: columnWidths.actions }}>
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <AnimatePresence>
+                {displayedNotifications.map((notification) => (
+                  <NotificationTableRow
+                    key={notification.id}
+                    notification={notification}
+                    isSelected={selectedIds.has(notification.id)}
+                    onSelect={handleSelectNotification}
+                    onMarkRead={handleMarkRead}
+                    onDelete={handleDelete}
+                    onClick={handleClick}
+                    columnWidths={columnWidths}
+                  />
+                ))}
+              </AnimatePresence>
+            </tbody>
+          </table>
+        </div>
       </div>
       
       {/* Bulk Action Bar */}

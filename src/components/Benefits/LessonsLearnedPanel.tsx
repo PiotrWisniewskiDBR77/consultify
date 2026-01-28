@@ -377,37 +377,8 @@ export const LessonsLearnedPanel: React.FC<LessonsLearnedPanelProps> = ({
       setLessons(response.lessons || []);
     } catch (error) {
       console.error('[LessonsLearnedPanel] Fetch error:', error);
-      // Use mock data for demo
-      setLessons([
-        {
-          id: '1',
-          initiativeId: initiativeId || 'mock-1',
-          initiativeName: initiativeName || 'Digital Transformation',
-          type: 'SUCCESS',
-          category: 'TECHNOLOGY',
-          description:
-            'Implementing CI/CD pipelines early in the project significantly reduced deployment issues.',
-          actionTaken:
-            'Documented the CI/CD setup process and created templates for future projects.',
-          applicableTo: ['Digital Projects', 'IT Implementation'],
-          createdAt: new Date().toISOString(),
-          createdBy: 'user-1',
-          createdByName: 'Jan Kowalski',
-        },
-        {
-          id: '2',
-          initiativeId: initiativeId || 'mock-2',
-          initiativeName: initiativeName || 'Process Automation',
-          type: 'CHALLENGE',
-          category: 'PEOPLE',
-          description: 'Resistance to change from the operations team slowed down adoption.',
-          actionTaken: 'Added dedicated change management role to the project team.',
-          applicableTo: ['Process Changes', 'Automation'],
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-          createdBy: 'user-2',
-          createdByName: 'Anna Nowak',
-        },
-      ]);
+      setLessons([]);
+      toast.error('Failed to load lessons learned');
     } finally {
       setIsLoading(false);
     }

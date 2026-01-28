@@ -12,6 +12,8 @@ let learningSystem: any;
 let aiMemoryMetricsService: any;
 let aiCostControlService: any;
 let slaService: any;
+let taskAssignmentService: any;
+let decisionEscalationChainService: any;
 let storageReconciliationService: any;
 let aiMemoryManager: any;
 let feedbackService: any;
@@ -25,20 +27,24 @@ export const Scheduler = {
     logger.info('[Scheduler] Initializing Cron Jobs...');
 
     // Resolve lazy services
-    const [amms_p, accs_p, slas_p, amm_p, fs_p] = await Promise.all([
+    const [amms_p, accs_p, slas_p, tass_p, decs_p, amm_p, fs_p] = await Promise.all([
       // import('../services/ai/learningSystem.js').then((m) => m.default),
-      import('../services/ai/aiMemoryMetricsService.js').then((m) => m.default),
-      import('../services/aiCostControlService.js').then((m) => m.default),
-      import('../services/slaService.js').then((m) => m.default),
-      // import('../services/storageReconciliationService.js').then((m) => m.default),
-      import('../services/aiMemoryManager.js').then((m) => m.default),
-      import('../services/feedbackService.js').then((m) => m.default),
+      import('../services/ai/aiMemoryMetricsService').then((m) => m.default),
+      import('../services/aiCostControlService').then((m) => m.default),
+      import('../services/slaService').then((m) => m.default),
+      import('../services/taskAssignmentService').then((m) => m.default),
+      import('../services/decisionEscalationChainService').then((m) => m.default),
+      // import('../services/storageReconciliationService').then((m) => m.default),
+      import('../services/aiMemoryManager').then((m) => m.default),
+      import('../services/feedbackService').then((m) => m.default),
     ]);
 
     // learningSystem = (await kls_p).learningSystem;
     aiMemoryMetricsService = amms_p;
     aiCostControlService = accs_p;
     slaService = slas_p;
+    taskAssignmentService = tass_p;
+    decisionEscalationChainService = decs_p;
     // storageReconciliationService = await srs_p;
     aiMemoryManager = amm_p;
     feedbackService = fs_p;
@@ -89,6 +95,24 @@ export const Scheduler = {
     });
     this.jobs.push(job6);
 
+    // 7. Task Overdue Reminders (assignee/owner/backup) - Run every 30 minutes
+    const job7 = cron.schedule('*/30 * * * *', () => {
+      logger.info('[Scheduler] Running Task Overdue Stakeholder Notifications');
+      taskAssignmentService.checkAndNotifyOverdueStakeholders({ limit: 200 }).catch((err: Error) => {
+        logger.error('[Scheduler] Task Overdue Notification job failed:', err.message);
+      });
+    });
+    this.jobs.push(job7);
+
+    // 7b. Decision Auto-Escalation - Run every 15 minutes
+    const job7b = cron.schedule('*/15 * * * *', () => {
+      logger.info('[Scheduler] Running Decision Auto-Escalation');
+      decisionEscalationChainService.checkAndEscalateOverdue({ limit: 100 }).catch((err: Error) => {
+        logger.error('[Scheduler] Decision Auto-Escalation job failed:', err.message);
+      });
+    });
+    this.jobs.push(job7b);
+
     // 8. AI Monthly Budget Reset - Run on the 1st of every month at midnight
     const job8 = cron.schedule('0 0 1 * *', () => {
       logger.info('[Scheduler] Running Monthly AI Budget Reset');
@@ -104,17 +128,38 @@ export const Scheduler = {
     this.jobs.push(job8);
 
     // 9. Scheduled Management Reports - Run every hour at minute 0
-    const job9 = cron.schedule('0 * * * *', () => {
+    const job9 = cron.schedule('0 * * * *', async () => {
       logger.info('[Scheduler] Checking Scheduled Management Reports');
-      // scheduledReportsService.processScheduledReports().then((result: { processed: number }) => {
-      //     if (result.processed > 0) {
-      //         logger.info(`[Scheduler] Processed ${result.processed} scheduled report(s)`);
-      //     }
-      // }).catch((err: Error) => {
-      //     logger.error('[Scheduler] Scheduled Reports processing failed:', err.message);
-      // });
+      try {
+        const { processScheduledReports } = await import('./ReportGenerationCron.js');
+        const result = await processScheduledReports();
+        if (result.processed > 0) {
+          logger.info(
+            `[Scheduler] Processed ${result.processed} scheduled report(s): ${result.successful} successful, ${result.failed} failed`
+          );
+        }
+      } catch (err: any) {
+        logger.error('[Scheduler] Scheduled Reports processing failed:', err.message);
+      }
     });
     this.jobs.push(job9);
+
+    // 9b. Report Schedules (new system) - Run every hour at minute 30
+    const job9b = cron.schedule('30 * * * *', async () => {
+      logger.info('[Scheduler] Checking Report Schedules');
+      try {
+        const { processScheduledReports } = await import('./ReportGenerationJob.js');
+        const result = await processScheduledReports();
+        if (result.processed > 0) {
+          logger.info(
+            `[Scheduler] Processed ${result.processed} report schedule(s): ${result.successful} successful, ${result.failed} failed`
+          );
+        }
+      } catch (err: any) {
+        logger.error('[Scheduler] Report Schedules processing failed:', err.message);
+      }
+    });
+    this.jobs.push(job9b);
 
     // 10. Scheduled Emails - Run every 15 minutes
     const job10 = cron.schedule('*/15 * * * *', () => {
@@ -320,6 +365,53 @@ export const Scheduler = {
       }
     });
     this.jobs.push(job23);
+
+    // EXECUTION: Process recurring tasks - Run daily at 1:00 AM
+    const job24 = cron.schedule('0 1 * * *', async () => {
+      logger.info('[Scheduler] Running Recurring Tasks Processing');
+      try {
+        const { processRecurringTasks } = await import('./RecurringTasksCron.js');
+        const result = await processRecurringTasks();
+        logger.info(
+          `[Scheduler] Recurring tasks: ${result.created} created, ${result.skipped} skipped, ${result.deactivated} deactivated`
+        );
+      } catch (err) {
+        logger.error('[Scheduler] Recurring tasks processing failed:', err);
+      }
+    });
+    this.jobs.push(job24);
+
+    // MYWORK: Daily Digest Emails - Run every hour to check for users with matching delivery time
+    const job25 = cron.schedule('0 * * * *', async () => {
+      logger.info('[Scheduler] Processing Daily Digest Emails');
+      try {
+        const { processDailyDigests } = await import('./DailyDigestCron.js');
+        const result = await processDailyDigests();
+        if (result.sent > 0 || result.failed > 0) {
+          logger.info(
+            `[Scheduler] Daily digests: ${result.sent} sent, ${result.failed} failed, ${result.skipped} skipped`
+          );
+        }
+      } catch (err) {
+        logger.error('[Scheduler] Daily digest processing failed:', err);
+      }
+    });
+    this.jobs.push(job25);
+
+    // MYWORK: Weekly Digest Emails - Run every Monday at 8:00 AM UTC
+    const job26 = cron.schedule('0 8 * * 1', async () => {
+      logger.info('[Scheduler] Processing Weekly Digest Emails');
+      try {
+        const { processWeeklyDigests } = await import('./DailyDigestCron.js');
+        const result = await processWeeklyDigests();
+        logger.info(
+          `[Scheduler] Weekly digests: ${result.sent} sent, ${result.failed} failed, ${result.skipped} skipped`
+        );
+      } catch (err) {
+        logger.error('[Scheduler] Weekly digest processing failed:', err);
+      }
+    });
+    this.jobs.push(job26);
 
     logger.info(
       '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM)'

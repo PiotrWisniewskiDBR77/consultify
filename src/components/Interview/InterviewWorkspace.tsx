@@ -357,17 +357,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       if (session.assignmentId) {
         const result = await Api.post(`/interview/assignments/${session.assignmentId}/submit`, {});
         const updatedSession = (result as any)?.session;
-        const entersContext = (result as any)?.entersContext === true;
         const completeness = (result as any)?.completenessPercent;
         if (updatedSession) setSession(updatedSession);
         toast.success(
-          entersContext
-            ? (isPolish ? 'Wywiad zatwierdzony!' : 'Interview submitted!')
-            : (isPolish
-                ? `Wywiad wysłany (poniżej 50%: ${completeness ?? 0}%). Admin może odesłać.`
-                : `Submitted (<50%: ${completeness ?? 0}%). Admin may send back.`)
+          isPolish
+            ? `Wywiad wysłany do review (${completeness ?? 0}%). Reviewer może odesłać do uzupełnienia.`
+            : `Submitted for review (${completeness ?? 0}%). Reviewer may send back for completion.`
         );
-        if (entersContext) onComplete?.(session.id);
         return;
       }
 

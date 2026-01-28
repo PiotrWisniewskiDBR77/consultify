@@ -3,10 +3,14 @@
  * Exports all assessment form components
  */
 
+// Main assessment forms
 export { DRDForm } from './DRDForm';
 export { SIRIForm } from './SIRIForm';
+export { ADMAForm, createEmptyADMAFormData } from './ADMAForm';
+export { CMPracticeForm, createEmptyCMMIFormData } from './CMPracticeForm';
+export { LeanForm, createEmptyLeanFormData } from './LeanForm';
 
-// Coming soon placeholders
-export const ADMAForm = () => null;
-export const CMMIForm = () => null;
-export const LeanForm = () => null;
+// Re-export types
+export type { default as ADMAFormType } from './ADMAForm';
+export type { default as CMPracticeFormType } from './CMPracticeForm';
+export type { default as LeanFormType } from './LeanForm';

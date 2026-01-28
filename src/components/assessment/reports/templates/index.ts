@@ -13,3 +13,19 @@ export { ADMAReportTemplate } from './ADMAReportTemplate';
 export { CMMIReportTemplate } from './CMMIReportTemplate';
 export { DBR77ReportTemplate } from './DBR77ReportTemplate';
 export { SIRIReportTemplate } from './SIRIReportTemplate';
+
+// Visualization components
+export {
+  AssessmentVisualizationDashboard,
+  AssessmentRadarChart,
+  GapHeatmap,
+  DimensionBars,
+  ScoreCardsGrid,
+  ScoreCard,
+} from '../AssessmentReportVisualizations';
+
+export type {
+  AssessmentVisualizationData,
+  DimensionScore,
+  AssessmentFramework,
+} from '../AssessmentReportVisualizations';

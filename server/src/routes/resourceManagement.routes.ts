@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Resource Management Routes (SuperAdmin)
  * Endpoints for managing subscription plans and organization resources

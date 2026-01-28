@@ -174,7 +174,11 @@ export class InitiativeController {
       const supportedLangs = ['pl', 'en', 'de', 'es', 'ar', 'ja'];
       const lang = supportedLangs.includes(userLang) ? userLang : 'en';
 
-      const { status } = req.query as { status?: string };
+      const { status, source, sourceAssessmentId } = req.query as {
+        status?: string;
+        source?: string;
+        sourceAssessmentId?: string;
+      };
       const params: Array<unknown> = [orgId];
       let sql = `
             SELECT i.*, 
@@ -188,6 +192,15 @@ export class InitiativeController {
       if (status) {
         sql += ` AND UPPER(i.status) = ?`;
         params.push(normalizeStatus(status));
+      }
+
+      // Assessment module support: show initiatives derived from assessments/reports
+      if (source && source.toString().toLowerCase() === 'assessment') {
+        sql += ` AND (i.source_assessment_id IS NOT NULL OR i.source_report_id IS NOT NULL OR LOWER(COALESCE(i.created_from,'')) = 'assessment')`;
+      }
+      if (sourceAssessmentId) {
+        sql += ` AND i.source_assessment_id = ?`;
+        params.push(sourceAssessmentId);
       }
       sql += ` ORDER BY i.created_at DESC`;
 

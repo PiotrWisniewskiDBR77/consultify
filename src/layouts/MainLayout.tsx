@@ -272,7 +272,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             )}
 
             {/* Main Content */}
-            <div className="flex-1 overflow-hidden flex flex-col min-h-0 min-w-0">{children}</div>
+            <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-y-auto">{children}</div>
           </div>
         </TrialExpiredGate>
       </main>

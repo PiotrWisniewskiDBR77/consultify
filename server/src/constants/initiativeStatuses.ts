@@ -1,25 +1,30 @@
 /**
- * Initiative Statuses - Central Source of Truth
+ * Initiative Statuses - Central Source of Truth (Canonical)
  *
- * This file defines all initiative statuses, their transitions, module mappings,
- * and visibility rules for the entire system.
+ * This file defines all initiative statuses, their transitions, gate decisions,
+ * role permissions, module mappings, and visibility rules for the entire system.
  *
- * Flow: Interview -> Tools/Assessment -> Initiatives -> Execution -> Benefits
+ * Documentation: wdrozenia/standards/03-STATUS-WORKFLOW.md
+ *
+ * Lifecycle Flow:
+ * DRAFT → REVIEW → PROMOTED → PLANNING → APPROVED → SCHEDULED → EXECUTING → DONE → TRACKING
+ *                                                        ↓
+ *                                                    BLOCKED
  *
  * Status-Module Visibility:
- * | Module          | Visible Statuses                    |
- * |-----------------|-------------------------------------|
- * | Tools           | DRAFT (own)                         |
- * | Assessment      | DRAFT (own)                         |
- * | Initiatives     | REVIEW, APPROVED, PLANNING          |
- * | Execution       | EXECUTING, BLOCKED, DONE, CANCELLED |
- * | Benefits        | DONE                                |
+ * | Module          | Visible Statuses                                    |
+ * |-----------------|-----------------------------------------------------|
+ * | Tools           | DRAFT (own)                                         |
+ * | Assessment      | DRAFT (own)                                         |
+ * | Initiatives     | REVIEW, PROMOTED, PLANNING, APPROVED, SCHEDULED     |
+ * | Execution       | SCHEDULED, EXECUTING, BLOCKED, DONE                 |
+ * | Benefits        | TRACKING                                            |
  *
  * @module constants/initiativeStatuses
  */
 
 // ============================================
-// INITIATIVE STATUS ENUM
+// INITIATIVE STATUS ENUM (11 statuses)
 // ============================================
 
 /**
@@ -27,25 +32,152 @@
  * Used across the entire application (frontend and backend)
  */
 export const InitiativeStatus = {
-  // Assessment Module (Module 2) - Draft phase
+  // Source modules (Tools/Assessment) - Draft phase
   DRAFT: 'DRAFT',
 
-  // Initiative Management Module (Module 3) - Planning phase
-  PLANNING: 'PLANNING',
+  // Initiative Management Module - Review & Planning phase
   REVIEW: 'REVIEW',
+  PROMOTED: 'PROMOTED',
+  PLANNING: 'PLANNING',
   APPROVED: 'APPROVED',
+  SCHEDULED: 'SCHEDULED',
 
-  // Execution Module (Module 4/5) - Active work
+  // Execution Module - Active work
   EXECUTING: 'EXECUTING',
   BLOCKED: 'BLOCKED',
   DONE: 'DONE',
 
-  // Terminal States
+  // Benefits Module - Tracking phase
+  TRACKING: 'TRACKING',
+
+  // Terminal State
   CANCELLED: 'CANCELLED',
-  ARCHIVED: 'ARCHIVED',
 } as const;
 
 export type InitiativeStatusType = (typeof InitiativeStatus)[keyof typeof InitiativeStatus];
+
+// ============================================
+// ROLE DEFINITIONS
+// ============================================
+
+/**
+ * Role identifiers for gate permissions
+ */
+export const Role = {
+  ADMIN: 'ADMIN',
+  CONSULTANT: 'CONSULTANT',
+  PROJECT_MANAGER: 'PROJECT_MANAGER', // NEW: Can review initiatives from Tools/Assessment
+  PROJECT_LEAD: 'PROJECT_LEAD', // NEW: Can review initiatives from Tools/Assessment
+  INITIATIVE_OWNER: 'INITIATIVE_OWNER',
+  PROJECT_SPONSOR: 'PROJECT_SPONSOR',
+  PMO: 'PMO',
+  STEERING_COMMITTEE: 'STEERING_COMMITTEE',
+  TEAM_MEMBER: 'TEAM_MEMBER',
+  BUSINESS_OWNER: 'BUSINESS_OWNER',
+} as const;
+
+export type RoleType = (typeof Role)[keyof typeof Role];
+
+// ============================================
+// GATE DEFINITIONS
+// ============================================
+
+/**
+ * Gate decision types for status transitions
+ */
+export const GateType = {
+  // FAZA 1: Tools/Assessment gates (NEW)
+  SUBMIT_FOR_REVIEW: 'SUBMIT_FOR_REVIEW', // DRAFT → PENDING_REVIEW (Consultant)
+  SEND_BACK: 'SEND_BACK', // PENDING_REVIEW → DRAFT (PM/Lead)
+  APPROVE_TO_INITIATIVE: 'APPROVE_TO_INITIATIVE', // PENDING_REVIEW → REVIEW (PM/Lead)
+  
+  // FAZA 2-4: Existing gates
+  ACCEPT: 'ACCEPT',
+  REJECT: 'REJECT',
+  START_PLANNING: 'START_PLANNING',
+  APPROVE: 'APPROVE',
+  SCHEDULE: 'SCHEDULE',
+  START: 'START',
+  BLOCK: 'BLOCK',
+  UNBLOCK: 'UNBLOCK',
+  COMPLETE: 'COMPLETE',
+  START_TRACKING: 'START_TRACKING',
+  CANCEL: 'CANCEL',
+} as const;
+
+export type GateTypeValue = (typeof GateType)[keyof typeof GateType];
+
+/**
+ * Gate permissions - which roles can execute which gates
+ * Key rule: CONSULTANT can only execute SUBMIT_FOR_REVIEW (their own work)
+ */
+export const GATE_PERMISSIONS: Record<GateTypeValue, RoleType[]> = {
+  // FAZA 1: Tools/Assessment gates
+  [GateType.SUBMIT_FOR_REVIEW]: [Role.CONSULTANT, Role.INITIATIVE_OWNER], // Author submits own work
+  [GateType.SEND_BACK]: [Role.PROJECT_MANAGER, Role.PROJECT_LEAD, Role.PMO],
+  [GateType.APPROVE_TO_INITIATIVE]: [Role.PROJECT_MANAGER, Role.PROJECT_LEAD, Role.PMO],
+  
+  // FAZA 2: Initiatives gates
+  [GateType.ACCEPT]: [Role.PROJECT_SPONSOR, Role.STEERING_COMMITTEE],
+  [GateType.REJECT]: [Role.PROJECT_SPONSOR, Role.STEERING_COMMITTEE],
+  [GateType.START_PLANNING]: [Role.PMO],
+  [GateType.APPROVE]: [Role.STEERING_COMMITTEE],
+  [GateType.SCHEDULE]: [Role.PMO],
+  
+  // FAZA 3: Execution gates
+  [GateType.START]: [Role.PMO],
+  [GateType.BLOCK]: [Role.INITIATIVE_OWNER, Role.PMO],
+  [GateType.UNBLOCK]: [Role.PROJECT_SPONSOR, Role.STEERING_COMMITTEE],
+  [GateType.COMPLETE]: [Role.INITIATIVE_OWNER, Role.PMO],
+  
+  // FAZA 4: Benefits gates
+  [GateType.START_TRACKING]: [Role.BUSINESS_OWNER],
+  
+  // Universal
+  [GateType.CANCEL]: [Role.PMO, Role.STEERING_COMMITTEE],
+};
+
+/**
+ * Gate to status transition mapping
+ */
+export const GATE_TRANSITIONS: Record<GateTypeValue, { from: InitiativeStatusType[]; to: InitiativeStatusType }> = {
+  // FAZA 1: Tools/Assessment transitions
+  [GateType.SUBMIT_FOR_REVIEW]: { from: [InitiativeStatus.DRAFT], to: InitiativeStatus.PENDING_REVIEW },
+  [GateType.SEND_BACK]: { from: [InitiativeStatus.PENDING_REVIEW], to: InitiativeStatus.DRAFT },
+  [GateType.APPROVE_TO_INITIATIVE]: { from: [InitiativeStatus.PENDING_REVIEW], to: InitiativeStatus.REVIEW },
+  
+  // FAZA 2: Initiatives transitions
+  [GateType.ACCEPT]: { from: [InitiativeStatus.REVIEW], to: InitiativeStatus.PROMOTED },
+  [GateType.REJECT]: { from: [InitiativeStatus.REVIEW], to: InitiativeStatus.DRAFT },
+  [GateType.START_PLANNING]: { from: [InitiativeStatus.PROMOTED], to: InitiativeStatus.PLANNING },
+  [GateType.APPROVE]: { from: [InitiativeStatus.PLANNING], to: InitiativeStatus.APPROVED },
+  [GateType.SCHEDULE]: { from: [InitiativeStatus.APPROVED], to: InitiativeStatus.SCHEDULED },
+  
+  // FAZA 3: Execution transitions
+  [GateType.START]: { from: [InitiativeStatus.SCHEDULED], to: InitiativeStatus.EXECUTING },
+  [GateType.BLOCK]: { from: [InitiativeStatus.EXECUTING], to: InitiativeStatus.BLOCKED },
+  [GateType.UNBLOCK]: { from: [InitiativeStatus.BLOCKED], to: InitiativeStatus.EXECUTING },
+  [GateType.COMPLETE]: { from: [InitiativeStatus.EXECUTING], to: InitiativeStatus.DONE },
+  
+  // FAZA 4: Benefits transitions
+  [GateType.START_TRACKING]: { from: [InitiativeStatus.DONE], to: InitiativeStatus.TRACKING },
+  
+  // Universal
+  [GateType.CANCEL]: {
+    from: [
+      InitiativeStatus.DRAFT,
+      InitiativeStatus.PENDING_REVIEW,
+      InitiativeStatus.REVIEW,
+      InitiativeStatus.PROMOTED,
+      InitiativeStatus.PLANNING,
+      InitiativeStatus.APPROVED,
+      InitiativeStatus.SCHEDULED,
+      InitiativeStatus.EXECUTING,
+      InitiativeStatus.BLOCKED,
+    ],
+    to: InitiativeStatus.CANCELLED,
+  },
+};
 
 // ============================================
 // MODULE DEFINITIONS
@@ -54,7 +186,7 @@ export type InitiativeStatusType = (typeof InitiativeStatus)[keyof typeof Initia
 /**
  * Module identifiers for routing
  */
-export type ModuleId = 'tools' | 'assessment' | 'initiatives' | 'execution' | 'benefits';
+export type ModuleId = 'tools' | 'assessment' | 'initiatives' | 'execution' | 'benefits' | 'reporting';
 
 /**
  * Module configuration interface
@@ -62,6 +194,7 @@ export type ModuleId = 'tools' | 'assessment' | 'initiatives' | 'execution' | 'b
 export interface ModuleConfig {
   id: ModuleId;
   name: string;
+  namePL: string;
   route: string;
   statuses: InitiativeStatusType[];
   color: string;
@@ -75,30 +208,32 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
   tools: {
     id: 'tools',
     name: 'Tools',
+    namePL: 'Narzędzia',
     route: '/tools',
-    statuses: [InitiativeStatus.DRAFT],
+    statuses: [InitiativeStatus.DRAFT, InitiativeStatus.PENDING_REVIEW], // UPDATED: includes PENDING_REVIEW
     color: 'slate',
     description: 'Discovery tools generating draft initiatives',
   },
   assessment: {
     id: 'assessment',
     name: 'Assessment',
+    namePL: 'Ocena',
     route: '/assessment',
-    statuses: [InitiativeStatus.DRAFT],
+    statuses: [InitiativeStatus.DRAFT, InitiativeStatus.PENDING_REVIEW], // UPDATED: includes PENDING_REVIEW
     color: 'slate',
     description: 'Assessment module generating draft initiatives',
   },
   initiatives: {
     id: 'initiatives',
     name: 'Initiatives',
+    namePL: 'Inicjatywy',
     route: '/initiatives',
     statuses: [
-      InitiativeStatus.DRAFT,
-      InitiativeStatus.PLANNING,
       InitiativeStatus.REVIEW,
+      InitiativeStatus.PROMOTED,
+      InitiativeStatus.PLANNING,
       InitiativeStatus.APPROVED,
-      InitiativeStatus.EXECUTING,
-      InitiativeStatus.BLOCKED,
+      InitiativeStatus.SCHEDULED,
     ],
     color: 'purple',
     description: 'Initiative management and planning',
@@ -106,12 +241,13 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
   execution: {
     id: 'execution',
     name: 'Execution',
+    namePL: 'Realizacja',
     route: '/execution',
     statuses: [
+      InitiativeStatus.SCHEDULED,
       InitiativeStatus.EXECUTING,
       InitiativeStatus.BLOCKED,
       InitiativeStatus.DONE,
-      InitiativeStatus.CANCELLED,
     ],
     color: 'cyan',
     description: 'Execution center for active initiatives',
@@ -119,10 +255,20 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
   benefits: {
     id: 'benefits',
     name: 'Benefits',
+    namePL: 'Korzyści',
     route: '/benefits',
-    statuses: [InitiativeStatus.DONE],
-    color: 'green',
+    statuses: [InitiativeStatus.TRACKING],
+    color: 'teal',
     description: 'Benefits tracking for completed initiatives',
+  },
+  reporting: {
+    id: 'reporting',
+    name: 'Reporting',
+    namePL: 'Raportowanie',
+    route: '/reports',
+    statuses: Object.values(InitiativeStatus), // All statuses visible (read-only)
+    color: 'indigo',
+    description: 'Management reporting across all statuses',
   },
 };
 
@@ -135,31 +281,27 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
  * Defines which statuses can transition to which other statuses
  */
 export const VALID_TRANSITIONS: Record<InitiativeStatusType, InitiativeStatusType[]> = {
-  [InitiativeStatus.DRAFT]: [InitiativeStatus.PLANNING, InitiativeStatus.CANCELLED],
-  [InitiativeStatus.PLANNING]: [
-    InitiativeStatus.REVIEW,
-    InitiativeStatus.DRAFT,
-    InitiativeStatus.CANCELLED,
-  ],
-  [InitiativeStatus.REVIEW]: [
-    InitiativeStatus.APPROVED,
-    InitiativeStatus.PLANNING,
-    InitiativeStatus.CANCELLED,
-  ],
-  [InitiativeStatus.APPROVED]: [
-    InitiativeStatus.EXECUTING,
-    InitiativeStatus.PLANNING,
-    InitiativeStatus.CANCELLED,
-  ],
-  [InitiativeStatus.EXECUTING]: [
-    InitiativeStatus.BLOCKED,
-    InitiativeStatus.DONE,
-    InitiativeStatus.CANCELLED,
-  ],
+  // FAZA 1: Tools/Assessment
+  [InitiativeStatus.DRAFT]: [InitiativeStatus.PENDING_REVIEW, InitiativeStatus.CANCELLED],
+  [InitiativeStatus.PENDING_REVIEW]: [InitiativeStatus.REVIEW, InitiativeStatus.DRAFT, InitiativeStatus.CANCELLED],
+  
+  // FAZA 2: Initiatives
+  [InitiativeStatus.REVIEW]: [InitiativeStatus.PROMOTED, InitiativeStatus.DRAFT, InitiativeStatus.CANCELLED],
+  [InitiativeStatus.PROMOTED]: [InitiativeStatus.PLANNING, InitiativeStatus.CANCELLED],
+  [InitiativeStatus.PLANNING]: [InitiativeStatus.APPROVED, InitiativeStatus.CANCELLED],
+  [InitiativeStatus.APPROVED]: [InitiativeStatus.SCHEDULED, InitiativeStatus.CANCELLED],
+  [InitiativeStatus.SCHEDULED]: [InitiativeStatus.EXECUTING, InitiativeStatus.CANCELLED],
+  
+  // FAZA 3: Execution
+  [InitiativeStatus.EXECUTING]: [InitiativeStatus.BLOCKED, InitiativeStatus.DONE, InitiativeStatus.CANCELLED],
   [InitiativeStatus.BLOCKED]: [InitiativeStatus.EXECUTING, InitiativeStatus.CANCELLED],
-  [InitiativeStatus.DONE]: [InitiativeStatus.ARCHIVED],
-  [InitiativeStatus.CANCELLED]: [InitiativeStatus.ARCHIVED],
-  [InitiativeStatus.ARCHIVED]: [],
+  [InitiativeStatus.DONE]: [InitiativeStatus.TRACKING],
+  
+  // FAZA 4: Benefits
+  [InitiativeStatus.TRACKING]: [], // Terminal state (end of lifecycle)
+  
+  // Terminal
+  [InitiativeStatus.CANCELLED]: [], // Terminal state
 };
 
 // ============================================
@@ -171,85 +313,157 @@ export const VALID_TRANSITIONS: Record<InitiativeStatusType, InitiativeStatusTyp
  */
 export interface StatusMeta {
   label: string;
+  labelPL: string;
   color: string;
   bgColor: string;
   dotColor: string;
   description: string;
-  icon?: string;
+  descriptionPL: string;
+  icon: string;
+  order: number;
 }
 
 export const STATUS_METADATA: Record<InitiativeStatusType, StatusMeta> = {
+  // FAZA 1: Tools/Assessment
   [InitiativeStatus.DRAFT]: {
     label: 'Draft',
+    labelPL: 'Szkic',
     color: 'text-slate-500',
     bgColor: 'bg-slate-500/10',
     dotColor: 'bg-slate-400',
-    description: 'Initial draft, needs review',
+    description: 'Initial draft, author is working on it',
+    descriptionPL: 'Początkowy szkic, autor nad nim pracuje',
     icon: 'FileText',
+    order: 1,
   },
-  [InitiativeStatus.PLANNING]: {
-    label: 'Planning',
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500/10',
-    dotColor: 'bg-blue-400',
-    description: 'Being planned and scoped',
-    icon: 'ClipboardList',
+  [InitiativeStatus.PENDING_REVIEW]: {
+    label: 'Pending Review',
+    labelPL: 'Oczekuje na przegląd',
+    color: 'text-orange-500',
+    bgColor: 'bg-orange-500/10',
+    dotColor: 'bg-orange-400',
+    description: 'Awaiting PM/Lead review',
+    descriptionPL: 'Oczekuje na przegląd PM/Lead',
+    icon: 'Clock',
+    order: 2,
   },
+  
+  // FAZA 2: Initiatives
   [InitiativeStatus.REVIEW]: {
     label: 'In Review',
+    labelPL: 'W przeglądzie biznesowym',
     color: 'text-amber-500',
     bgColor: 'bg-amber-500/10',
     dotColor: 'bg-amber-400',
-    description: 'Awaiting approval',
+    description: 'Under business review (Go/No-Go)',
+    descriptionPL: 'W przeglądzie biznesowym (Go/No-Go)',
     icon: 'Eye',
+    order: 3,
+  },
+  [InitiativeStatus.PROMOTED]: {
+    label: 'Promoted',
+    labelPL: 'Promowana',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10',
+    dotColor: 'bg-blue-400',
+    description: 'Accepted for planning',
+    descriptionPL: 'Zaakceptowana do planowania',
+    icon: 'TrendingUp',
+    order: 4,
+  },
+  [InitiativeStatus.PLANNING]: {
+    label: 'Planning',
+    labelPL: 'Planowanie',
+    color: 'text-indigo-500',
+    bgColor: 'bg-indigo-500/10',
+    dotColor: 'bg-indigo-400',
+    description: 'Being planned and scoped',
+    descriptionPL: 'W trakcie planowania',
+    icon: 'ClipboardList',
+    order: 5,
   },
   [InitiativeStatus.APPROVED]: {
     label: 'Approved',
+    labelPL: 'Zatwierdzona',
     color: 'text-emerald-500',
     bgColor: 'bg-emerald-500/10',
     dotColor: 'bg-emerald-400',
-    description: 'Approved, ready for execution',
+    description: 'Approved, ready for scheduling',
+    descriptionPL: 'Zatwierdzona, gotowa do zaplanowania',
     icon: 'CheckCircle',
+    order: 6,
   },
+  [InitiativeStatus.SCHEDULED]: {
+    label: 'Scheduled',
+    labelPL: 'Zaplanowana',
+    color: 'text-purple-500',
+    bgColor: 'bg-purple-500/10',
+    dotColor: 'bg-purple-400',
+    description: 'Scheduled in roadmap',
+    descriptionPL: 'Zaplanowana w roadmapie',
+    icon: 'Calendar',
+    order: 7,
+  },
+  
+  // FAZA 3: Execution
   [InitiativeStatus.EXECUTING]: {
     label: 'Executing',
+    labelPL: 'W realizacji',
     color: 'text-cyan-500',
     bgColor: 'bg-cyan-500/10',
     dotColor: 'bg-cyan-400',
     description: 'Currently being implemented',
+    descriptionPL: 'W trakcie realizacji',
     icon: 'Play',
+    order: 8,
   },
   [InitiativeStatus.BLOCKED]: {
     label: 'Blocked',
+    labelPL: 'Zablokowana',
     color: 'text-red-500',
     bgColor: 'bg-red-500/10',
     dotColor: 'bg-red-400',
-    description: 'Blocked by an issue',
+    description: 'Blocked, requires decision',
+    descriptionPL: 'Zablokowana, wymaga decyzji',
     icon: 'AlertTriangle',
+    order: 9,
   },
   [InitiativeStatus.DONE]: {
     label: 'Done',
+    labelPL: 'Ukończona',
     color: 'text-green-500',
     bgColor: 'bg-green-500/10',
     dotColor: 'bg-green-400',
-    description: 'Successfully completed',
+    description: 'Delivery completed',
+    descriptionPL: 'Realizacja zakończona',
     icon: 'CheckCircle2',
+    order: 10,
   },
+  
+  // FAZA 4: Benefits
+  [InitiativeStatus.TRACKING]: {
+    label: 'Tracking',
+    labelPL: 'Śledzenie',
+    color: 'text-teal-500',
+    bgColor: 'bg-teal-500/10',
+    dotColor: 'bg-teal-400',
+    description: 'Benefits tracking in progress',
+    descriptionPL: 'Śledzenie korzyści w toku',
+    icon: 'BarChart',
+    order: 11,
+  },
+  
+  // Terminal
   [InitiativeStatus.CANCELLED]: {
     label: 'Cancelled',
+    labelPL: 'Anulowana',
     color: 'text-gray-500',
     bgColor: 'bg-gray-500/10',
     dotColor: 'bg-gray-400',
     description: 'Initiative was cancelled',
+    descriptionPL: 'Inicjatywa została anulowana',
     icon: 'XCircle',
-  },
-  [InitiativeStatus.ARCHIVED]: {
-    label: 'Archived',
-    color: 'text-slate-400',
-    bgColor: 'bg-slate-400/10',
-    dotColor: 'bg-slate-500',
-    description: 'Archived for reference',
-    icon: 'Archive',
+    order: 12,
   },
 };
 
@@ -258,16 +472,43 @@ export const STATUS_METADATA: Record<InitiativeStatusType, StatusMeta> = {
 // ============================================
 
 /**
+ * Check if user role can execute a gate
+ */
+export function canExecuteGate(role: RoleType, gate: GateTypeValue): boolean {
+  // Admin can technically do anything but should not execute business gates
+  if (role === Role.ADMIN) {
+    return true; // Technical override - should be logged
+  }
+  // Consultant can ONLY execute SUBMIT_FOR_REVIEW (their own work)
+  if (role === Role.CONSULTANT) {
+    return gate === GateType.SUBMIT_FOR_REVIEW;
+  }
+  return GATE_PERMISSIONS[gate]?.includes(role) ?? false;
+}
+
+/**
+ * Get the gate required for a status transition
+ */
+export function getGateForTransition(from: InitiativeStatusType, to: InitiativeStatusType): GateTypeValue | null {
+  for (const [gate, config] of Object.entries(GATE_TRANSITIONS)) {
+    if (config.from.includes(from) && config.to === to) {
+      return gate as GateTypeValue;
+    }
+  }
+  return null;
+}
+
+/**
  * Get the module for a given status
  */
 export function getModuleForStatus(status: InitiativeStatusType): ModuleId {
-  // Handle ARCHIVED and CANCELLED as historical in initiatives
-  if (status === InitiativeStatus.ARCHIVED || status === InitiativeStatus.CANCELLED) {
+  // Handle CANCELLED as historical in initiatives
+  if (status === InitiativeStatus.CANCELLED) {
     return 'initiatives';
   }
 
   for (const [moduleId, config] of Object.entries(MODULES)) {
-    if (config.statuses.includes(status)) {
+    if (moduleId !== 'reporting' && config.statuses.includes(status)) {
       return moduleId as ModuleId;
     }
   }
@@ -285,29 +526,21 @@ export function getModuleConfigForStatus(status: InitiativeStatusType): ModuleCo
 /**
  * Check if a status transition is valid
  */
-export function isValidTransition(
-  from: InitiativeStatusType,
-  to: InitiativeStatusType
-): boolean {
+export function isValidTransition(from: InitiativeStatusType, to: InitiativeStatusType): boolean {
   return VALID_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
 /**
  * Get valid next statuses from current status
  */
-export function getValidNextStatuses(
-  currentStatus: InitiativeStatusType
-): InitiativeStatusType[] {
+export function getValidNextStatuses(currentStatus: InitiativeStatusType): InitiativeStatusType[] {
   return VALID_TRANSITIONS[currentStatus] || [];
 }
 
 /**
  * Check if transitioning to a new status will change the module
  */
-export function willChangeModule(
-  from: InitiativeStatusType,
-  to: InitiativeStatusType
-): boolean {
+export function willChangeModule(from: InitiativeStatusType, to: InitiativeStatusType): boolean {
   return getModuleForStatus(from) !== getModuleForStatus(to);
 }
 
@@ -330,15 +563,23 @@ export function isStatusInModule(status: InitiativeStatusType, moduleId: ModuleI
  */
 export function getLifecycleProgress(status: InitiativeStatusType): number {
   const progressMap: Record<InitiativeStatusType, number> = {
-    [InitiativeStatus.DRAFT]: 10,
-    [InitiativeStatus.PLANNING]: 25,
-    [InitiativeStatus.REVIEW]: 40,
-    [InitiativeStatus.APPROVED]: 50,
+    // FAZA 1: Tools/Assessment (0-10%)
+    [InitiativeStatus.DRAFT]: 5,
+    [InitiativeStatus.PENDING_REVIEW]: 10,
+    // FAZA 2: Initiatives (15-55%)
+    [InitiativeStatus.REVIEW]: 15,
+    [InitiativeStatus.PROMOTED]: 25,
+    [InitiativeStatus.PLANNING]: 35,
+    [InitiativeStatus.APPROVED]: 45,
+    [InitiativeStatus.SCHEDULED]: 55,
+    // FAZA 3: Execution (60-90%)
     [InitiativeStatus.EXECUTING]: 70,
-    [InitiativeStatus.BLOCKED]: 60,
-    [InitiativeStatus.DONE]: 100,
+    [InitiativeStatus.BLOCKED]: 65,
+    [InitiativeStatus.DONE]: 90,
+    // FAZA 4: Benefits (100%)
+    [InitiativeStatus.TRACKING]: 100,
+    // Terminal
     [InitiativeStatus.CANCELLED]: 0,
-    [InitiativeStatus.ARCHIVED]: 100,
   };
   return progressMap[status] ?? 0;
 }
@@ -347,7 +588,7 @@ export function getLifecycleProgress(status: InitiativeStatusType): number {
  * Check if an initiative is in a terminal state
  */
 export function isTerminalStatus(status: InitiativeStatusType): boolean {
-  return status === InitiativeStatus.ARCHIVED || status === InitiativeStatus.CANCELLED;
+  return status === InitiativeStatus.TRACKING || status === InitiativeStatus.CANCELLED;
 }
 
 /**
@@ -358,40 +599,55 @@ export function isActiveStatus(status: InitiativeStatusType): boolean {
 }
 
 /**
- * Check if an initiative needs attention (blocked or in review)
+ * Check if an initiative needs attention (blocked, pending review, or in review)
  */
 export function needsAttention(status: InitiativeStatusType): boolean {
-  return status === InitiativeStatus.BLOCKED || status === InitiativeStatus.REVIEW;
+  return status === InitiativeStatus.BLOCKED || 
+         status === InitiativeStatus.PENDING_REVIEW || 
+         status === InitiativeStatus.REVIEW;
 }
 
 /**
  * Validate transition with context and return result
  */
 export interface TransitionValidationContext {
+  userRole: RoleType;
   blockedReason?: string;
   pendingTasks?: number;
   hasBlockingDecisions?: boolean;
   charterCompleteness?: number;
-  requiresApproval?: boolean;
-  isApproved?: boolean;
-  pendingReviews?: number;
-  requiresScheduling?: boolean;
+  hasRequiredArtefacts?: boolean;
   isScheduled?: boolean;
+  escalationLevel?: 'none' | 'amber' | 'red';
 }
 
 export interface TransitionValidationResult {
   valid: boolean;
   reason?: string;
+  requiredRoles?: RoleType[];
 }
 
 export function validateTransition(
   from: InitiativeStatusType,
   to: InitiativeStatusType,
-  context: TransitionValidationContext = {}
+  context: TransitionValidationContext
 ): TransitionValidationResult {
   // Check if transition is allowed
   if (!isValidTransition(from, to)) {
     return { valid: false, reason: `Cannot transition from ${from} to ${to}` };
+  }
+
+  // Get the gate for this transition
+  const gate = getGateForTransition(from, to);
+  if (gate) {
+    // Check role permission
+    if (!canExecuteGate(context.userRole, gate)) {
+      return {
+        valid: false,
+        reason: `Role ${context.userRole} cannot execute gate ${gate}`,
+        requiredRoles: GATE_PERMISSIONS[gate],
+      };
+    }
   }
 
   // BLOCKED status requires a reason
@@ -412,35 +668,33 @@ export function validateTransition(
     }
   }
 
-  // PLANNING -> REVIEW requires charter completeness
-  if (from === InitiativeStatus.PLANNING && to === InitiativeStatus.REVIEW) {
-    if (context.charterCompleteness !== undefined && context.charterCompleteness < 60) {
+  // REVIEW → PROMOTED requires artefacts
+  if (from === InitiativeStatus.REVIEW && to === InitiativeStatus.PROMOTED) {
+    if (context.hasRequiredArtefacts === false) {
       return {
         valid: false,
-        reason: `Charter completeness too low (${context.charterCompleteness}%). Minimum 60% required.`,
+        reason: 'Required artefacts missing: description, owner, scope, risk flags',
       };
     }
   }
 
-  // REVIEW -> APPROVED requires approval
-  if (from === InitiativeStatus.REVIEW && to === InitiativeStatus.APPROVED) {
-    if (context.requiresApproval && !context.isApproved) {
-      return { valid: false, reason: 'Governance approval required for this transition' };
-    }
-    if (context.pendingReviews && context.pendingReviews > 0) {
+  // APPROVED → SCHEDULED requires scheduling
+  if (from === InitiativeStatus.APPROVED && to === InitiativeStatus.SCHEDULED) {
+    if (!context.isScheduled) {
       return {
         valid: false,
-        reason: `Cannot approve: ${context.pendingReviews} reviews still pending`,
+        reason: 'Initiative must have dates assigned before scheduling',
       };
     }
   }
 
-  // APPROVED -> EXECUTING requires scheduling
-  if (from === InitiativeStatus.APPROVED && to === InitiativeStatus.EXECUTING) {
-    if (context.requiresScheduling && !context.isScheduled) {
+  // BLOCKED → EXECUTING (UNBLOCK) - escalated decisions go to Steering
+  if (from === InitiativeStatus.BLOCKED && to === InitiativeStatus.EXECUTING) {
+    if (context.escalationLevel === 'red' && context.userRole !== Role.STEERING_COMMITTEE) {
       return {
         valid: false,
-        reason: 'Initiative must be scheduled in roadmap before execution',
+        reason: 'Escalated (red) blocks require Steering Committee decision',
+        requiredRoles: [Role.STEERING_COMMITTEE],
       };
     }
   }
@@ -451,8 +705,9 @@ export function validateTransition(
 /**
  * Get status label for display
  */
-export function getStatusLabel(status: InitiativeStatusType): string {
-  return STATUS_METADATA[status]?.label || status;
+export function getStatusLabel(status: InitiativeStatusType, lang: 'en' | 'pl' = 'en'): string {
+  const meta = STATUS_METADATA[status];
+  return lang === 'pl' ? meta?.labelPL : meta?.label || status;
 }
 
 /**
@@ -460,13 +715,20 @@ export function getStatusLabel(status: InitiativeStatusType): string {
  */
 export function getLifecycleOrder(): InitiativeStatusType[] {
   return [
+    // FAZA 1: Tools/Assessment
     InitiativeStatus.DRAFT,
-    InitiativeStatus.PLANNING,
+    InitiativeStatus.PENDING_REVIEW,
+    // FAZA 2: Initiatives
     InitiativeStatus.REVIEW,
+    InitiativeStatus.PROMOTED,
+    InitiativeStatus.PLANNING,
     InitiativeStatus.APPROVED,
+    InitiativeStatus.SCHEDULED,
+    // FAZA 3: Execution
     InitiativeStatus.EXECUTING,
     InitiativeStatus.DONE,
-    InitiativeStatus.ARCHIVED,
+    // FAZA 4: Benefits
+    InitiativeStatus.TRACKING,
   ];
 }
 
@@ -476,53 +738,51 @@ export function getLifecycleOrder(): InitiativeStatusType[] {
 
 /**
  * Get statuses visible in Tools module
- * Only shows DRAFT initiatives created by tools
+ * Shows DRAFT and PENDING_REVIEW initiatives created by tools
  */
 export function getToolsVisibleStatuses(): InitiativeStatusType[] {
-  return [InitiativeStatus.DRAFT];
+  return [InitiativeStatus.DRAFT, InitiativeStatus.PENDING_REVIEW];
 }
 
 /**
  * Get statuses visible in Assessment module
- * Only shows DRAFT initiatives created by assessments
+ * Shows DRAFT and PENDING_REVIEW initiatives created by assessments
  */
 export function getAssessmentVisibleStatuses(): InitiativeStatusType[] {
-  return [InitiativeStatus.DRAFT];
+  return [InitiativeStatus.DRAFT, InitiativeStatus.PENDING_REVIEW];
 }
 
 /**
  * Get statuses visible in Initiatives module
- * Shows PLANNING, REVIEW, APPROVED (plus historical CANCELLED, ARCHIVED)
  */
 export function getInitiativesVisibleStatuses(): InitiativeStatusType[] {
   return [
-    InitiativeStatus.PLANNING,
     InitiativeStatus.REVIEW,
+    InitiativeStatus.PROMOTED,
+    InitiativeStatus.PLANNING,
     InitiativeStatus.APPROVED,
+    InitiativeStatus.SCHEDULED,
     InitiativeStatus.CANCELLED,
-    InitiativeStatus.ARCHIVED,
   ];
 }
 
 /**
  * Get statuses visible in Execution module
- * Shows EXECUTING, BLOCKED, DONE, CANCELLED
  */
 export function getExecutionVisibleStatuses(): InitiativeStatusType[] {
   return [
+    InitiativeStatus.SCHEDULED,
     InitiativeStatus.EXECUTING,
     InitiativeStatus.BLOCKED,
     InitiativeStatus.DONE,
-    InitiativeStatus.CANCELLED,
   ];
 }
 
 /**
  * Get statuses visible in Benefits module
- * Shows DONE initiatives for benefits tracking
  */
 export function getBenefitsVisibleStatuses(): InitiativeStatusType[] {
-  return [InitiativeStatus.DONE];
+  return [InitiativeStatus.TRACKING];
 }
 
 /**
@@ -567,9 +827,15 @@ export function buildStatusFilterSQL(
 
 export default {
   InitiativeStatus,
+  Role,
+  GateType,
+  GATE_PERMISSIONS,
+  GATE_TRANSITIONS,
   MODULES,
   VALID_TRANSITIONS,
   STATUS_METADATA,
+  canExecuteGate,
+  getGateForTransition,
   getModuleForStatus,
   getModuleConfigForStatus,
   isValidTransition,

@@ -73,6 +73,7 @@ describe('InterviewController assignments', () => {
         session_id: 's1',
         task_id: 't1',
         status: 'in_progress',
+        created_by: 'user-2',
       })
       // sessionRow for completeness
       .mockResolvedValueOnce({
@@ -82,7 +83,7 @@ describe('InterviewController assignments', () => {
         total_questions: 10,
       })
       // updated assignment
-      .mockResolvedValueOnce({ id: 'a1', status: 'submitted', session_id: 's1' })
+      .mockResolvedValueOnce({ id: 'a1', status: 'submitted', session_id: 's1', created_by: 'user-2' })
       // updated session
       .mockResolvedValueOnce({ id: 's1', status: 'submitted', assignment_id: 'a1' });
 
@@ -98,7 +99,7 @@ describe('InterviewController assignments', () => {
     );
   });
 
-  it('submitAssignment: >=50% becomes completed and enters context', async () => {
+  it('submitAssignment: >=50% still stays submitted (approval is separate)', async () => {
     mockReq.params.id = 'a2';
 
     mockQueryOne
@@ -110,6 +111,7 @@ describe('InterviewController assignments', () => {
         session_id: 's2',
         task_id: 't2',
         status: 'in_progress',
+        created_by: 'user-2',
       })
       // sessionRow for completeness
       .mockResolvedValueOnce({
@@ -119,16 +121,16 @@ describe('InterviewController assignments', () => {
         total_questions: 10,
       })
       // updated assignment
-      .mockResolvedValueOnce({ id: 'a2', status: 'completed', session_id: 's2' })
+      .mockResolvedValueOnce({ id: 'a2', status: 'submitted', session_id: 's2', created_by: 'user-2' })
       // updated session
-      .mockResolvedValueOnce({ id: 's2', status: 'completed', assignment_id: 'a2' });
+      .mockResolvedValueOnce({ id: 's2', status: 'submitted', assignment_id: 'a2' });
 
     const { InterviewController } = await import('../../../../server/src/controllers/InterviewController.js');
     await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
 
     expect(mockRes.json).toHaveBeenCalledWith(
       expect.objectContaining({
-        entersContext: true,
+        entersContext: false,
         completenessPercent: 50,
       })
     );

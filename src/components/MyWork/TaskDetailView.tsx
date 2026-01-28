@@ -21,6 +21,7 @@ import {
   MoreVertical,
   Plus,
   Save,
+  Sparkles,
   Tag,
   Target,
   Trash2,
@@ -28,7 +29,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -39,7 +40,6 @@ import {
   AttachmentsSection,
   CommentsSection,
   LinkedItemsSection,
-  TaskTimer,
   type Attachment,
   type Comment,
   type LinkedItem,
@@ -49,6 +49,7 @@ interface TaskDetailViewProps {
   taskId: string | null;
   onClose: () => void;
   onSaved?: (data: any) => void;
+  onOpenDecision?: (decisionId: string) => void;
 }
 
 // Status configuration
@@ -67,10 +68,20 @@ const PRIORITY_CONFIG = {
   critical: { label: { en: 'Critical', pl: 'Krytyczny' }, color: 'bg-red-500', textColor: 'text-red-500' },
 };
 
+// Normalize priority value to ensure it's a valid key
+const normalizePriority = (priority?: string | null): keyof typeof PRIORITY_CONFIG => {
+  if (!priority) return 'medium';
+  const normalized = priority.toLowerCase();
+  if (normalized === 'urgent') return 'critical';
+  if (normalized in PRIORITY_CONFIG) return normalized as keyof typeof PRIORITY_CONFIG;
+  return 'medium';
+};
+
 export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   taskId,
   onClose,
   onSaved,
+  onOpenDecision,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -83,10 +94,16 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const [status, setStatus] = useState<keyof typeof STATUS_CONFIG>('todo');
   const [priority, setPriority] = useState<keyof typeof PRIORITY_CONFIG>('medium');
   const [dueDate, setDueDate] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [estimatedHours, setEstimatedHours] = useState<number | ''>('');
-  const [actualHours, setActualHours] = useState<number | ''>('');
+  const [startedAt, setStartedAt] = useState('');
+  const [completedAt, setCompletedAt] = useState('');
   const [blockedReason, setBlockedReason] = useState('');
+  const [ownerId, setOwnerId] = useState('');
+  const [backupAssigneeId, setBackupAssigneeId] = useState('');
+  const [requiresAcceptance, setRequiresAcceptance] = useState(false);
+  const [acceptanceType, setAcceptanceType] = useState<'manual' | 'automatic'>('manual');
+  const [acceptorId, setAcceptorId] = useState('');
+  const [weight, setWeight] = useState<number>(1);
+  const [weightReason, setWeightReason] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
   const [checklist, setChecklist] = useState<{ id: string; text: string; completed: boolean }[]>([]);
@@ -96,6 +113,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const [projectName, setProjectName] = useState('');
   const [initiativeId, setInitiativeId] = useState('');
   const [initiatives, setInitiatives] = useState<{ id: string; name: string }[]>([]);
+  const [initiativeTasks, setInitiativeTasks] = useState<any[]>([]);
 
   // Assignee
   const [assigneeId, setAssigneeId] = useState('');
@@ -109,13 +127,55 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [linkedItems, setLinkedItems] = useState<LinkedItem[]>([]);
+  const [taskDecisions, setTaskDecisions] = useState<any[]>([]);
+  const [loadingDecisions, setLoadingDecisions] = useState(false);
+  const [showDecisionForm, setShowDecisionForm] = useState(false);
+  const [newDecisionTitle, setNewDecisionTitle] = useState('');
+  const [newDecisionDueDate, setNewDecisionDueDate] = useState('');
+  const [newDecisionPriority, setNewDecisionPriority] = useState<'low' | 'medium' | 'high' | 'critical'>('medium');
+  const [blockedByDecisionId, setBlockedByDecisionId] = useState<string>('');
 
   // UI State
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
+  const statusDropdownRef = useRef<HTMLDivElement | null>(null);
+  const priorityDropdownRef = useRef<HTMLDivElement | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['details', 'checklist', 'attachments', 'links', 'comments'])
   );
+
+  // Close dropdowns on click-outside / Escape
+  useEffect(() => {
+    const onMouseDown = (e: MouseEvent) => {
+      const target = e.target as Node | null;
+      if (!target) return;
+
+      if (showStatusDropdown && statusDropdownRef.current && !statusDropdownRef.current.contains(target)) {
+        setShowStatusDropdown(false);
+      }
+      if (
+        showPriorityDropdown &&
+        priorityDropdownRef.current &&
+        !priorityDropdownRef.current.contains(target)
+      ) {
+        setShowPriorityDropdown(false);
+      }
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowStatusDropdown(false);
+        setShowPriorityDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [showStatusDropdown, showPriorityDropdown]);
 
   useEffect(() => {
     loadInitiatives();
@@ -147,10 +207,39 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   useEffect(() => {
     if (taskId) {
       loadTask(taskId);
+      // Load decisions linked to this task
+      (async () => {
+        try {
+          setLoadingDecisions(true);
+          const decisions = await Api.getTaskDecisions(taskId);
+          setTaskDecisions(Array.isArray(decisions) ? decisions : []);
+        } catch {
+          setTaskDecisions([]);
+        } finally {
+          setLoadingDecisions(false);
+        }
+      })();
     } else {
       resetForm();
     }
   }, [taskId]);
+
+  useEffect(() => {
+    const run = async () => {
+      if (!initiativeId) {
+        setInitiativeTasks([]);
+        return;
+      }
+      try {
+        const tasks = await Api.getInitiativeTasks(initiativeId);
+        setInitiativeTasks(Array.isArray(tasks) ? tasks : []);
+      } catch (e) {
+        // Not fatal for task view
+        setInitiativeTasks([]);
+      }
+    };
+    run();
+  }, [initiativeId]);
 
   const resetForm = () => {
     setTitle('');
@@ -158,20 +247,74 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     setStatus('todo');
     setPriority('medium');
     setDueDate('');
-    setStartDate('');
-    setEstimatedHours('');
-    setActualHours('');
+    setStartedAt('');
+    setCompletedAt('');
     setBlockedReason('');
     setTags([]);
     setChecklist([]);
     setInitiativeId('');
     setAssigneeId('');
+    setOwnerId('');
+    setBackupAssigneeId('');
+    setRequiresAcceptance(false);
+    setAcceptanceType('manual');
+    setAcceptorId('');
+    setWeight(1);
+    setWeightReason('');
     setAssigneeName('');
     setProjectId('');
     setProjectName('');
     setAttachments([]);
     setComments([]);
     setLinkedItems([]);
+    setTaskDecisions([]);
+    setShowDecisionForm(false);
+    setNewDecisionTitle('');
+    setNewDecisionDueDate('');
+    setNewDecisionPriority('medium');
+    setBlockedByDecisionId('');
+  };
+
+  const handleRequestDecision = async () => {
+    if (!taskId) return;
+    if (!newDecisionTitle.trim()) {
+      toast.error(isPolish ? 'Tytuł decyzji jest wymagany' : 'Decision title is required');
+      return;
+    }
+    try {
+      const payload = {
+        title: newDecisionTitle.trim(),
+        description: `Decision required for task: ${title}`,
+        relatedObjectType: 'task',
+        relatedObjectId: taskId,
+        projectId: projectId || null,
+        initiativeId: initiativeId || null,
+        decisionOwnerId: ownerId || null,
+        dueDate: newDecisionDueDate || null,
+        priority: newDecisionPriority,
+        decisionType: 'EXECUTION',
+        pmoDomain: 'GOVERNANCE_DECISION_MAKING',
+      };
+      const created = await Api.createDecision(payload);
+      toast.success(isPolish ? 'Decyzja utworzona' : 'Decision created');
+      setShowDecisionForm(false);
+      setNewDecisionTitle('');
+      setNewDecisionDueDate('');
+      setNewDecisionPriority('medium');
+      // Refresh
+      const decisions = await Api.getTaskDecisions(taskId);
+      setTaskDecisions(Array.isArray(decisions) ? decisions : []);
+      // Reload task to reflect decision gate auto-block
+      await loadTask(taskId);
+      const createdId = created?.id;
+      if (createdId && onOpenDecision) onOpenDecision(createdId);
+    } catch (e: any) {
+      toast.error(
+        isPolish
+          ? 'Nie udało się utworzyć decyzji (wymagane uprawnienie approve_changes)'
+          : 'Failed to create decision (requires approve_changes)'
+      );
+    }
   };
 
   const loadTask = async (id: string) => {
@@ -181,12 +324,18 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       setTitle(task.title || '');
       setDescription(task.description || '');
       setStatus(task.status || 'todo');
-      setPriority(task.priority || 'medium');
+      setPriority(normalizePriority(task.priority));
       setDueDate(task.dueDate ? task.dueDate.split('T')[0] : '');
-      setStartDate(task.startDate ? task.startDate.split('T')[0] : '');
-      setEstimatedHours(task.estimatedHours || '');
-      setActualHours(task.actualHours || '');
+      setStartedAt(task.startedAt ? task.startedAt.split('T')[0] : '');
+      setCompletedAt(task.completedAt ? task.completedAt.split('T')[0] : '');
       setBlockedReason(task.blockedReason || '');
+      setOwnerId(task.ownerId || '');
+      setBackupAssigneeId(task.backupAssigneeId || '');
+      setRequiresAcceptance(task.requiresAcceptance || false);
+      setAcceptanceType(task.acceptanceType || 'manual');
+      setAcceptorId(task.acceptorId || '');
+      setWeight(typeof task.weight === 'number' ? task.weight : 1);
+      setWeightReason(task.weightReason || '');
       setTags(task.tags || []);
       setChecklist(task.checklist || []);
       setInitiativeId(task.initiativeId || '');
@@ -201,6 +350,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       setAttachments(task.attachments || []);
       setComments(task.comments || []);
       setLinkedItems(task.linkedItems || []);
+      setBlockedByDecisionId(task.blockedByDecisionId || '');
     } catch (error) {
       console.error('Failed to load task', error);
       toast.error(isPolish ? 'Nie udało się załadować zadania' : 'Failed to load task details');
@@ -223,14 +373,20 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         status,
         priority,
         dueDate: dueDate || null,
-        startDate: startDate || null,
-        estimatedHours: estimatedHours || null,
-        actualHours: actualHours || null,
+        startedAt: startedAt || null,
+        completedAt: completedAt || null,
         blockedReason: status === 'blocked' ? blockedReason : '',
         tags,
         checklist,
         initiativeId: initiativeId || null,
         assigneeId: assigneeId || null,
+        ownerId: ownerId || null,
+        backupAssigneeId: backupAssigneeId || null,
+        requiresAcceptance: requiresAcceptance || false,
+        acceptanceType: requiresAcceptance ? acceptanceType : null,
+        acceptorId: requiresAcceptance ? (acceptorId || null) : null,
+        weight,
+        weightReason: weightReason || null,
       };
 
       if (taskId) {
@@ -322,6 +478,93 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     return diff;
   }, [dueDate]);
 
+  const initiativeMeta = useMemo(() => {
+    if (!initiativeId) {
+      return {
+        total: 0,
+        position: null as number | null,
+        totalWeight: 0,
+        contributionPct: null as number | null,
+        overdueCount: 0,
+        blockedCount: 0,
+        rag: 'NA' as 'GREEN' | 'AMBER' | 'RED' | 'NA',
+      };
+    }
+
+    const isDone = (s?: string) => {
+      const v = (s || '').toLowerCase();
+      return v === 'done' || v === 'completed' || v === 'validated';
+    };
+
+    const tasks = Array.isArray(initiativeTasks) ? [...initiativeTasks] : [];
+    const total = tasks.length;
+    const totalWeight = tasks.reduce((acc, t: any) => acc + (typeof t.weight === 'number' ? t.weight : 1), 0);
+
+    const byDueThenCreated = tasks.sort((a: any, b: any) => {
+      const ad = a?.dueDate ? new Date(a.dueDate).getTime() : Number.POSITIVE_INFINITY;
+      const bd = b?.dueDate ? new Date(b.dueDate).getTime() : Number.POSITIVE_INFINITY;
+      if (ad !== bd) return ad - bd;
+      const ac = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bc = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return ac - bc;
+    });
+    const positionIdx = taskId ? byDueThenCreated.findIndex((t: any) => t?.id === taskId) : -1;
+    const position = positionIdx >= 0 ? positionIdx + 1 : null;
+
+    const now = Date.now();
+    const overdueCount = tasks.filter((t: any) => {
+      if (isDone(t?.status)) return false;
+      if (!t?.dueDate) return false;
+      return new Date(t.dueDate).getTime() < now;
+    }).length;
+
+    const blockedCount = tasks.filter((t: any) => (t?.status || '').toLowerCase() === 'blocked').length;
+
+    let rag: 'GREEN' | 'AMBER' | 'RED' | 'NA' = 'GREEN';
+    if (blockedCount > 0 && overdueCount > 0) rag = 'RED';
+    else if (blockedCount > 0) rag = 'RED';
+    else if (overdueCount > 0) rag = 'AMBER';
+
+    const contributionPct =
+      totalWeight > 0 ? Math.round(((typeof weight === 'number' ? weight : 1) / totalWeight) * 100) : null;
+
+    return { total, position, totalWeight, contributionPct, overdueCount, blockedCount, rag };
+  }, [initiativeId, initiativeTasks, taskId, weight]);
+
+  const handleSendToChat = async () => {
+    const initiativeName = initiatives.find((i) => i.id === initiativeId)?.name || null;
+    const lines = [
+      `TASK: ${title || '(no title)'}`,
+      taskId ? `ID: ${taskId}` : null,
+      projectName ? `Project: ${projectName}` : null,
+      initiativeName ? `Initiative: ${initiativeName}` : null,
+      `Status: ${status}`,
+      `Priority: ${priority}`,
+      dueDate ? `Due: ${dueDate}${isOverdue ? ' (OVERDUE)' : ''}` : null,
+      startedAt ? `Started: ${startedAt}` : null,
+      requiresAcceptance ? `Acceptance: required (${acceptanceType}${acceptorId ? `, acceptor=${acceptorId}` : ''})` : null,
+      ownerId ? `Owner: ${ownerId}` : null,
+      assigneeId ? `Assignee: ${assigneeId}` : `Assignee: (unassigned)`,
+      backupAssigneeId ? `Backup: ${backupAssigneeId}` : null,
+      initiativeId
+        ? `Initiative impact: ${initiativeMeta.contributionPct ?? '—'}% (task weight=${weight}, total weight=${initiativeMeta.totalWeight || '—'})`
+        : null,
+      initiativeId && initiativeMeta.total
+        ? `Initiative tasks: ${initiativeMeta.position ?? '—'}/${initiativeMeta.total} • Risk: ${initiativeMeta.rag} • Overdue: ${initiativeMeta.overdueCount} • Blocked: ${initiativeMeta.blockedCount}`
+        : null,
+      '',
+      'Description:',
+      description || '(empty)',
+    ].filter(Boolean);
+
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'));
+      toast.success(isPolish ? 'Skopiowano do czatu' : 'Copied for chat');
+    } catch {
+      toast.error(isPolish ? 'Nie udało się skopiować' : 'Failed to copy');
+    }
+  };
+
   // Attachment handlers (mock)
   const handleUploadAttachments = async (files: FileList) => {
     // TODO: Implement actual file upload
@@ -401,85 +644,84 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     );
   }
 
-  const statusConfig = STATUS_CONFIG[status];
-  const priorityConfig = PRIORITY_CONFIG[priority];
-  const StatusIcon = statusConfig.icon;
+  // Defensive fallbacks (prevents crash on unexpected/null values)
+  const statusConfig =
+    (STATUS_CONFIG as any)?.[status] ||
+    (STATUS_CONFIG as any)?.todo || {
+      label: { en: 'To Do', pl: 'Do zrobienia' },
+      color: 'bg-slate-400',
+      icon: CheckSquare,
+    };
+  const priorityConfig =
+    (PRIORITY_CONFIG as any)?.[priority] ||
+    (PRIORITY_CONFIG as any)?.medium || {
+      label: { en: 'Medium', pl: 'Średni' },
+      color: 'bg-blue-400',
+      textColor: 'text-blue-500',
+    };
+  const StatusIcon = (statusConfig as any).icon || CheckSquare;
+  const isDecisionBlocked = Boolean(blockedByDecisionId);
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950">
-      {/* Header */}
-      <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl ${statusConfig.color}/20 flex items-center justify-center`}>
-                <StatusIcon size={20} className={statusConfig.color.replace('bg-', 'text-')} />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-lg font-bold text-slate-800 dark:text-white">
-                    {taskId ? (isPolish ? 'Szczegóły zadania' : 'Task Details') : (isPolish ? 'Nowe zadanie' : 'New Task')}
-                  </h1>
+    <div className="min-h-0 bg-slate-50 dark:bg-navy-950">
+      {/* Content */}
+      <div className="p-6">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
+          {/* Main */}
+          <div className="space-y-4 order-2 lg:order-1">
+          {/* Title Section */}
+          <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-navy-700 min-h-[152px] flex flex-col justify-between">
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <button
+                onClick={onClose}
+                className="p-2 -ml-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                title={isPolish ? 'Wróć' : 'Back'}
+              >
+                <ChevronLeft size={20} />
+              </button>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                  <div className={`w-2.5 h-2.5 rounded-full ${statusConfig.color}`} />
+                  <span className="truncate">
+                    {taskId
+                      ? isPolish
+                        ? 'Szczegóły zadania'
+                        : 'Task details'
+                      : isPolish
+                        ? 'Nowe zadanie'
+                        : 'New task'}
+                  </span>
                   {taskId && (
                     <span className="text-xs font-mono text-slate-400 dark:text-slate-500">
                       #{taskId.slice(0, 8)}
                     </span>
                   )}
                 </div>
-                {/* Breadcrumb */}
-                <div className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
-                  {projectName && (
-                    <>
-                      <FolderOpen size={12} />
-                      <span>{projectName}</span>
-                    </>
-                  )}
-                  {initiativeId && initiatives.find((i) => i.id === initiativeId) && (
-                    <>
-                      <span className="mx-1">›</span>
-                      <Target size={12} />
-                      <span>{initiatives.find((i) => i.id === initiativeId)?.name}</span>
-                    </>
-                  )}
-                </div>
+                {(projectName || (initiativeId && initiatives.find((i) => i.id === initiativeId))) && (
+                  <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-500">
+                    {projectName && (
+                      <>
+                        <FolderOpen size={12} />
+                        <span className="truncate">{projectName}</span>
+                      </>
+                    )}
+                    {initiativeId && initiatives.find((i) => i.id === initiativeId) && (
+                      <>
+                        <span className="mx-1">›</span>
+                        <Target size={12} />
+                        <span className="truncate">{initiatives.find((i) => i.id === initiativeId)?.name}</span>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className={`w-10 h-10 rounded-xl ${statusConfig.color}/20 flex items-center justify-center`}>
+                <StatusIcon size={20} className={statusConfig.color.replace('bg-', 'text-')} />
               </div>
             </div>
-          </div>
 
-          {/* Header Actions */}
-          <div className="flex items-center gap-2">
-            {taskId && (
-              <button
-                onClick={handleDelete}
-                className="px-3 py-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors flex items-center gap-2"
-              >
-                <Trash2 size={16} />
-                <span className="hidden sm:inline">{isPolish ? 'Usuń' : 'Delete'}</span>
-              </button>
-            )}
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 text-white font-medium hover:brightness-110 transition-all flex items-center gap-2 disabled:opacity-50"
-            >
-              {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-              <span>{isPolish ? 'Zapisz' : 'Save'}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-auto p-6">
-        <div className="max-w-4xl mx-auto space-y-4">
-          {/* Title Section */}
-          <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
             <input
               type="text"
               value={title}
@@ -488,170 +730,33 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
               placeholder={isPolish ? 'Wprowadź tytuł zadania...' : 'Enter task title...'}
               autoFocus={!taskId}
             />
-          </div>
 
-          {/* Quick Info Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {/* Status Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <div className={`w-2.5 h-2.5 rounded-full ${statusConfig.color}`} />
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    {isPolish ? statusConfig.label.pl : statusConfig.label.en}
-                  </span>
+            {isDecisionBlocked && (
+              <div className="mt-4 rounded-lg border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-3 flex items-start justify-between gap-3">
+                <div className="flex items-start gap-2">
+                  <AlertCircle size={16} className="text-red-500 mt-0.5" />
+                  <div>
+                    <div className="text-sm font-medium text-red-700 dark:text-red-300">
+                      {isPolish ? 'Zablokowane decyzją' : 'Blocked by decision'}
+                    </div>
+                    <div className="text-xs text-red-600/80 dark:text-red-300/80 mt-0.5">
+                      {isPolish
+                        ? 'Rozwiąż decyzję blokującą, zanim ustawisz status na DONE.'
+                        : 'Resolve the blocking decision before marking this task DONE.'}
+                    </div>
+                  </div>
                 </div>
-                <ChevronDown size={16} className="text-slate-400" />
-              </button>
-              <AnimatePresence>
-                {showStatusDropdown && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    className="absolute z-20 top-full left-0 right-0 mt-1 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-navy-600 py-1 overflow-hidden"
+                {onOpenDecision && (
+                  <button
+                    onClick={() => onOpenDecision(blockedByDecisionId)}
+                    className="px-3 py-2 rounded-lg bg-red-600 text-white text-xs font-medium hover:bg-red-700 transition-colors"
                   >
-                    {Object.entries(STATUS_CONFIG).map(([key, config]) => {
-                      const Icon = config.icon;
-                      return (
-                        <button
-                          key={key}
-                          onClick={() => {
-                            setStatus(key as keyof typeof STATUS_CONFIG);
-                            setShowStatusDropdown(false);
-                          }}
-                          className={`w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
-                            status === key ? 'bg-primary-50 dark:bg-primary-500/10' : ''
-                          }`}
-                        >
-                          <div className={`w-2.5 h-2.5 rounded-full ${config.color}`} />
-                          <span className="text-slate-700 dark:text-slate-300">
-                            {isPolish ? config.label.pl : config.label.en}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </motion.div>
+                    {isPolish ? 'Otwórz decyzję' : 'Open decision'}
+                  </button>
                 )}
-              </AnimatePresence>
-            </div>
-
-            {/* Priority Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
-                className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Flag size={14} className={priorityConfig.textColor} />
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    {isPolish ? priorityConfig.label.pl : priorityConfig.label.en}
-                  </span>
-                </div>
-                <ChevronDown size={16} className="text-slate-400" />
-              </button>
-              <AnimatePresence>
-                {showPriorityDropdown && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    className="absolute z-20 top-full left-0 right-0 mt-1 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-navy-600 py-1 overflow-hidden"
-                  >
-                    {Object.entries(PRIORITY_CONFIG).map(([key, config]) => (
-                      <button
-                        key={key}
-                        onClick={() => {
-                          setPriority(key as keyof typeof PRIORITY_CONFIG);
-                          setShowPriorityDropdown(false);
-                        }}
-                        className={`w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
-                          priority === key ? 'bg-primary-50 dark:bg-primary-500/10' : ''
-                        }`}
-                      >
-                        <Flag size={14} className={config.textColor} />
-                        <span className="text-slate-700 dark:text-slate-300">
-                          {isPolish ? config.label.pl : config.label.en}
-                        </span>
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Due Date */}
-            <div className="relative">
-              <div className={`flex items-center gap-2 px-4 py-3 rounded-xl bg-white dark:bg-navy-900 border ${
-                isOverdue 
-                  ? 'border-red-300 dark:border-red-500/50 bg-red-50 dark:bg-red-500/10' 
-                  : 'border-slate-200 dark:border-navy-700'
-              }`}>
-                <Calendar size={14} className={isOverdue ? 'text-red-500' : 'text-slate-400'} />
-                <input
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className={`flex-1 text-sm bg-transparent focus:outline-none ${
-                    isOverdue ? 'text-red-600 dark:text-red-400' : 'text-slate-700 dark:text-slate-300'
-                  }`}
-                />
               </div>
-              {isOverdue && (
-                <span className="absolute -top-2 -right-2 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-red-500 text-white">
-                  {isPolish ? 'Spóźnione' : 'Overdue'}
-                </span>
-              )}
-            </div>
-
-            {/* Assignee */}
-            <div className="relative">
-              <select
-                value={assigneeId}
-                onChange={(e) => {
-                  setAssigneeId(e.target.value);
-                  const user = users.find((u) => u.id === e.target.value);
-                  setAssigneeName(user ? `${user.firstName} ${user.lastName}` : '');
-                }}
-                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-300 dark:focus:border-primary-500/50 appearance-none cursor-pointer"
-              >
-                <option value="">{isPolish ? 'Nieprzypisane' : 'Unassigned'}</option>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.firstName} {user.lastName}
-                  </option>
-                ))}
-              </select>
-              <User size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            </div>
+            )}
           </div>
-
-          {/* Blocked Reason Alert */}
-          {status === 'blocked' && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="bg-red-50 dark:bg-red-500/10 rounded-xl p-4 border border-red-200 dark:border-red-500/30"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <AlertCircle size={16} className="text-red-500" />
-                <span className="text-sm font-medium text-red-600 dark:text-red-400">
-                  {isPolish ? 'Powód blokady' : 'Reason for blocking'}
-                </span>
-              </div>
-              <input
-                type="text"
-                value={blockedReason}
-                onChange={(e) => setBlockedReason(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-white dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-300 placeholder-red-400 dark:placeholder-red-400/50 focus:outline-none"
-                placeholder={isPolish ? 'Co blokuje to zadanie?' : 'What is blocking this task?'}
-              />
-            </motion.div>
-          )}
 
           {/* Description */}
           <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
@@ -665,50 +770,6 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
               className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-300 dark:focus:border-primary-500/50 resize-none"
               placeholder={isPolish ? 'Opisz szczegóły zadania...' : 'Describe task details...'}
             />
-          </div>
-
-          {/* Tags */}
-          <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-            <div className="flex items-center gap-2 mb-3">
-              <Tag size={14} className="text-slate-400" />
-              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                {isPolish ? 'Tagi' : 'Tags'}
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-500/30"
-                >
-                  {tag}
-                  <button
-                    onClick={() => removeTag(tag)}
-                    className="hover:text-primary-800 dark:hover:text-primary-300"
-                  >
-                    <X size={12} />
-                  </button>
-                </span>
-              ))}
-              <div className="flex items-center gap-1">
-                <input
-                  type="text"
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && addTag()}
-                  placeholder={isPolish ? 'Dodaj tag...' : 'Add tag...'}
-                  className="px-2 py-1 rounded text-sm bg-transparent text-slate-600 dark:text-slate-400 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none w-24"
-                />
-                {newTag && (
-                  <button
-                    onClick={addTag}
-                    className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-400"
-                  >
-                    <Plus size={14} />
-                  </button>
-                )}
-              </div>
-            </div>
           </div>
 
           {/* Checklist */}
@@ -792,85 +853,6 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
             </AnimatePresence>
           </div>
 
-          {/* Time Tracking with Timer */}
-          {taskId && (
-            <TaskTimer
-              taskId={taskId}
-              taskTitle={title}
-              initialTime={(actualHours || 0) * 3600}
-              onTimeUpdate={(totalSeconds) => {
-                const hours = totalSeconds / 3600;
-                setActualHours(Math.round(hours * 10) / 10);
-              }}
-              onTimerStop={(duration) => {
-                const additionalHours = duration / 3600;
-                setActualHours((prev) => {
-                  const current = typeof prev === 'number' ? prev : 0;
-                  return Math.round((current + additionalHours) * 10) / 10;
-                });
-              }}
-            />
-          )}
-
-          {/* Manual Time Entry */}
-          <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-            <div className="flex items-center gap-2 mb-3">
-              <Clock size={14} className="text-slate-400" />
-              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                {isPolish ? 'Czas ręczny' : 'Manual Time Entry'}
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
-                  {isPolish ? 'Szacowany czas (h)' : 'Estimated (h)'}
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={estimatedHours}
-                  onChange={(e) => setEstimatedHours(e.target.value ? parseFloat(e.target.value) : '')}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-300"
-                  placeholder="0"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
-                  {isPolish ? 'Rzeczywisty czas (h)' : 'Actual (h)'}
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={actualHours}
-                  onChange={(e) => setActualHours(e.target.value ? parseFloat(e.target.value) : '')}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-300"
-                  placeholder="0"
-                />
-              </div>
-            </div>
-            {/* Progress bar comparing estimated vs actual */}
-            {estimatedHours && actualHours && (
-              <div className="mt-4">
-                <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
-                  <span>{isPolish ? 'Progres czasu' : 'Time progress'}</span>
-                  <span className={actualHours > estimatedHours ? 'text-red-500' : 'text-emerald-500'}>
-                    {Math.round((actualHours / estimatedHours) * 100)}%
-                  </span>
-                </div>
-                <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full transition-all duration-300 ${
-                      actualHours > estimatedHours ? 'bg-red-500' : 'bg-emerald-500'
-                    }`}
-                    style={{ width: `${Math.min(100, (actualHours / estimatedHours) * 100)}%` }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Attachments */}
           <AttachmentsSection
             attachments={attachments}
@@ -886,6 +868,50 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
             searchItems={searchLinkedItems}
             allowedTypes={['decision', 'risk', 'initiative']}
           />
+
+          {/* Tags */}
+          <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
+            <div className="flex items-center gap-2 mb-3">
+              <Tag size={14} className="text-slate-400" />
+              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                {isPolish ? 'Tagi' : 'Tags'}
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-500/30"
+                >
+                  {tag}
+                  <button
+                    onClick={() => removeTag(tag)}
+                    className="hover:text-primary-800 dark:hover:text-primary-300"
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              ))}
+              <div className="flex items-center gap-1">
+                <input
+                  type="text"
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addTag()}
+                  placeholder={isPolish ? 'Dodaj tag...' : 'Add tag...'}
+                  className="px-2 py-1 rounded text-sm bg-transparent text-slate-600 dark:text-slate-400 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none w-24"
+                />
+                {newTag && (
+                  <button
+                    onClick={addTag}
+                    className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-400"
+                  >
+                    <Plus size={14} />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
 
           {/* Comments */}
           <CommentsSection
@@ -914,8 +940,586 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
             </div>
           )}
         </div>
+
+        {/* Control Sidebar (manage) */}
+        <div className="space-y-4 lg:sticky lg:top-6 self-start order-1 lg:order-2">
+          {/* Actions */}
+          <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
+            <div className="flex items-center gap-3">
+              {taskId && (
+                <button
+                  onClick={handleDelete}
+                  className="h-9 w-9 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-colors flex items-center justify-center"
+                  title={isPolish ? 'Usuń' : 'Delete'}
+                >
+                  <Trash2 size={18} />
+                </button>
+              )}
+
+              <button
+                onClick={handleSendToChat}
+                className="h-9 px-4 rounded-lg bg-purple-500 hover:bg-purple-600 text-white font-medium transition-colors flex items-center gap-2 shadow-sm"
+                title={isPolish ? 'Wyślij do AI' : 'Send to AI'}
+              >
+                <Sparkles size={16} />
+                <span>AI</span>
+              </button>
+
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="h-9 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-medium transition-colors flex items-center gap-2 shadow-sm disabled:opacity-50"
+              >
+                {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                <span>{isPolish ? 'Zapisz' : 'Save'}</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
+            <div className="flex items-center gap-2 mb-3">
+              <Flag size={14} className="text-slate-400" />
+              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                {isPolish ? 'Sterowanie' : 'Control'}
+              </span>
+            </div>
+            <div className="space-y-3">
+              {/* Status */}
+              <div className="relative" ref={statusDropdownRef}>
+                <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
+                  {isPolish ? 'Status' : 'Status'}
+                </label>
+                <button
+                  onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                  className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2.5 h-2.5 rounded-full ${statusConfig.color}`} />
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      {isPolish ? statusConfig.label.pl : statusConfig.label.en}
+                    </span>
+                  </div>
+                  <ChevronDown size={16} className="text-slate-400" />
+                </button>
+                <AnimatePresence>
+                  {showStatusDropdown && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="absolute z-20 top-full left-0 right-0 mt-1 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-navy-600 py-1 overflow-hidden"
+                    >
+                      {Object.entries(STATUS_CONFIG).map(([key, config]) => (
+                        <button
+                          key={key}
+                          disabled={key === 'done' && isDecisionBlocked}
+                          onClick={() => {
+                            if (key === 'done' && isDecisionBlocked) {
+                              toast.error(
+                                isPolish
+                                  ? 'Nie możesz ustawić DONE: task jest zablokowany decyzją.'
+                                  : 'Cannot set DONE: task is blocked by a decision.'
+                              );
+                              return;
+                            }
+                            setStatus(key as keyof typeof STATUS_CONFIG);
+                            setShowStatusDropdown(false);
+                          }}
+                          className={`w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
+                            status === key ? 'bg-primary-50 dark:bg-primary-500/10' : ''
+                          } ${key === 'done' && isDecisionBlocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          <div className={`w-2.5 h-2.5 rounded-full ${config.color}`} />
+                          <span className="text-slate-700 dark:text-slate-300">
+                            {isPolish ? config.label.pl : config.label.en}
+                          </span>
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Priority */}
+              <div className="relative" ref={priorityDropdownRef}>
+                <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
+                  {isPolish ? 'Priorytet' : 'Priority'}
+                </label>
+                <button
+                  onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
+                  className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Flag size={14} className={priorityConfig.textColor} />
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      {isPolish ? priorityConfig.label.pl : priorityConfig.label.en}
+                    </span>
+                  </div>
+                  <ChevronDown size={16} className="text-slate-400" />
+                </button>
+                <AnimatePresence>
+                  {showPriorityDropdown && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="absolute z-20 top-full left-0 right-0 mt-1 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-navy-600 py-1 overflow-hidden"
+                    >
+                      {Object.entries(PRIORITY_CONFIG).map(([key, config]) => (
+                        <button
+                          key={key}
+                          onClick={() => {
+                            setPriority(key as keyof typeof PRIORITY_CONFIG);
+                            setShowPriorityDropdown(false);
+                          }}
+                          className={`w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
+                            priority === key ? 'bg-primary-50 dark:bg-primary-500/10' : ''
+                          }`}
+                        >
+                          <Flag size={14} className={config.textColor} />
+                          <span className="text-slate-700 dark:text-slate-300">
+                            {isPolish ? config.label.pl : config.label.en}
+                          </span>
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Due / Start */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
+                    {isPolish ? 'Due' : 'Due'}
+                  </label>
+                  <div
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border ${
+                      isOverdue
+                        ? 'border-red-300 dark:border-red-500/50 bg-red-50 dark:bg-red-500/10'
+                        : 'border-slate-200 dark:border-navy-600'
+                    }`}
+                  >
+                    <Calendar size={14} className={isOverdue ? 'text-red-500' : 'text-slate-400'} />
+                    <input
+                      type="date"
+                      value={dueDate}
+                      onChange={(e) => setDueDate(e.target.value)}
+                      className={`flex-1 text-sm bg-transparent focus:outline-none ${
+                        isOverdue ? 'text-red-600 dark:text-red-400' : 'text-slate-700 dark:text-slate-300'
+                      }`}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
+                    {isPolish ? 'Start' : 'Start'}
+                  </label>
+                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
+                    <Calendar size={14} className="text-slate-400" />
+                    <input
+                      type="date"
+                      value={startedAt}
+                      onChange={(e) => setStartedAt(e.target.value)}
+                      className="flex-1 text-sm bg-transparent focus:outline-none text-slate-700 dark:text-slate-300"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {status === 'done' && (
+                <div>
+                  <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
+                    {isPolish ? 'Ukończono' : 'Completed'}
+                  </label>
+                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
+                    <CheckCircle2 size={14} className="text-emerald-400" />
+                    <input
+                      type="date"
+                      value={completedAt}
+                      onChange={(e) => setCompletedAt(e.target.value)}
+                      className="flex-1 text-sm bg-transparent focus:outline-none text-slate-700 dark:text-slate-300"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {status === 'blocked' && (
+                <div className="bg-red-50 dark:bg-red-500/10 rounded-lg p-3 border border-red-200 dark:border-red-500/30">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertCircle size={14} className="text-red-500" />
+                    <span className="text-xs font-medium text-red-600 dark:text-red-400">
+                      {isPolish ? 'Powód blokady' : 'Blocked reason'}
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    value={blockedReason}
+                    onChange={(e) => setBlockedReason(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-sm text-red-700 dark:text-red-300 placeholder-red-400 dark:placeholder-red-400/60 focus:outline-none"
+                    placeholder={isPolish ? 'Co blokuje to zadanie?' : 'What is blocking this task?'}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* People */}
+          <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
+            <div className="flex items-center gap-2 mb-3">
+              <Users size={14} className="text-slate-400" />
+              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                {isPolish ? 'Osoby' : 'People'}
+              </span>
+            </div>
+            <div className="space-y-3">
+              <div className="relative">
+                <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
+                  {isPolish ? 'Assignee' : 'Assignee'}
+                </label>
+                <div className="relative">
+                <select
+                  value={assigneeId}
+                  onChange={(e) => {
+                    setAssigneeId(e.target.value);
+                    const user = users.find((u) => u.id === e.target.value);
+                    setAssigneeName(user ? `${user.firstName} ${user.lastName}` : '');
+                  }}
+                  className="w-full pl-9 pr-9 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-300 dark:focus:border-primary-500/50 appearance-none cursor-pointer"
+                >
+                  <option value="">{isPolish ? 'Nieprzypisane' : 'Unassigned'}</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.firstName} {user.lastName}
+                    </option>
+                  ))}
+                </select>
+                <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+
+              <div className="relative">
+                <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
+                  {isPolish ? 'Owner' : 'Owner'}
+                </label>
+                <div className="relative">
+                <select
+                  value={ownerId}
+                  onChange={(e) => setOwnerId(e.target.value)}
+                  className="w-full pl-9 pr-9 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-300 dark:focus:border-primary-500/50 appearance-none cursor-pointer"
+                >
+                  <option value="">{isPolish ? 'Brak właściciela' : 'No owner'}</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.firstName} {user.lastName}
+                    </option>
+                  ))}
+                </select>
+                <Users size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+
+              <div className="relative">
+                <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
+                  {isPolish ? 'Zastępstwo' : 'Backup'}
+                </label>
+                <div className="relative">
+                <select
+                  value={backupAssigneeId}
+                  onChange={(e) => setBackupAssigneeId(e.target.value)}
+                  className="w-full pl-9 pr-9 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-300 dark:focus:border-primary-500/50 appearance-none cursor-pointer"
+                >
+                  <option value="">{isPolish ? 'Brak zastępstwa' : 'No backup'}</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.firstName} {user.lastName}
+                    </option>
+                  ))}
+                </select>
+                <Users size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Acceptance */}
+          <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
+            <div className="flex items-center gap-2 mb-3">
+              <CheckCircle2 size={14} className="text-slate-400" />
+              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                {isPolish ? 'Akceptacja' : 'Acceptance'}
+              </span>
+            </div>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={requiresAcceptance}
+                onChange={(e) => {
+                  setRequiresAcceptance(e.target.checked);
+                  if (!e.target.checked) {
+                    setAcceptorId('');
+                  }
+                }}
+                className="w-4 h-4 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-300"
+              />
+              <span className="text-sm text-slate-700 dark:text-slate-300">
+                {isPolish ? 'Wymaga akceptacji przed DONE' : 'Requires approval before DONE'}
+              </span>
+            </label>
+            {requiresAcceptance && (
+              <div className="mt-3 space-y-3">
+                <div>
+                  <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
+                    {isPolish ? 'Typ' : 'Type'}
+                  </label>
+                  <select
+                    value={acceptanceType}
+                    onChange={(e) => setAcceptanceType(e.target.value as 'manual' | 'automatic')}
+                    className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300"
+                  >
+                    <option value="manual">{isPolish ? 'Ręczna' : 'Manual'}</option>
+                    <option value="automatic">{isPolish ? 'Automatyczna' : 'Automatic'}</option>
+                  </select>
+                </div>
+                {acceptanceType === 'manual' && (
+                  <div>
+                    <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
+                      {isPolish ? 'Akceptujący' : 'Acceptor'}
+                    </label>
+                    <select
+                      value={acceptorId}
+                      onChange={(e) => setAcceptorId(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300"
+                    >
+                      <option value="">{isPolish ? 'Wybierz osobę' : 'Select person'}</option>
+                      {users.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.firstName} {user.lastName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Initiative */}
+          <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
+            <div className="flex items-center gap-2 mb-3">
+              <Target size={14} className="text-slate-400" />
+              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                {isPolish ? 'Inicjatywa' : 'Initiative'}
+              </span>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
+                  {isPolish ? 'Powiązanie' : 'Link'}
+                </label>
+                <select
+                  value={initiativeId}
+                  onChange={(e) => setInitiativeId(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300"
+                >
+                  <option value="">{isPolish ? 'Brak (niepowiązane)' : 'None (unlinked)'}</option>
+                  {initiatives.map((i) => (
+                    <option key={i.id} value={i.id}>
+                      {i.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
+                    {isPolish ? 'Waga' : 'Weight'}
+                  </label>
+                  <select
+                    value={String(weight)}
+                    onChange={(e) => setWeight(Number(e.target.value))}
+                    className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300"
+                  >
+                    {[1, 2, 3, 4, 5].map((v) => (
+                      <option key={v} value={v}>
+                        {v}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 px-3 py-2.5">
+                  <div className="text-[11px] text-slate-500 dark:text-slate-500">
+                    {isPolish ? 'Udział' : 'Share'}
+                  </div>
+                  <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    {initiativeId ? `${initiativeMeta.contributionPct ?? 0}%` : '—'}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
+                  {isPolish ? 'Uzasadnienie (opcjonalnie)' : 'Rationale (optional)'}
+                </label>
+                <input
+                  type="text"
+                  value={weightReason}
+                  onChange={(e) => setWeightReason(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300"
+                  placeholder={isPolish ? 'Dlaczego taka waga?' : 'Why this weight?'}
+                />
+              </div>
+
+              {initiativeId && (
+                <div className="text-xs text-slate-500 dark:text-slate-500">
+                  {isPolish
+                    ? `Task ${initiativeMeta.position ?? '—'}/${initiativeMeta.total || '—'} • Overdue: ${initiativeMeta.overdueCount} • Blocked: ${initiativeMeta.blockedCount}`
+                    : `Task ${initiativeMeta.position ?? '—'}/${initiativeMeta.total || '—'} • Overdue: ${initiativeMeta.overdueCount} • Blocked: ${initiativeMeta.blockedCount}`}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Links summary */}
+          <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
+            <div className="flex items-center gap-2 mb-2">
+              <LinkIcon size={14} className="text-slate-400" />
+              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                {isPolish ? 'Powiązania' : 'Links'}
+              </span>
+            </div>
+            <div className="text-sm text-slate-700 dark:text-slate-300 flex items-center justify-between">
+              <span className="text-slate-500 dark:text-slate-500">{isPolish ? 'Decyzje' : 'Decisions'}</span>
+              <span className="font-semibold">{linkedItems.filter((i) => i.type === 'decision').length}</span>
+            </div>
+            <div className="text-sm text-slate-700 dark:text-slate-300 flex items-center justify-between mt-1">
+              <span className="text-slate-500 dark:text-slate-500">{isPolish ? 'Ryzyka' : 'Risks'}</span>
+              <span className="font-semibold">{linkedItems.filter((i) => i.type === 'risk').length}</span>
+            </div>
+          </div>
+
+          {/* Required Decisions (PMO) */}
+          <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <div className="flex items-center gap-2">
+                <Flag size={14} className="text-slate-400" />
+                <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                  {isPolish ? 'Wymagane decyzje' : 'Required decisions'}
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700">
+                  {taskDecisions.length}
+                </span>
+              </div>
+              {taskId && (
+                <button
+                  onClick={() => setShowDecisionForm((v) => !v)}
+                  className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
+                >
+                  {showDecisionForm ? (isPolish ? 'Zamknij' : 'Close') : isPolish ? 'Request' : 'Request'}
+                </button>
+              )}
+            </div>
+
+            {showDecisionForm && taskId && (
+              <div className="mb-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 p-3 space-y-2">
+                <input
+                  value={newDecisionTitle}
+                  onChange={(e) => setNewDecisionTitle(e.target.value)}
+                  placeholder={isPolish ? 'Tytuł decyzji…' : 'Decision title…'}
+                  className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="date"
+                    value={newDecisionDueDate}
+                    onChange={(e) => setNewDecisionDueDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none"
+                  />
+                  <select
+                    value={newDecisionPriority}
+                    onChange={(e) => setNewDecisionPriority(e.target.value as any)}
+                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none"
+                  >
+                    <option value="low">{isPolish ? 'Niski' : 'Low'}</option>
+                    <option value="medium">{isPolish ? 'Średni' : 'Medium'}</option>
+                    <option value="high">{isPolish ? 'Wysoki' : 'High'}</option>
+                    <option value="critical">{isPolish ? 'Krytyczny' : 'Critical'}</option>
+                  </select>
+                </div>
+                <button
+                  onClick={handleRequestDecision}
+                  className="w-full px-3 py-2 rounded-lg bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 transition-colors"
+                >
+                  {isPolish ? 'Utwórz decyzję' : 'Create decision'}
+                </button>
+                <p className="text-[11px] text-slate-500 dark:text-slate-500">
+                  {isPolish
+                    ? 'Uwaga: tworzenie decyzji wymaga uprawnienia approve_changes.'
+                    : 'Note: creating decisions requires approve_changes permission.'}
+                </p>
+              </div>
+            )}
+
+            {loadingDecisions ? (
+              <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-500">
+                <Loader2 size={14} className="animate-spin" />
+                <span>{isPolish ? 'Ładowanie…' : 'Loading…'}</span>
+              </div>
+            ) : taskDecisions.length === 0 ? (
+              <div className="text-sm text-slate-500 dark:text-slate-500">
+                {isPolish ? 'Brak decyzji powiązanych z taskiem.' : 'No decisions linked to this task.'}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {taskDecisions.slice(0, 6).map((d: any) => {
+                  const st = String(d.status || '').toUpperCase();
+                  const pill =
+                    st === 'APPROVED'
+                      ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                      : st === 'REJECTED'
+                        ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                        : st === 'ESCALATED'
+                          ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                          : 'bg-slate-500/10 text-slate-500 border-slate-500/20';
+
+                  return (
+                    <button
+                      key={d.id}
+                      onClick={() => (onOpenDecision ? onOpenDecision(d.id) : undefined)}
+                      className="w-full text-left p-2 rounded-lg border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
+                      title={isPolish ? 'Otwórz decyzję' : 'Open decision'}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
+                            {d.title || d.id}
+                          </div>
+                          <div className="text-[11px] text-slate-500 dark:text-slate-500 mt-0.5">
+                            {(d.ownerName && `${d.ownerName} • `) || ''}
+                            {d.dueDate ? `${isPolish ? 'Due' : 'Due'}: ${String(d.dueDate).slice(0, 10)}` : '—'}
+                          </div>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-full text-[11px] border ${pill}`}>{st || 'PENDING'}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+                {taskDecisions.length > 6 && (
+                  <div className="text-xs text-slate-500 dark:text-slate-500">
+                    {isPolish ? '…więcej w panelu decyzji' : '…more in Decisions panel'}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
+  </div>
   );
 };
 

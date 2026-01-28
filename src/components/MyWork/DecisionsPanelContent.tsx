@@ -1198,8 +1198,8 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
-      <div className="flex-1 overflow-y-auto">
-        <div className="overflow-x-auto">
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
           <table className="w-full" style={{ minWidth: 900 }}>
             <thead>
               <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">

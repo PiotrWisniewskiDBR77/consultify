@@ -173,6 +173,12 @@ export interface InboxItem {
   triagedAt?: string;
   triageAction?: TriageAction;
   triageParams?: Record<string, unknown>;
+
+  /**
+   * Internal key used by backend for triage persistence.
+   * Not required by UI, but needed for /my-work/inbox/* endpoints.
+   */
+  _key?: string;
 }
 
 /**

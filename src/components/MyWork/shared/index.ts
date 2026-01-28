@@ -15,6 +15,12 @@ export type { LinkedItem, LinkedItemType } from './LinkedItemsSection';
 export { EscalationRulesSection } from './EscalationRulesSection';
 export type { ReminderRule, EscalationRule, WarningThresholds } from './EscalationRulesSection';
 
+export { DelegationModal } from './DelegationModal';
+export type { DelegationType } from './DelegationModal';
+
+export { StakeholdersSection } from './StakeholdersSection';
+export type { Stakeholder, StakeholderRole } from './StakeholdersSection';
+
 export { KeyboardShortcutsHelp } from './KeyboardShortcutsHelp';
 
 export { QuickActions } from './QuickActions';

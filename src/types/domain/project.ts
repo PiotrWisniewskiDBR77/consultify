@@ -146,6 +146,7 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   assigneeId?: string;
+  backupAssigneeId?: string;
   assignee?: any; // Full assignee object
   assigneeName?: string;
   assigneeAvatar?: string;
@@ -157,6 +158,11 @@ export interface Task {
   dueDate?: string;
   startDate?: string;
   completedAt?: string;
+  startedAt?: string;
+  ownerId?: string;
+  requiresAcceptance?: boolean;
+  acceptanceType?: 'manual' | 'automatic' | null;
+  acceptorId?: string | null;
   estimatedHours?: number;
   actualHours?: number;
   remainingHours?: number;

@@ -47,7 +47,7 @@ export class TaskService {
     const { projectId, status, assigneeId, priority, initiativeId } = filters;
 
     let query = `
-            SELECT t.*, u.name as assignee_name, u.avatar_url as assignee_avatar
+            SELECT t.*, (u.first_name || ' ' || u.last_name) as assignee_name, u.avatar_url as assignee_avatar
             FROM tasks t
             LEFT JOIN users u ON t.assignee_id = u.id
             WHERE 1=1
@@ -87,7 +87,7 @@ export class TaskService {
    */
   async getTask(id: string): Promise<Task> {
     const result = await this.db.query<TaskRow>(
-      `SELECT t.*, u.name as assignee_name, u.avatar_url as assignee_avatar
+      `SELECT t.*, (u.first_name || ' ' || u.last_name) as assignee_name, u.avatar_url as assignee_avatar
              FROM tasks t
              LEFT JOIN users u ON t.assignee_id = u.id
              WHERE t.id = $1`,

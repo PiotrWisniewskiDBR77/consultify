@@ -235,7 +235,7 @@ export const InterviewAssignmentsPanel: React.FC = () => {
                   return (
                     <tr key={a.id} className="text-slate-800 dark:text-slate-200">
                       <td className="py-3 pr-3">
-                        <div className="font-medium">{a.template?.name || a.template_id}</div>
+                        <div className="font-medium">{a.template?.name || a.template?.id || 'N/A'}</div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
                           {(a.template?.category || '').toUpperCase()}
                         </div>

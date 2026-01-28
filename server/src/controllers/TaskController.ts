@@ -63,6 +63,7 @@ interface TaskRow {
   status: string;
   priority: string;
   assignee_id?: string;
+  backup_assignee_id?: string;
   assignee_first_name?: string;
   assignee_last_name?: string;
   assignee_avatar?: string;
@@ -71,6 +72,7 @@ interface TaskRow {
   reporter_last_name?: string;
   reporter_avatar?: string;
   due_date?: string;
+  started_at?: string;
   estimated_hours?: number;
   checklist?: string;
   attachments?: string;
@@ -87,6 +89,12 @@ interface TaskRow {
   blocking_issues?: string;
   step_phase?: string;
   why?: string;
+  owner_id?: string;
+  requires_acceptance?: number | boolean;
+  acceptance_type?: string;
+  acceptor_id?: string;
+  weight?: number;
+  weight_reason?: string;
   roadmap_initiative_id?: string;
   kpi_id?: string;
   raid_item_id?: string;
@@ -95,12 +103,24 @@ interface TaskRow {
   initiative_name?: string;
   progress?: number;
   blocked_reason?: string;
+  blocked_at?: string;
+  blocked_by_decision_id?: string | null;
   // SLA / Escalation
   sla_hours?: number;
   sla_due_at?: string;
   escalation_level?: number;
   escalated_to_id?: string;
   last_escalated_at?: string;
+
+  // PMO notification rules + throttling
+  notify_on_overdue?: number;
+  notify_on_acceptance?: number;
+  notify_on_unassigned?: number;
+  notify_on_blocked?: number;
+  last_overdue_notified_at?: string;
+  last_acceptance_notified_at?: string;
+  last_unassigned_notified_at?: string;
+  last_blocked_notified_at?: string;
 }
 
 // ==========================================
@@ -290,6 +310,7 @@ export class TaskController {
         status: t.status,
         priority: t.priority,
         assigneeId: t.assignee_id,
+        backupAssigneeId: t.backup_assignee_id,
         assignee: t.assignee_id
           ? {
               id: t.assignee_id,
@@ -308,6 +329,7 @@ export class TaskController {
             }
           : null,
         dueDate: t.due_date,
+        startedAt: t.started_at,
         estimatedHours: t.estimated_hours,
         checklist: t.checklist ? JSON.parse(t.checklist) : [],
         attachments: t.attachments ? JSON.parse(t.attachments) : [],
@@ -324,6 +346,12 @@ export class TaskController {
         blockingIssues: t.blocking_issues,
         stepPhase: t.step_phase,
         why: t.why,
+        ownerId: t.owner_id,
+        requiresAcceptance: Boolean(t.requires_acceptance),
+        acceptanceType: t.acceptance_type || null,
+        acceptorId: t.acceptor_id || null,
+        weight: t.weight ?? 1,
+        weightReason: t.weight_reason || null,
         roadmapInitiativeId: t.roadmap_initiative_id,
         kpiId: t.kpi_id,
         raidItemId: t.raid_item_id,
@@ -387,6 +415,64 @@ export class TaskController {
         return;
       }
 
+      // Auto-apply decision block if there is an active blocking decision impact
+      // (keeps task.status consistent with decision gate)
+      try {
+        if (t.status !== 'done') {
+          const activeBlocker = await DbPromise.get<{ id: string; title: string }>(
+            `
+              SELECT d.id, d.title
+              FROM decisions d
+              JOIN decision_impacts di ON d.id = di.decision_id
+              WHERE d.organization_id = ?
+                AND di.impacted_type = 'task'
+                AND di.impacted_id = ?
+                AND di.is_blocker = 1
+                AND d.status IN ('pending', 'escalated')
+              ORDER BY 
+                CASE WHEN d.deadline IS NULL THEN 1 ELSE 0 END,
+                d.deadline ASC,
+                d.created_at ASC
+              LIMIT 1
+            `,
+            [orgId, id]
+          );
+
+          const shouldBlock =
+            Boolean(activeBlocker?.id) && (t.status !== 'blocked' || !t.blocked_by_decision_id);
+
+          if (shouldBlock) {
+            const nowIso = new Date().toISOString();
+            await DbPromise.run(
+              `UPDATE tasks SET
+                status = 'blocked',
+                blocked_at = ?,
+                blocked_reason = COALESCE(NULLIF(blocked_reason, ''), ?),
+                blocked_by_decision_id = COALESCE(blocked_by_decision_id, ?),
+                updated_at = ?
+               WHERE id = ? AND organization_id = ?`,
+              [
+                nowIso,
+                `[decision:${activeBlocker!.id}] Blocked by decision: ${activeBlocker!.title}`,
+                activeBlocker!.id,
+                nowIso,
+                id,
+                orgId,
+              ]
+            );
+            t.status = 'blocked';
+            (t as any).blocked_by_decision_id = activeBlocker!.id;
+            (t as any).blocked_at = nowIso;
+            t.blocked_reason =
+              t.blocked_reason && t.blocked_reason !== ''
+                ? t.blocked_reason
+                : `[decision:${activeBlocker!.id}] Blocked by decision: ${activeBlocker!.title}`;
+          }
+        }
+      } catch (e: any) {
+        logger.warn('[TaskController] Decision-block auto-apply skipped:', e?.message || e);
+      }
+
       const task = {
         id: t.id,
         projectId: t.project_id,
@@ -397,6 +483,7 @@ export class TaskController {
         status: t.status,
         priority: t.priority,
         assigneeId: t.assignee_id,
+        backupAssigneeId: t.backup_assignee_id,
         assignee: t.assignee_id
           ? {
               id: t.assignee_id,
@@ -415,6 +502,7 @@ export class TaskController {
             }
           : null,
         dueDate: t.due_date,
+        startedAt: t.started_at,
         estimatedHours: t.estimated_hours,
         checklist: t.checklist ? JSON.parse(t.checklist) : [],
         attachments: t.attachments ? JSON.parse(t.attachments) : [],
@@ -431,6 +519,12 @@ export class TaskController {
         blockingIssues: t.blocking_issues,
         stepPhase: t.step_phase,
         why: t.why,
+        ownerId: t.owner_id,
+        requiresAcceptance: Boolean(t.requires_acceptance),
+        acceptanceType: t.acceptance_type || null,
+        acceptorId: t.acceptor_id || null,
+        weight: t.weight ?? 1,
+        weightReason: t.weight_reason || null,
         roadmapInitiativeId: t.roadmap_initiative_id,
         kpiId: t.kpi_id,
         raidItemId: t.raid_item_id,
@@ -439,6 +533,8 @@ export class TaskController {
         initiativeName: getMultilingualText(t.initiative_name, lang),
         progress: t.progress || 0,
         blockedReason: t.blocked_reason || '',
+        blockedAt: (t as any).blocked_at || null,
+        blockedByDecisionId: (t as any).blocked_by_decision_id || null,
         // SLA / Escalation
         slaHours: t.sla_hours,
         slaDueAt: t.sla_due_at,
@@ -474,16 +570,24 @@ export class TaskController {
         status,
         priority,
         assigneeId,
+        backupAssigneeId,
         dueDate,
+        startedAt,
         estimatedHours,
         tags,
         taskType,
         initiativeId,
+        ownerId,
+        requiresAcceptance,
+        acceptanceType,
+        acceptorId,
         why,
         expectedOutcome,
         decisionImpact,
         evidenceRequired,
         strategicContribution,
+        weight,
+        weightReason,
         roadmapInitiativeId,
         kpiId,
         raidItemId,
@@ -512,19 +616,23 @@ export class TaskController {
         : '[]';
       const finalProgress = progress || 0;
       const finalBlockedReason = blockedReason || '';
+      const finalRequiresAcceptance = Boolean(requiresAcceptance);
+      const finalWeight = typeof weight === 'number' ? weight : 1;
 
       const sql = `
             INSERT INTO tasks (
                 id, project_id, organization_id, title, description,
-                status, priority, assignee_id, reporter_id,
-                due_date, estimated_hours, tags,
+                status, priority, assignee_id, backup_assignee_id, reporter_id,
+                due_date, started_at, estimated_hours, tags,
                 task_type, initiative_id, why,
+                owner_id, requires_acceptance, acceptance_type, acceptor_id,
+                weight, weight_reason,
                 expected_outcome, decision_impact, evidence_required, strategic_contribution,
                 roadmap_initiative_id, kpi_id, raid_item_id, assignees,
                 progress, blocked_reason,
                 created_at, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
       const result = await DbPromise.run(sql, [
@@ -536,13 +644,21 @@ export class TaskController {
         finalStatus,
         finalPriority,
         assigneeId,
+        backupAssigneeId || null,
         userId,
         dueDate,
+        startedAt || null,
         estimatedHours,
         tags ? JSON.stringify(tags) : '[]',
         finalTaskType,
         initiativeId,
         why,
+        ownerId || null,
+        finalRequiresAcceptance,
+        finalRequiresAcceptance ? acceptanceType || 'manual' : null,
+        finalRequiresAcceptance ? acceptorId || null : null,
+        finalWeight,
+        weightReason || null,
         finalExpectedOutcome,
         finalDecisionImpact,
         finalEvidenceRequired,
@@ -658,13 +774,44 @@ export class TaskController {
         return;
       }
 
+      // Gate: prevent completing when blocking decisions exist
+      if ((updates as any)?.status === 'done') {
+        const blockers = await DbPromise.all<{ id: string; title: string }>(
+          `
+            SELECT d.id, d.title
+            FROM decisions d
+            JOIN decision_impacts di ON d.id = di.decision_id
+            WHERE d.organization_id = ?
+              AND di.impacted_type = 'task'
+              AND di.impacted_id = ?
+              AND di.is_blocker = 1
+              AND d.status IN ('pending', 'escalated')
+            ORDER BY 
+              CASE WHEN d.deadline IS NULL THEN 1 ELSE 0 END,
+              d.deadline ASC,
+              d.created_at ASC
+            LIMIT 5
+          `,
+          [orgId, id]
+        );
+        if (Array.isArray(blockers) && blockers.length > 0) {
+          res.status(409).json({
+            error: 'Blocking decisions must be resolved before completing the task',
+            blockers,
+          });
+          return;
+        }
+      }
+
       const allowedFields = [
         'title',
         'description',
         'status',
         'priority',
         'assignee_id',
+        'backup_assignee_id',
         'due_date',
+        'started_at',
         'estimated_hours',
         'checklist',
         'attachments',
@@ -673,6 +820,12 @@ export class TaskController {
         'task_type',
         'initiative_id',
         'why',
+        'owner_id',
+        'requires_acceptance',
+        'acceptance_type',
+        'acceptor_id',
+        'weight',
+        'weight_reason',
         'expected_outcome',
         'decision_impact',
         'evidence_required',
@@ -687,11 +840,18 @@ export class TaskController {
 
       const fieldMap: Record<string, string> = {
         assigneeId: 'assignee_id',
+        backupAssigneeId: 'backup_assignee_id',
         dueDate: 'due_date',
+        startedAt: 'started_at',
         estimatedHours: 'estimated_hours',
         customStatusId: 'custom_status_id',
         taskType: 'task_type',
         initiativeId: 'initiative_id',
+        ownerId: 'owner_id',
+        requiresAcceptance: 'requires_acceptance',
+        acceptanceType: 'acceptance_type',
+        acceptorId: 'acceptor_id',
+        weightReason: 'weight_reason',
         expectedOutcome: 'expected_outcome',
         decisionImpact: 'decision_impact',
         evidenceRequired: 'evidence_required',
@@ -812,6 +972,133 @@ export class TaskController {
             relatedObjectId: id,
           })
           .catch((err: any) => logger.error('[TaskController] Notification failed:', err));
+      }
+
+      // PMO Notification Rules (throttled)
+      try {
+        const updatedRow = await DbPromise.get<TaskRow>(`SELECT * FROM tasks WHERE id = ? AND organization_id = ?`, [
+          id,
+          orgId,
+        ]);
+        const row: any = updatedRow || currentTask;
+        const nowIso = now;
+        const nowMs = Date.now();
+        const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+        const parseMs = (ts?: string | null) => {
+          if (!ts) return 0;
+          const t = Date.parse(ts);
+          return Number.isFinite(t) ? t : 0;
+        };
+        const canNotify = (lastAt?: string | null) => nowMs - parseMs(lastAt) > ONE_DAY_MS;
+        const isDone = (s?: string) => String(s || '').toLowerCase() === 'done';
+
+        const due = row.due_date || null;
+        const statusVal = row.status;
+        const assignee = row.assignee_id || null;
+        const backup = row.backup_assignee_id || null;
+        const owner = row.owner_id || null;
+        const acceptor = row.acceptor_id || null;
+        const requiresAcceptanceFlag = Boolean(row.requires_acceptance);
+
+        const recipientsUnique = (ids: Array<string | null | undefined>) => {
+          const set = new Set<string>();
+          ids.forEach((x) => {
+            if (x && x !== userId) set.add(String(x));
+          });
+          return Array.from(set);
+        };
+
+        // Overdue
+        const overdueEnabled = (row.notify_on_overdue ?? 1) === 1;
+        if (overdueEnabled && due && !isDone(statusVal)) {
+          const dueMs = Date.parse(due);
+          const isOverdue = Number.isFinite(dueMs) && dueMs < nowMs;
+          if (isOverdue && canNotify(row.last_overdue_notified_at)) {
+            const recipients = recipientsUnique([assignee, owner, backup]);
+            for (const rid of recipients) {
+              (NotificationService as any)
+                .create({
+                  userId: rid,
+                  organizationId: orgId,
+                  type: 'task_overdue',
+                  title: 'Task Overdue',
+                  message: `Task "${row.title}" is overdue`,
+                  relatedObjectType: 'TASK',
+                  relatedObjectId: id,
+                })
+                .catch((err: any) => logger.error('[TaskController] Overdue notification failed:', err));
+            }
+            await DbPromise.run(`UPDATE tasks SET last_overdue_notified_at = ? WHERE id = ?`, [nowIso, id]);
+          }
+        }
+
+        // Acceptance gate (we treat status=review as waiting for approval)
+        const acceptanceEnabled = (row.notify_on_acceptance ?? 1) === 1;
+        const enteredReview = updates.status === 'review' && currentTask.status !== 'review';
+        if (
+          acceptanceEnabled &&
+          requiresAcceptanceFlag &&
+          acceptor &&
+          (row.status === 'review' || enteredReview) &&
+          canNotify(row.last_acceptance_notified_at)
+        ) {
+          (NotificationService as any)
+            .create({
+              userId: acceptor,
+              organizationId: orgId,
+              type: 'task_pending_approval',
+              title: 'Approval Required',
+              message: `Task "${row.title}" is awaiting approval`,
+              relatedObjectType: 'TASK',
+              relatedObjectId: id,
+            })
+            .catch((err: any) => logger.error('[TaskController] Acceptance notification failed:', err));
+          await DbPromise.run(`UPDATE tasks SET last_acceptance_notified_at = ? WHERE id = ?`, [nowIso, id]);
+        }
+
+        // Unassigned -> backup/owner
+        const unassignedEnabled = (row.notify_on_unassigned ?? 1) === 1;
+        if (unassignedEnabled && !assignee && (backup || owner) && canNotify(row.last_unassigned_notified_at)) {
+          const target = backup || owner;
+          if (target) {
+            (NotificationService as any)
+              .create({
+                userId: target,
+                organizationId: orgId,
+                type: 'task_unassigned',
+                title: 'Task Unassigned',
+                message: `Task "${row.title}" has no assignee`,
+                relatedObjectType: 'TASK',
+                relatedObjectId: id,
+              })
+              .catch((err: any) => logger.error('[TaskController] Unassigned notification failed:', err));
+            await DbPromise.run(`UPDATE tasks SET last_unassigned_notified_at = ? WHERE id = ?`, [nowIso, id]);
+          }
+        }
+
+        // Blocked (status transition)
+        const blockedEnabled = (row.notify_on_blocked ?? 1) === 1;
+        const becameBlocked = updates.status === 'blocked' && currentTask.status !== 'blocked';
+        if (blockedEnabled && becameBlocked && canNotify(row.last_blocked_notified_at)) {
+          const recipients = recipientsUnique([assignee, owner, backup]);
+          for (const rid of recipients) {
+            (NotificationService as any)
+              .create({
+                userId: rid,
+                organizationId: orgId,
+                type: 'task_blocked',
+                title: 'Task Blocked',
+                message: `Task "${row.title}" is blocked`,
+                relatedObjectType: 'TASK',
+                relatedObjectId: id,
+              })
+              .catch((err: any) => logger.error('[TaskController] Blocked notification failed:', err));
+          }
+          await DbPromise.run(`UPDATE tasks SET last_blocked_notified_at = ? WHERE id = ?`, [nowIso, id]);
+        }
+      } catch (e: any) {
+        logger.warn('[TaskController] PMO notification rules skipped:', e?.message || e);
       }
 
       // Initiative Progress Recalc

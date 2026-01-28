@@ -14,7 +14,17 @@ const SimulationEngine = new SimulationEngineClass();
  * Orchestrates the AI Advisor pipeline:
  * Context -> Signals -> Recommendations -> Simulation
  */
-const AICoach = {
+const AICoach: {
+  deps: {
+    AIContextBuilder: typeof AIContextBuilder;
+    SignalEngine: typeof SignalEngine;
+    RecommendationEngine: typeof RecommendationEngine;
+    SimulationEngine: typeof SimulationEngine;
+  };
+  setDependencies: (newDeps: Partial<typeof AICoach.deps>) => void;
+  getAdvisoryReport: (orgId: string) => Promise<unknown>;
+  _calculateHealthScore: (context: any, signals: Array<{ severity: string }>) => number;
+} = {
   // Dependencies wrapper for injection
   deps: {
     AIContextBuilder,
@@ -27,7 +37,7 @@ const AICoach = {
    * Override dependencies for testing
    * @param {Object} newDeps - Partial dependency object to merge
    */
-  setDependencies(newDeps) {
+  setDependencies(newDeps: Partial<typeof AICoach.deps>): void {
     Object.assign(this.deps, newDeps);
   },
 
@@ -36,7 +46,7 @@ const AICoach = {
    * @param {string} orgId - The organization ID.
    * @returns {Promise<Object>} The full advisory report.
    */
-  getAdvisoryReport: async (orgId) => {
+  getAdvisoryReport: async (orgId: string) => {
     // 1. Build Context
     const context = await AICoach.deps.AIContextBuilder.buildContext(orgId);
 
@@ -80,18 +90,18 @@ const AICoach = {
   /**
    * Simple health score calculation (0-100)
    */
-  _calculateHealthScore: (context, signals) => {
+  _calculateHealthScore: (context: any, signals: Array<{ severity: string }>) => {
     let score = 100;
 
     // Penalty for high-severity signals
-    signals.forEach((s) => {
+    signals.forEach((s: { severity: string }) => {
       if (s.severity === 'CRITICAL') score -= 15;
       if (s.severity === 'HIGH') score -= 10;
       if (s.severity === 'MEDIUM') score -= 5;
     });
 
     // Penalties for blocked initiatives
-    const blockedCount = context.data.initiative_status.filter((i) => i.is_blocked).length;
+    const blockedCount = context.data.initiative_status.filter((i: { is_blocked: boolean }) => i.is_blocked).length;
     score -= blockedCount * 5;
 
     return Math.max(0, score);

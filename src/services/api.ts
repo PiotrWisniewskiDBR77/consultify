@@ -1590,6 +1590,13 @@ export const Api = {
     return res.json();
   },
 
+  getTaskDecisions: async (taskId: string): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/decisions?taskId=${taskId}`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch task decisions');
+    const data = await res.json();
+    return Array.isArray(data) ? data : data?.decisions || [];
+  },
+
   // ==========================================
   // PHASE 6: AI INTEGRATION
   // ==========================================
@@ -1781,7 +1788,7 @@ export const Api = {
 
   generateToolInitiatives: async (
     toolId: string,
-    payload: { methodologyId: string; count: number; includeChatContext?: boolean }
+    payload: { methodologyId: string; count: number; includeChatContext?: boolean; decisionOwnerId?: string }
   ): Promise<any> => {
     const res = await fetch(`${API_URL}/tools/${toolId}/generate-initiatives`, {
       method: 'POST',
@@ -4709,7 +4716,7 @@ export const Api = {
     const data = await res.json();
     return data.reports || [];
   },
-  generateAssessmentReport: async (projectId: string, type?: string) => {
+  generateProjectAssessmentReport: async (projectId: string, type?: string) => {
     const res = await fetch(`${API_URL}/assessment-reports`, {
       method: 'POST',
       headers: getHeaders(),

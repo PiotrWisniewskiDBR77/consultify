@@ -258,7 +258,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
       </div>
 
       {/* Table */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto p-4">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
@@ -282,8 +282,9 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
             )}
           </div>
         ) : (
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
           <table className="w-full">
-            <thead className="bg-slate-50 dark:bg-navy-950 sticky top-0">
+            <thead className="bg-slate-50 dark:bg-navy-900/50 sticky top-0">
               <tr>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   {t('assessment.table.assessment', 'Assessment')}
@@ -412,6 +413,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

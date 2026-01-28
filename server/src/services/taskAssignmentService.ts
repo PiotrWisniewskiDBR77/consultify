@@ -9,7 +9,7 @@ import { v4 as uuid } from 'uuid';
 import ActivityService from '../services/ActivityService.js';
 import DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
-import NotificationService from './notificationService.js';
+import notificationService from './notificationService.js';
 import { PMO_DOMAIN_IDS } from './pmoDomainRegistry.js';
 import PMOStandardsMapping from './pmoStandardsMapping.js';
 import ProjectMemberService from './projectMemberService.js';
@@ -45,6 +45,110 @@ export const ESCALATION_TRIGGERS = {
 } as const;
 
 export class TaskAssignmentService {
+  /**
+   * Check overdue tasks and notify key stakeholders (assignee + owner + backup).
+   * Canon: if work is not realized on time, notify execution + ownership + backup.
+   *
+   * Anti-spam: send at most once per 24h per task via `tasks.last_overdue_notified_at`.
+   */
+  static async checkAndNotifyOverdueStakeholders(options: any = {}): Promise<{
+    processed: number;
+    notified: number;
+    skipped: number;
+    failed: number;
+  }> {
+    const { limit = 200 } = options;
+    const nowIso = new Date().toISOString();
+
+    // Prefer due_date if present; fallback to sla_due_at.
+    // Use lower(status) to be resilient to mixed casing in DB.
+    const tasks: any[] = await DbPromise.all(
+      `SELECT
+          id, organization_id, project_id, title, priority, status,
+          due_date, sla_due_at,
+          assignee_id, owner_id, backup_assignee_id,
+          last_overdue_notified_at
+        FROM tasks
+        WHERE
+          (
+            (due_date IS NOT NULL AND due_date < ?)
+            OR
+            (sla_due_at IS NOT NULL AND sla_due_at < ?)
+          )
+          AND lower(status) NOT IN ('done', 'completed', 'cancelled')
+          AND (
+            last_overdue_notified_at IS NULL
+            OR last_overdue_notified_at < datetime('now', '-24 hours')
+          )
+        ORDER BY coalesce(due_date, sla_due_at) ASC
+        LIMIT ?`,
+      [nowIso, nowIso, limit]
+    );
+
+    const results = { processed: 0, notified: 0, skipped: 0, failed: 0 };
+
+    for (const task of tasks || []) {
+      results.processed++;
+      try {
+        const due = task.due_date || task.sla_due_at || null;
+        const dueMs = due ? new Date(due).getTime() : NaN;
+        const overdueDays =
+          !due || Number.isNaN(dueMs)
+            ? null
+            : Math.max(1, Math.floor((Date.now() - dueMs) / (1000 * 60 * 60 * 24)));
+
+        const recipients = new Set<string>();
+        if (task.assignee_id) recipients.add(String(task.assignee_id));
+        if (task.owner_id) recipients.add(String(task.owner_id));
+        if (task.backup_assignee_id) recipients.add(String(task.backup_assignee_id));
+
+        if (recipients.size === 0) {
+          results.skipped++;
+          continue;
+        }
+
+        const priority = String(task.priority || '').toLowerCase();
+        const notifPriority =
+          priority === 'critical' || priority === 'urgent' ? 'urgent' : overdueDays && overdueDays >= 3 ? 'high' : 'normal';
+
+        const title = overdueDays
+          ? `Task overdue (${overdueDays}d)`
+          : 'Task overdue';
+        const bodyBase = `Task "${task.title}" is overdue${due ? ` (due: ${String(due).slice(0, 10)})` : ''}.`;
+
+        for (const userId of recipients) {
+          const isBackup = userId === String(task.backup_assignee_id || '');
+          await notificationService.send({
+            userId,
+            organizationId: task.organization_id,
+            type: isBackup ? 'task_overdue_backup' : 'task_overdue',
+            title: isBackup ? `${title} • backup` : title,
+            body: isBackup ? `${bodyBase} You are listed as backup for this task.` : bodyBase,
+            entityType: 'task',
+            entityId: task.id,
+            actionUrl: '/my-work',
+            priority: notifPriority,
+          });
+          results.notified++;
+        }
+
+        // Mark as notified (single timestamp gates the whole recipient set)
+        await DbPromise.run(
+          `UPDATE tasks SET last_overdue_notified_at = ?, updated_at = ? WHERE id = ?`,
+          [nowIso, nowIso, task.id]
+        );
+      } catch (err: any) {
+        results.failed++;
+        logger.warn('[TaskAssignmentService] Overdue stakeholder notification failed:', {
+          taskId: task?.id,
+          error: err?.message || String(err),
+        });
+      }
+    }
+
+    return results;
+  }
+
   /**
    * Assign a task to a user
    */
@@ -90,6 +194,7 @@ export class TaskAssignmentService {
            escalation_level = 0,
            escalated_to_id = NULL,
            last_escalated_at = NULL,
+           last_overdue_notified_at = NULL,
            updated_at = ?
        WHERE id = ?`,
       [assigneeId, effectiveSlaHours, slaDueAt, now.toISOString(), taskId]
@@ -164,6 +269,7 @@ export class TaskAssignmentService {
            escalation_level = 0,
            escalated_to_id = NULL,
            last_escalated_at = NULL,
+           last_overdue_notified_at = NULL,
            updated_at = ?
        WHERE id = ?`,
       [new Date().toISOString(), taskId]
@@ -646,21 +752,17 @@ export class TaskAssignmentService {
         3: 'Project Sponsor',
       };
 
-      if ((NotificationService as any)?.create) {
-        await (NotificationService as any).create({
-          userId: recipient.userId,
-          organizationId: task.organization_id,
-          projectId: task.project_id,
-          type: 'TASK_ESCALATED',
-          severity: level >= 3 ? 'CRITICAL' : level >= 2 ? 'WARNING' : 'INFO',
-          title: `Task Escalated to ${levelNames[level] || 'Level ' + level}`,
-          message: `Task "${task.title}" has been escalated. Reason: ${reason}`,
-          relatedObjectType: 'TASK',
-          relatedObjectId: task.id,
-          isActionable: true,
-          actionUrl: `/projects/${task.project_id}/tasks/${task.id}`,
-        });
-      }
+      await notificationService.send({
+        userId: recipient.userId,
+        organizationId: task.organization_id,
+        type: 'task_escalated',
+        title: `Task escalated to ${levelNames[level] || `Level ${level}`}`,
+        body: `Task "${task.title}" has been escalated. Reason: ${reason}`,
+        entityType: 'task',
+        entityId: task.id,
+        actionUrl: '/my-work',
+        priority: level >= 3 ? 'urgent' : level >= 2 ? 'high' : 'normal',
+      });
 
       logger.info(
         `[ESCALATION] Notification sent to ${recipient.firstName} ${recipient.lastName} (${recipient.email})`

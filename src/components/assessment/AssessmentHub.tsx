@@ -9,6 +9,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { Api } from '@/services/api';
+import { NewAssessmentModal, NewAssessmentData } from './NewAssessmentModal';
+import { InitiativeFullView } from '../Initiatives/InitiativeFullView';
 
 import {
   FilterableTable,
@@ -18,13 +20,30 @@ import {
   ModuleHub,
   ModuleTab,
   OpenDocument,
+  StatusDropdown,
+  ModuleContext,
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
 
 // Assessment Framework Types
 type AssessmentFramework = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
-type ItemStatus = 'draft' | 'in_review' | 'approved' | 'completed';
+
+// Canonical Initiative Status (13 statuses)
+// Documentation: wdrozenia/standards/03-STATUS-WORKFLOW.md
+type InitiativeStatusType =
+  | 'DRAFT'
+  | 'PENDING_REVIEW'
+  | 'REVIEW'
+  | 'PROMOTED'
+  | 'PLANNING'
+  | 'APPROVED'
+  | 'SCHEDULED'
+  | 'EXECUTING'
+  | 'BLOCKED'
+  | 'DONE'
+  | 'TRACKING'
+  | 'CANCELLED';
 
 // Framework metadata
 const FRAMEWORK_META: Record<
@@ -88,16 +107,29 @@ interface AssessmentFromAPI {
   organizationId?: string;
 }
 
-// Map API status to local ItemStatus
-const mapApiStatus = (status: string): ItemStatus => {
-  const statusMap: Record<string, ItemStatus> = {
-    DRAFT: 'draft',
-    IN_REVIEW: 'in_review',
-    AWAITING_APPROVAL: 'in_review',
-    APPROVED: 'approved',
-    COMPLETED: 'completed',
+// Map API status to canonical InitiativeStatus
+const mapApiStatus = (status: string): InitiativeStatusType => {
+  const s = status?.toUpperCase() || 'DRAFT';
+  // Map legacy statuses to new canonical statuses
+  const statusMap: Record<string, InitiativeStatusType> = {
+    DRAFT: 'DRAFT',
+    PENDING_REVIEW: 'PENDING_REVIEW',
+    IN_REVIEW: 'PENDING_REVIEW', // Legacy mapping
+    AWAITING_APPROVAL: 'PENDING_REVIEW', // Legacy mapping
+    REVIEW: 'REVIEW',
+    PROMOTED: 'PROMOTED',
+    PLANNING: 'PLANNING',
+    APPROVED: 'APPROVED',
+    SCHEDULED: 'SCHEDULED',
+    EXECUTING: 'EXECUTING',
+    BLOCKED: 'BLOCKED',
+    DONE: 'DONE',
+    COMPLETED: 'DONE',
+    TRACKING: 'TRACKING',
+    CANCELLED: 'CANCELLED',
+    ARCHIVED: 'CANCELLED', // Map legacy ARCHIVED to CANCELLED
   };
-  return statusMap[status?.toUpperCase()] || 'draft';
+  return statusMap[s] || 'DRAFT';
 };
 
 // Map API type to AssessmentFramework
@@ -123,6 +155,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
   const [showNewAssessmentModal, setShowNewAssessmentModal] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   // API data state
   const [assessments, setAssessments] = useState<AssessmentFromAPI[]>([]);
@@ -143,15 +176,14 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         const assessmentData = assessmentResponse?.assessments || [];
         setAssessments(Array.isArray(assessmentData) ? assessmentData : []);
 
-        // TODO: Fetch reports when API is ready
-        // const reportsResponse = await Api.get('/assessment-reports');
-        // setReports(reportsResponse?.reports || []);
-        setReports([]);
+        // Fetch reports (Assessment Reports module)
+        const reportsResponse = await Api.get('/assessment-reports').catch(() => null);
+        const reportData = reportsResponse?.reports || [];
+        setReports(Array.isArray(reportData) ? reportData : []);
 
-        // TODO: Fetch initiatives when API is ready
-        // const initiativesResponse = await Api.get('/initiatives?source=assessment');
-        // setInitiatives(initiativesResponse?.initiatives || []);
-        setInitiatives([]);
+        // Fetch initiatives derived from assessments
+        const initiativesResponse = await Api.get('/initiatives?source=assessment').catch(() => []);
+        setInitiatives(Array.isArray(initiativesResponse) ? initiativesResponse : []);
       } catch (err: any) {
         const message = err?.message || 'Failed to load assessments';
         setError(message);
@@ -169,14 +201,65 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const refreshData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await Api.get('/assessments/my-assessments');
-      setAssessments(response?.assessments || []);
+      const [assessmentsRes, reportsRes, initiativesRes] = await Promise.all([
+        Api.get('/assessments/my-assessments').catch(() => null),
+        Api.get('/assessment-reports').catch(() => null),
+        Api.get('/initiatives?source=assessment').catch(() => []),
+      ]);
+
+      setAssessments(assessmentsRes?.assessments || []);
+      setReports(reportsRes?.reports || []);
+      setInitiatives(Array.isArray(initiativesRes) ? initiativesRes : []);
     } catch (err: any) {
       toast.error('Failed to refresh');
     } finally {
       setIsLoading(false);
     }
   }, []);
+
+  // Get status dropdown context based on active tab
+  // Assessment tab shows DRAFT only, Initiatives tab shows full lifecycle
+  const statusContext: ModuleContext = useMemo(() => {
+    switch (activeTab) {
+      case 'reports':
+        return 'reporting'; // Reports can see all statuses
+      case 'initiatives':
+        return 'initiatives'; // Full initiative lifecycle
+      default:
+        return 'assessment'; // DRAFT only
+    }
+  }, [activeTab]);
+
+  // Reset status filter when tab changes
+  useEffect(() => {
+    setStatusFilter('all');
+  }, [activeTab]);
+
+  // Calculate status counts for dropdown
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: 0 };
+
+    let data: any[] = [];
+    switch (activeTab) {
+      case 'list':
+        data = assessments;
+        break;
+      case 'reports':
+        data = reports;
+        break;
+      case 'initiatives':
+        data = initiatives;
+        break;
+    }
+
+    counts.all = data.length;
+    data.forEach((item) => {
+      const status = mapApiStatus(item.status);
+      counts[status] = (counts[status] || 0) + 1;
+    });
+
+    return counts;
+  }, [activeTab, assessments, reports, initiatives]);
 
   // Tab configuration
   const tabs = useMemo(
@@ -237,10 +320,17 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         width: '140px',
         filterable: true,
         filterOptions: [
-          { value: 'draft', label: 'Draft', color: 'bg-slate-400' },
-          { value: 'in_review', label: 'In Review', color: 'bg-amber-400' },
-          { value: 'approved', label: 'Approved', color: 'bg-emerald-400' },
-          { value: 'completed', label: 'Completed', color: 'bg-emerald-400' },
+          { value: 'DRAFT', label: 'Draft', color: 'bg-slate-400' },
+          { value: 'REVIEW', label: 'In Review', color: 'bg-amber-400' },
+          { value: 'PROMOTED', label: 'Promoted', color: 'bg-blue-400' },
+          { value: 'PLANNING', label: 'Planning', color: 'bg-indigo-400' },
+          { value: 'APPROVED', label: 'Approved', color: 'bg-emerald-400' },
+          { value: 'SCHEDULED', label: 'Scheduled', color: 'bg-purple-400' },
+          { value: 'EXECUTING', label: 'Executing', color: 'bg-cyan-400' },
+          { value: 'BLOCKED', label: 'Blocked', color: 'bg-red-400' },
+          { value: 'DONE', label: 'Done', color: 'bg-green-400' },
+          { value: 'TRACKING', label: 'Tracking', color: 'bg-teal-400' },
+          { value: 'CANCELLED', label: 'Cancelled', color: 'bg-gray-400' },
         ],
       },
       {
@@ -260,10 +350,13 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
 
   // Handlers
   const handleOpenDocument = useCallback((row: any) => {
+    // Determine document type based on active tab
+    const docType = activeTab === 'initiatives' ? 'initiative' : 'assessment';
+    
     const doc: OpenDocument = {
       id: row.id,
-      type: 'assessment',
-      subType: row.framework,
+      type: docType,
+      subType: row.framework || row.sourceType,
       name: row.name,
       status: row.status,
     };
@@ -273,7 +366,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       return [...prev, doc];
     });
     setActiveDocumentId(row.id);
-  }, []);
+  }, [activeTab]);
 
   const handleCloseDocument = useCallback(
     (id: string) => {
@@ -301,6 +394,21 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     setShowNewAssessmentModal(true);
   }, []);
 
+  const handleAssessmentCreated = useCallback(
+    (assessment: NewAssessmentData) => {
+      // Refresh data to include new assessment
+      refreshData();
+      // Open the new assessment
+      handleOpenDocument({
+        id: assessment.id,
+        name: assessment.name,
+        framework: assessment.assessmentType,
+        status: assessment.status,
+      });
+    },
+    [refreshData, handleOpenDocument]
+  );
+
   const handleRowAction = useCallback(
     (action: string, row: any) => {
       console.log('Row action:', action, row);
@@ -313,9 +421,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
 
   // Transform API data to display format
   const currentData = useMemo(() => {
+    let data: any[] = [];
+    
     switch (activeTab) {
       case 'list':
-        return assessments.map((item) => ({
+        data = assessments.map((item) => ({
           id: item.id,
           name: item.name,
           framework: mapApiFramework(item.type),
@@ -323,8 +433,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           progress: item.progress ?? 0,
           updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
         }));
+        break;
       case 'reports':
-        return reports.map((item) => ({
+        data = reports.map((item) => ({
           id: item.id,
           name: item.name,
           framework: mapApiFramework(item.type),
@@ -332,8 +443,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           progress: item.progress ?? 100,
           updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
         }));
+        break;
       case 'initiatives':
-        return initiatives.map((item) => ({
+        data = initiatives.map((item) => ({
           id: item.id,
           name: item.name || item.title,
           framework: mapApiFramework(item.sourceType),
@@ -343,25 +455,126 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           priority: item.priority || 'medium',
           impact: item.impact || 'medium',
         }));
+        break;
       default:
-        return [];
+        data = [];
     }
-  }, [activeTab, assessments, reports, initiatives]);
+
+    // Apply status filter
+    if (statusFilter && statusFilter !== 'all') {
+      data = data.filter((item) => item.status === statusFilter);
+    }
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      data = data.filter((item) => {
+        const name = item.name?.toLowerCase() || '';
+        const framework = item.framework?.toLowerCase() || '';
+        const status = item.status?.toLowerCase() || '';
+        return name.includes(query) || framework.includes(query) || status.includes(query);
+      });
+    }
+
+    return data;
+  }, [activeTab, assessments, reports, initiatives, searchQuery, statusFilter]);
 
   // Convert to grid items
   const gridItems: GridItem[] = useMemo(() => {
     return currentData.map((item) => ({
       ...item,
       type: item.framework,
-      typeColor: FRAMEWORK_META[item.framework]?.color || 'slate',
+      typeColor: FRAMEWORK_META[item.framework as AssessmentFramework]?.color || 'slate',
     }));
   }, [currentData]);
 
   // Render content based on active document or list
   const renderContent = () => {
     if (activeDocumentId) {
-      // Show document editor (placeholder for now)
       const doc = openDocuments.find((d) => d.id === activeDocumentId);
+      
+      // Show Initiative Full View for initiatives
+      if (doc && (doc.type === 'initiative' || activeTab === 'initiatives')) {
+        return (
+          <InitiativeFullView
+            initiativeId={doc.id}
+            onBack={handleShowList}
+            onStatusChange={refreshData}
+            sourceModule="assessment"
+          />
+        );
+      }
+      
+      // Show Assessment Editor for assessments
+      if (doc && doc.type === 'assessment') {
+        const framework = doc.subType?.toUpperCase() || 'DRD';
+        return (
+          <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950">
+            {/* Assessment Editor Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={handleShowList}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
+                >
+                  <FileText className="w-5 h-5 text-slate-500" />
+                </button>
+                <div>
+                  <h2 className="text-lg font-semibold text-navy-900 dark:text-white">{doc.name}</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {framework} Assessment · {doc.status}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  doc.status === 'DRAFT' ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' :
+                  doc.status === 'REVIEW' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                  doc.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                }`}>
+                  {doc.status}
+                </span>
+              </div>
+            </div>
+            
+            {/* Assessment Editor Content */}
+            <div className="flex-1 overflow-auto p-6">
+              <div className="max-w-4xl mx-auto">
+                <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8">
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mx-auto mb-4">
+                      <Activity className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-navy-900 dark:text-white mb-2">
+                      {doc.name}
+                    </h3>
+                    <p className="text-slate-500 dark:text-slate-400 mb-6">
+                      Framework: {framework} · Progress: {doc.progress || 0}%
+                    </p>
+                    <div className="flex justify-center gap-3">
+                      <button
+                        onClick={() => window.open(`/assessment/${framework.toLowerCase()}/${doc.id}`, '_blank')}
+                        className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors"
+                      >
+                        Open Full Editor
+                      </button>
+                      <button
+                        onClick={handleShowList}
+                        className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-navy-800 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors"
+                      >
+                        Back to List
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+      
+      // Show document editor (placeholder for reports)
       return (
         <div className="flex items-center justify-center h-full text-slate-500">
           <div className="text-center">
@@ -369,7 +582,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             <p className="text-sm">
               ({doc?.subType} - {doc?.status})
             </p>
-            <p className="mt-4 text-xs">Editor placeholder - będzie tu edytor assessmentu</p>
+            <p className="mt-4 text-xs">Editor placeholder - będzie tu edytor raportu</p>
           </div>
         </div>
       );
@@ -430,6 +643,17 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     );
   }
 
+  // Status dropdown component for right controls
+  const statusDropdownControl = (
+    <StatusDropdown
+      context={statusContext}
+      value={statusFilter}
+      onChange={setStatusFilter}
+      counts={statusCounts}
+      size="md"
+    />
+  );
+
   return (
     <>
       <ModuleHub
@@ -449,47 +673,17 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         onClearFilters={handleClearFilters}
         onNewItem={handleNewAssessment}
         newItemLabel="New Assessment"
+        rightControls={statusDropdownControl}
       >
         {renderContent()}
       </ModuleHub>
 
-      {/* New Assessment Modal (placeholder) */}
-      {showNewAssessmentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-navy-900 border border-navy-700 rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-lg font-semibold text-white mb-4">Select Framework</h2>
-            <div className="space-y-2">
-              {Object.entries(FRAMEWORK_META).map(([key, meta]) => (
-                <button
-                  key={key}
-                  onClick={() => {
-                    console.log('Create assessment:', key);
-                    setShowNewAssessmentModal(false);
-                  }}
-                  className={`
-                    flex items-center gap-3 w-full p-3 rounded-lg
-                    bg-navy-800 border border-navy-600
-                    hover:border-${meta.color}-500/50 hover:bg-navy-700
-                    transition-all text-left
-                  `}
-                >
-                  <span className={`text-${meta.color}-400`}>{meta.icon}</span>
-                  <div>
-                    <div className="text-white font-medium">{meta.shortName}</div>
-                    <div className="text-xs text-slate-400">{meta.name}</div>
-                  </div>
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={() => setShowNewAssessmentModal(false)}
-              className="mt-4 w-full py-2 text-sm text-slate-400 hover:text-white transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      {/* New Assessment Modal */}
+      <NewAssessmentModal
+        isOpen={showNewAssessmentModal}
+        onClose={() => setShowNewAssessmentModal(false)}
+        onSuccess={handleAssessmentCreated}
+      />
     </>
   );
 };

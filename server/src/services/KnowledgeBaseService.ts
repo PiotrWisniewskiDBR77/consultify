@@ -167,7 +167,7 @@ class KnowledgeBaseService {
         LEFT JOIN kb_article_translations t ON a.id = t.article_id AND t.language = ?
         WHERE ${whereClause}
       `;
-      const countResult = await dbGet(countSql, [language, ...queryParams]);
+      const countResult = (await dbGet(countSql, [language, ...queryParams])) as any;
       const total = countResult?.total || 0;
 
       // Data query
@@ -229,7 +229,7 @@ class KnowledgeBaseService {
         WHERE a.slug = ? AND a.status = 'published'
       `;
 
-      const row = await dbGet(sql, [language, language, slug]);
+      const row = (await dbGet(sql, [language, language, slug])) as any;
 
       if (!row) return null;
 

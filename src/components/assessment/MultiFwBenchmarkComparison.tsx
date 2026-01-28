@@ -171,6 +171,7 @@ export const MultiFwBenchmarkComparison: React.FC<MultiFwBenchmarkComparisonProp
   const [selectedSize, setSelectedSize] = useState(initialSize || 'medium');
   const [benchmarkData, setBenchmarkData] = useState<BenchmarkData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch benchmark data
   useEffect(() => {
@@ -179,6 +180,7 @@ export const MultiFwBenchmarkComparison: React.FC<MultiFwBenchmarkComparisonProp
 
   const fetchBenchmarkData = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(
@@ -196,71 +198,14 @@ export const MultiFwBenchmarkComparison: React.FC<MultiFwBenchmarkComparisonProp
         const data = await response.json();
         setBenchmarkData(data);
       } else {
-        // Use mock data for demo
-        setBenchmarkData(generateMockBenchmarkData());
+        setBenchmarkData(null);
+        setError('Failed to load benchmark data');
       }
     } catch (err) {
-      // Use mock data for demo
-      setBenchmarkData(generateMockBenchmarkData());
+      setBenchmarkData(null);
+      setError('Failed to load benchmark data');
     }
     setIsLoading(false);
-  };
-
-  // Generate mock benchmark data
-  const generateMockBenchmarkData = (): BenchmarkData => {
-    const industryAverage = 2.7 + Math.random() * 0.5;
-    const percentile = Math.round(
-      ((scoreResult.overall - 1) / 4) * 100 * (0.8 + Math.random() * 0.4)
-    );
-
-    const categoryComparison: Record<string, any> = {};
-    const labels = CATEGORY_LABELS[framework] || {};
-
-    Object.entries(scoreResult.categories || {}).forEach(([catId, catScore]) => {
-      const scoreValue = typeof catScore === 'number' ? catScore : 0;
-      const benchmark = industryAverage + (Math.random() - 0.5) * 0.8;
-      categoryComparison[catId] = {
-        score: scoreValue,
-        benchmark: Math.round(benchmark * 10) / 10,
-        gap: Math.round((scoreValue - benchmark) * 10) / 10,
-        status: scoreValue >= benchmark ? 'above' : 'below',
-      };
-    });
-
-    const strengths = Object.entries(categoryComparison)
-      .filter(([, d]) => d.gap > 0)
-      .map(([id, d]) => ({ id, gap: d.gap }))
-      .sort((a, b) => b.gap - a.gap);
-
-    const weaknesses = Object.entries(categoryComparison)
-      .filter(([, d]) => d.gap < 0)
-      .map(([id, d]) => ({ id, gap: d.gap }))
-      .sort((a, b) => a.gap - b.gap);
-
-    return {
-      industry: selectedIndustry,
-      industryName:
-        INDUSTRY_OPTIONS[framework]?.find((i) => i.id === selectedIndustry)?.name ||
-        selectedIndustry,
-      sampleSize: 150 + Math.floor(Math.random() * 300),
-      lastUpdated: '2024-Q4',
-      percentile: Math.min(99, Math.max(1, percentile)),
-      percentileLabel:
-        percentile >= 90
-          ? 'Industry Leader'
-          : percentile >= 75
-            ? 'Above Average'
-            : percentile >= 50
-              ? 'Average'
-              : percentile >= 25
-                ? 'Below Average'
-                : 'Laggard',
-      industryAverage: Math.round(industryAverage * 10) / 10,
-      gapToAverage: Math.round((scoreResult.overall - industryAverage) * 10) / 10,
-      categoryComparison,
-      strengths,
-      weaknesses,
-    };
   };
 
   // Prepare radar chart data
@@ -298,7 +243,21 @@ export const MultiFwBenchmarkComparison: React.FC<MultiFwBenchmarkComparisonProp
     );
   }
 
-  if (!benchmarkData) return null;
+  if (!benchmarkData) {
+    return (
+      <div className="p-6 rounded-xl border border-gray-200 dark:border-navy-700 bg-gray-50 dark:bg-navy-900">
+        <div className="text-sm text-gray-700 dark:text-gray-200">
+          {error || 'No benchmark data available.'}
+        </div>
+        <button
+          onClick={fetchBenchmarkData}
+          className="mt-3 px-3 py-1.5 text-sm rounded-lg bg-brand text-white hover:opacity-90"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

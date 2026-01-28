@@ -33,7 +33,10 @@ const router = Router();
 
 // Mount all AI sub-routes
 router.use('/ab-testing', aiAbTestingRoutes);
-router.use('/analytics', aiAnalyticsRoutesV1);
+// Default to V2 under the canonical path
+router.use('/analytics', aiAnalyticsRoutesV2);
+// Keep explicit versioned aliases for backwards compatibility
+router.use('/analytics-v1', aiAnalyticsRoutesV1);
 router.use('/analytics-v2', aiAnalyticsRoutesV2);
 router.use('/budgets', aiBudgetsRoutes);
 router.use('/development', aiDevelopmentRoutes);

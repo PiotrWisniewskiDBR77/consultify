@@ -25,12 +25,19 @@ interface DynamicTabsProps {
 // Max visible tabs before overflow
 const MAX_VISIBLE_TABS = 6;
 
-// Status dot colors
+// Status dot colors - uses canonical 11-status initiative lifecycle
 const STATUS_COLORS: Record<ItemStatus, string> = {
-  draft: 'bg-slate-400',
-  in_review: 'bg-amber-400',
-  approved: 'bg-emerald-400',
-  completed: 'bg-emerald-400',
+  DRAFT: 'bg-slate-400',
+  REVIEW: 'bg-amber-400',
+  PROMOTED: 'bg-blue-400',
+  PLANNING: 'bg-indigo-400',
+  APPROVED: 'bg-emerald-400',
+  SCHEDULED: 'bg-purple-400',
+  EXECUTING: 'bg-cyan-400',
+  BLOCKED: 'bg-red-400',
+  DONE: 'bg-green-400',
+  TRACKING: 'bg-teal-400',
+  CANCELLED: 'bg-gray-400',
 };
 
 // Type colors for left border accent

@@ -12,11 +12,13 @@ import {
   ArrowRight,
   Calendar,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   Clock,
   Cpu,
   DollarSign,
   FileText,
+  Filter,
   Flag,
   Lightbulb,
   ListTodo,
@@ -39,6 +41,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { ToolType as StoreToolType } from '@/store/useToolStore';
 
 import { ToolWorkspace } from '../DiscoveryTools';
+import { InitiativeFullView } from '../Initiatives/InitiativeFullView';
 
 import {
   CategoryButton,
@@ -56,6 +59,39 @@ import {
 // Tool category types
 type ToolCategory = 'strategic' | 'operational' | 'digital' | 'automation';
 type ItemStatus = 'draft' | 'in_review' | 'approved' | 'completed';
+
+// Status filter options per tab context
+interface StatusFilterOption {
+  id: string;
+  label: string;
+  color: string;
+  bgColor: string;
+}
+
+// Discovery tab: DRAFT, PENDING_REVIEW (work in progress)
+const DISCOVERY_STATUSES: StatusFilterOption[] = [
+  { id: 'all', label: 'All', color: 'text-slate-400', bgColor: 'bg-slate-500' },
+  { id: 'draft', label: 'Draft', color: 'text-slate-400', bgColor: 'bg-slate-500' },
+  { id: 'pending_review', label: 'Pending Review', color: 'text-orange-400', bgColor: 'bg-orange-500' },
+];
+
+// Reports tab: APPROVED, COMPLETED (finished analyses)
+const REPORTS_STATUSES: StatusFilterOption[] = [
+  { id: 'all', label: 'All', color: 'text-slate-400', bgColor: 'bg-slate-500' },
+  { id: 'approved', label: 'Approved', color: 'text-emerald-400', bgColor: 'bg-emerald-500' },
+  { id: 'completed', label: 'Completed', color: 'text-blue-400', bgColor: 'bg-blue-500' },
+];
+
+// Initiatives tab: DRAFT, PROPOSED, PLANNED, IN_PROGRESS, COMPLETED, CANCELLED
+const INITIATIVES_STATUSES: StatusFilterOption[] = [
+  { id: 'all', label: 'All', color: 'text-slate-400', bgColor: 'bg-slate-500' },
+  { id: 'draft', label: 'Draft', color: 'text-slate-400', bgColor: 'bg-slate-500' },
+  { id: 'proposed', label: 'Proposed', color: 'text-purple-400', bgColor: 'bg-purple-500' },
+  { id: 'planned', label: 'Planned', color: 'text-blue-400', bgColor: 'bg-blue-500' },
+  { id: 'in_progress', label: 'In Progress', color: 'text-amber-400', bgColor: 'bg-amber-500' },
+  { id: 'completed', label: 'Completed', color: 'text-emerald-400', bgColor: 'bg-emerald-500' },
+  { id: 'cancelled', label: 'Cancelled', color: 'text-red-400', bgColor: 'bg-red-500' },
+];
 
 // Tool type codes
 type ToolType =
@@ -449,6 +485,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
   const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<ToolCategory | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  const statusDropdownRef = React.useRef<HTMLDivElement>(null);
 
   // Data State
   const [discoveries, setDiscoveries] = useState<DisplayItem[]>([]);
@@ -551,6 +590,41 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Reset status filter when tab changes
+  useEffect(() => {
+    setStatusFilter('all');
+  }, [activeTab]);
+
+  // Close status dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
+        setIsStatusDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Get status options based on active tab
+  const currentStatusOptions = useMemo(() => {
+    switch (activeTab) {
+      case 'list':
+        return DISCOVERY_STATUSES;
+      case 'reports':
+        return REPORTS_STATUSES;
+      case 'initiatives':
+        return INITIATIVES_STATUSES;
+      default:
+        return DISCOVERY_STATUSES;
+    }
+  }, [activeTab]);
+
+  // Get selected status option
+  const selectedStatusOption = useMemo(() => {
+    return currentStatusOptions.find(opt => opt.id === statusFilter) || currentStatusOptions[0];
+  }, [currentStatusOptions, statusFilter]);
 
   // Tab configuration with dynamic counts
   const tabs = useMemo(
@@ -905,6 +979,19 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
         data = [];
     }
 
+    // Apply status filter
+    if (statusFilter && statusFilter !== 'all') {
+      data = data.filter((item) => {
+        // For initiatives tab, also check _fullData.status
+        if (activeTab === 'initiatives' && item._fullData?.status) {
+          return item._fullData.status.toLowerCase() === statusFilter.toLowerCase() ||
+                 item._fullData.status.toLowerCase().replace('_', '') === statusFilter.replace('_', '');
+        }
+        return item.status === statusFilter || 
+               item.status.replace('_', '') === statusFilter.replace('_', '');
+      });
+    }
+
     // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -917,7 +1004,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     }
 
     return data;
-  }, [activeTab, discoveries, reports, initiatives, searchQuery]);
+  }, [activeTab, discoveries, reports, initiatives, searchQuery, statusFilter]);
 
   // Convert to grid items
   const gridItems: GridItem[] = useMemo(() => {
@@ -1329,9 +1416,16 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     if (activeDocumentId) {
       const doc = openDocuments.find((d) => d.id === activeDocumentId);
       
-      // Show Initiative Detail View
+      // Show Initiative Full View (new component with full lifecycle support)
       if (doc && doc.type === 'initiative') {
-        return renderInitiativeDetail();
+        return (
+          <InitiativeFullView
+            initiativeId={doc.id}
+            onBack={handleShowList}
+            onStatusChange={() => fetchData(true)}
+            sourceModule="tools"
+          />
+        );
       }
       
       // Check if this is a tool session (not an initiative)
@@ -1425,6 +1519,64 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     );
   };
 
+  // Status Filter Dropdown Component
+  const StatusFilterDropdown = (
+    <div ref={statusDropdownRef} className="relative">
+      <button
+        onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+        className={`
+          flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
+          border transition-all duration-200
+          ${isStatusDropdownOpen 
+            ? 'bg-primary-500/15 border-primary-500 text-primary-400' 
+            : 'bg-navy-800 border-navy-600 text-slate-300 hover:bg-navy-700 hover:border-slate-500 hover:text-white'
+          }
+        `}
+      >
+        <Filter size={16} className="text-slate-400" />
+        <span className={`w-2 h-2 rounded-full ${selectedStatusOption.bgColor}`} />
+        <span>{selectedStatusOption.label}</span>
+        <ChevronDown
+          size={16}
+          className={`text-slate-400 transition-transform duration-200 ${isStatusDropdownOpen ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {isStatusDropdownOpen && (
+        <div className="absolute top-full right-0 mt-1 z-50 min-w-[180px] py-1 bg-navy-800 border border-navy-600 rounded-lg shadow-xl shadow-black/30">
+          {currentStatusOptions.map((option) => {
+            const isSelected = statusFilter === option.id;
+            return (
+              <button
+                key={option.id}
+                onClick={() => {
+                  setStatusFilter(option.id);
+                  setIsStatusDropdownOpen(false);
+                }}
+                className={`
+                  w-full flex items-center gap-3 px-3 py-2 text-left
+                  transition-colors duration-150
+                  ${isSelected 
+                    ? 'bg-primary-500/15 text-white' 
+                    : 'text-slate-300 hover:bg-navy-700 hover:text-white'
+                  }
+                `}
+              >
+                <span className={`w-2.5 h-2.5 rounded-full ${option.bgColor}`} />
+                <span className="flex-1 text-sm">{option.label}</span>
+                {isSelected && (
+                  <svg className="w-4 h-4 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <>
       <ModuleHub
@@ -1443,6 +1595,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         categoryButtons={categoryButtons}
+        rightControls={StatusFilterDropdown}
       >
         {renderContent()}
       </ModuleHub>

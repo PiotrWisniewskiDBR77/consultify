@@ -24,7 +24,7 @@ import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-export type LinkedItemType = 'task' | 'decision' | 'risk' | 'initiative' | 'project';
+export type LinkedItemType = 'task' | 'decision' | 'risk' | 'initiative' | 'project' | 'external';
 
 export interface LinkedItem {
   id: string;
@@ -33,6 +33,7 @@ export interface LinkedItem {
   status?: string;
   priority?: string;
   url?: string;
+  externalUrl?: string;
 }
 
 interface LinkedItemsSectionProps {
@@ -61,6 +62,9 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
   const [searchResults, setSearchResults] = useState<LinkedItem[]>([]);
   const [searching, setSearching] = useState(false);
   const [selectedType, setSelectedType] = useState<LinkedItemType | 'all'>('all');
+  const [isAddingExternal, setIsAddingExternal] = useState(false);
+  const [externalUrl, setExternalUrl] = useState('');
+  const [externalTitle, setExternalTitle] = useState('');
 
   const getTypeIcon = (type: LinkedItemType, size: number = 16) => {
     switch (type) {
@@ -74,6 +78,8 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
         return <Target size={size} className="text-emerald-400" />;
       case 'project':
         return <Flag size={size} className="text-indigo-400" />;
+      case 'external':
+        return <ExternalLink size={size} className="text-slate-400" />;
       default:
         return <LinkIcon size={size} className="text-slate-400" />;
     }
@@ -86,6 +92,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
       risk: { en: 'Risk', pl: 'Ryzyko' },
       initiative: { en: 'Initiative', pl: 'Inicjatywa' },
       project: { en: 'Project', pl: 'Projekt' },
+      external: { en: 'External Link', pl: 'Link zewnętrzny' },
     };
     return isPolish ? labels[type].pl : labels[type].en;
   };
@@ -171,6 +178,36 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
     [onRemove, isPolish]
   );
 
+  const handleAddExternalLink = useCallback(async () => {
+    if (!externalUrl.trim() || !externalTitle.trim() || !onAdd) return;
+
+    // Validate URL format
+    try {
+      new URL(externalUrl);
+    } catch {
+      toast.error(isPolish ? 'Nieprawidłowy format URL' : 'Invalid URL format');
+      return;
+    }
+
+    const externalItem: LinkedItem = {
+      id: `external-${Date.now()}`,
+      type: 'external',
+      title: externalTitle.trim(),
+      externalUrl: externalUrl.trim(),
+      url: externalUrl.trim(),
+    };
+
+    try {
+      await onAdd(externalItem);
+      setExternalUrl('');
+      setExternalTitle('');
+      setIsAddingExternal(false);
+      toast.success(isPolish ? 'Link zewnętrzny dodany' : 'External link added');
+    } catch (error) {
+      toast.error(isPolish ? 'Nie udało się dodać linku' : 'Failed to add link');
+    }
+  }, [externalUrl, externalTitle, onAdd, isPolish]);
+
   // Group items by type
   const groupedItems = items.reduce((acc, item) => {
     if (!acc[item.type]) {
@@ -195,18 +232,39 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
             </span>
           )}
         </div>
-        {!readOnly && onAdd && searchItems && (
-          <button
-            onClick={() => setIsAddingLink(!isAddingLink)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              isAddingLink
-                ? 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-                : 'text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10'
-            }`}
-          >
-            {isAddingLink ? <X size={14} /> : <Plus size={14} />}
-            <span>{isAddingLink ? (isPolish ? 'Anuluj' : 'Cancel') : (isPolish ? 'Dodaj' : 'Add')}</span>
-          </button>
+        {!readOnly && onAdd && (
+          <div className="flex items-center gap-2">
+            {searchItems && (
+              <button
+                onClick={() => {
+                  setIsAddingLink(!isAddingLink);
+                  setIsAddingExternal(false);
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  isAddingLink
+                    ? 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+                    : 'text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10'
+                }`}
+              >
+                {isAddingLink ? <X size={14} /> : <Plus size={14} />}
+                <span>{isAddingLink ? (isPolish ? 'Anuluj' : 'Cancel') : (isPolish ? 'Dodaj' : 'Add')}</span>
+              </button>
+            )}
+            <button
+              onClick={() => {
+                setIsAddingExternal(!isAddingExternal);
+                setIsAddingLink(false);
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                isAddingExternal
+                  ? 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+                  : 'text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10'
+              }`}
+            >
+              {isAddingExternal ? <X size={14} /> : <ExternalLink size={14} />}
+              <span>{isAddingExternal ? (isPolish ? 'Anuluj' : 'Cancel') : (isPolish ? 'Link zewnętrzny' : 'External')}</span>
+            </button>
+          </div>
         )}
       </div>
 
@@ -305,6 +363,65 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
             </div>
           </motion.div>
         )}
+
+        {/* Add External Link Panel */}
+        {isAddingExternal && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-4 overflow-hidden"
+          >
+            <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 border border-slate-200 dark:border-navy-600">
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                    {isPolish ? 'Tytuł linku' : 'Link Title'}
+                  </label>
+                  <input
+                    type="text"
+                    value={externalTitle}
+                    onChange={(e) => setExternalTitle(e.target.value)}
+                    placeholder={isPolish ? 'Np. Dokumentacja projektu' : 'e.g., Project documentation'}
+                    className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 outline-none"
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                    {isPolish ? 'URL' : 'URL'}
+                  </label>
+                  <input
+                    type="url"
+                    value={externalUrl}
+                    onChange={(e) => setExternalUrl(e.target.value)}
+                    placeholder={isPolish ? 'https://example.com' : 'https://example.com'}
+                    className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 outline-none"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleAddExternalLink}
+                    disabled={!externalUrl.trim() || !externalTitle.trim()}
+                    className="flex-1 px-3 py-2 rounded-lg text-sm font-medium bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isPolish ? 'Dodaj link' : 'Add Link'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsAddingExternal(false);
+                      setExternalUrl('');
+                      setExternalTitle('');
+                    }}
+                    className="px-3 py-2 rounded-lg text-sm font-medium bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-navy-600 transition-colors"
+                  >
+                    {isPolish ? 'Anuluj' : 'Cancel'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* Items List */}
@@ -361,13 +478,14 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
 
                     {/* Actions */}
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {item.url && (
+                      {(item.url || item.externalUrl) && (
                         <a
-                          href={item.url}
+                          href={item.externalUrl || item.url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-navy-600 transition-colors"
                           title={isPolish ? 'Otwórz w nowej karcie' : 'Open in new tab'}
+                          onClick={(e) => e.stopPropagation()}
                         >
                           <ExternalLink size={14} className="text-slate-400" />
                         </a>

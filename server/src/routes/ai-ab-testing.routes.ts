@@ -52,7 +52,7 @@ try {
 router.get(
   '/experiments',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!abTestingService?.listExperiments) {
       return res.status(503).json({ error: 'AB Testing service not available' });
@@ -90,7 +90,7 @@ router.get(
 router.post(
   '/experiments',
   verifyToken,
-  requireRole(['super_admin']),
+  requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!abTestingService?.createExperiment) {
       return res.status(503).json({ error: 'AB Testing service not available' });
@@ -125,7 +125,7 @@ router.post(
 router.get(
   '/experiments/:id',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!abTestingService?.getExperimentStats) {
       return res.status(503).json({ error: 'AB Testing service not available' });
@@ -152,7 +152,7 @@ router.get(
 router.post(
   '/experiments/:id/start',
   verifyToken,
-  requireRole(['super_admin']),
+  requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!abTestingService?.startExperiment) {
       return res.status(503).json({ error: 'AB Testing service not available' });
@@ -184,7 +184,7 @@ router.post(
 router.post(
   '/experiments/:id/stop',
   verifyToken,
-  requireRole(['super_admin']),
+  requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!abTestingService?.stopExperiment) {
       return res.status(503).json({ error: 'AB Testing service not available' });

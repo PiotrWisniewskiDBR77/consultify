@@ -24,6 +24,7 @@ import {
   Plus,
   Save,
   Scale,
+  Share2,
   Star,
   ThumbsDown,
   ThumbsUp,
@@ -43,12 +44,16 @@ import {
   CommentsSection,
   LinkedItemsSection,
   EscalationRulesSection,
+  DelegationModal,
+  StakeholdersSection,
   type Attachment,
   type Comment,
   type LinkedItem,
   type ReminderRule,
   type EscalationRule,
   type WarningThresholds,
+  type Stakeholder,
+  type StakeholderRole,
 } from './shared';
 
 interface DecisionDetailViewProps {
@@ -91,6 +96,15 @@ const PRIORITY_CONFIG = {
   medium: { label: { en: 'Medium', pl: 'Średni' }, color: 'bg-blue-400', textColor: 'text-blue-500' },
   high: { label: { en: 'High', pl: 'Wysoki' }, color: 'bg-orange-400', textColor: 'text-orange-500' },
   critical: { label: { en: 'Critical', pl: 'Krytyczny' }, color: 'bg-red-500', textColor: 'text-red-500' },
+};
+
+// Normalize priority value to ensure it's a valid key
+const normalizePriority = (priority?: string | null): keyof typeof PRIORITY_CONFIG => {
+  if (!priority) return 'medium';
+  const normalized = priority.toLowerCase();
+  if (normalized === 'urgent') return 'critical';
+  if (normalized in PRIORITY_CONFIG) return normalized as keyof typeof PRIORITY_CONFIG;
+  return 'medium';
 };
 
 const CATEGORY_CONFIG = {
@@ -172,12 +186,16 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const [comments, setComments] = useState<Comment[]>([]);
   const [linkedItems, setLinkedItems] = useState<LinkedItem[]>([]);
 
+  // Stakeholders & Delegation
+  const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
+  const [showDelegationModal, setShowDelegationModal] = useState(false);
+
   // UI State
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['description', 'alternatives', 'impact', 'escalation', 'attachments', 'links', 'comments'])
+    new Set(['description', 'alternatives', 'impact', 'escalation', 'stakeholders', 'attachments', 'links', 'comments'])
   );
   const [editingAlternativeId, setEditingAlternativeId] = useState<string | null>(null);
 
@@ -234,7 +252,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       setTitle(decision.title || '');
       setDescription(decision.description || '');
       setStatus(decision.status?.toLowerCase() || 'pending');
-      setPriority(decision.priority?.toLowerCase() || 'medium');
+      setPriority(normalizePriority(decision.priority));
       setCategory(decision.category || 'technical');
       setDueDate(decision.dueDate ? decision.dueDate.split('T')[0] : '');
       setRationale(decision.rationale || '');
@@ -255,6 +273,15 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       setAttachments(decision.attachments || []);
       setComments(decision.comments || []);
       setLinkedItems(decision.linkedItems || []);
+
+      // Load stakeholders
+      try {
+        const stakeholdersResponse = await Api.get(`/decisions/${id}/stakeholders`);
+        setStakeholders(stakeholdersResponse?.stakeholders || []);
+      } catch {
+        // Stakeholders endpoint may not exist yet
+        setStakeholders([]);
+      }
     } catch (error) {
       console.error('Failed to load decision', error);
       toast.error(isPolish ? 'Nie udało się załadować decyzji' : 'Failed to load decision');
@@ -381,8 +408,21 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   }, [dueDate, status]);
 
   const isPending = status === 'pending';
-  const statusConfig = STATUS_CONFIG[status];
-  const priorityConfig = PRIORITY_CONFIG[priority];
+  // Defensive fallbacks (prevents crash on unexpected/null values)
+  const statusConfig =
+    (STATUS_CONFIG as any)?.[status] ||
+    (STATUS_CONFIG as any)?.pending || {
+      label: { en: 'Pending', pl: 'Oczekująca' },
+      color: 'bg-amber-500',
+      textColor: 'text-amber-500',
+    };
+  const priorityConfig =
+    (PRIORITY_CONFIG as any)?.[normalizePriority(priority)] ||
+    (PRIORITY_CONFIG as any)?.medium || {
+      label: { en: 'Medium', pl: 'Średni' },
+      color: 'bg-blue-400',
+      textColor: 'text-blue-500',
+    };
   const CategoryIcon = CATEGORY_CONFIG[category]?.icon || FileText;
 
   // Attachment handlers (mock)
@@ -514,6 +554,17 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
 
           {/* Header Actions */}
           <div className="flex items-center gap-2">
+            {/* Delegate/Request Input */}
+            {decisionId && isPending && (
+              <button
+                onClick={() => setShowDelegationModal(true)}
+                className="px-3 py-2 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition-colors flex items-center gap-2"
+                title={isPolish ? 'Deleguj / Poproś o opinię' : 'Delegate / Request Input'}
+              >
+                <Share2 size={16} />
+                <span className="hidden sm:inline">{isPolish ? 'Deleguj' : 'Delegate'}</span>
+              </button>
+            )}
             {/* Quick Actions for Pending */}
             {decisionId && isPending && (
               <>
@@ -1071,6 +1122,50 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
             </div>
           )}
 
+          {/* Stakeholders (RACI) */}
+          <StakeholdersSection
+            stakeholders={stakeholders}
+            availableUsers={users.map((u) => ({
+              id: u.id,
+              name: `${u.firstName} ${u.lastName}`,
+            }))}
+            onAdd={async (userId: string, role: StakeholderRole) => {
+              try {
+                if (decisionId) {
+                  await Api.post(`/decisions/${decisionId}/stakeholders`, {
+                    stakeholderUserId: userId,
+                    role,
+                  });
+                  const user = users.find((u) => u.id === userId);
+                  setStakeholders([
+                    ...stakeholders,
+                    {
+                      id: Math.random().toString(36).substr(2, 9),
+                      decisionId: decisionId,
+                      userId,
+                      userName: user ? `${user.firstName} ${user.lastName}` : undefined,
+                      role,
+                    },
+                  ]);
+                  toast.success(isPolish ? 'Dodano interesariusza' : 'Stakeholder added');
+                }
+              } catch {
+                toast.error(isPolish ? 'Nie udało się dodać' : 'Failed to add');
+              }
+            }}
+            onRemove={async (userId: string) => {
+              try {
+                if (decisionId) {
+                  await Api.delete(`/decisions/${decisionId}/stakeholders/${userId}`);
+                  setStakeholders(stakeholders.filter((s) => s.userId !== userId));
+                  toast.success(isPolish ? 'Usunięto interesariusza' : 'Stakeholder removed');
+                }
+              } catch {
+                toast.error(isPolish ? 'Nie udało się usunąć' : 'Failed to remove');
+              }
+            }}
+          />
+
           {/* Escalation & Reminders */}
           <EscalationRulesSection
             reminders={reminders}
@@ -1134,6 +1229,25 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
           )}
         </div>
       </div>
+
+      {/* Delegation Modal */}
+      {decisionId && (
+        <DelegationModal
+          isOpen={showDelegationModal}
+          onClose={() => setShowDelegationModal(false)}
+          decisionId={decisionId}
+          decisionTitle={title}
+          availableUsers={users.map((u) => ({
+            id: u.id,
+            name: `${u.firstName} ${u.lastName}`,
+          }))}
+          currentDeciderId={deciderId}
+          onDelegated={() => {
+            // Reload decision to get updated data
+            loadDecision(decisionId);
+          }}
+        />
+      )}
     </div>
   );
 };

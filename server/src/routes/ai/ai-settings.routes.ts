@@ -98,7 +98,7 @@ const transformSettingsToSnakeCase = (settings: any) => ({
 router.get(
   '/superadmin',
   verifyToken,
-  requireRole(['superadmin']),
+  requireRole('superadmin'),
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     // Try service first, fall back to defaults if not available
     if (AISettingsService?.getSuperAdminSettings) {
@@ -142,7 +142,7 @@ router.get(
 router.put(
   '/superadmin',
   verifyToken,
-  requireRole(['superadmin']),
+  requireRole('superadmin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const settingsCamelCase = req.body;
     const actorId = req.user?.id;

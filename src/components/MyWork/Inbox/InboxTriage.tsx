@@ -51,124 +51,6 @@ interface ExtendedInboxTriageProps extends Partial<InboxTriageProps> {
 }
 
 /**
- * Sample inbox items for demo/empty state
- */
-const SAMPLE_INBOX_ITEMS: InboxItem[] = [
-  {
-    id: 'sample-1',
-    type: 'new_assignment',
-    title: 'Przygotowanie raportu kwartalnego Q4',
-    description:
-      'Przygotuj raport podsumowujący wyniki zespołu za ostatni kwartał. Uwzględnij KPI i rekomendacje.',
-    source: { type: 'user', userId: 'user-1', userName: 'Anna Kowalska', avatarUrl: undefined },
-    receivedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-    urgency: 'critical',
-    linkedTaskId: 'task-1',
-    linkedTask: {
-      id: 'task-1',
-      title: 'Raport Q4',
-      status: 'todo' as any,
-      priority: 'high',
-      dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    triaged: false,
-  },
-  {
-    id: 'sample-2',
-    type: 'mention',
-    title: '@Ty zostałeś wspomniany w komentarzu',
-    description: '"Sprawdźcie z @Ty czy budżet został już zatwierdzony przez zarząd"',
-    source: { type: 'user', userId: 'user-2', userName: 'Piotr Nowak', avatarUrl: undefined },
-    receivedAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 min ago
-    urgency: 'high',
-    linkedTaskId: 'task-2',
-    linkedTask: {
-      id: 'task-2',
-      title: 'Zatwierdzenie budżetu',
-      status: 'in_progress' as any,
-      priority: 'high',
-      dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    triaged: false,
-  },
-  {
-    id: 'sample-3',
-    type: 'decision_request',
-    title: 'Decyzja: Wybór dostawcy infrastruktury',
-    description:
-      'Wymagana Twoja decyzja odnośnie wyboru dostawcy usług chmurowych. Deadline: jutro.',
-    source: { type: 'user', userId: 'user-3', userName: 'Marek Wiśniewski', avatarUrl: undefined },
-    receivedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
-    urgency: 'high',
-    linkedDecisionId: 'decision-1',
-    triaged: false,
-  },
-  {
-    id: 'sample-4',
-    type: 'review_request',
-    title: 'Prośba o review: Dokumentacja API v2',
-    description: 'Proszę o przejrzenie dokumentacji nowego API przed publikacją.',
-    source: {
-      type: 'user',
-      userId: 'user-4',
-      userName: 'Katarzyna Dąbrowska',
-      avatarUrl: undefined,
-    },
-    receivedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-    urgency: 'normal',
-    linkedTaskId: 'task-3',
-    linkedTask: {
-      id: 'task-3',
-      title: 'Dokumentacja API',
-      status: 'IN_PROGRESS' as any,
-      priority: 'medium',
-      dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    triaged: false,
-  },
-  {
-    id: 'sample-5',
-    type: 'escalation',
-    title: '⚠️ Eskalacja: Opóźnienie w dostawie komponentów',
-    description: 'Dostawca zgłosił 2-tygodniowe opóźnienie. Wymagana interwencja PM.',
-    source: { type: 'system', userId: undefined, userName: 'System PMO', avatarUrl: undefined },
-    receivedAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15 min ago
-    urgency: 'critical',
-    linkedInitiativeId: 'initiative-1',
-    triaged: false,
-  },
-  {
-    id: 'sample-6',
-    type: 'ai_suggestion',
-    title: '💡 AI sugeruje: Przegrupuj zadania na ten tydzień',
-    description:
-      'Wykryto 3 zadania z nakładającymi się terminami. Rozważ delegację lub zmianę priorytetów.',
-    source: { type: 'system', userId: undefined, userName: 'AI Assistant', avatarUrl: undefined },
-    receivedAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 min ago
-    urgency: 'normal',
-    triaged: false,
-  },
-  {
-    id: 'sample-7',
-    type: 'new_assignment',
-    title: 'Nowe zadanie: Spotkanie z klientem ABC',
-    description: 'Umów spotkanie prezentacyjne z klientem ABC w sprawie nowego projektu.',
-    source: { type: 'user', userId: 'user-5', userName: 'Jan Kowalczyk', avatarUrl: undefined },
-    receivedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
-    urgency: 'low',
-    linkedTaskId: 'task-4',
-    linkedTask: {
-      id: 'task-4',
-      title: 'Spotkanie z ABC',
-      status: 'TODO' as any,
-      priority: 'low',
-      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    triaged: false,
-  },
-];
-
-/**
  * Urgency configuration
  */
 const urgencyConfig = {
@@ -458,17 +340,16 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
       if (res?.items && res.items.length > 0) {
         setItems(res.items.filter((i: InboxItem) => !i.triaged));
       } else {
-        // Use sample data for demo when no real data exists
-        setItems(SAMPLE_INBOX_ITEMS);
+        setItems([]);
       }
     } catch (error) {
       console.error('Failed to load inbox:', error);
-      // Use sample data as fallback
-      setItems(SAMPLE_INBOX_ITEMS);
+      setItems([]);
+      toast.error(t('myWork.inbox.error', 'Failed to load inbox'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadInbox();
@@ -529,24 +410,18 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
     params?: TriageParams[TriageAction]
   ) => {
     try {
+      const item = items.find((i) => i.id === itemId);
+      const itemKey = (item as any)?._key;
+
       // Optimistic update - remove from UI immediately
       setItems((prev) => prev.filter((i) => i.id !== itemId));
-
-      // Check if it's a sample item (sample items have 'sample-' prefix)
-      const isSampleItem = itemId.startsWith('sample-');
-
-      if (!isSampleItem) {
-        await Api.post(`/my-work/inbox/${itemId}/triage`, { action, params });
-      }
+      await Api.post(`/my-work/inbox/${itemId}/triage`, { action, params, itemKey });
 
       onTriage?.(itemId, action, params);
       toast.success(t('myWork.inbox.triaged', 'Item processed'));
     } catch (error) {
       console.error('Failed to triage:', error);
-      // Only revert if it's a real item
-      if (!itemId.startsWith('sample-')) {
-        loadInbox(); // Revert
-      }
+      loadInbox(); // Revert
       toast.error(t('myWork.inbox.error', 'Failed to process'));
     }
   };
@@ -557,30 +432,25 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
 
     try {
       const ids = Array.from(selectedIds);
+      const itemKeys = ids
+        .map((id) => items.find((i) => i.id === id))
+        .map((i: any) => i?._key)
+        .filter(Boolean);
 
       // Optimistic update
       setItems((prev) => prev.filter((i) => !selectedIds.has(i.id)));
       setSelectedIds(new Set());
-
-      // Filter out sample items - only send real items to API
-      const realIds = ids.filter((id) => !id.startsWith('sample-'));
-
-      if (realIds.length > 0) {
-        await Api.post('/my-work/inbox/bulk-triage', {
-          itemIds: realIds,
-          action,
-        });
-      }
+      await Api.post('/my-work/inbox/bulk-triage', {
+        itemIds: ids,
+        itemKeys,
+        action,
+      });
 
       onBulkTriage?.(ids, action);
       toast.success(t('myWork.inbox.bulkTriaged', `${ids.length} items processed`));
     } catch (error) {
       console.error('Failed to bulk triage:', error);
-      // Only reload if there were real items
-      const hasRealItems = Array.from(selectedIds).some((id) => !id.startsWith('sample-'));
-      if (hasRealItems) {
-        loadInbox();
-      }
+      loadInbox();
       toast.error(t('myWork.inbox.error', 'Failed to process'));
     }
   };

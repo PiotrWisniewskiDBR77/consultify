@@ -140,61 +140,14 @@ export const TeamPerformancePreview: React.FC<TeamPerformancePreviewProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  // Default/mock members
-  const displayMembers: TeamMember[] =
-    members.length > 0
-      ? members
-      : [
-          {
-            id: '1',
-            name: 'Anna Kowalska',
-            initials: 'AK',
-            capacity: 95,
-            tasksCompleted: 6,
-            tasksTotal: 8,
-            trend: 'up',
-          },
-          {
-            id: '2',
-            name: 'Piotr Nowak',
-            initials: 'PN',
-            capacity: 120,
-            tasksCompleted: 5,
-            tasksTotal: 12,
-            trend: 'down',
-          },
-          {
-            id: '3',
-            name: 'Marta Wiśniewska',
-            initials: 'MW',
-            capacity: 65,
-            tasksCompleted: 3,
-            tasksTotal: 5,
-            trend: 'stable',
-          },
-          {
-            id: '4',
-            name: 'Jan Kowalczyk',
-            initials: 'JK',
-            capacity: 40,
-            tasksCompleted: 2,
-            tasksTotal: 3,
-            trend: 'up',
-          },
-          {
-            id: '5',
-            name: 'Karolina Mazur',
-            initials: 'KM',
-            capacity: 85,
-            tasksCompleted: 4,
-            tasksTotal: 7,
-            trend: 'stable',
-          },
-        ];
+  // Real data only - no mock fallbacks
+  const displayMembers: TeamMember[] = members;
 
   const calculatedAvgCapacity =
     avgCapacity ||
-    Math.round(displayMembers.reduce((sum, m) => sum + m.capacity, 0) / displayMembers.length);
+    (displayMembers.length > 0
+      ? Math.round(displayMembers.reduce((sum, m) => sum + m.capacity, 0) / displayMembers.length)
+      : 0);
   const overloadedCount = displayMembers.filter((m) => m.capacity > 100).length;
   const availableCount = displayMembers.filter((m) => m.capacity < 50).length;
 
@@ -288,18 +241,27 @@ export const TeamPerformancePreview: React.FC<TeamPerformancePreviewProps> = ({
 
       {/* Team Members List */}
       <div className="flex-1 overflow-y-auto p-3">
-        <div className="space-y-1">
-          {displayMembers.slice(0, 6).map((member, idx) => (
-            <motion.div
-              key={member.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.05 }}
-            >
-              <TeamMemberRow member={member} onClick={() => onMemberClick?.(member.id)} />
-            </motion.div>
-          ))}
-        </div>
+        {displayMembers.length > 0 ? (
+          <div className="space-y-1">
+            {displayMembers.slice(0, 6).map((member, idx) => (
+              <motion.div
+                key={member.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+              >
+                <TeamMemberRow member={member} onClick={() => onMemberClick?.(member.id)} />
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <Users size={32} className="text-slate-300 dark:text-slate-600 mb-2" />
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {t('executive.team.noMembers', 'No team members found')}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Footer */}

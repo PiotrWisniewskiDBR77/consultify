@@ -183,39 +183,8 @@ export const DecisionQueuePreview: React.FC<DecisionQueuePreviewProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  // Default/mock decisions
-  const displayDecisions: Decision[] =
-    decisions.length > 0
-      ? decisions
-      : [
-          {
-            id: '1',
-            title: 'Wybór dostawcy platformy CRM',
-            type: 'GENERAL',
-            priority: 'medium',
-            daysWaiting: 2,
-            requestedBy: 'Tomasz K.',
-            projectName: 'CRM Implementation',
-          },
-          {
-            id: '2',
-            title: 'Zatwierdzenie rozszerzenia zakresu',
-            type: 'SCOPE_CHANGE',
-            priority: 'high',
-            daysWaiting: 5,
-            requestedBy: 'Anna N.',
-            projectName: 'Website Redesign',
-          },
-          {
-            id: '3',
-            title: 'Budget approval for Q2 hiring',
-            type: 'BUDGET',
-            priority: 'critical',
-            daysWaiting: 8,
-            requestedBy: 'HR Team',
-            projectName: 'Talent Acquisition',
-          },
-        ];
+  // Real data only - no mock fallbacks
+  const displayDecisions: Decision[] = decisions;
 
   const criticalCount = displayDecisions.filter((d) => d.priority === 'critical').length;
   const overdueCount = displayDecisions.filter((d) => d.daysWaiting > 7).length;

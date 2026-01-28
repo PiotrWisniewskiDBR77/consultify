@@ -27,7 +27,7 @@ type EmptyStateType =
   | 'generic';
 
 interface EmptyStateProps {
-  type: EmptyStateType;
+  type?: EmptyStateType;
   title?: string;
   description?: string;
   actionLabel?: string;
@@ -37,6 +37,9 @@ interface EmptyStateProps {
   showAISuggestion?: boolean;
   onAISuggestion?: () => void;
   className?: string;
+  // Alternative API for custom icon/action
+  icon?: React.ReactNode;
+  action?: React.ReactNode;
 }
 
 /**
@@ -99,7 +102,7 @@ const typeConfig: Record<
  * EmptyState Component
  */
 export const EmptyState: React.FC<EmptyStateProps> = ({
-  type,
+  type = 'generic',
   title,
   description,
   actionLabel,
@@ -109,9 +112,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   showAISuggestion = false,
   onAISuggestion,
   className = '',
+  icon,
+  action,
 }) => {
   const { t } = useTranslation();
-  const config = typeConfig[type];
+  const config = typeConfig[type] || typeConfig.generic;
 
   return (
     <motion.div
@@ -125,7 +130,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
             `}
     >
       {/* Icon */}
-      <div className="mb-4 text-slate-400 dark:text-slate-500">{config.icon}</div>
+      <div className="mb-4 text-slate-400 dark:text-slate-500">{icon || config.icon}</div>
 
       {/* Title */}
       <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
@@ -191,6 +196,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
             {secondaryActionLabel}
           </button>
         )}
+
+        {/* Custom Action (alternative API) */}
+        {action}
       </div>
     </motion.div>
   );

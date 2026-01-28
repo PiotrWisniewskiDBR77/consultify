@@ -417,7 +417,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
       )}
 
       {/* Center Panel: Workspace */}
-      <div className="flex-1 flex flex-col min-w-0 h-full min-h-0 overflow-hidden relative">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0 relative">
         {/* Focus Mode Selector - Only for legacy ChatPanel (UnifiedChatPanel has built-in) */}
         {!useUnifiedChat && !hideSidebar && !isChatCollapsed && (
           <div className="hidden lg:flex items-center justify-between px-4 py-2 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950">
@@ -492,7 +492,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
           </button>
         )}
 
-        <div className="flex-1 min-h-0 overflow-hidden relative momentum-scroll">{children}</div>
+        <div className="flex-1 min-h-0 relative">{children}</div>
       </div>
 
       {/* Right Panel: Artifacts - World-Class Chat 2025 */}

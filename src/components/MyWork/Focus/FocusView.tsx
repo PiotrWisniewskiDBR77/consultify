@@ -42,7 +42,6 @@ import {
   GripVertical,
   Loader2,
   MoreHorizontal,
-  RefreshCw,
   Sun,
   Target,
   User,
@@ -816,15 +815,6 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
     }
   };
 
-  // Stats
-  const stats = useMemo(() => {
-    const total = items.length;
-    const completed = items.filter((i) => i.isCompleted).length;
-    const overdue = items.filter((i) => i.isOverdue || (i.dueDate && new Date(i.dueDate) < new Date() && !i.isCompleted)).length;
-    const decisions = items.filter((i) => i.type === 'decision').length;
-    return { total, completed, overdue, decisions };
-  }, [items]);
-
   const activeItem = activeId ? findItemById(activeId) : null;
 
   if (loading) {
@@ -836,72 +826,7 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-gradient-to-br from-brand to-purple-600 text-white rounded-xl shadow-lg shadow-brand/25">
-            <Target size={22} />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-navy-900 dark:text-white">
-              {t('myWork.focus.kanbanTitle', 'Focus Board')}
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {t('myWork.focus.kanbanSubtitle', 'Drag items between columns to organize your work')}
-            </p>
-          </div>
-        </div>
-
-        <button
-          onClick={loadFocus}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-        >
-          <RefreshCw size={16} />
-          {t('common.refresh', 'Refresh')}
-        </button>
-      </div>
-
-      {/* Stats Bar */}
-      <div className="grid grid-cols-4 gap-3">
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-navy-800/50 border border-slate-200 dark:border-navy-700">
-          <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-            <Target size={16} className="text-blue-600 dark:text-blue-400" />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-navy-900 dark:text-white">{stats.total}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{t('myWork.focus.stats.total', 'Total')}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/30">
-          <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-            <CheckCircle2 size={16} className="text-green-600 dark:text-green-400" />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-navy-900 dark:text-white">{stats.completed}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{t('myWork.focus.stats.done', 'Done')}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30">
-          <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30">
-            <AlertTriangle size={16} className="text-red-600 dark:text-red-400" />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-navy-900 dark:text-white">{stats.overdue}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{t('myWork.focus.stats.overdue', 'Overdue')}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800/30">
-          <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-            <Zap size={16} className="text-purple-600 dark:text-purple-400" />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-navy-900 dark:text-white">{stats.decisions}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{t('myWork.focus.stats.decisions', 'Decisions')}</p>
-          </div>
-        </div>
-      </div>
-
+    <div className="space-y-4 p-4">
       {/* Kanban Board */}
       {items.length > 0 ? (
         <DndContext

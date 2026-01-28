@@ -5,17 +5,11 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  AlertCircle,
   Calendar,
   CheckCircle2,
   CheckSquare,
-  ChevronDown,
-  ChevronRight,
-  Circle,
-  Clock,
   Edit,
   Eye,
-  Filter,
   Loader2,
   Minus,
   MoreVertical,
@@ -23,6 +17,10 @@ import {
   Square,
   Trash2,
   User,
+  TrendingUp,
+  BarChart3,
+  AlertCircle,
+  Clock,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -90,7 +88,7 @@ const getStatusConfig = (status?: string) => {
         color: 'text-emerald-700 dark:text-emerald-400',
         bg: 'bg-emerald-100 dark:bg-emerald-500/20',
         dot: 'bg-emerald-500',
-        label: 'Completed',
+        label: 'Done',
       };
     case 'in_progress':
     case 'in progress':
@@ -100,12 +98,20 @@ const getStatusConfig = (status?: string) => {
         dot: 'bg-blue-500',
         label: 'In progress',
       };
+    case 'pending_approval':
+    case 'pending approval':
+      return {
+        color: 'text-purple-700 dark:text-purple-400',
+        bg: 'bg-purple-100 dark:bg-purple-500/20',
+        dot: 'bg-purple-500',
+        label: 'Pending approval',
+      };
     case 'review':
       return {
         color: 'text-purple-700 dark:text-purple-400',
         bg: 'bg-purple-100 dark:bg-purple-500/20',
         dot: 'bg-purple-500',
-        label: 'Review',
+        label: 'Pending approval',
       };
     case 'blocked':
       return {
@@ -113,6 +119,14 @@ const getStatusConfig = (status?: string) => {
         bg: 'bg-red-100 dark:bg-red-500/20',
         dot: 'bg-red-500',
         label: 'Blocked',
+      };
+    case 'cancelled':
+    case 'canceled':
+      return {
+        color: 'text-slate-700 dark:text-slate-400',
+        bg: 'bg-slate-100 dark:bg-slate-500/20',
+        dot: 'bg-slate-500',
+        label: 'Cancelled',
       };
     default:
       return {
@@ -172,40 +186,6 @@ const categorizeTask = (task: Task): TaskTimeGroup => {
   if (dueDate < endOfWeek) return 'week';
   return 'later';
 };
-
-// Time group configs
-const timeGroupConfigs = [
-  {
-    key: 'overdue' as TaskTimeGroup,
-    label: 'Overdue',
-    color: 'text-red-700 dark:text-red-400',
-    bg: 'bg-red-50 dark:bg-red-900/20',
-  },
-  {
-    key: 'today' as TaskTimeGroup,
-    label: 'Today',
-    color: 'text-blue-700 dark:text-blue-400',
-    bg: 'bg-blue-50 dark:bg-blue-900/20',
-  },
-  {
-    key: 'week' as TaskTimeGroup,
-    label: 'This Week',
-    color: 'text-slate-700 dark:text-slate-400',
-    bg: 'bg-slate-50 dark:bg-navy-800/50',
-  },
-  {
-    key: 'later' as TaskTimeGroup,
-    label: 'Later',
-    color: 'text-slate-700 dark:text-slate-500',
-    bg: 'bg-slate-50 dark:bg-navy-900',
-  },
-  {
-    key: 'no-date' as TaskTimeGroup,
-    label: 'No Date',
-    color: 'text-slate-700 dark:text-slate-500',
-    bg: 'bg-slate-50 dark:bg-navy-900',
-  },
-];
 
 // Task table column definitions
 const TASK_COLUMNS: ColumnDef[] = [
@@ -528,9 +508,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const { t } = useTranslation();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedGroups, setExpandedGroups] = useState<Set<TaskTimeGroup>>(
-    new Set(['overdue', 'today', 'week', 'later', 'no-date'])
-  );
   
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -626,6 +603,40 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     }).length;
   }, [tasks]);
 
+  // Calculate task statistics (PMO standards) - BEFORE early returns
+  const taskStats = useMemo(() => {
+    const allTasks = groupedTasks.all;
+    const total = allTasks.length;
+    const completed = allTasks.filter((t) => 
+      ['done', 'completed', 'validated'].includes(t.status?.toLowerCase() || '')
+    ).length;
+    const inProgress = allTasks.filter((t) => 
+      ['in_progress', 'in progress', 'review'].includes(t.status?.toLowerCase() || '')
+    ).length;
+    const blocked = allTasks.filter((t) => 
+      t.status?.toLowerCase() === 'blocked'
+    ).length;
+    const todo = allTasks.filter((t) => 
+      ['todo', 'to do'].includes(t.status?.toLowerCase() || '')
+    ).length;
+    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+    const overdue = groupedTasks.overdue.length;
+    const critical = allTasks.filter((t) => 
+      ['critical', 'urgent'].includes(t.priority?.toLowerCase() || '')
+    ).length;
+
+    return {
+      total,
+      completed,
+      inProgress,
+      blocked,
+      todo,
+      overdue,
+      critical,
+      completionRate,
+    };
+  }, [groupedTasks]);
+
   useEffect(() => {
     const counts: TaskCounts = {
       total: groupedTasks.all.length,
@@ -638,15 +649,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   }, [groupedTasks, urgentCount, onCountsChange]);
 
   // Handlers
-  const toggleGroup = (group: TaskTimeGroup) => {
-    setExpandedGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(group)) next.delete(group);
-      else next.add(group);
-      return next;
-    });
-  };
-
   const handleToggleComplete = async (taskId: string, completed: boolean) => {
     try {
       await Api.updateTask(taskId, { status: completed ? 'completed' : 'todo' });
@@ -676,20 +678,10 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     }
   };
 
-  // Get visible groups based on filter (need this before handlers)
-  const visibleGroups = activeFilter === 'all' || activeFilter === 'urgent'
-    ? timeGroupConfigs
-    : timeGroupConfigs.filter((g) => g.key === activeFilter);
-
   // Calculate total visible tasks for select all
   const allVisibleTaskIds = useMemo(() => {
-    const ids = new Set<string>();
-    visibleGroups.forEach((config) => {
-      const groupTasks = groupedTasks[config.key];
-      groupTasks.forEach((task) => ids.add(task.id));
-    });
-    return ids;
-  }, [visibleGroups, groupedTasks]);
+    return new Set(groupedTasks.all.map(task => task.id));
+  }, [groupedTasks]);
 
   // Selection helpers
   const allSelected = selectedIds.size > 0 && selectedIds.size === allVisibleTaskIds.size;
@@ -778,15 +770,8 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
   // Flat list of all visible tasks for keyboard navigation
   const flatTaskList = useMemo(() => {
-    const list: Task[] = [];
-    visibleGroups.forEach((config) => {
-      const groupTasks = groupedTasks[config.key];
-      if (expandedGroups.has(config.key)) {
-        list.push(...groupTasks);
-      }
-    });
-    return list;
-  }, [visibleGroups, groupedTasks, expandedGroups]);
+    return groupedTasks.all;
+  }, [groupedTasks]);
 
   // Get focused task
   const focusedTask = focusedIndex >= 0 && focusedIndex < flatTaskList.length 
@@ -864,206 +849,296 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     },
   });
 
+  // Flat list of all tasks (no grouping) - must be before early returns
+  const allFilteredTasks = useMemo(() => {
+    let result: Task[] = [...groupedTasks.all];
+    
+    // Apply table filters
+    const statusFilter = tableFilters.status as string[] | undefined;
+    const priorityFilter = tableFilters.priority as string[] | undefined;
+    
+    if (statusFilter?.length) {
+      result = result.filter(task => statusFilter.includes(task.status?.toLowerCase() || ''));
+    }
+    if (priorityFilter?.length) {
+      result = result.filter(task => priorityFilter.includes(task.priority?.toLowerCase() || ''));
+    }
+    
+    return result;
+  }, [groupedTasks, tableFilters]);
+
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center h-64">
-        <Loader2 className="animate-spin text-blue-500" size={32} />
-      </div>
-    );
-  }
-
-  if (tasks.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full text-center p-8">
-        <CheckCircle2 size={48} className="text-slate-600 mb-4" />
-        <h3 className="text-lg font-medium text-slate-400 mb-2">No tasks yet</h3>
-        <p className="text-sm text-slate-500 mb-4">Create your first task to get started</p>
-        <button
-          onClick={onCreateTask}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-400 border border-blue-500/50 rounded-lg hover:bg-blue-500/10 transition-colors"
-        >
-          <Plus size={16} />
-          Create Task
-        </button>
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
+        <div className="flex-1 overflow-y-auto p-4">
+          {/* Task Statistics Panel - PMO Standards - Always visible */}
+          <div className="mb-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+            {/* Show loading state for stats */}
+            {[...Array(7)].map((_, i) => (
+              <div key={i} className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-4 animate-pulse">
+                <div className="h-4 bg-slate-200 dark:bg-navy-700 rounded w-16 mb-2"></div>
+                <div className="h-8 bg-slate-200 dark:bg-navy-700 rounded w-12"></div>
+              </div>
+            ))}
+          </div>
+          <div className="flex-1 flex items-center justify-center h-64">
+            <Loader2 className="animate-spin text-blue-500" size={32} />
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
-      <div className="flex-1 overflow-y-auto">
-        {visibleGroups.map((config) => {
-          const groupTasks = groupedTasks[config.key];
-          if (groupTasks.length === 0) return null;
-
-          const isExpanded = expandedGroups.has(config.key);
-
-          return (
-            <div key={config.key} className="mb-0">
-              {/* Group Header */}
-              <button
-                onClick={() => toggleGroup(config.key)}
-                className={`w-full flex items-center gap-2 px-4 py-2 ${config.bg} border-b border-slate-200 dark:border-navy-700/50 transition-colors hover:opacity-90`}
-              >
-                {isExpanded ? (
-                  <ChevronDown size={14} className="text-slate-500" />
-                ) : (
-                  <ChevronRight size={14} className="text-slate-500" />
-                )}
-                <Clock size={14} className={config.color} />
-                <span className={`text-xs font-medium uppercase tracking-wide ${config.color}`}>
-                  {config.label}
-                </span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400">
-                  {groupTasks.length}
-                </span>
-              </button>
-
-              {/* Table */}
-              {isExpanded && (
-                <div className="overflow-x-auto">
-                  <table className="w-full" style={{ minWidth: 900 }}>
-                    <thead>
-                      <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
-                        {/* Select All */}
-                        <th className="w-10 px-2 py-2">
-                          <button
-                            onClick={() => handleSelectAll(!allSelected)}
-                            className={`
-                              w-5 h-5 rounded border flex items-center justify-center transition-colors
-                              ${
-                                allSelected
-                                  ? 'bg-primary-500 border-primary-500 text-white'
-                                  : someSelected
-                                    ? 'bg-primary-500/50 border-primary-500 text-white'
-                                    : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-400'
-                              }
-                            `}
-                          >
-                            {allSelected ? (
-                              <CheckSquare size={14} />
-                            ) : someSelected ? (
-                              <Minus size={14} />
-                            ) : (
-                              <Square size={14} />
-                            )}
-                          </button>
-                        </th>
-                        <th className="w-8 px-1 py-2"></th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Task</th>
-                        
-                        {/* Status with Filter */}
-                        <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.status }}>
-                          <div className="flex items-center gap-1">
-                            <span className={(tableFilters.status as string[])?.length ? 'text-primary-500' : ''}>Status</span>
-                            <FilterDropdown
-                              column={TASK_COLUMNS.find(c => c.id === 'status')!}
-                              value={tableFilters.status as string[]}
-                              onChange={(val) => handleFilterChange('status', val as string[])}
-                              isOpen={openFilterId === 'status'}
-                              onToggle={() => setOpenFilterId(openFilterId === 'status' ? null : 'status')}
-                              onClose={() => setOpenFilterId(null)}
-                            />
-                          </div>
-                          <ColumnResizer
-                            columnId="status"
-                            currentWidth={columnWidths.status}
-                            minWidth={100}
-                            maxWidth={160}
-                            onResize={handleColumnResize}
-                          />
-                        </th>
-                        
-                        {/* Priority with Filter */}
-                        <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.priority }}>
-                          <div className="flex items-center gap-1">
-                            <span className={(tableFilters.priority as string[])?.length ? 'text-primary-500' : ''}>Priority</span>
-                            <FilterDropdown
-                              column={TASK_COLUMNS.find(c => c.id === 'priority')!}
-                              value={tableFilters.priority as string[]}
-                              onChange={(val) => handleFilterChange('priority', val as string[])}
-                              isOpen={openFilterId === 'priority'}
-                              onToggle={() => setOpenFilterId(openFilterId === 'priority' ? null : 'priority')}
-                              onClose={() => setOpenFilterId(null)}
-                            />
-                          </div>
-                          <ColumnResizer
-                            columnId="priority"
-                            currentWidth={columnWidths.priority}
-                            minWidth={80}
-                            maxWidth={130}
-                            onResize={handleColumnResize}
-                          />
-                        </th>
-                        
-                        <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.date }}>
-                          <span>Due Date</span>
-                          <ColumnResizer
-                            columnId="date"
-                            currentWidth={columnWidths.date}
-                            minWidth={90}
-                            maxWidth={140}
-                            onResize={handleColumnResize}
-                          />
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.assignee }}>
-                          <span>Assignee</span>
-                          <ColumnResizer
-                            columnId="assignee"
-                            currentWidth={columnWidths.assignee}
-                            minWidth={100}
-                            maxWidth={180}
-                            onResize={handleColumnResize}
-                          />
-                        </th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: columnWidths.actions }}>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <AnimatePresence>
-                        {groupTasks
-                          // Apply table filters
-                          .filter((task) => {
-                            const statusFilter = tableFilters.status as string[] | undefined;
-                            const priorityFilter = tableFilters.priority as string[] | undefined;
-                            
-                            if (statusFilter?.length && !statusFilter.includes(task.status?.toLowerCase() || '')) {
-                              return false;
-                            }
-                            if (priorityFilter?.length && !priorityFilter.includes(task.priority?.toLowerCase() || '')) {
-                              return false;
-                            }
-                            return true;
-                          })
-                          .map((task, index) => (
-                          <TaskTableRow
-                            key={task.id}
-                            task={task}
-                            isSelected={selectedIds.has(task.id)}
-                            isFocused={focusedTask?.id === task.id}
-                            onSelect={handleSelectTask}
-                            onToggleComplete={handleToggleComplete}
-                            onDelete={handleDelete}
-                            onClick={onTaskClick}
-                            columnWidths={columnWidths}
-                          />
-                        ))}
-                      </AnimatePresence>
-                    </tbody>
-                  </table>
-                </div>
-              )}
+      <div className="flex-1 overflow-y-auto p-4">
+        {/* Task Statistics Panel - PMO Standards - Always visible */}
+        <div className="mb-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+          {/* Total Tasks */}
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <BarChart3 size={16} className="text-slate-500 dark:text-slate-400" />
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                {t('myWork.stats.total', 'Total')}
+              </span>
             </div>
-          );
-        })}
+            <div className="text-2xl font-bold text-slate-900 dark:text-white">
+              {taskStats.total}
+            </div>
+          </div>
+
+          {/* Completed */}
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <CheckCircle2 size={16} className="text-emerald-500" />
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                {t('myWork.stats.completed', 'Completed')}
+              </span>
+            </div>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+              {taskStats.completed}
+            </div>
+            {taskStats.total > 0 && (
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                {taskStats.completionRate}%
+              </div>
+            )}
+          </div>
+
+          {/* In Progress */}
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Clock size={16} className="text-blue-500" />
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                {t('myWork.stats.inProgress', 'In Progress')}
+              </span>
+            </div>
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+              {taskStats.inProgress}
+            </div>
+          </div>
+
+          {/* Blocked */}
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircle size={16} className="text-red-500" />
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                {t('myWork.stats.blocked', 'Blocked')}
+              </span>
+            </div>
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+              {taskStats.blocked}
+            </div>
+          </div>
+
+          {/* Overdue */}
+          <div className="bg-white dark:bg-navy-900 border border-red-200 dark:border-red-900/30 rounded-lg p-4 bg-red-50/50 dark:bg-red-950/20">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircle size={16} className="text-red-500" />
+              <span className="text-xs font-medium text-red-600 dark:text-red-400 uppercase">
+                {t('myWork.stats.overdue', 'Overdue')}
+              </span>
+            </div>
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+              {taskStats.overdue}
+            </div>
+          </div>
+
+          {/* Critical */}
+          <div className="bg-white dark:bg-navy-900 border border-orange-200 dark:border-orange-900/30 rounded-lg p-4 bg-orange-50/50 dark:bg-orange-950/20">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircle size={16} className="text-orange-500" />
+              <span className="text-xs font-medium text-orange-600 dark:text-orange-400 uppercase">
+                {t('myWork.stats.critical', 'Critical')}
+              </span>
+            </div>
+            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+              {taskStats.critical}
+            </div>
+          </div>
+
+          {/* Completion Rate */}
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp size={16} className="text-emerald-500" />
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                {t('myWork.stats.completionRate', 'Done')}
+              </span>
+            </div>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+              {taskStats.completionRate}%
+            </div>
+            <div className="w-full bg-slate-200 dark:bg-navy-700 rounded-full h-1.5 mt-2">
+              <div
+                className="bg-emerald-500 h-1.5 rounded-full transition-all duration-300"
+                style={{ width: `${taskStats.completionRate}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {tasks.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl">
+            <CheckCircle2 size={48} className="text-slate-600 mb-4" />
+            <h3 className="text-lg font-medium text-slate-400 mb-2">No tasks yet</h3>
+            <p className="text-sm text-slate-500 mb-4">Create your first task to get started</p>
+            <button
+              onClick={onCreateTask}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-400 border border-blue-500/50 rounded-lg hover:bg-blue-500/10 transition-colors"
+            >
+              <Plus size={16} />
+              Create Task
+            </button>
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+            <table className="w-full" style={{ minWidth: 900 }}>
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
+                {/* Select All */}
+                <th className="w-10 px-2 py-2">
+                  <button
+                    onClick={() => handleSelectAll(!allSelected)}
+                    className={`
+                      w-5 h-5 rounded border flex items-center justify-center transition-colors
+                      ${
+                        allSelected
+                          ? 'bg-primary-500 border-primary-500 text-white'
+                          : someSelected
+                            ? 'bg-primary-500/50 border-primary-500 text-white'
+                            : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-400'
+                      }
+                    `}
+                  >
+                    {allSelected ? (
+                      <CheckSquare size={14} />
+                    ) : someSelected ? (
+                      <Minus size={14} />
+                    ) : (
+                      <Square size={14} />
+                    )}
+                  </button>
+                </th>
+                <th className="w-8 px-1 py-2"></th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Task</th>
+                
+                {/* Status with Filter */}
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.status }}>
+                  <div className="flex items-center gap-1">
+                    <span className={(tableFilters.status as string[])?.length ? 'text-primary-500' : ''}>Status</span>
+                    <FilterDropdown
+                      column={TASK_COLUMNS.find(c => c.id === 'status')!}
+                      value={tableFilters.status as string[]}
+                      onChange={(val) => handleFilterChange('status', val as string[])}
+                      isOpen={openFilterId === 'status'}
+                      onToggle={() => setOpenFilterId(openFilterId === 'status' ? null : 'status')}
+                      onClose={() => setOpenFilterId(null)}
+                    />
+                  </div>
+                  <ColumnResizer
+                    columnId="status"
+                    currentWidth={columnWidths.status}
+                    minWidth={100}
+                    maxWidth={160}
+                    onResize={handleColumnResize}
+                  />
+                </th>
+                
+                {/* Priority with Filter */}
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.priority }}>
+                  <div className="flex items-center gap-1">
+                    <span className={(tableFilters.priority as string[])?.length ? 'text-primary-500' : ''}>Priority</span>
+                    <FilterDropdown
+                      column={TASK_COLUMNS.find(c => c.id === 'priority')!}
+                      value={tableFilters.priority as string[]}
+                      onChange={(val) => handleFilterChange('priority', val as string[])}
+                      isOpen={openFilterId === 'priority'}
+                      onToggle={() => setOpenFilterId(openFilterId === 'priority' ? null : 'priority')}
+                      onClose={() => setOpenFilterId(null)}
+                    />
+                  </div>
+                  <ColumnResizer
+                    columnId="priority"
+                    currentWidth={columnWidths.priority}
+                    minWidth={80}
+                    maxWidth={130}
+                    onResize={handleColumnResize}
+                  />
+                </th>
+                
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.date }}>
+                  <span>Due Date</span>
+                  <ColumnResizer
+                    columnId="date"
+                    currentWidth={columnWidths.date}
+                    minWidth={90}
+                    maxWidth={140}
+                    onResize={handleColumnResize}
+                  />
+                </th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.assignee }}>
+                  <span>Assignee</span>
+                  <ColumnResizer
+                    columnId="assignee"
+                    currentWidth={columnWidths.assignee}
+                    minWidth={100}
+                    maxWidth={180}
+                    onResize={handleColumnResize}
+                  />
+                </th>
+                <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: columnWidths.actions }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <AnimatePresence>
+                {allFilteredTasks.map((task) => (
+                  <TaskTableRow
+                    key={task.id}
+                    task={task}
+                    isSelected={selectedIds.has(task.id)}
+                    isFocused={focusedTask?.id === task.id}
+                    onSelect={handleSelectTask}
+                    onToggleComplete={handleToggleComplete}
+                    onDelete={handleDelete}
+                    onClick={onTaskClick}
+                    columnWidths={columnWidths}
+                  />
+                ))}
+              </AnimatePresence>
+            </tbody>
+          </table>
+          </div>
+        )}
       </div>
       
-      {/* Bulk Action Bar */}
-      <BulkActionBar
-        selectedCount={selectedIds.size}
-        onClearSelection={handleClearSelection}
-        actions={bulkActions}
-      />
+      {/* Bulk Action Bar - Only show when tasks exist */}
+      {tasks.length > 0 && (
+        <BulkActionBar
+          selectedCount={selectedIds.size}
+          onClearSelection={handleClearSelection}
+          actions={bulkActions}
+        />
+      )}
       
       {/* Keyboard Shortcuts Help Modal */}
       <KeyboardShortcutsHelp

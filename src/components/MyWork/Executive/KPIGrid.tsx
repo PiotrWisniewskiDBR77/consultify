@@ -221,31 +221,31 @@ const RiskLevelBadge: React.FC<{ level: string }> = ({ level }) => {
 export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavigate }) => {
   const { t } = useTranslation();
 
-  // Default/mock data
+  // Real data only - no mock fallbacks
   const kpiData: KPIData = {
     tasks: {
-      completed: data?.tasks?.completed ?? 24,
-      total: data?.tasks?.total ?? 36,
-      overdueCount: data?.tasks?.overdueCount ?? 3,
-      onTimeRate: data?.tasks?.onTimeRate ?? 78,
-      trend: data?.tasks?.trend ?? 'up',
+      completed: data?.tasks?.completed ?? 0,
+      total: data?.tasks?.total ?? 0,
+      overdueCount: data?.tasks?.overdueCount ?? 0,
+      onTimeRate: data?.tasks?.onTimeRate ?? 0,
+      trend: data?.tasks?.trend ?? 'stable',
     },
     decisions: {
-      pending: data?.decisions?.pending ?? 8,
-      avgWaitDays: data?.decisions?.avgWaitDays ?? 2.4,
-      critical: data?.decisions?.critical ?? 2,
+      pending: data?.decisions?.pending ?? 0,
+      avgWaitDays: data?.decisions?.avgWaitDays ?? 0,
+      critical: data?.decisions?.critical ?? 0,
       trend: data?.decisions?.trend ?? 'stable',
     },
     team: {
-      avgCapacity: data?.team?.avgCapacity ?? 82,
-      overloaded: data?.team?.overloaded ?? 2,
-      available: data?.team?.available ?? 1,
-      trend: data?.team?.trend ?? 'up',
+      avgCapacity: data?.team?.avgCapacity ?? 0,
+      overloaded: data?.team?.overloaded ?? 0,
+      available: data?.team?.available ?? 0,
+      trend: data?.team?.trend ?? 'stable',
     },
     risk: {
-      level: data?.risk?.level ?? 'medium',
-      blockers: data?.risk?.blockers ?? 4,
-      escalations: data?.risk?.escalations ?? 1,
+      level: data?.risk?.level ?? 'low',
+      blockers: data?.risk?.blockers ?? 0,
+      escalations: data?.risk?.escalations ?? 0,
       trend: data?.risk?.trend ?? 'stable',
     },
   };

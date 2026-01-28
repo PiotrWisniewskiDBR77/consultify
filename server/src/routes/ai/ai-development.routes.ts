@@ -78,7 +78,7 @@ try {
 router.get(
   '/prompts',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { category, search, is_active } = req.query;
@@ -140,7 +140,7 @@ router.get(
 router.get(
   '/prompts/categories',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
       const categories = await dbAll(`
@@ -168,7 +168,7 @@ router.get(
 router.get(
   '/prompts/:id',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -220,7 +220,7 @@ router.get(
 router.post(
   '/prompts',
   verifyToken,
-  requireRole(['super_admin']),
+  requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { name, category, description, template, variables, is_active } = req.body;
@@ -290,7 +290,7 @@ router.post(
 router.put(
   '/prompts/:id',
   verifyToken,
-  requireRole(['super_admin']),
+  requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -372,7 +372,7 @@ router.put(
 router.post(
   '/prompts/:id/test',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -426,7 +426,7 @@ router.post(
 router.get(
   '/experiments',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!abTestingService?.listExperiments) {
       return res.status(503).json({ error: 'A/B Testing service not available' });
@@ -464,7 +464,7 @@ router.get(
 router.post(
   '/experiments',
   verifyToken,
-  requireRole(['super_admin']),
+  requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!abTestingService?.createExperiment) {
       return res.status(503).json({ error: 'A/B Testing service not available' });
@@ -499,7 +499,7 @@ router.post(
 router.get(
   '/experiments/:id',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!abTestingService?.getExperimentStats) {
       return res.status(503).json({ error: 'A/B Testing service not available' });
@@ -525,7 +525,7 @@ router.get(
 router.post(
   '/experiments/:id/start',
   verifyToken,
-  requireRole(['super_admin']),
+  requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!abTestingService?.startExperiment) {
       return res.status(503).json({ error: 'A/B Testing service not available' });
@@ -556,7 +556,7 @@ router.post(
 router.post(
   '/experiments/:id/stop',
   verifyToken,
-  requireRole(['super_admin']),
+  requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!abTestingService?.stopExperiment) {
       return res.status(503).json({ error: 'A/B Testing service not available' });
@@ -587,7 +587,7 @@ router.post(
 router.get(
   '/knowledge/candidates',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.getCandidates) {
       return res.status(503).json({ error: 'Knowledge service not available' });
@@ -646,7 +646,7 @@ router.post(
 router.put(
   '/knowledge/candidates/:id/status',
   verifyToken,
-  requireRole(['super_admin']),
+  requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!KnowledgeService?.updateCandidateStatus) {
       return res.status(503).json({ error: 'Knowledge service not available' });
@@ -707,7 +707,7 @@ router.get(
 router.get(
   '/intelligence/config',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
       const config = (await dbGet(`
@@ -741,7 +741,7 @@ router.get(
 router.put(
   '/intelligence/config',
   verifyToken,
-  requireRole(['super_admin']),
+  requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const config = req.body;
@@ -780,7 +780,7 @@ router.put(
 router.get(
   '/summary',
   verifyToken,
-  requireRole(['super_admin', 'admin']),
+  requireRole('super_admin', 'admin'),
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
       const [promptStats, experimentStats, knowledgeStats] = await Promise.all([

@@ -15,14 +15,15 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
+const demoGuardAny = demoGuard as any;
 const demoModule =
-  demoGuard.default && typeof demoGuard.default === 'object' ? demoGuard.default : demoGuard;
+  demoGuardAny?.default && typeof demoGuardAny.default === 'object'
+    ? demoGuardAny.default
+    : demoGuardAny;
 const DEMO_ORG_ID = demoModule.DEMO_ORG_ID || 'demo-org';
 const DEMO_ORG_NAME = demoModule.DEMO_ORG_NAME || 'Demo Organization';
-const checkUserDemoPreference =
-  demoModule.checkUserDemoPreference || (async () => false);
-const setUserDemoPreference =
-  demoModule.setUserDemoPreference || (async () => {});
+const checkUserDemoPreference = demoModule.checkUserDemoPreference || (async () => false);
+const setUserDemoPreference = demoModule.setUserDemoPreference || (async () => {});
 const getDemoOrganization =
   demoModule.getDemoOrganization ||
   (async () => ({
@@ -70,13 +71,13 @@ router.post(
 
     try {
       // Save preference to database
-      await demoGuard.setUserDemoPreference(userId, isDemoEnabled);
+      await setUserDemoPreference(userId, isDemoEnabled);
 
       if (isDemoEnabled) {
         // Get demo organization details and stats
         const [demoOrganization, stats] = await Promise.all([
-          demoGuard.getDemoOrganization(),
-          demoGuard.getDemoStats(),
+          getDemoOrganization(),
+          getDemoStats(),
         ]);
 
         logger.info(`[DemoMode] User ${userId} enabled demo mode`);
@@ -144,12 +145,12 @@ router.get(
     }
 
     try {
-      const isDemoEnabled = await demoGuard.checkUserDemoPreference(userId);
+      const isDemoEnabled = await checkUserDemoPreference(userId);
 
       if (isDemoEnabled) {
         const [demoOrganization, stats] = await Promise.all([
-          demoGuard.getDemoOrganization(),
-          demoGuard.getDemoStats(),
+          getDemoOrganization(),
+          getDemoStats(),
         ]);
 
         return res.json({
@@ -193,16 +194,13 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const [demoOrganization, stats] = await Promise.all([
-        demoGuard.getDemoOrganization(),
-        demoGuard.getDemoStats(),
-      ]);
+      const [demoOrganization, stats] = await Promise.all([getDemoOrganization(), getDemoStats()]);
 
       return res.json({
         success: true,
         organization: {
-          id: demoGuard.DEMO_ORG_ID,
-          name: demoGuard.DEMO_ORG_NAME,
+          id: DEMO_ORG_ID,
+          name: DEMO_ORG_NAME,
           slug: 'acme-demo',
           industry: 'Manufacturing & Technology',
           size: '500-1000 employees',
