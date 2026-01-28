@@ -56,6 +56,12 @@ RUN if [ ! -f src/utils/aiSchemaValidator.js ] && [ -f src/utils/AISchemaValidat
       cp src/utils/AISchemaValidator.js src/utils/aiSchemaValidator.js; \
     fi
 RUN npm run build
+# Copy .js re-export files to dist (TypeScript excludes .js files but we need them at runtime)
+RUN mkdir -p dist/src/utils dist/src/services/ai && \
+    if [ -f src/utils/aiSchemaValidator.js ]; then cp src/utils/aiSchemaValidator.js dist/src/utils/aiSchemaValidator.js; fi && \
+    if [ -f src/utils/AISchemaValidator.js ]; then cp src/utils/AISchemaValidator.js dist/src/utils/AISchemaValidator.js; fi && \
+    if [ -f src/services/ai/aiPipeline.js ]; then cp src/services/ai/aiPipeline.js dist/src/services/ai/aiPipeline.js; fi && \
+    if [ -f src/services/ai/AIPipeline.js ]; then cp src/services/ai/AIPipeline.js dist/src/services/ai/AIPipeline.js; fi
 
 # ==========================================
 # STAGE 4: Production API

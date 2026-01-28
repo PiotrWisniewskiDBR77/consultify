@@ -82,6 +82,12 @@ RUN test -f tsconfig.build.json || (echo "ERROR: tsconfig.build.json not found!"
 # Build TypeScript - use --build flag with tsconfig.build.json to ensure proper compilation
 # Use node_modules/.bin/tsc to ensure we use the locally installed TypeScript
 RUN ./node_modules/.bin/tsc --build tsconfig.build.json || (echo "TypeScript build failed!" && exit 1)
+# Copy .js re-export files to dist (TypeScript excludes .js files but we need them at runtime)
+RUN mkdir -p dist/src/utils dist/src/services/ai && \
+    if [ -f src/utils/aiSchemaValidator.js ]; then cp src/utils/aiSchemaValidator.js dist/src/utils/aiSchemaValidator.js; fi && \
+    if [ -f src/utils/AISchemaValidator.js ]; then cp src/utils/AISchemaValidator.js dist/src/utils/AISchemaValidator.js; fi && \
+    if [ -f src/services/ai/aiPipeline.js ]; then cp src/services/ai/aiPipeline.js dist/src/services/ai/aiPipeline.js; fi && \
+    if [ -f src/services/ai/AIPipeline.js ]; then cp src/services/ai/AIPipeline.js dist/src/services/ai/AIPipeline.js; fi
 # Verify dist directory was created
 RUN test -d dist || (echo "ERROR: dist directory not created after build!" && ls -la && exit 1)
 # Verify critical modules exist in dist
