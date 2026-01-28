@@ -238,9 +238,9 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 
     await new Promise<void>((resolve, reject) => {
       db.run(
-        `INSERT INTO assessments (id, organization_id, name, description, status, created_at, updated_at)
-                 VALUES (?, ?, ?, ?, 'DRAFT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-        [id, organizationId, name || 'New Assessment', description || ''],
+        `INSERT INTO assessments (id, organization_id, name, status, created_at, updated_at)
+                 VALUES (?, ?, ?, 'DRAFT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        [id, organizationId, name || 'New Assessment'],
         (err: Error | null) => {
           if (err) reject(err);
           else resolve();
