@@ -58,10 +58,33 @@ RUN if [ ! -f src/utils/aiSchemaValidator.js ] && [ -f src/utils/AISchemaValidat
 RUN npm run build
 # Copy .js re-export files to dist (TypeScript excludes .js files but we need them at runtime)
 RUN mkdir -p dist/src/utils dist/src/services/ai && \
-    if [ -f src/utils/aiSchemaValidator.js ]; then cp src/utils/aiSchemaValidator.js dist/src/utils/aiSchemaValidator.js; fi && \
-    if [ -f src/utils/AISchemaValidator.js ]; then cp src/utils/AISchemaValidator.js dist/src/utils/AISchemaValidator.js; fi && \
-    if [ -f src/services/ai/aiPipeline.js ]; then cp src/services/ai/aiPipeline.js dist/src/services/ai/aiPipeline.js; fi && \
-    if [ -f src/services/ai/AIPipeline.js ]; then cp src/services/ai/AIPipeline.js dist/src/services/ai/AIPipeline.js; fi
+    if [ -f src/utils/aiSchemaValidator.js ]; then \
+      cp src/utils/aiSchemaValidator.js dist/src/utils/aiSchemaValidator.js && \
+      echo "✓ Copied aiSchemaValidator.js"; \
+    else \
+      echo "⚠️  aiSchemaValidator.js not found in src"; \
+    fi && \
+    if [ -f src/utils/AISchemaValidator.js ]; then \
+      cp src/utils/AISchemaValidator.js dist/src/utils/AISchemaValidator.js && \
+      echo "✓ Copied AISchemaValidator.js"; \
+    else \
+      echo "⚠️  AISchemaValidator.js not found in src"; \
+    fi && \
+    if [ -f src/services/ai/aiPipeline.js ]; then \
+      cp src/services/ai/aiPipeline.js dist/src/services/ai/aiPipeline.js && \
+      echo "✓ Copied aiPipeline.js"; \
+    else \
+      echo "⚠️  aiPipeline.js not found in src"; \
+    fi && \
+    if [ -f src/services/ai/AIPipeline.js ]; then \
+      cp src/services/ai/AIPipeline.js dist/src/services/ai/AIPipeline.js && \
+      echo "✓ Copied AIPipeline.js"; \
+    else \
+      echo "⚠️  AIPipeline.js not found in src"; \
+    fi && \
+    echo "Verifying copied files:" && \
+    ls -la dist/src/utils/*.js 2>/dev/null | grep -i schema || echo "No schema files in dist/src/utils" && \
+    ls -la dist/src/services/ai/*.js 2>/dev/null | grep -i pipeline || echo "No pipeline files in dist/src/services/ai"
 
 # ==========================================
 # STAGE 4: Production API
