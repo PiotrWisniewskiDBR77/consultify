@@ -36,6 +36,7 @@ router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
                     id,
                     organization_id as organizationId,
                     name,
+                    description,
                     status,
                     created_at as createdAt,
                     updated_at as updatedAt,
@@ -86,6 +87,7 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
                     id,
                     organization_id as organizationId,
                     name,
+                    description,
                     status,
                     created_at as createdAt,
                     updated_at as updatedAt,
@@ -126,9 +128,9 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 
     await new Promise<void>((resolve, reject) => {
       db.run(
-        `INSERT INTO assessments (id, organization_id, name, status, created_at, updated_at)
-                 VALUES (?, ?, ?, 'DRAFT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-        [id, organizationId, name || 'New Assessment'],
+        `INSERT INTO assessments (id, organization_id, name, description, status, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, 'DRAFT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        [id, organizationId, name || 'New Assessment', description || ''],
         (err: Error | null) => {
           if (err) reject(err);
           else resolve();
