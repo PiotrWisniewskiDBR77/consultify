@@ -47,6 +47,10 @@ RUN npm ci
 
 # Copy source and build
 COPY server/ .
+# Create aiPipeline.js for case-sensitive filesystems (macOS git can't track both AIPipeline.js and aiPipeline.js)
+RUN if [ ! -f src/services/ai/aiPipeline.js ] && [ -f src/services/ai/AIPipeline.js ]; then \
+      cp src/services/ai/AIPipeline.js src/services/ai/aiPipeline.js; \
+    fi
 RUN npm run build
 
 # ==========================================
