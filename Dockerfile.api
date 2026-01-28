@@ -65,9 +65,11 @@ RUN npm install --save --ignore-scripts cookie-parser@^1.4.7 @types/cookie-parse
 COPY server/tsconfig.json ./
 # Copy all server files first (tsconfig.build.json should be included)
 COPY server/ .
-# Create aiPipeline.js for case-sensitive filesystems (macOS git can't track both AIPipeline.js and aiPipeline.js)
-RUN if [ ! -f src/services/ai/aiPipeline.js ] && [ -f src/services/ai/AIPipeline.js ]; then \
-      cp src/services/ai/AIPipeline.js src/services/ai/aiPipeline.js; \
+# Create aiPipeline.js for case-sensitive filesystems (macOS git can't track both)
+# Note: We don't create AIPipeline.js re-export as it would overwrite the compiled output
+RUN if [ ! -f src/services/ai/aiPipeline.js ]; then \
+      echo "Creating aiPipeline.js re-export file..." && \
+      printf '// Re-export from AIPipeline.js (compiled) for case-sensitive file systems\n// This file allows imports using lowercase '\''aiPipeline'\'' to work on case-sensitive filesystems\nexport * from '\''./AIPipeline.js'\'';\nexport { AIPipeline } from '\''./AIPipeline.js'\'';\nexport { default } from '\''./AIPipeline.js'\'';\n' > src/services/ai/aiPipeline.js; \
     fi
 # Create aiSchemaValidator.js for case-sensitive filesystems (macOS git can't track both)
 # Note: We don't create AISchemaValidator.js re-export as it would overwrite the compiled output
@@ -98,12 +100,6 @@ RUN mkdir -p dist/src/utils dist/src/services/ai && \
       echo "✓ Copied aiPipeline.js"; \
     else \
       echo "⚠️  aiPipeline.js not found in src"; \
-    fi && \
-    if [ -f src/services/ai/AIPipeline.js ]; then \
-      cp src/services/ai/AIPipeline.js dist/src/services/ai/AIPipeline.js && \
-      echo "✓ Copied AIPipeline.js"; \
-    else \
-      echo "⚠️  AIPipeline.js not found in src"; \
     fi && \
     echo "Verifying copied files:" && \
     ls -la dist/src/utils/*.js 2>/dev/null | grep -i schema || echo "No schema files in dist/src/utils" && \
