@@ -21,11 +21,6 @@ import { InitiativeCard } from '../InitiativeCard';
 import { PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
 import { PortfolioListView } from '../Portfolio/PortfolioListView';
 import { PortfolioMatrixView } from '../Portfolio/PortfolioMatrixView';
-// New Initiative Drawer (50% width with Open wider)
-import { InitiativeDrawer } from './InitiativeDrawer';
-// Full-width view (Open Wider mode)
-import { InitiativeFullView } from './InitiativeFullView';
-import { InitiativesTimelineView } from './InitiativesTimelineView';
 // ModuleHub components
 import {
   FilterChip,
@@ -35,14 +30,23 @@ import {
   StatusFilter,
   ViewMode,
 } from '../shared/ModuleHub';
-// Dynamic card for full initiative view
-import { InitiativeDetailCard } from './InitiativeDetailCard';
+import { InitiativeDocumentView } from './InitiativeDocumentView';
+// New Initiative Drawer (50% width with Open wider)
+import { InitiativeDrawer } from './InitiativeDrawer';
+import { InitiativesTimelineView } from './InitiativesTimelineView';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
 const ALLOWED_STATUSES: InitiativeStatus[] =
   MODULE_STATUSES.length > 0
     ? MODULE_STATUSES
-    : [InitiativeStatus.DRAFT, InitiativeStatus.PLANNING, InitiativeStatus.REVIEW, InitiativeStatus.APPROVED, InitiativeStatus.EXECUTING, InitiativeStatus.BLOCKED];
+    : [
+        InitiativeStatus.DRAFT,
+        InitiativeStatus.PLANNING,
+        InitiativeStatus.REVIEW,
+        InitiativeStatus.APPROVED,
+        InitiativeStatus.EXECUTING,
+        InitiativeStatus.BLOCKED,
+      ];
 
 interface InitiativesHubProps {
   initialTab?: ModuleTab;
@@ -77,7 +81,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // Side panel state
   const [selectedInitiative, setSelectedInitiative] = useState<PortfolioInitiative | null>(null);
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
-  const [isFullView, setIsFullView] = useState(false);
 
   // Filter state for API
   const [filters, setFilters] = useState<PortfolioFilters>({});
@@ -97,7 +100,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       try {
         const params = new URLSearchParams();
         if (currentProjectId) params.append('projectId', currentProjectId);
-        if (activeStatusFilter && ALLOWED_STATUSES.includes(activeStatusFilter as InitiativeStatus)) {
+        if (
+          activeStatusFilter &&
+          ALLOWED_STATUSES.includes(activeStatusFilter as InitiativeStatus)
+        ) {
           params.append('status', activeStatusFilter);
         }
         if (filters.priority?.length) filters.priority.forEach((p) => params.append('priority', p));
@@ -224,26 +230,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     setIsSidePanelOpen(true);
   }, []);
 
-  // Open initiative in full-width view (Open Wider mode)
-  const handleOpenWider = useCallback((initiative: PortfolioInitiative) => {
-    setSelectedInitiative(initiative);
-    setIsSidePanelOpen(false);
-    setIsFullView(true);
-  }, []);
-
-  // Collapse from full view back to drawer
-  const handleCollapseToDrawer = useCallback(() => {
-    setIsFullView(false);
-    setIsSidePanelOpen(true);
-  }, []);
-
-  // Close full view completely
-  const handleCloseFullView = useCallback(() => {
-    setIsFullView(false);
-    setSelectedInitiative(null);
-  }, []);
-
-  // Open initiative as dynamic card - called from side panel button (alternative view)
+  // Open initiative as dynamic document (DynamicTabs)
   const handleOpenFullScreen = useCallback(
     (initiative: PortfolioInitiative) => {
       // Close side panel first
@@ -323,13 +310,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     [activeDocumentId]
   );
 
-  // Handle save from dynamic card
-  const handleSaveFromCard = useCallback(() => {
-    // Refresh list data after save
-    fetchData(true);
-    toast.success('Initiative saved');
-  }, [fetchData]);
-
   const handleBulkApply = useCallback(async () => {
     if (selectedIds.size === 0) return;
 
@@ -368,14 +348,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     setBulkOwnerBusinessId('');
     setBulkOwnerExecutionId('');
     fetchData(true);
-  }, [
-    bulkOwnerBusinessId,
-    bulkOwnerExecutionId,
-    bulkPriority,
-    bulkStatus,
-    fetchData,
-    selectedIds,
-  ]);
+  }, [bulkOwnerBusinessId, bulkOwnerExecutionId, bulkPriority, bulkStatus, fetchData, selectedIds]);
 
   // ============================================
   // CONTENT RENDERING - Original Portfolio Components
@@ -384,7 +357,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const renderContent = () => {
     // If there's an active document, show the dynamic card
     if (activeDocumentId) {
-      return <InitiativeDetailCard initiativeId={activeDocumentId} onSave={handleSaveFromCard} />;
+      return <InitiativeDocumentView initiativeId={activeDocumentId} />;
     }
 
     if (isLoading) {
@@ -532,7 +505,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       {/* Initiative Drawer (50% width) with Open Wider functionality */}
       <InitiativeDrawer
         initiative={selectedInitiative}
-        isOpen={isSidePanelOpen && !isFullView}
+        isOpen={isSidePanelOpen}
         onClose={handleCloseSidePanel}
         onUpdate={(updated) => {
           setInitiatives((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
@@ -540,23 +513,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             setSelectedInitiative(updated);
           }
         }}
-        onOpenWider={handleOpenWider}
+        onOpenWider={handleOpenFullScreen}
         users={users}
       />
-
-      {/* Full-width view (Open Wider mode) */}
-      {isFullView && selectedInitiative && (
-        <InitiativeFullView
-          initiative={selectedInitiative}
-          onClose={handleCloseFullView}
-          onCollapse={handleCollapseToDrawer}
-          onUpdate={(updated) => {
-            setSelectedInitiative(updated);
-            setInitiatives((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
-            fetchData(true);
-          }}
-        />
-      )}
 
       {/* New Initiative Modal */}
       {showNewModal && (
@@ -580,9 +539,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-navy-900 border border-navy-700 rounded-xl p-6 w-full max-w-lg">
             <h2 className="text-lg font-semibold text-white mb-4">Bulk edit initiatives</h2>
-            <p className="text-sm text-slate-400 mb-4">
-              {selectedIds.size} initiatives selected
-            </p>
+            <p className="text-sm text-slate-400 mb-4">{selectedIds.size} initiatives selected</p>
             <div className="space-y-4">
               <div>
                 <label className="block text-xs text-slate-400 mb-1">Status</label>

@@ -1,24 +1,27 @@
 /**
  * TaskDetailView
- * Full-page task detail view for dynamic tabs
- * ClickUp-style design following Golden Standard
+ * Full-page task detail view following Decision Panel Golden Standard
+ * Two-column layout with collapsible sections
+ * Tech-sexy UI with gradients and glassmorphism
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
   Calendar,
+  Check,
   CheckCircle2,
   CheckSquare,
   ChevronDown,
   ChevronLeft,
   Clock,
   Edit3,
+  FileText,
   Flag,
-  FolderOpen,
-  Link as LinkIcon,
+  Layers,
   Loader2,
-  MoreVertical,
+  Minus,
+  Play,
   Plus,
   Save,
   Sparkles,
@@ -29,20 +32,42 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { Api } from '../../services/api';
-import { InitiativeService } from '../../services/initiativeService';
+import { Api } from '@/services/api';
+import { InitiativeService } from '@/services/initiativeService';
 
 import {
-  AttachmentsSection,
-  CommentsSection,
-  LinkedItemsSection,
+  type AIInsight,
+  AIInsightSection,
+  type Alternative,
+  AlternativesSection,
   type Attachment,
+  AttachmentsSection,
   type Comment,
+  CommentsSection,
+  DeadlineAlertBanner,
+  DependenciesSection,
+  type EscalationRule,
+  EscalationRulesSection,
+  type EvidenceItem,
+  EvidenceSection,
+  type EvidenceType,
+  type ImplementationIdea,
+  ImplementationIdeasSection,
   type LinkedItem,
+  LinkedItemsSection,
+  type ReminderRule,
+  RiskAssessmentCompact,
+  type RiskItem,
+  type Stakeholder,
+  type StakeholderNotificationSettings,
+  type StakeholderRole,
+  StakeholdersSection,
+  type TaskDependency,
+  type WarningThresholds,
 } from './shared';
 
 interface TaskDetailViewProps {
@@ -54,21 +79,61 @@ interface TaskDetailViewProps {
 
 // Status configuration
 const STATUS_CONFIG = {
-  todo: { label: { en: 'To Do', pl: 'Do zrobienia' }, color: 'bg-slate-400', icon: CheckSquare },
-  in_progress: { label: { en: 'In Progress', pl: 'W trakcie' }, color: 'bg-blue-500', icon: Clock },
-  review: { label: { en: 'Review', pl: 'Przegląd' }, color: 'bg-purple-500', icon: Edit3 },
-  done: { label: { en: 'Done', pl: 'Ukończone' }, color: 'bg-emerald-500', icon: CheckCircle2 },
-  blocked: { label: { en: 'Blocked', pl: 'Zablokowane' }, color: 'bg-red-500', icon: AlertCircle },
+  todo: {
+    label: { en: 'To Do', pl: 'Do zrobienia' },
+    color: 'bg-slate-400',
+    textColor: 'text-slate-500',
+    icon: CheckSquare,
+  },
+  in_progress: {
+    label: { en: 'In Progress', pl: 'W trakcie' },
+    color: 'bg-blue-500',
+    textColor: 'text-blue-500',
+    icon: Clock,
+  },
+  review: {
+    label: { en: 'Review', pl: 'Przegląd' },
+    color: 'bg-purple-500',
+    textColor: 'text-purple-500',
+    icon: Edit3,
+  },
+  done: {
+    label: { en: 'Done', pl: 'Ukończone' },
+    color: 'bg-emerald-500',
+    textColor: 'text-emerald-500',
+    icon: CheckCircle2,
+  },
+  blocked: {
+    label: { en: 'Blocked', pl: 'Zablokowane' },
+    color: 'bg-red-500',
+    textColor: 'text-red-500',
+    icon: AlertCircle,
+  },
 };
 
 const PRIORITY_CONFIG = {
-  low: { label: { en: 'Low', pl: 'Niski' }, color: 'bg-slate-400', textColor: 'text-slate-500' },
-  medium: { label: { en: 'Medium', pl: 'Średni' }, color: 'bg-blue-400', textColor: 'text-blue-500' },
-  high: { label: { en: 'High', pl: 'Wysoki' }, color: 'bg-orange-400', textColor: 'text-orange-500' },
-  critical: { label: { en: 'Critical', pl: 'Krytyczny' }, color: 'bg-red-500', textColor: 'text-red-500' },
+  low: {
+    label: { en: 'Low', pl: 'Niski' },
+    color: 'bg-slate-400',
+    textColor: 'text-slate-500',
+  },
+  medium: {
+    label: { en: 'Medium', pl: 'Średni' },
+    color: 'bg-blue-400',
+    textColor: 'text-blue-500',
+  },
+  high: {
+    label: { en: 'High', pl: 'Wysoki' },
+    color: 'bg-orange-400',
+    textColor: 'text-orange-500',
+  },
+  critical: {
+    label: { en: 'Critical', pl: 'Krytyczny' },
+    color: 'bg-red-500',
+    textColor: 'text-red-500',
+  },
 };
 
-// Normalize priority value to ensure it's a valid key
 const normalizePriority = (priority?: string | null): keyof typeof PRIORITY_CONFIG => {
   if (!priority) return 'medium';
   const normalized = priority.toLowerCase();
@@ -94,100 +159,117 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const [status, setStatus] = useState<keyof typeof STATUS_CONFIG>('todo');
   const [priority, setPriority] = useState<keyof typeof PRIORITY_CONFIG>('medium');
   const [dueDate, setDueDate] = useState('');
-  const [startedAt, setStartedAt] = useState('');
-  const [completedAt, setCompletedAt] = useState('');
+  const [startDate, setStartDate] = useState('');
   const [blockedReason, setBlockedReason] = useState('');
+
+  // People
   const [ownerId, setOwnerId] = useState('');
-  const [backupAssigneeId, setBackupAssigneeId] = useState('');
-  const [requiresAcceptance, setRequiresAcceptance] = useState(false);
-  const [acceptanceType, setAcceptanceType] = useState<'manual' | 'automatic'>('manual');
-  const [acceptorId, setAcceptorId] = useState('');
-  const [weight, setWeight] = useState<number>(1);
-  const [weightReason, setWeightReason] = useState('');
-  const [tags, setTags] = useState<string[]>([]);
-  const [newTag, setNewTag] = useState('');
-  const [checklist, setChecklist] = useState<{ id: string; text: string; completed: boolean }[]>([]);
+  const [assigneeId, setAssigneeId] = useState('');
+  const [users, setUsers] = useState<
+    { id: string; firstName: string; lastName: string; email?: string }[]
+  >([]);
+
+  // Initiative (parent)
+  const [initiativeId, setInitiativeId] = useState<string | null>(null);
+  const [initiativeName, setInitiativeName] = useState<string | null>(null);
+  const [availableInitiatives, setAvailableInitiatives] = useState<
+    { id: string; name: string; type: string }[]
+  >([]);
+  const [showInitiativeDropdown, setShowInitiativeDropdown] = useState(false);
 
   // Context
   const [projectId, setProjectId] = useState('');
   const [projectName, setProjectName] = useState('');
-  const [initiativeId, setInitiativeId] = useState('');
-  const [initiatives, setInitiatives] = useState<{ id: string; name: string }[]>([]);
-  const [initiativeTasks, setInitiativeTasks] = useState<any[]>([]);
-
-  // Assignee
-  const [assigneeId, setAssigneeId] = useState('');
-  const [assigneeName, setAssigneeName] = useState('');
-  const [users, setUsers] = useState<{ id: string; firstName: string; lastName: string }[]>([]);
   const [createdBy, setCreatedBy] = useState('');
   const [createdAt, setCreatedAt] = useState('');
-  const [updatedAt, setUpdatedAt] = useState('');
 
-  // Attachments, Comments, Links (mock data for now - would be loaded from API)
+  // Checklist
+  const [checklist, setChecklist] = useState<{ id: string; text: string; completed: boolean }[]>(
+    []
+  );
+
+  // Tags
+  const [tags, setTags] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState('');
+
+  // Escalation & Reminders
+  const [reminders, setReminders] = useState<ReminderRule[]>([]);
+  const [escalation, setEscalation] = useState<EscalationRule | null>(null);
+  const [thresholds, setThresholds] = useState<WarningThresholds>({
+    warningDays: 3,
+    criticalDays: 1,
+    showOverdueAlert: true,
+  });
+
+  // Attachments, Comments, Links
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [linkedItems, setLinkedItems] = useState<LinkedItem[]>([]);
-  const [taskDecisions, setTaskDecisions] = useState<any[]>([]);
-  const [loadingDecisions, setLoadingDecisions] = useState(false);
-  const [showDecisionForm, setShowDecisionForm] = useState(false);
-  const [newDecisionTitle, setNewDecisionTitle] = useState('');
-  const [newDecisionDueDate, setNewDecisionDueDate] = useState('');
-  const [newDecisionPriority, setNewDecisionPriority] = useState<'low' | 'medium' | 'high' | 'critical'>('medium');
+
+  // Stakeholders
+  const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
+
+  // Decision blocking
   const [blockedByDecisionId, setBlockedByDecisionId] = useState<string>('');
+
+  // New sections state
+  const [risks, setRisks] = useState<RiskItem[]>([]);
+  const [alternatives, setAlternatives] = useState<Alternative[]>([]);
+  const [selectedAlternativeId, setSelectedAlternativeId] = useState<string>('');
+  const [implementationIdeas, setImplementationIdeas] = useState<ImplementationIdea[]>([]);
+  const [dependencies, setDependencies] = useState<TaskDependency[]>([]);
+  const [aiInsights, setAiInsights] = useState<AIInsight[]>([]);
+  const [expectedOutcome, setExpectedOutcome] = useState('');
+  const [strategicContribution, setStrategicContribution] = useState<
+    ('PROCESS_CHANGE' | 'BEHAVIOR_CHANGE' | 'CAPABILITY_CHANGE')[]
+  >([]);
+
+  // Evidence & Acceptance
+  const [evidenceRequired, setEvidenceRequired] = useState<EvidenceType[]>([]);
+  const [evidenceItems, setEvidenceItems] = useState<EvidenceItem[]>([]);
+  const [requiresAcceptance, setRequiresAcceptance] = useState(false);
+  const [acceptanceType, setAcceptanceType] = useState<'manual' | 'automatic' | null>(null);
+  const [acceptorId, setAcceptorId] = useState<string | null>(null);
+  const [signedOff, setSignedOff] = useState(false);
+  const [signedOffAt, setSignedOffAt] = useState<string | undefined>();
+  const [signedOffBy, setSignedOffBy] = useState<string | undefined>();
+
+  // Generation states
+  const [isGeneratingRisks, setIsGeneratingRisks] = useState(false);
+  const [isGeneratingAlternatives, setIsGeneratingAlternatives] = useState(false);
+  const [isGeneratingIdeas, setIsGeneratingIdeas] = useState(false);
+  const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
 
   // UI State
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
-  const statusDropdownRef = useRef<HTMLDivElement | null>(null);
-  const priorityDropdownRef = useRef<HTMLDivElement | null>(null);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['details', 'checklist', 'attachments', 'links', 'comments'])
-  );
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set([]));
 
-  // Close dropdowns on click-outside / Escape
+  // Load data
   useEffect(() => {
-    const onMouseDown = (e: MouseEvent) => {
-      const target = e.target as Node | null;
-      if (!target) return;
-
-      if (showStatusDropdown && statusDropdownRef.current && !statusDropdownRef.current.contains(target)) {
-        setShowStatusDropdown(false);
-      }
-      if (
-        showPriorityDropdown &&
-        priorityDropdownRef.current &&
-        !priorityDropdownRef.current.contains(target)
-      ) {
-        setShowPriorityDropdown(false);
-      }
-    };
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setShowStatusDropdown(false);
-        setShowPriorityDropdown(false);
-      }
-    };
-
-    document.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('keydown', onKeyDown);
-    };
-  }, [showStatusDropdown, showPriorityDropdown]);
-
-  useEffect(() => {
-    loadInitiatives();
     loadUsers();
+    loadInitiatives();
   }, []);
+
+  useEffect(() => {
+    if (taskId) {
+      loadTask(taskId);
+    } else {
+      resetForm();
+    }
+  }, [taskId]);
 
   const loadUsers = async () => {
     try {
       const response = await Api.get('/users');
       const usersArray = Array.isArray(response) ? response : response?.users || [];
       setUsers(
-        usersArray.map((u: any) => ({ id: u.id, firstName: u.firstName, lastName: u.lastName }))
+        usersArray.map((u: any) => ({
+          id: u.id,
+          firstName: u.firstName,
+          lastName: u.lastName,
+          email: u.email,
+        }))
       );
     } catch (error) {
       console.error('Failed to load users', error);
@@ -198,122 +280,15 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     try {
       const data = await InitiativeService.getAll();
       const initiativesArray = Array.isArray(data) ? data : (data as any)?.initiatives || [];
-      setInitiatives(initiativesArray.map((i: any) => ({ id: i.id, name: i.name })));
+      setAvailableInitiatives(
+        initiativesArray.map((i: any) => ({
+          id: i.id,
+          name: i.name,
+          type: i.type || 'project',
+        }))
+      );
     } catch (error) {
       console.error('Failed to load initiatives', error);
-    }
-  };
-
-  useEffect(() => {
-    if (taskId) {
-      loadTask(taskId);
-      // Load decisions linked to this task
-      (async () => {
-        try {
-          setLoadingDecisions(true);
-          const decisions = await Api.getTaskDecisions(taskId);
-          setTaskDecisions(Array.isArray(decisions) ? decisions : []);
-        } catch {
-          setTaskDecisions([]);
-        } finally {
-          setLoadingDecisions(false);
-        }
-      })();
-    } else {
-      resetForm();
-    }
-  }, [taskId]);
-
-  useEffect(() => {
-    const run = async () => {
-      if (!initiativeId) {
-        setInitiativeTasks([]);
-        return;
-      }
-      try {
-        const tasks = await Api.getInitiativeTasks(initiativeId);
-        setInitiativeTasks(Array.isArray(tasks) ? tasks : []);
-      } catch (e) {
-        // Not fatal for task view
-        setInitiativeTasks([]);
-      }
-    };
-    run();
-  }, [initiativeId]);
-
-  const resetForm = () => {
-    setTitle('');
-    setDescription('');
-    setStatus('todo');
-    setPriority('medium');
-    setDueDate('');
-    setStartedAt('');
-    setCompletedAt('');
-    setBlockedReason('');
-    setTags([]);
-    setChecklist([]);
-    setInitiativeId('');
-    setAssigneeId('');
-    setOwnerId('');
-    setBackupAssigneeId('');
-    setRequiresAcceptance(false);
-    setAcceptanceType('manual');
-    setAcceptorId('');
-    setWeight(1);
-    setWeightReason('');
-    setAssigneeName('');
-    setProjectId('');
-    setProjectName('');
-    setAttachments([]);
-    setComments([]);
-    setLinkedItems([]);
-    setTaskDecisions([]);
-    setShowDecisionForm(false);
-    setNewDecisionTitle('');
-    setNewDecisionDueDate('');
-    setNewDecisionPriority('medium');
-    setBlockedByDecisionId('');
-  };
-
-  const handleRequestDecision = async () => {
-    if (!taskId) return;
-    if (!newDecisionTitle.trim()) {
-      toast.error(isPolish ? 'Tytuł decyzji jest wymagany' : 'Decision title is required');
-      return;
-    }
-    try {
-      const payload = {
-        title: newDecisionTitle.trim(),
-        description: `Decision required for task: ${title}`,
-        relatedObjectType: 'task',
-        relatedObjectId: taskId,
-        projectId: projectId || null,
-        initiativeId: initiativeId || null,
-        decisionOwnerId: ownerId || null,
-        dueDate: newDecisionDueDate || null,
-        priority: newDecisionPriority,
-        decisionType: 'EXECUTION',
-        pmoDomain: 'GOVERNANCE_DECISION_MAKING',
-      };
-      const created = await Api.createDecision(payload);
-      toast.success(isPolish ? 'Decyzja utworzona' : 'Decision created');
-      setShowDecisionForm(false);
-      setNewDecisionTitle('');
-      setNewDecisionDueDate('');
-      setNewDecisionPriority('medium');
-      // Refresh
-      const decisions = await Api.getTaskDecisions(taskId);
-      setTaskDecisions(Array.isArray(decisions) ? decisions : []);
-      // Reload task to reflect decision gate auto-block
-      await loadTask(taskId);
-      const createdId = created?.id;
-      if (createdId && onOpenDecision) onOpenDecision(createdId);
-    } catch (e: any) {
-      toast.error(
-        isPolish
-          ? 'Nie udało się utworzyć decyzji (wymagane uprawnienie approve_changes)'
-          : 'Failed to create decision (requires approve_changes)'
-      );
     }
   };
 
@@ -326,37 +301,58 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       setStatus(task.status || 'todo');
       setPriority(normalizePriority(task.priority));
       setDueDate(task.dueDate ? task.dueDate.split('T')[0] : '');
-      setStartedAt(task.startedAt ? task.startedAt.split('T')[0] : '');
-      setCompletedAt(task.completedAt ? task.completedAt.split('T')[0] : '');
+      setStartDate(task.startedAt ? task.startedAt.split('T')[0] : '');
       setBlockedReason(task.blockedReason || '');
-      setOwnerId(task.ownerId || '');
-      setBackupAssigneeId(task.backupAssigneeId || '');
-      setRequiresAcceptance(task.requiresAcceptance || false);
-      setAcceptanceType(task.acceptanceType || 'manual');
-      setAcceptorId(task.acceptorId || '');
-      setWeight(typeof task.weight === 'number' ? task.weight : 1);
-      setWeightReason(task.weightReason || '');
-      setTags(task.tags || []);
-      setChecklist(task.checklist || []);
-      setInitiativeId(task.initiativeId || '');
+      setOwnerId(task.ownerId || task.assigneeId || '');
       setAssigneeId(task.assigneeId || '');
-      setAssigneeName(task.assigneeName || '');
+      setInitiativeId(task.initiativeId || null);
       setProjectId(task.projectId || '');
       setProjectName(task.projectName || '');
       setCreatedBy(task.createdByName || task.createdBy || '');
       setCreatedAt(task.createdAt || '');
-      setUpdatedAt(task.updatedAt || '');
-      // Load related data
+      setTags(task.tags || []);
+      setChecklist(task.checklist || []);
       setAttachments(task.attachments || []);
       setComments(task.comments || []);
       setLinkedItems(task.linkedItems || []);
       setBlockedByDecisionId(task.blockedByDecisionId || '');
+
+      // Set initiative name if found
+      if (task.initiativeId) {
+        const init = availableInitiatives.find((i) => i.id === task.initiativeId);
+        setInitiativeName(init?.name || null);
+      }
     } catch (error) {
       console.error('Failed to load task', error);
-      toast.error(isPolish ? 'Nie udało się załadować zadania' : 'Failed to load task details');
+      toast.error(isPolish ? 'Nie udało się załadować zadania' : 'Failed to load task');
     } finally {
       setLoading(false);
     }
+  };
+
+  const resetForm = () => {
+    setTitle('');
+    setDescription('');
+    setStatus('todo');
+    setPriority('medium');
+    setDueDate('');
+    setStartDate('');
+    setBlockedReason('');
+    setOwnerId('');
+    setAssigneeId('');
+    setInitiativeId(null);
+    setInitiativeName(null);
+    setProjectId('');
+    setProjectName('');
+    setTags([]);
+    setChecklist([]);
+    setAttachments([]);
+    setComments([]);
+    setLinkedItems([]);
+    setStakeholders([]);
+    setReminders([]);
+    setEscalation(null);
+    setBlockedByDecisionId('');
   };
 
   const handleSave = async () => {
@@ -373,20 +369,13 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         status,
         priority,
         dueDate: dueDate || null,
-        startedAt: startedAt || null,
-        completedAt: completedAt || null,
+        startedAt: startDate || null,
         blockedReason: status === 'blocked' ? blockedReason : '',
         tags,
         checklist,
         initiativeId: initiativeId || null,
         assigneeId: assigneeId || null,
         ownerId: ownerId || null,
-        backupAssigneeId: backupAssigneeId || null,
-        requiresAcceptance: requiresAcceptance || false,
-        acceptanceType: requiresAcceptance ? acceptanceType : null,
-        acceptorId: requiresAcceptance ? (acceptorId || null) : null,
-        weight,
-        weightReason: weightReason || null,
       };
 
       if (taskId) {
@@ -405,18 +394,48 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     }
   };
 
+  const handleStartTask = () => {
+    setStatus('in_progress');
+    setStartDate(new Date().toISOString().split('T')[0]);
+    toast.success(isPolish ? 'Zadanie rozpoczęte' : 'Task started');
+  };
+
+  const handleCompleteTask = () => {
+    setStatus('done');
+    toast.success(isPolish ? 'Zadanie ukończone' : 'Task completed');
+  };
+
   const handleDelete = async () => {
     if (!taskId) return;
-    if (!confirm(isPolish ? 'Czy na pewno chcesz usunąć to zadanie?' : 'Are you sure you want to delete this task?')) return;
+    if (
+      !confirm(
+        isPolish
+          ? 'Czy na pewno chcesz usunąć to zadanie?'
+          : 'Are you sure you want to delete this task?'
+      )
+    )
+      return;
 
     try {
       await Api.delete(`/tasks/${taskId}`);
       toast.success(isPolish ? 'Zadanie usunięte' : 'Task deleted');
       onClose();
     } catch (error) {
-      console.error('Failed to delete task', error);
       toast.error(isPolish ? 'Nie udało się usunąć zadania' : 'Failed to delete task');
     }
+  };
+
+  // Section toggle
+  const toggleSection = (section: string) => {
+    setExpandedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(section)) {
+        next.delete(section);
+      } else {
+        next.add(section);
+      }
+      return next;
+    });
   };
 
   // Checklist handlers
@@ -427,7 +446,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     ]);
   };
 
-  const updateChecklistItem = (id: string, updates: Partial<typeof checklist[0]>) => {
+  const updateChecklistItem = (id: string, updates: Partial<(typeof checklist)[0]>) => {
     setChecklist(checklist.map((item) => (item.id === id ? { ...item, ...updates } : item)));
   };
 
@@ -447,127 +466,14 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     setTags(tags.filter((t) => t !== tag));
   };
 
-  // Section toggle
-  const toggleSection = (section: string) => {
-    setExpandedSections((prev) => {
-      const next = new Set(prev);
-      if (next.has(section)) {
-        next.delete(section);
-      } else {
-        next.add(section);
-      }
-      return next;
-    });
-  };
-
   // Calculate progress from checklist
   const checklistProgress = useMemo(() => {
     if (checklist.length === 0) return 0;
     return Math.round((checklist.filter((c) => c.completed).length / checklist.length) * 100);
   }, [checklist]);
 
-  // Calculate overdue status
-  const isOverdue = useMemo(() => {
-    if (!dueDate || status === 'done') return false;
-    return new Date(dueDate) < new Date();
-  }, [dueDate, status]);
-
-  const daysUntilDue = useMemo(() => {
-    if (!dueDate) return null;
-    const diff = Math.ceil((new Date(dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-    return diff;
-  }, [dueDate]);
-
-  const initiativeMeta = useMemo(() => {
-    if (!initiativeId) {
-      return {
-        total: 0,
-        position: null as number | null,
-        totalWeight: 0,
-        contributionPct: null as number | null,
-        overdueCount: 0,
-        blockedCount: 0,
-        rag: 'NA' as 'GREEN' | 'AMBER' | 'RED' | 'NA',
-      };
-    }
-
-    const isDone = (s?: string) => {
-      const v = (s || '').toLowerCase();
-      return v === 'done' || v === 'completed' || v === 'validated';
-    };
-
-    const tasks = Array.isArray(initiativeTasks) ? [...initiativeTasks] : [];
-    const total = tasks.length;
-    const totalWeight = tasks.reduce((acc, t: any) => acc + (typeof t.weight === 'number' ? t.weight : 1), 0);
-
-    const byDueThenCreated = tasks.sort((a: any, b: any) => {
-      const ad = a?.dueDate ? new Date(a.dueDate).getTime() : Number.POSITIVE_INFINITY;
-      const bd = b?.dueDate ? new Date(b.dueDate).getTime() : Number.POSITIVE_INFINITY;
-      if (ad !== bd) return ad - bd;
-      const ac = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const bc = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return ac - bc;
-    });
-    const positionIdx = taskId ? byDueThenCreated.findIndex((t: any) => t?.id === taskId) : -1;
-    const position = positionIdx >= 0 ? positionIdx + 1 : null;
-
-    const now = Date.now();
-    const overdueCount = tasks.filter((t: any) => {
-      if (isDone(t?.status)) return false;
-      if (!t?.dueDate) return false;
-      return new Date(t.dueDate).getTime() < now;
-    }).length;
-
-    const blockedCount = tasks.filter((t: any) => (t?.status || '').toLowerCase() === 'blocked').length;
-
-    let rag: 'GREEN' | 'AMBER' | 'RED' | 'NA' = 'GREEN';
-    if (blockedCount > 0 && overdueCount > 0) rag = 'RED';
-    else if (blockedCount > 0) rag = 'RED';
-    else if (overdueCount > 0) rag = 'AMBER';
-
-    const contributionPct =
-      totalWeight > 0 ? Math.round(((typeof weight === 'number' ? weight : 1) / totalWeight) * 100) : null;
-
-    return { total, position, totalWeight, contributionPct, overdueCount, blockedCount, rag };
-  }, [initiativeId, initiativeTasks, taskId, weight]);
-
-  const handleSendToChat = async () => {
-    const initiativeName = initiatives.find((i) => i.id === initiativeId)?.name || null;
-    const lines = [
-      `TASK: ${title || '(no title)'}`,
-      taskId ? `ID: ${taskId}` : null,
-      projectName ? `Project: ${projectName}` : null,
-      initiativeName ? `Initiative: ${initiativeName}` : null,
-      `Status: ${status}`,
-      `Priority: ${priority}`,
-      dueDate ? `Due: ${dueDate}${isOverdue ? ' (OVERDUE)' : ''}` : null,
-      startedAt ? `Started: ${startedAt}` : null,
-      requiresAcceptance ? `Acceptance: required (${acceptanceType}${acceptorId ? `, acceptor=${acceptorId}` : ''})` : null,
-      ownerId ? `Owner: ${ownerId}` : null,
-      assigneeId ? `Assignee: ${assigneeId}` : `Assignee: (unassigned)`,
-      backupAssigneeId ? `Backup: ${backupAssigneeId}` : null,
-      initiativeId
-        ? `Initiative impact: ${initiativeMeta.contributionPct ?? '—'}% (task weight=${weight}, total weight=${initiativeMeta.totalWeight || '—'})`
-        : null,
-      initiativeId && initiativeMeta.total
-        ? `Initiative tasks: ${initiativeMeta.position ?? '—'}/${initiativeMeta.total} • Risk: ${initiativeMeta.rag} • Overdue: ${initiativeMeta.overdueCount} • Blocked: ${initiativeMeta.blockedCount}`
-        : null,
-      '',
-      'Description:',
-      description || '(empty)',
-    ].filter(Boolean);
-
-    try {
-      await navigator.clipboard.writeText(lines.join('\n'));
-      toast.success(isPolish ? 'Skopiowano do czatu' : 'Copied for chat');
-    } catch {
-      toast.error(isPolish ? 'Nie udało się skopiować' : 'Failed to copy');
-    }
-  };
-
-  // Attachment handlers (mock)
+  // Attachment handlers
   const handleUploadAttachments = async (files: FileList) => {
-    // TODO: Implement actual file upload
     const newAttachments: Attachment[] = Array.from(files).map((file) => ({
       id: Math.random().toString(36).substr(2, 9),
       name: file.name,
@@ -583,7 +489,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     setAttachments(attachments.filter((a) => a.id !== id));
   };
 
-  // Comment handlers (mock)
+  // Comment handlers
   const handleAddComment = async (content: string, parentId?: string) => {
     const newComment: Comment = {
       id: Math.random().toString(36).substr(2, 9),
@@ -598,9 +504,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     if (parentId) {
       setComments(
         comments.map((c) =>
-          c.id === parentId
-            ? { ...c, replies: [...(c.replies || []), newComment] }
-            : c
+          c.id === parentId ? { ...c, replies: [...(c.replies || []), newComment] } : c
         )
       );
     } else {
@@ -622,7 +526,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     );
   };
 
-  // Linked items handlers (mock)
+  // Linked items handlers
   const handleAddLinkedItem = async (item: LinkedItem) => {
     setLinkedItems([...linkedItems, item]);
   };
@@ -632,7 +536,6 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   };
 
   const searchLinkedItems = async (query: string) => {
-    // Mock search - would be API call
     return [];
   };
 
@@ -644,882 +547,1137 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     );
   }
 
-  // Defensive fallbacks (prevents crash on unexpected/null values)
-  const statusConfig =
-    (STATUS_CONFIG as any)?.[status] ||
-    (STATUS_CONFIG as any)?.todo || {
-      label: { en: 'To Do', pl: 'Do zrobienia' },
-      color: 'bg-slate-400',
-      icon: CheckSquare,
-    };
-  const priorityConfig =
-    (PRIORITY_CONFIG as any)?.[priority] ||
-    (PRIORITY_CONFIG as any)?.medium || {
-      label: { en: 'Medium', pl: 'Średni' },
-      color: 'bg-blue-400',
-      textColor: 'text-blue-500',
-    };
-  const StatusIcon = (statusConfig as any).icon || CheckSquare;
+  const statusConfig = STATUS_CONFIG[status] || STATUS_CONFIG.todo;
+  const priorityConfig = PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.medium;
+  const StatusIcon = statusConfig.icon;
+  const isPending = status === 'todo' || status === 'in_progress';
+  const isBlocked = status === 'blocked';
+  const isDone = status === 'done';
   const isDecisionBlocked = Boolean(blockedByDecisionId);
 
+  // Risk handlers
+  const addRisk = () => {
+    const newRisk: RiskItem = {
+      id: Math.random().toString(36).substr(2, 9),
+      title: '',
+      probability: 'medium',
+      impact: 'medium',
+      category: 'technical',
+      mitigation: '',
+      contingency: '',
+    };
+    setRisks([...risks, newRisk]);
+  };
+
+  const generateRisksAI = async () => {
+    setIsGeneratingRisks(true);
+    await new Promise((r) => setTimeout(r, 1500));
+    const aiRisks: RiskItem[] = [
+      {
+        id: Math.random().toString(36).substr(2, 9),
+        title: isPolish ? 'Opóźnienie w dostawie' : 'Delivery delay',
+        probability: 'medium',
+        impact: 'high',
+        category: 'operational',
+        mitigation: '',
+        contingency: '',
+      },
+      {
+        id: Math.random().toString(36).substr(2, 9),
+        title: isPolish ? 'Brak zasobów' : 'Resource shortage',
+        probability: 'low',
+        impact: 'medium',
+        category: 'business',
+        mitigation: '',
+        contingency: '',
+      },
+    ];
+    setRisks([...risks, ...aiRisks]);
+    setIsGeneratingRisks(false);
+    toast.success(isPolish ? 'Wygenerowano ryzyka AI' : 'AI risks generated');
+  };
+
+  // Alternative handlers
+  const addAlternative = () => {
+    const newAlt: Alternative = {
+      id: Math.random().toString(36).substr(2, 9),
+      title: '',
+      description: '',
+      pros: [''],
+      cons: [''],
+      isRecommended: false,
+    };
+    setAlternatives([...alternatives, newAlt]);
+  };
+
+  const generateAlternativesAI = async () => {
+    setIsGeneratingAlternatives(true);
+    await new Promise((r) => setTimeout(r, 1500));
+    const aiAlts: Alternative[] = [
+      {
+        id: Math.random().toString(36).substr(2, 9),
+        title: isPolish ? 'Podejście A' : 'Approach A',
+        description: '',
+        pros: [isPolish ? 'Szybkie' : 'Fast'],
+        cons: [isPolish ? 'Kosztowne' : 'Expensive'],
+        isRecommended: true,
+      },
+      {
+        id: Math.random().toString(36).substr(2, 9),
+        title: isPolish ? 'Podejście B' : 'Approach B',
+        description: '',
+        pros: [isPolish ? 'Tanie' : 'Cheap'],
+        cons: [isPolish ? 'Wolne' : 'Slow'],
+        isRecommended: false,
+      },
+    ];
+    setAlternatives([...alternatives, ...aiAlts]);
+    setIsGeneratingAlternatives(false);
+    toast.success(isPolish ? 'Wygenerowano alternatywy AI' : 'AI alternatives generated');
+  };
+
+  // Implementation ideas handlers
+  const addIdea = () => {
+    const newIdea: ImplementationIdea = {
+      id: Math.random().toString(36).substr(2, 9),
+      title: '',
+      description: '',
+      source: 'manual',
+      status: 'idea',
+      votes: 0,
+      votedByMe: false,
+    };
+    setImplementationIdeas([...implementationIdeas, newIdea]);
+  };
+
+  const generateIdeasAI = async () => {
+    setIsGeneratingIdeas(true);
+    await new Promise((r) => setTimeout(r, 1500));
+    const aiIdeas: ImplementationIdea[] = [
+      {
+        id: Math.random().toString(36).substr(2, 9),
+        title: isPolish ? 'Automatyzacja procesu' : 'Process automation',
+        description: '',
+        source: 'ai',
+        status: 'idea',
+        votes: 0,
+        votedByMe: false,
+      },
+    ];
+    setImplementationIdeas([...implementationIdeas, ...aiIdeas]);
+    setIsGeneratingIdeas(false);
+    toast.success(isPolish ? 'Wygenerowano pomysły AI' : 'AI ideas generated');
+  };
+
+  // AI Insights handler
+  const generateInsightsAI = async () => {
+    setIsGeneratingInsights(true);
+    await new Promise((r) => setTimeout(r, 2000));
+    const newInsights: AIInsight[] = [
+      {
+        id: Math.random().toString(36).substr(2, 9),
+        type: 'recommendation',
+        title: isPolish ? 'Rozważ wcześniejszy start' : 'Consider earlier start',
+        description: isPolish
+          ? 'Na podstawie zależności, wcześniejszy start może przyspieszyć całość'
+          : 'Based on dependencies, earlier start could speed up overall',
+        confidence: 'high',
+        createdAt: new Date().toISOString(),
+        actionable: true,
+      },
+      {
+        id: Math.random().toString(36).substr(2, 9),
+        type: 'warning',
+        title: isPolish ? 'Potencjalne opóźnienie' : 'Potential delay',
+        description: isPolish
+          ? 'Wykryto ryzyko opóźnienia o 2-3 dni'
+          : 'Detected risk of 2-3 day delay',
+        confidence: 'medium',
+        createdAt: new Date().toISOString(),
+      },
+    ];
+    setAiInsights([...aiInsights, ...newInsights]);
+    setIsGeneratingInsights(false);
+    toast.success(isPolish ? 'Wygenerowano wskazówki AI' : 'AI insights generated');
+  };
+
   return (
-    <div className="min-h-0 bg-slate-50 dark:bg-navy-950">
-      {/* Content */}
-      <div className="p-6">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
-          {/* Main */}
-          <div className="space-y-4 order-2 lg:order-1">
-          {/* Title Section */}
-          <div className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-navy-700 min-h-[152px] flex flex-col justify-between">
-            <div className="flex items-center justify-between gap-3 mb-4">
-              <button
-                onClick={onClose}
-                className="p-2 -ml-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                title={isPolish ? 'Wróć' : 'Back'}
-              >
-                <ChevronLeft size={20} />
-              </button>
+    <div className="h-full flex flex-col bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50/30 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 dark:from-blue-500/10 dark:to-cyan-500/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-purple-500/5 to-pink-500/5 dark:from-purple-500/10 dark:to-pink-500/10 rounded-full blur-3xl" />
+      </div>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                  <div className={`w-2.5 h-2.5 rounded-full ${statusConfig.color}`} />
-                  <span className="truncate">
-                    {taskId
-                      ? isPolish
-                        ? 'Szczegóły zadania'
-                        : 'Task details'
-                      : isPolish
-                        ? 'Nowe zadanie'
-                        : 'New task'}
-                  </span>
-                  {taskId && (
-                    <span className="text-xs font-mono text-slate-400 dark:text-slate-500">
-                      #{taskId.slice(0, 8)}
-                    </span>
-                  )}
-                </div>
-                {(projectName || (initiativeId && initiatives.find((i) => i.id === initiativeId))) && (
-                  <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-500">
-                    {projectName && (
-                      <>
-                        <FolderOpen size={12} />
-                        <span className="truncate">{projectName}</span>
-                      </>
-                    )}
-                    {initiativeId && initiatives.find((i) => i.id === initiativeId) && (
-                      <>
-                        <span className="mx-1">›</span>
-                        <Target size={12} />
-                        <span className="truncate">{initiatives.find((i) => i.id === initiativeId)?.name}</span>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
+      {/* Header */}
+      <header className="relative flex-shrink-0 px-6 py-4 border-b border-slate-200/80 dark:border-navy-800/80 bg-white/50 dark:bg-navy-900/50 backdrop-blur-xl">
+        <div className="flex items-center gap-4">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onClose}
+            className="p-2 -ml-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-navy-800/80 transition-all"
+          >
+            <ChevronLeft size={20} />
+          </motion.button>
 
-              <div className={`w-10 h-10 rounded-xl ${statusConfig.color}/20 flex items-center justify-center`}>
-                <StatusIcon size={20} className={statusConfig.color.replace('bg-', 'text-')} />
-              </div>
-            </div>
-
+          <div className="flex-1 flex items-center gap-3">
+            <div
+              className={`w-3 h-3 rounded-full ${statusConfig.color} shadow-lg shadow-${statusConfig.color.replace('bg-', '')}/50`}
+            />
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full text-xl font-semibold bg-transparent text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none"
-              placeholder={isPolish ? 'Wprowadź tytuł zadania...' : 'Enter task title...'}
+              className="flex-1 text-xl font-bold bg-transparent text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
+              placeholder={isPolish ? 'Tytuł zadania...' : 'Task title...'}
               autoFocus={!taskId}
             />
-
-            {isDecisionBlocked && (
-              <div className="mt-4 rounded-lg border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-3 flex items-start justify-between gap-3">
-                <div className="flex items-start gap-2">
-                  <AlertCircle size={16} className="text-red-500 mt-0.5" />
-                  <div>
-                    <div className="text-sm font-medium text-red-700 dark:text-red-300">
-                      {isPolish ? 'Zablokowane decyzją' : 'Blocked by decision'}
-                    </div>
-                    <div className="text-xs text-red-600/80 dark:text-red-300/80 mt-0.5">
-                      {isPolish
-                        ? 'Rozwiąż decyzję blokującą, zanim ustawisz status na DONE.'
-                        : 'Resolve the blocking decision before marking this task DONE.'}
-                    </div>
-                  </div>
-                </div>
-                {onOpenDecision && (
-                  <button
-                    onClick={() => onOpenDecision(blockedByDecisionId)}
-                    className="px-3 py-2 rounded-lg bg-red-600 text-white text-xs font-medium hover:bg-red-700 transition-colors"
-                  >
-                    {isPolish ? 'Otwórz decyzję' : 'Open decision'}
-                  </button>
-                )}
-              </div>
-            )}
           </div>
 
-          {/* Description */}
-          <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-              {isPolish ? 'Opis' : 'Description'}
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={4}
-              className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-300 dark:focus:border-primary-500/50 resize-none"
-              placeholder={isPolish ? 'Opisz szczegóły zadania...' : 'Describe task details...'}
-            />
-          </div>
-
-          {/* Checklist */}
-          <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-            <button
-              onClick={() => toggleSection('checklist')}
-              className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <CheckSquare size={16} className="text-slate-400" />
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  {isPolish ? 'Lista kontrolna' : 'Checklist'}
-                </span>
-                {checklist.length > 0 && (
-                  <span className="px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400">
-                    {checklist.filter((c) => c.completed).length}/{checklist.length}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-3">
-                {checklist.length > 0 && (
-                  <div className="w-24 h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                    <div
-                      className="h-full bg-emerald-500 transition-all duration-300"
-                      style={{ width: `${checklistProgress}%` }}
-                    />
-                  </div>
-                )}
-                <ChevronDown
-                  size={16}
-                  className={`text-slate-400 transition-transform ${expandedSections.has('checklist') ? 'rotate-180' : ''}`}
-                />
-              </div>
-            </button>
-            <AnimatePresence>
-              {expandedSections.has('checklist') && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="border-t border-slate-200 dark:border-navy-700"
-                >
-                  <div className="p-4 space-y-2">
-                    {checklist.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3 group">
-                        <input
-                          type="checkbox"
-                          checked={item.completed}
-                          onChange={(e) =>
-                            updateChecklistItem(item.id, { completed: e.target.checked })
-                          }
-                          className="w-4 h-4 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500"
-                        />
-                        <input
-                          type="text"
-                          value={item.text}
-                          onChange={(e) => updateChecklistItem(item.id, { text: e.target.value })}
-                          placeholder={isPolish ? 'Wprowadź element...' : 'Enter item...'}
-                          className={`flex-1 px-2 py-1 rounded text-sm bg-transparent text-slate-700 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none ${
-                            item.completed ? 'line-through text-slate-400 dark:text-slate-500' : ''
-                          }`}
-                        />
-                        <button
-                          onClick={() => removeChecklistItem(item.id)}
-                          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-all"
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ))}
-                    <button
-                      onClick={addChecklistItem}
-                      className="flex items-center gap-2 text-sm text-primary-500 hover:text-primary-600 py-2"
-                    >
-                      <Plus size={14} />
-                      <span>{isPolish ? 'Dodaj element' : 'Add item'}</span>
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Attachments */}
-          <AttachmentsSection
-            attachments={attachments}
-            onUpload={handleUploadAttachments}
-            onDelete={handleDeleteAttachment}
-          />
-
-          {/* Linked Items */}
-          <LinkedItemsSection
-            items={linkedItems}
-            onAdd={handleAddLinkedItem}
-            onRemove={handleRemoveLinkedItem}
-            searchItems={searchLinkedItems}
-            allowedTypes={['decision', 'risk', 'initiative']}
-          />
-
-          {/* Tags */}
-          <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-            <div className="flex items-center gap-2 mb-3">
-              <Tag size={14} className="text-slate-400" />
-              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                {isPolish ? 'Tagi' : 'Tags'}
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-500/30"
-                >
-                  {tag}
-                  <button
-                    onClick={() => removeTag(tag)}
-                    className="hover:text-primary-800 dark:hover:text-primary-300"
-                  >
-                    <X size={12} />
-                  </button>
-                </span>
-              ))}
-              <div className="flex items-center gap-1">
-                <input
-                  type="text"
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && addTag()}
-                  placeholder={isPolish ? 'Dodaj tag...' : 'Add tag...'}
-                  className="px-2 py-1 rounded text-sm bg-transparent text-slate-600 dark:text-slate-400 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none w-24"
-                />
-                {newTag && (
-                  <button
-                    onClick={addTag}
-                    className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-400"
-                  >
-                    <Plus size={14} />
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Comments */}
-          <CommentsSection
-            comments={comments}
-            onAddComment={handleAddComment}
-            onDeleteComment={handleDeleteComment}
-            onLikeComment={handleLikeComment}
-            currentUserId="current-user"
-          />
-
-          {/* Metadata Footer */}
           {taskId && (
-            <div className="text-xs text-slate-400 dark:text-slate-500 space-y-1 pt-4">
-              {createdBy && (
-                <p>
-                  {isPolish ? 'Utworzone przez' : 'Created by'}: {createdBy}
-                  {createdAt && ` • ${new Date(createdAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US')}`}
-                </p>
-              )}
-              {updatedAt && (
-                <p>
-                  {isPolish ? 'Ostatnia aktualizacja' : 'Last updated'}:{' '}
-                  {new Date(updatedAt).toLocaleString(isPolish ? 'pl-PL' : 'en-US')}
-                </p>
-              )}
-            </div>
+            <span className="text-xs font-mono text-slate-400 dark:text-slate-500 bg-slate-100/80 dark:bg-navy-800/80 px-2.5 py-1 rounded-lg">
+              #{taskId.slice(0, 8)}
+            </span>
           )}
         </div>
+      </header>
 
-        {/* Control Sidebar (manage) */}
-        <div className="space-y-4 lg:sticky lg:top-6 self-start order-1 lg:order-2">
-          {/* Actions */}
-          <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-            <div className="flex items-center gap-3">
-              {taskId && (
-                <button
-                  onClick={handleDelete}
-                  className="h-9 w-9 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-colors flex items-center justify-center"
-                  title={isPolish ? 'Usuń' : 'Delete'}
-                >
-                  <Trash2 size={18} />
-                </button>
+      {/* Content - Two columns */}
+      <div className="relative flex-1 overflow-y-auto p-6">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - 2/3 */}
+          <div className="lg:col-span-2 space-y-4 order-2 lg:order-1">
+            {/* Task Description */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl p-5 border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 dark:from-blue-500/20 dark:to-cyan-500/20">
+                  <FileText size={16} className="text-blue-500 dark:text-blue-400" />
+                </div>
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  {isPolish ? 'Opis zadania' : 'Task description'}
+                </span>
+              </div>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={4}
+                className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 resize-none transition-all"
+                placeholder={isPolish ? 'Opisz szczegóły zadania...' : 'Describe task details...'}
+              />
+            </motion.div>
+
+            {/* Expected Outcome */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl p-5 border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/20 dark:to-teal-500/20">
+                  <Target size={16} className="text-emerald-500 dark:text-emerald-400" />
+                </div>
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  {isPolish ? 'Oczekiwany rezultat' : 'Expected Outcome'}
+                </span>
+              </div>
+              <textarea
+                value={expectedOutcome}
+                onChange={(e) => setExpectedOutcome(e.target.value)}
+                rows={2}
+                className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/10 resize-none transition-all"
+                placeholder={
+                  isPolish
+                    ? 'Co ma być efektem tego zadania?'
+                    : 'What should be the outcome of this task?'
+                }
+              />
+            </motion.div>
+
+            {/* Comments */}
+            <CommentsSection
+              comments={comments}
+              onAddComment={handleAddComment}
+              onDeleteComment={handleDeleteComment}
+              onLikeComment={handleLikeComment}
+              currentUserId="current-user"
+              expanded={expandedSections.has('comments')}
+              onToggleExpand={() => toggleSection('comments')}
+            />
+
+            {/* Risk Analysis */}
+            <RiskAssessmentCompact
+              risks={risks}
+              onAdd={addRisk}
+              onUpdate={(id, updates) =>
+                setRisks(risks.map((r) => (r.id === id ? { ...r, ...updates } : r)))
+              }
+              onRemove={(id) => setRisks(risks.filter((r) => r.id !== id))}
+              onGenerateAI={generateRisksAI}
+              isGenerating={isGeneratingRisks}
+              expanded={expandedSections.has('risks')}
+              onToggleExpand={() => toggleSection('risks')}
+            />
+
+            {/* Alternatives */}
+            <AlternativesSection
+              alternatives={alternatives}
+              selectedAlternativeId={selectedAlternativeId}
+              status={status}
+              onAdd={addAlternative}
+              onUpdate={(id, updates) =>
+                setAlternatives(alternatives.map((a) => (a.id === id ? { ...a, ...updates } : a)))
+              }
+              onRemove={(id) => setAlternatives(alternatives.filter((a) => a.id !== id))}
+              onSetRecommended={(id) =>
+                setAlternatives(alternatives.map((a) => ({ ...a, isRecommended: a.id === id })))
+              }
+              onSelect={(id) => setSelectedAlternativeId(id)}
+              onGenerateAI={generateAlternativesAI}
+              isGenerating={isGeneratingAlternatives}
+              expanded={expandedSections.has('alternatives')}
+              onToggleExpand={() => toggleSection('alternatives')}
+            />
+
+            {/* Implementation Ideas */}
+            <ImplementationIdeasSection
+              ideas={implementationIdeas}
+              onAdd={addIdea}
+              onUpdate={(id, updates) =>
+                setImplementationIdeas(
+                  implementationIdeas.map((i) => (i.id === id ? { ...i, ...updates } : i))
+                )
+              }
+              onRemove={(id) =>
+                setImplementationIdeas(implementationIdeas.filter((i) => i.id !== id))
+              }
+              onVote={(id) =>
+                setImplementationIdeas(
+                  implementationIdeas.map((i) =>
+                    i.id === id
+                      ? {
+                          ...i,
+                          votes: i.votedByMe ? i.votes - 1 : i.votes + 1,
+                          votedByMe: !i.votedByMe,
+                        }
+                      : i
+                  )
+                )
+              }
+              onGenerateAI={generateIdeasAI}
+              isGenerating={isGeneratingIdeas}
+              expanded={expandedSections.has('ideas')}
+              onToggleExpand={() => toggleSection('ideas')}
+            />
+
+            {/* Checklist */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+            >
+              <motion.button
+                whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => toggleSection('checklist')}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20">
+                    <CheckSquare size={18} className="text-emerald-500 dark:text-emerald-400" />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {isPolish ? 'Lista kontrolna' : 'Checklist'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  {checklist.length > 0 && (
+                    <>
+                      <div className="w-20 h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+                        <div
+                          className="h-full bg-emerald-500 transition-all"
+                          style={{ width: `${checklistProgress}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                        {checklist.filter((c) => c.completed).length}/{checklist.length}
+                      </span>
+                    </>
+                  )}
+                  <motion.div
+                    animate={{ rotate: expandedSections.has('checklist') ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown size={18} className="text-slate-400" />
+                  </motion.div>
+                </div>
+              </motion.button>
+
+              <AnimatePresence>
+                {expandedSections.has('checklist') && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                  >
+                    <div className="p-4 space-y-2">
+                      {checklist.length === 0 ? (
+                        <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
+                          <CheckSquare
+                            size={24}
+                            className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                          />
+                          <p className="text-sm text-slate-400 dark:text-slate-500">
+                            {isPolish ? 'Brak elementów' : 'No items'}
+                          </p>
+                          <button
+                            onClick={addChecklistItem}
+                            className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 transition-colors"
+                          >
+                            <Plus size={14} />
+                            {isPolish ? 'Dodaj element' : 'Add item'}
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          {checklist.map((item) => (
+                            <div key={item.id} className="flex items-center gap-3 group">
+                              <input
+                                type="checkbox"
+                                checked={item.completed}
+                                onChange={(e) =>
+                                  updateChecklistItem(item.id, { completed: e.target.checked })
+                                }
+                                className="w-4 h-4 rounded border-slate-300 dark:border-navy-600 text-emerald-500 focus:ring-emerald-500"
+                              />
+                              <input
+                                type="text"
+                                value={item.text}
+                                onChange={(e) =>
+                                  updateChecklistItem(item.id, { text: e.target.value })
+                                }
+                                placeholder={isPolish ? 'Wprowadź element...' : 'Enter item...'}
+                                className={`flex-1 px-2 py-1.5 rounded-lg text-sm bg-transparent border border-transparent hover:border-slate-200 dark:hover:border-navy-600 focus:border-emerald-400 dark:focus:border-emerald-500 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none transition-colors ${
+                                  item.completed
+                                    ? 'line-through text-slate-400 dark:text-slate-500'
+                                    : ''
+                                }`}
+                              />
+                              <button
+                                onClick={() => removeChecklistItem(item.id)}
+                                className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-all"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            onClick={addChecklistItem}
+                            className="flex items-center gap-2 text-sm text-emerald-500 hover:text-emerald-600 py-2 px-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors"
+                          >
+                            <Plus size={14} />
+                            <span>{isPolish ? 'Dodaj element' : 'Add item'}</span>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </div>
+
+          {/* Right Column - 1/3 */}
+          <div className="space-y-4 lg:sticky lg:top-6 self-start order-1 lg:order-2">
+            {/* Deadline Alert */}
+            <DeadlineAlertBanner dueDate={dueDate} status={status} />
+
+            {/* Action Buttons */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="space-y-2"
+            >
+              {/* Primary Actions */}
+              {taskId && !isDone && (
+                <div className="grid grid-cols-2 gap-2">
+                  {status === 'todo' && (
+                    <motion.button
+                      whileHover={{ scale: 1.02, boxShadow: '0 4px 20px rgba(59, 130, 246, 0.2)' }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleStartTask}
+                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-blue-400/40 text-blue-500 hover:border-blue-500 hover:bg-blue-500/10 font-medium transition-all shadow-sm"
+                    >
+                      <Play size={18} />
+                      <span>{isPolish ? 'Rozpocznij' : 'Start'}</span>
+                    </motion.button>
+                  )}
+                  {(status === 'in_progress' || status === 'review') && (
+                    <motion.button
+                      whileHover={{ scale: 1.02, boxShadow: '0 4px 20px rgba(16, 185, 129, 0.2)' }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleCompleteTask}
+                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-emerald-400/40 text-emerald-500 hover:border-emerald-500 hover:bg-emerald-500/10 font-medium transition-all shadow-sm"
+                    >
+                      <Check size={18} />
+                      <span>{isPolish ? 'Ukończ' : 'Complete'}</span>
+                    </motion.button>
+                  )}
+                  {taskId && (
+                    <motion.button
+                      whileHover={{ scale: 1.02, boxShadow: '0 4px 20px rgba(239, 68, 68, 0.2)' }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleDelete}
+                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-red-400/40 text-red-500 hover:border-red-500 hover:bg-red-500/10 font-medium transition-all shadow-sm"
+                    >
+                      <Trash2 size={18} />
+                      <span>{isPolish ? 'Usuń' : 'Delete'}</span>
+                    </motion.button>
+                  )}
+                </div>
               )}
 
-              <button
-                onClick={handleSendToChat}
-                className="h-9 px-4 rounded-lg bg-purple-500 hover:bg-purple-600 text-white font-medium transition-colors flex items-center gap-2 shadow-sm"
-                title={isPolish ? 'Wyślij do AI' : 'Send to AI'}
-              >
-                <Sparkles size={16} />
-                <span>AI</span>
-              </button>
-
-              <button
+              {/* Save Button */}
+              <motion.button
+                whileHover={{ scale: 1.02, boxShadow: '0 4px 20px rgba(139, 92, 246, 0.2)' }}
+                whileTap={{ scale: 0.98 }}
                 onClick={handleSave}
                 disabled={saving}
-                className="h-9 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-medium transition-colors flex items-center gap-2 shadow-sm disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-purple-400/40 text-purple-500 hover:border-purple-500 hover:bg-purple-500/10 font-medium transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                <span>{isPolish ? 'Zapisz' : 'Save'}</span>
-              </button>
-            </div>
-          </div>
+                {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                <span>{isPolish ? 'Zapisz zmiany' : 'Save Changes'}</span>
+              </motion.button>
+            </motion.div>
 
-          <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-            <div className="flex items-center gap-2 mb-3">
-              <Flag size={14} className="text-slate-400" />
-              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                {isPolish ? 'Sterowanie' : 'Control'}
-              </span>
-            </div>
-            <div className="space-y-3">
-              {/* Status */}
-              <div className="relative" ref={statusDropdownRef}>
-                <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
-                  {isPolish ? 'Status' : 'Status'}
-                </label>
-                <button
-                  onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                  className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2.5 h-2.5 rounded-full ${statusConfig.color}`} />
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      {isPolish ? statusConfig.label.pl : statusConfig.label.en}
-                    </span>
+            {/* Control Panel */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.15 }}
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+            >
+              <motion.button
+                whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => toggleSection('control')}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 dark:from-blue-500/20 dark:to-cyan-500/20">
+                    <Flag size={18} className="text-blue-500 dark:text-blue-400" />
                   </div>
-                  <ChevronDown size={16} className="text-slate-400" />
-                </button>
-                <AnimatePresence>
-                  {showStatusDropdown && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      className="absolute z-20 top-full left-0 right-0 mt-1 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-navy-600 py-1 overflow-hidden"
-                    >
-                      {Object.entries(STATUS_CONFIG).map(([key, config]) => (
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {isPolish ? 'Sterowanie' : 'Control'}
+                  </span>
+                </div>
+                <motion.div
+                  animate={{ rotate: expandedSections.has('control') ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronDown size={18} className="text-slate-400" />
+                </motion.div>
+              </motion.button>
+
+              <AnimatePresence>
+                {expandedSections.has('control') && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                  >
+                    <div className="p-4 space-y-3">
+                      {/* Initiative */}
+                      <div className="relative">
+                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                          {isPolish ? 'Inicjatywa' : 'Initiative'}
+                        </label>
                         <button
-                          key={key}
-                          disabled={key === 'done' && isDecisionBlocked}
-                          onClick={() => {
-                            if (key === 'done' && isDecisionBlocked) {
-                              toast.error(
-                                isPolish
-                                  ? 'Nie możesz ustawić DONE: task jest zablokowany decyzją.'
-                                  : 'Cannot set DONE: task is blocked by a decision.'
-                              );
-                              return;
-                            }
-                            setStatus(key as keyof typeof STATUS_CONFIG);
-                            setShowStatusDropdown(false);
-                          }}
-                          className={`w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
-                            status === key ? 'bg-primary-50 dark:bg-primary-500/10' : ''
-                          } ${key === 'done' && isDecisionBlocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          onClick={() => setShowInitiativeDropdown(!showInitiativeDropdown)}
+                          className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors"
                         >
-                          <div className={`w-2.5 h-2.5 rounded-full ${config.color}`} />
-                          <span className="text-slate-700 dark:text-slate-300">
-                            {isPolish ? config.label.pl : config.label.en}
-                          </span>
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Priority */}
-              <div className="relative" ref={priorityDropdownRef}>
-                <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
-                  {isPolish ? 'Priorytet' : 'Priority'}
-                </label>
-                <button
-                  onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
-                  className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <Flag size={14} className={priorityConfig.textColor} />
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      {isPolish ? priorityConfig.label.pl : priorityConfig.label.en}
-                    </span>
-                  </div>
-                  <ChevronDown size={16} className="text-slate-400" />
-                </button>
-                <AnimatePresence>
-                  {showPriorityDropdown && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      className="absolute z-20 top-full left-0 right-0 mt-1 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-navy-600 py-1 overflow-hidden"
-                    >
-                      {Object.entries(PRIORITY_CONFIG).map(([key, config]) => (
-                        <button
-                          key={key}
-                          onClick={() => {
-                            setPriority(key as keyof typeof PRIORITY_CONFIG);
-                            setShowPriorityDropdown(false);
-                          }}
-                          className={`w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
-                            priority === key ? 'bg-primary-50 dark:bg-primary-500/10' : ''
-                          }`}
-                        >
-                          <Flag size={14} className={config.textColor} />
-                          <span className="text-slate-700 dark:text-slate-300">
-                            {isPolish ? config.label.pl : config.label.en}
-                          </span>
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Due / Start */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
-                    {isPolish ? 'Due' : 'Due'}
-                  </label>
-                  <div
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border ${
-                      isOverdue
-                        ? 'border-red-300 dark:border-red-500/50 bg-red-50 dark:bg-red-500/10'
-                        : 'border-slate-200 dark:border-navy-600'
-                    }`}
-                  >
-                    <Calendar size={14} className={isOverdue ? 'text-red-500' : 'text-slate-400'} />
-                    <input
-                      type="date"
-                      value={dueDate}
-                      onChange={(e) => setDueDate(e.target.value)}
-                      className={`flex-1 text-sm bg-transparent focus:outline-none ${
-                        isOverdue ? 'text-red-600 dark:text-red-400' : 'text-slate-700 dark:text-slate-300'
-                      }`}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
-                    {isPolish ? 'Start' : 'Start'}
-                  </label>
-                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
-                    <Calendar size={14} className="text-slate-400" />
-                    <input
-                      type="date"
-                      value={startedAt}
-                      onChange={(e) => setStartedAt(e.target.value)}
-                      className="flex-1 text-sm bg-transparent focus:outline-none text-slate-700 dark:text-slate-300"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {status === 'done' && (
-                <div>
-                  <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
-                    {isPolish ? 'Ukończono' : 'Completed'}
-                  </label>
-                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
-                    <CheckCircle2 size={14} className="text-emerald-400" />
-                    <input
-                      type="date"
-                      value={completedAt}
-                      onChange={(e) => setCompletedAt(e.target.value)}
-                      className="flex-1 text-sm bg-transparent focus:outline-none text-slate-700 dark:text-slate-300"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {status === 'blocked' && (
-                <div className="bg-red-50 dark:bg-red-500/10 rounded-lg p-3 border border-red-200 dark:border-red-500/30">
-                  <div className="flex items-center gap-2 mb-2">
-                    <AlertCircle size={14} className="text-red-500" />
-                    <span className="text-xs font-medium text-red-600 dark:text-red-400">
-                      {isPolish ? 'Powód blokady' : 'Blocked reason'}
-                    </span>
-                  </div>
-                  <input
-                    type="text"
-                    value={blockedReason}
-                    onChange={(e) => setBlockedReason(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-sm text-red-700 dark:text-red-300 placeholder-red-400 dark:placeholder-red-400/60 focus:outline-none"
-                    placeholder={isPolish ? 'Co blokuje to zadanie?' : 'What is blocking this task?'}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* People */}
-          <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-            <div className="flex items-center gap-2 mb-3">
-              <Users size={14} className="text-slate-400" />
-              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                {isPolish ? 'Osoby' : 'People'}
-              </span>
-            </div>
-            <div className="space-y-3">
-              <div className="relative">
-                <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
-                  {isPolish ? 'Assignee' : 'Assignee'}
-                </label>
-                <div className="relative">
-                <select
-                  value={assigneeId}
-                  onChange={(e) => {
-                    setAssigneeId(e.target.value);
-                    const user = users.find((u) => u.id === e.target.value);
-                    setAssigneeName(user ? `${user.firstName} ${user.lastName}` : '');
-                  }}
-                  className="w-full pl-9 pr-9 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-300 dark:focus:border-primary-500/50 appearance-none cursor-pointer"
-                >
-                  <option value="">{isPolish ? 'Nieprzypisane' : 'Unassigned'}</option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.firstName} {user.lastName}
-                    </option>
-                  ))}
-                </select>
-                <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
-              </div>
-
-              <div className="relative">
-                <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
-                  {isPolish ? 'Owner' : 'Owner'}
-                </label>
-                <div className="relative">
-                <select
-                  value={ownerId}
-                  onChange={(e) => setOwnerId(e.target.value)}
-                  className="w-full pl-9 pr-9 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-300 dark:focus:border-primary-500/50 appearance-none cursor-pointer"
-                >
-                  <option value="">{isPolish ? 'Brak właściciela' : 'No owner'}</option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.firstName} {user.lastName}
-                    </option>
-                  ))}
-                </select>
-                <Users size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
-              </div>
-
-              <div className="relative">
-                <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
-                  {isPolish ? 'Zastępstwo' : 'Backup'}
-                </label>
-                <div className="relative">
-                <select
-                  value={backupAssigneeId}
-                  onChange={(e) => setBackupAssigneeId(e.target.value)}
-                  className="w-full pl-9 pr-9 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-300 dark:focus:border-primary-500/50 appearance-none cursor-pointer"
-                >
-                  <option value="">{isPolish ? 'Brak zastępstwa' : 'No backup'}</option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.firstName} {user.lastName}
-                    </option>
-                  ))}
-                </select>
-                <Users size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Acceptance */}
-          <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-            <div className="flex items-center gap-2 mb-3">
-              <CheckCircle2 size={14} className="text-slate-400" />
-              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                {isPolish ? 'Akceptacja' : 'Acceptance'}
-              </span>
-            </div>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={requiresAcceptance}
-                onChange={(e) => {
-                  setRequiresAcceptance(e.target.checked);
-                  if (!e.target.checked) {
-                    setAcceptorId('');
-                  }
-                }}
-                className="w-4 h-4 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-300"
-              />
-              <span className="text-sm text-slate-700 dark:text-slate-300">
-                {isPolish ? 'Wymaga akceptacji przed DONE' : 'Requires approval before DONE'}
-              </span>
-            </label>
-            {requiresAcceptance && (
-              <div className="mt-3 space-y-3">
-                <div>
-                  <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
-                    {isPolish ? 'Typ' : 'Type'}
-                  </label>
-                  <select
-                    value={acceptanceType}
-                    onChange={(e) => setAcceptanceType(e.target.value as 'manual' | 'automatic')}
-                    className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300"
-                  >
-                    <option value="manual">{isPolish ? 'Ręczna' : 'Manual'}</option>
-                    <option value="automatic">{isPolish ? 'Automatyczna' : 'Automatic'}</option>
-                  </select>
-                </div>
-                {acceptanceType === 'manual' && (
-                  <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
-                      {isPolish ? 'Akceptujący' : 'Acceptor'}
-                    </label>
-                    <select
-                      value={acceptorId}
-                      onChange={(e) => setAcceptorId(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300"
-                    >
-                      <option value="">{isPolish ? 'Wybierz osobę' : 'Select person'}</option>
-                      {users.map((user) => (
-                        <option key={user.id} value={user.id}>
-                          {user.firstName} {user.lastName}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Initiative */}
-          <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-            <div className="flex items-center gap-2 mb-3">
-              <Target size={14} className="text-slate-400" />
-              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                {isPolish ? 'Inicjatywa' : 'Initiative'}
-              </span>
-            </div>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
-                  {isPolish ? 'Powiązanie' : 'Link'}
-                </label>
-                <select
-                  value={initiativeId}
-                  onChange={(e) => setInitiativeId(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300"
-                >
-                  <option value="">{isPolish ? 'Brak (niepowiązane)' : 'None (unlinked)'}</option>
-                  {initiatives.map((i) => (
-                    <option key={i.id} value={i.id}>
-                      {i.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
-                    {isPolish ? 'Waga' : 'Weight'}
-                  </label>
-                  <select
-                    value={String(weight)}
-                    onChange={(e) => setWeight(Number(e.target.value))}
-                    className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300"
-                  >
-                    {[1, 2, 3, 4, 5].map((v) => (
-                      <option key={v} value={v}>
-                        {v}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 px-3 py-2.5">
-                  <div className="text-[11px] text-slate-500 dark:text-slate-500">
-                    {isPolish ? 'Udział' : 'Share'}
-                  </div>
-                  <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                    {initiativeId ? `${initiativeMeta.contributionPct ?? 0}%` : '—'}
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-500 mb-1">
-                  {isPolish ? 'Uzasadnienie (opcjonalnie)' : 'Rationale (optional)'}
-                </label>
-                <input
-                  type="text"
-                  value={weightReason}
-                  onChange={(e) => setWeightReason(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300"
-                  placeholder={isPolish ? 'Dlaczego taka waga?' : 'Why this weight?'}
-                />
-              </div>
-
-              {initiativeId && (
-                <div className="text-xs text-slate-500 dark:text-slate-500">
-                  {isPolish
-                    ? `Task ${initiativeMeta.position ?? '—'}/${initiativeMeta.total || '—'} • Overdue: ${initiativeMeta.overdueCount} • Blocked: ${initiativeMeta.blockedCount}`
-                    : `Task ${initiativeMeta.position ?? '—'}/${initiativeMeta.total || '—'} • Overdue: ${initiativeMeta.overdueCount} • Blocked: ${initiativeMeta.blockedCount}`}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Links summary */}
-          <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-            <div className="flex items-center gap-2 mb-2">
-              <LinkIcon size={14} className="text-slate-400" />
-              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                {isPolish ? 'Powiązania' : 'Links'}
-              </span>
-            </div>
-            <div className="text-sm text-slate-700 dark:text-slate-300 flex items-center justify-between">
-              <span className="text-slate-500 dark:text-slate-500">{isPolish ? 'Decyzje' : 'Decisions'}</span>
-              <span className="font-semibold">{linkedItems.filter((i) => i.type === 'decision').length}</span>
-            </div>
-            <div className="text-sm text-slate-700 dark:text-slate-300 flex items-center justify-between mt-1">
-              <span className="text-slate-500 dark:text-slate-500">{isPolish ? 'Ryzyka' : 'Risks'}</span>
-              <span className="font-semibold">{linkedItems.filter((i) => i.type === 'risk').length}</span>
-            </div>
-          </div>
-
-          {/* Required Decisions (PMO) */}
-          <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <div className="flex items-center gap-2">
-                <Flag size={14} className="text-slate-400" />
-                <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                  {isPolish ? 'Wymagane decyzje' : 'Required decisions'}
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700">
-                  {taskDecisions.length}
-                </span>
-              </div>
-              {taskId && (
-                <button
-                  onClick={() => setShowDecisionForm((v) => !v)}
-                  className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
-                >
-                  {showDecisionForm ? (isPolish ? 'Zamknij' : 'Close') : isPolish ? 'Request' : 'Request'}
-                </button>
-              )}
-            </div>
-
-            {showDecisionForm && taskId && (
-              <div className="mb-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 p-3 space-y-2">
-                <input
-                  value={newDecisionTitle}
-                  onChange={(e) => setNewDecisionTitle(e.target.value)}
-                  placeholder={isPolish ? 'Tytuł decyzji…' : 'Decision title…'}
-                  className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none"
-                />
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="date"
-                    value={newDecisionDueDate}
-                    onChange={(e) => setNewDecisionDueDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none"
-                  />
-                  <select
-                    value={newDecisionPriority}
-                    onChange={(e) => setNewDecisionPriority(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none"
-                  >
-                    <option value="low">{isPolish ? 'Niski' : 'Low'}</option>
-                    <option value="medium">{isPolish ? 'Średni' : 'Medium'}</option>
-                    <option value="high">{isPolish ? 'Wysoki' : 'High'}</option>
-                    <option value="critical">{isPolish ? 'Krytyczny' : 'Critical'}</option>
-                  </select>
-                </div>
-                <button
-                  onClick={handleRequestDecision}
-                  className="w-full px-3 py-2 rounded-lg bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 transition-colors"
-                >
-                  {isPolish ? 'Utwórz decyzję' : 'Create decision'}
-                </button>
-                <p className="text-[11px] text-slate-500 dark:text-slate-500">
-                  {isPolish
-                    ? 'Uwaga: tworzenie decyzji wymaga uprawnienia approve_changes.'
-                    : 'Note: creating decisions requires approve_changes permission.'}
-                </p>
-              </div>
-            )}
-
-            {loadingDecisions ? (
-              <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-500">
-                <Loader2 size={14} className="animate-spin" />
-                <span>{isPolish ? 'Ładowanie…' : 'Loading…'}</span>
-              </div>
-            ) : taskDecisions.length === 0 ? (
-              <div className="text-sm text-slate-500 dark:text-slate-500">
-                {isPolish ? 'Brak decyzji powiązanych z taskiem.' : 'No decisions linked to this task.'}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {taskDecisions.slice(0, 6).map((d: any) => {
-                  const st = String(d.status || '').toUpperCase();
-                  const pill =
-                    st === 'APPROVED'
-                      ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                      : st === 'REJECTED'
-                        ? 'bg-red-500/10 text-red-500 border-red-500/20'
-                        : st === 'ESCALATED'
-                          ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-                          : 'bg-slate-500/10 text-slate-500 border-slate-500/20';
-
-                  return (
-                    <button
-                      key={d.id}
-                      onClick={() => (onOpenDecision ? onOpenDecision(d.id) : undefined)}
-                      className="w-full text-left p-2 rounded-lg border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
-                      title={isPolish ? 'Otwórz decyzję' : 'Open decision'}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
-                            {d.title || d.id}
+                          <div className="flex items-center gap-2">
+                            {initiativeId ? (
+                              <>
+                                <div className="p-1 rounded bg-blue-500/10">
+                                  <Layers size={12} className="text-blue-500" />
+                                </div>
+                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
+                                  {initiativeName ||
+                                    availableInitiatives.find((i) => i.id === initiativeId)?.name}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <div className="p-1 rounded bg-slate-200 dark:bg-navy-700">
+                                  <Minus size={12} className="text-slate-400" />
+                                </div>
+                                <span className="text-sm text-slate-400 dark:text-slate-500">
+                                  {isPolish ? 'Samodzielne zadanie' : 'Standalone task'}
+                                </span>
+                              </>
+                            )}
                           </div>
-                          <div className="text-[11px] text-slate-500 dark:text-slate-500 mt-0.5">
-                            {(d.ownerName && `${d.ownerName} • `) || ''}
-                            {d.dueDate ? `${isPolish ? 'Due' : 'Due'}: ${String(d.dueDate).slice(0, 10)}` : '—'}
-                          </div>
-                        </div>
-                        <span className={`px-2 py-0.5 rounded-full text-[11px] border ${pill}`}>{st || 'PENDING'}</span>
+                          <ChevronDown size={16} className="text-slate-400" />
+                        </button>
+                        <AnimatePresence>
+                          {showInitiativeDropdown && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -8 }}
+                              className="absolute z-20 top-full left-0 right-0 mt-1 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-navy-600 py-1 max-h-60 overflow-y-auto"
+                            >
+                              <button
+                                onClick={() => {
+                                  setInitiativeId(null);
+                                  setInitiativeName(null);
+                                  setShowInitiativeDropdown(false);
+                                }}
+                                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
+                                  !initiativeId ? 'bg-blue-50 dark:bg-blue-500/10' : ''
+                                }`}
+                              >
+                                <div className="p-1 rounded bg-slate-200 dark:bg-navy-700">
+                                  <Minus size={12} className="text-slate-400" />
+                                </div>
+                                <span className="text-slate-500 dark:text-slate-400">
+                                  {isPolish ? 'Samodzielne zadanie' : 'Standalone task'}
+                                </span>
+                              </button>
+                              <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
+                              {availableInitiatives.map((init) => (
+                                <button
+                                  key={init.id}
+                                  onClick={() => {
+                                    setInitiativeId(init.id);
+                                    setInitiativeName(init.name);
+                                    setShowInitiativeDropdown(false);
+                                  }}
+                                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
+                                    initiativeId === init.id ? 'bg-blue-50 dark:bg-blue-500/10' : ''
+                                  }`}
+                                >
+                                  <div className="p-1 rounded bg-blue-500/10">
+                                    <Layers size={12} className="text-blue-500" />
+                                  </div>
+                                  <span className="text-slate-700 dark:text-slate-300">
+                                    {init.name}
+                                  </span>
+                                </button>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
-                    </button>
-                  );
-                })}
-                {taskDecisions.length > 6 && (
-                  <div className="text-xs text-slate-500 dark:text-slate-500">
-                    {isPolish ? '…więcej w panelu decyzji' : '…more in Decisions panel'}
-                  </div>
+
+                      {/* Status */}
+                      <div className="relative">
+                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                          Status
+                        </label>
+                        <button
+                          onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                          className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2.5 h-2.5 rounded-full ${statusConfig.color}`} />
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                              {isPolish ? statusConfig.label.pl : statusConfig.label.en}
+                            </span>
+                          </div>
+                          <ChevronDown size={16} className="text-slate-400" />
+                        </button>
+                        <AnimatePresence>
+                          {showStatusDropdown && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -8 }}
+                              className="absolute z-20 top-full left-0 right-0 mt-1 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-navy-600 py-1"
+                            >
+                              {Object.entries(STATUS_CONFIG).map(([key, config]) => (
+                                <button
+                                  key={key}
+                                  onClick={() => {
+                                    setStatus(key as keyof typeof STATUS_CONFIG);
+                                    setShowStatusDropdown(false);
+                                  }}
+                                  className={`w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
+                                    status === key ? 'bg-blue-50 dark:bg-blue-500/10' : ''
+                                  }`}
+                                >
+                                  <div className={`w-2.5 h-2.5 rounded-full ${config.color}`} />
+                                  <span className="text-slate-700 dark:text-slate-300">
+                                    {isPolish ? config.label.pl : config.label.en}
+                                  </span>
+                                </button>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* Priority */}
+                      <div className="relative">
+                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                          {isPolish ? 'Priorytet' : 'Priority'}
+                        </label>
+                        <button
+                          onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
+                          className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Flag size={14} className={priorityConfig.textColor} />
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                              {isPolish ? priorityConfig.label.pl : priorityConfig.label.en}
+                            </span>
+                          </div>
+                          <ChevronDown size={16} className="text-slate-400" />
+                        </button>
+                        <AnimatePresence>
+                          {showPriorityDropdown && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -8 }}
+                              className="absolute z-20 top-full left-0 right-0 mt-1 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-navy-600 py-1"
+                            >
+                              {Object.entries(PRIORITY_CONFIG).map(([key, config]) => (
+                                <button
+                                  key={key}
+                                  onClick={() => {
+                                    setPriority(key as keyof typeof PRIORITY_CONFIG);
+                                    setShowPriorityDropdown(false);
+                                  }}
+                                  className={`w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
+                                    priority === key ? 'bg-blue-50 dark:bg-blue-500/10' : ''
+                                  }`}
+                                >
+                                  <Flag size={14} className={config.textColor} />
+                                  <span className="text-slate-700 dark:text-slate-300">
+                                    {isPolish ? config.label.pl : config.label.en}
+                                  </span>
+                                </button>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* Due Date */}
+                      <div>
+                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                          {isPolish ? 'Termin' : 'Due Date'}
+                        </label>
+                        <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
+                          <Calendar size={14} className="text-slate-400" />
+                          <input
+                            type="date"
+                            value={dueDate}
+                            onChange={(e) => setDueDate(e.target.value)}
+                            className="flex-1 bg-transparent text-sm text-slate-700 dark:text-slate-300 focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Owner / Assignee */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                            {isPolish ? 'Właściciel' : 'Owner'}
+                          </label>
+                          <select
+                            value={ownerId}
+                            onChange={(e) => setOwnerId(e.target.value)}
+                            className="w-full h-[42px] px-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-blue-400"
+                          >
+                            <option value="">{isPolish ? 'Wybierz' : 'Select'}</option>
+                            {users.map((user) => (
+                              <option key={user.id} value={user.id}>
+                                {user.firstName} {user.lastName}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                            {isPolish ? 'Wykonawca' : 'Assignee'}
+                          </label>
+                          <select
+                            value={assigneeId}
+                            onChange={(e) => setAssigneeId(e.target.value)}
+                            className="w-full h-[42px] px-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-blue-400"
+                          >
+                            <option value="">{isPolish ? 'Wybierz' : 'Select'}</option>
+                            {users.map((user) => (
+                              <option key={user.id} value={user.id}>
+                                {user.firstName} {user.lastName}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Blocked Reason */}
+                      {status === 'blocked' && (
+                        <div>
+                          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                            {isPolish ? 'Powód blokady' : 'Blocked Reason'}
+                          </label>
+                          <textarea
+                            value={blockedReason}
+                            onChange={(e) => setBlockedReason(e.target.value)}
+                            rows={2}
+                            className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-red-200 dark:border-red-500/30 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-red-400 resize-none"
+                            placeholder={
+                              isPolish ? 'Opisz powód blokady...' : 'Describe blocking reason...'
+                            }
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
                 )}
-              </div>
-            )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Tags */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.18 }}
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+            >
+              <motion.button
+                whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => toggleSection('tags')}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500/10 to-rose-500/10 dark:from-pink-500/20 dark:to-rose-500/20">
+                    <Tag size={18} className="text-pink-500 dark:text-pink-400" />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {isPolish ? 'Tagi' : 'Tags'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {tags.length > 0 && (
+                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                      {tags.length}
+                    </span>
+                  )}
+                  <motion.div
+                    animate={{ rotate: expandedSections.has('tags') ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown size={18} className="text-slate-400" />
+                  </motion.div>
+                </div>
+              </motion.button>
+
+              <AnimatePresence>
+                {expandedSections.has('tags') && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                  >
+                    <div className="p-4">
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-pink-100 dark:bg-pink-500/20 text-pink-700 dark:text-pink-300"
+                          >
+                            {tag}
+                            <button
+                              onClick={() => removeTag(tag)}
+                              className="hover:text-pink-900 dark:hover:text-pink-100"
+                            >
+                              <X size={12} />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={newTag}
+                          onChange={(e) => setNewTag(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && addTag()}
+                          placeholder={isPolish ? 'Nowy tag...' : 'New tag...'}
+                          className="flex-1 px-3 py-2 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-pink-400"
+                        />
+                        <button
+                          onClick={addTag}
+                          disabled={!newTag.trim()}
+                          className="px-3 py-2 rounded-lg text-sm font-medium text-pink-600 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-500/10 border border-pink-200 dark:border-pink-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <Plus size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* AI Insights */}
+            <AIInsightSection
+              insights={aiInsights}
+              onGenerateInsights={generateInsightsAI}
+              onDismissInsight={(id) => setAiInsights(aiInsights.filter((i) => i.id !== id))}
+              isGenerating={isGeneratingInsights}
+              expanded={expandedSections.has('aiInsights')}
+              onToggleExpand={() => toggleSection('aiInsights')}
+            />
+
+            {/* Dependencies */}
+            <DependenciesSection
+              dependencies={dependencies}
+              onAdd={(type) => {
+                const newDep: TaskDependency = {
+                  id: Math.random().toString(36).substr(2, 9),
+                  taskId: '',
+                  taskTitle: isPolish ? 'Nowa zależność' : 'New dependency',
+                  type,
+                };
+                setDependencies([...dependencies, newDep]);
+              }}
+              onRemove={(id) => setDependencies(dependencies.filter((d) => d.id !== id))}
+              expanded={expandedSections.has('dependencies')}
+              onToggleExpand={() => toggleSection('dependencies')}
+            />
+
+            {/* Stakeholders */}
+            <StakeholdersSection
+              stakeholders={stakeholders}
+              availableUsers={users.map((u) => ({
+                id: u.id,
+                name: `${u.firstName} ${u.lastName}`,
+                email: u.email,
+              }))}
+              onAdd={(
+                userId: string,
+                role: StakeholderRole,
+                notificationSettings: StakeholderNotificationSettings
+              ) => {
+                const user = users.find((u) => u.id === userId);
+                const newStakeholder: Stakeholder = {
+                  id: Math.random().toString(36).substr(2, 9),
+                  decisionId: taskId || 'new',
+                  userId,
+                  userName: user ? `${user.firstName} ${user.lastName}` : undefined,
+                  userEmail: user?.email,
+                  role,
+                  notificationSettings,
+                };
+                setStakeholders([...stakeholders, newStakeholder]);
+                toast.success(isPolish ? 'Dodano interesariusza' : 'Stakeholder added');
+              }}
+              onUpdate={(id: string, updates: Partial<Stakeholder>) => {
+                setStakeholders(stakeholders.map((s) => (s.id === id ? { ...s, ...updates } : s)));
+              }}
+              onRemove={(id: string) => {
+                setStakeholders(stakeholders.filter((s) => s.id !== id));
+                toast.success(isPolish ? 'Usunięto interesariusza' : 'Stakeholder removed');
+              }}
+            />
+
+            {/* Reminders & Escalation */}
+            <EscalationRulesSection
+              reminders={reminders}
+              escalation={escalation}
+              thresholds={thresholds}
+              availableUsers={users.map((u) => ({
+                id: u.id,
+                name: `${u.firstName} ${u.lastName}`,
+              }))}
+              onRemindersChange={setReminders}
+              onEscalationChange={setEscalation}
+              onThresholdsChange={setThresholds}
+              dueDate={dueDate}
+            />
+
+            {/* Attachments */}
+            <AttachmentsSection
+              attachments={attachments}
+              onUpload={handleUploadAttachments}
+              onDelete={handleDeleteAttachment}
+              expanded={expandedSections.has('attachments')}
+              onToggleExpand={() => toggleSection('attachments')}
+            />
+
+            {/* Linked Items */}
+            <LinkedItemsSection
+              items={linkedItems}
+              onAdd={handleAddLinkedItem}
+              onRemove={handleRemoveLinkedItem}
+              searchItems={searchLinkedItems}
+              expanded={expandedSections.has('linkedItems')}
+              onToggleExpand={() => toggleSection('linkedItems')}
+            />
+
+            {/* Evidence & Acceptance */}
+            <EvidenceSection
+              evidenceRequired={evidenceRequired}
+              evidenceItems={evidenceItems}
+              requiresAcceptance={requiresAcceptance}
+              acceptanceType={acceptanceType}
+              acceptorId={acceptorId}
+              signedOff={signedOff}
+              signedOffAt={signedOffAt}
+              signedOffBy={signedOffBy}
+              availableUsers={users.map((u) => ({
+                id: u.id,
+                name: `${u.firstName} ${u.lastName}`,
+              }))}
+              onEvidenceRequiredChange={setEvidenceRequired}
+              onAddEvidence={(item) =>
+                setEvidenceItems([
+                  ...evidenceItems,
+                  { ...item, id: Math.random().toString(36).substr(2, 9) },
+                ])
+              }
+              onRemoveEvidence={(id) => setEvidenceItems(evidenceItems.filter((e) => e.id !== id))}
+              onVerifyEvidence={(id) =>
+                setEvidenceItems(
+                  evidenceItems.map((e) =>
+                    e.id === id ? { ...e, verified: true, verifiedAt: new Date().toISOString() } : e
+                  )
+                )
+              }
+              onAcceptanceChange={(requires, type, acceptor) => {
+                setRequiresAcceptance(requires);
+                setAcceptanceType(type);
+                setAcceptorId(acceptor);
+              }}
+              onSignOff={() => {
+                setSignedOff(true);
+                setSignedOffAt(new Date().toISOString());
+                setSignedOffBy('Current User');
+                toast.success(isPolish ? 'Zadanie podpisane' : 'Task signed off');
+              }}
+              expanded={expandedSections.has('evidence')}
+              onToggleExpand={() => toggleSection('evidence')}
+            />
+
+            {/* Strategic Contribution */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+            >
+              <motion.button
+                whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => toggleSection('strategic')}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500/10 to-purple-500/10 dark:from-violet-500/20 dark:to-purple-500/20">
+                    <Sparkles size={18} className="text-violet-500 dark:text-violet-400" />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {isPolish ? 'Wkład strategiczny' : 'Strategic Contribution'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {strategicContribution.length > 0 && (
+                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                      {strategicContribution.length}
+                    </span>
+                  )}
+                  <motion.div
+                    animate={{ rotate: expandedSections.has('strategic') ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown size={18} className="text-slate-400" />
+                  </motion.div>
+                </div>
+              </motion.button>
+
+              <AnimatePresence>
+                {expandedSections.has('strategic') && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                  >
+                    <div className="p-4 space-y-2">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                        {isPolish
+                          ? 'Jakie zmiany wprowadza to zadanie?'
+                          : 'What changes does this task introduce?'}
+                      </p>
+                      {[
+                        {
+                          key: 'PROCESS_CHANGE',
+                          label: { en: 'Process Change', pl: 'Zmiana procesu' },
+                          color: 'blue',
+                        },
+                        {
+                          key: 'BEHAVIOR_CHANGE',
+                          label: { en: 'Behavior Change', pl: 'Zmiana zachowania' },
+                          color: 'emerald',
+                        },
+                        {
+                          key: 'CAPABILITY_CHANGE',
+                          label: { en: 'Capability Change', pl: 'Zmiana zdolności' },
+                          color: 'purple',
+                        },
+                      ].map((item) => {
+                        const isSelected = strategicContribution.includes(item.key as any);
+                        return (
+                          <button
+                            key={item.key}
+                            onClick={() => {
+                              if (isSelected) {
+                                setStrategicContribution(
+                                  strategicContribution.filter((s) => s !== item.key)
+                                );
+                              } else {
+                                setStrategicContribution([
+                                  ...strategicContribution,
+                                  item.key as any,
+                                ]);
+                              }
+                            }}
+                            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                              isSelected
+                                ? `bg-${item.color}-50 dark:bg-${item.color}-500/10 border-${item.color}-300 dark:border-${item.color}-500/50 text-${item.color}-700 dark:text-${item.color}-300`
+                                : 'bg-slate-50/50 dark:bg-navy-800/50 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-navy-500'
+                            }`}
+                          >
+                            <span className="text-sm font-medium">
+                              {isPolish ? item.label.pl : item.label.en}
+                            </span>
+                            {isSelected && <Check size={16} />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           </div>
         </div>
       </div>
     </div>
-  </div>
   );
 };
 

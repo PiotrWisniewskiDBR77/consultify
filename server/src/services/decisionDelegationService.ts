@@ -1,7 +1,7 @@
 /**
  * Decision Delegation Service
  * Manages delegation, handoff, and input requests for decisions
- * 
+ *
  * Features:
  * - Full delegation (transfer decision ownership)
  * - Request input/review from others
@@ -80,7 +80,6 @@ export interface Stakeholder {
 // ==========================================
 
 export class DecisionDelegationService {
-
   // ==========================================
   // DELEGATION
   // ==========================================
@@ -149,7 +148,9 @@ export class DecisionDelegationService {
     // Send notification
     await this.notifyDelegation(id, decision.title, delegationType);
 
-    logger.info(`[DecisionDelegationService] Created ${delegationType} delegation ${id} from ${fromUserId} to ${toUserId}`);
+    logger.info(
+      `[DecisionDelegationService] Created ${delegationType} delegation ${id} from ${fromUserId} to ${toUserId}`
+    );
 
     return this.getDelegation(id) as Promise<Delegation>;
   }
@@ -163,7 +164,7 @@ export class DecisionDelegationService {
     responseComment?: string
   ): Promise<Delegation> {
     const delegation = await this.getDelegation(delegationId);
-    
+
     if (!delegation) {
       throw new Error('Delegation not found');
     }
@@ -220,7 +221,7 @@ export class DecisionDelegationService {
     rejectionReason?: string
   ): Promise<Delegation> {
     const delegation = await this.getDelegation(delegationId);
-    
+
     if (!delegation) {
       throw new Error('Delegation not found');
     }
@@ -291,7 +292,7 @@ export class DecisionDelegationService {
     } = {}
   ): Promise<ConsultedOpinion> {
     const delegation = await this.getDelegation(delegationId);
-    
+
     if (!delegation) {
       throw new Error('Delegation not found');
     }
@@ -586,7 +587,7 @@ export class DecisionDelegationService {
     try {
       await notificationService.send({
         userId: delegation.toUserId,
-        organizationId: delegation.organizationId,
+        organizationId: delegation.organizationId || '',
         type: `decision_${delegationType}`,
         title: typeLabels[delegationType],
         body: delegation.comment || typeMessages[delegationType],
@@ -596,7 +597,10 @@ export class DecisionDelegationService {
         priority: delegationType === 'full' || delegationType === 'co_decide' ? 'high' : 'normal',
       });
     } catch (err: any) {
-      logger.warn(`[DecisionDelegationService] Failed to send delegation notification:`, err.message);
+      logger.warn(
+        `[DecisionDelegationService] Failed to send delegation notification:`,
+        err.message
+      );
     }
   }
 
@@ -613,12 +617,13 @@ export class DecisionDelegationService {
     try {
       await notificationService.send({
         userId: delegation.fromUserId,
-        organizationId: delegation.organizationId,
+        organizationId: delegation.organizationId || '',
         type: `delegation_${response}`,
         title: response === 'accepted' ? 'Delegation Accepted' : 'Delegation Rejected',
-        body: response === 'accepted'
-          ? `${delegation.toUserName || 'User'} accepted your delegation request for "${delegation.decisionTitle}"`
-          : `${delegation.toUserName || 'User'} rejected your delegation request for "${delegation.decisionTitle}"${delegation.rejectionReason ? `: ${delegation.rejectionReason}` : ''}`,
+        body:
+          response === 'accepted'
+            ? `${delegation.toUserName || 'User'} accepted your delegation request for "${delegation.decisionTitle}"`
+            : `${delegation.toUserName || 'User'} rejected your delegation request for "${delegation.decisionTitle}"${delegation.rejectionReason ? `: ${delegation.rejectionReason}` : ''}`,
         entityType: 'decision',
         entityId: delegation.decisionId,
         actionUrl: `/my-work?decision=${delegation.decisionId}`,
@@ -632,11 +637,14 @@ export class DecisionDelegationService {
   /**
    * Notify that input was received
    */
-  private static async notifyInputReceived(delegation: Delegation, opinion: string): Promise<void> {
+  private static async notifyInputReceived(
+    delegation: Delegation,
+    _opinion: string
+  ): Promise<void> {
     try {
       await notificationService.send({
         userId: delegation.fromUserId,
-        organizationId: delegation.organizationId,
+        organizationId: delegation.organizationId || '',
         type: 'decision_input_received',
         title: 'Input Received',
         body: `${delegation.toUserName || 'User'} provided input on "${delegation.decisionTitle}"`,
@@ -646,7 +654,10 @@ export class DecisionDelegationService {
         priority: 'normal',
       });
     } catch (err: any) {
-      logger.warn(`[DecisionDelegationService] Failed to send input received notification:`, err.message);
+      logger.warn(
+        `[DecisionDelegationService] Failed to send input received notification:`,
+        err.message
+      );
     }
   }
 

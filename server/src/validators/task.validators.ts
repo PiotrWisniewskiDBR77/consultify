@@ -71,6 +71,7 @@ export const CreateTaskSchema = z.object({
   strategicContribution: z.unknown().optional(),
   progress: z.number().min(0).max(100).optional(),
   blockedReason: z.string().optional(),
+  blockedByDecisionId: z.string().uuid().optional().nullable(),
   weight: z.number().min(0.1).max(100).optional(),
   weightReason: z.string().max(500).optional().nullable(),
   roadmapInitiativeId: z.string().uuid().optional().nullable(),

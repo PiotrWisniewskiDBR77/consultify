@@ -5,7 +5,10 @@
  * Implements the status-driven architecture where InitiativeStatus determines
  * which module displays the initiative.
  *
- * Flow: Assessment → Initiatives → Execution → Benefits
+ * Canonical flow (PMO):
+ * DRAFT → PENDING_REVIEW → REVIEW → PROMOTED → PLANNING → APPROVED → SCHEDULED
+ *   → EXECUTING ↔ BLOCKED → DONE → TRACKING
+ * + CANCELLED is terminal and can be reached from most non-terminal states.
  */
 
 import { InitiativeStatus } from '../types';
@@ -14,36 +17,39 @@ import { InitiativeStatus } from '../types';
  * Valid status transitions map
  * Defines which statuses can transition to which other statuses
  */
-/**
- * Valid status transitions map
- * 
- * Flow in Initiatives module: REVIEW -> APPROVED -> PLANNING
- * Then: PLANNING -> EXECUTING (moves to Execution module)
- */
 export const VALID_TRANSITIONS: Record<InitiativeStatus, InitiativeStatus[]> = {
-  // DRAFT is created in Tools/Assessment, then submitted for REVIEW
-  [InitiativeStatus.DRAFT]: [InitiativeStatus.REVIEW, InitiativeStatus.CANCELLED],
-  // REVIEW: awaiting Go/No-Go decision, can be approved or sent back to draft
+  // FAZA 1: Tools/Assessment
+  [InitiativeStatus.DRAFT]: [InitiativeStatus.PENDING_REVIEW, InitiativeStatus.CANCELLED],
+  [InitiativeStatus.PENDING_REVIEW]: [
+    InitiativeStatus.REVIEW, // approve to initiatives
+    InitiativeStatus.DRAFT, // send back
+    InitiativeStatus.CANCELLED,
+  ],
+
+  // FAZA 2: Initiatives
   [InitiativeStatus.REVIEW]: [
-    InitiativeStatus.APPROVED,
-    InitiativeStatus.DRAFT,
+    InitiativeStatus.PROMOTED, // accept
+    InitiativeStatus.DRAFT, // reject
     InitiativeStatus.CANCELLED,
   ],
-  // APPROVED: awaiting Resources Commit and Schedule Lock, then moves to PLANNING
-  [InitiativeStatus.APPROVED]: [
-    InitiativeStatus.PLANNING,
-    InitiativeStatus.REVIEW, // Can be sent back for re-review
-    InitiativeStatus.CANCELLED,
-  ],
-  // PLANNING: detailed planning, then moves to EXECUTING
-  [InitiativeStatus.PLANNING]: [InitiativeStatus.EXECUTING, InitiativeStatus.APPROVED],
+  [InitiativeStatus.PROMOTED]: [InitiativeStatus.PLANNING, InitiativeStatus.CANCELLED],
+  [InitiativeStatus.PLANNING]: [InitiativeStatus.APPROVED, InitiativeStatus.CANCELLED],
+  [InitiativeStatus.APPROVED]: [InitiativeStatus.SCHEDULED, InitiativeStatus.CANCELLED],
+  [InitiativeStatus.SCHEDULED]: [InitiativeStatus.EXECUTING, InitiativeStatus.CANCELLED],
+
+  // FAZA 3: Execution
   [InitiativeStatus.EXECUTING]: [
     InitiativeStatus.BLOCKED,
     InitiativeStatus.DONE,
     InitiativeStatus.CANCELLED,
   ],
   [InitiativeStatus.BLOCKED]: [InitiativeStatus.EXECUTING, InitiativeStatus.CANCELLED],
-  [InitiativeStatus.DONE]: [InitiativeStatus.ARCHIVED],
+  [InitiativeStatus.DONE]: [InitiativeStatus.TRACKING],
+
+  // FAZA 4: Benefits
+  [InitiativeStatus.TRACKING]: [InitiativeStatus.ARCHIVED],
+
+  // Terminal
   [InitiativeStatus.CANCELLED]: [InitiativeStatus.ARCHIVED],
   [InitiativeStatus.ARCHIVED]: [],
 };
@@ -51,7 +57,13 @@ export const VALID_TRANSITIONS: Record<InitiativeStatus, InitiativeStatus[]> = {
 /**
  * Module identifiers for routing
  */
-export type ModuleId = 'assessment' | 'initiatives' | 'execution' | 'benefits';
+export type ModuleId =
+  | 'tools'
+  | 'assessment'
+  | 'initiatives'
+  | 'execution'
+  | 'benefits'
+  | 'reporting';
 
 /**
  * Module configuration
@@ -68,11 +80,18 @@ export interface ModuleConfig {
  * Module definitions with their associated statuses
  */
 export const MODULES: Record<ModuleId, ModuleConfig> = {
+  tools: {
+    id: 'tools',
+    name: 'Tools',
+    route: '/tools',
+    statuses: [InitiativeStatus.DRAFT, InitiativeStatus.PENDING_REVIEW],
+    color: 'slate',
+  },
   assessment: {
     id: 'assessment',
     name: 'Assessment',
     route: '/assessment',
-    statuses: [InitiativeStatus.DRAFT],
+    statuses: [InitiativeStatus.DRAFT, InitiativeStatus.PENDING_REVIEW],
     color: 'slate',
   },
   initiatives: {
@@ -80,12 +99,13 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
     name: 'Initiatives',
     route: '/initiatives',
     statuses: [
-      InitiativeStatus.DRAFT,
-      InitiativeStatus.PLANNING,
       InitiativeStatus.REVIEW,
+      InitiativeStatus.PROMOTED,
+      InitiativeStatus.PLANNING,
       InitiativeStatus.APPROVED,
-      InitiativeStatus.EXECUTING,
-      InitiativeStatus.BLOCKED,
+      InitiativeStatus.SCHEDULED,
+      InitiativeStatus.CANCELLED,
+      InitiativeStatus.ARCHIVED,
     ],
     color: 'purple',
   },
@@ -93,15 +113,27 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
     id: 'execution',
     name: 'Execution',
     route: '/execution',
-    statuses: [InitiativeStatus.EXECUTING, InitiativeStatus.BLOCKED],
+    statuses: [
+      InitiativeStatus.SCHEDULED,
+      InitiativeStatus.EXECUTING,
+      InitiativeStatus.BLOCKED,
+      InitiativeStatus.DONE,
+    ],
     color: 'cyan',
   },
   benefits: {
     id: 'benefits',
     name: 'Benefits',
     route: '/benefits',
-    statuses: [InitiativeStatus.DONE],
-    color: 'green',
+    statuses: [InitiativeStatus.TRACKING],
+    color: 'teal',
+  },
+  reporting: {
+    id: 'reporting',
+    name: 'Reporting',
+    route: '/reports',
+    statuses: Object.values(InitiativeStatus),
+    color: 'indigo',
   },
 };
 
@@ -124,26 +156,47 @@ export const STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = {
     dotColor: 'bg-slate-400',
     description: 'Initial draft, needs review',
   },
-  [InitiativeStatus.PLANNING]: {
-    label: 'Planning',
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500/10',
-    dotColor: 'bg-blue-400',
-    description: 'Being planned and scoped',
+  [InitiativeStatus.PENDING_REVIEW]: {
+    label: 'Pending Review',
+    color: 'text-orange-500',
+    bgColor: 'bg-orange-500/10',
+    dotColor: 'bg-orange-400',
+    description: 'Awaiting PM/Lead review',
   },
   [InitiativeStatus.REVIEW]: {
     label: 'In Review',
     color: 'text-amber-500',
     bgColor: 'bg-amber-500/10',
     dotColor: 'bg-amber-400',
-    description: 'Awaiting approval',
+    description: 'Business review (Go/No-Go)',
+  },
+  [InitiativeStatus.PROMOTED]: {
+    label: 'Promoted',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10',
+    dotColor: 'bg-blue-400',
+    description: 'Accepted for planning',
+  },
+  [InitiativeStatus.PLANNING]: {
+    label: 'Planning',
+    color: 'text-indigo-500',
+    bgColor: 'bg-indigo-500/10',
+    dotColor: 'bg-indigo-400',
+    description: 'Being planned and scoped',
   },
   [InitiativeStatus.APPROVED]: {
     label: 'Approved',
     color: 'text-emerald-500',
     bgColor: 'bg-emerald-500/10',
     dotColor: 'bg-emerald-400',
-    description: 'Approved, ready for execution',
+    description: 'Approved, ready for scheduling',
+  },
+  [InitiativeStatus.SCHEDULED]: {
+    label: 'Scheduled',
+    color: 'text-purple-500',
+    bgColor: 'bg-purple-500/10',
+    dotColor: 'bg-purple-400',
+    description: 'Scheduled in roadmap',
   },
   [InitiativeStatus.EXECUTING]: {
     label: 'Executing',
@@ -166,6 +219,13 @@ export const STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = {
     dotColor: 'bg-green-400',
     description: 'Successfully completed',
   },
+  [InitiativeStatus.TRACKING]: {
+    label: 'Tracking',
+    color: 'text-teal-500',
+    bgColor: 'bg-teal-500/10',
+    dotColor: 'bg-teal-400',
+    description: 'Benefits tracking in progress',
+  },
   [InitiativeStatus.CANCELLED]: {
     label: 'Cancelled',
     color: 'text-gray-500',
@@ -186,6 +246,11 @@ export const STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = {
  * Get the module for a given status
  */
 export function getModuleForStatus(status: InitiativeStatus): ModuleId {
+  // Cancelled is kept historically in Initiatives / Reporting
+  if (status === InitiativeStatus.CANCELLED || status === InitiativeStatus.ARCHIVED) {
+    return 'initiatives';
+  }
+
   for (const [moduleId, config] of Object.entries(MODULES)) {
     if (config.statuses.includes(status)) {
       return moduleId as ModuleId;
@@ -257,13 +322,17 @@ export function isStatusInModule(status: InitiativeStatus, moduleId: ModuleId): 
  */
 export function getLifecycleProgress(status: InitiativeStatus): number {
   const progressMap: Record<InitiativeStatus, number> = {
-    [InitiativeStatus.DRAFT]: 10,
-    [InitiativeStatus.REVIEW]: 25,
-    [InitiativeStatus.APPROVED]: 40,
-    [InitiativeStatus.PLANNING]: 55,
-    [InitiativeStatus.EXECUTING]: 70,
-    [InitiativeStatus.BLOCKED]: 65, // Same as executing but blocked
-    [InitiativeStatus.DONE]: 100,
+    [InitiativeStatus.DRAFT]: 5,
+    [InitiativeStatus.PENDING_REVIEW]: 10,
+    [InitiativeStatus.REVIEW]: 20,
+    [InitiativeStatus.PROMOTED]: 30,
+    [InitiativeStatus.PLANNING]: 40,
+    [InitiativeStatus.APPROVED]: 50,
+    [InitiativeStatus.SCHEDULED]: 60,
+    [InitiativeStatus.EXECUTING]: 75,
+    [InitiativeStatus.BLOCKED]: 70,
+    [InitiativeStatus.DONE]: 90,
+    [InitiativeStatus.TRACKING]: 100,
     [InitiativeStatus.CANCELLED]: 0,
     [InitiativeStatus.ARCHIVED]: 100,
   };
@@ -277,11 +346,17 @@ export function getLifecycleProgress(status: InitiativeStatus): number {
 export function getLifecycleOrder(): InitiativeStatus[] {
   return [
     InitiativeStatus.DRAFT,
+    InitiativeStatus.PENDING_REVIEW,
     InitiativeStatus.REVIEW,
-    InitiativeStatus.APPROVED,
+    InitiativeStatus.PROMOTED,
     InitiativeStatus.PLANNING,
+    InitiativeStatus.APPROVED,
+    InitiativeStatus.SCHEDULED,
     InitiativeStatus.EXECUTING,
+    InitiativeStatus.BLOCKED,
     InitiativeStatus.DONE,
+    InitiativeStatus.TRACKING,
+    InitiativeStatus.CANCELLED,
     InitiativeStatus.ARCHIVED,
   ];
 }
@@ -290,7 +365,7 @@ export function getLifecycleOrder(): InitiativeStatus[] {
  * Check if an initiative is in a terminal state
  */
 export function isTerminalStatus(status: InitiativeStatus): boolean {
-  return status === InitiativeStatus.ARCHIVED || status === InitiativeStatus.CANCELLED;
+  return status === InitiativeStatus.CANCELLED || status === InitiativeStatus.ARCHIVED;
 }
 
 /**
@@ -304,7 +379,11 @@ export function isActiveStatus(status: InitiativeStatus): boolean {
  * Check if an initiative needs attention (blocked or in review)
  */
 export function needsAttention(status: InitiativeStatus): boolean {
-  return status === InitiativeStatus.BLOCKED || status === InitiativeStatus.REVIEW;
+  return (
+    status === InitiativeStatus.BLOCKED ||
+    status === InitiativeStatus.PENDING_REVIEW ||
+    status === InitiativeStatus.REVIEW
+  );
 }
 
 /**
@@ -327,22 +406,30 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
 
   // Primary actions (forward progress) - in workflow order
   // DRAFT -> Submit for Review
-  if (validNext.includes(InitiativeStatus.REVIEW)) {
+  if (validNext.includes(InitiativeStatus.PENDING_REVIEW)) {
     actions.push({
       label: 'Submit for Review',
+      targetStatus: InitiativeStatus.PENDING_REVIEW,
+      variant: 'primary',
+    });
+  }
+  // PENDING_REVIEW -> Approve to Initiatives
+  if (validNext.includes(InitiativeStatus.REVIEW)) {
+    actions.push({
+      label: 'Approve to Initiatives',
       targetStatus: InitiativeStatus.REVIEW,
       variant: 'primary',
     });
   }
-  // REVIEW -> Approve (Go/No-Go gate)
-  if (validNext.includes(InitiativeStatus.APPROVED)) {
+  // REVIEW -> Accept (Promote)
+  if (validNext.includes(InitiativeStatus.PROMOTED)) {
     actions.push({
-      label: 'Approve',
-      targetStatus: InitiativeStatus.APPROVED,
+      label: 'Accept (Promote)',
+      targetStatus: InitiativeStatus.PROMOTED,
       variant: 'primary',
     });
   }
-  // APPROVED -> Start Planning (Resources Commit + Schedule Lock gates)
+  // PROMOTED -> Start Planning
   if (validNext.includes(InitiativeStatus.PLANNING)) {
     actions.push({
       label: 'Start Planning',
@@ -350,7 +437,23 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
       variant: 'primary',
     });
   }
-  // PLANNING -> Start Execution
+  // PLANNING -> Approve
+  if (validNext.includes(InitiativeStatus.APPROVED)) {
+    actions.push({
+      label: 'Approve',
+      targetStatus: InitiativeStatus.APPROVED,
+      variant: 'primary',
+    });
+  }
+  // APPROVED -> Schedule
+  if (validNext.includes(InitiativeStatus.SCHEDULED)) {
+    actions.push({
+      label: 'Schedule',
+      targetStatus: InitiativeStatus.SCHEDULED,
+      variant: 'primary',
+    });
+  }
+  // SCHEDULED -> Start Execution
   if (validNext.includes(InitiativeStatus.EXECUTING)) {
     actions.push({
       label: 'Start Execution',
@@ -366,7 +469,15 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
       variant: 'primary',
     });
   }
-  // DONE/CANCELLED -> Archive
+  // DONE -> Start Tracking
+  if (validNext.includes(InitiativeStatus.TRACKING)) {
+    actions.push({
+      label: 'Start Tracking',
+      targetStatus: InitiativeStatus.TRACKING,
+      variant: 'primary',
+    });
+  }
+  // TRACKING/CANCELLED -> Archive
   if (validNext.includes(InitiativeStatus.ARCHIVED)) {
     actions.push({
       label: 'Archive',
@@ -376,6 +487,14 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
   }
 
   // Secondary actions (backward or alternative)
+  // PENDING_REVIEW -> Send Back
+  if (status === InitiativeStatus.PENDING_REVIEW && validNext.includes(InitiativeStatus.DRAFT)) {
+    actions.push({
+      label: 'Send Back',
+      targetStatus: InitiativeStatus.DRAFT,
+      variant: 'secondary',
+    });
+  }
   // Can return to DRAFT from REVIEW
   if (validNext.includes(InitiativeStatus.DRAFT) && status !== InitiativeStatus.DRAFT) {
     actions.push({
@@ -384,20 +503,13 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
       variant: 'secondary',
     });
   }
-  // Can return to REVIEW from APPROVED
-  if (validNext.includes(InitiativeStatus.REVIEW) && status === InitiativeStatus.APPROVED) {
+  // REVIEW -> Reject
+  if (status === InitiativeStatus.REVIEW && validNext.includes(InitiativeStatus.DRAFT)) {
     actions.push({
-      label: 'Send Back to Review',
-      targetStatus: InitiativeStatus.REVIEW,
-      variant: 'secondary',
-    });
-  }
-  // Can return to APPROVED from PLANNING
-  if (validNext.includes(InitiativeStatus.APPROVED) && status === InitiativeStatus.PLANNING) {
-    actions.push({
-      label: 'Return to Approved',
-      targetStatus: InitiativeStatus.APPROVED,
-      variant: 'secondary',
+      label: 'Reject',
+      targetStatus: InitiativeStatus.DRAFT,
+      variant: 'danger',
+      requiresReason: true,
     });
   }
   // Mark as blocked (in EXECUTING)
@@ -407,6 +519,14 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
       targetStatus: InitiativeStatus.BLOCKED,
       variant: 'danger',
       requiresReason: true,
+    });
+  }
+  // BLOCKED -> Unblock (back to executing)
+  if (status === InitiativeStatus.BLOCKED && validNext.includes(InitiativeStatus.EXECUTING)) {
+    actions.push({
+      label: 'Unblock',
+      targetStatus: InitiativeStatus.EXECUTING,
+      variant: 'primary',
     });
   }
   // Cancel

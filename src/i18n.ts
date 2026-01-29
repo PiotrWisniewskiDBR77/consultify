@@ -54,8 +54,9 @@ i18n
     defaultNS: 'translation',
     ns: NAMESPACES,
 
-    // Debug only in development
-    debug: process.env.NODE_ENV === 'development',
+    // IMPORTANT: i18next debug logs (especially missingKey) can significantly slow down the app.
+    // Keep it OFF by default. Enable explicitly via: VITE_I18N_DEBUG=true
+    debug: import.meta.env.VITE_I18N_DEBUG === 'true',
 
     interpolation: {
       escapeValue: false, // React already escapes values

@@ -30,6 +30,8 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        // Force a complete lodash-es package (some nested deps ship an incomplete copy)
+        'lodash-es': path.resolve(__dirname, './node_modules/lodash-es'),
       },
     },
     optimizeDeps: {

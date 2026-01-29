@@ -87,12 +87,14 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
   } = useConversationStore();
 
   // Fetch conversations and pinned prompts when menu opens
+  // Note: fetchConversations is a stable Zustand action - we exclude it from deps to prevent infinite loops
   useEffect(() => {
     if (isOpen) {
       fetchConversations({ projectId });
       fetchPinnedPrompts();
     }
-  }, [isOpen, projectId, fetchConversations]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, projectId]);
 
   const fetchPinnedPrompts = async () => {
     setPinnedLoading(true);

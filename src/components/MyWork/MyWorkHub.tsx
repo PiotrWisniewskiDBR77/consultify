@@ -21,6 +21,7 @@ import {
   FileText,
   Flame,
   Hourglass,
+  Inbox,
   LayoutGrid,
   List,
   Loader2,
@@ -38,24 +39,35 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
+import { DecisionDetailView } from './DecisionDetailView';
 import { DecisionsPanelContent } from './DecisionsPanelContent';
 import { ExecutiveDashboard } from './Executive/ExecutiveDashboard';
-import { FocusView, type FocusItem } from './Focus/FocusView';
+import { type FocusItem, FocusView } from './Focus/FocusView';
+import { InboxContent } from './InboxContent';
 import { MyTasksListContent } from './MyTasksListContent';
+import { NotificationDetailView } from './NotificationDetailView';
 import { NotificationsContent } from './NotificationsContent';
 import { TaskDetailView } from './TaskDetailView';
-import { DecisionDetailView } from './DecisionDetailView';
-import { NotificationDetailView } from './NotificationDetailView';
 
 // Types
-type ModuleTab = 'executive' | 'focus' | 'tasks' | 'decisions' | 'notifications';
+type ModuleTab = 'executive' | 'inbox' | 'focus' | 'tasks' | 'decisions' | 'notifications';
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
 type DecisionFilter = 'my' | 'awaiting';
 type NotificationFilter = 'all' | 'unread' | 'today' | 'week';
-type ItemStatus = 'todo' | 'in_progress' | 'completed' | 'blocked' | 'pending' | 'approved' | 'rejected' | 'read' | 'unread';
+type ItemStatus =
+  | 'todo'
+  | 'in_progress'
+  | 'completed'
+  | 'blocked'
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'read'
+  | 'unread';
 
 interface TabCounts {
   executive: number;
+  inbox: number;
   focus: number;
   tasks: number;
   decisions: number;
@@ -159,7 +171,7 @@ interface MyWorkHubProps {
 export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const { currentUser } = useAppStore();
+  const { currentUser, myWorkIntent, clearMyWorkIntent } = useAppStore();
 
   // Tab state
   const [activeTab, setActiveTab] = useState<ModuleTab>('tasks');
@@ -174,6 +186,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // Counts
   const [tabCounts, setTabCounts] = useState<TabCounts>({
     executive: 0,
+    inbox: 0,
     focus: 0,
     tasks: 0,
     decisions: 0,
@@ -189,11 +202,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     my: 0,
     awaiting: 0,
   });
-  const [notificationFilterCounts, setNotificationFilterCounts] = useState<NotificationFilterCounts>({
-    unread: 0,
-    today: 0,
-    week: 0,
-  });
+  const [notificationFilterCounts, setNotificationFilterCounts] =
+    useState<NotificationFilterCounts>({
+      unread: 0,
+      today: 0,
+      week: 0,
+    });
 
   // Dynamic documents state
   const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
@@ -201,6 +215,51 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
   // Loading state
   const [isLoading, setIsLoading] = useState(false);
+
+  // Document handlers (Dynamic Tabs) - defined early to avoid hoisting issues
+  const handleOpenDocument = useCallback((doc: OpenDocument) => {
+    setOpenDocuments((prev) => {
+      if (prev.find((d) => d.id === doc.id)) return prev;
+      return [...prev, doc];
+    });
+    setActiveDocumentId(doc.id);
+  }, []);
+
+  // Robust: whenever user switches main tab, always show list view (close any open document)
+  useEffect(() => {
+    setActiveDocumentId(null);
+  }, [activeTab]);
+
+  // Deep link support: header dropdown → open inside My Work
+  useEffect(() => {
+    if (!myWorkIntent) return;
+    if (myWorkIntent.tab) {
+      setActiveTab(myWorkIntent.tab as ModuleTab);
+    }
+    setActiveDocumentId(null);
+    if (myWorkIntent.open) {
+      const o = myWorkIntent.open;
+      handleOpenDocument({
+        id: o.id,
+        type: o.type,
+        name:
+          o.name ||
+          (o.type === 'notification'
+            ? 'Notification'
+            : o.type === 'decision'
+              ? 'Decision'
+              : 'Task'),
+        status:
+          o.type === 'notification'
+            ? ('unread' as const)
+            : o.type === 'decision'
+              ? ('pending' as const)
+              : ('todo' as const),
+        data: o.data,
+      });
+    }
+    clearMyWorkIntent();
+  }, [myWorkIntent, clearMyWorkIntent, handleOpenDocument]);
 
   // Tab configuration
   const tabs = useMemo(
@@ -211,6 +270,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         icon: <FileText size={16} />,
         count: tabCounts.executive,
         color: 'bg-violet-500',
+      },
+      {
+        id: 'inbox' as ModuleTab,
+        label: isPolish ? 'Inbox' : 'Inbox',
+        icon: <Inbox size={16} />,
+        count: tabCounts.inbox,
+        color: 'bg-red-500',
       },
       {
         id: 'focus' as ModuleTab,
@@ -350,21 +416,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     setSearchQuery('');
   };
 
-  // Document handlers (Dynamic Tabs)
-  const handleOpenDocument = useCallback((doc: OpenDocument) => {
-    setOpenDocuments((prev) => {
-      if (prev.find((d) => d.id === doc.id)) return prev;
-      return [...prev, doc];
-    });
-    setActiveDocumentId(doc.id);
-  }, []);
-
-  const handleCloseDocument = useCallback((id: string) => {
-    setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
-    if (activeDocumentId === id) {
-      setActiveDocumentId(null);
-    }
-  }, [activeDocumentId]);
+  const handleCloseDocument = useCallback(
+    (id: string) => {
+      setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
+      if (activeDocumentId === id) {
+        setActiveDocumentId(null);
+      }
+    },
+    [activeDocumentId]
+  );
 
   const handleShowList = useCallback(() => {
     setActiveDocumentId(null);
@@ -383,15 +443,18 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     });
   }, [handleOpenDocument, isPolish]);
 
-  const handleTaskClick = useCallback((taskId: string, taskData?: any) => {
-    handleOpenDocument({
-      id: taskId,
-      type: 'task',
-      name: taskData?.title || 'Task',
-      status: (taskData?.status?.toLowerCase() || 'todo') as ItemStatus,
-      data: taskData,
-    });
-  }, [handleOpenDocument]);
+  const handleTaskClick = useCallback(
+    (taskId: string, taskData?: any) => {
+      handleOpenDocument({
+        id: taskId,
+        type: 'task',
+        name: taskData?.title || 'Task',
+        status: (taskData?.status?.toLowerCase() || 'todo') as ItemStatus,
+        data: taskData,
+      });
+    },
+    [handleOpenDocument]
+  );
 
   // Decision handlers
   const handleCreateDecision = useCallback(() => {
@@ -405,26 +468,32 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     });
   }, [handleOpenDocument, isPolish]);
 
-  const handleDecisionClick = useCallback((decisionId: string, decisionData?: any) => {
-    handleOpenDocument({
-      id: decisionId,
-      type: 'decision',
-      name: decisionData?.title || 'Decision',
-      status: (decisionData?.status?.toLowerCase() || 'pending') as ItemStatus,
-      data: decisionData,
-    });
-  }, [handleOpenDocument]);
+  const handleDecisionClick = useCallback(
+    (decisionId: string, decisionData?: any) => {
+      handleOpenDocument({
+        id: decisionId,
+        type: 'decision',
+        name: decisionData?.title || 'Decision',
+        status: (decisionData?.status?.toLowerCase() || 'pending') as ItemStatus,
+        data: decisionData,
+      });
+    },
+    [handleOpenDocument]
+  );
 
   // Notification handlers
-  const handleNotificationClick = useCallback((notificationId: string, notificationData?: any) => {
-    handleOpenDocument({
-      id: notificationId,
-      type: 'notification',
-      name: notificationData?.title || 'Notification',
-      status: notificationData?.isRead ? 'read' : 'unread',
-      data: notificationData,
-    });
-  }, [handleOpenDocument]);
+  const handleNotificationClick = useCallback(
+    (notificationId: string, notificationData?: any) => {
+      handleOpenDocument({
+        id: notificationId,
+        type: 'notification',
+        name: notificationData?.title || 'Notification',
+        status: notificationData?.isRead ? 'read' : 'unread',
+        data: notificationData,
+      });
+    },
+    [handleOpenDocument]
+  );
 
   // Handle document saved/updated
   const handleDocumentSaved = useCallback((docId: string, updatedData?: any) => {
@@ -478,6 +547,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     []
   );
 
+  const handleInboxCountsChange = useCallback((counts: { total: number; critical: number }) => {
+    setTabCounts((prev) => ({ ...prev, inbox: counts.total }));
+    // We keep the "critical" number inside Inbox itself; tab only shows total
+  }, []);
+
   // Get action button config based on active tab
   const actionButton = useMemo(() => {
     // Don't show action button when viewing a document
@@ -486,6 +560,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     switch (activeTab) {
       case 'executive':
       case 'focus':
+      case 'inbox':
         return null;
       case 'tasks':
         return {
@@ -518,7 +593,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     }
   }, [activeTab, isPolish, handleCreateTask, handleCreateDecision, activeDocumentId]);
 
-
   // Get current filters based on active tab
   const currentFilters = useMemo(() => {
     if (activeDocumentId) return []; // Hide filters when viewing document
@@ -531,6 +605,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         return notificationFilters;
       case 'executive':
       case 'focus':
+      case 'inbox':
       default:
         return [];
     }
@@ -579,7 +654,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         {/* List button */}
         <button
           onClick={handleShowList}
-          className={isListActive ? TAB_ACTIVE.replace('border-l-2', '') : TAB_INACTIVE.replace('border-l-2', '')}
+          className={
+            isListActive
+              ? TAB_ACTIVE.replace('border-l-2', '')
+              : TAB_INACTIVE.replace('border-l-2', '')
+          }
         >
           <List size={14} />
           <span>{isPolish ? 'Lista' : 'List'}</span>
@@ -680,7 +759,18 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               if (section === 'tasks') setActiveTab('tasks');
               if (section === 'decisions') setActiveTab('decisions');
               if (section === 'focus') setActiveTab('focus');
+              if (section === 'inbox') setActiveTab('inbox');
             }}
+          />
+        );
+      case 'inbox':
+        return (
+          <InboxContent
+            searchQuery={searchQuery}
+            onOpenTask={(id) => handleTaskClick(id)}
+            onOpenDecision={(id) => handleDecisionClick(id)}
+            onOpenNotification={(id) => handleNotificationClick(id)}
+            onCountsChange={handleInboxCountsChange}
           />
         );
       case 'focus':
@@ -771,7 +861,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     key={tab.id}
                     onClick={() => {
                       setActiveTab(tab.id);
-                      // Don't close document when switching tabs
+                      // Close document when switching tabs to show list view
+                      setActiveDocumentId(null);
                     }}
                     className={isActive ? BUTTON_ACTIVE : BUTTON_INACTIVE}
                     data-testid={`mywork-tab-${tab.id}`}
@@ -812,7 +903,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     </option>
                   ))}
                 </select>
-                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
+                <ChevronDown
+                  size={16}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
+                />
               </div>
             )}
 

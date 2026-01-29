@@ -25,6 +25,33 @@ if (!rootElement) {
   throw new Error('Root element not found');
 }
 
+// Initialize theme synchronously before React renders to prevent flicker
+// This reads from localStorage before React hydration
+try {
+  const stored = localStorage.getItem('consultinity-storage');
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      const theme = parsed?.state?.theme;
+      if (theme) {
+        const root = document.documentElement;
+        if (
+          theme === 'dark' ||
+          (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        ) {
+          root.classList.add('dark');
+        } else {
+          root.classList.remove('dark');
+        }
+      }
+    } catch {
+      // Ignore parsing errors, will be handled by React
+    }
+  }
+} catch {
+  // Ignore localStorage errors, will be handled by React
+}
+
 const root = createRoot(rootElement);
 
 // Add error boundary for render errors

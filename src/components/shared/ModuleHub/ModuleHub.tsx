@@ -12,6 +12,9 @@ import { ModuleNavBar, StatusFilter } from './ModuleNavBar';
 import { CategoryButton, ModuleTab, OpenDocument, TabConfig, ViewMode } from './types';
 
 interface ModuleHubProps {
+  // Optional: key for persisting UI state (ModuleHub currently does not persist internally)
+  persistViewModeKey?: string;
+
   // Tab configuration
   tabs: TabConfig[];
   activeTab: ModuleTab;
@@ -54,11 +57,16 @@ interface ModuleHubProps {
   // Extra controls rendered on the right, just before view mode buttons
   rightControls?: React.ReactNode;
 
+  // Optional: module-specific actions shown alongside filters (consumed by some hubs)
+  // Note: ModuleHub does not render these directly yet; kept for compatibility.
+  filterActions?: any;
+
   // Content
   children: React.ReactNode;
 }
 
 export const ModuleHub: React.FC<ModuleHubProps> = ({
+  persistViewModeKey,
   tabs,
   activeTab,
   onTabChange,
@@ -81,8 +89,13 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
   onStatusFilterChange,
   availableViewModes,
   rightControls,
+  filterActions,
   children,
 }) => {
+  // Currently unused, but accepted for compatibility with hubs.
+  void persistViewModeKey;
+  void filterActions;
+
   return (
     <div className="flex flex-col h-full bg-navy-950">
       {/* Navigation Bar */}

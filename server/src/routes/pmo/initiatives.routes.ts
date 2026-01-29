@@ -15,9 +15,9 @@ import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import {
   CreateInitiativeSchema,
+  QuickUpdateInitiativeSchema,
   UpdateInitiativeSchema,
   UpdateInitiativeStatusSchema,
-  QuickUpdateInitiativeSchema,
 } from '../../validators/initiative.validators.js';
 
 const router = Router();
@@ -233,5 +233,24 @@ router.get('/:id/resources', InitiativeController.getResources);
  * Add a resource to an initiative
  */
 router.post('/:id/resources', InitiativeController.addResource);
+
+// ==========================================
+// P0: RAID / Stakeholders / Watchers / History
+// ==========================================
+
+router.get('/:id/stakeholders', InitiativeController.getStakeholders);
+router.post('/:id/stakeholders', InitiativeController.addStakeholder);
+router.delete('/:id/stakeholders/:stakeholderId', InitiativeController.deleteStakeholder);
+
+router.get('/:id/watchers', InitiativeController.getWatchers);
+router.post('/:id/watchers', InitiativeController.addWatcher);
+router.delete('/:id/watchers/:watcherId', InitiativeController.deleteWatcher);
+
+router.get('/:id/raid', InitiativeController.getRaid);
+router.post('/:id/raid', InitiativeController.createRaidItem);
+router.patch('/:id/raid/:raidId', InitiativeController.updateRaidItem);
+router.delete('/:id/raid/:raidId', InitiativeController.deleteRaidItem);
+
+router.get('/:id/history', InitiativeController.getHistory);
 
 export default router;

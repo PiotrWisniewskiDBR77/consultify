@@ -9,6 +9,7 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import notificationService from '../services/notificationService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -61,6 +62,56 @@ const hasApprovedGateDecision = async (
     const hasDueDate = !!row.deadline;
     return status === 'approved' && hasOwner && hasDueDate;
   });
+};
+
+const getInitiativeNotificationRecipients = async (
+  orgId: string,
+  initiativeId: string
+): Promise<string[]> => {
+  const recipients = new Set<string>();
+
+  const initiative = await queryHelpers.queryOne(
+    `SELECT owner_business_id, owner_execution_id, sponsor_id, name
+     FROM initiatives WHERE id = ? AND organization_id = ?`,
+    [initiativeId, orgId]
+  );
+
+  const ownerBusinessId = (initiative as any)?.owner_business_id;
+  const ownerExecutionId = (initiative as any)?.owner_execution_id;
+  const sponsorId = (initiative as any)?.sponsor_id;
+  [ownerBusinessId, ownerExecutionId, sponsorId]
+    .filter(Boolean)
+    .forEach((id: string) => recipients.add(id));
+
+  // Watchers (if feature enabled)
+  try {
+    const watcherRows = await queryHelpers.queryAll(
+      `SELECT w.user_id as userId
+       FROM initiative_watchers w
+       JOIN initiatives i ON i.id = w.initiative_id
+       WHERE w.initiative_id = ? AND i.organization_id = ?`,
+      [initiativeId, orgId]
+    );
+    watcherRows.forEach((r: any) => r?.userId && recipients.add(r.userId));
+  } catch {
+    // table may not exist yet
+  }
+
+  // Stakeholders (RACI)
+  try {
+    const stakeholderRows = await queryHelpers.queryAll(
+      `SELECT s.user_id as userId
+       FROM initiative_stakeholders s
+       JOIN initiatives i ON i.id = s.initiative_id
+       WHERE s.initiative_id = ? AND i.organization_id = ? AND s.user_id IS NOT NULL`,
+      [initiativeId, orgId]
+    );
+    stakeholderRows.forEach((r: any) => r?.userId && recipients.add(r.userId));
+  } catch {
+    // table may not exist yet
+  }
+
+  return Array.from(recipients);
 };
 
 const hasPendingExecutionGateDecisions = async (
@@ -485,7 +536,7 @@ export class InitiativeController {
       }
 
       const existing = await queryHelpers.queryOne(
-        `SELECT status FROM initiatives WHERE id = ? AND organization_id = ?`,
+        `SELECT status, name FROM initiatives WHERE id = ? AND organization_id = ?`,
         [id, orgId]
       );
       if (!existing) {
@@ -495,36 +546,170 @@ export class InitiativeController {
 
       const currentStatus = normalizeStatus((existing as Record<string, unknown>).status as string);
       const nextStatus = normalizeStatus(status as string);
+      const initiativeName = String((existing as any)?.name || 'Initiative');
+      const actorId = req.user?.id;
+      const actorName =
+        req.user?.firstName && req.user?.lastName
+          ? `${req.user.firstName} ${req.user.lastName}`
+          : req.user?.email || undefined;
 
       // Gate decision validation
-      // Flow: DRAFT -> REVIEW -> APPROVED -> PLANNING -> EXECUTING
-      
-      // REVIEW -> APPROVED: requires Go/No-Go decision
-      if (currentStatus === 'REVIEW' && nextStatus === 'APPROVED') {
-        const hasGoNoGo = await hasApprovedGateDecision(
-          orgId,
-          id,
-          'GOVERNANCE_DECISION_MAKING'
-        );
+      // Canonical flow (PMO):
+      // DRAFT -> PENDING_REVIEW -> REVIEW -> PROMOTED -> PLANNING -> APPROVED -> SCHEDULED -> EXECUTING -> DONE -> TRACKING
+
+      // REVIEW -> PROMOTED: requires Go/No-Go decision (governance)
+      if (currentStatus === 'REVIEW' && nextStatus === 'PROMOTED') {
+        const hasGoNoGo = await hasApprovedGateDecision(orgId, id, 'GOVERNANCE_DECISION_MAKING');
         if (!hasGoNoGo) {
+          try {
+            const recipients = await getInitiativeNotificationRecipients(orgId, id);
+            await Promise.allSettled(
+              recipients
+                .filter((uid) => uid && uid !== actorId)
+                .map((userId) =>
+                  notificationService.send({
+                    userId,
+                    organizationId: orgId,
+                    type: 'initiative.gate_blocked',
+                    title: 'Initiative gate blocked',
+                    body: `${initiativeName}: Go/No-Go decision is required to promote.`,
+                    entityType: 'initiative',
+                    entityId: id,
+                    actionUrl: '/initiatives',
+                    actorId,
+                    actorName,
+                    priority: 'high',
+                    metadata: { currentStatus, nextStatus, gate: 'GOVERNANCE_DECISION_MAKING' },
+                  })
+                )
+            );
+          } catch {
+            // best-effort
+          }
+
           res.status(400).json({
-            error: 'Go/No-Go decision is required to approve this initiative',
+            error: 'Go/No-Go decision is required to promote this initiative',
             rule: 'GATE_DECISION_REQUIRED',
           });
           return;
         }
       }
 
-      // APPROVED -> PLANNING: requires Resources Commit and Schedule Lock decisions
-      if (currentStatus === 'APPROVED' && nextStatus === 'PLANNING') {
-        const [hasResourcesCommit, hasScheduleLock] = await Promise.all([
-          hasApprovedGateDecision(orgId, id, 'RESOURCE_RESPONSIBILITY'),
-          hasApprovedGateDecision(orgId, id, 'SCHEDULE_MILESTONES'),
-        ]);
-        if (!hasResourcesCommit || !hasScheduleLock) {
+      // PROMOTED -> PLANNING: requires Resources Commit decision
+      if (currentStatus === 'PROMOTED' && nextStatus === 'PLANNING') {
+        const hasResourcesCommit = await hasApprovedGateDecision(
+          orgId,
+          id,
+          'RESOURCE_RESPONSIBILITY'
+        );
+        if (!hasResourcesCommit) {
+          try {
+            const recipients = await getInitiativeNotificationRecipients(orgId, id);
+            await Promise.allSettled(
+              recipients
+                .filter((uid) => uid && uid !== actorId)
+                .map((userId) =>
+                  notificationService.send({
+                    userId,
+                    organizationId: orgId,
+                    type: 'initiative.gate_blocked',
+                    title: 'Initiative gate blocked',
+                    body: `${initiativeName}: Resources Commit decision is required to start planning.`,
+                    entityType: 'initiative',
+                    entityId: id,
+                    actionUrl: '/initiatives',
+                    actorId,
+                    actorName,
+                    priority: 'high',
+                    metadata: { currentStatus, nextStatus, gate: 'RESOURCE_RESPONSIBILITY' },
+                  })
+                )
+            );
+          } catch {
+            // best-effort
+          }
+
           res.status(400).json({
-            error: 'Resources Commit and Schedule Lock decisions are required to start planning',
+            error: 'Resources Commit decision is required to start planning',
             rule: 'GATE_DECISION_REQUIRED',
+          });
+          return;
+        }
+      }
+
+      // APPROVED -> SCHEDULED: requires Schedule Lock decision (and dates)
+      if (currentStatus === 'APPROVED' && nextStatus === 'SCHEDULED') {
+        const hasScheduleLock = await hasApprovedGateDecision(orgId, id, 'SCHEDULE_MILESTONES');
+        if (!hasScheduleLock) {
+          try {
+            const recipients = await getInitiativeNotificationRecipients(orgId, id);
+            await Promise.allSettled(
+              recipients
+                .filter((uid) => uid && uid !== actorId)
+                .map((userId) =>
+                  notificationService.send({
+                    userId,
+                    organizationId: orgId,
+                    type: 'initiative.gate_blocked',
+                    title: 'Initiative gate blocked',
+                    body: `${initiativeName}: Schedule Lock decision is required to schedule.`,
+                    entityType: 'initiative',
+                    entityId: id,
+                    actionUrl: '/initiatives',
+                    actorId,
+                    actorName,
+                    priority: 'high',
+                    metadata: { currentStatus, nextStatus, gate: 'SCHEDULE_MILESTONES' },
+                  })
+                )
+            );
+          } catch {
+            // best-effort
+          }
+
+          res.status(400).json({
+            error: 'Schedule Lock decision is required to schedule this initiative',
+            rule: 'GATE_DECISION_REQUIRED',
+          });
+          return;
+        }
+
+        const row = await queryHelpers.queryOne(
+          `SELECT planned_start_date, planned_end_date FROM initiatives WHERE id = ? AND organization_id = ?`,
+          [id, orgId]
+        );
+        const plannedStart = (row as any)?.planned_start_date;
+        const plannedEnd = (row as any)?.planned_end_date;
+        if (!plannedStart || !plannedEnd) {
+          try {
+            const recipients = await getInitiativeNotificationRecipients(orgId, id);
+            await Promise.allSettled(
+              recipients
+                .filter((uid) => uid && uid !== actorId)
+                .map((userId) =>
+                  notificationService.send({
+                    userId,
+                    organizationId: orgId,
+                    type: 'initiative.gate_blocked',
+                    title: 'Initiative gate blocked',
+                    body: `${initiativeName}: plannedStartDate and plannedEndDate are required to schedule.`,
+                    entityType: 'initiative',
+                    entityId: id,
+                    actionUrl: '/initiatives',
+                    actorId,
+                    actorName,
+                    priority: 'high',
+                    metadata: { currentStatus, nextStatus, gate: 'SCHEDULE_DATES_REQUIRED' },
+                  })
+                )
+            );
+          } catch {
+            // best-effort
+          }
+
+          res.status(400).json({
+            error: 'plannedStartDate and plannedEndDate are required to schedule this initiative',
+            rule: 'SCHEDULE_DATES_REQUIRED',
           });
           return;
         }
@@ -545,6 +730,33 @@ export class InitiativeController {
       // TODO: Use InitiativeStatusService when migrated
       const sql = `UPDATE initiatives SET status = ?, updated_at = ? WHERE id = ? AND organization_id = ?`;
       await queryHelpers.queryRun(sql, [nextStatus, new Date().toISOString(), id, orgId]);
+
+      // Emit notifications (best-effort)
+      try {
+        const recipients = await getInitiativeNotificationRecipients(orgId, id);
+        await Promise.allSettled(
+          recipients
+            .filter((uid) => uid && uid !== actorId)
+            .map((userId) =>
+              notificationService.send({
+                userId,
+                organizationId: orgId,
+                type: 'initiative.status_changed',
+                title: 'Initiative status changed',
+                body: `${initiativeName}: ${currentStatus} → ${nextStatus}`,
+                entityType: 'initiative',
+                entityId: id,
+                actionUrl: '/initiatives',
+                actorId,
+                actorName,
+                priority: 'normal',
+                metadata: { from: currentStatus, to: nextStatus },
+              })
+            )
+        );
+      } catch {
+        // best-effort
+      }
 
       res.json({ id, status: nextStatus, message: 'Status updated' });
     }
@@ -573,13 +785,25 @@ export class InitiativeController {
       } = req.body as Record<string, unknown>;
 
       const current = await queryHelpers.queryOne(
-        `SELECT planned_start_date, planned_end_date FROM initiatives WHERE id = ? AND organization_id = ?`,
+        `SELECT planned_start_date, planned_end_date, owner_business_id, owner_execution_id, name
+         FROM initiatives
+         WHERE id = ? AND organization_id = ?`,
         [id, orgId]
       );
       if (!current) {
         res.status(404).json({ error: 'Initiative not found' });
         return;
       }
+
+      const actorId = req.user?.id;
+      const actorName =
+        req.user?.firstName && req.user?.lastName
+          ? `${req.user.firstName} ${req.user.lastName}`
+          : req.user?.email || undefined;
+
+      const previousOwnerBusinessId = (current as any).owner_business_id as string | null;
+      const previousOwnerExecutionId = (current as any).owner_execution_id as string | null;
+      const initiativeName = String((current as any)?.name || 'Initiative');
 
       const existingStart = (current as Record<string, unknown>).planned_start_date as
         | string
@@ -645,6 +869,51 @@ export class InitiativeController {
       const sql = `UPDATE initiatives SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`;
       await queryHelpers.queryRun(sql, params);
 
+      // Emit owner change notifications (best-effort)
+      try {
+        const ownerBusinessChanged =
+          ownerBusinessId !== undefined &&
+          String(ownerBusinessId || '') !== String(previousOwnerBusinessId || '');
+        const ownerExecutionChanged =
+          ownerExecutionId !== undefined &&
+          String(ownerExecutionId || '') !== String(previousOwnerExecutionId || '');
+
+        if (ownerBusinessChanged || ownerExecutionChanged) {
+          const recipients = await getInitiativeNotificationRecipients(orgId, id);
+          const bodyParts: string[] = [];
+          if (ownerBusinessChanged) bodyParts.push('Business owner updated');
+          if (ownerExecutionChanged) bodyParts.push('Execution owner updated');
+
+          await Promise.allSettled(
+            recipients
+              .filter((uid) => uid && uid !== actorId)
+              .map((userId) =>
+                notificationService.send({
+                  userId,
+                  organizationId: orgId,
+                  type: 'initiative.owner_changed',
+                  title: 'Initiative owner changed',
+                  body: `${initiativeName}: ${bodyParts.join(' · ')}`,
+                  entityType: 'initiative',
+                  entityId: id,
+                  actionUrl: '/initiatives',
+                  actorId,
+                  actorName,
+                  priority: 'normal',
+                  metadata: {
+                    previousOwnerBusinessId,
+                    previousOwnerExecutionId,
+                    ownerBusinessId,
+                    ownerExecutionId,
+                  },
+                })
+              )
+          );
+        }
+      } catch {
+        // best-effort
+      }
+
       res.json({ success: true, message: 'Initiative updated' });
     }
   );
@@ -684,12 +953,16 @@ export class InitiativeController {
         if (
           [
             'DRAFT',
+            'PENDING_REVIEW',
             'PLANNING',
             'REVIEW',
+            'PROMOTED',
             'APPROVED',
+            'SCHEDULED',
             'EXECUTING',
             'BLOCKED',
             'DONE',
+            'TRACKING',
             'CANCELLED',
             'ARCHIVED',
           ].includes(s)
@@ -2047,6 +2320,473 @@ export class InitiativeController {
           notes,
         },
       });
+    }
+  );
+
+  // ==========================================
+  // P0: RAID / Stakeholders / Watchers / History
+  // ==========================================
+
+  static getStakeholders = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId } = req.params;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const rows = await queryHelpers.queryAll(
+        `SELECT 
+          s.id,
+          s.initiative_id as initiativeId,
+          s.user_id as userId,
+          s.external_name as externalName,
+          s.external_email as externalEmail,
+          s.role,
+          s.raci_type as raciType,
+          s.created_at as createdAt,
+          u.first_name as firstName,
+          u.last_name as lastName,
+          u.email as email
+        FROM initiative_stakeholders s
+        JOIN initiatives i ON i.id = s.initiative_id
+        LEFT JOIN users u ON u.id = s.user_id
+        WHERE s.initiative_id = ? AND i.organization_id = ?
+        ORDER BY s.created_at DESC`,
+        [initiativeId, orgId]
+      );
+
+      res.json({ stakeholders: rows });
+    }
+  );
+
+  static addStakeholder = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      const { id: initiativeId } = req.params;
+      const { userId, raciType, role, externalName, externalEmail } = req.body || {};
+
+      if (!orgId || !actorId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const exists = await queryHelpers.queryOne(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, orgId]
+      );
+      if (!exists) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+
+      if (!userId && !externalName) {
+        res.status(400).json({ error: 'userId or externalName is required' });
+        return;
+      }
+
+      const id = uuidv4();
+      await queryHelpers.queryRun(
+        `INSERT INTO initiative_stakeholders (
+          id, initiative_id, user_id, external_name, external_email, role, raci_type, created_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          initiativeId,
+          userId || null,
+          userId ? null : externalName,
+          userId ? null : externalEmail || null,
+          role || null,
+          raciType || null,
+          actorId,
+        ]
+      );
+
+      // Record history
+      await queryHelpers.queryRun(
+        `INSERT INTO initiative_history (id, initiative_id, action, old_value, new_value, changed_by, notes)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uuidv4(),
+          initiativeId,
+          'stakeholder_added',
+          null,
+          JSON.stringify({ userId, externalName, raciType, role }),
+          actorId,
+          null,
+        ]
+      );
+
+      res.status(201).json({ success: true, id });
+    }
+  );
+
+  static deleteStakeholder = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      const { id: initiativeId, stakeholderId } = req.params as any;
+      if (!orgId || !actorId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const row = await queryHelpers.queryOne(
+        `SELECT s.id FROM initiative_stakeholders s
+         JOIN initiatives i ON i.id = s.initiative_id
+         WHERE s.id = ? AND s.initiative_id = ? AND i.organization_id = ?`,
+        [stakeholderId, initiativeId, orgId]
+      );
+      if (!row) {
+        res.status(404).json({ error: 'Stakeholder not found' });
+        return;
+      }
+
+      await queryHelpers.queryRun(`DELETE FROM initiative_stakeholders WHERE id = ?`, [
+        stakeholderId,
+      ]);
+      await queryHelpers.queryRun(
+        `INSERT INTO initiative_history (id, initiative_id, action, old_value, new_value, changed_by, notes)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uuidv4(),
+          initiativeId,
+          'stakeholder_removed',
+          JSON.stringify({ id: stakeholderId }),
+          null,
+          actorId,
+          null,
+        ]
+      );
+
+      res.json({ success: true });
+    }
+  );
+
+  static getWatchers = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId } = req.params;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const rows = await queryHelpers.queryAll(
+        `SELECT
+          w.id,
+          w.initiative_id as initiativeId,
+          w.user_id as userId,
+          w.created_at as createdAt,
+          u.first_name as firstName,
+          u.last_name as lastName,
+          u.email as email
+        FROM initiative_watchers w
+        JOIN initiatives i ON i.id = w.initiative_id
+        JOIN users u ON u.id = w.user_id
+        WHERE w.initiative_id = ? AND i.organization_id = ?
+        ORDER BY w.created_at DESC`,
+        [initiativeId, orgId]
+      );
+
+      res.json({ watchers: rows });
+    }
+  );
+
+  static addWatcher = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      const { id: initiativeId } = req.params;
+      const { userId } = req.body || {};
+      if (!orgId || !actorId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      if (!userId) {
+        res.status(400).json({ error: 'userId is required' });
+        return;
+      }
+
+      const exists = await queryHelpers.queryOne(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, orgId]
+      );
+      if (!exists) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+
+      const id = uuidv4();
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO initiative_watchers (id, initiative_id, user_id) VALUES (?, ?, ?)`,
+          [id, initiativeId, userId]
+        );
+      } catch (e: any) {
+        // Unique constraint violation: treat as idempotent
+      }
+
+      await queryHelpers.queryRun(
+        `INSERT INTO initiative_history (id, initiative_id, action, old_value, new_value, changed_by, notes)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [uuidv4(), initiativeId, 'watcher_added', null, JSON.stringify({ userId }), actorId, null]
+      );
+
+      res.status(201).json({ success: true });
+    }
+  );
+
+  static deleteWatcher = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      const { id: initiativeId, watcherId } = req.params as any;
+      if (!orgId || !actorId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const row = await queryHelpers.queryOne(
+        `SELECT w.id, w.user_id as userId FROM initiative_watchers w
+         JOIN initiatives i ON i.id = w.initiative_id
+         WHERE w.id = ? AND w.initiative_id = ? AND i.organization_id = ?`,
+        [watcherId, initiativeId, orgId]
+      );
+      if (!row) {
+        res.status(404).json({ error: 'Watcher not found' });
+        return;
+      }
+
+      await queryHelpers.queryRun(`DELETE FROM initiative_watchers WHERE id = ?`, [watcherId]);
+      await queryHelpers.queryRun(
+        `INSERT INTO initiative_history (id, initiative_id, action, old_value, new_value, changed_by, notes)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uuidv4(),
+          initiativeId,
+          'watcher_removed',
+          JSON.stringify({ id: watcherId, userId: (row as any).userId }),
+          null,
+          actorId,
+          null,
+        ]
+      );
+
+      res.json({ success: true });
+    }
+  );
+
+  static getRaid = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const orgId = req.user?.organizationId;
+    const { id: initiativeId } = req.params;
+    const limit = Number(req.query?.limit || 50);
+    if (!orgId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const rows = await queryHelpers.queryAll(
+      `SELECT
+          r.id,
+          r.initiative_id as initiativeId,
+          LOWER(r.type) as type,
+          r.title,
+          r.description,
+          r.status,
+          r.impact as severity,
+          r.owner_id as ownerId,
+          r.due_date as dueDate,
+          r.created_at as createdAt,
+          r.updated_at as updatedAt
+        FROM raid_items r
+        WHERE r.organization_id = ? AND r.initiative_id = ?
+        ORDER BY r.updated_at DESC
+        LIMIT ?`,
+      [orgId, initiativeId, Number.isFinite(limit) ? limit : 50]
+    );
+
+    res.json({ items: rows });
+  });
+
+  static createRaidItem = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      const { id: initiativeId } = req.params;
+      const { type, title, description, severity, dueDate, ownerId } = req.body || {};
+      if (!orgId || !actorId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      if (!type || !title) {
+        res.status(400).json({ error: 'type and title are required' });
+        return;
+      }
+
+      const id = uuidv4();
+      await queryHelpers.queryRun(
+        `INSERT INTO raid_items (
+          id, organization_id, initiative_id, type, title, description, impact, due_date, owner_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          orgId,
+          initiativeId,
+          String(type).toUpperCase(),
+          title,
+          description || null,
+          severity ? String(severity).toUpperCase() : null,
+          dueDate || null,
+          ownerId || null,
+        ]
+      );
+
+      await queryHelpers.queryRun(
+        `INSERT INTO initiative_history (id, initiative_id, action, old_value, new_value, changed_by, notes)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uuidv4(),
+          initiativeId,
+          'raid_item_created',
+          null,
+          JSON.stringify({ id, type, title }),
+          actorId,
+          null,
+        ]
+      );
+
+      res.status(201).json({ success: true, id });
+    }
+  );
+
+  static updateRaidItem = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      const { id: initiativeId, raidId } = req.params as any;
+      const { title, description, status, severity, dueDate, ownerId } = req.body || {};
+      if (!orgId || !actorId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const existing = await queryHelpers.queryOne(
+        `SELECT id, title, description, status, impact, due_date, owner_id
+         FROM raid_items
+         WHERE id = ? AND organization_id = ? AND initiative_id = ?`,
+        [raidId, orgId, initiativeId]
+      );
+      if (!existing) {
+        res.status(404).json({ error: 'RAID item not found' });
+        return;
+      }
+
+      await queryHelpers.queryRun(
+        `UPDATE raid_items
+         SET title = COALESCE(?, title),
+             description = COALESCE(?, description),
+             status = COALESCE(?, status),
+             impact = COALESCE(?, impact),
+             due_date = COALESCE(?, due_date),
+             owner_id = COALESCE(?, owner_id),
+             updated_at = datetime('now')
+         WHERE id = ? AND organization_id = ? AND initiative_id = ?`,
+        [
+          title ?? null,
+          description ?? null,
+          status ?? null,
+          severity ? String(severity).toUpperCase() : null,
+          dueDate ?? null,
+          ownerId ?? null,
+          raidId,
+          orgId,
+          initiativeId,
+        ]
+      );
+
+      await queryHelpers.queryRun(
+        `INSERT INTO initiative_history (id, initiative_id, action, old_value, new_value, changed_by, notes)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uuidv4(),
+          initiativeId,
+          'raid_item_updated',
+          JSON.stringify(existing),
+          JSON.stringify({ title, description, status, severity, dueDate, ownerId }),
+          actorId,
+          null,
+        ]
+      );
+
+      res.json({ success: true });
+    }
+  );
+
+  static deleteRaidItem = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      const { id: initiativeId, raidId } = req.params as any;
+      if (!orgId || !actorId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const existing = await queryHelpers.queryOne(
+        `SELECT id, title FROM raid_items WHERE id = ? AND organization_id = ? AND initiative_id = ?`,
+        [raidId, orgId, initiativeId]
+      );
+      if (!existing) {
+        res.status(404).json({ error: 'RAID item not found' });
+        return;
+      }
+
+      await queryHelpers.queryRun(
+        `DELETE FROM raid_items WHERE id = ? AND organization_id = ? AND initiative_id = ?`,
+        [raidId, orgId, initiativeId]
+      );
+
+      await queryHelpers.queryRun(
+        `INSERT INTO initiative_history (id, initiative_id, action, old_value, new_value, changed_by, notes)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [uuidv4(), initiativeId, 'raid_item_deleted', JSON.stringify(existing), null, actorId, null]
+      );
+
+      res.json({ success: true });
+    }
+  );
+
+  static getHistory = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId } = req.params;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const rows = await queryHelpers.queryAll(
+        `SELECT 
+          h.id,
+          h.initiative_id as initiativeId,
+          h.action as eventType,
+          h.changed_by as actorId,
+          h.changed_at as createdAt,
+          h.old_value as oldValue,
+          h.new_value as newValue,
+          h.notes
+        FROM initiative_history h
+        JOIN initiatives i ON i.id = h.initiative_id
+        WHERE h.initiative_id = ? AND i.organization_id = ?
+        ORDER BY h.changed_at DESC
+        LIMIT 200`,
+        [initiativeId, orgId]
+      );
+
+      res.json({ events: rows });
     }
   );
 }

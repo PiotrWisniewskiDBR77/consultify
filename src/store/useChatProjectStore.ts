@@ -113,7 +113,17 @@ export const useChatProjectStore = create<ChatProjectState>()(
         set({ isLoading: true, error: null });
         try {
           const result = await Api.getChatProjects();
-          const projects = result.projects.map(mapApiProject);
+          // Backend may return either:
+          // - { projects: [...] }
+          // - { projects: { rows: [...] } } (SQLite shim)
+          const rawProjects = (result as any)?.projects;
+          const projectRows = Array.isArray(rawProjects)
+            ? rawProjects
+            : (rawProjects as any)?.rows && Array.isArray((rawProjects as any).rows)
+              ? (rawProjects as any).rows
+              : [];
+
+          const projects = projectRows.map(mapApiProject);
           set({ projects, isLoading: false });
         } catch (err: any) {
           console.error('[ChatProjectStore] Fetch error:', err);

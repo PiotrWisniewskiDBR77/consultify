@@ -65,6 +65,16 @@ const STATUS_META: Record<
   InitiativeStatus,
   { label: string; dotColor: string; icon: React.ReactNode }
 > = {
+  [InitiativeStatus.PENDING_REVIEW]: {
+    label: STATUS_METADATA[InitiativeStatus.PENDING_REVIEW].label,
+    dotColor: STATUS_METADATA[InitiativeStatus.PENDING_REVIEW].dotColor,
+    icon: <FileText size={14} />,
+  },
+  [InitiativeStatus.PROMOTED]: {
+    label: STATUS_METADATA[InitiativeStatus.PROMOTED].label,
+    dotColor: STATUS_METADATA[InitiativeStatus.PROMOTED].dotColor,
+    icon: <TrendingUp size={14} />,
+  },
   [InitiativeStatus.DONE]: {
     label: STATUS_METADATA[InitiativeStatus.DONE].label,
     dotColor: STATUS_METADATA[InitiativeStatus.DONE].dotColor,
@@ -100,10 +110,20 @@ const STATUS_META: Record<
     dotColor: STATUS_METADATA[InitiativeStatus.APPROVED].dotColor,
     icon: <CheckCircle2 size={14} />,
   },
+  [InitiativeStatus.SCHEDULED]: {
+    label: STATUS_METADATA[InitiativeStatus.SCHEDULED].label,
+    dotColor: STATUS_METADATA[InitiativeStatus.SCHEDULED].dotColor,
+    icon: <Target size={14} />,
+  },
   [InitiativeStatus.EXECUTING]: {
     label: STATUS_METADATA[InitiativeStatus.EXECUTING].label,
     dotColor: STATUS_METADATA[InitiativeStatus.EXECUTING].dotColor,
     icon: <Target size={14} />,
+  },
+  [InitiativeStatus.TRACKING]: {
+    label: STATUS_METADATA[InitiativeStatus.TRACKING].label,
+    dotColor: STATUS_METADATA[InitiativeStatus.TRACKING].dotColor,
+    icon: <BarChart3 size={14} />,
   },
   [InitiativeStatus.DRAFT]: {
     label: STATUS_METADATA[InitiativeStatus.DRAFT].label,

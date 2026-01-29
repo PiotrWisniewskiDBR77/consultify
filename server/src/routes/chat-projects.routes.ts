@@ -51,7 +51,7 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
 
     const db = getDatabase();
 
-    const projects = await db.query(
+    const projectsResult = await db.query(
       `
             SELECT 
                 cp.*,
@@ -63,9 +63,15 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
       [userId, orgId]
     );
 
+    const projects = Array.isArray(projectsResult)
+      ? projectsResult
+      : (projectsResult as any)?.rows && Array.isArray((projectsResult as any).rows)
+        ? (projectsResult as any).rows
+        : [];
+
     res.json({
-      projects: projects || [],
-      total: projects?.length || 0,
+      projects,
+      total: projects.length,
     });
   } catch (error: any) {
     logger.error('[ChatProjects] Get all error:', error);
@@ -102,7 +108,7 @@ router.get('/:id', verifyToken, async (req: Request, res: Response) => {
     }
 
     // Get conversations in this project
-    const conversations = await db.query(
+    const conversationsResult = await db.query(
       `
             SELECT * FROM conversations 
             WHERE chat_project_id = ?
@@ -111,9 +117,15 @@ router.get('/:id', verifyToken, async (req: Request, res: Response) => {
       [id]
     );
 
+    const conversations = Array.isArray(conversationsResult)
+      ? conversationsResult
+      : (conversationsResult as any)?.rows && Array.isArray((conversationsResult as any).rows)
+        ? (conversationsResult as any).rows
+        : [];
+
     res.json({
       ...project,
-      conversations: conversations || [],
+      conversations,
     });
   } catch (error: any) {
     logger.error('[ChatProjects] Get one error:', error);

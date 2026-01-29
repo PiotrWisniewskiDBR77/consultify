@@ -3,31 +3,47 @@
  * ClickUp-style design following Golden Standard
  */
 
-export { AttachmentsSection } from './AttachmentsSection';
 export type { Attachment } from './AttachmentsSection';
-
-export { CommentsSection } from './CommentsSection';
+export { AttachmentsSection } from './AttachmentsSection';
 export type { Comment } from './CommentsSection';
-
-export { LinkedItemsSection } from './LinkedItemsSection';
-export type { LinkedItem, LinkedItemType } from './LinkedItemsSection';
-
-export { EscalationRulesSection } from './EscalationRulesSection';
-export type { ReminderRule, EscalationRule, WarningThresholds } from './EscalationRulesSection';
-
-export { DelegationModal } from './DelegationModal';
+export { CommentsSection } from './CommentsSection';
 export type { DelegationType } from './DelegationModal';
-
-export { StakeholdersSection } from './StakeholdersSection';
-export type { Stakeholder, StakeholderRole } from './StakeholdersSection';
-
+export { DelegationModal } from './DelegationModal';
+export { DraggableTaskRow } from './DraggableTaskRow';
+export type { EscalationRule, ReminderRule, WarningThresholds } from './EscalationRulesSection';
+export { EscalationRulesSection } from './EscalationRulesSection';
 export { KeyboardShortcutsHelp } from './KeyboardShortcutsHelp';
-
+export type { LinkedItem, LinkedItemType } from './LinkedItemsSection';
+export { LinkedItemsSection } from './LinkedItemsSection';
 export { QuickActions } from './QuickActions';
-
+export type {
+  NotificationTrigger,
+  Stakeholder,
+  StakeholderNotificationSettings,
+  StakeholderRole,
+} from './StakeholdersSection';
+export { StakeholdersSection } from './StakeholdersSection';
+export type { RecurringPattern, TaskTemplate } from './TaskTemplates';
+export { TaskTemplates } from './TaskTemplates';
 export { TaskTimer } from './TaskTimer';
 
-export { DraggableTaskRow } from './DraggableTaskRow';
+// Decision-specific components
+export type { Alternative } from './AlternativesSection';
+export { AlternativesSection } from './AlternativesSection';
+export { DeadlineAlertBanner } from './DeadlineAlertBanner';
+export type { DecisionReadinessData } from './DecisionReadinessBar';
+export { DecisionReadinessBar } from './DecisionReadinessBar';
+export type { ImpactValues } from './ImpactAssessmentCompact';
+export { ImpactAssessmentCompact } from './ImpactAssessmentCompact';
+export type { RiskItem } from './RiskAssessmentCompact';
+export { RiskAssessmentCompact } from './RiskAssessmentCompact';
 
-export { TaskTemplates } from './TaskTemplates';
-export type { TaskTemplate, RecurringPattern } from './TaskTemplates';
+// Task-specific components
+export type { AIInsight } from './AIInsightSection';
+export { AIInsightSection } from './AIInsightSection';
+export type { TaskDependency } from './DependenciesSection';
+export { DependenciesSection } from './DependenciesSection';
+export type { EvidenceItem, EvidenceType } from './EvidenceSection';
+export { EvidenceSection } from './EvidenceSection';
+export type { ImplementationIdea } from './ImplementationIdeasSection';
+export { ImplementationIdeasSection } from './ImplementationIdeasSection';

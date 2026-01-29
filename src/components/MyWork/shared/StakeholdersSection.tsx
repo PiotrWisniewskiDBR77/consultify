@@ -1,32 +1,55 @@
 /**
  * StakeholdersSection
- * Component for managing decision stakeholders (RACI model)
- * Responsible, Accountable, Consulted, Informed
+ * Enhanced component for managing decision stakeholders (RACI model)
+ * Includes notification settings per stakeholder
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  Bell,
+  BellOff,
+  Check,
   ChevronDown,
+  Clock,
+  Eye,
+  Mail,
+  MessageSquare,
   Plus,
+  Settings,
   Trash2,
   User,
   UserCheck,
   UserCog,
   Users,
-  Eye,
-  MessageSquare,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export type StakeholderRole = 'responsible' | 'accountable' | 'consulted' | 'informed';
 
+export type NotificationTrigger =
+  | 'on_create'
+  | 'on_update'
+  | 'on_comment'
+  | 'on_status_change'
+  | 'on_deadline_approaching'
+  | 'on_decision_made';
+
+export interface StakeholderNotificationSettings {
+  enabled: boolean;
+  triggers: NotificationTrigger[];
+  emailEnabled: boolean;
+  inAppEnabled: boolean;
+}
+
 export interface Stakeholder {
   id: string;
   decisionId: string;
   userId: string;
   userName?: string;
+  userEmail?: string;
   role: StakeholderRole;
+  notificationSettings: StakeholderNotificationSettings;
   notifiedAt?: string;
   acknowledgedAt?: string;
 }
@@ -34,9 +57,13 @@ export interface Stakeholder {
 interface StakeholdersSectionProps {
   stakeholders: Stakeholder[];
   availableUsers: { id: string; name: string; email?: string }[];
-  onAdd: (userId: string, role: StakeholderRole) => Promise<void>;
-  onRemove: (userId: string) => Promise<void>;
-  onRoleChange?: (userId: string, role: StakeholderRole) => Promise<void>;
+  onAdd: (
+    userId: string,
+    role: StakeholderRole,
+    notificationSettings: StakeholderNotificationSettings
+  ) => void;
+  onUpdate: (id: string, updates: Partial<Stakeholder>) => void;
+  onRemove: (id: string) => void;
   readOnly?: boolean;
 }
 
@@ -47,69 +74,124 @@ const ROLE_CONFIG: Record<
     description: { en: string; pl: string };
     icon: React.ElementType;
     color: string;
+    bgColor: string;
+    defaultTriggers: NotificationTrigger[];
   }
 > = {
+  accountable: {
+    label: { en: 'Accountable', pl: 'Rozliczany' },
+    description: { en: 'Makes the final decision', pl: 'Podejmuje ostateczną decyzję' },
+    icon: UserCheck,
+    color: 'text-purple-500',
+    bgColor: 'bg-purple-500/10',
+    defaultTriggers: [
+      'on_create',
+      'on_update',
+      'on_comment',
+      'on_status_change',
+      'on_deadline_approaching',
+    ],
+  },
   responsible: {
     label: { en: 'Responsible', pl: 'Odpowiedzialny' },
     description: { en: 'Does the work', pl: 'Wykonuje pracę' },
     icon: UserCog,
-    color: 'text-blue-500 bg-blue-500/10',
-  },
-  accountable: {
-    label: { en: 'Accountable', pl: 'Rozliczalny' },
-    description: { en: 'Makes the final decision', pl: 'Podejmuje ostateczną decyzję' },
-    icon: UserCheck,
-    color: 'text-purple-500 bg-purple-500/10',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10',
+    defaultTriggers: ['on_create', 'on_update', 'on_comment', 'on_deadline_approaching'],
   },
   consulted: {
     label: { en: 'Consulted', pl: 'Konsultowany' },
     description: { en: 'Provides input', pl: 'Dostarcza opinię' },
     icon: MessageSquare,
-    color: 'text-emerald-500 bg-emerald-500/10',
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-500/10',
+    defaultTriggers: ['on_create', 'on_comment'],
   },
   informed: {
     label: { en: 'Informed', pl: 'Informowany' },
     description: { en: 'Kept in the loop', pl: 'Informowany o postępach' },
     icon: Eye,
-    color: 'text-slate-500 bg-slate-500/10',
+    color: 'text-slate-500',
+    bgColor: 'bg-slate-500/10',
+    defaultTriggers: ['on_status_change', 'on_decision_made'],
   },
+};
+
+const NOTIFICATION_TRIGGERS: Record<NotificationTrigger, { en: string; pl: string }> = {
+  on_create: { en: 'When created', pl: 'Przy utworzeniu' },
+  on_update: { en: 'When updated', pl: 'Przy aktualizacji' },
+  on_comment: { en: 'New comment', pl: 'Nowy komentarz' },
+  on_status_change: { en: 'Status change', pl: 'Zmiana statusu' },
+  on_deadline_approaching: { en: 'Deadline approaching', pl: 'Zbliżający się termin' },
+  on_decision_made: { en: 'Decision made', pl: 'Decyzja podjęta' },
 };
 
 export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
   stakeholders,
   availableUsers,
   onAdd,
+  onUpdate,
   onRemove,
-  onRoleChange,
   readOnly = false,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedRole, setSelectedRole] = useState<StakeholderRole>('consulted');
-  const [adding, setAdding] = useState(false);
+  const [expandedStakeholderId, setExpandedStakeholderId] = useState<string | null>(null);
 
   // Filter out already added users
-  const availableToAdd = availableUsers.filter(
-    (u) => !stakeholders.some((s) => s.userId === u.id)
-  );
+  const availableToAdd = availableUsers.filter((u) => !stakeholders.some((s) => s.userId === u.id));
 
-  const handleAdd = async () => {
+  const handleAdd = () => {
     if (!selectedUserId) return;
-    
-    try {
-      setAdding(true);
-      await onAdd(selectedUserId, selectedRole);
-      setSelectedUserId('');
-      setShowAddForm(false);
-    } catch {
-      // Error handled by parent
-    } finally {
-      setAdding(false);
-    }
+
+    const roleConfig = ROLE_CONFIG[selectedRole];
+    const user = availableUsers.find((u) => u.id === selectedUserId);
+
+    const defaultSettings: StakeholderNotificationSettings = {
+      enabled: true,
+      triggers: roleConfig.defaultTriggers,
+      emailEnabled: true,
+      inAppEnabled: true,
+    };
+
+    onAdd(selectedUserId, selectedRole, defaultSettings);
+    setSelectedUserId('');
+    setShowAddForm(false);
+  };
+
+  const toggleTrigger = (stakeholderId: string, trigger: NotificationTrigger) => {
+    const stakeholder = stakeholders.find((s) => s.id === stakeholderId);
+    if (!stakeholder) return;
+
+    const currentTriggers = stakeholder.notificationSettings.triggers;
+    const newTriggers = currentTriggers.includes(trigger)
+      ? currentTriggers.filter((t) => t !== trigger)
+      : [...currentTriggers, trigger];
+
+    onUpdate(stakeholderId, {
+      notificationSettings: {
+        ...stakeholder.notificationSettings,
+        triggers: newTriggers,
+      },
+    });
+  };
+
+  const toggleNotifications = (stakeholderId: string) => {
+    const stakeholder = stakeholders.find((s) => s.id === stakeholderId);
+    if (!stakeholder) return;
+
+    onUpdate(stakeholderId, {
+      notificationSettings: {
+        ...stakeholder.notificationSettings,
+        enabled: !stakeholder.notificationSettings.enabled,
+      },
+    });
   };
 
   const groupedStakeholders = stakeholders.reduce(
@@ -122,32 +204,37 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
   );
 
   return (
-    <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-navy-700/50 shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
+    >
       {/* Header */}
-      <button
+      <motion.button
+        whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
+        whileTap={{ scale: 0.98 }}
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors duration-200"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-blue-500/10">
-            <Users size={16} className="text-blue-500" />
+          <div className="p-2 rounded-xl bg-blue-500/10 dark:bg-blue-500/20">
+            <Users size={18} className="text-blue-500 dark:text-blue-400" />
           </div>
-          <div className="text-left">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              {isPolish ? 'Interesariusze (RACI)' : 'Stakeholders (RACI)'}
-            </span>
-            {stakeholders.length > 0 && (
-              <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">
-                ({stakeholders.length})
-              </span>
-            )}
-          </div>
+          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            {isPolish ? 'Interesariusze (RACI)' : 'Stakeholders (RACI)'}
+          </span>
         </div>
-        <ChevronDown
-          size={16}
-          className={`text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-        />
-      </button>
+        <div className="flex items-center gap-2">
+          {stakeholders.length > 0 && (
+            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+              {stakeholders.length}
+            </span>
+          )}
+          <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+            <ChevronDown size={18} className="text-slate-400" />
+          </motion.div>
+        </div>
+      </motion.button>
 
       {/* Content */}
       <AnimatePresence>
@@ -170,53 +257,239 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                   return (
                     <div key={role}>
                       <div className="flex items-center gap-2 mb-2">
-                        <div className={`p-1 rounded ${config.color}`}>
-                          <Icon size={12} />
+                        <div className={`p-1.5 rounded-lg ${config.bgColor}`}>
+                          <Icon size={14} className={config.color} />
                         </div>
-                        <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
                           {isPolish ? config.label.pl : config.label.en}
                         </span>
                         <span className="text-xs text-slate-400 dark:text-slate-500">
                           ({roleStakeholders.length})
                         </span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 italic hidden sm:inline">
+                          - {isPolish ? config.description.pl : config.description.en}
+                        </span>
                       </div>
 
                       {roleStakeholders.length > 0 ? (
-                        <div className="space-y-1 ml-6">
-                          {roleStakeholders.map((stakeholder) => (
-                            <div
-                              key={stakeholder.id}
-                              className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-navy-800 group"
-                            >
-                              <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                                  <span className="text-[10px] font-medium text-white">
-                                    {stakeholder.userName?.charAt(0).toUpperCase() || '?'}
-                                  </span>
-                                </div>
-                                <span className="text-sm text-slate-700 dark:text-slate-300">
-                                  {stakeholder.userName || stakeholder.userId}
-                                </span>
-                                {stakeholder.acknowledgedAt && (
-                                  <span className="text-xs text-emerald-500">✓</span>
-                                )}
-                              </div>
+                        <div className="space-y-2 ml-6">
+                          {roleStakeholders.map((stakeholder) => {
+                            const isStakeholderExpanded = expandedStakeholderId === stakeholder.id;
 
-                              {!readOnly && (
-                                <button
-                                  onClick={() => onRemove(stakeholder.userId)}
-                                  className="p-1 rounded opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/20 transition-all"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              )}
-                            </div>
-                          ))}
+                            return (
+                              <motion.div
+                                key={stakeholder.id}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className={`rounded-xl border overflow-hidden transition-all ${
+                                  isStakeholderExpanded
+                                    ? 'border-purple-300 dark:border-purple-500/50 bg-purple-50/30 dark:bg-purple-500/5'
+                                    : 'border-slate-200 dark:border-navy-600 bg-slate-50 dark:bg-navy-800/50'
+                                }`}
+                              >
+                                {/* Stakeholder Row */}
+                                <div className="flex items-center justify-between p-2.5 group">
+                                  <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center flex-shrink-0">
+                                      <span className="text-xs font-medium text-white">
+                                        {stakeholder.userName?.charAt(0).toUpperCase() || '?'}
+                                      </span>
+                                    </div>
+                                    <div className="min-w-0">
+                                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300 block truncate">
+                                        {stakeholder.userName || stakeholder.userId}
+                                      </span>
+                                      {stakeholder.userEmail && (
+                                        <span className="text-[10px] text-slate-400 dark:text-slate-500 truncate block">
+                                          {stakeholder.userEmail}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-1.5">
+                                    {/* Notification Status */}
+                                    <button
+                                      onClick={() => toggleNotifications(stakeholder.id)}
+                                      className={`p-1.5 rounded-lg transition-colors ${
+                                        stakeholder.notificationSettings.enabled
+                                          ? 'text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20'
+                                          : 'text-slate-400 bg-slate-100 dark:bg-navy-700 hover:bg-slate-200 dark:hover:bg-navy-600'
+                                      }`}
+                                      title={
+                                        stakeholder.notificationSettings.enabled
+                                          ? isPolish
+                                            ? 'Powiadomienia włączone'
+                                            : 'Notifications enabled'
+                                          : isPolish
+                                            ? 'Powiadomienia wyłączone'
+                                            : 'Notifications disabled'
+                                      }
+                                    >
+                                      {stakeholder.notificationSettings.enabled ? (
+                                        <Bell size={14} />
+                                      ) : (
+                                        <BellOff size={14} />
+                                      )}
+                                    </button>
+
+                                    {/* Settings Toggle */}
+                                    <button
+                                      onClick={() =>
+                                        setExpandedStakeholderId(
+                                          isStakeholderExpanded ? null : stakeholder.id
+                                        )
+                                      }
+                                      className={`p-1.5 rounded-lg transition-colors ${
+                                        isStakeholderExpanded
+                                          ? 'text-purple-500 bg-purple-500/10'
+                                          : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-700'
+                                      }`}
+                                      title={isPolish ? 'Ustawienia' : 'Settings'}
+                                    >
+                                      <Settings size={14} />
+                                    </button>
+
+                                    {/* Remove Button */}
+                                    {!readOnly && (
+                                      <button
+                                        onClick={() => onRemove(stakeholder.id)}
+                                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/20 transition-colors opacity-0 group-hover:opacity-100"
+                                        title={isPolish ? 'Usuń' : 'Remove'}
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Expanded Settings */}
+                                <AnimatePresence>
+                                  {isStakeholderExpanded && (
+                                    <motion.div
+                                      initial={{ height: 0, opacity: 0 }}
+                                      animate={{ height: 'auto', opacity: 1 }}
+                                      exit={{ height: 0, opacity: 0 }}
+                                      className="overflow-hidden"
+                                    >
+                                      <div className="px-3 pb-3 pt-2 border-t border-slate-200 dark:border-navy-600 space-y-3">
+                                        {/* Notification Triggers */}
+                                        <div>
+                                          <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
+                                            {isPolish ? 'Powiadamiaj gdy:' : 'Notify when:'}
+                                          </label>
+                                          <div className="flex flex-wrap gap-1.5">
+                                            {Object.entries(NOTIFICATION_TRIGGERS).map(
+                                              ([trigger, label]) => {
+                                                const isActive =
+                                                  stakeholder.notificationSettings.triggers.includes(
+                                                    trigger as NotificationTrigger
+                                                  );
+                                                return (
+                                                  <button
+                                                    key={trigger}
+                                                    onClick={() =>
+                                                      toggleTrigger(
+                                                        stakeholder.id,
+                                                        trigger as NotificationTrigger
+                                                      )
+                                                    }
+                                                    disabled={readOnly}
+                                                    className={`px-2 py-1 rounded-lg text-[10px] font-medium transition-all ${
+                                                      isActive
+                                                        ? 'bg-purple-500 text-white'
+                                                        : 'bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-600'
+                                                    } ${readOnly ? 'cursor-not-allowed' : ''}`}
+                                                  >
+                                                    {isPolish ? label.pl : label.en}
+                                                  </button>
+                                                );
+                                              }
+                                            )}
+                                          </div>
+                                        </div>
+
+                                        {/* Notification Channels */}
+                                        <div className="flex gap-3">
+                                          <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                              type="checkbox"
+                                              checked={
+                                                stakeholder.notificationSettings.emailEnabled
+                                              }
+                                              onChange={() =>
+                                                onUpdate(stakeholder.id, {
+                                                  notificationSettings: {
+                                                    ...stakeholder.notificationSettings,
+                                                    emailEnabled:
+                                                      !stakeholder.notificationSettings
+                                                        .emailEnabled,
+                                                  },
+                                                })
+                                              }
+                                              disabled={readOnly}
+                                              className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-purple-500 focus:ring-purple-500"
+                                            />
+                                            <Mail size={12} className="text-slate-400" />
+                                            <span className="text-xs text-slate-600 dark:text-slate-400">
+                                              Email
+                                            </span>
+                                          </label>
+                                          <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                              type="checkbox"
+                                              checked={
+                                                stakeholder.notificationSettings.inAppEnabled
+                                              }
+                                              onChange={() =>
+                                                onUpdate(stakeholder.id, {
+                                                  notificationSettings: {
+                                                    ...stakeholder.notificationSettings,
+                                                    inAppEnabled:
+                                                      !stakeholder.notificationSettings
+                                                        .inAppEnabled,
+                                                  },
+                                                })
+                                              }
+                                              disabled={readOnly}
+                                              className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-purple-500 focus:ring-purple-500"
+                                            />
+                                            <Bell size={12} className="text-slate-400" />
+                                            <span className="text-xs text-slate-600 dark:text-slate-400">
+                                              {isPolish ? 'W aplikacji' : 'In-app'}
+                                            </span>
+                                          </label>
+                                        </div>
+
+                                        {/* Acknowledged status */}
+                                        {stakeholder.acknowledgedAt && (
+                                          <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+                                            <Check size={12} />
+                                            <span>
+                                              {isPolish ? 'Potwierdzono' : 'Acknowledged'}{' '}
+                                              {new Date(
+                                                stakeholder.acknowledgedAt
+                                              ).toLocaleDateString()}
+                                            </span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </motion.div>
+                            );
+                          })}
                         </div>
                       ) : (
-                        <p className="text-xs text-slate-400 dark:text-slate-500 ml-6 italic">
-                          {isPolish ? 'Brak' : 'None'}
-                        </p>
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="ml-6 py-2 flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500"
+                        >
+                          <div className="w-4 h-4 rounded-full border-2 border-dashed border-slate-300 dark:border-navy-600" />
+                          <span className="italic">{isPolish ? 'Brak' : 'None'}</span>
+                        </motion.div>
                       )}
                     </div>
                   );
@@ -227,16 +500,20 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
               {!readOnly && (
                 <>
                   {showAddForm ? (
-                    <div className="p-3 rounded-lg bg-slate-50 dark:bg-navy-800 space-y-3">
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-3 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 space-y-3"
+                    >
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                          <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
                             {isPolish ? 'Osoba' : 'Person'}
                           </label>
                           <select
                             value={selectedUserId}
                             onChange={(e) => setSelectedUserId(e.target.value)}
-                            className="w-full px-2 py-1.5 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300"
+                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400"
                           >
                             <option value="">{isPolish ? 'Wybierz...' : 'Select...'}</option>
                             {availableToAdd.map((user) => (
@@ -247,13 +524,13 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                           </select>
                         </div>
                         <div>
-                          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                          <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
                             {isPolish ? 'Rola' : 'Role'}
                           </label>
                           <select
                             value={selectedRole}
                             onChange={(e) => setSelectedRole(e.target.value as StakeholderRole)}
-                            className="w-full px-2 py-1.5 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300"
+                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400"
                           >
                             {Object.entries(ROLE_CONFIG).map(([role, config]) => (
                               <option key={role} value={role}>
@@ -263,33 +540,57 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                           </select>
                         </div>
                       </div>
+
+                      {/* Role description */}
+                      <div className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-700 px-3 py-2 rounded-lg">
+                        {isPolish
+                          ? ROLE_CONFIG[selectedRole].description.pl
+                          : ROLE_CONFIG[selectedRole].description.en}
+                        <span className="block mt-1 text-[10px] text-slate-400">
+                          {isPolish ? 'Domyślne powiadomienia: ' : 'Default notifications: '}
+                          {ROLE_CONFIG[selectedRole].defaultTriggers
+                            .map((t) =>
+                              isPolish ? NOTIFICATION_TRIGGERS[t].pl : NOTIFICATION_TRIGGERS[t].en
+                            )
+                            .join(', ')}
+                        </span>
+                      </div>
+
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() => setShowAddForm(false)}
-                          className="px-3 py-1.5 text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
+                          className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
                         >
                           {isPolish ? 'Anuluj' : 'Cancel'}
                         </button>
                         <button
                           onClick={handleAdd}
-                          disabled={!selectedUserId || adding}
-                          className="px-3 py-1.5 text-xs bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50 transition-colors"
+                          disabled={!selectedUserId}
+                          className="px-4 py-2 text-xs font-medium bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                           {isPolish ? 'Dodaj' : 'Add'}
                         </button>
                       </div>
-                    </div>
+                    </motion.div>
                   ) : (
-                    <button
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => setShowAddForm(true)}
                       disabled={availableToAdd.length === 0}
-                      className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-primary-300 dark:hover:border-primary-500/50 hover:text-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-blue-400 dark:hover:border-blue-500/50 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-500/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                     >
-                      <Plus size={14} />
+                      <Plus size={16} />
                       <span className="text-sm">
-                        {isPolish ? 'Dodaj interesariusza' : 'Add stakeholder'}
+                        {availableToAdd.length === 0
+                          ? isPolish
+                            ? 'Wszyscy użytkownicy dodani'
+                            : 'All users added'
+                          : isPolish
+                            ? 'Dodaj interesariusza'
+                            : 'Add stakeholder'}
                       </span>
-                    </button>
+                    </motion.button>
                   )}
                 </>
               )}
@@ -297,7 +598,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 };
 

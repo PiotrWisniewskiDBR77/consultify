@@ -16,6 +16,7 @@ export type ViewMode = 'table' | 'grid' | 'kanban' | 'timeline' | 'calendar' | '
  */
 export type ItemStatus =
   | 'DRAFT'
+  | 'PENDING_REVIEW'
   | 'REVIEW'
   | 'PROMOTED'
   | 'PLANNING'
@@ -25,7 +26,8 @@ export type ItemStatus =
   | 'BLOCKED'
   | 'DONE'
   | 'TRACKING'
-  | 'CANCELLED';
+  | 'CANCELLED'
+  | 'ARCHIVED';
 
 export interface OpenDocument {
   id: string;

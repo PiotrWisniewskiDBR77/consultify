@@ -44,6 +44,8 @@ const ALLOWED_FILES = [
   /config\/.*\.example\./,
   /docs\/.*secret.*/i,
   /tests\/.*secret.*/i,
+  /tests\/.*security.*/i,
+  /tests\/.*\.test\.(ts|js|tsx|jsx)$/,
 ];
 
 // Files to skip

@@ -4,14 +4,13 @@
  * ClickUp-style design following Golden Standard
  */
 
-import { AnimatePresence, motion } from 'framer-motion';
+// framer-motion used across MyWork; keep import minimal here
 import {
   AlertCircle,
   AlertTriangle,
   Bell,
   BellOff,
   Calendar,
-  CheckCircle,
   CheckSquare,
   ChevronLeft,
   Clock,
@@ -25,11 +24,12 @@ import {
   Scale,
   Target,
   Trash2,
-  User,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { buildNotificationContent } from '@/components/Notifications/notificationContent';
 
 import { Api } from '../../services/api';
 
@@ -134,7 +134,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       }
     } catch (error) {
       console.error('Failed to load notification', error);
-      toast.error(isPolish ? 'Nie udało się załadować powiadomienia' : 'Failed to load notification');
+      toast.error(
+        isPolish ? 'Nie udało się załadować powiadomienia' : 'Failed to load notification'
+      );
     } finally {
       setLoading(false);
     }
@@ -164,7 +166,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       onClose();
     } catch (error) {
       console.error('Failed to delete notification', error);
-      toast.error(isPolish ? 'Nie udało się usunąć powiadomienia' : 'Failed to delete notification');
+      toast.error(
+        isPolish ? 'Nie udało się usunąć powiadomienia' : 'Failed to delete notification'
+      );
     }
   };
 
@@ -250,6 +254,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   const SeverityIcon = severityConfig.icon;
   const typeConfig = TYPE_ICONS[notification.type] || { icon: Bell, color: 'text-slate-400' };
   const TypeIcon = typeConfig.icon;
+  const contract = buildNotificationContent(notification as any, isPolish);
 
   return (
     <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950">
@@ -290,6 +295,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                   <Calendar size={12} />
                   <span>{formatDate(notification.createdAt)}</span>
+                  <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300">
+                    {contract.priority}
+                  </span>
                 </div>
               </div>
             </div>
@@ -318,174 +327,229 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
       {/* Content */}
       <div className="flex-1 overflow-auto p-6">
-        <div className="max-w-3xl mx-auto space-y-4">
-          {/* Main Notification Card */}
-          <div
-            className={`rounded-xl p-6 border ${severityConfig.bgColor} ${severityConfig.borderColor}`}
-          >
-            {/* Badges Row */}
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              {/* Severity Badge */}
-              <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${severityConfig.bgColor} ${severityConfig.textColor} border ${severityConfig.borderColor}`}
-              >
-                <SeverityIcon size={12} />
-                {isPolish ? severityConfig.label.pl : severityConfig.label.en}
-              </span>
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-6">
+          {/* Left = merytoryka (kanon 4-liniowy) */}
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+              <div className="p-6">
+                <div className="flex flex-wrap items-center gap-2 mb-4">
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${severityConfig.bgColor} ${severityConfig.textColor} border ${severityConfig.borderColor}`}
+                  >
+                    <SeverityIcon size={12} />
+                    {isPolish ? severityConfig.label.pl : severityConfig.label.en}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700">
+                    <TypeIcon size={12} className={typeConfig.color} />
+                    {notification.type.replace(/_/g, ' ')}
+                  </span>
+                  <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700 capitalize">
+                    {notification.category}
+                  </span>
+                </div>
 
-              {/* Type Badge */}
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300">
-                <TypeIcon size={12} className={typeConfig.color} />
-                {notification.type.replace(/_/g, ' ')}
-              </span>
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      {isPolish ? 'Co się dzieje' : 'What’s happening'}
+                    </div>
+                    <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">
+                      {contract.what}
+                    </div>
+                  </div>
 
-              {/* Category Badge */}
-              <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300 capitalize">
-                {notification.category}
-              </span>
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      {isPolish ? 'Dlaczego to ważne' : 'Why it matters'}
+                    </div>
+                    <div className="mt-1 text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+                      {contract.whyImportant}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      {isPolish ? 'Co jest blokowane' : 'What is blocked'}
+                    </div>
+                    <div className="mt-1 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                      {contract.blocked}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      {isPolish ? 'Oczekiwana akcja' : 'Expected action'}
+                    </div>
+                    <div className="mt-1 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                      {contract.expectedAction}
+                    </div>
+                  </div>
+                </div>
+
+                {notification.data && Object.keys(notification.data).length > 0 ? (
+                  <details className="mt-6 group">
+                    <summary className="cursor-pointer text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+                      {isPolish ? 'Dane techniczne' : 'Technical data'}
+                    </summary>
+                    <pre className="mt-3 text-xs whitespace-pre-wrap break-words bg-slate-50 dark:bg-navy-950/40 border border-slate-200 dark:border-navy-700 rounded-xl p-3 text-slate-700 dark:text-slate-200">
+                      {JSON.stringify(notification.data, null, 2)}
+                    </pre>
+                  </details>
+                ) : null}
+              </div>
             </div>
-
-            {/* Title */}
-            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-3">
-              {notification.title}
-            </h2>
-
-            {/* Message */}
-            <div className="bg-white/50 dark:bg-navy-950/50 rounded-lg p-4 mb-4">
-              <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
-                {notification.message}
-              </p>
-            </div>
-
-            {/* Action Button */}
-            {notification.isActionable && notification.actionUrl && (
-              <motion.a
-                href={notification.actionUrl}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${severityConfig.color} text-white hover:brightness-110`}
-              >
-                {notification.actionLabel || (isPolish ? 'Zobacz szczegóły' : 'View Details')}
-                <ExternalLink size={14} />
-              </motion.a>
-            )}
           </div>
 
-          {/* Source Context */}
-          {(notification.relatedObjectType || notification.projectName) && (
-            <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-              <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3">
-                {isPolish ? 'Źródło' : 'Source'}
-              </h3>
-
-              <div className="space-y-2">
-                {/* Related Object */}
-                {notification.relatedObjectType && notification.relatedObjectId && (
+          {/* Right = sterowanie + metryki */}
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-navy-700 p-5">
+              <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                {isPolish ? 'Control' : 'Control'}
+              </div>
+              <div className="mt-4 space-y-2">
+                {contract.primaryCta.kind === 'open_link' ? (
+                  <a
+                    href={contract.primaryCta.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-colors font-medium"
+                  >
+                    {contract.primaryCta.label}
+                    <ExternalLink size={16} />
+                  </a>
+                ) : contract.primaryCta.kind === 'open_task' ? (
+                  <button
+                    onClick={() => onNavigateToSource?.('task', contract.primaryCta.id)}
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-colors font-medium"
+                  >
+                    {contract.primaryCta.label}
+                    <ExternalLink size={16} />
+                  </button>
+                ) : contract.primaryCta.kind === 'open_decision' ? (
+                  <button
+                    onClick={() => onNavigateToSource?.('decision', contract.primaryCta.id)}
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-colors font-medium"
+                  >
+                    {contract.primaryCta.label}
+                    <ExternalLink size={16} />
+                  </button>
+                ) : (
                   <button
                     onClick={() =>
-                      onNavigateToSource?.(
-                        notification.relatedObjectType!.toLowerCase(),
-                        notification.relatedObjectId!
-                      )
+                      notification.relatedObjectType && notification.relatedObjectId
+                        ? onNavigateToSource?.(
+                            notification.relatedObjectType.toLowerCase(),
+                            notification.relatedObjectId
+                          )
+                        : onClose()
                     }
-                    className="w-full flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors group"
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors font-medium"
                   >
-                    <div className="flex items-center gap-3">
-                      {getRelatedObjectIcon(notification.relatedObjectType)}
-                      <div className="text-left">
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          {getRelatedObjectLabel(notification.relatedObjectType)}
+                    {isPolish ? 'Otwórz kontekst' : 'Open context'}
+                    <ExternalLink size={16} />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {(notification.relatedObjectType || notification.projectName) && (
+              <div className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-navy-700 p-5">
+                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {isPolish ? 'Kontekst' : 'Context'}
+                </div>
+                <div className="mt-4 space-y-2">
+                  {notification.relatedObjectType && notification.relatedObjectId ? (
+                    <button
+                      onClick={() =>
+                        onNavigateToSource?.(
+                          notification.relatedObjectType!.toLowerCase(),
+                          notification.relatedObjectId!
+                        )
+                      }
+                      className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors group border border-slate-200 dark:border-navy-700"
+                    >
+                      <div className="flex items-center gap-3">
+                        {getRelatedObjectIcon(notification.relatedObjectType)}
+                        <div className="text-left">
+                          <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                            {getRelatedObjectLabel(notification.relatedObjectType)}
+                          </p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">
+                            {notification.relatedObjectId.slice(0, 12)}...
+                          </p>
+                        </div>
+                      </div>
+                      <ExternalLink
+                        size={14}
+                        className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                      />
+                    </button>
+                  ) : null}
+
+                  {notification.projectName ? (
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
+                      <FolderOpen size={16} className="text-indigo-400" />
+                      <div>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">
+                          {isPolish ? 'Projekt' : 'Project'}
                         </p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">
-                          {notification.relatedObjectId.slice(0, 12)}...
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                          {notification.projectName}
                         </p>
                       </div>
                     </div>
-                    <ExternalLink
-                      size={14}
-                      className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                    />
-                  </button>
-                )}
+                  ) : null}
+                </div>
+              </div>
+            )}
 
-                {/* Project */}
-                {notification.projectName && (
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-navy-800">
-                    <FolderOpen size={16} className="text-indigo-400" />
-                    <div>
-                      <p className="text-xs text-slate-400 dark:text-slate-500">
-                        {isPolish ? 'Projekt' : 'Project'}
-                      </p>
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        {notification.projectName}
-                      </p>
+            <div className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-navy-700 p-5">
+              <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                {isPolish ? 'Metryki' : 'Metrics'}
+              </div>
+              <div className="mt-4 space-y-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Utworzono' : 'Created'}
+                  </span>
+                  <span className="font-medium text-slate-900 dark:text-white">
+                    {new Date(notification.createdAt).toLocaleString(isPolish ? 'pl-PL' : 'en-US')}
+                  </span>
+                </div>
+                {notification.readAt ? (
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 dark:text-slate-400">
+                      {isPolish ? 'Przeczytano' : 'Read at'}
+                    </span>
+                    <span className="font-medium text-slate-900 dark:text-white">
+                      {new Date(notification.readAt).toLocaleString(isPolish ? 'pl-PL' : 'en-US')}
+                    </span>
+                  </div>
+                ) : null}
+                {notification.expiresAt ? (
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 dark:text-slate-400">
+                      {isPolish ? 'Wygasa' : 'Expires'}
+                    </span>
+                    <span className="font-medium text-slate-900 dark:text-white">
+                      {new Date(notification.expiresAt).toLocaleString(
+                        isPolish ? 'pl-PL' : 'en-US'
+                      )}
+                    </span>
+                  </div>
+                ) : null}
+
+                {contract.whyYouGotIt ? (
+                  <div className="pt-3 border-t border-slate-200 dark:border-navy-700">
+                    <div className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      {isPolish ? 'Dlaczego to dostałeś' : 'Why you got it'}
+                    </div>
+                    <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                      {contract.whyYouGotIt}
                     </div>
                   </div>
-                )}
+                ) : null}
               </div>
-            </div>
-          )}
-
-          {/* Additional Data */}
-          {notification.data && Object.keys(notification.data).length > 0 && (
-            <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-              <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3">
-                {isPolish ? 'Szczegóły' : 'Details'}
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                {Object.entries(notification.data)
-                  .filter(([key]) => !['link', 'actionLabel'].includes(key))
-                  .map(([key, value]) => (
-                    <div
-                      key={key}
-                      className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3"
-                    >
-                      <p className="text-xs text-slate-400 dark:text-slate-500 mb-1 capitalize">
-                        {key.replace(/_/g, ' ')}
-                      </p>
-                      <p className="text-sm text-slate-700 dark:text-slate-300 font-medium">
-                        {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                      </p>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
-
-          {/* Timing Info */}
-          <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-            <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3">
-              {isPolish ? 'Informacje czasowe' : 'Timing'}
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <div>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">
-                  {isPolish ? 'Utworzono' : 'Created'}
-                </p>
-                <p className="text-sm text-slate-700 dark:text-slate-300">
-                  {new Date(notification.createdAt).toLocaleString(isPolish ? 'pl-PL' : 'en-US')}
-                </p>
-              </div>
-              {notification.readAt && (
-                <div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">
-                    {isPolish ? 'Przeczytano' : 'Read at'}
-                  </p>
-                  <p className="text-sm text-slate-700 dark:text-slate-300">
-                    {new Date(notification.readAt).toLocaleString(isPolish ? 'pl-PL' : 'en-US')}
-                  </p>
-                </div>
-              )}
-              {notification.expiresAt && (
-                <div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">
-                    {isPolish ? 'Wygasa' : 'Expires'}
-                  </p>
-                  <p className="text-sm text-slate-700 dark:text-slate-300">
-                    {new Date(notification.expiresAt).toLocaleString(isPolish ? 'pl-PL' : 'en-US')}
-                  </p>
-                </div>
-              )}
             </div>
           </div>
         </div>

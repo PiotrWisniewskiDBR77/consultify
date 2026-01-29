@@ -83,10 +83,13 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   const [projectMenuId, setProjectMenuId] = useState<string | null>(null);
 
   // Fetch conversations and projects on mount
+  // Note: fetchConversations and fetchProjects are stable Zustand actions -
+  // we intentionally exclude them from deps to prevent infinite loops
   useEffect(() => {
     fetchConversations({ projectId });
     fetchProjects();
-  }, [projectId, fetchConversations, fetchProjects]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
 
   // Filter conversations based on search
   const filteredConversations = searchQuery

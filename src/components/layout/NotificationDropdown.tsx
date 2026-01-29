@@ -12,10 +12,15 @@ import {
 import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { buildNotificationContent } from '@/components/Notifications/notificationContent';
+import { useAppStore } from '@/store/useAppStore';
+import { AppView } from '@/types';
+
 import { Api } from '../../services/api';
 import { Notification } from '../../types';
 
 export const NotificationDropdown = () => {
+  const { setCurrentView, setMyWorkIntent } = useAppStore();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -70,6 +75,33 @@ export const NotificationDropdown = () => {
     } catch {
       toast.error('Failed to mark as read');
     }
+  };
+
+  const openInMyWork = async (notification: Notification) => {
+    try {
+      // Optimistic: mark as read immediately to keep badge accurate
+      if (!notification.isRead) {
+        await Api.markNotificationRead(notification.id);
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n))
+        );
+      }
+    } catch {
+      // ignore; detail view will retry
+    }
+
+    setMyWorkIntent({
+      tab: 'notifications',
+      open: {
+        type: 'notification',
+        id: notification.id,
+        name: notification.title,
+        data: notification,
+      },
+    });
+    setCurrentView(AppView.MY_WORK);
+    setIsOpen(false);
   };
 
   const handleMarkAllRead = async () => {
@@ -170,6 +202,28 @@ export const NotificationDropdown = () => {
               )}
             </div>
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setMyWorkIntent({ tab: 'inbox' });
+                  setCurrentView(AppView.MY_WORK);
+                  setIsOpen(false);
+                }}
+                className="text-xs text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"
+                title="Open Inbox (Action Queue)"
+              >
+                <ArrowRight size={12} /> Inbox
+              </button>
+              <button
+                onClick={() => {
+                  setMyWorkIntent({ tab: 'notifications' });
+                  setCurrentView(AppView.MY_WORK);
+                  setIsOpen(false);
+                }}
+                className="text-xs text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"
+                title="Open Notification Center"
+              >
+                <ArrowRight size={12} /> Center
+              </button>
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllRead}
@@ -210,83 +264,87 @@ export const NotificationDropdown = () => {
               </div>
             ) : (
               <div className="divide-y divide-slate-50 dark:divide-white/5">
-                {notifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={`group relative p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${
-                      !notification.isRead
-                        ? notification.type.includes('ai')
-                          ? 'bg-purple-50/50 dark:bg-purple-900/20'
-                          : 'bg-slate-50 dark:bg-navy-800/30'
-                        : ''
-                    }`}
-                    onClick={() =>
-                      !notification.isRead && handleMarkAsRead(notification.id, {} as any)
-                    }
-                  >
-                    <div className="flex gap-3 pr-8">
+                {notifications.map((notification) =>
+                  (() => {
+                    const contract = buildNotificationContent(notification as any, false);
+                    const primaryLabel =
+                      contract.primaryCta.kind === 'none' ? 'Open' : contract.primaryCta.label;
+                    return (
                       <div
-                        className={`mt-0.5 shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${!notification.isRead ? 'bg-white dark:bg-white/10 shadow-sm border border-slate-200 dark:border-navy-700' : 'bg-slate-100 dark:bg-white/5'}`}
+                        key={notification.id}
+                        className={`group relative p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${
+                          !notification.isRead
+                            ? notification.type.includes('ai')
+                              ? 'bg-purple-50/50 dark:bg-purple-900/20'
+                              : 'bg-slate-50 dark:bg-navy-800/30'
+                            : ''
+                        }`}
+                        onClick={() => openInMyWork(notification)}
                       >
-                        {getIcon(notification.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 mb-1">
-                          <p
-                            className={`text-sm font-semibold leading-tight ${!notification.isRead ? 'text-navy-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}
+                        <div className="flex gap-3 pr-8">
+                          <div
+                            className={`mt-0.5 shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${!notification.isRead ? 'bg-white dark:bg-white/10 shadow-sm border border-slate-200 dark:border-navy-700' : 'bg-slate-100 dark:bg-white/5'}`}
                           >
-                            {notification.title}
-                          </p>
-                          <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0 whitespace-nowrap mt-0.5">
-                            {formatTime(notification.createdAt)}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3">
-                          {notification.message}
-                        </p>
+                            {getIcon(notification.type)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2 mb-1">
+                              <p
+                                className={`text-sm font-semibold leading-tight ${!notification.isRead ? 'text-navy-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}
+                              >
+                                {notification.title}
+                              </p>
+                              <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0 whitespace-nowrap mt-0.5">
+                                {formatTime(notification.createdAt)}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
+                              {contract.whyImportant}
+                            </p>
 
-                        {/* Action Button */}
-                        {notification.data?.link && (
-                          <a
-                            href={notification.data.link}
-                            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 bg-purple-50 dark:bg-purple-900/20 px-2.5 py-1 rounded-md transition-colors hover:bg-purple-100 dark:hover:bg-purple-900/30"
-                            onClick={(e) => e.stopPropagation()}
+                            {/* Action Button */}
+                            <div className="mt-2 inline-flex items-center gap-2">
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700">
+                                {contract.priority}
+                              </span>
+                              <span className="inline-flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 bg-purple-50 dark:bg-purple-900/20 px-2.5 py-1 rounded-md transition-colors hover:bg-purple-100 dark:hover:bg-purple-900/30">
+                                {primaryLabel} <ArrowRight size={12} />
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Actions - Always visible for better UX */}
+                        <div className="absolute right-2 top-2 flex items-center gap-1 bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-slate-100 dark:border-navy-700">
+                          {!notification.isRead && (
+                            <button
+                              onClick={(e) => handleMarkAsRead(notification.id, e)}
+                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/20 rounded-md transition-colors"
+                              title="Mark as read"
+                            >
+                              <Check size={14} />
+                            </button>
+                          )}
+                          <button
+                            onClick={(e) => handleDelete(notification.id, e)}
+                            className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/20 rounded-md transition-colors"
+                            title="Delete"
                           >
-                            {notification.data.actionLabel || 'View'} <ArrowRight size={12} />
-                          </a>
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+
+                        {!notification.isRead && (
+                          <div
+                            className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-full ${
+                              notification.type.includes('ai') ? 'bg-indigo-500' : 'bg-purple-500'
+                            }`}
+                          ></div>
                         )}
                       </div>
-                    </div>
-
-                    {/* Actions - Always visible for better UX */}
-                    <div className="absolute right-2 top-2 flex items-center gap-1 bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-slate-100 dark:border-navy-700">
-                      {!notification.isRead && (
-                        <button
-                          onClick={(e) => handleMarkAsRead(notification.id, e)}
-                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/20 rounded-md transition-colors"
-                          title="Mark as read"
-                        >
-                          <Check size={14} />
-                        </button>
-                      )}
-                      <button
-                        onClick={(e) => handleDelete(notification.id, e)}
-                        className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/20 rounded-md transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-
-                    {!notification.isRead && (
-                      <div
-                        className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-full ${
-                          notification.type.includes('ai') ? 'bg-indigo-500' : 'bg-purple-500'
-                        }`}
-                      ></div>
-                    )}
-                  </div>
-                ))}
+                    );
+                  })()
+                )}
               </div>
             )}
           </div>

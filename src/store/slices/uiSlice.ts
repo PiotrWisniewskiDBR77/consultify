@@ -46,6 +46,19 @@ export interface UISlice {
   navigateWithChatContext: (view: AppView, options?: NavigationOptions) => void;
   returnToFullChat: () => void;
   setPreviousView: (view: AppView | null) => void;
+
+  // Cross-module deep links (e.g., header → My Work)
+  myWorkIntent: {
+    tab?: 'executive' | 'inbox' | 'focus' | 'tasks' | 'decisions' | 'notifications';
+    open?: {
+      type: 'notification' | 'task' | 'decision';
+      id: string;
+      name?: string;
+      data?: unknown;
+    };
+  } | null;
+  setMyWorkIntent: (intent: UISlice['myWorkIntent']) => void;
+  clearMyWorkIntent: () => void;
 }
 
 export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get) => ({
@@ -63,8 +76,11 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
   previousView: null,
 
   navigateFn: undefined,
+  myWorkIntent: null,
 
   setNavigateFn: (fn) => set({ navigateFn: fn }),
+  setMyWorkIntent: (intent) => set({ myWorkIntent: intent }),
+  clearMyWorkIntent: () => set({ myWorkIntent: null }),
 
   setCurrentView: (view) => {
     const previousView = get().currentView;

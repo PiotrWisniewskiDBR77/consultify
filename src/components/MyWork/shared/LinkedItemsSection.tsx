@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertTriangle,
   CheckSquare,
+  ChevronDown,
   ChevronRight,
   ExternalLink,
   Flag,
@@ -44,6 +45,8 @@ interface LinkedItemsSectionProps {
   searchItems?: (query: string, type?: LinkedItemType) => Promise<LinkedItem[]>;
   readOnly?: boolean;
   allowedTypes?: LinkedItemType[];
+  expanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
@@ -54,6 +57,8 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
   searchItems,
   readOnly = false,
   allowedTypes = ['task', 'decision', 'risk', 'initiative'],
+  expanded = false,
+  onToggleExpand,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -99,7 +104,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
 
   const getStatusColor = (status?: string) => {
     if (!status) return 'bg-slate-500/20 text-slate-400';
-    
+
     const statusLower = status.toLowerCase();
     if (['done', 'completed', 'approved', 'closed', 'mitigated'].includes(statusLower)) {
       return 'bg-emerald-500/20 text-emerald-400';
@@ -209,304 +214,299 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
   }, [externalUrl, externalTitle, onAdd, isPolish]);
 
   // Group items by type
-  const groupedItems = items.reduce((acc, item) => {
-    if (!acc[item.type]) {
-      acc[item.type] = [];
-    }
-    acc[item.type].push(item);
-    return acc;
-  }, {} as Record<LinkedItemType, LinkedItem[]>);
+  const groupedItems = items.reduce(
+    (acc, item) => {
+      if (!acc[item.type]) {
+        acc[item.type] = [];
+      }
+      acc[item.type].push(item);
+      return acc;
+    },
+    {} as Record<LinkedItemType, LinkedItem[]>
+  );
 
   return (
-    <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-          <LinkIcon size={16} />
-          <span className="text-sm font-medium">
-            {isPolish ? 'Powiązania' : 'Linked Items'}
-          </span>
+    <div className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-navy-700/50 shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
+      {/* Collapsible Header */}
+      <motion.button
+        whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
+        whileTap={{ scale: 0.98 }}
+        onClick={onToggleExpand}
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors duration-200"
+      >
+        <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
+          <div className="p-2 rounded-xl bg-purple-500/10 dark:bg-purple-500/20">
+            <LinkIcon size={18} className="text-purple-500 dark:text-purple-400" />
+          </div>
+          <span className="text-sm font-semibold">{isPolish ? 'Powiązania' : 'Linked Items'}</span>
+        </div>
+        <div className="flex items-center gap-2">
           {items.length > 0 && (
-            <span className="px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400">
+            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
               {items.length}
             </span>
           )}
+          <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+            <ChevronDown size={18} className="text-slate-400" />
+          </motion.div>
         </div>
-        {!readOnly && onAdd && (
-          <div className="flex items-center gap-2">
-            {searchItems && (
-              <button
-                onClick={() => {
-                  setIsAddingLink(!isAddingLink);
-                  setIsAddingExternal(false);
-                }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  isAddingLink
-                    ? 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-                    : 'text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10'
-                }`}
-              >
-                {isAddingLink ? <X size={14} /> : <Plus size={14} />}
-                <span>{isAddingLink ? (isPolish ? 'Anuluj' : 'Cancel') : (isPolish ? 'Dodaj' : 'Add')}</span>
-              </button>
-            )}
-            <button
-              onClick={() => {
-                setIsAddingExternal(!isAddingExternal);
-                setIsAddingLink(false);
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                isAddingExternal
-                  ? 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-                  : 'text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10'
-              }`}
-            >
-              {isAddingExternal ? <X size={14} /> : <ExternalLink size={14} />}
-              <span>{isAddingExternal ? (isPolish ? 'Anuluj' : 'Cancel') : (isPolish ? 'Link zewnętrzny' : 'External')}</span>
-            </button>
-          </div>
-        )}
-      </div>
+      </motion.button>
 
-      {/* Add Link Panel */}
+      {/* Collapsible Content */}
       <AnimatePresence>
-        {isAddingLink && (
+        {expanded && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mb-4 overflow-hidden"
+            initial={{ height: 0 }}
+            animate={{ height: 'auto' }}
+            exit={{ height: 0 }}
+            className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
           >
-            <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 border border-slate-200 dark:border-navy-600">
-              {/* Type Filter */}
-              <div className="flex gap-2 mb-3 flex-wrap">
-                <button
-                  onClick={() => setSelectedType('all')}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                    selectedType === 'all'
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-navy-600'
-                  }`}
-                >
-                  {isPolish ? 'Wszystkie' : 'All'}
-                </button>
-                {allowedTypes.map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => setSelectedType(type)}
-                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                      selectedType === type
-                        ? 'bg-primary-500 text-white'
-                        : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-navy-600'
-                    }`}
+            <div className="p-4">
+              {/* Add Link Panel */}
+              <AnimatePresence>
+                {isAddingLink && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mb-4 overflow-hidden"
                   >
-                    {getTypeIcon(type, 12)}
-                    <span>{getTypeLabel(type)}</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Search Input */}
-              <div className="relative">
-                <Search
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    handleSearch(e.target.value);
-                  }}
-                  placeholder={isPolish ? 'Szukaj elementów...' : 'Search items...'}
-                  className="w-full pl-10 pr-4 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 outline-none"
-                  autoFocus
-                />
-                {searching && (
-                  <Loader2
-                    size={16}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-slate-400"
-                  />
-                )}
-              </div>
-
-              {/* Search Results */}
-              {searchResults.length > 0 && (
-                <div className="mt-3 max-h-48 overflow-y-auto space-y-1">
-                  {searchResults.map((result) => (
-                    <button
-                      key={result.id}
-                      onClick={() => handleAddItem(result)}
-                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors text-left"
-                    >
-                      {getTypeIcon(result.type)}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-800 dark:text-white truncate">
-                          {result.title}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {getTypeLabel(result.type)}
-                        </p>
+                    <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 border border-slate-200 dark:border-navy-600">
+                      {/* Type Filter */}
+                      <div className="flex gap-2 mb-3 flex-wrap">
+                        <button
+                          onClick={() => setSelectedType('all')}
+                          className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                            selectedType === 'all'
+                              ? 'bg-primary-500 text-white'
+                              : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-navy-600'
+                          }`}
+                        >
+                          {isPolish ? 'Wszystkie' : 'All'}
+                        </button>
+                        {allowedTypes.map((type) => (
+                          <button
+                            key={type}
+                            onClick={() => setSelectedType(type)}
+                            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                              selectedType === type
+                                ? 'bg-primary-500 text-white'
+                                : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-navy-600'
+                            }`}
+                          >
+                            {getTypeIcon(type, 12)}
+                            <span>{getTypeLabel(type)}</span>
+                          </button>
+                        ))}
                       </div>
-                      <Plus size={16} className="text-slate-400" />
-                    </button>
+
+                      {/* Search Input */}
+                      <div className="relative">
+                        <Search
+                          size={16}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                        />
+                        <input
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            handleSearch(e.target.value);
+                          }}
+                          placeholder={isPolish ? 'Szukaj elementów...' : 'Search items...'}
+                          className="w-full pl-10 pr-4 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 outline-none"
+                          autoFocus
+                        />
+                        {searching && (
+                          <Loader2
+                            size={16}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-slate-400"
+                          />
+                        )}
+                      </div>
+
+                      {/* Search Results */}
+                      {searchResults.length > 0 && (
+                        <div className="mt-3 max-h-48 overflow-y-auto space-y-1">
+                          {searchResults.map((result) => (
+                            <button
+                              key={result.id}
+                              onClick={() => handleAddItem(result)}
+                              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors text-left"
+                            >
+                              {getTypeIcon(result.type)}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-slate-800 dark:text-white truncate">
+                                  {result.title}
+                                </p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                  {getTypeLabel(result.type)}
+                                </p>
+                              </div>
+                              <Plus size={16} className="text-slate-400" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {searchQuery.length >= 2 && !searching && searchResults.length === 0 && (
+                        <p className="mt-3 text-center text-sm text-slate-400 dark:text-slate-500">
+                          {isPolish ? 'Brak wyników' : 'No results found'}
+                        </p>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Add External Link Panel */}
+                {isAddingExternal && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mb-4 overflow-hidden"
+                  >
+                    <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 border border-slate-200 dark:border-navy-600">
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                            {isPolish ? 'Tytuł linku' : 'Link Title'}
+                          </label>
+                          <input
+                            type="text"
+                            value={externalTitle}
+                            onChange={(e) => setExternalTitle(e.target.value)}
+                            placeholder={
+                              isPolish ? 'Np. Dokumentacja projektu' : 'e.g., Project documentation'
+                            }
+                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 outline-none"
+                            autoFocus
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                            {isPolish ? 'URL' : 'URL'}
+                          </label>
+                          <input
+                            type="url"
+                            value={externalUrl}
+                            onChange={(e) => setExternalUrl(e.target.value)}
+                            placeholder={isPolish ? 'https://example.com' : 'https://example.com'}
+                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 outline-none"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={handleAddExternalLink}
+                            disabled={!externalUrl.trim() || !externalTitle.trim()}
+                            className="flex-1 px-3 py-2 rounded-lg text-sm font-medium bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {isPolish ? 'Dodaj link' : 'Add Link'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsAddingExternal(false);
+                              setExternalUrl('');
+                              setExternalTitle('');
+                            }}
+                            className="px-3 py-2 rounded-lg text-sm font-medium bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-navy-600 transition-colors"
+                          >
+                            {isPolish ? 'Anuluj' : 'Cancel'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Items List */}
+              {items.length === 0 ? (
+                <div className="text-center py-6 text-slate-400 dark:text-slate-500">
+                  <LinkIcon size={32} className="mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">{isPolish ? 'Brak powiązań' : 'No linked items'}</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {Object.entries(groupedItems).map(([type, typeItems]) => (
+                    <div key={type}>
+                      {/* Type Header */}
+                      <div className="flex items-center gap-2 mb-2">
+                        {getTypeIcon(type as LinkedItemType)}
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                          {getTypeLabel(type as LinkedItemType)}s ({typeItems.length})
+                        </span>
+                      </div>
+
+                      {/* Items */}
+                      <div className="space-y-1">
+                        {typeItems.map((item) => (
+                          <motion.div
+                            key={item.id}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="group flex items-center gap-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 hover:border-primary-300 dark:hover:border-primary-500/50 transition-all"
+                          >
+                            {/* Title */}
+                            <button
+                              onClick={() => onNavigate?.(item)}
+                              className="flex-1 min-w-0 text-left flex items-center gap-2"
+                            >
+                              <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                                {item.title}
+                              </span>
+                              <ChevronRight
+                                size={14}
+                                className="flex-shrink-0 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                              />
+                            </button>
+
+                            {/* Status Badge */}
+                            {item.status && (
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                                  item.status
+                                )}`}
+                              >
+                                {item.status}
+                              </span>
+                            )}
+
+                            {/* Actions */}
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {(item.url || item.externalUrl) && (
+                                <a
+                                  href={item.externalUrl || item.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-navy-600 transition-colors"
+                                  title={isPolish ? 'Otwórz w nowej karcie' : 'Open in new tab'}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <ExternalLink size={14} className="text-slate-400" />
+                                </a>
+                              )}
+                              {!readOnly && (
+                                <button
+                                  onClick={() => handleRemoveItem(item.id)}
+                                  className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-500/20 transition-colors"
+                                  title={isPolish ? 'Usuń powiązanie' : 'Remove link'}
+                                >
+                                  <Trash2 size={14} className="text-slate-400 hover:text-red-500" />
+                                </button>
+                              )}
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
-
-              {searchQuery.length >= 2 && !searching && searchResults.length === 0 && (
-                <p className="mt-3 text-center text-sm text-slate-400 dark:text-slate-500">
-                  {isPolish ? 'Brak wyników' : 'No results found'}
-                </p>
-              )}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Add External Link Panel */}
-        {isAddingExternal && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mb-4 overflow-hidden"
-          >
-            <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 border border-slate-200 dark:border-navy-600">
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                    {isPolish ? 'Tytuł linku' : 'Link Title'}
-                  </label>
-                  <input
-                    type="text"
-                    value={externalTitle}
-                    onChange={(e) => setExternalTitle(e.target.value)}
-                    placeholder={isPolish ? 'Np. Dokumentacja projektu' : 'e.g., Project documentation'}
-                    className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 outline-none"
-                    autoFocus
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                    {isPolish ? 'URL' : 'URL'}
-                  </label>
-                  <input
-                    type="url"
-                    value={externalUrl}
-                    onChange={(e) => setExternalUrl(e.target.value)}
-                    placeholder={isPolish ? 'https://example.com' : 'https://example.com'}
-                    className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 outline-none"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleAddExternalLink}
-                    disabled={!externalUrl.trim() || !externalTitle.trim()}
-                    className="flex-1 px-3 py-2 rounded-lg text-sm font-medium bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {isPolish ? 'Dodaj link' : 'Add Link'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsAddingExternal(false);
-                      setExternalUrl('');
-                      setExternalTitle('');
-                    }}
-                    className="px-3 py-2 rounded-lg text-sm font-medium bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-navy-600 transition-colors"
-                  >
-                    {isPolish ? 'Anuluj' : 'Cancel'}
-                  </button>
-                </div>
-              </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Items List */}
-      {items.length === 0 ? (
-        <div className="text-center py-6 text-slate-400 dark:text-slate-500">
-          <LinkIcon size={32} className="mx-auto mb-2 opacity-50" />
-          <p className="text-sm">{isPolish ? 'Brak powiązań' : 'No linked items'}</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {Object.entries(groupedItems).map(([type, typeItems]) => (
-            <div key={type}>
-              {/* Type Header */}
-              <div className="flex items-center gap-2 mb-2">
-                {getTypeIcon(type as LinkedItemType)}
-                <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  {getTypeLabel(type as LinkedItemType)}s ({typeItems.length})
-                </span>
-              </div>
-
-              {/* Items */}
-              <div className="space-y-1">
-                {typeItems.map((item) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="group flex items-center gap-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 hover:border-primary-300 dark:hover:border-primary-500/50 transition-all"
-                  >
-                    {/* Title */}
-                    <button
-                      onClick={() => onNavigate?.(item)}
-                      className="flex-1 min-w-0 text-left flex items-center gap-2"
-                    >
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
-                        {item.title}
-                      </span>
-                      <ChevronRight
-                        size={14}
-                        className="flex-shrink-0 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                      />
-                    </button>
-
-                    {/* Status Badge */}
-                    {item.status && (
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                          item.status
-                        )}`}
-                      >
-                        {item.status}
-                      </span>
-                    )}
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {(item.url || item.externalUrl) && (
-                        <a
-                          href={item.externalUrl || item.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-navy-600 transition-colors"
-                          title={isPolish ? 'Otwórz w nowej karcie' : 'Open in new tab'}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <ExternalLink size={14} className="text-slate-400" />
-                        </a>
-                      )}
-                      {!readOnly && (
-                        <button
-                          onClick={() => handleRemoveItem(item.id)}
-                          className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-500/20 transition-colors"
-                          title={isPolish ? 'Usuń powiązanie' : 'Remove link'}
-                        >
-                          <Trash2 size={14} className="text-slate-400 hover:text-red-500" />
-                        </button>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 };

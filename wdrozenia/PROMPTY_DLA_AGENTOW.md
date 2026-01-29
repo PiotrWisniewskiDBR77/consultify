@@ -3,9 +3,11 @@
 ## Stan wdrożenia (2026-01-20)
 
 ### ✅ Wdrożone
+
 1. **Tools** - ~95% zgodności (szczegóły: `ANALIZA_ZGODNOSCI_IMPLEMENTACJI.md`)
 
 ### ❌ Do wdrożenia (w kolejności priorytetów)
+
 1. **Interview** - PRZEBUDOWA (5 kategorii, ClickUp-like UI)
 2. **Assessment** - DRD + SIRI pełne, ADMA/CMMI/Lean = Coming soon
 3. **Initiatives + Roadmap** - 4 widoki, drawer 50%, harmonogram
@@ -17,6 +19,7 @@
 9. **System Integration** - end-to-end flow
 
 ### 📊 Przepływ statusów inicjatyw
+
 ```
 INTERVIEW → TOOLS/ASSESSMENT → INITIATIVES → EXECUTION → BENEFITS
               (DRAFT, PLANNING)   (REVIEW,      (EXECUTING,   (DONE)
@@ -29,9 +32,17 @@ INTERVIEW → TOOLS/ASSESSMENT → INITIATIVES → EXECUTION → BENEFITS
 **Pełna dokumentacja:** `wdrozenia/UI_UX_GOLDEN_STANDARD.md`
 
 #### Główny kontener: ModuleHub
+
 Wszystkie moduły listowe muszą używać `src/components/shared/ModuleHub/`:
+
 ```tsx
-import { ModuleHub, ModuleNavBar, DynamicTabs, FilterableTable, GridView } from '@/components/shared/ModuleHub';
+import {
+  ModuleHub,
+  ModuleNavBar,
+  DynamicTabs,
+  FilterableTable,
+  GridView,
+} from '@/components/shared/ModuleHub';
 ```
 
 #### Elementy obowiązkowe:
@@ -49,9 +60,11 @@ import { ModuleHub, ModuleNavBar, DynamicTabs, FilterableTable, GridView } from 
    - Overflow dropdown dla >6 dokumentów
 
 3. **Widok tabeli (FilterableTable)**:
+
    ```
    | TYPE | NAME | STATUS | PROGRESS | UPDATED | ACTIONS |
    ```
+
    - Status badges: Draft (szary), In Review (żółty), Approved (zielony), Completed (zielony)
    - Progress bar z kolorami wg postępu
    - Actions visible on hover
@@ -64,28 +77,32 @@ import { ModuleHub, ModuleNavBar, DynamicTabs, FilterableTable, GridView } from 
    - Quick view button (eye) on hover
 
 #### Style przycisków:
+
 ```tsx
 // Primary (akcja główna)
-className="bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/25"
+className =
+  'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/25';
 
 // Secondary (nieaktywny)
-className="bg-navy-800 border-navy-600 text-slate-300 hover:bg-navy-700"
+className = 'bg-navy-800 border-navy-600 text-slate-300 hover:bg-navy-700';
 
 // Active tab
-className="bg-primary-500/15 border-primary-500 text-primary-400"
+className = 'bg-primary-500/15 border-primary-500 text-primary-400';
 ```
 
 #### Kolory statusów:
-| Status | Dot | Background |
-|--------|-----|------------|
-| Draft | `bg-slate-400` | `bg-slate-500/20` |
-| In Review | `bg-amber-400` | `bg-amber-500/20` |
-| Approved | `bg-emerald-400` | `bg-emerald-500/20` |
+
+| Status    | Dot              | Background          |
+| --------- | ---------------- | ------------------- |
+| Draft     | `bg-slate-400`   | `bg-slate-500/20`   |
+| In Review | `bg-amber-400`   | `bg-amber-500/20`   |
+| Approved  | `bg-emerald-400` | `bg-emerald-500/20` |
 | Completed | `bg-emerald-400` | `bg-emerald-500/20` |
-| Blocked | `bg-rose-400` | `bg-rose-500/20` |
-| Executing | `bg-cyan-400` | `bg-cyan-500/20` |
+| Blocked   | `bg-rose-400`    | `bg-rose-500/20`    |
+| Executing | `bg-cyan-400`    | `bg-cyan-500/20`    |
 
 #### Moduły zgodne z ModuleHub:
+
 - ✅ Assessment (`AssessmentModuleHub.tsx`)
 - ✅ Initiatives (`InitiativesHub.tsx`)
 - ✅ Execution (`ExecutionHub.tsx`)
@@ -93,6 +110,7 @@ className="bg-primary-500/15 border-primary-500 text-primary-400"
 - ✅ Reports (`ReportsHub.tsx`)
 
 #### Moduły z uzasadnionymi różnicami:
+
 - ⚠️ My Work - dashboard (SplitLayout 65/35)
 - ⚠️ Interview - workspace pattern
 - ⚠️ Tools - landing page z kategoriami
@@ -114,7 +132,7 @@ PRZECZYTAJ NAJPIERW:
 4. server/src/controllers/ToolController.ts (wzorzec controllera)
 5. server/migrations/291_tools_initiatives.sql (wzorzec migracji)
 
-CEL: Assessment to drugi moduł generujący inicjatywy (obok Tools). 
+CEL: Assessment to drugi moduł generujący inicjatywy (obok Tools).
 Mechanika jest podobna do Tools, ale z 5 różnymi narzędziami assessment.
 
 ZAKRES WDROŻENIA:
@@ -124,7 +142,7 @@ ZAKRES WDROŻENIA:
    - DRD (Digital Readiness Diagnosis) - PEŁNA implementacja
    - SIRI (Smart Industry Readiness Index) - PEŁNA implementacja
    - ADMA - Coming soon placeholder
-   - CMMI - Coming soon placeholder  
+   - CMMI - Coming soon placeholder
    - Lean 4.0 - Coming soon placeholder
 4. Workspace z formularzem, wizualizacjami, live scoring
 5. Raport assessment + approval flow
@@ -502,7 +520,8 @@ FORMAT ANALIZY FINANSOWEJ:
 
 ---
 
-Prompt 6 decyzje 
+Prompt 6 decyzje
+
 ### Kontekst dla agenta
 
 ```
@@ -747,6 +766,7 @@ UWAGA: Obecna implementacja jest przestarzała i wymaga PEŁNEJ PRZEBUDOWY UI/UX
 Nowy interfejs ma być wzorowany na ClickUp (task-list style).
 
 5 KATEGORII WYWIADU (nie 8!):
+
 1. Strategy - cele biznesowe, wizja, kierunki strategiczne
 2. Operations - procesy operacyjne, efektywność, bottlenecki
 3. Digital - dojrzałość cyfrowa, systemy IT, automatyzacja
@@ -755,21 +775,22 @@ Nowy interfejs ma być wzorowany na ClickUp (task-list style).
 
 NOWA STRUKTURA UX (ClickUp-like):
 ┌──────────────────────────────────────────────────────────────────┐
-│ TOP BAR: Session name | Status | Owner | Last updated           │
+│ TOP BAR: Session name | Status | Owner | Last updated │
 ├──────────────────────────────────────────────────────────────────┤
-│ TABS: [Questions] [Notes] [Evidence] [Summary]                   │
+│ TABS: [Questions] [Notes] [Evidence] [Summary] │
 ├──────────────┬───────────────────────────────────┬───────────────┤
-│ LEFT SIDEBAR │     MAIN WORKSPACE                │ RIGHT PANEL   │
-│              │                                   │               │
-│ Categories:  │  Lista pytań (task-list style)   │ Company Facts │
-│ • Strategy   │  - Inline edit                   │ Key Metrics   │
-│ • Operations │  - Status per pytanie            │ Stakeholders  │
-│ • Digital    │  - Confidence score (1-5)        │ Open Gaps     │
-│ • People     │  - Owner (kto odpowiedział)      │               │
-│ • Finance    │  - Tags (risk, opportunity)      │               │
+│ LEFT SIDEBAR │ MAIN WORKSPACE │ RIGHT PANEL │
+│ │ │ │
+│ Categories: │ Lista pytań (task-list style) │ Company Facts │
+│ • Strategy │ - Inline edit │ Key Metrics │
+│ • Operations │ - Status per pytanie │ Stakeholders │
+│ • Digital │ - Confidence score (1-5) │ Open Gaps │
+│ • People │ - Owner (kto odpowiedział) │ │
+│ • Finance │ - Tags (risk, opportunity) │ │
 └──────────────┴───────────────────────────────────┴───────────────┘
 
 ZAKRES PRZEBUDOWY:
+
 1. Nowy layout ClickUp-like (lewy sidebar, środek, prawy panel)
 2. 4 taby: Questions, Notes, Evidence, Summary
 3. Lista pytań jako task-list (inline edit, statusy)
@@ -780,6 +801,7 @@ ZAKRES PRZEBUDOWY:
 8. Company Facts panel (prawy sidebar)
 
 WORKFLOW SESJI:
+
 1. Użytkownik tworzy sesję Interview
 2. System proponuje szablon pytań per kategoria
 3. Użytkownik odpowiada - statusy zmieniają się automatycznie
@@ -789,13 +811,15 @@ WORKFLOW SESJI:
 
 ZASADA: BRAK REKOMENDACJI
 W Summary tylko:
+
 - najważniejsze fakty (as-is)
 - główne luki informacyjne (gaps)
 - ryzyka i ograniczenia (constraints)
 - current pain points (opisowo)
-NIE MA: planów działań, rekomendacji, next steps
+  NIE MA: planów działań, rekomendacji, next steps
 
 DELIVERABLES:
+
 1. Frontend (PRZEBUDOWA):
    - src/views/InterviewView.tsx (refactor)
    - src/components/Interview/InterviewWorkspace.tsx (refactor)
@@ -815,6 +839,7 @@ DELIVERABLES:
    - tests/e2e/interview.spec.ts
 
 KRYTERIA AKCEPTACJI:
+
 - [ ] Nowy layout ClickUp-like działa
 - [ ] 5 kategorii (Strategy, Operations, Digital, People, Finance)
 - [ ] Lista pytań z inline edit i statusami
@@ -826,10 +851,12 @@ KRYTERIA AKCEPTACJI:
 
 STANDARD UI/UX:
 Spójność z pozostałymi modułami:
+
 - Ten sam dynamiczny pasek nawigacji (max 6 otwartych)
-- Te same przyciski i style  
+- Te same przyciski i style
 - Task-list pattern jak w ClickUp
 - Minimalizm, dużo przestrzeni
+
 ```
 
 ---
@@ -837,27 +864,22 @@ Spójność z pozostałymi modułami:
 ## 📋 KOLEJNOŚĆ WDROŻENIA (REKOMENDOWANA)
 
 ```
-FAZA 0 - Kontekst organizacji:
-0. Interview (PRZEBUDOWA - 5 kategorii, ClickUp-like UI)
+
+FAZA 0 - Kontekst organizacji: 0. Interview (PRZEBUDOWA - 5 kategorii, ClickUp-like UI)
 
 FAZA 1 - Źródła inicjatyw:
+
 1. Assessment (DRD + SIRI pełne, ADMA/CMMI/Lean = Coming soon)
 
-FAZA 2 - Centrum zarządzania:
-2. Initiatives + Roadmap (4 widoki, drawer, harmonogram)
+FAZA 2 - Centrum zarządzania: 2. Initiatives + Roadmap (4 widoki, drawer, harmonogram)
 
-FAZA 3 - Realizacja:
-3. Execution Center (5 widoków, Gantt, RAID, Portfolio Health)
-4. Benefits (monitoring, rozliczenie)
+FAZA 3 - Realizacja: 3. Execution Center (5 widoków, Gantt, RAID, Portfolio Health) 4. Benefits (monitoring, rozliczenie)
 
-FAZA 4 - Wsparcie decyzji:
-5. Economic Analysis (scenariusze, powiązanie z inicjatywami)
-6. Reporting (generator, PDF/PPTX, schedule)
+FAZA 4 - Wsparcie decyzji: 5. Economic Analysis (scenariusze, powiązanie z inicjatywami) 6. Reporting (generator, PDF/PPTX, schedule)
 
-FAZA 5 - Warstwa przekrojowa:
-7. Decision Management (unified model, eskalacje)
-8. System Integration (end-to-end flow, testy)
-```
+FAZA 5 - Warstwa przekrojowa: 7. Decision Management (unified model, eskalacje) 8. System Integration (end-to-end flow, testy)
+
+````
 
 ### 🔗 Zależności między modułami
 - Interview -> Tools/Assessment (kontekst)
@@ -927,7 +949,7 @@ Po każdym module agent powinien wygenerować audyt:
 
 ## ✅ REKOMENDACJE DALSZE
 [Lista ulepszeń nice-to-have]
-```
+````
 
 ---
 
@@ -946,34 +968,54 @@ Po każdym module agent powinien wygenerować audyt:
 
 ---
 
-## 📝 LISTA PROMPTÓW (spis treści)
+## ✅ KANON TRWAŁY (system traktuje te założenia jako stałe)
 
-| # | Moduł | Priorytet | Status |
-|---|-------|-----------|--------|
-| 8 | **Interview** | 🔴 WYSOKI | PRZEBUDOWA - 5 kategorii, ClickUp UI |
-| 1 | **Assessment** | 🔴 WYSOKI | DRD + SIRI pełne |
-| 2 | **Initiatives + Roadmap** | 🔴 WYSOKI | 4 widoki, drawer, harmonogram |
-| 3 | **Execution Center** | 🔴 WYSOKI | 5 widoków, Gantt, RAID |
-| 3.5 | **Benefits** | 🟡 ŚREDNI | Monitoring, rozliczenie |
-| 4 | **Economic Analysis** | 🟡 ŚREDNI | Scenariusze, inicjatywy |
-| 5 | **Reporting** | 🔴 WYSOKI | Generator, PDF/PPTX |
-| 6 | **Decision Management** | 🔴 WYSOKI | Unified model, eskalacje |
-| 7 | **System Integration** | 🔴 WYSOKI | E2E flow, testy |
+Dla wszelkich prac w obszarze My Work / Execution / Decisions / Notifications obowiązuje kontrakt:
+
+- Task = najmniejsza jednostka realnej zmiany (owner + efekt + rozliczalność)
+- Decision = mechanizm zamykania niepewności i odblokowania działań
+- Notifications = system presji i eskalacji (nie feed informacji)
+- Inbox = kolejka akcji (Action Queue), nie “lista powiadomień”
+
+Źródła prawdy (must-read przed implementacją):
+
+- `wdrozenia/standards/entities/01-TASK.md`
+- `wdrozenia/standards/entities/02-DECISION.md`
+- `wdrozenia/standards/entities/06-NOTIFICATION.md`
+- `wdrozenia/modules/mywork/frontend/02-inbox-triage.md`
 
 ---
 
-*Dokument zaktualizowany: 2026-01-20*
-*Wersja: 2.1*
-*Zmiany w v2.1:*
-- *Rozbudowano sekcję UI/UX Golden Standard*
-- *Dodano referencję do pełnej dokumentacji: `wdrozenia/UI_UX_GOLDEN_STANDARD.md`*
-- *Dodano audyt zgodności modułów z ModuleHub*
-- *Dodano szczegóły stylów przycisków i statusów*
+## 📝 LISTA PROMPTÓW (spis treści)
 
-*Zmiany w v2.0:*
-- *Dodano PROMPT 3: Execution Center (brakowało)*
-- *Dodano PROMPT 3.5: Benefits (brakowało)*
-- *Zaktualizowano PROMPT 8: Interview (wymagany, 5 kategorii, przebudowa UI)*
-- *Dodano przepływ statusów inicjatyw*
-- *Dodano standard UI/UX*
-- *Zaktualizowano kolejność wdrożenia*
+| #   | Moduł                     | Priorytet | Status                               |
+| --- | ------------------------- | --------- | ------------------------------------ |
+| 8   | **Interview**             | 🔴 WYSOKI | PRZEBUDOWA - 5 kategorii, ClickUp UI |
+| 1   | **Assessment**            | 🔴 WYSOKI | DRD + SIRI pełne                     |
+| 2   | **Initiatives + Roadmap** | 🔴 WYSOKI | 4 widoki, drawer, harmonogram        |
+| 3   | **Execution Center**      | 🔴 WYSOKI | 5 widoków, Gantt, RAID               |
+| 3.5 | **Benefits**              | 🟡 ŚREDNI | Monitoring, rozliczenie              |
+| 4   | **Economic Analysis**     | 🟡 ŚREDNI | Scenariusze, inicjatywy              |
+| 5   | **Reporting**             | 🔴 WYSOKI | Generator, PDF/PPTX                  |
+| 6   | **Decision Management**   | 🔴 WYSOKI | Unified model, eskalacje             |
+| 7   | **System Integration**    | 🔴 WYSOKI | E2E flow, testy                      |
+
+---
+
+_Dokument zaktualizowany: 2026-01-20_
+_Wersja: 2.1_
+_Zmiany w v2.1:_
+
+- _Rozbudowano sekcję UI/UX Golden Standard_
+- _Dodano referencję do pełnej dokumentacji: `wdrozenia/UI_UX_GOLDEN_STANDARD.md`_
+- _Dodano audyt zgodności modułów z ModuleHub_
+- _Dodano szczegóły stylów przycisków i statusów_
+
+_Zmiany w v2.0:_
+
+- _Dodano PROMPT 3: Execution Center (brakowało)_
+- _Dodano PROMPT 3.5: Benefits (brakowało)_
+- _Zaktualizowano PROMPT 8: Interview (wymagany, 5 kategorii, przebudowa UI)_
+- _Dodano przepływ statusów inicjatyw_
+- _Dodano standard UI/UX_
+- _Zaktualizowano kolejność wdrożenia_

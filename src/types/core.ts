@@ -695,6 +695,7 @@ export interface GovernancePolicy {
 export enum InitiativeStatus {
   // Source modules (Tools/Assessment) - Draft phase
   DRAFT = 'DRAFT',
+  PENDING_REVIEW = 'PENDING_REVIEW',
 
   // Initiative Management Module - Review & Planning phase
   REVIEW = 'REVIEW',
@@ -713,6 +714,7 @@ export enum InitiativeStatus {
 
   // Terminal State
   CANCELLED = 'CANCELLED',
+  ARCHIVED = 'ARCHIVED',
 }
 
 /** Task Status Lifecycle (ENFORCED) */

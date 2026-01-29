@@ -22,8 +22,8 @@ import {
   Copy,
   Download,
   Edit3,
-  FileText,
   FilePlus,
+  FileText,
   Grid3X3,
   Inbox,
   Lightbulb,
@@ -49,10 +49,10 @@ import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
+import { InsightDetailView } from '../Discovery/InsightDetailView';
 import { AssignInterviewModal } from './AssignInterviewModal';
 import { InsightCreatorModal } from './InsightCreatorModal';
 import { InsightViewer } from './InsightViewer';
-import { InsightDetailView } from '../Discovery/InsightDetailView';
 import { InterviewWorkspace } from './InterviewWorkspace';
 import { TemplateBuilder } from './TemplateBuilder';
 
@@ -110,7 +110,17 @@ interface InterviewTemplate {
 
 type ModuleTab = 'my-assignments' | 'sessions' | 'templates' | 'insights' | 'managed';
 type ViewMode = 'table' | 'grid';
-type ItemStatus = 'draft' | 'in_review' | 'approved' | 'completed' | 'active' | 'archived' | 'assigned' | 'in_progress' | 'submitted' | 'sent_back';
+type ItemStatus =
+  | 'draft'
+  | 'in_review'
+  | 'approved'
+  | 'completed'
+  | 'active'
+  | 'archived'
+  | 'assigned'
+  | 'in_progress'
+  | 'submitted'
+  | 'sent_back';
 
 // Assignment types
 interface InterviewAssignment {
@@ -218,10 +228,6 @@ const STATUS_COLORS: Record<ItemStatus, string> = {
   in_progress: 'bg-purple-400',
   submitted: 'bg-amber-400',
   sent_back: 'bg-red-400',
-  // Assignment terminal state (reviewer approved)
-  // (reuse completed color)
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  approved: 'bg-emerald-400',
 };
 
 export const InterviewHub: React.FC = () => {
@@ -229,9 +235,14 @@ export const InterviewHub: React.FC = () => {
   const isPolish = i18n.language === 'pl';
   const [searchParams] = useSearchParams();
   const { currentProjectId, currentOrganization } = useAppStore();
-  
+
   // Permissions hook
-  const { canAssign, canViewManaged, canViewOverdue, isLoading: permissionsLoading } = useInterviewPermissions();
+  const {
+    canAssign,
+    canViewManaged,
+    canViewOverdue,
+    isLoading: permissionsLoading,
+  } = useInterviewPermissions();
 
   // Get session ID from URL if provided
   const sessionIdFromUrl = searchParams.get('sessionId');
@@ -247,13 +258,13 @@ export const InterviewHub: React.FC = () => {
   const [insights, setInsights] = useState<InterviewInsight[]>([]);
   const [templates, setTemplates] = useState<InterviewTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Assignments state
   const [myAssignments, setMyAssignments] = useState<InterviewAssignment[]>([]);
   const [managedAssignments, setManagedAssignments] = useState<InterviewAssignment[]>([]);
   const [overdueAssignments, setOverdueAssignments] = useState<InterviewAssignment[]>([]);
   const [assignmentsLoading, setAssignmentsLoading] = useState(false);
-  
+
   // Modal state
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
@@ -269,7 +280,9 @@ export const InterviewHub: React.FC = () => {
 
   // Template questions cache (for read-only preview)
   const [templateQuestionsById, setTemplateQuestionsById] = useState<Record<string, any[]>>({});
-  const [templateQuestionsLoading, setTemplateQuestionsLoading] = useState<Record<string, boolean>>({});
+  const [templateQuestionsLoading, setTemplateQuestionsLoading] = useState<Record<string, boolean>>(
+    {}
+  );
 
   // Dynamic documents state
   const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
@@ -285,7 +298,7 @@ export const InterviewHub: React.FC = () => {
           Api.get('/interview/insights').catch(() => []),
           Api.get('/interview/templates').catch(() => []),
         ]);
-        
+
         setSessions(Array.isArray(sessionsRes) ? sessionsRes : []);
         setInsights(Array.isArray(insightsRes) ? insightsRes : []);
         setTemplates(Array.isArray(templatesRes) ? templatesRes : []);
@@ -313,7 +326,7 @@ export const InterviewHub: React.FC = () => {
   useEffect(() => {
     const loadAssignments = async () => {
       if (permissionsLoading) return;
-      
+
       setAssignmentsLoading(true);
       try {
         // Always load my assignments
@@ -342,7 +355,7 @@ export const InterviewHub: React.FC = () => {
   // Open session from URL
   useEffect(() => {
     if (sessionIdFromUrl && sessions.length > 0) {
-      const session = sessions.find(s => s.id === sessionIdFromUrl);
+      const session = sessions.find((s) => s.id === sessionIdFromUrl);
       if (session) {
         handleOpenDocument({
           id: session.id,
@@ -413,59 +426,64 @@ export const InterviewHub: React.FC = () => {
     );
   }, [templates, searchQuery]);
 
-
   // Tab configuration - MINIMALIST (5 tabs max)
-  const tabs = useMemo(
-    () => {
-      const baseTabs = [
-        // 1. Inbox - przydzielone do mnie (do zrobienia)
-        {
-          id: 'my-assignments' as ModuleTab,
-          label: isPolish ? 'Inbox' : 'Inbox',
-          icon: <Inbox size={16} />,
-          count: myAssignments.filter(a => a.status !== 'completed').length,
-        },
-        // 2. Sessions - moje sesje wywiadów
-        {
-          id: 'sessions' as ModuleTab,
-          label: isPolish ? 'Sesje' : 'Sessions',
-          icon: <MessageSquare size={16} />,
-          count: sessions.length,
-        },
-        // 3. Templates - biblioteka szablonów
-        {
-          id: 'templates' as ModuleTab,
-          label: isPolish ? 'Szablony' : 'Templates',
-          icon: <FileText size={16} />,
-          count: templates.length,
-        },
-        // 4. Insights - wnioski AI
-        {
-          id: 'insights' as ModuleTab,
-          label: isPolish ? 'Wnioski' : 'Insights',
-          icon: <Lightbulb size={16} />,
-          count: insights.length,
-        },
-      ];
+  const tabs = useMemo(() => {
+    const baseTabs = [
+      // 1. Inbox - przydzielone do mnie (do zrobienia)
+      {
+        id: 'my-assignments' as ModuleTab,
+        label: isPolish ? 'Inbox' : 'Inbox',
+        icon: <Inbox size={16} />,
+        count: myAssignments.filter((a) => a.status !== 'completed').length,
+      },
+      // 2. Sessions - moje sesje wywiadów
+      {
+        id: 'sessions' as ModuleTab,
+        label: isPolish ? 'Sesje' : 'Sessions',
+        icon: <MessageSquare size={16} />,
+        count: sessions.length,
+      },
+      // 3. Templates - biblioteka szablonów
+      {
+        id: 'templates' as ModuleTab,
+        label: isPolish ? 'Szablony' : 'Templates',
+        icon: <FileText size={16} />,
+        count: templates.length,
+      },
+      // 4. Insights - wnioski AI
+      {
+        id: 'insights' as ModuleTab,
+        label: isPolish ? 'Wnioski' : 'Insights',
+        icon: <Lightbulb size={16} />,
+        count: insights.length,
+      },
+    ];
 
-      // 5. Assigned - tylko dla PM/Admin (wywiady które przydzieliłem)
-      if (canViewManaged) {
-        const assignedCount = managedAssignments.length;
-        const overdueCount = overdueAssignments.length;
-        baseTabs.push({
-          id: 'managed' as ModuleTab,
-          label: isPolish ? 'Przydzielone' : 'Assigned',
-          icon: <ClipboardList size={16} />,
-          count: assignedCount,
-          // Show warning badge if there are overdue
-          hasWarning: overdueCount > 0,
-        } as any);
-      }
+    // 5. Assigned - tylko dla PM/Admin (wywiady które przydzieliłem)
+    if (canViewManaged) {
+      const assignedCount = managedAssignments.length;
+      const overdueCount = overdueAssignments.length;
+      baseTabs.push({
+        id: 'managed' as ModuleTab,
+        label: isPolish ? 'Przydzielone' : 'Assigned',
+        icon: <ClipboardList size={16} />,
+        count: assignedCount,
+        // Show warning badge if there are overdue
+        hasWarning: overdueCount > 0,
+      } as any);
+    }
 
-      return baseTabs;
-    },
-    [isPolish, sessions.length, insights.length, templates.length, myAssignments, managedAssignments, overdueAssignments, canViewManaged]
-  );
+    return baseTabs;
+  }, [
+    isPolish,
+    sessions.length,
+    insights.length,
+    templates.length,
+    myAssignments,
+    managedAssignments,
+    overdueAssignments,
+    canViewManaged,
+  ]);
 
   // Handlers
   const handleNewSession = useCallback(async () => {
@@ -476,7 +494,7 @@ export const InterviewHub: React.FC = () => {
       });
 
       setSessions((prev) => [newSession as InterviewSession, ...prev]);
-      
+
       // Open the new session
       handleOpenDocument({
         id: (newSession as InterviewSession).id,
@@ -485,7 +503,7 @@ export const InterviewHub: React.FC = () => {
         status: 'active',
         data: newSession as InterviewSession,
       });
-      
+
       toast.success(isPolish ? 'Nowa sesja wywiadu rozpoczęta!' : 'New interview session started!');
     } catch (error) {
       console.error('[InterviewHub] Failed to create session:', error);
@@ -501,47 +519,59 @@ export const InterviewHub: React.FC = () => {
     setActiveDocumentId(doc.id);
   }, []);
 
-  const handleCloseDocument = useCallback((id: string) => {
-    setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
-    if (activeDocumentId === id) {
-      setActiveDocumentId(null);
-    }
-  }, [activeDocumentId]);
+  const handleCloseDocument = useCallback(
+    (id: string) => {
+      setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
+      if (activeDocumentId === id) {
+        setActiveDocumentId(null);
+      }
+    },
+    [activeDocumentId]
+  );
 
   const handleShowList = useCallback(() => {
     setActiveDocumentId(null);
   }, []);
 
-  const handleViewSession = useCallback((session: InterviewSession) => {
-    handleOpenDocument({
-      id: session.id,
-      type: 'session',
-      name: session.name || 'Interview Session',
-      status: session.status as ItemStatus,
-      data: session,
-    });
-  }, [handleOpenDocument]);
+  const handleViewSession = useCallback(
+    (session: InterviewSession) => {
+      handleOpenDocument({
+        id: session.id,
+        type: 'session',
+        name: session.name || 'Interview Session',
+        status: session.status as ItemStatus,
+        data: session,
+      });
+    },
+    [handleOpenDocument]
+  );
 
-  const handleViewInsight = useCallback((insight: InterviewInsight) => {
-    // Open as dynamic tab with full view (like sessions and templates)
-    handleOpenDocument({
-      id: insight.id,
-      type: 'insight',
-      name: insight.title,
-      status: (insight.status as ItemStatus) || 'approved',
-      data: insight,
-    });
-  }, [handleOpenDocument]);
+  const handleViewInsight = useCallback(
+    (insight: InterviewInsight) => {
+      // Open as dynamic tab with full view (like sessions and templates)
+      handleOpenDocument({
+        id: insight.id,
+        type: 'insight',
+        name: insight.title,
+        status: (insight.status as ItemStatus) || 'approved',
+        data: insight,
+      });
+    },
+    [handleOpenDocument]
+  );
 
-  const handleViewTemplate = useCallback((template: InterviewTemplate) => {
-    handleOpenDocument({
-      id: template.id,
-      type: 'template',
-      name: template.name,
-      status: 'approved',
-      data: template,
-    });
-  }, [handleOpenDocument]);
+  const handleViewTemplate = useCallback(
+    (template: InterviewTemplate) => {
+      handleOpenDocument({
+        id: template.id,
+        type: 'template',
+        name: template.name,
+        status: 'approved',
+        data: template,
+      });
+    },
+    [handleOpenDocument]
+  );
 
   const handleSessionComplete = useCallback(
     (sessionId: string) => {
@@ -585,46 +615,58 @@ export const InterviewHub: React.FC = () => {
     setShowTemplateBuilder(true);
   }, []);
 
-  const handleCloneTemplate = useCallback(async (template: InterviewTemplate) => {
-    try {
-      toast.loading(isPolish ? 'Klonowanie szablonu...' : 'Cloning template...');
-      const cloned = await Api.post(`/interview/templates/${template.id}/clone`, {
-        name: `${template.name} (${isPolish ? 'kopia' : 'copy'})`,
-      });
-      toast.dismiss();
-      toast.success(isPolish ? 'Szablon sklonowany!' : 'Template cloned!');
-      
-      // Refresh templates
-      const templatesRes = await Api.get('/interview/templates').catch(() => []);
-      setTemplates(Array.isArray(templatesRes) ? templatesRes : []);
-      
-      // Open the cloned template for editing
-      setEditingTemplateId((cloned as any).id);
-      setShowTemplateBuilder(true);
-    } catch (error) {
-      toast.dismiss();
-      toast.error(isPolish ? 'Nie udało się sklonować szablonu' : 'Failed to clone template');
-      console.error('[InterviewHub] Failed to clone template:', error);
-    }
-  }, [isPolish]);
+  const handleCloneTemplate = useCallback(
+    async (template: InterviewTemplate) => {
+      try {
+        toast.loading(isPolish ? 'Klonowanie szablonu...' : 'Cloning template...');
+        const cloned = await Api.post(`/interview/templates/${template.id}/clone`, {
+          name: `${template.name} (${isPolish ? 'kopia' : 'copy'})`,
+        });
+        toast.dismiss();
+        toast.success(isPolish ? 'Szablon sklonowany!' : 'Template cloned!');
 
-  const handleDeleteTemplate = useCallback(async (template: InterviewTemplate) => {
-    if (!confirm(isPolish ? `Czy na pewno chcesz usunąć szablon "${template.name}"?` : `Are you sure you want to delete template "${template.name}"?`)) {
-      return;
-    }
-    
-    try {
-      await Api.delete(`/interview/templates/${template.id}`);
-      toast.success(isPolish ? 'Szablon usunięty!' : 'Template deleted!');
-      
-      // Refresh templates
-      const templatesRes = await Api.get('/interview/templates').catch(() => []);
-      setTemplates(Array.isArray(templatesRes) ? templatesRes : []);
-    } catch (error) {
-      toast.error(isPolish ? 'Nie udało się usunąć szablonu' : 'Failed to delete template');
-      console.error('[InterviewHub] Failed to delete template:', error);
-    }
-  }, [isPolish]);
+        // Refresh templates
+        const templatesRes = await Api.get('/interview/templates').catch(() => []);
+        setTemplates(Array.isArray(templatesRes) ? templatesRes : []);
+
+        // Open the cloned template for editing
+        setEditingTemplateId((cloned as any).id);
+        setShowTemplateBuilder(true);
+      } catch (error) {
+        toast.dismiss();
+        toast.error(isPolish ? 'Nie udało się sklonować szablonu' : 'Failed to clone template');
+        console.error('[InterviewHub] Failed to clone template:', error);
+      }
+    },
+    [isPolish]
+  );
+
+  const handleDeleteTemplate = useCallback(
+    async (template: InterviewTemplate) => {
+      if (
+        !confirm(
+          isPolish
+            ? `Czy na pewno chcesz usunąć szablon "${template.name}"?`
+            : `Are you sure you want to delete template "${template.name}"?`
+        )
+      ) {
+        return;
+      }
+
+      try {
+        await Api.delete(`/interview/templates/${template.id}`);
+        toast.success(isPolish ? 'Szablon usunięty!' : 'Template deleted!');
+
+        // Refresh templates
+        const templatesRes = await Api.get('/interview/templates').catch(() => []);
+        setTemplates(Array.isArray(templatesRes) ? templatesRes : []);
+      } catch (error) {
+        toast.error(isPolish ? 'Nie udało się usunąć szablonu' : 'Failed to delete template');
+        console.error('[InterviewHub] Failed to delete template:', error);
+      }
+    },
+    [isPolish]
+  );
 
   // Assignment management actions
   const handleOpenReminderModal = useCallback((assignment: InterviewAssignment) => {
@@ -637,72 +679,90 @@ export const InterviewHub: React.FC = () => {
     setShowSendBackModal(true);
   }, []);
 
-  const handleSendBack = useCallback(async (reason: string) => {
-    if (!selectedAssignment) return;
-    
-    try {
-      await Api.post(`/interview/assignments/${selectedAssignment.id}/send-back`, { reason });
-      toast.success(isPolish ? 'Wywiad zwrócony do poprawy!' : 'Interview sent back!');
-      setShowSendBackModal(false);
-      setSelectedAssignment(null);
-      
-      // Refresh assignments
-      const [managedRes, overdueRes] = await Promise.all([
-        Api.get('/interview/assignments/managed').catch(() => []),
-        Api.get('/interview/assignments/overdue').catch(() => []),
-      ]);
-      setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
-      setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
-    } catch (error) {
-      toast.error(isPolish ? 'Nie udało się zwrócić wywiadu' : 'Failed to send back');
-      console.error('[InterviewHub] Failed to send back:', error);
-    }
-  }, [selectedAssignment, isPolish]);
+  const handleSendBack = useCallback(
+    async (reason: string) => {
+      if (!selectedAssignment) return;
 
-  const handleApproveAssignment = useCallback(async (assignment: InterviewAssignment) => {
-    try {
-      await Api.post(`/interview/assignments/${assignment.id}/approve`, {});
-      toast.success(isPolish ? 'Wywiad zatwierdzony!' : 'Interview approved!');
+      try {
+        await Api.post(`/interview/assignments/${selectedAssignment.id}/send-back`, { reason });
+        toast.success(isPolish ? 'Wywiad zwrócony do poprawy!' : 'Interview sent back!');
+        setShowSendBackModal(false);
+        setSelectedAssignment(null);
 
-      const [managedRes, overdueRes] = await Promise.all([
-        Api.get('/interview/assignments/managed').catch(() => []),
-        Api.get('/interview/assignments/overdue').catch(() => []),
-      ]);
-      setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
-      setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
-    } catch (error) {
-      toast.error(isPolish ? 'Nie udało się zatwierdzić wywiadu' : 'Failed to approve interview');
-      console.error('[InterviewHub] Failed to approve assignment:', error);
-    }
-  }, [isPolish]);
+        // Refresh assignments
+        const [managedRes, overdueRes] = await Promise.all([
+          Api.get('/interview/assignments/managed').catch(() => []),
+          Api.get('/interview/assignments/overdue').catch(() => []),
+        ]);
+        setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
+        setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
+      } catch (error) {
+        toast.error(isPolish ? 'Nie udało się zwrócić wywiadu' : 'Failed to send back');
+        console.error('[InterviewHub] Failed to send back:', error);
+      }
+    },
+    [selectedAssignment, isPolish]
+  );
+
+  const handleApproveAssignment = useCallback(
+    async (assignment: InterviewAssignment) => {
+      try {
+        await Api.post(`/interview/assignments/${assignment.id}/approve`, {});
+        toast.success(isPolish ? 'Wywiad zatwierdzony!' : 'Interview approved!');
+
+        const [managedRes, overdueRes] = await Promise.all([
+          Api.get('/interview/assignments/managed').catch(() => []),
+          Api.get('/interview/assignments/overdue').catch(() => []),
+        ]);
+        setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
+        setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
+      } catch (error) {
+        toast.error(isPolish ? 'Nie udało się zatwierdzić wywiadu' : 'Failed to approve interview');
+        console.error('[InterviewHub] Failed to approve assignment:', error);
+      }
+    },
+    [isPolish]
+  );
 
   // Export action
-  const handleExport = useCallback((format: 'pdf' | 'excel') => {
-    // TODO: Implement export functionality
-    toast.success(isPolish ? `Eksport do ${format.toUpperCase()} rozpoczęty` : `Export to ${format.toUpperCase()} started`);
-    setShowExportModal(false);
-  }, [isPolish]);
+  const handleExport = useCallback(
+    (format: 'pdf' | 'excel') => {
+      // TODO: Implement export functionality
+      toast.success(
+        isPolish
+          ? `Eksport do ${format.toUpperCase()} rozpoczęty`
+          : `Export to ${format.toUpperCase()} started`
+      );
+      setShowExportModal(false);
+    },
+    [isPolish]
+  );
 
   // Generate insight from session
-  const handleGenerateInsight = useCallback(async (session: InterviewSession) => {
-    try {
-      toast.loading(isPolish ? 'Generowanie wniosków AI...' : 'Generating AI insights...');
-      await Api.post('/interview/insights', { sessionId: session.id });
-      toast.dismiss();
-      toast.success(isPolish ? 'Wnioski wygenerowane!' : 'Insights generated!');
-      
-      // Refresh insights
-      const insightsRes = await Api.get('/interview/insights').catch(() => []);
-      setInsights(Array.isArray(insightsRes) ? insightsRes : []);
-      
-      // Switch to insights tab
-      setActiveTab('insights');
-    } catch (error) {
-      toast.dismiss();
-      toast.error(isPolish ? 'Nie udało się wygenerować wniosków' : 'Failed to generate insights');
-      console.error('[InterviewHub] Failed to generate insight:', error);
-    }
-  }, [isPolish]);
+  const handleGenerateInsight = useCallback(
+    async (session: InterviewSession) => {
+      try {
+        toast.loading(isPolish ? 'Generowanie wniosków AI...' : 'Generating AI insights...');
+        await Api.post('/interview/insights', { sessionId: session.id });
+        toast.dismiss();
+        toast.success(isPolish ? 'Wnioski wygenerowane!' : 'Insights generated!');
+
+        // Refresh insights
+        const insightsRes = await Api.get('/interview/insights').catch(() => []);
+        setInsights(Array.isArray(insightsRes) ? insightsRes : []);
+
+        // Switch to insights tab
+        setActiveTab('insights');
+      } catch (error) {
+        toast.dismiss();
+        toast.error(
+          isPolish ? 'Nie udało się wygenerować wniosków' : 'Failed to generate insights'
+        );
+        console.error('[InterviewHub] Failed to generate insight:', error);
+      }
+    },
+    [isPolish]
+  );
 
   // Render Dynamic Tabs
   const renderDynamicTabs = () => {
@@ -715,7 +775,11 @@ export const InterviewHub: React.FC = () => {
         {/* List button */}
         <button
           onClick={handleShowList}
-          className={isListActive ? TAB_ACTIVE.replace('border-l-2', '') : TAB_INACTIVE.replace('border-l-2', '')}
+          className={
+            isListActive
+              ? TAB_ACTIVE.replace('border-l-2', '')
+              : TAB_INACTIVE.replace('border-l-2', '')
+          }
         >
           <List size={14} />
           <span>List</span>
@@ -822,7 +886,9 @@ export const InterviewHub: React.FC = () => {
                         }
                       />
                     </div>
-                    <span className="text-sm text-white font-medium">{session.name || 'Discovery Interview'}</span>
+                    <span className="text-sm text-white font-medium">
+                      {session.name || 'Discovery Interview'}
+                    </span>
                   </div>
                 </td>
                 <td className="px-4 py-3">
@@ -989,7 +1055,11 @@ export const InterviewHub: React.FC = () => {
                     }
                   />
                   <span className="font-mono text-xs font-bold text-slate-300">
-                    {session.status === 'completed' ? 'DONE' : session.status === 'active' ? 'LIVE' : 'ARCH'}
+                    {session.status === 'completed'
+                      ? 'DONE'
+                      : session.status === 'active'
+                        ? 'LIVE'
+                        : 'ARCH'}
                   </span>
                 </div>
               </div>
@@ -1057,7 +1127,9 @@ export const InterviewHub: React.FC = () => {
                       : session.status}
                 </span>
               </div>
-              <span className="text-xs text-slate-500">{new Date(session.startedAt).toLocaleDateString()}</span>
+              <span className="text-xs text-slate-500">
+                {new Date(session.startedAt).toLocaleDateString()}
+              </span>
             </div>
           </div>
         );
@@ -1099,13 +1171,20 @@ export const InterviewHub: React.FC = () => {
                 </div>
               </td>
               <td className="px-4 py-3">
-                <span className="text-xs text-slate-400 capitalize">{(insight.type || 'general').replace('_', ' ')}</span>
+                <span className="text-xs text-slate-400 capitalize">
+                  {(insight.type || 'general').replace('_', ' ')}
+                </span>
               </td>
               <td className="px-4 py-3">
-                <span className={`text-xs font-medium ${
-                  insight.priority === 'high' ? 'text-red-400' :
-                  insight.priority === 'medium' ? 'text-amber-400' : 'text-slate-400'
-                }`}>
+                <span
+                  className={`text-xs font-medium ${
+                    insight.priority === 'high'
+                      ? 'text-red-400'
+                      : insight.priority === 'medium'
+                        ? 'text-amber-400'
+                        : 'text-slate-400'
+                  }`}
+                >
                   {insight.priority || 'medium'}
                 </span>
               </td>
@@ -1168,7 +1247,9 @@ export const InterviewHub: React.FC = () => {
                   </div>
                   <div>
                     <span className="text-sm text-white font-medium block">{template.name}</span>
-                    <span className="text-xs text-slate-500 line-clamp-1">{template.description}</span>
+                    <span className="text-xs text-slate-500 line-clamp-1">
+                      {template.description}
+                    </span>
                   </div>
                 </div>
               </td>
@@ -1199,27 +1280,31 @@ export const InterviewHub: React.FC = () => {
                       Api.post(`/interview/templates/${template.id}/use`, {
                         projectId: currentProjectId,
                         name: `${template.name} ${new Date().toLocaleDateString()}`,
-                      }).then((created) => {
-                        const newSession = created as InterviewSession;
-                        setSessions((prev) => [newSession, ...prev]);
-                        handleOpenDocument({
-                          id: newSession.id,
-                          type: 'session',
-                          name: newSession.name || 'Interview Session',
-                          status: 'active',
-                          data: newSession,
+                      })
+                        .then((created) => {
+                          const newSession = created as InterviewSession;
+                          setSessions((prev) => [newSession, ...prev]);
+                          handleOpenDocument({
+                            id: newSession.id,
+                            type: 'session',
+                            name: newSession.name || 'Interview Session',
+                            status: 'active',
+                            data: newSession,
+                          });
+                          toast.success(isPolish ? 'Sesja utworzona' : 'Session created');
+                        })
+                        .catch(() => {
+                          toast.error(
+                            isPolish ? 'Nie udało się utworzyć sesji' : 'Failed to create session'
+                          );
                         });
-                        toast.success(isPolish ? 'Sesja utworzona' : 'Session created');
-                      }).catch(() => {
-                        toast.error(isPolish ? 'Nie udało się utworzyć sesji' : 'Failed to create session');
-                      });
                     }}
                     className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-emerald-400 transition-colors"
                     title={isPolish ? 'Użyj szablonu' : 'Use template'}
                   >
                     <Sparkles size={14} />
                   </button>
-                  
+
                   {/* Clone Template */}
                   <button
                     onClick={(e) => {
@@ -1231,7 +1316,7 @@ export const InterviewHub: React.FC = () => {
                   >
                     <Copy size={14} />
                   </button>
-                  
+
                   {/* Edit Template - only for PM/Admin */}
                   {canAssign && (
                     <button
@@ -1245,7 +1330,7 @@ export const InterviewHub: React.FC = () => {
                       <Edit3 size={14} />
                     </button>
                   )}
-                  
+
                   {/* Delete Template - only for PM/Admin and non-default */}
                   {canAssign && !template.isDefault && (
                     <button
@@ -1319,7 +1404,12 @@ export const InterviewHub: React.FC = () => {
             category: insight.category,
             insightType: insight.type,
             promptType: insight.type,
-            impactLevel: insight.priority === 'high' ? 'high' : insight.priority === 'medium' ? 'medium' : 'low',
+            impactLevel:
+              insight.priority === 'high'
+                ? 'high'
+                : insight.priority === 'medium'
+                  ? 'medium'
+                  : 'low',
             confidence: 'high',
             status: insight.status || 'approved',
             sourceQuote: insight.sourceQuote,
@@ -1393,7 +1483,10 @@ export const InterviewHub: React.FC = () => {
                       const items = templateQuestions.filter((q: any) => q.category === cat);
                       if (items.length === 0) return null;
                       return (
-                        <div key={cat} className="bg-navy-950/40 border border-navy-700 rounded-lg p-4">
+                        <div
+                          key={cat}
+                          className="bg-navy-950/40 border border-navy-700 rounded-lg p-4"
+                        >
                           <div className="flex items-center justify-between mb-3">
                             <span className="text-xs font-semibold text-slate-200">
                               {(categoryLabels as any)[cat]}
@@ -1422,7 +1515,9 @@ export const InterviewHub: React.FC = () => {
                 onClick={async () => {
                   try {
                     toast.loading(
-                      isPolish ? 'Tworzenie sesji z szablonu...' : 'Creating session from template...'
+                      isPolish
+                        ? 'Tworzenie sesji z szablonu...'
+                        : 'Creating session from template...'
                     );
                     const created = await Api.post(`/interview/templates/${template.id}/use`, {
                       projectId: currentProjectId,
@@ -1445,7 +1540,9 @@ export const InterviewHub: React.FC = () => {
                   } catch (error) {
                     console.error('[InterviewHub] Failed to create session from template:', error);
                     toast.dismiss();
-                    toast.error(isPolish ? 'Nie udało się utworzyć sesji' : 'Failed to create session');
+                    toast.error(
+                      isPolish ? 'Nie udało się utworzyć sesji' : 'Failed to create session'
+                    );
                   }
                 }}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
@@ -1463,16 +1560,26 @@ export const InterviewHub: React.FC = () => {
   };
 
   // Render assignments table (reusable for my/managed/overdue)
-  const renderAssignmentsTable = (assignments: InterviewAssignment[], showAssignee: boolean = false) => {
+  const renderAssignmentsTable = (
+    assignments: InterviewAssignment[],
+    showAssignee: boolean = false
+  ) => {
     const getStatusColor = (status: string) => {
       switch (status) {
-        case 'assigned': return 'bg-blue-500/20 text-blue-400';
-        case 'in_progress': return 'bg-purple-500/20 text-purple-400';
-        case 'submitted': return 'bg-amber-500/20 text-amber-400';
-        case 'sent_back': return 'bg-red-500/20 text-red-400';
-        case 'approved': return 'bg-emerald-500/20 text-emerald-400';
-        case 'completed': return 'bg-emerald-500/20 text-emerald-400';
-        default: return 'bg-slate-500/20 text-slate-400';
+        case 'assigned':
+          return 'bg-blue-500/20 text-blue-400';
+        case 'in_progress':
+          return 'bg-purple-500/20 text-purple-400';
+        case 'submitted':
+          return 'bg-amber-500/20 text-amber-400';
+        case 'sent_back':
+          return 'bg-red-500/20 text-red-400';
+        case 'approved':
+          return 'bg-emerald-500/20 text-emerald-400';
+        case 'completed':
+          return 'bg-emerald-500/20 text-emerald-400';
+        default:
+          return 'bg-slate-500/20 text-slate-400';
       }
     };
 
@@ -1490,11 +1597,16 @@ export const InterviewHub: React.FC = () => {
 
     const getPriorityColor = (priority: string) => {
       switch (priority) {
-        case 'urgent': return 'text-red-400';
-        case 'high': return 'text-orange-400';
-        case 'medium': return 'text-amber-400';
-        case 'low': return 'text-slate-400';
-        default: return 'text-slate-400';
+        case 'urgent':
+          return 'text-red-400';
+        case 'high':
+          return 'text-orange-400';
+        case 'medium':
+          return 'text-amber-400';
+        case 'low':
+          return 'text-slate-400';
+        default:
+          return 'text-slate-400';
       }
     };
 
@@ -1509,7 +1621,7 @@ export const InterviewHub: React.FC = () => {
         const result = await Api.post(`/interview/assignments/${assignment.id}/start`, {});
         toast.dismiss();
         toast.success(isPolish ? 'Wywiad rozpoczęty!' : 'Interview started!');
-        
+
         // Open the session
         if ((result as any).sessionId) {
           const session = await Api.get(`/interview/sessions/${(result as any).sessionId}`);
@@ -1521,7 +1633,7 @@ export const InterviewHub: React.FC = () => {
             data: session as InterviewSession,
           });
         }
-        
+
         // Refresh assignments
         const myRes = await Api.get('/interview/assignments/my').catch(() => []);
         setMyAssignments(Array.isArray(myRes) ? myRes : []);
@@ -1581,7 +1693,9 @@ export const InterviewHub: React.FC = () => {
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-blue-500/20`}>
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center bg-blue-500/20`}
+                      >
                         <ClipboardList size={16} className="text-blue-400" />
                       </div>
                       <div>
@@ -1589,7 +1703,9 @@ export const InterviewHub: React.FC = () => {
                           {assignment.template?.name || 'Interview'}
                         </span>
                         {assignment.template?.category && (
-                          <span className="text-xs text-slate-500">{assignment.template.category}</span>
+                          <span className="text-xs text-slate-500">
+                            {assignment.template.category}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -1607,7 +1723,9 @@ export const InterviewHub: React.FC = () => {
                     </td>
                   )}
                   <td className="px-4 py-3">
-                    <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(assignment.status)}`}>
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(assignment.status)}`}
+                    >
                       <span className="w-1.5 h-1.5 rounded-full bg-current" />
                       {getStatusLabel(assignment.status)}
                     </span>
@@ -1625,7 +1743,9 @@ export const InterviewHub: React.FC = () => {
                   </td>
                   <td className="px-4 py-3">
                     {assignment.dueAt ? (
-                      <div className={`flex items-center gap-1 text-xs ${overdue ? 'text-red-400' : 'text-slate-400'}`}>
+                      <div
+                        className={`flex items-center gap-1 text-xs ${overdue ? 'text-red-400' : 'text-slate-400'}`}
+                      >
                         <Calendar size={12} />
                         {new Date(assignment.dueAt).toLocaleDateString()}
                         {overdue && <AlertTriangle size={12} className="ml-1" />}
@@ -1646,56 +1766,63 @@ export const InterviewHub: React.FC = () => {
                           {isPolish ? 'Rozpocznij' : 'Start'}
                         </button>
                       )}
-                      {assignment.status === 'in_progress' && assignment.sessionId && !showAssignee && (
-                        <button
-                          onClick={async () => {
-                            const session = await Api.get(`/interview/sessions/${assignment.sessionId}`);
-                            handleOpenDocument({
-                              id: (session as InterviewSession).id,
-                              type: 'session',
-                              name: (session as InterviewSession).name || 'Interview Session',
-                              status: 'active',
-                              data: session as InterviewSession,
-                            });
-                          }}
-                          className="flex items-center gap-1 px-2 py-1 rounded bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 text-xs font-medium transition-colors"
-                        >
-                          <ChevronRight size={12} />
-                          {isPolish ? 'Kontynuuj' : 'Continue'}
-                        </button>
-                      )}
-                      {showAssignee && canAssign && assignment.status !== 'completed' && assignment.status !== 'approved' && (
-                        <>
-                          {/* Send Reminder */}
+                      {assignment.status === 'in_progress' &&
+                        assignment.sessionId &&
+                        !showAssignee && (
                           <button
-                            onClick={() => handleOpenReminderModal(assignment)}
-                            className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-amber-400 transition-colors"
-                            title={isPolish ? 'Wyślij przypomnienie' : 'Send reminder'}
+                            onClick={async () => {
+                              const session = await Api.get(
+                                `/interview/sessions/${assignment.sessionId}`
+                              );
+                              handleOpenDocument({
+                                id: (session as InterviewSession).id,
+                                type: 'session',
+                                name: (session as InterviewSession).name || 'Interview Session',
+                                status: 'active',
+                                data: session as InterviewSession,
+                              });
+                            }}
+                            className="flex items-center gap-1 px-2 py-1 rounded bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 text-xs font-medium transition-colors"
                           >
-                            <Bell size={14} />
+                            <ChevronRight size={12} />
+                            {isPolish ? 'Kontynuuj' : 'Continue'}
                           </button>
-                          
-                          {/* Review actions - only for submitted assignments */}
-                          {assignment.status === 'submitted' && (
-                            <>
-                              <button
-                                onClick={() => handleApproveAssignment(assignment)}
-                                className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-emerald-400 transition-colors"
-                                title={isPolish ? 'Zatwierdź' : 'Approve'}
-                              >
-                                <Check size={14} />
-                              </button>
-                              <button
-                                onClick={() => handleOpenSendBackModal(assignment)}
-                                className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-red-400 transition-colors"
-                                title={isPolish ? 'Zwróć do poprawy' : 'Send back'}
-                              >
-                                <RotateCcw size={14} />
-                              </button>
-                            </>
-                          )}
-                        </>
-                      )}
+                        )}
+                      {showAssignee &&
+                        canAssign &&
+                        assignment.status !== 'completed' &&
+                        assignment.status !== 'approved' && (
+                          <>
+                            {/* Send Reminder */}
+                            <button
+                              onClick={() => handleOpenReminderModal(assignment)}
+                              className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-amber-400 transition-colors"
+                              title={isPolish ? 'Wyślij przypomnienie' : 'Send reminder'}
+                            >
+                              <Bell size={14} />
+                            </button>
+
+                            {/* Review actions - only for submitted assignments */}
+                            {assignment.status === 'submitted' && (
+                              <>
+                                <button
+                                  onClick={() => handleApproveAssignment(assignment)}
+                                  className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-emerald-400 transition-colors"
+                                  title={isPolish ? 'Zatwierdź' : 'Approve'}
+                                >
+                                  <Check size={14} />
+                                </button>
+                                <button
+                                  onClick={() => handleOpenSendBackModal(assignment)}
+                                  className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-red-400 transition-colors"
+                                  title={isPolish ? 'Zwróć do poprawy' : 'Send back'}
+                                >
+                                  <RotateCcw size={14} />
+                                </button>
+                              </>
+                            )}
+                          </>
+                        )}
                     </div>
                   </td>
                 </tr>
@@ -1753,7 +1880,6 @@ export const InterviewHub: React.FC = () => {
       return <div className="p-4">{renderAssignmentsTable(managedAssignments, true)}</div>;
     }
 
-
     return null;
   };
 
@@ -1807,10 +1933,10 @@ export const InterviewHub: React.FC = () => {
                     {tab.count !== undefined && tab.count > 0 && (
                       <span
                         className={`px-1.5 py-0.5 text-xs rounded-full ${
-                          tab.hasWarning 
-                            ? 'bg-red-500/30 text-red-300' 
-                            : isActive 
-                              ? 'bg-primary-500/30 text-primary-300' 
+                          tab.hasWarning
+                            ? 'bg-red-500/30 text-red-300'
+                            : isActive
+                              ? 'bg-primary-500/30 text-primary-300'
                               : 'bg-navy-700 text-slate-400'
                         }`}
                       >
@@ -1824,7 +1950,6 @@ export const InterviewHub: React.FC = () => {
                 );
               })}
             </div>
-
           </div>
 
           {/* Right: MINIMAL Action Buttons - kontekstowe per tab */}
@@ -1900,17 +2025,26 @@ export const InterviewHub: React.FC = () => {
         {showSearch && (
           <div className="px-4 pb-3">
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={handleSearchChange}
                 placeholder={
                   activeTab === 'sessions'
-                    ? isPolish ? 'Szukaj sesji...' : 'Search sessions...'
+                    ? isPolish
+                      ? 'Szukaj sesji...'
+                      : 'Search sessions...'
                     : activeTab === 'insights'
-                      ? isPolish ? 'Szukaj wniosków...' : 'Search insights...'
-                      : isPolish ? 'Szukaj szablonów...' : 'Search templates...'
+                      ? isPolish
+                        ? 'Szukaj wniosków...'
+                        : 'Search insights...'
+                      : isPolish
+                        ? 'Szukaj szablonów...'
+                        : 'Search templates...'
                 }
                 autoFocus
                 className="w-full pl-10 pr-10 py-2 rounded-lg bg-navy-800 border border-navy-600 text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
@@ -1943,8 +2077,12 @@ export const InterviewHub: React.FC = () => {
           try {
             const [myRes, managedRes, overdueRes] = await Promise.all([
               Api.get('/interview/assignments/my').catch(() => []),
-              canViewManaged ? Api.get('/interview/assignments/managed').catch(() => []) : Promise.resolve([]),
-              canViewOverdue ? Api.get('/interview/assignments/overdue').catch(() => []) : Promise.resolve([]),
+              canViewManaged
+                ? Api.get('/interview/assignments/managed').catch(() => [])
+                : Promise.resolve([]),
+              canViewOverdue
+                ? Api.get('/interview/assignments/overdue').catch(() => [])
+                : Promise.resolve([]),
             ]);
             setMyAssignments(Array.isArray(myRes) ? myRes : []);
             setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
@@ -1983,7 +2121,9 @@ export const InterviewHub: React.FC = () => {
                 </div>
                 <div className="text-left">
                   <span className="text-sm font-medium text-white block">PDF</span>
-                  <span className="text-xs text-slate-500">{isPolish ? 'Raport profesjonalny' : 'Professional report'}</span>
+                  <span className="text-xs text-slate-500">
+                    {isPolish ? 'Raport profesjonalny' : 'Professional report'}
+                  </span>
                 </div>
               </button>
               <button
@@ -1995,7 +2135,9 @@ export const InterviewHub: React.FC = () => {
                 </div>
                 <div className="text-left">
                   <span className="text-sm font-medium text-white block">Excel</span>
-                  <span className="text-xs text-slate-500">{isPolish ? 'Dane do analizy' : 'Data for analysis'}</span>
+                  <span className="text-xs text-slate-500">
+                    {isPolish ? 'Dane do analizy' : 'Data for analysis'}
+                  </span>
                 </div>
               </button>
             </div>
@@ -2023,18 +2165,20 @@ export const InterviewHub: React.FC = () => {
             </div>
             <div className="p-4">
               <p className="text-sm text-slate-400 mb-4">
-                {isPolish 
+                {isPolish
                   ? `Czy na pewno chcesz wysłać przypomnienie do ${selectedAssignment.assignee?.name || 'użytkownika'}?`
-                  : `Are you sure you want to send a reminder to ${selectedAssignment.assignee?.name || 'the user'}?`
-                }
+                  : `Are you sure you want to send a reminder to ${selectedAssignment.assignee?.name || 'the user'}?`}
               </p>
               <div className="bg-navy-800 rounded-lg p-3 mb-4">
-                <div className="text-sm text-white font-medium">{selectedAssignment.template?.name}</div>
+                <div className="text-sm text-white font-medium">
+                  {selectedAssignment.template?.name}
+                </div>
                 <div className="text-xs text-slate-500 mt-1">
-                  {selectedAssignment.dueAt 
+                  {selectedAssignment.dueAt
                     ? `${isPolish ? 'Termin:' : 'Due:'} ${new Date(selectedAssignment.dueAt).toLocaleDateString()}`
-                    : isPolish ? 'Brak terminu' : 'No due date'
-                  }
+                    : isPolish
+                      ? 'Brak terminu'
+                      : 'No due date'}
                 </div>
               </div>
               <div className="flex gap-3">
@@ -2055,7 +2199,9 @@ export const InterviewHub: React.FC = () => {
                       setShowReminderModal(false);
                       setSelectedAssignment(null);
                     } catch (error) {
-                      toast.error(isPolish ? 'Nie udało się wysłać przypomnienia' : 'Failed to send reminder');
+                      toast.error(
+                        isPolish ? 'Nie udało się wysłać przypomnienia' : 'Failed to send reminder'
+                      );
                     }
                   }}
                   className="flex-1 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-medium transition-colors"
@@ -2097,16 +2243,17 @@ export const InterviewHub: React.FC = () => {
               className="p-4"
             >
               <p className="text-sm text-slate-400 mb-4">
-                {isPolish 
+                {isPolish
                   ? 'Podaj powód zwrotu wywiadu do poprawy:'
-                  : 'Provide a reason for sending the interview back:'
-                }
+                  : 'Provide a reason for sending the interview back:'}
               </p>
               <textarea
                 name="reason"
                 required
                 rows={4}
-                placeholder={isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs to be improved...'}
+                placeholder={
+                  isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs to be improved...'
+                }
                 className="w-full px-3 py-2 rounded-lg bg-navy-800 border border-navy-600 text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all resize-none"
               />
               <div className="flex gap-3 mt-4">
@@ -2154,23 +2301,31 @@ export const InterviewHub: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div className="bg-navy-800 border border-navy-700 rounded-xl p-4">
                   <div className="text-2xl font-bold text-white">{sessions.length}</div>
-                  <div className="text-sm text-slate-400">{isPolish ? 'Wszystkie sesje' : 'Total Sessions'}</div>
+                  <div className="text-sm text-slate-400">
+                    {isPolish ? 'Wszystkie sesje' : 'Total Sessions'}
+                  </div>
                 </div>
                 <div className="bg-navy-800 border border-navy-700 rounded-xl p-4">
                   <div className="text-2xl font-bold text-emerald-400">
-                    {sessions.filter(s => s.status === 'completed').length}
+                    {sessions.filter((s) => s.status === 'completed').length}
                   </div>
-                  <div className="text-sm text-slate-400">{isPolish ? 'Zakończone' : 'Completed'}</div>
+                  <div className="text-sm text-slate-400">
+                    {isPolish ? 'Zakończone' : 'Completed'}
+                  </div>
                 </div>
                 <div className="bg-navy-800 border border-navy-700 rounded-xl p-4">
                   <div className="text-2xl font-bold text-purple-400">
-                    {sessions.filter(s => s.status === 'active').length}
+                    {sessions.filter((s) => s.status === 'active').length}
                   </div>
-                  <div className="text-sm text-slate-400">{isPolish ? 'W trakcie' : 'In Progress'}</div>
+                  <div className="text-sm text-slate-400">
+                    {isPolish ? 'W trakcie' : 'In Progress'}
+                  </div>
                 </div>
                 <div className="bg-navy-800 border border-navy-700 rounded-xl p-4">
                   <div className="text-2xl font-bold text-amber-400">{insights.length}</div>
-                  <div className="text-sm text-slate-400">{isPolish ? 'Wnioski AI' : 'AI Insights'}</div>
+                  <div className="text-sm text-slate-400">
+                    {isPolish ? 'Wnioski AI' : 'AI Insights'}
+                  </div>
                 </div>
               </div>
 
@@ -2181,24 +2336,36 @@ export const InterviewHub: React.FC = () => {
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
-                    <div className="text-xl font-bold text-blue-400">{managedAssignments.length}</div>
-                    <div className="text-xs text-slate-500">{isPolish ? 'Zarządzane' : 'Managed'}</div>
+                    <div className="text-xl font-bold text-blue-400">
+                      {managedAssignments.length}
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      {isPolish ? 'Zarządzane' : 'Managed'}
+                    </div>
                   </div>
                   <div>
-                    <div className="text-xl font-bold text-red-400">{overdueAssignments.length}</div>
-                    <div className="text-xs text-slate-500">{isPolish ? 'Przeterminowane' : 'Overdue'}</div>
+                    <div className="text-xl font-bold text-red-400">
+                      {overdueAssignments.length}
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      {isPolish ? 'Przeterminowane' : 'Overdue'}
+                    </div>
                   </div>
                   <div>
                     <div className="text-xl font-bold text-emerald-400">
-                      {managedAssignments.filter(a => a.status === 'completed').length}
+                      {managedAssignments.filter((a) => a.status === 'completed').length}
                     </div>
-                    <div className="text-xs text-slate-500">{isPolish ? 'Ukończone' : 'Completed'}</div>
+                    <div className="text-xs text-slate-500">
+                      {isPolish ? 'Ukończone' : 'Completed'}
+                    </div>
                   </div>
                   <div>
                     <div className="text-xl font-bold text-amber-400">
-                      {managedAssignments.filter(a => a.status === 'submitted').length}
+                      {managedAssignments.filter((a) => a.status === 'submitted').length}
                     </div>
-                    <div className="text-xs text-slate-500">{isPolish ? 'Do przeglądu' : 'Pending Review'}</div>
+                    <div className="text-xs text-slate-500">
+                      {isPolish ? 'Do przeglądu' : 'Pending Review'}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2215,14 +2382,18 @@ export const InterviewHub: React.FC = () => {
                         <FileText size={14} className="text-blue-400" />
                         <span className="text-sm text-slate-300">{template.name}</span>
                       </div>
-                      <span className="text-xs text-slate-500">{template.questionCount} {isPolish ? 'pytań' : 'questions'}</span>
+                      <span className="text-xs text-slate-500">
+                        {template.questionCount} {isPolish ? 'pytań' : 'questions'}
+                      </span>
                     </div>
                   ))}
                 </div>
               </div>
 
               <p className="text-center text-slate-500 text-sm mt-6">
-                {isPolish ? 'Pełny dashboard analityczny w przygotowaniu...' : 'Full analytics dashboard coming soon...'}
+                {isPolish
+                  ? 'Pełny dashboard analityczny w przygotowaniu...'
+                  : 'Full analytics dashboard coming soon...'}
               </p>
             </div>
           </div>

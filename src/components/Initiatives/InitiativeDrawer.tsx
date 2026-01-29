@@ -1,6 +1,6 @@
 /**
  * InitiativeDrawer
- * 
+ *
  * Drawer panel (50% viewport width) for initiative details.
  * Implements "Open wider" functionality to expand to full card view.
  * Part of Initiatives + Roadmap module.
@@ -29,7 +29,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import { getStatusMeta, getStatusActions, StatusAction } from '@/services/initiativeLifecycle';
+import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
 
 import { InitiativeStatus, PortfolioInitiative, User } from '../../types';
 
@@ -62,6 +62,15 @@ interface GateDecision {
   ownerName?: string;
 }
 
+interface RaidItem {
+  id: string;
+  type: 'risk' | 'issue' | 'assumption' | 'dependency';
+  title: string;
+  severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  status?: string;
+  dueDate?: string;
+}
+
 const TABS: { id: DrawerTab; label: string; icon: React.ReactNode }[] = [
   { id: 'overview', label: 'Overview', icon: <FileText size={14} /> },
   { id: 'timeline', label: 'Timeline', icon: <Calendar size={14} /> },
@@ -71,15 +80,34 @@ const TABS: { id: DrawerTab; label: string; icon: React.ReactNode }[] = [
 
 /**
  * Gate Decisions for Initiatives module
- * Flow: REVIEW -> APPROVED -> PLANNING
- * - Go/No-Go: Required to move from REVIEW to APPROVED
- * - Resources Commit: Required to move from APPROVED to PLANNING
- * - Schedule Lock: Required to move from APPROVED to PLANNING
+ * Canonical flow (PMO):
+ * REVIEW -> PROMOTED -> PLANNING -> APPROVED -> SCHEDULED
+ *
+ * Gate enforcement lives in backend (`InitiativeController.updateInitiativeStatus`).
+ * Drawer shows readiness based on required decision domains.
  */
 const GATE_DEFINITIONS = [
-  { id: 'GO_NO_GO', label: 'Go/No-Go', forStatus: 'REVIEW', targetStatus: 'APPROVED', pmoDomain: 'GOVERNANCE_DECISION_MAKING' },
-  { id: 'RESOURCES_COMMIT', label: 'Resources Commit', forStatus: 'APPROVED', targetStatus: 'PLANNING', pmoDomain: 'RESOURCE_RESPONSIBILITY' },
-  { id: 'SCHEDULE_LOCK', label: 'Schedule Lock', forStatus: 'APPROVED', targetStatus: 'PLANNING', pmoDomain: 'SCHEDULE_MILESTONES' },
+  {
+    id: 'GO_NO_GO',
+    label: 'Go/No-Go',
+    forStatus: 'REVIEW',
+    targetStatus: 'PROMOTED',
+    pmoDomain: 'GOVERNANCE_DECISION_MAKING',
+  },
+  {
+    id: 'RESOURCES_COMMIT',
+    label: 'Resources Commit',
+    forStatus: 'PROMOTED',
+    targetStatus: 'PLANNING',
+    pmoDomain: 'RESOURCE_RESPONSIBILITY',
+  },
+  {
+    id: 'SCHEDULE_LOCK',
+    label: 'Schedule Lock',
+    forStatus: 'APPROVED',
+    targetStatus: 'SCHEDULED',
+    pmoDomain: 'SCHEDULE_MILESTONES',
+  },
 ];
 
 export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
@@ -94,6 +122,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
   const [activeTab, setActiveTab] = useState<DrawerTab>('overview');
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [decisions, setDecisions] = useState<GateDecision[]>([]);
+  const [raidItems, setRaidItems] = useState<RaidItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // Fetch additional data when initiative changes
@@ -102,6 +131,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
     setActiveTab('overview');
     fetchMilestones();
     fetchDecisions();
+    fetchRaid();
   }, [initiative?.id, isOpen]);
 
   const fetchMilestones = async () => {
@@ -127,16 +157,26 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
     }
   };
 
+  const fetchRaid = async () => {
+    if (!initiative?.id) return;
+    try {
+      const response = await Api.get(`/initiatives/${initiative.id}/raid?limit=3`);
+      setRaidItems(response?.items || response?.raid || (Array.isArray(response) ? response : []));
+    } catch {
+      setRaidItems([]);
+    }
+  };
+
   const handleStatusAction = useCallback(
     async (action: StatusAction) => {
       if (!initiative) return;
-      
+
       try {
         setIsLoading(true);
         await Api.patch(`/initiatives/${initiative.id}/status`, {
           status: action.targetStatus,
         });
-        
+
         onUpdate({ ...initiative, status: action.targetStatus });
         toast.success(`Status changed to ${action.targetStatus}`);
       } catch (error: any) {
@@ -177,9 +217,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
     : [];
 
   const getGateStatus = (pmoDomain: string) => {
-    const match = decisions.find(
-      (d) => d.type === pmoDomain || (d as any).pmoDomain === pmoDomain
-    );
+    const match = decisions.find((d) => d.type === pmoDomain || (d as any).pmoDomain === pmoDomain);
     if (!match) return 'MISSING';
     return match.status;
   };
@@ -201,52 +239,81 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
     const statusMeta = getStatusMeta(initiative.status as InitiativeStatus);
     const actions = getStatusActions(initiative.status as InitiativeStatus);
     const primaryActions = actions.filter((a) => a.variant === 'primary').slice(0, 2);
+    const blockingGates = requiredGates.filter((g) => getGateStatus(g.pmoDomain) !== 'APPROVED');
+    const isGateReady = requiredGates.length === 0 || blockingGates.length === 0;
+
+    const nextMilestone = milestones
+      .filter((m) => m.status !== 'COMPLETED' && !!m.targetDate)
+      .sort(
+        (a, b) =>
+          new Date(a.targetDate as string).getTime() - new Date(b.targetDate as string).getTime()
+      )[0];
 
     return (
       <div className="space-y-5">
-        {/* Workflow Progress */}
-        <div className="p-4 bg-navy-900/50 rounded-xl border border-navy-700">
+        {/* Gate readiness */}
+        <div
+          className={`p-4 rounded-xl border ${
+            isGateReady ? 'bg-navy-900/50 border-navy-700' : 'bg-amber-900/10 border-amber-500/20'
+          }`}
+        >
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-400 uppercase">
-              Workflow Progress
-            </span>
-            <span className={`px-2 py-0.5 text-xs font-medium rounded ${statusMeta?.bgColor} ${statusMeta?.color}`}>
+            <span className="text-xs font-semibold text-slate-400 uppercase">Quick review</span>
+            <span
+              className={`px-2 py-0.5 text-xs font-medium rounded ${statusMeta?.bgColor} ${statusMeta?.color}`}
+            >
               {statusMeta?.label}
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            {['REVIEW', 'APPROVED', 'PLANNING'].map((status, idx) => (
-              <React.Fragment key={status}>
-                <div
-                  className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold transition-all ${
-                    initiative.status === status
-                      ? 'bg-purple-500 text-white ring-2 ring-purple-300'
-                      : workflowProgress > idx * 33
-                        ? 'bg-green-500/20 text-green-400'
-                        : 'bg-navy-800 text-slate-500'
-                  }`}
-                >
-                  {workflowProgress > idx * 33 && initiative.status !== status ? (
-                    <CheckCircle2 size={14} />
-                  ) : (
-                    idx + 1
-                  )}
-                </div>
-                {idx < 2 && (
-                  <div
-                    className={`flex-1 h-1 rounded ${
-                      workflowProgress > (idx + 1) * 33 ? 'bg-green-500/30' : 'bg-navy-700'
-                    }`}
-                  />
-                )}
-              </React.Fragment>
-            ))}
+
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-sm font-medium text-white">Gate readiness</div>
+              <div className="text-xs text-slate-400 mt-0.5">
+                {requiredGates.length === 0
+                  ? 'No gate required for current status.'
+                  : isGateReady
+                    ? 'All required gate decisions are approved.'
+                    : 'Blocked by missing / pending gate decisions.'}
+              </div>
+            </div>
+            {requiredGates.length > 0 && (
+              <button
+                onClick={() => setActiveTab('decisions')}
+                className="text-xs text-purple-400 hover:text-purple-300"
+              >
+                View decisions
+              </button>
+            )}
           </div>
-          <div className="flex justify-between text-[10px] text-slate-500 mt-2">
-            <span>Review</span>
-            <span>Approved</span>
-            <span>Planning</span>
-          </div>
+
+          {requiredGates.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {requiredGates.map((gate) => {
+                const status = getGateStatus(gate.pmoDomain);
+                const ok = status === 'APPROVED';
+                return (
+                  <div key={gate.id} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2 text-slate-300">
+                      <Scale size={14} className={ok ? 'text-emerald-400' : 'text-amber-400'} />
+                      <span>{gate.label}</span>
+                    </div>
+                    <span
+                      className={`px-2 py-0.5 text-[10px] font-medium rounded ${
+                        ok
+                          ? 'bg-emerald-500/20 text-emerald-400'
+                          : status === 'PENDING'
+                            ? 'bg-amber-500/20 text-amber-400'
+                            : 'bg-slate-500/20 text-slate-400'
+                      }`}
+                    >
+                      {status === 'MISSING' ? 'Not requested' : status}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Summary */}
@@ -271,9 +338,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                   style={{ width: `${initiative.progress || 0}%` }}
                 />
               </div>
-              <span className="text-sm font-semibold text-white">
-                {initiative.progress || 0}%
-              </span>
+              <span className="text-sm font-semibold text-white">{initiative.progress || 0}%</span>
             </div>
           </div>
 
@@ -302,11 +367,17 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
               <Flag size={12} />
               Priority
             </div>
-            <div className={`text-sm font-semibold ${
-              initiative.priority === 'CRITICAL' ? 'text-red-400' :
-              initiative.priority === 'HIGH' ? 'text-orange-400' :
-              initiative.priority === 'MEDIUM' ? 'text-amber-400' : 'text-slate-400'
-            }`}>
+            <div
+              className={`text-sm font-semibold ${
+                initiative.priority === 'CRITICAL'
+                  ? 'text-red-400'
+                  : initiative.priority === 'HIGH'
+                    ? 'text-orange-400'
+                    : initiative.priority === 'MEDIUM'
+                      ? 'text-amber-400'
+                      : 'text-slate-400'
+              }`}
+            >
               {initiative.priority || 'Medium'}
             </div>
           </div>
@@ -329,40 +400,38 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
               <span className="text-white">{formatDate(initiative.plannedEndDate)}</span>
             </div>
           </div>
+          <div className="flex items-center justify-between text-xs text-slate-400 mt-2">
+            <span className="flex items-center gap-1.5">
+              <Milestone size={12} />
+              Next milestone
+            </span>
+            <span className="text-slate-200">
+              {nextMilestone
+                ? `${nextMilestone.name} · ${formatDate(nextMilestone.targetDate)}`
+                : '-'}
+            </span>
+          </div>
         </div>
 
-        {/* Required Gate Decisions */}
-        {requiredGates.length > 0 && (
-          <div className="p-4 bg-amber-900/10 rounded-xl border border-amber-500/20">
-            <div className="flex items-center gap-2 mb-3">
-              <Scale size={14} className="text-amber-400" />
-              <span className="text-xs font-semibold text-amber-400 uppercase">
-                Required Gate Decisions
-              </span>
-            </div>
-            <div className="space-y-2">
-              {requiredGates.map((gate) => {
-                const status = getGateStatus(gate.pmoDomain);
-                return (
-                  <div key={gate.id} className="flex items-center justify-between text-sm">
-                    <span className="text-slate-300">{gate.label}</span>
-                    <span
-                      className={`px-2 py-0.5 text-[10px] font-medium rounded ${
-                        status === 'APPROVED'
-                          ? 'bg-green-500/20 text-green-400'
-                          : status === 'PENDING'
-                            ? 'bg-amber-500/20 text-amber-400'
-                            : 'bg-slate-500/20 text-slate-400'
-                      }`}
-                    >
-                      {status === 'MISSING' ? 'Not Requested' : status}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+        {/* Top RAID */}
+        <div className="p-3 bg-navy-900/50 rounded-lg border border-navy-700">
+          <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-2">
+            <AlertTriangle size={12} />
+            Top risks / issues
           </div>
-        )}
+          {raidItems.length === 0 ? (
+            <div className="text-sm text-slate-500">No RAID items yet.</div>
+          ) : (
+            <div className="space-y-2">
+              {raidItems.slice(0, 3).map((item) => (
+                <div key={item.id} className="flex items-center justify-between text-sm">
+                  <div className="text-slate-200 truncate pr-2">{item.title}</div>
+                  <div className="text-[10px] text-slate-400 uppercase">{item.type}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Actions */}
         {primaryActions.length > 0 && (
@@ -395,9 +464,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
         {/* Timeline Header */}
         <div className="flex items-center justify-between">
           <h4 className="text-xs font-semibold text-slate-400 uppercase">Milestones</h4>
-          <button className="text-xs text-purple-400 hover:text-purple-300">
-            + Add Milestone
-          </button>
+          <button className="text-xs text-purple-400 hover:text-purple-300">+ Add Milestone</button>
         </div>
 
         {/* Milestones List */}
@@ -621,7 +688,9 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-xs text-slate-400">
-                    <span className="capitalize">{decision.type?.toLowerCase().replace(/_/g, ' ')}</span>
+                    <span className="capitalize">
+                      {decision.type?.toLowerCase().replace(/_/g, ' ')}
+                    </span>
                     {decision.dueDate && (
                       <span className="flex items-center gap-1">
                         <Clock size={10} />
@@ -637,15 +706,19 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
 
         {/* Gate Requirements Info */}
         <div className="p-4 bg-slate-800/30 rounded-xl border border-navy-700">
-          <h4 className="text-xs font-semibold text-slate-400 uppercase mb-3">
-            Gate Requirements
-          </h4>
+          <h4 className="text-xs font-semibold text-slate-400 uppercase mb-3">Gate Requirements</h4>
           <div className="space-y-2 text-xs text-slate-400">
             <p>
-              <strong className="text-slate-300">REVIEW → APPROVED:</strong> Requires Go/No-Go decision
+              <strong className="text-slate-300">REVIEW → PROMOTED:</strong> Requires Go/No-Go
+              decision
             </p>
             <p>
-              <strong className="text-slate-300">APPROVED → EXECUTING:</strong> Requires Resources Commit and Schedule Lock decisions
+              <strong className="text-slate-300">PROMOTED → PLANNING:</strong> Requires Resources
+              Commit decision
+            </p>
+            <p>
+              <strong className="text-slate-300">APPROVED → SCHEDULED:</strong> Requires Schedule
+              Lock decision + planned dates
             </p>
           </div>
         </div>
@@ -701,9 +774,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                     </span>
                   )}
                 </div>
-                <h2 className="text-xl font-bold text-white line-clamp-2">
-                  {initiative.name}
-                </h2>
+                <h2 className="text-xl font-bold text-white line-clamp-2">{initiative.name}</h2>
               </div>
 
               <div className="flex items-center gap-1">
@@ -754,7 +825,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
               className="w-full flex items-center justify-center gap-2 py-3 text-sm font-medium text-purple-400 hover:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 rounded-lg transition-colors"
             >
               <ExternalLink size={16} />
-              Open Wider - Full Initiative View
+              Open full card
             </button>
           </div>
         </div>

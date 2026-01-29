@@ -24,6 +24,8 @@ import {
   WorkspaceType,
 } from '../types/workspace';
 
+const STORE_DEBUG = import.meta.env.VITE_STORE_DEBUG === 'true';
+
 // ==================== TYPES ====================
 
 export interface Conversation {
@@ -657,12 +659,13 @@ export const useConversationStore = create<ConversationState>()(
       // ==================== UNIFIED CHAT ACTIONS ====================
 
       setDisplayMode: (mode: ChatDisplayMode) => {
-        console.log('[ConversationStore] setDisplayMode:', mode);
+        if (STORE_DEBUG) console.log('[ConversationStore] setDisplayMode:', mode);
         set({ displayMode: mode });
       },
 
       setWorkspaceContext: (context: WorkspaceContext | null) => {
-        console.log('[ConversationStore] setWorkspaceContext:', context?.type, context?.entityId);
+        if (STORE_DEBUG)
+          console.log('[ConversationStore] setWorkspaceContext:', context?.type, context?.entityId);
         set({ workspaceContext: context });
       },
 
@@ -680,12 +683,14 @@ export const useConversationStore = create<ConversationState>()(
           workspaceContext: context,
           displayMode: 'split',
         });
-        console.log('[ConversationStore] updateWorkspaceFromView:', view, workspaceType);
+        if (STORE_DEBUG)
+          console.log('[ConversationStore] updateWorkspaceFromView:', view, workspaceType);
       },
 
       expandToFullScreen: () => {
         const { workspaceContext } = get();
-        console.log('[ConversationStore] expandToFullScreen from:', workspaceContext?.view);
+        if (STORE_DEBUG)
+          console.log('[ConversationStore] expandToFullScreen from:', workspaceContext?.view);
         set({
           displayMode: 'full',
           previousView: workspaceContext?.view || null,

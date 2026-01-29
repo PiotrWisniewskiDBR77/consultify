@@ -28,6 +28,7 @@ const MAX_VISIBLE_TABS = 6;
 // Status dot colors - uses canonical 11-status initiative lifecycle
 const STATUS_COLORS: Record<ItemStatus, string> = {
   DRAFT: 'bg-slate-400',
+  PENDING_REVIEW: 'bg-orange-400',
   REVIEW: 'bg-amber-400',
   PROMOTED: 'bg-blue-400',
   PLANNING: 'bg-indigo-400',
@@ -38,6 +39,7 @@ const STATUS_COLORS: Record<ItemStatus, string> = {
   DONE: 'bg-green-400',
   TRACKING: 'bg-teal-400',
   CANCELLED: 'bg-gray-400',
+  ARCHIVED: 'bg-slate-500',
 };
 
 // Type colors for left border accent

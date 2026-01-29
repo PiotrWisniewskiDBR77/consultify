@@ -196,8 +196,16 @@ export class TaskController {
       const limit = Number(query.limit) || 100;
       const offset = (page - 1) * limit;
 
-      const { projectId, status, assigneeId, priority, initiativeId, reporterId, taskType, search } =
-        query as any;
+      const {
+        projectId,
+        status,
+        assigneeId,
+        priority,
+        initiativeId,
+        reporterId,
+        taskType,
+        search,
+      } = query as any;
 
       const sql = `
             SELECT 
@@ -578,6 +586,7 @@ export class TaskController {
         taskType,
         initiativeId,
         ownerId,
+        blockedByDecisionId,
         requiresAcceptance,
         acceptanceType,
         acceptorId,
@@ -618,6 +627,11 @@ export class TaskController {
       const finalBlockedReason = blockedReason || '';
       const finalRequiresAcceptance = Boolean(requiresAcceptance);
       const finalWeight = typeof weight === 'number' ? weight : 1;
+      // Owner is mandatory (system contract). Default: explicit owner -> assignee -> creator.
+      const effectiveOwnerId = ownerId || assigneeId || userId;
+      const effectiveBlockedByDecisionId =
+        finalStatus === 'blocked' ? blockedByDecisionId || null : null;
+      const effectiveBlockedAt = finalStatus === 'blocked' ? now : null;
 
       const sql = `
             INSERT INTO tasks (
@@ -629,10 +643,10 @@ export class TaskController {
                 weight, weight_reason,
                 expected_outcome, decision_impact, evidence_required, strategic_contribution,
                 roadmap_initiative_id, kpi_id, raid_item_id, assignees,
-                progress, blocked_reason,
+                progress, blocked_reason, blocked_by_decision_id, blocked_at,
                 created_at, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
       const result = await DbPromise.run(sql, [
@@ -653,7 +667,7 @@ export class TaskController {
         finalTaskType,
         initiativeId,
         why,
-        ownerId || null,
+        effectiveOwnerId,
         finalRequiresAcceptance,
         finalRequiresAcceptance ? acceptanceType || 'manual' : null,
         finalRequiresAcceptance ? acceptorId || null : null,
@@ -669,6 +683,8 @@ export class TaskController {
         assignees ? JSON.stringify(assignees) : '[]',
         finalProgress,
         finalBlockedReason,
+        effectiveBlockedByDecisionId,
+        effectiveBlockedAt,
         now,
         now,
       ]);
@@ -774,6 +790,20 @@ export class TaskController {
         return;
       }
 
+      // Owner is mandatory (system contract). Prevent explicitly clearing.
+      if (Object.prototype.hasOwnProperty.call(updates as any, 'ownerId')) {
+        const v = (updates as any).ownerId;
+        if (!v) {
+          res.status(400).json({ error: 'ownerId is required' });
+          return;
+        }
+      }
+      // If legacy task has no owner, auto-heal on first update.
+      if (!currentTask.owner_id && !(updates as any).ownerId) {
+        const incomingAssignee = (updates as any).assigneeId || (updates as any).assignee_id;
+        (updates as any).ownerId = incomingAssignee || currentTask.assignee_id || userId;
+      }
+
       // Gate: prevent completing when blocking decisions exist
       if ((updates as any)?.status === 'done') {
         const blockers = await DbPromise.all<{ id: string; title: string }>(
@@ -836,6 +866,8 @@ export class TaskController {
         'assignees',
         'progress',
         'blocked_reason',
+        'blocked_by_decision_id',
+        'blocked_at',
       ];
 
       const fieldMap: Record<string, string> = {
@@ -860,6 +892,8 @@ export class TaskController {
         kpiId: 'kpi_id',
         raidItemId: 'raid_item_id',
         blockedReason: 'blocked_reason',
+        blockedByDecisionId: 'blocked_by_decision_id',
+        blockedAt: 'blocked_at',
       };
 
       const sqlUpdates: string[] = [];
@@ -916,6 +950,15 @@ export class TaskController {
         if (!updates.progress || updates.progress < 100) {
           sqlUpdates.push(`progress = ?`);
           params.push(100);
+        }
+      }
+
+      // When task becomes blocked, set blocked_at if missing
+      if ((updates as any).status === 'blocked' && currentTask.status !== 'blocked') {
+        const alreadySettingBlockedAt = sqlUpdates.some((s) => s.startsWith('blocked_at ='));
+        if (!alreadySettingBlockedAt) {
+          sqlUpdates.push(`blocked_at = ?`);
+          params.push(now);
         }
       }
 
@@ -976,10 +1019,10 @@ export class TaskController {
 
       // PMO Notification Rules (throttled)
       try {
-        const updatedRow = await DbPromise.get<TaskRow>(`SELECT * FROM tasks WHERE id = ? AND organization_id = ?`, [
-          id,
-          orgId,
-        ]);
+        const updatedRow = await DbPromise.get<TaskRow>(
+          `SELECT * FROM tasks WHERE id = ? AND organization_id = ?`,
+          [id, orgId]
+        );
         const row: any = updatedRow || currentTask;
         const nowIso = now;
         const nowMs = Date.now();
@@ -1027,9 +1070,14 @@ export class TaskController {
                   relatedObjectType: 'TASK',
                   relatedObjectId: id,
                 })
-                .catch((err: any) => logger.error('[TaskController] Overdue notification failed:', err));
+                .catch((err: any) =>
+                  logger.error('[TaskController] Overdue notification failed:', err)
+                );
             }
-            await DbPromise.run(`UPDATE tasks SET last_overdue_notified_at = ? WHERE id = ?`, [nowIso, id]);
+            await DbPromise.run(`UPDATE tasks SET last_overdue_notified_at = ? WHERE id = ?`, [
+              nowIso,
+              id,
+            ]);
           }
         }
 
@@ -1053,13 +1101,23 @@ export class TaskController {
               relatedObjectType: 'TASK',
               relatedObjectId: id,
             })
-            .catch((err: any) => logger.error('[TaskController] Acceptance notification failed:', err));
-          await DbPromise.run(`UPDATE tasks SET last_acceptance_notified_at = ? WHERE id = ?`, [nowIso, id]);
+            .catch((err: any) =>
+              logger.error('[TaskController] Acceptance notification failed:', err)
+            );
+          await DbPromise.run(`UPDATE tasks SET last_acceptance_notified_at = ? WHERE id = ?`, [
+            nowIso,
+            id,
+          ]);
         }
 
         // Unassigned -> backup/owner
         const unassignedEnabled = (row.notify_on_unassigned ?? 1) === 1;
-        if (unassignedEnabled && !assignee && (backup || owner) && canNotify(row.last_unassigned_notified_at)) {
+        if (
+          unassignedEnabled &&
+          !assignee &&
+          (backup || owner) &&
+          canNotify(row.last_unassigned_notified_at)
+        ) {
           const target = backup || owner;
           if (target) {
             (NotificationService as any)
@@ -1072,8 +1130,13 @@ export class TaskController {
                 relatedObjectType: 'TASK',
                 relatedObjectId: id,
               })
-              .catch((err: any) => logger.error('[TaskController] Unassigned notification failed:', err));
-            await DbPromise.run(`UPDATE tasks SET last_unassigned_notified_at = ? WHERE id = ?`, [nowIso, id]);
+              .catch((err: any) =>
+                logger.error('[TaskController] Unassigned notification failed:', err)
+              );
+            await DbPromise.run(`UPDATE tasks SET last_unassigned_notified_at = ? WHERE id = ?`, [
+              nowIso,
+              id,
+            ]);
           }
         }
 
@@ -1093,9 +1156,14 @@ export class TaskController {
                 relatedObjectType: 'TASK',
                 relatedObjectId: id,
               })
-              .catch((err: any) => logger.error('[TaskController] Blocked notification failed:', err));
+              .catch((err: any) =>
+                logger.error('[TaskController] Blocked notification failed:', err)
+              );
           }
-          await DbPromise.run(`UPDATE tasks SET last_blocked_notified_at = ? WHERE id = ?`, [nowIso, id]);
+          await DbPromise.run(`UPDATE tasks SET last_blocked_notified_at = ? WHERE id = ?`, [
+            nowIso,
+            id,
+          ]);
         }
       } catch (e: any) {
         logger.warn('[TaskController] PMO notification rules skipped:', e?.message || e);

@@ -5,7 +5,9 @@
 Ten dokument opisuje **kompletny flow pracy** w aplikacji - od momentu pojawienia się pomysłu na inicjatywę, przez jej planowanie, realizację, aż po śledzenie korzyści. Obejmuje zarówno poziom **Initiative** jak i **Task**.
 
 ## Kanon ról i założeń (must-read)
+
 Ten flow zakłada jedno rozumienie ról i delegacji w projektach (nie wszystkie role muszą istnieć w każdym projekcie):
+
 - `wdrozenia/workflows/01-ROLES-AND-ASSUMPTIONS.md`
 
 ---
@@ -37,11 +39,11 @@ Ten flow zakłada jedno rozumienie ról i delegacji w projektach (nie wszystkie 
 
 ### Moduły źródłowe
 
-| Moduł | Opis | Wynik |
-|-------|------|-------|
-| **Tools** | Narzędzia analityczne (SWOT, Porter, Growth Paths, etc.) | Inicjatywy z analizy |
-| **Assessment** | Oceny dojrzałości (DRD, SIRI, ADMA, CMMI, LEAN) | Inicjatywy z oceny |
-| **Interview** | Wywiady z interesariuszami | Inicjatywy z wywiadów |
+| Moduł          | Opis                                                     | Wynik                 |
+| -------------- | -------------------------------------------------------- | --------------------- |
+| **Tools**      | Narzędzia analityczne (SWOT, Porter, Growth Paths, etc.) | Inicjatywy z analizy  |
+| **Assessment** | Oceny dojrzałości (DRD, SIRI, ADMA, CMMI, LEAN)          | Inicjatywy z oceny    |
+| **Interview**  | Wywiady z interesariuszami                               | Inicjatywy z wywiadów |
 
 ### Przepływ w Fazie 1
 
@@ -75,10 +77,10 @@ Ten flow zakłada jedno rozumienie ról i delegacji w projektach (nie wszystkie 
 
 ### Role w Fazie 1
 
-| Rola | Uprawnienia |
-|------|-------------|
-| **Consultant** | Tworzy, edytuje DRAFT, wysyła do review |
-| **Project Manager / Lead** | Przegląda, zatwierdza lub odsyła |
+| Rola                       | Uprawnienia                             |
+| -------------------------- | --------------------------------------- |
+| **Consultant**             | Tworzy, edytuje DRAFT, wysyła do review |
+| **Project Manager / Lead** | Przegląda, zatwierdza lub odsyła        |
 
 > Jeśli projekt nie ma osobnej roli reviewer/PMO, odbiór jakości pełni Project Manager (delegacje w `01-ROLES-AND-ASSUMPTIONS.md`).
 
@@ -140,21 +142,21 @@ Ten flow zakłada jedno rozumienie ról i delegacji w projektach (nie wszystkie 
 
 ### Role w Fazie 2
 
-| Rola | Uprawnienia |
-|------|-------------|
-| **Project Sponsor** | ACCEPT / REJECT w REVIEW |
+| Rola                   | Uprawnienia                    |
+| ---------------------- | ------------------------------ |
+| **Project Sponsor**    | ACCEPT / REJECT w REVIEW       |
 | **Steering Committee** | APPROVE w PLANNING (eskalacje) |
-| **PMO** | START_PLANNING, SCHEDULE |
-| **Initiative Owner** | Edycja, uzupełnianie danych |
+| **PMO**                | START_PLANNING, SCHEDULE       |
+| **Initiative Owner**   | Edycja, uzupełnianie danych    |
 
 ### Artefakty wymagane
 
-| Status | Wymagane artefakty |
-|--------|-------------------|
-| REVIEW | Opis, Owner, Wstępny scope, Risk flags (min. 1) |
-| PLANNING | Taski, Timeline, Economic Analysis |
-| APPROVED | Zatwierdzona ekonomika, scope, owner |
-| SCHEDULED | Timeline baseline, Taski z datami |
+| Status    | Wymagane artefakty                              |
+| --------- | ----------------------------------------------- |
+| REVIEW    | Opis, Owner, Wstępny scope, Risk flags (min. 1) |
+| PLANNING  | Taski, Timeline, Economic Analysis              |
+| APPROVED  | Zatwierdzona ekonomika, scope, owner            |
+| SCHEDULED | Timeline baseline, Taski z datami               |
 
 ---
 
@@ -217,12 +219,12 @@ Ten flow zakłada jedno rozumienie ról i delegacji w projektach (nie wszystkie 
 
 ### Role w Fazie 3
 
-| Rola | Uprawnienia |
-|------|-------------|
-| **Initiative Owner** | Zarządzanie taskami, BLOCK, COMPLETE |
-| **Team Member** | Wykonywanie tasków, aktualizacja statusu |
-| **PMO** | Monitoring, eskalacje, UNBLOCK |
-| **Project Sponsor** | UNBLOCK (decyzje biznesowe) |
+| Rola                 | Uprawnienia                              |
+| -------------------- | ---------------------------------------- |
+| **Initiative Owner** | Zarządzanie taskami, BLOCK, COMPLETE     |
+| **Team Member**      | Wykonywanie tasków, aktualizacja statusu |
+| **PMO**              | Monitoring, eskalacje, UNBLOCK           |
+| **Project Sponsor**  | UNBLOCK (decyzje biznesowe)              |
 
 ### Mechanizm zatwierdzania Tasków
 
@@ -280,10 +282,10 @@ Ten flow zakłada jedno rozumienie ról i delegacji w projektach (nie wszystkie 
 
 ### Role w Fazie 4
 
-| Rola | Uprawnienia |
-|------|-------------|
+| Rola               | Uprawnienia                               |
+| ------------------ | ----------------------------------------- |
 | **Business Owner** | Wprowadzanie danych, zamknięcie trackingu |
-| **PMO** | Monitoring, raportowanie |
+| **PMO**            | Monitoring, raportowanie                  |
 
 ---
 
@@ -346,54 +348,54 @@ Ten flow zakłada jedno rozumienie ról i delegacji w projektach (nie wszystkie 
 
 ### Poziom Initiative
 
-| Akcja | Consultant | PM/Lead | Initiative Owner | PMO | Sponsor | Steering |
-|-------|:----------:|:-------:|:----------------:|:---:|:-------:|:--------:|
-| Create DRAFT | ✅ | ✅ | - | - | - | - |
-| Edit DRAFT | ✅ | ✅ | - | - | - | - |
-| SUBMIT_FOR_REVIEW | ✅ | - | - | - | - | - |
-| SEND_BACK | - | ✅ | - | ✅ | - | - |
-| APPROVE_TO_INITIATIVE | - | ✅ | - | ✅ | - | - |
-| ACCEPT/REJECT | - | - | - | - | ✅ | ✅ |
-| START_PLANNING | - | - | - | ✅ | - | - |
-| APPROVE | - | - | - | - | - | ✅ |
-| SCHEDULE | - | - | - | ✅ | - | - |
-| START | - | - | - | ✅ | - | - |
-| BLOCK/UNBLOCK | - | - | ✅ | ✅ | ✅ | ✅ |
-| COMPLETE | - | - | ✅ | ✅ | - | - |
-| START_TRACKING | - | - | - | - | ✅* | - |
-| CANCEL | - | - | - | ✅ | - | ✅ |
+| Akcja                 | Consultant | PM/Lead | Initiative Owner | PMO | Sponsor | Steering |
+| --------------------- | :--------: | :-----: | :--------------: | :-: | :-----: | :------: |
+| Create DRAFT          |     ✅     |   ✅    |        -         |  -  |    -    |    -     |
+| Edit DRAFT            |     ✅     |   ✅    |        -         |  -  |    -    |    -     |
+| SUBMIT_FOR_REVIEW     |     ✅     |    -    |        -         |  -  |    -    |    -     |
+| SEND_BACK             |     -      |   ✅    |        -         | ✅  |    -    |    -     |
+| APPROVE_TO_INITIATIVE |     -      |   ✅    |        -         | ✅  |    -    |    -     |
+| ACCEPT/REJECT         |     -      |    -    |        -         |  -  |   ✅    |    ✅    |
+| START_PLANNING        |     -      |    -    |        -         | ✅  |    -    |    -     |
+| APPROVE               |     -      |    -    |        -         |  -  |    -    |    ✅    |
+| SCHEDULE              |     -      |    -    |        -         | ✅  |    -    |    -     |
+| START                 |     -      |    -    |        -         | ✅  |    -    |    -     |
+| BLOCK/UNBLOCK         |     -      |    -    |        ✅        | ✅  |   ✅    |    ✅    |
+| COMPLETE              |     -      |    -    |        ✅        | ✅  |    -    |    -     |
+| START_TRACKING        |     -      |    -    |        -         |  -  |  ✅\*   |    -     |
+| CANCEL                |     -      |    -    |        -         | ✅  |    -    |    ✅    |
 
-*Business Owner
+\*Business Owner
 
 ### Poziom Task
 
-| Akcja | Assignee | Reporter | Initiative Owner | PM | PMO |
-|-------|:--------:|:--------:|:----------------:|:--:|:---:|
-| Create Task | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Edit Task | ✅ | ✅ | ✅ | ✅ | ✅ |
-| START (TODO→IN_PROGRESS) | ✅ | - | ✅ | - | - |
-| COMPLETE (→PENDING_APPROVAL) | ✅ | - | - | - | - |
-| APPROVE Task | - | ✅* | ✅* | ✅* | - |
-| REJECT Task | - | ✅* | ✅* | ✅* | - |
-| BLOCK | ✅ | - | ✅ | ✅ | ✅ |
-| UNBLOCK | - | - | ✅ | ✅ | ✅ |
+| Akcja                        | Assignee | Reporter | Initiative Owner |  PM  | PMO |
+| ---------------------------- | :------: | :------: | :--------------: | :--: | :-: |
+| Create Task                  |    ✅    |    ✅    |        ✅        |  ✅  | ✅  |
+| Edit Task                    |    ✅    |    ✅    |        ✅        |  ✅  | ✅  |
+| START (TODO→IN_PROGRESS)     |    ✅    |    -     |        ✅        |  -   |  -  |
+| COMPLETE (→PENDING_APPROVAL) |    ✅    |    -     |        -         |  -   |  -  |
+| APPROVE Task                 |    -     |   ✅\*   |       ✅\*       | ✅\* |  -  |
+| REJECT Task                  |    -     |   ✅\*   |       ✅\*       | ✅\* |  -  |
+| BLOCK                        |    ✅    |    -     |        ✅        |  ✅  | ✅  |
+| UNBLOCK                      |    -     |    -     |        ✅        |  ✅  | ✅  |
 
-*Zależnie od acceptanceType
+\*Zależnie od acceptanceType
 
 ---
 
 ## 📊 Widoczność w modułach UI
 
-| Moduł | Initiative Statuses | Task Statuses | Główne role |
-|-------|---------------------|---------------|-------------|
-| **Tools** | DRAFT, PENDING_REVIEW | - | Consultant, PM |
-| **Assessment** | DRAFT, PENDING_REVIEW | - | Consultant, PM |
-| **Interview** | DRAFT, PENDING_REVIEW | - | Consultant, PM |
-| **Initiatives** | REVIEW → SCHEDULED | TODO (planning) | PMO, Sponsor, Steering |
-| **Execution** | EXECUTING, BLOCKED, DONE | Wszystkie | Owner, Team, PMO |
-| **My Work** | (własne) | (przypisane) | Wszyscy |
-| **Benefits** | TRACKING | - | Business Owner, PMO |
-| **Reports** | Wszystkie (read-only) | Wszystkie (read-only) | Wszyscy |
+| Moduł           | Initiative Statuses      | Task Statuses         | Główne role            |
+| --------------- | ------------------------ | --------------------- | ---------------------- |
+| **Tools**       | DRAFT, PENDING_REVIEW    | -                     | Consultant, PM         |
+| **Assessment**  | DRAFT, PENDING_REVIEW    | -                     | Consultant, PM         |
+| **Interview**   | DRAFT, PENDING_REVIEW    | -                     | Consultant, PM         |
+| **Initiatives** | REVIEW → SCHEDULED       | TODO (planning)       | PMO, Sponsor, Steering |
+| **Execution**   | EXECUTING, BLOCKED, DONE | Wszystkie             | Owner, Team, PMO       |
+| **My Work**     | (własne)                 | (przypisane)          | Wszyscy                |
+| **Benefits**    | TRACKING                 | -                     | Business Owner, PMO    |
+| **Reports**     | Wszystkie (read-only)    | Wszystkie (read-only) | Wszyscy                |
 
 ---
 
@@ -401,25 +403,56 @@ Ten flow zakłada jedno rozumienie ról i delegacji w projektach (nie wszystkie 
 
 ### Na poziomie Initiative
 
-| Zdarzenie | Odbiorcy |
-|-----------|----------|
-| Nowa inicjatywa do review | PM/Lead |
+| Zdarzenie                              | Odbiorcy              |
+| -------------------------------------- | --------------------- |
+| Nowa inicjatywa do review              | PM/Lead               |
 | Inicjatywa zatwierdzona do Initiatives | Initiative Owner, PMO |
-| Inicjatywa odrzucona | Autor (Consultant) |
-| Inicjatywa wymaga decyzji | Sponsor / Steering |
-| Inicjatywa zablokowana | PMO, Sponsor |
-| Inicjatywa ukończona | Business Owner, PMO |
+| Inicjatywa odrzucona                   | Autor (Consultant)    |
+| Inicjatywa wymaga decyzji              | Sponsor / Steering    |
+| Inicjatywa zablokowana                 | PMO, Sponsor          |
+| Inicjatywa ukończona                   | Business Owner, PMO   |
 
 ### Na poziomie Task
 
-| Zdarzenie | Odbiorcy |
-|-----------|----------|
-| Task przypisany | Assignee |
-| Task wymaga zatwierdzenia | Acceptor |
-| Task zatwierdzony | Assignee, Reporter |
-| Task odrzucony | Assignee |
-| Task zablokowany | Initiative Owner, PMO |
-| Task przeterminowany | Assignee, Initiative Owner |
+| Zdarzenie                 | Odbiorcy                   |
+| ------------------------- | -------------------------- |
+| Task przypisany           | Assignee                   |
+| Task wymaga zatwierdzenia | Acceptor                   |
+| Task zatwierdzony         | Assignee, Reporter         |
+| Task odrzucony            | Assignee                   |
+| Task zablokowany          | Initiative Owner, PMO      |
+| Task przeterminowany      | Assignee, Initiative Owner |
+
+---
+
+## 🧠 Warstwa “komunikacja i taskowanie” (KANON SYSTEMOWY)
+
+Ta warstwa definiuje spójne zachowanie trzech narzędzi: **Task, Decision, Notifications**.
+
+### Zasada domykająca
+
+- **Task** pokazuje, co robimy (i jaki efekt ma się wydarzyć).
+- **Decision** mówi, co wolno i za co odpowiadamy (zamyka niepewność, odblokowuje działania).
+- **Notifications** pilnują, żeby organizacja się nie zatrzymała (presja, eskalacja, rytm).
+
+### Reguły integracyjne (must-have)
+
+1. Task jest poprawny tylko wtedy, gdy system potrafi odpowiedzieć:  
+   **„Co się zmieni w organizacji, jeśli ten Task zostanie zamknięty?”**
+
+2. Task może żyć bez decyzji, **ale blokada Taska wynikająca z braku decyzji zawsze musi prowadzić do Decision**:
+   - Task ma link do Decision,
+   - Decision pokazuje listę blokowanych tasków + koszt braku decyzji.
+
+3. Notyfikacje nie są feedem:
+   - Inbox w My Work jest **kolejką akcji**,
+   - notyfikacje są systemem presji i historii.
+
+Źródła kanoniczne:
+
+- Task: `wdrozenia/standards/entities/01-TASK.md`
+- Decision: `wdrozenia/standards/entities/02-DECISION.md`
+- Notifications: `wdrozenia/standards/entities/06-NOTIFICATION.md`
 
 ---
 
@@ -437,6 +470,6 @@ Ten flow zakłada jedno rozumienie ról i delegacji w projektach (nie wszystkie 
 
 ## Historia zmian
 
-| Data | Zmiana | Autor |
-|------|--------|-------|
+| Data       | Zmiana                                        | Autor |
+| ---------- | --------------------------------------------- | ----- |
 | 2026-01-27 | Utworzenie dokumentu - pełny cykl życia pracy | Agent |
