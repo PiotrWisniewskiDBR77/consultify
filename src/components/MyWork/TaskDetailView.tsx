@@ -16,17 +16,22 @@ import {
   ChevronLeft,
   Clock,
   Edit3,
+  ExternalLink,
   Eye,
   FileText,
   Flag,
+  GitBranch,
   History,
   Layers,
+  Link2,
   Loader2,
   Minus,
   Pause,
   Play,
   Plus,
   Save,
+  Scale,
+  Search,
   Share2,
   Sparkles,
   Tag,
@@ -44,8 +49,6 @@ import { Api } from '@/services/api';
 import { InitiativeService } from '@/services/initiativeService';
 
 import {
-  type AIInsight,
-  AIInsightSection,
   type Alternative,
   AlternativesSection,
   type Attachment,
@@ -213,8 +216,35 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   // Stakeholders
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
 
-  // Decision blocking
+  // Decision blocking (legacy)
   const [blockedByDecisionId, setBlockedByDecisionId] = useState<string>('');
+
+  // Related Decisions
+  interface RelatedDecision {
+    id: string;
+    decisionId: string;
+    decisionTitle: string;
+    decisionStatus: 'pending' | 'approved' | 'rejected' | 'deferred' | 'escalated';
+    relationshipType: 'blocks' | 'requires' | 'informs' | 'depends_on';
+    note?: string;
+  }
+  const [relatedDecisions, setRelatedDecisions] = useState<RelatedDecision[]>([]);
+  const [showDecisionSearch, setShowDecisionSearch] = useState(false);
+  const [decisionSearchQuery, setDecisionSearchQuery] = useState('');
+  const [showCreateDecision, setShowCreateDecision] = useState(false);
+  const [newDecisionTitle, setNewDecisionTitle] = useState('');
+  const [newDecisionDescription, setNewDecisionDescription] = useState('');
+  const [newDecisionRelationType, setNewDecisionRelationType] = useState<
+    'blocks' | 'requires' | 'informs' | 'depends_on'
+  >('requires');
+  const [availableDecisions, setAvailableDecisions] = useState<
+    { id: string; title: string; status: string }[]
+  >([
+    { id: 'dec-1', title: 'Zatwierdzenie budżetu Q2', status: 'pending' },
+    { id: 'dec-2', title: 'Wybór dostawcy chmury', status: 'pending' },
+    { id: 'dec-3', title: 'Go-Live Date Approval', status: 'approved' },
+    { id: 'dec-4', title: 'Zatrudnienie Senior Dev', status: 'pending' },
+  ]);
 
   // New sections state
   const [risks, setRisks] = useState<RiskItem[]>([]);
@@ -222,11 +252,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const [selectedAlternativeId, setSelectedAlternativeId] = useState<string>('');
   const [implementationIdeas, setImplementationIdeas] = useState<ImplementationIdea[]>([]);
   const [dependencies, setDependencies] = useState<TaskDependency[]>([]);
-  const [aiInsights, setAiInsights] = useState<AIInsight[]>([]);
   const [expectedOutcome, setExpectedOutcome] = useState('');
-  const [strategicContribution, setStrategicContribution] = useState<
-    ('PROCESS_CHANGE' | 'BEHAVIOR_CHANGE' | 'CAPABILITY_CHANGE')[]
-  >([]);
 
   // Evidence & Acceptance
   const [evidenceRequired, setEvidenceRequired] = useState<EvidenceType[]>([]);
@@ -242,7 +268,10 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const [isGeneratingRisks, setIsGeneratingRisks] = useState(false);
   const [isGeneratingAlternatives, setIsGeneratingAlternatives] = useState(false);
   const [isGeneratingIdeas, setIsGeneratingIdeas] = useState(false);
-  const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
+  const [isGeneratingAIComment, setIsGeneratingAIComment] = useState(false);
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
+  const [isGeneratingOutcome, setIsGeneratingOutcome] = useState(false);
+  const [isGeneratingChecklist, setIsGeneratingChecklist] = useState(false);
 
   // Activity Log
   interface ActivityLogEntry {
@@ -724,36 +753,131 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     toast.success(isPolish ? 'Wygenerowano pomysły AI' : 'AI ideas generated');
   };
 
-  // AI Insights handler
-  const generateInsightsAI = async () => {
-    setIsGeneratingInsights(true);
-    await new Promise((r) => setTimeout(r, 2000));
-    const newInsights: AIInsight[] = [
-      {
-        id: Math.random().toString(36).substr(2, 9),
-        type: 'recommendation',
-        title: isPolish ? 'Rozważ wcześniejszy start' : 'Consider earlier start',
-        description: isPolish
-          ? 'Na podstawie zależności, wcześniejszy start może przyspieszyć całość'
-          : 'Based on dependencies, earlier start could speed up overall',
-        confidence: 'high',
-        createdAt: new Date().toISOString(),
-        actionable: true,
-      },
-      {
-        id: Math.random().toString(36).substr(2, 9),
-        type: 'warning',
-        title: isPolish ? 'Potencjalne opóźnienie' : 'Potential delay',
-        description: isPolish
-          ? 'Wykryto ryzyko opóźnienia o 2-3 dni'
-          : 'Detected risk of 2-3 day delay',
-        confidence: 'medium',
-        createdAt: new Date().toISOString(),
-      },
+  // AI Description handler
+  const generateAIDescription = async () => {
+    if (!title.trim()) {
+      toast.error(isPolish ? 'Najpierw wprowadź tytuł' : 'Enter title first');
+      return;
+    }
+    setIsGeneratingDescription(true);
+    await new Promise((r) => setTimeout(r, 1500));
+
+    const descriptions = [
+      isPolish
+        ? `Zadanie "${title}" obejmuje następujące działania:\n\n1. Analiza wymagań i określenie zakresu prac\n2. Przygotowanie niezbędnych zasobów i narzędzi\n3. Realizacja głównych kroków zgodnie z planem\n4. Weryfikacja i testowanie rezultatów\n5. Dokumentacja i przekazanie do akceptacji`
+        : `Task "${title}" involves the following activities:\n\n1. Requirements analysis and scope definition\n2. Preparation of necessary resources and tools\n3. Execution of main steps according to plan\n4. Verification and testing of results\n5. Documentation and handover for acceptance`,
+      isPolish
+        ? `Cel: Realizacja "${title}"\n\nZakres prac:\n- Określenie szczegółowych wymagań\n- Koordynacja z zespołem i interesariuszami\n- Implementacja zgodnie z przyjętymi standardami\n- Kontrola jakości i walidacja\n\nUwagi: Zadanie wymaga regularnej komunikacji z zespołem.`
+        : `Goal: Complete "${title}"\n\nScope of work:\n- Define detailed requirements\n- Coordinate with team and stakeholders\n- Implement according to established standards\n- Quality control and validation\n\nNotes: Task requires regular team communication.`,
     ];
-    setAiInsights([...aiInsights, ...newInsights]);
-    setIsGeneratingInsights(false);
-    toast.success(isPolish ? 'Wygenerowano wskazówki AI' : 'AI insights generated');
+
+    setDescription(descriptions[Math.floor(Math.random() * descriptions.length)]);
+    setIsGeneratingDescription(false);
+    addActivityLogEntry('edit', isPolish ? 'AI wygenerowało opis' : 'AI generated description');
+    toast.success(isPolish ? 'AI wygenerowało opis' : 'AI generated description');
+  };
+
+  // AI Expected Outcome handler
+  const generateAIOutcome = async () => {
+    if (!title.trim()) {
+      toast.error(isPolish ? 'Najpierw wprowadź tytuł' : 'Enter title first');
+      return;
+    }
+    setIsGeneratingOutcome(true);
+    await new Promise((r) => setTimeout(r, 1200));
+
+    const outcomes = [
+      isPolish
+        ? `✅ Kryteria sukcesu dla "${title}":\n• Wszystkie wymagania spełnione i zweryfikowane\n• Dokumentacja kompletna i zatwierdzona\n• Brak błędów krytycznych\n• Akceptacja przez interesariuszy`
+        : `✅ Success criteria for "${title}":\n• All requirements met and verified\n• Documentation complete and approved\n• No critical errors\n• Stakeholder acceptance`,
+      isPolish
+        ? `Oczekiwany rezultat:\n1. Zadanie ukończone w terminie\n2. Jakość zgodna ze standardami\n3. Pozytywna walidacja przez zespół QA\n4. Gotowość do wdrożenia/przekazania`
+        : `Expected outcome:\n1. Task completed on time\n2. Quality meets standards\n3. Positive QA validation\n4. Ready for deployment/handover`,
+    ];
+
+    setExpectedOutcome(outcomes[Math.floor(Math.random() * outcomes.length)]);
+    setIsGeneratingOutcome(false);
+    addActivityLogEntry('edit', isPolish ? 'AI wygenerowało rezultat' : 'AI generated outcome');
+    toast.success(
+      isPolish ? 'AI wygenerowało oczekiwany rezultat' : 'AI generated expected outcome'
+    );
+  };
+
+  // AI Checklist handler
+  const generateAIChecklist = async () => {
+    if (!title.trim()) {
+      toast.error(isPolish ? 'Najpierw wprowadź tytuł' : 'Enter title first');
+      return;
+    }
+    setIsGeneratingChecklist(true);
+    await new Promise((r) => setTimeout(r, 1500));
+
+    const checklistItems = isPolish
+      ? [
+          'Przeanalizować wymagania',
+          'Przygotować plan działania',
+          'Zebrać niezbędne zasoby',
+          'Wykonać główne zadanie',
+          'Przetestować rezultaty',
+          'Udokumentować wykonane prace',
+          'Przekazać do przeglądu',
+        ]
+      : [
+          'Analyze requirements',
+          'Prepare action plan',
+          'Gather necessary resources',
+          'Execute main task',
+          'Test results',
+          'Document completed work',
+          'Submit for review',
+        ];
+
+    const newItems = checklistItems.map((text) => ({
+      id: Math.random().toString(36).substr(2, 9),
+      text,
+      completed: false,
+    }));
+
+    setChecklist([...checklist, ...newItems]);
+    setIsGeneratingChecklist(false);
+    addActivityLogEntry('edit', isPolish ? 'AI wygenerowało checklistę' : 'AI generated checklist');
+    toast.success(isPolish ? 'AI wygenerowało checklistę' : 'AI generated checklist');
+  };
+
+  // AI Comment handler
+  const generateAIComment = async () => {
+    setIsGeneratingAIComment(true);
+    await new Promise((r) => setTimeout(r, 1500));
+
+    // Generate AI analysis comment based on task context
+    const aiComments = [
+      isPolish
+        ? `🤖 **Analiza AI**: Na podstawie opisu zadania "${title || 'bez tytułu'}", sugeruję rozważenie następujących aspektów: priorytetyzacja kroków, identyfikacja potencjalnych blokerów oraz określenie mierzalnych kryteriów sukcesu.`
+        : `🤖 **AI Analysis**: Based on the task description "${title || 'untitled'}", I suggest considering the following aspects: step prioritization, identification of potential blockers, and defining measurable success criteria.`,
+      isPolish
+        ? `🤖 **Wskazówka AI**: Zadanie może wymagać dodatkowej koordynacji z zespołem. Rozważ dodanie checklisty z kluczowymi krokami.`
+        : `🤖 **AI Tip**: This task may require additional team coordination. Consider adding a checklist with key steps.`,
+      isPolish
+        ? `🤖 **Rekomendacja AI**: Bazując na priorytecie i terminie, zalecam podzielenie zadania na mniejsze, łatwiejsze do śledzenia części.`
+        : `🤖 **AI Recommendation**: Based on priority and deadline, I recommend breaking this task into smaller, easier-to-track parts.`,
+    ];
+
+    const randomComment = aiComments[Math.floor(Math.random() * aiComments.length)];
+
+    const newComment: Comment = {
+      id: Math.random().toString(36).substr(2, 9),
+      content: randomComment,
+      authorId: 'ai-assistant',
+      authorName: 'AI Assistant',
+      createdAt: new Date().toISOString(),
+      likes: 0,
+      likedByMe: false,
+    };
+
+    setComments([...comments, newComment]);
+    setIsGeneratingAIComment(false);
+    addActivityLogEntry('comment', isPolish ? 'AI wygenerowało komentarz' : 'AI generated comment');
+    toast.success(isPolish ? 'AI wygenerowało komentarz' : 'AI comment generated');
   };
 
   return (
@@ -807,23 +931,83 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl p-5 border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50"
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
             >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 dark:from-blue-500/20 dark:to-cyan-500/20">
-                  <FileText size={16} className="text-blue-500 dark:text-blue-400" />
+              <div
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
+                onClick={() => toggleSection('description')}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 dark:from-blue-500/20 dark:to-cyan-500/20">
+                    <FileText size={18} className="text-blue-500 dark:text-blue-400" />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {isPolish ? 'Opis zadania' : 'Task description'}
+                  </span>
                 </div>
-                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  {isPolish ? 'Opis zadania' : 'Task description'}
-                </span>
+                <div className="flex items-center gap-2">
+                  {description && (
+                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                      ✓
+                    </span>
+                  )}
+                  {/* AI Button - visible only when expanded */}
+                  <AnimatePresence>
+                    {expandedSections.has('description') && (
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          generateAIDescription();
+                        }}
+                        disabled={isGeneratingDescription}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 dark:hover:bg-violet-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                        title={isPolish ? 'Wygeneruj opis AI' : 'Generate AI description'}
+                      >
+                        {isGeneratingDescription ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Sparkles size={14} />
+                        )}
+                        <span>AI</span>
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                  <motion.div
+                    animate={{ rotate: expandedSections.has('description') ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown size={18} className="text-slate-400" />
+                  </motion.div>
+                </div>
               </div>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={4}
-                className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 resize-none transition-all"
-                placeholder={isPolish ? 'Opisz szczegóły zadania...' : 'Describe task details...'}
-              />
+
+              <AnimatePresence>
+                {expandedSections.has('description') && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                  >
+                    <div className="p-4">
+                      <textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        rows={4}
+                        className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 resize-none transition-all"
+                        placeholder={
+                          isPolish ? 'Opisz szczegóły zadania...' : 'Describe task details...'
+                        }
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
 
             {/* Expected Outcome */}
@@ -831,27 +1015,85 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 }}
-              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl p-5 border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50"
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
             >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/20 dark:to-teal-500/20">
-                  <Target size={16} className="text-emerald-500 dark:text-emerald-400" />
+              <div
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
+                onClick={() => toggleSection('expectedOutcome')}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/20 dark:to-teal-500/20">
+                    <Target size={18} className="text-emerald-500 dark:text-emerald-400" />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {isPolish ? 'Oczekiwany rezultat' : 'Expected Outcome'}
+                  </span>
                 </div>
-                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  {isPolish ? 'Oczekiwany rezultat' : 'Expected Outcome'}
-                </span>
+                <div className="flex items-center gap-2">
+                  {expectedOutcome && (
+                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                      ✓
+                    </span>
+                  )}
+                  {/* AI Button - visible only when expanded */}
+                  <AnimatePresence>
+                    {expandedSections.has('expectedOutcome') && (
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          generateAIOutcome();
+                        }}
+                        disabled={isGeneratingOutcome}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 dark:hover:bg-violet-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                        title={isPolish ? 'Wygeneruj rezultat AI' : 'Generate AI outcome'}
+                      >
+                        {isGeneratingOutcome ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Sparkles size={14} />
+                        )}
+                        <span>AI</span>
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                  <motion.div
+                    animate={{ rotate: expandedSections.has('expectedOutcome') ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown size={18} className="text-slate-400" />
+                  </motion.div>
+                </div>
               </div>
-              <textarea
-                value={expectedOutcome}
-                onChange={(e) => setExpectedOutcome(e.target.value)}
-                rows={2}
-                className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/10 resize-none transition-all"
-                placeholder={
-                  isPolish
-                    ? 'Co ma być efektem tego zadania?'
-                    : 'What should be the outcome of this task?'
-                }
-              />
+
+              <AnimatePresence>
+                {expandedSections.has('expectedOutcome') && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                  >
+                    <div className="p-4">
+                      <textarea
+                        value={expectedOutcome}
+                        onChange={(e) => setExpectedOutcome(e.target.value)}
+                        rows={3}
+                        className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/10 resize-none transition-all"
+                        placeholder={
+                          isPolish
+                            ? 'Co ma być efektem tego zadania?'
+                            : 'What should be the outcome of this task?'
+                        }
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
 
             {/* Comments */}
@@ -860,6 +1102,8 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
               onAddComment={handleAddComment}
               onDeleteComment={handleDeleteComment}
               onLikeComment={handleLikeComment}
+              onGenerateAIComment={generateAIComment}
+              isGeneratingAI={isGeneratingAIComment}
               currentUserId="current-user"
               expanded={expandedSections.has('comments')}
               onToggleExpand={() => toggleSection('comments')}
@@ -936,11 +1180,9 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
               animate={{ opacity: 1, y: 0 }}
               className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
             >
-              <motion.button
-                whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
-                whileTap={{ scale: 0.98 }}
+              <div
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
                 onClick={() => toggleSection('checklist')}
-                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20">
@@ -964,6 +1206,32 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
                       </span>
                     </>
                   )}
+                  {/* AI Button - visible only when expanded */}
+                  <AnimatePresence>
+                    {expandedSections.has('checklist') && (
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          generateAIChecklist();
+                        }}
+                        disabled={isGeneratingChecklist}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 dark:hover:bg-violet-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                        title={isPolish ? 'Wygeneruj checklistę AI' : 'Generate AI checklist'}
+                      >
+                        {isGeneratingChecklist ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Sparkles size={14} />
+                        )}
+                        <span>AI</span>
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
                   <motion.div
                     animate={{ rotate: expandedSections.has('checklist') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
@@ -971,7 +1239,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
                     <ChevronDown size={18} className="text-slate-400" />
                   </motion.div>
                 </div>
-              </motion.button>
+              </div>
 
               <AnimatePresence>
                 {expandedSections.has('checklist') && (
@@ -1040,6 +1308,473 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
                             <span>{isPolish ? 'Dodaj element' : 'Add item'}</span>
                           </button>
                         </>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Related Decisions */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+            >
+              <div
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
+                onClick={() => toggleSection('relatedDecisions')}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20">
+                    <Scale size={18} className="text-amber-500 dark:text-amber-400" />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {isPolish ? 'Powiązane decyzje' : 'Related Decisions'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {relatedDecisions.length > 0 && (
+                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                      {relatedDecisions.length}
+                    </span>
+                  )}
+                  {relatedDecisions.some(
+                    (d) =>
+                      d.decisionStatus === 'pending' &&
+                      (d.relationshipType === 'blocks' || d.relationshipType === 'requires')
+                  ) && <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />}
+                  <motion.div
+                    animate={{ rotate: expandedSections.has('relatedDecisions') ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown size={18} className="text-slate-400" />
+                  </motion.div>
+                </div>
+              </div>
+
+              <AnimatePresence>
+                {expandedSections.has('relatedDecisions') && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                  >
+                    <div className="p-4 space-y-3">
+                      {/* Related decisions list */}
+                      {relatedDecisions.length === 0 &&
+                      !showCreateDecision &&
+                      !showDecisionSearch ? (
+                        <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
+                          <Scale
+                            size={24}
+                            className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                          />
+                          <p className="text-sm text-slate-400 dark:text-slate-500">
+                            {isPolish ? 'Brak powiązanych decyzji' : 'No related decisions'}
+                          </p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                            {isPolish
+                              ? 'Powiąż istniejącą lub utwórz nową decyzję'
+                              : 'Link existing or create new decision'}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {relatedDecisions.map((rel) => {
+                            const statusColors: Record<string, string> = {
+                              pending: 'bg-amber-500',
+                              approved: 'bg-emerald-500',
+                              rejected: 'bg-red-500',
+                              deferred: 'bg-slate-500',
+                              escalated: 'bg-orange-500',
+                            };
+                            const statusLabels: Record<string, { en: string; pl: string }> = {
+                              pending: { en: 'Pending', pl: 'Oczekuje' },
+                              approved: { en: 'Approved', pl: 'Zatwierdzona' },
+                              rejected: { en: 'Rejected', pl: 'Odrzucona' },
+                              deferred: { en: 'Deferred', pl: 'Odroczona' },
+                              escalated: { en: 'Escalated', pl: 'Eskalowana' },
+                            };
+                            const relationLabels: Record<string, { en: string; pl: string }> = {
+                              blocks: { en: 'Blocks', pl: 'Blokuje' },
+                              requires: { en: 'Requires', pl: 'Wymaga' },
+                              informs: { en: 'Informs', pl: 'Informuje' },
+                              depends_on: { en: 'Depends on', pl: 'Zależy od' },
+                            };
+                            const isBlocking =
+                              (rel.relationshipType === 'blocks' ||
+                                rel.relationshipType === 'requires') &&
+                              rel.decisionStatus === 'pending';
+
+                            return (
+                              <div
+                                key={rel.id}
+                                className={`p-3 rounded-xl border transition-all ${
+                                  isBlocking
+                                    ? 'bg-amber-50/50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30'
+                                    : 'bg-slate-50/50 dark:bg-navy-800/50 border-slate-200 dark:border-navy-600'
+                                }`}
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                                    <div
+                                      className={`w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 ${statusColors[rel.decisionStatus] || 'bg-slate-400'}`}
+                                    />
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                        {rel.decisionTitle}
+                                      </p>
+                                      <div className="flex flex-wrap items-center gap-2 mt-1">
+                                        <span
+                                          className={`text-xs px-1.5 py-0.5 rounded ${
+                                            isBlocking
+                                              ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                                              : 'bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
+                                          }`}
+                                        >
+                                          {isPolish
+                                            ? relationLabels[rel.relationshipType]?.pl
+                                            : relationLabels[rel.relationshipType]?.en}
+                                        </span>
+                                        <span className="text-xs text-slate-400 dark:text-slate-500">
+                                          {isPolish
+                                            ? statusLabels[rel.decisionStatus]?.pl
+                                            : statusLabels[rel.decisionStatus]?.en}
+                                        </span>
+                                        {isBlocking && (
+                                          <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                                            ⚠️ {isPolish ? 'Blokuje' : 'Blocking'}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1 flex-shrink-0">
+                                    {onOpenDecision && (
+                                      <button
+                                        onClick={() => onOpenDecision(rel.decisionId)}
+                                        className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-600 text-slate-400 hover:text-blue-500 transition-all"
+                                        title={isPolish ? 'Otwórz decyzję' : 'Open decision'}
+                                      >
+                                        <ExternalLink size={14} />
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={() =>
+                                        setRelatedDecisions(
+                                          relatedDecisions.filter((d) => d.id !== rel.id)
+                                        )
+                                      }
+                                      className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-all"
+                                    >
+                                      <X size={14} />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Create new decision form */}
+                      {showCreateDecision && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="p-4 rounded-xl border-2 border-amber-300 dark:border-amber-500/50 bg-amber-50/30 dark:bg-amber-500/5 space-y-3"
+                        >
+                          <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                            <Plus size={16} />
+                            <span className="text-sm font-semibold">
+                              {isPolish ? 'Nowa decyzja' : 'New Decision'}
+                            </span>
+                          </div>
+
+                          {/* Decision title */}
+                          <div>
+                            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                              {isPolish ? 'Tytuł decyzji *' : 'Decision title *'}
+                            </label>
+                            <input
+                              type="text"
+                              value={newDecisionTitle}
+                              onChange={(e) => setNewDecisionTitle(e.target.value)}
+                              placeholder={
+                                isPolish
+                                  ? 'Np. Zatwierdzenie budżetu projektu'
+                                  : 'E.g. Project budget approval'
+                              }
+                              className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-amber-400"
+                              autoFocus
+                            />
+                          </div>
+
+                          {/* Decision description */}
+                          <div>
+                            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                              {isPolish
+                                ? 'Opis problemu / kontekst'
+                                : 'Problem description / context'}
+                            </label>
+                            <textarea
+                              value={newDecisionDescription}
+                              onChange={(e) => setNewDecisionDescription(e.target.value)}
+                              placeholder={
+                                isPolish
+                                  ? 'Opisz problem wymagający decyzji...'
+                                  : 'Describe the problem requiring decision...'
+                              }
+                              rows={2}
+                              className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-amber-400 resize-none"
+                            />
+                          </div>
+
+                          {/* Relationship type */}
+                          <div>
+                            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                              {isPolish ? 'Typ relacji z zadaniem' : 'Relationship with task'}
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                              {[
+                                {
+                                  key: 'requires',
+                                  label: { en: 'Requires', pl: 'Wymaga' },
+                                  desc: {
+                                    en: 'Task requires this decision',
+                                    pl: 'Zadanie wymaga tej decyzji',
+                                  },
+                                },
+                                {
+                                  key: 'blocks',
+                                  label: { en: 'Blocks', pl: 'Blokuje' },
+                                  desc: {
+                                    en: 'Decision blocks task progress',
+                                    pl: 'Decyzja blokuje postęp',
+                                  },
+                                },
+                                {
+                                  key: 'depends_on',
+                                  label: { en: 'Depends', pl: 'Zależy' },
+                                  desc: {
+                                    en: 'Task depends on outcome',
+                                    pl: 'Zadanie zależy od wyniku',
+                                  },
+                                },
+                                {
+                                  key: 'informs',
+                                  label: { en: 'Informs', pl: 'Informuje' },
+                                  desc: {
+                                    en: 'Decision informs task',
+                                    pl: 'Decyzja informuje zadanie',
+                                  },
+                                },
+                              ].map((type) => (
+                                <button
+                                  key={type.key}
+                                  onClick={() => setNewDecisionRelationType(type.key as any)}
+                                  className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${
+                                    newDecisionRelationType === type.key
+                                      ? 'bg-amber-100 dark:bg-amber-500/20 border-amber-300 dark:border-amber-500/50 text-amber-700 dark:text-amber-300'
+                                      : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:border-amber-300'
+                                  }`}
+                                  title={isPolish ? type.desc.pl : type.desc.en}
+                                >
+                                  {isPolish ? type.label.pl : type.label.en}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Action buttons */}
+                          <div className="flex gap-2 pt-2">
+                            <button
+                              onClick={() => {
+                                if (!newDecisionTitle.trim()) {
+                                  toast.error(
+                                    isPolish ? 'Podaj tytuł decyzji' : 'Enter decision title'
+                                  );
+                                  return;
+                                }
+                                const newDecisionId = Math.random().toString(36).substr(2, 9);
+                                const newDecision = {
+                                  id: newDecisionId,
+                                  title: newDecisionTitle,
+                                  status: 'pending',
+                                };
+                                setAvailableDecisions([...availableDecisions, newDecision]);
+                                const newRelation: RelatedDecision = {
+                                  id: Math.random().toString(36).substr(2, 9),
+                                  decisionId: newDecisionId,
+                                  decisionTitle: newDecisionTitle,
+                                  decisionStatus: 'pending',
+                                  relationshipType: newDecisionRelationType,
+                                };
+                                setRelatedDecisions([...relatedDecisions, newRelation]);
+                                setShowCreateDecision(false);
+                                setNewDecisionTitle('');
+                                setNewDecisionDescription('');
+                                setNewDecisionRelationType('requires');
+                                addActivityLogEntry(
+                                  'edit',
+                                  isPolish
+                                    ? `Utworzono decyzję: ${newDecisionTitle}`
+                                    : `Created decision: ${newDecisionTitle}`
+                                );
+                                toast.success(
+                                  isPolish
+                                    ? 'Decyzja utworzona i powiązana'
+                                    : 'Decision created and linked'
+                                );
+                              }}
+                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-white font-medium hover:bg-amber-600 transition-all"
+                            >
+                              <Plus size={16} />
+                              <span className="text-sm">
+                                {isPolish ? 'Utwórz decyzję' : 'Create Decision'}
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                setShowCreateDecision(false);
+                                setNewDecisionTitle('');
+                                setNewDecisionDescription('');
+                              }}
+                              className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-700 transition-all"
+                            >
+                              <span className="text-sm">{isPolish ? 'Anuluj' : 'Cancel'}</span>
+                            </button>
+                          </div>
+
+                          {/* Info about full editor */}
+                          <p className="text-xs text-slate-400 dark:text-slate-500 text-center">
+                            {isPolish
+                              ? 'Decyzja zostanie utworzona w trybie szkicu. Możesz ją uzupełnić w pełnym edytorze.'
+                              : 'Decision will be created as draft. You can complete it in full editor.'}
+                          </p>
+                        </motion.div>
+                      )}
+
+                      {/* Search existing decisions */}
+                      {showDecisionSearch && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="space-y-2"
+                        >
+                          <div className="relative">
+                            <Search
+                              size={16}
+                              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                            />
+                            <input
+                              type="text"
+                              value={decisionSearchQuery}
+                              onChange={(e) => setDecisionSearchQuery(e.target.value)}
+                              placeholder={
+                                isPolish
+                                  ? 'Szukaj istniejących decyzji...'
+                                  : 'Search existing decisions...'
+                              }
+                              className="w-full pl-9 pr-3 py-2 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-amber-400"
+                              autoFocus
+                            />
+                          </div>
+
+                          <div className="max-h-40 overflow-y-auto space-y-1">
+                            {availableDecisions
+                              .filter(
+                                (d) =>
+                                  d.title
+                                    .toLowerCase()
+                                    .includes(decisionSearchQuery.toLowerCase()) &&
+                                  !relatedDecisions.some((r) => r.decisionId === d.id)
+                              )
+                              .map((decision) => (
+                                <button
+                                  key={decision.id}
+                                  onClick={() => {
+                                    const newRelation: RelatedDecision = {
+                                      id: Math.random().toString(36).substr(2, 9),
+                                      decisionId: decision.id,
+                                      decisionTitle: decision.title,
+                                      decisionStatus: decision.status as any,
+                                      relationshipType: 'requires',
+                                    };
+                                    setRelatedDecisions([...relatedDecisions, newRelation]);
+                                    setShowDecisionSearch(false);
+                                    setDecisionSearchQuery('');
+                                    addActivityLogEntry(
+                                      'edit',
+                                      isPolish ? 'Powiązano decyzję' : 'Linked decision'
+                                    );
+                                    toast.success(
+                                      isPolish ? 'Powiązano decyzję' : 'Decision linked'
+                                    );
+                                  }}
+                                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors text-left"
+                                >
+                                  <div
+                                    className={`w-2 h-2 rounded-full ${
+                                      decision.status === 'pending'
+                                        ? 'bg-amber-500'
+                                        : decision.status === 'approved'
+                                          ? 'bg-emerald-500'
+                                          : 'bg-slate-400'
+                                    }`}
+                                  />
+                                  <span className="text-sm text-slate-700 dark:text-slate-300 truncate">
+                                    {decision.title}
+                                  </span>
+                                </button>
+                              ))}
+                            {availableDecisions.filter(
+                              (d) =>
+                                d.title.toLowerCase().includes(decisionSearchQuery.toLowerCase()) &&
+                                !relatedDecisions.some((r) => r.decisionId === d.id)
+                            ).length === 0 && (
+                              <p className="text-center text-sm text-slate-400 dark:text-slate-500 py-4">
+                                {isPolish ? 'Brak pasujących decyzji' : 'No matching decisions'}
+                              </p>
+                            )}
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              setShowDecisionSearch(false);
+                              setDecisionSearchQuery('');
+                            }}
+                            className="w-full text-center text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 py-1"
+                          >
+                            {isPolish ? 'Anuluj' : 'Cancel'}
+                          </button>
+                        </motion.div>
+                      )}
+
+                      {/* Action buttons */}
+                      {!showCreateDecision && !showDecisionSearch && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setShowCreateDecision(true)}
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-amber-300 dark:border-amber-500/50 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-all"
+                          >
+                            <Plus size={16} />
+                            <span className="text-sm font-medium">
+                              {isPolish ? 'Nowa decyzja' : 'New Decision'}
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => setShowDecisionSearch(true)}
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700 transition-all"
+                          >
+                            <Link2 size={16} />
+                            <span className="text-sm font-medium">
+                              {isPolish ? 'Powiąż istniejącą' : 'Link Existing'}
+                            </span>
+                          </button>
+                        </div>
                       )}
                     </div>
                   </motion.div>
@@ -1733,16 +2468,6 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
               </AnimatePresence>
             </motion.div>
 
-            {/* AI Insights */}
-            <AIInsightSection
-              insights={aiInsights}
-              onGenerateInsights={generateInsightsAI}
-              onDismissInsight={(id) => setAiInsights(aiInsights.filter((i) => i.id !== id))}
-              isGenerating={isGeneratingInsights}
-              expanded={expandedSections.has('aiInsights')}
-              onToggleExpand={() => toggleSection('aiInsights')}
-            />
-
             {/* Dependencies */}
             <DependenciesSection
               dependencies={dependencies}
@@ -1872,108 +2597,6 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
               expanded={expandedSections.has('evidence')}
               onToggleExpand={() => toggleSection('evidence')}
             />
-
-            {/* Strategic Contribution */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
-            >
-              <motion.button
-                whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => toggleSection('strategic')}
-                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500/10 to-purple-500/10 dark:from-violet-500/20 dark:to-purple-500/20">
-                    <Sparkles size={18} className="text-violet-500 dark:text-violet-400" />
-                  </div>
-                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    {isPolish ? 'Wkład strategiczny' : 'Strategic Contribution'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {strategicContribution.length > 0 && (
-                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
-                      {strategicContribution.length}
-                    </span>
-                  )}
-                  <motion.div
-                    animate={{ rotate: expandedSections.has('strategic') ? 180 : 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <ChevronDown size={18} className="text-slate-400" />
-                  </motion.div>
-                </div>
-              </motion.button>
-
-              <AnimatePresence>
-                {expandedSections.has('strategic') && (
-                  <motion.div
-                    initial={{ height: 0 }}
-                    animate={{ height: 'auto' }}
-                    exit={{ height: 0 }}
-                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
-                  >
-                    <div className="p-4 space-y-2">
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-                        {isPolish
-                          ? 'Jakie zmiany wprowadza to zadanie?'
-                          : 'What changes does this task introduce?'}
-                      </p>
-                      {[
-                        {
-                          key: 'PROCESS_CHANGE',
-                          label: { en: 'Process Change', pl: 'Zmiana procesu' },
-                          color: 'blue',
-                        },
-                        {
-                          key: 'BEHAVIOR_CHANGE',
-                          label: { en: 'Behavior Change', pl: 'Zmiana zachowania' },
-                          color: 'emerald',
-                        },
-                        {
-                          key: 'CAPABILITY_CHANGE',
-                          label: { en: 'Capability Change', pl: 'Zmiana zdolności' },
-                          color: 'purple',
-                        },
-                      ].map((item) => {
-                        const isSelected = strategicContribution.includes(item.key as any);
-                        return (
-                          <button
-                            key={item.key}
-                            onClick={() => {
-                              if (isSelected) {
-                                setStrategicContribution(
-                                  strategicContribution.filter((s) => s !== item.key)
-                                );
-                              } else {
-                                setStrategicContribution([
-                                  ...strategicContribution,
-                                  item.key as any,
-                                ]);
-                              }
-                            }}
-                            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
-                              isSelected
-                                ? `bg-${item.color}-50 dark:bg-${item.color}-500/10 border-${item.color}-300 dark:border-${item.color}-500/50 text-${item.color}-700 dark:text-${item.color}-300`
-                                : 'bg-slate-50/50 dark:bg-navy-800/50 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-navy-500'
-                            }`}
-                          >
-                            <span className="text-sm font-medium">
-                              {isPolish ? item.label.pl : item.label.en}
-                            </span>
-                            {isSelected && <Check size={16} />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
           </div>
         </div>
       </div>

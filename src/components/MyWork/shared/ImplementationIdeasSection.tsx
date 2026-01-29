@@ -133,6 +133,32 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
               {ideas.length}
             </span>
           )}
+          {/* AI Button - visible only when expanded */}
+          <AnimatePresence>
+            {expanded && onGenerateAI && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onGenerateAI();
+                }}
+                disabled={isGenerating}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 dark:hover:bg-violet-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                title={isPolish ? 'Generuj AI' : 'Generate AI'}
+              >
+                {isGenerating ? (
+                  <Sparkles size={14} className="animate-pulse" />
+                ) : (
+                  <Sparkles size={14} />
+                )}
+                <span>AI</span>
+              </motion.button>
+            )}
+          </AnimatePresence>
           <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
             <ChevronDown size={18} className="text-slate-400" />
           </motion.div>
@@ -314,43 +340,20 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
                 </div>
               )}
 
-              {/* Action Buttons */}
+              {/* Add Idea Button */}
               {!readOnly && (
-                <div className="flex gap-2 pt-2">
-                  {/* Add Idea Button */}
+                <div className="pt-2">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={onAdd}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-cyan-400 dark:hover:border-cyan-500 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-cyan-400 dark:hover:border-cyan-500 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
                   >
                     <Plus size={18} />
                     <span className="text-sm font-medium">
                       {isPolish ? 'Dodaj pomysł' : 'Add idea'}
                     </span>
                   </motion.button>
-
-                  {/* AI Generate Button */}
-                  {onGenerateAI && (
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={onGenerateAI}
-                      disabled={isGenerating}
-                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/20"
-                    >
-                      <Sparkles size={18} className={isGenerating ? 'animate-pulse' : ''} />
-                      <span className="text-sm">
-                        {isGenerating
-                          ? isPolish
-                            ? 'Generowanie...'
-                            : 'Generating...'
-                          : isPolish
-                            ? 'Generuj AI'
-                            : 'Generate AI'}
-                      </span>
-                    </motion.button>
-                  )}
                 </div>
               )}
 

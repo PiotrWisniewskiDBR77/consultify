@@ -55,6 +55,7 @@ interface AlternativesSectionProps {
   expanded?: boolean;
   onToggleExpand?: () => void;
   isGenerating?: boolean;
+  readOnly?: boolean;
 }
 
 type ViewMode = 'list' | 'comparison';
@@ -72,6 +73,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
   expanded = false,
   onToggleExpand,
   isGenerating = false,
+  readOnly = false,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -163,6 +165,32 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
               {alternatives.length}
             </span>
           )}
+          {/* AI Button - visible only when expanded */}
+          <AnimatePresence>
+            {expanded && onGenerateAI && !readOnly && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onGenerateAI();
+                }}
+                disabled={isGenerating}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 dark:hover:bg-violet-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                title={isPolish ? 'Generuj AI' : 'Generate AI'}
+              >
+                {isGenerating ? (
+                  <Sparkles size={14} className="animate-pulse" />
+                ) : (
+                  <Sparkles size={14} />
+                )}
+                <span>AI</span>
+              </motion.button>
+            )}
+          </AnimatePresence>
           <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
             <ChevronDown size={18} className="text-slate-400" />
           </motion.div>
@@ -484,40 +512,17 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                 </div>
               )}
 
-              {/* Action Buttons */}
-              <div className="flex gap-2 mt-4">
-                {/* Add alternative button */}
+              {/* Add alternative button */}
+              <div className="mt-4">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={onAdd}
-                  className="flex-1 py-4 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-purple-400 dark:hover:border-purple-500/50 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-500/10 transition-all duration-200 flex items-center justify-center gap-2 font-medium"
+                  className="w-full py-4 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-purple-400 dark:hover:border-purple-500/50 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-500/10 transition-all duration-200 flex items-center justify-center gap-2 font-medium"
                 >
                   <Plus size={18} />
                   <span>{isPolish ? 'Dodaj alternatywę' : 'Add alternative'}</span>
                 </motion.button>
-
-                {/* AI Generate Button */}
-                {onGenerateAI && (
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={onGenerateAI}
-                    disabled={isGenerating}
-                    className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/20"
-                  >
-                    <Sparkles size={18} className={isGenerating ? 'animate-pulse' : ''} />
-                    <span>
-                      {isGenerating
-                        ? isPolish
-                          ? 'Generowanie...'
-                          : 'Generating...'
-                        : isPolish
-                          ? 'Generuj AI'
-                          : 'Generate AI'}
-                    </span>
-                  </motion.button>
-                )}
               </div>
 
               {/* Recommendation hint */}

@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { FullSession, LLMProvider, SessionMode, User } from '../types';
-import { tokenService } from './tokenService';
 import { trackFunnelEvent } from './funnelAnalytics';
+import { tokenService } from './tokenService';
 
 // Use relative path to allow Vite proxy to handle the request (avoiding CORS)
 // or use env var if provided.
@@ -1349,7 +1349,8 @@ export const Api = {
       if (filters.assigneeId) params.append('assigneeId', filters.assigneeId);
       if (filters.priority) params.append('priority', filters.priority);
       if (filters.initiativeId) params.append('initiativeId', filters.initiativeId);
-      if (params.toString()) url += `? ${params.toString()}`;
+      // IMPORTANT: no leading space after "?" (breaks query parsing in some servers)
+      if (params.toString()) url += `?${params.toString()}`;
     }
     const res = await fetch(url, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch tasks');
@@ -1552,7 +1553,7 @@ export const Api = {
     if (!res.ok) throw new Error('Failed to fetch decisions');
     const data = await res.json();
     // Extract decisions array and map snake_case to camelCase
-    const decisions = Array.isArray(data) ? data : (data.decisions || []);
+    const decisions = Array.isArray(data) ? data : data.decisions || [];
     return decisions.map((d: any) => ({
       ...d,
       decisionOwnerId: d.decision_maker_id || d.decisionOwnerId,
@@ -1788,7 +1789,12 @@ export const Api = {
 
   generateToolInitiatives: async (
     toolId: string,
-    payload: { methodologyId: string; count: number; includeChatContext?: boolean; decisionOwnerId?: string }
+    payload: {
+      methodologyId: string;
+      count: number;
+      includeChatContext?: boolean;
+      decisionOwnerId?: string;
+    }
   ): Promise<any> => {
     const res = await fetch(`${API_URL}/tools/${toolId}/generate-initiatives`, {
       method: 'POST',
@@ -1944,9 +1950,12 @@ export const Api = {
   },
 
   getAssessmentGeneratedInitiatives: async (assessmentId: string): Promise<any> => {
-    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}/generated-initiatives`, {
-      headers: getHeaders(),
-    });
+    const res = await fetch(
+      `${API_URL}/assessment-workflow/${assessmentId}/generated-initiatives`,
+      {
+        headers: getHeaders(),
+      }
+    );
     return handleResponse(res, 'Failed to fetch generated initiatives');
   },
 
@@ -3924,10 +3933,13 @@ export const Api = {
    * Create initiative from analysis
    */
   createInitiativeFromAnalysis: async (analysisId: string): Promise<any> => {
-    const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/create-initiative`, {
-      method: 'POST',
-      headers: getHeaders(),
-    });
+    const res = await fetchWithRetry(
+      `${API_URL}/economics/analyses/${analysisId}/create-initiative`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    );
     return handleResponse(res, 'Failed to create initiative from analysis');
   },
 
@@ -3936,7 +3948,10 @@ export const Api = {
    */
   createAnalysisDecision: async (
     analysisId: string,
-    data: { decisionType: 'approve-analysis' | 'select-scenario' | 'go-no-go'; decisionMakerId?: string }
+    data: {
+      decisionType: 'approve-analysis' | 'select-scenario' | 'go-no-go';
+      decisionMakerId?: string;
+    }
   ): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/decisions`, {
       method: 'POST',

@@ -28,7 +28,10 @@ export const TaskDropdown = () => {
       setLoading(true);
       // Fetch tasks - ideally we want "my tasks" or "pending tasks"
       // For now, fetch all and filter client side for the dropdown preview
-      const allTasks = await Api.getTasks({});
+      const allTasks = await Api.getTasks({
+        // Keep this lightweight – dropdown preview doesn't need completed tasks
+        status: 'todo,in_progress,review,blocked,pending_approval',
+      } as any);
 
       // Sort by due date (closest first)
       const sorted = allTasks.sort((a, b) => {
@@ -55,8 +58,14 @@ export const TaskDropdown = () => {
 
   useEffect(() => {
     fetchTasks();
-    // Poll every 60s
-    const interval = setInterval(fetchTasks, 60000);
+    // Poll rarely; tasks can be large and this component is always mounted
+    const interval = setInterval(
+      () => {
+        if (typeof document !== 'undefined' && document.hidden) return;
+        fetchTasks();
+      },
+      5 * 60 * 1000
+    );
     return () => clearInterval(interval);
   }, []);
 

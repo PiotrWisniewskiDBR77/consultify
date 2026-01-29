@@ -13,6 +13,7 @@ import {
   MessageCircle,
   MoreVertical,
   Send,
+  Sparkles,
   ThumbsUp,
   Trash2,
   User,
@@ -40,6 +41,8 @@ interface CommentsSectionProps {
   onAddComment: (content: string, parentId?: string) => Promise<void>;
   onDeleteComment: (commentId: string) => Promise<void>;
   onLikeComment: (commentId: string) => Promise<void>;
+  onGenerateAIComment?: () => Promise<void>;
+  isGeneratingAI?: boolean;
   currentUserId?: string;
   readOnly?: boolean;
   expanded?: boolean;
@@ -51,6 +54,8 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
   onAddComment,
   onDeleteComment,
   onLikeComment,
+  onGenerateAIComment,
+  isGeneratingAI = false,
   currentUserId,
   readOnly = false,
   expanded = false,
@@ -371,6 +376,32 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
               {comments.length}
             </span>
           )}
+          {/* AI Button - visible only when expanded */}
+          <AnimatePresence>
+            {expanded && onGenerateAIComment && !readOnly && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onGenerateAIComment();
+                }}
+                disabled={isGeneratingAI}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 dark:hover:bg-violet-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                title={isPolish ? 'Wygeneruj komentarz AI' : 'Generate AI comment'}
+              >
+                {isGeneratingAI ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Sparkles size={14} />
+                )}
+                <span>AI</span>
+              </motion.button>
+            )}
+          </AnimatePresence>
           <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
             <ChevronDown size={18} className="text-slate-400" />
           </motion.div>
@@ -442,12 +473,13 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                         }
                       }}
                     />
+                    {/* Send Button */}
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={handleSubmit}
                       disabled={submitting || !newComment.trim()}
-                      className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 via-pink-500 to-purple-600 text-white font-semibold hover:brightness-110 shadow-lg shadow-purple-500/30 disabled:opacity-50 transition-all duration-200 flex items-center gap-2 disabled:cursor-not-allowed"
+                      className="px-5 py-2.5 rounded-xl bg-purple-500 text-white font-semibold hover:bg-purple-600 disabled:opacity-50 transition-all duration-200 flex items-center gap-2 disabled:cursor-not-allowed"
                     >
                       {submitting ? (
                         <Loader2 size={18} className="animate-spin" />

@@ -216,6 +216,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const [risks, setRisks] = useState<RiskItem[]>([]);
   const [isGeneratingRisks, setIsGeneratingRisks] = useState(false);
   const [isGeneratingAlternatives, setIsGeneratingAlternatives] = useState(false);
+  const [isGeneratingAIComment, setIsGeneratingAIComment] = useState(false);
 
   // Escalation & Reminders
   const [reminders, setReminders] = useState<ReminderRule[]>([]);
@@ -543,6 +544,39 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     }
   };
 
+  const generateAIComment = async () => {
+    setIsGeneratingAIComment(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      const aiComments = [
+        isPolish
+          ? `Na podstawie analizy tej decyzji, warto rozważyć następujące aspekty:\n\n1. **Wpływ na interesariuszy**: ${stakeholders.length > 0 ? `Zidentyfikowano ${stakeholders.length} interesariuszy` : 'Brak zdefiniowanych interesariuszy'}\n2. **Ocena ryzyka**: ${risks.length > 0 ? `${risks.length} ryzyk do monitorowania` : 'Brak zidentyfikowanych ryzyk'}\n3. **Alternatywy**: ${alternatives.length > 0 ? `${alternatives.length} opcji do rozważenia` : 'Brak alternatyw'}\n\nRekomendacja: Przed podjęciem decyzji upewnij się, że wszystkie kluczowe aspekty zostały przeanalizowane.`
+          : `Based on the analysis of this decision, consider the following aspects:\n\n1. **Stakeholder impact**: ${stakeholders.length > 0 ? `${stakeholders.length} stakeholders identified` : 'No stakeholders defined'}\n2. **Risk assessment**: ${risks.length > 0 ? `${risks.length} risks to monitor` : 'No risks identified'}\n3. **Alternatives**: ${alternatives.length > 0 ? `${alternatives.length} options to consider` : 'No alternatives'}\n\nRecommendation: Before making the decision, ensure all key aspects have been analyzed.`,
+      ];
+
+      const newComment: Comment = {
+        id: Math.random().toString(36).substr(2, 9),
+        content: aiComments[0],
+        author: {
+          id: 'ai-assistant',
+          name: 'AI Assistant',
+          avatar: '',
+        },
+        createdAt: new Date().toISOString(),
+        likes: 0,
+        isAIGenerated: true,
+      };
+
+      setComments([...comments, newComment]);
+      toast.success(isPolish ? 'Komentarz AI wygenerowany' : 'AI comment generated');
+    } catch {
+      toast.error(isPolish ? 'Błąd generowania komentarza' : 'Error generating comment');
+    } finally {
+      setIsGeneratingAIComment(false);
+    }
+  };
+
   const generateRisksAI = async () => {
     if (!title && !description) {
       toast.error(isPolish ? 'Dodaj tytuł lub opis decyzji' : 'Add title or description first');
@@ -722,11 +756,9 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className="relative bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-200/50 dark:border-navy-700/50 shadow-lg shadow-purple-500/5 dark:shadow-purple-500/10 overflow-hidden"
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl p-6 border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50"
             >
-              {/* Gradient Accent */}
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500" />
-              <div className="flex items-center gap-3 relative z-10">
+              <div className="flex items-center gap-3">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -778,6 +810,8 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
               onAddComment={handleAddComment}
               onDeleteComment={handleDeleteComment}
               onLikeComment={handleLikeComment}
+              onGenerateAIComment={generateAIComment}
+              isGeneratingAI={isGeneratingAIComment}
               currentUserId="current-user"
               expanded={expandedSections.has('comments')}
               onToggleExpand={() => toggleSection('comments')}
