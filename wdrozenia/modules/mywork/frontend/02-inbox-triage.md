@@ -69,9 +69,7 @@ Każda pozycja:
 2. Użytkownik wykonuje Primary CTA
 3. Po akcji:
    - presja się zamyka (cisza) albo eskaluje (jeśli brak reakcji)
-   - w audycie zostaje ślad (kto/kiedy/co)
-
----
+   - w audycie zostaje ślad (kto/kiedy/co)---
 
 ## Definicja “działa”
 

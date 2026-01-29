@@ -7,24 +7,25 @@
 import { Activity, Cpu, Database, FileText, Layers, Lightbulb, Workflow } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 import { Api } from '@/services/api';
-import { NewAssessmentModal, NewAssessmentData } from './NewAssessmentModal';
-import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 
+import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import {
   FilterableTable,
   FilterChip,
   GridItem,
   GridView,
+  ModuleContext,
   ModuleHub,
   ModuleTab,
   OpenDocument,
   StatusDropdown,
-  ModuleContext,
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
+import { NewAssessmentData, NewAssessmentModal } from './NewAssessmentModal';
 
 // Assessment Framework Types
 type AssessmentFramework = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
@@ -147,6 +148,7 @@ interface AssessmentHubProps {
 }
 
 export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list' }) => {
+  const navigate = useNavigate();
   // State
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
   const [viewMode, setViewMode] = useState<ViewMode>('table');
@@ -163,6 +165,16 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const [initiatives, setInitiatives] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Safety net: if an "assessment" document is opened in this hub, always redirect to the real editor.
+  // This prevents the placeholder card screen from ever being the primary UX.
+  useEffect(() => {
+    if (!activeDocumentId) return;
+    const doc = openDocuments.find((d) => d.id === activeDocumentId);
+    if (doc?.type !== 'assessment') return;
+    const framework = (doc.subType?.toString().toLowerCase() || 'drd') as string;
+    navigate(`/assessment/${framework}/${doc.id}`);
+  }, [activeDocumentId, openDocuments, navigate]);
 
   // Load data from API
   useEffect(() => {
@@ -349,24 +361,34 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   );
 
   // Handlers
-  const handleOpenDocument = useCallback((row: any) => {
-    // Determine document type based on active tab
-    const docType = activeTab === 'initiatives' ? 'initiative' : 'assessment';
-    
-    const doc: OpenDocument = {
-      id: row.id,
-      type: docType,
-      subType: row.framework || row.sourceType,
-      name: row.name,
-      status: row.status,
-    };
+  const handleOpenDocument = useCallback(
+    (row: any) => {
+      // Determine document type based on active tab
+      const docType = activeTab === 'initiatives' ? 'initiative' : 'assessment';
 
-    setOpenDocuments((prev) => {
-      if (prev.find((d) => d.id === doc.id)) return prev;
-      return [...prev, doc];
-    });
-    setActiveDocumentId(row.id);
-  }, [activeTab]);
+      // For assessments, open the actual editor route (instead of placeholder card)
+      if (docType === 'assessment') {
+        const framework = (row.framework || row.type || 'DRD').toString().toLowerCase();
+        navigate(`/assessment/${framework}/${row.id}`);
+        return;
+      }
+
+      const doc: OpenDocument = {
+        id: row.id,
+        type: docType,
+        subType: row.framework || row.sourceType,
+        name: row.name,
+        status: row.status,
+      };
+
+      setOpenDocuments((prev) => {
+        if (prev.find((d) => d.id === doc.id)) return prev;
+        return [...prev, doc];
+      });
+      setActiveDocumentId(row.id);
+    },
+    [activeTab, navigate]
+  );
 
   const handleCloseDocument = useCallback(
     (id: string) => {
@@ -398,15 +420,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     (assessment: NewAssessmentData) => {
       // Refresh data to include new assessment
       refreshData();
-      // Open the new assessment
-      handleOpenDocument({
-        id: assessment.id,
-        name: assessment.name,
-        framework: assessment.assessmentType,
-        status: assessment.status,
-      });
+      // Immediately open the actual editor
+      navigate(`/assessment/${assessment.assessmentType.toLowerCase()}/${assessment.id}`);
     },
-    [refreshData, handleOpenDocument]
+    [refreshData, navigate]
   );
 
   const handleRowAction = useCallback(
@@ -422,7 +439,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   // Transform API data to display format
   const currentData = useMemo(() => {
     let data: any[] = [];
-    
+
     switch (activeTab) {
       case 'list':
         data = assessments.map((item) => ({
@@ -492,7 +509,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const renderContent = () => {
     if (activeDocumentId) {
       const doc = openDocuments.find((d) => d.id === activeDocumentId);
-      
+
       // Show Initiative Document View for initiatives
       if (doc && (doc.type === 'initiative' || activeTab === 'initiatives')) {
         return (
@@ -504,7 +521,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           />
         );
       }
-      
+
       // Show Assessment Editor for assessments
       if (doc && doc.type === 'assessment') {
         const framework = doc.subType?.toUpperCase() || 'DRD';
@@ -520,24 +537,31 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                   <FileText className="w-5 h-5 text-slate-500" />
                 </button>
                 <div>
-                  <h2 className="text-lg font-semibold text-navy-900 dark:text-white">{doc.name}</h2>
+                  <h2 className="text-lg font-semibold text-navy-900 dark:text-white">
+                    {doc.name}
+                  </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     {framework} Assessment · {doc.status}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  doc.status === 'DRAFT' ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' :
-                  doc.status === 'REVIEW' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                  doc.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                }`}>
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    doc.status === 'DRAFT'
+                      ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                      : doc.status === 'REVIEW'
+                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                        : doc.status === 'APPROVED'
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                  }`}
+                >
                   {doc.status}
                 </span>
               </div>
             </div>
-            
+
             {/* Assessment Editor Content */}
             <div className="flex-1 overflow-auto p-6">
               <div className="max-w-4xl mx-auto">
@@ -550,11 +574,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                       {doc.name}
                     </h3>
                     <p className="text-slate-500 dark:text-slate-400 mb-6">
-                      Framework: {framework} · Progress: {doc.progress || 0}%
+                      Framework: {framework}
                     </p>
                     <div className="flex justify-center gap-3">
                       <button
-                        onClick={() => window.open(`/assessment/${framework.toLowerCase()}/${doc.id}`, '_blank')}
+                        onClick={() => navigate(`/assessment/${framework.toLowerCase()}/${doc.id}`)}
                         className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors"
                       >
                         Open Full Editor
@@ -573,7 +597,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           </div>
         );
       }
-      
+
       // Show document editor (placeholder for reports)
       return (
         <div className="flex items-center justify-center h-full text-slate-500">

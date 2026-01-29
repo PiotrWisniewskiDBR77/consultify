@@ -254,6 +254,20 @@ const logAudit = async (
 // Schema initialization
 const ensureAssessmentSchema = async (): Promise<void> => {
   try {
+    const tryAddColumn = async (table: string, columnDefSql: string): Promise<void> => {
+      try {
+        await queryHelpers.queryRun(`ALTER TABLE ${table} ADD COLUMN ${columnDefSql}`);
+      } catch (e: any) {
+        const msg = String(e?.message || e || '');
+        // SQLite: "duplicate column name: foo"
+        // Postgres: 'column "foo" of relation "table" already exists'
+        if (msg.includes('duplicate column name') || msg.includes('already exists')) return;
+        // If table doesn't exist (shouldn't happen after CREATE TABLE), ignore to keep init resilient
+        if (msg.includes('no such table') || msg.includes('does not exist')) return;
+        throw e;
+      }
+    };
+
     // Assessments table
     await queryHelpers.queryRun(
       `CREATE TABLE IF NOT EXISTS assessments (
@@ -278,6 +292,26 @@ const ensureAssessmentSchema = async (): Promise<void> => {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`
     );
+
+    // If the table already existed (older DB), ensure required columns exist.
+    // NOTE: SQLite won't add columns via CREATE TABLE IF NOT EXISTS, so we must ALTER.
+    await tryAddColumn('assessments', 'project_id TEXT');
+    await tryAddColumn('assessments', "assessment_type TEXT DEFAULT 'DRD'");
+    await tryAddColumn('assessments', "name TEXT DEFAULT 'New Assessment'");
+    await tryAddColumn('assessments', "status TEXT DEFAULT 'DRAFT'");
+    await tryAddColumn('assessments', 'completion_percent INTEGER DEFAULT 0');
+    await tryAddColumn('assessments', 'confidence_avg REAL DEFAULT 0');
+    await tryAddColumn('assessments', "answers_json TEXT DEFAULT '{}'");
+    await tryAddColumn('assessments', "context_snapshot TEXT DEFAULT '{}'");
+    await tryAddColumn('assessments', "score_summary TEXT DEFAULT '{}'");
+    await tryAddColumn('assessments', 'current_section_id TEXT');
+    await tryAddColumn('assessments', 'review_requested_at TIMESTAMP');
+    await tryAddColumn('assessments', 'report_approved_at TIMESTAMP');
+    await tryAddColumn('assessments', 'approved_at TIMESTAMP');
+    await tryAddColumn('assessments', 'created_by TEXT');
+    await tryAddColumn('assessments', 'updated_by TEXT');
+    await tryAddColumn('assessments', 'created_at TIMESTAMP');
+    await tryAddColumn('assessments', 'updated_at TIMESTAMP');
 
     // Assessment reports table
     await queryHelpers.queryRun(
@@ -541,29 +575,61 @@ export class AssessmentController {
       const id = uuidv4();
       const now = new Date().toISOString();
 
-      await queryHelpers.queryRun(
-        `INSERT INTO assessments (
-          id, organization_id, project_id, assessment_type, name, status,
-          completion_percent, confidence_avg, answers_json, context_snapshot,
-          created_by, updated_by, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          id,
-          user.organizationId,
-          projectId || null,
-          assessmentType,
-          name,
-          'DRAFT',
-          0,
-          0,
-          '{}',
-          '{}',
-          user.id,
-          user.id,
-          now,
-          now,
-        ]
-      );
+      // Backward compatibility: some older SQLite DBs may not have `project_id` column.
+      // We try the full insert first, and if it fails with "no such column", retry without project_id.
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO assessments (
+            id, organization_id, project_id, assessment_type, name, status,
+            completion_percent, confidence_avg, answers_json, context_snapshot,
+            created_by, updated_by, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            id,
+            user.organizationId,
+            projectId || null,
+            assessmentType,
+            name,
+            'DRAFT',
+            0,
+            0,
+            '{}',
+            '{}',
+            user.id,
+            user.id,
+            now,
+            now,
+          ]
+        );
+      } catch (e: any) {
+        const msg = String(e?.message || e || '');
+        if (msg.includes('no such column') && msg.includes('project_id')) {
+          await queryHelpers.queryRun(
+            `INSERT INTO assessments (
+              id, organization_id, assessment_type, name, status,
+              completion_percent, confidence_avg, answers_json, context_snapshot,
+              created_by, updated_by, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              id,
+              user.organizationId,
+              assessmentType,
+              name,
+              'DRAFT',
+              0,
+              0,
+              '{}',
+              '{}',
+              user.id,
+              user.id,
+              now,
+              now,
+            ]
+          );
+        } else {
+          throw e;
+        }
+      }
 
       // Create initial session for submenu
       await queryHelpers.queryRun(
@@ -619,7 +685,9 @@ export class AssessmentController {
 
       // Get latest report
       const report = await queryHelpers.queryOne<AssessmentReportRow>(
-        `SELECT * FROM assessment_reports WHERE assessment_id = ? ORDER BY version DESC LIMIT 1`,
+        // NOTE: DBs created before workflow v2 may not have `version` column on assessment_reports.
+        // Use timestamps to pick the latest row in a backwards-compatible way.
+        `SELECT * FROM assessment_reports WHERE assessment_id = ? ORDER BY COALESCE(updated_at, created_at) DESC LIMIT 1`,
         [assessmentId]
       );
 
@@ -807,7 +875,9 @@ export class AssessmentController {
 
       // Get latest report
       const report = await queryHelpers.queryOne<AssessmentReportRow>(
-        `SELECT * FROM assessment_reports WHERE assessment_id = ? ORDER BY version DESC LIMIT 1`,
+        // NOTE: DBs created before workflow v2 may not have `version` column on assessment_reports.
+        // Use timestamps to pick the latest row in a backwards-compatible way.
+        `SELECT * FROM assessment_reports WHERE assessment_id = ? ORDER BY COALESCE(updated_at, created_at) DESC LIMIT 1`,
         [assessmentId]
       );
 

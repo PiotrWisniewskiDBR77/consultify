@@ -92,6 +92,31 @@ const handleResponse = async (res: Response, defaultError: string) => {
 
   const data = await res.json().catch(() => ({}));
 
+  // Normalize error payloads to a readable string.
+  // Some endpoints return { error: {...} } which would otherwise surface as "[object Object]".
+  const toErrorMessage = (payload: any, fallback: string): string => {
+    const msg = payload?.message;
+    const err = payload?.error;
+    if (typeof msg === 'string' && msg.trim()) return msg;
+    if (typeof err === 'string' && err.trim()) return err;
+    if (err != null) {
+      try {
+        return typeof err === 'string' ? err : JSON.stringify(err);
+      } catch {
+        // ignore
+      }
+    }
+    if (msg != null) {
+      try {
+        return typeof msg === 'string' ? msg : JSON.stringify(msg);
+      } catch {
+        // ignore
+      }
+    }
+    return fallback;
+  };
+  const normalizedMessage = toErrorMessage(data, defaultError);
+
   // Check for Demo Block
   if (
     res.status === 403 &&
@@ -106,7 +131,7 @@ const handleResponse = async (res: Response, defaultError: string) => {
       })
     );
     // We still throw to stop execution, but the UI will handle the modal
-    throw new Error(data.message || data.error || 'Action blocked in Demo Mode');
+    throw new Error(toErrorMessage(data, 'Action blocked in Demo Mode'));
   }
 
   // Check for AI Budget Freeze (Phase 8: Prestige)
@@ -118,7 +143,7 @@ const handleResponse = async (res: Response, defaultError: string) => {
       reason: data.error,
       scope: data.budgetStatus?.scope || 'Global',
     });
-    throw new Error(data.error || 'AI Budget Exhausted');
+    throw new Error(toErrorMessage(data, 'AI Budget Exhausted'));
   }
 
   // Unified access-blocked handling (Trial expiry, AI limits, token budgets, etc.)
@@ -145,11 +170,11 @@ const handleResponse = async (res: Response, defaultError: string) => {
       } catch {
         // ignore
       }
-      throw new Error(data.message || data.error || defaultError);
+      throw new Error(normalizedMessage);
     }
   }
 
-  throw new Error(data.error || defaultError);
+  throw new Error(normalizedMessage);
 };
 
 export const Api = {
@@ -1815,6 +1840,7 @@ export const Api = {
   createAssessmentSession: async (payload: {
     assessmentType: 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
     name: string;
+    description?: string;
     projectId?: string | null;
   }): Promise<{ id: string; status: string }> => {
     const res = await fetch(`${API_URL}/assessment-workflow-v2`, {

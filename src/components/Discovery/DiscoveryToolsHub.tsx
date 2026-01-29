@@ -41,6 +41,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { ToolType as StoreToolType } from '@/store/useToolStore';
 
 import { ToolDocumentView, ToolWorkspace } from '../DiscoveryTools';
+import { GenericToolDocumentView } from '../DiscoveryTools/GenericToolDocumentView';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import {
   CategoryButton,
@@ -1529,23 +1530,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       // Fallback for unsupported tools
       const toolMeta = TOOL_META[doc?.subType as ToolType];
       return (
-        <div className="flex items-center justify-center h-full text-slate-500">
-          <div className="text-center">
-            <p className="text-lg">Working on: {doc?.name}</p>
-            <p className="text-sm">
-              ({toolMeta?.name || doc?.subType} - {doc?.status})
-            </p>
-            <p className="mt-4 text-xs text-slate-400">
-              This tool type is not yet fully implemented.
-            </p>
-            <button
-              onClick={handleShowList}
-              className="mt-4 px-4 py-2 bg-navy-700 hover:bg-navy-600 text-white rounded-lg text-sm transition-colors"
-            >
-              Back to List
-            </button>
-          </div>
-        </div>
+        <GenericToolDocumentView
+          sessionId={doc?.id}
+          title={doc?.name}
+          toolTypeLabel={toolMeta?.name || doc?.subType}
+          statusLabel={doc?.status}
+          onBack={handleShowList}
+        />
       );
     }
 

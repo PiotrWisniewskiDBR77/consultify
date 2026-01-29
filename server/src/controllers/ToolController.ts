@@ -6,11 +6,11 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import { hasPermission } from '../services/permissionService.js';
+import ToolInitiativeService from '../services/ToolInitiativeService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
-import { hasPermission } from '../services/permissionService.js';
-import ToolInitiativeService from '../services/ToolInitiativeService.js';
 
 type ToolSessionRow = {
   id: string;
@@ -31,17 +31,16 @@ type ToolSessionRow = {
   updated_at?: string | null;
 };
 
-const normalizeStatus = (status: string | null | undefined) =>
-  (status || 'DRAFT').toUpperCase();
+const normalizeStatus = (status: string | null | undefined) => (status || 'DRAFT').toUpperCase();
 
 let decisionColumnsCache: Set<string> | null = null;
 
 const getDecisionColumns = async (): Promise<Set<string>> => {
   if (decisionColumnsCache) return decisionColumnsCache;
   try {
-    const rows = (await queryHelpers.queryAll(
-      `PRAGMA table_info(decisions)`
-    )) as Array<{ name?: string }>;
+    const rows = (await queryHelpers.queryAll(`PRAGMA table_info(decisions)`)) as Array<{
+      name?: string;
+    }>;
     const cols = new Set((rows || []).map((row) => row.name).filter(Boolean) as string[]);
     if (cols.size > 0) {
       decisionColumnsCache = cols;
@@ -141,7 +140,12 @@ const ensurePermission = async (
     const key = String(permissionKey || '').toUpperCase();
     if (key.startsWith('TOOLS_')) return true;
   }
-  const allowed = await hasPermission(user.id, user.organizationId, permissionKey, user.role as any);
+  const allowed = await hasPermission(
+    user.id,
+    user.organizationId,
+    permissionKey,
+    user.role as any
+  );
   if (allowed) return true;
   const role = String(user.role || '').toUpperCase();
   const key = String(permissionKey || '').toUpperCase();
@@ -399,7 +403,16 @@ const upsertToolDecision = async (params: {
   await queryHelpers.queryRun(
     `INSERT INTO tool_decisions (id, tool_session_id, decision_type, status, decision_id, comment, created_by, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id, toolSessionId, decisionType, status, decisionId || null, comment || null, createdBy, new Date().toISOString()]
+    [
+      id,
+      toolSessionId,
+      decisionType,
+      status,
+      decisionId || null,
+      comment || null,
+      createdBy,
+      new Date().toISOString(),
+    ]
   );
   return id;
 };
@@ -485,7 +498,9 @@ export class ToolController {
 
       if (status) {
         // Support comma-separated statuses
-        const statuses = String(status).split(',').map(s => s.trim().toUpperCase());
+        const statuses = String(status)
+          .split(',')
+          .map((s) => s.trim().toUpperCase());
         sql += ` AND UPPER(status) IN (${statuses.map(() => '?').join(', ')})`;
         params.push(...statuses);
       }
@@ -498,9 +513,42 @@ export class ToolController {
       // Category filter maps to tool_type prefixes
       if (category) {
         const categoryMap: Record<string, string[]> = {
-          strategic: ['dynamic-swot', 'market-forces', 'growth-paths', 'value-chain', 'portfolio-priority', 'ambition-decomposer', 'focus-tradeoff', 'risk-uncertainty', 'capability-mapper', 'narrative-engine'],
-          operational: ['sop-builder', 'a3-problem-solving', 'smed-planner', 'dms-builder', 'inventory-autopilot', 'vsm-builder', 'automation-pipeline', 'constraint-control', 'decision-engine', 'control-tower'],
-          digital: ['robotics-feasibility', 'logistics-automation', 'rpa-scanner', 'ai-discovery', 'integration-diagnostic', 'digital-value-pool', 'legacy-analyzer', 'data-inventory', 'pain-to-solution', 'pain-explorer'],
+          strategic: [
+            'dynamic-swot',
+            'market-forces',
+            'growth-paths',
+            'value-chain',
+            'portfolio-priority',
+            'ambition-decomposer',
+            'focus-tradeoff',
+            'risk-uncertainty',
+            'capability-mapper',
+            'narrative-engine',
+          ],
+          operational: [
+            'sop-builder',
+            'a3-problem-solving',
+            'smed-planner',
+            'dms-builder',
+            'inventory-autopilot',
+            'vsm-builder',
+            'automation-pipeline',
+            'constraint-control',
+            'decision-engine',
+            'control-tower',
+          ],
+          digital: [
+            'robotics-feasibility',
+            'logistics-automation',
+            'rpa-scanner',
+            'ai-discovery',
+            'integration-diagnostic',
+            'digital-value-pool',
+            'legacy-analyzer',
+            'data-inventory',
+            'pain-to-solution',
+            'pain-explorer',
+          ],
           automation: ['process-automation'],
         };
         const toolTypes = categoryMap[String(category).toLowerCase()] || [];
@@ -528,7 +576,9 @@ export class ToolController {
         countParams.push(projectId);
       }
       if (status) {
-        const statuses = String(status).split(',').map(s => s.trim().toUpperCase());
+        const statuses = String(status)
+          .split(',')
+          .map((s) => s.trim().toUpperCase());
         countSql += ` AND UPPER(status) IN (${statuses.map(() => '?').join(', ')})`;
         countParams.push(...statuses);
       }
@@ -536,11 +586,13 @@ export class ToolController {
         countSql += ` AND tool_type = ?`;
         countParams.push(toolType);
       }
-      const countResult = (await queryHelpers.queryOne(countSql, countParams)) as { total: number } | null;
+      const countResult = (await queryHelpers.queryOne(countSql, countParams)) as {
+        total: number;
+      } | null;
       const total = countResult?.total || 0;
 
       // Transform to frontend format
-      const items = sessions.map(session => ({
+      const items = sessions.map((session) => ({
         id: session.id,
         name: session.name,
         toolType: session.tool_type,
@@ -607,8 +659,18 @@ export class ToolController {
       };
 
       res.json({
-        ...session,
+        id: session.id,
+        name: session.name,
+        toolType: session.tool_type,
         status: normalizeStatus(session.status),
+        progress: session.completion_percent || 0,
+        confidenceAvg: session.confidence_avg || 0,
+        projectId: session.project_id,
+        createdBy: session.created_by,
+        createdAt: session.created_at,
+        updatedAt: session.updated_at,
+        reviewRequestedAt: session.review_requested_at,
+        approvedAt: session.approved_at,
         answers: session.answers_json ? JSON.parse(session.answers_json) : {},
         contextSnapshot: session.context_snapshot ? JSON.parse(session.context_snapshot) : {},
         generatedInitiatives: initiatives,
@@ -910,7 +972,11 @@ export class ToolController {
         return;
       }
 
-      if (!session.answers_json || session.answers_json === '{}' || session.answers_json === 'null') {
+      if (
+        !session.answers_json ||
+        session.answers_json === '{}' ||
+        session.answers_json === 'null'
+      ) {
         res.status(409).json({ error: 'Missing tool context for generation' });
         return;
       }
@@ -921,15 +987,7 @@ export class ToolController {
         `INSERT INTO tool_initiative_batches (
           id, tool_session_id, methodology_id, initiatives_count, include_chat_context, generated_by, created_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
-          batchId,
-          toolId,
-          methodologyId,
-          count,
-          includeChatContext ? 1 : 0,
-          user.id,
-          now,
-        ]
+        [batchId, toolId, methodologyId, count, includeChatContext ? 1 : 0, user.id, now]
       );
 
       const decisionId = await createDecisionRecord({

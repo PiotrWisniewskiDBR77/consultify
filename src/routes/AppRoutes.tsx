@@ -74,6 +74,11 @@ const ProcessAutomationView = React.lazy(() =>
 const AssessmentHub = React.lazy(() =>
   import('@/components/assessment/AssessmentHub').then((m) => ({ default: m.AssessmentHub }))
 );
+const AssessmentSessionEditorView = React.lazy(() =>
+  import('@/views/AssessmentSessionEditorView').then((m) => ({
+    default: m.AssessmentSessionEditorView,
+  }))
+);
 
 // Transformation Modules - New Hubs (ModuleHub pattern)
 const InitiativesHub = React.lazy(() =>
@@ -792,6 +797,11 @@ export const AppRoutes: React.FC = () => {
             <MainLayout breadcrumbs={breadcrumbs || ['Assessment']} noPadding>
               <RouteErrorBoundary>
                 <Routes>
+                  {/* Assessment Session Editor (Workflow v2) */}
+                  <Route
+                    path=":framework/:assessmentId"
+                    element={<AssessmentSessionEditorView />}
+                  />
                   {/* Main Assessment Hub - unified view */}
                   <Route index element={<AssessmentHub />} />
                   <Route path="overview" element={<AssessmentHub />} />

@@ -48,11 +48,11 @@ test.describe('Interview Module - v2.0', () => {
     await page.click('button:has-text("New Session"), button:has-text("Nowa sesja")');
 
     // Workspace should show category sections
-    await expect(page.locator('text=Strategy')).toBeVisible();
-    await expect(page.locator('text=Operations')).toBeVisible();
-    await expect(page.locator('text=Digital')).toBeVisible();
-    await expect(page.locator('text=People')).toBeVisible();
-    await expect(page.locator('text=Finance')).toBeVisible();
+    await expect(page.getByRole('button', { name: /Strategy/i }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /Operations/i }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /Digital/i }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /People/i }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /Finance/i }).first()).toBeVisible();
   });
 
   test('should allow adding and answering a custom question', async ({ page }) => {
@@ -88,17 +88,29 @@ test.describe('Interview API - v2.0', () => {
   const EMAIL = 'piotr.wisniewski@dbr77.com';
   const PASSWORD = '123456';
 
-  async function login(request: any): Promise<{ token: string; userId: string }> {
+  async function login(request: any): Promise<{ token: string; userId: string; projectId: string }> {
     const res = await request.post('/api/auth/login', {
       data: { email: EMAIL, password: PASSWORD },
     });
     expect(res.ok()).toBeTruthy();
     const json = await res.json();
-    return { token: json.token, userId: json.user?.id };
+    const token = json.token as string;
+    const userId = json.user?.id as string;
+
+    const projectsRes = await request.get('/api/projects', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(projectsRes.ok()).toBeTruthy();
+    const projects = await projectsRes.json();
+    const preferred = Array.isArray(projects) ? projects.find((p: any) => p?.id === 'project-dbr77-001') : null;
+    const projectId = (preferred?.id || projects?.[0]?.id) as string;
+    expect(projectId).toBeTruthy();
+
+    return { token, userId, projectId };
   }
 
   test('should create interview session via API', async ({ request }) => {
-    const { token } = await login(request);
+    const { token, projectId } = await login(request);
 
     // Create session
     const sessionResponse = await request.post('/api/interview/sessions', {
@@ -107,6 +119,7 @@ test.describe('Interview API - v2.0', () => {
       },
       data: {
         name: 'Test Interview Session',
+        projectId,
       },
     });
 
@@ -132,7 +145,7 @@ test.describe('Interview API - v2.0', () => {
   });
 
   test('should add question via API', async ({ request }) => {
-    const { token } = await login(request);
+    const { token, projectId } = await login(request);
 
     // Create session first
     const sessionResponse = await request.post('/api/interview/sessions', {
@@ -141,6 +154,7 @@ test.describe('Interview API - v2.0', () => {
       },
       data: {
         name: 'Test Session for Questions',
+        projectId,
       },
     });
 
@@ -165,7 +179,7 @@ test.describe('Interview API - v2.0', () => {
   });
 
   test('should update question with answer and status via API', async ({ request }) => {
-    const { token } = await login(request);
+    const { token, projectId } = await login(request);
 
     // Create session
     const sessionResponse = await request.post('/api/interview/sessions', {
@@ -174,6 +188,7 @@ test.describe('Interview API - v2.0', () => {
       },
       data: {
         name: 'Test Session for Update',
+        projectId,
       },
     });
 
@@ -214,7 +229,7 @@ test.describe('Interview API - v2.0', () => {
   });
 
   test('should create note via API', async ({ request }) => {
-    const { token } = await login(request);
+    const { token, projectId } = await login(request);
 
     // Create session
     const sessionResponse = await request.post('/api/interview/sessions', {
@@ -223,6 +238,7 @@ test.describe('Interview API - v2.0', () => {
       },
       data: {
         name: 'Test Session for Notes',
+        projectId,
       },
     });
 
@@ -250,7 +266,7 @@ test.describe('Interview API - v2.0', () => {
   test('should execute full assignment workflow (create → start → answer → submit → approve)', async ({
     request,
   }) => {
-    const { token, userId } = await login(request);
+    const { token, userId, projectId } = await login(request);
 
     // Pick an approved template from library
     const templatesRes = await request.get('/api/interview/templates', {
@@ -262,12 +278,23 @@ test.describe('Interview API - v2.0', () => {
     expect(templates.length).toBeGreaterThan(0);
     const templateId = templates[0].id;
 
+    // Ensure creator has a management role in the selected project (dev DB can seed admin as MEMBER)
+    try {
+      await request.patch(`/api/projects/${projectId}/members/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        data: { role: 'WORKSTREAM_OWNER' },
+      });
+    } catch {
+      // ignore - if endpoint doesn't exist, test will fail at assignment create
+    }
+
     // Create assignment to self
     const createAssignmentRes = await request.post('/api/interview/assignments', {
       headers: { Authorization: `Bearer ${token}` },
       data: {
         assigneeUserId: userId,
         templateId,
+        projectId,
         priority: 'medium',
       },
     });
@@ -316,7 +343,7 @@ test.describe('Interview API - v2.0', () => {
     });
     expect(submitRes.ok()).toBeTruthy();
     const submitted = await submitRes.json();
-    expect(submitted?.session?.status).toBe('submitted');
+    expect(submitted?.assignment?.status).toBe('submitted');
 
     // Approve assignment
     const approveRes = await request.post(`/api/interview/assignments/${assignment.id}/approve`, {

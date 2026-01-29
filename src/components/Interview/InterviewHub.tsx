@@ -18,6 +18,7 @@ import {
   Brain,
   Calendar,
   Check,
+  ChevronDown,
   ChevronRight,
   ClipboardList,
   Clock,
@@ -51,6 +52,25 @@ import { useSearchParams } from 'react-router-dom';
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
+
+// Helper function to safely display error messages
+const safeToastError = (error: any, defaultMessage: string, isPolish: boolean) => {
+  let errorMessage: string;
+  if (typeof error === 'string') {
+    errorMessage = error;
+  } else if (error?.response?.data?.error) {
+    const errData = error.response.data.error;
+    errorMessage = typeof errData === 'string' ? errData : JSON.stringify(errData);
+  } else if (error?.message) {
+    errorMessage =
+      typeof error.message === 'string' ? error.message : JSON.stringify(error.message);
+  } else if (error?.error) {
+    errorMessage = typeof error.error === 'string' ? error.error : JSON.stringify(error.error);
+  } else {
+    errorMessage = defaultMessage;
+  }
+  toast.error(errorMessage);
+};
 
 import { AssignInterviewModal } from './AssignInterviewModal';
 import { InsightCreatorModal } from './InsightCreatorModal';
@@ -435,6 +455,41 @@ export const InterviewHub: React.FC = () => {
     };
   }, [sessions]);
 
+  const sessionStatusOptions = useMemo(() => {
+    const opts = [
+      {
+        id: 'all',
+        label: isPolish ? 'Wszystkie' : 'All',
+        count: sessionStatusCounts.all,
+      },
+      {
+        id: 'in_progress',
+        label: isPolish ? 'W trakcie' : 'In Progress',
+        count: sessionStatusCounts.in_progress,
+      },
+      {
+        id: 'submitted',
+        label: isPolish ? 'Do przeglądu' : 'To Review',
+        count: sessionStatusCounts.submitted,
+      },
+      {
+        id: 'completed',
+        label: isPolish ? 'Zakończone' : 'Completed',
+        count: sessionStatusCounts.completed,
+      },
+      {
+        id: 'archived',
+        label: isPolish ? 'Archiwum' : 'Archived',
+        count: sessionStatusCounts.archived,
+      },
+    ];
+
+    return opts.map((o) => ({
+      ...o,
+      display: `${o.label} (${o.count})`,
+    }));
+  }, [isPolish, sessionStatusCounts]);
+
   // Filter insights
   const filteredInsights = useMemo(() => {
     let result = insights;
@@ -623,21 +678,26 @@ export const InterviewHub: React.FC = () => {
 
       setSessions((prev) => [newSession as InterviewSession, ...prev]);
 
-      // Open the new session
-      handleOpenDocument({
+      // Open the new session (inline to avoid TDZ issues)
+      const doc: OpenDocument = {
         id: (newSession as InterviewSession).id,
         type: 'session',
         name: (newSession as InterviewSession).name || 'Interview Session',
         status: (newSession as any)?.status || 'in_progress',
         data: newSession as InterviewSession,
+      };
+      setOpenDocuments((prev) => {
+        if (prev.find((d) => d.id === doc.id)) return prev;
+        return [...prev, doc];
       });
+      setActiveDocumentId(doc.id);
 
       toast.success(isPolish ? 'Nowa sesja wywiadu rozpoczęta!' : 'New interview session started!');
     } catch (error) {
       console.error('[InterviewHub] Failed to create session:', error);
       toast.error(isPolish ? 'Nie udało się utworzyć sesji' : 'Failed to create session');
     }
-  }, [ensureProjectId, handleOpenDocument, isPolish]);
+  }, [ensureProjectId, isPolish]);
 
   const handleOpenDocument = useCallback((doc: OpenDocument) => {
     setOpenDocuments((prev) => {
@@ -826,9 +886,13 @@ export const InterviewHub: React.FC = () => {
         setMyAssignments(Array.isArray(myRes) ? myRes : []);
         setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
         setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
-      } catch (error) {
-        toast.error(isPolish ? 'Nie udało się zwrócić wywiadu' : 'Failed to send back');
+      } catch (error: any) {
         console.error('[InterviewHub] Failed to send back:', error);
+        safeToastError(
+          error,
+          isPolish ? 'Nie udało się zwrócić wywiadu' : 'Failed to send back',
+          isPolish
+        );
       }
     },
     [selectedAssignment, isPolish]
@@ -849,9 +913,13 @@ export const InterviewHub: React.FC = () => {
         setMyAssignments(Array.isArray(myRes) ? myRes : []);
         setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
         setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
-      } catch (error) {
-        toast.error(isPolish ? 'Nie udało się zatwierdzić wywiadu' : 'Failed to approve interview');
+      } catch (error: any) {
         console.error('[InterviewHub] Failed to approve assignment:', error);
+        safeToastError(
+          error,
+          isPolish ? 'Nie udało się zatwierdzić wywiadu' : 'Failed to approve interview',
+          isPolish
+        );
       }
     },
     [isPolish]
@@ -1953,13 +2021,22 @@ export const InterviewHub: React.FC = () => {
               <button
                 onClick={async () => {
                   try {
+                    const projectId = await ensureProjectId();
+                    if (!projectId) {
+                      toast.error(
+                        isPolish
+                          ? 'Wybierz projekt przed utworzeniem sesji'
+                          : 'Select a project before creating a session'
+                      );
+                      return;
+                    }
                     toast.loading(
                       isPolish
                         ? 'Tworzenie sesji z szablonu...'
                         : 'Creating session from template...'
                     );
                     const created = await Api.post(`/interview/templates/${template.id}/use`, {
-                      projectId: currentProjectId,
+                      projectId,
                       name: `${template.name} ${new Date().toLocaleDateString()}`,
                     });
 
@@ -1970,7 +2047,7 @@ export const InterviewHub: React.FC = () => {
                       id: newSession.id,
                       type: 'session',
                       name: newSession.name || 'Interview Session',
-                      status: 'active',
+                      status: (newSession as any)?.status || 'in_progress',
                       data: newSession,
                     });
 
@@ -2056,21 +2133,39 @@ export const InterviewHub: React.FC = () => {
 
     const handleStartAssignment = async (assignment: InterviewAssignment) => {
       try {
+        const projectId = await ensureProjectId();
+        if (!projectId) {
+          toast.error(
+            isPolish
+              ? 'Wybierz projekt przed rozpoczęciem wywiadu'
+              : 'Select a project before starting'
+          );
+          return;
+        }
         toast.loading(isPolish ? 'Rozpoczynanie wywiadu...' : 'Starting interview...');
-        const result = await Api.post(`/interview/assignments/${assignment.id}/start`, {});
+        const result = (await Api.post(`/interview/assignments/${assignment.id}/start`, {
+          projectId,
+        })) as any;
         toast.dismiss();
-        toast.success(isPolish ? 'Wywiad rozpoczęty!' : 'Interview started!');
 
-        // Open the session
-        if ((result as any).sessionId) {
-          const session = await Api.get(`/interview/sessions/${(result as any).sessionId}`);
+        console.log('[InterviewHub] Start assignment result:', result);
+
+        // Open the session - backend returns { assignmentId, session }
+        const session = result?.session;
+        if (session?.id) {
+          toast.success(isPolish ? 'Wywiad rozpoczęty!' : 'Interview started!');
           handleOpenDocument({
-            id: (session as InterviewSession).id,
+            id: session.id,
             type: 'session',
-            name: (session as InterviewSession).name || 'Interview Session',
-            status: 'active',
+            name: session.name || 'Interview Session',
+            status: (session.status || 'in_progress') as any,
             data: session as InterviewSession,
           });
+        } else {
+          console.warn('[InterviewHub] No session in result:', result);
+          toast.error(
+            isPolish ? 'Brak sesji w odpowiedzi serwera' : 'No session in server response'
+          );
         }
 
         // Refresh all assignments
@@ -2084,10 +2179,14 @@ export const InterviewHub: React.FC = () => {
         if (canViewManaged) {
           setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
         }
-      } catch (error) {
+      } catch (error: any) {
         toast.dismiss();
-        toast.error(isPolish ? 'Nie udało się rozpocząć' : 'Failed to start');
         console.error('[InterviewHub] Failed to start assignment:', error);
+        safeToastError(
+          error,
+          isPolish ? 'Nie udało się rozpocząć wywiadu' : 'Failed to start interview',
+          isPolish
+        );
       }
     };
 
@@ -2095,9 +2194,70 @@ export const InterviewHub: React.FC = () => {
       try {
         await Api.post(`/interview/assignments/${assignment.id}/remind`, {});
         toast.success(isPolish ? 'Przypomnienie wysłane!' : 'Reminder sent!');
-      } catch (error) {
-        toast.error(isPolish ? 'Nie udało się wysłać przypomnienia' : 'Failed to send reminder');
+      } catch (error: any) {
         console.error('[InterviewHub] Failed to send reminder:', error);
+        safeToastError(
+          error,
+          isPolish ? 'Nie udało się wysłać przypomnienia' : 'Failed to send reminder',
+          isPolish
+        );
+      }
+    };
+
+    const handleOpenAssignmentRow = async (assignment: InterviewAssignment) => {
+      try {
+        console.log('[InterviewHub] Opening assignment:', {
+          id: assignment.id,
+          status: assignment.status,
+          sessionId: assignment.sessionId,
+          showAssignee,
+        });
+
+        // If assignment has a session, open it (read-only will be handled by workspace based on assignment status)
+        const sid = assignment.sessionId || assignment.session?.id;
+        if (sid) {
+          console.log('[InterviewHub] Loading session:', sid);
+          const session = await Api.get(`/interview/sessions/${sid}`);
+          console.log('[InterviewHub] Session loaded:', session);
+          handleOpenDocument({
+            id: (session as InterviewSession).id,
+            type: 'session',
+            name: (session as InterviewSession).name || 'Interview Session',
+            status: ((session as any)?.status || 'in_progress') as any,
+            data: session as InterviewSession,
+          });
+          return;
+        }
+
+        // If user is assignee and the assignment hasn't started, start it.
+        if (!showAssignee && assignment.status === 'assigned') {
+          console.log('[InterviewHub] Starting assignment as assignee');
+          await handleStartAssignment(assignment);
+          return;
+        }
+
+        // If manager view and assignment hasn't started yet, show info message
+        if (showAssignee && !assignment.sessionId) {
+          console.log('[InterviewHub] Assignment not started yet (manager view)');
+          const message = isPolish
+            ? 'Wywiad nie został jeszcze rozpoczęty przez przypisanego użytkownika'
+            : 'Interview has not been started by the assignee yet';
+          toast(message, {
+            icon: 'ℹ️',
+            duration: 4000,
+          });
+          return;
+        }
+
+        // Fallback - should not reach here, but log if it does
+        console.warn('[InterviewHub] No action taken for assignment:', assignment);
+      } catch (error: any) {
+        console.error('[InterviewHub] Failed to open assignment row:', error);
+        safeToastError(
+          error,
+          isPolish ? 'Nie udało się otworzyć assignmentu' : 'Failed to open assignment',
+          isPolish
+        );
       }
     };
 
@@ -2136,7 +2296,23 @@ export const InterviewHub: React.FC = () => {
               return (
                 <tr
                   key={assignment.id}
-                  className="group hover:bg-navy-800/50 transition-colors border-b border-navy-700/50 last:border-0"
+                  onClick={(e) => {
+                    // Only handle click if not clicking on a button or interactive element
+                    const target = e.target as HTMLElement;
+                    if (target.tagName === 'BUTTON' || target.closest('button')) {
+                      return; // Let button handle its own click
+                    }
+                    handleOpenAssignmentRow(assignment);
+                  }}
+                  className="group hover:bg-navy-800/50 active:bg-navy-700/50 transition-colors border-b border-navy-700/50 last:border-0 cursor-pointer"
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleOpenAssignmentRow(assignment);
+                    }
+                  }}
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
@@ -2211,7 +2387,10 @@ export const InterviewHub: React.FC = () => {
                           {/* Start - for assigned status */}
                           {assignment.status === 'assigned' && (
                             <button
-                              onClick={() => handleStartAssignment(assignment)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStartAssignment(assignment);
+                              }}
                               className="flex items-center gap-1 px-2 py-1 rounded bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 text-xs font-medium transition-colors"
                             >
                               <Sparkles size={12} />
@@ -2223,6 +2402,10 @@ export const InterviewHub: React.FC = () => {
                           {assignment.status === 'in_progress' && assignment.sessionId && (
                             <button
                               onClick={async () => {
+                                // prevent row click
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                const ev = (arguments as any)[0];
+                                if (ev?.stopPropagation) ev.stopPropagation();
                                 const session = await Api.get(
                                   `/interview/sessions/${assignment.sessionId}`
                                 );
@@ -2230,7 +2413,7 @@ export const InterviewHub: React.FC = () => {
                                   id: (session as InterviewSession).id,
                                   type: 'session',
                                   name: (session as InterviewSession).name || 'Interview Session',
-                                  status: 'active',
+                                  status: ((session as any)?.status || 'in_progress') as any,
                                   data: session as InterviewSession,
                                 });
                               }}
@@ -2245,6 +2428,10 @@ export const InterviewHub: React.FC = () => {
                           {assignment.status === 'sent_back' && assignment.sessionId && (
                             <button
                               onClick={async () => {
+                                // prevent row click
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                const ev = (arguments as any)[0];
+                                if (ev?.stopPropagation) ev.stopPropagation();
                                 const session = await Api.get(
                                   `/interview/sessions/${assignment.sessionId}`
                                 );
@@ -2252,7 +2439,7 @@ export const InterviewHub: React.FC = () => {
                                   id: (session as InterviewSession).id,
                                   type: 'session',
                                   name: (session as InterviewSession).name || 'Interview Session',
-                                  status: 'active',
+                                  status: ((session as any)?.status || 'in_progress') as any,
                                   data: session as InterviewSession,
                                 });
                               }}
@@ -2290,7 +2477,10 @@ export const InterviewHub: React.FC = () => {
                           <>
                             {/* Send Reminder - for all non-completed statuses */}
                             <button
-                              onClick={() => handleOpenReminderModal(assignment)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenReminderModal(assignment);
+                              }}
                               className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-amber-400 transition-colors"
                               title={isPolish ? 'Wyślij przypomnienie' : 'Send reminder'}
                             >
@@ -2301,7 +2491,10 @@ export const InterviewHub: React.FC = () => {
                             {assignment.status === 'submitted' && (
                               <>
                                 <button
-                                  onClick={() => handleApproveAssignment(assignment)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleApproveAssignment(assignment);
+                                  }}
                                   className="flex items-center gap-1 px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-xs font-medium transition-colors"
                                   title={isPolish ? 'Zatwierdź' : 'Approve'}
                                 >
@@ -2309,7 +2502,10 @@ export const InterviewHub: React.FC = () => {
                                   {isPolish ? 'Zatwierdź' : 'Approve'}
                                 </button>
                                 <button
-                                  onClick={() => handleOpenSendBackModal(assignment)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenSendBackModal(assignment);
+                                  }}
                                   className="flex items-center gap-1 px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs font-medium transition-colors"
                                   title={isPolish ? 'Zwróć do poprawy' : 'Send back'}
                                 >
@@ -2354,490 +2550,30 @@ export const InterviewHub: React.FC = () => {
     }
 
     if (activeTab === 'sessions') {
-      const statusFilters = [
-        {
-          id: 'all',
-          label: isPolish ? 'Wszystkie' : 'All',
-          count: sessionStatusCounts.all,
-          activeClass: 'bg-primary-500/15 border-primary-500 text-primary-400',
-        },
-        {
-          id: 'in_progress',
-          label: isPolish ? 'W trakcie' : 'In Progress',
-          count: sessionStatusCounts.in_progress,
-          activeClass: 'bg-purple-500/20 border-purple-500/50 text-purple-400',
-        },
-        {
-          id: 'submitted',
-          label: isPolish ? 'Do przeglądu' : 'To Review',
-          count: sessionStatusCounts.submitted,
-          activeClass: 'bg-amber-500/20 border-amber-500/50 text-amber-400',
-        },
-        {
-          id: 'completed',
-          label: isPolish ? 'Zakończone' : 'Completed',
-          count: sessionStatusCounts.completed,
-          activeClass: 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400',
-        },
-        {
-          id: 'archived',
-          label: isPolish ? 'Archiwum' : 'Archived',
-          count: sessionStatusCounts.archived,
-          activeClass: 'bg-slate-500/20 border-slate-500/50 text-slate-300',
-        },
-      ];
-
       return (
-        <div className="p-4 space-y-4">
-          {/* Status Filters */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {statusFilters.map((filter) => {
-              const isActive = sessionStatusFilter === filter.id;
-
-              return (
-                <button
-                  key={filter.id}
-                  onClick={() => setSessionStatusFilter(filter.id)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                    isActive
-                      ? filter.activeClass
-                      : 'bg-navy-800 border-navy-600 text-slate-400 hover:bg-navy-700 hover:text-white'
-                  }`}
-                >
-                  <span>{filter.label}</span>
-                  {filter.count > 0 && (
-                    <span
-                      className={`px-1.5 py-0.5 text-xs rounded-full ${
-                        isActive ? 'bg-white/20' : 'bg-navy-700'
-                      }`}
-                    >
-                      {filter.count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Sessions Table/Grid */}
+        <div className="p-4">
           {viewMode === 'table' ? renderSessionsTable() : renderSessionsGrid()}
         </div>
       );
     }
 
     if (activeTab === 'insights') {
-      const exportedAnyCount = insights.filter(
-        (i) => i.exportedToTools || i.exportedToAssessment
-      ).length;
-      const statusFilters = [
-        {
-          id: 'all',
-          label: isPolish ? 'Wszystkie' : 'All',
-          count: insightStats.total,
-          activeClass: 'bg-primary-500/15 border-primary-500 text-primary-400',
-        },
-        {
-          id: 'generating',
-          label: isPolish ? 'Generuje' : 'Generating',
-          count: insightStats.generating,
-          activeClass: 'bg-amber-500/20 border-amber-500/50 text-amber-400',
-        },
-        {
-          id: 'completed',
-          label: isPolish ? 'Gotowe' : 'Completed',
-          count: insightStats.completed,
-          activeClass: 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400',
-        },
-        {
-          id: 'failed',
-          label: isPolish ? 'Błędy' : 'Failed',
-          count: insightStats.failed,
-          activeClass: 'bg-red-500/20 border-red-500/50 text-red-400',
-        },
-      ];
-
-      return (
-        <div className="p-4 space-y-4">
-          {/* Insight Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Lightbulb size={16} className="text-amber-400" />
-                <span className="text-xs text-slate-400">{isPolish ? 'Wnioski' : 'Insights'}</span>
-              </div>
-              <div className="text-2xl font-bold text-white">{insightStats.total}</div>
-            </div>
-            <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Loader2 size={16} className="text-amber-400" />
-                <span className="text-xs text-slate-400">
-                  {isPolish ? 'W trakcie' : 'Generating'}
-                </span>
-              </div>
-              <div className="text-2xl font-bold text-white">{insightStats.generating}</div>
-            </div>
-            <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Check size={16} className="text-emerald-400" />
-                <span className="text-xs text-slate-400">{isPolish ? 'Gotowe' : 'Completed'}</span>
-              </div>
-              <div className="text-2xl font-bold text-white">{insightStats.completed}</div>
-            </div>
-            <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Send size={16} className="text-blue-400" />
-                <span className="text-xs text-slate-400">
-                  {isPolish ? 'Wyeksportowane' : 'Exported'}
-                </span>
-              </div>
-              <div className="text-2xl font-bold text-white">{exportedAnyCount}</div>
-            </div>
-          </div>
-
-          {/* Filters Row */}
-          <div className="flex flex-wrap items-center gap-4">
-            {/* Status Filters */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500 mr-1">
-                {isPolish ? 'Status:' : 'Status:'}
-              </span>
-              {statusFilters.map((filter) => (
-                <button
-                  key={filter.id}
-                  onClick={() => setInsightStatusFilter(filter.id)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
-                    insightStatusFilter === filter.id
-                      ? filter.activeClass
-                      : 'bg-navy-800 border-navy-600 text-slate-400 hover:bg-navy-700 hover:text-white'
-                  }`}
-                >
-                  <span>{filter.label}</span>
-                  {filter.count > 0 && (
-                    <span
-                      className={`px-1 py-0.5 text-xs rounded ${
-                        insightStatusFilter === filter.id ? 'bg-white/20' : 'bg-navy-700'
-                      }`}
-                    >
-                      {filter.count}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {/* Type Filters */}
-            {insightTypes.length > 1 && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500 mr-1">{isPolish ? 'Typ:' : 'Type:'}</span>
-                <button
-                  onClick={() => setInsightTypeFilter('all')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
-                    insightTypeFilter === 'all'
-                      ? 'bg-primary-500/15 border-primary-500 text-primary-400'
-                      : 'bg-navy-800 border-navy-600 text-slate-400 hover:bg-navy-700 hover:text-white'
-                  }`}
-                >
-                  {isPolish ? 'Wszystkie' : 'All'}
-                </button>
-                {insightTypes.map((type) => {
-                  const typeConfig = getInsightTypeConfig(type);
-                  const count = insights.filter(
-                    (i: any) => (i.promptType || i.insightType || 'summary') === type
-                  ).length;
-                  return (
-                    <button
-                      key={type}
-                      onClick={() => setInsightTypeFilter(type)}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
-                        insightTypeFilter === type
-                          ? `${typeConfig.bgColor} border-current ${typeConfig.textColor}`
-                          : 'bg-navy-800 border-navy-600 text-slate-400 hover:bg-navy-700 hover:text-white'
-                      }`}
-                    >
-                      <span>{isPolish ? typeConfig.label.pl : typeConfig.label.en}</span>
-                      <span
-                        className={`px-1 py-0.5 text-xs rounded ${insightTypeFilter === type ? 'bg-white/20' : 'bg-navy-700'}`}
-                      >
-                        {count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Insights Table */}
-          {renderInsightsTable()}
-        </div>
-      );
+      return <div className="p-4">{renderInsightsTable()}</div>;
     }
 
     if (activeTab === 'templates') {
-      return (
-        <div className="p-4 space-y-4">
-          {/* Template Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <FileText size={16} className="text-blue-400" />
-                <span className="text-xs text-slate-400">
-                  {isPolish ? 'Szablony' : 'Templates'}
-                </span>
-              </div>
-              <div className="text-2xl font-bold text-white">{templateStats.total}</div>
-            </div>
-            <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <MessageSquare size={16} className="text-purple-400" />
-                <span className="text-xs text-slate-400">
-                  {isPolish ? 'Pytania łącznie' : 'Total Questions'}
-                </span>
-              </div>
-              <div className="text-2xl font-bold text-white">{templateStats.totalQuestions}</div>
-            </div>
-            <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Check size={16} className="text-blue-400" />
-                <span className="text-xs text-slate-400">{isPolish ? 'Domyślne' : 'Default'}</span>
-              </div>
-              <div className="text-2xl font-bold text-white">{templateStats.default}</div>
-            </div>
-            <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Sparkles size={16} className="text-emerald-400" />
-                <span className="text-xs text-slate-400">{isPolish ? 'Aktywne' : 'Active'}</span>
-              </div>
-              <div className="text-2xl font-bold text-white">{templateStats.active}</div>
-            </div>
-          </div>
-
-          {/* Category Filters */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => setTemplateCategoryFilter('all')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                templateCategoryFilter === 'all'
-                  ? 'bg-primary-500/15 border-primary-500 text-primary-400'
-                  : 'bg-navy-800 border-navy-600 text-slate-400 hover:bg-navy-700 hover:text-white'
-              }`}
-            >
-              <span>{isPolish ? 'Wszystkie' : 'All'}</span>
-              <span
-                className={`px-1.5 py-0.5 text-xs rounded-full ${
-                  templateCategoryFilter === 'all' ? 'bg-white/20' : 'bg-navy-700'
-                }`}
-              >
-                {templates.length}
-              </span>
-            </button>
-            {templateCategories.map((category) => {
-              const count = templates.filter((t) => t.category === category).length;
-              const isActive = templateCategoryFilter === category;
-              return (
-                <button
-                  key={category}
-                  onClick={() => setTemplateCategoryFilter(category)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                    isActive
-                      ? 'bg-blue-500/20 border-blue-500/50 text-blue-400'
-                      : 'bg-navy-800 border-navy-600 text-slate-400 hover:bg-navy-700 hover:text-white'
-                  }`}
-                >
-                  <span>{category}</span>
-                  <span
-                    className={`px-1.5 py-0.5 text-xs rounded-full ${
-                      isActive ? 'bg-white/20' : 'bg-navy-700'
-                    }`}
-                  >
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Templates Table */}
-          {renderTemplatesTable()}
-        </div>
-      );
+      return <div className="p-4">{renderTemplatesTable()}</div>;
     }
 
     if (activeTab === 'my-assignments') {
-      // Statystyki dla pracownika
-      const pendingCount = myAssignments.filter(
-        (a) => a.status === 'assigned' || a.status === 'sent_back'
-      ).length;
-      const inProgressCount = myAssignments.filter((a) => a.status === 'in_progress').length;
-      const submittedCount = myAssignments.filter((a) => a.status === 'submitted').length;
-      const completedCount = myAssignments.filter(
-        (a) => a.status === 'approved' || a.status === 'completed'
-      ).length;
-      const overdueCount = myAssignments.filter((a) => {
-        if (!a.dueAt) return false;
-        return (
-          new Date(a.dueAt) < new Date() && a.status !== 'approved' && a.status !== 'completed'
-        );
-      }).length;
-
-      return (
-        <div className="p-4 space-y-6">
-          {/* Statystyki moich przydziałów (także dla managera, jeśli jest assignee) */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                  <Inbox size={16} className="text-blue-400" />
-                </div>
-                <span className="text-xs text-slate-400">
-                  {isPolish ? 'Do zrobienia' : 'To Do'}
-                </span>
-              </div>
-              <div className="text-2xl font-bold text-white">{pendingCount}</div>
-            </div>
-            <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                  <MessageSquare size={16} className="text-purple-400" />
-                </div>
-                <span className="text-xs text-slate-400">
-                  {isPolish ? 'W trakcie' : 'In Progress'}
-                </span>
-              </div>
-              <div className="text-2xl font-bold text-white">{inProgressCount}</div>
-            </div>
-            <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                  <Send size={16} className="text-amber-400" />
-                </div>
-                <span className="text-xs text-slate-400">{isPolish ? 'Wysłane' : 'Submitted'}</span>
-              </div>
-              <div className="text-2xl font-bold text-white">{submittedCount}</div>
-            </div>
-            <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                  <Check size={16} className="text-emerald-400" />
-                </div>
-                <span className="text-xs text-slate-400">
-                  {isPolish ? 'Ukończone' : 'Completed'}
-                </span>
-              </div>
-              <div className="text-2xl font-bold text-white">{completedCount}</div>
-            </div>
-            {overdueCount > 0 && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
-                    <AlertTriangle size={16} className="text-red-400" />
-                  </div>
-                  <span className="text-xs text-red-400">{isPolish ? 'Zaległe' : 'Overdue'}</span>
-                </div>
-                <div className="text-2xl font-bold text-red-400">{overdueCount}</div>
-              </div>
-            )}
-          </div>
-
-          {/* Tabela przydziałów */}
-          {renderAssignmentsTable(myAssignments, false)}
-        </div>
-      );
+      return <div className="p-4">{renderAssignmentsTable(myAssignments, false)}</div>;
     }
 
     if (activeTab === 'managed') {
-      // Calculate status counts for managed assignments
-      const managedStatusCounts = {
-        all: managedAssignments.length,
-        assigned: managedAssignments.filter((a) => a.status === 'assigned').length,
-        in_progress: managedAssignments.filter((a) => a.status === 'in_progress').length,
-        submitted: managedAssignments.filter((a) => a.status === 'submitted').length,
-        sent_back: managedAssignments.filter((a) => a.status === 'sent_back').length,
-        approved: managedAssignments.filter(
-          (a) => a.status === 'approved' || a.status === 'completed'
-        ).length,
-      };
-
-      // Filter assignments by status
-      const filteredManagedAssignments =
-        assignmentStatusFilter === 'all'
-          ? managedAssignments
-          : managedAssignments.filter((a) => {
-              if (assignmentStatusFilter === 'approved') {
-                return a.status === 'approved' || a.status === 'completed';
-              }
-              return a.status === assignmentStatusFilter;
-            });
-
-      const statusFilters = [
-        {
-          id: 'all',
-          label: isPolish ? 'Wszystkie' : 'All',
-          count: managedStatusCounts.all,
-          activeClass: 'bg-primary-500/15 border-primary-500 text-primary-400',
-        },
-        {
-          id: 'assigned',
-          label: isPolish ? 'Przydzielone' : 'Assigned',
-          count: managedStatusCounts.assigned,
-          activeClass: 'bg-blue-500/20 border-blue-500/50 text-blue-400',
-        },
-        {
-          id: 'in_progress',
-          label: isPolish ? 'W trakcie' : 'In Progress',
-          count: managedStatusCounts.in_progress,
-          activeClass: 'bg-purple-500/20 border-purple-500/50 text-purple-400',
-        },
-        {
-          id: 'submitted',
-          label: isPolish ? 'Do przeglądu' : 'To Review',
-          count: managedStatusCounts.submitted,
-          activeClass: 'bg-amber-500/20 border-amber-500/50 text-amber-400',
-        },
-        {
-          id: 'sent_back',
-          label: isPolish ? 'Odesłane' : 'Sent Back',
-          count: managedStatusCounts.sent_back,
-          activeClass: 'bg-red-500/20 border-red-500/50 text-red-400',
-        },
-        {
-          id: 'approved',
-          label: isPolish ? 'Zatwierdzone' : 'Approved',
-          count: managedStatusCounts.approved,
-          activeClass: 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400',
-        },
-      ];
-
       return (
         <div className="p-4 space-y-4">
-          {/* Status Filters */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {statusFilters.map((filter) => (
-              <button
-                key={filter.id}
-                onClick={() => setAssignmentStatusFilter(filter.id)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                  assignmentStatusFilter === filter.id
-                    ? filter.activeClass
-                    : 'bg-navy-800 border-navy-600 text-slate-400 hover:bg-navy-700 hover:text-white'
-                }`}
-              >
-                <span>{filter.label}</span>
-                {filter.count > 0 && (
-                  <span
-                    className={`px-1.5 py-0.5 text-xs rounded-full ${
-                      assignmentStatusFilter === filter.id ? 'bg-white/20' : 'bg-navy-700'
-                    }`}
-                  >
-                    {filter.count}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-
           {/* Overdue Warning */}
-          {overdueAssignments.length > 0 && assignmentStatusFilter === 'all' && (
+          {overdueAssignments.length > 0 && (
             <div className="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
               <AlertTriangle size={20} className="text-red-400" />
               <div>
@@ -2855,7 +2591,7 @@ export const InterviewHub: React.FC = () => {
           )}
 
           {/* Assignments Table */}
-          {renderAssignmentsTable(filteredManagedAssignments, true)}
+          {renderAssignmentsTable(managedAssignments, true)}
         </div>
       );
     }
@@ -2936,13 +2672,33 @@ export const InterviewHub: React.FC = () => {
           <div className="flex items-center gap-2">
             {/* Sessions tab: tylko + Nowa sesja */}
             {activeTab === 'sessions' && !activeDocumentId && (
-              <button
-                onClick={handleNewSession}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-primary-500 to-primary-600 text-white border border-primary-400/30 hover:from-primary-400 hover:to-primary-500 shadow-lg shadow-primary-500/25 transition-all duration-200"
-              >
-                <Plus size={16} />
-                <span>{isPolish ? 'Nowa sesja' : 'New Session'}</span>
-              </button>
+              <>
+                <div className="relative">
+                  <select
+                    value={sessionStatusFilter}
+                    onChange={(e) => setSessionStatusFilter(e.target.value)}
+                    className="appearance-none pr-9 pl-3 py-2 rounded-lg text-sm font-medium border bg-navy-800 border-navy-600 text-slate-200 hover:bg-navy-700 hover:border-slate-500 transition-all duration-200"
+                    title={isPolish ? 'Filtr statusu' : 'Status filter'}
+                  >
+                    {sessionStatusOptions.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.display}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={16}
+                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  />
+                </div>
+                <button
+                  onClick={handleNewSession}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-primary-500 to-primary-600 text-white border border-primary-400/30 hover:from-primary-400 hover:to-primary-500 shadow-lg shadow-primary-500/25 transition-all duration-200"
+                >
+                  <Plus size={16} />
+                  <span>{isPolish ? 'Nowa sesja' : 'New Session'}</span>
+                </button>
+              </>
             )}
 
             {/* Templates tab: + Nowy szablon (PM/Admin) + Przydziel (PM/Admin) */}
@@ -3183,9 +2939,12 @@ export const InterviewHub: React.FC = () => {
                       toast.success(isPolish ? 'Przypomnienie wysłane!' : 'Reminder sent!');
                       setShowReminderModal(false);
                       setSelectedAssignment(null);
-                    } catch (error) {
-                      toast.error(
-                        isPolish ? 'Nie udało się wysłać przypomnienia' : 'Failed to send reminder'
+                    } catch (error: any) {
+                      console.error('[InterviewHub] Failed to send reminder from modal:', error);
+                      safeToastError(
+                        error,
+                        isPolish ? 'Nie udało się wysłać przypomnienia' : 'Failed to send reminder',
+                        isPolish
                       );
                     }
                   }}

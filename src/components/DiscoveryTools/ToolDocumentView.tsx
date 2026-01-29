@@ -61,20 +61,13 @@ import { useToolAI } from '@/hooks/discovery/useToolAI';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
-import {
-  GrowthPathsData,
-  OperationalToolData,
-  PorterData,
-  PortfolioPriorityData,
-  RiskUncertaintyData,
-  SWOTData,
-  ToolType,
-  useToolStore,
-} from '@/store/useToolStore';
+import { SWOTData, ToolType, useToolStore } from '@/store/useToolStore';
 import { AppView } from '@/types';
 
 import { type Comment, CommentsSection } from '../MyWork/shared';
 import { GenerateInitiativesModal } from './GenerateInitiativesModal';
+import { ToolCanvas } from './ToolCanvas';
+import { computeToolCompletionItems, computeToolReviewGaps } from './toolCompletion';
 
 // ==================== TYPES ====================
 
@@ -316,11 +309,17 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   // Tool store
   const {
     currentSession,
+    currentStep,
     createSession,
     loadSession,
     saveSession,
+    setCurrentStep,
+    nextStep,
+    prevStep,
+    canAdvanceStep,
     calculateProgress,
     getStepDefinitions,
+    hydrateSessionFromApi,
   } = useToolStore();
 
   // AI integration
@@ -386,160 +385,17 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
   // ==================== COMPUTED VALUES ====================
 
-  const reviewGaps = useMemo(() => {
-    if (!currentSession) return [];
-    const gaps: string[] = [];
-    const data = currentSession.inputData as any;
-
-    if (toolType === 'dynamic-swot') {
-      if (!data.context?.goal || !data.context?.scope)
-        gaps.push(isPolish ? 'Brak kontekstu strategicznego' : 'Missing strategic context');
-      ['strengths', 'weaknesses', 'opportunities', 'threats'].forEach((q) => {
-        if (!data.items?.some((i: any) => i.quadrant === q)) {
-          const labels: Record<string, string> = {
-            strengths: isPolish ? 'Mocne strony' : 'Strengths',
-            weaknesses: isPolish ? 'Słabe strony' : 'Weaknesses',
-            opportunities: isPolish ? 'Szanse' : 'Opportunities',
-            threats: isPolish ? 'Zagrożenia' : 'Threats',
-          };
-          gaps.push(`${isPolish ? 'Brak' : 'Missing'}: ${labels[q]}`);
-        }
-      });
-      if (!data.correlations?.length)
-        gaps.push(isPolish ? 'Brak korelacji' : 'Missing correlations');
-    }
-
-    if (toolType === 'market-forces') {
-      if (!data.context?.industry) gaps.push(isPolish ? 'Brak branży' : 'Missing industry');
-      if (!data.context?.geographicScope)
-        gaps.push(isPolish ? 'Brak zakresu geograficznego' : 'Missing geographic scope');
-      Object.entries(data.forces || {}).forEach(([key, force]: [string, any]) => {
-        if (!force?.drivers?.length)
-          gaps.push(`${isPolish ? 'Brak czynników' : 'Missing drivers'}: ${force?.name || key}`);
-      });
-    }
-
-    if (toolType === 'growth-paths') {
-      const growth = data as GrowthPathsData;
-      if (!growth.quadrants) gaps.push(isPolish ? 'Brak kwadrantów' : 'Missing quadrants');
-    }
-
-    if (toolType === 'portfolio-priority') {
-      const portfolio = data as PortfolioPriorityData;
-      if (!portfolio.initiatives?.length)
-        gaps.push(isPolish ? 'Brak inicjatyw w portfolio' : 'Missing portfolio initiatives');
-    }
-
-    if (toolType === 'risk-uncertainty') {
-      const risk = data as RiskUncertaintyData;
-      if (!risk.assumptions?.length) gaps.push(isPolish ? 'Brak założeń' : 'Missing assumptions');
-      if (!risk.risks?.length) gaps.push(isPolish ? 'Brak ryzyk' : 'Missing risks');
-    }
-
-    return gaps;
-  }, [currentSession, toolType, isPolish]);
+  const reviewGaps = useMemo(
+    () => computeToolReviewGaps(toolType, currentSession?.inputData, isPolish),
+    [toolType, currentSession?.inputData, isPolish]
+  );
 
   const completionReady = reviewGaps.length === 0;
 
-  const completionItems = useMemo(() => {
-    if (!currentSession) return [];
-    const items: { label: string; done: boolean }[] = [];
-    const data = currentSession.inputData as any;
-
-    if (toolType === 'dynamic-swot') {
-      const swot = data as SWOTData;
-      items.push({
-        label: isPolish ? 'Cel strategiczny zdefiniowany' : 'Strategic goal defined',
-        done: !!swot?.context?.goal && !!swot?.context?.scope,
-      });
-      const quadrantLabels: Record<string, string> = {
-        strengths: isPolish ? 'Mocne strony' : 'Strengths',
-        weaknesses: isPolish ? 'Słabe strony' : 'Weaknesses',
-        opportunities: isPolish ? 'Szanse' : 'Opportunities',
-        threats: isPolish ? 'Zagrożenia' : 'Threats',
-      };
-      ['strengths', 'weaknesses', 'opportunities', 'threats'].forEach((q) => {
-        items.push({
-          label: `${isPolish ? 'Elementy' : 'Items'}: ${quadrantLabels[q]}`,
-          done: swot?.items?.some((i) => i.quadrant === q) || false,
-        });
-      });
-      items.push({
-        label: isPolish ? 'Korelacje wygenerowane' : 'Correlations generated',
-        done: (swot?.correlations?.length || 0) > 0,
-      });
-    } else if (toolType === 'market-forces') {
-      const porter = data as PorterData;
-      items.push({
-        label: isPolish ? 'Branża zdefiniowana' : 'Industry defined',
-        done: !!porter?.context?.industry,
-      });
-      items.push({
-        label: isPolish ? 'Zakres geograficzny' : 'Geographic scope',
-        done: !!porter?.context?.geographicScope,
-      });
-      Object.values(porter?.forces || {}).forEach((force) => {
-        items.push({
-          label: `${isPolish ? 'Czynniki' : 'Drivers'}: ${force.name}`,
-          done: (force.drivers?.length || 0) > 0,
-        });
-      });
-    } else if (toolType === 'growth-paths') {
-      const growth = data as GrowthPathsData;
-      items.push({
-        label: isPolish ? 'Penetracja rynku' : 'Market Penetration',
-        done: (growth?.quadrants?.marketPenetration?.length || 0) > 0,
-      });
-      items.push({
-        label: isPolish ? 'Rozwój rynku' : 'Market Development',
-        done: (growth?.quadrants?.marketDevelopment?.length || 0) > 0,
-      });
-      items.push({
-        label: isPolish ? 'Rozwój produktu' : 'Product Development',
-        done: (growth?.quadrants?.productDevelopment?.length || 0) > 0,
-      });
-      items.push({
-        label: isPolish ? 'Dywersyfikacja' : 'Diversification',
-        done: (growth?.quadrants?.diversification?.length || 0) > 0,
-      });
-    } else if (toolType === 'portfolio-priority') {
-      const portfolio = data as PortfolioPriorityData;
-      items.push({
-        label: isPolish ? 'Inicjatywy dodane' : 'Initiatives added',
-        done: (portfolio?.initiatives?.length || 0) > 0,
-      });
-      items.push({
-        label: isPolish ? 'Kategorie przypisane' : 'Categories assigned',
-        done: portfolio?.initiatives?.some((i) => i.category) || false,
-      });
-    } else if (toolType === 'risk-uncertainty') {
-      const risk = data as RiskUncertaintyData;
-      items.push({
-        label: isPolish ? 'Założenia' : 'Assumptions',
-        done: (risk?.assumptions?.length || 0) > 0,
-      });
-      items.push({
-        label: isPolish ? 'Ryzyka' : 'Risks',
-        done: (risk?.risks?.length || 0) > 0,
-      });
-      items.push({
-        label: isPolish ? 'Scenariusze' : 'Scenarios',
-        done: (risk?.scenarios?.length || 0) > 0,
-      });
-    } else {
-      // Operational tools
-      const operational = data as OperationalToolData;
-      const sections = operational?.sections || {};
-      Object.keys(sections).forEach((sectionId) => {
-        items.push({
-          label: sectionId,
-          done: sections[sectionId]?.length > 0,
-        });
-      });
-    }
-
-    return items;
-  }, [currentSession, toolType, isPolish]);
+  const completionItems = useMemo(
+    () => computeToolCompletionItems(toolType, currentSession?.inputData, isPolish),
+    [toolType, currentSession?.inputData, isPolish]
+  );
 
   const statusConfig = STATUS_CONFIG[toolStatus] || STATUS_CONFIG.DRAFT;
 
@@ -563,10 +419,17 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       setToolDecisions(sessionData.decisions || []);
       setToolPermissions(sessionData.permissions || {});
 
-      // Load session into store
-      if (sessionData.answers) {
-        loadSession(toolSessionId);
-      }
+      // Hydrate answers into store so step components are editable
+      hydrateSessionFromApi({
+        id: toolSessionId,
+        toolType,
+        name: sessionData.name,
+        createdAt: sessionData.createdAt,
+        updatedAt: sessionData.updatedAt,
+        status: sessionData.status,
+        answers: sessionData.answers || {},
+        completionPercent: sessionData.completion_percent ?? sessionData.completionPercent,
+      });
 
       // Fetch users
       const fetchedUsers = await Api.getUsers();
@@ -791,147 +654,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     }
   };
 
-  // ==================== RENDER HELPERS ====================
-
-  const renderToolContent = () => {
-    if (!currentSession) return null;
-    const data = currentSession.inputData as any;
-
-    if (toolType === 'dynamic-swot') {
-      const swot = data as SWOTData;
-      return (
-        <div className="space-y-4">
-          {/* Context */}
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-navy-800">
-            <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {isPolish ? 'Kontekst strategiczny' : 'Strategic Context'}
-            </h4>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              <strong>{isPolish ? 'Cel' : 'Goal'}:</strong> {swot?.context?.goal || '-'}
-            </p>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-              <strong>{isPolish ? 'Zakres' : 'Scope'}:</strong> {swot?.context?.scope || '-'}
-            </p>
-          </div>
-
-          {/* Quadrants */}
-          <div className="grid grid-cols-2 gap-3">
-            {['strengths', 'weaknesses', 'opportunities', 'threats'].map((q) => {
-              const labels: Record<string, { en: string; pl: string; color: string }> = {
-                strengths: { en: 'Strengths', pl: 'Mocne strony', color: 'emerald' },
-                weaknesses: { en: 'Weaknesses', pl: 'Słabe strony', color: 'red' },
-                opportunities: { en: 'Opportunities', pl: 'Szanse', color: 'blue' },
-                threats: { en: 'Threats', pl: 'Zagrożenia', color: 'amber' },
-              };
-              const items = swot?.items?.filter((i) => i.quadrant === q) || [];
-              return (
-                <div
-                  key={q}
-                  className={`p-3 rounded-xl bg-${labels[q].color}-50 dark:bg-${labels[q].color}-900/20`}
-                >
-                  <h5
-                    className={`text-xs font-semibold text-${labels[q].color}-700 dark:text-${labels[q].color}-400 mb-2`}
-                  >
-                    {isPolish ? labels[q].pl : labels[q].en} ({items.length})
-                  </h5>
-                  <div className="space-y-1">
-                    {items.slice(0, 5).map((item, idx) => (
-                      <p key={idx} className="text-xs text-slate-600 dark:text-slate-400 truncate">
-                        • {item.text}
-                      </p>
-                    ))}
-                    {items.length > 5 && (
-                      <p className="text-xs text-slate-400">
-                        +{items.length - 5} {isPolish ? 'więcej' : 'more'}
-                      </p>
-                    )}
-                    {items.length === 0 && (
-                      <p className="text-xs text-slate-400 italic">
-                        {isPolish ? 'Brak elementów' : 'No items'}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Correlations */}
-          {swot?.correlations?.length > 0 && (
-            <div className="p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20">
-              <h4 className="text-sm font-medium text-purple-700 dark:text-purple-400 mb-2">
-                {isPolish ? 'Korelacje' : 'Correlations'} ({swot.correlations.length})
-              </h4>
-              <div className="space-y-2">
-                {swot.correlations.slice(0, 3).map((corr, idx) => (
-                  <p key={idx} className="text-xs text-slate-600 dark:text-slate-400">
-                    {corr.type}: {corr.insight || corr.initiativeProposal}
-                  </p>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    if (toolType === 'market-forces') {
-      const porter = data as PorterData;
-      return (
-        <div className="space-y-4">
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-navy-800">
-            <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {isPolish ? 'Kontekst' : 'Context'}
-            </h4>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              <strong>{isPolish ? 'Branża' : 'Industry'}:</strong>{' '}
-              {porter?.context?.industry || '-'}
-            </p>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-              <strong>{isPolish ? 'Region' : 'Region'}:</strong>{' '}
-              {porter?.context?.geographicScope || '-'}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3">
-            {Object.entries(porter?.forces || {}).map(([key, force]) => {
-              const forceData = force as { name: string; score: number; drivers: string[] };
-              return (
-                <div key={key} className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20">
-                  <div className="flex items-center justify-between mb-2">
-                    <h5 className="text-xs font-semibold text-blue-700 dark:text-blue-400">
-                      {forceData.name}
-                    </h5>
-                    <span className="text-xs text-blue-600">{forceData.score}/5</span>
-                  </div>
-                  <div className="space-y-1">
-                    {forceData.drivers?.slice(0, 3).map((driver, idx) => (
-                      <p key={idx} className="text-xs text-slate-600 dark:text-slate-400 truncate">
-                        • {driver}
-                      </p>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      );
-    }
-
-    // Generic fallback for other tool types
-    return (
-      <div className="p-4 rounded-xl bg-slate-50 dark:bg-navy-800">
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          {isPolish ? 'Dane narzędzia' : 'Tool data'}
-        </p>
-        <pre className="mt-2 text-xs text-slate-500 overflow-auto max-h-40">
-          {JSON.stringify(data, null, 2)}
-        </pre>
-      </div>
-    );
-  };
-
   // ==================== RENDER ====================
 
   if (loading) {
@@ -1075,13 +797,18 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             const isCompleted = currentSession?.steps?.some(
               (s) => s.stepId === step.id && s.status === 'completed'
             );
+            const isActive = currentStep === stepNum;
             return (
-              <div
+              <button
                 key={step.id}
+                type="button"
+                onClick={() => setCurrentStep(stepNum)}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs whitespace-nowrap ${
-                  isCompleted
-                    ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                    : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
+                  isActive
+                    ? `bg-gradient-to-r ${toolMeta.gradient} text-white shadow-sm`
+                    : isCompleted
+                      ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+                      : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
                 }`}
               >
                 {isCompleted ? (
@@ -1092,7 +819,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                   </span>
                 )}
                 <span>{isPolish ? step.namePl : step.name}</span>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -1134,7 +861,64 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                 </button>
               }
             >
-              {renderToolContent()}
+              {currentSession ? (
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 overflow-hidden bg-white/50 dark:bg-navy-900/40">
+                    <ToolCanvas
+                      toolType={toolType}
+                      currentStep={currentStep}
+                      stepDefinition={stepDefs[currentStep - 1]}
+                      session={currentSession}
+                      isStreaming={isStreaming}
+                      streamedContent={streamedContent || ''}
+                      isPolish={isPolish}
+                      orgName={currentOrganization?.name}
+                      onOpenChat={handleOpenChat}
+                      onOpenInitiatives={() => setShowGenerateModal(true)}
+                      generatedInitiatives={generatedInitiatives}
+                      recentInitiatives={generatedInitiatives.slice(0, 5)}
+                      chatSnippets={(activeChatMessages || []).slice(-6).map((m: any) => ({
+                        role: m.role,
+                        content: m.content,
+                      }))}
+                      showContextPanel={false}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <button
+                      type="button"
+                      onClick={() => prevStep()}
+                      disabled={currentStep <= 1}
+                      className="px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 disabled:opacity-50"
+                    >
+                      {isPolish ? 'Wstecz' : 'Previous'}
+                    </button>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      {isPolish ? 'Krok' : 'Step'} {currentStep}/{stepDefs.length} —{' '}
+                      {isPolish
+                        ? stepDefs[currentStep - 1]?.namePl
+                        : stepDefs[currentStep - 1]?.name}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => nextStep()}
+                      disabled={currentStep >= stepDefs.length || !canAdvanceStep()}
+                      className={`px-3 py-2 rounded-lg text-sm text-white disabled:opacity-50 ${
+                        currentStep >= stepDefs.length || !canAdvanceStep()
+                          ? 'bg-slate-400'
+                          : `bg-gradient-to-r ${toolMeta.gradient}`
+                      }`}
+                    >
+                      {isPolish ? 'Dalej' : 'Next'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Brak danych sesji' : 'No session data'}
+                </div>
+              )}
             </CollapsibleSection>
 
             {/* Analysis / Correlations Section */}

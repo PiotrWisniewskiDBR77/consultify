@@ -1,6 +1,6 @@
 /**
  * Interview Routes - v2.0 ClickUp-like Redesign
- * 
+ *
  * 5 Categories: Strategy, Operations, Digital, People, Finance
  * Task-list style questions with status, confidence, tags
  * Notes, Evidence, Summary (ONLY facts, no recommendations)
@@ -11,7 +11,7 @@ import { Router } from 'express';
 import { InterviewController } from '../controllers/InterviewController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
-import { requirePermission } from '../middleware/permission.middleware.js';
+import { requireAnyPermission, requirePermission } from '../middleware/permission.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 
 const router = Router();
@@ -156,7 +156,12 @@ router.delete(
 // ==========================================
 
 /** GET /interview/templates - List templates (library) */
-router.get('/templates', requirePermission('INTERVIEW_TEMPLATE_VIEW'), InterviewController.getTemplates);
+router.get(
+  '/templates',
+  // Assign flow needs to list templates too; allow either template viewing or assignment managing.
+  requireAnyPermission(['INTERVIEW_TEMPLATE_VIEW', 'INTERVIEW_ASSIGN_MANAGE']),
+  InterviewController.getTemplates
+);
 
 /** POST /interview/templates - Create new template */
 router.post(
@@ -166,17 +171,25 @@ router.post(
 );
 
 /** GET /interview/templates/:id - Get template metadata */
-router.get('/templates/:id', requirePermission('INTERVIEW_TEMPLATE_VIEW'), InterviewController.getTemplate);
+router.get(
+  '/templates/:id',
+  requireAnyPermission(['INTERVIEW_TEMPLATE_VIEW', 'INTERVIEW_ASSIGN_MANAGE']),
+  InterviewController.getTemplate
+);
 
 /** GET /interview/templates/:id/questions - Get template questions (read-only) */
 router.get(
   '/templates/:id/questions',
-  requirePermission('INTERVIEW_TEMPLATE_VIEW'),
+  requireAnyPermission(['INTERVIEW_TEMPLATE_VIEW', 'INTERVIEW_ASSIGN_MANAGE']),
   InterviewController.getTemplateQuestions
 );
 
 /** POST /interview/templates/:id/use - Create new session from template */
-router.post('/templates/:id/use', requirePermission('INTERVIEW_TEMPLATE_USE'), InterviewController.useTemplate);
+router.post(
+  '/templates/:id/use',
+  requirePermission('INTERVIEW_TEMPLATE_USE'),
+  InterviewController.useTemplate
+);
 
 /** POST /interview/templates/:id/clone - Clone template */
 router.post(

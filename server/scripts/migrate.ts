@@ -250,6 +250,9 @@ async function applyMigration(migration: Migration): Promise<boolean> {
             msg.includes('already exists') ||
             msg.includes('duplicate column name') ||
             msg.includes('already a column') ||
+            // If a migration references a table that doesn't exist in this DB,
+            // treat it as non-fatal and continue (keeps migrations forward-only on partially seeded SQLite DBs).
+            msg.includes('no such table') ||
             (isCreateIndex && (msg.includes('no such table') || msg.includes('no such column'))) ||
             (isSeedMigration &&
               (isMissingSchema ||

@@ -49,13 +49,17 @@ const requireUser = (req: AuthenticatedRequest) => {
 // Response builders
 const buildSessionResponse = (row: any) => {
   if (!row) return null;
+  const rawStatus = String(row.status || '').toLowerCase();
+  // DB legacy constraint uses: active | completed | paused
+  // API contract uses: in_progress | completed | paused (+ derived states at assignment level)
+  const normalizedStatus = rawStatus === 'active' ? 'in_progress' : rawStatus;
   return {
     id: row.id,
     organizationId: row.organization_id,
     projectId: row.project_id || undefined,
     name: row.name || 'Discovery Interview',
     ownerId: row.owner_id,
-    status: row.status,
+    status: normalizedStatus,
     templateId: row.template_id || undefined,
     templateVersion: row.template_version || undefined,
     assignmentId: row.assignment_id || undefined,
@@ -155,6 +159,27 @@ const buildTemplateQuestionResponse = (row: any) => {
   };
 };
 
+async function resolveValidProjectId(params: {
+  organizationId: string;
+  projectId?: string | null;
+}): Promise<string | null> {
+  const { organizationId } = params;
+  const raw = String(params.projectId || '').trim();
+  if (raw) {
+    const p = await queryHelpers.queryOne(
+      `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+      [raw, organizationId]
+    );
+    if (p?.id) return String(p.id);
+  }
+  // Fallback to first project in org (prevents SQLITE_CONSTRAINT on NOT NULL/FK)
+  const first = await queryHelpers.queryOne(
+    `SELECT id FROM projects WHERE organization_id = ? ORDER BY created_at ASC LIMIT 1`,
+    [organizationId]
+  );
+  return first?.id ? String(first.id) : null;
+}
+
 async function createSessionFromTemplate(params: {
   user: any;
   templateId: string;
@@ -185,22 +210,31 @@ async function createSessionFromTemplate(params: {
 
   const id = uuidv4();
   const now = new Date().toISOString();
+  const resolvedProjectId = await resolveValidProjectId({
+    organizationId: user.organizationId,
+    projectId,
+  });
+  if (!resolvedProjectId) {
+    throw new Error('Project not found');
+  }
 
   // Create session from template (snapshot)
   await queryHelpers.queryRun(
     `INSERT INTO interview_sessions
-     (id, organization_id, project_id, name, owner_id, status, progress_json,
+     (id, organization_id, project_id, user_id, topic, name, owner_id, status, progress_json,
       template_id, template_version,
       assignment_id,
       started_at, last_activity_at, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       user.organizationId,
-      projectId || null,
+      resolvedProjectId,
+      user.id,
+      name || `Interview ${new Date().toLocaleDateString()}`,
       name || `Interview ${new Date().toLocaleDateString()}`,
       user.id,
-      'in_progress',
+      'active',
       JSON.stringify({ strategy: 0, operations: 0, digital: 0, people: 0, finance: 0 }),
       template.id,
       template.version || 1,
@@ -329,8 +363,10 @@ export const InterviewController = {
     const params: unknown[] = [user.organizationId, user.organizationId];
 
     if (status) {
+      const normalized =
+        String(status).toLowerCase() === 'in_progress' ? 'active' : String(status).toLowerCase();
       query += ` AND s.status = ?`;
-      params.push(status);
+      params.push(normalized);
     }
 
     query += ` ORDER BY s.started_at DESC`;
@@ -370,8 +406,30 @@ export const InterviewController = {
 
     // If templateId provided, create from template library (snapshot)
     if (templateId) {
-      const session = await createSessionFromTemplate({ user, templateId, projectId, name });
+      const resolvedProjectId = await resolveValidProjectId({
+        organizationId: user.organizationId,
+        projectId,
+      });
+      if (!resolvedProjectId) {
+        res.status(400).json({ error: 'Project required' });
+        return;
+      }
+      const session = await createSessionFromTemplate({
+        user,
+        templateId,
+        projectId: resolvedProjectId,
+        name,
+      });
       res.status(201).json(session);
+      return;
+    }
+
+    const resolvedProjectId = await resolveValidProjectId({
+      organizationId: user.organizationId,
+      projectId,
+    });
+    if (!resolvedProjectId) {
+      res.status(400).json({ error: 'Project required' });
       return;
     }
 
@@ -381,16 +439,18 @@ export const InterviewController = {
     // Create session
     await queryHelpers.queryRun(
       `INSERT INTO interview_sessions
-       (id, organization_id, project_id, name, owner_id, status, progress_json,
+       (id, organization_id, project_id, user_id, topic, name, owner_id, status, progress_json,
         started_at, last_activity_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         user.organizationId,
-        projectId || null,
+        resolvedProjectId,
+        user.id,
+        name || 'Discovery Interview',
         name || 'Discovery Interview',
         user.id,
-        'in_progress',
+        'active',
         JSON.stringify({ strategy: 0, operations: 0, digital: 0, people: 0, finance: 0 }),
         now,
         now,
@@ -454,9 +514,18 @@ export const InterviewController = {
       params.push(name);
     }
     if (status) {
+      // DB constraint allows: active | completed | paused
+      // API may send: in_progress (alias for active)
+      const normalized =
+        String(status).toLowerCase() === 'in_progress' ? 'active' : String(status).toLowerCase();
+      const allowed = new Set(['active', 'completed', 'paused']);
+      if (!allowed.has(normalized)) {
+        res.status(400).json({ error: 'Invalid status' });
+        return;
+      }
       updates.push('status = ?');
-      params.push(status);
-      if (status === 'completed') {
+      params.push(normalized);
+      if (normalized === 'completed') {
         updates.push('completed_at = ?');
         params.push(new Date().toISOString());
       }
@@ -559,8 +628,10 @@ export const InterviewController = {
       const completenessRatio = calcCompletenessRatio(answered, total);
       return {
         id: r.id,
+        organizationId: r.organization_id,
         status: r.status,
         projectId: r.project_id || null,
+        sessionId: r.session_id || null,
         dueAt: r.due_at || null,
         startedAt: r.started_at || null,
         submittedAt: r.submitted_at || null,
@@ -624,7 +695,18 @@ export const InterviewController = {
     // ==========================================
     // SCOPE VALIDATION - Check if user can assign to these users
     // ==========================================
-    const creatorRole = admin.role?.toUpperCase() || '';
+    const creatorRoleRaw = (admin.role || '').toString().trim().toUpperCase();
+    // Auth middleware maps roles to app-level labels (e.g. admin -> administrator).
+    // Normalize to permission roles used across the backend.
+    const creatorRole =
+      creatorRoleRaw === 'ADMINISTRATOR'
+        ? 'ADMIN'
+        : creatorRoleRaw === 'OWNER'
+          ? 'SUPERADMIN'
+          : creatorRoleRaw === 'PROJECT_MANAGER'
+            ? 'PROJECT_MANAGER'
+            : creatorRoleRaw;
+
     const orgRolesWithFullAccess = ['SUPERADMIN', 'ADMIN', 'PROJECT_MANAGER'];
     const projectRolesWithAssign = ['PMO_LEAD', 'WORKSTREAM_OWNER', 'INITIATIVE_OWNER', 'SPONSOR'];
 
@@ -634,12 +716,12 @@ export const InterviewController = {
       if (!projectId) {
         // Without projectId, check if user has any project role that allows assignment
         const userProjectRoles = await queryHelpers.queryAll(
-          `SELECT project_id, project_role FROM project_members WHERE user_id = ?`,
+          `SELECT project_id, role FROM project_members WHERE user_id = ?`,
           [admin.id]
         );
 
         const hasAnyManagementRole = (userProjectRoles || []).some((pm: any) =>
-          projectRolesWithAssign.includes((pm.project_role || '').toUpperCase())
+          projectRolesWithAssign.includes((pm.role || '').toUpperCase())
         );
 
         if (!hasAnyManagementRole) {
@@ -652,15 +734,13 @@ export const InterviewController = {
       } else {
         // With projectId, check if creator has management role in that project
         const creatorProjectRole = await queryHelpers.queryOne(
-          `SELECT project_role FROM project_members WHERE user_id = ? AND project_id = ?`,
+          `SELECT role FROM project_members WHERE user_id = ? AND project_id = ?`,
           [admin.id, projectId]
         );
 
         if (
           !creatorProjectRole ||
-          !projectRolesWithAssign.includes(
-            ((creatorProjectRole as any).project_role || '').toUpperCase()
-          )
+          !projectRolesWithAssign.includes(((creatorProjectRole as any).role || '').toUpperCase())
         ) {
           res.status(403).json({
             error: 'You do not have a management role in this project to assign interviews.',
@@ -825,10 +905,19 @@ export const InterviewController = {
       return;
     }
 
+    const resolvedProjectId = await resolveValidProjectId({
+      organizationId: user.organizationId,
+      projectId: (assignment as any).project_id || projectId,
+    });
+    if (!resolvedProjectId) {
+      res.status(400).json({ error: 'Project required' });
+      return;
+    }
+
     const session = await createSessionFromTemplate({
       user,
       templateId: (assignment as any).template_id,
-      projectId: (assignment as any).project_id || projectId,
+      projectId: resolvedProjectId,
       name: name || `Interview ${new Date().toLocaleDateString()}`,
       assignmentId: id,
     });
@@ -838,7 +927,7 @@ export const InterviewController = {
       `UPDATE interview_assignments
        SET session_id = ?, status = 'in_progress', started_at = ?, updated_at = ?, project_id = COALESCE(project_id, ?)
        WHERE id = ?`,
-      [(session as any).id, now, now, (assignment as any).project_id || projectId || null, id]
+      [(session as any).id, now, now, resolvedProjectId, id]
     );
 
     // Mirror into task status/description
@@ -908,10 +997,9 @@ export const InterviewController = {
     const completenessPercent = Math.round(completenessRatio * 100);
     const now = new Date().toISOString();
 
-    // Canon: submit ALWAYS sends to review and locks the session.
-    // Approval is a separate action by reviewer (approve/send-back).
+    // Canon: submit ALWAYS sends to review.
+    // Session status remains within DB constraint (active|completed|paused); the "lock" is enforced by assignment status.
     const newAssignmentStatus = 'submitted';
-    const newSessionStatus = 'submitted';
 
     await queryHelpers.queryRun(
       `UPDATE interview_assignments
@@ -920,11 +1008,9 @@ export const InterviewController = {
       [newAssignmentStatus, now, now, id]
     );
 
-    const sessionUpdates: string[] = [`status = ?`, `updated_at = ?`];
-    const sessionParams: unknown[] = [newSessionStatus, now, (assignment as any).session_id];
     await queryHelpers.queryRun(
-      `UPDATE interview_sessions SET ${sessionUpdates.join(', ')} WHERE id = ?`,
-      sessionParams
+      `UPDATE interview_sessions SET updated_at = ?, last_activity_at = ? WHERE id = ?`,
+      [now, now, (assignment as any).session_id]
     );
 
     if ((assignment as any).task_id) {
@@ -1026,8 +1112,8 @@ export const InterviewController = {
     );
 
     await queryHelpers.queryRun(
-      `UPDATE interview_sessions SET status = 'in_progress', updated_at = ? WHERE id = ?`,
-      [now, (assignment as any).session_id]
+      `UPDATE interview_sessions SET status = 'active', updated_at = ?, last_activity_at = ? WHERE id = ?`,
+      [now, now, (assignment as any).session_id]
     );
 
     if ((assignment as any).task_id) {
@@ -1224,6 +1310,7 @@ export const InterviewController = {
         organizationId: r.organization_id,
         projectId: r.project_id || null,
         status: r.status,
+        sessionId: r.session_id || null,
         priority: r.priority || 'medium',
         dueAt: r.due_at || null,
         startedAt: r.started_at || null,
@@ -1300,7 +1387,10 @@ export const InterviewController = {
       const overdueDays = Math.floor((Date.now() - dueAt.getTime()) / (1000 * 60 * 60 * 24));
       return {
         id: r.id,
+        organizationId: r.organization_id,
+        projectId: r.project_id || null,
         status: r.status,
+        sessionId: r.session_id || null,
         priority: r.priority || 'medium',
         dueAt: r.due_at,
         overdueDays,
@@ -3443,6 +3533,7 @@ ${JSON.stringify(questions || [], null, 2)}
 
   // Export insight to Tools or Assessment
   exportInsight: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
     const { id } = req.params;
     const { target } = req.body;
 
@@ -3451,14 +3542,370 @@ ${JSON.stringify(questions || [], null, 2)}
       return;
     }
 
-    const column = target === 'tools' ? 'exported_to_tools' : 'exported_to_assessment';
+    // Load insight so we can create an actual downstream artifact (Tools/Assessment).
+    // NOTE: There are environments with different `interview_insights` schemas.
+    // We treat `session_id` as best-effort: export should still work even if session is missing.
+    let insightRow: any = null;
+    try {
+      insightRow = (await queryHelpers.queryOne(
+        `SELECT
+          id, session_id, organization_id, category, title, description,
+          insight_type, status, exported_to_tools, exported_to_assessment
+         FROM interview_insights
+         WHERE id = ? AND organization_id = ?`,
+        [id, user.organizationId]
+      )) as any;
+    } catch (e: any) {
+      // fallback for other schema variants
+      try {
+        insightRow = (await queryHelpers.queryOne(
+          `SELECT
+            id, organization_id, title, prompt_type, source_session_ids, content, status
+           FROM interview_insights
+           WHERE id = ? AND organization_id = ?`,
+          [id, user.organizationId]
+        )) as any;
+      } catch {
+        // ignore - handled below
+      }
+    }
 
+    if (!insightRow) {
+      res.status(404).json({ error: 'Insight not found' });
+      return;
+    }
+
+    // Resolve a usable sessionId (optional).
+    let sessionId: string | null = null;
+    if (insightRow.session_id) {
+      sessionId = String(insightRow.session_id);
+    } else if (insightRow.source_session_ids) {
+      try {
+        const ids = JSON.parse(String(insightRow.source_session_ids || '[]'));
+        if (Array.isArray(ids) && ids[0]) sessionId = String(ids[0]);
+      } catch {
+        // ignore
+      }
+    }
+
+    // Context gating (best-effort): only enforce when we can actually load the session + assignment.
+    let sessionRow: any = null;
+    if (sessionId) {
+      sessionRow = await queryHelpers.queryOne(
+        `SELECT id, status, assignment_id, answered_questions, total_questions, project_id FROM interview_sessions
+         WHERE id = ? AND organization_id = ?`,
+        [sessionId, user.organizationId]
+      );
+      if (sessionRow && (sessionRow as any).assignment_id) {
+        const assignment = await queryHelpers.queryOne(
+          `SELECT status FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+          [(sessionRow as any).assignment_id, user.organizationId]
+        );
+        const answered = Number((sessionRow as any).answered_questions || 0);
+        const total = Number((sessionRow as any).total_questions || 0);
+        const ratio = calcCompletenessRatio(answered, total);
+        const allowed =
+          String((assignment as any)?.status || '').toLowerCase() === 'completed' ||
+          (String((assignment as any)?.status || '').toLowerCase() === 'submitted' && ratio >= 0.5);
+        if (!allowed) {
+          res.status(409).json({ error: 'Interview not completed (>=50%) - cannot export yet' });
+          return;
+        }
+      }
+    }
+
+    // Ensure mapping table exists (idempotent exports by insight+target).
     await queryHelpers.queryRun(
-      `UPDATE interview_insights SET ${column} = 1, updated_at = ? WHERE id = ?`,
-      [new Date().toISOString(), id]
+      `CREATE TABLE IF NOT EXISTS interview_insight_exports (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        insight_id TEXT NOT NULL,
+        session_id TEXT NOT NULL,
+        target_type TEXT NOT NULL,
+        target_id TEXT NOT NULL,
+        created_by TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    );
+    await queryHelpers.queryRun(
+      `CREATE INDEX IF NOT EXISTS idx_interview_insight_exports_org ON interview_insight_exports(organization_id)`
+    );
+    await queryHelpers.queryRun(
+      `CREATE INDEX IF NOT EXISTS idx_interview_insight_exports_insight ON interview_insight_exports(insight_id)`
     );
 
-    res.json({ success: true, target });
+    const existing = (await queryHelpers.queryOne(
+      `SELECT target_id FROM interview_insight_exports
+       WHERE organization_id = ? AND insight_id = ? AND target_type = ?
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [user.organizationId, id, target]
+    )) as any;
+
+    // If already exported, just mark flags (if needed) and return the previously created target id.
+    if (existing?.target_id) {
+      const column = target === 'tools' ? 'exported_to_tools' : 'exported_to_assessment';
+      await queryHelpers.queryRun(
+        `UPDATE interview_insights SET ${column} = 1, updated_at = ? WHERE id = ?`,
+        [new Date().toISOString(), id]
+      );
+      if (target === 'assessment') {
+        let assessmentType: string | undefined;
+        try {
+          const row = (await queryHelpers.queryOne(
+            `SELECT assessment_type FROM assessments WHERE id = ? AND organization_id = ?`,
+            [existing.target_id, user.organizationId]
+          )) as any;
+          if (row?.assessment_type) assessmentType = String(row.assessment_type);
+        } catch {
+          // ignore
+        }
+        res.json({
+          success: true,
+          target,
+          targetId: existing.target_id,
+          assessmentType: assessmentType || 'DRD',
+        });
+        return;
+      }
+
+      res.json({ success: true, target, targetId: existing.target_id });
+      return;
+    }
+
+    const now = new Date().toISOString();
+
+    if (target === 'tools') {
+      // Ensure tool_sessions exists (it should via migrations, but keep it safe in dev).
+      await queryHelpers.queryRun(
+        `CREATE TABLE IF NOT EXISTS tool_sessions (
+          id TEXT PRIMARY KEY,
+          organization_id TEXT NOT NULL,
+          project_id TEXT,
+          tool_type TEXT NOT NULL,
+          name TEXT NOT NULL,
+          status TEXT DEFAULT 'DRAFT',
+          completion_percent INTEGER DEFAULT 0,
+          confidence_avg REAL DEFAULT 0,
+          answers_json TEXT DEFAULT '{}',
+          context_snapshot TEXT DEFAULT '{}',
+          review_requested_at TIMESTAMP,
+          approved_at TIMESTAMP,
+          created_by TEXT NOT NULL,
+          updated_by TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`
+      );
+
+      const projectIdCandidate = (sessionRow as any)?.project_id as string | null | undefined;
+      // Best-effort: prefer a valid projectId so Tools hub (project-scoped) can see it.
+      // If org has no projects, fall back to NULL (tools still work org-wide).
+      let resolvedProjectId: string | null = projectIdCandidate || null;
+      try {
+        resolvedProjectId = await resolveValidProjectId({
+          organizationId: user.organizationId,
+          projectId: projectIdCandidate || undefined,
+        });
+      } catch {
+        resolvedProjectId = projectIdCandidate || null;
+      }
+
+      const toolSessionId = uuidv4();
+      const toolType = 'dynamic-swot';
+      const name = `Interview Insight: ${String(insightRow.title || 'Untitled')}`;
+
+      const orgContext = await queryHelpers.queryOne(
+        `SELECT * FROM organization_context WHERE organization_id = ?`,
+        [user.organizationId]
+      );
+
+      const contextSnapshot = {
+        source: {
+          kind: 'interview_insight',
+          insightId: id,
+          sessionId: sessionId || null,
+          category: insightRow.category,
+          title: insightRow.title,
+          description: insightRow.description || insightRow.content || null,
+          insightType: insightRow.insight_type || insightRow.prompt_type || null,
+          exportedAt: now,
+        },
+        organizationContext: orgContext || {},
+      };
+
+      await queryHelpers.queryRun(
+        `INSERT INTO tool_sessions
+         (id, organization_id, project_id, tool_type, name, status, completion_percent, confidence_avg, answers_json, context_snapshot, created_by, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, 'DRAFT', 0, 0, ?, ?, ?, ?, ?)`,
+        [
+          toolSessionId,
+          user.organizationId,
+          resolvedProjectId || null,
+          toolType,
+          name,
+          JSON.stringify({}),
+          JSON.stringify(contextSnapshot),
+          user.id,
+          now,
+          now,
+        ]
+      );
+
+      await queryHelpers.queryRun(
+        `INSERT INTO interview_insight_exports
+         (id, organization_id, insight_id, session_id, target_type, target_id, created_by, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uuidv4(),
+          user.organizationId,
+          id,
+          sessionId || 'unknown',
+          'tools',
+          toolSessionId,
+          user.id,
+          now,
+        ]
+      );
+
+      // Only create a context export record when we actually have a session id.
+      if (sessionId) {
+        await queryHelpers.queryRun(
+          `INSERT INTO interview_context_exports
+           (id, interview_session_id, organization_id, target_type, target_id, context_snapshot, exported_by, exported_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            uuidv4(),
+            sessionId,
+            user.organizationId,
+            'tools',
+            toolSessionId,
+            JSON.stringify(orgContext || {}),
+            user.id,
+            now,
+          ]
+        );
+      }
+
+      // Best-effort flags (some schemas might not have these columns).
+      try {
+        await queryHelpers.queryRun(
+          `UPDATE interview_insights SET exported_to_tools = 1, updated_at = ? WHERE id = ?`,
+          [now, id]
+        );
+      } catch {
+        // ignore
+      }
+
+      res.json({ success: true, target: 'tools', targetId: toolSessionId });
+      return;
+    }
+
+    // Create an actual Assessment artifact (so the user can immediately open it).
+    // Keep this resilient: the Assessment module can exist in different schema states.
+    await queryHelpers.queryRun(
+      `CREATE TABLE IF NOT EXISTS assessments (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        project_id TEXT,
+        assessment_type TEXT NOT NULL,
+        name TEXT NOT NULL,
+        status TEXT DEFAULT 'DRAFT',
+        completion_percent INTEGER DEFAULT 0,
+        confidence_avg REAL DEFAULT 0,
+        answers_json TEXT DEFAULT '{}',
+        context_snapshot TEXT DEFAULT '{}',
+        score_summary TEXT DEFAULT '{}',
+        current_section_id TEXT,
+        review_requested_at TIMESTAMP,
+        report_approved_at TIMESTAMP,
+        approved_at TIMESTAMP,
+        created_by TEXT NOT NULL,
+        updated_by TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    );
+
+    const projectIdCandidate = (sessionRow as any)?.project_id as string | null | undefined;
+    let resolvedProjectId: string | null = projectIdCandidate || null;
+    try {
+      resolvedProjectId = await resolveValidProjectId({
+        organizationId: user.organizationId,
+        projectId: projectIdCandidate || undefined,
+      });
+    } catch {
+      resolvedProjectId = projectIdCandidate || null;
+    }
+
+    const assessmentId = uuidv4();
+    const assessmentType = 'DRD';
+    const name = `Interview Insight: ${String(insightRow.title || 'Untitled')}`;
+
+    const orgContext = await queryHelpers.queryOne(
+      `SELECT * FROM organization_context WHERE organization_id = ?`,
+      [user.organizationId]
+    );
+
+    const contextSnapshot = {
+      source: {
+        kind: 'interview_insight',
+        insightId: id,
+        sessionId: sessionId || null,
+        category: insightRow.category,
+        title: insightRow.title,
+        description: insightRow.description || insightRow.content || null,
+        insightType: insightRow.insight_type || insightRow.prompt_type || null,
+        exportedAt: now,
+      },
+      organizationContext: orgContext || {},
+    };
+
+    await queryHelpers.queryRun(
+      `INSERT INTO assessments
+       (id, organization_id, project_id, assessment_type, name, status, completion_percent, confidence_avg, answers_json, context_snapshot, score_summary, created_by, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 'DRAFT', 0, 0, ?, ?, ?, ?, ?, ?)`,
+      [
+        assessmentId,
+        user.organizationId,
+        resolvedProjectId || null,
+        assessmentType,
+        name,
+        JSON.stringify({}),
+        JSON.stringify(contextSnapshot),
+        JSON.stringify({}),
+        user.id,
+        now,
+        now,
+      ]
+    );
+
+    await queryHelpers.queryRun(
+      `INSERT INTO interview_insight_exports
+       (id, organization_id, insight_id, session_id, target_type, target_id, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        uuidv4(),
+        user.organizationId,
+        id,
+        sessionId || 'unknown',
+        'assessment',
+        assessmentId,
+        user.id,
+        now,
+      ]
+    );
+
+    try {
+      await queryHelpers.queryRun(
+        `UPDATE interview_insights SET exported_to_assessment = 1, updated_at = ? WHERE id = ?`,
+        [now, id]
+      );
+    } catch {
+      // ignore
+    }
+
+    res.json({ success: true, target: 'assessment', targetId: assessmentId, assessmentType });
   }),
 };
 

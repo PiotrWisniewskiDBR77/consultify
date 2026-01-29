@@ -10,6 +10,26 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       host: '0.0.0.0',
+      watch: {
+        // Prevent dev-server reload loops caused by generated artifacts (coverage, backups)
+        // and OS-created duplicate files like "Foo 2.tsx" that may be rewritten by sync tools.
+        ignored: [
+          '**/coverage/**',
+          '**/playwright-report/**',
+          '**/test-results/**',
+          '**/dist/**',
+          '**/data/**',
+          '**/.cursor/**',
+          '**/agent-transcripts/**',
+          // macOS Finder/iCloud duplicate naming patterns
+          '**/* [0-9].ts',
+          '**/* [0-9].tsx',
+          '**/* [0-9].js',
+          '**/* [0-9].jsx',
+          '**/* [0-9].md',
+          '**/* [0-9].html',
+        ],
+      },
       proxy: {
         '/api': {
           target: apiTarget,

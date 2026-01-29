@@ -59,8 +59,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
+import { useNavigate } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
 
+import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -616,9 +618,7 @@ const generateMockDataQuality = (isPolish: boolean): DataQuality => ({
     ? ['C-Level', 'Dyrektorzy', 'Managerowie', 'Specjaliści']
     : ['C-Level', 'Directors', 'Managers', 'Specialists'],
   coveragePercentage: 75,
-  missingAreas: isPolish
-    ? ['Produkcja', 'Logistyka', 'R&D']
-    : ['Production', 'Logistics', 'R&D'],
+  missingAreas: isPolish ? ['Produkcja', 'Logistyka', 'R&D'] : ['Production', 'Logistics', 'R&D'],
 });
 
 const generateMockSentiment = (): StakeholderSentiment => ({
@@ -644,6 +644,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   onRegenerate,
   onSaved,
 }) => {
+  const navigate = useNavigate();
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const { isChatCollapsed, toggleChatCollapse } = useAppStore();
@@ -670,10 +671,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const [isExportingTools, setIsExportingTools] = useState(false);
   const [isExportingAssessment, setIsExportingAssessment] = useState(false);
 
-  // UI state
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['executiveSummary', 'keyFindings', 'content', 'control', 'dataQuality'])
-  );
+  // UI state - wszystkie sekcje domyślnie zamknięte dla czytelności
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set([]));
 
   // Related data
   const [sourceSessions, setSourceSessions] = useState<SourceSession[]>([]);
@@ -695,7 +694,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const [sentiment, setSentiment] = useState<StakeholderSentiment | null>(null);
 
   // Quote filter
-  const [quoteFilter, setQuoteFilter] = useState<'all' | 'positive' | 'neutral' | 'negative'>('all');
+  const [quoteFilter, setQuoteFilter] = useState<'all' | 'positive' | 'neutral' | 'negative'>(
+    'all'
+  );
 
   // ==========================================
   // LOAD DATA
@@ -714,9 +715,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         if (data.content) {
           const firstParagraph = data.content.split('\n\n')[0] || '';
           setExecutiveSummary(
-            firstParagraph.length > 200
-              ? firstParagraph.substring(0, 200) + '...'
-              : firstParagraph
+            firstParagraph.length > 200 ? firstParagraph.substring(0, 200) + '...' : firstParagraph
           );
         }
 
@@ -805,10 +804,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     });
   };
 
-  const addActivityLogEntry = (
-    type: ActivityLogEntry['type'],
-    description: string
-  ) => {
+  const addActivityLogEntry = (type: ActivityLogEntry['type'], description: string) => {
     const entry: ActivityLogEntry = {
       id: Math.random().toString(36).substr(2, 9),
       type,
@@ -896,7 +892,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       toast.success(isPolish ? 'Regenerowanie rozpoczęte...' : 'Regeneration started...');
       const data = await Api.get(`/interview/insights/${insightId}`);
       setInsight(data);
-      addActivityLogEntry('regenerated', isPolish ? 'Regeneracja rozpoczęta' : 'Regeneration started');
+      addActivityLogEntry(
+        'regenerated',
+        isPolish ? 'Regeneracja rozpoczęta' : 'Regeneration started'
+      );
       onRegenerate?.();
     } catch {
       toast.error(isPolish ? 'Nie udało się zregenerować' : 'Failed to regenerate');
@@ -925,16 +924,26 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     a.click();
     URL.revokeObjectURL(url);
     toast.success(isPolish ? 'Pobrano plik Markdown' : 'Downloaded Markdown file');
-    addActivityLogEntry('exported', isPolish ? 'Wyeksportowano do Markdown' : 'Exported to Markdown');
+    addActivityLogEntry(
+      'exported',
+      isPolish ? 'Wyeksportowano do Markdown' : 'Exported to Markdown'
+    );
   };
 
   const handleExportToTools = async () => {
     if (!insight) return;
     setIsExportingTools(true);
     try {
-      await Api.post(`/interview/insights/${insight.id}/export`, { target: 'tools' });
+      const exportRes = await Api.post(`/interview/insights/${insight.id}/export`, {
+        target: 'tools',
+      });
       toast.success(isPolish ? 'Wyeksportowano do Tools' : 'Exported to Tools');
       addActivityLogEntry('exported', isPolish ? 'Wyeksportowano do Tools' : 'Exported to Tools');
+
+      const toolId = exportRes?.targetId;
+      if (toolId) {
+        navigate(`${ROUTES.DISCOVERY_TOOLS.STRATEGIC}?tool=${toolId}`);
+      }
     } catch {
       toast.error(isPolish ? 'Nie udało się wyeksportować' : 'Failed to export');
     } finally {
@@ -946,9 +955,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     if (!insight) return;
     setIsExportingAssessment(true);
     try {
-      await Api.post(`/interview/insights/${insight.id}/export`, { target: 'assessment' });
+      const exportRes = await Api.post(`/interview/insights/${insight.id}/export`, {
+        target: 'assessment',
+      });
       toast.success(isPolish ? 'Wyeksportowano do Assessment' : 'Exported to Assessment');
-      addActivityLogEntry('exported', isPolish ? 'Wyeksportowano do Assessment' : 'Exported to Assessment');
+      addActivityLogEntry(
+        'exported',
+        isPolish ? 'Wyeksportowano do Assessment' : 'Exported to Assessment'
+      );
+
+      const assessmentId = exportRes?.targetId;
+      const assessmentType = String(exportRes?.assessmentType || 'DRD').toLowerCase();
+      if (assessmentId) {
+        navigate(`${ROUTES.ASSESSMENT.ROOT}/${assessmentType}/${assessmentId}`);
+      }
     } catch {
       toast.error(isPolish ? 'Nie udało się wyeksportować' : 'Failed to export');
     } finally {
@@ -977,7 +997,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     try {
       await new Promise((r) => setTimeout(r, 1500));
       toast.success(isPolish ? 'Podsumowanie wygenerowane' : 'Summary generated');
-      addActivityLogEntry('edit', isPolish ? 'AI wygenerowało podsumowanie' : 'AI generated summary');
+      addActivityLogEntry(
+        'edit',
+        isPolish ? 'AI wygenerowało podsumowanie' : 'AI generated summary'
+      );
     } catch {
       toast.error(isPolish ? 'Błąd AI' : 'AI error');
     } finally {
@@ -1057,9 +1080,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // Action items handlers
   const toggleActionItem = (id: string) => {
     setActionItems(
-      actionItems.map((item) =>
-        item.id === id ? { ...item, completed: !item.completed } : item
-      )
+      actionItems.map((item) => (item.id === id ? { ...item, completed: !item.completed } : item))
     );
   };
 
@@ -1124,9 +1145,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       >
         <div className="flex items-center gap-3">
           <div className={`p-2 rounded-xl ${iconBgClass}`}>{icon}</div>
-          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            {title}
-          </span>
+          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{title}</span>
         </div>
         <div className="flex items-center gap-2">
           {headerActions}
@@ -1265,15 +1284,21 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 <div className="flex items-center gap-4 pt-3 border-t border-slate-200 dark:border-navy-700">
                   <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                     <MessageSquare size={14} />
-                    <span>{insight?.sourceSessionCount || 0} {isPolish ? 'wywiadów' : 'interviews'}</span>
+                    <span>
+                      {insight?.sourceSessionCount || 0} {isPolish ? 'wywiadów' : 'interviews'}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                     <Lightbulb size={14} />
-                    <span>{keyFindings.length} {isPolish ? 'ustaleń' : 'findings'}</span>
+                    <span>
+                      {keyFindings.length} {isPolish ? 'ustaleń' : 'findings'}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                     <Flag size={14} />
-                    <span>{riskCounts.high} {isPolish ? 'ryzyk wysokich' : 'high risks'}</span>
+                    <span>
+                      {riskCounts.high} {isPolish ? 'ryzyk wysokich' : 'high risks'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1319,7 +1344,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       {index + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-slate-700 dark:text-slate-300">{finding.content}</p>
+                      <p className="text-sm text-slate-700 dark:text-slate-300">
+                        {finding.content}
+                      </p>
                       <div className="flex items-center gap-3 mt-2">
                         <span
                           className={`text-xs px-2 py-0.5 rounded-full ${
@@ -1331,15 +1358,19 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           }`}
                         >
                           {finding.confidence === 'high'
-                            ? isPolish ? 'Wysoka pewność' : 'High confidence'
+                            ? isPolish
+                              ? 'Wysoka pewność'
+                              : 'High confidence'
                             : finding.confidence === 'medium'
-                              ? isPolish ? 'Średnia pewność' : 'Medium confidence'
-                              : isPolish ? 'Niska pewność' : 'Low confidence'}
+                              ? isPolish
+                                ? 'Średnia pewność'
+                                : 'Medium confidence'
+                              : isPolish
+                                ? 'Niska pewność'
+                                : 'Low confidence'}
                         </span>
                         {finding.category && (
-                          <span className="text-xs text-slate-400">
-                            {finding.category}
-                          </span>
+                          <span className="text-xs text-slate-400">{finding.category}</span>
                         )}
                         <span className="text-xs text-slate-400">
                           {finding.sourceCount} {isPolish ? 'źródeł' : 'sources'}
@@ -1373,7 +1404,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       disabled={isExpandingContent}
                       className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 dark:hover:bg-violet-500/30 text-xs font-medium transition-all disabled:opacity-50"
                     >
-                      {isExpandingContent ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                      {isExpandingContent ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Sparkles size={14} />
+                      )}
                       <span>{isPolish ? 'Rozwiń' : 'Expand'}</span>
                     </motion.button>
                     <motion.button
@@ -1388,7 +1423,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       disabled={isSummarizing}
                       className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 dark:hover:bg-emerald-500/30 text-xs font-medium transition-all disabled:opacity-50"
                     >
-                      {isSummarizing ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
+                      {isSummarizing ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <FileText size={14} />
+                      )}
                       <span>{isPolish ? 'Podsumuj' : 'Summarize'}</span>
                     </motion.button>
                   </>
@@ -1556,15 +1595,17 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               <div className="p-4">
                 {/* Word Cloud Simulation */}
                 <div className="flex flex-wrap gap-2 mb-4 p-4 rounded-xl bg-slate-50 dark:bg-navy-800">
-                  {patterns.flatMap((p) => p.relatedKeywords).map((keyword, i) => (
-                    <span
-                      key={i}
-                      className="px-3 py-1.5 rounded-full bg-cyan-500/10 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 text-sm"
-                      style={{ fontSize: `${Math.random() * 0.4 + 0.8}rem` }}
-                    >
-                      {keyword}
-                    </span>
-                  ))}
+                  {patterns
+                    .flatMap((p) => p.relatedKeywords)
+                    .map((keyword, i) => (
+                      <span
+                        key={i}
+                        className="px-3 py-1.5 rounded-full bg-cyan-500/10 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 text-sm"
+                        style={{ fontSize: `${Math.random() * 0.4 + 0.8}rem` }}
+                      >
+                        {keyword}
+                      </span>
+                    ))}
                 </div>
                 {/* Themes List */}
                 <div className="space-y-2">
@@ -1919,12 +1960,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                 </span>
                               )}
                               <span className="text-xs text-slate-400 dark:text-slate-500">
-                                {new Date(entry.timestamp).toLocaleString(isPolish ? 'pl-PL' : 'en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
+                                {new Date(entry.timestamp).toLocaleString(
+                                  isPolish ? 'pl-PL' : 'en-US',
+                                  {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  }
+                                )}
                               </span>
                             </div>
                           </div>
@@ -1963,7 +2007,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg ${getColorClasses(typeMeta.color, 'bg')} border ${getColorClasses(typeMeta.color, 'border')}`}
                   >
                     <span className={getColorClasses(typeMeta.color, 'text')}>{typeMeta.icon}</span>
-                    <span className={`text-sm font-medium ${getColorClasses(typeMeta.color, 'text')}`}>
+                    <span
+                      className={`text-sm font-medium ${getColorClasses(typeMeta.color, 'text')}`}
+                    >
                       {isPolish ? typeMeta.labelPl : typeMeta.label}
                     </span>
                   </div>
@@ -1991,7 +2037,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     <Calendar size={14} className="text-slate-400" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
                       {insight?.createdAt
-                        ? new Date(insight.createdAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US')
+                        ? new Date(insight.createdAt).toLocaleDateString(
+                            isPolish ? 'pl-PL' : 'en-US'
+                          )
                         : '-'}
                     </span>
                   </div>
@@ -2045,7 +2093,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   disabled={isExportingTools || insight?.status !== 'completed'}
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 border border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 dark:hover:bg-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isExportingTools ? <Loader2 size={16} className="animate-spin" /> : <Target size={16} />}
+                  {isExportingTools ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Target size={16} />
+                  )}
                   <span className="text-sm font-medium">
                     {isPolish ? 'Eksportuj do Tools' : 'Export to Tools'}
                   </span>
@@ -2059,7 +2111,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   disabled={isExportingAssessment || insight?.status !== 'completed'}
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-purple-500/10 dark:bg-purple-500/20 border border-purple-500/30 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 dark:hover:bg-purple-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isExportingAssessment ? <Loader2 size={16} className="animate-spin" /> : <BarChart3 size={16} />}
+                  {isExportingAssessment ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <BarChart3 size={16} />
+                  )}
                   <span className="text-sm font-medium">
                     {isPolish ? 'Eksportuj do Assessment' : 'Export to Assessment'}
                   </span>

@@ -60,7 +60,7 @@ export interface InterviewQuestion {
 
 export interface QuestionsListProps {
   questions: InterviewQuestion[];
-  category: InterviewCategory;
+  category: InterviewCategory | undefined;
   onUpdateQuestion: (questionId: string, updates: Partial<InterviewQuestion>) => Promise<void>;
   onAddQuestion: (category: InterviewCategory, questionText: string) => Promise<void>;
   isLoading?: boolean;
@@ -148,22 +148,24 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
   const isPolish = i18n.language === 'pl';
 
   // Filter questions for current category
-  const categoryQuestions = questions.filter((q) => q.category === category);
+  const categoryQuestions = category ? questions.filter((q) => q.category === category) : [];
 
-  // Find first unanswered question to auto-expand
-  const firstUnansweredId =
-    categoryQuestions.find((q) => q.status !== 'answered')?.id || categoryQuestions[0]?.id || null;
+  // Wszystkie pytania domyślnie zamknięte dla czytelności
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const [expandedId, setExpandedId] = useState<string | null>(firstUnansweredId);
+  // Jeśli nie ma kategorii, nie renderuj nic
+  if (!category) {
+    return null;
+  }
 
-  // Auto-expand first unanswered question when category changes
-  useEffect(() => {
-    const nextUnanswered =
-      categoryQuestions.find((q) => q.status !== 'answered')?.id ||
-      categoryQuestions[0]?.id ||
-      null;
-    setExpandedId(nextUnanswered);
-  }, [category]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Nie auto-rozwijaj pytań przy zmianie kategorii - użytkownik sam zdecyduje, co otworzyć
+  // useEffect(() => {
+  //   const nextUnanswered =
+  //     categoryQuestions.find((q) => q.status !== 'answered')?.id ||
+  //     categoryQuestions[0]?.id ||
+  //     null;
+  //   setExpandedId(nextUnanswered);
+  // }, [category]); // eslint-disable-line react-hooks/exhaustive-deps
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [newQuestionText, setNewQuestionText] = useState('');

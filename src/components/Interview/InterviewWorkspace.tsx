@@ -45,7 +45,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -145,6 +145,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   });
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [linkedItems, setLinkedItems] = useState<LinkedItem[]>([]);
+  const [assignmentStatus, setAssignmentStatus] = useState<string | null>(null);
+  const [assignmentInfo, setAssignmentInfo] = useState<any>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -152,27 +154,38 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editedProfile, setEditedProfile] = useState<CompanyProfile>({});
 
-  // Expanded sections state
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['strategy', 'control', 'progress'])
-  );
+  // Expanded sections state - wszystkie sekcje domyślnie zamknięte dla czytelności
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set([]));
 
-  const isLocked =
-    (session?.status || '').toLowerCase() === 'submitted' ||
-    (session?.status || '').toLowerCase() === 'completed';
+  // Locking rules:
+  // - For assignments: lock on assignment status (submitted/approved/completed)
+  // - For ad-hoc sessions: lock on session completion
+  const isLocked = useMemo(() => {
+    const sessionStatus = (session?.status || '').toLowerCase();
+    const asgStatus = (assignmentStatus || '').toLowerCase();
+    const assignmentLocked =
+      Boolean(session?.assignmentId) && ['submitted', 'approved', 'completed'].includes(asgStatus);
+    return assignmentLocked || sessionStatus === 'completed';
+  }, [assignmentStatus, session?.assignmentId, session?.status]);
 
-  // Auto-expand first category with unanswered questions after loading
-  useEffect(() => {
-    if (questions.length > 0) {
-      const firstCategoryWithUnanswered = CATEGORY_ORDER.find((cat) => {
-        const catQuestions = questions.filter((q) => q.category === cat);
-        return catQuestions.some((q) => q.status !== 'answered');
-      });
-      if (firstCategoryWithUnanswered) {
-        setExpandedSections((prev) => new Set([...prev, firstCategoryWithUnanswered]));
-      }
-    }
-  }, [questions]);
+  const isAssignmentMode = Boolean(session?.assignmentId);
+
+  // Domyślnie nie wybieramy żadnej kategorii - użytkownik sam zdecyduje
+  const [activeCategory, setActiveCategory] = useState<InterviewCategory | undefined>(undefined);
+  const questionsTopRef = useRef<HTMLDivElement | null>(null);
+
+  // Nie auto-wybieraj kategorii - użytkownik sam zdecyduje, co otworzyć
+  // useEffect(() => {
+  //   if (questions.length > 0) {
+  //     const firstCategoryWithUnanswered = CATEGORY_ORDER.find((cat) => {
+  //       const catQuestions = questions.filter((q) => q.category === cat);
+  //       return catQuestions.some((q) => q.status !== 'answered');
+  //     });
+  //     if (firstCategoryWithUnanswered) {
+  //       setActiveCategory(firstCategoryWithUnanswered);
+  //     }
+  //   }
+  // }, [questions]);
 
   // ==========================================
   // COMPUTED VALUES
@@ -196,6 +209,20 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const overallPercent =
     totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
   const completedCategories = categoryProgress.filter((p) => p.isComplete).length;
+
+  const activeCategoryConfig = activeCategory ? CATEGORY_CONFIG[activeCategory] : undefined;
+  const ActiveCategoryIcon = activeCategoryConfig?.icon || FileText;
+  const activeCategoryProgress = activeCategory
+    ? categoryProgress.find((p) => p.category === activeCategory)
+    : undefined;
+  const activeCategoryPercent =
+    activeCategoryProgress && (activeCategoryProgress.totalQuestions || 0) > 0
+      ? Math.round(
+          ((activeCategoryProgress?.answeredQuestions || 0) /
+            (activeCategoryProgress?.totalQuestions || 1)) *
+            100
+        )
+      : 0;
 
   // Status config (backend uses: in_progress | submitted | completed)
   const statusConfig = {
@@ -249,19 +276,32 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         if (currentSession) {
           setSession(currentSession);
           setSessionName(currentSession.name || 'Discovery Interview');
+          setAssignmentStatus(null);
+          setAssignmentInfo(null);
           onSessionChange?.(currentSession);
 
-          const [questionsRes, notesRes, evidenceRes, contextRes, summaryRes] = await Promise.all([
-            Api.get(`/interview/sessions/${currentSession.id}/questions`),
-            Api.get(`/interview/sessions/${currentSession.id}/notes`),
-            Api.get(`/interview/sessions/${currentSession.id}/evidence`),
-            Api.get('/interview/context'),
-            Api.get(`/interview/sessions/${currentSession.id}/summary`).catch(() => null),
-          ]);
+          const [questionsRes, notesRes, evidenceRes, contextRes, summaryRes, myAssignmentsRes] =
+            await Promise.all([
+              Api.get(`/interview/sessions/${currentSession.id}/questions`),
+              Api.get(`/interview/sessions/${currentSession.id}/notes`),
+              Api.get(`/interview/sessions/${currentSession.id}/evidence`),
+              Api.get('/interview/context'),
+              Api.get(`/interview/sessions/${currentSession.id}/summary`).catch(() => null),
+              currentSession.assignmentId
+                ? Api.get(`/interview/assignments/my?includeCompleted=true`).catch(() => [])
+                : Promise.resolve([]),
+            ]);
 
           setQuestions(Array.isArray(questionsRes) ? questionsRes : []);
           setNotes(Array.isArray(notesRes) ? notesRes : []);
           setEvidence(Array.isArray(evidenceRes) ? evidenceRes : []);
+
+          if (currentSession.assignmentId) {
+            const list = Array.isArray(myAssignmentsRes) ? myAssignmentsRes : [];
+            const found = list.find((a: any) => a?.id === currentSession?.assignmentId);
+            setAssignmentStatus(found?.status || null);
+            setAssignmentInfo(found || null);
+          }
 
           if (contextRes && typeof contextRes === 'object') {
             const ctx = contextRes as Record<string, unknown>;
@@ -513,10 +553,30 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
     try {
       if (session.assignmentId) {
+        // Validate completion before submit (basic rule: all questions answered)
+        const missing = questions.filter((q) => q.status !== 'answered');
+        if (missing.length > 0) {
+          const first = missing[0];
+          if (first?.category) {
+            setActiveCategory(first.category as InterviewCategory);
+            requestAnimationFrame(() => {
+              questionsTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+          }
+          toast.error(
+            isPolish
+              ? `Uzupełnij brakujące odpowiedzi (${missing.length}).`
+              : `Please fill missing answers (${missing.length}).`
+          );
+          return;
+        }
+
         const result = await Api.post(`/interview/assignments/${session.assignmentId}/submit`, {});
         const updatedSession = (result as any)?.session;
+        const updatedAssignment = (result as any)?.assignment;
         const completeness = (result as any)?.completenessPercent;
         if (updatedSession) setSession(updatedSession);
+        if (updatedAssignment?.status) setAssignmentStatus(String(updatedAssignment.status));
         toast.success(
           isPolish
             ? `Wywiad wysłany do review (${completeness ?? 0}%).`
@@ -532,7 +592,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       console.error('[InterviewWorkspace] Failed to submit session:', error);
       toast.error(isPolish ? 'Nie udało się zatwierdzić' : 'Failed to submit');
     }
-  }, [session, isLocked, isPolish, onComplete]);
+  }, [session, isLocked, isPolish, onComplete, questions]);
 
   // Open chat
   const handleOpenChat = useCallback(() => {
@@ -803,6 +863,38 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              onClick={handleSubmitSession}
+              disabled={isLocked || isSaving}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm disabled:opacity-60 ${
+                isLocked
+                  ? 'bg-slate-200/60 dark:bg-navy-800/60 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-700'
+                  : 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white border border-emerald-400/30 hover:from-emerald-400 hover:to-teal-500 shadow-lg shadow-emerald-500/20'
+              }`}
+              title={
+                isAssignmentMode
+                  ? isPolish
+                    ? 'Wyślij do przeglądu'
+                    : 'Submit for review'
+                  : isPolish
+                    ? 'Zakończ'
+                    : 'Complete'
+              }
+            >
+              <Send size={16} />
+              <span>
+                {isAssignmentMode
+                  ? isPolish
+                    ? 'Wyślij'
+                    : 'Submit'
+                  : isPolish
+                    ? 'Zakończ'
+                    : 'Complete'}
+              </span>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={handleOpenChat}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-purple-500/40 dark:border-purple-400/30 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 dark:hover:bg-purple-500/10 text-sm font-semibold transition-all shadow-sm"
             >
@@ -811,6 +903,27 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             </motion.button>
           </div>
         </div>
+
+        {isAssignmentMode && assignmentInfo?.dueAt && (
+          <div className="max-w-7xl mx-auto mt-3">
+            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+              <span className="flex items-center gap-1">
+                <Calendar size={12} />
+                {isPolish ? 'Termin:' : 'Due:'}{' '}
+                <span className="font-medium text-slate-700 dark:text-slate-300">
+                  {new Date(assignmentInfo.dueAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US')}
+                </span>
+              </span>
+              {String(assignmentStatus || '').toLowerCase() === 'sent_back' &&
+                assignmentInfo?.sentBackReason && (
+                  <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-300">
+                    <AlertTriangle size={12} />
+                    {isPolish ? 'Do poprawy:' : 'Fix:'} {String(assignmentInfo.sentBackReason)}
+                  </span>
+                )}
+            </div>
+          </div>
+        )}
 
         {isLocked && (
           <div className="max-w-7xl mx-auto mt-3">
@@ -831,15 +944,155 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           TWO-COLUMN GRID
           ========================================== */}
       <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* ==========================================
-              LEFT COLUMN - 2/3 width
+              LEFT COLUMN - Category Navigation
               ========================================== */}
-          <div className="lg:col-span-2 space-y-5 order-2 lg:order-1">
-            {/* Category Sections */}
-            {CATEGORY_ORDER.map((category) => (
-              <React.Fragment key={category}>{renderCategorySection(category)}</React.Fragment>
-            ))}
+          <div className="lg:col-span-3 order-1">
+            <div className="lg:sticky lg:top-24 space-y-4">
+              <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Nawigacja' : 'Navigation'}
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    {isPolish ? 'Sekcje pytań' : 'Question sections'}
+                  </div>
+                </div>
+
+                <div className="p-3 space-y-1">
+                  {CATEGORY_ORDER.map((cat) => {
+                    const cfg = CATEGORY_CONFIG[cat];
+                    const Icon = cfg.icon;
+                    const p = categoryProgress.find((x) => x.category === cat);
+                    const isActive = cat === activeCategory;
+                    const answered = p?.answeredQuestions || 0;
+                    const total = p?.totalQuestions || 0;
+                    const isComplete = Boolean(p?.isComplete);
+
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => {
+                          setActiveCategory(cat);
+                          requestAnimationFrame(() => {
+                            questionsTopRef.current?.scrollIntoView({
+                              behavior: 'smooth',
+                              block: 'start',
+                            });
+                          });
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all border ${
+                          isActive
+                            ? 'bg-primary-500/10 border-primary-500/30'
+                            : 'bg-transparent border-transparent hover:bg-slate-50/80 dark:hover:bg-navy-800/50'
+                        }`}
+                      >
+                        <div
+                          className={`w-9 h-9 rounded-xl flex items-center justify-center ${cfg.bgColor}`}
+                        >
+                          {isComplete ? (
+                            <Check size={16} className="text-emerald-600 dark:text-emerald-400" />
+                          ) : (
+                            <Icon size={16} className={cfg.color} />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
+                            {isPolish ? cfg.labelPl : cfg.labelEn}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            {answered}/{total} {isPolish ? 'odp.' : 'ans.'}
+                          </div>
+                        </div>
+                        <ChevronRight
+                          size={16}
+                          className={`shrink-0 ${isActive ? 'text-primary-400' : 'text-slate-300 dark:text-slate-600'}`}
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="p-3 border-t border-slate-200/60 dark:border-navy-700/60">
+                  <button
+                    onClick={() => {
+                      const first = questions.find((q) => q.status !== 'answered');
+                      if (first?.category) {
+                        setActiveCategory(first.category as InterviewCategory);
+                        requestAnimationFrame(() => {
+                          questionsTopRef.current?.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start',
+                          });
+                        });
+                      }
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-all"
+                  >
+                    <ArrowRight size={16} />
+                    {isPolish ? 'Następne brakujące' : 'Next missing'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ==========================================
+              MIDDLE COLUMN - Questions (Form)
+              ========================================== */}
+          <div className="lg:col-span-6 space-y-5 order-2">
+            <div ref={questionsTopRef} />
+
+            {activeCategory && activeCategoryConfig ? (
+              <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2.5 rounded-xl ${activeCategoryConfig.bgColor}`}>
+                      <ActiveCategoryIcon size={18} className={activeCategoryConfig.color} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                        {isPolish ? activeCategoryConfig.labelPl : activeCategoryConfig.labelEn}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        {isPolish
+                          ? activeCategoryConfig.descriptionPl
+                          : activeCategoryConfig.descriptionEn}
+                      </div>
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      {activeCategoryProgress?.answeredQuestions || 0}/
+                      {activeCategoryProgress?.totalQuestions || 0}
+                    </div>
+                  </div>
+                  <div className="mt-3 h-2 bg-slate-200/70 dark:bg-navy-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-primary-500 to-emerald-500 transition-all"
+                      style={{ width: `${activeCategoryPercent}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="p-4">
+                  <QuestionsList
+                    questions={questions}
+                    category={activeCategory}
+                    onUpdateQuestion={handleUpdateQuestion}
+                    onAddQuestion={handleAddQuestion}
+                    readOnly={isLocked}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden p-8 text-center">
+                <FileText size={48} className="text-slate-400 mx-auto mb-4" />
+                <p className="text-slate-500 dark:text-slate-400">
+                  {isPolish
+                    ? 'Wybierz sekcję pytań z lewej strony, aby rozpocząć'
+                    : 'Select a question section from the left to begin'}
+                </p>
+              </div>
+            )}
 
             {/* Notes Section */}
             {renderCollapsibleSection(
@@ -854,7 +1107,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               <div className="p-4">
                 <NotesPanel
                   notes={notes}
-                  activeCategory="strategy"
+                  activeCategory={activeCategory}
                   onCreateNote={handleCreateNote}
                   onUpdateNote={handleUpdateNote}
                   onDeleteNote={handleDeleteNote}
@@ -876,7 +1129,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               <div className="p-4">
                 <EvidencePanel
                   evidence={evidence}
-                  activeCategory="strategy"
+                  activeCategory={activeCategory}
                   onUploadFile={handleUploadFile}
                   onAddLink={handleAddLink}
                   onDeleteEvidence={handleDeleteEvidence}
@@ -885,127 +1138,132 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               </div>
             )}
 
-            {/* Summary Section */}
-            {renderCollapsibleSection(
-              'summary',
-              <Sparkles size={18} className="text-purple-500 dark:text-purple-400" />,
-              isPolish ? 'Podsumowanie' : 'Summary',
-              'bg-gradient-to-br from-purple-500/10 to-pink-500/10 dark:from-purple-500/20 dark:to-pink-500/20',
-              undefined,
-              undefined,
-              <div className="p-5 space-y-6">
-                <p className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
-                  ⚠️{' '}
-                  {isPolish
-                    ? 'Tylko fakty - bez rekomendacji i planów działań'
-                    : 'Facts only - no recommendations or action plans'}
-                </p>
+            {/* Summary Section (hide in assignment-fill mode to keep the form focused) */}
+            {!isAssignmentMode &&
+              renderCollapsibleSection(
+                'summary',
+                <Sparkles size={18} className="text-purple-500 dark:text-purple-400" />,
+                isPolish ? 'Podsumowanie' : 'Summary',
+                'bg-gradient-to-br from-purple-500/10 to-pink-500/10 dark:from-purple-500/20 dark:to-pink-500/20',
+                undefined,
+                undefined,
+                <div className="p-5 space-y-6">
+                  <p className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
+                    ⚠️{' '}
+                    {isPolish
+                      ? 'Tylko fakty - bez rekomendacji i planów działań'
+                      : 'Facts only - no recommendations or action plans'}
+                  </p>
 
-                {/* Facts */}
-                <div>
-                  <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                    {isPolish ? 'Najważniejsze fakty (as-is)' : 'Key Facts (as-is)'}
-                  </h4>
-                  {summaryData.facts.length > 0 ? (
-                    <ul className="space-y-2">
-                      {summaryData.facts.map((fact, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
-                        >
-                          <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
-                          {fact}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-slate-400 italic">
-                      {isPolish
-                        ? 'Fakty zostaną wygenerowane automatycznie'
-                        : 'Facts will be generated automatically'}
-                    </p>
-                  )}
-                </div>
+                  {/* Facts */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                      {isPolish ? 'Najważniejsze fakty (as-is)' : 'Key Facts (as-is)'}
+                    </h4>
+                    {summaryData.facts.length > 0 ? (
+                      <ul className="space-y-2">
+                        {summaryData.facts.map((fact, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
+                          >
+                            <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                            {fact}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-slate-400 italic">
+                        {isPolish
+                          ? 'Fakty zostaną wygenerowane automatycznie'
+                          : 'Facts will be generated automatically'}
+                      </p>
+                    )}
+                  </div>
 
-                {/* Gaps */}
-                <div>
-                  <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                    {isPolish ? 'Główne luki informacyjne' : 'Information Gaps'}
-                  </h4>
-                  {summaryData.gaps.length > 0 ? (
-                    <ul className="space-y-2">
-                      {summaryData.gaps.map((gap, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
-                        >
-                          <ChevronRight size={14} className="text-amber-500 mt-0.5 shrink-0" />
-                          {gap}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-slate-400 italic">
-                      {isPolish ? 'Brak zidentyfikowanych luk' : 'No gaps identified'}
-                    </p>
-                  )}
-                </div>
+                  {/* Gaps */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                      {isPolish ? 'Główne luki informacyjne' : 'Information Gaps'}
+                    </h4>
+                    {summaryData.gaps.length > 0 ? (
+                      <ul className="space-y-2">
+                        {summaryData.gaps.map((gap, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
+                          >
+                            <ChevronRight size={14} className="text-amber-500 mt-0.5 shrink-0" />
+                            {gap}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-slate-400 italic">
+                        {isPolish ? 'Brak zidentyfikowanych luk' : 'No gaps identified'}
+                      </p>
+                    )}
+                  </div>
 
-                {/* Constraints */}
-                <div>
-                  <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                    {isPolish ? 'Ryzyka i ograniczenia' : 'Risks & Constraints'}
-                  </h4>
-                  {summaryData.constraints.length > 0 ? (
-                    <ul className="space-y-2">
-                      {summaryData.constraints.map((constraint, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
-                        >
-                          <AlertTriangle size={14} className="text-red-500 mt-0.5 shrink-0" />
-                          {constraint}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-slate-400 italic">
-                      {isPolish ? 'Brak zidentyfikowanych ograniczeń' : 'No constraints identified'}
-                    </p>
-                  )}
-                </div>
+                  {/* Constraints */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                      {isPolish ? 'Ryzyka i ograniczenia' : 'Risks & Constraints'}
+                    </h4>
+                    {summaryData.constraints.length > 0 ? (
+                      <ul className="space-y-2">
+                        {summaryData.constraints.map((constraint, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
+                          >
+                            <AlertTriangle size={14} className="text-red-500 mt-0.5 shrink-0" />
+                            {constraint}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-slate-400 italic">
+                        {isPolish
+                          ? 'Brak zidentyfikowanych ograniczeń'
+                          : 'No constraints identified'}
+                      </p>
+                    )}
+                  </div>
 
-                {/* Pain Points */}
-                <div>
-                  <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                    {isPolish ? 'Aktualne problemy (pain points)' : 'Current Pain Points'}
-                  </h4>
-                  {summaryData.painPoints.length > 0 ? (
-                    <ul className="space-y-2">
-                      {summaryData.painPoints.map((pain, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
-                        >
-                          <ChevronRight size={14} className="text-purple-500 mt-0.5 shrink-0" />
-                          {pain}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-slate-400 italic">
-                      {isPolish ? 'Brak zidentyfikowanych problemów' : 'No pain points identified'}
-                    </p>
-                  )}
+                  {/* Pain Points */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                      {isPolish ? 'Aktualne problemy (pain points)' : 'Current Pain Points'}
+                    </h4>
+                    {summaryData.painPoints.length > 0 ? (
+                      <ul className="space-y-2">
+                        {summaryData.painPoints.map((pain, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
+                          >
+                            <ChevronRight size={14} className="text-purple-500 mt-0.5 shrink-0" />
+                            {pain}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-slate-400 italic">
+                        {isPolish
+                          ? 'Brak zidentyfikowanych problemów'
+                          : 'No pain points identified'}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
 
           {/* ==========================================
-              RIGHT COLUMN - 1/3 width (sticky)
+              RIGHT COLUMN - Context/Actions (sticky)
               ========================================== */}
-          <div className="space-y-4 lg:sticky lg:top-24 self-start order-1 lg:order-2">
+          <div className="lg:col-span-3 space-y-4 lg:sticky lg:top-24 self-start order-3">
             {/* 1. Control Panel */}
             {renderCollapsibleSection(
               'control',

@@ -487,7 +487,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [dependencies, setDependencies] = useState<TaskDependency[]>([]);
   const [reminders, setReminders] = useState<ReminderRule[]>([]);
   const [escalation, setEscalation] = useState<EscalationRule | null>(null);
-  const [thresholds, setThresholds] = useState<WarningThresholds>({ warning: 3, critical: 1 });
+  const [thresholds, setThresholds] = useState<WarningThresholds>({
+    warningDays: 3,
+    criticalDays: 1,
+    showOverdueAlert: true,
+  });
   const [users, setUsers] = useState<
     { id: string; firstName: string; lastName: string; email?: string }[]
   >([]);
@@ -547,6 +551,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       return next;
     });
   };
+
+  const getUserDisplayName = useCallback(
+    (userId: string) => {
+      const u = users.find((x) => x.id === userId);
+      if (!u) return userId;
+      const full = `${u.firstName} ${u.lastName}`.trim();
+      return full || u.email || userId;
+    },
+    [users]
+  );
 
   // Fetch all data
   const fetchAll = useCallback(async () => {
@@ -1023,12 +1037,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     }
 
     // Push rich initiative context into the unified chat workspace context
-    updateWorkspaceFromView(AppView.INITIATIVES, initiativeId, {
+    updateWorkspaceFromView(AppView.INITIATIVE_GENERATOR, initiativeId, {
       type: 'initiative',
       id: initiativeId,
       title: initiative?.name || '',
       status,
-      phase: getPhaseFromStatus(status),
+      phase: isPolish ? moduleConfig.labelPl : moduleConfig.label,
       summary,
       tasksCount: tasks.length,
       tasksDone,
@@ -1351,8 +1365,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             <CommentsSection
               comments={comments}
               onAddComment={handleAddComment}
-              onDeleteComment={(id) => setComments((prev) => prev.filter((c) => c.id !== id))}
-              onLikeComment={(id) =>
+              onDeleteComment={async (id) => {
+                setComments((prev) => prev.filter((c) => c.id !== id));
+              }}
+              onLikeComment={async (id) => {
                 setComments((prev) =>
                   prev.map((c) =>
                     c.id === id
@@ -1363,8 +1379,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         }
                       : c
                   )
-                )
-              }
+                );
+              }}
               onGenerateAIComment={() => handleGenerateAI('comments')}
               isGeneratingAI={isGeneratingAI === 'comments'}
               currentUserId={currentUserId}
@@ -2304,15 +2320,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     </div>
                     {nextGateConfig.requiredRole === 'sponsor' && sponsorId && (
                       <span className="text-xs text-purple-500">
-                        {users.find((u) => u.id === sponsorId)?.name ||
-                          users.find((u) => u.id === sponsorId)?.email}
+                        {getUserDisplayName(sponsorId)}
                       </span>
                     )}
                     {nextGateConfig.requiredRole === 'owner' && ownerId && (
-                      <span className="text-xs text-purple-500">
-                        {users.find((u) => u.id === ownerId)?.name ||
-                          users.find((u) => u.id === ownerId)?.email}
-                      </span>
+                      <span className="text-xs text-purple-500">{getUserDisplayName(ownerId)}</span>
                     )}
                   </div>
                 </div>
@@ -2895,7 +2907,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                         : req === 'timeline'
                                           ? !!targetDate
                                           : req === 'risks'
-                                            ? raidItems.some((r) => r.type === 'RISK')
+                                            ? raidItems.some((r) => r.type === 'risk')
                                             : req === 'all_tasks_done'
                                               ? tasks.every((t) => t.status === 'DONE')
                                               : true; // Default to true for unknown requirements
@@ -2934,14 +2946,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                 </span>
                                 {nextGateConfig.requiredRole === 'sponsor' && sponsorId && (
                                   <span className="text-xs text-slate-400 ml-auto">
-                                    {users.find((u) => u.id === sponsorId)?.name ||
-                                      users.find((u) => u.id === sponsorId)?.email}
+                                    {getUserDisplayName(sponsorId)}
                                   </span>
                                 )}
                                 {nextGateConfig.requiredRole === 'owner' && ownerId && (
                                   <span className="text-xs text-slate-400 ml-auto">
-                                    {users.find((u) => u.id === ownerId)?.name ||
-                                      users.find((u) => u.id === ownerId)?.email}
+                                    {getUserDisplayName(ownerId)}
                                   </span>
                                 )}
                               </div>
@@ -3172,14 +3182,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 const newAttachments: Attachment[] = Array.from(files).map((f) => ({
                   id: Math.random().toString(36).substr(2, 9),
                   name: f.name,
-                  size: `${(f.size / 1024).toFixed(1)} KB`,
                   type: f.type,
+                  size: f.size,
+                  url: URL.createObjectURL(f),
                   uploadedAt: new Date().toISOString(),
                 }));
                 setAttachments((prev) => [...prev, ...newAttachments]);
                 toast.success(isPolish ? 'Załączniki dodane' : 'Attachments added');
               }}
-              onDelete={(id) => {
+              onDelete={async (id) => {
                 setAttachments((prev) => prev.filter((a) => a.id !== id));
                 toast.success(isPolish ? 'Załącznik usunięty' : 'Attachment removed');
               }}
@@ -3190,14 +3201,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             {/* 5. Linked Items */}
             <LinkedItemsSection
               items={linkedItems}
-              onAdd={(item) => {
+              onAdd={async (item) => {
                 setLinkedItems((prev) => [
                   ...prev,
                   { ...item, id: Math.random().toString(36).substr(2, 9) },
                 ]);
                 toast.success(isPolish ? 'Element powiązany' : 'Item linked');
               }}
-              onRemove={(id) => {
+              onRemove={async (id) => {
                 setLinkedItems((prev) => prev.filter((i) => i.id !== id));
                 toast.success(isPolish ? 'Powiązanie usunięte' : 'Link removed');
               }}

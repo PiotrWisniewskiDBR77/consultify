@@ -73,15 +73,24 @@ try {
 }
 
 // Register Service Worker
-if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then(
-      (registration) => {
-        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-      },
-      (err) => {
-        console.log('ServiceWorker registration failed: ', err);
-      }
-    );
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      // Make sure we check for SW updates on each load (production only).
+      void registration.update();
+
+      // If a new SW takes control, reload to pick up the new index.html/assets.
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        refreshing = true;
+        window.location.reload();
+      });
+
+      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+    } catch (err) {
+      console.log('ServiceWorker registration failed: ', err);
+    }
   });
 }

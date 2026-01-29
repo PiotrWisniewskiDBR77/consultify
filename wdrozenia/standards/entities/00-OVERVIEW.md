@@ -6,6 +6,8 @@ Ujednolicić „kręgosłup systemu”: encje, które przewijają się przez wie
 
 ## Encje kanoniczne (minimum)
 
+- **Initiative**: najważniejszy artefakt programu (hub governance + execution); uruchamia Tasks/Decisions/Notifications/Economics.
+  - Kanon: `wdrozenia/standards/entities/07-INITIATIVE.md`
 - **Task**: podstawowa jednostka pracy w Execution/My Work, powiązana z Initiative, Decision i Reporting.
   - Kanon: `wdrozenia/standards/entities/01-TASK.md`
 - **Decision**: formalny punkt odpowiedzialności odblokowujący działania; most między analizą a działaniem.

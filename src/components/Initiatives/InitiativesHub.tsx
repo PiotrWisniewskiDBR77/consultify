@@ -9,6 +9,7 @@ import { Edit2, Lightbulb, Plus, RefreshCw } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 
 import { Api } from '@/services/api';
 import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
@@ -55,6 +56,9 @@ interface InitiativesHubProps {
 export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'list' }) => {
   const { t } = useTranslation();
   const { currentProjectId, currentUser } = useAppStore();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [handledDeepLinkOpen, setHandledDeepLinkOpen] = useState(false);
+  const [handledDeepLinkNew, setHandledDeepLinkNew] = useState(false);
 
   // View state
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
@@ -81,9 +85,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   // New initiative form (P0 minimal)
   const [newTitle, setNewTitle] = useState('');
-  const [newAxis, setNewAxis] = useState<'strategic' | 'operational' | 'transformational' | 'compliance'>(
-    'operational'
-  );
+  const [newAxis, setNewAxis] = useState<
+    'strategic' | 'operational' | 'transformational' | 'compliance'
+  >('operational');
   const [newSummary, setNewSummary] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
@@ -139,7 +143,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         setInitiatives(allowed);
       } catch (error: any) {
         console.error('[InitiativesHub] Fetch error:', error);
-        setLoadError(error?.response?.data?.error || error?.message || 'Failed to load initiatives');
+        setLoadError(
+          error?.response?.data?.error || error?.message || 'Failed to load initiatives'
+        );
       } finally {
         setIsLoading(false);
         setIsRefreshing(false);
@@ -254,11 +260,76 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         };
         setOpenDocuments((prev) => [...prev, newDoc]);
       }
-      // Set as active document - this will trigger rendering InitiativeDetailCard
+      // Set as active document - this renders InitiativeDocumentView in ModuleHub
       setActiveDocumentId(initiative.id);
     },
     [openDocuments]
   );
+
+  // Deep link: open initiative drawer/full card via URL params
+  // Supported: /initiatives?open=<initiativeId>&mode=drawer|doc
+  useEffect(() => {
+    if (handledDeepLinkOpen) return;
+    const openId = searchParams.get('open');
+    if (!openId) {
+      setHandledDeepLinkOpen(true);
+      return;
+    }
+
+    const mode = (searchParams.get('mode') || 'doc').toLowerCase();
+
+    const run = async () => {
+      try {
+        // Prefer list row if already loaded; fallback to GET by id
+        const fromList = initiatives.find((i) => i.id === openId);
+        const response = fromList ? null : await Api.get(`/initiatives/${openId}`);
+        const initiative = (fromList || response?.initiative || response) as any;
+
+        if (!initiative?.id) {
+          toast.error('Initiative not found');
+          return;
+        }
+
+        if (mode === 'drawer') {
+          handleInitiativeClick(initiative as any);
+        } else {
+          handleOpenFullScreen(initiative as any);
+        }
+      } catch (e: any) {
+        toast.error(e?.response?.data?.error || e?.message || 'Failed to open initiative');
+      } finally {
+        // Clear only deep-link params (preserve others if any)
+        const next = new URLSearchParams(searchParams);
+        next.delete('open');
+        next.delete('mode');
+        setSearchParams(next, { replace: true });
+        setHandledDeepLinkOpen(true);
+      }
+    };
+
+    run();
+  }, [
+    handledDeepLinkOpen,
+    searchParams,
+    setSearchParams,
+    initiatives,
+    handleInitiativeClick,
+    handleOpenFullScreen,
+  ]);
+
+  // Deep link: open "New Initiative" modal
+  // Supported: /initiatives?new=1
+  useEffect(() => {
+    if (handledDeepLinkNew) return;
+    const isNew = searchParams.get('new') === '1';
+    if (isNew) {
+      setShowNewModal(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete('new');
+      setSearchParams(next, { replace: true });
+    }
+    setHandledDeepLinkNew(true);
+  }, [handledDeepLinkNew, searchParams, setSearchParams]);
 
   const handleCloseSidePanel = useCallback(() => {
     setIsSidePanelOpen(false);
@@ -628,7 +699,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                     }
                   }
                 } catch (e: any) {
-                  toast.error(e?.response?.data?.error || e?.message || 'Failed to create initiative');
+                  toast.error(
+                    e?.response?.data?.error || e?.message || 'Failed to create initiative'
+                  );
                 } finally {
                   setIsCreating(false);
                 }
