@@ -1,6 +1,6 @@
 /**
  * InterviewController - v2.0 ClickUp-like Redesign
- * 
+ *
  * Handles:
  * - Interview sessions (5 categories: Strategy, Operations, Digital, People, Finance)
  * - Questions (task-list style with status, confidence, tags)
@@ -14,21 +14,21 @@ import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
-import type { AuthenticatedRequest } from '../types/index.js';
 import { llmService } from '../services/ai/llmService.js';
 import notificationService from '../services/notificationService.js';
 import { evaluateGatePolicy } from '../services/workflow/gatePolicy.js';
+import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import * as queryHelpers from '../utils/queryHelpers.js';
 import logger from '../utils/Logger.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 
 // 5 Interview Categories (new spec)
 const INTERVIEW_CATEGORIES = ['strategy', 'operations', 'digital', 'people', 'finance'] as const;
-type InterviewCategory = typeof INTERVIEW_CATEGORIES[number];
+type InterviewCategory = (typeof INTERVIEW_CATEGORIES)[number];
 
 // Question statuses (task-list style)
 const QUESTION_STATUSES = ['not_started', 'in_progress', 'answered', 'needs_follow_up'] as const;
-type QuestionStatus = typeof QUESTION_STATUSES[number];
+type QuestionStatus = (typeof QUESTION_STATUSES)[number];
 
 // Helpers
 const parseJson = <T>(value: string | null | undefined, fallback: T): T => {
@@ -245,7 +245,9 @@ async function createSessionFromTemplate(params: {
     id,
   ]);
 
-  const session = await queryHelpers.queryOne(`SELECT * FROM interview_sessions WHERE id = ?`, [id]);
+  const session = await queryHelpers.queryOne(`SELECT * FROM interview_sessions WHERE id = ?`, [
+    id,
+  ]);
   return buildSessionResponse(session);
 }
 
@@ -294,7 +296,10 @@ async function assertSessionOwnedByUser(
   if (String((session as any).owner_id) !== String(userId)) throw new Error('Forbidden');
 }
 
-async function getAssignmentForSession(sessionId: string, organizationId: string): Promise<any | null> {
+async function getAssignmentForSession(
+  sessionId: string,
+  organizationId: string
+): Promise<any | null> {
   const row = await queryHelpers.queryOne(
     `SELECT * FROM interview_assignments WHERE session_id = ? AND organization_id = ?`,
     [sessionId, organizationId]
@@ -311,14 +316,17 @@ export const InterviewController = {
     const user = requireUser(req);
     const { status } = req.query;
 
-    // Join with projects to filter by organization
+    // Filter sessions by organization (project-scoped OR org-scoped)
     let query = `
-      SELECT s.* 
+      SELECT s.*
       FROM interview_sessions s
-      JOIN projects p ON p.id = s.project_id
-      WHERE p.organization_id = ?
+      LEFT JOIN projects p ON p.id = s.project_id
+      WHERE (
+        p.organization_id = ?
+        OR (s.project_id IS NULL AND s.organization_id = ?)
+      )
     `;
-    const params: unknown[] = [user.organizationId];
+    const params: unknown[] = [user.organizationId, user.organizationId];
 
     if (status) {
       query += ` AND s.status = ?`;
@@ -337,11 +345,15 @@ export const InterviewController = {
 
     // Join with projects to filter by organization
     const row = await queryHelpers.queryOne(
-      `SELECT s.* 
+      `SELECT s.*
        FROM interview_sessions s
-       JOIN projects p ON p.id = s.project_id
-       WHERE s.id = ? AND p.organization_id = ?`,
-      [id, user.organizationId]
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ?
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )`,
+      [id, user.organizationId, user.organizationId]
     );
 
     if (!row) {
@@ -416,12 +428,14 @@ export const InterviewController = {
     }
 
     // Update total questions
-    await queryHelpers.queryRun(
-      `UPDATE interview_sessions SET total_questions = ? WHERE id = ?`,
-      [questionCount, id]
-    );
+    await queryHelpers.queryRun(`UPDATE interview_sessions SET total_questions = ? WHERE id = ?`, [
+      questionCount,
+      id,
+    ]);
 
-    const session = await queryHelpers.queryOne(`SELECT * FROM interview_sessions WHERE id = ?`, [id]);
+    const session = await queryHelpers.queryOne(`SELECT * FROM interview_sessions WHERE id = ?`, [
+      id,
+    ]);
     logger.info(`[InterviewController] Created session ${id} with ${questionCount} questions`);
     res.status(201).json(buildSessionResponse(session));
   }),
@@ -429,7 +443,8 @@ export const InterviewController = {
   updateSession: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params;
-    const { name, status, summaryFacts, summaryGaps, summaryConstraints, summaryPainPoints } = req.body;
+    const { name, status, summaryFacts, summaryGaps, summaryConstraints, summaryPainPoints } =
+      req.body;
 
     const updates: string[] = [];
     const params: unknown[] = [];
@@ -472,12 +487,17 @@ export const InterviewController = {
     params.push(new Date().toISOString());
     params.push(id);
 
-    // Verify session belongs to user's organization via project
+    // Verify session belongs to user's organization (project-scoped OR org-scoped)
     const sessionCheck = await queryHelpers.queryOne(
-      `SELECT s.id FROM interview_sessions s
-       JOIN projects p ON p.id = s.project_id
-       WHERE s.id = ? AND p.organization_id = ?`,
-      [id, user.organizationId]
+      `SELECT s.id
+       FROM interview_sessions s
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ?
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )`,
+      [id, user.organizationId, user.organizationId]
     );
     if (!sessionCheck) {
       res.status(404).json({ error: 'Session not found' });
@@ -489,7 +509,9 @@ export const InterviewController = {
       params
     );
 
-    const updated = await queryHelpers.queryOne(`SELECT * FROM interview_sessions WHERE id = ?`, [id]);
+    const updated = await queryHelpers.queryOne(`SELECT * FROM interview_sessions WHERE id = ?`, [
+      id,
+    ]);
     res.json(buildSessionResponse(updated));
   }),
 
@@ -550,7 +572,10 @@ export const InterviewController = {
           version: r.template_version,
           name: r.template_name || '',
           description: r.template_description || '',
-          category: typeof r.template_category === 'string' ? r.template_category.toLowerCase() : r.template_category,
+          category:
+            typeof r.template_category === 'string'
+              ? r.template_category.toLowerCase()
+              : r.template_category,
         },
         session: r.session_id
           ? {
@@ -569,12 +594,12 @@ export const InterviewController = {
 
   createAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const admin = requireUser(req);
-    const { 
-      assigneeUserId,      // Single user (legacy support)
-      assigneeUserIds,     // Array of users (new - supports teams)
-      templateId, 
-      dueAt, 
-      processRef, 
+    const {
+      assigneeUserId, // Single user (legacy support)
+      assigneeUserIds, // Array of users (new - supports teams)
+      templateId,
+      dueAt,
+      processRef,
       projectId,
       priority,
       escalateTo,
@@ -583,9 +608,13 @@ export const InterviewController = {
     } = req.body || {};
 
     // Support both singular and plural assignee fields
-    const userIds: string[] = assigneeUserIds 
-      ? (Array.isArray(assigneeUserIds) ? assigneeUserIds : [assigneeUserIds])
-      : (assigneeUserId ? [assigneeUserId] : []);
+    const userIds: string[] = assigneeUserIds
+      ? Array.isArray(assigneeUserIds)
+        ? assigneeUserIds
+        : [assigneeUserIds]
+      : assigneeUserId
+        ? [assigneeUserId]
+        : [];
 
     if (userIds.length === 0 || !templateId) {
       res.status(400).json({ error: 'assigneeUserId(s) and templateId are required' });
@@ -608,14 +637,15 @@ export const InterviewController = {
           `SELECT project_id, project_role FROM project_members WHERE user_id = ?`,
           [admin.id]
         );
-        
-        const hasAnyManagementRole = (userProjectRoles || []).some((pm: any) => 
+
+        const hasAnyManagementRole = (userProjectRoles || []).some((pm: any) =>
           projectRolesWithAssign.includes((pm.project_role || '').toUpperCase())
         );
-        
+
         if (!hasAnyManagementRole) {
-          res.status(403).json({ 
-            error: 'You do not have permission to assign interviews. You need PROJECT_MANAGER role or a management role in a project.' 
+          res.status(403).json({
+            error:
+              'You do not have permission to assign interviews. You need PROJECT_MANAGER role or a management role in a project.',
           });
           return;
         }
@@ -625,10 +655,15 @@ export const InterviewController = {
           `SELECT project_role FROM project_members WHERE user_id = ? AND project_id = ?`,
           [admin.id, projectId]
         );
-        
-        if (!creatorProjectRole || !projectRolesWithAssign.includes(((creatorProjectRole as any).project_role || '').toUpperCase())) {
-          res.status(403).json({ 
-            error: 'You do not have a management role in this project to assign interviews.' 
+
+        if (
+          !creatorProjectRole ||
+          !projectRolesWithAssign.includes(
+            ((creatorProjectRole as any).project_role || '').toUpperCase()
+          )
+        ) {
+          res.status(403).json({
+            error: 'You do not have a management role in this project to assign interviews.',
           });
           return;
         }
@@ -639,11 +674,12 @@ export const InterviewController = {
           [projectId]
         );
         const projectMemberIds = (projectMembers || []).map((m: any) => m.user_id);
-        
-        const invalidAssignees = userIds.filter(id => !projectMemberIds.includes(id));
+
+        const invalidAssignees = userIds.filter((id) => !projectMemberIds.includes(id));
         if (invalidAssignees.length > 0) {
-          res.status(403).json({ 
-            error: 'Some assignees are not members of this project. You can only assign to project members.' 
+          res.status(403).json({
+            error:
+              'Some assignees are not members of this project. You can only assign to project members.',
           });
           return;
         }
@@ -666,8 +702,9 @@ export const InterviewController = {
     }
 
     // Use InterviewAssignmentService for proper handling of teams, notifications, escalation
-    const { default: interviewAssignmentService } = await import('../services/InterviewAssignmentService.js');
-    
+    const { default: interviewAssignmentService } =
+      await import('../services/InterviewAssignmentService.js');
+
     const assignment = await interviewAssignmentService.create({
       organizationId: admin.organizationId,
       projectId: projectId || undefined,
@@ -684,7 +721,9 @@ export const InterviewController = {
     });
 
     // Return with full details
-    const assignmentWithDetails = await interviewAssignmentService.getByIdWithDetails(assignment.id);
+    const assignmentWithDetails = await interviewAssignmentService.getByIdWithDetails(
+      assignment.id
+    );
     res.status(201).json(assignmentWithDetails);
   }),
 
@@ -738,7 +777,10 @@ export const InterviewController = {
         template: {
           id: r.template_id,
           name: r.template_name || '',
-          category: typeof r.template_category === 'string' ? r.template_category.toLowerCase() : r.template_category,
+          category:
+            typeof r.template_category === 'string'
+              ? r.template_category.toLowerCase()
+              : r.template_category,
           version: r.template_version,
         },
         session: r.session_id
@@ -845,10 +887,15 @@ export const InterviewController = {
     }
 
     const sessionRow = await queryHelpers.queryOne(
-      `SELECT s.* FROM interview_sessions s
-       JOIN projects p ON p.id = s.project_id
-       WHERE s.id = ? AND p.organization_id = ?`,
-      [(assignment as any).session_id, user.organizationId]
+      `SELECT s.*
+       FROM interview_sessions s
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ?
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )`,
+      [(assignment as any).session_id, user.organizationId, user.organizationId]
     );
     if (!sessionRow) {
       res.status(404).json({ error: 'Session not found' });
@@ -887,10 +934,14 @@ export const InterviewController = {
       );
     }
 
-    const updatedAssignment = await queryHelpers.queryOne(`SELECT * FROM interview_assignments WHERE id = ?`, [id]);
-    const updatedSession = await queryHelpers.queryOne(`SELECT * FROM interview_sessions WHERE id = ?`, [
-      (assignment as any).session_id,
-    ]);
+    const updatedAssignment = await queryHelpers.queryOne(
+      `SELECT * FROM interview_assignments WHERE id = ?`,
+      [id]
+    );
+    const updatedSession = await queryHelpers.queryOne(
+      `SELECT * FROM interview_sessions WHERE id = ?`,
+      [(assignment as any).session_id]
+    );
 
     // Notify the assignment creator (manager/reviewer) that review is needed
     try {
@@ -941,15 +992,22 @@ export const InterviewController = {
       context: { assignment },
     });
     if (!sendBackGate.allow) {
-      res.status(sendBackGate.code === 'INVALID_STATE' ? 409 : 400).json({ error: sendBackGate.error });
+      res
+        .status(sendBackGate.code === 'INVALID_STATE' ? 409 : 400)
+        .json({ error: sendBackGate.error });
       return;
     }
 
     const sessionRow = await queryHelpers.queryOne(
-      `SELECT s.* FROM interview_sessions s
-       JOIN projects p ON p.id = s.project_id
-       WHERE s.id = ? AND p.organization_id = ?`,
-      [(assignment as any).session_id, admin.organizationId]
+      `SELECT s.*
+       FROM interview_sessions s
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ?
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )`,
+      [(assignment as any).session_id, admin.organizationId, admin.organizationId]
     );
     if (!sessionRow) {
       res.status(404).json({ error: 'Session not found' });
@@ -980,7 +1038,10 @@ export const InterviewController = {
       ]);
     }
 
-    const updated = await queryHelpers.queryOne(`SELECT * FROM interview_assignments WHERE id = ?`, [id]);
+    const updated = await queryHelpers.queryOne(
+      `SELECT * FROM interview_assignments WHERE id = ?`,
+      [id]
+    );
 
     // Notify assignee that interview was sent back
     try {
@@ -1025,15 +1086,22 @@ export const InterviewController = {
       context: { assignment },
     });
     if (!approveGate.allow) {
-      res.status(approveGate.code === 'INVALID_STATE' ? 409 : 400).json({ error: approveGate.error });
+      res
+        .status(approveGate.code === 'INVALID_STATE' ? 409 : 400)
+        .json({ error: approveGate.error });
       return;
     }
 
     const sessionRow = await queryHelpers.queryOne(
-      `SELECT s.* FROM interview_sessions s
-       JOIN projects p ON p.id = s.project_id
-       WHERE s.id = ? AND p.organization_id = ?`,
-      [(assignment as any).session_id, reviewer.organizationId]
+      `SELECT s.*
+       FROM interview_sessions s
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ?
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )`,
+      [(assignment as any).session_id, reviewer.organizationId, reviewer.organizationId]
     );
     if (!sessionRow) {
       res.status(404).json({ error: 'Session not found' });
@@ -1091,10 +1159,14 @@ export const InterviewController = {
       logger.warn('[InterviewController] Failed to send interview_approved notification', e);
     }
 
-    const updatedAssignment = await queryHelpers.queryOne(`SELECT * FROM interview_assignments WHERE id = ?`, [id]);
-    const updatedSession = await queryHelpers.queryOne(`SELECT * FROM interview_sessions WHERE id = ?`, [
-      (assignment as any).session_id,
-    ]);
+    const updatedAssignment = await queryHelpers.queryOne(
+      `SELECT * FROM interview_assignments WHERE id = ?`,
+      [id]
+    );
+    const updatedSession = await queryHelpers.queryOne(
+      `SELECT * FROM interview_sessions WHERE id = ?`,
+      [(assignment as any).session_id]
+    );
 
     res.json({
       assignment: updatedAssignment,
@@ -1167,7 +1239,10 @@ export const InterviewController = {
           version: r.template_version,
           name: r.template_name || '',
           description: r.template_description || '',
-          category: typeof r.template_category === 'string' ? r.template_category.toLowerCase() : r.template_category,
+          category:
+            typeof r.template_category === 'string'
+              ? r.template_category.toLowerCase()
+              : r.template_category,
         },
         session: r.session_id
           ? {
@@ -1365,7 +1440,10 @@ export const InterviewController = {
         version: r.template_version,
         name: r.template_name || '',
         description: r.template_description || '',
-        category: typeof r.template_category === 'string' ? r.template_category.toLowerCase() : r.template_category,
+        category:
+          typeof r.template_category === 'string'
+            ? r.template_category.toLowerCase()
+            : r.template_category,
       },
       session: r.session_id
         ? {
@@ -1447,13 +1525,17 @@ export const InterviewController = {
 
     // Update mirror task if deadline changed
     if (dueAt !== undefined && (existing as any).task_id) {
-      await queryHelpers.queryRun(
-        `UPDATE tasks SET due_date = ?, updated_at = ? WHERE id = ?`,
-        [dueAt, now, (existing as any).task_id]
-      );
+      await queryHelpers.queryRun(`UPDATE tasks SET due_date = ?, updated_at = ? WHERE id = ?`, [
+        dueAt,
+        now,
+        (existing as any).task_id,
+      ]);
     }
 
-    const updated = await queryHelpers.queryOne(`SELECT * FROM interview_assignments WHERE id = ?`, [id]);
+    const updated = await queryHelpers.queryOne(
+      `SELECT * FROM interview_assignments WHERE id = ?`,
+      [id]
+    );
     res.json(updated);
   }),
 
@@ -1482,7 +1564,10 @@ export const InterviewController = {
     }
 
     // Delete team members
-    await queryHelpers.queryRun(`DELETE FROM interview_assignment_members WHERE assignment_id = ?`, [id]);
+    await queryHelpers.queryRun(
+      `DELETE FROM interview_assignment_members WHERE assignment_id = ?`,
+      [id]
+    );
 
     // Delete assignment
     await queryHelpers.queryRun(`DELETE FROM interview_assignments WHERE id = ?`, [id]);
@@ -1508,7 +1593,8 @@ export const InterviewController = {
     }
 
     // Import service dynamically to avoid circular deps
-    const { default: interviewAssignmentService } = await import('../services/InterviewAssignmentService.js');
+    const { default: interviewAssignmentService } =
+      await import('../services/InterviewAssignmentService.js');
     await interviewAssignmentService.sendReminder(id, user.id);
 
     res.json({ success: true, message: 'Reminder sent' });
@@ -1540,16 +1626,18 @@ export const InterviewController = {
       [id]
     );
 
-    res.json((members || []).map((m: any) => ({
-      id: m.id,
-      userId: m.user_id,
-      userName: m.user_name,
-      userEmail: m.user_email,
-      role: m.role,
-      progressPercent: m.progress_percent || 0,
-      joinedAt: m.joined_at,
-      completedAt: m.completed_at,
-    })));
+    res.json(
+      (members || []).map((m: any) => ({
+        id: m.id,
+        userId: m.user_id,
+        userName: m.user_name,
+        userEmail: m.user_email,
+        role: m.role,
+        progressPercent: m.progress_percent || 0,
+        joinedAt: m.joined_at,
+        completedAt: m.completed_at,
+      }))
+    );
   }),
 
   addAssignmentMember: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -1634,7 +1722,9 @@ export const InterviewController = {
 
     // Cannot remove primary assignee
     if ((assignment as any).assignee_user_id === userId) {
-      res.status(409).json({ error: 'Cannot remove primary assignee. Reassign the assignment first.' });
+      res
+        .status(409)
+        .json({ error: 'Cannot remove primary assignee. Reassign the assignment first.' });
       return;
     }
 
@@ -1927,10 +2017,7 @@ export const InterviewController = {
     );
 
     // Delete template
-    await queryHelpers.queryRun(
-      `DELETE FROM interview_library_templates WHERE id = ?`,
-      [id]
-    );
+    await queryHelpers.queryRun(`DELETE FROM interview_library_templates WHERE id = ?`, [id]);
 
     res.json({ success: true, deletedId: id });
   }),
@@ -2011,7 +2098,8 @@ export const InterviewController = {
   addTemplateQuestion: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params; // template id
-    const { category, questionText, sortOrder, answerType, isRequired, helpHint, answerOptions } = req.body || {};
+    const { category, questionText, sortOrder, answerType, isRequired, helpHint, answerOptions } =
+      req.body || {};
 
     const template = await queryHelpers.queryOne(
       `SELECT * FROM interview_library_templates WHERE id = ? AND (organization_id IS NULL OR organization_id = ?)`,
@@ -2060,7 +2148,8 @@ export const InterviewController = {
   updateTemplateQuestion: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id, questionId } = req.params;
-    const { category, questionText, sortOrder, answerType, isRequired, helpHint, answerOptions } = req.body || {};
+    const { category, questionText, sortOrder, answerType, isRequired, helpHint, answerOptions } =
+      req.body || {};
 
     const existing = await queryHelpers.queryOne(
       `SELECT * FROM interview_library_template_questions WHERE id = ? AND template_id = ?`,
@@ -2393,16 +2482,18 @@ ${JSON.stringify(questions || [], null, 2)}
     );
 
     // Update session progress
-    const question = await queryHelpers.queryOne(
+    const question = (await queryHelpers.queryOne(
       `SELECT session_id FROM interview_questions WHERE id = ?`,
       [questionId]
-    ) as { session_id: string } | null;
+    )) as { session_id: string } | null;
 
     if (question) {
       await InterviewController.updateSessionProgress(question.session_id);
     }
 
-    const updated = await queryHelpers.queryOne(`SELECT * FROM interview_questions WHERE id = ?`, [questionId]);
+    const updated = await queryHelpers.queryOne(`SELECT * FROM interview_questions WHERE id = ?`, [
+      questionId,
+    ]);
     res.json(buildQuestionResponse(updated));
   }),
 
@@ -2444,10 +2535,10 @@ ${JSON.stringify(questions || [], null, 2)}
     const now = new Date().toISOString();
 
     // Get max sort order
-    const maxOrder = await queryHelpers.queryOne(
+    const maxOrder = (await queryHelpers.queryOne(
       `SELECT MAX(sort_order) as max_order FROM interview_questions WHERE session_id = ? AND category = ?`,
       [sessionId, category]
-    ) as { max_order: number } | null;
+    )) as { max_order: number } | null;
 
     await queryHelpers.queryRun(
       `INSERT INTO interview_questions
@@ -2473,19 +2564,33 @@ ${JSON.stringify(questions || [], null, 2)}
       [sessionId]
     );
 
-    const created = await queryHelpers.queryOne(`SELECT * FROM interview_questions WHERE id = ?`, [id]);
+    const created = await queryHelpers.queryOne(`SELECT * FROM interview_questions WHERE id = ?`, [
+      id,
+    ]);
     res.status(201).json(buildQuestionResponse(created));
   }),
 
   // Helper to update session progress
   updateSessionProgress: async (sessionId: string) => {
-    const questions = await queryHelpers.queryAll(
+    const questions = (await queryHelpers.queryAll(
       `SELECT category, status FROM interview_questions WHERE session_id = ?`,
       [sessionId]
-    ) as { category: string; status: string }[];
+    )) as { category: string; status: string }[];
 
-    const progress: Record<string, number> = { strategy: 0, operations: 0, digital: 0, people: 0, finance: 0 };
-    const categoryCount: Record<string, number> = { strategy: 0, operations: 0, digital: 0, people: 0, finance: 0 };
+    const progress: Record<string, number> = {
+      strategy: 0,
+      operations: 0,
+      digital: 0,
+      people: 0,
+      finance: 0,
+    };
+    const categoryCount: Record<string, number> = {
+      strategy: 0,
+      operations: 0,
+      digital: 0,
+      people: 0,
+      finance: 0,
+    };
     let answeredTotal = 0;
 
     for (const q of questions) {
@@ -2562,7 +2667,17 @@ ${JSON.stringify(questions || [], null, 2)}
     await queryHelpers.queryRun(
       `INSERT INTO interview_notes (id, session_id, organization_id, category, title, content, created_by, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, sessionId, user.organizationId, category || null, title || null, content, user.id, now, now]
+      [
+        id,
+        sessionId,
+        user.organizationId,
+        category || null,
+        title || null,
+        content,
+        user.id,
+        now,
+        now,
+      ]
     );
 
     const created = await queryHelpers.queryOne(`SELECT * FROM interview_notes WHERE id = ?`, [id]);
@@ -2587,12 +2702,18 @@ ${JSON.stringify(questions || [], null, 2)}
       res.status(404).json({ error: 'Note not found' });
       return;
     }
-    if (String((await queryHelpers.queryOne(
-      `SELECT s.user_id as owner_id FROM interview_sessions s
+    if (
+      String(
+        (
+          (await queryHelpers.queryOne(
+            `SELECT s.user_id as owner_id FROM interview_sessions s
        JOIN projects p ON p.id = s.project_id
        WHERE s.id = ? AND p.organization_id = ?`,
-      [(noteSession as any).session_id, user.organizationId]
-    ) as any)?.owner_id) !== String(user.id)) {
+            [(noteSession as any).session_id, user.organizationId]
+          )) as any
+        )?.owner_id
+      ) !== String(user.id)
+    ) {
       res.status(403).json({ error: 'Forbidden' });
       return;
     }
@@ -2627,7 +2748,9 @@ ${JSON.stringify(questions || [], null, 2)}
       params
     );
 
-    const updated = await queryHelpers.queryOne(`SELECT * FROM interview_notes WHERE id = ?`, [noteId]);
+    const updated = await queryHelpers.queryOne(`SELECT * FROM interview_notes WHERE id = ?`, [
+      noteId,
+    ]);
     res.json(buildNoteResponse(updated));
   }),
 
@@ -2648,12 +2771,18 @@ ${JSON.stringify(questions || [], null, 2)}
       res.status(404).json({ error: 'Note not found' });
       return;
     }
-    if (String((await queryHelpers.queryOne(
-      `SELECT s.user_id as owner_id FROM interview_sessions s
+    if (
+      String(
+        (
+          (await queryHelpers.queryOne(
+            `SELECT s.user_id as owner_id FROM interview_sessions s
        JOIN projects p ON p.id = s.project_id
        WHERE s.id = ? AND p.organization_id = ?`,
-      [(noteSession as any).session_id, user.organizationId]
-    ) as any)?.owner_id) !== String(user.id)) {
+            [(noteSession as any).session_id, user.organizationId]
+          )) as any
+        )?.owner_id
+      ) !== String(user.id)
+    ) {
       res.status(403).json({ error: 'Forbidden' });
       return;
     }
@@ -2688,7 +2817,8 @@ ${JSON.stringify(questions || [], null, 2)}
   createEvidence: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { sessionId } = req.params;
-    const { questionId, evidenceType, title, description, fileName, fileSize, fileType, url } = req.body;
+    const { questionId, evidenceType, title, description, fileName, fileSize, fileType, url } =
+      req.body;
 
     try {
       await assertSessionEditable(sessionId, user.organizationId);
@@ -2739,7 +2869,9 @@ ${JSON.stringify(questions || [], null, 2)}
       ]
     );
 
-    const created = await queryHelpers.queryOne(`SELECT * FROM interview_evidence WHERE id = ?`, [id]);
+    const created = await queryHelpers.queryOne(`SELECT * FROM interview_evidence WHERE id = ?`, [
+      id,
+    ]);
     res.status(201).json(buildEvidenceResponse(created));
   }),
 
@@ -2760,12 +2892,18 @@ ${JSON.stringify(questions || [], null, 2)}
       res.status(404).json({ error: 'Evidence not found' });
       return;
     }
-    if (String((await queryHelpers.queryOne(
-      `SELECT s.user_id as owner_id FROM interview_sessions s
+    if (
+      String(
+        (
+          (await queryHelpers.queryOne(
+            `SELECT s.user_id as owner_id FROM interview_sessions s
        JOIN projects p ON p.id = s.project_id
        WHERE s.id = ? AND p.organization_id = ?`,
-      [(evSession as any).session_id, user.organizationId]
-    ) as any)?.owner_id) !== String(user.id)) {
+            [(evSession as any).session_id, user.organizationId]
+          )) as any
+        )?.owner_id
+      ) !== String(user.id)
+    ) {
       res.status(403).json({ error: 'Forbidden' });
       return;
     }
@@ -2831,8 +2969,16 @@ ${JSON.stringify(questions || [], null, 2)}
   updateOrganizationContext: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const {
-      companyName, industry, companySize, location, employeeCount, annualRevenue,
-      keyMetrics, stakeholders, openGaps, lastInterviewId
+      companyName,
+      industry,
+      companySize,
+      location,
+      employeeCount,
+      annualRevenue,
+      keyMetrics,
+      stakeholders,
+      openGaps,
+      lastInterviewId,
     } = req.body;
 
     const existing = await queryHelpers.queryOne(
@@ -2985,7 +3131,16 @@ ${JSON.stringify(questions || [], null, 2)}
       `INSERT INTO interview_context_exports
        (id, interview_session_id, organization_id, target_type, target_id, context_snapshot, exported_by, exported_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, sessionId, user.organizationId, targetType, targetId, JSON.stringify(context || {}), user.id, now]
+      [
+        id,
+        sessionId,
+        user.organizationId,
+        targetType,
+        targetId,
+        JSON.stringify(context || {}),
+        user.id,
+        now,
+      ]
     );
 
     logger.info(`[InterviewController] Exported context to ${targetType}:${targetId}`);
@@ -3022,16 +3177,18 @@ ${JSON.stringify(questions || [], null, 2)}
         String((assignment as any)?.status || '').toLowerCase() === 'completed' ||
         (String((assignment as any)?.status || '').toLowerCase() === 'submitted' && ratio >= 0.5);
       if (!allowed) {
-        res.status(409).json({ error: 'Interview not completed (>=50%) - cannot generate summary yet' });
+        res
+          .status(409)
+          .json({ error: 'Interview not completed (>=50%) - cannot generate summary yet' });
         return;
       }
     }
 
     // Get all answered questions
-    const questions = await queryHelpers.queryAll(
+    const questions = (await queryHelpers.queryAll(
       `SELECT * FROM interview_questions WHERE session_id = ? AND status = 'answered' ORDER BY category, sort_order`,
       [sessionId]
-    ) as any[];
+    )) as any[];
 
     // Group by category and extract facts
     const facts: { category: string; fact: string }[] = [];
@@ -3056,10 +3213,10 @@ ${JSON.stringify(questions || [], null, 2)}
     }
 
     // Find gaps (unanswered required questions or low confidence)
-    const allQuestions = await queryHelpers.queryAll(
+    const allQuestions = (await queryHelpers.queryAll(
       `SELECT * FROM interview_questions WHERE session_id = ?`,
       [sessionId]
-    ) as any[];
+    )) as any[];
 
     for (const q of allQuestions) {
       if (q.status !== 'answered' || (q.confidence_score && q.confidence_score < 3)) {
@@ -3098,19 +3255,23 @@ ${JSON.stringify(questions || [], null, 2)}
   getCompletedSessions: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
 
-    // Join with projects to filter by organization (sessions don't have organization_id)
+    // Filter by organization (project-scoped OR org-scoped) and return lightweight rows for Insights tab
     const rows = await queryHelpers.queryAll(
       `SELECT 
-        s.id, s.topic as name, s.template_id, s.status, s.completed_at, s.user_id,
+        s.id, s.name as name, s.template_id, s.status, s.completed_at, s.owner_id,
+        s.answered_questions, s.total_questions,
         t.name as template_name, t.category as template_category,
-        u.first_name || ' ' || u.last_name as respondent_name
+        COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '') as respondent_name
        FROM interview_sessions s
-       JOIN projects p ON p.id = s.project_id
+       LEFT JOIN projects p ON p.id = s.project_id
        LEFT JOIN interview_library_templates t ON t.id = s.template_id
-       LEFT JOIN users u ON u.id = s.user_id
-       WHERE p.organization_id = ? AND s.status = 'completed'
+       LEFT JOIN users u ON u.id = s.owner_id
+       WHERE (
+         p.organization_id = ?
+         OR (s.project_id IS NULL AND s.organization_id = ?)
+       ) AND s.status = 'completed'
        ORDER BY s.completed_at DESC`,
-      [user.organizationId]
+      [user.organizationId, user.organizationId]
     );
 
     const sessions = (rows || []).map((row: any) => ({
@@ -3121,7 +3282,7 @@ ${JSON.stringify(questions || [], null, 2)}
       templateCategory: row.template_category,
       status: row.status,
       completedAt: row.completed_at,
-      respondentId: row.user_id,
+      respondentId: row.owner_id,
       respondentName: row.respondent_name,
       answeredQuestions: row.answered_questions,
       totalQuestions: row.total_questions,
@@ -3139,10 +3300,10 @@ ${JSON.stringify(questions || [], null, 2)}
     const { limit = 50, offset = 0 } = req.query;
 
     const interviewInsightService = await import('../services/InterviewInsightService.js');
-    const insights = await interviewInsightService.list(
-      user.organizationId,
-      { limit: Number(limit), offset: Number(offset) }
-    );
+    const insights = await interviewInsightService.list(user.organizationId, {
+      limit: Number(limit),
+      offset: Number(offset),
+    });
 
     res.json(insights);
   }),
@@ -3150,7 +3311,7 @@ ${JSON.stringify(questions || [], null, 2)}
   getInsight: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { id } = req.params;
 
-    const row = await queryHelpers.queryOne(
+    const row = (await queryHelpers.queryOne(
       `SELECT 
         id, session_id, organization_id, category, title, description,
         source_quote, insight_type, impact_level, confidence, pmo_domain,
@@ -3159,7 +3320,7 @@ ${JSON.stringify(questions || [], null, 2)}
        FROM interview_insights 
        WHERE id = ?`,
       [id]
-    ) as any;
+    )) as any;
 
     if (!row) {
       res.status(404).json({ error: 'Insight not found' });

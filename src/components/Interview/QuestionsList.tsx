@@ -1,6 +1,6 @@
 /**
  * QuestionsList - Task-list style questions component
- * 
+ *
  * ClickUp-like interface with:
  * - Inline edit for answers
  * - Status per question (Not started, In progress, Answered, Needs follow-up)
@@ -9,8 +9,6 @@
  * - Owner (who answered)
  */
 
-import React, { useCallback, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   AlertTriangle,
   Bot,
@@ -34,9 +32,11 @@ import {
   User,
   X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import { Api } from '@/services/api';
 import { sendMessageToAI } from '@/services/ai/gemini';
+import { Api } from '@/services/api';
 
 import type { InterviewCategory } from './CategorySidebar';
 
@@ -68,13 +68,16 @@ export interface QuestionsListProps {
 }
 
 // Status configuration
-const STATUS_CONFIG: Record<QuestionStatus, {
-  labelEn: string;
-  labelPl: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-  color: string;
-  bgColor: string;
-}> = {
+const STATUS_CONFIG: Record<
+  QuestionStatus,
+  {
+    labelEn: string;
+    labelPl: string;
+    icon: React.ComponentType<{ size?: number; className?: string }>;
+    color: string;
+    bgColor: string;
+  }
+> = {
   not_started: {
     labelEn: 'Not started',
     labelPl: 'Nie rozpoczęte',
@@ -107,10 +110,30 @@ const STATUS_CONFIG: Record<QuestionStatus, {
 
 // Tag configuration
 const TAG_OPTIONS = [
-  { value: 'risk', labelEn: 'Risk', labelPl: 'Ryzyko', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
-  { value: 'opportunity', labelEn: 'Opportunity', labelPl: 'Szansa', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
-  { value: 'constraint', labelEn: 'Constraint', labelPl: 'Ograniczenie', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
-  { value: 'priority', labelEn: 'Priority', labelPl: 'Priorytet', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
+  {
+    value: 'risk',
+    labelEn: 'Risk',
+    labelPl: 'Ryzyko',
+    color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  },
+  {
+    value: 'opportunity',
+    labelEn: 'Opportunity',
+    labelPl: 'Szansa',
+    color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  },
+  {
+    value: 'constraint',
+    labelEn: 'Constraint',
+    labelPl: 'Ograniczenie',
+    color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  },
+  {
+    value: 'priority',
+    labelEn: 'Priority',
+    labelPl: 'Priorytet',
+    color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+  },
 ];
 
 export const QuestionsList: React.FC<QuestionsListProps> = ({
@@ -124,7 +147,23 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  // Filter questions for current category
+  const categoryQuestions = questions.filter((q) => q.category === category);
+
+  // Find first unanswered question to auto-expand
+  const firstUnansweredId =
+    categoryQuestions.find((q) => q.status !== 'answered')?.id || categoryQuestions[0]?.id || null;
+
+  const [expandedId, setExpandedId] = useState<string | null>(firstUnansweredId);
+
+  // Auto-expand first unanswered question when category changes
+  useEffect(() => {
+    const nextUnanswered =
+      categoryQuestions.find((q) => q.status !== 'answered')?.id ||
+      categoryQuestions[0]?.id ||
+      null;
+    setExpandedId(nextUnanswered);
+  }, [category]); // eslint-disable-line react-hooks/exhaustive-deps
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [newQuestionText, setNewQuestionText] = useState('');
@@ -135,13 +174,12 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
 
   // Chat → field insert (human-in-the-loop)
   const [chatQuestion, setChatQuestion] = useState<InterviewQuestion | null>(null);
-  const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'ai'; content: string }>>([]);
+  const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'ai'; content: string }>>(
+    []
+  );
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [applyLoading, setApplyLoading] = useState(false);
-
-  // Filter questions for current category
-  const categoryQuestions = questions.filter(q => q.category === category);
 
   // Start editing answer
   const handleStartEdit = useCallback((question: InterviewQuestion) => {
@@ -150,17 +188,29 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
     setExpandedId(question.id);
   }, []);
 
-  // Save answer
-  const handleSaveAnswer = useCallback(async (questionId: string) => {
-    if (!editValue.trim()) return;
-    
-    await onUpdateQuestion(questionId, {
-      answerText: editValue.trim(),
-      status: 'answered',
-    });
-    setEditingId(null);
-    setEditValue('');
-  }, [editValue, onUpdateQuestion]);
+  // Save answer and move to next unanswered question
+  const handleSaveAnswer = useCallback(
+    async (questionId: string) => {
+      if (!editValue.trim()) return;
+
+      await onUpdateQuestion(questionId, {
+        answerText: editValue.trim(),
+        status: 'answered',
+      });
+      setEditingId(null);
+      setEditValue('');
+
+      // Find next unanswered question and expand it
+      const currentIndex = categoryQuestions.findIndex((q) => q.id === questionId);
+      const nextUnanswered = categoryQuestions
+        .slice(currentIndex + 1)
+        .find((q) => q.status !== 'answered');
+      if (nextUnanswered) {
+        setExpandedId(nextUnanswered.id);
+      }
+    },
+    [editValue, onUpdateQuestion, categoryQuestions]
+  );
 
   // Cancel edit
   const handleCancelEdit = useCallback(() => {
@@ -169,23 +219,32 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
   }, []);
 
   // Update status
-  const handleStatusChange = useCallback(async (questionId: string, status: QuestionStatus) => {
-    await onUpdateQuestion(questionId, { status });
-    setShowStatusMenu(null);
-  }, [onUpdateQuestion]);
+  const handleStatusChange = useCallback(
+    async (questionId: string, status: QuestionStatus) => {
+      await onUpdateQuestion(questionId, { status });
+      setShowStatusMenu(null);
+    },
+    [onUpdateQuestion]
+  );
 
   // Update confidence
-  const handleConfidenceChange = useCallback(async (questionId: string, score: number) => {
-    await onUpdateQuestion(questionId, { confidenceScore: score });
-  }, [onUpdateQuestion]);
+  const handleConfidenceChange = useCallback(
+    async (questionId: string, score: number) => {
+      await onUpdateQuestion(questionId, { confidenceScore: score });
+    },
+    [onUpdateQuestion]
+  );
 
   // Toggle tag
-  const handleToggleTag = useCallback(async (questionId: string, tag: string, currentTags: string[]) => {
-    const newTags = currentTags.includes(tag)
-      ? currentTags.filter(t => t !== tag)
-      : [...currentTags, tag];
-    await onUpdateQuestion(questionId, { tags: newTags });
-  }, [onUpdateQuestion]);
+  const handleToggleTag = useCallback(
+    async (questionId: string, tag: string, currentTags: string[]) => {
+      const newTags = currentTags.includes(tag)
+        ? currentTags.filter((t) => t !== tag)
+        : [...currentTags, tag];
+      await onUpdateQuestion(questionId, { tags: newTags });
+    },
+    [onUpdateQuestion]
+  );
 
   // Add new question
   const handleAddQuestion = useCallback(async () => {
@@ -276,7 +335,12 @@ Rules:
       console.error('[QuestionsList] Chat send failed:', err);
       setChatMessages((prev) => [
         ...prev,
-        { role: 'ai', content: isPolish ? 'Wystąpił błąd. Spróbuj ponownie.' : 'An error occurred. Please try again.' },
+        {
+          role: 'ai',
+          content: isPolish
+            ? 'Wystąpił błąd. Spróbuj ponownie.'
+            : 'An error occurred. Please try again.',
+        },
       ]);
     } finally {
       setChatLoading(false);
@@ -339,7 +403,7 @@ Rules:
   // Render status dropdown
   const renderStatusMenu = (question: InterviewQuestion) => {
     if (showStatusMenu !== question.id) return null;
-    
+
     return (
       <div className="absolute top-full left-0 mt-1 bg-white dark:bg-navy-900 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1 z-20 min-w-[160px]">
         {Object.entries(STATUS_CONFIG).map(([status, config]) => {
@@ -421,7 +485,10 @@ Rules:
               {/* Status Button */}
               <div className="relative">
                 <button
-                  onClick={() => !readOnly && setShowStatusMenu(showStatusMenu === question.id ? null : question.id)}
+                  onClick={() =>
+                    !readOnly &&
+                    setShowStatusMenu(showStatusMenu === question.id ? null : question.id)
+                  }
                   disabled={readOnly}
                   className={`w-8 h-8 rounded-lg flex items-center justify-center ${statusConfig.bgColor} ${readOnly ? 'cursor-default' : 'hover:opacity-80'}`}
                   title={isPolish ? statusConfig.labelPl : statusConfig.labelEn}
@@ -446,7 +513,7 @@ Rules:
                 {question.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-1">
                     {question.tags.map((tag) => {
-                      const tagConfig = TAG_OPTIONS.find(t => t.value === tag);
+                      const tagConfig = TAG_OPTIONS.find((t) => t.value === tag);
                       return tagConfig ? (
                         <span
                           key={tag}
@@ -487,7 +554,9 @@ Rules:
                 {/* Tag Button */}
                 <div className="relative">
                   <button
-                    onClick={() => !readOnly && setShowTagMenu(showTagMenu === question.id ? null : question.id)}
+                    onClick={() =>
+                      !readOnly && setShowTagMenu(showTagMenu === question.id ? null : question.id)
+                    }
                     disabled={readOnly}
                     className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
                     title={isPolish ? 'Tagi' : 'Tags'}
@@ -534,10 +603,20 @@ Rules:
                           onClick={() => handleAISuggest(question)}
                           disabled={aiLoadingId === question.id}
                           className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-500 disabled:opacity-50"
-                          title={isPolish ? 'Pomóż AI (wstępna propozycja)' : 'AI assist (draft suggestion)'}
+                          title={
+                            isPolish
+                              ? 'Pomóż AI (wstępna propozycja)'
+                              : 'AI assist (draft suggestion)'
+                          }
                         >
                           <Sparkles size={12} />
-                          {aiLoadingId === question.id ? (isPolish ? 'AI...' : 'AI...') : isPolish ? 'AI' : 'AI'}
+                          {aiLoadingId === question.id
+                            ? isPolish
+                              ? 'AI...'
+                              : 'AI...'
+                            : isPolish
+                              ? 'AI'
+                              : 'AI'}
                         </button>
 
                         {/* Chat → field insert */}
@@ -564,40 +643,62 @@ Rules:
                   </div>
 
                   {isEditing ? (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <textarea
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
-                        className="w-full p-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                        rows={4}
+                        className="w-full p-3 text-sm border border-slate-200 dark:border-navy-700 rounded-xl bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none min-h-[120px]"
+                        rows={5}
                         placeholder={isPolish ? 'Wpisz odpowiedź...' : 'Type your answer...'}
                         autoFocus
                       />
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={handleCancelEdit}
-                          className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-                        >
-                          {isPolish ? 'Anuluj' : 'Cancel'}
-                        </button>
-                        <button
-                          onClick={() => handleSaveAnswer(question.id)}
-                          className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-500 text-white rounded-lg"
-                        >
-                          {isPolish ? 'Zapisz' : 'Save'}
-                        </button>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-xs text-slate-400">
+                          <Sparkles size={12} />
+                          <span>
+                            {isPolish
+                              ? 'Tip: Użyj AI lub Czat aby pomóc sformułować odpowiedź'
+                              : 'Tip: Use AI or Chat to help draft your answer'}
+                          </span>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleCancelEdit}
+                            className="px-3 py-2 text-sm text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                          >
+                            {isPolish ? 'Anuluj' : 'Cancel'}
+                          </button>
+                          <button
+                            onClick={() => handleSaveAnswer(question.id)}
+                            className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                          >
+                            <Check size={14} />
+                            {isPolish ? 'Zapisz' : 'Save'}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ) : (
                     <div
-                      className={`p-3 rounded-lg text-sm ${
+                      className={`p-4 rounded-xl text-sm transition-all ${
                         question.answerText
-                          ? 'bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white'
-                          : 'bg-slate-50 dark:bg-navy-950 text-slate-400 dark:text-slate-500 italic cursor-pointer hover:bg-slate-100 dark:hover:bg-navy-900'
+                          ? 'bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white border border-slate-200 dark:border-navy-700'
+                          : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-2 border-dashed border-blue-300 dark:border-blue-700 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30'
                       }`}
                       onClick={() => !readOnly && !question.answerText && handleStartEdit(question)}
                     >
-                      {question.answerText || (isPolish ? 'Kliknij, aby dodać odpowiedź...' : 'Click to add answer...')}
+                      {question.answerText ? (
+                        <div className="whitespace-pre-wrap">{question.answerText}</div>
+                      ) : (
+                        <div className="flex items-center justify-center gap-2 py-4">
+                          <Plus size={16} />
+                          <span className="font-medium">
+                            {isPolish
+                              ? 'Kliknij, aby dodać odpowiedź...'
+                              : 'Click to add your answer...'}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -619,15 +720,22 @@ Rules:
 
       {/* Empty State */}
       {categoryQuestions.length === 0 && !showNewQuestion && (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <MessageSquare className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-3" />
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+        <div className="flex flex-col items-center justify-center py-8 text-center bg-slate-50/50 dark:bg-navy-950/50 rounded-xl border-2 border-dashed border-slate-200 dark:border-navy-700">
+          <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center mb-4">
+            <MessageSquare className="w-7 h-7 text-slate-400 dark:text-slate-500" />
+          </div>
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
             {isPolish ? 'Brak pytań w tej kategorii' : 'No questions in this category'}
+          </p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mb-4 max-w-xs">
+            {isPolish
+              ? "Pytania pojawią się po przypisaniu template'u lub możesz dodać własne pytania"
+              : 'Questions will appear after assigning a template, or you can add custom questions'}
           </p>
           {!readOnly && (
             <button
               onClick={() => setShowNewQuestion(true)}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition-colors"
             >
               <Plus size={16} />
               {isPolish ? 'Dodaj pytanie' : 'Add question'}
@@ -672,14 +780,16 @@ Rules:
                 </button>
               </div>
             </div>
-          ) : categoryQuestions.length > 0 && (
-            <button
-              onClick={() => setShowNewQuestion(true)}
-              className="w-full flex items-center justify-center gap-2 py-2 text-sm text-slate-500 hover:text-blue-600 hover:bg-slate-50 dark:hover:bg-navy-800 rounded-lg border border-dashed border-slate-200 dark:border-navy-700"
-            >
-              <Plus size={16} />
-              {isPolish ? 'Dodaj pytanie' : 'Add question'}
-            </button>
+          ) : (
+            categoryQuestions.length > 0 && (
+              <button
+                onClick={() => setShowNewQuestion(true)}
+                className="w-full flex items-center justify-center gap-2 py-2 text-sm text-slate-500 hover:text-blue-600 hover:bg-slate-50 dark:hover:bg-navy-800 rounded-lg border border-dashed border-slate-200 dark:border-navy-700"
+              >
+                <Plus size={16} />
+                {isPolish ? 'Dodaj pytanie' : 'Add question'}
+              </button>
+            )
           )}
         </div>
       )}
@@ -699,7 +809,10 @@ Rules:
                   <div className="text-xs text-slate-300 truncate">{chatQuestion.questionText}</div>
                 </div>
               </div>
-              <button onClick={closeChat} className="p-1 rounded hover:bg-navy-800 transition-colors">
+              <button
+                onClick={closeChat}
+                className="p-1 rounded hover:bg-navy-800 transition-colors"
+              >
                 <X size={18} />
               </button>
             </div>
@@ -707,7 +820,10 @@ Rules:
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50 dark:bg-navy-950">
               {chatMessages.map((m, idx) => (
-                <div key={idx} className={`flex gap-2 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                <div
+                  key={idx}
+                  className={`flex gap-2 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}
+                >
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
                       m.role === 'user' ? 'bg-slate-200 dark:bg-slate-700' : 'bg-purple-500'
@@ -765,19 +881,26 @@ Rules:
               </div>
 
               <div className="flex items-center justify-between">
-                <button
-                  onClick={closeChat}
-                  className="text-sm text-slate-500 hover:text-slate-300"
-                >
+                <button onClick={closeChat} className="text-sm text-slate-500 hover:text-slate-300">
                   {isPolish ? 'Zamknij' : 'Close'}
                 </button>
                 <button
                   onClick={handleApplyChatToQuestion}
                   disabled={applyLoading || chatMessages.length < 2}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors"
-                  title={isPolish ? 'Wstaw propozycję do pola (human-in-the-loop)' : 'Insert draft into field (human-in-the-loop)'}
+                  title={
+                    isPolish
+                      ? 'Wstaw propozycję do pola (human-in-the-loop)'
+                      : 'Insert draft into field (human-in-the-loop)'
+                  }
                 >
-                  {applyLoading ? (isPolish ? 'Wstawiam...' : 'Applying...') : isPolish ? 'Wstaw do pytania' : 'Insert to question'}
+                  {applyLoading
+                    ? isPolish
+                      ? 'Wstawiam...'
+                      : 'Applying...'
+                    : isPolish
+                      ? 'Wstaw do pytania'
+                      : 'Insert to question'}
                 </button>
               </div>
             </div>

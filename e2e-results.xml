@@ -1,44 +1,259 @@
-<testsuites id="" name="" tests="1" failures="1" skipped="0" errors="0" time="13.592828">
-<testsuite name="tools-to-initiatives.spec.ts" timestamp="2026-01-20T18:14:33.475Z" hostname="chromium" tests="1" failures="1" skipped="0" time="6.505" errors="0">
-<testcase name="Tools -&gt; Initiatives Flow › creates initiatives after tool approval" classname="tools-to-initiatives.spec.ts" time="6.505">
-<failure message="tools-to-initiatives.spec.ts:51:3 creates initiatives after tool approval" type="FAILURE">
-<![CDATA[  [chromium] › tools-to-initiatives.spec.ts:51:3 › Tools -> Initiatives Flow › creates initiatives after tool approval 
+<testsuites id="" name="" tests="9" failures="7" skipped="0" errors="0" time="28.389350999999998">
+<testsuite name="interview.spec.ts" timestamp="2026-01-29T16:37:19.452Z" hostname="chromium" tests="9" failures="7" skipped="0" time="57.482" errors="0">
+<testcase name="Interview Module - v2.0 › should display interview hub with tabs" classname="interview.spec.ts" time="10.555">
+</testcase>
+<testcase name="Interview Module - v2.0 › should start a new session and open workspace" classname="interview.spec.ts" time="20.109">
+<failure message="interview.spec.ts:43:3 should start a new session and open workspace" type="FAILURE">
+<![CDATA[  [chromium] › interview.spec.ts:43:3 › Interview Module - v2.0 › should start a new session and open workspace 
 
-    Error: expect(received).toBeTruthy()
+    Error: expect(locator).toBeVisible() failed
 
-    Received: false
+    Locator: locator('text=Strategy')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
 
-      94 |       }
-      95 |     );
-    > 96 |     expect(reviewResponse.ok()).toBeTruthy();
-         |                                 ^
-      97 |     const reviewData = await reviewResponse.json();
-      98 |     expect(reviewData.status).toBe('REVIEW');
-      99 |
-        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/tools-to-initiatives.spec.ts:96:33
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for locator('text=Strategy')
+
+
+      49 |
+      50 |     // Workspace should show category sections
+    > 51 |     await expect(page.locator('text=Strategy')).toBeVisible();
+         |                                                 ^
+      52 |     await expect(page.locator('text=Operations')).toBeVisible();
+      53 |     await expect(page.locator('text=Digital')).toBeVisible();
+      54 |     await expect(page.locator('text=People')).toBeVisible();
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/interview.spec.ts:51:49
 
     attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../test-results/tools-to-initiatives-Tools-764b4-iatives-after-tool-approval-chromium/test-failed-1.png
+    ../../test-results/interview-Interview-Module-f0a08--session-and-open-workspace-chromium/test-failed-1.png
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-    Error Context: ../../test-results/tools-to-initiatives-Tools-764b4-iatives-after-tool-approval-chromium/error-context.md
+    Error Context: ../../test-results/interview-Interview-Module-f0a08--session-and-open-workspace-chromium/error-context.md
 
     attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
-    ../../test-results/tools-to-initiatives-Tools-764b4-iatives-after-tool-approval-chromium/trace.zip
+    ../../test-results/interview-Interview-Module-f0a08--session-and-open-workspace-chromium/trace.zip
     Usage:
 
-        npx playwright show-trace ../../test-results/tools-to-initiatives-Tools-764b4-iatives-after-tool-approval-chromium/trace.zip
+        npx playwright show-trace ../../test-results/interview-Interview-Module-f0a08--session-and-open-workspace-chromium/trace.zip
 
     ────────────────────────────────────────────────────────────────────────────────────────────────
 ]]>
 </failure>
 <system-out>
 <![CDATA[
-[[ATTACHMENT|test-results/tools-to-initiatives-Tools-764b4-iatives-after-tool-approval-chromium/test-failed-1.png]]
+[[ATTACHMENT|test-results/interview-Interview-Module-f0a08--session-and-open-workspace-chromium/test-failed-1.png]]
 
-[[ATTACHMENT|test-results/tools-to-initiatives-Tools-764b4-iatives-after-tool-approval-chromium/error-context.md]]
+[[ATTACHMENT|test-results/interview-Interview-Module-f0a08--session-and-open-workspace-chromium/error-context.md]]
 
-[[ATTACHMENT|test-results/tools-to-initiatives-Tools-764b4-iatives-after-tool-approval-chromium/trace.zip]]
+[[ATTACHMENT|test-results/interview-Interview-Module-f0a08--session-and-open-workspace-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Interview Module - v2.0 › should allow adding and answering a custom question" classname="interview.spec.ts" time="25.642">
+<failure message="interview.spec.ts:61:3 should allow adding and answering a custom question" type="FAILURE">
+<![CDATA[  [chromium] › interview.spec.ts:61:3 › Interview Module - v2.0 › should allow adding and answering a custom question 
+
+    TimeoutError: page.click: Timeout 15000ms exceeded.
+    Call log:
+      - waiting for locator('button:has-text("Strategy")')
+
+
+      62 |
+      63 |     // Expand Strategy section if needed and add a question
+    > 64 |     await page.click('button:has-text("Strategy")');
+         |                ^
+      65 |     await page.click('button:has-text("Add question"), button:has-text("Dodaj pytanie")');
+      66 |     await page.fill('input[placeholder*="question"], input[placeholder*="pytania"]', 'What is your main constraint?');
+      67 |     await page.keyboard.press('Enter');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/interview.spec.ts:64:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/interview-Interview-Module-492dc-answering-a-custom-question-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/interview-Interview-Module-492dc-answering-a-custom-question-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/interview-Interview-Module-492dc-answering-a-custom-question-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/interview-Interview-Module-492dc-answering-a-custom-question-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/interview-Interview-Module-492dc-answering-a-custom-question-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/interview-Interview-Module-492dc-answering-a-custom-question-chromium/error-context.md]]
+
+[[ATTACHMENT|test-results/interview-Interview-Module-492dc-answering-a-custom-question-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Interview API - v2.0 › should create interview session via API" classname="interview.spec.ts" time="0.26">
+<failure message="interview.spec.ts:100:3 should create interview session via API" type="FAILURE">
+<![CDATA[  [chromium] › interview.spec.ts:100:3 › Interview API - v2.0 › should create interview session via API 
+
+    Error: expect(received).toBeTruthy()
+
+    Received: false
+
+      103 |     });
+      104 |     
+    > 105 |     expect(sessionResponse.ok()).toBeTruthy();
+          |                                  ^
+      106 |     const session = await sessionResponse.json();
+      107 |     expect(session.id).toBeDefined();
+      108 |     expect(session.status).toBe('in_progress');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/interview.spec.ts:105:34
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/interview-Interview-API----c2d69-e-interview-session-via-API-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/interview-Interview-API----c2d69-e-interview-session-via-API-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/interview-Interview-API----c2d69-e-interview-session-via-API-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Interview API - v2.0 › should get organization context via API" classname="interview.spec.ts" time="0.181">
+</testcase>
+<testcase name="Interview API - v2.0 › should add question via API" classname="interview.spec.ts" time="0.256">
+<failure message="interview.spec.ts:138:3 should add question via API" type="FAILURE">
+<![CDATA[  [chromium] › interview.spec.ts:138:3 › Interview API - v2.0 › should add question via API ────────
+
+    Error: expect(received).toBeTruthy()
+
+    Received: false
+
+      137 |     });
+      138 |     
+    > 139 |     expect(sessionResponse.ok()).toBeTruthy();
+          |                                  ^
+      140 |     const session = await sessionResponse.json();
+      141 |     
+      142 |     // Add question (using new 5 categories)
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/interview.spec.ts:139:34
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/interview-Interview-API---v2-0-should-add-question-via-API-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/interview-Interview-API---v2-0-should-add-question-via-API-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/interview-Interview-API---v2-0-should-add-question-via-API-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Interview API - v2.0 › should update question with answer and status via API" classname="interview.spec.ts" time="0.161">
+<failure message="interview.spec.ts:173:3 should update question with answer and status via API" type="FAILURE">
+<![CDATA[  [chromium] › interview.spec.ts:173:3 › Interview API - v2.0 › should update question with answer and status via API 
+
+    Error: expect(received).toBeTruthy()
+
+    Received: false
+
+      170 |     });
+      171 |     
+    > 172 |     expect(sessionResponse.ok()).toBeTruthy();
+          |                                  ^
+      173 |     const session = await sessionResponse.json();
+      174 |     
+      175 |     // Add question
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/interview.spec.ts:172:34
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/interview-Interview-API----4abb0-h-answer-and-status-via-API-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/interview-Interview-API----4abb0-h-answer-and-status-via-API-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/interview-Interview-API----4abb0-h-answer-and-status-via-API-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Interview API - v2.0 › should create note via API" classname="interview.spec.ts" time="0.224">
+<failure message="interview.spec.ts:222:3 should create note via API" type="FAILURE">
+<![CDATA[  [chromium] › interview.spec.ts:222:3 › Interview API - v2.0 › should create note via API ─────────
+
+    Error: expect(received).toBeTruthy()
+
+    Received: false
+
+      219 |     });
+      220 |     
+    > 221 |     expect(sessionResponse.ok()).toBeTruthy();
+          |                                  ^
+      222 |     const session = await sessionResponse.json();
+      223 |     
+      224 |     // Create note
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/interview.spec.ts:221:34
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/interview-Interview-API---v2-0-should-create-note-via-API-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/interview-Interview-API---v2-0-should-create-note-via-API-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/interview-Interview-API---v2-0-should-create-note-via-API-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Interview API - v2.0 › should execute full assignment workflow (create → start → answer → submit → approve)" classname="interview.spec.ts" time="0.094">
+<failure message="interview.spec.ts:257:3 should execute full assignment workflow (create → start → answer → submit → approve)" type="FAILURE">
+<![CDATA[  [chromium] › interview.spec.ts:257:3 › Interview API - v2.0 › should execute full assignment workflow (create → start → answer → submit → approve) 
+
+    Error: expect(received).toBeTruthy()
+
+    Received: false
+
+      262 |       },
+      263 |     });
+    > 264 |     expect(createAssignmentRes.ok()).toBeTruthy();
+          |                                      ^
+      265 |     const assignment = await createAssignmentRes.json();
+      266 |     expect(assignment.id).toBeDefined();
+      267 |
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/interview.spec.ts:264:38
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/interview-Interview-API----690c6--answer-→-submit-→-approve--chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/interview-Interview-API----690c6--answer-→-submit-→-approve--chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/interview-Interview-API----690c6--answer-→-submit-→-approve--chromium/trace.zip]]
 ]]>
 </system-out>
 </testcase>

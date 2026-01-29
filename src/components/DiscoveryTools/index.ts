@@ -5,13 +5,14 @@
  */
 
 // Main components
+export { GenerateInitiativesModal } from './GenerateInitiativesModal';
+export { InlineAssist } from './InlineAssist';
 export { ToolActionBar } from './ToolActionBar';
 export { ToolCanvas } from './ToolCanvas';
 export { ToolContextPanel } from './ToolContextPanel';
-export { ToolReviewPanel } from './ToolReviewPanel';
-export { GenerateInitiativesModal } from './GenerateInitiativesModal';
-export { InlineAssist } from './InlineAssist';
+export { ToolDocumentView } from './ToolDocumentView';
 export { ToolHeader } from './ToolHeader';
+export { ToolReviewPanel } from './ToolReviewPanel';
 export { ToolWorkspace } from './ToolWorkspace';
 
 // Steps

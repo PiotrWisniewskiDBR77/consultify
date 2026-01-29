@@ -1,11 +1,11 @@
 /**
  * InterviewWorkspace - v3.0 Golden Standard Redesign
- * 
+ *
  * Two-column layout matching InsightViewer:
  * - Full-width header with session title, status, actions
  * - Left column (2/3): Categories as collapsible sections
  * - Right column (1/3, sticky): Control, Export, Progress, Company Facts
- * 
+ *
  * Features:
  * - 5 Categories: Strategy, Operations, Digital, People, Finance
  * - Collapsible sections with glassmorphism styling
@@ -14,9 +14,6 @@
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
-import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import toast from 'react-hot-toast';
 import {
   AlertTriangle,
   ArrowRight,
@@ -48,6 +45,9 @@ import {
   Users,
   X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -59,12 +59,16 @@ import {
   type LinkedItem,
   LinkedItemsSection,
 } from '../MyWork/shared';
-
-import { InterviewCategory, CategoryProgress, CATEGORY_ORDER, CATEGORY_CONFIG } from './CategorySidebar';
-import { QuestionsList, InterviewQuestion } from './QuestionsList';
-import { NotesPanel, InterviewNote } from './NotesPanel';
+import {
+  CATEGORY_CONFIG,
+  CATEGORY_ORDER,
+  CategoryProgress,
+  InterviewCategory,
+} from './CategorySidebar';
+import { CompanyProfile, KeyMetric, OpenGap, Stakeholder } from './CompanyFactsPanel';
 import { EvidencePanel, InterviewEvidence } from './EvidencePanel';
-import { CompanyProfile, KeyMetric, Stakeholder, OpenGap } from './CompanyFactsPanel';
+import { InterviewNote, NotesPanel } from './NotesPanel';
+import { InterviewQuestion, QuestionsList } from './QuestionsList';
 
 // ==========================================
 // TYPES
@@ -153,7 +157,22 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     new Set(['strategy', 'control', 'progress'])
   );
 
-  const isLocked = (session?.status || '').toLowerCase() === 'submitted' || (session?.status || '').toLowerCase() === 'completed';
+  const isLocked =
+    (session?.status || '').toLowerCase() === 'submitted' ||
+    (session?.status || '').toLowerCase() === 'completed';
+
+  // Auto-expand first category with unanswered questions after loading
+  useEffect(() => {
+    if (questions.length > 0) {
+      const firstCategoryWithUnanswered = CATEGORY_ORDER.find((cat) => {
+        const catQuestions = questions.filter((q) => q.category === cat);
+        return catQuestions.some((q) => q.status !== 'answered');
+      });
+      if (firstCategoryWithUnanswered) {
+        setExpandedSections((prev) => new Set([...prev, firstCategoryWithUnanswered]));
+      }
+    }
+  }, [questions]);
 
   // ==========================================
   // COMPUTED VALUES
@@ -174,15 +193,32 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   // Overall progress
   const totalQuestions = categoryProgress.reduce((sum, p) => sum + p.totalQuestions, 0);
   const answeredQuestions = categoryProgress.reduce((sum, p) => sum + p.answeredQuestions, 0);
-  const overallPercent = totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
-  const completedCategories = categoryProgress.filter(p => p.isComplete).length;
+  const overallPercent =
+    totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
+  const completedCategories = categoryProgress.filter((p) => p.isComplete).length;
 
-  // Status config
+  // Status config (backend uses: in_progress | submitted | completed)
   const statusConfig = {
-    active: { label: { en: 'In Progress', pl: 'W trakcie' }, color: 'bg-blue-500', textColor: 'text-blue-600 dark:text-blue-400' },
-    submitted: { label: { en: 'Submitted', pl: 'Wysłany' }, color: 'bg-amber-500', textColor: 'text-amber-600 dark:text-amber-400' },
-    completed: { label: { en: 'Completed', pl: 'Zakończony' }, color: 'bg-emerald-500', textColor: 'text-emerald-600 dark:text-emerald-400' },
-  }[(session?.status || 'active').toLowerCase()] || { label: { en: 'Draft', pl: 'Szkic' }, color: 'bg-slate-400', textColor: 'text-slate-600' };
+    in_progress: {
+      label: { en: 'In Progress', pl: 'W trakcie' },
+      color: 'bg-blue-500',
+      textColor: 'text-blue-600 dark:text-blue-400',
+    },
+    submitted: {
+      label: { en: 'Submitted', pl: 'Wysłany' },
+      color: 'bg-amber-500',
+      textColor: 'text-amber-600 dark:text-amber-400',
+    },
+    completed: {
+      label: { en: 'Completed', pl: 'Zakończony' },
+      color: 'bg-emerald-500',
+      textColor: 'text-emerald-600 dark:text-emerald-400',
+    },
+  }[(session?.status || 'in_progress').toLowerCase()] || {
+    label: { en: 'Draft', pl: 'Szkic' },
+    color: 'bg-slate-400',
+    textColor: 'text-slate-600',
+  };
 
   // ==========================================
   // EFFECTS
@@ -201,7 +237,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         } else {
           const sessionsRes = await Api.get('/interview/sessions?status=active');
           const sessions = Array.isArray(sessionsRes) ? sessionsRes : [];
-          
+
           if (sessions.length > 0) {
             currentSession = sessions[0] as InterviewSession;
           } else {
@@ -272,150 +308,170 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   };
 
   // Update question
-  const handleUpdateQuestion = useCallback(async (questionId: string, updates: Partial<InterviewQuestion>) => {
-    if (!session) return;
-    setIsSaving(true);
+  const handleUpdateQuestion = useCallback(
+    async (questionId: string, updates: Partial<InterviewQuestion>) => {
+      if (!session) return;
+      setIsSaving(true);
 
-    try {
-      const updated = await Api.patch(`/interview/questions/${questionId}`, updates);
-      setQuestions((prev) =>
-        prev.map((q) => (q.id === questionId ? { ...q, ...updated } : q))
-      );
-    } catch (error) {
-      console.error('[InterviewWorkspace] Failed to update question:', error);
-      toast.error(isPolish ? 'Nie udało się zapisać' : 'Failed to save');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [session, isPolish]);
+      try {
+        const updated = await Api.patch(`/interview/questions/${questionId}`, updates);
+        setQuestions((prev) => prev.map((q) => (q.id === questionId ? { ...q, ...updated } : q)));
+      } catch (error) {
+        console.error('[InterviewWorkspace] Failed to update question:', error);
+        toast.error(isPolish ? 'Nie udało się zapisać' : 'Failed to save');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [session, isPolish]
+  );
 
   // Add question
-  const handleAddQuestion = useCallback(async (category: InterviewCategory, questionText: string) => {
-    if (!session) return;
-    setIsSaving(true);
+  const handleAddQuestion = useCallback(
+    async (category: InterviewCategory, questionText: string) => {
+      if (!session) return;
+      setIsSaving(true);
 
-    try {
-      const created = await Api.post(`/interview/sessions/${session.id}/questions`, {
-        category,
-        questionText,
-      });
-      setQuestions((prev) => [...prev, created as InterviewQuestion]);
-    } catch (error) {
-      console.error('[InterviewWorkspace] Failed to add question:', error);
-      toast.error(isPolish ? 'Nie udało się dodać pytania' : 'Failed to add question');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [session, isPolish]);
+      try {
+        const created = await Api.post(`/interview/sessions/${session.id}/questions`, {
+          category,
+          questionText,
+        });
+        setQuestions((prev) => [...prev, created as InterviewQuestion]);
+      } catch (error) {
+        console.error('[InterviewWorkspace] Failed to add question:', error);
+        toast.error(isPolish ? 'Nie udało się dodać pytania' : 'Failed to add question');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [session, isPolish]
+  );
 
   // Create note
-  const handleCreateNote = useCallback(async (title: string, content: string, category?: InterviewCategory) => {
-    if (!session) return;
-    setIsSaving(true);
+  const handleCreateNote = useCallback(
+    async (title: string, content: string, category?: InterviewCategory) => {
+      if (!session) return;
+      setIsSaving(true);
 
-    try {
-      const created = await Api.post(`/interview/sessions/${session.id}/notes`, {
-        title,
-        content,
-        category,
-      });
-      setNotes((prev) => [...prev, created as InterviewNote]);
-    } catch (error) {
-      console.error('[InterviewWorkspace] Failed to create note:', error);
-      toast.error(isPolish ? 'Nie udało się utworzyć notatki' : 'Failed to create note');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [session, isPolish]);
+      try {
+        const created = await Api.post(`/interview/sessions/${session.id}/notes`, {
+          title,
+          content,
+          category,
+        });
+        setNotes((prev) => [...prev, created as InterviewNote]);
+      } catch (error) {
+        console.error('[InterviewWorkspace] Failed to create note:', error);
+        toast.error(isPolish ? 'Nie udało się utworzyć notatki' : 'Failed to create note');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [session, isPolish]
+  );
 
   // Update note
-  const handleUpdateNote = useCallback(async (noteId: string, updates: Partial<InterviewNote>) => {
-    if (!session) return;
-    setIsSaving(true);
+  const handleUpdateNote = useCallback(
+    async (noteId: string, updates: Partial<InterviewNote>) => {
+      if (!session) return;
+      setIsSaving(true);
 
-    try {
-      const updated = await Api.patch(`/interview/notes/${noteId}`, updates);
-      setNotes((prev) =>
-        prev.map((n) => (n.id === noteId ? { ...n, ...updated } : n))
-      );
-    } catch (error) {
-      console.error('[InterviewWorkspace] Failed to update note:', error);
-      toast.error(isPolish ? 'Nie udało się zapisać notatki' : 'Failed to save note');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [session, isPolish]);
+      try {
+        const updated = await Api.patch(`/interview/notes/${noteId}`, updates);
+        setNotes((prev) => prev.map((n) => (n.id === noteId ? { ...n, ...updated } : n)));
+      } catch (error) {
+        console.error('[InterviewWorkspace] Failed to update note:', error);
+        toast.error(isPolish ? 'Nie udało się zapisać notatki' : 'Failed to save note');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [session, isPolish]
+  );
 
   // Delete note
-  const handleDeleteNote = useCallback(async (noteId: string) => {
-    if (!session) return;
+  const handleDeleteNote = useCallback(
+    async (noteId: string) => {
+      if (!session) return;
 
-    try {
-      await Api.delete(`/interview/notes/${noteId}`);
-      setNotes((prev) => prev.filter((n) => n.id !== noteId));
-    } catch (error) {
-      console.error('[InterviewWorkspace] Failed to delete note:', error);
-      toast.error(isPolish ? 'Nie udało się usunąć notatki' : 'Failed to delete note');
-    }
-  }, [session, isPolish]);
+      try {
+        await Api.delete(`/interview/notes/${noteId}`);
+        setNotes((prev) => prev.filter((n) => n.id !== noteId));
+      } catch (error) {
+        console.error('[InterviewWorkspace] Failed to delete note:', error);
+        toast.error(isPolish ? 'Nie udało się usunąć notatki' : 'Failed to delete note');
+      }
+    },
+    [session, isPolish]
+  );
 
   // Upload file
-  const handleUploadFile = useCallback(async (file: File, category?: InterviewCategory) => {
-    if (!session) return;
-    setIsSaving(true);
+  const handleUploadFile = useCallback(
+    async (file: File, category?: InterviewCategory) => {
+      if (!session) return;
+      setIsSaving(true);
 
-    try {
-      const created = await Api.post(`/interview/sessions/${session.id}/evidence`, {
-        evidenceType: 'file',
-        name: file.name,
-        fileSize: file.size,
-        mimeType: file.type,
-        category,
-      });
-      setEvidence((prev) => [...prev, created as InterviewEvidence]);
-      toast.success(isPolish ? 'Plik dodany' : 'File added');
-    } catch (error) {
-      console.error('[InterviewWorkspace] Failed to upload file:', error);
-      toast.error(isPolish ? 'Nie udało się dodać pliku' : 'Failed to upload file');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [session, isPolish]);
+      try {
+        const created = await Api.post(`/interview/sessions/${session.id}/evidence`, {
+          evidenceType: 'file',
+          name: file.name,
+          fileSize: file.size,
+          mimeType: file.type,
+          category,
+        });
+        setEvidence((prev) => [...prev, created as InterviewEvidence]);
+        toast.success(isPolish ? 'Plik dodany' : 'File added');
+      } catch (error) {
+        console.error('[InterviewWorkspace] Failed to upload file:', error);
+        toast.error(isPolish ? 'Nie udało się dodać pliku' : 'Failed to upload file');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [session, isPolish]
+  );
 
   // Add link
-  const handleAddLink = useCallback(async (name: string, url: string, description?: string, category?: InterviewCategory) => {
-    if (!session) return;
-    setIsSaving(true);
+  const handleAddLink = useCallback(
+    async (name: string, url: string, description?: string, category?: InterviewCategory) => {
+      if (!session) return;
+      setIsSaving(true);
 
-    try {
-      const created = await Api.post(`/interview/sessions/${session.id}/evidence`, {
-        evidenceType: 'link',
-        name,
-        url,
-        description,
-        category,
-      });
-      setEvidence((prev) => [...prev, created as InterviewEvidence]);
-    } catch (error) {
-      console.error('[InterviewWorkspace] Failed to add link:', error);
-      toast.error(isPolish ? 'Nie udało się dodać linku' : 'Failed to add link');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [session, isPolish]);
+      try {
+        const created = await Api.post(`/interview/sessions/${session.id}/evidence`, {
+          evidenceType: 'link',
+          name,
+          url,
+          description,
+          category,
+        });
+        setEvidence((prev) => [...prev, created as InterviewEvidence]);
+      } catch (error) {
+        console.error('[InterviewWorkspace] Failed to add link:', error);
+        toast.error(isPolish ? 'Nie udało się dodać linku' : 'Failed to add link');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [session, isPolish]
+  );
 
   // Delete evidence
-  const handleDeleteEvidence = useCallback(async (evidenceId: string) => {
-    if (!session) return;
+  const handleDeleteEvidence = useCallback(
+    async (evidenceId: string) => {
+      if (!session) return;
 
-    try {
-      await Api.delete(`/interview/evidence/${evidenceId}`);
-      setEvidence((prev) => prev.filter((e) => e.id !== evidenceId));
-    } catch (error) {
-      console.error('[InterviewWorkspace] Failed to delete evidence:', error);
-      toast.error(isPolish ? 'Nie udało się usunąć' : 'Failed to delete');
-    }
-  }, [session, isPolish]);
+      try {
+        await Api.delete(`/interview/evidence/${evidenceId}`);
+        setEvidence((prev) => prev.filter((e) => e.id !== evidenceId));
+      } catch (error) {
+        console.error('[InterviewWorkspace] Failed to delete evidence:', error);
+        toast.error(isPolish ? 'Nie udało się usunąć' : 'Failed to delete');
+      }
+    },
+    [session, isPolish]
+  );
 
   // Update company profile
   const handleUpdateProfile = useCallback(async () => {
@@ -525,7 +581,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   // Export handlers
   const handleExportMarkdown = () => {
-    const content = `# ${sessionName}\n\n## Progress: ${overallPercent}%\n\n${summaryData.facts.map(f => `- ${f}`).join('\n')}`;
+    const content = `# ${sessionName}\n\n## Progress: ${overallPercent}%\n\n${summaryData.facts.map((f) => `- ${f}`).join('\n')}`;
     const blob = new Blob([content], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -537,7 +593,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   };
 
   const handleCopy = () => {
-    const content = `${sessionName}\n\nProgress: ${overallPercent}%\n\nFacts:\n${summaryData.facts.map(f => `- ${f}`).join('\n')}`;
+    const content = `${sessionName}\n\nProgress: ${overallPercent}%\n\nFacts:\n${summaryData.facts.map((f) => `- ${f}`).join('\n')}`;
     navigator.clipboard.writeText(content);
     toast.success(isPolish ? 'Skopiowano' : 'Copied');
   };
@@ -568,9 +624,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       >
         <div className="flex items-center gap-3">
           <div className={`p-2 rounded-xl ${iconBgClass}`}>{icon}</div>
-          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            {title}
-          </span>
+          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{title}</span>
         </div>
         <div className="flex items-center gap-2">
           {headerActions}
@@ -603,8 +657,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const renderCategorySection = (category: InterviewCategory) => {
     const config = CATEGORY_CONFIG[category];
     const Icon = config.icon;
-    const progress = categoryProgress.find(p => p.category === category);
-    const categoryQuestions = questions.filter(q => q.category === category);
+    const progress = categoryProgress.find((p) => p.category === category);
+    const categoryQuestions = questions.filter((q) => q.category === category);
+    const hasQuestions = categoryQuestions.length > 0;
 
     return renderCollapsibleSection(
       category,
@@ -625,12 +680,20 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       undefined,
       <div className="p-4">
         {/* Progress bar */}
-        {(progress?.totalQuestions || 0) > 0 && (
+        {hasQuestions && (
           <div className="mb-4">
-            <div className="h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+            <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+              <span>{isPolish ? 'Postęp' : 'Progress'}</span>
+              <span>
+                {progress?.answeredQuestions || 0}/{progress?.totalQuestions || 0}
+              </span>
+            </div>
+            <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all ${progress?.isComplete ? 'bg-emerald-500' : 'bg-blue-500'}`}
-                style={{ width: `${(progress?.totalQuestions || 0) > 0 ? ((progress?.answeredQuestions || 0) / (progress?.totalQuestions || 1)) * 100 : 0}%` }}
+                style={{
+                  width: `${(progress?.totalQuestions || 0) > 0 ? ((progress?.answeredQuestions || 0) / (progress?.totalQuestions || 1)) * 100 : 0}%`,
+                }}
               />
             </div>
           </div>
@@ -638,7 +701,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
         {/* Questions list */}
         <QuestionsList
-          questions={categoryQuestions}
+          questions={questions}
           category={category}
           onUpdateQuestion={handleUpdateQuestion}
           onAddQuestion={handleAddQuestion}
@@ -710,7 +773,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     {isPolish ? statusConfig.label.pl : statusConfig.label.en}
                   </span>
                   <span>•</span>
-                  <span>{overallPercent}% {isPolish ? 'ukończone' : 'complete'}</span>
+                  <span>
+                    {overallPercent}% {isPolish ? 'ukończone' : 'complete'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -751,12 +816,12 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           <div className="max-w-7xl mx-auto mt-3">
             <div className="px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-sm">
               {(session?.status || '').toLowerCase() === 'submitted'
-                ? (isPolish
-                    ? 'Wywiad jest wysłany i zablokowany do edycji.'
-                    : 'Interview is submitted and locked.')
-                : (isPolish
-                    ? 'Wywiad jest ukończony i zablokowany do edycji.'
-                    : 'Interview is completed and locked.')}
+                ? isPolish
+                  ? 'Wywiad jest wysłany i zablokowany do edycji.'
+                  : 'Interview is submitted and locked.'
+                : isPolish
+                  ? 'Wywiad jest ukończony i zablokowany do edycji.'
+                  : 'Interview is completed and locked.'}
             </div>
           </div>
         )}
@@ -773,9 +838,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           <div className="lg:col-span-2 space-y-5 order-2 lg:order-1">
             {/* Category Sections */}
             {CATEGORY_ORDER.map((category) => (
-              <React.Fragment key={category}>
-                {renderCategorySection(category)}
-              </React.Fragment>
+              <React.Fragment key={category}>{renderCategorySection(category)}</React.Fragment>
             ))}
 
             {/* Notes Section */}
@@ -832,10 +895,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               undefined,
               <div className="p-5 space-y-6">
                 <p className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
-                  ⚠️ {isPolish 
+                  ⚠️{' '}
+                  {isPolish
                     ? 'Tylko fakty - bez rekomendacji i planów działań'
-                    : 'Facts only - no recommendations or action plans'
-                  }
+                    : 'Facts only - no recommendations or action plans'}
                 </p>
 
                 {/* Facts */}
@@ -846,7 +909,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   {summaryData.facts.length > 0 ? (
                     <ul className="space-y-2">
                       {summaryData.facts.map((fact, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
+                        <li
+                          key={idx}
+                          className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
+                        >
                           <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
                           {fact}
                         </li>
@@ -854,7 +920,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     </ul>
                   ) : (
                     <p className="text-sm text-slate-400 italic">
-                      {isPolish ? 'Fakty zostaną wygenerowane automatycznie' : 'Facts will be generated automatically'}
+                      {isPolish
+                        ? 'Fakty zostaną wygenerowane automatycznie'
+                        : 'Facts will be generated automatically'}
                     </p>
                   )}
                 </div>
@@ -867,7 +935,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   {summaryData.gaps.length > 0 ? (
                     <ul className="space-y-2">
                       {summaryData.gaps.map((gap, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
+                        <li
+                          key={idx}
+                          className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
+                        >
                           <ChevronRight size={14} className="text-amber-500 mt-0.5 shrink-0" />
                           {gap}
                         </li>
@@ -888,7 +959,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   {summaryData.constraints.length > 0 ? (
                     <ul className="space-y-2">
                       {summaryData.constraints.map((constraint, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
+                        <li
+                          key={idx}
+                          className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
+                        >
                           <AlertTriangle size={14} className="text-red-500 mt-0.5 shrink-0" />
                           {constraint}
                         </li>
@@ -909,7 +983,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   {summaryData.painPoints.length > 0 ? (
                     <ul className="space-y-2">
                       {summaryData.painPoints.map((pain, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
+                        <li
+                          key={idx}
+                          className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
+                        >
                           <ChevronRight size={14} className="text-purple-500 mt-0.5 shrink-0" />
                           {pain}
                         </li>
@@ -964,7 +1041,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     <Calendar size={14} className="text-slate-400" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
                       {session?.startedAt
-                        ? new Date(session.startedAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US')
+                        ? new Date(session.startedAt).toLocaleDateString(
+                            isPolish ? 'pl-PL' : 'en-US'
+                          )
                         : '-'}
                     </span>
                   </div>
@@ -979,7 +1058,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
                       <Clock size={14} className="text-slate-400" />
                       <span className="text-sm text-slate-700 dark:text-slate-300">
-                        {new Date(session.lastActivityAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US')}
+                        {new Date(session.lastActivityAt).toLocaleDateString(
+                          isPolish ? 'pl-PL' : 'en-US'
+                        )}
                       </span>
                     </div>
                   </div>
@@ -1076,7 +1157,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 <div className="space-y-3">
                   {categoryProgress.map((cp) => {
                     const config = CATEGORY_CONFIG[cp.category];
-                    const percent = cp.totalQuestions > 0 ? Math.round((cp.answeredQuestions / cp.totalQuestions) * 100) : 0;
+                    const percent =
+                      cp.totalQuestions > 0
+                        ? Math.round((cp.answeredQuestions / cp.totalQuestions) * 100)
+                        : 0;
                     return (
                       <div key={cp.category} className="flex items-center gap-3">
                         <div className={`p-1.5 rounded-lg ${config.bgColor}`}>
@@ -1133,7 +1217,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                       <input
                         type="text"
                         value={editedProfile.name || ''}
-                        onChange={(e) => setEditedProfile({ ...editedProfile, name: e.target.value })}
+                        onChange={(e) =>
+                          setEditedProfile({ ...editedProfile, name: e.target.value })
+                        }
                         className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300"
                       />
                     </div>
@@ -1144,7 +1230,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                       <input
                         type="text"
                         value={editedProfile.industry || ''}
-                        onChange={(e) => setEditedProfile({ ...editedProfile, industry: e.target.value })}
+                        onChange={(e) =>
+                          setEditedProfile({ ...editedProfile, industry: e.target.value })
+                        }
                         className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300"
                       />
                     </div>
@@ -1155,7 +1243,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                       <input
                         type="text"
                         value={editedProfile.location || ''}
-                        onChange={(e) => setEditedProfile({ ...editedProfile, location: e.target.value })}
+                        onChange={(e) =>
+                          setEditedProfile({ ...editedProfile, location: e.target.value })
+                        }
                         className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300"
                       />
                     </div>
@@ -1167,7 +1257,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                         disabled={isSaving}
                         className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 transition-colors disabled:opacity-50"
                       >
-                        {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                        {isSaving ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Save size={14} />
+                        )}
                         {isPolish ? 'Zapisz' : 'Save'}
                       </motion.button>
                       <motion.button
@@ -1190,31 +1284,41 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                         {companyProfile.name && (
                           <div className="flex items-center gap-2 text-sm">
                             <Building2 size={14} className="text-slate-400" />
-                            <span className="text-slate-700 dark:text-slate-300">{companyProfile.name}</span>
+                            <span className="text-slate-700 dark:text-slate-300">
+                              {companyProfile.name}
+                            </span>
                           </div>
                         )}
                         {companyProfile.industry && (
                           <div className="flex items-center gap-2 text-sm">
                             <Target size={14} className="text-slate-400" />
-                            <span className="text-slate-700 dark:text-slate-300">{companyProfile.industry}</span>
+                            <span className="text-slate-700 dark:text-slate-300">
+                              {companyProfile.industry}
+                            </span>
                           </div>
                         )}
                         {companyProfile.location && (
                           <div className="flex items-center gap-2 text-sm">
                             <Building2 size={14} className="text-slate-400" />
-                            <span className="text-slate-700 dark:text-slate-300">{companyProfile.location}</span>
+                            <span className="text-slate-700 dark:text-slate-300">
+                              {companyProfile.location}
+                            </span>
                           </div>
                         )}
                         {companyProfile.size && (
                           <div className="flex items-center gap-2 text-sm">
                             <Users size={14} className="text-slate-400" />
-                            <span className="text-slate-700 dark:text-slate-300">{companyProfile.size} {isPolish ? 'pracowników' : 'employees'}</span>
+                            <span className="text-slate-700 dark:text-slate-300">
+                              {companyProfile.size} {isPolish ? 'pracowników' : 'employees'}
+                            </span>
                           </div>
                         )}
                       </div>
                     ) : (
                       <p className="text-sm text-slate-400 italic">
-                        {isPolish ? 'Kliknij edytuj aby dodać dane firmy' : 'Click edit to add company data'}
+                        {isPolish
+                          ? 'Kliknij edytuj aby dodać dane firmy'
+                          : 'Click edit to add company data'}
                       </p>
                     )}
                   </>
@@ -1238,12 +1342,17 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 {stakeholders.length > 0 ? (
                   <div className="space-y-2">
                     {stakeholders.map((s) => (
-                      <div key={s.id} className="flex items-center gap-3 p-2 rounded-lg bg-slate-50 dark:bg-navy-800">
+                      <div
+                        key={s.id}
+                        className="flex items-center gap-3 p-2 rounded-lg bg-slate-50 dark:bg-navy-800"
+                      >
                         <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center">
                           <Users size={14} className="text-cyan-500" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">{s.name}</p>
+                          <p className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
+                            {s.name}
+                          </p>
                           <p className="text-xs text-slate-500 truncate">{s.role}</p>
                         </div>
                       </div>
@@ -1283,7 +1392,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                               : 'border-l-slate-400 bg-slate-50 dark:bg-navy-800'
                         }`}
                       >
-                        <p className="text-sm text-slate-700 dark:text-slate-300">{gap.description}</p>
+                        <p className="text-sm text-slate-700 dark:text-slate-300">
+                          {gap.description}
+                        </p>
                         <span className="text-xs text-slate-500 mt-1 block">{gap.category}</span>
                       </div>
                     ))}
