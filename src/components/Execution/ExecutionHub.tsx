@@ -61,6 +61,7 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import { ExecutionDetailPanel } from './ExecutionDetailPanel';
+import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import { ExecutionTimelineView } from './ExecutionTimelineView';
 
 // Kanban column status mapping
@@ -1469,18 +1470,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }
 
     if (activeDocumentId) {
-      const initiative = initiatives.find((i) => i.id === activeDocumentId);
-      if (initiative) {
-        return (
-          <div className="p-6">
-            <ExecutionDetailPanel
-              initiative={initiative}
-              onBack={handleShowList}
-              onUpdate={handleInitiativeUpdate}
-            />
-          </div>
-        );
-      }
+      return (
+        <InitiativeDocumentView
+          initiativeId={activeDocumentId}
+          onBack={handleShowList}
+          onStatusChange={() => handleRefresh()}
+          sourceModule="execution"
+        />
+      );
     }
 
     return (

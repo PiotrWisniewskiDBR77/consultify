@@ -1,4 +1,7 @@
 /**
+ * @deprecated This component is LEGACY and will be removed.
+ * Use InitiativeDocumentView instead for the canonical full initiative view.
+ * 
  * InitiativeFullView
  * Full initiative view component designed to be opened as a dynamic tab
  * in ModuleHub (Tools, Assessment, Initiatives modules)
@@ -9,6 +12,8 @@
  * - Tabbed interface: Overview, Tasks, Definition, Economics, Team, History
  * - Real-time data from API
  * - Integration with gate decisions workflow
+ * 
+ * MIGRATION NOTE: Replace usages with InitiativeDocumentView from './InitiativeDocumentView'
  */
 
 import {

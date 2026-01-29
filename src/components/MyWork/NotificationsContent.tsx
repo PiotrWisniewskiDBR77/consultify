@@ -1,6 +1,7 @@
 /**
  * NotificationsContent - Notifications table for MyWorkHub
  * Professional table design with resizable columns matching Decisions and Tasks modules
+ * Enhanced with time-based grouping, inline quick actions, and snooze functionality
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
@@ -17,6 +18,7 @@ import {
   FolderOpen,
   Info,
   Loader2,
+  MessageSquare,
   Minus,
   MoreVertical,
   Sparkles,
@@ -30,6 +32,10 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { useNotificationSnooze, type SnoozePreset } from '@/hooks/useNotificationSnooze';
+import { useAppStore } from '@/store/useAppStore';
+import { useConversationStore } from '@/store/useConversationStore';
+import { AppView } from '@/types';
 import {
   BulkActionBar,
   ColumnResizer,
@@ -71,15 +77,16 @@ interface NotificationsContentProps {
   searchQuery: string;
   onOpenTask?: (taskId: string, taskData?: any) => void;
   onOpenDecision?: (decisionId: string, decisionData?: any) => void;
+  onOpenInitiative?: (initiativeId: string) => void;
   onNotificationClick?: (notificationId: string, notificationData?: Notification) => void;
   onCountsChange: (counts: NotificationCounts) => void;
 }
 
 // Format relative time
-const formatRelativeTime = (dateString: string): string => {
-  if (!dateString) return 'Recently';
+const formatRelativeTime = (dateString: string, isPolish: boolean = false): string => {
+  if (!dateString) return isPolish ? 'Niedawno' : 'Recently';
   const date = new Date(dateString);
-  if (isNaN(date.getTime())) return 'Recently';
+  if (isNaN(date.getTime())) return isPolish ? 'Niedawno' : 'Recently';
 
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -87,11 +94,38 @@ const formatRelativeTime = (dateString: string): string => {
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
+  if (diffMins < 1) return isPolish ? 'Przed chwilą' : 'Just now';
+  if (diffMins < 60) return isPolish ? `${diffMins} min temu` : `${diffMins}m ago`;
+  if (diffHours < 24) return isPolish ? `${diffHours} godz. temu` : `${diffHours}h ago`;
+  if (diffDays < 7) return isPolish ? `${diffDays} dni temu` : `${diffDays}d ago`;
+  return date.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US');
+};
+
+// Time group types
+type TimeGroup = 'today' | 'yesterday' | 'this_week' | 'earlier';
+
+// Get time group for a notification
+const getTimeGroup = (dateString: string): TimeGroup => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const weekAgo = new Date(today);
+  weekAgo.setDate(weekAgo.getDate() - 7);
+
+  if (date >= today) return 'today';
+  if (date >= yesterday) return 'yesterday';
+  if (date >= weekAgo) return 'this_week';
+  return 'earlier';
+};
+
+// Time group labels
+const TIME_GROUP_LABELS: Record<TimeGroup, { en: string; pl: string }> = {
+  today: { en: 'Today', pl: 'Dzisiaj' },
+  yesterday: { en: 'Yesterday', pl: 'Wczoraj' },
+  this_week: { en: 'This Week', pl: 'Ten tydzień' },
+  earlier: { en: 'Earlier', pl: 'Wcześniej' },
 };
 
 // Get notification type config
@@ -282,9 +316,28 @@ const NotificationTableRow: React.FC<{
   onMarkRead: (id: string) => void;
   onDelete: (id: string) => void;
   onClick: (n: Notification) => void;
+  onOpenChat?: (n: Notification) => void;
+  onSnooze?: (id: string, preset: SnoozePreset) => void;
+  isSnoozed?: boolean;
+  snoozedUntilLabel?: string | null;
   columnWidths: ColumnWidths;
-}> = ({ notification, isSelected, onSelect, onMarkRead, onDelete, onClick, columnWidths }) => {
+  isPolish?: boolean;
+}> = ({ 
+  notification, 
+  isSelected, 
+  onSelect, 
+  onMarkRead, 
+  onDelete, 
+  onClick, 
+  onOpenChat,
+  onSnooze,
+  isSnoozed,
+  snoozedUntilLabel,
+  columnWidths,
+  isPolish = false,
+}) => {
   const [showMenu, setShowMenu] = useState(false);
+  const [showSnoozeMenu, setShowSnoozeMenu] = useState(false);
 
   const isRead = notification.read || notification.isRead;
   const severityConfig = getSeverityConfig(notification.severity);
@@ -413,19 +466,85 @@ const NotificationTableRow: React.FC<{
       {/* Actions */}
       <td className="px-3 py-2.5" style={{ width: columnWidths.actions }}>
         <div className="flex items-center justify-end gap-1">
-          {/* Mark as read button (only for unread) */}
-          {!isRead && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onMarkRead(notification.id);
-              }}
-              className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
-              title="Mark as read"
-            >
-              <Check size={14} />
-            </button>
+          {/* Snoozed indicator */}
+          {isSnoozed && (
+            <span className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded">
+              <Clock size={10} />
+              {snoozedUntilLabel || (isPolish ? 'Odłożone' : 'Snoozed')}
+            </span>
           )}
+
+          {/* Inline quick actions (visible on hover) */}
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Chat button */}
+            {onOpenChat && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenChat(notification);
+                }}
+                className="p-1.5 rounded hover:bg-purple-100 dark:hover:bg-purple-900/30 text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                title={isPolish ? 'Czat' : 'Chat'}
+              >
+                <MessageSquare size={14} />
+              </button>
+            )}
+
+            {/* Snooze button with dropdown */}
+            {onSnooze && !isSnoozed && (
+              <div className="relative">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowSnoozeMenu(!showSnoozeMenu);
+                  }}
+                  className="p-1.5 rounded hover:bg-amber-100 dark:hover:bg-amber-900/30 text-slate-400 dark:text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+                  title={isPolish ? 'Odłóż' : 'Snooze'}
+                >
+                  <Clock size={14} />
+                </button>
+                {showSnoozeMenu && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowSnoozeMenu(false)} />
+                    <div className="absolute right-0 top-full mt-1 z-50 py-1 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 min-w-[100px]">
+                      {[
+                        { preset: '1h' as SnoozePreset, label: isPolish ? '1 godz.' : '1 hour' },
+                        { preset: '4h' as SnoozePreset, label: isPolish ? '4 godz.' : '4 hours' },
+                        { preset: 'tomorrow' as SnoozePreset, label: isPolish ? 'Jutro' : 'Tomorrow' },
+                        { preset: 'next_week' as SnoozePreset, label: isPolish ? 'Za tydzień' : 'Next week' },
+                      ].map(({ preset, label }) => (
+                        <button
+                          key={preset}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSnooze(notification.id, preset);
+                            setShowSnoozeMenu(false);
+                          }}
+                          className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Mark as read button (only for unread) */}
+            {!isRead && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMarkRead(notification.id);
+                }}
+                className="p-1.5 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                title={isPolish ? 'Oznacz jako przeczytane' : 'Mark as read'}
+              >
+                <Check size={14} />
+              </button>
+            )}
+          </div>
 
           {/* View button */}
           <button
@@ -434,7 +553,7 @@ const NotificationTableRow: React.FC<{
               onClick(notification);
             }}
             className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-            title="View"
+            title={isPolish ? 'Zobacz' : 'View'}
           >
             <Eye size={14} />
           </button>
@@ -453,7 +572,7 @@ const NotificationTableRow: React.FC<{
             {showMenu && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 top-full mt-1 z-50 w-40 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
+                <div className="absolute right-0 top-full mt-1 z-50 w-44 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -463,8 +582,21 @@ const NotificationTableRow: React.FC<{
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
                   >
                     <Eye size={14} />
-                    View Details
+                    {isPolish ? 'Zobacz szczegóły' : 'View Details'}
                   </button>
+                  {onOpenChat && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenChat(notification);
+                        setShowMenu(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-purple-700 dark:text-purple-400 hover:bg-slate-50 dark:hover:bg-navy-700"
+                    >
+                      <MessageSquare size={14} />
+                      {isPolish ? 'Otwórz czat' : 'Open Chat'}
+                    </button>
+                  )}
                   {!isRead && (
                     <button
                       onClick={(e) => {
@@ -475,7 +607,7 @@ const NotificationTableRow: React.FC<{
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
                     >
                       <Check size={14} />
-                      Mark as Read
+                      {isPolish ? 'Oznacz jako przeczytane' : 'Mark as Read'}
                     </button>
                   )}
                   {notification.relatedObjectId && (
@@ -488,7 +620,7 @@ const NotificationTableRow: React.FC<{
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-700 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-navy-700"
                     >
                       <ArrowRight size={14} />
-                      Go to Source
+                      {isPolish ? 'Idź do źródła' : 'Go to Source'}
                     </button>
                   )}
                   <div className="border-t border-slate-200 dark:border-navy-600" />
@@ -501,7 +633,7 @@ const NotificationTableRow: React.FC<{
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-slate-50 dark:hover:bg-navy-700"
                   >
                     <Trash2 size={14} />
-                    Delete
+                    {isPolish ? 'Usuń' : 'Delete'}
                   </button>
                 </div>
               </>
@@ -518,10 +650,12 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
   searchQuery,
   onOpenTask,
   onOpenDecision,
+  onOpenInitiative,
   onNotificationClick,
   onCountsChange,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = i18n.language === 'pl';
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -536,6 +670,13 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
   
   // Open filter dropdown state
   const [openFilterId, setOpenFilterId] = useState<string | null>(null);
+
+  // Snooze hook
+  const { snooze, isSnoozed, formatRemainingTime, getSnoozedIds } = useNotificationSnooze();
+
+  // Chat integration
+  const { isChatCollapsed, toggleChatCollapse } = useAppStore();
+  const { updateWorkspaceFromView } = useConversationStore();
 
   // Fetch notifications
   const fetchNotifications = useCallback(async () => {
@@ -652,7 +793,56 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
       onOpenDecision
     ) {
       onOpenDecision(notification.relatedObjectId);
+    } else if (
+      (notification.relatedObjectType === 'INITIATIVE' ||
+        notification.relatedObjectType === 'initiative') &&
+      notification.relatedObjectId &&
+      onOpenInitiative
+    ) {
+      onOpenInitiative(notification.relatedObjectId);
     }
+  };
+
+  // Handle opening chat with notification context
+  const handleOpenChat = (notification: Notification) => {
+    // Ensure chat panel is visible
+    if (isChatCollapsed) {
+      toggleChatCollapse();
+    }
+
+    // Push notification context into the unified chat workspace context
+    updateWorkspaceFromView(AppView.MY_WORK, notification.id, {
+      type: 'notification',
+      id: notification.id,
+      notificationType: notification.type,
+      severity: notification.severity,
+      title: notification.title,
+      message: notification.message,
+      relatedEntity: notification.relatedObjectType && notification.relatedObjectId ? {
+        type: notification.relatedObjectType,
+        id: notification.relatedObjectId,
+      } : null,
+      projectId: notification.projectId || null,
+      projectName: notification.projectName || null,
+    });
+
+    toast.success(isPolish ? 'Otwarto czat' : 'Chat opened');
+  };
+
+  // Handle snoozing a notification
+  const handleSnooze = (notificationId: string, preset: SnoozePreset) => {
+    const until = snooze(notificationId, preset);
+    const presetLabels: Record<SnoozePreset, { en: string; pl: string }> = {
+      '1h': { en: '1 hour', pl: '1 godzinę' },
+      '4h': { en: '4 hours', pl: '4 godziny' },
+      'tomorrow': { en: 'tomorrow', pl: 'jutro' },
+      'next_week': { en: 'next week', pl: 'za tydzień' },
+    };
+    toast.success(
+      isPolish 
+        ? `Powiadomienie odłożone na ${presetLabels[preset].pl}` 
+        : `Notification snoozed for ${presetLabels[preset].en}`
+    );
   };
 
   // Selection helpers
@@ -738,9 +928,13 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
     onArchive: () => toast('Archive coming soon'),
   });
 
-  // Apply table filters
+  // Apply table filters and exclude snoozed notifications
   const displayedNotifications = useMemo(() => {
     let result = filteredNotifications;
+    
+    // Filter out snoozed notifications
+    const snoozedIds = getSnoozedIds();
+    result = result.filter(n => !snoozedIds.includes(n.id));
     
     const severityFilter = tableFilters.severity as string[] | undefined;
     const typeFilter = tableFilters.type as string[] | undefined;
@@ -756,7 +950,30 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
     }
     
     return result;
-  }, [filteredNotifications, tableFilters]);
+  }, [filteredNotifications, tableFilters, getSnoozedIds]);
+
+  // Group notifications by time
+  const groupedNotifications = useMemo(() => {
+    const groups: Record<TimeGroup, Notification[]> = {
+      today: [],
+      yesterday: [],
+      this_week: [],
+      earlier: [],
+    };
+
+    displayedNotifications.forEach(n => {
+      const group = getTimeGroup(n.createdAt);
+      groups[group].push(n);
+    });
+
+    return groups;
+  }, [displayedNotifications]);
+
+  // Check if we should show grouping (more than one group has items)
+  const showGrouping = useMemo(() => {
+    const nonEmptyGroups = Object.values(groupedNotifications).filter(g => g.length > 0);
+    return nonEmptyGroups.length > 1;
+  }, [groupedNotifications]);
 
   // Early returns AFTER all hooks
   if (loading) {
@@ -885,18 +1102,66 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
             </thead>
             <tbody>
               <AnimatePresence>
-                {displayedNotifications.map((notification) => (
-                  <NotificationTableRow
-                    key={notification.id}
-                    notification={notification}
-                    isSelected={selectedIds.has(notification.id)}
-                    onSelect={handleSelectNotification}
-                    onMarkRead={handleMarkRead}
-                    onDelete={handleDelete}
-                    onClick={handleClick}
-                    columnWidths={columnWidths}
-                  />
-                ))}
+                {showGrouping ? (
+                  // Render with time grouping
+                  (['today', 'yesterday', 'this_week', 'earlier'] as TimeGroup[]).map(group => {
+                    const groupNotifications = groupedNotifications[group];
+                    if (groupNotifications.length === 0) return null;
+                    
+                    return (
+                      <React.Fragment key={group}>
+                        {/* Group header */}
+                        <tr className="bg-slate-100/50 dark:bg-navy-800/50">
+                          <td colSpan={7} className="px-4 py-2">
+                            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                              {isPolish ? TIME_GROUP_LABELS[group].pl : TIME_GROUP_LABELS[group].en}
+                              <span className="ml-2 text-slate-400 dark:text-slate-500 font-normal">
+                                ({groupNotifications.length})
+                              </span>
+                            </span>
+                          </td>
+                        </tr>
+                        {/* Group notifications */}
+                        {groupNotifications.map((notification) => (
+                          <NotificationTableRow
+                            key={notification.id}
+                            notification={notification}
+                            isSelected={selectedIds.has(notification.id)}
+                            onSelect={handleSelectNotification}
+                            onMarkRead={handleMarkRead}
+                            onDelete={handleDelete}
+                            onClick={handleClick}
+                            onOpenChat={handleOpenChat}
+                            onSnooze={handleSnooze}
+                            isSnoozed={isSnoozed(notification.id)}
+                            snoozedUntilLabel={formatRemainingTime(notification.id, isPolish)}
+                            columnWidths={columnWidths}
+                            isPolish={isPolish}
+                          />
+                        ))}
+                      </React.Fragment>
+                    );
+                  })
+                ) : (
+                  // Render without grouping
+                  displayedNotifications.map((notification) => (
+                    <NotificationTableRow
+                      key={notification.id}
+                      notification={notification}
+                      isSelected={selectedIds.has(notification.id)}
+                      onSelect={handleSelectNotification}
+                      onMarkRead={handleMarkRead}
+                      onDelete={handleDelete}
+                      onClick={handleClick}
+                      onOpenChat={handleOpenChat}
+                      onSnooze={handleSnooze}
+                      isSnoozed={isSnoozed(notification.id)}
+                      snoozedUntilLabel={formatRemainingTime(notification.id, isPolish)}
+                      columnWidths={columnWidths}
+                      isPolish={isPolish}
+                    />
+                  ))
+                )}
               </AnimatePresence>
             </tbody>
           </table>

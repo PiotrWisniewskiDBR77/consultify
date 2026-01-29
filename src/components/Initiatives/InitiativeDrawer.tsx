@@ -71,12 +71,23 @@ interface RaidItem {
   dueDate?: string;
 }
 
-const TABS: { id: DrawerTab; label: string; icon: React.ReactNode }[] = [
-  { id: 'overview', label: 'Overview', icon: <FileText size={14} /> },
-  { id: 'timeline', label: 'Timeline', icon: <Calendar size={14} /> },
-  { id: 'resources', label: 'Resources', icon: <Users size={14} /> },
-  { id: 'decisions', label: 'Decisions', icon: <Scale size={14} /> },
-];
+// Tabs are built dynamically to include counts
+const getTabLabel = (id: DrawerTab, count?: number) => {
+  const labels: Record<DrawerTab, string> = {
+    overview: 'Overview',
+    timeline: 'Timeline',
+    resources: 'Resources',
+    decisions: 'Decisions',
+  };
+  return count && count > 0 ? `${labels[id]} (${count})` : labels[id];
+};
+
+const TAB_ICONS: Record<DrawerTab, React.ReactNode> = {
+  overview: <FileText size={14} />,
+  timeline: <Calendar size={14} />,
+  resources: <Users size={14} />,
+  decisions: <Scale size={14} />,
+};
 
 /**
  * Gate Decisions for Initiatives module
@@ -464,7 +475,14 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
         {/* Timeline Header */}
         <div className="flex items-center justify-between">
           <h4 className="text-xs font-semibold text-slate-400 uppercase">Milestones</h4>
-          <button className="text-xs text-purple-400 hover:text-purple-300">+ Add Milestone</button>
+          {milestones.length > 0 && (
+            <button
+              onClick={() => onOpenWider(initiative)}
+              className="text-xs text-purple-400 hover:text-purple-300"
+            >
+              Manage in full view
+            </button>
+          )}
         </div>
 
         {/* Milestones List */}
@@ -638,10 +656,16 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
           </div>
         </div>
 
-        {/* Team placeholder */}
+        {/* Team - link to full view */}
         <div className="text-center py-6 text-slate-500">
           <Users className="w-10 h-10 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">Team management coming soon</p>
+          <p className="text-sm mb-2">Manage team members in full view</p>
+          <button
+            onClick={() => onOpenWider(initiative)}
+            className="text-xs text-purple-400 hover:text-purple-300"
+          >
+            Open full card
+          </button>
         </div>
       </div>
     );
@@ -656,7 +680,10 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
         <div>
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-xs font-semibold text-slate-400 uppercase">Gate Decisions</h4>
-            <button className="text-xs text-purple-400 hover:text-purple-300">
+            <button
+              onClick={() => onOpenWider(initiative)}
+              className="text-xs text-purple-400 hover:text-purple-300"
+            >
               + Request Decision
             </button>
           </div>
@@ -798,20 +825,28 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
           {/* Tabs */}
           <div className="shrink-0 px-6 py-2 border-b border-navy-700 bg-navy-900/30">
             <div className="flex items-center gap-1">
-              {TABS.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    activeTab === tab.id
-                      ? 'bg-purple-500/20 text-purple-400'
-                      : 'text-slate-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  {tab.icon}
-                  {tab.label}
-                </button>
-              ))}
+              {(['overview', 'timeline', 'resources', 'decisions'] as DrawerTab[]).map((tabId) => {
+                const count =
+                  tabId === 'timeline'
+                    ? milestones.length
+                    : tabId === 'decisions'
+                      ? decisions.length
+                      : undefined;
+                return (
+                  <button
+                    key={tabId}
+                    onClick={() => setActiveTab(tabId)}
+                    className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      activeTab === tabId
+                        ? 'bg-purple-500/20 text-purple-400'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {TAB_ICONS[tabId]}
+                    {getTabLabel(tabId, count)}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

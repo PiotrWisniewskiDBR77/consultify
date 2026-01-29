@@ -41,7 +41,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { ToolType as StoreToolType } from '@/store/useToolStore';
 
 import { ToolWorkspace } from '../DiscoveryTools';
-import { InitiativeFullView } from '../Initiatives/InitiativeFullView';
+import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 
 import {
   CategoryButton,
@@ -1416,10 +1416,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     if (activeDocumentId) {
       const doc = openDocuments.find((d) => d.id === activeDocumentId);
       
-      // Show Initiative Full View (new component with full lifecycle support)
+      // Show Initiative Document View (canonical full lifecycle view)
       if (doc && doc.type === 'initiative') {
         return (
-          <InitiativeFullView
+          <InitiativeDocumentView
             initiativeId={doc.id}
             onBack={handleShowList}
             onStatusChange={() => fetchData(true)}

@@ -4,27 +4,37 @@ import {
   Bell,
   Check,
   CheckCircle,
+  Clock,
   Info,
+  MessageSquare,
   Sparkles,
   Trash2,
   X,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { buildNotificationContent } from '@/components/Notifications/notificationContent';
+import { useNotificationSnooze, type SnoozePreset } from '@/hooks/useNotificationSnooze';
 import { useAppStore } from '@/store/useAppStore';
+import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 
 import { Api } from '../../services/api';
 import { Notification } from '../../types';
 
 export const NotificationDropdown = () => {
-  const { setCurrentView, setMyWorkIntent } = useAppStore();
+  const { i18n } = useTranslation();
+  const isPolish = i18n.language === 'pl';
+  const { setCurrentView, setMyWorkIntent, isChatCollapsed, toggleChatCollapse } = useAppStore();
+  const { updateWorkspaceFromView } = useConversationStore();
+  const { snooze, isSnoozed, formatRemainingTime, getSnoozedIds } = useNotificationSnooze();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [showSnoozeMenu, setShowSnoozeMenu] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const fetchNotifications = async () => {
@@ -128,6 +138,54 @@ export const NotificationDropdown = () => {
     }
   };
 
+  // Handle opening chat with notification context
+  const handleOpenChat = (notification: Notification, event: React.MouseEvent) => {
+    event.stopPropagation();
+    
+    // Ensure chat panel is visible
+    if (isChatCollapsed) {
+      toggleChatCollapse();
+    }
+
+    // Push notification context into the unified chat workspace context
+    updateWorkspaceFromView(AppView.MY_WORK, notification.id, {
+      type: 'notification',
+      id: notification.id,
+      notificationType: notification.type,
+      severity: notification.severity,
+      title: notification.title,
+      message: notification.message,
+      relatedEntity: notification.relatedObjectType && notification.relatedObjectId ? {
+        type: notification.relatedObjectType,
+        id: notification.relatedObjectId,
+      } : null,
+      projectId: notification.projectId || null,
+      projectName: notification.projectName || null,
+    });
+
+    setIsOpen(false);
+    toast.success(isPolish ? 'Otwarto czat' : 'Chat opened');
+  };
+
+  // Handle snoozing a notification
+  const handleSnooze = (notificationId: string, preset: SnoozePreset, event: React.MouseEvent) => {
+    event.stopPropagation();
+    snooze(notificationId, preset);
+    setShowSnoozeMenu(null);
+    
+    const presetLabels: Record<SnoozePreset, { en: string; pl: string }> = {
+      '1h': { en: '1 hour', pl: '1 godzinę' },
+      '4h': { en: '4 hours', pl: '4 godziny' },
+      'tomorrow': { en: 'tomorrow', pl: 'jutro' },
+      'next_week': { en: 'next week', pl: 'za tydzień' },
+    };
+    toast.success(
+      isPolish 
+        ? `Powiadomienie odłożone na ${presetLabels[preset].pl}` 
+        : `Notification snoozed for ${presetLabels[preset].en}`
+    );
+  };
+
   const handleDeleteAll = async () => {
     try {
       // Delete all notifications one by one (or implement bulk delete API)
@@ -191,13 +249,15 @@ export const NotificationDropdown = () => {
 
       {isOpen && (
         <div className="absolute right-0 top-full mt-2 w-[420px] bg-white dark:bg-navy-900 rounded-xl shadow-xl border border-slate-200 dark:border-navy-700 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
-          {/* Header */}
-          <div className="px-4 py-3 border-b border-slate-100 dark:border-navy-700 flex items-center justify-between bg-slate-50/50 dark:bg-white/5">
+          {/* Header - Purple gradient following standard */}
+          <div className="px-4 py-3 border-b border-purple-200/40 dark:border-purple-500/20 flex items-center justify-between bg-gradient-to-r from-white/80 via-purple-50/30 to-white/80 dark:from-navy-900/80 dark:via-purple-900/20 dark:to-navy-900/80">
             <div className="flex items-center gap-2">
-              <h3 className="font-bold text-navy-900 dark:text-white text-sm">Notifications</h3>
+              <h3 className="font-bold text-navy-900 dark:text-white text-sm">
+                {isPolish ? 'Powiadomienia' : 'Notifications'}
+              </h3>
               {unreadCount > 0 && (
                 <span className="bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-300 px-2 py-0.5 rounded-full text-xs font-medium">
-                  {unreadCount} New
+                  {unreadCount} {isPolish ? 'Nowe' : 'New'}
                 </span>
               )}
             </div>
@@ -209,9 +269,9 @@ export const NotificationDropdown = () => {
                   setIsOpen(false);
                 }}
                 className="text-xs text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"
-                title="Open Inbox (Action Queue)"
+                title={isPolish ? 'Otwórz skrzynkę' : 'Open Inbox (Action Queue)'}
               >
-                <ArrowRight size={12} /> Inbox
+                <ArrowRight size={12} /> {isPolish ? 'Skrzynka' : 'Inbox'}
               </button>
               <button
                 onClick={() => {
@@ -220,23 +280,23 @@ export const NotificationDropdown = () => {
                   setIsOpen(false);
                 }}
                 className="text-xs text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"
-                title="Open Notification Center"
+                title={isPolish ? 'Otwórz centrum powiadomień' : 'Open Notification Center'}
               >
-                <ArrowRight size={12} /> Center
+                <ArrowRight size={12} /> {isPolish ? 'Centrum' : 'Center'}
               </button>
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllRead}
                   className="text-xs text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"
-                  title="Mark all as read"
+                  title={isPolish ? 'Oznacz wszystkie jako przeczytane' : 'Mark all as read'}
                 >
-                  <Check size={12} /> Mark all read
+                  <Check size={12} /> {isPolish ? 'Przeczytane' : 'Mark all read'}
                 </button>
               )}
               <button
                 onClick={() => setIsOpen(false)}
                 className="p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded-md hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
-                title="Close"
+                title={isPolish ? 'Zamknij' : 'Close'}
               >
                 <X size={14} />
               </button>
@@ -248,27 +308,31 @@ export const NotificationDropdown = () => {
             {loading && notifications.length === 0 ? (
               <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-sm">
                 <div className="animate-spin w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full mx-auto mb-2"></div>
-                Loading...
+                {isPolish ? 'Ładowanie...' : 'Loading...'}
               </div>
-            ) : notifications.length === 0 ? (
+            ) : notifications.filter(n => !isSnoozed(n.id)).length === 0 ? (
               <div className="p-8 text-center flex flex-col items-center">
                 <div className="w-12 h-12 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-3">
                   <Bell size={20} className="text-slate-300" />
                 </div>
                 <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-                  No notifications yet
+                  {isPolish ? 'Brak powiadomień' : 'No notifications yet'}
                 </p>
                 <p className="text-slate-400 dark:text-slate-500 text-xs mt-1">
-                  You're all caught up!
+                  {isPolish ? 'Wszystko załatwione!' : "You're all caught up!"}
                 </p>
               </div>
             ) : (
               <div className="divide-y divide-slate-50 dark:divide-white/5">
-                {notifications.map((notification) =>
+                {notifications
+                  .filter(n => !isSnoozed(n.id)) // Filter out snoozed notifications
+                  .map((notification) =>
                   (() => {
-                    const contract = buildNotificationContent(notification as any, false);
+                    const contract = buildNotificationContent(notification as any, isPolish);
                     const primaryLabel =
-                      contract.primaryCta.kind === 'none' ? 'Open' : contract.primaryCta.label;
+                      contract.primaryCta.kind === 'none' 
+                        ? (isPolish ? 'Otwórz' : 'Open') 
+                        : contract.primaryCta.label;
                     return (
                       <div
                         key={notification.id}
@@ -316,11 +380,55 @@ export const NotificationDropdown = () => {
 
                         {/* Actions - Always visible for better UX */}
                         <div className="absolute right-2 top-2 flex items-center gap-1 bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-slate-100 dark:border-navy-700">
+                          {/* Chat button */}
+                          <button
+                            onClick={(e) => handleOpenChat(notification, e)}
+                            className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/20 rounded-md transition-colors"
+                            title={isPolish ? 'Otwórz czat' : 'Open chat'}
+                          >
+                            <MessageSquare size={14} />
+                          </button>
+                          
+                          {/* Snooze button with dropdown */}
+                          <div className="relative">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowSnoozeMenu(showSnoozeMenu === notification.id ? null : notification.id);
+                              }}
+                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/20 rounded-md transition-colors"
+                              title={isPolish ? 'Odłóż' : 'Snooze'}
+                            >
+                              <Clock size={14} />
+                            </button>
+                            {showSnoozeMenu === notification.id && (
+                              <>
+                                <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setShowSnoozeMenu(null); }} />
+                                <div className="absolute right-0 top-full mt-1 z-50 py-1 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 min-w-[100px]">
+                                  {[
+                                    { preset: '1h' as SnoozePreset, label: isPolish ? '1 godz.' : '1 hour' },
+                                    { preset: '4h' as SnoozePreset, label: isPolish ? '4 godz.' : '4 hours' },
+                                    { preset: 'tomorrow' as SnoozePreset, label: isPolish ? 'Jutro' : 'Tomorrow' },
+                                    { preset: 'next_week' as SnoozePreset, label: isPolish ? 'Za tydzień' : 'Next week' },
+                                  ].map(({ preset, label }) => (
+                                    <button
+                                      key={preset}
+                                      onClick={(e) => handleSnooze(notification.id, preset, e)}
+                                      className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                                    >
+                                      {label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
+
                           {!notification.isRead && (
                             <button
                               onClick={(e) => handleMarkAsRead(notification.id, e)}
-                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/20 rounded-md transition-colors"
-                              title="Mark as read"
+                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/20 rounded-md transition-colors"
+                              title={isPolish ? 'Oznacz jako przeczytane' : 'Mark as read'}
                             >
                               <Check size={14} />
                             </button>
@@ -328,7 +436,7 @@ export const NotificationDropdown = () => {
                           <button
                             onClick={(e) => handleDelete(notification.id, e)}
                             className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/20 rounded-md transition-colors"
-                            title="Delete"
+                            title={isPolish ? 'Usuń' : 'Delete'}
                           >
                             <Trash2 size={14} />
                           </button>
@@ -353,26 +461,33 @@ export const NotificationDropdown = () => {
           {notifications.length > 0 && (
             <div className="px-4 py-3 border-t border-slate-100 dark:border-navy-700 bg-slate-50/50 dark:bg-white/5 flex items-center justify-between">
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                {notifications.length}{' '}
-                {notifications.length === 1 ? 'notification' : 'notifications'}
+                {notifications.filter(n => !isSnoozed(n.id)).length}{' '}
+                {isPolish 
+                  ? (notifications.filter(n => !isSnoozed(n.id)).length === 1 ? 'powiadomienie' : 'powiadomień')
+                  : (notifications.filter(n => !isSnoozed(n.id)).length === 1 ? 'notification' : 'notifications')}
+                {getSnoozedIds().length > 0 && (
+                  <span className="ml-2 text-amber-500">
+                    ({getSnoozedIds().length} {isPolish ? 'odłożone' : 'snoozed'})
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 {notifications.some((n) => n.isRead) && (
                   <button
                     onClick={handleClearRead}
                     className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300 font-medium transition-colors px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"
-                    title="Clear read notifications"
+                    title={isPolish ? 'Wyczyść przeczytane' : 'Clear read notifications'}
                   >
-                    Clear read
+                    {isPolish ? 'Wyczyść przeczytane' : 'Clear read'}
                   </button>
                 )}
                 {notifications.length > 1 && (
                   <button
                     onClick={handleDeleteAll}
                     className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium transition-colors px-2 py-1 rounded-md hover:bg-red-50 dark:hover:bg-red-500/10"
-                    title="Delete all notifications"
+                    title={isPolish ? 'Usuń wszystkie' : 'Delete all notifications'}
                   >
-                    Clear all
+                    {isPolish ? 'Usuń wszystkie' : 'Clear all'}
                   </button>
                 )}
               </div>

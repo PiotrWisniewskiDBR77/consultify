@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 
 import { Api } from '@/services/api';
 import { NewAssessmentModal, NewAssessmentData } from './NewAssessmentModal';
-import { InitiativeFullView } from '../Initiatives/InitiativeFullView';
+import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 
 import {
   FilterableTable,
@@ -493,10 +493,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     if (activeDocumentId) {
       const doc = openDocuments.find((d) => d.id === activeDocumentId);
       
-      // Show Initiative Full View for initiatives
+      // Show Initiative Document View for initiatives
       if (doc && (doc.type === 'initiative' || activeTab === 'initiatives')) {
         return (
-          <InitiativeFullView
+          <InitiativeDocumentView
             initiativeId={doc.id}
             onBack={handleShowList}
             onStatusChange={refreshData}

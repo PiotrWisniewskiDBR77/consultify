@@ -363,7 +363,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const renderContent = () => {
     // If there's an active document, show the dynamic card
     if (activeDocumentId) {
-      return <InitiativeDocumentView initiativeId={activeDocumentId} />;
+      return (
+        <InitiativeDocumentView
+          initiativeId={activeDocumentId}
+          onBack={handleShowList}
+          onStatusChange={() => fetchData(true)}
+          sourceModule="initiatives"
+        />
+      );
     }
 
     if (loadError) {

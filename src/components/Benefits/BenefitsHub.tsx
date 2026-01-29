@@ -25,6 +25,7 @@ import { Api } from '@/services/api';
 import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
 
 import { InitiativeKPI, InitiativeStatus } from '../../types';
+import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import {
   FilterableTable,
   FilterChip,
@@ -564,19 +565,13 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
     }
 
     if (activeDocumentId) {
-      const doc = openDocuments.find((d) => d.id === activeDocumentId);
-      const initiative = initiatives.find((i) => i.id === activeDocumentId);
       return (
-        <div className="flex items-center justify-center h-full text-slate-500">
-          <div className="text-center">
-            <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-green-400/50" />
-            <p className="text-lg text-white">Benefits Details: {doc?.name}</p>
-            <p className="text-sm text-slate-400">
-              ({doc?.subType} - {STATUS_META[initiative?.status || InitiativeStatus.DONE]?.label})
-            </p>
-            <p className="mt-4 text-xs">Connect to existing benefits workspace</p>
-          </div>
-        </div>
+        <InitiativeDocumentView
+          initiativeId={activeDocumentId}
+          onBack={handleShowList}
+          onStatusChange={() => fetchData()}
+          sourceModule="benefits"
+        />
       );
     }
 

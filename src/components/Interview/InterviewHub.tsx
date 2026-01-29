@@ -49,7 +49,6 @@ import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
-import { InsightDetailView } from '../Discovery/InsightDetailView';
 import { AssignInterviewModal } from './AssignInterviewModal';
 import { InsightCreatorModal } from './InsightCreatorModal';
 import { InsightViewer } from './InsightViewer';
@@ -276,7 +275,6 @@ export const InterviewHub: React.FC = () => {
   const [selectedAssignment, setSelectedAssignment] = useState<InterviewAssignment | null>(null);
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   const [selectedSessionsForInsight, setSelectedSessionsForInsight] = useState<string[]>([]);
-  const [viewingInsightId, setViewingInsightId] = useState<string | null>(null);
 
   // Template questions cache (for read-only preview)
   const [templateQuestionsById, setTemplateQuestionsById] = useState<Record<string, any[]>>({});
@@ -1394,30 +1392,19 @@ export const InterviewHub: React.FC = () => {
     if (doc.type === 'insight') {
       const insight = doc.data as InterviewInsight;
       return (
-        <InsightDetailView
+        <InsightViewer
           insightId={insight.id}
-          insight={{
-            id: insight.id,
-            title: insight.title,
-            description: insight.content,
-            content: insight.content,
-            category: insight.category,
-            insightType: insight.type,
-            promptType: insight.type,
-            impactLevel:
-              insight.priority === 'high'
-                ? 'high'
-                : insight.priority === 'medium'
-                  ? 'medium'
-                  : 'low',
-            confidence: 'high',
-            status: insight.status || 'approved',
-            sourceQuote: insight.sourceQuote,
-            actionable: true,
-            createdAt: insight.createdAt,
-            updatedAt: insight.updatedAt,
+          onClose={() => handleCloseDocument(insight.id)}
+          onRegenerate={async () => {
+            const insightsRes = await Api.get('/interview/insights').catch(() => []);
+            setInsights(Array.isArray(insightsRes) ? insightsRes : []);
           }}
-          onRefresh={loadInsights}
+          onSaved={(data) => {
+            // Update local insight data
+            setInsights((prev) =>
+              prev.map((i) => (i.id === data.id ? { ...i, ...data } : i))
+            );
+          }}
         />
       );
     }
@@ -2429,18 +2416,6 @@ export const InterviewHub: React.FC = () => {
         }}
       />
 
-      {/* Insight Viewer Modal */}
-      {viewingInsightId && (
-        <InsightViewer
-          insightId={viewingInsightId}
-          onClose={() => setViewingInsightId(null)}
-          onRegenerate={async () => {
-            // Refresh insights after regeneration
-            const insightsRes = await Api.get('/interview/insights').catch(() => []);
-            setInsights(Array.isArray(insightsRes) ? insightsRes : []);
-          }}
-        />
-      )}
     </div>
   );
 };

@@ -57,6 +57,7 @@ interface Notification {
 interface NotificationsHubProps {
   onOpenTask?: (taskId: string) => void;
   onOpenDecision?: (decisionId: string) => void;
+  onOpenInitiative?: (initiativeId: string) => void;
 }
 
 // Group notifications by time
@@ -403,6 +404,7 @@ interface FilterChip {
 export const NotificationsHub: React.FC<NotificationsHubProps> = ({
   onOpenTask,
   onOpenDecision,
+  onOpenInitiative,
 }) => {
   const { t } = useTranslation();
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -551,6 +553,13 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
       onOpenDecision
     ) {
       onOpenDecision(notification.relatedObjectId);
+    } else if (
+      (notification.relatedObjectType === 'INITIATIVE' ||
+        notification.relatedObjectType === 'initiative') &&
+      notification.relatedObjectId &&
+      onOpenInitiative
+    ) {
+      onOpenInitiative(notification.relatedObjectId);
     }
   };
 
