@@ -16,14 +16,18 @@ import {
   ChevronLeft,
   Clock,
   Edit3,
+  Eye,
   FileText,
   Flag,
+  History,
   Layers,
   Loader2,
   Minus,
+  Pause,
   Play,
   Plus,
   Save,
+  Share2,
   Sparkles,
   Tag,
   Target,
@@ -240,6 +244,35 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const [isGeneratingIdeas, setIsGeneratingIdeas] = useState(false);
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
 
+  // Activity Log
+  interface ActivityLogEntry {
+    id: string;
+    type:
+      | 'created'
+      | 'status_change'
+      | 'assignment'
+      | 'comment'
+      | 'edit'
+      | 'attachment'
+      | 'deadline'
+      | 'priority';
+    description: string;
+    userId?: string;
+    userName?: string;
+    timestamp: string;
+    oldValue?: string;
+    newValue?: string;
+  }
+  const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([
+    {
+      id: '1',
+      type: 'created',
+      description: isPolish ? 'Zadanie utworzone' : 'Task created',
+      userName: createdBy || 'System',
+      timestamp: createdAt || new Date().toISOString(),
+    },
+  ]);
+
   // UI State
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
@@ -403,6 +436,28 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const handleCompleteTask = () => {
     setStatus('done');
     toast.success(isPolish ? 'Zadanie ukończone' : 'Task completed');
+  };
+
+  const handleRequestReview = () => {
+    setStatus('review');
+    toast.success(isPolish ? 'Wysłano do przeglądu' : 'Sent for review');
+  };
+
+  const handlePauseTask = () => {
+    setStatus('todo');
+    toast.success(isPolish ? 'Zadanie wstrzymane' : 'Task paused');
+  };
+
+  const handleBlockTask = () => {
+    setStatus('blocked');
+    toast.success(isPolish ? 'Zadanie zablokowane' : 'Task blocked');
+  };
+
+  const handleDelegateTask = () => {
+    // TODO: Open delegation modal
+    toast.success(
+      isPolish ? 'Funkcja delegowania w przygotowaniu' : 'Delegation feature coming soon'
+    );
   };
 
   const handleDelete = async () => {
@@ -991,6 +1046,167 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
                 )}
               </AnimatePresence>
             </motion.div>
+
+            {/* Activity Log */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+            >
+              <motion.button
+                whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => toggleSection('activityLog')}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-slate-500/10 to-gray-500/10 dark:from-slate-500/20 dark:to-gray-500/20">
+                    <History size={18} className="text-slate-500 dark:text-slate-400" />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {isPolish ? 'Historia zmian' : 'Activity Log'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {activityLog.length > 0 && (
+                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                      {activityLog.length}
+                    </span>
+                  )}
+                  <motion.div
+                    animate={{ rotate: expandedSections.has('activityLog') ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown size={18} className="text-slate-400" />
+                  </motion.div>
+                </div>
+              </motion.button>
+
+              <AnimatePresence>
+                {expandedSections.has('activityLog') && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                  >
+                    <div className="p-4 max-h-80 overflow-y-auto">
+                      {activityLog.length === 0 ? (
+                        <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
+                          <History
+                            size={24}
+                            className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                          />
+                          <p className="text-sm text-slate-400 dark:text-slate-500">
+                            {isPolish ? 'Brak historii' : 'No activity yet'}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="relative">
+                          {/* Timeline line */}
+                          <div className="absolute left-3 top-2 bottom-2 w-px bg-slate-200 dark:bg-navy-700" />
+
+                          <div className="space-y-4">
+                            {activityLog.map((entry, index) => {
+                              const getIcon = () => {
+                                switch (entry.type) {
+                                  case 'created':
+                                    return <Plus size={12} />;
+                                  case 'status_change':
+                                    return <CheckCircle2 size={12} />;
+                                  case 'assignment':
+                                    return <User size={12} />;
+                                  case 'comment':
+                                    return <FileText size={12} />;
+                                  case 'edit':
+                                    return <Edit3 size={12} />;
+                                  case 'attachment':
+                                    return <FileText size={12} />;
+                                  case 'deadline':
+                                    return <Calendar size={12} />;
+                                  case 'priority':
+                                    return <Flag size={12} />;
+                                  default:
+                                    return <Clock size={12} />;
+                                }
+                              };
+
+                              const getColor = () => {
+                                switch (entry.type) {
+                                  case 'created':
+                                    return 'bg-emerald-500 text-white';
+                                  case 'status_change':
+                                    return 'bg-blue-500 text-white';
+                                  case 'assignment':
+                                    return 'bg-purple-500 text-white';
+                                  case 'comment':
+                                    return 'bg-amber-500 text-white';
+                                  case 'edit':
+                                    return 'bg-slate-500 text-white';
+                                  case 'deadline':
+                                    return 'bg-red-500 text-white';
+                                  case 'priority':
+                                    return 'bg-orange-500 text-white';
+                                  default:
+                                    return 'bg-slate-400 text-white';
+                                }
+                              };
+
+                              return (
+                                <div key={entry.id} className="relative flex gap-3 pl-1">
+                                  {/* Icon */}
+                                  <div
+                                    className={`relative z-10 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${getColor()}`}
+                                  >
+                                    {getIcon()}
+                                  </div>
+
+                                  {/* Content */}
+                                  <div className="flex-1 min-w-0 pb-2">
+                                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                                      {entry.description}
+                                      {entry.oldValue && entry.newValue && (
+                                        <span className="text-slate-400 dark:text-slate-500">
+                                          {' '}
+                                          <span className="line-through">
+                                            {entry.oldValue}
+                                          </span> →{' '}
+                                          <span className="font-medium text-slate-600 dark:text-slate-300">
+                                            {entry.newValue}
+                                          </span>
+                                        </span>
+                                      )}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      {entry.userName && (
+                                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                                          {entry.userName}
+                                        </span>
+                                      )}
+                                      <span className="text-xs text-slate-400 dark:text-slate-500">
+                                        {new Date(entry.timestamp).toLocaleString(
+                                          isPolish ? 'pl-PL' : 'en-US',
+                                          {
+                                            month: 'short',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                          }
+                                        )}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           </div>
 
           {/* Right Column - 1/3 */}
@@ -1004,32 +1220,76 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
               animate={{ opacity: 1, x: 0 }}
               className="space-y-2"
             >
-              {/* Primary Actions */}
+              {/* Primary Actions - Status dependent */}
               {taskId && !isDone && (
-                <div className="grid grid-cols-2 gap-2">
-                  {status === 'todo' && (
-                    <motion.button
-                      whileHover={{ scale: 1.02, boxShadow: '0 4px 20px rgba(59, 130, 246, 0.2)' }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleStartTask}
-                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-blue-400/40 text-blue-500 hover:border-blue-500 hover:bg-blue-500/10 font-medium transition-all shadow-sm"
-                    >
-                      <Play size={18} />
-                      <span>{isPolish ? 'Rozpocznij' : 'Start'}</span>
-                    </motion.button>
-                  )}
-                  {(status === 'in_progress' || status === 'review') && (
-                    <motion.button
-                      whileHover={{ scale: 1.02, boxShadow: '0 4px 20px rgba(16, 185, 129, 0.2)' }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleCompleteTask}
-                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-emerald-400/40 text-emerald-500 hover:border-emerald-500 hover:bg-emerald-500/10 font-medium transition-all shadow-sm"
-                    >
-                      <Check size={18} />
-                      <span>{isPolish ? 'Ukończ' : 'Complete'}</span>
-                    </motion.button>
-                  )}
-                  {taskId && (
+                <>
+                  {/* Row 1: Main status actions */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Start - only for todo */}
+                    {status === 'todo' && (
+                      <motion.button
+                        whileHover={{
+                          scale: 1.02,
+                          boxShadow: '0 4px 20px rgba(59, 130, 246, 0.2)',
+                        }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleStartTask}
+                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-blue-400/40 text-blue-500 hover:border-blue-500 hover:bg-blue-500/10 font-medium transition-all shadow-sm"
+                      >
+                        <Play size={18} />
+                        <span>{isPolish ? 'Rozpocznij' : 'Start'}</span>
+                      </motion.button>
+                    )}
+
+                    {/* Complete - for in_progress or review */}
+                    {(status === 'in_progress' || status === 'review') && (
+                      <motion.button
+                        whileHover={{
+                          scale: 1.02,
+                          boxShadow: '0 4px 20px rgba(16, 185, 129, 0.2)',
+                        }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleCompleteTask}
+                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-emerald-400/40 text-emerald-500 hover:border-emerald-500 hover:bg-emerald-500/10 font-medium transition-all shadow-sm"
+                      >
+                        <Check size={18} />
+                        <span>{isPolish ? 'Ukończ' : 'Complete'}</span>
+                      </motion.button>
+                    )}
+
+                    {/* Request Review - for in_progress */}
+                    {status === 'in_progress' && (
+                      <motion.button
+                        whileHover={{
+                          scale: 1.02,
+                          boxShadow: '0 4px 20px rgba(139, 92, 246, 0.2)',
+                        }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleRequestReview}
+                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-violet-400/40 text-violet-500 hover:border-violet-500 hover:bg-violet-500/10 font-medium transition-all shadow-sm"
+                      >
+                        <Eye size={18} />
+                        <span>{isPolish ? 'Do przeglądu' : 'Review'}</span>
+                      </motion.button>
+                    )}
+
+                    {/* Resume - for blocked */}
+                    {status === 'blocked' && (
+                      <motion.button
+                        whileHover={{
+                          scale: 1.02,
+                          boxShadow: '0 4px 20px rgba(59, 130, 246, 0.2)',
+                        }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleStartTask}
+                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-blue-400/40 text-blue-500 hover:border-blue-500 hover:bg-blue-500/10 font-medium transition-all shadow-sm"
+                      >
+                        <Play size={18} />
+                        <span>{isPolish ? 'Wznów' : 'Resume'}</span>
+                      </motion.button>
+                    )}
+
+                    {/* Delete - always visible */}
                     <motion.button
                       whileHover={{ scale: 1.02, boxShadow: '0 4px 20px rgba(239, 68, 68, 0.2)' }}
                       whileTap={{ scale: 0.98 }}
@@ -1039,11 +1299,51 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
                       <Trash2 size={18} />
                       <span>{isPolish ? 'Usuń' : 'Delete'}</span>
                     </motion.button>
-                  )}
-                </div>
+                  </div>
+
+                  {/* Row 2: Secondary actions */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Pause - for in_progress */}
+                    {status === 'in_progress' && (
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handlePauseTask}
+                        className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-navy-500 text-sm font-medium transition-all shadow-sm"
+                      >
+                        <Pause size={16} />
+                        <span>{isPolish ? 'Wstrzymaj' : 'Pause'}</span>
+                      </motion.button>
+                    )}
+
+                    {/* Block - for todo or in_progress */}
+                    {(status === 'todo' || status === 'in_progress') && (
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleBlockTask}
+                        className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:border-orange-400 hover:text-orange-500 text-sm font-medium transition-all shadow-sm"
+                      >
+                        <AlertCircle size={16} />
+                        <span>{isPolish ? 'Zablokuj' : 'Block'}</span>
+                      </motion.button>
+                    )}
+
+                    {/* Delegate - always available when not done */}
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleDelegateTask}
+                      className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-navy-500 text-sm font-medium transition-all shadow-sm"
+                    >
+                      <Share2 size={16} />
+                      <span>{isPolish ? 'Deleguj' : 'Delegate'}</span>
+                    </motion.button>
+                  </div>
+                </>
               )}
 
-              {/* Save Button */}
+              {/* Save Button - Always visible */}
               <motion.button
                 whileHover={{ scale: 1.02, boxShadow: '0 4px 20px rgba(139, 92, 246, 0.2)' }}
                 whileTap={{ scale: 0.98 }}
