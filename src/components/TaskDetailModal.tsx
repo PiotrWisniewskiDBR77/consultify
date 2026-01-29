@@ -433,45 +433,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                       </div>
                     </div>
 
-                    <div className="p-4 rounded-lg bg-slate-50 dark:bg-navy-950/30 border border-slate-200 dark:border-navy-700">
-                      <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-3">
-                        Strategic Contribution
-                      </h4>
-                      <div className="space-y-2">
-                        {['PROCESS_CHANGE', 'BEHAVIOR_CHANGE', 'CAPABILITY_CHANGE'].map((type) => (
-                          <label
-                            key={type}
-                            className="flex items-center gap-2 p-2 rounded hover:bg-slate-200 dark:hover:bg-white/5 cursor-pointer transition-colors"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={task.strategicContribution?.includes(type as any) || false}
-                              onChange={(e) => {
-                                const current = task.strategicContribution || [];
-                                if (e.target.checked) {
-                                  setTask({
-                                    ...task,
-                                    strategicContribution: [...current, type as any],
-                                  });
-                                } else {
-                                  setTask({
-                                    ...task,
-                                    strategicContribution: (Array.isArray(current)
-                                      ? current
-                                      : []
-                                    ).filter((t: any) => t !== type),
-                                  });
-                                }
-                              }}
-                              className="rounded border-slate-300 dark:border-white/20 bg-white dark:bg-navy-900 text-blue-600 focus:ring-0"
-                            />
-                            <span className="text-xs text-navy-900 dark:text-slate-300 capitalize">
-                              {type.replace('_', ' ').toLowerCase()}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
+                    {/* Strategic Contribution (removed for now) */}
                   </div>
                 </div>
               )}

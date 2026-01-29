@@ -69,6 +69,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [initiatives, setInitiatives] = useState<PortfolioInitiative[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showNewModal, setShowNewModal] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -77,6 +78,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [bulkPriority, setBulkPriority] = useState<'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | ''>('');
   const [bulkOwnerBusinessId, setBulkOwnerBusinessId] = useState<string>('');
   const [bulkOwnerExecutionId, setBulkOwnerExecutionId] = useState<string>('');
+
+  // New initiative form (P0 minimal)
+  const [newTitle, setNewTitle] = useState('');
+  const [newAxis, setNewAxis] = useState<'strategic' | 'operational' | 'transformational' | 'compliance'>(
+    'operational'
+  );
+  const [newSummary, setNewSummary] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
 
   // Side panel state
   const [selectedInitiative, setSelectedInitiative] = useState<PortfolioInitiative | null>(null);
@@ -98,6 +107,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       }
 
       try {
+        setLoadError(null);
         const params = new URLSearchParams();
         if (currentProjectId) params.append('projectId', currentProjectId);
         if (
@@ -129,7 +139,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         setInitiatives(allowed);
       } catch (error: any) {
         console.error('[InitiativesHub] Fetch error:', error);
-        toast.error('Failed to load initiatives');
+        setLoadError(error?.response?.data?.error || error?.message || 'Failed to load initiatives');
       } finally {
         setIsLoading(false);
         setIsRefreshing(false);
@@ -168,11 +178,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     }
   }, [initiatives, selectedIds]);
 
-  useEffect(() => {
-    if (activeStatusFilter && !ALLOWED_STATUSES.includes(activeStatusFilter as InitiativeStatus)) {
-      setActiveStatusFilter(null);
-    }
-  }, [activeStatusFilter]);
+  // NOTE: We normalize "all" to null in the handler below (no flicker).
 
   // ============================================
   // STATUS FILTERS
@@ -360,6 +366,31 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       return <InitiativeDocumentView initiativeId={activeDocumentId} />;
     }
 
+    if (loadError) {
+      return (
+        <div className="flex items-center justify-center h-full px-6">
+          <div className="max-w-xl w-full p-5 rounded-2xl border border-red-500/20 bg-red-900/10">
+            <div className="text-sm font-semibold text-red-300">Failed to load initiatives</div>
+            <div className="text-sm text-red-200/80 mt-1">{loadError}</div>
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={() => fetchData(true)}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-red-500/20 text-red-200 hover:bg-red-500/30 transition-colors"
+              >
+                Retry
+              </button>
+              <button
+                onClick={() => setLoadError(null)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5 transition-colors"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     if (isLoading) {
       return (
         <div className="flex items-center justify-center h-full">
@@ -496,7 +527,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         filterActions={filterActions}
         statusFilters={statusFilters}
         activeStatusFilter={activeStatusFilter}
-        onStatusFilterChange={setActiveStatusFilter}
+        onStatusFilterChange={(id) => setActiveStatusFilter(id === 'all' ? null : id)}
         availableViewModes={availableViewModes}
       >
         <div className="flex-1 overflow-hidden">{renderContent()}</div>
@@ -522,14 +553,89 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-navy-900 border border-navy-700 rounded-xl p-6 w-full max-w-md">
             <h2 className="text-lg font-semibold text-white mb-4">Create New Initiative</h2>
-            <p className="text-slate-400 text-sm mb-6">
-              This feature is coming soon. Use the AI Chat to generate initiatives from assessments.
-            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Title *</label>
+                <input
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  className="w-full px-3 py-2 bg-navy-950 border border-navy-700 rounded-lg text-sm text-white"
+                  placeholder="e.g. Submit compliance documentation"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Axis</label>
+                <select
+                  value={newAxis}
+                  onChange={(e) => setNewAxis(e.target.value as any)}
+                  className="w-full px-3 py-2 bg-navy-950 border border-navy-700 rounded-lg text-sm text-white"
+                >
+                  <option value="operational">Operational</option>
+                  <option value="strategic">Strategic</option>
+                  <option value="transformational">Transformational</option>
+                  <option value="compliance">Compliance</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Summary</label>
+                <textarea
+                  value={newSummary}
+                  onChange={(e) => setNewSummary(e.target.value)}
+                  className="w-full px-3 py-2 bg-navy-950 border border-navy-700 rounded-lg text-sm text-white resize-none"
+                  rows={3}
+                  placeholder="Short problem/goal statement…"
+                />
+              </div>
+            </div>
             <button
-              onClick={() => setShowNewModal(false)}
-              className="w-full py-2 text-sm text-slate-400 hover:text-white transition-colors border border-navy-600 rounded-lg hover:bg-navy-800"
+              disabled={isCreating}
+              onClick={async () => {
+                if (!newTitle.trim()) {
+                  toast.error('Title is required');
+                  return;
+                }
+                try {
+                  setIsCreating(true);
+                  const created = await Api.post('/initiatives', {
+                    projectId: currentProjectId || undefined,
+                    title: newTitle.trim(),
+                    axis: newAxis,
+                    summary: newSummary.trim() || undefined,
+                    status: 'DRAFT',
+                  });
+                  toast.success('Initiative created');
+                  setShowNewModal(false);
+                  setNewTitle('');
+                  setNewSummary('');
+                  // Refresh list and open quick preview for immediate follow-up
+                  fetchData(true);
+                  const createdId = created?.id || created?.initiative?.id;
+                  if (createdId) {
+                    // Best-effort: fetch full row for drawer
+                    try {
+                      const full = await Api.get(`/initiatives/${createdId}`);
+                      handleInitiativeClick(full as any);
+                    } catch {
+                      // ignore
+                    }
+                  }
+                } catch (e: any) {
+                  toast.error(e?.response?.data?.error || e?.message || 'Failed to create initiative');
+                } finally {
+                  setIsCreating(false);
+                }
+              }}
+              className="w-full mt-6 py-2 text-sm text-white bg-primary-600 hover:bg-primary-500 transition-colors rounded-lg disabled:opacity-50"
             >
-              Close
+              {isCreating ? 'Creating…' : 'Create'}
+            </button>
+            <button
+              disabled={isCreating}
+              onClick={() => setShowNewModal(false)}
+              className="w-full mt-2 py-2 text-sm text-slate-400 hover:text-white transition-colors border border-navy-600 rounded-lg hover:bg-navy-800 disabled:opacity-50"
+            >
+              Cancel
             </button>
           </div>
         </div>
@@ -549,9 +655,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   className="w-full px-3 py-2 bg-navy-950 border border-navy-700 rounded-lg text-sm text-white"
                 >
                   <option value="">No change</option>
-                  <option value="PLANNING">Planning</option>
-                  <option value="REVIEW">Review</option>
-                  <option value="APPROVED">Approved</option>
+                  {ALLOWED_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {STATUS_METADATA[s].label}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>

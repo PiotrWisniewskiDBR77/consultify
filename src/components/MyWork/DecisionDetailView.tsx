@@ -25,11 +25,19 @@ import {
   Scale,
   Share2,
   Star,
+  Tag,
   ThumbsDown,
   ThumbsUp,
   Trash2,
   Users,
   X,
+  History,
+  Edit3,
+  MessageSquare,
+  Clock,
+  ArrowUp,
+  UserCheck,
+  Sparkles,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -43,7 +51,6 @@ import {
   AttachmentsSection,
   type Comment,
   CommentsSection,
-  DeadlineAlertBanner,
   DecisionReadinessBar,
   type DecisionReadinessData,
   DelegationModal,
@@ -62,6 +69,9 @@ import {
   StakeholdersSection,
   type WarningThresholds,
 } from './shared';
+import { useAppStore } from '@/store/useAppStore';
+import { useConversationStore } from '@/store/useConversationStore';
+import { AppView } from '@/types';
 
 interface DecisionDetailViewProps {
   decisionId: string | null;
@@ -158,6 +168,8 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const { isChatCollapsed, toggleChatCollapse } = useAppStore();
+  const { updateWorkspaceFromView } = useConversationStore();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -217,6 +229,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const [isGeneratingRisks, setIsGeneratingRisks] = useState(false);
   const [isGeneratingAlternatives, setIsGeneratingAlternatives] = useState(false);
   const [isGeneratingAIComment, setIsGeneratingAIComment] = useState(false);
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
 
   // Escalation & Reminders
   const [reminders, setReminders] = useState<ReminderRule[]>([]);
@@ -231,6 +244,31 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [linkedItems, setLinkedItems] = useState<LinkedItem[]>([]);
+
+  // Tags
+  const [tags, setTags] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState('');
+
+  // Activity Log
+  interface ActivityLogEntry {
+    id: string;
+    type: 'status_change' | 'assignment' | 'comment' | 'edit' | 'deadline' | 'priority' | 'created' | 'approved' | 'rejected' | 'escalated' | 'deferred';
+    description: string;
+    timestamp: string;
+    userId?: string;
+    userName?: string;
+    oldValue?: string;
+    newValue?: string;
+  }
+  const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([
+    {
+      id: '1',
+      type: 'created',
+      description: isPolish ? 'Decyzja utworzona' : 'Decision created',
+      timestamp: new Date().toISOString(),
+      userName: 'System',
+    },
+  ]);
 
   // Stakeholders & Delegation
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
@@ -256,6 +294,25 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     } catch (error) {
       console.error('Failed to load users', error);
     }
+  };
+
+  // Activity Log helper
+  const addActivityLogEntry = (
+    type: ActivityLogEntry['type'],
+    description: string,
+    oldValue?: string,
+    newValue?: string
+  ) => {
+    const entry: ActivityLogEntry = {
+      id: Math.random().toString(36).substr(2, 9),
+      type,
+      description,
+      timestamp: new Date().toISOString(),
+      userName: 'Current User',
+      oldValue,
+      newValue,
+    };
+    setActivityLog((prev) => [entry, ...prev]);
   };
 
   useEffect(() => {
@@ -371,12 +428,81 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     }
   };
 
+  const handleOpenChat = async () => {
+    // Persist local draft so user never loses input
+    const draftKey = `consultinity-decision-draft:${decisionId || 'new'}`;
+    try {
+      localStorage.setItem(
+        draftKey,
+        JSON.stringify({
+          schemaVersion: 1,
+          source: 'chat',
+          savedAt: new Date().toISOString(),
+          decisionId: decisionId || null,
+          draft: {
+            title,
+            description,
+            status,
+            priority,
+            category,
+            dueDate: dueDate || null,
+            rationale,
+            deciderId: deciderId || null,
+            alternatives,
+            selectedAlternativeId,
+            impact,
+            comments,
+            attachments,
+            linkedItems,
+            stakeholders,
+            reminders,
+            escalation,
+            thresholds,
+            tags,
+          },
+        })
+      );
+    } catch (e) {
+      console.warn('[DecisionDetailView] Failed to persist local draft (chat)', e);
+    }
+
+    // Ensure chat panel is visible
+    if (isChatCollapsed) {
+      toggleChatCollapse();
+    }
+
+    // Push rich decision context into the unified chat workspace context
+    updateWorkspaceFromView(AppView.MY_WORK, decisionId || 'new', {
+      type: 'decision',
+      id: decisionId || null,
+      title,
+      description,
+      status,
+      priority,
+      category,
+      dueDate: dueDate || null,
+      rationale,
+      deciderId: deciderId || null,
+      alternativesCount: alternatives.length,
+      selectedAlternativeId,
+      commentsCount: comments.length,
+      attachmentsCount: attachments.length,
+    });
+  };
+
   const handleApprove = async () => {
     if (!decisionId) return;
     try {
       await Api.updateDecision(decisionId, { status: 'APPROVED' });
+      const oldStatus = status;
       setStatus('approved');
       setDecisionDate(new Date().toISOString());
+      addActivityLogEntry(
+        'approved',
+        isPolish ? 'Decyzja zatwierdzona' : 'Decision approved',
+        isPolish ? 'Oczekująca' : 'Pending',
+        isPolish ? 'Zatwierdzona' : 'Approved'
+      );
       toast.success(isPolish ? 'Decyzja zatwierdzona' : 'Decision approved');
       onSaved?.({ title, status: 'approved' });
     } catch (error) {
@@ -388,12 +514,55 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     if (!decisionId) return;
     try {
       await Api.updateDecision(decisionId, { status: 'REJECTED' });
+      const oldStatus = status;
       setStatus('rejected');
       setDecisionDate(new Date().toISOString());
+      addActivityLogEntry(
+        'rejected',
+        isPolish ? 'Decyzja odrzucona' : 'Decision rejected',
+        isPolish ? 'Oczekująca' : 'Pending',
+        isPolish ? 'Odrzucona' : 'Rejected'
+      );
       toast.success(isPolish ? 'Decyzja odrzucona' : 'Decision rejected');
       onSaved?.({ title, status: 'rejected' });
     } catch (error) {
       toast.error(isPolish ? 'Nie udało się odrzucić' : 'Failed to reject');
+    }
+  };
+
+  const handleDefer = async () => {
+    if (!decisionId) return;
+    try {
+      await Api.updateDecision(decisionId, { status: 'DEFERRED' });
+      setStatus('deferred');
+      addActivityLogEntry(
+        'deferred',
+        isPolish ? 'Decyzja odroczona' : 'Decision deferred',
+        isPolish ? 'Oczekująca' : 'Pending',
+        isPolish ? 'Odroczona' : 'Deferred'
+      );
+      toast.success(isPolish ? 'Decyzja odroczona' : 'Decision deferred');
+      onSaved?.({ title, status: 'deferred' });
+    } catch (error) {
+      toast.error(isPolish ? 'Nie udało się odroczyć' : 'Failed to defer');
+    }
+  };
+
+  const handleEscalate = async () => {
+    if (!decisionId) return;
+    try {
+      await Api.updateDecision(decisionId, { status: 'ESCALATED' });
+      setStatus('escalated');
+      addActivityLogEntry(
+        'escalated',
+        isPolish ? 'Decyzja eskalowana' : 'Decision escalated',
+        isPolish ? 'Oczekująca' : 'Pending',
+        isPolish ? 'Eskalowana' : 'Escalated'
+      );
+      toast.success(isPolish ? 'Decyzja eskalowana' : 'Decision escalated');
+      onSaved?.({ title, status: 'escalated' });
+    } catch (error) {
+      toast.error(isPolish ? 'Nie udało się eskalować' : 'Failed to escalate');
     }
   };
 
@@ -541,6 +710,24 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       toast.error(isPolish ? 'Błąd generowania' : 'Generation failed');
     } finally {
       setIsGeneratingAlternatives(false);
+    }
+  };
+
+  const generateDescriptionAI = async () => {
+    setIsGeneratingDescription(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      const generatedDescription = isPolish
+        ? `## Kontekst decyzji\n\nDecyzja dotyczy wyboru optymalnego rozwiązania dla ${title || 'bieżącego problemu'}.\n\n### Tło\nW ramach analizy zidentyfikowano następujące kluczowe czynniki:\n- Wymagania biznesowe i techniczne\n- Ograniczenia budżetowe i czasowe\n- Wpływ na obecne procesy\n\n### Zakres\nDecyzja obejmuje:\n1. Wybór dostawcy/technologii\n2. Określenie harmonogramu wdrożenia\n3. Alokację zasobów\n\n### Oczekiwane rezultaty\n- Poprawa efektywności procesów\n- Redukcja kosztów operacyjnych\n- Zwiększenie konkurencyjności`
+        : `## Decision Context\n\nThis decision concerns selecting the optimal solution for ${title || 'the current issue'}.\n\n### Background\nThe analysis has identified the following key factors:\n- Business and technical requirements\n- Budget and timeline constraints\n- Impact on existing processes\n\n### Scope\nThe decision covers:\n1. Vendor/technology selection\n2. Implementation timeline definition\n3. Resource allocation\n\n### Expected Outcomes\n- Process efficiency improvement\n- Operational cost reduction\n- Increased competitiveness`;
+
+      setDescription(generatedDescription);
+      toast.success(isPolish ? 'Opis wygenerowany przez AI' : 'Description generated by AI');
+    } catch {
+      toast.error(isPolish ? 'Błąd generowania opisu' : 'Error generating description');
+    } finally {
+      setIsGeneratingDescription(false);
     }
   };
 
@@ -708,6 +895,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     } else {
       setComments([...comments, newComment]);
     }
+    addActivityLogEntry('comment', isPolish ? 'Dodano komentarz' : 'Comment added');
   };
 
   const handleDeleteComment = async (id: string) => {
@@ -750,58 +938,150 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       <div className="p-6">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
           {/* Main */}
-          <div className="space-y-5 order-2 lg:order-1">
-            {/* Title Section - Clean Minimal Header */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl p-6 border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50"
-            >
-              <div className="flex items-center gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={onClose}
-                  className="p-2 -ml-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-navy-800/80 backdrop-blur-sm transition-all duration-200"
-                  title={isPolish ? 'Wróć' : 'Back'}
-                >
-                  <ChevronLeft size={20} />
-                </motion.button>
+          {/* Title Header with Save & Chat */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="col-span-full bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+          >
+            <div className="flex items-center gap-4 px-5 py-4">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onClose}
+                className="p-2 -ml-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-navy-800/80 transition-all"
+              >
+                <ChevronLeft size={20} />
+              </motion.button>
 
+              <div className="flex-1 flex items-center gap-3">
+                <div
+                  className={`w-3 h-3 rounded-full ${statusConfig.color} shadow-lg shadow-${statusConfig.color.replace('bg-', '')}/50`}
+                />
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="flex-1 text-2xl font-bold bg-transparent text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 rounded-lg px-2 py-1 -mx-2 -my-1 transition-all"
-                  placeholder={isPolish ? 'Wprowadź tytuł decyzji...' : 'Enter decision title...'}
+                  className="flex-1 text-xl font-bold bg-transparent text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
+                  placeholder={isPolish ? 'Tytuł decyzji...' : 'Decision title...'}
                   autoFocus={!decisionId}
                 />
               </div>
-            </motion.div>
 
-            {/* Description - Enhanced with Floating Label Effect */}
+              <div className="flex items-center gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-blue-500/40 dark:border-blue-400/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 dark:hover:bg-blue-500/10 text-sm font-semibold transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                  title={isPolish ? 'Zapisz' : 'Save'}
+                >
+                  {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                  <span>{isPolish ? 'Zapisz' : 'Save'}</span>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleOpenChat}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-purple-500/40 dark:border-purple-400/30 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 dark:hover:bg-purple-500/10 text-sm font-semibold transition-all shadow-sm"
+                  title={isPolish ? 'Otwórz czat do tej decyzji' : 'Open decision chat'}
+                >
+                  <MessageSquare size={16} />
+                  <span>{isPolish ? 'Czat' : 'Chat'}</span>
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+          <div className="space-y-5 order-2 lg:order-1">
+
+            {/* Description - Collapsible with AI */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="relative bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl rounded-2xl p-5 border border-slate-200/50 dark:border-navy-700/50 shadow-md hover:shadow-lg transition-shadow duration-300"
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
             >
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
-                <FileText size={16} className="text-purple-500" />
-                {isPolish ? 'Opis problemu / kontekst' : 'Problem description / context'}
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={5}
-                className="w-full px-4 py-3 rounded-xl bg-gradient-to-br from-slate-50 to-white dark:from-navy-800 dark:to-navy-900 border-2 border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-purple-400 dark:focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 resize-none transition-all duration-200"
-                placeholder={
-                  isPolish
-                    ? 'Opisz kontekst i wymagania decyzji...'
-                    : 'Describe the context and requirements...'
-                }
-              />
+              <motion.button
+                whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => toggleSection('description')}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 dark:from-purple-500/20 dark:to-pink-500/20">
+                    <FileText size={18} className="text-purple-500 dark:text-purple-400" />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {isPolish ? 'Opis problemu / kontekst' : 'Problem description / context'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* AI Button - visible only when expanded */}
+                  <AnimatePresence>
+                    {expandedSections.has('description') && (
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          generateDescriptionAI();
+                        }}
+                        disabled={isGeneratingDescription}
+                        className="p-1.5 rounded-lg bg-gradient-to-r from-purple-500/10 to-pink-500/10 hover:from-purple-500/20 hover:to-pink-500/20 text-purple-500 dark:text-purple-400 transition-all disabled:opacity-50"
+                        title={isPolish ? 'Generuj opis AI' : 'Generate AI description'}
+                      >
+                        {isGeneratingDescription ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Sparkles size={14} />
+                        )}
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                  {description && (
+                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                      {description.length > 0 ? `${description.length}` : ''}
+                    </span>
+                  )}
+                  <motion.div
+                    animate={{ rotate: expandedSections.has('description') ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown size={18} className="text-slate-400" />
+                  </motion.div>
+                </div>
+              </motion.button>
+
+              <AnimatePresence>
+                {expandedSections.has('description') && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                  >
+                    <div className="p-4">
+                      <textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        rows={6}
+                        className="w-full px-4 py-3 rounded-xl bg-gradient-to-br from-slate-50 to-white dark:from-navy-800 dark:to-navy-900 border-2 border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-purple-400 dark:focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 resize-none transition-all duration-200"
+                        placeholder={
+                          isPolish
+                            ? 'Opisz kontekst i wymagania decyzji...'
+                            : 'Describe the context and requirements...'
+                        }
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
 
             {/* Comments */}
@@ -844,13 +1124,182 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
               onToggleExpand={() => toggleSection('alternatives')}
               isGenerating={isGeneratingAlternatives}
             />
+
+            {/* Activity Log */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+            >
+              <motion.button
+                whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => toggleSection('activityLog')}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-slate-500/10 to-gray-500/10 dark:from-slate-500/20 dark:to-gray-500/20">
+                    <History size={18} className="text-slate-500 dark:text-slate-400" />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {isPolish ? 'Historia zmian' : 'Activity Log'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {activityLog.length > 0 && (
+                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                      {activityLog.length}
+                    </span>
+                  )}
+                  <motion.div
+                    animate={{ rotate: expandedSections.has('activityLog') ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown size={18} className="text-slate-400" />
+                  </motion.div>
+                </div>
+              </motion.button>
+
+              <AnimatePresence>
+                {expandedSections.has('activityLog') && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                  >
+                    <div className="p-4">
+                      {activityLog.length === 0 ? (
+                        <div className="text-center py-6 text-slate-400 dark:text-slate-500">
+                          <History size={24} className="mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">
+                            {isPolish ? 'Brak wpisów' : 'No entries'}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="relative">
+                          {/* Timeline line */}
+                          <div className="absolute left-3 top-3 bottom-3 w-px bg-slate-200 dark:bg-navy-700" />
+                          
+                          <div className="space-y-3">
+                            {activityLog.map((entry, index) => {
+                              const getIcon = () => {
+                                switch (entry.type) {
+                                  case 'status_change':
+                                    return <Flag size={12} />;
+                                  case 'approved':
+                                    return <Check size={12} />;
+                                  case 'rejected':
+                                    return <X size={12} />;
+                                  case 'escalated':
+                                    return <ArrowUp size={12} />;
+                                  case 'deferred':
+                                    return <Clock size={12} />;
+                                  case 'assignment':
+                                    return <UserCheck size={12} />;
+                                  case 'comment':
+                                    return <MessageSquare size={12} />;
+                                  case 'edit':
+                                    return <Edit3 size={12} />;
+                                  case 'deadline':
+                                    return <Calendar size={12} />;
+                                  case 'priority':
+                                    return <Flag size={12} />;
+                                  case 'created':
+                                    return <Plus size={12} />;
+                                  default:
+                                    return <History size={12} />;
+                                }
+                              };
+
+                              const getColor = () => {
+                                switch (entry.type) {
+                                  case 'approved':
+                                    return 'bg-emerald-500 text-white';
+                                  case 'rejected':
+                                    return 'bg-red-500 text-white';
+                                  case 'escalated':
+                                    return 'bg-orange-500 text-white';
+                                  case 'deferred':
+                                    return 'bg-slate-500 text-white';
+                                  case 'status_change':
+                                    return 'bg-blue-500 text-white';
+                                  case 'assignment':
+                                    return 'bg-purple-500 text-white';
+                                  case 'comment':
+                                    return 'bg-amber-500 text-white';
+                                  case 'edit':
+                                    return 'bg-slate-500 text-white';
+                                  case 'deadline':
+                                    return 'bg-red-500 text-white';
+                                  case 'priority':
+                                    return 'bg-orange-500 text-white';
+                                  case 'created':
+                                    return 'bg-emerald-500 text-white';
+                                  default:
+                                    return 'bg-slate-400 text-white';
+                                }
+                              };
+
+                              return (
+                                <div key={entry.id} className="relative flex gap-3 pl-1">
+                                  {/* Icon */}
+                                  <div
+                                    className={`relative z-10 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${getColor()}`}
+                                  >
+                                    {getIcon()}
+                                  </div>
+
+                                  {/* Content */}
+                                  <div className="flex-1 min-w-0 pb-2">
+                                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                                      {entry.description}
+                                      {entry.oldValue && entry.newValue && (
+                                        <span className="text-slate-400 dark:text-slate-500">
+                                          {' '}
+                                          <span className="line-through">
+                                            {entry.oldValue}
+                                          </span> →{' '}
+                                          <span className="font-medium text-slate-600 dark:text-slate-300">
+                                            {entry.newValue}
+                                          </span>
+                                        </span>
+                                      )}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      {entry.userName && (
+                                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                                          {entry.userName}
+                                        </span>
+                                      )}
+                                      <span className="text-xs text-slate-400 dark:text-slate-500">
+                                        {new Date(entry.timestamp).toLocaleString(
+                                          isPolish ? 'pl-PL' : 'en-US',
+                                          {
+                                            month: 'short',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                          }
+                                        )}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           </div>
 
           {/* Control Sidebar (manage) - Premium Sticky */}
           <div className="space-y-4 lg:sticky lg:top-6 self-start order-1 lg:order-2">
-            {/* Deadline Alert - Above Control Panel */}
-            <DeadlineAlertBanner dueDate={dueDate} status={status} />
-
             {/* Actions Panel - Outline Style */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
@@ -905,26 +1354,18 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
                   </div>
                 </>
               )}
-
-              {/* Save Button - Purple Outline */}
-              <motion.button
-                whileHover={{ scale: 1.02, borderColor: 'rgb(168, 85, 247)' }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleSave}
-                disabled={saving}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-transparent border border-purple-400/60 text-purple-500 hover:border-purple-500 hover:bg-purple-500/10 font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                <span>{isPolish ? 'Zapisz zmiany' : 'Save Changes'}</span>
-              </motion.button>
             </motion.div>
 
-            {/* Control - Premium Panel */}
+            {/* Control - Premium Panel (Red when overdue) */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.15 }}
-              className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-navy-700/50 shadow-lg overflow-hidden"
+              className={`backdrop-blur-xl rounded-2xl shadow-lg overflow-hidden ${
+                isOverdue
+                  ? 'bg-red-500/10 dark:bg-red-500/10 border border-red-500/40 dark:border-red-400/30'
+                  : 'bg-white/80 dark:bg-navy-900/80 border border-slate-200/50 dark:border-navy-700/50'
+              }`}
             >
               {/* Collapsible Header */}
               <motion.button
@@ -941,12 +1382,19 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
                     {isPolish ? 'Sterowanie' : 'Control'}
                   </span>
                 </div>
-                <motion.div
-                  animate={{ rotate: expandedSections.has('control') ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ChevronDown size={18} className="text-slate-400" />
-                </motion.div>
+                <div className="flex items-center gap-2">
+                  {decisionId && (
+                    <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 bg-slate-100/80 dark:bg-navy-800/80 px-2 py-0.5 rounded-lg">
+                      #{decisionId.slice(0, 8)}
+                    </span>
+                  )}
+                  <motion.div
+                    animate={{ rotate: expandedSections.has('control') ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown size={18} className="text-slate-400" />
+                  </motion.div>
+                </div>
               </motion.button>
 
               {/* Collapsible Content */}
@@ -1379,6 +1827,130 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
               dueDate={dueDate}
             />
 
+            {/* Tags */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.28 }}
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+            >
+              <motion.button
+                whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => toggleSection('tags')}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-pink-500/10 dark:bg-pink-500/20">
+                    <Tag size={18} className="text-pink-500 dark:text-pink-400" />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {isPolish ? 'Tagi' : 'Tags'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {tags.length > 0 && (
+                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                      {tags.length}
+                    </span>
+                  )}
+                  <motion.div
+                    animate={{ rotate: expandedSections.has('tags') ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown size={18} className="text-slate-400" />
+                  </motion.div>
+                </div>
+              </motion.button>
+
+              <AnimatePresence>
+                {expandedSections.has('tags') && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                  >
+                    <div className="p-4 space-y-3">
+                      {/* Tags list */}
+                      {tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {tags.map((tag, index) => (
+                            <motion.span
+                              key={index}
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500/10 to-purple-500/10 dark:from-pink-500/20 dark:to-purple-500/20 text-pink-700 dark:text-pink-300 text-xs font-medium"
+                            >
+                              #{tag}
+                              <button
+                                onClick={() => setTags(tags.filter((_, i) => i !== index))}
+                                className="p-0.5 rounded-full hover:bg-pink-500/20 transition-colors"
+                              >
+                                <X size={12} />
+                              </button>
+                            </motion.span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Add tag input */}
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={newTag}
+                          onChange={(e) => setNewTag(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && newTag.trim()) {
+                              if (!tags.includes(newTag.trim().toLowerCase())) {
+                                setTags([...tags, newTag.trim().toLowerCase()]);
+                              }
+                              setNewTag('');
+                            }
+                          }}
+                          placeholder={isPolish ? 'Dodaj tag...' : 'Add tag...'}
+                          className="flex-1 px-3 py-2 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-pink-400"
+                        />
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => {
+                            if (newTag.trim() && !tags.includes(newTag.trim().toLowerCase())) {
+                              setTags([...tags, newTag.trim().toLowerCase()]);
+                              setNewTag('');
+                            }
+                          }}
+                          className="px-4 py-2 rounded-lg bg-pink-500/10 dark:bg-pink-500/20 text-pink-600 dark:text-pink-400 hover:bg-pink-500/20 dark:hover:bg-pink-500/30 text-sm font-medium transition-all"
+                        >
+                          <Plus size={16} />
+                        </motion.button>
+                      </div>
+
+                      {/* Quick tags */}
+                      {tags.length === 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {[
+                            isPolish ? 'pilne' : 'urgent',
+                            isPolish ? 'strategiczne' : 'strategic',
+                            isPolish ? 'budżet' : 'budget',
+                            isPolish ? 'techniczne' : 'technical',
+                          ].map((quickTag) => (
+                            <button
+                              key={quickTag}
+                              onClick={() => setTags([...tags, quickTag])}
+                              className="px-2.5 py-1 rounded-full text-xs bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400 hover:bg-pink-100 dark:hover:bg-pink-500/20 hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
+                            >
+                              #{quickTag}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
             {/* Attachments */}
             <AttachmentsSection
               attachments={attachments}
@@ -1394,7 +1966,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
               onAdd={handleAddLinkedItem}
               onRemove={handleRemoveLinkedItem}
               searchItems={searchLinkedItems}
-              allowedTypes={['task', 'risk', 'initiative']}
+              allowedTypes={['task', 'initiative', 'decision', 'risk', 'project', 'external']}
               expanded={expandedSections.has('linkedItems')}
               onToggleExpand={() => toggleSection('linkedItems')}
             />

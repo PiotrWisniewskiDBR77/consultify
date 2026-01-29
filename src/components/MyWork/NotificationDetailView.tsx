@@ -1,10 +1,10 @@
 /**
  * NotificationDetailView
  * Full-page notification detail view for dynamic tabs
- * ClickUp-style design following Golden Standard
+ * Following Task Detail View Golden Standard with purple gradient header
  */
 
-// framer-motion used across MyWork; keep import minimal here
+import { motion } from 'framer-motion';
 import {
   AlertCircle,
   AlertTriangle,
@@ -12,6 +12,7 @@ import {
   BellOff,
   Calendar,
   CheckSquare,
+  ChevronDown,
   ChevronLeft,
   Clock,
   ExternalLink,
@@ -21,6 +22,7 @@ import {
   Loader2,
   Mail,
   MailOpen,
+  MessageSquare,
   Scale,
   Target,
   Trash2,
@@ -30,6 +32,9 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { buildNotificationContent } from '@/components/Notifications/notificationContent';
+import { useAppStore } from '@/store/useAppStore';
+import { useConversationStore } from '@/store/useConversationStore';
+import { AppView } from '@/types';
 
 import { Api } from '../../services/api';
 
@@ -110,8 +115,11 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const { isChatCollapsed, toggleChatCollapse } = useAppStore();
+  const { updateWorkspaceFromView } = useConversationStore();
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState<NotificationData | null>(null);
+  const [controlExpanded, setControlExpanded] = useState(true);
 
   useEffect(() => {
     loadNotification();

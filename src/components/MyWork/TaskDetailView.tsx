@@ -25,6 +25,7 @@ import {
   Layers,
   Link2,
   Loader2,
+  MessageSquare,
   Minus,
   Pause,
   Play,
@@ -47,6 +48,9 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { InitiativeService } from '@/services/initiativeService';
+import { useConversationStore } from '@/store/useConversationStore';
+import { useAppStore } from '@/store/useAppStore';
+import { AppView } from '@/types';
 
 import {
   type Alternative,
@@ -157,6 +161,8 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const { isChatCollapsed, toggleChatCollapse } = useAppStore();
+  const { updateWorkspaceFromView } = useConversationStore();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -440,6 +446,42 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         ownerId: ownerId || null,
       };
 
+      // Always persist a local draft before attempting network save (offline safety net)
+      try {
+        const draftKey = `consultinity-task-draft:${taskId || 'new'}`;
+        localStorage.setItem(
+          draftKey,
+          JSON.stringify({
+            schemaVersion: 1,
+            source: 'save',
+            savedAt: new Date().toISOString(),
+            taskId: taskId || null,
+            projectId: projectId || null,
+            initiativeId: initiativeId || null,
+            draft: {
+              ...payload,
+              projectId: projectId || null,
+              initiativeName,
+              projectName,
+              createdBy,
+              createdAt,
+              // Extra editable state (best-effort snapshot)
+              blockedByDecisionId,
+              attachments,
+              comments,
+              linkedItems,
+              stakeholders,
+              reminders,
+              escalation,
+              thresholds,
+            },
+          })
+        );
+      } catch (e) {
+        // Local draft is best-effort; don't block Save on storage errors
+        console.warn('[TaskDetailView] Failed to persist local draft', e);
+      }
+
       if (taskId) {
         await Api.put(`/tasks/${taskId}`, payload);
         toast.success(isPolish ? 'Zadanie zaktualizowane' : 'Task updated');
@@ -456,57 +498,76 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     }
   };
 
-  const handleStartTask = () => {
-    setStatus('in_progress');
-    setStartDate(new Date().toISOString().split('T')[0]);
-    toast.success(isPolish ? 'Zadanie rozpoczęte' : 'Task started');
-  };
-
-  const handleCompleteTask = () => {
-    setStatus('done');
-    toast.success(isPolish ? 'Zadanie ukończone' : 'Task completed');
-  };
-
-  const handleRequestReview = () => {
-    setStatus('review');
-    toast.success(isPolish ? 'Wysłano do przeglądu' : 'Sent for review');
-  };
-
-  const handlePauseTask = () => {
-    setStatus('todo');
-    toast.success(isPolish ? 'Zadanie wstrzymane' : 'Task paused');
-  };
-
-  const handleBlockTask = () => {
-    setStatus('blocked');
-    toast.success(isPolish ? 'Zadanie zablokowane' : 'Task blocked');
-  };
-
-  const handleDelegateTask = () => {
-    // TODO: Open delegation modal
-    toast.success(
-      isPolish ? 'Funkcja delegowania w przygotowaniu' : 'Delegation feature coming soon'
-    );
-  };
-
-  const handleDelete = async () => {
-    if (!taskId) return;
-    if (
-      !confirm(
-        isPolish
-          ? 'Czy na pewno chcesz usunąć to zadanie?'
-          : 'Are you sure you want to delete this task?'
-      )
-    )
-      return;
-
+  const handleOpenChat = async () => {
+    // Persist local draft so user never loses input (even offline)
+    const draftKey = `consultinity-task-draft:${taskId || 'new'}`;
     try {
-      await Api.delete(`/tasks/${taskId}`);
-      toast.success(isPolish ? 'Zadanie usunięte' : 'Task deleted');
-      onClose();
-    } catch (error) {
-      toast.error(isPolish ? 'Nie udało się usunąć zadania' : 'Failed to delete task');
+      localStorage.setItem(
+        draftKey,
+        JSON.stringify({
+          schemaVersion: 1,
+          source: 'chat',
+          savedAt: new Date().toISOString(),
+          taskId: taskId || null,
+          projectId: projectId || null,
+          initiativeId: initiativeId || null,
+          draft: {
+            title,
+            description,
+            status,
+            priority,
+            dueDate: dueDate || null,
+            startedAt: startDate || null,
+            blockedReason: status === 'blocked' ? blockedReason : '',
+            tags,
+            checklist,
+            initiativeId: initiativeId || null,
+            initiativeName,
+            assigneeId: assigneeId || null,
+            ownerId: ownerId || null,
+            projectId: projectId || null,
+            projectName,
+            blockedByDecisionId,
+            attachments,
+            comments,
+            linkedItems,
+            stakeholders,
+            reminders,
+            escalation,
+            thresholds,
+          },
+        })
+      );
+    } catch (e) {
+      console.warn('[TaskDetailView] Failed to persist local draft (chat)', e);
     }
+
+    // Ensure chat panel is visible
+    if (isChatCollapsed) {
+      toggleChatCollapse();
+    }
+
+    // Push rich task context into the unified chat workspace context (no extra buttons needed)
+    updateWorkspaceFromView(AppView.MY_WORK, taskId || 'new', {
+      type: 'task',
+      id: taskId || null,
+      title,
+      description,
+      status,
+      priority,
+      dueDate: dueDate || null,
+      startedAt: startDate || null,
+      blockedReason: status === 'blocked' ? blockedReason : '',
+      tags,
+      checklist,
+      initiativeId: initiativeId || null,
+      initiativeName,
+      projectId: projectId || null,
+      projectName,
+      blockedByDecisionId,
+    });
+
+    toast.success(isPolish ? 'Zapisano roboczo i otwarto czat' : 'Draft saved and chat opened');
   };
 
   // Section toggle
@@ -888,43 +949,65 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-purple-500/5 to-pink-500/5 dark:from-purple-500/10 dark:to-pink-500/10 rounded-full blur-3xl" />
       </div>
 
-      {/* Header */}
-      <header className="relative flex-shrink-0 px-6 py-4 border-b border-slate-200/80 dark:border-navy-800/80 bg-white/50 dark:bg-navy-900/50 backdrop-blur-xl">
-        <div className="flex items-center gap-4">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={onClose}
-            className="p-2 -ml-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-navy-800/80 transition-all"
-          >
-            <ChevronLeft size={20} />
-          </motion.button>
-
-          <div className="flex-1 flex items-center gap-3">
-            <div
-              className={`w-3 h-3 rounded-full ${statusConfig.color} shadow-lg shadow-${statusConfig.color.replace('bg-', '')}/50`}
-            />
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="flex-1 text-xl font-bold bg-transparent text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
-              placeholder={isPolish ? 'Tytuł zadania...' : 'Task title...'}
-              autoFocus={!taskId}
-            />
-          </div>
-
-          {taskId && (
-            <span className="text-xs font-mono text-slate-400 dark:text-slate-500 bg-slate-100/80 dark:bg-navy-800/80 px-2.5 py-1 rounded-lg">
-              #{taskId.slice(0, 8)}
-            </span>
-          )}
-        </div>
-      </header>
-
       {/* Content - Two columns */}
       <div className="relative flex-1 overflow-y-auto p-6">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Header - Full width */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="lg:col-span-3 bg-gradient-to-r from-white/80 via-purple-50/30 to-white/80 dark:from-navy-900/80 dark:via-purple-900/20 dark:to-navy-900/80 backdrop-blur-xl rounded-2xl border border-purple-200/40 dark:border-purple-500/20 shadow-lg shadow-purple-500/10 dark:shadow-purple-500/20 overflow-hidden ring-1 ring-purple-500/10 dark:ring-purple-400/10"
+          >
+            <div className="flex items-center gap-4 px-5 py-4">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onClose}
+                className="p-2 -ml-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-navy-800/80 transition-all"
+              >
+                <ChevronLeft size={20} />
+              </motion.button>
+
+              <div className="flex-1 flex items-center gap-3">
+                <div
+                  className={`w-3 h-3 rounded-full ${statusConfig.color} shadow-lg shadow-${statusConfig.color.replace('bg-', '')}/50`}
+                />
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="flex-1 text-xl font-bold bg-transparent text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
+                  placeholder={isPolish ? 'Tytuł zadania...' : 'Task title...'}
+                  autoFocus={!taskId}
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-blue-500/40 dark:border-blue-400/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 dark:hover:bg-blue-500/10 text-sm font-semibold transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                  title={isPolish ? 'Zapisz' : 'Save'}
+                >
+                  {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                  <span>{isPolish ? 'Zapisz' : 'Save'}</span>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleOpenChat}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-purple-500/40 dark:border-purple-400/30 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 dark:hover:bg-purple-500/10 text-sm font-semibold transition-all shadow-sm"
+                  title={isPolish ? 'Otwórz czat do tego zadania' : 'Open task chat'}
+                >
+                  <MessageSquare size={16} />
+                  <span>{isPolish ? 'Czat' : 'Chat'}</span>
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
           {/* Left Column - 2/3 */}
           <div className="lg:col-span-2 space-y-4 order-2 lg:order-1">
             {/* Task Description */}
@@ -1109,40 +1192,6 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
               onToggleExpand={() => toggleSection('comments')}
             />
 
-            {/* Risk Analysis */}
-            <RiskAssessmentCompact
-              risks={risks}
-              onAdd={addRisk}
-              onUpdate={(id, updates) =>
-                setRisks(risks.map((r) => (r.id === id ? { ...r, ...updates } : r)))
-              }
-              onRemove={(id) => setRisks(risks.filter((r) => r.id !== id))}
-              onGenerateAI={generateRisksAI}
-              isGenerating={isGeneratingRisks}
-              expanded={expandedSections.has('risks')}
-              onToggleExpand={() => toggleSection('risks')}
-            />
-
-            {/* Alternatives */}
-            <AlternativesSection
-              alternatives={alternatives}
-              selectedAlternativeId={selectedAlternativeId}
-              status={status}
-              onAdd={addAlternative}
-              onUpdate={(id, updates) =>
-                setAlternatives(alternatives.map((a) => (a.id === id ? { ...a, ...updates } : a)))
-              }
-              onRemove={(id) => setAlternatives(alternatives.filter((a) => a.id !== id))}
-              onSetRecommended={(id) =>
-                setAlternatives(alternatives.map((a) => ({ ...a, isRecommended: a.id === id })))
-              }
-              onSelect={(id) => setSelectedAlternativeId(id)}
-              onGenerateAI={generateAlternativesAI}
-              isGenerating={isGeneratingAlternatives}
-              expanded={expandedSections.has('alternatives')}
-              onToggleExpand={() => toggleSection('alternatives')}
-            />
-
             {/* Implementation Ideas */}
             <ImplementationIdeasSection
               ideas={implementationIdeas}
@@ -1173,147 +1222,6 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
               expanded={expandedSections.has('ideas')}
               onToggleExpand={() => toggleSection('ideas')}
             />
-
-            {/* Checklist */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
-            >
-              <div
-                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
-                onClick={() => toggleSection('checklist')}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20">
-                    <CheckSquare size={18} className="text-emerald-500 dark:text-emerald-400" />
-                  </div>
-                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    {isPolish ? 'Lista kontrolna' : 'Checklist'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  {checklist.length > 0 && (
-                    <>
-                      <div className="w-20 h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                        <div
-                          className="h-full bg-emerald-500 transition-all"
-                          style={{ width: `${checklistProgress}%` }}
-                        />
-                      </div>
-                      <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
-                        {checklist.filter((c) => c.completed).length}/{checklist.length}
-                      </span>
-                    </>
-                  )}
-                  {/* AI Button - visible only when expanded */}
-                  <AnimatePresence>
-                    {expandedSections.has('checklist') && (
-                      <motion.button
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          generateAIChecklist();
-                        }}
-                        disabled={isGeneratingChecklist}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 dark:hover:bg-violet-500/30 text-xs font-medium transition-all disabled:opacity-50"
-                        title={isPolish ? 'Wygeneruj checklistę AI' : 'Generate AI checklist'}
-                      >
-                        {isGeneratingChecklist ? (
-                          <Loader2 size={14} className="animate-spin" />
-                        ) : (
-                          <Sparkles size={14} />
-                        )}
-                        <span>AI</span>
-                      </motion.button>
-                    )}
-                  </AnimatePresence>
-                  <motion.div
-                    animate={{ rotate: expandedSections.has('checklist') ? 180 : 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <ChevronDown size={18} className="text-slate-400" />
-                  </motion.div>
-                </div>
-              </div>
-
-              <AnimatePresence>
-                {expandedSections.has('checklist') && (
-                  <motion.div
-                    initial={{ height: 0 }}
-                    animate={{ height: 'auto' }}
-                    exit={{ height: 0 }}
-                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
-                  >
-                    <div className="p-4 space-y-2">
-                      {checklist.length === 0 ? (
-                        <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
-                          <CheckSquare
-                            size={24}
-                            className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
-                          />
-                          <p className="text-sm text-slate-400 dark:text-slate-500">
-                            {isPolish ? 'Brak elementów' : 'No items'}
-                          </p>
-                          <button
-                            onClick={addChecklistItem}
-                            className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 transition-colors"
-                          >
-                            <Plus size={14} />
-                            {isPolish ? 'Dodaj element' : 'Add item'}
-                          </button>
-                        </div>
-                      ) : (
-                        <>
-                          {checklist.map((item) => (
-                            <div key={item.id} className="flex items-center gap-3 group">
-                              <input
-                                type="checkbox"
-                                checked={item.completed}
-                                onChange={(e) =>
-                                  updateChecklistItem(item.id, { completed: e.target.checked })
-                                }
-                                className="w-4 h-4 rounded border-slate-300 dark:border-navy-600 text-emerald-500 focus:ring-emerald-500"
-                              />
-                              <input
-                                type="text"
-                                value={item.text}
-                                onChange={(e) =>
-                                  updateChecklistItem(item.id, { text: e.target.value })
-                                }
-                                placeholder={isPolish ? 'Wprowadź element...' : 'Enter item...'}
-                                className={`flex-1 px-2 py-1.5 rounded-lg text-sm bg-transparent border border-transparent hover:border-slate-200 dark:hover:border-navy-600 focus:border-emerald-400 dark:focus:border-emerald-500 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none transition-colors ${
-                                  item.completed
-                                    ? 'line-through text-slate-400 dark:text-slate-500'
-                                    : ''
-                                }`}
-                              />
-                              <button
-                                onClick={() => removeChecklistItem(item.id)}
-                                className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-all"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          ))}
-                          <button
-                            onClick={addChecklistItem}
-                            className="flex items-center gap-2 text-sm text-emerald-500 hover:text-emerald-600 py-2 px-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors"
-                          >
-                            <Plus size={14} />
-                            <span>{isPolish ? 'Dodaj element' : 'Add item'}</span>
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
 
             {/* Related Decisions */}
             <motion.div
@@ -1782,6 +1690,181 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
               </AnimatePresence>
             </motion.div>
 
+            {/* Risk Analysis */}
+            <RiskAssessmentCompact
+              risks={risks}
+              onAdd={addRisk}
+              onUpdate={(id, updates) =>
+                setRisks(risks.map((r) => (r.id === id ? { ...r, ...updates } : r)))
+              }
+              onRemove={(id) => setRisks(risks.filter((r) => r.id !== id))}
+              onGenerateAI={generateRisksAI}
+              isGenerating={isGeneratingRisks}
+              expanded={expandedSections.has('risks')}
+              onToggleExpand={() => toggleSection('risks')}
+            />
+
+            {/* Alternatives */}
+            <AlternativesSection
+              alternatives={alternatives}
+              selectedAlternativeId={selectedAlternativeId}
+              status={status}
+              onAdd={addAlternative}
+              onUpdate={(id, updates) =>
+                setAlternatives(alternatives.map((a) => (a.id === id ? { ...a, ...updates } : a)))
+              }
+              onRemove={(id) => setAlternatives(alternatives.filter((a) => a.id !== id))}
+              onSetRecommended={(id) =>
+                setAlternatives(alternatives.map((a) => ({ ...a, isRecommended: a.id === id })))
+              }
+              onSelect={(id) => setSelectedAlternativeId(id)}
+              onGenerateAI={generateAlternativesAI}
+              isGenerating={isGeneratingAlternatives}
+              expanded={expandedSections.has('alternatives')}
+              onToggleExpand={() => toggleSection('alternatives')}
+            />
+
+            {/* Checklist */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+            >
+              <div
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
+                onClick={() => toggleSection('checklist')}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20">
+                    <CheckSquare size={18} className="text-emerald-500 dark:text-emerald-400" />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {isPolish ? 'Lista kontrolna' : 'Checklist'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  {checklist.length > 0 && (
+                    <>
+                      <div className="w-20 h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+                        <div
+                          className="h-full bg-emerald-500 transition-all"
+                          style={{ width: `${checklistProgress}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                        {checklist.filter((c) => c.completed).length}/{checklist.length}
+                      </span>
+                    </>
+                  )}
+                  {/* AI Button - visible only when expanded */}
+                  <AnimatePresence>
+                    {expandedSections.has('checklist') && (
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          generateAIChecklist();
+                        }}
+                        disabled={isGeneratingChecklist}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 dark:hover:bg-violet-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                        title={isPolish ? 'Wygeneruj checklistę AI' : 'Generate AI checklist'}
+                      >
+                        {isGeneratingChecklist ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Sparkles size={14} />
+                        )}
+                        <span>AI</span>
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                  <motion.div
+                    animate={{ rotate: expandedSections.has('checklist') ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown size={18} className="text-slate-400" />
+                  </motion.div>
+                </div>
+              </div>
+
+              <AnimatePresence>
+                {expandedSections.has('checklist') && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                  >
+                    <div className="p-4 space-y-2">
+                      {checklist.length === 0 ? (
+                        <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
+                          <CheckSquare
+                            size={24}
+                            className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                          />
+                          <p className="text-sm text-slate-400 dark:text-slate-500">
+                            {isPolish ? 'Brak elementów' : 'No items'}
+                          </p>
+                          <button
+                            onClick={addChecklistItem}
+                            className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 transition-colors"
+                          >
+                            <Plus size={14} />
+                            {isPolish ? 'Dodaj element' : 'Add item'}
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          {checklist.map((item) => (
+                            <div key={item.id} className="flex items-center gap-3 group">
+                              <input
+                                type="checkbox"
+                                checked={item.completed}
+                                onChange={(e) =>
+                                  updateChecklistItem(item.id, { completed: e.target.checked })
+                                }
+                                className="w-4 h-4 rounded border-slate-300 dark:border-navy-600 text-emerald-500 focus:ring-emerald-500"
+                              />
+                              <input
+                                type="text"
+                                value={item.text}
+                                onChange={(e) =>
+                                  updateChecklistItem(item.id, { text: e.target.value })
+                                }
+                                placeholder={isPolish ? 'Wprowadź element...' : 'Enter item...'}
+                                className={`flex-1 px-2 py-1.5 rounded-lg text-sm bg-transparent border border-transparent hover:border-slate-200 dark:hover:border-navy-600 focus:border-emerald-400 dark:focus:border-emerald-500 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none transition-colors ${
+                                  item.completed
+                                    ? 'line-through text-slate-400 dark:text-slate-500'
+                                    : ''
+                                }`}
+                              />
+                              <button
+                                onClick={() => removeChecklistItem(item.id)}
+                                className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-all"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            onClick={addChecklistItem}
+                            className="flex items-center gap-2 text-sm text-emerald-500 hover:text-emerald-600 py-2 px-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors"
+                          >
+                            <Plus size={14} />
+                            <span>{isPolish ? 'Dodaj element' : 'Add item'}</span>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
             {/* Activity Log */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -1949,148 +2032,6 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
             {/* Deadline Alert */}
             <DeadlineAlertBanner dueDate={dueDate} status={status} />
 
-            {/* Action Buttons */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="space-y-2"
-            >
-              {/* Primary Actions - Status dependent */}
-              {taskId && !isDone && (
-                <>
-                  {/* Row 1: Main status actions */}
-                  <div className="grid grid-cols-2 gap-2">
-                    {/* Start - only for todo */}
-                    {status === 'todo' && (
-                      <motion.button
-                        whileHover={{
-                          scale: 1.02,
-                          boxShadow: '0 4px 20px rgba(59, 130, 246, 0.2)',
-                        }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={handleStartTask}
-                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-blue-400/40 text-blue-500 hover:border-blue-500 hover:bg-blue-500/10 font-medium transition-all shadow-sm"
-                      >
-                        <Play size={18} />
-                        <span>{isPolish ? 'Rozpocznij' : 'Start'}</span>
-                      </motion.button>
-                    )}
-
-                    {/* Complete - for in_progress or review */}
-                    {(status === 'in_progress' || status === 'review') && (
-                      <motion.button
-                        whileHover={{
-                          scale: 1.02,
-                          boxShadow: '0 4px 20px rgba(16, 185, 129, 0.2)',
-                        }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={handleCompleteTask}
-                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-emerald-400/40 text-emerald-500 hover:border-emerald-500 hover:bg-emerald-500/10 font-medium transition-all shadow-sm"
-                      >
-                        <Check size={18} />
-                        <span>{isPolish ? 'Ukończ' : 'Complete'}</span>
-                      </motion.button>
-                    )}
-
-                    {/* Request Review - for in_progress */}
-                    {status === 'in_progress' && (
-                      <motion.button
-                        whileHover={{
-                          scale: 1.02,
-                          boxShadow: '0 4px 20px rgba(139, 92, 246, 0.2)',
-                        }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={handleRequestReview}
-                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-violet-400/40 text-violet-500 hover:border-violet-500 hover:bg-violet-500/10 font-medium transition-all shadow-sm"
-                      >
-                        <Eye size={18} />
-                        <span>{isPolish ? 'Do przeglądu' : 'Review'}</span>
-                      </motion.button>
-                    )}
-
-                    {/* Resume - for blocked */}
-                    {status === 'blocked' && (
-                      <motion.button
-                        whileHover={{
-                          scale: 1.02,
-                          boxShadow: '0 4px 20px rgba(59, 130, 246, 0.2)',
-                        }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={handleStartTask}
-                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-blue-400/40 text-blue-500 hover:border-blue-500 hover:bg-blue-500/10 font-medium transition-all shadow-sm"
-                      >
-                        <Play size={18} />
-                        <span>{isPolish ? 'Wznów' : 'Resume'}</span>
-                      </motion.button>
-                    )}
-
-                    {/* Delete - always visible */}
-                    <motion.button
-                      whileHover={{ scale: 1.02, boxShadow: '0 4px 20px rgba(239, 68, 68, 0.2)' }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleDelete}
-                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-red-400/40 text-red-500 hover:border-red-500 hover:bg-red-500/10 font-medium transition-all shadow-sm"
-                    >
-                      <Trash2 size={18} />
-                      <span>{isPolish ? 'Usuń' : 'Delete'}</span>
-                    </motion.button>
-                  </div>
-
-                  {/* Row 2: Secondary actions */}
-                  <div className="grid grid-cols-2 gap-2">
-                    {/* Pause - for in_progress */}
-                    {status === 'in_progress' && (
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={handlePauseTask}
-                        className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-navy-500 text-sm font-medium transition-all shadow-sm"
-                      >
-                        <Pause size={16} />
-                        <span>{isPolish ? 'Wstrzymaj' : 'Pause'}</span>
-                      </motion.button>
-                    )}
-
-                    {/* Block - for todo or in_progress */}
-                    {(status === 'todo' || status === 'in_progress') && (
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={handleBlockTask}
-                        className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:border-orange-400 hover:text-orange-500 text-sm font-medium transition-all shadow-sm"
-                      >
-                        <AlertCircle size={16} />
-                        <span>{isPolish ? 'Zablokuj' : 'Block'}</span>
-                      </motion.button>
-                    )}
-
-                    {/* Delegate - always available when not done */}
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleDelegateTask}
-                      className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-navy-500 text-sm font-medium transition-all shadow-sm"
-                    >
-                      <Share2 size={16} />
-                      <span>{isPolish ? 'Deleguj' : 'Delegate'}</span>
-                    </motion.button>
-                  </div>
-                </>
-              )}
-
-              {/* Save Button - Always visible */}
-              <motion.button
-                whileHover={{ scale: 1.02, boxShadow: '0 4px 20px rgba(139, 92, 246, 0.2)' }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleSave}
-                disabled={saving}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/50 dark:bg-navy-800/50 backdrop-blur-sm border border-purple-400/40 text-purple-500 hover:border-purple-500 hover:bg-purple-500/10 font-medium transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                <span>{isPolish ? 'Zapisz zmiany' : 'Save Changes'}</span>
-              </motion.button>
-            </motion.div>
-
             {/* Control Panel */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
@@ -2112,12 +2053,19 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
                     {isPolish ? 'Sterowanie' : 'Control'}
                   </span>
                 </div>
-                <motion.div
-                  animate={{ rotate: expandedSections.has('control') ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ChevronDown size={18} className="text-slate-400" />
-                </motion.div>
+                <div className="flex items-center gap-2">
+                  {taskId && (
+                    <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 bg-slate-100/80 dark:bg-navy-800/80 px-2 py-0.5 rounded-lg">
+                      #{taskId.slice(0, 8)}
+                    </span>
+                  )}
+                  <motion.div
+                    animate={{ rotate: expandedSections.has('control') ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown size={18} className="text-slate-400" />
+                  </motion.div>
+                </div>
               </motion.button>
 
               <AnimatePresence>
@@ -2384,6 +2332,75 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
               </AnimatePresence>
             </motion.div>
 
+            {/* Attachments */}
+            <AttachmentsSection
+              attachments={attachments}
+              onUpload={handleUploadAttachments}
+              onDelete={handleDeleteAttachment}
+              expanded={expandedSections.has('attachments')}
+              onToggleExpand={() => toggleSection('attachments')}
+            />
+
+            {/* Linked Items */}
+            <LinkedItemsSection
+              items={linkedItems}
+              onAdd={handleAddLinkedItem}
+              onRemove={handleRemoveLinkedItem}
+              searchItems={searchLinkedItems}
+              expanded={expandedSections.has('linkedItems')}
+              onToggleExpand={() => toggleSection('linkedItems')}
+            />
+
+            {/* Stakeholders */}
+            <StakeholdersSection
+              stakeholders={stakeholders}
+              availableUsers={users.map((u) => ({
+                id: u.id,
+                name: `${u.firstName} ${u.lastName}`,
+                email: u.email,
+              }))}
+              onAdd={(
+                userId: string,
+                role: StakeholderRole,
+                notificationSettings: StakeholderNotificationSettings
+              ) => {
+                const user = users.find((u) => u.id === userId);
+                const newStakeholder: Stakeholder = {
+                  id: Math.random().toString(36).substr(2, 9),
+                  decisionId: taskId || 'new',
+                  userId,
+                  userName: user ? `${user.firstName} ${user.lastName}` : undefined,
+                  userEmail: user?.email,
+                  role,
+                  notificationSettings,
+                };
+                setStakeholders([...stakeholders, newStakeholder]);
+                toast.success(isPolish ? 'Dodano interesariusza' : 'Stakeholder added');
+              }}
+              onUpdate={(id: string, updates: Partial<Stakeholder>) => {
+                setStakeholders(stakeholders.map((s) => (s.id === id ? { ...s, ...updates } : s)));
+              }}
+              onRemove={(id: string) => {
+                setStakeholders(stakeholders.filter((s) => s.id !== id));
+                toast.success(isPolish ? 'Usunięto interesariusza' : 'Stakeholder removed');
+              }}
+            />
+
+            {/* Reminders & Escalation */}
+            <EscalationRulesSection
+              reminders={reminders}
+              escalation={escalation}
+              thresholds={thresholds}
+              availableUsers={users.map((u) => ({
+                id: u.id,
+                name: `${u.firstName} ${u.lastName}`,
+              }))}
+              onRemindersChange={setReminders}
+              onEscalationChange={setEscalation}
+              onThresholdsChange={setThresholds}
+              dueDate={dueDate}
+            />
+
             {/* Tags */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
@@ -2483,75 +2500,6 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
               onRemove={(id) => setDependencies(dependencies.filter((d) => d.id !== id))}
               expanded={expandedSections.has('dependencies')}
               onToggleExpand={() => toggleSection('dependencies')}
-            />
-
-            {/* Stakeholders */}
-            <StakeholdersSection
-              stakeholders={stakeholders}
-              availableUsers={users.map((u) => ({
-                id: u.id,
-                name: `${u.firstName} ${u.lastName}`,
-                email: u.email,
-              }))}
-              onAdd={(
-                userId: string,
-                role: StakeholderRole,
-                notificationSettings: StakeholderNotificationSettings
-              ) => {
-                const user = users.find((u) => u.id === userId);
-                const newStakeholder: Stakeholder = {
-                  id: Math.random().toString(36).substr(2, 9),
-                  decisionId: taskId || 'new',
-                  userId,
-                  userName: user ? `${user.firstName} ${user.lastName}` : undefined,
-                  userEmail: user?.email,
-                  role,
-                  notificationSettings,
-                };
-                setStakeholders([...stakeholders, newStakeholder]);
-                toast.success(isPolish ? 'Dodano interesariusza' : 'Stakeholder added');
-              }}
-              onUpdate={(id: string, updates: Partial<Stakeholder>) => {
-                setStakeholders(stakeholders.map((s) => (s.id === id ? { ...s, ...updates } : s)));
-              }}
-              onRemove={(id: string) => {
-                setStakeholders(stakeholders.filter((s) => s.id !== id));
-                toast.success(isPolish ? 'Usunięto interesariusza' : 'Stakeholder removed');
-              }}
-            />
-
-            {/* Reminders & Escalation */}
-            <EscalationRulesSection
-              reminders={reminders}
-              escalation={escalation}
-              thresholds={thresholds}
-              availableUsers={users.map((u) => ({
-                id: u.id,
-                name: `${u.firstName} ${u.lastName}`,
-              }))}
-              onRemindersChange={setReminders}
-              onEscalationChange={setEscalation}
-              onThresholdsChange={setThresholds}
-              dueDate={dueDate}
-            />
-
-            {/* Attachments */}
-            <AttachmentsSection
-              attachments={attachments}
-              onUpload={handleUploadAttachments}
-              onDelete={handleDeleteAttachment}
-              expanded={expandedSections.has('attachments')}
-              onToggleExpand={() => toggleSection('attachments')}
-            />
-
-            {/* Linked Items */}
-            <LinkedItemsSection
-              items={linkedItems}
-              onAdd={handleAddLinkedItem}
-              onRemove={handleRemoveLinkedItem}
-              searchItems={searchLinkedItems}
-              expanded={expandedSections.has('linkedItems')}
-              onToggleExpand={() => toggleSection('linkedItems')}
             />
 
             {/* Evidence & Acceptance */}
