@@ -61,7 +61,7 @@ function pickSuggestedTechnologies(level: DRDLevel): string[] {
 }
 
 function defaultQuestions(area: DRDArea, level: DRDLevel): [string, string, string] {
-  const areaName = area.name || area.namePL || 'this area';
+  const areaName = area.name || 'this area';
   const lvl = level.level;
   const title = normalizeWhitespace(level.title);
   return [
@@ -72,7 +72,7 @@ function defaultQuestions(area: DRDArea, level: DRDLevel): [string, string, stri
 }
 
 function defaultExample(area: DRDArea, level: DRDLevel): string {
-  const areaName = area.name || area.namePL || 'this area';
+  const areaName = area.name || 'this area';
   const lvl = level.level;
   // Keep it simple and universal; can be overridden per level.
   return `Example: in "${areaName}", we provide a concrete artifact confirming level ${lvl} (e.g. screenshot, report, system log, procedure, instruction, KPI).`;

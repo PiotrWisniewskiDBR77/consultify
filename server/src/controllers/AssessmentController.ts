@@ -254,9 +254,45 @@ const logAudit = async (
 // Schema initialization
 const ensureAssessmentSchema = async (): Promise<void> => {
   try {
-    const tryAddColumn = async (table: string, columnDefSql: string): Promise<void> => {
+    const isSQLite = String(process.env.DB_TYPE || '').toLowerCase() === 'sqlite';
+    const tableColumnsCache = new Map<string, Set<string>>();
+
+    const getTableColumns = async (table: string): Promise<Set<string>> => {
+      const cached = tableColumnsCache.get(table);
+      if (cached) return cached;
+      const cols = new Set<string>();
+      if (isSQLite) {
+        try {
+          const rows = (await queryHelpers.queryAll(`PRAGMA table_info(${table})`)) as Array<{
+            name?: string;
+          }>;
+          for (const r of rows || []) {
+            if (r?.name) cols.add(String(r.name));
+          }
+        } catch {
+          // ignore
+        }
+      }
+      tableColumnsCache.set(table, cols);
+      return cols;
+    };
+
+    const tryAddColumn = async (
+      table: string,
+      columnName: string,
+      columnDefSql: string
+    ): Promise<void> => {
+      // Prefer a schema check in SQLite to avoid noisy "duplicate column" errors.
+      if (isSQLite) {
+        const cols = await getTableColumns(table);
+        if (cols.has(columnName)) return;
+      }
       try {
         await queryHelpers.queryRun(`ALTER TABLE ${table} ADD COLUMN ${columnDefSql}`);
+        if (isSQLite) {
+          const cols = await getTableColumns(table);
+          cols.add(columnName);
+        }
       } catch (e: any) {
         const msg = String(e?.message || e || '');
         // SQLite: "duplicate column name: foo"
@@ -295,23 +331,23 @@ const ensureAssessmentSchema = async (): Promise<void> => {
 
     // If the table already existed (older DB), ensure required columns exist.
     // NOTE: SQLite won't add columns via CREATE TABLE IF NOT EXISTS, so we must ALTER.
-    await tryAddColumn('assessments', 'project_id TEXT');
-    await tryAddColumn('assessments', "assessment_type TEXT DEFAULT 'DRD'");
-    await tryAddColumn('assessments', "name TEXT DEFAULT 'New Assessment'");
-    await tryAddColumn('assessments', "status TEXT DEFAULT 'DRAFT'");
-    await tryAddColumn('assessments', 'completion_percent INTEGER DEFAULT 0');
-    await tryAddColumn('assessments', 'confidence_avg REAL DEFAULT 0');
-    await tryAddColumn('assessments', "answers_json TEXT DEFAULT '{}'");
-    await tryAddColumn('assessments', "context_snapshot TEXT DEFAULT '{}'");
-    await tryAddColumn('assessments', "score_summary TEXT DEFAULT '{}'");
-    await tryAddColumn('assessments', 'current_section_id TEXT');
-    await tryAddColumn('assessments', 'review_requested_at TIMESTAMP');
-    await tryAddColumn('assessments', 'report_approved_at TIMESTAMP');
-    await tryAddColumn('assessments', 'approved_at TIMESTAMP');
-    await tryAddColumn('assessments', 'created_by TEXT');
-    await tryAddColumn('assessments', 'updated_by TEXT');
-    await tryAddColumn('assessments', 'created_at TIMESTAMP');
-    await tryAddColumn('assessments', 'updated_at TIMESTAMP');
+    await tryAddColumn('assessments', 'project_id', 'project_id TEXT');
+    await tryAddColumn('assessments', 'assessment_type', "assessment_type TEXT DEFAULT 'DRD'");
+    await tryAddColumn('assessments', 'name', "name TEXT DEFAULT 'New Assessment'");
+    await tryAddColumn('assessments', 'status', "status TEXT DEFAULT 'DRAFT'");
+    await tryAddColumn('assessments', 'completion_percent', 'completion_percent INTEGER DEFAULT 0');
+    await tryAddColumn('assessments', 'confidence_avg', 'confidence_avg REAL DEFAULT 0');
+    await tryAddColumn('assessments', 'answers_json', "answers_json TEXT DEFAULT '{}'");
+    await tryAddColumn('assessments', 'context_snapshot', "context_snapshot TEXT DEFAULT '{}'");
+    await tryAddColumn('assessments', 'score_summary', "score_summary TEXT DEFAULT '{}'");
+    await tryAddColumn('assessments', 'current_section_id', 'current_section_id TEXT');
+    await tryAddColumn('assessments', 'review_requested_at', 'review_requested_at TIMESTAMP');
+    await tryAddColumn('assessments', 'report_approved_at', 'report_approved_at TIMESTAMP');
+    await tryAddColumn('assessments', 'approved_at', 'approved_at TIMESTAMP');
+    await tryAddColumn('assessments', 'created_by', 'created_by TEXT');
+    await tryAddColumn('assessments', 'updated_by', 'updated_by TEXT');
+    await tryAddColumn('assessments', 'created_at', 'created_at TIMESTAMP');
+    await tryAddColumn('assessments', 'updated_at', 'updated_at TIMESTAMP');
 
     // Assessment reports table
     await queryHelpers.queryRun(
@@ -416,14 +452,18 @@ const ensureAssessmentSchema = async (): Promise<void> => {
       await queryHelpers.queryRun(permissionInsertSql);
     } catch {
       // Try with ON CONFLICT
-      await queryHelpers.queryRun(
-        `INSERT INTO permissions (key, name, description, category, icon) VALUES
-          ('ASSESSMENT_REQUEST_REVIEW', 'Assessment: Request Review', 'Request review for assessment', 'ASSESSMENT', 'fact_check'),
-          ('ASSESSMENT_APPROVE_REPORT', 'Assessment: Approve Report', 'Approve assessment report', 'ASSESSMENT', 'description'),
-          ('ASSESSMENT_APPROVE', 'Assessment: Approve Assessment', 'Approve assessment', 'ASSESSMENT', 'check_circle'),
-          ('ASSESSMENT_GENERATE_INITIATIVES', 'Assessment: Generate Initiatives', 'Generate initiatives from assessment', 'ASSESSMENT', 'lightbulb')
-        ON CONFLICT (key) DO NOTHING`
-      );
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO permissions (key, name, description, category, icon) VALUES
+            ('ASSESSMENT_REQUEST_REVIEW', 'Assessment: Request Review', 'Request review for assessment', 'ASSESSMENT', 'fact_check'),
+            ('ASSESSMENT_APPROVE_REPORT', 'Assessment: Approve Report', 'Approve assessment report', 'ASSESSMENT', 'description'),
+            ('ASSESSMENT_APPROVE', 'Assessment: Approve Assessment', 'Approve assessment', 'ASSESSMENT', 'check_circle'),
+            ('ASSESSMENT_GENERATE_INITIATIVES', 'Assessment: Generate Initiatives', 'Generate initiatives from assessment', 'ASSESSMENT', 'lightbulb')
+          ON CONFLICT (key) DO NOTHING`
+        );
+      } catch {
+        // permissions table may not exist in all environments
+      }
     }
 
     // Role permissions
@@ -442,20 +482,24 @@ const ensureAssessmentSchema = async (): Promise<void> => {
       await queryHelpers.queryRun(roleInsertSql);
     } catch {
       // Try with ON CONFLICT
-      await queryHelpers.queryRun(
-        `INSERT INTO role_permissions (id, role, permission_key, description) VALUES
-          ('rp_assessment_request_review_admin', 'ADMIN', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
-          ('rp_assessment_request_review_pm', 'PROJECT_MANAGER', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
-          ('rp_assessment_request_review_super', 'SUPERADMIN', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
-          ('rp_assessment_approve_report_admin', 'ADMIN', 'ASSESSMENT_APPROVE_REPORT', 'Approve assessment reports'),
-          ('rp_assessment_approve_report_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE_REPORT', 'Approve assessment reports'),
-          ('rp_assessment_approve_admin', 'ADMIN', 'ASSESSMENT_APPROVE', 'Approve assessments'),
-          ('rp_assessment_approve_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE', 'Approve assessments'),
-          ('rp_assessment_generate_admin', 'ADMIN', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments'),
-          ('rp_assessment_generate_pm', 'PROJECT_MANAGER', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments'),
-          ('rp_assessment_generate_super', 'SUPERADMIN', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments')
-        ON CONFLICT (id) DO NOTHING`
-      );
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO role_permissions (id, role, permission_key, description) VALUES
+            ('rp_assessment_request_review_admin', 'ADMIN', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
+            ('rp_assessment_request_review_pm', 'PROJECT_MANAGER', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
+            ('rp_assessment_request_review_super', 'SUPERADMIN', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
+            ('rp_assessment_approve_report_admin', 'ADMIN', 'ASSESSMENT_APPROVE_REPORT', 'Approve assessment reports'),
+            ('rp_assessment_approve_report_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE_REPORT', 'Approve assessment reports'),
+            ('rp_assessment_approve_admin', 'ADMIN', 'ASSESSMENT_APPROVE', 'Approve assessments'),
+            ('rp_assessment_approve_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE', 'Approve assessments'),
+            ('rp_assessment_generate_admin', 'ADMIN', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments'),
+            ('rp_assessment_generate_pm', 'PROJECT_MANAGER', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments'),
+            ('rp_assessment_generate_super', 'SUPERADMIN', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments')
+          ON CONFLICT (id) DO NOTHING`
+        );
+      } catch {
+        // role_permissions table may not exist in all environments
+      }
     }
   } catch {
     // Schema might be managed elsewhere
@@ -654,68 +698,101 @@ export class AssessmentController {
         return;
       }
 
-      const assessment = (await queryHelpers.queryOne(
-        `SELECT * FROM assessments WHERE id = ? AND organization_id = ?`,
-        [assessmentId, user.organizationId]
-      )) as AssessmentRow | null;
+      try {
+        // Ensure workflow schema exists even for older DBs (so reads don't fail on missing tables).
+        await ensureAssessmentSchema();
 
-      if (!assessment) {
-        res.status(404).json({ error: 'Assessment not found' });
-        return;
+        const assessment = (await queryHelpers.queryOne(
+          `SELECT * FROM assessments WHERE id = ? AND organization_id = ?`,
+          [assessmentId, user.organizationId]
+        )) as AssessmentRow | null;
+
+        if (!assessment) {
+          res.status(404).json({ error: 'Assessment not found' });
+          return;
+        }
+
+        // Get initiatives
+        const initiatives = await queryHelpers.queryAll(
+          `SELECT i.id, i.name as title, i.status, l.batch_id
+           FROM assessment_initiative_links l
+           LEFT JOIN initiatives i ON l.initiative_id = i.id
+           WHERE l.assessment_id = ?
+           ORDER BY l.created_at DESC`,
+          [assessmentId]
+        ).catch((err) => {
+          console.warn('[AssessmentController] Failed to load initiatives:', err);
+          return [];
+        });
+
+        // Get decisions
+        const decisions = await queryHelpers.queryAll(
+          `SELECT ad.decision_type, ad.status, ad.decision_id, d.status as decision_status
+           FROM assessment_decisions ad
+           LEFT JOIN decisions d ON ad.decision_id = d.id
+           WHERE ad.assessment_id = ?`,
+          [assessmentId]
+        ).catch((err) => {
+          console.warn('[AssessmentController] Failed to load decisions:', err);
+          return [];
+        });
+
+        // Get latest report
+        const report = await queryHelpers.queryOne<AssessmentReportRow>(
+          // NOTE: DBs created before workflow v2 may not have `version` column on assessment_reports.
+          // Use timestamps to pick the latest row in a backwards-compatible way.
+          `SELECT * FROM assessment_reports WHERE assessment_id = ? ORDER BY COALESCE(updated_at, created_at) DESC LIMIT 1`,
+          [assessmentId]
+        ).catch((err) => {
+          console.warn('[AssessmentController] Failed to load report:', err);
+          return null;
+        });
+
+        // Get permissions
+        const permissions = {
+          canRequestReview: await ensurePermission(req, 'ASSESSMENT_REQUEST_REVIEW').catch(() => false),
+          canApproveReport: await ensurePermission(req, 'ASSESSMENT_APPROVE_REPORT').catch(() => false),
+          canApproveAssessment: await ensurePermission(req, 'ASSESSMENT_APPROVE').catch(() => false),
+          canGenerate: await ensurePermission(req, 'ASSESSMENT_GENERATE_INITIATIVES').catch(() => false),
+        };
+
+        // Safe JSON parsing with fallback
+        const parseJsonSafely = (jsonString: string | null | undefined, fallback: any = {}): any => {
+          if (!jsonString) return fallback;
+          try {
+            return JSON.parse(jsonString);
+          } catch (e) {
+            console.error('[AssessmentController] Failed to parse JSON:', e, 'Raw:', jsonString?.substring(0, 100));
+            return fallback;
+          }
+        };
+
+        res.json({
+          ...assessment,
+          status: normalizeStatus(assessment.status),
+          backendStatus: assessment.status,
+          answers: parseJsonSafely(assessment.answers_json, {}),
+          contextSnapshot: parseJsonSafely(assessment.context_snapshot, {}),
+          scoreSummary: parseJsonSafely(assessment.score_summary, {}),
+          generatedInitiatives: initiatives,
+          decisions,
+          report: report
+            ? {
+                ...report,
+                content: parseJsonSafely(report.content_json, {}),
+              }
+            : null,
+          permissions,
+        });
+      } catch (error: any) {
+        console.error('[AssessmentController] Error in getAssessment:', {
+          assessmentId,
+          organizationId: user.organizationId,
+          error: error?.message,
+          stack: error?.stack,
+        });
+        throw error; // Re-throw to be handled by asyncHandler
       }
-
-      // Get initiatives
-      const initiatives = await queryHelpers.queryAll(
-        `SELECT i.id, i.name as title, i.status, l.batch_id
-         FROM assessment_initiative_links l
-         LEFT JOIN initiatives i ON l.initiative_id = i.id
-         WHERE l.assessment_id = ?
-         ORDER BY l.created_at DESC`,
-        [assessmentId]
-      );
-
-      // Get decisions
-      const decisions = await queryHelpers.queryAll(
-        `SELECT ad.decision_type, ad.status, ad.decision_id, d.status as decision_status
-         FROM assessment_decisions ad
-         LEFT JOIN decisions d ON ad.decision_id = d.id
-         WHERE ad.assessment_id = ?`,
-        [assessmentId]
-      );
-
-      // Get latest report
-      const report = await queryHelpers.queryOne<AssessmentReportRow>(
-        // NOTE: DBs created before workflow v2 may not have `version` column on assessment_reports.
-        // Use timestamps to pick the latest row in a backwards-compatible way.
-        `SELECT * FROM assessment_reports WHERE assessment_id = ? ORDER BY COALESCE(updated_at, created_at) DESC LIMIT 1`,
-        [assessmentId]
-      );
-
-      // Get permissions
-      const permissions = {
-        canRequestReview: await ensurePermission(req, 'ASSESSMENT_REQUEST_REVIEW'),
-        canApproveReport: await ensurePermission(req, 'ASSESSMENT_APPROVE_REPORT'),
-        canApproveAssessment: await ensurePermission(req, 'ASSESSMENT_APPROVE'),
-        canGenerate: await ensurePermission(req, 'ASSESSMENT_GENERATE_INITIATIVES'),
-      };
-
-      res.json({
-        ...assessment,
-        status: normalizeStatus(assessment.status),
-        backendStatus: assessment.status,
-        answers: assessment.answers_json ? JSON.parse(assessment.answers_json) : {},
-        contextSnapshot: assessment.context_snapshot ? JSON.parse(assessment.context_snapshot) : {},
-        scoreSummary: assessment.score_summary ? JSON.parse(assessment.score_summary) : {},
-        generatedInitiatives: initiatives,
-        decisions,
-        report: report
-          ? {
-              ...report,
-              content: report.content_json ? JSON.parse(report.content_json) : {},
-            }
-          : null,
-        permissions,
-      });
     }
   );
 

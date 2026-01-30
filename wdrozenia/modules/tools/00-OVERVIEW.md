@@ -13,6 +13,28 @@ Discovery tools -> generowanie inicjatyw (DRAFT) z DoD i gate decisions.
 W module Tools „raport” jest artefaktem Discovery (snapshot + approval + eksport), a nie raportem zarządczym:
 - `wdrozenia/standards/entities/04-TOOL-REPORT.md`
 
+## Dokumentacja funkcjonalnosci
+
+### Frontend
+- **ToolDocumentView (Kanoniczny widok)** - `wdrozenia/modules/tools/frontend/07-tool-document-view.md`
+  - Dwukolumnowy layout zgodny z Golden Standard
+  - Step-based workflow z nawigacją
+  - ToolCanvas integration
+  - DoD Checklist i logika completion
+  - Auto-save i hydration z API
+  - AI Integration w każdej sekcji
+  - Gate Decisions i Generated Initiatives
+
+### Backend
+- **API Endpoints** - `wdrozenia/modules/tools/backend/01-api-list.md`
+- **Request Review** - `wdrozenia/modules/tools/backend/01-request-review.md`
+- **Generate Initiatives** - `wdrozenia/modules/tools/backend/03-generate-initiatives.md`
+
+### UI/UX
+- **Hub Structure** - `wdrozenia/modules/tools/frontend/01-hub-structure.md`
+- **Completion Checker** - `wdrozenia/modules/tools/frontend/01-completion-checker.md`
+- **Generate Modal** - `wdrozenia/modules/tools/frontend/06-generate-modal.md`
+
 ---
 
 ## Podsumowanie zgodnosci: ~95%
@@ -85,17 +107,19 @@ W module Tools „raport” jest artefaktem Discovery (snapshot + approval + eks
 | `confidence_avg` | >= 3 | Srednia pewnosc odpowiedzi (skala 1-5) |
 
 ### UI Komponenty
-| Komponent | Plik | Opis |
-|-----------|------|------|
-| ToolWorkspace | `ToolWorkspace.tsx` | Glowny kontener workspace |
-| ToolReviewPanel | `ToolReviewPanel.tsx` | Panel review z gaps i akcjami |
-| GenerateInitiativesModal | `GenerateInitiativesModal.tsx` | Modal generowania (count 3-7, metodyka) |
-| ToolContextPanel | `ToolContextPanel.tsx` | Prawy panel z org, completion, AI assist |
-| ToolHeader | `ToolHeader.tsx` | Status badge, progress, request review |
-| ToolCanvas | `ToolCanvas.tsx` | Glowna kolumna z sekcjami narzedzia |
-| ToolActionBar | `ToolActionBar.tsx` | Dolny pasek akcji |
-| InlineAssist | `InlineAssist.tsx` | Micro-suggestions przy polach |
-| DiscoveryToolsHub | `DiscoveryToolsHub.tsx` | Hub z zakladkami i kategoriami |
+| Komponent | Plik | Opis | Status |
+|-----------|------|------|--------|
+| **ToolDocumentView** | `ToolDocumentView.tsx` | **Kanoniczny widok dokumentu (dwukolumnowy)** | ✅ Active |
+| ToolCanvas | `ToolCanvas.tsx` | Renderowanie treści narzędzia (kroki) | ✅ Active |
+| GenerateInitiativesModal | `GenerateInitiativesModal.tsx` | Modal generowania (count 3-7, metodyka) | ✅ Active |
+| ToolReviewPanel | `ToolReviewPanel.tsx` | Panel review z gaps i akcjami | ✅ Active |
+| DiscoveryToolsHub | `DiscoveryToolsHub.tsx` | Hub z zakladkami i kategoriami | ✅ Active |
+| toolCompletion | `toolCompletion.ts` | Logika DoD i gaps (computeToolCompletionItems, computeToolReviewGaps) | ✅ Active |
+| ToolWorkspace | `ToolWorkspace.tsx` | ~~Legacy workspace~~ (zastąpiony przez ToolDocumentView) | ⚠️ Deprecated |
+| ToolContextPanel | `ToolContextPanel.tsx` | ~~Prawy panel~~ (zintegrowany w ToolDocumentView) | ⚠️ Deprecated |
+| ToolHeader | `ToolHeader.tsx` | ~~Header~~ (zintegrowany w ToolDocumentView) | ⚠️ Deprecated |
+| ToolActionBar | `ToolActionBar.tsx` | ~~Action bar~~ (zintegrowany w ToolDocumentView) | ⚠️ Deprecated |
+| InlineAssist | `InlineAssist.tsx` | Micro-suggestions przy polach | ✅ Active |
 
 ### Generowanie inicjatyw
 | Metodologia | Category | Priority | Risk | Best For |
@@ -141,11 +165,40 @@ W module Tools „raport” jest artefaktem Discovery (snapshot + approval + eks
 
 ---
 
+## Nowe funkcjonalności (2026-01)
+
+### ToolDocumentView (Kanoniczny widok)
+- ✅ **Dwukolumnowy layout** zgodny z Golden Standard (Task/Initiative)
+- ✅ **Step-based workflow** - klikalne step pills, Previous/Next navigation
+- ✅ **ToolCanvas integration** - renderowanie treści narzędzia z `showContextPanel={false}`
+- ✅ **DoD Checklist** - dynamicznie generowany przez `computeToolCompletionItems()`
+- ✅ **hydrateSessionFromApi** - poprawne ładowanie danych z backendu do store
+- ✅ **Auto-save** - debounced zapis zmian (1.5s)
+- ✅ **AI Integration** - Generate with AI w każdej sekcji, AI comments
+- ✅ **Gate Decisions** - wyświetlanie wszystkich decyzji bramkowych
+- ✅ **Generated Initiatives** - lista inicjatyw z linkami do pełnego widoku
+- ✅ **Comments Section** - shared component z Task/Initiative
+- ✅ **Activity Log** - historia zmian statusu i akcji
+
+**Dokumentacja:** `wdrozenia/modules/tools/frontend/07-tool-document-view.md`
+
+### toolCompletion.ts (Centralized DoD Logic)
+- ✅ **computeToolReviewGaps()** - lista brakujących elementów dla review
+- ✅ **computeToolCompletionItems()** - lista kryteriów DoD z statusem done/not done
+- ✅ **Tool-specific logic** - obsługa SWOT, Porter, Growth Paths, Portfolio Priority, Risk & Uncertainty
+
+**Dokumentacja:** `wdrozenia/modules/tools/frontend/07-tool-document-view.md` (sekcja "Tool Completion Logic")
+
+---
+
 ## Braki / Nice-to-have (P2/P3)
 
 ### P2 (Enhancement)
 | Feature | Opis | Effort |
 |---------|------|--------|
+| Go to section z DoD | Scroll do sekcji w lewej kolumnie z DoD checklist | 2h |
+| Team section | Wyświetlanie owner/reviewer z opisami ról | 2h |
+| Traceability section | Pokazanie źródła narzędzia (assessment, interview) | 2h |
 | Decision Owner Selection UI | Backend przyjmuje `decisionOwnerId`, UI brak selektora | 2h |
 | Link z Initiative do Tool | `source_type='tool'` zapisane, brak linku w UI | 1h |
 | Batch history view | Lista wszystkich batchy generowania | 3h |
@@ -220,21 +273,28 @@ W module Tools „raport” jest artefaktem Discovery (snapshot + approval + eks
 
 ## Rekomendacje dalszego rozwoju
 
-### Priorytet 1 (Q1 2026)
-1. **Dodac selektor decision owner** - w request review modal
-2. **Dodac link z Initiative do Tool** - w InitiativeDetailCard
-3. **Rozszerzyc testy** - coverage do 80%
+### Priorytet 1 (Q1 2026) - ✅ Ukończone
+1. ✅ **ToolDocumentView** - kanoniczny widok dwukolumnowy
+2. ✅ **Step-based workflow** - nawigacja między krokami
+3. ✅ **toolCompletion.ts** - centralizacja logiki DoD
+4. ✅ **hydrateSessionFromApi** - poprawne ładowanie z backendu
 
 ### Priorytet 2 (Q2 2026)
-4. **Rozszerzyc related initiatives** - pokazac ryzyko i wiecej szczegolow
-5. **Dodac tooltipy confidence** - wyjasnienie dlaczego confidence jest na danym poziomie
-6. **Dodac pinowanie fragmentow czatu** - dla lepszego kontekstu
-7. **Export do PDF** - eksport analizy
+1. **Go to section z DoD** - scroll do sekcji z checklist
+2. **Team section** - owner/reviewer z opisami ról
+3. **Traceability section** - źródło narzędzia (assessment, interview)
+4. **Dodac selektor decision owner** - w request review modal
+5. **Dodac link z Initiative do Tool** - w InitiativeDetailCard
+6. **Rozszerzyc testy** - coverage do 80%
 
 ### Priorytet 3 (Q3-Q4 2026)
-8. **Collaborative editing** - real-time sync
-9. **Version history** - historia zmian
-10. **Nowe narzedzia** - Value Chain, VSM Builder, RPA Scanner
+7. **Rozszerzyc related initiatives** - pokazac ryzyko i wiecej szczegolow
+8. **Dodac tooltipy confidence** - wyjasnienie dlaczego confidence jest na danym poziomie
+9. **Dodac pinowanie fragmentow czatu** - dla lepszego kontekstu
+10. **Export do PDF** - eksport analizy
+11. **Collaborative editing** - real-time sync
+12. **Version history** - historia zmian
+13. **Nowe narzedzia** - Value Chain, VSM Builder, RPA Scanner
 
 ---
 
@@ -263,15 +323,18 @@ W module Tools „raport” jest artefaktem Discovery (snapshot + approval + eks
 ### Frontend
 | Plik | Opis | Linie |
 |------|------|-------|
-| `src/components/DiscoveryTools/ToolWorkspace.tsx` | Main workspace | ~800 |
-| `src/components/DiscoveryTools/ToolReviewPanel.tsx` | Review panel | ~300 |
-| `src/components/DiscoveryTools/GenerateInitiativesModal.tsx` | Generate modal | ~350 |
-| `src/components/DiscoveryTools/ToolContextPanel.tsx` | Context panel | ~250 |
-| `src/components/DiscoveryTools/ToolHeader.tsx` | Header | ~150 |
-| `src/components/DiscoveryTools/ToolCanvas.tsx` | Canvas | ~400 |
-| `src/components/DiscoveryTools/ToolActionBar.tsx` | Action bar | ~100 |
-| `src/components/DiscoveryTools/InlineAssist.tsx` | AI assist | ~150 |
-| `src/components/Discovery/DiscoveryToolsHub.tsx` | Hub | ~500 |
+| `src/components/DiscoveryTools/ToolDocumentView.tsx` | **Kanoniczny widok dokumentu (dwukolumnowy)** | ~1500 | ✅ Active |
+| `src/components/DiscoveryTools/ToolCanvas.tsx` | Renderowanie treści narzędzia (kroki) | ~400 | ✅ Active |
+| `src/components/DiscoveryTools/toolCompletion.ts` | Logika DoD i gaps | ~220 | ✅ Active |
+| `src/components/DiscoveryTools/GenerateInitiativesModal.tsx` | Modal generowania inicjatyw | ~350 | ✅ Active |
+| `src/components/DiscoveryTools/ToolReviewPanel.tsx` | Panel review z gaps i akcjami | ~300 | ✅ Active |
+| `src/components/Discovery/DiscoveryToolsHub.tsx` | Hub z zakladkami i kategoriami | ~500 | ✅ Active |
+| `src/components/DiscoveryTools/InlineAssist.tsx` | AI micro-suggestions | ~150 | ✅ Active |
+| `src/store/useToolStore.ts` | Zustand store (session, steps, data) | ~1400 | ✅ Active |
+| ~~`src/components/DiscoveryTools/ToolWorkspace.tsx`~~ | ~~Legacy workspace~~ | ~800 | ⚠️ Deprecated |
+| ~~`src/components/DiscoveryTools/ToolContextPanel.tsx`~~ | ~~Context panel~~ | ~250 | ⚠️ Deprecated |
+| ~~`src/components/DiscoveryTools/ToolHeader.tsx`~~ | ~~Header~~ | ~150 | ⚠️ Deprecated |
+| ~~`src/components/DiscoveryTools/ToolActionBar.tsx`~~ | ~~Action bar~~ | ~100 | ⚠️ Deprecated |
 
 ### Testy
 | Plik | Opis | Testy |

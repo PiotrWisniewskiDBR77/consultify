@@ -19,7 +19,6 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { LevelAttachment, useAssessmentAttachments } from '../../hooks/useAssessmentAttachments';
 
@@ -33,11 +32,11 @@ interface LevelAttachmentsProps {
 }
 
 const ATTACHMENT_TYPES = [
-  { value: 'EVIDENCE', label: 'Dowód' },
-  { value: 'SCREENSHOT', label: 'Zrzut ekranu' },
-  { value: 'DOCUMENT', label: 'Dokument' },
-  { value: 'REPORT', label: 'Raport' },
-  { value: 'OTHER', label: 'Inne' },
+  { value: 'EVIDENCE', label: 'Evidence' },
+  { value: 'SCREENSHOT', label: 'Screenshot' },
+  { value: 'DOCUMENT', label: 'Document' },
+  { value: 'REPORT', label: 'Report' },
+  { value: 'OTHER', label: 'Other' },
 ] as const;
 
 const getFileIcon = (mimeType: string) => {
@@ -60,7 +59,6 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
   readOnly = false,
   compact = false,
 }) => {
-  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [attachments, setAttachments] = useState<LevelAttachment[]>([]);
@@ -116,7 +114,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
   };
 
   const handleDelete = async (attachmentId: string) => {
-    if (window.confirm('Czy na pewno chcesz usunąć ten załącznik?')) {
+    if (window.confirm('Are you sure you want to delete this attachment?')) {
       const success = await deleteAttachment(attachmentId);
       if (success) {
         setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
@@ -139,8 +137,8 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
           <Paperclip size={14} />
           <span>
             {attachments.length > 0
-              ? `${attachments.length} załącznik${attachments.length === 1 ? '' : attachments.length < 5 ? 'i' : 'ów'}`
-              : 'Dodaj załącznik'}
+              ? `${attachments.length} ${attachments.length === 1 ? 'attachment' : 'attachments'}`
+              : 'Add attachment'}
           </span>
         </button>
       </div>
@@ -153,7 +151,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
           <Paperclip size={14} />
-          <span>Załączniki ({attachments.length})</span>
+          <span>Attachments ({attachments.length})</span>
         </div>
 
         {!readOnly && (
@@ -162,7 +160,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
             className="flex items-center gap-1.5 text-xs font-medium text-purple-500 hover:text-purple-600 transition-colors"
           >
             <Plus size={14} />
-            Dodaj
+            Add
           </button>
         )}
 
@@ -183,7 +181,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
             {/* Type Selection */}
             <div>
               <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                Typ załącznika
+                  Attachment type
               </label>
               <select
                 value={selectedType}
@@ -203,13 +201,13 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
             {/* Description */}
             <div>
               <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                Opis (opcjonalnie)
+                  Description (optional)
               </label>
               <input
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Krótki opis załącznika..."
+                  placeholder="Short attachment description..."
                 className="w-full text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-md px-2 py-1.5"
               />
             </div>
@@ -232,19 +230,19 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
                 {isUploading ? (
                   <>
                     <Loader2 size={16} className="animate-spin" />
-                    Przesyłanie...
+                    Uploading...
                   </>
                 ) : (
                   <>
                     <Upload size={16} />
-                    Wybierz plik
+                    Choose file
                   </>
                 )}
               </button>
             </div>
 
             <p className="text-[10px] text-slate-400 dark:text-slate-500">
-              Dozwolone: PDF, Word, Excel, PowerPoint, obrazy, CSV, TXT, JSON (max 25MB)
+              Allowed: PDF, Word, Excel, PowerPoint, images, CSV, TXT, JSON (max 25MB)
             </p>
           </div>
         </div>
@@ -326,7 +324,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
         </div>
       ) : (
         <div className="text-center py-4 text-sm text-slate-400 dark:text-slate-500">
-          Brak załączników dla tego poziomu
+          No attachments for this level
         </div>
       )}
     </div>

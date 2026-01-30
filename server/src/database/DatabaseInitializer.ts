@@ -11,8 +11,6 @@ import fs from 'fs';
 import { databaseConfig } from '../config/DatabaseConfig.js';
 import logger from '../utils/Logger.js';
 import { getDatabase, getDatabaseAsync } from './Database.js';
-// @ts-ignore - Dynamic import of legacy module
-const getLegacySqlite = async () => import('../../legacy_archive/database.sqlite.js');
 
 const resolveTestSchemaPath = async () => {
   const path = await import('path');
@@ -422,13 +420,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
             }
           } catch (schemaErr: any) {
             logger.warn(`[DatabaseInitializer] TEST_SCHEMA import failed: ${schemaErr.message}`);
-            logger.warn('[DatabaseInitializer] Falling back to legacy init');
-            const sqliteModule = await getLegacySqlite();
-            if (sqliteModule && sqliteModule.initDb) {
-              sqliteModule.initDb(db);
-              // Wait a bit for callbacks to fire
-              await new Promise((resolve) => setTimeout(resolve, 1000));
-            }
+            logger.warn('[DatabaseInitializer] No legacy init available; skipping fallback init');
           }
         }
 

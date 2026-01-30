@@ -29,6 +29,7 @@ import {
   User,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
 import { ImportReportModal } from '../Reports/ImportReportModal';
@@ -86,6 +87,8 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   pendingAssessmentId,
   onOpenReport,
 }) => {
+  const { i18n } = useTranslation();
+  const isPolish = i18n.language === 'pl';
   // State
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -184,14 +187,14 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        toast.success('Eksport PDF zakończony');
+        toast.success(isPolish ? 'Eksport PDF zakończony' : 'PDF export completed');
       } else {
         console.error('PDF export failed');
-        toast.error('Nie udało się wyeksportować PDF');
+        toast.error(isPolish ? 'Nie udało się wyeksportować PDF' : 'Failed to export PDF');
       }
     } catch (err) {
       console.error('[ReportsTable] PDF Export error:', err);
-      toast.error('Błąd eksportu PDF');
+      toast.error(isPolish ? 'Błąd eksportu PDF' : 'PDF export error');
     }
   };
 
@@ -213,14 +216,14 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        toast.success('Eksport Excel zakończony');
+        toast.success(isPolish ? 'Eksport Excel zakończony' : 'Excel export completed');
       } else {
         console.error('Excel export failed');
-        toast.error('Nie udało się wyeksportować Excel');
+        toast.error(isPolish ? 'Nie udało się wyeksportować Excel' : 'Failed to export Excel');
       }
     } catch (err) {
       console.error('[ReportsTable] Excel Export error:', err);
-      toast.error('Błąd eksportu Excel');
+      toast.error(isPolish ? 'Błąd eksportu Excel' : 'Excel export error');
     }
   };
 

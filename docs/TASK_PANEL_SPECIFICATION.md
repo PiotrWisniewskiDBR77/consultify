@@ -1,15 +1,20 @@
 # Task Panel - Pełna Specyfikacja UI/UX
 
+> **Status:** OBOWIĄZUJĄCY od 2026-01-29  
+> **Ostatnia aktualizacja:** 2026-01-29  
+> **Plik źródłowy:** `src/components/MyWork/TaskDetailView.tsx`
+
 ## Spis treści
 
 1. [Przegląd](#przegląd)
-2. [Różnice względem Decision Panel](#różnice-względem-decision-panel)
-3. [Układ (Layout)](#układ-layout)
-4. [Komponenty lewej kolumny](#komponenty-lewej-kolumny)
-5. [Komponenty prawej kolumny](#komponenty-prawej-kolumny)
-6. [Stany i konfiguracje](#stany-i-konfiguracje)
-7. [Workflow i logika](#workflow-i-logika)
-8. [Nowe sekcje](#nowe-sekcje)
+2. [Golden Standard (2026-01-29)](#golden-standard-2026-01-29)
+3. [Różnice względem Decision Panel](#różnice-względem-decision-panel)
+4. [Układ (Layout)](#układ-layout)
+5. [Komponenty lewej kolumny](#komponenty-lewej-kolumny)
+6. [Komponenty prawej kolumny](#komponenty-prawej-kolumny)
+7. [Stany i konfiguracje](#stany-i-konfiguracje)
+8. [Workflow i logika](#workflow-i-logika)
+9. [Nowe sekcje](#nowe-sekcje)
 
 ---
 
@@ -29,6 +34,42 @@ Task Panel został przebudowany według wzorca Decision Panel (Golden Standard).
 - **Animacje** z Framer Motion
 - **Tech-sexy UI** z gradientami i efektami blur
 - **AI-powered** generowanie ryzyk, alternatyw, pomysłów i wskazówek
+- **Offline support** - draft zapisywany do localStorage
+
+---
+
+## Golden Standard (2026-01-29)
+
+### Uproszczony Header
+
+Od 2026-01-29 header zawiera **tylko 2 przyciski**:
+
+| Przycisk | Kolor ramki | Kolor tekstu | Funkcja |
+|----------|-------------|--------------|---------|
+| **Save** | `border-blue-500/40` | `text-blue-700` | Zapisuje task + draft offline |
+| **Chat** | `border-purple-500/40` | `text-purple-700` | Otwiera AI chat z kontekstem |
+
+### Usunięte przyciski
+
+Następujące przyciski zostały **celowo usunięte** z headera:
+- Start
+- Complete
+- Block
+- Delegate
+- Delete
+
+Status zadania zmienia się teraz wyłącznie przez dropdown w sekcji Control.
+
+### Badge Task ID
+
+Badge `#task-XXX` przeniesiony do sekcji **Control** (prawa kolumna), wyświetlany po prawej stronie nagłówka sekcji.
+
+### Offline Draft
+
+Każdy Save i Chat najpierw zapisuje draft do localStorage:
+```
+consultinity-task-draft:{taskId}
+```
 
 ### Design System:
 

@@ -86,14 +86,22 @@ export async function createDatabase(): Promise<IDatabase> {
     return db;
   }
 
-  // Default to SQLite
-  console.log('[Database] Loading SQLite legacy module...');
-  const sqliteModule = await import('../../legacy_archive/database.sqlite.js').then(
-    (m) => m.default || m
-  );
-  const db = (
-    sqliteModule.getDatabaseInstance ? sqliteModule.getDatabaseInstance() : sqliteModule
-  ) as IDatabase;
+  // Default to SQLite (direct sqlite3 connection)
+  console.log('[Database] Initializing SQLite connection...');
+  const sqlite3Module: any = await import('sqlite3').then((m) => (m as any).default || m);
+  const sqlite3 = sqlite3Module?.verbose ? sqlite3Module.verbose() : sqlite3Module;
+  const sqlitePath = databaseConfig.sqlite?.path || process.env.SQLITE_PATH;
+  if (!sqlitePath) {
+    throw new Error('SQLITE_PATH is not set');
+  }
+
+  const db = (await new Promise((resolve, reject) => {
+    const handle = new sqlite3.Database(sqlitePath, (err: any) => {
+      if (err) reject(err);
+      else resolve(handle);
+    });
+  })) as IDatabase;
+
   shimQuery(db);
   setToGlobal(db);
   return db;
@@ -131,12 +139,19 @@ export function getDatabaseInstance(): IDatabase {
     return mockDb;
   }
 
-  // SQLite Sync Fallback
+  // SQLite Sync Fallback (direct sqlite3 connection)
   try {
-    const sqliteModule = require('../../legacy_archive/database.sqlite.js');
-    const db = (
-      sqliteModule.getDatabaseInstance ? sqliteModule.getDatabaseInstance() : sqliteModule
-    ) as IDatabase;
+    const sqlite3Module: any = require('sqlite3');
+    const sqlite3 = sqlite3Module?.verbose ? sqlite3Module.verbose() : sqlite3Module;
+    const sqlitePath = (databaseConfig as any).sqlite?.path || process.env.SQLITE_PATH;
+    if (!sqlitePath) {
+      throw new Error('SQLITE_PATH is not set');
+    }
+    const db = new sqlite3.Database(sqlitePath, (err: any) => {
+      if (err) {
+        console.error('[Database] SQLite sync open error:', err);
+      }
+    }) as unknown as IDatabase;
     shimQuery(db);
     setToGlobal(db);
     return db;

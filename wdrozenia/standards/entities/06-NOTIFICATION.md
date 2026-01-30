@@ -52,7 +52,7 @@ Każda notyfikacja odpowiada na:
 3. **Co jest blokowane**
 4. **Jakiej akcji oczekujemy** (jednoznaczny CTA)
 
-Wymóg: notyfikacja ma mieć **Primary CTA** prowadzące do konkretnego działania (nie “read more”).
+Wymóg: notyfikacja ma mieć **Primary CTA** prowadzące do konkretnego działania (nie "read more").
 
 ---
 
@@ -61,10 +61,10 @@ Wymóg: notyfikacja ma mieć **Primary CTA** prowadzące do konkretnego działan
 Notyfikacje muszą powstawać co najmniej z:
 
 - brak decyzji / decyzja overdue / decision critical
-- blokada taska (w szczególności: “blocked by decision”)
+- blokada taska (w szczególności: "blocked by decision")
 - przekroczony próg kosztu opóźnienia
 - aging (brak ruchu / brak aktualizacji)
-- “shadow execution” (próba pchania taska bez decyzji)
+- "shadow execution" (próba pchania taska bez decyzji)
 
 ---
 
@@ -72,7 +72,7 @@ Notyfikacje muszą powstawać co najmniej z:
 
 Adresaci wynikają z grafu odpowiedzialności:
 
-- **Decydent** → presja, koszt, CTA “Decide/Delegate/Escalate”
+- **Decydent** → presja, koszt, CTA "Decide/Delegate/Escalate"
 - **Manager** → blokady zespołu, przepływ
 - **Wykonawca** → na co czeka, co ma zrobić
 - **Sponsor** → ryzyko strategiczne, koszt domina
@@ -101,7 +101,7 @@ Wymóg: mechanizm musi mieć anti-spam:
 Inbox pokazuje tylko elementy wymagające reakcji (z notyfikacji/zdarzeń):
 
 - Decisions wymagające aktu
-- Taski w blokadzie (zwłaszcza “blocked by decision”)
+- Taski w blokadzie (zwłaszcza "blocked by decision")
 - Krytyczne zaległości / no-response
 
 Każdy element: 4-liniowy format + Primary CTA + (opcjonalnie) Snooze z powodem.
@@ -112,7 +112,7 @@ To archiwum + preferencje:
 
 - filtrowanie po priorytecie i encji
 - grupowanie po encji (Decision/Task)
-- “why you got it” (rola: decider/owner/manager/sponsor)
+- "why you got it" (rola: decider/owner/manager/sponsor)
 
 ---
 
@@ -125,6 +125,39 @@ To archiwum + preferencje:
 
 ---
 
+### Notification Detail View (2026-01-29)
+
+Pełny widok szczegółowy notyfikacji zgodny z Golden Standard:
+
+#### Header
+- Fioletowy gradient (jak Task Detail View)
+- 2 przyciski: **Mark Read** (niebieski) + **Chat** (fioletowy)
+- Severity indicator (kolorowa kropka)
+
+#### Lewa kolumna (2/3)
+1. **What's Happening** - co się dzieje, dlaczego ważne, co blokowane
+2. **AI Analysis** ⭐ - priorytet, wpływ, rekomendacja AI, przycisk "Zapytaj AI"
+3. **Expected Action** - oczekiwana akcja + interaktywna checklista
+4. **Related Items** - powiązane task/decision/project
+5. **Comments** - komentarze (przygotowane)
+6. **Activity Log** - historia aktywności
+
+#### Prawa kolumna (1/3)
+1. **Control** - typ, severity, kategoria, daty, Primary CTA, Mute, Delete
+2. **Stakeholders** - interesariusze (przygotowane)
+3. **Why You Got It** - wyjaśnienie dlaczego otrzymano
+
+#### Snooze Mechanism
+- Presety: 1h, 4h, jutro, następny tydzień
+- Custom datetime
+- Persystowane w localStorage
+
+---
+
 ### Historia zmian
 
-- 2026-01-28: dodano standard Notification zgodnie z kanonem „komunikacja i taskowanie”
+- 2026-01-29: dodano Notification Detail View zgodny z Golden Standard
+- 2026-01-29: dodano sekcję AI Analysis
+- 2026-01-29: dodano interaktywną checklistę akcji
+- 2026-01-29: dodano snooze mechanism z offline persistence
+- 2026-01-28: dodano standard Notification zgodnie z kanonem „komunikacja i taskowanie"

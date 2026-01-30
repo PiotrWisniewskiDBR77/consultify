@@ -916,14 +916,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   const handleExportMarkdown = () => {
     if (!insight?.content) return;
-    const blob = new Blob([insight.content], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${insight.title.replace(/[^a-z0-9]/gi, '_')}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success(isPolish ? 'Pobrano plik Markdown' : 'Downloaded Markdown file');
+      const blob = new Blob([insight.content], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${insight.title.replace(/[^a-z0-9]/gi, '_')}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(isPolish ? 'Pobrano plik Markdown' : 'Downloaded Markdown file');
     addActivityLogEntry(
       'exported',
       isPolish ? 'Wyeksportowano do Markdown' : 'Exported to Markdown'
@@ -1143,7 +1143,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         onClick={() => toggleSection(id)}
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
       >
-        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
           <div className={`p-2 rounded-xl ${iconBgClass}`}>{icon}</div>
           <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{title}</span>
         </div>
@@ -1213,8 +1213,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 <div
                   className={`w-10 h-10 rounded-xl flex items-center justify-center ${getColorClasses(typeMeta.color, 'bg')} ${getColorClasses(typeMeta.color, 'text')}`}
                 >
-                  {typeMeta.icon}
-                </div>
+              {typeMeta.icon}
+            </div>
                 <div className="flex-1">
                   <input
                     type="text"
@@ -1224,19 +1224,19 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     placeholder={isPolish ? 'Tytuł wniosku...' : 'Insight title...'}
                   />
                   <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
-                    <span className={getColorClasses(typeMeta.color, 'text')}>
-                      {isPolish ? typeMeta.labelPl : typeMeta.label}
-                    </span>
+                <span className={getColorClasses(typeMeta.color, 'text')}>
+                  {isPolish ? typeMeta.labelPl : typeMeta.label}
+                </span>
                     <span>•</span>
                     <span className={`flex items-center gap-1 ${statusConfig.textColor}`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.color}`} />
                       {isPolish ? statusConfig.label.pl : statusConfig.label.en}
                     </span>
-                  </div>
-                </div>
               </div>
+            </div>
+          </div>
 
-              <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -1342,7 +1342,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   >
                     <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-sm">
                       {index + 1}
-                    </div>
+          </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-slate-700 dark:text-slate-300">
                         {finding.content}
@@ -1375,11 +1375,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         <span className="text-xs text-slate-400">
                           {finding.sourceCount} {isPolish ? 'źródeł' : 'sources'}
                         </span>
-                      </div>
-                    </div>
+        </div>
+            </div>
                   </motion.div>
                 ))}
-              </div>
+            </div>
             )}
 
             {/* Insight Content Section */}
@@ -1436,41 +1436,41 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               <div className="p-5">
                 {insight?.status === 'generating' ? (
                   <div className="flex flex-col items-center justify-center py-12">
-                    <div className="relative mb-6">
-                      <Sparkles size={48} className="text-amber-400 animate-pulse" />
-                    </div>
+              <div className="relative mb-6">
+                <Sparkles size={48} className="text-amber-400 animate-pulse" />
+                </div>
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                      {isPolish ? 'AI generuje wnioski...' : 'AI is generating insights...'}
-                    </h3>
+                {isPolish ? 'AI generuje wnioski...' : 'AI is generating insights...'}
+              </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 text-center max-w-md">
-                      {isPolish
+                {isPolish
                         ? 'Analizujemy wybrane sesje wywiadów i przygotowujemy kompleksową analizę.'
                         : 'We are analyzing selected interview sessions and preparing a comprehensive analysis.'}
                     </p>
-                  </div>
-                ) : insight?.content ? (
+            </div>
+          ) : insight?.content ? (
                   <div className="prose prose-slate dark:prose-invert prose-sm max-w-none">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        h1: ({ children }) => (
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  h1: ({ children }) => (
                           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 pb-2 border-b border-slate-200 dark:border-navy-700">
-                            {children}
-                          </h1>
-                        ),
-                        h2: ({ children }) => (
+                      {children}
+                    </h1>
+                  ),
+                  h2: ({ children }) => (
                           <h2 className="text-xl font-semibold text-slate-800 dark:text-white mt-6 mb-3">
                             {children}
                           </h2>
-                        ),
-                        h3: ({ children }) => (
+                  ),
+                  h3: ({ children }) => (
                           <h3 className="text-lg font-medium text-slate-700 dark:text-slate-200 mt-4 mb-2">
-                            {children}
+                      {children}
                           </h3>
                         ),
                         p: ({ children }) => (
                           <p className="text-slate-600 dark:text-slate-300 mb-3 leading-relaxed">
-                            {children}
+                        {children}
                           </p>
                         ),
                         ul: ({ children }) => (
@@ -1484,26 +1484,26 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         ),
                         strong: ({ children }) => (
                           <strong className="font-semibold text-slate-800 dark:text-white">
-                            {children}
+                      {children}
                           </strong>
                         ),
                         blockquote: ({ children }) => (
                           <blockquote className="border-l-4 border-primary-500 pl-4 py-2 my-4 bg-slate-50 dark:bg-navy-800/50 rounded-r-lg">
-                            {children}
+                      {children}
                           </blockquote>
-                        ),
-                      }}
-                    >
-                      {insight.content}
-                    </ReactMarkdown>
-                  </div>
-                ) : (
+                  ),
+                }}
+              >
+                {insight.content}
+              </ReactMarkdown>
+            </div>
+          ) : (
                   <div className="flex flex-col items-center justify-center py-12">
                     <FileText size={48} className="text-slate-300 dark:text-slate-600 mb-4" />
-                    <p className="text-slate-400">{isPolish ? 'Brak treści' : 'No content'}</p>
-                  </div>
-                )}
-              </div>
+              <p className="text-slate-400">{isPolish ? 'Brak treści' : 'No content'}</p>
+            </div>
+          )}
+        </div>
             )}
 
             {/* Quotes & Evidence Section */}
@@ -1573,7 +1573,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs"
                           >
                             #{tag}
-                          </span>
+              </span>
                         ))}
                       </div>
                     </div>
@@ -2054,8 +2054,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
                       <Clock size={14} className="text-slate-400" />
                       <span className="text-sm text-slate-700 dark:text-slate-300">
-                        {(insight.generationTimeMs / 1000).toFixed(1)}s
-                      </span>
+                  {(insight.generationTimeMs / 1000).toFixed(1)}s
+                </span>
                     </div>
                   </div>
                 )}
@@ -2070,11 +2070,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       <Sparkles size={14} className="text-slate-400" />
                       <span className="text-sm text-slate-700 dark:text-slate-300">
                         {insight.tokensUsed.toLocaleString()}
-                      </span>
+                </span>
                     </div>
                   </div>
-                )}
-              </div>
+              )}
+            </div>
             )}
 
             {/* 2. Export Actions */}
@@ -2100,7 +2100,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   )}
                   <span className="text-sm font-medium">
                     {isPolish ? 'Eksportuj do Tools' : 'Export to Tools'}
-                  </span>
+            </span>
                   <ArrowRight size={14} className="ml-auto" />
                 </motion.button>
 
@@ -2160,8 +2160,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     {isPolish ? 'Regeneruj AI' : 'Regenerate AI'}
                   </span>
                 </motion.button>
-              </div>
-            )}
+          </div>
+        )}
 
             {/* 3. Attachments */}
             <AttachmentsSection

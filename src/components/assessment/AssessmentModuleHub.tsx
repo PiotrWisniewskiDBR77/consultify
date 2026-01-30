@@ -33,6 +33,7 @@ import {
   Workflow,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
 import { useDeviceType } from '../../hooks/useDeviceType';
@@ -174,6 +175,8 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
   initialAssessmentId,
   onNavigate,
 }) => {
+  const { i18n } = useTranslation();
+  const isPolish = i18n.language === 'pl';
   const { currentProjectId, setCurrentView } = useAppStore();
   const { isTablet, isMobile, isTouchDevice } = useDeviceType();
   const isCompact = isTablet || isMobile;
@@ -470,13 +473,13 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
         }
       } else {
         const errorData = await response.json();
-        setSaveError(errorData.error || 'Nie udało się zapisać');
-        toast.error('Nie udało się zapisać assessment');
+        setSaveError(errorData.error || (isPolish ? 'Nie udało się zapisać' : 'Failed to save'));
+        toast.error(isPolish ? 'Nie udało się zapisać assessment' : 'Failed to save assessment');
       }
     } catch (error) {
       console.error('[AssessmentModuleHub] Save error:', error);
-      setSaveError('Błąd połączenia');
-      toast.error('Błąd połączenia');
+      setSaveError(isPolish ? 'Błąd połączenia' : 'Connection error');
+      toast.error(isPolish ? 'Błąd połączenia' : 'Connection error');
     } finally {
       setIsSaving(false);
     }
@@ -681,7 +684,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
               <div className="text-center">
                 <Loader2 className="w-8 h-8 text-purple-500 animate-spin mx-auto mb-3" />
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Ładowanie danych assessmentu...
+                  {isPolish ? 'Ładowanie danych assessmentu...' : 'Loading assessment data...'}
                 </p>
               </div>
             </div>
@@ -1176,7 +1179,9 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
             <div className="flex items-center justify-between">
               {/* Progress Indicator */}
               <div className="flex items-center gap-3">
-                <span className="text-sm text-slate-500 dark:text-slate-400">Postęp:</span>
+                <span className="text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Postęp:' : 'Progress:'}
+                </span>
                 <div className="w-32 h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-purple-500 rounded-full transition-all duration-300"
@@ -1243,7 +1248,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                   {isSaving ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
-                      Zapisuję...
+                      {isPolish ? 'Zapisuję...' : 'Saving...'}
                     </>
                   ) : lastSaved && !hasUnsavedChanges ? (
                     <>
