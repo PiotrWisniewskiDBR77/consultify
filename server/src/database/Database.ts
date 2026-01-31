@@ -170,26 +170,42 @@ export interface MockDatabase extends IDatabase {
 }
 
 function createMockDatabase(): MockDatabase {
-  return {
+  const mock: MockDatabase = {
     isMock: true,
     get: (_sql, _params, callback) => {
+      // sqlite3 compatibility: support (sql, cb) and (sql, params, cb)
+      if (typeof _params === 'function') {
+        // @ts-ignore
+        _params(null, null);
+        return mock;
+      }
       if (callback) callback(null, null);
-      return Promise.resolve(null);
+      return mock;
     },
     all: (_sql, _params, callback) => {
+      if (typeof _params === 'function') {
+        // @ts-ignore
+        _params(null, []);
+        return mock;
+      }
       if (callback) callback(null, []);
-      return Promise.resolve([]);
+      return mock;
     },
     run(_sql, _params, callback) {
+      if (typeof _params === 'function') {
+        // @ts-ignore
+        _params.call({ lastID: 0, changes: 0 }, null);
+        return mock;
+      }
       if (callback) {
         // @ts-ignore
         callback.call({ lastID: 0, changes: 0 }, null);
       }
-      return Promise.resolve({ lastID: 0, changes: 0 });
+      return mock;
     },
     exec(_sql, callback) {
       if (callback) callback(null);
-      return Promise.resolve();
+      return mock;
     },
     serialize: (cb) => cb(),
     close: (callback) => {
@@ -200,6 +216,8 @@ function createMockDatabase(): MockDatabase {
       return { rows: [], rowCount: 0 };
     },
   };
+
+  return mock;
 }
 
 /**
@@ -222,12 +240,7 @@ function createProxyMethod(prop: string) {
         const originalCallback = lastArg;
         const wrappedArgs = [...args];
         wrappedArgs[lastArgIndex] = function (this: any, err: any, ...results: any[]) {
-          if (
-            err &&
-            err.message &&
-            err.message.includes('Database is closed') &&
-            retryCount < 1
-          ) {
+          if (err && err.message && err.message.includes('Database is closed') && retryCount < 1) {
             resetConnectionLocally();
             return callWithRetry(retryCount + 1);
           }

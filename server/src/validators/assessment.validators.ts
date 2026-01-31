@@ -14,12 +14,37 @@ export const CreateAssessmentSchema = z.object({
 });
 
 export const UpdateAssessmentSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
   answers: z.record(z.string(), z.unknown()).optional(),
   completionPercent: z.number().min(0).max(100).optional(),
   confidenceAvg: z.number().min(1).max(5).optional(),
   contextSnapshot: z.record(z.string(), z.unknown()).optional(),
   scoreSummary: z.record(z.string(), z.unknown()).optional(),
   currentSectionId: z.string().optional().nullable(),
+  navigation: z
+    .object({
+      axisId: z.number().int().positive(),
+      areaId: z.string().min(1),
+      level: z.number().int().min(1),
+    })
+    .optional(),
+});
+
+export const UpdateUserStateSchema = z.object({
+  navigation: z
+    .object({
+      axisId: z.number().int().positive(),
+      areaId: z.string().min(1),
+      level: z.number().int().min(1),
+    })
+    .optional(),
+});
+
+export const UpsertAssignmentSchema = z.object({
+  areaId: z.string().min(1),
+  assignedUserId: z.string().min(1),
+  dueAt: z.string().optional().nullable(),
+  status: z.string().optional(),
 });
 
 export const AssessmentDecisionSchema = z.object({
@@ -55,7 +80,9 @@ export const GenerateReportSchema = z.object({
 // List query params
 export const ListAssessmentsQuerySchema = z.object({
   projectId: z.string().optional(),
-  status: z.enum(['DRAFT', 'IN_REVIEW', 'AWAITING_APPROVAL', 'APPROVED', 'REJECTED', 'ARCHIVED']).optional(),
+  status: z
+    .enum(['DRAFT', 'IN_REVIEW', 'AWAITING_APPROVAL', 'APPROVED', 'REJECTED', 'ARCHIVED'])
+    .optional(),
   assessmentType: AssessmentTypeSchema.optional(),
   limit: z.string().transform(Number).optional(),
   offset: z.string().transform(Number).optional(),
@@ -64,6 +91,8 @@ export const ListAssessmentsQuerySchema = z.object({
 // Type exports
 export type CreateAssessmentRequest = z.infer<typeof CreateAssessmentSchema>;
 export type UpdateAssessmentRequest = z.infer<typeof UpdateAssessmentSchema>;
+export type UpdateUserStateRequest = z.infer<typeof UpdateUserStateSchema>;
+export type UpsertAssignmentRequest = z.infer<typeof UpsertAssignmentSchema>;
 export type RequestReviewRequest = z.infer<typeof RequestReviewSchema>;
 export type ApproveReportRequest = z.infer<typeof ApproveReportSchema>;
 export type ApproveAssessmentRequest = z.infer<typeof ApproveAssessmentSchema>;

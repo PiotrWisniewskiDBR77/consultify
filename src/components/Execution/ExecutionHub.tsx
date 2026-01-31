@@ -9,6 +9,7 @@
  */
 
 import {
+  closestCorners,
   DndContext,
   DragEndEvent,
   DragOverEvent,
@@ -17,7 +18,6 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  closestCorners,
 } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -46,6 +46,7 @@ import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLife
 import { useAppStore } from '../../store/useAppStore';
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
 import { RAIDLog } from '../Implementation/RAIDLog';
+import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import { DecisionsPanel } from '../MyWork/DecisionsPanel';
 import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
 import { InitiativeSidePanel } from '../Portfolio/InitiativeSidePanel';
@@ -61,7 +62,6 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import { ExecutionDetailPanel } from './ExecutionDetailPanel';
-import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import { ExecutionTimelineView } from './ExecutionTimelineView';
 
 // Kanban column status mapping
@@ -85,7 +85,9 @@ const mapPriorityToPortfolio = (
   }
 };
 
-const mapPriorityToFull = (priority: PortfolioInitiative['priority']): FullInitiative['priority'] => {
+const mapPriorityToFull = (
+  priority: PortfolioInitiative['priority']
+): FullInitiative['priority'] => {
   switch (priority) {
     case 'CRITICAL':
       return 'Critical';
@@ -198,7 +200,14 @@ interface KanbanColumnProps {
   isPastDue: (date?: string) => boolean;
 }
 
-const KanbanColumn: React.FC<KanbanColumnProps> = ({ id, label, accent, icon, tasks, isPastDue }) => {
+const KanbanColumn: React.FC<KanbanColumnProps> = ({
+  id,
+  label,
+  accent,
+  icon,
+  tasks,
+  isPastDue,
+}) => {
   const { setNodeRef, isOver } = useSortable({
     id: `column-${id}`,
     data: { type: 'column', columnId: id },
@@ -368,8 +377,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       } catch (err) {
         console.error('[ExecutionHub] Failed to load:', err);
         // Fallback to session data
-        const executionInitiatives = (fullSessionData?.initiatives || []).filter((i: FullInitiative) =>
-          EXECUTION_STATUSES.includes(i.status)
+        const executionInitiatives = (fullSessionData?.initiatives || []).filter(
+          (i: FullInitiative) => EXECUTION_STATUSES.includes(i.status)
         );
         setInitiatives(executionInitiatives);
       } finally {
@@ -612,9 +621,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           return (
             <div className="flex items-center gap-2 text-xs">
               <span className="text-slate-300">{relatedDecisions.length} total</span>
-              {overdueCount > 0 && (
-                <span className="text-rose-400">{overdueCount} overdue</span>
-              )}
+              {overdueCount > 0 && <span className="text-rose-400">{overdueCount} overdue</span>}
             </div>
           );
         },
@@ -681,7 +688,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const overdueDecisions =
       healthSnapshot?.decisions?.overdueCount ??
       decisions.filter(
-        (decision) => String(decision.status).toUpperCase() === 'PENDING' && isPastDue(decision.dueDate)
+        (decision) =>
+          String(decision.status).toUpperCase() === 'PENDING' && isPastDue(decision.dueDate)
       ).length;
     const totalDecisions =
       healthSnapshot?.decisions?.pendingCount ??
@@ -690,7 +698,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       ? Math.max(0, 100 - Math.round((overdueDecisions / totalDecisions) * 100))
       : 100;
 
-    const completedTasks = tasks.filter((task) => normalizeTaskStatus(task.status) === 'done').length;
+    const completedTasks = tasks.filter(
+      (task) => normalizeTaskStatus(task.status) === 'done'
+    ).length;
     const taskHealth = tasks.length
       ? Math.max(0, Math.round((completedTasks / tasks.length) * 100))
       : 0;
@@ -809,9 +819,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       .slice(0, 3)
       .map((initiative) => ({
         title: initiative.name,
-        context: !initiative.plannedStartDate || !initiative.plannedEndDate
-          ? 'Missing dates'
-          : 'Schedule conflict',
+        context:
+          !initiative.plannedStartDate || !initiative.plannedEndDate
+            ? 'Missing dates'
+            : 'Schedule conflict',
       }));
 
     const riskAlerts = initiatives
@@ -850,10 +861,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       name: row.name,
       status:
         row.status === InitiativeStatus.BLOCKED
-          ? 'in_review'
+          ? 'BLOCKED'
           : row.status === InitiativeStatus.DONE
-            ? 'completed'
-            : 'draft',
+            ? 'DONE'
+            : 'DRAFT',
     };
 
     setOpenDocuments((prev) => {
@@ -911,12 +922,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       typeColor: 'cyan',
       status:
         item.status === InitiativeStatus.BLOCKED
-          ? ('in_review' as const)
+          ? ('BLOCKED' as ItemStatus)
           : item.status === InitiativeStatus.DONE
-            ? ('completed' as const)
+            ? ('DONE' as ItemStatus)
             : item.status === InitiativeStatus.EXECUTING
-              ? ('approved' as const)
-              : ('draft' as const),
+              ? ('EXECUTING' as ItemStatus)
+              : ('DRAFT' as ItemStatus),
       progress: item.progress || 0,
       updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
     }));
@@ -984,9 +995,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       const newStatus = KANBAN_STATUS_MAP[targetColumnId];
 
       // Optimistic update
-      setTasks((prev) =>
-        prev.map((t) => (t.id === activeId ? { ...t, status: newStatus } : t))
-      );
+      setTasks((prev) => prev.map((t) => (t.id === activeId ? { ...t, status: newStatus } : t)));
 
       // API call to update task status
       try {
@@ -1028,13 +1037,24 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       );
     }
 
-    const columns: { id: KanbanColumnId; label: string; accent: string; icon: React.ReactNode }[] = [
-      { id: 'todo', label: 'To Do', accent: 'text-slate-300', icon: <ClipboardList size={14} /> },
-      { id: 'in_progress', label: 'In Progress', accent: 'text-cyan-300', icon: <Target size={14} /> },
-      { id: 'review', label: 'Review', accent: 'text-amber-300', icon: <Scale size={14} /> },
-      { id: 'blocked', label: 'Blocked', accent: 'text-rose-300', icon: <AlertTriangle size={14} /> },
-      { id: 'done', label: 'Done', accent: 'text-emerald-300', icon: <CheckCircle2 size={14} /> },
-    ];
+    const columns: { id: KanbanColumnId; label: string; accent: string; icon: React.ReactNode }[] =
+      [
+        { id: 'todo', label: 'To Do', accent: 'text-slate-300', icon: <ClipboardList size={14} /> },
+        {
+          id: 'in_progress',
+          label: 'In Progress',
+          accent: 'text-cyan-300',
+          icon: <Target size={14} />,
+        },
+        { id: 'review', label: 'Review', accent: 'text-amber-300', icon: <Scale size={14} /> },
+        {
+          id: 'blocked',
+          label: 'Blocked',
+          accent: 'text-rose-300',
+          icon: <AlertTriangle size={14} />,
+        },
+        { id: 'done', label: 'Done', accent: 'text-emerald-300', icon: <CheckCircle2 size={14} /> },
+      ];
 
     return (
       <DndContext
@@ -1067,7 +1087,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">
                   <GripVertical size={14} className="text-cyan-400" />
-                  <h4 className="text-sm font-medium text-white line-clamp-2">{activeTask.title}</h4>
+                  <h4 className="text-sm font-medium text-white line-clamp-2">
+                    {activeTask.title}
+                  </h4>
                 </div>
               </div>
               {activeTask.initiativeName && (
@@ -1171,7 +1193,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-slate-400 uppercase tracking-wide">Overdue Decisions</p>
-              <p className="text-2xl font-semibold text-white">{portfolioMetrics.overdueDecisions}</p>
+              <p className="text-2xl font-semibold text-white">
+                {portfolioMetrics.overdueDecisions}
+              </p>
             </div>
             <Scale className="text-amber-400" />
           </div>
@@ -1439,9 +1463,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // Render Decisions tab
   const renderDecisionsTab = () => (
     <div className="p-4 h-full">
-      <DecisionsPanel
-        onDecisionClick={(id) => console.log('Decision clicked:', id)}
-      />
+      <DecisionsPanel onDecisionClick={(id) => console.log('Decision clicked:', id)} />
     </div>
   );
 

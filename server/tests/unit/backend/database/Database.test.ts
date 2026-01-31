@@ -4,22 +4,29 @@
  * ETAP 10.1: Testy dla Database Layer - 95%+ coverage
  */
 
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createDatabase,
   getDatabase,
+  getDatabaseInstance,
   type MockDatabase,
+  resetConnection,
 } from '../../../../src/database/Database.js';
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
 
 describe('Database', () => {
   let originalMockDb: string | undefined;
   let originalDbType: string | undefined;
+  let originalSqlitePath: string | undefined;
 
   beforeEach(() => {
     originalMockDb = process.env.MOCK_DB;
     originalDbType = process.env.DB_TYPE;
+    originalSqlitePath = process.env.SQLITE_PATH;
     vi.clearAllMocks();
   });
 
@@ -33,6 +40,11 @@ describe('Database', () => {
       process.env.DB_TYPE = originalDbType;
     } else {
       delete process.env.DB_TYPE;
+    }
+    if (originalSqlitePath !== undefined) {
+      process.env.SQLITE_PATH = originalSqlitePath;
+    } else {
+      delete process.env.SQLITE_PATH;
     }
   });
 
@@ -79,6 +91,58 @@ describe('Database', () => {
       // Both should be valid database instances
       expect(db1).toBeDefined();
       expect(db2).toBeDefined();
+    });
+
+    it('should initialize SQLite without legacy_archive dependency', async () => {
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'consultify-db-test-'));
+      const sqlitePath = path.join(tmpDir, 'test.db');
+
+      const prevMock = process.env.MOCK_DB;
+      const prevType = process.env.DB_TYPE;
+      const prevSqlite = process.env.SQLITE_PATH;
+
+      try {
+        // Ensure a clean singleton between test runs
+        await resetConnection();
+
+        process.env.MOCK_DB = 'false';
+        process.env.DB_TYPE = 'sqlite';
+        process.env.SQLITE_PATH = sqlitePath;
+
+        const db = (await createDatabase()) as IDatabase;
+        expect(db).toBeDefined();
+        expect(typeof db.get).toBe('function');
+        expect(typeof db.all).toBe('function');
+        expect(typeof db.run).toBe('function');
+        expect(typeof (db as any).exec).toBe('function');
+
+        // Also verify sync access does not throw "Database not initialized"
+        await resetConnection();
+        process.env.MOCK_DB = 'false';
+        process.env.DB_TYPE = 'sqlite';
+        process.env.SQLITE_PATH = sqlitePath;
+
+        const syncDb = getDatabaseInstance();
+        expect(syncDb).toBeDefined();
+        expect(typeof syncDb.get).toBe('function');
+        expect(typeof syncDb.all).toBe('function');
+        expect(typeof syncDb.run).toBe('function');
+      } finally {
+        // Close any opened handle + restore env to avoid leaking into other tests
+        await resetConnection();
+        if (prevMock !== undefined) process.env.MOCK_DB = prevMock;
+        else delete process.env.MOCK_DB;
+        if (prevType !== undefined) process.env.DB_TYPE = prevType;
+        else delete process.env.DB_TYPE;
+        if (prevSqlite !== undefined) process.env.SQLITE_PATH = prevSqlite;
+        else delete process.env.SQLITE_PATH;
+
+        try {
+          fs.rmSync(tmpDir, { recursive: true, force: true });
+        } catch {
+          // ignore
+        }
+      }
     });
   });
 

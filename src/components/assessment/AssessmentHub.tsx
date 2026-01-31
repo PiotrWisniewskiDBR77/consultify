@@ -369,6 +369,25 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       // For assessments, open the actual editor route (instead of placeholder card)
       if (docType === 'assessment') {
         const framework = (row.framework || row.type || 'DRD').toString().toLowerCase();
+        // Resume last known position (DRD only for now)
+        if (framework === 'drd') {
+          try {
+            const raw = window.localStorage.getItem(`assessment.nav.${row.id}`);
+            if (raw) {
+              const pos = JSON.parse(raw) as { axisId?: number; areaId?: string; level?: number };
+              if (pos?.axisId && pos?.areaId && pos?.level) {
+                navigate(
+                  `/assessment/${framework}/${row.id}?axis=${encodeURIComponent(String(pos.axisId))}&area=${encodeURIComponent(
+                    String(pos.areaId)
+                  )}&level=${encodeURIComponent(String(pos.level))}`
+                );
+                return;
+              }
+            }
+          } catch {
+            // ignore
+          }
+        }
         navigate(`/assessment/${framework}/${row.id}`);
         return;
       }
@@ -606,7 +625,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             <p className="text-sm">
               ({doc?.subType} - {doc?.status})
             </p>
-            <p className="mt-4 text-xs">Editor placeholder - będzie tu edytor raportu</p>
+            <p className="mt-4 text-xs">Editor placeholder - report editor will be here</p>
           </div>
         </div>
       );

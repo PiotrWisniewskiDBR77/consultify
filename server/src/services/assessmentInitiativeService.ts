@@ -309,12 +309,22 @@ Categories to consider: ${categories.join(', ')}
 
 `;
 
-    if (includeChatContext && contextSnapshot.chat) {
-      prompt += `\nRecent conversation context:\n${JSON.stringify(contextSnapshot.chat.slice(-10), null, 2)}\n`;
+    const chatFromSnapshot =
+      (Array.isArray(contextSnapshot.chat) && contextSnapshot.chat) ||
+      (Array.isArray(contextSnapshot?.chatContext?.lastMessages) &&
+        contextSnapshot.chatContext.lastMessages) ||
+      null;
+
+    if (includeChatContext && chatFromSnapshot) {
+      prompt += `\nRecent conversation context:\n${JSON.stringify(chatFromSnapshot.slice(-10), null, 2)}\n`;
     }
 
     if (contextSnapshot.org) {
       prompt += `\nOrganization context:\n${JSON.stringify(contextSnapshot.org, null, 2)}\n`;
+    }
+
+    if (contextSnapshot.report) {
+      prompt += `\nLatest assessment report context:\n${JSON.stringify(contextSnapshot.report, null, 2)}\n`;
     }
 
     prompt += `
@@ -389,7 +399,9 @@ Return a JSON array with exactly ${count} initiatives in this format:
       })(),
       risk: (() => {
         const raw = String(init.risk || '').toLowerCase();
-        return ['low', 'medium', 'high'].includes(raw) ? (raw as GeneratedInitiative['risk']) : 'medium';
+        return ['low', 'medium', 'high'].includes(raw)
+          ? (raw as GeneratedInitiative['risk'])
+          : 'medium';
       })(),
       estimatedEffort: init.estimatedEffort || 'M',
       expectedOutcome: init.expectedOutcome || '',

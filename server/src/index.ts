@@ -133,6 +133,27 @@ const sentryHandlers = initSentry(app);
 
 // IMPORTANT: do not accept requests before DB is ready.
 // Many routes use synchronous DB access and will throw if initialization is still in progress.
+let dbReady = false;
+let dbInitError: string | null = null;
+
+// Readiness probe for load balancers / orchestration.
+// Returns 503 until DB init + schema verification finishes successfully.
+app.get('/api/ready', (_req: Request, res: Response) => {
+  if (dbReady) {
+    return res.status(200).json({
+      status: 'ready',
+      database: 'ready',
+      timestamp: new Date().toISOString(),
+    });
+  }
+  return res.status(503).json({
+    status: 'not_ready',
+    database: 'initializing',
+    error: dbInitError,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 const databaseInitPromise: Promise<void> =
   !isTest || process.env.E2E_MODE === 'true'
     ? (async () => {
@@ -147,6 +168,8 @@ const databaseInitPromise: Promise<void> =
 
           if (!initResult.success) {
             logger.error(`[Server] Database initialization failed: ${initResult.message}`);
+            dbReady = false;
+            dbInitError = initResult.message || 'Database initialization failed';
             if (isProduction) {
               logger.error(
                 '[Server] CRITICAL: Database schema incomplete. Application may not function correctly.'
@@ -154,6 +177,8 @@ const databaseInitPromise: Promise<void> =
             }
           } else {
             logger.info(`[Server] Database initialized successfully: ${initResult.message}`);
+            dbReady = true;
+            dbInitError = null;
           }
 
           // Initialize connection pool
@@ -190,6 +215,8 @@ const databaseInitPromise: Promise<void> =
         } catch (err: any) {
           const error = err as Error;
           logger.error(`[Server] Database initialization failed: ${error.message}`);
+          dbReady = false;
+          dbInitError = error.message || 'Database initialization failed';
           if (isProduction) {
             logger.error('[Server] CRITICAL: Cannot proceed without database. Exiting...');
             process.exit(1);
@@ -867,67 +894,67 @@ if (startServer && (!isTest || process.env.E2E_MODE === 'true')) {
       }
     });
 
-  // Interval reference is stored in global scope during database initialization
+    // Interval reference is stored in global scope during database initialization
 
-  // Register shutdown handlers
-  const gracefulShutdown = async (signal: string) => {
-    logger.info(`[Shutdown] Received ${signal}, initiating graceful shutdown...`);
-    
-    // Stop accepting new connections
-    server.close(async () => {
-      logger.info('[Shutdown] HTTP server closed');
-      
-      try {
-        // Clear health check interval (stored in global scope)
-        const healthCheckInterval = (global as any).__HEALTH_CHECK_INTERVAL__;
-        if (healthCheckInterval) {
-          clearInterval(healthCheckInterval);
-          (global as any).__HEALTH_CHECK_INTERVAL__ = null;
-          logger.info('[Shutdown] Health check interval cleared');
-        }
+    // Register shutdown handlers
+    const gracefulShutdown = async (signal: string) => {
+      logger.info(`[Shutdown] Received ${signal}, initiating graceful shutdown...`);
 
-        // Close BullMQ queue
+      // Stop accepting new connections
+      server.close(async () => {
+        logger.info('[Shutdown] HTTP server closed');
+
         try {
-          const aiQueueModule = await import('./queues/aiQueue.js');
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-          const aiQueue: any = aiQueueModule.default;
-          if (aiQueue && typeof aiQueue.close === 'function') {
-            await aiQueue.close();
-            logger.info('[Shutdown] BullMQ queue closed');
+          // Clear health check interval (stored in global scope)
+          const healthCheckInterval = (global as any).__HEALTH_CHECK_INTERVAL__;
+          if (healthCheckInterval) {
+            clearInterval(healthCheckInterval);
+            (global as any).__HEALTH_CHECK_INTERVAL__ = null;
+            logger.info('[Shutdown] Health check interval cleared');
           }
+
+          // Close BullMQ queue
+          try {
+            const aiQueueModule = await import('./queues/aiQueue.js');
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+            const aiQueue: any = aiQueueModule.default;
+            if (aiQueue && typeof aiQueue.close === 'function') {
+              await aiQueue.close();
+              logger.info('[Shutdown] BullMQ queue closed');
+            }
+          } catch (err: any) {
+            logger.warn('[Shutdown] Error closing queue:', err.message);
+          }
+
+          // Shutdown database connection pool
+          try {
+            await shutdownConnectionPool();
+            logger.info('[Shutdown] Database connection pool closed');
+          } catch (err: any) {
+            logger.warn('[Shutdown] Error closing database pool:', err.message);
+          }
+
+          // Use ShutdownManager for any registered cleanups
+          const shutdownManager = getShutdownManager(10000); // 10 second timeout
+          await shutdownManager.shutdown(signal);
+
+          logger.info('[Shutdown] Graceful shutdown complete');
+          process.exit(0);
         } catch (err: any) {
-          logger.warn('[Shutdown] Error closing queue:', err.message);
+          logger.error('[Shutdown] Error during cleanup:', err);
+          process.exit(1);
         }
+      });
 
-        // Shutdown database connection pool
-        try {
-          await shutdownConnectionPool();
-          logger.info('[Shutdown] Database connection pool closed');
-        } catch (err: any) {
-          logger.warn('[Shutdown] Error closing database pool:', err.message);
-        }
-
-        // Use ShutdownManager for any registered cleanups
-        const shutdownManager = getShutdownManager(10000); // 10 second timeout
-        await shutdownManager.shutdown(signal);
-
-        logger.info('[Shutdown] Graceful shutdown complete');
-        process.exit(0);
-      } catch (err: any) {
-        logger.error('[Shutdown] Error during cleanup:', err);
+      // Force exit after timeout
+      setTimeout(() => {
+        logger.error('[Shutdown] Forced shutdown after timeout');
         process.exit(1);
-      }
-    });
+      }, 15000); // 15 second timeout
+    };
 
-    // Force exit after timeout
-    setTimeout(() => {
-      logger.error('[Shutdown] Forced shutdown after timeout');
-      process.exit(1);
-    }, 15000); // 15 second timeout
-  };
-
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
     // Wait for DB initialization before accepting requests.
     await databaseInitPromise;

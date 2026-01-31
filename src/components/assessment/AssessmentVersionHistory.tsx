@@ -87,9 +87,9 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
   };
 
   const getVersionLabel = (version: AssessmentVersion, index: number, total: number) => {
-    if (index === 0) return 'Aktualna wersja';
-    if (index === total - 1) return 'Wersja początkowa';
-    return `Wersja ${version.version}`;
+    if (index === 0) return 'Current version';
+    if (index === total - 1) return 'Initial version';
+    return `Version ${version.version}`;
   };
 
   if (isLoading && versions.length === 0) {
@@ -113,7 +113,7 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
     return (
       <div className="text-center py-12">
         <History className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-        <p className="text-slate-500 dark:text-slate-400">Brak historii wersji</p>
+        <p className="text-slate-500 dark:text-slate-400">No version history</p>
       </div>
     );
   }
@@ -127,8 +127,8 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
             <History className="w-5 h-5 text-purple-600 dark:text-purple-400" />
           </div>
           <div>
-            <h3 className="font-bold text-navy-900 dark:text-white">Historia wersji</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{versions.length} wersji</p>
+            <h3 className="font-bold text-navy-900 dark:text-white">Version History</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{versions.length} versions</p>
           </div>
         </div>
 
@@ -139,7 +139,7 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
             className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg transition-colors"
           >
             <GitCompare className="w-4 h-4" />
-            Porównaj wybrane
+            Compare selected
           </button>
         )}
       </div>
@@ -218,7 +218,7 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
                     <button
                       onClick={() => onViewVersion(version)}
                       className="p-2 text-slate-500 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-                      title="Podgląd"
+                      title="Preview"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
@@ -230,7 +230,7 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
                       onClick={() => setShowConfirmRestore(version.version)}
                       disabled={isRestoring !== null}
                       className="p-2 text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50"
-                      title="Przywróć"
+                      title="Restore"
                     >
                       {isRestoring === version.version ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -259,7 +259,7 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
                 <div className="px-4 pb-4">
                   <div className="bg-slate-50 dark:bg-navy-950/50 rounded-lg p-4">
                     <h4 className="text-sm font-semibold text-navy-900 dark:text-white mb-3">
-                      Oceny w tej wersji
+                      Scores in this version
                     </h4>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       {version.data.axes &&

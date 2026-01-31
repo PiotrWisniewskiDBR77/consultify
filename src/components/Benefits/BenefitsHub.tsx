@@ -358,10 +358,10 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
       name: row.name,
       status:
         row.status === InitiativeStatus.DONE
-          ? 'completed'
+          ? 'DONE'
           : row.status === InitiativeStatus.BLOCKED
-            ? 'in_review'
-            : 'draft',
+            ? 'BLOCKED'
+            : 'DRAFT',
     };
 
     setOpenDocuments((prev) => {
@@ -418,10 +418,10 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
       progress: item.progress || 100,
       updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
       status: (item.status === InitiativeStatus.DONE
-        ? 'completed'
+        ? 'DONE'
         : item.status === InitiativeStatus.BLOCKED
-          ? 'in_review'
-          : 'draft') as ItemStatus,
+          ? 'BLOCKED'
+          : 'DRAFT') as ItemStatus,
     }));
   }, [filteredInitiatives]);
 
@@ -569,7 +569,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
         <InitiativeDocumentView
           initiativeId={activeDocumentId}
           onBack={handleShowList}
-          onStatusChange={() => fetchData()}
+          onStatusChange={() => {}}
           sourceModule="benefits"
         />
       );

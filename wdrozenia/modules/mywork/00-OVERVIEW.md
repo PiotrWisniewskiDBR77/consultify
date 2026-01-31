@@ -36,6 +36,4 @@ My Work musi umożliwiać w 5 sekund odpowiedź:
 - jaki jest koszt czekania (aging / cost of delay),
 - jaki jest następny krok (Primary CTA).
 
-Minimalny UX:- Inbox pokazuje tylko elementy wymagające reakcji (Decisions/Blocked Tasks/Critical).
-
-- Każdy element ma 4-liniowy format (co/dlaczego/blokuje/akcja) + Primary CTA.
+Minimalny UX:- Inbox pokazuje tylko elementy wymagające reakcji (Decisions/Blocked Tasks/Critical).- Każdy element ma 4-liniowy format (co/dlaczego/blokuje/akcja) + Primary CTA.

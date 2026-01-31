@@ -90,10 +90,10 @@ export const DocumentTabsBar: React.FC<DocumentTabsBarProps> = ({
                             hover:bg-slate-50 dark:hover:bg-navy-800
                             shrink-0 mr-2
                         `}
-            title="Pokaż listę"
+            title="Show list"
           >
             <Plus size={14} className="rotate-45" />
-            Lista
+            List
           </button>
         )}
 

@@ -7,20 +7,14 @@
  * Views: Table, Grid
  */
 
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  Hourglass,
-  Loader2,
-  User,
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock, Hourglass, Loader2, User } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
+import { useAppStore } from '../../store/useAppStore';
 import {
   FilterableTable,
   FilterChip,
@@ -34,17 +28,13 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import DecisionCard, { Decision } from './DecisionCard';
-import { useAppStore } from '../../store/useAppStore';
 
 // Decision status mapping
-const STATUS_META: Record<
-  string,
-  { label: string; dotColor: string; itemStatus: ItemStatus }
-> = {
-  PENDING: { label: 'Pending', dotColor: 'bg-amber-400', itemStatus: 'in_review' },
-  APPROVED: { label: 'Approved', dotColor: 'bg-emerald-400', itemStatus: 'completed' },
-  REJECTED: { label: 'Rejected', dotColor: 'bg-red-400', itemStatus: 'completed' },
-  ESCALATED: { label: 'Escalated', dotColor: 'bg-orange-400', itemStatus: 'in_review' },
+const STATUS_META: Record<string, { label: string; dotColor: string; itemStatus: ItemStatus }> = {
+  PENDING: { label: 'Pending', dotColor: 'bg-amber-400', itemStatus: 'REVIEW' },
+  APPROVED: { label: 'Approved', dotColor: 'bg-emerald-400', itemStatus: 'DONE' },
+  REJECTED: { label: 'Rejected', dotColor: 'bg-red-400', itemStatus: 'DONE' },
+  ESCALATED: { label: 'Escalated', dotColor: 'bg-orange-400', itemStatus: 'REVIEW' },
 };
 
 // Priority badge colors
@@ -102,43 +92,46 @@ export const DecisionsHub: React.FC<DecisionsHubProps> = ({
   const effectiveProjectId = projectId || currentProjectId;
 
   // Fetch decisions
-  const fetchDecisions = useCallback(async (isRefresh = false) => {
-    try {
-      if (isRefresh) setRefreshing(true);
-      else setIsLoading(true);
+  const fetchDecisions = useCallback(
+    async (isRefresh = false) => {
+      try {
+        if (isRefresh) setRefreshing(true);
+        else setIsLoading(true);
 
-      const url = effectiveProjectId
-        ? `/decisions?projectId=${effectiveProjectId}&includeAll=true`
-        : '/decisions?includeAll=true';
+        const url = effectiveProjectId
+          ? `/decisions?projectId=${effectiveProjectId}&includeAll=true`
+          : '/decisions?includeAll=true';
 
-      const data = await Api.get(url);
-      const decisionsList = Array.isArray(data) ? data : data?.decisions || [];
+        const data = await Api.get(url);
+        const decisionsList = Array.isArray(data) ? data : data?.decisions || [];
 
-      // Enhance decisions with computed fields
-      const enhanced = decisionsList.map((d: Decision) => {
-        const daysWaiting =
-          d.daysWaiting ||
-          Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24));
-        const isOverdue = daysWaiting > 7;
-        const daysOverdue = Math.max(0, daysWaiting - 7);
-        return {
-          ...d,
-          daysWaiting,
-          isOverdue,
-          daysOverdue,
-          escalationLevel: d.escalationLevel || 0,
-        };
-      });
+        // Enhance decisions with computed fields
+        const enhanced = decisionsList.map((d: Decision) => {
+          const daysWaiting =
+            d.daysWaiting ||
+            Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+          const isOverdue = daysWaiting > 7;
+          const daysOverdue = Math.max(0, daysWaiting - 7);
+          return {
+            ...d,
+            daysWaiting,
+            isOverdue,
+            daysOverdue,
+            escalationLevel: d.escalationLevel || 0,
+          };
+        });
 
-      setDecisions(enhanced);
-    } catch (error) {
-      console.error('[DecisionsHub] Failed to fetch decisions:', error);
-      toast.error(t('decisions.fetchError', 'Failed to load decisions'));
-    } finally {
-      setIsLoading(false);
-      setRefreshing(false);
-    }
-  }, [effectiveProjectId, t]);
+        setDecisions(enhanced);
+      } catch (error) {
+        console.error('[DecisionsHub] Failed to fetch decisions:', error);
+        toast.error(t('decisions.fetchError', 'Failed to load decisions'));
+      } finally {
+        setIsLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [effectiveProjectId, t]
+  );
 
   useEffect(() => {
     fetchDecisions();
@@ -208,8 +201,7 @@ export const DecisionsHub: React.FC<DecisionsHubProps> = ({
       if (filter.column === 'context') {
         filtered = filtered.filter(
           (d) =>
-            d.contextType === filter.value ||
-            d.relatedObjectType?.toLowerCase() === filter.value
+            d.contextType === filter.value || d.relatedObjectType?.toLowerCase() === filter.value
         );
       }
     });
@@ -279,9 +271,7 @@ export const DecisionsHub: React.FC<DecisionsHubProps> = ({
         render: (row: Decision) => (
           <div>
             <span className="text-sm text-white font-medium">{row.title}</span>
-            {row.projectName && (
-              <p className="text-xs text-slate-400 mt-0.5">{row.projectName}</p>
-            )}
+            {row.projectName && <p className="text-xs text-slate-400 mt-0.5">{row.projectName}</p>}
           </div>
         ),
       },
@@ -330,7 +320,9 @@ export const DecisionsHub: React.FC<DecisionsHubProps> = ({
           return (
             <div className="flex items-center gap-1">
               {isOverdue && <AlertTriangle size={14} className="text-red-400" />}
-              <span className={`text-sm ${isOverdue ? 'text-red-400 font-medium' : 'text-slate-400'}`}>
+              <span
+                className={`text-sm ${isOverdue ? 'text-red-400 font-medium' : 'text-slate-400'}`}
+              >
                 {days}d
               </span>
             </div>
@@ -342,29 +334,32 @@ export const DecisionsHub: React.FC<DecisionsHubProps> = ({
   );
 
   // Handlers
-  const handleOpenDocument = useCallback((decision: Decision) => {
-    const statusMeta = STATUS_META[decision.status] || STATUS_META.PENDING;
+  const handleOpenDocument = useCallback(
+    (decision: Decision) => {
+      const statusMeta = STATUS_META[decision.status] || STATUS_META.PENDING;
 
-    const doc: OpenDocument = {
-      id: decision.id,
-      type: 'initiative', // Using 'initiative' as it's the closest match
-      subType: decision.priority || 'MEDIUM',
-      name: decision.title,
-      status: statusMeta.itemStatus,
-    };
+      const doc: OpenDocument = {
+        id: decision.id,
+        type: 'initiative', // Using 'initiative' as it's the closest match
+        subType: decision.priority || 'MEDIUM',
+        name: decision.title,
+        status: statusMeta.itemStatus,
+      };
 
-    setOpenDocuments((prev) => {
-      if (prev.find((d) => d.id === doc.id)) return prev;
-      return [...prev, doc];
-    });
-    setActiveDocumentId(decision.id);
-    setSelectedDecision(decision);
+      setOpenDocuments((prev) => {
+        if (prev.find((d) => d.id === doc.id)) return prev;
+        return [...prev, doc];
+      });
+      setActiveDocumentId(decision.id);
+      setSelectedDecision(decision);
 
-    // Callback for external handlers
-    if (onDecisionClick) {
-      onDecisionClick(decision.id);
-    }
-  }, [onDecisionClick]);
+      // Callback for external handlers
+      if (onDecisionClick) {
+        onDecisionClick(decision.id);
+      }
+    },
+    [onDecisionClick]
+  );
 
   const handleCloseDocument = useCallback(
     (id: string) => {
@@ -399,44 +394,53 @@ export const DecisionsHub: React.FC<DecisionsHubProps> = ({
     [handleOpenDocument]
   );
 
-  const handleApprove = useCallback(async (id: string) => {
-    try {
-      await Api.put(`/decisions/${id}/decide`, {
-        status: 'APPROVED',
-        outcome: t('decisions.defaultApproveRationale', 'Approved via quick action'),
-      });
-      toast.success(t('decisions.approved', 'Decision approved'));
-      fetchDecisions(true);
-    } catch (error) {
-      console.error('Failed to approve:', error);
-      toast.error(t('decisions.approveError', 'Failed to approve decision'));
-    }
-  }, [fetchDecisions, t]);
+  const handleApprove = useCallback(
+    async (id: string) => {
+      try {
+        await Api.put(`/decisions/${id}/decide`, {
+          status: 'APPROVED',
+          outcome: t('decisions.defaultApproveRationale', 'Approved via quick action'),
+        });
+        toast.success(t('decisions.approved', 'Decision approved'));
+        fetchDecisions(true);
+      } catch (error) {
+        console.error('Failed to approve:', error);
+        toast.error(t('decisions.approveError', 'Failed to approve decision'));
+      }
+    },
+    [fetchDecisions, t]
+  );
 
-  const handleReject = useCallback(async (id: string) => {
-    try {
-      await Api.put(`/decisions/${id}/decide`, {
-        status: 'REJECTED',
-        outcome: t('decisions.defaultRejectRationale', 'Rejected via quick action'),
-      });
-      toast.success(t('decisions.rejected', 'Decision rejected'));
-      fetchDecisions(true);
-    } catch (error) {
-      console.error('Failed to reject:', error);
-      toast.error(t('decisions.rejectError', 'Failed to reject decision'));
-    }
-  }, [fetchDecisions, t]);
+  const handleReject = useCallback(
+    async (id: string) => {
+      try {
+        await Api.put(`/decisions/${id}/decide`, {
+          status: 'REJECTED',
+          outcome: t('decisions.defaultRejectRationale', 'Rejected via quick action'),
+        });
+        toast.success(t('decisions.rejected', 'Decision rejected'));
+        fetchDecisions(true);
+      } catch (error) {
+        console.error('Failed to reject:', error);
+        toast.error(t('decisions.rejectError', 'Failed to reject decision'));
+      }
+    },
+    [fetchDecisions, t]
+  );
 
-  const handleEscalate = useCallback(async (id: string) => {
-    try {
-      await Api.post(`/decisions/${id}/escalate`, {});
-      toast.success(t('decisions.escalated', 'Decision escalated'));
-      fetchDecisions(true);
-    } catch (error) {
-      console.error('Failed to escalate:', error);
-      toast.error(t('decisions.escalateError', 'Failed to escalate decision'));
-    }
-  }, [fetchDecisions, t]);
+  const handleEscalate = useCallback(
+    async (id: string) => {
+      try {
+        await Api.post(`/decisions/${id}/escalate`, {});
+        toast.success(t('decisions.escalated', 'Decision escalated'));
+        fetchDecisions(true);
+      } catch (error) {
+        console.error('Failed to escalate:', error);
+        toast.error(t('decisions.escalateError', 'Failed to escalate decision'));
+      }
+    },
+    [fetchDecisions, t]
+  );
 
   // Convert to grid items
   const gridItems: GridItem[] = useMemo(() => {
@@ -447,7 +451,8 @@ export const DecisionsHub: React.FC<DecisionsHubProps> = ({
         id: item.id,
         name: item.title,
         type: item.priority || 'MEDIUM',
-        typeColor: item.priority === 'CRITICAL' ? 'red' : item.priority === 'HIGH' ? 'orange' : 'amber',
+        typeColor:
+          item.priority === 'CRITICAL' ? 'red' : item.priority === 'HIGH' ? 'orange' : 'amber',
         status: statusMeta.itemStatus,
         progress: Math.max(0, Math.min(100, 100 - daysWaiting * 10)), // Visual indicator
         updatedAt: new Date(item.createdAt),
@@ -474,7 +479,11 @@ export const DecisionsHub: React.FC<DecisionsHubProps> = ({
               <p className="text-xs text-slate-400">
                 {selectedDecision.projectName || 'No project'}
                 {' • '}
-                <span className={selectedDecision.isOverdue ? 'text-red-400 font-medium' : 'text-slate-400'}>
+                <span
+                  className={
+                    selectedDecision.isOverdue ? 'text-red-400 font-medium' : 'text-slate-400'
+                  }
+                >
                   {selectedDecision.daysWaiting}d waiting
                 </span>
               </p>
@@ -599,9 +608,7 @@ export const DecisionsHub: React.FC<DecisionsHubProps> = ({
         columns={columns}
         data={filteredDecisions}
         onRowClick={(row: any) => handleOpenDocument(row as Decision)}
-        onRowAction={(action: string, row: any) =>
-          handleRowAction(action, row as Decision)
-        }
+        onRowAction={(action: string, row: any) => handleRowAction(action, row as Decision)}
         activeFilters={activeFilters}
         onFilterChange={setActiveFilters}
         emptyMessage={t('decisions.noDecisions', 'No pending decisions')}

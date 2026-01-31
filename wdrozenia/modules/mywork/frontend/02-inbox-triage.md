@@ -59,9 +59,7 @@ Każda pozycja:
 - Task:
   - `Unblock` (Open Decision / Create Decision)
   - `Reassign`
-  - `Update plan`
-
----
+  - `Update plan`---
 
 ## Workflow (jak to działa)
 

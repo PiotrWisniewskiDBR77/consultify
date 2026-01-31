@@ -7,15 +7,19 @@
 ---
 
 ## 📋 Plan źródłowy
+
 `wdrozenia/plan-assessment-initiatives.md`
 
 ---
 
 ## 🎯 Cel
+
 Assessment (DRD/SIRI/...) → raport → approval → generowanie inicjatyw (DRAFT).
 
 ## Standard artefaktu (Assessment Report)
+
 Raport w module Assessment jest artefaktem Discovery (wyniki + gaps + evidence + approval), a nie raportem zarządczym:
+
 - `wdrozenia/standards/entities/05-ASSESSMENT-REPORT.md`
 
 ---
@@ -23,6 +27,7 @@ Raport w module Assessment jest artefaktem Discovery (wyniki + gaps + evidence +
 ## ✅ Zaimplementowane Funkcjonalności
 
 ### Backend (kompletny workflow)
+
 - ✅ CRUD assessments
 - ✅ Workflow: DRAFT → IN_REVIEW → AWAITING_APPROVAL → APPROVED
 - ✅ 4 Gate Decisions
@@ -36,6 +41,7 @@ Raport w module Assessment jest artefaktem Discovery (wyniki + gaps + evidence +
 - ✅ **Backward compatibility** dla SQLite (brakujące kolumny `version`, `project_id`)
 
 ### Frontend (kompletny)
+
 - ✅ AssessmentModuleHub (lista, filtry, wyszukiwanie)
 - ✅ DRDForm, SIRIForm (live scoring)
 - ✅ **AssessmentSessionEditorView** - główny edytor sesji assessment
@@ -55,6 +61,7 @@ Raport w module Assessment jest artefaktem Discovery (wyniki + gaps + evidence +
 - ✅ **Toast notifications** (save success/error)
 
 ### Testy
+
 - ✅ Unit tests (`assessment.test.ts`)
 - ✅ E2E tests (`assessmentFlow.spec.ts`, `assessment-workflow.spec.ts`)
 
@@ -79,53 +86,54 @@ Raport w module Assessment jest artefaktem Discovery (wyniki + gaps + evidence +
 
 ## 🎯 4 Gate Decisions
 
-| Decision | Owner | Opis |
-|----------|-------|------|
-| `REQUEST_REVIEW` | Project Lead | Wysłanie do review |
-| `APPROVE_REPORT` | PMO/Owner | Zatwierdzenie raportu |
-| `APPROVE_ASSESSMENT` | PMO/Owner | Zatwierdzenie assessment |
-| `GENERATE_INITIATIVES` | Consultant Lead | Generowanie inicjatyw |
+| Decision               | Owner           | Opis                     |
+| ---------------------- | --------------- | ------------------------ |
+| `REQUEST_REVIEW`       | Project Lead    | Wysłanie do review       |
+| `APPROVE_REPORT`       | PMO/Owner       | Zatwierdzenie raportu    |
+| `APPROVE_ASSESSMENT`   | PMO/Owner       | Zatwierdzenie assessment |
+| `GENERATE_INITIATIVES` | Consultant Lead | Generowanie inicjatyw    |
 
 ---
 
 ## 📊 Frameworki
 
-| Framework | Skala | Wymiary |
-|-----------|-------|---------|
-| **DRD** | 1-7 | 7 osi transformacji |
-| **SIRI** | 0-5 | 3 bloki, 8 wymiarów |
-| **ADMA** | 1-5 | 5 filarów |
-| **CMMI** | 1-5 | 3 kategorie |
-| **Lean 4.0** | 1-5 | 3 wymiary |
+| Framework    | Skala | Wymiary             |
+| ------------ | ----- | ------------------- |
+| **DRD**      | 1-7   | 7 osi transformacji |
+| **SIRI**     | 0-5   | 3 bloki, 8 wymiarów |
+| **ADMA**     | 1-5   | 5 filarów           |
+| **CMMI**     | 1-5   | 3 kategorie         |
+| **Lean 4.0** | 1-5   | 3 wymiary           |
 
 ---
 
 ## 🎯 5 Metodologii Generowania Inicjatyw
 
-| Metodologia | Opis |
-|-------------|------|
+| Metodologia          | Opis                       |
+| -------------------- | -------------------------- |
 | `impact-feasibility` | Macierz Impact/Feasibility |
-| `moscow` | MoSCoW Method |
-| `rice` | RICE Score |
-| `value-effort` | Value vs Effort |
-| `strategic-fit` | Strategic Fit |
+| `moscow`             | MoSCoW Method              |
+| `rice`               | RICE Score                 |
+| `value-effort`       | Value vs Effort            |
+| `strategic-fit`      | Strategic Fit              |
 
 ---
 
 ## 📁 Artefakty modułu
 
-| Typ | Lokalizacja |
-|-----|-------------|
-| UI | `wdrozenia/modules/assessment/frontend/` |
-| API | `wdrozenia/modules/assessment/backend/` |
+| Typ      | Lokalizacja                              |
+| -------- | ---------------------------------------- |
+| UI       | `wdrozenia/modules/assessment/frontend/` |
+| API      | `wdrozenia/modules/assessment/backend/`  |
 | Features | `wdrozenia/modules/assessment/features/` |
-| Testy | `wdrozenia/modules/assessment/testing/` |
+| Testy    | `wdrozenia/modules/assessment/testing/`  |
 
 ---
 
 ## 🔧 Kluczowe Pliki
 
 ### Frontend
+
 ```
 src/components/assessment/
 ├── AssessmentModuleHub.tsx          # Hub z listą assessmentów
@@ -154,6 +162,7 @@ src/views/
 ```
 
 ### Backend
+
 ```
 server/src/
 ├── controllers/AssessmentController.ts
@@ -169,6 +178,7 @@ server/src/
 ```
 
 ### Baza danych
+
 ```
 server/migrations/
 └── 293_assessment_workflow.sql
@@ -193,23 +203,27 @@ server/migrations/
 Kompletnie przeprojektowany edytor DRD z następującymi funkcjami:
 
 #### 1. **Struktura Hierarchiczna**
+
 - **7 Osí** (Axes): Digital Processes, Digital Products, Digital Business Models, Data & Analytics, Organizational Culture, Cybersecurity, AI
 - **34 Obszary** (Areas): każda oś zawiera 5-9 obszarów oceny
 - **Poziomy** (Levels): każdy obszar ma 5-7 poziomów (w zależności od osi)
 
 #### 2. **Ocena Poziomów**
+
 - **Monotoniczna logika**: jeśli poziom wyższy jest osiągnięty, wszystkie niższe są automatycznie osiągnięte
 - **Odpowiedź TAK/NIE** dla każdego poziomu
 - **Achieved Level**: aktualny osiągnięty poziom (0-7)
 - **Target Level**: docelowy poziom (opcjonalny)
 
 #### 3. **Baza Wiedzy per Poziom**
+
 - **3 pytania walidacyjne** (yes/no) dla każdego poziomu
 - **Opis poziomu** z przykładami
 - **Sugerowane technologie** (z bazy wiedzy, w przyszłości AI-powered)
 - **Przykłady** (examples) dla każdego poziomu
 
 #### 4. **Komentarze i Załączniki**
+
 - **Komentarz per poziom**: możliwość dodania notatek dla każdego poziomu
 - **Załączniki per poziom**: upload plików jako dowód (evidence)
   - Typy: Evidence, Screenshot, Document, Report, Other
@@ -218,6 +232,7 @@ Kompletnie przeprojektowany edytor DRD z następującymi funkcjami:
   - Opcjonalny opis dla każdego załącznika
 
 #### 5. **Nawigacja i UX**
+
 - **Top Header**:
   - Przycisk "Back to Assessment"
   - Tytuł assessmentu
@@ -251,28 +266,33 @@ Kompletnie przeprojektowany edytor DRD z następującymi funkcjami:
     - "Verified" badge przy pytaniach
 
 #### 6. **Auto-save i Manual Save**
+
 - **Auto-save**: automatyczne zapisywanie po 600ms debounce
 - **Manual save**: przycisk "Save" + keyboard shortcut (Ctrl+S/Cmd+S)
 - **Status zapisu**: wizualny wskaźnik (saving spinner / saved timestamp)
 - **Toast notifications**: sukces/błąd przy zapisie
 
 #### 7. **Progress Tracking**
+
 - **Overall completion %**: procent ukończenia całego assessmentu
 - **Per-axis progress**: `completed/total` areas dla każdej osi
 - **Per-area progress**: wizualny wskaźnik w sidebarze
 - **Real-time updates**: progress aktualizuje się automatycznie przy zmianach
 
 #### 8. **Integracja z Systemem**
+
 - **Breadcrumbs**: integracja z dynamicznym menu (`useAppStore`, `AppView`)
 - **Routing**: `/assessment/:framework/:assessmentId`
 - **Framework support**: DRD (pełny), SIRI (podstawowy), ADMA/CMMI/LEAN (placeholder)
 
 #### 9. **Responsywność**
+
 - **Mobile-friendly**: collapsible sidebar z przyciskiem Menu/X
 - **Responsive header**: ukrywanie tekstu na małych ekranach
 - **Smooth scrolling**: automatyczne przewijanie do góry przy zmianie osi/obszaru
 
 #### 10. **Baza Wiedzy (drdKnowledge.ts)**
+
 - **Domyślne pytania**: generowane automatycznie dla wszystkich poziomów
 - **Przykłady**: uniwersalne przykłady per poziom
 - **Technologie**: sugerowane na podstawie słów kluczowych w opisie poziomu
@@ -281,6 +301,7 @@ Kompletnie przeprojektowany edytor DRD z następującymi funkcjami:
 ### API Endpoints (Backend)
 
 #### Assessment Level Attachments
+
 - `POST /api/assessment-level-attachments` - Upload pliku
 - `GET /api/assessment-level-attachments/level/:assessmentId/:axisId/:levelNumber` - Lista załączników
 - `GET /api/assessment-level-attachments/download/:attachmentId` - Pobranie pliku
@@ -288,12 +309,14 @@ Kompletnie przeprojektowany edytor DRD z następującymi funkcjami:
 - `DELETE /api/assessment-level-attachments/:attachmentId` - Usunięcie załącznika
 
 **Storage:**
+
 - Pliki: `/uploads/assessment-level-attachments/<orgId>/`
 - Metadata: tabela `assessment_level_attachments` w SQLite
 
 ### Struktura Danych
 
 #### DRD Answers Format
+
 ```typescript
 {
   drd: {
@@ -314,6 +337,7 @@ Kompletnie przeprojektowany edytor DRD z następującymi funkcjami:
 ```
 
 #### Attachment Metadata
+
 ```typescript
 {
   id: string;

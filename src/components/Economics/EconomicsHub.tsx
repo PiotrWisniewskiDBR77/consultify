@@ -52,13 +52,10 @@ import { DigitizationAnalysis } from './types';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
 
 // Analysis status mapping
-const STATUS_META: Record<
-  string,
-  { label: string; dotColor: string; itemStatus: ItemStatus }
-> = {
-  DRAFT: { label: 'Draft', dotColor: 'bg-slate-400', itemStatus: 'draft' },
-  REVIEW: { label: 'In Review', dotColor: 'bg-amber-400', itemStatus: 'in_review' },
-  APPROVED: { label: 'Completed', dotColor: 'bg-emerald-400', itemStatus: 'completed' },
+const STATUS_META: Record<string, { label: string; dotColor: string; itemStatus: ItemStatus }> = {
+  DRAFT: { label: 'Draft', dotColor: 'bg-slate-400', itemStatus: 'DRAFT' },
+  REVIEW: { label: 'In Review', dotColor: 'bg-amber-400', itemStatus: 'REVIEW' },
+  APPROVED: { label: 'Completed', dotColor: 'bg-emerald-400', itemStatus: 'DONE' },
 };
 
 // Type codes for analysis types
@@ -91,7 +88,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
   const [analyses, setAnalyses] = useState<DigitizationAnalysis[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAnalysis, setSelectedAnalysis] = useState<DigitizationAnalysis | null>(null);
-  
+
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showImportWizard, setShowImportWizard] = useState(false);
@@ -117,12 +114,15 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
   }, []);
 
   // Calculate stats
-  const stats = useMemo(() => ({
-    total: analyses.length,
-    draft: analyses.filter((a) => a.status === 'DRAFT').length,
-    review: analyses.filter((a) => a.status === 'REVIEW').length,
-    approved: analyses.filter((a) => a.status === 'APPROVED').length,
-  }), [analyses]);
+  const stats = useMemo(
+    () => ({
+      total: analyses.length,
+      draft: analyses.filter((a) => a.status === 'DRAFT').length,
+      review: analyses.filter((a) => a.status === 'REVIEW').length,
+      approved: analyses.filter((a) => a.status === 'APPROVED').length,
+    }),
+    [analyses]
+  );
 
   // Filter analyses
   const filteredAnalyses = useMemo(() => {
@@ -193,9 +193,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
         render: (row: DigitizationAnalysis) => (
           <div>
             <span className="text-sm text-white font-medium">{row.name}</span>
-            {row.projectName && (
-              <p className="text-xs text-slate-400 mt-0.5">{row.projectName}</p>
-            )}
+            {row.projectName && <p className="text-xs text-slate-400 mt-0.5">{row.projectName}</p>}
           </div>
         ),
       },
@@ -230,9 +228,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
               <div className="flex-1 h-1.5 bg-navy-700 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${
-                    score >= 5 ? 'bg-emerald-500' :
-                    score >= 3 ? 'bg-amber-500' :
-                    'bg-slate-500'
+                    score >= 5 ? 'bg-emerald-500' : score >= 3 ? 'bg-amber-500' : 'bg-slate-500'
                   }`}
                   style={{ width: `${(score / 7) * 100}%` }}
                 />
@@ -310,17 +306,23 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
     setShowCreateModal(true);
   }, []);
 
-  const handleCreateAnalysis = useCallback((newAnalysis: DigitizationAnalysis) => {
-    setAnalyses((prev) => [newAnalysis, ...prev]);
-    setShowCreateModal(false);
-    handleOpenDocument(newAnalysis);
-  }, [handleOpenDocument]);
+  const handleCreateAnalysis = useCallback(
+    (newAnalysis: DigitizationAnalysis) => {
+      setAnalyses((prev) => [newAnalysis, ...prev]);
+      setShowCreateModal(false);
+      handleOpenDocument(newAnalysis);
+    },
+    [handleOpenDocument]
+  );
 
-  const handleImportComplete = useCallback((analysis: DigitizationAnalysis) => {
-    setAnalyses((prev) => [analysis, ...prev]);
-    setShowImportWizard(false);
-    handleOpenDocument(analysis);
-  }, [handleOpenDocument]);
+  const handleImportComplete = useCallback(
+    (analysis: DigitizationAnalysis) => {
+      setAnalyses((prev) => [analysis, ...prev]);
+      setShowImportWizard(false);
+      handleOpenDocument(analysis);
+    },
+    [handleOpenDocument]
+  );
 
   const handleAnalysisUpdate = useCallback((updated: DigitizationAnalysis) => {
     setSelectedAnalysis(updated);
@@ -350,7 +352,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
         type: getTypeCode(item.analysisType),
         typeColor: 'emerald',
         status: statusMeta.itemStatus,
-        progress: Math.round((item.overallScore || 0) / 7 * 100),
+        progress: Math.round(((item.overallScore || 0) / 7) * 100),
         updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
       };
     });
@@ -483,7 +485,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
     // Tab: Results
     if (activeTab === 'reports') {
       const approvedAnalyses = analyses.filter((a) => a.status === 'APPROVED');
-      
+
       if (approvedAnalyses.length === 0) {
         return (
           <div className="flex flex-col items-center justify-center h-full text-center">
@@ -499,7 +501,10 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
       return (
         <div className="p-6 space-y-6">
           {approvedAnalyses.map((analysis) => (
-            <div key={analysis.id} className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden">
+            <div
+              key={analysis.id}
+              className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden"
+            >
               <div className="px-4 py-3 border-b border-navy-700 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Target className="text-emerald-400" size={18} />
@@ -530,15 +535,18 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
   };
 
   // Category buttons for import
-  const categoryButtons = useMemo(() => [
-    {
-      id: 'import',
-      label: 'Import Excel',
-      icon: <Upload size={16} />,
-      count: 0,
-      onClick: () => setShowImportWizard(true),
-    },
-  ], []);
+  const categoryButtons = useMemo(
+    () => [
+      {
+        id: 'import',
+        label: 'Import Excel',
+        icon: <Upload size={16} />,
+        count: 0,
+        onClick: () => setShowImportWizard(true),
+      },
+    ],
+    []
+  );
 
   return (
     <>

@@ -301,7 +301,7 @@ export const useConversationStore = create<ConversationState>()(
       activeConversationId: null,
       activeMessages: [],
       isLoading: false,
-      isSidebarOpen: true,
+      isSidebarOpen: false,
       searchQuery: '',
       showArchived: false,
       groupedConversations: {
@@ -735,7 +735,7 @@ export const useConversationStore = create<ConversationState>()(
       name: 'consultinity-conversations',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        isSidebarOpen: state.isSidebarOpen,
+        // Note: isSidebarOpen is NOT persisted - always start with sidebar closed to avoid blocking main content
         showArchived: state.showArchived,
         displayMode: state.displayMode,
         activeConversationId: state.activeConversationId, // Persist active conversation across screens
@@ -743,6 +743,12 @@ export const useConversationStore = create<ConversationState>()(
       onRehydrate: () => {
         // When store rehydrates, we need to fetch messages for active conversation
         return (state) => {
+          // Migration: Reset isSidebarOpen to false to prevent blocking main content
+          // This fixes an issue where the chat history sidebar was blocking clicks
+          if (state) {
+            state.isSidebarOpen = false;
+          }
+
           if (state?.activeConversationId) {
             console.log(
               '[ConversationStore] Rehydrating active conversation:',

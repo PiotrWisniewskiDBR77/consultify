@@ -788,6 +788,158 @@ router.post('/reviews/:reviewId/submit', async (req: AuthRequest, res: Response)
 });
 
 // =============================================================================
+// ACTIVITY LOG ENDPOINTS
+// =============================================================================
+
+/**
+ * GET /api/assessment-workflow/:assessmentId/activity-logs
+ * Get activity logs for an assessment (who did what, when)
+ */
+router.get('/:assessmentId/activity-logs', async (req: AuthRequest, res: Response) => {
+  try {
+    const { assessmentId } = req.params;
+    const organizationId = req.user?.organizationId || 'org-default';
+    const db = getDatabase();
+    const limit = Math.min(parseInt(String(req.query.limit || '100')), 500);
+
+    logger.info(`[AssessmentWorkflow] Getting activity logs for assessment ${assessmentId}`);
+
+    // Try multiple query variants to handle different schema versions
+    let logs: any[] = [];
+
+    // Query variant 1: Standard schema with created_at
+    try {
+      logs = await new Promise<any[]>((resolve, reject) => {
+        db.all(
+          `SELECT 
+            al.id,
+            al.created_at as timestamp,
+            al.user_id as userId,
+            al.action,
+            al.resource_type as resourceType,
+            al.resource_id as resourceId,
+            al.details,
+            al.ip_address as ipAddress,
+            u.email as userEmail,
+            COALESCE(u.first_name || ' ' || u.last_name, u.email) as userName
+          FROM audit_logs al
+          LEFT JOIN users u ON al.user_id = u.id
+          WHERE al.resource_id = ? 
+            AND al.organization_id = ?
+          ORDER BY al.created_at DESC
+          LIMIT ?`,
+          [assessmentId, organizationId, limit],
+          (err: Error | null, rows: any[]) => {
+            if (err) reject(err);
+            else resolve(rows || []);
+          }
+        );
+      });
+    } catch (e1: any) {
+      // Query variant 2: Schema with timestamp column and action_type
+      try {
+        logs = await new Promise<any[]>((resolve, reject) => {
+          db.all(
+            `SELECT 
+              al.id,
+              al.timestamp,
+              al.user_id as userId,
+              al.action_type as action,
+              al.resource_type as resourceType,
+              al.resource_id as resourceId,
+              al.details,
+              al.ip_address as ipAddress,
+              u.email as userEmail,
+              COALESCE(u.first_name || ' ' || u.last_name, u.email) as userName
+            FROM audit_logs al
+            LEFT JOIN users u ON al.user_id = u.id
+            WHERE al.resource_id = ? 
+              AND al.organization_id = ?
+            ORDER BY al.timestamp DESC
+            LIMIT ?`,
+            [assessmentId, organizationId, limit],
+            (err: Error | null, rows: any[]) => {
+              if (err) reject(err);
+              else resolve(rows || []);
+            }
+          );
+        });
+      } catch (e2: any) {
+        logger.warn('[AssessmentWorkflow] Could not query audit_logs:', e2.message);
+        logs = [];
+      }
+    }
+
+    // Parse JSON details safely
+    const parsedLogs = logs.map((log) => {
+      let details = null;
+      if (log.details) {
+        try {
+          details = JSON.parse(log.details);
+        } catch {
+          details = null;
+        }
+      }
+      return { ...log, details };
+    });
+
+    res.json({ logs: parsedLogs });
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflow] Error getting activity logs:', err);
+    res.status(500).json({ error: 'Failed to get activity logs', message: err.message });
+  }
+});
+
+/**
+ * POST /api/assessment-workflow/:assessmentId/log-activity
+ * Log a new activity for an assessment
+ */
+router.post('/:assessmentId/log-activity', async (req: AuthRequest, res: Response) => {
+  try {
+    const { assessmentId } = req.params;
+    const { action, details } = req.body;
+    const userId = req.user?.id || 'user-default';
+    const organizationId = req.user?.organizationId || 'org-default';
+    const db = getDatabase();
+
+    if (!action) {
+      return res.status(400).json({ error: 'Action is required' });
+    }
+
+    const logId = `log-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    logger.info(`[AssessmentWorkflow] Logging activity ${action} for assessment ${assessmentId}`);
+
+    await new Promise<void>((resolve, reject) => {
+      db.run(
+        `INSERT INTO audit_logs 
+          (id, user_id, organization_id, action, resource_type, resource_id, details, ip_address, user_agent, created_at)
+        VALUES (?, ?, ?, ?, 'ASSESSMENT', ?, ?, ?, ?, datetime('now'))`,
+        [
+          logId,
+          userId,
+          organizationId,
+          action,
+          assessmentId,
+          JSON.stringify(details || {}),
+          req.ip || null,
+          req.get('user-agent') || null,
+        ],
+        (err: Error | null) => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+
+    res.status(201).json({ id: logId, success: true });
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflow] Error logging activity:', err);
+    res.status(500).json({ error: 'Failed to log activity', message: err.message });
+  }
+});
+
+// =============================================================================
 // HELPER FUNCTIONS
 // =============================================================================
 

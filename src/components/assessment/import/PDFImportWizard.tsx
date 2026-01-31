@@ -125,7 +125,8 @@ const UploadStep: React.FC<{
   onFileRemove: () => void;
   isDragging: boolean;
   setIsDragging: (v: boolean) => void;
-}> = ({ file, onFileSelect, onFileRemove, isDragging, setIsDragging }) => {
+  isPolish: boolean;
+}> = ({ file, onFileSelect, onFileRemove, isDragging, setIsDragging, isPolish }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleDrop = useCallback(
@@ -158,7 +159,9 @@ const UploadStep: React.FC<{
           {isPolish ? 'Wgraj raport PDF' : 'Upload PDF Report'}
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          {isPolish ? 'Obsługiwane formaty: SIRI, ADMA, CMMI' : 'Supported formats: SIRI, ADMA, CMMI'}
+          {isPolish
+            ? 'Obsługiwane formaty: SIRI, ADMA, CMMI'
+            : 'Supported formats: SIRI, ADMA, CMMI'}
         </p>
       </div>
 
@@ -241,7 +244,15 @@ const DetectionStep: React.FC<{
   isAnalyzing: boolean;
   onFrameworkSelect: (fw: AssessmentFrameworkId) => void;
   allowedFrameworks: AssessmentFrameworkId[];
-}> = ({ detectedFramework, confidence, isAnalyzing, onFrameworkSelect, allowedFrameworks }) => {
+  isPolish: boolean;
+}> = ({
+  detectedFramework,
+  confidence,
+  isAnalyzing,
+  onFrameworkSelect,
+  allowedFrameworks,
+  isPolish,
+}) => {
   if (isAnalyzing) {
     return (
       <div className="text-center py-12">
@@ -319,7 +330,8 @@ const ExtractionStep: React.FC<{
   extractedScores: ExtractedScore[];
   isExtracting: boolean;
   onScoreEdit: (dimensionId: string, newScore: number) => void;
-}> = ({ framework, extractedScores, isExtracting, onScoreEdit }) => {
+  isPolish: boolean;
+}> = ({ framework, extractedScores, isExtracting, onScoreEdit, isPolish }) => {
   const config = FRAMEWORK_CONFIGS[framework];
 
   if (isExtracting) {
@@ -472,7 +484,8 @@ const ConfirmStep: React.FC<{
   averageScore: number;
   mapToDRD: boolean;
   onMapToDRDChange: (v: boolean) => void;
-}> = ({ framework, fileName, scoreCount, averageScore, mapToDRD, onMapToDRDChange }) => {
+  isPolish: boolean;
+}> = ({ framework, fileName, scoreCount, averageScore, mapToDRD, onMapToDRDChange, isPolish }) => {
   const config = FRAMEWORK_CONFIGS[framework];
 
   return (
@@ -483,7 +496,9 @@ const ConfirmStep: React.FC<{
           {isPolish ? 'Gotowe do zapisania' : 'Ready to save'}
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          {isPolish ? 'Sprawdź podsumowanie i potwierdź import' : 'Review summary and confirm import'}
+          {isPolish
+            ? 'Sprawdź podsumowanie i potwierdź import'
+            : 'Review summary and confirm import'}
         </p>
       </div>
 
@@ -849,6 +864,7 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
               onFileRemove={handleFileRemove}
               isDragging={isDragging}
               setIsDragging={setIsDragging}
+              isPolish={isPolish}
             />
           )}
 
@@ -859,6 +875,7 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
               isAnalyzing={isAnalyzing}
               onFrameworkSelect={handleFrameworkSelect}
               allowedFrameworks={allowedFrameworks}
+              isPolish={isPolish}
             />
           )}
 
@@ -868,6 +885,7 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
               extractedScores={extractedScores}
               isExtracting={isExtracting}
               onScoreEdit={handleScoreEdit}
+              isPolish={isPolish}
             />
           )}
 
@@ -879,6 +897,7 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
               averageScore={averageScore}
               mapToDRD={mapToDRD}
               onMapToDRDChange={setMapToDRD}
+              isPolish={isPolish}
             />
           )}
         </div>

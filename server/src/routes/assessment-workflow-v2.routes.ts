@@ -1,7 +1,7 @@
 /**
  * Assessment Workflow Routes v2
  * Assessment -> Initiatives workflow endpoints
- * 
+ *
  * Endpoints:
  * - POST /api/assessment-workflow - Create assessment
  * - GET /api/assessment-workflow - List assessments
@@ -29,14 +29,16 @@ import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import {
-  CreateAssessmentSchema,
-  UpdateAssessmentSchema,
-  RequestReviewSchema,
-  ApproveReportSchema,
   ApproveAssessmentSchema,
-  SendBackSchema,
+  ApproveReportSchema,
+  CreateAssessmentSchema,
   GenerateInitiativesSchema,
   GenerateReportSchema,
+  RequestReviewSchema,
+  SendBackSchema,
+  UpdateAssessmentSchema,
+  UpdateUserStateSchema,
+  UpsertAssignmentSchema,
 } from '../validators/assessment.validators.js';
 
 const router = Router();
@@ -59,7 +61,27 @@ router.post('/', validateBody(CreateAssessmentSchema), AssessmentController.crea
 router.get('/:assessmentId', AssessmentController.getAssessment);
 
 // Update assessment
-router.put('/:assessmentId', validateBody(UpdateAssessmentSchema), AssessmentController.updateAssessment);
+router.put(
+  '/:assessmentId',
+  validateBody(UpdateAssessmentSchema),
+  AssessmentController.updateAssessment
+);
+
+// Enterprise: per-user state (resume)
+router.get('/:assessmentId/user-state', AssessmentController.getUserState);
+router.put(
+  '/:assessmentId/user-state',
+  validateBody(UpdateUserStateSchema),
+  AssessmentController.updateUserState
+);
+
+// Enterprise: assignments
+router.get('/:assessmentId/assignments', AssessmentController.listAssignments);
+router.put(
+  '/:assessmentId/assignments',
+  validateBody(UpsertAssignmentSchema),
+  AssessmentController.upsertAssignment
+);
 
 // Delete assessment
 router.delete('/:assessmentId', AssessmentController.deleteAssessment);
@@ -69,11 +91,31 @@ router.post('/:assessmentId/session/open', AssessmentController.openSession);
 router.post('/:assessmentId/session/close', AssessmentController.closeSession);
 
 // Workflow transitions
-router.post('/:assessmentId/request-review', validateBody(RequestReviewSchema), AssessmentController.requestReview);
-router.post('/:assessmentId/report', validateBody(GenerateReportSchema), AssessmentController.generateReport);
-router.post('/:assessmentId/report/approve', validateBody(ApproveReportSchema), AssessmentController.approveReport);
-router.post('/:assessmentId/approve', validateBody(ApproveAssessmentSchema), AssessmentController.approveAssessment);
-router.post('/:assessmentId/send-back', validateBody(SendBackSchema), AssessmentController.sendBackToDraft);
+router.post(
+  '/:assessmentId/request-review',
+  validateBody(RequestReviewSchema),
+  AssessmentController.requestReview
+);
+router.post(
+  '/:assessmentId/report',
+  validateBody(GenerateReportSchema),
+  AssessmentController.generateReport
+);
+router.post(
+  '/:assessmentId/report/approve',
+  validateBody(ApproveReportSchema),
+  AssessmentController.approveReport
+);
+router.post(
+  '/:assessmentId/approve',
+  validateBody(ApproveAssessmentSchema),
+  AssessmentController.approveAssessment
+);
+router.post(
+  '/:assessmentId/send-back',
+  validateBody(SendBackSchema),
+  AssessmentController.sendBackToDraft
+);
 
 // Initiative generation
 router.post(
