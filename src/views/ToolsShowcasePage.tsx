@@ -1,0 +1,445 @@
+/**
+ * Tools Showcase Page
+ *
+ * Public page showcasing 4 thematic education blocks with featured tools.
+ * Each tool has a video teaser preview and CTA to start trial.
+ *
+ * Route: /tools
+ */
+
+import { motion } from 'framer-motion';
+import {
+  ArrowRight,
+  BookOpen,
+  ChevronRight,
+  Play,
+  Settings,
+  Sparkles,
+  Target,
+  Users,
+  Zap,
+} from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+
+import { ToolVideoModal } from '@/components/Education/ToolVideoModal';
+import { EntryTopBar } from '@/components/Landing/EntryTopBar';
+import {
+  EDUCATION_BLOCKS,
+  EducationBlock,
+  EducationTool,
+  getFeaturedToolsByBlock,
+} from '@/data/toolEducationData';
+import { useAppStore } from '@/store/useAppStore';
+
+// ============================================
+// DYNAMIC ICON
+// ============================================
+
+const DynamicIcon: React.FC<{ name: string; size?: number; className?: string }> = ({
+  name,
+  size = 24,
+  className,
+}) => {
+  const IconComponent = (LucideIcons as any)[name];
+  if (!IconComponent) return <BookOpen size={size} className={className} />;
+  return <IconComponent size={size} className={className} />;
+};
+
+// ============================================
+// BLOCK ICONS
+// ============================================
+
+const BLOCK_ICONS: Record<string, React.ElementType> = {
+  Target,
+  Settings,
+  Zap,
+  Users,
+};
+
+// ============================================
+// TOOL CARD
+// ============================================
+
+interface ToolCardProps {
+  tool: EducationTool;
+  blockColor: string;
+  onWatchVideo: (tool: EducationTool) => void;
+  onTryTool: () => void;
+}
+
+const ToolCard: React.FC<ToolCardProps> = ({ tool, blockColor, onWatchVideo, onTryTool }) => {
+  const colorClasses: Record<string, { bg: string; text: string; border: string; hover: string }> =
+    {
+      emerald: {
+        bg: 'bg-emerald-100 dark:bg-emerald-900/30',
+        text: 'text-emerald-600 dark:text-emerald-400',
+        border: 'border-emerald-200 dark:border-emerald-800',
+        hover: 'hover:border-emerald-400',
+      },
+      blue: {
+        bg: 'bg-blue-100 dark:bg-blue-900/30',
+        text: 'text-blue-600 dark:text-blue-400',
+        border: 'border-blue-200 dark:border-blue-800',
+        hover: 'hover:border-blue-400',
+      },
+      violet: {
+        bg: 'bg-violet-100 dark:bg-violet-900/30',
+        text: 'text-violet-600 dark:text-violet-400',
+        border: 'border-violet-200 dark:border-violet-800',
+        hover: 'hover:border-violet-400',
+      },
+      amber: {
+        bg: 'bg-amber-100 dark:bg-amber-900/30',
+        text: 'text-amber-600 dark:text-amber-400',
+        border: 'border-amber-200 dark:border-amber-800',
+        hover: 'hover:border-amber-400',
+      },
+    };
+
+  const colors = colorClasses[blockColor] || colorClasses.violet;
+
+  return (
+    <motion.div
+      whileHover={{ y: -4 }}
+      className={`relative bg-white dark:bg-navy-900 rounded-xl border-2 ${colors.border} ${colors.hover} overflow-hidden shadow-lg hover:shadow-xl transition-all group`}
+    >
+      {/* Video Preview Area */}
+      <div
+        onClick={() => onWatchVideo(tool)}
+        className="relative aspect-video bg-gradient-to-br from-slate-800 to-slate-900 cursor-pointer overflow-hidden"
+      >
+        {tool.thumbnailUrl ? (
+          <img
+            src={tool.thumbnailUrl}
+            alt={tool.name}
+            className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <DynamicIcon name={tool.icon} size={48} className="text-white/30" />
+          </div>
+        )}
+
+        {/* Play Button Overlay */}
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+          <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+            <Play size={24} className="text-purple-600 ml-1" />
+          </div>
+        </div>
+
+        {/* Framework Badge */}
+        <div className="absolute top-3 left-3">
+          <span className="px-2 py-1 bg-black/60 backdrop-blur-sm text-white text-xs font-medium rounded-full">
+            {tool.framework}
+          </span>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-5">
+        <div className="flex items-start gap-3 mb-3">
+          <div
+            className={`w-10 h-10 rounded-lg ${colors.bg} flex items-center justify-center flex-shrink-0`}
+          >
+            <DynamicIcon name={tool.icon} size={20} className={colors.text} />
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+              {tool.name}
+            </h3>
+          </div>
+        </div>
+
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-2">
+          {tool.description}
+        </p>
+
+        {/* Outputs */}
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {tool.outputs.slice(0, 3).map((output, idx) => (
+            <span
+              key={idx}
+              className={`px-2 py-0.5 text-xs rounded-full ${colors.bg} ${colors.text}`}
+            >
+              {output}
+            </span>
+          ))}
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => onWatchVideo(tool)}
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+          >
+            <Play size={14} />
+            Watch Demo
+          </button>
+          <button
+            onClick={onTryTool}
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-semibold rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all"
+          >
+            Try Free
+            <ArrowRight size={14} />
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// ============================================
+// EDUCATION BLOCK SECTION
+// ============================================
+
+interface BlockSectionProps {
+  block: EducationBlock;
+  tools: EducationTool[];
+  onWatchVideo: (tool: EducationTool) => void;
+  onTryTool: () => void;
+}
+
+const BlockSection: React.FC<BlockSectionProps> = ({ block, tools, onWatchVideo, onTryTool }) => {
+  const BlockIcon = BLOCK_ICONS[block.icon] || Target;
+
+  return (
+    <section className="mb-16">
+      {/* Block Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <div
+          className={`p-3 rounded-xl bg-gradient-to-br ${block.gradientFrom} ${block.gradientTo}`}
+        >
+          <BlockIcon size={28} className="text-white" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{block.name}</h2>
+          <p className="text-slate-600 dark:text-slate-400">{block.description}</p>
+        </div>
+      </div>
+
+      {/* Tools Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {tools.map((tool) => (
+          <ToolCard
+            key={tool.id}
+            tool={tool}
+            blockColor={block.color}
+            onWatchVideo={onWatchVideo}
+            onTryTool={onTryTool}
+          />
+        ))}
+      </div>
+    </section>
+  );
+};
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
+
+export const ToolsShowcasePage: React.FC = () => {
+  const navigate = useNavigate();
+  const { currentUser, setAuthInitialStep } = useAppStore();
+  const [selectedTool, setSelectedTool] = useState<EducationTool | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleWatchVideo = (tool: EducationTool) => {
+    setSelectedTool(tool);
+    setIsModalOpen(true);
+  };
+
+  const handleTryTool = () => {
+    setIsModalOpen(false);
+    navigate('/trial');
+  };
+
+  const handleDemoClick = () => {
+    navigate('/demo');
+  };
+
+  const handleTrialClick = () => {
+    navigate('/trial');
+  };
+
+  const handleLoginClick = () => {
+    navigate('/login');
+  };
+
+  const handleRegisterClick = () => {
+    navigate('/register');
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-navy-950">
+      <EntryTopBar
+        onTrialClick={handleTrialClick}
+        onDemoClick={handleDemoClick}
+        onLoginClick={handleLoginClick}
+        onRegisterClick={handleRegisterClick}
+        isLoggedIn={!!currentUser}
+        hasWorkspace={!!currentUser?.hasWorkspace}
+      />
+
+      {/* Advanced Background Effects */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-purple-600/5 dark:bg-purple-600/15 rounded-full blur-[120px]" />
+        <div className="absolute top-[20%] -right-[10%] w-[35%] h-[45%] bg-indigo-600/5 dark:bg-indigo-600/10 rounded-full blur-[100px]" />
+        <div className="absolute bottom-[-10%] left-[20%] w-[50%] h-[30%] bg-emerald-600/5 dark:bg-emerald-600/15 rounded-full blur-[80px]" />
+
+        {/* Subtle Grid / Texture for Light Mode */}
+        <div className="absolute inset-0 opacity-[0.03] dark:opacity-0 bg-[url('https://www.transparenttextures.com/patterns/clean-gray-paper.png')]" />
+
+        {/* Subtle Radial Gradient Overlay */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_0%,_rgba(255,255,255,0.4)_100%)] dark:bg-[radial-gradient(circle_at_center,_transparent_0%,_rgba(0,0,0,0.6)_100%)]" />
+      </div>
+
+      {/* Hero Section */}
+      <section className="relative overflow-hidden bg-slate-900 dark:bg-navy-950 text-white pt-24 border-b border-slate-800 dark:border-navy-900">
+        {/* Decorative elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl opacity-50" />
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl opacity-50" />
+        </div>
+
+        {/* Hero Content */}
+        <div className="relative max-w-5xl mx-auto px-4 py-16 lg:py-24 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full text-sm font-medium mb-6">
+              <Sparkles size={16} className="text-purple-400" />
+              AI-Powered Consulting Tools
+            </div>
+
+            <h1 className="text-4xl lg:text-6xl font-bold tracking-tight mb-6">
+              Master the
+              <br />
+              <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                Elite Consulting Standard
+              </span>
+            </h1>
+
+            <p className="text-lg lg:text-xl text-white/70 max-w-3xl mx-auto mb-8">
+              A curated knowledge base and 40+ AI-powered tools utilized by Harvard graduates at
+              leading global consulting firms. Master the methodologies behind the world's most
+              successful strategic transformations.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={() => navigate('/trial')}
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg text-lg"
+              >
+                Start Free Trial
+                <ArrowRight size={20} />
+              </button>
+              <a
+                href="#tools"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-all border border-white/20"
+              >
+                Explore Tools
+                <ChevronRight size={20} />
+              </a>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Tools Sections */}
+      <div id="tools" className="max-w-7xl mx-auto px-4 py-16">
+        {EDUCATION_BLOCKS.map((block) => {
+          const featuredTools = getFeaturedToolsByBlock(block.id);
+          return (
+            <BlockSection
+              key={block.id}
+              block={block}
+              tools={featuredTools}
+              onWatchVideo={handleWatchVideo}
+              onTryTool={handleTryTool}
+            />
+          );
+        })}
+      </div>
+
+      {/* Availability Message */}
+      <div className="max-w-7xl mx-auto px-4 pb-16 text-center">
+        <div className="inline-block p-6 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 shadow-sm max-w-2xl">
+          <p className="text-slate-600 dark:text-slate-400 font-medium">
+            💡 Wszystkie narzędzia są dostępne po zalogowaniu do aplikacji w panelu{' '}
+            <span className="text-purple-600 dark:text-purple-400 font-bold">Baza Wiedzy</span>.
+          </p>
+        </div>
+      </div>
+
+      {/* Bottom CTA */}
+      <section className="bg-gradient-to-r from-purple-600 to-indigo-600 py-16">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
+            Ready to Transform Your Organization?
+          </h2>
+          <p className="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
+            Start your free trial and get full access to all 40+ tools, AI-assisted analysis, and
+            collaborative workspaces.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={() => navigate('/trial')}
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-purple-700 font-semibold rounded-xl hover:bg-slate-100 transition-all shadow-lg text-lg"
+            >
+              Start Free Trial
+              <ArrowRight size={20} />
+            </button>
+            <Link
+              to="/contact"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/20 text-white font-semibold rounded-xl hover:bg-white/30 transition-all border border-white/30"
+            >
+              Talk to Expert
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-slate-900 py-8">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-6 px-2 rounded bg-brand-600 flex items-center justify-center">
+              <span className="text-white font-bold text-[10px] tracking-tight">C</span>
+            </div>
+            <span className="text-sm font-bold tracking-[0.15em] text-white/60 uppercase">
+              Consultinity
+            </span>
+          </div>
+          <div className="flex items-center gap-6 text-xs text-white/40">
+            <Link to="/docs" className="hover:text-white/70 transition-colors">
+              Documentation
+            </Link>
+            <Link to="/privacy" className="hover:text-white/70 transition-colors">
+              Privacy
+            </Link>
+            <Link to="/terms" className="hover:text-white/70 transition-colors">
+              Terms
+            </Link>
+            <Link to="/docs/security" className="hover:text-white/70 transition-colors">
+              Security
+            </Link>
+          </div>
+        </div>
+      </footer>
+
+      {/* Video Modal */}
+      <ToolVideoModal
+        tool={selectedTool}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onTryTool={handleTryTool}
+      />
+    </div>
+  );
+};
+
+export default ToolsShowcasePage;

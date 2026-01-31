@@ -32,6 +32,15 @@ type ToolSessionRow = {
 };
 
 const normalizeStatus = (status: string | null | undefined) => (status || 'DRAFT').toUpperCase();
+const safeJsonParse = (value: string | null | undefined): Record<string, unknown> => {
+  if (!value) return {};
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+};
 
 let decisionColumnsCache: Set<string> | null = null;
 
@@ -691,6 +700,21 @@ export class ToolController {
 
       const { answers, completionPercent, confidenceAvg, contextSnapshot } = req.body;
 
+      // Enforce report immutability after approval/generation (Tool Report snapshot canon)
+      const existing = (await queryHelpers.queryOne(
+        `SELECT status FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+        [toolId, user.organizationId]
+      )) as { status?: string | null } | null;
+      if (!existing) {
+        res.status(404).json({ error: 'Tool session not found' });
+        return;
+      }
+      const existingStatus = normalizeStatus(existing.status);
+      if (existingStatus === 'APPROVED' || existingStatus === 'GENERATED') {
+        res.status(409).json({ error: 'Tool session is locked after approval' });
+        return;
+      }
+
       const now = new Date().toISOString();
       await queryHelpers.queryRun(
         `UPDATE tool_sessions
@@ -840,9 +864,34 @@ export class ToolController {
         createdBy: user.id,
       });
 
+      // Freeze an immutable snapshot for the Tool Report export & audit trail
+      // Store under context_snapshot to avoid schema changes (v1 approach).
+      let approvedSnapshot: unknown = {};
+      try {
+        approvedSnapshot = {
+          toolSessionId: toolId,
+          toolType: session.tool_type,
+          name: session.name,
+          approvedAt: now,
+          approvedBy: user.id,
+          completionPercent: session.completion_percent ?? 0,
+          confidenceAvg: session.confidence_avg ?? 0,
+          answers: session.answers_json ? JSON.parse(session.answers_json) : {},
+        };
+      } catch {
+        approvedSnapshot = { toolSessionId: toolId, approvedAt: now };
+      }
+      const frozenContextSnapshot = JSON.stringify({
+        ...(session.context_snapshot ? safeJsonParse(session.context_snapshot) : {}),
+        approvedSnapshot,
+        snapshotVersion: 1,
+      });
+
       await queryHelpers.queryRun(
-        `UPDATE tool_sessions SET status = 'APPROVED', approved_at = ?, updated_at = ? WHERE id = ?`,
-        [now, now, toolId]
+        `UPDATE tool_sessions
+         SET status = 'APPROVED', approved_at = ?, updated_at = ?, context_snapshot = ?
+         WHERE id = ?`,
+        [now, now, frozenContextSnapshot, toolId]
       );
 
       await logAudit(user.organizationId, user.id, 'tool_approved', toolId, {
@@ -962,7 +1011,8 @@ export class ToolController {
         return;
       }
 
-      if (normalizeStatus(session.status) !== 'APPROVED') {
+      const sessionStatus = normalizeStatus(session.status);
+      if (sessionStatus !== 'APPROVED' && sessionStatus !== 'GENERATED') {
         res.status(409).json({ error: 'Tool session not approved' });
         return;
       }
@@ -1030,7 +1080,13 @@ export class ToolController {
         decisionId,
       });
 
-      res.json({ batchId, initiatives: created });
+      // Mark session as GENERATED (Tool Report lifecycle)
+      await queryHelpers.queryRun(
+        `UPDATE tool_sessions SET status = 'GENERATED', updated_at = ? WHERE id = ?`,
+        [now, toolId]
+      );
+
+      res.json({ batchId, initiatives: created, status: 'GENERATED' });
     }
   );
 

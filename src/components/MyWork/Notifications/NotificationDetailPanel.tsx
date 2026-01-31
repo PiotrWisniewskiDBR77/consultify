@@ -18,6 +18,8 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { SnoozePreset } from '@/hooks/useNotificationSnooze';
+
 import { NotificationQuickActions } from './NotificationQuickActions';
 
 export interface NotificationData {
@@ -41,7 +43,7 @@ interface NotificationDetailPanelProps {
   onNavigate: () => void;
   onMarkRead: () => void;
   onDelete: () => void;
-  onSnooze?: (hours: number) => void;
+  onSnooze?: (preset: SnoozePreset) => void;
   canNavigate: boolean;
   navigationLabel: string;
 }

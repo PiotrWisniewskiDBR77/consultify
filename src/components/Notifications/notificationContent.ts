@@ -72,7 +72,9 @@ const inferWhy = (n: NotificationLike, isPolish: boolean): string => {
 
 const inferBlocked = (n: NotificationLike, isPolish: boolean): string => {
   const data = n.data || {};
-  const blocked = normalize(data.blocked || data.blockedWhat || data.blocked_summary);
+  const blocked = normalize(
+    (data.blocked || data.blockedWhat || data.blocked_summary) as string | undefined
+  );
   if (blocked) return blocked;
 
   if (n.relatedObjectType && n.relatedObjectId) {
@@ -95,7 +97,9 @@ const inferBlocked = (n: NotificationLike, isPolish: boolean): string => {
 
 const inferPrimaryCta = (n: NotificationLike, isPolish: boolean): NotificationPrimaryCta => {
   const link = normalize(
-    n.data?.link || n.data?.url || n.data?.actionUrl || n.data?.action_url || n.data?.href
+    (n.data?.link || n.data?.url || n.data?.actionUrl || n.data?.action_url || n.data?.href) as
+      | string
+      | undefined
   );
   const relatedType = normalize(n.relatedObjectType).toUpperCase();
   const relatedId = normalize(n.relatedObjectId);
@@ -146,7 +150,7 @@ export const buildNotificationContent = (
         : `Do: ${primaryCta.label}`;
 
   const whyYouGotIt = normalize(
-    n.data?.whyYouGotIt || n.data?.why_you_got_it || n.data?.roleReason
+    (n.data?.whyYouGotIt || n.data?.why_you_got_it || n.data?.roleReason) as string | undefined
   );
 
   return {

@@ -1528,6 +1528,7 @@ export interface Notification {
   userId: string;
   organizationId: string;
   projectId?: string;
+  projectName?: string;
 
   // Type & Severity
   type: NotificationType;

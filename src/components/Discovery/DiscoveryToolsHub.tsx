@@ -39,6 +39,7 @@ import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { ToolType as StoreToolType } from '@/store/useToolStore';
+import { listStrategyToolSlugs } from '@/toolCatalog/strategy/catalog';
 
 import { ToolDocumentView, ToolWorkspace } from '../DiscoveryTools';
 import { GenericToolDocumentView } from '../DiscoveryTools/GenericToolDocumentView';
@@ -49,6 +50,7 @@ import {
   FilterChip,
   GridItem,
   GridView,
+  ItemStatus,
   ModuleHub,
   ModuleTab,
   OpenDocument,
@@ -58,7 +60,27 @@ import {
 
 // Tool category types
 type ToolCategory = 'strategic' | 'operational' | 'digital' | 'automation';
-type ItemStatus = 'draft' | 'in_review' | 'approved' | 'completed';
+// Using ItemStatus from ModuleHub types (uppercase): DRAFT, REVIEW, APPROVED, DONE, etc.
+// Helper to map lowercase statuses from API to uppercase for GridItem
+const mapStatusToUppercase = (status: string): import('../shared/ModuleHub').ItemStatus => {
+  const mapping: Record<string, import('../shared/ModuleHub').ItemStatus> = {
+    draft: 'DRAFT',
+    in_review: 'PENDING_REVIEW',
+    pending_review: 'PENDING_REVIEW',
+    approved: 'APPROVED',
+    completed: 'DONE',
+    done: 'DONE',
+    blocked: 'BLOCKED',
+    cancelled: 'CANCELLED',
+    archived: 'ARCHIVED',
+    proposed: 'REVIEW',
+    planned: 'PLANNING',
+    in_progress: 'EXECUTING',
+    executing: 'EXECUTING',
+    review: 'REVIEW',
+  };
+  return mapping[status.toLowerCase()] || 'DRAFT';
+};
 
 // Status filter options per tab context
 interface StatusFilterOption {
@@ -494,6 +516,15 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const statusDropdownRef = React.useRef<HTMLDivElement>(null);
 
+  // Docs-driven strategy catalog (wdrozenia/modules/tools/catalog/strategy/*.md)
+  const strategyCatalogSlugs = useMemo(() => listStrategyToolSlugs(), []);
+  const titleFromSlug = (slug: string) =>
+    String(slug || '')
+      .split('-')
+      .filter(Boolean)
+      .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+      .join(' ');
+
   // Data State
   const [discoveries, setDiscoveries] = useState<DisplayItem[]>([]);
   const [reports, setReports] = useState<DisplayItem[]>([]);
@@ -513,17 +544,18 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       category: 'strategic' as ToolCategory,
     };
     const statusMap: Record<string, ItemStatus> = {
-      DRAFT: 'draft',
-      REVIEW: 'in_review',
-      APPROVED: 'approved',
-      COMPLETED: 'completed',
+      DRAFT: 'DRAFT',
+      REVIEW: 'PENDING_REVIEW',
+      APPROVED: 'APPROVED',
+      GENERATED: 'DONE',
+      COMPLETED: 'DONE',
     };
     return {
       id: session.id,
       name: session.name,
       toolType: mapping.short,
       category: mapping.category,
-      status: statusMap[session.status?.toUpperCase()] || 'draft',
+      status: statusMap[session.status?.toUpperCase()] || 'DRAFT',
       progress: session.progress || 0,
       updatedAt: session.updatedAt ? new Date(session.updatedAt) : new Date(),
       apiToolType: session.toolType,
@@ -550,13 +582,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
         // Split by status for different tabs
         // Discovery: DRAFT, REVIEW (work in progress)
         const discoveryItems = allSessions.filter(
-          (s) => s.status === 'draft' || s.status === 'in_review'
+          (s) => s.status === 'DRAFT' || s.status === 'PENDING_REVIEW'
         );
         setDiscoveries(discoveryItems);
 
         // Reports: APPROVED, COMPLETED (finished analyses)
         const reportItems = allSessions.filter(
-          (s) => s.status === 'approved' || s.status === 'completed'
+          (s) => s.status === 'APPROVED' || s.status === 'DONE'
         );
         setReports(reportItems);
 
@@ -1044,6 +1076,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
         ...item,
         type: item.toolType,
         typeColor: categoryMeta?.color || 'slate',
+        status: mapStatusToUppercase(item.status),
       };
     });
   }, [currentData]);
@@ -1531,10 +1564,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       const toolMeta = TOOL_META[doc?.subType as ToolType];
       return (
         <GenericToolDocumentView
-          sessionId={doc?.id}
+          sessionId={doc?.id || ''}
           title={doc?.name}
           toolTypeLabel={toolMeta?.name || doc?.subType}
-          statusLabel={doc?.status}
+          statusLabel={doc?.status || undefined}
           onBack={handleShowList}
         />
       );
@@ -1726,6 +1759,56 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                     </div>
                   </button>
                 ))}
+
+              {/* Docs-driven frameworks catalog (Strategy only) */}
+              {selectedCategory === 'strategic' && strategyCatalogSlugs.length > 0 && (
+                <>
+                  <div className="my-4 border-t border-navy-700" />
+                  <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide px-1">
+                    Framework catalog (docs-driven)
+                  </div>
+                  <div className="text-xs text-slate-500 px-1 -mt-1">
+                    Starts a tool session with type = catalog slug, then opens a generic view with
+                    the full documentation.
+                  </div>
+                  {strategyCatalogSlugs.map((slug) => (
+                    <button
+                      key={slug}
+                      onClick={async () => {
+                        const name = titleFromSlug(slug);
+                        setSelectedCategory(null);
+                        try {
+                          const created = await Api.createToolSession({
+                            toolType: slug,
+                            name,
+                            projectId: currentProjectId ?? null,
+                          });
+                          handleOpenDocument({
+                            id: created.id,
+                            name,
+                            status: created.status || 'DRAFT',
+                            apiToolType: slug,
+                            toolType: slug,
+                          });
+                        } catch (e) {
+                          toast.error('Failed to create tool session');
+                        }
+                      }}
+                      className="flex items-center gap-3 w-full p-3 rounded-lg bg-navy-800 border border-navy-600 hover:bg-navy-700 transition-all text-left"
+                    >
+                      <span className="font-mono text-xs font-bold text-slate-400 w-12 truncate">
+                        {slug}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-white font-medium truncate">{titleFromSlug(slug)}</div>
+                        <div className="text-xs text-slate-400 truncate">
+                          Catalog tool · `wdrozenia/.../strategy/{slug}.md`
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </>
+              )}
             </div>
             <button
               onClick={() => setSelectedCategory(null)}

@@ -1,6 +1,6 @@
 /**
  * InsightDetailView - Professional BCG-quality Insight Display
- * 
+ *
  * Features:
  * - Rich markdown rendering with tables, code blocks
  * - Metadata display (type, category, impact, confidence)
@@ -79,24 +79,112 @@ interface InsightDetailViewProps {
 // CONSTANTS
 // ==========================================
 
-const INSIGHT_TYPE_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string; bgColor: string }> = {
-  summary: { label: 'Executive Summary', icon: <FileText size={16} />, color: 'text-blue-400', bgColor: 'bg-blue-500/20' },
-  opportunity: { label: 'Opportunity', icon: <TrendingUp size={16} />, color: 'text-emerald-400', bgColor: 'bg-emerald-500/20' },
-  gap: { label: 'Gap Analysis', icon: <Target size={16} />, color: 'text-amber-400', bgColor: 'bg-amber-500/20' },
-  risk: { label: 'Risk', icon: <AlertTriangle size={16} />, color: 'text-rose-400', bgColor: 'bg-rose-500/20' },
-  problem: { label: 'Problem', icon: <AlertTriangle size={16} />, color: 'text-orange-400', bgColor: 'bg-orange-500/20' },
-  recommendation: { label: 'Recommendation', icon: <Sparkles size={16} />, color: 'text-violet-400', bgColor: 'bg-violet-500/20' },
-  priority: { label: 'Priority', icon: <Zap size={16} />, color: 'text-yellow-400', bgColor: 'bg-yellow-500/20' },
-  trends: { label: 'Trends', icon: <BarChart3 size={16} />, color: 'text-cyan-400', bgColor: 'bg-cyan-500/20' },
-  problems: { label: 'Problems', icon: <AlertTriangle size={16} />, color: 'text-rose-400', bgColor: 'bg-rose-500/20' },
-  recommendations: { label: 'Recommendations', icon: <Sparkles size={16} />, color: 'text-violet-400', bgColor: 'bg-violet-500/20' },
-  comparison: { label: 'Comparison', icon: <Users size={16} />, color: 'text-indigo-400', bgColor: 'bg-indigo-500/20' },
-  maturity: { label: 'Maturity Assessment', icon: <BarChart3 size={16} />, color: 'text-teal-400', bgColor: 'bg-teal-500/20' },
-  stakeholder_map: { label: 'Stakeholder Map', icon: <Users size={16} />, color: 'text-pink-400', bgColor: 'bg-pink-500/20' },
-  risk_assessment: { label: 'Risk Assessment', icon: <AlertTriangle size={16} />, color: 'text-rose-400', bgColor: 'bg-rose-500/20' },
-  opportunity_scan: { label: 'Opportunity Scan', icon: <TrendingUp size={16} />, color: 'text-emerald-400', bgColor: 'bg-emerald-500/20' },
-  gaps: { label: 'Gap Analysis', icon: <Target size={16} />, color: 'text-amber-400', bgColor: 'bg-amber-500/20' },
-  general: { label: 'General', icon: <Lightbulb size={16} />, color: 'text-slate-400', bgColor: 'bg-slate-500/20' },
+const INSIGHT_TYPE_CONFIG: Record<
+  string,
+  { label: string; icon: React.ReactNode; color: string; bgColor: string }
+> = {
+  summary: {
+    label: 'Executive Summary',
+    icon: <FileText size={16} />,
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-500/20',
+  },
+  opportunity: {
+    label: 'Opportunity',
+    icon: <TrendingUp size={16} />,
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-500/20',
+  },
+  gap: {
+    label: 'Gap Analysis',
+    icon: <Target size={16} />,
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-500/20',
+  },
+  risk: {
+    label: 'Risk',
+    icon: <AlertTriangle size={16} />,
+    color: 'text-rose-400',
+    bgColor: 'bg-rose-500/20',
+  },
+  problem: {
+    label: 'Problem',
+    icon: <AlertTriangle size={16} />,
+    color: 'text-orange-400',
+    bgColor: 'bg-orange-500/20',
+  },
+  recommendation: {
+    label: 'Recommendation',
+    icon: <Sparkles size={16} />,
+    color: 'text-violet-400',
+    bgColor: 'bg-violet-500/20',
+  },
+  priority: {
+    label: 'Priority',
+    icon: <Zap size={16} />,
+    color: 'text-yellow-400',
+    bgColor: 'bg-yellow-500/20',
+  },
+  trends: {
+    label: 'Trends',
+    icon: <BarChart3 size={16} />,
+    color: 'text-cyan-400',
+    bgColor: 'bg-cyan-500/20',
+  },
+  problems: {
+    label: 'Problems',
+    icon: <AlertTriangle size={16} />,
+    color: 'text-rose-400',
+    bgColor: 'bg-rose-500/20',
+  },
+  recommendations: {
+    label: 'Recommendations',
+    icon: <Sparkles size={16} />,
+    color: 'text-violet-400',
+    bgColor: 'bg-violet-500/20',
+  },
+  comparison: {
+    label: 'Comparison',
+    icon: <Users size={16} />,
+    color: 'text-indigo-400',
+    bgColor: 'bg-indigo-500/20',
+  },
+  maturity: {
+    label: 'Maturity Assessment',
+    icon: <BarChart3 size={16} />,
+    color: 'text-teal-400',
+    bgColor: 'bg-teal-500/20',
+  },
+  stakeholder_map: {
+    label: 'Stakeholder Map',
+    icon: <Users size={16} />,
+    color: 'text-pink-400',
+    bgColor: 'bg-pink-500/20',
+  },
+  risk_assessment: {
+    label: 'Risk Assessment',
+    icon: <AlertTriangle size={16} />,
+    color: 'text-rose-400',
+    bgColor: 'bg-rose-500/20',
+  },
+  opportunity_scan: {
+    label: 'Opportunity Scan',
+    icon: <TrendingUp size={16} />,
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-500/20',
+  },
+  gaps: {
+    label: 'Gap Analysis',
+    icon: <Target size={16} />,
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-500/20',
+  },
+  general: {
+    label: 'General',
+    icon: <Lightbulb size={16} />,
+    color: 'text-slate-400',
+    bgColor: 'bg-slate-500/20',
+  },
 };
 
 const CATEGORY_CONFIG: Record<string, { label: string; color: string }> = {
@@ -160,9 +248,13 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
   // Get type config
   const typeKey = insight?.insightType || insight?.promptType || 'general';
   const typeConfig = INSIGHT_TYPE_CONFIG[typeKey] || INSIGHT_TYPE_CONFIG.general;
-  const categoryConfig = CATEGORY_CONFIG[insight?.category || ''] || { label: insight?.category || '', color: 'text-slate-400' };
+  const categoryConfig = CATEGORY_CONFIG[insight?.category || ''] || {
+    label: insight?.category || '',
+    color: 'text-slate-400',
+  };
   const impactConfig = IMPACT_CONFIG[insight?.impactLevel || 'medium'] || IMPACT_CONFIG.medium;
-  const confidenceConfig = CONFIDENCE_CONFIG[insight?.confidence || 'medium'] || CONFIDENCE_CONFIG.medium;
+  const confidenceConfig =
+    CONFIDENCE_CONFIG[insight?.confidence || 'medium'] || CONFIDENCE_CONFIG.medium;
   const statusConfig = STATUS_CONFIG[insight?.status || 'draft'] || STATUS_CONFIG.draft;
 
   // Get content (support both description and content fields)
@@ -218,7 +310,7 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
     if (!insight) return;
     setExporting('regenerate');
     try {
-      await Api.post(`/interview/insights/${insight.id}/regenerate`);
+      await Api.post(`/interview/insights/${insight.id}/regenerate`, {});
       toast.success('Regeneration started');
       onRefresh?.();
     } catch (err) {
@@ -260,15 +352,21 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className={typeConfig.color}>{typeConfig.icon}</span>
-                <span className={`text-sm font-medium ${typeConfig.color}`}>{typeConfig.label}</span>
+                <span className={`text-sm font-medium ${typeConfig.color}`}>
+                  {typeConfig.label}
+                </span>
                 {insight.category && (
                   <>
                     <ChevronRight size={14} className="text-slate-600" />
-                    <span className={`text-sm ${categoryConfig.color}`}>{categoryConfig.label}</span>
+                    <span className={`text-sm ${categoryConfig.color}`}>
+                      {categoryConfig.label}
+                    </span>
                   </>
                 )}
               </div>
-              <div className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusConfig.bgColor} ${statusConfig.color}`}>
+              <div
+                className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusConfig.bgColor} ${statusConfig.color}`}
+              >
                 {statusConfig.label}
               </div>
             </div>
@@ -277,17 +375,19 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
           {/* Title & Meta */}
           <div className="p-6">
             <h1 className="text-2xl font-bold text-white mb-4">{insight.title}</h1>
-            
+
             {/* Metadata Row */}
             <div className="flex flex-wrap items-center gap-4 text-sm">
               {/* Impact */}
               {insight.impactLevel && (
-                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${impactConfig.bgColor}`}>
+                <div
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${impactConfig.bgColor}`}
+                >
                   <AlertTriangle size={12} className={impactConfig.color} />
                   <span className={impactConfig.color}>{impactConfig.label} Impact</span>
                 </div>
               )}
-              
+
               {/* Confidence */}
               {insight.confidence && (
                 <div className="flex items-center gap-1.5 text-slate-400">
@@ -316,11 +416,13 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
               {insight.createdAt && (
                 <div className="flex items-center gap-1.5 text-slate-500">
                   <Clock size={12} />
-                  <span>{new Date(insight.createdAt).toLocaleDateString('en-GB', { 
-                    day: '2-digit', 
-                    month: 'short', 
-                    year: 'numeric' 
-                  })}</span>
+                  <span>
+                    {new Date(insight.createdAt).toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </span>
                 </div>
               )}
             </div>
@@ -345,7 +447,8 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
         {/* Main Content */}
         {content ? (
           <div className="bg-navy-900 border border-navy-700 rounded-xl p-6">
-            <div className="prose prose-invert prose-sm max-w-none
+            <div
+              className="prose prose-invert prose-sm max-w-none
               prose-headings:text-white prose-headings:font-semibold
               prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:pb-2 prose-h2:border-b prose-h2:border-navy-700
               prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3
@@ -361,10 +464,9 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
               prose-pre:bg-navy-950 prose-pre:border prose-pre:border-navy-700 prose-pre:rounded-lg
               prose-blockquote:border-l-4 prose-blockquote:border-amber-500/50 prose-blockquote:bg-navy-800/50 prose-blockquote:px-4 prose-blockquote:py-2 prose-blockquote:rounded-r-lg prose-blockquote:not-italic
               prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline
-            ">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {content}
-              </ReactMarkdown>
+            "
+            >
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
             </div>
           </div>
         ) : (
@@ -385,9 +487,10 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
               onClick={handleExportToTools}
               disabled={!!exporting || insight.exportedToTools}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
-                ${insight.exportedToTools 
-                  ? 'bg-emerald-500/20 text-emerald-400 cursor-default' 
-                  : 'bg-navy-800 hover:bg-navy-700 border border-navy-600 text-white'
+                ${
+                  insight.exportedToTools
+                    ? 'bg-emerald-500/20 text-emerald-400 cursor-default'
+                    : 'bg-navy-800 hover:bg-navy-700 border border-navy-600 text-white'
                 }
                 disabled:opacity-50`}
             >
@@ -409,9 +512,10 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
               onClick={handleExportToAssessment}
               disabled={!!exporting || insight.exportedToAssessment}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
-                ${insight.exportedToAssessment 
-                  ? 'bg-emerald-500/20 text-emerald-400 cursor-default' 
-                  : 'bg-navy-800 hover:bg-navy-700 border border-navy-600 text-white'
+                ${
+                  insight.exportedToAssessment
+                    ? 'bg-emerald-500/20 text-emerald-400 cursor-default'
+                    : 'bg-navy-800 hover:bg-navy-700 border border-navy-600 text-white'
                 }
                 disabled:opacity-50`}
             >
@@ -457,7 +561,9 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
               className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 border border-navy-600 text-white rounded-lg text-sm font-medium transition-colors"
               onClick={() => {
                 // Create markdown download
-                const blob = new Blob([`# ${insight.title}\n\n${content}`], { type: 'text/markdown' });
+                const blob = new Blob([`# ${insight.title}\n\n${content}`], {
+                  type: 'text/markdown',
+                });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -478,7 +584,9 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
           <div className="text-xs text-slate-500 text-center">
             {insight.tokensUsed && <span>Tokens used: {insight.tokensUsed}</span>}
             {insight.tokensUsed && insight.generationTimeMs && <span className="mx-2">•</span>}
-            {insight.generationTimeMs && <span>Generated in {(insight.generationTimeMs / 1000).toFixed(1)}s</span>}
+            {insight.generationTimeMs && (
+              <span>Generated in {(insight.generationTimeMs / 1000).toFixed(1)}s</span>
+            )}
           </div>
         )}
       </div>

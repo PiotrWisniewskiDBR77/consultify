@@ -126,17 +126,19 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   const { updateWorkspaceFromView } = useConversationStore();
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState<NotificationData | null>(null);
-  
+
   // Expanded sections state
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['whats-happening', 'ai-analysis', 'expected-action', 'control'])
   );
 
   // Action checklist state (mock data - would come from API)
-  const [actionChecklist, setActionChecklist] = useState<{ id: string; text: string; completed: boolean }[]>([]);
+  const [actionChecklist, setActionChecklist] = useState<
+    { id: string; text: string; completed: boolean }[]
+  >([]);
 
   const toggleSection = (section: string) => {
-    setExpandedSections(prev => {
+    setExpandedSections((prev) => {
       const next = new Set(prev);
       if (next.has(section)) {
         next.delete(section);
@@ -184,26 +186,66 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
     if (type.includes('TASK')) {
       items = [
-        { id: '1', text: isPolish ? 'Przejrzyj szczegóły zadania' : 'Review task details', completed: false },
-        { id: '2', text: isPolish ? 'Zaktualizuj status lub termin' : 'Update status or deadline', completed: false },
-        { id: '3', text: isPolish ? 'Powiadom interesariuszy' : 'Notify stakeholders', completed: false },
+        {
+          id: '1',
+          text: isPolish ? 'Przejrzyj szczegóły zadania' : 'Review task details',
+          completed: false,
+        },
+        {
+          id: '2',
+          text: isPolish ? 'Zaktualizuj status lub termin' : 'Update status or deadline',
+          completed: false,
+        },
+        {
+          id: '3',
+          text: isPolish ? 'Powiadom interesariuszy' : 'Notify stakeholders',
+          completed: false,
+        },
       ];
     } else if (type.includes('DECISION')) {
       items = [
-        { id: '1', text: isPolish ? 'Przeanalizuj kontekst decyzji' : 'Analyze decision context', completed: false },
-        { id: '2', text: isPolish ? 'Skonsultuj z zespołem' : 'Consult with team', completed: false },
-        { id: '3', text: isPolish ? 'Podejmij decyzję lub deleguj' : 'Make decision or delegate', completed: false },
+        {
+          id: '1',
+          text: isPolish ? 'Przeanalizuj kontekst decyzji' : 'Analyze decision context',
+          completed: false,
+        },
+        {
+          id: '2',
+          text: isPolish ? 'Skonsultuj z zespołem' : 'Consult with team',
+          completed: false,
+        },
+        {
+          id: '3',
+          text: isPolish ? 'Podejmij decyzję lub deleguj' : 'Make decision or delegate',
+          completed: false,
+        },
       ];
     } else if (type.includes('AI')) {
       items = [
-        { id: '1', text: isPolish ? 'Przejrzyj rekomendację AI' : 'Review AI recommendation', completed: false },
-        { id: '2', text: isPolish ? 'Zweryfikuj dane wejściowe' : 'Verify input data', completed: false },
+        {
+          id: '1',
+          text: isPolish ? 'Przejrzyj rekomendację AI' : 'Review AI recommendation',
+          completed: false,
+        },
+        {
+          id: '2',
+          text: isPolish ? 'Zweryfikuj dane wejściowe' : 'Verify input data',
+          completed: false,
+        },
         { id: '3', text: isPolish ? 'Zastosuj lub odrzuć' : 'Apply or dismiss', completed: false },
       ];
     } else {
       items = [
-        { id: '1', text: isPolish ? 'Przejrzyj powiadomienie' : 'Review notification', completed: false },
-        { id: '2', text: isPolish ? 'Podejmij odpowiednią akcję' : 'Take appropriate action', completed: false },
+        {
+          id: '1',
+          text: isPolish ? 'Przejrzyj powiadomienie' : 'Review notification',
+          completed: false,
+        },
+        {
+          id: '2',
+          text: isPolish ? 'Podejmij odpowiednią akcję' : 'Take appropriate action',
+          completed: false,
+        },
       ];
     }
 
@@ -211,10 +253,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   };
 
   const toggleChecklistItem = (id: string) => {
-    setActionChecklist(prev =>
-      prev.map(item =>
-        item.id === id ? { ...item, completed: !item.completed } : item
-      )
+    setActionChecklist((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, completed: !item.completed } : item))
     );
   };
 
@@ -260,15 +300,13 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       toast.success(isPolish ? 'Oznaczono jako przeczytane' : 'Marked as read');
     } catch (error) {
       console.error('Failed to mark as read', error);
-      toast.error(
-        isPolish ? 'Nie udało się oznaczyć jako przeczytane' : 'Failed to mark as read'
-      );
+      toast.error(isPolish ? 'Nie udało się oznaczyć jako przeczytane' : 'Failed to mark as read');
     }
   };
 
   const handleOpenChat = () => {
     if (!notification) return;
-    
+
     if (isChatCollapsed) {
       toggleChatCollapse();
     }
@@ -280,10 +318,13 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       severity: notification.severity,
       title: notification.title,
       message: notification.message,
-      relatedEntity: notification.relatedObjectType && notification.relatedObjectId ? {
-        type: notification.relatedObjectType,
-        id: notification.relatedObjectId,
-      } : null,
+      relatedEntity:
+        notification.relatedObjectType && notification.relatedObjectId
+          ? {
+              type: notification.relatedObjectType,
+              id: notification.relatedObjectId,
+            }
+          : null,
       projectId: notification.projectId || null,
       projectName: notification.projectName || null,
     });
@@ -348,13 +389,13 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   // Generate AI analysis based on notification
   const generateAIAnalysis = () => {
     if (!notification) return null;
-    
+
     const type = notification.type?.toUpperCase() || '';
-    
+
     if (type.includes('OVERDUE')) {
       return {
         priority: isPolish ? 'WYSOKI' : 'HIGH',
-        impact: isPolish 
+        impact: isPolish
           ? 'To opóźnienie może wpłynąć na powiązane zadania i terminy projektu.'
           : 'This delay may impact related tasks and project deadlines.',
         recommendation: isPolish
@@ -385,7 +426,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         riskLevel: 'medium',
       };
     }
-    
+
     return {
       priority: isPolish ? 'NISKI' : 'LOW',
       impact: isPolish
@@ -501,11 +542,15 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${severityConfig.bgColor} ${severityConfig.textColor}`}>
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${severityConfig.bgColor} ${severityConfig.textColor}`}
+                  >
                     <SeverityIcon size={10} />
                     {isPolish ? severityConfig.label.pl : severityConfig.label.en}
                   </span>
-                  <motion.div animate={{ rotate: expandedSections.has('whats-happening') ? 180 : 0 }}>
+                  <motion.div
+                    animate={{ rotate: expandedSections.has('whats-happening') ? 180 : 0 }}
+                  >
                     <ChevronDown size={18} className="text-slate-400" />
                   </motion.div>
                 </div>
@@ -580,12 +625,17 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   >
                     <div className="p-5 space-y-4">
                       <div className="flex items-center gap-3">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                          aiAnalysis.riskLevel === 'critical' ? 'bg-red-500/10 text-red-500' :
-                          aiAnalysis.riskLevel === 'high' ? 'bg-amber-500/10 text-amber-500' :
-                          aiAnalysis.riskLevel === 'medium' ? 'bg-blue-500/10 text-blue-500' :
-                          'bg-slate-500/10 text-slate-500'
-                        }`}>
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                            aiAnalysis.riskLevel === 'critical'
+                              ? 'bg-red-500/10 text-red-500'
+                              : aiAnalysis.riskLevel === 'high'
+                                ? 'bg-amber-500/10 text-amber-500'
+                                : aiAnalysis.riskLevel === 'medium'
+                                  ? 'bg-blue-500/10 text-blue-500'
+                                  : 'bg-slate-500/10 text-slate-500'
+                          }`}
+                        >
                           {isPolish ? 'Priorytet' : 'Priority'}: {aiAnalysis.priority}
                         </span>
                       </div>
@@ -634,9 +684,11 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-slate-400">
-                    {actionChecklist.filter(i => i.completed).length}/{actionChecklist.length}
+                    {actionChecklist.filter((i) => i.completed).length}/{actionChecklist.length}
                   </span>
-                  <motion.div animate={{ rotate: expandedSections.has('expected-action') ? 180 : 0 }}>
+                  <motion.div
+                    animate={{ rotate: expandedSections.has('expected-action') ? 180 : 0 }}
+                  >
                     <ChevronDown size={18} className="text-slate-400" />
                   </motion.div>
                 </div>
@@ -654,24 +706,28 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         {contract.expectedAction}
                       </div>
                       <div className="space-y-2">
-                        {actionChecklist.map(item => (
+                        {actionChecklist.map((item) => (
                           <button
                             key={item.id}
                             onClick={() => toggleChecklistItem(item.id)}
                             className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors text-left"
                           >
-                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
-                              item.completed 
-                                ? 'bg-emerald-500 border-emerald-500' 
-                                : 'border-slate-300 dark:border-navy-600'
-                            }`}>
+                            <div
+                              className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
+                                item.completed
+                                  ? 'bg-emerald-500 border-emerald-500'
+                                  : 'border-slate-300 dark:border-navy-600'
+                              }`}
+                            >
                               {item.completed && <Check size={12} className="text-white" />}
                             </div>
-                            <span className={`text-sm ${
-                              item.completed 
-                                ? 'text-slate-400 line-through' 
-                                : 'text-slate-700 dark:text-slate-300'
-                            }`}>
+                            <span
+                              className={`text-sm ${
+                                item.completed
+                                  ? 'text-slate-400 line-through'
+                                  : 'text-slate-700 dark:text-slate-300'
+                              }`}
+                            >
                               {item.text}
                             </span>
                           </button>
@@ -741,14 +797,19 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               </p>
                             </div>
                           </div>
-                          <ExternalLink size={14} className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <ExternalLink
+                            size={14}
+                            className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                          />
                         </button>
                       )}
                       {notification.projectName && (
                         <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-navy-800">
                           <FolderOpen size={16} className="text-indigo-400" />
                           <div>
-                            <p className="text-xs text-slate-400">{isPolish ? 'Projekt' : 'Project'}</p>
+                            <p className="text-xs text-slate-400">
+                              {isPolish ? 'Projekt' : 'Project'}
+                            </p>
                             <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
                               {notification.projectName}
                             </p>
@@ -1001,7 +1062,18 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         {/* Primary CTA */}
                         {contract.primaryCta.kind === 'open_task' ? (
                           <button
-                            onClick={() => onNavigateToSource?.('task', contract.primaryCta.id)}
+                            onClick={() =>
+                              onNavigateToSource?.(
+                                'task',
+                                (
+                                  contract.primaryCta as {
+                                    kind: 'open_task';
+                                    label: string;
+                                    id: string;
+                                  }
+                                ).id
+                              )
+                            }
                             className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium text-sm"
                           >
                             <CheckSquare size={14} />
@@ -1009,7 +1081,18 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           </button>
                         ) : contract.primaryCta.kind === 'open_decision' ? (
                           <button
-                            onClick={() => onNavigateToSource?.('decision', contract.primaryCta.id)}
+                            onClick={() =>
+                              onNavigateToSource?.(
+                                'decision',
+                                (
+                                  contract.primaryCta as {
+                                    kind: 'open_decision';
+                                    label: string;
+                                    id: string;
+                                  }
+                                ).id
+                              )
+                            }
                             className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 text-white hover:bg-purple-700 transition-colors font-medium text-sm"
                           >
                             <Scale size={14} />

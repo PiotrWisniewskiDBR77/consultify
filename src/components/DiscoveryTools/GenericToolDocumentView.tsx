@@ -2,7 +2,9 @@ import { Loader2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { MarkdownRenderer } from '@/components/AIChat/Artifacts/renderers/MarkdownRenderer';
 import { Api } from '@/services/api';
+import { hasStrategyToolDoc, loadStrategyToolDocMarkdown } from '@/toolCatalog/strategy/catalog';
 
 type GenericToolDocumentViewProps = {
   sessionId: string;
@@ -22,6 +24,8 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
   const [isLoading, setIsLoading] = useState(true);
   const [session, setSession] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [catalogMarkdown, setCatalogMarkdown] = useState<string | null>(null);
+  const [isCatalogLoading, setIsCatalogLoading] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -44,6 +48,36 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
       mounted = false;
     };
   }, [sessionId]);
+
+  const toolSlug = useMemo(() => {
+    const raw = session?.toolType || session?.tool_type || '';
+    return String(raw).trim().toLowerCase();
+  }, [session?.toolType, session?.tool_type]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!toolSlug || !hasStrategyToolDoc(toolSlug)) {
+        setCatalogMarkdown(null);
+        return;
+      }
+      setIsCatalogLoading(true);
+      try {
+        const md = await loadStrategyToolDocMarkdown(toolSlug);
+        if (!mounted) return;
+        setCatalogMarkdown(md);
+      } catch {
+        if (!mounted) return;
+        setCatalogMarkdown(null);
+      } finally {
+        if (!mounted) return;
+        setIsCatalogLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [toolSlug]);
 
   const computedTitle = useMemo(() => {
     return title || session?.name || 'Tool session';
@@ -126,6 +160,29 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* LEFT: content */}
           <div className="lg:col-span-2 space-y-6">
+            {isCatalogLoading && (
+              <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
+                <div className="flex items-center gap-3 text-slate-300">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm">Loading tool documentation...</span>
+                </div>
+              </div>
+            )}
+
+            {catalogMarkdown && (
+              <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                    Tool documentation (catalog)
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Source: wdrozenia/modules/tools/catalog/strategy/{toolSlug}.md
+                  </div>
+                </div>
+                <MarkdownRenderer content={catalogMarkdown} className="p-0" />
+              </div>
+            )}
+
             <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold text-white">Context Snapshot</h3>

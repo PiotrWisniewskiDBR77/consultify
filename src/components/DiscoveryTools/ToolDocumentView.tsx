@@ -63,6 +63,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { SWOTData, ToolType, useToolStore } from '@/store/useToolStore';
 import { AppView } from '@/types';
+import { exportToPDF } from '@/utils/pdfExport';
 
 import { type Comment, CommentsSection } from '../MyWork/shared';
 import { GenerateInitiativesModal } from './GenerateInitiativesModal';
@@ -235,6 +236,11 @@ const STATUS_CONFIG = {
     color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
     dotColor: 'bg-blue-500',
   },
+  GENERATED: {
+    label: { en: 'Generated', pl: 'Wygenerowano' },
+    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    dotColor: 'bg-blue-500',
+  },
 };
 
 // ==================== COLLAPSIBLE SECTION ====================
@@ -333,14 +339,15 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
   // Local state
   const [toolSessionId, setToolSessionId] = useState<string | null>(sessionId || null);
-  const [toolStatus, setToolStatus] = useState<'DRAFT' | 'REVIEW' | 'APPROVED' | 'COMPLETED'>(
-    'DRAFT'
-  );
+  const [toolStatus, setToolStatus] = useState<
+    'DRAFT' | 'REVIEW' | 'APPROVED' | 'GENERATED' | 'COMPLETED'
+  >('DRAFT');
   const [sessionName, setSessionName] = useState('');
   const [createdAt, setCreatedAt] = useState('');
   const [lastModified, setLastModified] = useState('');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   // Data state
   const [generatedInitiatives, setGeneratedInitiatives] = useState<
@@ -396,6 +403,28 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     () => computeToolCompletionItems(toolType, currentSession?.inputData, isPolish),
     [toolType, currentSession?.inputData, isPolish]
   );
+
+  const handleExportPdf = useCallback(async () => {
+    try {
+      setIsExportingPdf(true);
+      const safeName = (sessionName || toolMeta.name || toolType)
+        .replace(/[^\w\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .toLowerCase();
+      const date = new Date().toISOString().slice(0, 10);
+      await exportToPDF('tool-report-export', {
+        filename: `tool-report-${toolType}-${safeName}-${date}.pdf`,
+        title: `${toolMeta.name} • Tool Report`,
+        orientation: 'portrait',
+      });
+      toast.success(isPolish ? 'Wyeksportowano PDF' : 'PDF exported');
+    } catch {
+      toast.error(isPolish ? 'Nie udało się wyeksportować PDF' : 'PDF export failed');
+    } finally {
+      setIsExportingPdf(false);
+    }
+  }, [isPolish, sessionName, toolMeta.name, toolType]);
 
   const statusConfig = STATUS_CONFIG[toolStatus] || STATUS_CONFIG.DRAFT;
 
@@ -625,7 +654,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     }
     try {
       setGenerationDefaults(payload);
-      await Api.generateToolInitiatives(toolSessionId, payload);
+      const result = await Api.generateToolInitiatives(toolSessionId, payload);
+      if (result?.status) {
+        setToolStatus(String(result.status).toUpperCase() as any);
+      }
       const updated = await Api.getToolGeneratedInitiatives(toolSessionId);
       setGeneratedInitiatives(updated.initiatives || []);
       await fetchAll();
@@ -764,13 +796,22 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                     </button>
                     <button
                       onClick={() => {
-                        toast.success('Export coming soon');
                         setShowMoreMenu(false);
+                        void handleExportPdf();
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+                      disabled={isExportingPdf}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700 ${
+                        isExportingPdf ? 'opacity-60 cursor-not-allowed' : ''
+                      }`}
                     >
                       <Download className="w-4 h-4" />
-                      {isPolish ? 'Eksportuj PDF' : 'Export PDF'}
+                      {isExportingPdf
+                        ? isPolish
+                          ? 'Eksportuję...'
+                          : 'Exporting...'
+                        : isPolish
+                          ? 'Eksportuj PDF'
+                          : 'Export PDF'}
                     </button>
                     <div className="border-t border-slate-200 dark:border-navy-700 my-2" />
                     <button
@@ -1167,7 +1208,9 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                   </>
                 )}
 
-                {(toolStatus === 'APPROVED' || toolStatus === 'COMPLETED') && (
+                {(toolStatus === 'APPROVED' ||
+                  toolStatus === 'GENERATED' ||
+                  toolStatus === 'COMPLETED') && (
                   <button
                     onClick={() => setShowGenerateModal(true)}
                     disabled={toolPermissions.canGenerate === false}
@@ -1508,6 +1551,101 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           </motion.div>
         </div>
       )}
+
+      {/* Hidden printable Tool Report (used for PDF export) */}
+      <div
+        id="tool-report-export"
+        className="fixed left-[-10000px] top-0 w-[210mm] bg-white text-slate-900 p-8"
+      >
+        <div className="flex items-start justify-between gap-6">
+          <div className="min-w-0">
+            <div className="text-xs uppercase tracking-wide text-slate-500">Consultify • Tools</div>
+            <h1 className="text-2xl font-bold mt-1">Tool Report</h1>
+            <div className="text-sm text-slate-700 mt-1">
+              {toolMeta.name} • {sessionName || toolSessionId || '—'}
+            </div>
+            <div className="text-xs text-slate-500 mt-1">
+              Organization: {currentOrganization?.name || currentOrganization?.id || '—'}
+              {currentProjectId ? ` • Project: ${currentProjectId}` : ''}
+            </div>
+          </div>
+          <div className="text-right text-xs text-slate-600">
+            <div>
+              <span className="font-semibold text-slate-800">Status:</span> {toolStatus}
+            </div>
+            <div>
+              <span className="font-semibold text-slate-800">Completion:</span>{' '}
+              {Math.round(progress)}%
+            </div>
+            <div>
+              <span className="font-semibold text-slate-800">Generated:</span>{' '}
+              {new Date().toLocaleString()}
+            </div>
+          </div>
+        </div>
+
+        <hr className="my-5 border-slate-200" />
+
+        <section className="mb-5">
+          <h2 className="text-sm font-semibold text-slate-900">Executive Summary</h2>
+          <p className="text-xs text-slate-600 mt-1">
+            Snapshot export of the current tool session. Use the Reports module for governance /
+            management reporting.
+          </p>
+        </section>
+
+        <section className="mb-5">
+          <h2 className="text-sm font-semibold text-slate-900">DoD / Quality</h2>
+          <ul className="mt-2 space-y-1 text-xs text-slate-700">
+            <li>
+              <span className="font-semibold">Completion:</span> {Math.round(progress)}%
+            </li>
+            <li>
+              <span className="font-semibold">Review gaps:</span> {reviewGaps.length}
+            </li>
+          </ul>
+        </section>
+
+        <section className="mb-5">
+          <h2 className="text-sm font-semibold text-slate-900">Findings (tool data)</h2>
+          <pre className="mt-2 text-[10px] leading-4 bg-slate-50 border border-slate-200 rounded-lg p-3 whitespace-pre-wrap break-words">
+            {JSON.stringify(currentSession?.inputData || {}, null, 2)}
+          </pre>
+        </section>
+
+        <section className="mb-5">
+          <h2 className="text-sm font-semibold text-slate-900">Review & approval log</h2>
+          {toolDecisions.length === 0 ? (
+            <div className="text-xs text-slate-500 mt-2">No decisions recorded.</div>
+          ) : (
+            <ul className="mt-2 space-y-1 text-xs text-slate-700">
+              {toolDecisions.map((d, idx) => (
+                <li key={`${d.decision_type}-${d.decision_id || idx}`}>
+                  <span className="font-semibold">{d.decision_type}</span> • {d.status}
+                  {d.owner_name ? ` • owner: ${d.owner_name}` : ''}
+                  {d.due_date ? ` • due: ${d.due_date}` : ''}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="mb-2">
+          <h2 className="text-sm font-semibold text-slate-900">Generated initiatives</h2>
+          {generatedInitiatives.length === 0 ? (
+            <div className="text-xs text-slate-500 mt-2">No initiatives generated.</div>
+          ) : (
+            <ol className="mt-2 space-y-1 text-xs text-slate-700 list-decimal list-inside">
+              {generatedInitiatives.map((i) => (
+                <li key={i.id}>
+                  {i.title}
+                  {i.status ? ` • ${i.status}` : ''}
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      </div>
 
       {/* Click outside handler for more menu */}
       {showMoreMenu && (

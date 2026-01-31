@@ -31,9 +31,10 @@ export interface Comment {
   createdAt: string;
   updatedAt?: string;
   likes: number;
-  likedByMe: boolean;
+  likedByMe?: boolean;
   parentId?: string;
   replies?: Comment[];
+  isAIGenerated?: boolean;
 }
 
 interface CommentsSectionProps {

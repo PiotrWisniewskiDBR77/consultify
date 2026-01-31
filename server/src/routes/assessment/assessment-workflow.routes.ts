@@ -9,6 +9,8 @@
 import { Request, Response, Router } from 'express';
 
 import { getDatabase } from '../../database/index.js';
+import { verifyToken } from '../../middleware/auth.middleware.js';
+import NotificationService from '../../services/notificationService.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
@@ -23,6 +25,9 @@ interface AuthRequest extends Request {
     email?: string;
   };
 }
+
+// All assessment-workflow endpoints require authentication
+router.use(verifyToken);
 
 // Workflow states
 type WorkflowState =
@@ -938,6 +943,590 @@ router.post('/:assessmentId/log-activity', async (req: AuthRequest, res: Respons
     res.status(500).json({ error: 'Failed to log activity', message: err.message });
   }
 });
+
+// =============================================================================
+// PERMISSION & ROLE MANAGEMENT ENDPOINTS
+// =============================================================================
+
+import AssessmentPermissionService from '../../services/assessmentPermissionService.js';
+
+/**
+ * GET /api/assessment-workflow/:assessmentId/my-role
+ * Get current user's role and permissions for an assessment
+ */
+router.get('/:assessmentId/my-role', async (req: AuthRequest, res: Response) => {
+  try {
+    const { assessmentId } = req.params;
+    const userId = req.user?.id;
+    const organizationId = req.user?.organizationId || 'org-default';
+    const globalRole = String(req.user?.role || '').toUpperCase();
+
+    logger.info(
+      `[AssessmentWorkflow] /my-role called: assessmentId=${assessmentId}, userId=${userId}, orgId=${organizationId}`
+    );
+
+    if (!userId) {
+      logger.warn(`[AssessmentWorkflow] /my-role: No userId in request`);
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Global admins/superadmins should always have admin capabilities inside assessments
+    // (this prevents "admin sees user screen" when assessment ownership/roles are missing or not migrated).
+    if (
+      globalRole === 'ADMIN' ||
+      globalRole === 'ADMINISTRATOR' ||
+      globalRole === 'OWNER' ||
+      globalRole === 'SUPERADMIN' ||
+      globalRole === 'SUPER_ADMIN'
+    ) {
+      const roleInfo = {
+        role: 'admin' as const,
+        permissions: AssessmentPermissionService.getDefaultPermissions('admin'),
+        assignedAreas: null,
+        isOwner: true,
+      };
+      logger.info(
+        `[AssessmentWorkflow] /my-role global override: globalRole=${globalRole}, role=admin, canManage=${roleInfo.permissions.canManage}`
+      );
+      return res.json(roleInfo);
+    }
+
+    logger.info(
+      `[AssessmentWorkflow] Getting role for user ${userId} in assessment ${assessmentId}`
+    );
+
+    const roleInfo = await AssessmentPermissionService.getUserRole(
+      assessmentId,
+      userId,
+      organizationId
+    );
+
+    logger.info(
+      `[AssessmentWorkflow] /my-role result: role=${roleInfo.role}, canManage=${roleInfo.permissions?.canManage}, canEdit=${roleInfo.permissions?.canEdit}`
+    );
+
+    res.json(roleInfo);
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflow] Error getting user role:', err);
+    res.status(500).json({ error: 'Failed to get user role', message: err.message });
+  }
+});
+
+/**
+ * GET /api/assessment-workflow/:assessmentId/roles
+ * Get all roles for an assessment (Admin/Manager only)
+ */
+router.get('/:assessmentId/roles', async (req: AuthRequest, res: Response) => {
+  try {
+    const { assessmentId } = req.params;
+    const userId = req.user?.id;
+    const organizationId = req.user?.organizationId || 'org-default';
+    const globalRole = String(req.user?.role || '').toUpperCase();
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Check permission
+    const isGlobalAdmin =
+      globalRole === 'ADMIN' ||
+      globalRole === 'ADMINISTRATOR' ||
+      globalRole === 'OWNER' ||
+      globalRole === 'SUPERADMIN' ||
+      globalRole === 'SUPER_ADMIN';
+
+    const canManage = isGlobalAdmin
+      ? true
+      : await AssessmentPermissionService.hasPermission(
+          assessmentId,
+          userId,
+          organizationId,
+          'canManage'
+        );
+
+    if (!canManage) {
+      return res.status(403).json({ error: 'You do not have permission to view roles' });
+    }
+
+    const roles = await AssessmentPermissionService.getAssessmentRoles(
+      assessmentId,
+      organizationId
+    );
+
+    res.json({ roles });
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflow] Error getting assessment roles:', err);
+    res.status(500).json({ error: 'Failed to get roles', message: err.message });
+  }
+});
+
+/**
+ * POST /api/assessment-workflow/:assessmentId/roles
+ * Assign or update a role (Admin/Manager only)
+ */
+router.post('/:assessmentId/roles', async (req: AuthRequest, res: Response) => {
+  try {
+    const { assessmentId } = req.params;
+    const userId = req.user?.id;
+    const organizationId = req.user?.organizationId || 'org-default';
+    const globalRole = String(req.user?.role || '').toUpperCase();
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { targetUserId, role, permissions, assignedAreas } = req.body;
+
+    if (!targetUserId || !role) {
+      return res.status(400).json({ error: 'targetUserId and role are required' });
+    }
+
+    if (!['admin', 'manager', 'editor', 'viewer'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+
+    // Check permission
+    const isGlobalAdmin =
+      globalRole === 'ADMIN' ||
+      globalRole === 'ADMINISTRATOR' ||
+      globalRole === 'OWNER' ||
+      globalRole === 'SUPERADMIN' ||
+      globalRole === 'SUPER_ADMIN';
+
+    const canManageTeam = isGlobalAdmin
+      ? true
+      : await AssessmentPermissionService.hasPermission(
+          assessmentId,
+          userId,
+          organizationId,
+          'canManageTeam'
+        );
+
+    if (!canManageTeam) {
+      return res.status(403).json({ error: 'You do not have permission to manage team' });
+    }
+
+    const roleRecord = await AssessmentPermissionService.assignRole({
+      assessmentId,
+      userId: targetUserId,
+      organizationId,
+      role,
+      assignedBy: userId,
+      permissions,
+      assignedAreas,
+    });
+
+    logger.info(`[AssessmentWorkflow] Role ${role} assigned to ${targetUserId} by ${userId}`);
+
+    res.status(201).json(roleRecord);
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflow] Error assigning role:', err);
+    res.status(500).json({ error: 'Failed to assign role', message: err.message });
+  }
+});
+
+/**
+ * DELETE /api/assessment-workflow/:assessmentId/roles/:targetUserId
+ * Remove a user's role (Admin only)
+ */
+router.delete('/:assessmentId/roles/:targetUserId', async (req: AuthRequest, res: Response) => {
+  try {
+    const { assessmentId, targetUserId } = req.params;
+    const userId = req.user?.id;
+    const organizationId = req.user?.organizationId || 'org-default';
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Check if user is admin
+    const userRole = await AssessmentPermissionService.getUserRole(
+      assessmentId,
+      userId,
+      organizationId
+    );
+
+    if (userRole.role !== 'admin') {
+      return res.status(403).json({ error: 'Only admins can remove roles' });
+    }
+
+    const removed = await AssessmentPermissionService.removeRole(
+      assessmentId,
+      targetUserId,
+      organizationId
+    );
+
+    if (!removed) {
+      return res.status(404).json({ error: 'Role not found' });
+    }
+
+    logger.info(`[AssessmentWorkflow] Role removed for ${targetUserId} by ${userId}`);
+
+    res.json({ success: true });
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflow] Error removing role:', err);
+    res.status(500).json({ error: 'Failed to remove role', message: err.message });
+  }
+});
+
+// =============================================================================
+// ACCESS REQUEST ENDPOINTS
+// =============================================================================
+
+/**
+ * POST /api/assessment-workflow/:assessmentId/access-requests
+ * Create an access request
+ */
+router.post('/:assessmentId/access-requests', async (req: AuthRequest, res: Response) => {
+  try {
+    const { assessmentId } = req.params;
+    const userId = req.user?.id;
+    const organizationId = req.user?.organizationId || 'org-default';
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { requestedRole, requestedAreas, justification, priority } = req.body;
+
+    if (!requestedRole || !justification) {
+      return res.status(400).json({ error: 'requestedRole and justification are required' });
+    }
+
+    if (!['editor', 'manager'].includes(requestedRole)) {
+      return res.status(400).json({ error: 'Invalid requested role' });
+    }
+
+    const request = await AssessmentPermissionService.createAccessRequest({
+      assessmentId,
+      organizationId,
+      requesterId: userId,
+      requestedRole,
+      requestedAreas,
+      justification,
+      priority,
+    });
+
+    logger.info(
+      `[AssessmentWorkflow] Access request created by ${userId} for assessment ${assessmentId}`
+    );
+
+    // Send notification to admins
+    try {
+      const admins = await AssessmentPermissionService.getAssessmentAdmins(
+        assessmentId,
+        organizationId
+      );
+      const requesterName = req.user?.name || req.user?.email || 'A user';
+
+      // Get assessment name
+      const db = getDatabase();
+      const assessment = await new Promise<{ name: string } | null>((resolve, reject) => {
+        db.get(
+          `SELECT name FROM assessments WHERE id = ?`,
+          [assessmentId],
+          (err: Error | null, row: any) => {
+            if (err) reject(err);
+            else resolve(row);
+          }
+        );
+      });
+      const assessmentName = assessment?.name || 'Assessment';
+
+      for (const admin of admins) {
+        await NotificationService.send({
+          userId: admin.userId,
+          organizationId,
+          type: 'ASSESSMENT_ACCESS_REQUEST',
+          title: 'New access request',
+          body: `${requesterName} requested ${requestedRole} access to "${assessmentName}"`,
+          entityType: 'assessment_access_request',
+          entityId: request.id,
+          actionUrl: `/assessment/drd/${assessmentId}?manage=access-requests`,
+          actorId: userId,
+          actorName: requesterName,
+          priority: priority === 'URGENT' ? 'urgent' : priority === 'HIGH' ? 'high' : 'normal',
+        });
+      }
+      logger.info(`[AssessmentWorkflow] Notifications sent to ${admins.length} admins`);
+    } catch (notifErr) {
+      logger.warn('[AssessmentWorkflow] Failed to send notifications:', notifErr);
+      // Don't fail the request if notifications fail
+    }
+
+    res.status(201).json(request);
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflow] Error creating access request:', err);
+    res.status(500).json({ error: err.message || 'Failed to create access request' });
+  }
+});
+
+/**
+ * GET /api/assessment-workflow/:assessmentId/access-requests
+ * Get access requests for an assessment (Admin/Manager only)
+ */
+router.get('/:assessmentId/access-requests', async (req: AuthRequest, res: Response) => {
+  try {
+    const { assessmentId } = req.params;
+    const userId = req.user?.id;
+    const organizationId = req.user?.organizationId || 'org-default';
+    const globalRole = String(req.user?.role || '').toUpperCase();
+    const status = req.query.status as
+      | 'PENDING'
+      | 'APPROVED'
+      | 'REJECTED'
+      | 'CANCELLED'
+      | undefined;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Check permission
+    const isGlobalAdmin =
+      globalRole === 'ADMIN' ||
+      globalRole === 'ADMINISTRATOR' ||
+      globalRole === 'OWNER' ||
+      globalRole === 'SUPERADMIN' ||
+      globalRole === 'SUPER_ADMIN';
+
+    const canManage = isGlobalAdmin
+      ? true
+      : await AssessmentPermissionService.hasPermission(
+          assessmentId,
+          userId,
+          organizationId,
+          'canManage'
+        );
+
+    if (!canManage) {
+      return res.status(403).json({ error: 'You do not have permission to view access requests' });
+    }
+
+    const requests = await AssessmentPermissionService.getAccessRequests(
+      assessmentId,
+      organizationId,
+      status
+    );
+
+    res.json({ requests });
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflow] Error getting access requests:', err);
+    res.status(500).json({ error: 'Failed to get access requests', message: err.message });
+  }
+});
+
+/**
+ * POST /api/assessment-workflow/:assessmentId/access-requests/:requestId/approve
+ * Approve an access request (Admin/Manager only)
+ */
+router.post(
+  '/:assessmentId/access-requests/:requestId/approve',
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { assessmentId, requestId } = req.params;
+      const userId = req.user?.id;
+      const organizationId = req.user?.organizationId || 'org-default';
+      const globalRole = String(req.user?.role || '').toUpperCase();
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { grantedRole, grantedPermissions, grantedAreas, notes } = req.body;
+
+      if (!grantedRole) {
+        return res.status(400).json({ error: 'grantedRole is required' });
+      }
+
+      // Check permission
+      const isGlobalAdmin =
+        globalRole === 'ADMIN' ||
+        globalRole === 'ADMINISTRATOR' ||
+        globalRole === 'OWNER' ||
+        globalRole === 'SUPERADMIN' ||
+        globalRole === 'SUPER_ADMIN';
+
+      const canManageTeam = isGlobalAdmin
+        ? true
+        : await AssessmentPermissionService.hasPermission(
+            assessmentId,
+            userId,
+            organizationId,
+            'canManageTeam'
+          );
+
+      if (!canManageTeam) {
+        return res.status(403).json({ error: 'You do not have permission to approve requests' });
+      }
+
+      const request = await AssessmentPermissionService.approveAccessRequest({
+        requestId,
+        reviewerId: userId,
+        grantedRole,
+        grantedPermissions,
+        grantedAreas,
+        notes,
+      });
+
+      logger.info(`[AssessmentWorkflow] Access request ${requestId} approved by ${userId}`);
+
+      // Send notification to requester
+      try {
+        const db = getDatabase();
+        const assessment = await new Promise<{ name: string } | null>((resolve, reject) => {
+          db.get(
+            `SELECT name FROM assessments WHERE id = ?`,
+            [assessmentId],
+            (err: Error | null, row: any) => {
+              if (err) reject(err);
+              else resolve(row);
+            }
+          );
+        });
+        const assessmentName = assessment?.name || 'Assessment';
+        const reviewerName = req.user?.name || req.user?.email || 'An admin';
+
+        await NotificationService.send({
+          userId: request.requesterId,
+          organizationId,
+          type: 'ASSESSMENT_ACCESS_APPROVED',
+          title: 'Access request approved',
+          body: `Your request for ${grantedRole} access to "${assessmentName}" was approved`,
+          entityType: 'assessment',
+          entityId: assessmentId,
+          actionUrl: `/assessment/drd/${assessmentId}`,
+          actorId: userId,
+          actorName: reviewerName,
+          priority: 'normal',
+        });
+        logger.info(`[AssessmentWorkflow] Approval notification sent to ${request.requesterId}`);
+      } catch (notifErr) {
+        logger.warn('[AssessmentWorkflow] Failed to send approval notification:', notifErr);
+      }
+
+      res.json(request);
+    } catch (err: any) {
+      logger.error('[AssessmentWorkflow] Error approving access request:', err);
+      res.status(500).json({ error: err.message || 'Failed to approve access request' });
+    }
+  }
+);
+
+/**
+ * POST /api/assessment-workflow/:assessmentId/access-requests/:requestId/reject
+ * Reject an access request (Admin/Manager only)
+ */
+router.post(
+  '/:assessmentId/access-requests/:requestId/reject',
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { assessmentId, requestId } = req.params;
+      const userId = req.user?.id;
+      const organizationId = req.user?.organizationId || 'org-default';
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { reason } = req.body;
+
+      if (!reason) {
+        return res.status(400).json({ error: 'reason is required' });
+      }
+
+      // Check permission
+      const canManageTeam = await AssessmentPermissionService.hasPermission(
+        assessmentId,
+        userId,
+        organizationId,
+        'canManageTeam'
+      );
+
+      if (!canManageTeam) {
+        return res.status(403).json({ error: 'You do not have permission to reject requests' });
+      }
+
+      const request = await AssessmentPermissionService.rejectAccessRequest(
+        requestId,
+        userId,
+        reason
+      );
+
+      logger.info(`[AssessmentWorkflow] Access request ${requestId} rejected by ${userId}`);
+
+      // Send notification to requester
+      try {
+        const db = getDatabase();
+        const assessment = await new Promise<{ name: string } | null>((resolve, reject) => {
+          db.get(
+            `SELECT name FROM assessments WHERE id = ?`,
+            [assessmentId],
+            (err: Error | null, row: any) => {
+              if (err) reject(err);
+              else resolve(row);
+            }
+          );
+        });
+        const assessmentName = assessment?.name || 'Assessment';
+        const reviewerName = req.user?.name || req.user?.email || 'An admin';
+
+        await NotificationService.send({
+          userId: request.requesterId,
+          organizationId,
+          type: 'ASSESSMENT_ACCESS_REJECTED',
+          title: 'Access request rejected',
+          body: `Your request for access to "${assessmentName}" was rejected. Reason: ${reason}`,
+          entityType: 'assessment',
+          entityId: assessmentId,
+          actionUrl: `/assessment`,
+          actorId: userId,
+          actorName: reviewerName,
+          priority: 'normal',
+        });
+        logger.info(`[AssessmentWorkflow] Rejection notification sent to ${request.requesterId}`);
+      } catch (notifErr) {
+        logger.warn('[AssessmentWorkflow] Failed to send rejection notification:', notifErr);
+      }
+
+      res.json(request);
+    } catch (err: any) {
+      logger.error('[AssessmentWorkflow] Error rejecting access request:', err);
+      res.status(500).json({ error: err.message || 'Failed to reject access request' });
+    }
+  }
+);
+
+/**
+ * DELETE /api/assessment-workflow/:assessmentId/access-requests/:requestId
+ * Cancel own access request
+ */
+router.delete(
+  '/:assessmentId/access-requests/:requestId',
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { requestId } = req.params;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const cancelled = await AssessmentPermissionService.cancelAccessRequest(requestId, userId);
+
+      if (!cancelled) {
+        return res.status(404).json({ error: 'Request not found or already processed' });
+      }
+
+      logger.info(`[AssessmentWorkflow] Access request ${requestId} cancelled by ${userId}`);
+
+      res.json({ success: true });
+    } catch (err: any) {
+      logger.error('[AssessmentWorkflow] Error cancelling access request:', err);
+      res.status(500).json({ error: 'Failed to cancel access request', message: err.message });
+    }
+  }
+);
 
 // =============================================================================
 // HELPER FUNCTIONS

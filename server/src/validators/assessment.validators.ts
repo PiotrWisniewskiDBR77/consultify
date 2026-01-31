@@ -77,6 +77,61 @@ export const GenerateReportSchema = z.object({
   includeGapAnalysis: z.boolean().optional(),
 });
 
+// =============================================================================
+// MANAGE (RBAC / access requests) – v2
+// =============================================================================
+
+const AssessmentRoleSchema = z.enum(['admin', 'manager', 'editor', 'viewer']);
+
+const ManagerPermissionOverridesSchema = z
+  .object({
+    canEdit: z.boolean().optional(),
+    canApprove: z.boolean().optional(),
+    canManageTeam: z.boolean().optional(),
+    canChangeStatus: z.boolean().optional(),
+    canGenerateReport: z.boolean().optional(),
+    canGenerateInitiatives: z.boolean().optional(),
+  })
+  .optional();
+
+export const UpsertAssessmentRoleSchema = z.object({
+  role: AssessmentRoleSchema,
+  permissions: ManagerPermissionOverridesSchema,
+  assignedAreas: z.array(z.string().min(1)).optional().nullable(),
+});
+
+export const AssignAssessmentRoleSchema = UpsertAssessmentRoleSchema.extend({
+  userId: z.string().min(1),
+});
+
+export const ApproveAssessmentAccessRequestSchema = z.object({
+  grantedRole: z.enum(['editor', 'manager']),
+  grantedPermissions: z
+    .object({
+      canEdit: z.boolean().optional(),
+      canApprove: z.boolean().optional(),
+      canManageTeam: z.boolean().optional(),
+      canChangeStatus: z.boolean().optional(),
+      canGenerateReport: z.boolean().optional(),
+      canGenerateInitiatives: z.boolean().optional(),
+    })
+    .optional(),
+  grantedAreas: z.array(z.string().min(1)).optional().nullable(),
+  notes: z.string().optional(),
+});
+
+export const RejectAssessmentAccessRequestSchema = z.object({
+  reason: z.string().min(2, 'Reason must be at least 2 characters'),
+});
+
+export const CreateManualInitiativeFromAssessmentSchema = z.object({
+  title: z.string().min(3).max(200),
+  description: z.string().max(20000).optional().nullable(),
+  category: z.string().max(200).optional().nullable(),
+  priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+  risk: z.enum(['low', 'medium', 'high']).optional(),
+});
+
 // List query params
 export const ListAssessmentsQuerySchema = z.object({
   projectId: z.string().optional(),
@@ -99,3 +154,15 @@ export type ApproveAssessmentRequest = z.infer<typeof ApproveAssessmentSchema>;
 export type SendBackRequest = z.infer<typeof SendBackSchema>;
 export type GenerateInitiativesRequest = z.infer<typeof GenerateInitiativesSchema>;
 export type GenerateReportRequest = z.infer<typeof GenerateReportSchema>;
+
+export type UpsertAssessmentRoleRequest = z.infer<typeof UpsertAssessmentRoleSchema>;
+export type AssignAssessmentRoleRequest = z.infer<typeof AssignAssessmentRoleSchema>;
+export type ApproveAssessmentAccessRequestRequest = z.infer<
+  typeof ApproveAssessmentAccessRequestSchema
+>;
+export type RejectAssessmentAccessRequestRequest = z.infer<
+  typeof RejectAssessmentAccessRequestSchema
+>;
+export type CreateManualInitiativeFromAssessmentRequest = z.infer<
+  typeof CreateManualInitiativeFromAssessmentSchema
+>;

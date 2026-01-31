@@ -8,40 +8,44 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertTriangle,
+  ArrowUp,
   Calendar,
   Check,
   ChevronDown,
   ChevronLeft,
+  Clock,
+  Edit3,
   FileText,
   Flag,
   FolderOpen,
   HelpCircle,
+  History,
   Layers,
   Lightbulb,
   Loader2,
+  MessageSquare,
   Minus,
   Plus,
   Save,
   Scale,
   Share2,
+  Sparkles,
   Star,
   Tag,
   ThumbsDown,
   ThumbsUp,
   Trash2,
+  UserCheck,
   Users,
   X,
-  History,
-  Edit3,
-  MessageSquare,
-  Clock,
-  ArrowUp,
-  UserCheck,
-  Sparkles,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { useAppStore } from '@/store/useAppStore';
+import { useConversationStore } from '@/store/useConversationStore';
+import { AppView } from '@/types';
 
 import { Api } from '../../services/api';
 import {
@@ -69,9 +73,6 @@ import {
   StakeholdersSection,
   type WarningThresholds,
 } from './shared';
-import { useAppStore } from '@/store/useAppStore';
-import { useConversationStore } from '@/store/useConversationStore';
-import { AppView } from '@/types';
 
 interface DecisionDetailViewProps {
   decisionId: string | null;
@@ -252,7 +253,18 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   // Activity Log
   interface ActivityLogEntry {
     id: string;
-    type: 'status_change' | 'assignment' | 'comment' | 'edit' | 'deadline' | 'priority' | 'created' | 'approved' | 'rejected' | 'escalated' | 'deferred';
+    type:
+      | 'status_change'
+      | 'assignment'
+      | 'comment'
+      | 'edit'
+      | 'deadline'
+      | 'priority'
+      | 'created'
+      | 'approved'
+      | 'rejected'
+      | 'escalated'
+      | 'deferred';
     description: string;
     timestamp: string;
     userId?: string;
@@ -745,11 +757,8 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       const newComment: Comment = {
         id: Math.random().toString(36).substr(2, 9),
         content: aiComments[0],
-        author: {
-          id: 'ai-assistant',
-          name: 'AI Assistant',
-          avatar: '',
-        },
+        authorId: 'ai-assistant',
+        authorName: 'AI Assistant',
         createdAt: new Date().toISOString(),
         likes: 0,
         isAIGenerated: true,
@@ -996,7 +1005,6 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
             </div>
           </motion.div>
           <div className="space-y-5 order-2 lg:order-1">
-
             {/* Description - Collapsible with AI */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -1172,15 +1180,13 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
                       {activityLog.length === 0 ? (
                         <div className="text-center py-6 text-slate-400 dark:text-slate-500">
                           <History size={24} className="mx-auto mb-2 opacity-50" />
-                          <p className="text-sm">
-                            {isPolish ? 'Brak wpisów' : 'No entries'}
-                          </p>
+                          <p className="text-sm">{isPolish ? 'Brak wpisów' : 'No entries'}</p>
                         </div>
                       ) : (
                         <div className="relative">
                           {/* Timeline line */}
                           <div className="absolute left-3 top-3 bottom-3 w-px bg-slate-200 dark:bg-navy-700" />
-                          
+
                           <div className="space-y-3">
                             {activityLog.map((entry, index) => {
                               const getIcon = () => {

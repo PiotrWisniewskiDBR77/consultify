@@ -117,6 +117,9 @@ const FullRolloutView = React.lazy(() =>
 const FullReportsView = React.lazy(() =>
   import('@/views/FullReportsView').then((m) => ({ default: m.FullReportsView }))
 );
+const ReportBuilderView = React.lazy(() =>
+  import('@/views/ReportBuilderView').then((m) => ({ default: m.ReportBuilderView }))
+);
 const KpiOkrView = React.lazy(() =>
   import('@/views/KpiOkrView').then((m) => ({ default: m.KpiOkrView }))
 );
@@ -283,6 +286,23 @@ const DocsArticleView = React.lazy(() =>
 );
 const DocsSearchView = React.lazy(() =>
   import('@/views/docs/DocsSearchView').then((m) => ({ default: m.DocsSearchView }))
+);
+const DocsApiReferenceView = React.lazy(() =>
+  import('@/views/docs/DocsApiReferenceView').then((m) => ({ default: m.DocsApiReferenceView }))
+);
+const DocsChangelogView = React.lazy(() =>
+  import('@/views/docs/DocsChangelogView').then((m) => ({ default: m.DocsChangelogView }))
+);
+const DocsSecurityView = React.lazy(() =>
+  import('@/views/docs/DocsSecurityView').then((m) => ({ default: m.DocsSecurityView }))
+);
+
+// Education Hub (Public)
+const ToolsShowcasePage = React.lazy(() =>
+  import('@/views/ToolsShowcasePage').then((m) => ({ default: m.ToolsShowcasePage }))
+);
+const AuditsShowcasePage = React.lazy(() =>
+  import('@/views/AuditsShowcasePage').then((m) => ({ default: m.AuditsShowcasePage }))
 );
 
 export const AppRoutes: React.FC = () => {
@@ -486,9 +506,36 @@ export const AppRoutes: React.FC = () => {
         <Route path="/docs" element={<DocsLayout />}>
           <Route index element={<DocsHomeView />} />
           <Route path="search" element={<DocsSearchView />} />
+          <Route path="api" element={<DocsApiReferenceView />} />
+          <Route path="changelog" element={<DocsChangelogView />} />
+          <Route path="security" element={<DocsSecurityView />} />
           <Route path=":categorySlug" element={<DocsCategoryView />} />
           <Route path=":categorySlug/:articleSlug" element={<DocsArticleView />} />
         </Route>
+
+        {/* Tools Showcase - Education Hub (Public) */}
+        <Route
+          path="/tools"
+          element={
+            <AuthLayout>
+              <Suspense fallback={<LoadingScreen message="Loading tools..." />}>
+                <ToolsShowcasePage />
+              </Suspense>
+            </AuthLayout>
+          }
+        />
+
+        {/* Audits Showcase - Industrial Excellence (Public) */}
+        <Route
+          path="/audits"
+          element={
+            <AuthLayout>
+              <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
+                <AuditsShowcasePage />
+              </Suspense>
+            </AuthLayout>
+          }
+        />
 
         {/* Login - stable key prevents remount during auth initialization */}
         <Route
@@ -916,6 +963,31 @@ export const AppRoutes: React.FC = () => {
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
                   <FullReportsView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+        {/* Report Builder Module */}
+        <Route
+          path="/reports/builder"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Reports', 'Builder']}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <ReportBuilderView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/reports/builder/:reportId"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Reports', 'Builder', 'Edit']}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <ReportBuilderView />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>

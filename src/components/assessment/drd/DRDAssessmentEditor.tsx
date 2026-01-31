@@ -77,6 +77,16 @@ type Props = {
   readOnly?: boolean;
   value: DRDEditorAnswers | undefined;
   onChange: (next: DRDEditorAnswers) => void;
+  /**
+   * Optional override for the LEFT workspace content.
+   * When provided, the right navigation panel stays visible unchanged.
+   */
+  leftOverride?: React.ReactNode;
+  /**
+   * Called when user switches between Survey/Preview in the right panel.
+   * Useful to exit Manage/Logs overlays in the parent.
+   */
+  onViewModeChange?: (mode: 'surveys' | 'matrix') => void;
   onAxisChange?: (axisId: number) => void;
   currentAxisId?: number;
   onAreaChange?: (areaId: string) => void;
@@ -97,6 +107,8 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
   readOnly = false,
   value,
   onChange,
+  leftOverride,
+  onViewModeChange,
   onAxisChange,
   currentAxisId,
   onAreaChange,
@@ -334,7 +346,13 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
 
         <button
           type="button"
-          onClick={() => setViewMode((m) => (m === 'surveys' ? 'matrix' : 'surveys'))}
+          onClick={() => {
+            setViewMode((m) => {
+              const next = m === 'surveys' ? 'matrix' : 'surveys';
+              onViewModeChange?.(next);
+              return next;
+            });
+          }}
           className="w-full h-10 px-4 rounded-lg border border-navy-700 bg-navy-950 text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-navy-900 transition-colors"
         >
           {viewMode === 'surveys' ? (
@@ -349,9 +367,6 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
             </>
           )}
         </button>
-        <div className="mt-2 text-[11px] text-slate-400 leading-snug">
-          Tip: Shift+Click a cell in Preview to set a target level.
-        </div>
 
         <div className="space-y-2">
           <label className="text-xs text-slate-500 dark:text-slate-400">Axis</label>
@@ -1713,7 +1728,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
 
   return (
     <AssessmentToolShell
-      left={contentPanel}
+      left={leftOverride ?? contentPanel}
       right={navPanel}
       isRightOpen={isSidebarOpen}
       rightWidthClass="w-[320px]"

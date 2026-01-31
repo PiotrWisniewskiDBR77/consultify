@@ -123,7 +123,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const { currentUser } = useAppStore();
-  const { setActiveConversation, setIsOpen } = useConversationStore();
+  const { setActiveConversation } = useConversationStore();
 
   // ==========================================
   // STATE
@@ -597,14 +597,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   // Open chat
   const handleOpenChat = useCallback(() => {
     if (!session) return;
-    setActiveConversation({
-      id: `interview-${session.id}`,
-      type: 'interview',
-      title: sessionName || 'Interview Session',
-      context: { sessionId: session.id },
-    });
-    setIsOpen(true);
-  }, [session, sessionName, setActiveConversation, setIsOpen]);
+    setActiveConversation(`interview-${session.id}`);
+  }, [session, setActiveConversation]);
 
   // Attachments handlers
   const handleUploadAttachment = async (files: FileList) => {
@@ -615,7 +609,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       size: file.size,
       url: URL.createObjectURL(file),
       uploadedAt: new Date().toISOString(),
-      uploadedBy: currentUser?.name || 'User',
+      uploadedBy: currentUser?.displayName || currentUser?.firstName || 'User',
     }));
     setAttachments([...attachments, ...newAttachments]);
     toast.success(isPolish ? 'Załączniki dodane' : 'Attachments added');

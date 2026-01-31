@@ -114,6 +114,7 @@ export type TaskStatus =
   | 'in_progress'
   | 'review'
   | 'done'
+  | 'completed'
   | 'blocked'
   | 'cancelled'
   | 'TODO'
@@ -194,6 +195,8 @@ export interface Task {
   stakeholders?: any[];
   why?: string;
   progress?: number;
+  progressNote?: string;
+  projectName?: string; // Computed field for UI
   changeLog?: any[];
   acceptanceCriteria?: string[] | boolean;
   createdAt: string;

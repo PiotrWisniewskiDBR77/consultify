@@ -210,7 +210,11 @@ interface ConversationState {
   fetchConversation: (id: string) => Promise<void>;
 
   // Actions - CRUD
-  createConversation: (options?: { title?: string; projectId?: string }) => Promise<Conversation>;
+  createConversation: (options?: {
+    title?: string;
+    projectId?: string;
+    pmoContext?: { assessmentId?: string; initiativeIds?: string[]; roadmapId?: string };
+  }) => Promise<Conversation>;
   updateConversation: (id: string, updates: Partial<Conversation>) => Promise<void>;
   deleteConversation: (id: string) => Promise<void>;
 
@@ -364,6 +368,7 @@ export const useConversationStore = create<ConversationState>()(
           const result = await Api.createConversation({
             title: options?.title,
             projectId: options?.projectId,
+            pmoContext: options?.pmoContext,
           });
 
           const conversation = mapApiConversation(result);

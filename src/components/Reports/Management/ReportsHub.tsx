@@ -26,7 +26,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
-
 import {
   ManagementReport,
   ManagementReportScope,
@@ -42,9 +41,9 @@ import {
   TableColumn,
   ViewMode,
 } from '../../shared/ModuleHub';
-import { ReportGeneratorDrawer } from './ReportGeneratorDrawer';
 import { PortfolioHealthReport } from './PortfolioHealthReport';
 import { RaidReport } from './RaidReport';
+import { ReportGeneratorDrawer } from './ReportGeneratorDrawer';
 import { SteeringCommitteeReport } from './SteeringCommitteeReport';
 import { TeamMeetingReport } from './TeamMeetingReport';
 
@@ -275,9 +274,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         render: (row: ReportHistoryItem) => (
           <div>
             <span className="text-sm text-white font-medium">{row.title}</span>
-            {row.projectName && (
-              <p className="text-xs text-slate-400 mt-0.5">{row.projectName}</p>
-            )}
+            {row.projectName && <p className="text-xs text-slate-400 mt-0.5">{row.projectName}</p>}
           </div>
         ),
       },
@@ -521,7 +518,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
           type: 'report',
           subType: meta.shortLabel,
           name: report.title,
-          status: report.status === 'FINAL' ? 'completed' : 'draft',
+          status: report.status === 'FINAL' ? 'DONE' : 'DRAFT',
         };
 
         setOpenDocuments((prev) => {
@@ -620,7 +617,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       type: 'report',
       subType: meta.shortLabel,
       name: report.title,
-      status: 'draft',
+      status: 'DRAFT',
     };
 
     setOpenDocuments((prev) => [...prev, doc]);

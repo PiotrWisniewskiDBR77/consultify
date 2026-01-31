@@ -2401,11 +2401,9 @@ export const InterviewHub: React.FC = () => {
                           {/* Continue - for in_progress status */}
                           {assignment.status === 'in_progress' && assignment.sessionId && (
                             <button
-                              onClick={async () => {
+                              onClick={async (e) => {
                                 // prevent row click
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                const ev = (arguments as any)[0];
-                                if (ev?.stopPropagation) ev.stopPropagation();
+                                e.stopPropagation();
                                 const session = await Api.get(
                                   `/interview/sessions/${assignment.sessionId}`
                                 );
@@ -2427,11 +2425,9 @@ export const InterviewHub: React.FC = () => {
                           {/* Resume - for sent_back status (user needs to fix and resubmit) */}
                           {assignment.status === 'sent_back' && assignment.sessionId && (
                             <button
-                              onClick={async () => {
+                              onClick={async (e) => {
                                 // prevent row click
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                const ev = (arguments as any)[0];
-                                if (ev?.stopPropagation) ev.stopPropagation();
+                                e.stopPropagation();
                                 const session = await Api.get(
                                   `/interview/sessions/${assignment.sessionId}`
                                 );

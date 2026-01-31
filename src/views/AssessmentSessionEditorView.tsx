@@ -1,7 +1,6 @@
 import {
   ArrowLeft,
   Check,
-  Clock,
   Edit3,
   Info,
   Loader2,
@@ -9,6 +8,7 @@ import {
   LogOut,
   MessageSquare,
   Save,
+  Settings,
   Unlock,
   X,
 } from 'lucide-react';
@@ -16,12 +16,14 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { ActivityLogPanel } from '@/components/assessment/ActivityLogPanel';
 import { DRDAssessmentEditor } from '@/components/assessment/drd/DRDAssessmentEditor';
+import { AssessmentManagePanel } from '@/components/assessment/manage/AssessmentManagePanel';
+import { RequestAccessModal, useAssessmentPermissions } from '@/components/assessment/permissions';
 import { SIRIForm } from '@/components/assessment/tools/SIRIForm';
 import { Api } from '@/services/api';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
 import { useAppStore } from '@/store/useAppStore';
+import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 
 type SupportedFramework = 'drd' | 'siri' | 'adma' | 'cmmi' | 'lean';
@@ -138,6 +140,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
   const navigate = useNavigate();
   const { framework: frameworkParam, assessmentId } = useParams();
   const { setCurrentViewState, currentUser } = useAppStore();
+  const { createConversation } = useConversationStore();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const framework = (frameworkParam?.toLowerCase() as SupportedFramework | undefined) || undefined;
@@ -190,9 +193,41 @@ export const AssessmentSessionEditorView: React.FC = () => {
   const [isRenaming, setIsRenaming] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
   const [isLocked, setIsLocked] = useState(true);
-  const [showActivityLog, setShowActivityLog] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
+  const [showRequestAccessModal, setShowRequestAccessModal] = useState(false);
+  const [isManageOpen, setIsManageOpen] = useState(false);
+
+  // Permissions
+  const {
+    role: userRole,
+    permissions,
+    isLoading: permissionsLoading,
+    requestAccess,
+    refreshPermissions,
+  } = useAssessmentPermissions(assessmentId);
+
+  const isGlobalAdmin = useMemo(() => {
+    const r = String(currentUser?.role || '').toLowerCase();
+    return (
+      r === 'admin' ||
+      r === 'owner' ||
+      r === 'superadmin' ||
+      r === 'super_admin' ||
+      r === 'administrator'
+    );
+  }, [currentUser?.role]);
+
+  const canManageEffective = Boolean(permissions?.canManage || isGlobalAdmin);
+  const canEditEffective = Boolean(permissions?.canEdit || isGlobalAdmin);
+  const isAdminEffective = Boolean(isGlobalAdmin || userRole === 'admin');
+
+  // Admins shouldn't need a lock toggle: keep editing enabled.
+  useEffect(() => {
+    if (isAdminEffective) {
+      setIsLocked(false);
+    }
+  }, [isAdminEffective]);
 
   useEffect(() => {
     return () => {
@@ -537,6 +572,27 @@ export const AssessmentSessionEditorView: React.FC = () => {
     navigate,
   ]);
 
+  // Open chat with assessment context
+  const handleOpenChat = useCallback(async () => {
+    if (!assessmentId || !assessment) return;
+
+    try {
+      // Create new conversation with assessment context
+      const conversation = await createConversation({
+        title: `Assessment: ${assessment.name || 'Untitled'}`,
+        pmoContext: {
+          assessmentId: assessmentId,
+        },
+      });
+
+      // Navigate to chat with the new conversation
+      navigate(`/ai-chat?conversationId=${conversation.id}`);
+    } catch (e: any) {
+      console.error('[AssessmentSessionEditorView] Failed to create chat:', e);
+      toast.error('Failed to open chat');
+    }
+  }, [assessmentId, assessment, createConversation, navigate]);
+
   const assignmentByAreaId = useMemo(() => {
     const map: Record<string, any> = {};
     for (const a of assignments || []) {
@@ -770,15 +826,6 @@ export const AssessmentSessionEditorView: React.FC = () => {
   }
 
   const renderEditor = () => {
-    // Show Activity Log view if enabled
-    if (showActivityLog) {
-      return (
-        <div className="h-full bg-white dark:bg-navy-900">
-          <ActivityLogPanel assessmentId={assessmentId} />
-        </div>
-      );
-    }
-
     if (framework === 'drd') {
       const drdData: DRDFormData = answers?.drd || {};
       return (
@@ -788,6 +835,18 @@ export const AssessmentSessionEditorView: React.FC = () => {
           currentUserId={currentUser?.id || undefined}
           assignmentByAreaId={assignmentByAreaId}
           onAssignToMe={assignAreaToMe}
+          leftOverride={
+            isManageOpen && canManageEffective ? (
+              <AssessmentManagePanel
+                assessmentId={assessmentId}
+                assessmentName={assessment?.name}
+              />
+            ) : undefined
+          }
+          onViewModeChange={() => {
+            // Switching between Survey/Preview should exit Manage workspace
+            if (isManageOpen) setIsManageOpen(false);
+          }}
           value={drdData}
           onChange={(next) => {
             const nextAnswers = { ...answers, drd: next };
@@ -795,11 +854,20 @@ export const AssessmentSessionEditorView: React.FC = () => {
             scheduleSave(nextAnswers, calcDrdCompletionPercent(next));
           }}
           currentAxisId={currentAxisId}
-          onAxisChange={handleAxisChange}
+          onAxisChange={(nextAxisId) => {
+            if (isManageOpen) setIsManageOpen(false);
+            handleAxisChange(nextAxisId);
+          }}
           currentAreaId={currentAreaId}
-          onAreaChange={handleAreaChange}
+          onAreaChange={(nextAreaId) => {
+            if (isManageOpen) setIsManageOpen(false);
+            handleAreaChange(nextAreaId);
+          }}
           currentLevel={currentLevel}
-          onLevelChange={handleLevelChange}
+          onLevelChange={(lvl) => {
+            if (isManageOpen) setIsManageOpen(false);
+            handleLevelChange(lvl);
+          }}
         />
       );
     }
@@ -917,6 +985,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
 
           {/* Actions */}
           <div className="flex items-center gap-2">
+            {/* Info button - always visible */}
             <button
               type="button"
               onClick={() => setIsInfoOpen((v) => !v)}
@@ -927,59 +996,94 @@ export const AssessmentSessionEditorView: React.FC = () => {
               <span>Info</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => setShowActivityLog((v) => !v)}
-              className={`hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-lg border text-sm font-medium transition-colors ${
-                showActivityLog
-                  ? 'border-purple-200/60 dark:border-purple-900/30 bg-purple-50/70 dark:bg-purple-900/10 text-purple-700 dark:text-purple-200'
-                  : 'border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900'
-              }`}
-              title="Activity Log"
-            >
-              <Clock className="w-4 h-4" />
-              <span>Logs</span>
-            </button>
+            {/* Manage button - only for admin/manager */}
+            {canManageEffective && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsManageOpen((v) => !v);
+                }}
+                className={`hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-lg border text-sm font-medium transition-colors ${
+                  isManageOpen
+                    ? 'border-purple-200/60 dark:border-purple-900/30 bg-purple-50/70 dark:bg-purple-900/10 text-purple-700 dark:text-purple-200'
+                    : 'border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900'
+                }`}
+                title="Manage assessment"
+              >
+                <Settings className="w-4 h-4" />
+                <span>Manage</span>
+              </button>
+            )}
 
-            <button
-              type="button"
-              onClick={() => setIsLocked((v) => !v)}
-              className={`hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-lg border text-sm font-medium transition-colors ${
-                isLocked
-                  ? 'border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900'
-                  : 'border-purple-200/60 dark:border-purple-900/30 bg-purple-50/70 dark:bg-purple-900/10 text-purple-700 dark:text-purple-200 hover:bg-purple-100/60 dark:hover:bg-purple-900/20'
-              }`}
-              title={isLocked ? 'Unlock editing' : 'Lock editing'}
-            >
-              {isLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
-              <span>{isLocked ? 'Edit' : 'Editing'}</span>
-            </button>
+            {/* Edit button - behavior depends on permissions */}
+            {!isAdminEffective && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (canEditEffective) {
+                    setIsLocked((v) => !v);
+                  } else {
+                    setShowRequestAccessModal(true);
+                  }
+                }}
+                className={`hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-lg border text-sm font-medium transition-colors ${
+                  !canEditEffective
+                    ? 'border-slate-200/80 dark:border-navy-700 bg-slate-50/70 dark:bg-navy-900/30 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 cursor-pointer'
+                    : isLocked
+                      ? 'border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900'
+                      : 'border-purple-200/60 dark:border-purple-900/30 bg-purple-50/70 dark:bg-purple-900/10 text-purple-700 dark:text-purple-200 hover:bg-purple-100/60 dark:hover:bg-purple-900/20'
+                }`}
+                title={
+                  !canEditEffective
+                    ? 'Request edit access'
+                    : isLocked
+                      ? 'Unlock editing'
+                      : 'Lock editing'
+                }
+              >
+                {canEditEffective ? (
+                  isLocked ? (
+                    <Lock className="w-4 h-4" />
+                  ) : (
+                    <Unlock className="w-4 h-4" />
+                  )
+                ) : (
+                  <Lock className="w-4 h-4" />
+                )}
+                <span>{canEditEffective ? (isLocked ? 'Edit' : 'Editing') : 'Edit'}</span>
+              </button>
+            )}
 
+            {/* Chat button - opens new chat with assessment context */}
             <button
-              onClick={() => setIsChatContextOpen(true)}
+              onClick={handleOpenChat}
               className="hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors"
-              title="Attach context from general chat"
+              title="Open chat with assessment context"
               type="button"
             >
               <MessageSquare className="w-4 h-4" />
               <span>Chat</span>
             </button>
 
-            <button
-              onClick={handleManualSave}
-              disabled={isSaving}
-              className="hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors"
-              title="Save (Ctrl+S / Cmd+S)"
-              type="button"
-            >
-              {isSaving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
-              <span>Save</span>
-            </button>
+            {/* Save button - only when can edit and not locked */}
+            {canEditEffective && !isLocked && (
+              <button
+                onClick={handleManualSave}
+                disabled={isSaving}
+                className="hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors"
+                title="Save (Ctrl+S / Cmd+S)"
+                type="button"
+              >
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                <span>Save</span>
+              </button>
+            )}
 
+            {/* Exit button - always visible */}
             <button
               onClick={handleExitClick}
               disabled={isExiting}
@@ -1285,6 +1389,21 @@ export const AssessmentSessionEditorView: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Request Access Modal */}
+      {showRequestAccessModal && (
+        <RequestAccessModal
+          assessmentId={assessmentId}
+          assessmentName={assessment?.name}
+          currentRole={userRole}
+          onClose={() => setShowRequestAccessModal(false)}
+          onSubmit={async (params) => {
+            await requestAccess(params);
+            setShowRequestAccessModal(false);
+            toast.success('Access request submitted. You will be notified when it is reviewed.');
+          }}
+        />
       )}
     </div>
   );

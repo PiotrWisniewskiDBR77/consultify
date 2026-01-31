@@ -582,94 +582,91 @@ The MECE Issue Tree analysis should produce a structured consultant report with 
 
 ---
 
-## 11. Video storyboard (script-ready)
+## 11. Video storyboard
 
-### 11.1 Audience & Duration
+### 11.1 Audience & duration
 
-- **Target audience**: Strategy practitioners, consultants, business analysts
-- **Duration**: 8–12 minutes
-- **Format**: Screen recording + voiceover, with animated graphics
+- **Audience**: Strategy practitioners, consultants, business analysts, executives
+- **Duration**: 45–60 seconds intro
+- **Style**: Professional, instructional, clear visuals
 
-### 11.2 Scene-by-Scene Breakdown
+### 11.2 Scene list
 
-**Scene 1: Introduction (0:00–1:30)**
+**Scene 1: Hook & Problem (0–10s)**
 
-- **Visual**: Title card "MECE Issue Trees: From Vague Problem to Action Plan"
-- **Narration**: "When facing a complex business problem, consultants use MECE issue trees to break it down systematically. Today, you'll learn how to build one and turn it into actionable initiatives."
-- **On-screen**: Example of a messy problem statement vs. a structured tree
+- **Visual**: Split screen showing vague problem statement vs structured issue tree
+- **VO (PL)**: "Czy masz złożony problem biznesowy, który trudno rozłożyć na części?"
+- **VO (EN)**: "Do you have a complex business problem that's hard to break down?"
+- **On-screen text (PL)**: "Złożony problem = Trudna analiza"
+- **On-screen text (EN)**: "Complex problem = Difficult analysis"
 
-**Scene 2: Problem Framing (1:30–2:30)**
+**Scene 2: Solution Intro (10–18s)**
 
-- **Visual**: Tool workspace showing root question setup
-- **Narration**: "Start with a decision-grade question: 'What must we do to achieve X within Y under constraints Z?' Add scope, KPI baseline, and target."
-- **On-screen**: Fill in root question form; highlight scope, horizon, constraints fields
+- **Visual**: Tool logo/name appears, transition to issue tree diagram (hierarchical structure)
+- **VO (PL)**: "MECE Issue Tree rozkłada problem na wzajemnie wykluczające się i kompletne części."
+- **VO (EN)**: "MECE Issue Tree breaks down problems into mutually exclusive and collectively exhaustive parts."
+- **On-screen text (PL)**: "MECE = Bez nakładania się i bez luk"
+- **On-screen text (EN)**: "MECE = No overlaps, no gaps"
 
-**Scene 3: Build Numeric First Layer (2:30–4:00)**
+**Scene 3: Build Tree (18–26s)**
 
-- **Visual**: Tree editor, starting with root, then adding first-level branches
-- **Narration**: "Always start with a numeric identity. For profitability, that's Profit = Revenue − Cost. This ensures your tree is quantifiable from the start."
-- **On-screen**:
-  - Add root node: "Restore Operating Margin"
-  - Add first branch: "Revenue" (with formula)
-  - Add second branch: "COGS" (with formula)
-  - Add third branch: "Opex" (with formula)
-  - Highlight MECE check: "These three branches are mutually exclusive and collectively exhaustive."
+- **Visual**: Issue tree editor, building tree from root question, adding branches
+- **VO (PL)**: "Zbuduj drzewo zaczynając od pytania głównego i rozwijając gałęzie."
+- **VO (EN)**: "Build the tree starting from the root question and expanding branches."
+- **On-screen text (PL)**: "Buduj drzewo = Rozwijaj gałęzie"
+- **On-screen text (EN)**: "Build tree = Expand branches"
 
-**Scene 4: Expand to Mechanisms (4:00–5:30)**
+**Scene 4: Hypotheses & Tests (26–34s)**
 
-- **Visual**: Expanding Revenue branch into Price and Volume; then Price into mechanisms
-- **Narration**: "For each numeric driver, expand into operational mechanisms. Price breaks down into discounting, list price, and price architecture. Each level must remain MECE."
-- **On-screen**:
-  - Click "Revenue" → expand to show "Price" and "Volume"
-  - Click "Price" → expand to show "Discount leakage", "List price", "Price architecture"
-  - Show MECE validation: no overlaps, all mechanisms covered
+- **Visual**: Hypothesis board showing leaves with tests and thresholds, status badges
+- **VO (PL)**: "Dla każdego liścia stwórz hipotezę z testem i progiem."
+- **VO (EN)**: "For each leaf, create a hypothesis with a test and threshold."
+- **On-screen text (PL)**: "Hipotezy + Testy = Weryfikowalne"
+- **On-screen text (EN)**: "Hypotheses + Tests = Verifiable"
 
-**Scene 5: Convert Leaves to Hypotheses (5:30–7:00)**
+**Scene 5: Prioritization (34–42s)**
 
-- **Visual**: Clicking a leaf node, opening hypothesis panel
-- **Narration**: "Each leaf becomes a testable hypothesis. Write it answer-first: 'Discount leakage explains ≥40% of margin gap.' Define the test and threshold."
-- **On-screen**:
-  - Click leaf "Discount leakage"
-  - Open hypothesis editor
-  - Fill in: statement, test ("90-day discount audit"), threshold ("+2pp vs guardrail")
-  - Show hypothesis card moving to Kanban board
+- **Visual**: Prioritization matrix (impact × uncertainty), bridge-to-target waterfall chart
+- **VO (PL)**: "Priorytetyzuj według wpływu i niepewności, zbuduj most do celu."
+- **VO (EN)**: "Prioritize by impact and uncertainty, build a bridge to target."
+- **On-screen text (PL)**: "Priorytetyzacja = Wpływ × Niepewność"
+- **On-screen text (EN)**: "Prioritization = Impact × Uncertainty"
 
-**Scene 6: Prioritize & Build Bridge (7:00–9:00)**
+**Scene 6: Initiatives (42–50s)**
 
-- **Visual**: Prioritization matrix (impact × uncertainty), then waterfall chart
-- **Narration**: "Score each hypothesis by impact, uncertainty, and speed. Focus on high-impact, high-uncertainty items first. Once validated, build a bridge-to-target waterfall."
-- **On-screen**:
-  - Show prioritization scores (heatmap)
-  - Highlight top 3 hypotheses
-  - Show waterfall chart building: baseline → +120 bps (discount) → +70 bps (mix) → +50 bps (yield) → target
-  - Annotate with confidence ranges
+- **Visual**: Initiative list linked to validated hypotheses, traceability shown
+- **VO (PL)**: "Przekształć zweryfikowane dźwignie w inicjatywy z właścicielami."
+- **VO (EN)**: "Convert validated levers into initiatives with owners."
+- **On-screen text (PL)**: "Inicjatywy = Z weryfikowanych dźwigni"
+- **On-screen text (EN)**: "Initiatives = From validated levers"
 
-**Scene 7: Generate Initiatives (9:00–10:30)**
+**Scene 7: Export & CTA (50–60s)**
 
-- **Visual**: Initiative generator, showing traceability
-- **Narration**: "Each validated lever becomes an initiative. Link it back to the hypothesis, define impact, effort, risks, and first steps."
-- **On-screen**:
-  - Click "Generate Initiatives" button
-  - Show 3 initiatives created
-  - Click one → show traceability link to leaf node
-  - Show initiative fields: title, rationale, impact, effort, risks, steps
+- **Visual**: PDF export preview, "Generate Initiatives" button highlighted
+- **VO (PL)**: "Eksportuj raport i generuj inicjatywy. Rozpocznij MECE & Issue Trees już dziś."
+- **VO (EN)**: "Export the report and generate initiatives. Start MECE & Issue Trees today."
+- **On-screen text (PL)**: "Eksportuj i generuj inicjatywy"
+- **On-screen text (EN)**: "Export and generate initiatives"
 
-**Scene 8: Export & Report (10:30–11:30)**
+### 11.3 Shot list
 
-- **Visual**: Export options, then PDF report preview
-- **Narration**: "Export your tree, waterfall, and initiatives. The tool generates a consultant-ready report with all sections: problem framing, tree analysis, hypothesis validation, bridge-to-target, and recommendations."
-- **On-screen**:
-  - Click "Export PDF"
-  - Show report preview: cover page, executive summary, tree diagram, waterfall, initiatives table
-  - Highlight traceability: initiatives → hypotheses → tree leaves
+1. **Shot 1 (0–10s)**: Wide shot of split screen (vague problem vs structured tree), zoom to tree
+2. **Shot 2 (10–18s)**: Fade to tool logo, pan to issue tree diagram overview
+3. **Shot 3 (18–26s)**: Close-up of tree editor, building branches interactively
+4. **Shot 4 (26–34s)**: Focus on hypothesis board, click leaf to show test details
+5. **Shot 5 (34–42s)**: Zoom to prioritization matrix, bridge-to-target waterfall chart
+6. **Shot 6 (42–50s)**: Pan across initiative list, highlight traceability to hypotheses
+7. **Shot 7 (50–60s)**: PDF preview overlay, fade to CTA button
 
-**Scene 9: Wrap-up (11:30–12:00)**
+### 11.4 Implementation notes
 
-- **Visual**: Summary slide with key takeaways
-- **Narration**: "MECE issue trees turn ambiguous problems into structured, testable hypotheses and actionable initiatives. Start numeric, stay MECE, test rigorously, and build a quantified bridge to your target."
-- **On-screen**: Key takeaways checklist
-
----
+- **Screen recording**: Use actual tool interface (or high-fidelity mockup)
+- **Transitions**: Smooth fades between scenes (0.5s)
+- **Highlighting**: Use subtle glow/outline for interactive elements
+- **Text overlays**: Bottom third of screen, semi-transparent background, readable font
+- **VO**: Professional voiceover, clear pronunciation, moderate pace
+- **Music**: Subtle background music (optional), non-distracting
+- **Call-to-action**: End with tool name and "Get Started" button
 
 ## 12. Knowledge Base Extraction Pack
 
@@ -709,7 +706,62 @@ A: No. If you have multiple questions, create separate trees or make one questio
 **Q10: What if my tree doesn't close the gap?**
 A: Either you missed a branch (gap in MECE), your assumptions are too conservative, or the target is unrealistic. Revisit the tree structure, test more hypotheses, or adjust the target.
 
-### 12.3 Checklists
+### 12.3
+
+6. **What inputs are required?**
+   A: - Decision question (root question) and scope/time horizon
+
+- Baseline metrics (at least one KPI tied to the root question)
+- **Optional inputs**:
+  - Financials (P&L), unit economics, operational KP...
+
+7. **How long does it typically take?**
+   A: 60–120 minutes (single problem); 1 day workshop (multi-stream)
+
+8. **What makes a good MECE & Issue Trees analysis?**
+   A: A good analysis has clear objectives, complete data, systematic execution, and actionable insights.
+
+9. **What inputs are required?**
+   A: - Decision question (root question) and scope/time horizon
+
+- Baseline metrics (at least one KPI tied to the root question)
+- **Optional inputs**:
+  - Financials (P&L), unit economics, operational KP...
+
+10. **How long does it typically take?**
+    A: 60–120 minutes (single problem); 1 day workshop (multi-stream)
+
+11. **What makes a good MECE & Issue Trees analysis?**
+    A: A good analysis has clear objectives, complete data, systematic execution, and actionable insights.
+
+### FAQ (at least 8)
+
+1. **What is the main purpose of MECE & Issue Trees?**
+   A: MECE & Issue Trees helps MECE issue trees help users turn a vague, high-stakes question (e.g., “Why did profit drop?”) into a....
+
+2. **When should I use MECE & Issue Trees?**
+   A: Use it You have an unclear problem and need a clear analytical plan.
+   Multiple stakeholders disagree on what matters.
+   You need to move fast (timebox) without ....
+
+3. **What are the key outputs?**
+   A: Key outputs include Issue tree, hypotheses per branch, prioritized workplan, “driver bridge” to target, initiative candidates.
+
+4. **What inputs are required?**
+   A: Required inputs include scope, objectives, and relevant data. Check the Inputs section for specific requirements.
+
+5. **How do I ensure quality results?**
+   A: Ensure all required inputs are provided, follow the method systematically, validate results, and check the Definition of Done checklist.
+
+6. **What are common mistakes?**
+   A: Common mistakes include incomplete data, skipping validation steps, unclear objectives, and not following the systematic method.
+
+7. **How long does it typically take?**
+   A: Duration varies by tool complexity. Check the metadata section for typical duration estimates.
+
+8. **What makes a good MECE & Issue Trees analysis?**
+   A: A good analysis has clear objectives, complete data, systematic execution, validated results, and actionable insights.
+   Checklists
 
 **DoD Checklist (Definition of Done):**
 

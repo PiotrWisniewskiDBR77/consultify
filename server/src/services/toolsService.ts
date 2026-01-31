@@ -1,6 +1,11 @@
 /**
  * Tools Service
  * FLOW-TOOLS-001: Manage tools and tool work items
+ *
+ * @deprecated Legacy implementation based on `tool_works` / `process_flows` / `a3_documents`.
+ * The active Tools workflow uses `tool_sessions` + decisions + initiative links (see `ToolController`).
+ * This file is kept temporarily for reference during migration and will be removed once all legacy
+ * tables and UI paths are fully retired.
  */
 
 import { v4 as uuidv4 } from 'uuid';

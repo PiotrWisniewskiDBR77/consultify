@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { Play, X } from 'lucide-react';
+import { Play, Sparkles, X } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { useAppStore } from '../../store/useAppStore';
 
@@ -24,6 +25,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const { theme } = useAppStore();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const isDark = theme === 'dark';
 
   // Randomly select a slogan variant based on current second (changes every second)
@@ -37,7 +39,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     {
       id: 'demo',
       title: t('landing.hero.cards.demo.title', 'Interactive Demo'),
-      description: t('landing.hero.cards.demo.description', 'Explore Consultinity with AI-guided walkthrough. No signup required.'),
+      description: t(
+        'landing.hero.cards.demo.description',
+        'Explore Consultinity with AI-guided walkthrough. No signup required.'
+      ),
       meta: t('landing.hero.cards.demo.meta', 'GUIDED EXPERIENCE'),
       cta: t('landing.hero.cards.demo.cta', 'Start Demo'),
       image: '/assets/landing/cinematic/demo_digital_twin.png',
@@ -48,7 +53,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     {
       id: 'trial',
       title: t('landing.hero.cards.trial.title', 'Free Trial'),
-      description: t('landing.hero.cards.trial.description', '14-day full access to all features. Start your transformation today.'),
+      description: t(
+        'landing.hero.cards.trial.description',
+        '14-day full access to all features. Start your transformation today.'
+      ),
       meta: t('landing.hero.cards.trial.meta', '14 DAYS FREE'),
       cta: t('landing.hero.cards.trial.cta', 'Start Free Trial'),
       image: '/assets/landing/cinematic/trial_command_cockpit.png',
@@ -60,7 +68,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     {
       id: 'video',
       title: t('landing.hero.cards.video.title', 'Watch How It Works'),
-      description: t('landing.hero.cards.video.description', 'See Consultinity in action with real enterprise transformation examples.'),
+      description: t(
+        'landing.hero.cards.video.description',
+        'See Consultinity in action with real enterprise transformation examples.'
+      ),
       meta: t('landing.hero.cards.video.meta', '3 MIN VIDEO'),
       cta: t('landing.hero.cards.video.cta', 'Play Video'),
       image: '/assets/landing/video_presentation.jpg',
@@ -70,25 +81,29 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       className: 'lg:col-span-2 lg:row-span-1',
     },
     {
-      id: 'expert',
-      title: t('landing.hero.cards.expert.title', 'Talk to Expert'),
-      description: t('landing.hero.cards.expert.description', 'Schedule a personalized consultation with our strategy specialists.'),
-      meta: t('landing.hero.cards.expert.meta', 'HUMAN TOUCH'),
-      cta: t('landing.hero.cards.expert.cta', 'Book Consultation'),
-      image: '/assets/landing/cinematic/expert_dialogue.png',
-      color: 'emerald',
-      onClick: onExpertClick,
+      id: 'tools',
+      title: t('landing.hero.cards.tools.title', 'Learn Our Tools'),
+      description: t(
+        'landing.hero.cards.tools.description',
+        'Watch demos and masterclasses for 40+ consulting frameworks.'
+      ),
+      meta: t('landing.hero.cards.tools.meta', 'EDUCATION HUB'),
+      cta: t('landing.hero.cards.tools.cta', 'Explore Tools'),
+      image: '/assets/landing/cinematic/tools_education.png',
+      color: 'cyan',
+      onClick: () => navigate('/tools'),
       className: 'lg:col-span-1 lg:row-span-1',
+      icon: Sparkles,
     },
     {
-      id: 'login',
-      title: t('landing.hero.cards.login.title', 'Welcome Back'),
-      description: t('landing.hero.cards.login.description', 'Continue your transformation journey. Your workspace awaits.'),
-      meta: t('landing.hero.cards.login.meta', 'EXISTING USER'),
-      cta: t('landing.hero.cards.login.cta', 'Log In'),
-      image: '/assets/landing/cinematic/login_portal.png',
+      id: 'audits',
+      title: 'Global Audits',
+      description: 'DRD, SIRI, ADMA & Lean 4.0 assessment frameworks.',
+      meta: 'INDUSTRIAL EXCELLENCE',
+      cta: 'Explore Audits',
+      image: '/assets/landing/cinematic/industrial_audits.png',
       color: 'navy',
-      onClick: onLoginClick,
+      onClick: () => navigate('/audits'),
       className: 'lg:col-span-1 lg:row-span-1',
     },
   ];
@@ -156,6 +171,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   border: 'ring-blue-500/40',
                   glow: 'shadow-blue-500/20',
                   hoverBorder: 'group-hover:ring-blue-400/60',
+                },
+                cyan: {
+                  border: 'ring-cyan-500/40',
+                  glow: 'shadow-cyan-500/20',
+                  hoverBorder: 'group-hover:ring-cyan-400/60',
                 },
               };
             const colors = colorMap[card.color] || colorMap['purple'];

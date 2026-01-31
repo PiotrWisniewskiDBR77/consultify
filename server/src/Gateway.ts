@@ -143,6 +143,7 @@ import promptAssistantRoutes from './routes/prompt-assistant.routes.js';
 import raidRoutes from './routes/raid.routes.js';
 import rapidleanRoutes from './routes/rapidlean.routes.js';
 import referralRoutes from './routes/referrals.routes.js';
+import reportBuilderRoutes from './routes/report-builder.routes.js';
 import reportCommentsRoutes from './routes/report-comments.routes.js';
 import reportsRoutes from './routes/reports.routes.js';
 import resourceManagementRoutes from './routes/resourceManagement.routes.js';
@@ -404,6 +405,7 @@ export class ApiGateway {
       // Reports routes
       app.use('/api/reports', reportsRoutes);
       app.use('/api/reports/premium', premiumReportsRoutes);
+      app.use('/api/report-builder', reportBuilderRoutes);
       app.use('/api/management-reports', managementReportsRoutes);
       app.use('/api/management-reports/analytics', managementReportsAnalyticsRoutes);
 

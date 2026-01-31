@@ -46,6 +46,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
+    return undefined;
   }, [isOpen, onClose]);
 
   const handleSelectOption = (optionValue: string) => {
@@ -165,9 +166,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
                     <input
                       type="date"
                       className="w-full px-2 py-1 text-sm rounded border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-700 text-slate-900 dark:text-white"
-                      value={
-                        (localValue as DateRange)?.from?.toISOString().split('T')[0] || ''
-                      }
+                      value={(localValue as DateRange)?.from?.toISOString().split('T')[0] || ''}
                       onChange={(e) =>
                         setLocalValue({
                           ...(localValue as DateRange),
