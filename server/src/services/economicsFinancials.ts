@@ -50,7 +50,9 @@ export const calculateFinancialMetrics = (data: FinancialData) => {
   const totalUpfront = totalInitialCost + contingency;
 
   const baseAnnualBenefits =
-    (data.annualCostSavings || 0) + (data.annualRevenueIncrease || 0) + (data.riskReductionValue || 0);
+    (data.annualCostSavings || 0) +
+    (data.annualRevenueIncrease || 0) +
+    (data.riskReductionValue || 0);
   const productivityMultiplier = 1 + (data.productivityGainsPercent || 0) / 100;
   const annualBenefits = baseAnnualBenefits * productivityMultiplier;
 
@@ -148,7 +150,10 @@ export const calculateFinancialMetrics = (data: FinancialData) => {
   };
 };
 
-export const applyScenarioAdjustments = (data: FinancialData, scenarioType: string): FinancialData => {
+export const applyScenarioAdjustments = (
+  data: FinancialData,
+  scenarioType: string
+): FinancialData => {
   if (scenarioType === 'optimistic') {
     return {
       ...data,
@@ -185,7 +190,7 @@ export const validateFinancialData = (data: FinancialData): FinancialInsights =>
   const warnings: string[] = [];
   const recommendations: string[] = [];
 
-  const safeNumber = (value: number) => Number.isFinite(value) ? value : 0;
+  const safeNumber = (value: number) => (Number.isFinite(value) ? value : 0);
 
   const initialInvestment = safeNumber(data.initialInvestment);
   const implementationCost = safeNumber(data.implementationCost);
@@ -217,7 +222,11 @@ export const validateFinancialData = (data: FinancialData): FinancialInsights =>
   }
 
   const totalBenefits = annualCostSavings + annualRevenueIncrease + riskReductionValue;
-  pushIf(warnings, totalBenefits === 0, 'No annual benefits defined; ROI and payback may be negative.');
+  pushIf(
+    warnings,
+    totalBenefits === 0,
+    'No annual benefits defined; ROI and payback may be negative.'
+  );
   pushIf(
     warnings,
     totalBenefits > 0 && totalBenefits <= annualOperatingCost,

@@ -429,7 +429,7 @@ export function useReportBuilder() {
     try {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
-      await Api.post(`/report-builder/${reportId}/finalize`);
+      await Api.post(`/report-builder/${reportId}/finalize`, {});
 
       setState((prev) => ({
         ...prev,
@@ -452,7 +452,7 @@ export function useReportBuilder() {
     try {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
-      await Api.post(`/report-builder/${reportId}/approve`);
+      await Api.post(`/report-builder/${reportId}/approve`, {});
 
       setState((prev) => ({
         ...prev,

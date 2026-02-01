@@ -8,6 +8,7 @@
  */
 
 import fs from 'fs';
+
 import { databaseConfig } from '../config/DatabaseConfig.js';
 import logger from '../utils/Logger.js';
 import { getDatabase, getDatabaseAsync } from './Database.js';

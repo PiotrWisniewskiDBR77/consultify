@@ -48,8 +48,7 @@ const generateAuthToken = (user: typeof testUser) => {
 };
 
 beforeAll(async () => {
-  process.env.JWT_SECRET =
-    process.env.JWT_SECRET || 'test-secret-test-secret-test-secret-123';
+  process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-test-secret-test-secret-123';
   // 1. Instantiate the raw SQLite database directly (avoids loading Database.ts prematurely)
   // process.env.MOCK_DB is NOT used by database.sqlite.active.js, it just creates a DB
   const sqliteModule = await import('../../legacy_archive/database.sqlite.js');

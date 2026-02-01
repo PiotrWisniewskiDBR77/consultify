@@ -1,12 +1,12 @@
 /**
  * useInterviewContext Hook - v2.0
- * 
+ *
  * Provides access to organization context collected during Interview.
  * Used by Tools and Assessment modules to enrich their analysis.
- * 
+ *
  * 5 Categories: Strategy, Operations, Digital, People, Finance
  * ONLY facts - no recommendations
- * 
+ *
  * @see PROMPT 8 in wdrozenia/PROMPTY_DLA_AGENTOW.md
  */
 
@@ -54,7 +54,10 @@ export interface UseInterviewContextResult {
   hasContext: boolean;
   completenessPercent: number;
   refetch: () => Promise<void>;
-  exportToTarget: (targetType: 'tool_session' | 'assessment_session', targetId: string) => Promise<void>;
+  exportToTarget: (
+    targetType: 'tool_session' | 'assessment_session',
+    targetId: string
+  ) => Promise<void>;
 }
 
 export function useInterviewContext(): UseInterviewContextResult {

@@ -10,10 +10,21 @@
  * Supports all frameworks: DRD, SIRI, ADMA, CMMI, Lean
  */
 
-import { AlertTriangle, ArrowRight, BarChart3, CheckCircle, Target, TrendingUp } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  BarChart3,
+  CheckCircle,
+  Target,
+  TrendingUp,
+} from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
   Legend,
   PolarAngleAxis,
   PolarGrid,
@@ -22,12 +33,8 @@ import {
   RadarChart as RechartsRadar,
   ResponsiveContainer,
   Tooltip,
-  Bar,
-  BarChart,
   XAxis,
   YAxis,
-  Cell,
-  CartesianGrid,
 } from 'recharts';
 
 // ============================================
@@ -126,7 +133,11 @@ export const ScoreCard: React.FC<ScoreCardProps> = ({
           {trend === 'down' && <TrendingUp size={14} className="text-red-400 rotate-180" />}
           <span
             className={`text-xs ${
-              trend === 'up' ? 'text-emerald-400' : trend === 'down' ? 'text-red-400' : 'text-slate-400'
+              trend === 'up'
+                ? 'text-emerald-400'
+                : trend === 'down'
+                  ? 'text-red-400'
+                  : 'text-slate-400'
             }`}
           >
             {trend === 'up' ? 'Above target' : trend === 'down' ? 'Below target' : 'On track'}
@@ -167,7 +178,9 @@ export const ScoreCardsGrid: React.FC<ScoreCardsGridProps> = ({ data }) => {
         value={`${data.completionPercent}%`}
         subtitle={`${data.dimensions.length} dimensions`}
         icon={<CheckCircle size={20} />}
-        color={data.completionPercent >= 80 ? 'green' : data.completionPercent >= 50 ? 'amber' : 'red'}
+        color={
+          data.completionPercent >= 80 ? 'green' : data.completionPercent >= 50 ? 'amber' : 'red'
+        }
       />
       <ScoreCard
         title="Critical Gaps"
@@ -281,7 +294,7 @@ export const GapHeatmap: React.FC<GapHeatmapProps> = ({ data, onDimensionClick }
   const isPolish = i18n.language === 'pl';
 
   const sortedDimensions = useMemo(() => {
-    return [...data.dimensions].sort((a, b) => (b.target - b.current) - (a.target - a.current));
+    return [...data.dimensions].sort((a, b) => b.target - b.current - (a.target - a.current));
   }, [data.dimensions]);
 
   const getGapColor = (gap: number): string => {
@@ -353,7 +366,8 @@ export const GapHeatmap: React.FC<GapHeatmapProps> = ({ data, onDimensionClick }
                   <span>Target: {dim.target}</span>
                   <span className="text-slate-500">|</span>
                   <span className={gap > 0 ? 'text-amber-400' : 'text-emerald-400'}>
-                    Gap: {gap > 0 ? '+' : ''}{gap}
+                    Gap: {gap > 0 ? '+' : ''}
+                    {gap}
                   </span>
                 </div>
               </div>
@@ -414,9 +428,7 @@ export const DimensionBars: React.FC<DimensionBarsProps> = ({ data, height = 300
             }}
             labelStyle={{ color: '#f8fafc' }}
           />
-          <Legend
-            formatter={(value) => <span className="text-slate-300 text-sm">{value}</span>}
-          />
+          <Legend formatter={(value) => <span className="text-slate-300 text-sm">{value}</span>} />
           <Bar dataKey="current" name="Current" fill="#3b82f6" radius={[0, 4, 4, 0]} />
           <Bar dataKey="target" name="Target" fill="#10b981" radius={[0, 4, 4, 0]} />
         </BarChart>

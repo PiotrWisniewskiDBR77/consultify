@@ -1,12 +1,10 @@
 /**
  * EvidencePanel - File attachments and links for Interview
- * 
+ *
  * Allows uploading files and adding links as evidence for interview answers.
  * Evidence is organized by category.
  */
 
-import React, { useCallback, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   ExternalLink,
   File,
@@ -20,6 +18,8 @@ import {
   Upload,
   X,
 } from 'lucide-react';
+import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { InterviewCategory } from './CategorySidebar';
 import { CATEGORY_CONFIG } from './CategorySidebar';
@@ -45,7 +45,12 @@ export interface EvidencePanelProps {
   evidence: InterviewEvidence[];
   activeCategory?: InterviewCategory;
   onUploadFile: (file: File, category?: InterviewCategory) => Promise<void>;
-  onAddLink: (name: string, url: string, description?: string, category?: InterviewCategory) => Promise<void>;
+  onAddLink: (
+    name: string,
+    url: string,
+    description?: string,
+    category?: InterviewCategory
+  ) => Promise<void>;
   onDeleteEvidence: (evidenceId: string) => Promise<void>;
   isLoading?: boolean;
   readOnly?: boolean;
@@ -88,18 +93,22 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
   const [isDragging, setIsDragging] = useState(false);
 
   // Filter evidence
-  const filteredEvidence = filter === 'category' && activeCategory
-    ? evidence.filter(e => e.category === activeCategory)
-    : evidence;
+  const filteredEvidence =
+    filter === 'category' && activeCategory
+      ? evidence.filter((e) => e.category === activeCategory)
+      : evidence;
 
   // Handle file upload
-  const handleFileUpload = useCallback(async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    for (let i = 0; i < files.length; i++) {
-      await onUploadFile(files[i], activeCategory);
-    }
-    setShowAddType(null);
-  }, [activeCategory, onUploadFile]);
+  const handleFileUpload = useCallback(
+    async (files: FileList | null) => {
+      if (!files || files.length === 0) return;
+      for (let i = 0; i < files.length; i++) {
+        await onUploadFile(files[i], activeCategory);
+      }
+      setShowAddType(null);
+    },
+    [activeCategory, onUploadFile]
+  );
 
   // Handle link add
   const handleAddLink = useCallback(async () => {
@@ -121,11 +130,14 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    handleFileUpload(e.dataTransfer.files);
-  }, [handleFileUpload]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      handleFileUpload(e.dataTransfer.files);
+    },
+    [handleFileUpload]
+  );
 
   if (isLoading) {
     return (
@@ -147,7 +159,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
             {filteredEvidence.length}
           </span>
         </div>
-        
+
         <div className="flex items-center gap-2">
           {/* Filter */}
           <div className="flex items-center bg-slate-100 dark:bg-navy-800 rounded-lg p-0.5">
@@ -209,10 +221,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
         >
           <Upload className="w-10 h-10 text-slate-400 mx-auto mb-3" />
           <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
-            {isPolish 
-              ? 'Przeciągnij pliki tutaj lub' 
-              : 'Drag files here or'
-            }
+            {isPolish ? 'Przeciągnij pliki tutaj lub' : 'Drag files here or'}
           </p>
           <label className="inline-flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg cursor-pointer">
             <span>{isPolish ? 'Wybierz pliki' : 'Browse files'}</span>
@@ -292,16 +301,21 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
               className="flex items-center gap-3 p-3 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700"
             >
               {/* Icon */}
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-                item.evidenceType === 'link'
-                  ? 'bg-blue-100 dark:bg-blue-900/30'
-                  : 'bg-slate-100 dark:bg-navy-800'
-              }`}>
-                <FileIcon size={20} className={
+              <div
+                className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
                   item.evidenceType === 'link'
-                    ? 'text-blue-600 dark:text-blue-400'
-                    : 'text-slate-500 dark:text-slate-400'
-                } />
+                    ? 'bg-blue-100 dark:bg-blue-900/30'
+                    : 'bg-slate-100 dark:bg-navy-800'
+                }`}
+              >
+                <FileIcon
+                  size={20}
+                  className={
+                    item.evidenceType === 'link'
+                      ? 'text-blue-600 dark:text-blue-400'
+                      : 'text-slate-500 dark:text-slate-400'
+                  }
+                />
               </div>
 
               {/* Content */}
@@ -323,18 +337,16 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                     </span>
                   )}
                   {categoryConfig && (
-                    <span className={`px-1.5 py-0.5 text-xs rounded shrink-0 ${categoryConfig.bgColor} ${categoryConfig.color}`}>
+                    <span
+                      className={`px-1.5 py-0.5 text-xs rounded shrink-0 ${categoryConfig.bgColor} ${categoryConfig.color}`}
+                    >
                       {isPolish ? categoryConfig.labelPl : categoryConfig.labelEn}
                     </span>
                   )}
                 </div>
                 <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-                  {item.fileSize && (
-                    <span>{formatFileSize(item.fileSize)}</span>
-                  )}
-                  {item.description && (
-                    <span className="truncate">{item.description}</span>
-                  )}
+                  {item.fileSize && <span>{formatFileSize(item.fileSize)}</span>}
+                  {item.description && <span className="truncate">{item.description}</span>}
                   <span>{new Date(item.uploadedAt).toLocaleDateString()}</span>
                 </div>
               </div>

@@ -56,14 +56,7 @@ async function checkDatabase(): Promise<HealthCheck> {
 async function checkTables(): Promise<HealthCheck> {
   try {
     const db = await getDatabaseAsync();
-    const criticalTables = [
-      'users',
-      'organizations',
-      'sessions',
-      'projects',
-      'refresh_tokens',
-      'mfa_settings',
-    ];
+    const criticalTables = ['users', 'organizations', 'sessions', 'projects', 'refresh_tokens'];
 
     const missing: string[] = [];
     const existing: string[] = [];
@@ -296,7 +289,11 @@ async function checkLLMProviders(): Promise<HealthCheck> {
  * Check environment variables
  */
 async function checkEnvironment(): Promise<HealthCheck> {
-  const critical = ['NODE_ENV', 'JWT_SECRET', 'DATABASE_URL'];
+  const dbType = process.env.DB_TYPE || (process.env.DATABASE_URL ? 'postgres' : 'sqlite');
+  const critical =
+    dbType === 'sqlite'
+      ? ['NODE_ENV', 'JWT_SECRET', 'SQLITE_PATH']
+      : ['NODE_ENV', 'JWT_SECRET', 'DATABASE_URL'];
   const missing: string[] = [];
   const present: string[] = [];
 

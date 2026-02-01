@@ -19,12 +19,8 @@ type PartialResponse = {
 };
 
 export const useAIStream = (options: StreamOptions = {}) => {
-  const {
-    updateLastChatMessage,
-    setIsBotTyping,
-    setCurrentStreamContent,
-    aiConfig,
-  } = useAppStore();
+  const { updateLastChatMessage, setIsBotTyping, setCurrentStreamContent, aiConfig } =
+    useAppStore();
   const { addArtifact } = useArtifactsStore();
 
   const [isStreaming, setIsStreaming] = useState(false);
@@ -159,22 +155,25 @@ export const useAIStream = (options: StreamOptions = {}) => {
     resetStreamState();
   }, [resetStreamState, setIsBotTyping]);
 
-  const checkPartialResponse = useCallback(async (sessionId: string): Promise<PartialResponse | null> => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/ai/stream/partial/${sessionId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
+  const checkPartialResponse = useCallback(
+    async (sessionId: string): Promise<PartialResponse | null> => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/ai/stream/partial/${sessionId}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
 
-      if (!response.ok) {
+        if (!response.ok) {
+          return null;
+        }
+
+        return (await response.json()) as PartialResponse;
+      } catch (error) {
         return null;
       }
-
-      return (await response.json()) as PartialResponse;
-    } catch (error) {
-      return null;
-    }
-  }, []);
+    },
+    []
+  );
 
   const resumeFromPartial = useCallback(
     async (
@@ -185,7 +184,13 @@ export const useAIStream = (options: StreamOptions = {}) => {
       context?: Record<string, unknown>,
       focusMode?: string
     ) => {
-      await startStream(message, history, systemPrompt, { ...context, sessionId, resumeFromPartial: true }, focusMode);
+      await startStream(
+        message,
+        history,
+        systemPrompt,
+        { ...context, sessionId, resumeFromPartial: true },
+        focusMode
+      );
     },
     [startStream]
   );

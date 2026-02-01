@@ -22,13 +22,13 @@ export default defineConfig({
         find: /.*\/server\/services\/(.*)$/,
         replacement: path.resolve(__dirname, 'server/src/services/$1'),
       },
-      // Handle absolute-looking /server/ paths used in some tests
+      // Handle absolute-looking /server/ paths used in some tests (avoid leading slash issues)
       {
-        find: /^\/server\/src\/(.*)\.js$/,
+        find: /^server\/src\/(.*)\.js$/,
         replacement: path.resolve(__dirname, 'server/src/$1.ts'),
       },
       {
-        find: /^\/server\/(.*)\.js$/,
+        find: /^server\/(.*)\.js$/,
         replacement: path.resolve(__dirname, 'server/src/$1.ts'),
       },
       {

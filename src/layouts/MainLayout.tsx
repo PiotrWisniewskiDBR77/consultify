@@ -2,9 +2,9 @@ import { ChevronRight, Menu, MessageSquare, Sparkles, X } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { AccessBlockedModal } from '../components/access/AccessBlockedModal';
 import { UnifiedChatPanel } from '../components/AIChat/UnifiedChatPanel';
 import { AIFreezeBanner } from '../components/AIFreezeBanner';
-import { AccessBlockedModal } from '../components/access/AccessBlockedModal';
 import { DemoSessionManager } from '../components/demo/DemoSessionManager';
 import { DocumentSidePanel } from '../components/documents/DocumentSidePanel';
 import { DocumentToggleButton } from '../components/documents/DocumentToggleButton';

@@ -35,7 +35,9 @@ export const InterviewAssignmentsPanel: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
-  const [users, setUsers] = useState<{ id: string; firstName: string; lastName: string; email?: string }[]>([]);
+  const [users, setUsers] = useState<
+    { id: string; firstName: string; lastName: string; email?: string }[]
+  >([]);
 
   // Create form
   const [assigneeUserId, setAssigneeUserId] = useState('');
@@ -199,7 +201,13 @@ export const InterviewAssignmentsPanel: React.FC = () => {
             disabled={saving || !assigneeUserId || !templateId}
             className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {saving ? (isPolish ? 'Zapisywanie...' : 'Saving...') : isPolish ? 'Przypisz' : 'Assign'}
+            {saving
+              ? isPolish
+                ? 'Zapisywanie...'
+                : 'Saving...'
+              : isPolish
+                ? 'Przypisz'
+                : 'Assign'}
           </button>
         </div>
       </div>
@@ -213,9 +221,13 @@ export const InterviewAssignmentsPanel: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="text-sm text-slate-500 dark:text-slate-400">{isPolish ? 'Ładowanie...' : 'Loading...'}</div>
+          <div className="text-sm text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Ładowanie...' : 'Loading...'}
+          </div>
         ) : assignments.length === 0 ? (
-          <div className="text-sm text-slate-500 dark:text-slate-400">{isPolish ? 'Brak danych' : 'No data'}</div>
+          <div className="text-sm text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Brak danych' : 'No data'}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -235,14 +247,18 @@ export const InterviewAssignmentsPanel: React.FC = () => {
                   return (
                     <tr key={a.id} className="text-slate-800 dark:text-slate-200">
                       <td className="py-3 pr-3">
-                        <div className="font-medium">{a.template?.name || a.template?.id || 'N/A'}</div>
+                        <div className="font-medium">
+                          {a.template?.name || a.template?.id || 'N/A'}
+                        </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
                           {(a.template?.category || '').toUpperCase()}
                         </div>
                       </td>
                       <td className="py-3 pr-3">{a.status}</td>
                       <td className="py-3 pr-3">{a.session ? `${progress}%` : '-'}</td>
-                      <td className="py-3 pr-3">{a.due_at ? new Date(a.due_at).toLocaleDateString() : '-'}</td>
+                      <td className="py-3 pr-3">
+                        {a.due_at ? new Date(a.due_at).toLocaleDateString() : '-'}
+                      </td>
                       <td className="py-3 pr-3">
                         <div className="flex items-center gap-2">
                           <button
@@ -260,7 +276,9 @@ export const InterviewAssignmentsPanel: React.FC = () => {
                           </button>
                         </div>
                         {a.sent_back_reason && (
-                          <div className="text-xs text-rose-300 mt-1 truncate">{a.sent_back_reason}</div>
+                          <div className="text-xs text-rose-300 mt-1 truncate">
+                            {a.sent_back_reason}
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -276,4 +294,3 @@ export const InterviewAssignmentsPanel: React.FC = () => {
 };
 
 export default InterviewAssignmentsPanel;
-

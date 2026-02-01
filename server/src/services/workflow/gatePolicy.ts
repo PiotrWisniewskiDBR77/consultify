@@ -20,9 +20,7 @@ export type GateContextType =
 
 export type GateAction =
   // Interview
-  | 'SUBMIT_INTERVIEW'
-  | 'SEND_BACK_INTERVIEW'
-  | 'APPROVE_INTERVIEW';
+  'SUBMIT_INTERVIEW' | 'SEND_BACK_INTERVIEW' | 'APPROVE_INTERVIEW';
 
 export type GateDecision =
   | { allow: true }
@@ -46,34 +44,54 @@ export function evaluateGatePolicy(input: GatePolicyInput): GateDecision {
   // Interview Assignment gates
   if (contextType === 'interview_assignment') {
     const status = String((context as any)?.assignment?.status || (context as any)?.status || '');
-    const hasSession = Boolean((context as any)?.assignment?.session_id || (context as any)?.session_id);
+    const hasSession = Boolean(
+      (context as any)?.assignment?.session_id || (context as any)?.session_id
+    );
 
     if (action === 'SUBMIT_INTERVIEW') {
-      if (!hasSession) return { allow: false, code: 'MISSING_DATA', error: 'Assignment has no session yet' };
+      if (!hasSession)
+        return { allow: false, code: 'MISSING_DATA', error: 'Assignment has no session yet' };
       if (status !== 'in_progress') {
-        return { allow: false, code: 'INVALID_STATE', error: 'Only in_progress assignments can be submitted' };
+        return {
+          allow: false,
+          code: 'INVALID_STATE',
+          error: 'Only in_progress assignments can be submitted',
+        };
       }
       return { allow: true };
     }
 
     if (action === 'SEND_BACK_INTERVIEW') {
-      if (!hasSession) return { allow: false, code: 'MISSING_DATA', error: 'Assignment has no session yet' };
+      if (!hasSession)
+        return { allow: false, code: 'MISSING_DATA', error: 'Assignment has no session yet' };
       if (status !== 'submitted') {
-        return { allow: false, code: 'INVALID_STATE', error: 'Only submitted assignments can be sent back' };
+        return {
+          allow: false,
+          code: 'INVALID_STATE',
+          error: 'Only submitted assignments can be sent back',
+        };
       }
       return { allow: true };
     }
 
     if (action === 'APPROVE_INTERVIEW') {
-      if (!hasSession) return { allow: false, code: 'MISSING_DATA', error: 'Assignment has no session yet' };
+      if (!hasSession)
+        return { allow: false, code: 'MISSING_DATA', error: 'Assignment has no session yet' };
       if (status !== 'submitted') {
-        return { allow: false, code: 'INVALID_STATE', error: 'Only submitted assignments can be approved' };
+        return {
+          allow: false,
+          code: 'INVALID_STATE',
+          error: 'Only submitted assignments can be approved',
+        };
       }
       return { allow: true };
     }
   }
 
   // Default: unknown action/context treated as forbidden for safety
-  return { allow: false, code: 'FORBIDDEN', error: 'Gate policy not defined for this action/context' };
+  return {
+    allow: false,
+    code: 'FORBIDDEN',
+    error: 'Gate policy not defined for this action/context',
+  };
 }
-

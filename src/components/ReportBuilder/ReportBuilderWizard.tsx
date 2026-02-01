@@ -305,8 +305,8 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
             sections={sections}
             onUpdateSection={updateLocalSection}
             onReorderSections={reorderSections}
-            onAddSection={(title) => report && addCustomSection(report.id, title)}
-            onRemoveSection={(key) => report && removeSection(report.id, key)}
+            onAddSection={async (title) => (report ? addCustomSection(report.id, title) : null)}
+            onRemoveSection={async (key) => (report ? removeSection(report.id, key) : false)}
             onSaveConfig={async (updates) => {
               if (!report) return;
               await updateSectionConfig(report.id, updates);

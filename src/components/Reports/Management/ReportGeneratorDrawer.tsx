@@ -18,12 +18,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
-
-import {
-  ManagementReport,
-  ManagementReportScope,
-  ManagementReportType,
-} from '../../../types';
+import { ManagementReport, ManagementReportScope, ManagementReportType } from '../../../types';
 
 interface Project {
   id: string;
@@ -179,10 +174,7 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-          >
+          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
             <X size={20} className="text-slate-400" />
           </button>
         </div>
@@ -215,9 +207,7 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
                       <Icon size={18} />
                     </div>
                     <div className="flex-1">
-                      <h3
-                        className={`font-medium ${isSelected ? 'text-white' : 'text-slate-300'}`}
-                      >
+                      <h3 className={`font-medium ${isSelected ? 'text-white' : 'text-slate-300'}`}>
                         {option.title}
                       </h3>
                       <p className="text-xs text-slate-500 mt-0.5">{option.description}</p>

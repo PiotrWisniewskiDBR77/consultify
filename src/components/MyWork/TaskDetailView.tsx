@@ -48,8 +48,8 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { InitiativeService } from '@/services/initiativeService';
-import { useConversationStore } from '@/store/useConversationStore';
 import { useAppStore } from '@/store/useAppStore';
+import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 
 import {
@@ -283,14 +283,14 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   interface ActivityLogEntry {
     id: string;
     type:
-    | 'created'
-    | 'status_change'
-    | 'assignment'
-    | 'comment'
-    | 'edit'
-    | 'attachment'
-    | 'deadline'
-    | 'priority';
+      | 'created'
+      | 'status_change'
+      | 'assignment'
+      | 'comment'
+      | 'edit'
+      | 'attachment'
+      | 'deadline'
+      | 'priority';
     description: string;
     userId?: string;
     userName?: string;
@@ -894,23 +894,23 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 
     const checklistItems = isPolish
       ? [
-        'Przeanalizować wymagania',
-        'Przygotować plan działania',
-        'Zebrać niezbędne zasoby',
-        'Wykonać główne zadanie',
-        'Przetestować rezultaty',
-        'Udokumentować wykonane prace',
-        'Przekazać do przeglądu',
-      ]
+          'Przeanalizować wymagania',
+          'Przygotować plan działania',
+          'Zebrać niezbędne zasoby',
+          'Wykonać główne zadanie',
+          'Przetestować rezultaty',
+          'Udokumentować wykonane prace',
+          'Przekazać do przeglądu',
+        ]
       : [
-        'Analyze requirements',
-        'Prepare action plan',
-        'Gather necessary resources',
-        'Execute main task',
-        'Test results',
-        'Document completed work',
-        'Submit for review',
-      ];
+          'Analyze requirements',
+          'Prepare action plan',
+          'Gather necessary resources',
+          'Execute main task',
+          'Test results',
+          'Document completed work',
+          'Submit for review',
+        ];
 
     const newItems = checklistItems.map((text) => ({
       id: Math.random().toString(36).substr(2, 9),
@@ -1228,10 +1228,10 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
                   implementationIdeas.map((i) =>
                     i.id === id
                       ? {
-                        ...i,
-                        votes: i.votedByMe ? i.votes - 1 : i.votes + 1,
-                        votedByMe: !i.votedByMe,
-                      }
+                          ...i,
+                          votes: i.votedByMe ? i.votes - 1 : i.votes + 1,
+                          votedByMe: !i.votedByMe,
+                        }
                       : i
                   )
                 )
@@ -1291,8 +1291,8 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
                     <div className="p-4 space-y-3">
                       {/* Related decisions list */}
                       {relatedDecisions.length === 0 &&
-                        !showCreateDecision &&
-                        !showDecisionSearch ? (
+                      !showCreateDecision &&
+                      !showDecisionSearch ? (
                         <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
                           <Scale
                             size={24}
@@ -1338,10 +1338,11 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
                             return (
                               <div
                                 key={rel.id}
-                                className={`p-3 rounded-xl border transition-all ${isBlocking
+                                className={`p-3 rounded-xl border transition-all ${
+                                  isBlocking
                                     ? 'bg-amber-50/50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30'
                                     : 'bg-slate-50/50 dark:bg-navy-800/50 border-slate-200 dark:border-navy-600'
-                                  }`}
+                                }`}
                               >
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -1354,10 +1355,11 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
                                       </p>
                                       <div className="flex flex-wrap items-center gap-2 mt-1">
                                         <span
-                                          className={`text-xs px-1.5 py-0.5 rounded ${isBlocking
+                                          className={`text-xs px-1.5 py-0.5 rounded ${
+                                            isBlocking
                                               ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
                                               : 'bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
-                                            }`}
+                                          }`}
                                         >
                                           {isPolish
                                             ? relationLabels[rel.relationshipType]?.pl
@@ -1500,10 +1502,11 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
                                 <button
                                   key={type.key}
                                   onClick={() => setNewDecisionRelationType(type.key as any)}
-                                  className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${newDecisionRelationType === type.key
+                                  className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${
+                                    newDecisionRelationType === type.key
                                       ? 'bg-amber-100 dark:bg-amber-500/20 border-amber-300 dark:border-amber-500/50 text-amber-700 dark:text-amber-300'
                                       : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:border-amber-300'
-                                    }`}
+                                  }`}
                                   title={isPolish ? type.desc.pl : type.desc.en}
                                 >
                                   {isPolish ? type.label.pl : type.label.en}
@@ -1641,12 +1644,13 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
                                   className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors text-left"
                                 >
                                   <div
-                                    className={`w-2 h-2 rounded-full ${decision.status === 'pending'
+                                    className={`w-2 h-2 rounded-full ${
+                                      decision.status === 'pending'
                                         ? 'bg-amber-500'
                                         : decision.status === 'approved'
                                           ? 'bg-emerald-500'
                                           : 'bg-slate-400'
-                                      }`}
+                                    }`}
                                   />
                                   <span className="text-sm text-slate-700 dark:text-slate-300 truncate">
                                     {decision.title}
@@ -1658,10 +1662,10 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
                                 d.title.toLowerCase().includes(decisionSearchQuery.toLowerCase()) &&
                                 !relatedDecisions.some((r) => r.decisionId === d.id)
                             ).length === 0 && (
-                                <p className="text-center text-sm text-slate-400 dark:text-slate-500 py-4">
-                                  {isPolish ? 'Brak pasujących decyzji' : 'No matching decisions'}
-                                </p>
-                              )}
+                              <p className="text-center text-sm text-slate-400 dark:text-slate-500 py-4">
+                                {isPolish ? 'Brak pasujących decyzji' : 'No matching decisions'}
+                              </p>
+                            )}
                           </div>
 
                           <button
@@ -1851,10 +1855,11 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
                                   updateChecklistItem(item.id, { text: e.target.value })
                                 }
                                 placeholder={isPolish ? 'Wprowadź element...' : 'Enter item...'}
-                                className={`flex-1 px-2 py-1.5 rounded-lg text-sm bg-transparent border border-transparent hover:border-slate-200 dark:hover:border-navy-600 focus:border-emerald-400 dark:focus:border-emerald-500 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none transition-colors ${item.completed
+                                className={`flex-1 px-2 py-1.5 rounded-lg text-sm bg-transparent border border-transparent hover:border-slate-200 dark:hover:border-navy-600 focus:border-emerald-400 dark:focus:border-emerald-500 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none transition-colors ${
+                                  item.completed
                                     ? 'line-through text-slate-400 dark:text-slate-500'
                                     : ''
-                                  }`}
+                                }`}
                               />
                               <button
                                 onClick={() => removeChecklistItem(item.id)}
@@ -2138,8 +2143,9 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
                                   setInitiativeName(null);
                                   setShowInitiativeDropdown(false);
                                 }}
-                                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${!initiativeId ? 'bg-blue-50 dark:bg-blue-500/10' : ''
-                                  }`}
+                                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
+                                  !initiativeId ? 'bg-blue-50 dark:bg-blue-500/10' : ''
+                                }`}
                               >
                                 <div className="p-1 rounded bg-slate-200 dark:bg-navy-700">
                                   <Minus size={12} className="text-slate-400" />
@@ -2157,8 +2163,9 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
                                     setInitiativeName(init.name);
                                     setShowInitiativeDropdown(false);
                                   }}
-                                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${initiativeId === init.id ? 'bg-blue-50 dark:bg-blue-500/10' : ''
-                                    }`}
+                                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
+                                    initiativeId === init.id ? 'bg-blue-50 dark:bg-blue-500/10' : ''
+                                  }`}
                                 >
                                   <div className="p-1 rounded bg-blue-500/10">
                                     <Layers size={12} className="text-blue-500" />
@@ -2205,8 +2212,9 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
                                     setStatus(key as keyof typeof STATUS_CONFIG);
                                     setShowStatusDropdown(false);
                                   }}
-                                  className={`w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${status === key ? 'bg-blue-50 dark:bg-blue-500/10' : ''
-                                    }`}
+                                  className={`w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
+                                    status === key ? 'bg-blue-50 dark:bg-blue-500/10' : ''
+                                  }`}
                                 >
                                   <div className={`w-2.5 h-2.5 rounded-full ${config.color}`} />
                                   <span className="text-slate-700 dark:text-slate-300">
@@ -2251,8 +2259,9 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
                                     setPriority(key as keyof typeof PRIORITY_CONFIG);
                                     setShowPriorityDropdown(false);
                                   }}
-                                  className={`w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${priority === key ? 'bg-blue-50 dark:bg-blue-500/10' : ''
-                                    }`}
+                                  className={`w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
+                                    priority === key ? 'bg-blue-50 dark:bg-blue-500/10' : ''
+                                  }`}
                                 >
                                   <Flag size={14} className={config.textColor} />
                                   <span className="text-slate-700 dark:text-slate-300">

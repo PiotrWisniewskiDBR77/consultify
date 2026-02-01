@@ -4,7 +4,12 @@
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { OperationalItem, OperationalToolData, ToolSession, useToolStore } from '@/store/useToolStore';
+import {
+  OperationalItem,
+  OperationalToolData,
+  ToolSession,
+  useToolStore,
+} from '@/store/useToolStore';
 
 import { InlineAssist } from '../../InlineAssist';
 
@@ -92,9 +97,7 @@ export const SMEDStepsStep: React.FC<SMEDStepsStepProps> = ({ session, isPolish 
             onChange={(e) => setDurationMinutes(Number(e.target.value))}
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-300 w-28"
           />
-          <span className="text-sm text-slate-500 self-center">
-            {isPolish ? 'min' : 'min'}
-          </span>
+          <span className="text-sm text-slate-500 self-center">{isPolish ? 'min' : 'min'}</span>
           <button
             onClick={handleAdd}
             disabled={!title.trim()}
@@ -128,8 +131,8 @@ export const SMEDStepsStep: React.FC<SMEDStepsStepProps> = ({ session, isPolish 
                 <div>
                   <h4 className="font-medium text-slate-900 dark:text-white">{item.title}</h4>
                   <div className="text-xs text-slate-500 mt-2">
-                    {isPolish ? 'Typ' : 'Type'}: {item.category} •{' '}
-                    {isPolish ? 'Czas' : 'Duration'}: {item.durationMinutes} min
+                    {isPolish ? 'Typ' : 'Type'}: {item.category} • {isPolish ? 'Czas' : 'Duration'}:{' '}
+                    {item.durationMinutes} min
                   </div>
                 </div>
                 <button

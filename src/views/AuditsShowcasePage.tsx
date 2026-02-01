@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { EntryFooter } from '@/components/Landing/EntryFooter';
@@ -56,6 +57,7 @@ interface AuditSectionProps {
 }
 
 const AuditSection: React.FC<AuditSectionProps> = ({ audit, index, onStartAssessment }) => {
+  const { t } = useTranslation();
   const isEven = index % 2 === 0;
 
   const colorClasses: Record<string, { text: string; accent: string; muted: string }> = {
@@ -108,7 +110,7 @@ const AuditSection: React.FC<AuditSectionProps> = ({ audit, index, onStartAssess
               {/* Placeholder for Video - Real video would use <video> or iframe */}
               <img
                 src={audit.image}
-                alt={audit.name}
+                alt={t(`showcase.audits.items.${audit.id}.fullName`)}
                 className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
               />
 
@@ -126,7 +128,7 @@ const AuditSection: React.FC<AuditSectionProps> = ({ audit, index, onStartAssess
               <div className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-black/40 backdrop-blur-sm rounded-lg border border-white/10">
                 <Globe size={14} className="text-white" />
                 <span className="text-[10px] font-bold text-white uppercase tracking-widest">
-                  Methodology Introduction
+                  {t('showcase.common.methodologyIntro')}
                 </span>
               </div>
             </div>
@@ -145,26 +147,27 @@ const AuditSection: React.FC<AuditSectionProps> = ({ audit, index, onStartAssess
                 <DynamicIcon name={audit.icon} size={24} className={colors.text} />
               </div>
               <span className={`text-sm font-black uppercase tracking-[0.2em] ${colors.text}`}>
-                {audit.name} Framework
+                {t(`showcase.audits.items.${audit.id}.name` as any) || audit.id.toUpperCase()}{' '}
+                {t('showcase.common.framework')}
               </span>
             </div>
 
             <h2 className="text-3xl lg:text-5xl font-black text-navy-950 dark:text-white mb-6 uppercase tracking-tight leading-tight">
-              {audit.fullName}
+              {t(`showcase.audits.items.${audit.id}.fullName`)}
             </h2>
 
             <p className="text-lg lg:text-xl text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
-              {audit.longDescription}
+              {t(`showcase.audits.items.${audit.id}.longDescription`)}
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
-              {audit.keyDimensions.map((dim, idx) => (
+              {[0, 1, 2, 3].map((idx) => (
                 <div key={idx} className="flex items-center gap-3 group">
                   <div className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <CheckCircle2 size={14} className={colors.text} />
                   </div>
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    {dim}
+                    {t(`showcase.audits.items.${audit.id}.dimensions.${idx}` as any)}
                   </span>
                 </div>
               ))}
@@ -175,7 +178,7 @@ const AuditSection: React.FC<AuditSectionProps> = ({ audit, index, onStartAssess
                 onClick={onStartAssessment}
                 className={`inline-flex items-center justify-center gap-2 px-8 py-4 ${colors.accent} text-white font-black rounded-xl hover:opacity-90 transition-all shadow-lg text-sm uppercase tracking-wider`}
               >
-                Execute
+                {t('showcase.common.execute')}
                 <ArrowRight size={18} />
               </button>
               <a
@@ -184,7 +187,7 @@ const AuditSection: React.FC<AuditSectionProps> = ({ audit, index, onStartAssess
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 font-black rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 transition-all text-sm uppercase tracking-wider"
               >
-                {audit.externalLinkLabel}
+                {t(`showcase.audits.items.${audit.id}.externalLinkLabel`)}
                 <ExternalLink size={18} />
               </a>
             </div>
@@ -201,6 +204,7 @@ const AuditSection: React.FC<AuditSectionProps> = ({ audit, index, onStartAssess
 
 export const AuditsShowcasePage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { currentUser } = useAppStore();
 
   const handleStartAssessment = () => {
@@ -240,20 +244,19 @@ export const AuditsShowcasePage: React.FC = () => {
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-full text-xs font-black uppercase tracking-[0.2em] mb-8">
             <Map size={14} className="text-purple-400" />
-            Industrial Excellence
+            {t('showcase.audits.hero.badge')}
           </div>
 
           <h1 className="text-5xl lg:text-8xl font-black tracking-tight text-navy-950 dark:text-white mb-8 uppercase leading-[1] text-center">
-            BASELINE YOUR
+            {t('showcase.audits.hero.title1')}
             <br />
             <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 bg-clip-text text-transparent">
-              DIGITAL MATURITY
+              {t('showcase.audits.hero.title2')}
             </span>
           </h1>
 
           <p className="text-xl lg:text-3xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto mb-12 leading-relaxed font-medium">
-            Consultinity integrates world-class audit methodologies used by Harvard experts to drive
-            data-driven change across global industries.
+            {t('showcase.audits.hero.subtitle')}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -261,7 +264,7 @@ export const AuditsShowcasePage: React.FC = () => {
               onClick={handleStartAssessment}
               className="inline-flex items-center justify-center gap-3 px-10 py-5 bg-navy-950 dark:bg-white text-white dark:text-navy-950 font-black rounded-2xl hover:scale-[1.02] transition-all shadow-2xl text-xl uppercase tracking-wider"
             >
-              Execute
+              {t('showcase.common.execute')}
               <ArrowRight size={24} />
             </button>
           </div>
@@ -288,14 +291,13 @@ export const AuditsShowcasePage: React.FC = () => {
 
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <h2 className="text-4xl lg:text-6xl font-black text-white mb-8 uppercase tracking-tight">
-            TAKE THE NEXT STEP IN
+            {t('showcase.audits.cta.header')}
             <br />
-            <span className="text-purple-400">YOUR TRANSFORMATION</span>
+            <span className="text-purple-400">{t('showcase.audits.cta.headerAccent')}</span>
           </h2>
 
           <p className="text-xl text-white/60 mb-16 max-w-2xl mx-auto leading-relaxed">
-            Assessments are only the beginning. Discover the full suite of AI-powered tools designed
-            to turn maturity insights into operational results.
+            {t('showcase.audits.cta.description')}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
@@ -303,13 +305,13 @@ export const AuditsShowcasePage: React.FC = () => {
               onClick={handleStartAssessment}
               className="px-12 py-6 bg-white text-navy-950 font-black rounded-2xl hover:bg-slate-100 transition-all text-xl uppercase tracking-widest shadow-xl"
             >
-              Execute
+              {t('showcase.common.execute')}
             </button>
             <button
               onClick={handleToolsHubClick}
               className="px-12 py-6 bg-purple-600 text-white font-black rounded-2xl hover:bg-purple-500 transition-all text-xl uppercase tracking-widest shadow-xl shadow-purple-600/30 flex items-center justify-center gap-3"
             >
-              More Tools
+              {t('showcase.common.moreTools')}
               <ChevronRight size={24} />
             </button>
           </div>
@@ -320,7 +322,7 @@ export const AuditsShowcasePage: React.FC = () => {
       <div className="py-12 bg-slate-50 dark:bg-navy-950 text-center border-t border-slate-200 dark:border-navy-900">
         <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest flex items-center justify-center gap-3">
           <Sparkles size={20} className="text-purple-500" />
-          Knowledge base and audits integrated in the Discovery panel
+          {t('showcase.common.integratedHint')}
         </p>
       </div>
 

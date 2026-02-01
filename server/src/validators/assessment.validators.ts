@@ -69,6 +69,13 @@ export const GenerateInitiativesSchema = AssessmentDecisionSchema.extend({
   methodologyId: z.string().min(1),
   count: z.number().min(1).max(7, 'Maximum 7 initiatives per batch'),
   includeChatContext: z.boolean().optional(),
+  /**
+   * Optional report context for initiative generation.
+   * When provided, initiatives should be generated using BOTH:
+   * - detailed assessment answers (assessment)
+   * - report narrative/synthesis (report)
+   */
+  reportId: z.string().min(1).optional(),
 });
 
 export const GenerateReportSchema = z.object({

@@ -14,8 +14,8 @@ import {
   applyScenarioAdjustments,
   calculateFinancialMetrics,
   defaultFinancialData,
-  normalizeFinancialData,
   type FinancialData,
+  normalizeFinancialData,
   validateFinancialData,
 } from '../services/economicsFinancials.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -54,7 +54,6 @@ const normalizeStatusForDb = (status?: string | null) => {
   if (upper === 'APPROVED') return 'completed';
   return 'draft';
 };
-
 
 /**
  * GET /api/economics/analyses
@@ -272,8 +271,8 @@ router.post(
           description,
           status: 'DRAFT',
           projectId,
-        initiativeId,
-        analysisType: analysisType || 'financial',
+          initiativeId,
+          analysisType: analysisType || 'financial',
           organizationId: orgId,
           createdBy: userId,
           overallScore: null,
@@ -490,7 +489,15 @@ router.post(
           id, analysis_id, initiative_id, organization_id,
           created_by, created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [uuidv4(), id, initiativeId, orgId, userId || null, new Date().toISOString(), new Date().toISOString()]
+        [
+          uuidv4(),
+          id,
+          initiativeId,
+          orgId,
+          userId || null,
+          new Date().toISOString(),
+          new Date().toISOString(),
+        ]
       );
     }
 
@@ -578,15 +585,21 @@ router.put(
 
       const findCost = (match: RegExp, fallbackYear?: number) =>
         costItems.find((c: any) => match.test(String(c.description || ''))) ||
-        (fallbackYear !== undefined ? costItems.find((c: any) => c.year === fallbackYear) : undefined);
+        (fallbackYear !== undefined
+          ? costItems.find((c: any) => c.year === fallbackYear)
+          : undefined);
 
       const initial = findCost(/inwestycja|capex|initial/i, 0);
       const implementation = findCost(/wdroż|implement/i);
       const training = findCost(/szkol|training/i);
       const operating = findCost(/opex|operac|operating/i, 1);
 
-      const annualSavings = benefitItems.find((b: any) => /oszcz|savings/i.test(String(b.description || '')));
-      const annualRevenue = benefitItems.find((b: any) => /przych|revenue/i.test(String(b.description || '')));
+      const annualSavings = benefitItems.find((b: any) =>
+        /oszcz|savings/i.test(String(b.description || ''))
+      );
+      const annualRevenue = benefitItems.find((b: any) =>
+        /przych|revenue/i.test(String(b.description || ''))
+      );
 
       financialData = {
         ...financialData,
@@ -712,11 +725,16 @@ router.put(
     await dbRun(`UPDATE digitization_analyses SET updated_at = ? WHERE id = ?`, [now, id]);
 
     const scenarioTypes = ['base', 'optimistic', 'conservative'];
-    const scenarioSummaries: Array<{ scenarioType: string; npv: number | null; roi: number | null }> =
-      [];
+    const scenarioSummaries: Array<{
+      scenarioType: string;
+      npv: number | null;
+      roi: number | null;
+    }> = [];
     for (const scenarioType of scenarioTypes) {
       const scenarioData =
-        scenarioType === 'base' ? financialData : applyScenarioAdjustments(financialData, scenarioType);
+        scenarioType === 'base'
+          ? financialData
+          : applyScenarioAdjustments(financialData, scenarioType);
       const scenarioMetrics = calculateFinancialMetrics(scenarioData);
       scenarioSummaries.push({
         scenarioType,
@@ -1030,7 +1048,8 @@ router.put(
       [orgId, analysis.initiative_id, trackingPeriod]
     );
 
-    const variancePercent = plannedBenefits > 0 ? ((actualBenefits - plannedBenefits) / plannedBenefits) * 100 : 0;
+    const variancePercent =
+      plannedBenefits > 0 ? ((actualBenefits - plannedBenefits) / plannedBenefits) * 100 : 0;
 
     if (existing) {
       await dbRun(

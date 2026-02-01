@@ -7,9 +7,9 @@
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
 import PDFDocument from 'pdfkit';
 import PptxGenJS from 'pptxgenjs';
+import { v4 as uuidv4 } from 'uuid';
 
 import managementReportRepository from '../repositories/ManagementReportRepository.js';
 import { all, get, run } from '../utils/DbPromise.js';
@@ -97,7 +97,11 @@ class ManagementReportsService {
       doc.fontSize(11).text('None');
     } else {
       decisions.slice(0, 10).forEach((decision: any, index: number) => {
-        doc.fontSize(11).text(`${index + 1}. ${decision.title || 'Decision'} (Owner: ${decision.ownerName || 'TBD'})`);
+        doc
+          .fontSize(11)
+          .text(
+            `${index + 1}. ${decision.title || 'Decision'} (Owner: ${decision.ownerName || 'TBD'})`
+          );
       });
     }
 
@@ -171,14 +175,17 @@ class ManagementReportsService {
       h: 0.6,
       fontSize: 24,
     });
-    narrativeSlide.addText(report?.aiNarrative || report?.content?.executiveSummary || 'No narrative available.', {
-      x: 0.8,
-      y: 1.6,
-      w: 12.0,
-      h: 5.0,
-      fontSize: 16,
-      color: '333333',
-    });
+    narrativeSlide.addText(
+      report?.aiNarrative || report?.content?.executiveSummary || 'No narrative available.',
+      {
+        x: 0.8,
+        y: 1.6,
+        w: 12.0,
+        h: 5.0,
+        fontSize: 16,
+        color: '333333',
+      }
+    );
 
     await pptx.writeFile({ fileName: filePath });
   }
@@ -280,7 +287,9 @@ class ManagementReportsService {
         assigneeName: item.assigneeName,
         progressPercent: item.progress || 0,
         dueDate: item.due_date,
-        daysUntilDue: item.due_date ? Math.ceil((new Date(item.due_date) - Date.now()) / 86400000) : 0,
+        daysUntilDue: item.due_date
+          ? Math.ceil((new Date(item.due_date) - Date.now()) / 86400000)
+          : 0,
         status: item.progress >= 80 ? 'GREEN' : item.progress >= 50 ? 'AMBER' : 'RED',
         projectId,
         projectName: project.name,
@@ -876,7 +885,14 @@ class ManagementReportsService {
       [newTitle, reportId]
     );
 
-    await this.createReportVersion(reportId, report.content, report.ai_narrative, report.ai_warnings, userId, 'Updated report metadata');
+    await this.createReportVersion(
+      reportId,
+      report.content,
+      report.ai_narrative,
+      report.ai_warnings,
+      userId,
+      'Updated report metadata'
+    );
 
     return this.getReport(reportId);
   }
@@ -925,10 +941,9 @@ class ManagementReportsService {
        WHERE report_id = ? AND status = 'PENDING'`,
       [userId, comment || '', reportId]
     );
-    await run(
-      `UPDATE management_reports SET approval_status = 'APPROVED' WHERE id = ?`,
-      [reportId]
-    );
+    await run(`UPDATE management_reports SET approval_status = 'APPROVED' WHERE id = ?`, [
+      reportId,
+    ]);
     await this.logAudit(reportId, 'APPROVED', userId, { comment });
     return true;
   }
@@ -1172,10 +1187,10 @@ class ManagementReportsService {
   }
 
   async deleteTemplate(templateId, organizationId) {
-    await run(
-      `DELETE FROM management_report_templates WHERE id = ? AND organization_id = ?`,
-      [templateId, organizationId]
-    );
+    await run(`DELETE FROM management_report_templates WHERE id = ? AND organization_id = ?`, [
+      templateId,
+      organizationId,
+    ]);
   }
 
   async listSchedules(organizationId) {
@@ -1244,10 +1259,10 @@ class ManagementReportsService {
   }
 
   async deleteSchedule(scheduleId, organizationId) {
-    await run(
-      `DELETE FROM management_report_schedules WHERE id = ? AND organization_id = ?`,
-      [scheduleId, organizationId]
-    );
+    await run(`DELETE FROM management_report_schedules WHERE id = ? AND organization_id = ?`, [
+      scheduleId,
+      organizationId,
+    ]);
   }
 
   calculateNextSchedule(payload) {
@@ -1286,7 +1301,11 @@ class ManagementReportsService {
     try {
       const aiModule = await import('./aiExecutiveReporting.js');
       const aiService = aiModule.default || aiModule;
-      if (aiService?.generateReport && reportType !== 'TEAM_MEETING' && reportType !== 'TEAM_WEEKLY') {
+      if (
+        aiService?.generateReport &&
+        reportType !== 'TEAM_MEETING' &&
+        reportType !== 'TEAM_WEEKLY'
+      ) {
         const result = await aiService.generateReport({
           type: reportType,
           scope,

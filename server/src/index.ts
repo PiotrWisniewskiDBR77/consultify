@@ -916,7 +916,7 @@ if (startServer && (!isTest || process.env.E2E_MODE === 'true')) {
           // Close BullMQ queue
           try {
             const aiQueueModule = await import('./queues/aiQueue.js');
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const aiQueue: any = aiQueueModule.default;
             if (aiQueue && typeof aiQueue.close === 'function') {
               await aiQueue.close();

@@ -4,7 +4,12 @@
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { OperationalItem, OperationalToolData, ToolSession, useToolStore } from '@/store/useToolStore';
+import {
+  OperationalItem,
+  OperationalToolData,
+  ToolSession,
+  useToolStore,
+} from '@/store/useToolStore';
 
 import { InlineAssist } from '../../InlineAssist';
 
@@ -64,9 +69,7 @@ export const SMEDImprovementsStep: React.FC<SMEDImprovementsStepProps> = ({
           {isPolish ? 'Usprawnienia SMED' : 'SMED improvements'}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Dodaj quick wins oraz inwestycje.'
-            : 'Add quick wins and investments.'}
+          {isPolish ? 'Dodaj quick wins oraz inwestycje.' : 'Add quick wins and investments.'}
         </p>
       </div>
 

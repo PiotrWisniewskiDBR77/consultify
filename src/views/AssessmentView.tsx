@@ -1,9 +1,9 @@
 /**
  * AssessmentView
- * 
+ *
  * Main view for Assessment module with framework selection.
  * Routes to AssessmentModuleHub with selected framework.
- * 
+ *
  * Supported frameworks:
  * - DRD (Digital Readiness Diagnosis) - Full implementation
  * - SIRI (Smart Industry Readiness Index) - Full implementation
@@ -12,8 +12,6 @@
  * - Lean 4.0 - Coming soon
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Activity,
   AlertCircle,
@@ -29,12 +27,14 @@ import {
   Settings,
   Workflow,
 } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { AssessmentModuleHub } from '../components/assessment/AssessmentModuleHub';
+import { SplitLayout } from '../components/layout/SplitLayout';
 import { useAppStore } from '../store/useAppStore';
 import { AssessmentFramework, useMultiFrameworkStore } from '../store/useMultiFrameworkStore';
 import { AppView } from '../types';
-import { SplitLayout } from '../components/layout/SplitLayout';
-import { AssessmentModuleHub } from '../components/assessment/AssessmentModuleHub';
 
 // Framework configuration
 const FRAMEWORKS: {
@@ -51,8 +51,10 @@ const FRAMEWORKS: {
     id: 'DRD',
     name: 'Digital Readiness Diagnosis',
     namePL: 'Diagnoza Gotowości Cyfrowej',
-    description: '7-axis digital maturity assessment covering processes, products, business models, data, culture, cybersecurity, and AI.',
-    descriptionPL: '7-osiowa ocena dojrzałości cyfrowej obejmująca procesy, produkty, modele biznesowe, dane, kulturę, cyberbezpieczeństwo i AI.',
+    description:
+      '7-axis digital maturity assessment covering processes, products, business models, data, culture, cybersecurity, and AI.',
+    descriptionPL:
+      '7-osiowa ocena dojrzałości cyfrowej obejmująca procesy, produkty, modele biznesowe, dane, kulturę, cyberbezpieczeństwo i AI.',
     icon: <Activity size={32} />,
     color: 'purple',
     status: 'available',
@@ -61,8 +63,10 @@ const FRAMEWORKS: {
     id: 'SIRI',
     name: 'Smart Industry Readiness Index',
     namePL: 'Indeks Gotowości do Przemysłu 4.0',
-    description: 'Industry 4.0 readiness with 3 building blocks, 8 dimensions, and 16 prioritisation areas.',
-    descriptionPL: 'Gotowość do Przemysłu 4.0 z 3 blokami budowlanymi, 8 wymiarami i 16 obszarami priorytetyzacji.',
+    description:
+      'Industry 4.0 readiness with 3 building blocks, 8 dimensions, and 16 prioritisation areas.',
+    descriptionPL:
+      'Gotowość do Przemysłu 4.0 z 3 blokami budowlanymi, 8 wymiarami i 16 obszarami priorytetyzacji.',
     icon: <Cpu size={32} />,
     color: 'green',
     status: 'available',
@@ -282,7 +286,10 @@ export const AssessmentView: React.FC<AssessmentViewProps> = ({
 
   // Otherwise show the framework selector
   return (
-    <SplitLayout title={isPolish ? 'Assessment' : 'Assessment'} currentView={AppView.ASSESSMENT_OVERVIEW}>
+    <SplitLayout
+      title={isPolish ? 'Assessment' : 'Assessment'}
+      currentView={AppView.ASSESSMENT_OVERVIEW}
+    >
       {renderFrameworkSelector()}
     </SplitLayout>
   );

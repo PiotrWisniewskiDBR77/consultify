@@ -89,7 +89,10 @@ export const SubscriptionPlansManager: React.FC = () => {
       toast({ description: 'Plan created successfully!' });
     },
     onError: (error: any) => {
-      toast({ description: error.response?.data?.error || 'Failed to create plan', variant: 'destructive' });
+      toast({
+        description: error.response?.data?.error || 'Failed to create plan',
+        variant: 'destructive',
+      });
     },
   });
 
@@ -112,7 +115,10 @@ export const SubscriptionPlansManager: React.FC = () => {
       toast({ description: 'Plan updated successfully!' });
     },
     onError: (error: any) => {
-      toast({ description: error.response?.data?.error || 'Failed to update plan', variant: 'destructive' });
+      toast({
+        description: error.response?.data?.error || 'Failed to update plan',
+        variant: 'destructive',
+      });
     },
   });
 
@@ -126,7 +132,10 @@ export const SubscriptionPlansManager: React.FC = () => {
       toast({ description: 'Plan deleted successfully!' });
     },
     onError: (error: any) => {
-      toast({ description: error.response?.data?.error || 'Failed to delete plan', variant: 'destructive' });
+      toast({
+        description: error.response?.data?.error || 'Failed to delete plan',
+        variant: 'destructive',
+      });
     },
   });
 

@@ -657,6 +657,36 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     );
   };
 
+  // Status dropdown component for right controls
+  const statusDropdownControl = (
+    <StatusDropdown
+      context={statusContext}
+      value={statusFilter}
+      onChange={setStatusFilter}
+      counts={statusCounts}
+      size="md"
+    />
+  );
+
+  // Dynamic new item handler based on active tab
+  const handleNewItem = useCallback(() => {
+    if (activeTab === 'reports') {
+      navigate('/reports/builder?new=true');
+    } else if (activeTab === 'initiatives') {
+      // TODO: handle new initiative
+      toast.error('New initiative flow not implemented yet');
+    } else {
+      handleNewAssessment();
+    }
+  }, [activeTab, navigate, handleNewAssessment]);
+
+  // Dynamic new item label based on active tab
+  const getNewItemLabel = () => {
+    if (activeTab === 'reports') return 'New Report (AI)';
+    if (activeTab === 'initiatives') return 'New Initiative';
+    return 'New Assessment';
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -686,17 +716,6 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     );
   }
 
-  // Status dropdown component for right controls
-  const statusDropdownControl = (
-    <StatusDropdown
-      context={statusContext}
-      value={statusFilter}
-      onChange={setStatusFilter}
-      counts={statusCounts}
-      size="md"
-    />
-  );
-
   return (
     <>
       <ModuleHub
@@ -714,8 +733,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        onNewItem={handleNewAssessment}
-        newItemLabel="New Assessment"
+        onNewItem={handleNewItem}
+        newItemLabel={getNewItemLabel()}
         rightControls={statusDropdownControl}
       >
         {renderContent()}

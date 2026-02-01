@@ -181,7 +181,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
             {/* Type Selection */}
             <div>
               <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                  Attachment type
+                Attachment type
               </label>
               <select
                 value={selectedType}
@@ -201,13 +201,13 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
             {/* Description */}
             <div>
               <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                  Description (optional)
+                Description (optional)
               </label>
               <input
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Short attachment description..."
+                placeholder="Short attachment description..."
                 className="w-full text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-md px-2 py-1.5"
               />
             </div>

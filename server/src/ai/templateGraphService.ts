@@ -187,19 +187,23 @@ function graphToSteps(graph: {
     }
     visited.add(currentId);
 
-    const currentNode = nodes.find((n: { id: string; type: string; title?: string; data?: unknown }) => n.id === currentId);
+    const currentNode = nodes.find(
+      (n: { id: string; type: string; title?: string; data?: unknown }) => n.id === currentId
+    );
     if (!currentNode) continue;
 
     // Skip START and END nodes from step output
     if (currentNode.type !== NODE_TYPES.START && currentNode.type !== NODE_TYPES.END) {
-      const nodeData = currentNode.data as {
-        actionType?: string;
-        description?: string;
-        payloadTemplate?: unknown;
-        isOptional?: boolean;
-        waitForPrevious?: boolean;
-      } | undefined;
-      
+      const nodeData = currentNode.data as
+        | {
+            actionType?: string;
+            description?: string;
+            payloadTemplate?: unknown;
+            isOptional?: boolean;
+            waitForPrevious?: boolean;
+          }
+        | undefined;
+
       orderedSteps.push({
         id: currentNode.id,
         stepOrder: stepOrder++,
@@ -326,7 +330,9 @@ function getAllPaths(graph: {
 
   // Find START and END nodes
   const startNode = nodes.find((n: { id: string; type: string }) => n.type === NODE_TYPES.START);
-  const endNodes = nodes.filter((n: { id: string; type: string }) => n.type === NODE_TYPES.END).map((n: { id: string }) => n.id);
+  const endNodes = nodes
+    .filter((n: { id: string; type: string }) => n.type === NODE_TYPES.END)
+    .map((n: { id: string }) => n.id);
 
   if (!startNode || endNodes.length === 0) {
     return [];
@@ -380,7 +386,8 @@ function findDeadEnds(graph: {
 
   // Find nodes without outgoing edges
   const deadEnds = nodes.filter(
-    (node: { id: string; type: string }) => node.type !== NODE_TYPES.END && !nodesWithOutgoing.has(node.id)
+    (node: { id: string; type: string }) =>
+      node.type !== NODE_TYPES.END && !nodesWithOutgoing.has(node.id)
   );
 
   return deadEnds.map((n) => n.id);
@@ -402,14 +409,19 @@ function findBranchesWithoutElse(graph: {
   const { nodes, edges } = graph;
 
   // Get all BRANCH nodes
-  const branchNodes = nodes.filter((n: { id: string; type: string }) => n.type === NODE_TYPES.BRANCH);
+  const branchNodes = nodes.filter(
+    (n: { id: string; type: string }) => n.type === NODE_TYPES.BRANCH
+  );
 
   const missingElse: string[] = [];
 
   branchNodes.forEach((branch) => {
-    const outgoingEdges = edges.filter((e: { from: string; to: string; label?: string }) => e.from === branch.id);
+    const outgoingEdges = edges.filter(
+      (e: { from: string; to: string; label?: string }) => e.from === branch.id
+    );
     const hasElse = outgoingEdges.some(
-      (e: { from: string; to: string; label?: string }) => e.label === EDGE_LABELS.ELSE || e.label?.toLowerCase().includes('else')
+      (e: { from: string; to: string; label?: string }) =>
+        e.label === EDGE_LABELS.ELSE || e.label?.toLowerCase().includes('else')
     );
 
     if (!hasElse) {

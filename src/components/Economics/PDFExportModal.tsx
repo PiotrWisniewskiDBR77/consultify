@@ -87,8 +87,7 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
       );
     } catch (error: any) {
       toast.error(
-        error.message ||
-          (language === 'pl' ? 'Failed to generate PDF' : 'Failed to generate PDF')
+        error.message || (language === 'pl' ? 'Failed to generate PDF' : 'Failed to generate PDF')
       );
       setExportResult({ success: false });
     } finally {

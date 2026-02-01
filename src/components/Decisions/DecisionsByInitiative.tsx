@@ -17,7 +17,7 @@ import {
   Search,
   Target,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
@@ -126,7 +126,9 @@ const GroupHeader: React.FC<{
             >
               {group.name}
             </button>
-            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${badge.bg} ${badge.text}`}>
+            <span
+              className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${badge.bg} ${badge.text}`}
+            >
               {badge.label}
             </span>
           </div>
@@ -171,43 +173,46 @@ export const DecisionsByInitiative: React.FC<DecisionsByInitiativeProps> = ({
   const effectiveProjectId = projectId || currentProjectId;
 
   // Fetch decisions
-  const fetchDecisions = useCallback(async (isRefresh = false) => {
-    try {
-      if (isRefresh) setRefreshing(true);
-      else setLoading(true);
+  const fetchDecisions = useCallback(
+    async (isRefresh = false) => {
+      try {
+        if (isRefresh) setRefreshing(true);
+        else setLoading(true);
 
-      let url = '/decisions?includeAll=true';
-      if (effectiveProjectId) {
-        url += `&projectId=${effectiveProjectId}`;
+        let url = '/decisions?includeAll=true';
+        if (effectiveProjectId) {
+          url += `&projectId=${effectiveProjectId}`;
+        }
+        if (initiativeId) {
+          url += `&relatedObjectId=${initiativeId}`;
+        }
+
+        const data = await Api.get(url);
+        const decisionsList = Array.isArray(data) ? data : data?.decisions || [];
+
+        // Enhance decisions
+        const enhanced = decisionsList.map((d: Decision) => {
+          const daysWaiting =
+            d.daysWaiting ||
+            Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+          return {
+            ...d,
+            daysWaiting,
+            isOverdue: daysWaiting > 7,
+            daysOverdue: Math.max(0, daysWaiting - 7),
+          };
+        });
+
+        setDecisions(enhanced.filter((d: Decision) => ['PENDING', 'ESCALATED'].includes(d.status)));
+      } catch (error) {
+        console.error('Failed to fetch decisions:', error);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-      if (initiativeId) {
-        url += `&relatedObjectId=${initiativeId}`;
-      }
-
-      const data = await Api.get(url);
-      const decisionsList = Array.isArray(data) ? data : data?.decisions || [];
-
-      // Enhance decisions
-      const enhanced = decisionsList.map((d: Decision) => {
-        const daysWaiting =
-          d.daysWaiting ||
-          Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24));
-        return {
-          ...d,
-          daysWaiting,
-          isOverdue: daysWaiting > 7,
-          daysOverdue: Math.max(0, daysWaiting - 7),
-        };
-      });
-
-      setDecisions(enhanced.filter((d: Decision) => ['PENDING', 'ESCALATED'].includes(d.status)));
-    } catch (error) {
-      console.error('Failed to fetch decisions:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [effectiveProjectId, initiativeId]);
+    },
+    [effectiveProjectId, initiativeId]
+  );
 
   useEffect(() => {
     fetchDecisions();
@@ -238,11 +243,13 @@ export const DecisionsByInitiative: React.FC<DecisionsByInitiativeProps> = ({
 
       if (decision.relatedObjectType === 'initiative' && decision.relatedObjectId) {
         groupKey = `initiative-${decision.relatedObjectId}`;
-        groupName = decision.relatedObjectName || `Initiative ${decision.relatedObjectId.slice(0, 8)}`;
+        groupName =
+          decision.relatedObjectName || `Initiative ${decision.relatedObjectId.slice(0, 8)}`;
         groupType = 'initiative';
       } else if (decision.relatedObjectType === 'assessment' && decision.relatedObjectId) {
         groupKey = `assessment-${decision.relatedObjectId}`;
-        groupName = decision.relatedObjectName || `Assessment ${decision.relatedObjectId.slice(0, 8)}`;
+        groupName =
+          decision.relatedObjectName || `Assessment ${decision.relatedObjectId.slice(0, 8)}`;
         groupType = 'assessment';
       } else if (decision.relatedObjectType === 'tool' && decision.relatedObjectId) {
         groupKey = `tool-${decision.relatedObjectId}`;
@@ -354,8 +361,8 @@ export const DecisionsByInitiative: React.FC<DecisionsByInitiativeProps> = ({
                 {t('decisions.byInitiative', 'Decisions by Initiative')}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                {groupedDecisions.length} {t('decisions.groups', 'groups')} •{' '}
-                {decisions.length} {t('decisions.totalDecisions', 'total decisions')}
+                {groupedDecisions.length} {t('decisions.groups', 'groups')} • {decisions.length}{' '}
+                {t('decisions.totalDecisions', 'total decisions')}
               </p>
             </div>
           </div>

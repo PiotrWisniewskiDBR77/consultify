@@ -9,8 +9,8 @@ import React from 'react';
 import {
   GrowthPathsData,
   OperationalToolData,
-  PortfolioPriorityData,
   PorterData,
+  PortfolioPriorityData,
   RiskUncertaintyData,
   SWOTData,
   ToolSession,
@@ -26,7 +26,12 @@ interface ToolReviewPanelProps {
   onSendBack: (comment?: string) => void;
   onConfigureGenerate: () => void;
   generationDefaults: { methodologyId: string; count: number; includeChatContext: boolean };
-  decisions?: { decision_type: string; status: string; decision_id?: string; decision_status?: string }[];
+  decisions?: {
+    decision_type: string;
+    status: string;
+    decision_id?: string;
+    decision_status?: string;
+  }[];
   canApprove?: boolean;
   canGenerate?: boolean;
 }
@@ -108,16 +113,17 @@ export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
       ];
     }
     if (
-      ['sop-builder', 'a3-problem-solving', 'smed-planner', 'dms-builder', 'inventory-autopilot'].includes(
-        toolType
-      )
+      [
+        'sop-builder',
+        'a3-problem-solving',
+        'smed-planner',
+        'dms-builder',
+        'inventory-autopilot',
+      ].includes(toolType)
     ) {
       const operational = inputData as OperationalToolData;
       const sections = operational.sections || {};
-      const totalItems = Object.values(sections).reduce(
-        (sum, items) => sum + items.length,
-        0
-      );
+      const totalItems = Object.values(sections).reduce((sum, items) => sum + items.length, 0);
       return [
         `${isPolish ? 'Sekcje' : 'Sections'}: ${Object.keys(sections).length}`,
         `${isPolish ? 'Elementy' : 'Items'}: ${totalItems}`,

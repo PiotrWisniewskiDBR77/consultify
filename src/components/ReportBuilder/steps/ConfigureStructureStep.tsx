@@ -39,6 +39,7 @@ interface ConfigureStructureStepProps {
       length?: SectionLength;
       language?: SectionLanguage;
       customPrompt?: string;
+      title?: string;
     }>
   ) => Promise<void>;
   isLoading: boolean;

@@ -1,6 +1,6 @@
 /**
  * DRDForm - Digital Readiness Diagnosis Form
- * 
+ *
  * 7-axis digital maturity assessment form with live scoring.
  * Axes:
  * 1. Processes
@@ -10,12 +10,10 @@
  * 5. Culture
  * 6. Cybersecurity
  * 7. AI Maturity
- * 
+ *
  * Each axis has multiple areas with 5-level maturity scale.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Activity,
   AlertCircle,
@@ -32,8 +30,10 @@ import {
   TrendingUp,
   Users,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import { DRD_STRUCTURE, DRDAxis, DRDArea, DRDLevel } from '../../../services/drdStructure';
+import { DRD_STRUCTURE, DRDArea, DRDAxis, DRDLevel } from '../../../services/drdStructure';
 
 // Types
 interface AxisScore {
@@ -61,15 +61,16 @@ interface DRDFormProps {
 }
 
 // Axis metadata with icons
-const AXIS_META: Record<number, { key: keyof DRDFormData; icon: React.ReactNode; color: string }> = {
-  1: { key: 'processes', icon: <Settings size={20} />, color: 'blue' },
-  2: { key: 'digitalProducts', icon: <Lightbulb size={20} />, color: 'purple' },
-  3: { key: 'businessModels', icon: <TrendingUp size={20} />, color: 'green' },
-  4: { key: 'dataManagement', icon: <Database size={20} />, color: 'amber' },
-  5: { key: 'culture', icon: <Users size={20} />, color: 'pink' },
-  6: { key: 'cybersecurity', icon: <Shield size={20} />, color: 'red' },
-  7: { key: 'aiMaturity', icon: <Activity size={20} />, color: 'cyan' },
-};
+const AXIS_META: Record<number, { key: keyof DRDFormData; icon: React.ReactNode; color: string }> =
+  {
+    1: { key: 'processes', icon: <Settings size={20} />, color: 'blue' },
+    2: { key: 'digitalProducts', icon: <Lightbulb size={20} />, color: 'purple' },
+    3: { key: 'businessModels', icon: <TrendingUp size={20} />, color: 'green' },
+    4: { key: 'dataManagement', icon: <Database size={20} />, color: 'amber' },
+    5: { key: 'culture', icon: <Users size={20} />, color: 'pink' },
+    6: { key: 'cybersecurity', icon: <Shield size={20} />, color: 'red' },
+    7: { key: 'aiMaturity', icon: <Activity size={20} />, color: 'cyan' },
+  };
 
 export const DRDForm: React.FC<DRDFormProps> = ({
   data,
@@ -131,12 +132,14 @@ export const DRDForm: React.FC<DRDFormProps> = ({
 
       // Calculate axis average
       const scores = Object.values(newAreaScores);
-      const avgActual = scores.length > 0
-        ? Math.round((scores.reduce((sum, s) => sum + s[0], 0) / scores.length) * 10) / 10
-        : 0;
-      const avgTarget = scores.length > 0
-        ? Math.round((scores.reduce((sum, s) => sum + s[1], 0) / scores.length) * 10) / 10
-        : 0;
+      const avgActual =
+        scores.length > 0
+          ? Math.round((scores.reduce((sum, s) => sum + s[0], 0) / scores.length) * 10) / 10
+          : 0;
+      const avgTarget =
+        scores.length > 0
+          ? Math.round((scores.reduce((sum, s) => sum + s[1], 0) / scores.length) * 10) / 10
+          : 0;
 
       onChange({
         ...data,
@@ -358,7 +361,8 @@ export const DRDForm: React.FC<DRDFormProps> = ({
               {isPolish ? 'Postęp oceny' : 'Assessment Progress'}
             </span>
             <span className="text-sm text-slate-500 dark:text-slate-400">
-              {progress.completedAxes}/{progress.totalAxes} {isPolish ? 'osi' : 'axes'} ({progress.percent}%)
+              {progress.completedAxes}/{progress.totalAxes} {isPolish ? 'osi' : 'axes'} (
+              {progress.percent}%)
             </span>
           </div>
           <div className="h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
@@ -458,9 +462,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
             </div>
 
             {/* Areas */}
-            <div className="space-y-3">
-              {currentAxis.areas.map((area) => renderAreaCard(area))}
-            </div>
+            <div className="space-y-3">{currentAxis.areas.map((area) => renderAreaCard(area))}</div>
           </div>
         )}
       </div>

@@ -21,7 +21,7 @@ import {
   Users,
   Zap,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
@@ -238,47 +238,52 @@ export const EscalationDashboard: React.FC<EscalationDashboardProps> = ({
   const effectiveProjectId = projectId || currentProjectId;
 
   // Fetch data
-  const fetchData = useCallback(async (isRefresh = false) => {
-    try {
-      if (isRefresh) setRefreshing(true);
-      else setLoading(true);
+  const fetchData = useCallback(
+    async (isRefresh = false) => {
+      try {
+        if (isRefresh) setRefreshing(true);
+        else setLoading(true);
 
-      const bottleneckUrl = effectiveProjectId
-        ? `/decisions/bottlenecks?projectId=${effectiveProjectId}`
-        : '/decisions/bottlenecks';
+        const bottleneckUrl = effectiveProjectId
+          ? `/decisions/bottlenecks?projectId=${effectiveProjectId}`
+          : '/decisions/bottlenecks';
 
-      const decisionsUrl = effectiveProjectId
-        ? `/decisions?projectId=${effectiveProjectId}&includeAll=true`
-        : '/decisions?includeAll=true';
+        const decisionsUrl = effectiveProjectId
+          ? `/decisions?projectId=${effectiveProjectId}&includeAll=true`
+          : '/decisions?includeAll=true';
 
-      const [bottleneckData, decisionsData] = await Promise.all([
-        Api.get(bottleneckUrl),
-        Api.get(decisionsUrl),
-      ]);
+        const [bottleneckData, decisionsData] = await Promise.all([
+          Api.get(bottleneckUrl),
+          Api.get(decisionsUrl),
+        ]);
 
-      setBottlenecks(bottleneckData);
+        setBottlenecks(bottleneckData);
 
-      const decisionsList = Array.isArray(decisionsData) ? decisionsData : decisionsData?.decisions || [];
-      const enhanced = decisionsList.map((d: Decision) => {
-        const daysWaiting =
-          d.daysWaiting ||
-          Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24));
-        return {
-          ...d,
-          daysWaiting,
-          isOverdue: daysWaiting > 7,
-          daysOverdue: Math.max(0, daysWaiting - 7),
-        };
-      });
+        const decisionsList = Array.isArray(decisionsData)
+          ? decisionsData
+          : decisionsData?.decisions || [];
+        const enhanced = decisionsList.map((d: Decision) => {
+          const daysWaiting =
+            d.daysWaiting ||
+            Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+          return {
+            ...d,
+            daysWaiting,
+            isOverdue: daysWaiting > 7,
+            daysOverdue: Math.max(0, daysWaiting - 7),
+          };
+        });
 
-      setDecisions(enhanced);
-    } catch (error) {
-      console.error('Failed to fetch escalation data:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [effectiveProjectId]);
+        setDecisions(enhanced);
+      } catch (error) {
+        console.error('Failed to fetch escalation data:', error);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [effectiveProjectId]
+  );
 
   useEffect(() => {
     fetchData();
@@ -425,7 +430,9 @@ export const EscalationDashboard: React.FC<EscalationDashboardProps> = ({
             title={t('decisions.escalationRate', 'Escalation Rate')}
             value={`${metrics.escalationRate}%`}
             icon={<Zap size={18} />}
-            color={metrics.escalationRate > 20 ? 'red' : metrics.escalationRate > 10 ? 'amber' : 'green'}
+            color={
+              metrics.escalationRate > 20 ? 'red' : metrics.escalationRate > 10 ? 'amber' : 'green'
+            }
           />
         </div>
 
@@ -540,7 +547,9 @@ export const EscalationDashboard: React.FC<EscalationDashboardProps> = ({
                       {owner.pendingCount} pending
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500">{owner.email}</span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                    {owner.email}
+                  </span>
                 </button>
               ))}
             </AlertSection>

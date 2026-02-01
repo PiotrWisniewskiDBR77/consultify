@@ -1,7 +1,7 @@
 /**
  * Input Sanitization Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Input sanitization middleware (no-op fallback for tests)
  */
 

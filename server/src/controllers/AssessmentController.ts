@@ -1333,8 +1333,15 @@ export class AssessmentController {
         return;
       }
 
-      const { methodologyId, count, includeChatContext, decisionOwnerId, dueDate, priority } =
-        req.body;
+      const {
+        methodologyId,
+        count,
+        includeChatContext,
+        decisionOwnerId,
+        dueDate,
+        priority,
+        reportId,
+      } = req.body;
       if (!methodologyId || !count) {
         res.status(400).json({ error: 'methodologyId and count are required' });
         return;
@@ -1378,11 +1385,44 @@ export class AssessmentController {
       const batchId = uuidv4();
       const now = new Date().toISOString();
 
+      // Some deployments may not yet have report_id on batches.
+      // Detect columns to keep compatibility.
+      const batchCols = await (async (): Promise<Set<string> | null> => {
+        try {
+          const rows = (await queryHelpers.queryAll(
+            `PRAGMA table_info(assessment_initiative_batches)`
+          )) as Array<{
+            name?: string;
+          }>;
+          return new Set((rows || []).map((r) => r.name).filter(Boolean) as string[]);
+        } catch {
+          // Unknown schema: avoid inserting optional columns like report_id.
+          return null;
+        }
+      })();
+
+      const insertBatchCols: string[] = [];
+      const insertBatchValues: unknown[] = [];
+      const pushBatch = (col: string, value: unknown) => {
+        if (batchCols === null && col === 'report_id') return;
+        if (batchCols && !batchCols.has(col)) return;
+        insertBatchCols.push(col);
+        insertBatchValues.push(value);
+      };
+      pushBatch('id', batchId);
+      pushBatch('assessment_id', assessmentId);
+      pushBatch('methodology_id', methodologyId);
+      pushBatch('initiatives_count', count);
+      pushBatch('include_chat_context', includeChatContext ? 1 : 0);
+      pushBatch('generated_by', user.id);
+      pushBatch('created_at', now);
+      // Optional: link batch to a report (when provided)
+      pushBatch('report_id', reportId ? String(reportId) : null);
+
+      const batchPlaceholders = insertBatchCols.map(() => '?').join(', ');
       await queryHelpers.queryRun(
-        `INSERT INTO assessment_initiative_batches (
-          id, assessment_id, methodology_id, initiatives_count, include_chat_context, generated_by, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [batchId, assessmentId, methodologyId, count, includeChatContext ? 1 : 0, user.id, now]
+        `INSERT INTO assessment_initiative_batches (${insertBatchCols.join(', ')}) VALUES (${batchPlaceholders})`,
+        insertBatchValues
       );
 
       const decisionId = await createDecisionRecord({
@@ -1406,8 +1446,10 @@ export class AssessmentController {
       });
 
       // Generate initiatives
-      // Enrich context snapshot with latest report content (if available),
-      // so initiative generation can leverage the actual report narrative.
+      // Enrich context snapshot with report context + existing initiatives (dedup),
+      // so generation leverages BOTH:
+      // - detailed assessment answers (assessment)
+      // - synthesized narrative (report)
       const parseJsonSafely = (jsonString: string | null | undefined, fallback: any = {}): any => {
         if (!jsonString) return fallback;
         try {
@@ -1417,25 +1459,135 @@ export class AssessmentController {
         }
       };
 
-      const latestReport = await queryHelpers
-        .queryOne<{
-          content_json?: string | null;
-        }>(
-          `SELECT content_json FROM assessment_reports WHERE assessment_id = ? ORDER BY COALESCE(updated_at, created_at) DESC LIMIT 1`,
+      // Fetch report context:
+      // - if reportId is provided, use it (and ensure it belongs to this assessment)
+      // - else fallback to latest report by updated/created
+      const reportColumns = await (async () => {
+        try {
+          const rows = (await queryHelpers.queryAll(
+            `PRAGMA table_info(assessment_reports)`
+          )) as Array<{
+            name?: string;
+          }>;
+          return new Set((rows || []).map((r) => r.name).filter(Boolean) as string[]);
+        } catch {
+          return new Set<string>();
+        }
+      })();
+
+      const fetchReportRow = async (): Promise<any | null> => {
+        try {
+          if (reportId) {
+            return await queryHelpers.queryOne<any>(
+              `SELECT * FROM assessment_reports WHERE id = ? AND assessment_id = ? LIMIT 1`,
+              [String(reportId), assessmentId]
+            );
+          }
+          return await queryHelpers.queryOne<any>(
+            `SELECT * FROM assessment_reports WHERE assessment_id = ? ORDER BY COALESCE(updated_at, created_at) DESC LIMIT 1`,
+            [assessmentId]
+          );
+        } catch {
+          return null;
+        }
+      };
+
+      const reportRow = await fetchReportRow();
+      if (reportId && !reportRow) {
+        res.status(404).json({ error: 'Report not found for this assessment' });
+        return;
+      }
+
+      const reportContext = (() => {
+        if (!reportRow) return null;
+        // Prefer canonical v2 schema: content_json (JSON)
+        if (reportColumns.has('content_json')) {
+          const content = reportRow.content_json ? parseJsonSafely(reportRow.content_json, {}) : {};
+          return {
+            id: reportRow.id,
+            assessmentId: reportRow.assessment_id || assessmentId,
+            version: reportRow.version,
+            status: reportRow.status,
+            content,
+            updatedAt: reportRow.updated_at || reportRow.created_at,
+          };
+        }
+        // Legacy schema variant used by /api/assessment-reports routes (executive_summary, detailed_analysis, recommendations)
+        const detailed = reportRow.detailed_analysis
+          ? parseJsonSafely(reportRow.detailed_analysis, {})
+          : {};
+        const recommendations = reportRow.recommendations
+          ? parseJsonSafely(reportRow.recommendations, [])
+          : [];
+        return {
+          id: reportRow.id,
+          assessmentId: reportRow.assessment_id || assessmentId,
+          status: reportRow.status || (reportRow.executive_summary ? 'FINAL' : 'DRAFT'),
+          content: {
+            executiveSummary: reportRow.executive_summary || '',
+            keyFindings: detailed?.keyFindings || [],
+            notes: detailed?.notes || '',
+            recommendations,
+          },
+          updatedAt: reportRow.updated_at || reportRow.created_at,
+        };
+      })();
+
+      // Existing initiatives for dedup guidance (assessment + report)
+      const existingByAssessment = await queryHelpers
+        .queryAll<any>(
+          `SELECT i.id,
+                  COALESCE(i.title, i.name) as title,
+                  i.status,
+                  i.report_id as reportId
+           FROM assessment_initiative_links l
+           LEFT JOIN initiatives i ON l.initiative_id = i.id
+           WHERE l.assessment_id = ?
+           ORDER BY l.created_at DESC
+           LIMIT 200`,
           [assessmentId]
         )
-        .catch(() => null);
+        .catch(() => []);
+
+      const existingByReport = reportContext?.id
+        ? await queryHelpers
+            .queryAll<any>(
+              `SELECT id,
+                      COALESCE(title, name) as title,
+                      status,
+                      report_id as reportId
+               FROM initiatives
+               WHERE report_id = ?
+                  OR (source_type = 'assessment_report' AND source_id = ?)
+               ORDER BY updated_at DESC
+               LIMIT 200`,
+              [String(reportContext.id), String(reportContext.id)]
+            )
+            .catch(() => [])
+        : [];
+
+      const existingInitiatives = (() => {
+        const map = new Map<string, any>();
+        for (const r of [...(existingByReport || []), ...(existingByAssessment || [])]) {
+          if (!r?.id) continue;
+          map.set(String(r.id), {
+            id: String(r.id),
+            title: String(r.title || ''),
+            status: r.status ? String(r.status) : undefined,
+            reportId: r.reportId ? String(r.reportId) : undefined,
+          });
+        }
+        return Array.from(map.values());
+      })();
 
       const baseContext = parseJsonSafely(assessment.context_snapshot, {});
-      const reportContent = latestReport?.content_json
-        ? parseJsonSafely(latestReport.content_json, {})
-        : null;
 
       const enrichedAssessment: AssessmentRow = {
         ...(assessment as any),
         context_snapshot: JSON.stringify({
           ...baseContext,
-          ...(reportContent ? { report: reportContent } : {}),
+          ...(reportContext ? { report: reportContext } : {}),
+          ...(existingInitiatives.length ? { existingInitiatives } : {}),
         }),
       };
 
@@ -1444,6 +1596,8 @@ export class AssessmentController {
         methodologyId,
         count,
         includeChatContext: Boolean(includeChatContext),
+        reportContext: reportContext || null,
+        existingInitiatives,
         userId: user.id,
       });
 
@@ -1452,6 +1606,7 @@ export class AssessmentController {
         assessment: enrichedAssessment,
         batchId,
         initiatives,
+        reportId: reportContext?.id ? String(reportContext.id) : reportId ? String(reportId) : null,
         userId: user.id,
       });
 

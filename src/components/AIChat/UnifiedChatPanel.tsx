@@ -39,7 +39,7 @@ import remarkGfm from 'remark-gfm';
 
 import { useAIStream } from '../../hooks/useAIStream';
 import { useDemoSession } from '../../hooks/useDemoSession';
-import { useVoiceChat } from '../../hooks/useVoiceChat';
+import { useUniversalVoice } from '../../hooks/useUniversalVoice';
 import { submitAIFeedback } from '../../services/api-extensions';
 import { useAppStore } from '../../store/useAppStore';
 import { useArtifactsStore } from '../../store/useArtifactsStore';
@@ -163,7 +163,26 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   } = useConversationStore();
 
   const { addArtifact, togglePanel: toggleArtifactsPanel } = useArtifactsStore();
-  const { speak, stopSpeaking, isSpeaking, voiceEnabled, ttsSupported } = useVoiceChat();
+
+  // Voice Hook
+  const {
+    speak,
+    stopSpeaking,
+    state: voiceState,
+    startListening,
+    stopListening,
+    settings: voiceSettings,
+    updateSettings: updateVoiceSettings,
+  } = useUniversalVoice({
+    onSendMessage: (msg) => handleSendMessage(msg),
+    settings: {
+      autoSpeakResponses: autoReadEnabled,
+      sttProvider: 'whisper',
+      ttsProvider: 'openai',
+      language: t.language || 'pl',
+    },
+  });
+
   const {
     isDemo,
     timeRemainingMs: demoTimeRemainingMs,
@@ -234,7 +253,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       });
 
       // Auto-read AI response if enabled (use ref for current value)
-      if (autoReadEnabledRef.current && ttsSupported && fullText) {
+      if (autoReadEnabledRef.current && fullText) {
         speak(fullText);
       }
 
@@ -659,12 +678,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 )}
 
                 {/* Speak */}
-                {ttsSupported && msg.role === 'ai' && (
+                {msg.role === 'ai' && (
                   <button
-                    onClick={() => (isSpeaking ? stopSpeaking() : speak(msg.content))}
-                    className={`p-1 rounded-md ${isSpeaking ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'} hover:bg-slate-100 dark:hover:bg-navy-700`}
+                    onClick={() => (voiceState.isSpeaking ? stopSpeaking() : speak(msg.content))}
+                    className={`p-1 rounded-md ${voiceState.isSpeaking ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'} hover:bg-slate-100 dark:hover:bg-navy-700`}
                     title={
-                      isSpeaking ? t('chat.actions.stop', 'Stop') : t('chat.actions.speak', 'Speak')
+                      voiceState.isSpeaking
+                        ? t('chat.actions.stop', 'Stop')
+                        : t('chat.actions.speak', 'Speak')
                     }
                   >
                     <Volume2 size={12} />
@@ -749,8 +770,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               onClick={() => setChatSlidingPanelOpen(!isChatSlidingPanelOpen)}
               data-chat-toggle
               className={`p-1.5 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors ${
-                isChatSlidingPanelOpen 
-                  ? 'text-primary-600 dark:text-primary-400' 
+                isChatSlidingPanelOpen
+                  ? 'text-primary-600 dark:text-primary-400'
                   : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300'
               }`}
               title={t('aiChat.history', 'Historia')}
@@ -765,19 +786,23 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           {ttsSupported && (
             <button
               onClick={() => {
-                if (autoReadEnabled && isSpeaking) {
+                if (autoReadEnabled && voiceState.isSpeaking) {
                   stopSpeaking();
                 }
-                setAutoReadEnabled(!autoReadEnabled);
+                const nextState = !autoReadEnabled;
+                setAutoReadEnabled(nextState);
+                updateVoiceSettings({ autoSpeakResponses: nextState });
               }}
               className={`p-1.5 rounded-lg transition-colors ${
                 autoReadEnabled
                   ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30'
                   : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
               }`}
-              title={autoReadEnabled 
-                ? t('aiChat.autoReadOff', 'Wyłącz czytanie na głos') 
-                : t('aiChat.autoReadOn', 'Włącz czytanie na głos')}
+              title={
+                autoReadEnabled
+                  ? t('aiChat.autoReadOff', 'Wyłącz czytanie na głos')
+                  : t('aiChat.autoReadOn', 'Włącz czytanie na głos')
+              }
             >
               {autoReadEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
             </button>
@@ -859,6 +884,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           }
           voiceModeEnabled={voiceModeEnabled}
           onVoiceModeChange={setVoiceModeEnabled}
+          voiceState={voiceState}
+          startVoiceListening={startListening}
+          stopVoiceListening={stopListening}
         />
       </div>
 

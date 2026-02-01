@@ -80,8 +80,14 @@ export class HealthCheckController {
 
     // Check Redis
     try {
-      const { isRedisConnected } = await import('../services/ai/redisClient.js');
-      checks.redis = isRedisConnected();
+      // In local dev we often run without Redis (MOCK_REDIS=true).
+      // Treat mocked Redis as "ready" so the app can start cleanly.
+      if (process.env.MOCK_REDIS === 'true') {
+        checks.redis = true;
+      } else {
+        const { isRedisConnected } = await import('../services/ai/redisClient.js');
+        checks.redis = isRedisConnected();
+      }
     } catch (error) {
       checks.redis = false;
     }

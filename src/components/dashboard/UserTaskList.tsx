@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { Api } from '../../services/api';
-import { AppView, Task, TaskStatus, User } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
+import { AppView, Task, TaskStatus, User } from '../../types';
 import { TaskDetailModal } from '../TaskDetailModal';
 
 interface UserTaskListProps {

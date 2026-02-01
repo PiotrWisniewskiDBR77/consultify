@@ -1,6 +1,6 @@
 /**
  * SIRIForm - Smart Industry Readiness Index Form
- * 
+ *
  * SIRI assessment form with live scoring.
  * Structure:
  * - 3 Building Blocks: Process, Technology, Organization
@@ -9,8 +9,6 @@
  * - Scale: 0-5 (0 = Not Started)
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Activity,
   ArrowRight,
@@ -25,17 +23,19 @@ import {
   TrendingUp,
   Users,
 } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
+  calculateBlockScore,
+  calculateOverallSIRIScore,
   SIRI_BUILDING_BLOCKS,
   SIRI_DIMENSIONS,
-  SIRI_PRIORITISATION_AREAS,
   SIRI_MATURITY_LEVELS,
+  SIRI_PRIORITISATION_AREAS,
   SIRIBuildingBlock,
   SIRIDimension,
   SIRIPrioritisationArea,
-  calculateBlockScore,
-  calculateOverallSIRIScore,
 } from '../../../services/siriStructure';
 
 // Types
@@ -106,23 +106,30 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
     // Calculate block scores
     (['PROCESS', 'TECHNOLOGY', 'ORGANIZATION'] as SIRIBuildingBlock[]).forEach((block) => {
       const blockConfig = SIRI_BUILDING_BLOCKS[block];
-      const dimScores = blockConfig.dimensionIds
-        .map((id) => dimensions[id])
-        .filter(Boolean);
+      const dimScores = blockConfig.dimensionIds.map((id) => dimensions[id]).filter(Boolean);
 
       if (dimScores.length > 0) {
         blockScores[block] = {
-          current: Math.round((dimScores.reduce((sum, d) => sum + (d?.current || 0), 0) / dimScores.length) * 10) / 10,
-          target: Math.round((dimScores.reduce((sum, d) => sum + (d?.target || 0), 0) / dimScores.length) * 10) / 10,
+          current:
+            Math.round(
+              (dimScores.reduce((sum, d) => sum + (d?.current || 0), 0) / dimScores.length) * 10
+            ) / 10,
+          target:
+            Math.round(
+              (dimScores.reduce((sum, d) => sum + (d?.target || 0), 0) / dimScores.length) * 10
+            ) / 10,
         };
       }
     });
 
     // Calculate overall
     const allDims = Object.values(dimensions).filter(Boolean);
-    const overall = allDims.length > 0
-      ? Math.round((allDims.reduce((sum, d) => sum + (d?.current || 0), 0) / allDims.length) * 10) / 10
-      : 0;
+    const overall =
+      allDims.length > 0
+        ? Math.round(
+            (allDims.reduce((sum, d) => sum + (d?.current || 0), 0) / allDims.length) * 10
+          ) / 10
+        : 0;
 
     return { blockScores, overall };
   }, [data.dimensions]);
@@ -159,9 +166,12 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
 
       // Recalculate overall
       const allDims = Object.values(dimensions).filter(Boolean);
-      const overall = allDims.length > 0
-        ? Math.round((allDims.reduce((sum, d) => sum + (d?.current || 0), 0) / allDims.length) * 10) / 10
-        : 0;
+      const overall =
+        allDims.length > 0
+          ? Math.round(
+              (allDims.reduce((sum, d) => sum + (d?.current || 0), 0) / allDims.length) * 10
+            ) / 10
+          : 0;
 
       onChange({
         ...data,
@@ -185,10 +195,13 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
       if (area) {
         const dimensions = { ...data.dimensions };
         const dimAreas = SIRI_PRIORITISATION_AREAS.filter((a) => a.dimension === area.dimension);
-        const areaScores = dimAreas.reduce((acc, a) => {
-          acc[a.id] = matrix[a.id] || 0;
-          return acc;
-        }, {} as Record<string, number>);
+        const areaScores = dimAreas.reduce(
+          (acc, a) => {
+            acc[a.id] = matrix[a.id] || 0;
+            return acc;
+          },
+          {} as Record<string, number>
+        );
 
         const avgScore =
           dimAreas.length > 0
@@ -288,7 +301,9 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
               <Layers size={20} />
             </span>
             <div>
-              <span className="font-medium text-navy-900 dark:text-white block">{dimension.name}</span>
+              <span className="font-medium text-navy-900 dark:text-white block">
+                {dimension.name}
+              </span>
               <span className="text-xs text-slate-500 dark:text-slate-400">
                 {areas.length} {isPolish ? 'obszarów' : 'areas'}
               </span>
@@ -301,17 +316,13 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
                 <span className={`text-${blockColor}-600 dark:text-${blockColor}-400 font-medium`}>
                   {dimData.current || 0}
                 </span>
-                <span className="text-slate-400 text-xs block">
-                  {isPolish ? 'Akt.' : 'Cur.'}
-                </span>
+                <span className="text-slate-400 text-xs block">{isPolish ? 'Akt.' : 'Cur.'}</span>
               </div>
               <div className="text-center">
                 <span className="text-green-600 dark:text-green-400 font-medium">
                   {dimData.target || 0}
                 </span>
-                <span className="text-slate-400 text-xs block">
-                  {isPolish ? 'Cel' : 'Tgt.'}
-                </span>
+                <span className="text-slate-400 text-xs block">{isPolish ? 'Cel' : 'Tgt.'}</span>
               </div>
               {(dimData.gap || 0) > 0 && (
                 <span className="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded text-xs">
@@ -418,8 +429,12 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
                       {level.level}
                     </span>
                     <div>
-                      <span className="font-medium text-navy-900 dark:text-white">{level.title}</span>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{level.description}</p>
+                      <span className="font-medium text-navy-900 dark:text-white">
+                        {level.title}
+                      </span>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {level.description}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -464,7 +479,8 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
               {isPolish ? 'Postęp oceny SIRI' : 'SIRI Assessment Progress'}
             </span>
             <span className="text-sm text-slate-500 dark:text-slate-400">
-              {progress.completed}/{progress.total} {isPolish ? 'wymiarów' : 'dimensions'} ({progress.percent}%)
+              {progress.completed}/{progress.total} {isPolish ? 'wymiarów' : 'dimensions'} (
+              {progress.percent}%)
             </span>
           </div>
           <div className="h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
@@ -542,11 +558,15 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
 
           {/* Block Score Summary */}
           <div className="grid grid-cols-3 gap-4">
-            <div className={`bg-${blockColor}-50 dark:bg-${blockColor}-900/20 rounded-xl p-4 border border-${blockColor}-200 dark:border-${blockColor}-500/30`}>
+            <div
+              className={`bg-${blockColor}-50 dark:bg-${blockColor}-900/20 rounded-xl p-4 border border-${blockColor}-200 dark:border-${blockColor}-500/30`}
+            >
               <p className={`text-sm text-${blockColor}-600 dark:text-${blockColor}-400 mb-1`}>
                 {isPolish ? 'Aktualny poziom' : 'Current Level'}
               </p>
-              <p className={`text-2xl font-bold text-${blockColor}-700 dark:text-${blockColor}-300`}>
+              <p
+                className={`text-2xl font-bold text-${blockColor}-700 dark:text-${blockColor}-300`}
+              >
                 {scores.blockScores[activeBlock].current || '-'}/5
               </p>
             </div>

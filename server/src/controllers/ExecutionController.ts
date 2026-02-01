@@ -13,8 +13,8 @@ import type { Response } from 'express';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as DbPromise from '../utils/DbPromise.js';
-import * as queryHelpers from '../utils/queryHelpers.js';
 import logger from '../utils/Logger.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 
 // Valid execution statuses
 const EXECUTION_STATUSES = ['EXECUTING', 'BLOCKED', 'DONE', 'CANCELLED', 'ARCHIVED'];
@@ -61,7 +61,7 @@ export class ExecutionController {
         WHERE project_id = ? AND organization_id = ?
           AND status IN ('EXECUTING', 'BLOCKED', 'DONE')
       `;
-      const initiatives = await queryHelpers.queryAll(initiativesSql, [projectId, orgId]) || [];
+      const initiatives = (await queryHelpers.queryAll(initiativesSql, [projectId, orgId])) || [];
 
       // Get tasks for the project
       const tasksSql = `
@@ -69,23 +69,24 @@ export class ExecutionController {
         FROM tasks
         WHERE project_id = ? AND organization_id = ?
       `;
-      const tasks = await queryHelpers.queryAll(tasksSql, [projectId, orgId]) || [];
+      const tasks = (await queryHelpers.queryAll(tasksSql, [projectId, orgId])) || [];
 
       const now = Date.now();
-      const onTrackTasks = tasks.filter((t: any) => 
-        t.status !== 'BLOCKED' && (!t.due_date || new Date(t.due_date).getTime() > now)
+      const onTrackTasks = tasks.filter(
+        (t: any) => t.status !== 'BLOCKED' && (!t.due_date || new Date(t.due_date).getTime() > now)
       ).length;
       const atRiskTasks = tasks.filter((t: any) => {
         if (!t.due_date) return false;
-        const daysUntilDue = Math.ceil((new Date(t.due_date).getTime() - now) / (1000 * 60 * 60 * 24));
+        const daysUntilDue = Math.ceil(
+          (new Date(t.due_date).getTime() - now) / (1000 * 60 * 60 * 24)
+        );
         return daysUntilDue > 0 && daysUntilDue <= 3 && t.status !== 'DONE';
       }).length;
       const blockedTasks = tasks.filter((t: any) => t.status === 'BLOCKED').length;
 
       const totalProgress = initiatives.reduce((sum: number, i: any) => sum + (i.progress || 0), 0);
-      const completionPercentage = initiatives.length > 0 
-        ? Math.round(totalProgress / initiatives.length) 
-        : 0;
+      const completionPercentage =
+        initiatives.length > 0 ? Math.round(totalProgress / initiatives.length) : 0;
 
       res.json({
         projectId,
@@ -124,7 +125,8 @@ export class ExecutionController {
           AND i.status = 'BLOCKED'
         ORDER BY i.updated_at DESC
       `;
-      const blockedInitiatives = await queryHelpers.queryAll(blockedInitiativesSql, [projectId, orgId]) || [];
+      const blockedInitiatives =
+        (await queryHelpers.queryAll(blockedInitiativesSql, [projectId, orgId])) || [];
 
       // Get blocked tasks
       const blockedTasksSql = `
@@ -138,7 +140,7 @@ export class ExecutionController {
           AND t.status = 'BLOCKED'
         ORDER BY t.updated_at DESC
       `;
-      const blockedTasks = await queryHelpers.queryAll(blockedTasksSql, [projectId, orgId]) || [];
+      const blockedTasks = (await queryHelpers.queryAll(blockedTasksSql, [projectId, orgId])) || [];
 
       // Get pending decisions that are blocking
       const blockingDecisionsSql = `
@@ -155,7 +157,8 @@ export class ExecutionController {
           )
         ORDER BY d.deadline ASC
       `;
-      const blockingDecisions = await queryHelpers.queryAll(blockingDecisionsSql, [projectId, orgId]) || [];
+      const blockingDecisions =
+        (await queryHelpers.queryAll(blockingDecisionsSql, [projectId, orgId])) || [];
 
       res.json({
         blockedInitiatives: blockedInitiatives.map((b: any) => ({
@@ -215,14 +218,16 @@ export class ExecutionController {
             AND d.status IN ('pending', 'escalated')
             AND di.is_blocker = 1
         `;
-        const pendingResult = await queryHelpers.queryOne<{ count: number }>(
-          pendingDecisionsSql,
-          [initiativeId, projectId]
-        );
+        const pendingResult = await queryHelpers.queryOne<{ count: number }>(pendingDecisionsSql, [
+          initiativeId,
+          projectId,
+        ]);
 
         if (pendingResult && pendingResult.count > 0) {
           canAdvance = false;
-          errors.push(`${pendingResult.count} blocking decision(s) must be resolved before completing`);
+          errors.push(
+            `${pendingResult.count} blocking decision(s) must be resolved before completing`
+          );
         }
       }
 
@@ -233,10 +238,9 @@ export class ExecutionController {
           FROM tasks
           WHERE initiative_id = ? AND status = 'BLOCKED'
         `;
-        const blockedResult = await queryHelpers.queryOne<{ count: number }>(
-          blockedTasksSql,
-          [initiativeId]
-        );
+        const blockedResult = await queryHelpers.queryOne<{ count: number }>(blockedTasksSql, [
+          initiativeId,
+        ]);
 
         if (blockedResult && blockedResult.count > 0) {
           canAdvance = false;
@@ -275,7 +279,7 @@ export class ExecutionController {
         WHERE project_id = ? AND organization_id = ?
           AND status IN ('EXECUTING', 'BLOCKED', 'DONE', 'CANCELLED', 'ARCHIVED')
       `;
-      const initiatives = await queryHelpers.queryAll(initiativesSql, [projectId, orgId]) || [];
+      const initiatives = (await queryHelpers.queryAll(initiativesSql, [projectId, orgId])) || [];
 
       // Get tasks
       const tasksSql = `
@@ -283,7 +287,7 @@ export class ExecutionController {
         FROM tasks
         WHERE project_id = ? AND organization_id = ?
       `;
-      const tasks = await queryHelpers.queryAll(tasksSql, [projectId, orgId]) || [];
+      const tasks = (await queryHelpers.queryAll(tasksSql, [projectId, orgId])) || [];
 
       // Get decisions
       const decisionsSql = `
@@ -292,23 +296,24 @@ export class ExecutionController {
         WHERE project_id = ? AND organization_id = ?
           AND status IN ('pending', 'escalated')
       `;
-      const decisions = await queryHelpers.queryAll(decisionsSql, [projectId, orgId]) || [];
+      const decisions = (await queryHelpers.queryAll(decisionsSql, [projectId, orgId])) || [];
 
       // Calculate metrics
-      const totalInitiatives = initiatives.filter((i: any) => 
+      const totalInitiatives = initiatives.filter((i: any) =>
         ['EXECUTING', 'BLOCKED'].includes(i.status)
       ).length;
       const blockedCount = initiatives.filter((i: any) => i.status === 'BLOCKED').length;
       const onTrackCount = totalInitiatives - blockedCount;
       const atRiskCount = blockedCount;
 
-      const avgProgress = totalInitiatives > 0
-        ? Math.round(
-            initiatives
-              .filter((i: any) => ['EXECUTING', 'BLOCKED'].includes(i.status))
-              .reduce((sum: number, i: any) => sum + (i.progress || 0), 0) / totalInitiatives
-          )
-        : 0;
+      const avgProgress =
+        totalInitiatives > 0
+          ? Math.round(
+              initiatives
+                .filter((i: any) => ['EXECUTING', 'BLOCKED'].includes(i.status))
+                .reduce((sum: number, i: any) => sum + (i.progress || 0), 0) / totalInitiatives
+            )
+          : 0;
 
       const now = Date.now();
       const overdueDecisions = decisions.filter((d: any) => {
@@ -318,27 +323,24 @@ export class ExecutionController {
       const totalDecisions = decisions.length;
 
       const completedTasks = tasks.filter((t: any) => t.status === 'DONE').length;
-      const taskHealth = tasks.length > 0 
-        ? Math.round((completedTasks / tasks.length) * 100) 
-        : 0;
+      const taskHealth = tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0;
 
-      const decisionHealth = totalDecisions > 0
-        ? Math.max(0, 100 - Math.round((overdueDecisions / totalDecisions) * 100))
-        : 100;
+      const decisionHealth =
+        totalDecisions > 0
+          ? Math.max(0, 100 - Math.round((overdueDecisions / totalDecisions) * 100))
+          : 100;
 
-      const riskHealth = totalInitiatives > 0
-        ? Math.max(0, 100 - Math.round((blockedCount / totalInitiatives) * 100))
-        : 100;
+      const riskHealth =
+        totalInitiatives > 0
+          ? Math.max(0, 100 - Math.round((blockedCount / totalInitiatives) * 100))
+          : 100;
 
       const healthScore = Math.round((avgProgress + decisionHealth + taskHealth + riskHealth) / 4);
 
       // Budget health (simplified - percentage of initiatives with budget data)
-      const budgetValues = initiatives
-        .filter((i: any) => i.cost_capex || i.cost_opex)
-        .length;
-      const budgetHealth = initiatives.length > 0 
-        ? Math.round((budgetValues / initiatives.length) * 100) 
-        : null;
+      const budgetValues = initiatives.filter((i: any) => i.cost_capex || i.cost_opex).length;
+      const budgetHealth =
+        initiatives.length > 0 ? Math.round((budgetValues / initiatives.length) * 100) : null;
 
       const metrics: PortfolioHealthMetrics = {
         healthScore,
@@ -392,16 +394,19 @@ export class ExecutionController {
 
       sql += ` GROUP BY status`;
 
-      const stats = await queryHelpers.queryAll(sql, params) || [];
+      const stats = (await queryHelpers.queryAll(sql, params)) || [];
 
-      const result = EXECUTION_STATUSES.reduce((acc, status) => {
-        const stat = stats.find((s: any) => s.status === status);
-        acc[status] = {
-          count: stat?.count || 0,
-          avgProgress: Math.round(stat?.avg_progress || 0),
-        };
-        return acc;
-      }, {} as Record<string, { count: number; avgProgress: number }>);
+      const result = EXECUTION_STATUSES.reduce(
+        (acc, status) => {
+          const stat = stats.find((s: any) => s.status === status);
+          acc[status] = {
+            count: stat?.count || 0,
+            avgProgress: Math.round(stat?.avg_progress || 0),
+          };
+          return acc;
+        },
+        {} as Record<string, { count: number; avgProgress: number }>
+      );
 
       res.json({
         stats: result,
@@ -448,7 +453,7 @@ export class ExecutionController {
 
       decisionsSql += ` ORDER BY days_overdue DESC LIMIT 50`;
 
-      const overdueDecisions = await queryHelpers.queryAll(decisionsSql, params) || [];
+      const overdueDecisions = (await queryHelpers.queryAll(decisionsSql, params)) || [];
 
       // Categorize by escalation level
       const amber = overdueDecisions.filter((d: any) => {
@@ -504,9 +509,11 @@ export class ExecutionController {
         return;
       }
 
-      const start = startDate ? new Date(String(startDate)).toISOString() : new Date().toISOString();
-      const end = endDate 
-        ? new Date(String(endDate)).toISOString() 
+      const start = startDate
+        ? new Date(String(startDate)).toISOString()
+        : new Date().toISOString();
+      const end = endDate
+        ? new Date(String(endDate)).toISOString()
         : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
       // Get tasks with due dates
@@ -530,7 +537,7 @@ export class ExecutionController {
 
       tasksSql += ` ORDER BY t.due_date ASC`;
 
-      const tasks = await queryHelpers.queryAll(tasksSql, taskParams) || [];
+      const tasks = (await queryHelpers.queryAll(tasksSql, taskParams)) || [];
 
       // Get decisions with deadlines
       let decisionsSql = `
@@ -554,7 +561,7 @@ export class ExecutionController {
 
       decisionsSql += ` ORDER BY d.deadline ASC`;
 
-      const decisions = await queryHelpers.queryAll(decisionsSql, decisionParams) || [];
+      const decisions = (await queryHelpers.queryAll(decisionsSql, decisionParams)) || [];
 
       res.json({
         items: [

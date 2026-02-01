@@ -1,5 +1,6 @@
 import {
   ArrowLeft,
+  ArrowRight,
   CheckCircle2,
   ChevronDown,
   Grid2X2,
@@ -128,6 +129,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
   const [isMatrixFullscreen, setIsMatrixFullscreen] = useState(false);
   const [activeLevel, setActiveLevel] = useState<number>(currentLevel ?? 1);
   const [isDetailsOpen, setIsDetailsOpen] = useState(true);
+  const [isExplanationExpanded, setIsExplanationExpanded] = useState(false);
   // In matrix, we want content visible by default (tech examples per cell)
   const [matrixShowText, setMatrixShowText] = useState(true);
   const [matrixCompact, setMatrixCompact] = useState(true);
@@ -197,6 +199,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
     setIsDetailsOpen(true);
     setActiveCardPanel(null);
     setLinkDraft('');
+    setIsExplanationExpanded(false);
     // Keep navigation snappy: bring the active card into view.
     setTimeout(() => {
       const el = document.getElementById(`drd-level-${lvl}`);
@@ -240,6 +243,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
   React.useEffect(() => {
     setActiveCardPanel(null);
     setLinkDraft('');
+    setIsExplanationExpanded(false);
     if (currentLevel === undefined) {
       const s = getAreaState(value, areaId, levelCount);
       const next = clamp((s.achievedLevel || 0) + 1, 1, levelCount);
@@ -1003,6 +1007,61 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             )}
                         </div>
 
+                        {/* Explanation (collapsed by default; expandable) */}
+                        <div className="mt-3 rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950 p-4">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                              Explanation
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setIsExplanationExpanded((v) => !v)}
+                              className="text-xs font-semibold text-purple-600 dark:text-purple-400 hover:underline"
+                            >
+                              {isExplanationExpanded ? 'Less' : 'More'}
+                            </button>
+                          </div>
+
+                          <div className="mt-2 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                            <div className={isExplanationExpanded ? '' : 'line-clamp-2'}>
+                              {lvl.description}{' '}
+                              <span className="text-slate-500 dark:text-slate-400">
+                                Use evidence (screenshot, report, system log, procedure, KPI) to
+                                justify your choice.
+                              </span>
+                            </div>
+
+                            {isExplanationExpanded && (
+                              <div className="mt-3 space-y-2">
+                                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                  How to decide
+                                </div>
+                                <ul className="space-y-1">
+                                  <li>
+                                    <span className="font-semibold">Achieved</span>: this is in
+                                    place and used in practice (not only a pilot).
+                                  </li>
+                                  <li>
+                                    <span className="font-semibold">Target</span>: desired “to‑be”
+                                    level (planned / roadmap target).
+                                  </li>
+                                  <li>
+                                    <span className="font-semibold">Skip</span>: explicitly mark
+                                    “not planned” for this level.
+                                  </li>
+                                </ul>
+                                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                  Tip
+                                </div>
+                                <div>
+                                  If you’re unsure, add a short comment + attach a quick artifact.
+                                  You can always change your mind later.
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
                         {/* Quick actions */}
                         <div className="mt-3 flex flex-wrap items-center gap-2">
                           <button
@@ -1012,8 +1071,8 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             }
                             className={`inline-flex items-center gap-2 h-9 px-3 rounded-lg border text-xs font-semibold transition-colors ${
                               activeCardPanel === 'questions'
-                                ? 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-800 dark:text-slate-100'
-                                : 'bg-transparent border-slate-200/70 dark:border-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-900/40'
+                                ? 'bg-white dark:bg-navy-900 border-slate-300 dark:border-navy-600 text-slate-800 dark:text-slate-100 shadow-sm'
+                                : 'bg-white/70 dark:bg-white/5 border-slate-300/80 dark:border-white/15 text-slate-700 dark:text-slate-200 shadow-sm hover:bg-white dark:hover:bg-white/8 hover:border-slate-400/80 dark:hover:border-white/25'
                             }`}
                           >
                             <HelpCircle className="w-4 h-4" />
@@ -1027,8 +1086,8 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             }
                             className={`inline-flex items-center gap-2 h-9 px-3 rounded-lg border text-xs font-semibold transition-colors ${
                               activeCardPanel === 'comment'
-                                ? 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-800 dark:text-slate-100'
-                                : 'bg-transparent border-slate-200/70 dark:border-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-900/40'
+                                ? 'bg-white dark:bg-navy-900 border-slate-300 dark:border-navy-600 text-slate-800 dark:text-slate-100 shadow-sm'
+                                : 'bg-white/70 dark:bg-white/5 border-slate-300/80 dark:border-white/15 text-slate-700 dark:text-slate-200 shadow-sm hover:bg-white dark:hover:bg-white/8 hover:border-slate-400/80 dark:hover:border-white/25'
                             }`}
                           >
                             <MessageSquare className="w-4 h-4" />
@@ -1044,8 +1103,8 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             }
                             className={`inline-flex items-center gap-2 h-9 px-3 rounded-lg border text-xs font-semibold transition-colors ${
                               activeCardPanel === 'attachments'
-                                ? 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-800 dark:text-slate-100'
-                                : 'bg-transparent border-slate-200/70 dark:border-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-900/40'
+                                ? 'bg-white dark:bg-navy-900 border-slate-300 dark:border-navy-600 text-slate-800 dark:text-slate-100 shadow-sm'
+                                : 'bg-white/70 dark:bg-white/5 border-slate-300/80 dark:border-white/15 text-slate-700 dark:text-slate-200 shadow-sm hover:bg-white dark:hover:bg-white/8 hover:border-slate-400/80 dark:hover:border-white/25'
                             }`}
                           >
                             <Paperclip className="w-4 h-4" />
@@ -1059,8 +1118,8 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             }
                             className={`inline-flex items-center gap-2 h-9 px-3 rounded-lg border text-xs font-semibold transition-colors ${
                               activeCardPanel === 'links'
-                                ? 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-800 dark:text-slate-100'
-                                : 'bg-transparent border-slate-200/70 dark:border-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-900/40'
+                                ? 'bg-white dark:bg-navy-900 border-slate-300 dark:border-navy-600 text-slate-800 dark:text-slate-100 shadow-sm'
+                                : 'bg-white/70 dark:bg-white/5 border-slate-300/80 dark:border-white/15 text-slate-700 dark:text-slate-200 shadow-sm hover:bg-white dark:hover:bg-white/8 hover:border-slate-400/80 dark:hover:border-white/25'
                             }`}
                           >
                             <Link2 className="w-4 h-4" />
@@ -1190,20 +1249,26 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                           return (
                             <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-800">
                               <div className="grid grid-cols-3 items-center gap-3">
-                                <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                                  Transparent = not achieved. Use{' '}
-                                  <span className="font-semibold">Skip</span> to explicitly mark
-                                  “not planned”.
-                                </div>
+                                <div />
 
                                 <div className="flex items-center justify-center gap-2">
                                   <button
                                     type="button"
                                     disabled={readOnly}
                                     onClick={() => {
+                                      // Toggle Achieved for this level.
+                                      // If already achieved (even implicitly), clicking again will un-achieve this level
+                                      // by lowering the achievedLevel to (level - 1).
+                                      const cur = getAreaState(value, areaId, levelCount);
+                                      const curAchieved = Number(cur.achievedLevel || 0);
+                                      const already = curAchieved >= lvl.level;
+
+                                      // Ensure mutual exclusivity: Achieved clears Skip and "Target on this level".
                                       setLevelDecision(lvl.level, undefined);
-                                      setAchieved(lvl.level, true);
-                                      if (next) setLevel(next.level);
+                                      if (Number(cur.targetLevel || 0) === lvl.level)
+                                        setTargetLevel(undefined);
+
+                                      setAchieved(lvl.level, !already);
                                     }}
                                     className={`h-10 w-28 rounded-lg text-sm font-semibold border transition-colors ${
                                       achieved
@@ -1218,8 +1283,24 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                     type="button"
                                     disabled={readOnly}
                                     onClick={() => {
+                                      // Toggle Target for this level.
+                                      const cur = getAreaState(value, areaId, levelCount);
+                                      const alreadyTarget =
+                                        Number(cur.targetLevel || 0) === lvl.level;
+
+                                      // Ensure mutual exclusivity: Target clears Skip.
                                       setLevelDecision(lvl.level, undefined);
-                                      setTargetLevel(lvl.level);
+
+                                      // If the level is currently achieved, Target means "not achieved" (to-be),
+                                      // so we lower achievedLevel below this level.
+                                      if (
+                                        !alreadyTarget &&
+                                        Number(cur.achievedLevel || 0) >= lvl.level
+                                      ) {
+                                        setAchieved(lvl.level, false);
+                                      }
+
+                                      setTargetLevel(alreadyTarget ? undefined : lvl.level);
                                     }}
                                     className={`h-10 w-28 rounded-lg text-sm font-semibold border transition-colors ${
                                       isTarget
@@ -1234,18 +1315,32 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                     type="button"
                                     disabled={readOnly}
                                     onClick={() => {
-                                      if (state.achievedLevel >= lvl.level) {
+                                      // Toggle Skip (explicit "not planned") for this level.
+                                      const cur = getAreaState(value, areaId, levelCount);
+                                      const alreadySkipped =
+                                        (cur.levelDecisions || {})[String(lvl.level)] === 'skip';
+
+                                      if (alreadySkipped) {
+                                        // Un-skip -> back to transparent (not achieved, not target, no skip)
+                                        setLevelDecision(lvl.level, undefined);
+                                        return;
+                                      }
+
+                                      if (Number(cur.achievedLevel || 0) >= lvl.level) {
                                         const ok = window.confirm(
                                           `Skipping Level ${lvl.level} will lower the maximum achieved level to ${lvl.level - 1}. Continue?`
                                         );
                                         if (!ok) return;
                                       }
-                                      if ((state.targetLevel || 0) === lvl.level) {
+
+                                      // Ensure mutual exclusivity: Skip clears "Target on this level".
+                                      if (Number(cur.targetLevel || 0) === lvl.level) {
                                         setTargetLevel(undefined);
                                       }
+
+                                      // Skip always implies "not achieved" at this level
                                       setAchieved(lvl.level, false);
                                       setLevelDecision(lvl.level, 'skip');
-                                      if (next) setLevel(next.level);
                                     }}
                                     className={`h-10 w-28 rounded-lg text-sm font-semibold border transition-colors ${
                                       isSkipped
@@ -1258,22 +1353,29 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                 </div>
 
                                 <div className="flex items-center justify-end gap-2">
-                                  <button
-                                    type="button"
-                                    disabled={!prev}
-                                    onClick={() => prev && setLevel(prev.level)}
-                                    className="h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
-                                  >
-                                    Previous
-                                  </button>
-                                  <button
-                                    type="button"
-                                    disabled={!next}
-                                    onClick={() => next && setLevel(next.level)}
-                                    className="h-10 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white text-sm font-semibold"
-                                  >
-                                    Next
-                                  </button>
+                                  <div className="inline-flex overflow-hidden rounded-xl border border-slate-200/80 dark:border-white/15 bg-white/80 dark:bg-white/5 shadow-sm">
+                                    <button
+                                      type="button"
+                                      disabled={!prev}
+                                      onClick={() => prev && setLevel(prev.level)}
+                                      className="h-10 px-4 inline-flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50/80 dark:hover:bg-white/8 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                      title="Previous"
+                                    >
+                                      <ArrowLeft className="w-4 h-4" />
+                                      Previous
+                                    </button>
+                                    <div className="w-px bg-slate-200/80 dark:bg-white/10" />
+                                    <button
+                                      type="button"
+                                      disabled={!next}
+                                      onClick={() => next && setLevel(next.level)}
+                                      className="h-10 px-4 inline-flex items-center gap-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300/60 disabled:text-white/90 disabled:cursor-not-allowed transition-colors"
+                                      title="Next"
+                                    >
+                                      Next
+                                      <ArrowRight className="w-4 h-4" />
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             </div>

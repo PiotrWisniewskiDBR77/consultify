@@ -302,7 +302,8 @@ export const verifyToken = asyncHandler(
     try {
       const { jwt: jwtLib, config } = await getDeps();
 
-      const jwtSecret = (config as { JWT_SECRET: string })?.JWT_SECRET || (config as any)?.JWT_SECRET;
+      const jwtSecret =
+        (config as { JWT_SECRET: string })?.JWT_SECRET || (config as any)?.JWT_SECRET;
       if (!config || !jwtSecret) {
         logger.error(
           `[AuthMiddleware] CRITICAL: config object is ${typeof config}, keys: ${config ? Object.keys(config) : 'none'}, JWT_SECRET is ${config?.JWT_SECRET ? 'present' : 'missing'}`

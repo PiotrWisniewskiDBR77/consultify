@@ -946,4 +946,186 @@ router.post(
   }
 );
 
+// ============================================
+// Gate Decisions Endpoints
+// ============================================
+
+/**
+ * GET /api/assessment-workflow-v2/:assessmentId/gate-decisions
+ * List gate decisions for this assessment with assignee info.
+ */
+router.get('/:assessmentId/gate-decisions', async (req, res) => {
+  try {
+    const { assessmentId } = req.params as any;
+    const { userId, organizationId } = getAuthContext(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const roleInfo = await AssessmentPermissionService.getUserRole(
+      String(assessmentId),
+      String(userId),
+      String(organizationId)
+    );
+    if (!roleInfo?.permissions?.canView) {
+      return res.status(403).json({ error: 'Permission denied', required: 'canView' });
+    }
+
+    const db = getDatabase();
+
+    // Try to fetch from assessment_gate_decisions table (may not exist yet)
+    let decisions: any[] = [];
+    try {
+      const rows = await db.all<any>(
+        `SELECT 
+          gd.id,
+          gd.gate_type as gateType,
+          gd.from_status as fromStatus,
+          gd.to_status as toStatus,
+          gd.approver_role as approverRole,
+          gd.assignee_id as assigneeId,
+          gd.status,
+          gd.requested_at as requestedAt,
+          gd.requested_by as requestedBy,
+          gd.request_comment as requestComment,
+          gd.decided_at as decidedAt,
+          gd.decided_by as decidedBy,
+          gd.decision_comment as decisionComment,
+          gd.reminder_count as reminderCount,
+          u_assignee.display_name as assigneeName,
+          u_assignee.email as assigneeEmail,
+          u_requester.display_name as requesterName,
+          u_requester.email as requesterEmail
+        FROM assessment_gate_decisions gd
+        LEFT JOIN users u_assignee ON u_assignee.id = gd.assignee_id
+        LEFT JOIN users u_requester ON u_requester.id = gd.requested_by
+        WHERE gd.assessment_id = ?
+        ORDER BY gd.created_at ASC`,
+        [String(assessmentId)]
+      );
+      decisions = rows || [];
+    } catch (tableErr: any) {
+      // Table doesn't exist yet - return empty decisions
+      logger.warn('[AssessmentWorkflowV2] Gate decisions table not found, returning empty list');
+      decisions = [];
+    }
+
+    return res.json({ decisions });
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflowV2] Error fetching gate decisions:', err);
+    return res.status(500).json({ error: 'Failed to fetch gate decisions', message: err.message });
+  }
+});
+
+/**
+ * PUT /api/assessment-workflow-v2/:assessmentId/gate-decisions/:gateType
+ * Update a gate decision (assign user, update status, etc.)
+ */
+router.put('/:assessmentId/gate-decisions/:gateType', async (req, res) => {
+  try {
+    const { assessmentId, gateType } = req.params as any;
+    const { userId: actorId, organizationId } = getAuthContext(req);
+    if (!actorId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const ok = await requireAssessmentPermission(req, res, 'canManage');
+    if (!ok) return;
+
+    const { assigneeId, status } = req.body || {};
+    const db = getDatabase();
+    const now = new Date().toISOString();
+
+    // Validate gate type
+    const validGates = [
+      'REQUEST_REVIEW',
+      'APPROVE_REPORT',
+      'APPROVE_ASSESSMENT',
+      'GENERATE_INITIATIVES',
+    ];
+    if (!validGates.includes(String(gateType).toUpperCase())) {
+      return res.status(400).json({ error: 'Invalid gate type' });
+    }
+
+    // Check if record exists
+    let existing: any = null;
+    try {
+      existing = await db.get<any>(
+        `SELECT id FROM assessment_gate_decisions WHERE assessment_id = ? AND gate_type = ?`,
+        [String(assessmentId), String(gateType).toUpperCase()]
+      );
+    } catch {
+      // Table might not exist
+    }
+
+    if (existing) {
+      // Update existing
+      const updates: string[] = [];
+      const params: any[] = [];
+
+      if (assigneeId !== undefined) {
+        updates.push('assignee_id = ?');
+        params.push(assigneeId ? String(assigneeId) : null);
+      }
+      if (status !== undefined) {
+        updates.push('status = ?');
+        params.push(String(status).toUpperCase());
+      }
+
+      if (updates.length > 0) {
+        updates.push('updated_at = ?');
+        params.push(now);
+        params.push(String(assessmentId));
+        params.push(String(gateType).toUpperCase());
+
+        await db.run(
+          `UPDATE assessment_gate_decisions SET ${updates.join(', ')} WHERE assessment_id = ? AND gate_type = ?`,
+          params
+        );
+      }
+    } else {
+      // Create new gate decision record
+      const gateId = uuidv4();
+      const gateConfig: Record<string, { from: string; to: string; role: string }> = {
+        REQUEST_REVIEW: { from: 'DRAFT', to: 'IN_REVIEW', role: 'manager' },
+        APPROVE_REPORT: { from: 'IN_REVIEW', to: 'AWAITING_APPROVAL', role: 'admin' },
+        APPROVE_ASSESSMENT: { from: 'AWAITING_APPROVAL', to: 'APPROVED', role: 'admin' },
+        GENERATE_INITIATIVES: { from: 'APPROVED', to: 'APPROVED', role: 'manager' },
+      };
+
+      const config = gateConfig[String(gateType).toUpperCase()] || {
+        from: 'DRAFT',
+        to: 'DRAFT',
+        role: 'admin',
+      };
+
+      try {
+        await db.run(
+          `INSERT INTO assessment_gate_decisions (
+            id, assessment_id, organization_id, gate_type, from_status, to_status,
+            approver_role, assignee_id, status, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            gateId,
+            String(assessmentId),
+            String(organizationId),
+            String(gateType).toUpperCase(),
+            config.from,
+            config.to,
+            config.role,
+            assigneeId ? String(assigneeId) : null,
+            status ? String(status).toUpperCase() : 'NOT_STARTED',
+            now,
+            now,
+          ]
+        );
+      } catch (insertErr: any) {
+        logger.error('[AssessmentWorkflowV2] Error creating gate decision:', insertErr);
+        return res.status(500).json({ error: 'Failed to create gate decision' });
+      }
+    }
+
+    return res.json({ ok: true });
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflowV2] Error updating gate decision:', err);
+    return res.status(500).json({ error: 'Failed to update gate decision', message: err.message });
+  }
+});
+
 export default router;

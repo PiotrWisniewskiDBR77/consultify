@@ -31,21 +31,21 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  BulkActionBar,
+  type ColumnDef,
+  ColumnResizer,
+  type ColumnWidths,
+  createNotificationBulkActions,
+  NOTIFICATION_TYPE_FILTER_OPTIONS,
+  type TableFilters,
+} from '@/components/ui/ResizableTable';
+import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
+import { type SnoozePreset, useNotificationSnooze } from '@/hooks/useNotificationSnooze';
 import { Api } from '@/services/api';
-import { useNotificationSnooze, type SnoozePreset } from '@/hooks/useNotificationSnooze';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
-import {
-  BulkActionBar,
-  ColumnResizer,
-  createNotificationBulkActions,
-  type ColumnDef,
-  type ColumnWidths,
-  type TableFilters,
-  NOTIFICATION_TYPE_FILTER_OPTIONS,
-} from '@/components/ui/ResizableTable';
-import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 
 type NotificationFilter = 'all' | 'unread' | 'today' | 'week';
 
@@ -305,7 +305,7 @@ const NOTIFICATION_COLUMNS: ColumnDef[] = [
 ];
 
 // Default column widths
-const getDefaultColumnWidths = (): ColumnWidths => 
+const getDefaultColumnWidths = (): ColumnWidths =>
   NOTIFICATION_COLUMNS.reduce((acc, col) => ({ ...acc, [col.id]: col.width }), {});
 
 // Notification Table Row Component
@@ -322,13 +322,13 @@ const NotificationTableRow: React.FC<{
   snoozedUntilLabel?: string | null;
   columnWidths: ColumnWidths;
   isPolish?: boolean;
-}> = ({ 
-  notification, 
-  isSelected, 
-  onSelect, 
-  onMarkRead, 
-  onDelete, 
-  onClick, 
+}> = ({
+  notification,
+  isSelected,
+  onSelect,
+  onMarkRead,
+  onDelete,
+  onClick,
   onOpenChat,
   onSnooze,
   isSnoozed,
@@ -376,9 +376,10 @@ const NotificationTableRow: React.FC<{
           }}
           className={`
             w-5 h-5 rounded border flex items-center justify-center transition-all
-            ${isSelected
-              ? 'bg-primary-500 border-primary-500 text-white'
-              : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
+            ${
+              isSelected
+                ? 'bg-primary-500 border-primary-500 text-white'
+                : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
             }
           `}
         >
@@ -510,8 +511,14 @@ const NotificationTableRow: React.FC<{
                       {[
                         { preset: '1h' as SnoozePreset, label: isPolish ? '1 godz.' : '1 hour' },
                         { preset: '4h' as SnoozePreset, label: isPolish ? '4 godz.' : '4 hours' },
-                        { preset: 'tomorrow' as SnoozePreset, label: isPolish ? 'Jutro' : 'Tomorrow' },
-                        { preset: 'next_week' as SnoozePreset, label: isPolish ? 'Za tydzień' : 'Next week' },
+                        {
+                          preset: 'tomorrow' as SnoozePreset,
+                          label: isPolish ? 'Jutro' : 'Tomorrow',
+                        },
+                        {
+                          preset: 'next_week' as SnoozePreset,
+                          label: isPolish ? 'Za tydzień' : 'Next week',
+                        },
                       ].map(({ preset, label }) => (
                         <button
                           key={preset}
@@ -658,16 +665,16 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
   const isPolish = i18n.language === 'pl';
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  
+
   // Column widths state (for resizable columns)
   const [columnWidths, setColumnWidths] = useState<ColumnWidths>(getDefaultColumnWidths());
-  
+
   // Filter state (session only)
   const [tableFilters, setTableFilters] = useState<TableFilters>({});
-  
+
   // Open filter dropdown state
   const [openFilterId, setOpenFilterId] = useState<string | null>(null);
 
@@ -704,8 +711,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
-        (n) =>
-          n.title?.toLowerCase().includes(query) || n.message?.toLowerCase().includes(query)
+        (n) => n.title?.toLowerCase().includes(query) || n.message?.toLowerCase().includes(query)
       );
     }
 
@@ -818,10 +824,13 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
       severity: notification.severity,
       title: notification.title,
       message: notification.message,
-      relatedEntity: notification.relatedObjectType && notification.relatedObjectId ? {
-        type: notification.relatedObjectType,
-        id: notification.relatedObjectId,
-      } : null,
+      relatedEntity:
+        notification.relatedObjectType && notification.relatedObjectId
+          ? {
+              type: notification.relatedObjectType,
+              id: notification.relatedObjectId,
+            }
+          : null,
       projectId: notification.projectId || null,
       projectName: notification.projectName || null,
     });
@@ -835,19 +844,19 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
     const presetLabels: Record<SnoozePreset, { en: string; pl: string }> = {
       '1h': { en: '1 hour', pl: '1 godzinę' },
       '4h': { en: '4 hours', pl: '4 godziny' },
-      'tomorrow': { en: 'tomorrow', pl: 'jutro' },
-      'next_week': { en: 'next week', pl: 'za tydzień' },
+      tomorrow: { en: 'tomorrow', pl: 'jutro' },
+      next_week: { en: 'next week', pl: 'za tydzień' },
     };
     toast.success(
-      isPolish 
-        ? `Powiadomienie odłożone na ${presetLabels[preset].pl}` 
+      isPolish
+        ? `Powiadomienie odłożone na ${presetLabels[preset].pl}`
         : `Notification snoozed for ${presetLabels[preset].en}`
     );
   };
 
   // Selection helpers
   const allVisibleNotificationIds = useMemo(() => {
-    return new Set(filteredNotifications.map(n => n.id));
+    return new Set(filteredNotifications.map((n) => n.id));
   }, [filteredNotifications]);
 
   const allSelected = selectedIds.size > 0 && selectedIds.size === allVisibleNotificationIds.size;
@@ -899,9 +908,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
     try {
       await Promise.all(Array.from(selectedIds).map((id) => Api.markNotificationRead(id)));
       setNotifications((prev) =>
-        prev.map((n) =>
-          selectedIds.has(n.id) ? { ...n, read: true, isRead: true } : n
-        )
+        prev.map((n) => (selectedIds.has(n.id) ? { ...n, read: true, isRead: true } : n))
       );
       toast.success(`${selectedIds.size} notifications marked as read`);
       setSelectedIds(new Set());
@@ -931,24 +938,24 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
   // Apply table filters and exclude snoozed notifications
   const displayedNotifications = useMemo(() => {
     let result = filteredNotifications;
-    
+
     // Filter out snoozed notifications
     const snoozedIds = getSnoozedIds();
-    result = result.filter(n => !snoozedIds.includes(n.id));
-    
+    result = result.filter((n) => !snoozedIds.includes(n.id));
+
     const severityFilter = tableFilters.severity as string[] | undefined;
     const typeFilter = tableFilters.type as string[] | undefined;
-    
+
     if (severityFilter?.length) {
-      result = result.filter(n => severityFilter.includes(n.severity?.toLowerCase() || ''));
+      result = result.filter((n) => severityFilter.includes(n.severity?.toLowerCase() || ''));
     }
     if (typeFilter?.length) {
-      result = result.filter(n => {
+      result = result.filter((n) => {
         const type = getTypeConfig(n.type).label.toLowerCase();
         return typeFilter.includes(type);
       });
     }
-    
+
     return result;
   }, [filteredNotifications, tableFilters, getSnoozedIds]);
 
@@ -961,7 +968,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
       earlier: [],
     };
 
-    displayedNotifications.forEach(n => {
+    displayedNotifications.forEach((n) => {
       const group = getTimeGroup(n.createdAt);
       groups[group].push(n);
     });
@@ -971,7 +978,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
 
   // Check if we should show grouping (more than one group has items)
   const showGrouping = useMemo(() => {
-    const nonEmptyGroups = Object.values(groupedNotifications).filter(g => g.length > 0);
+    const nonEmptyGroups = Object.values(groupedNotifications).filter((g) => g.length > 0);
     return nonEmptyGroups.length > 1;
   }, [groupedNotifications]);
 
@@ -1027,17 +1034,28 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                     )}
                   </button>
                 </th>
-                
+
                 {/* Severity with Filter */}
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.severity }}>
+                <th
+                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                  style={{ width: columnWidths.severity }}
+                >
                   <div className="flex items-center gap-1">
-                    <span className={(tableFilters.severity as string[])?.length ? 'text-primary-500' : ''}>Severity</span>
+                    <span
+                      className={
+                        (tableFilters.severity as string[])?.length ? 'text-primary-500' : ''
+                      }
+                    >
+                      Severity
+                    </span>
                     <FilterDropdown
-                      column={NOTIFICATION_COLUMNS.find(c => c.id === 'severity')!}
+                      column={NOTIFICATION_COLUMNS.find((c) => c.id === 'severity')!}
                       value={tableFilters.severity as string[]}
                       onChange={(val) => handleFilterChange('severity', val as string[])}
                       isOpen={openFilterId === 'severity'}
-                      onToggle={() => setOpenFilterId(openFilterId === 'severity' ? null : 'severity')}
+                      onToggle={() =>
+                        setOpenFilterId(openFilterId === 'severity' ? null : 'severity')
+                      }
                       onClose={() => setOpenFilterId(null)}
                     />
                   </div>
@@ -1049,13 +1067,20 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                     onResize={handleColumnResize}
                   />
                 </th>
-                
+
                 {/* Type with Filter */}
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.type }}>
+                <th
+                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                  style={{ width: columnWidths.type }}
+                >
                   <div className="flex items-center gap-1">
-                    <span className={(tableFilters.type as string[])?.length ? 'text-primary-500' : ''}>Type</span>
+                    <span
+                      className={(tableFilters.type as string[])?.length ? 'text-primary-500' : ''}
+                    >
+                      Type
+                    </span>
                     <FilterDropdown
-                      column={NOTIFICATION_COLUMNS.find(c => c.id === 'type')!}
+                      column={NOTIFICATION_COLUMNS.find((c) => c.id === 'type')!}
                       value={tableFilters.type as string[]}
                       onChange={(val) => handleFilterChange('type', val as string[])}
                       isOpen={openFilterId === 'type'}
@@ -1071,11 +1096,14 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                     onResize={handleColumnResize}
                   />
                 </th>
-                
+
                 <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                   Notification
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.source }}>
+                <th
+                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                  style={{ width: columnWidths.source }}
+                >
                   <span>Source</span>
                   <ColumnResizer
                     columnId="source"
@@ -1085,7 +1113,10 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                     onResize={handleColumnResize}
                   />
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.time }}>
+                <th
+                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                  style={{ width: columnWidths.time }}
+                >
                   <span>Time</span>
                   <ColumnResizer
                     columnId="time"
@@ -1095,79 +1126,82 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                     onResize={handleColumnResize}
                   />
                 </th>
-                <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: columnWidths.actions }}>
+                <th
+                  className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
+                  style={{ width: columnWidths.actions }}
+                >
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody>
               <AnimatePresence>
-                {showGrouping ? (
-                  // Render with time grouping
-                  (['today', 'yesterday', 'this_week', 'earlier'] as TimeGroup[]).map(group => {
-                    const groupNotifications = groupedNotifications[group];
-                    if (groupNotifications.length === 0) return null;
-                    
-                    return (
-                      <React.Fragment key={group}>
-                        {/* Group header */}
-                        <tr className="bg-slate-100/50 dark:bg-navy-800/50">
-                          <td colSpan={7} className="px-4 py-2">
-                            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                              {isPolish ? TIME_GROUP_LABELS[group].pl : TIME_GROUP_LABELS[group].en}
-                              <span className="ml-2 text-slate-400 dark:text-slate-500 font-normal">
-                                ({groupNotifications.length})
+                {showGrouping
+                  ? // Render with time grouping
+                    (['today', 'yesterday', 'this_week', 'earlier'] as TimeGroup[]).map((group) => {
+                      const groupNotifications = groupedNotifications[group];
+                      if (groupNotifications.length === 0) return null;
+
+                      return (
+                        <React.Fragment key={group}>
+                          {/* Group header */}
+                          <tr className="bg-slate-100/50 dark:bg-navy-800/50">
+                            <td colSpan={7} className="px-4 py-2">
+                              <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                                {isPolish
+                                  ? TIME_GROUP_LABELS[group].pl
+                                  : TIME_GROUP_LABELS[group].en}
+                                <span className="ml-2 text-slate-400 dark:text-slate-500 font-normal">
+                                  ({groupNotifications.length})
+                                </span>
                               </span>
-                            </span>
-                          </td>
-                        </tr>
-                        {/* Group notifications */}
-                        {groupNotifications.map((notification) => (
-                          <NotificationTableRow
-                            key={notification.id}
-                            notification={notification}
-                            isSelected={selectedIds.has(notification.id)}
-                            onSelect={handleSelectNotification}
-                            onMarkRead={handleMarkRead}
-                            onDelete={handleDelete}
-                            onClick={handleClick}
-                            onOpenChat={handleOpenChat}
-                            onSnooze={handleSnooze}
-                            isSnoozed={isSnoozed(notification.id)}
-                            snoozedUntilLabel={formatRemainingTime(notification.id, isPolish)}
-                            columnWidths={columnWidths}
-                            isPolish={isPolish}
-                          />
-                        ))}
-                      </React.Fragment>
-                    );
-                  })
-                ) : (
-                  // Render without grouping
-                  displayedNotifications.map((notification) => (
-                    <NotificationTableRow
-                      key={notification.id}
-                      notification={notification}
-                      isSelected={selectedIds.has(notification.id)}
-                      onSelect={handleSelectNotification}
-                      onMarkRead={handleMarkRead}
-                      onDelete={handleDelete}
-                      onClick={handleClick}
-                      onOpenChat={handleOpenChat}
-                      onSnooze={handleSnooze}
-                      isSnoozed={isSnoozed(notification.id)}
-                      snoozedUntilLabel={formatRemainingTime(notification.id, isPolish)}
-                      columnWidths={columnWidths}
-                      isPolish={isPolish}
-                    />
-                  ))
-                )}
+                            </td>
+                          </tr>
+                          {/* Group notifications */}
+                          {groupNotifications.map((notification) => (
+                            <NotificationTableRow
+                              key={notification.id}
+                              notification={notification}
+                              isSelected={selectedIds.has(notification.id)}
+                              onSelect={handleSelectNotification}
+                              onMarkRead={handleMarkRead}
+                              onDelete={handleDelete}
+                              onClick={handleClick}
+                              onOpenChat={handleOpenChat}
+                              onSnooze={handleSnooze}
+                              isSnoozed={isSnoozed(notification.id)}
+                              snoozedUntilLabel={formatRemainingTime(notification.id, isPolish)}
+                              columnWidths={columnWidths}
+                              isPolish={isPolish}
+                            />
+                          ))}
+                        </React.Fragment>
+                      );
+                    })
+                  : // Render without grouping
+                    displayedNotifications.map((notification) => (
+                      <NotificationTableRow
+                        key={notification.id}
+                        notification={notification}
+                        isSelected={selectedIds.has(notification.id)}
+                        onSelect={handleSelectNotification}
+                        onMarkRead={handleMarkRead}
+                        onDelete={handleDelete}
+                        onClick={handleClick}
+                        onOpenChat={handleOpenChat}
+                        onSnooze={handleSnooze}
+                        isSnoozed={isSnoozed(notification.id)}
+                        snoozedUntilLabel={formatRemainingTime(notification.id, isPolish)}
+                        columnWidths={columnWidths}
+                        isPolish={isPolish}
+                      />
+                    ))}
               </AnimatePresence>
             </tbody>
           </table>
         </div>
       </div>
-      
+
       {/* Bulk Action Bar */}
       <BulkActionBar
         selectedCount={selectedIds.size}

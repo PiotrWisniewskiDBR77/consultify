@@ -6,20 +6,20 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
+import { useToolAI } from '@/hooks/discovery/useToolAI';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
-import { useToolAI } from '@/hooks/discovery/useToolAI';
 import { ToolType, useToolStore } from '@/store/useToolStore';
 import { AppView } from '@/types';
 
+import { GenerateInitiativesModal } from './GenerateInitiativesModal';
 import { ToolActionBar } from './ToolActionBar';
 import { ToolCanvas } from './ToolCanvas';
 import { ToolHeader } from './ToolHeader';
 import { ToolReviewPanel } from './ToolReviewPanel';
-import { GenerateInitiativesModal } from './GenerateInitiativesModal';
 
 // ==================== TYPES ====================
 
@@ -603,7 +603,8 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {isPolish ? 'Decision Owner' : 'Decision Owner'} {isPolish ? '(opcjonalnie)' : '(optional)'}
+                  {isPolish ? 'Decision Owner' : 'Decision Owner'}{' '}
+                  {isPolish ? '(opcjonalnie)' : '(optional)'}
                 </label>
                 <select
                   value={reviewDecisionOwnerId}

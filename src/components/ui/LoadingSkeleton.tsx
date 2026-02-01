@@ -1,6 +1,6 @@
-import React from 'react';
-
 import './LoadingSkeleton.css';
+
+import React from 'react';
 
 interface TableSkeletonProps {
   rows?: number;

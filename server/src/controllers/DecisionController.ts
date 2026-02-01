@@ -83,19 +83,21 @@ const isDecisionStatusInput = (status?: string | null): boolean => {
 
 const DECISION_BLOCK_TAG = (decisionId: string) => `[decision:${decisionId}]`;
 
-const refreshTaskDecisionBlock = async (
-  input: { taskId: string; organizationId: string; resolvedDecisionId: string }
-): Promise<void> => {
+const refreshTaskDecisionBlock = async (input: {
+  taskId: string;
+  organizationId: string;
+  resolvedDecisionId: string;
+}): Promise<void> => {
   const { taskId, organizationId, resolvedDecisionId } = input;
 
   const task = await queryHelpers.queryOne<{
     status?: string;
     blocked_by_decision_id?: string | null;
     blocked_reason?: string | null;
-  }>(`SELECT status, blocked_by_decision_id, blocked_reason FROM tasks WHERE id = ? AND organization_id = ?`, [
-    taskId,
-    organizationId,
-  ]);
+  }>(
+    `SELECT status, blocked_by_decision_id, blocked_reason FROM tasks WHERE id = ? AND organization_id = ?`,
+    [taskId, organizationId]
+  );
 
   if (!task) return;
 
@@ -156,15 +158,20 @@ const refreshTaskDecisionBlock = async (
   );
 };
 
-const refreshInitiativeDecisionBlock = async (
-  input: { initiativeId: string; organizationId: string; resolvedDecisionId: string }
-): Promise<void> => {
+const refreshInitiativeDecisionBlock = async (input: {
+  initiativeId: string;
+  organizationId: string;
+  resolvedDecisionId: string;
+}): Promise<void> => {
   const { initiativeId, organizationId, resolvedDecisionId } = input;
 
-  const initiative = await queryHelpers.queryOne<{ status?: string; blocked_reason?: string | null }>(
-    `SELECT status, blocked_reason FROM initiatives WHERE id = ? AND organization_id = ?`,
-    [initiativeId, organizationId]
-  );
+  const initiative = await queryHelpers.queryOne<{
+    status?: string;
+    blocked_reason?: string | null;
+  }>(`SELECT status, blocked_reason FROM initiatives WHERE id = ? AND organization_id = ?`, [
+    initiativeId,
+    organizationId,
+  ]);
   if (!initiative) return;
 
   // Only unblock initiatives that we blocked for this decision (tag-based)
@@ -508,7 +515,11 @@ export class DecisionController {
         [id]
       );
 
-      const escalation = computeEscalationLevel(decision.deadline, decision.priority, decision.impact);
+      const escalation = computeEscalationLevel(
+        decision.deadline,
+        decision.priority,
+        decision.impact
+      );
       const statusNormalized = normalizeStatus(decision.status);
       const shouldEscalate = statusNormalized === 'pending' && escalation.overdueDays > 0;
       const nextStatus = shouldEscalate ? 'escalated' : statusNormalized;
@@ -621,15 +632,16 @@ export class DecisionController {
       const decisionTypeValue = (decisionType || type || 'GENERAL').toString();
       const normalizedType = decisionTypeValue.toUpperCase();
 
-      const shouldRequireDecision = ['INITIATIVE_APPROVAL', 'PHASE_TRANSITION', 'EXECUTION'].includes(
-        normalizedType
-      );
+      const shouldRequireDecision = [
+        'INITIATIVE_APPROVAL',
+        'PHASE_TRANSITION',
+        'EXECUTION',
+      ].includes(normalizedType);
 
       const initiativeIdValue =
         relatedObjectType === 'initiative' ? relatedObjectId : initiativeId || null;
       const taskIdValue = relatedObjectType === 'task' ? relatedObjectId : taskId || null;
-      const projectIdValue =
-        relatedObjectType === 'project' ? relatedObjectId : projectId || null;
+      const projectIdValue = relatedObjectType === 'project' ? relatedObjectId : projectId || null;
 
       if (!projectIdValue && !initiativeIdValue && !taskIdValue) {
         res.status(400).json({ error: 'Missing decision context' });
@@ -685,7 +697,13 @@ export class DecisionController {
 
       const relatedObjectTypeValue =
         relatedObjectType ||
-        (initiativeIdValue ? 'initiative' : taskIdValue ? 'task' : projectIdValue ? 'project' : null);
+        (initiativeIdValue
+          ? 'initiative'
+          : taskIdValue
+            ? 'task'
+            : projectIdValue
+              ? 'project'
+              : null);
       const relatedObjectIdValue =
         relatedObjectId || initiativeIdValue || taskIdValue || projectIdValue || null;
 
@@ -834,7 +852,11 @@ export class DecisionController {
       const rationaleValue = (rationale || outcome || '').trim();
       const rationaleText =
         rationaleValue ||
-        (normalizedStatus === 'approved' ? 'Approved' : normalizedStatus === 'rejected' ? 'Rejected' : '');
+        (normalizedStatus === 'approved'
+          ? 'Approved'
+          : normalizedStatus === 'rejected'
+            ? 'Rejected'
+            : '');
 
       // Get decision first
       const currentDecision = await queryHelpers.queryOne<{
@@ -988,7 +1010,10 @@ export class DecisionController {
       updates.push('updated_at = CURRENT_TIMESTAMP');
       params.push(id);
 
-      await queryHelpers.queryRun(`UPDATE decisions SET ${updates.join(', ')} WHERE id = ?`, params);
+      await queryHelpers.queryRun(
+        `UPDATE decisions SET ${updates.join(', ')} WHERE id = ?`,
+        params
+      );
 
       await queryHelpers.queryRun(
         `INSERT INTO decision_history (id, decision_id, action, old_status, new_status, changed_by, details)

@@ -9,8 +9,8 @@ import React from 'react';
 
 import {
   GrowthPathsData,
-  PortfolioPriorityData,
   PorterData,
+  PortfolioPriorityData,
   RiskUncertaintyData,
   SWOTData,
   ToolSession,
@@ -103,9 +103,13 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isP
         },
       };
     } else if (
-      ['sop-builder', 'a3-problem-solving', 'smed-planner', 'dms-builder', 'inventory-autopilot'].includes(
-        toolType
-      )
+      [
+        'sop-builder',
+        'a3-problem-solving',
+        'smed-planner',
+        'dms-builder',
+        'inventory-autopilot',
+      ].includes(toolType)
     ) {
       const operational = inputData as { sections?: Record<string, unknown[]>; summary?: any };
       const sections = (operational.sections || {}) as Record<string, unknown[]>;
@@ -263,9 +267,13 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isP
             />
           </>
         )}
-        {['sop-builder', 'a3-problem-solving', 'smed-planner', 'dms-builder', 'inventory-autopilot'].includes(
-          toolType
-        ) && (
+        {[
+          'sop-builder',
+          'a3-problem-solving',
+          'smed-planner',
+          'dms-builder',
+          'inventory-autopilot',
+        ].includes(toolType) && (
           <>
             <MetricCard
               label={isPolish ? 'Elementy' : 'Items'}
@@ -313,9 +321,13 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isP
               : 'Risk summary is reflected in the metrics above.'}
           </div>
         )}
-        {['sop-builder', 'a3-problem-solving', 'smed-planner', 'dms-builder', 'inventory-autopilot'].includes(
-          toolType
-        ) && (
+        {[
+          'sop-builder',
+          'a3-problem-solving',
+          'smed-planner',
+          'dms-builder',
+          'inventory-autopilot',
+        ].includes(toolType) && (
           <div className="text-sm text-slate-500 dark:text-slate-400">
             {isPolish
               ? 'Podsumowanie operacyjne jest widoczne w metrykach powyżej.'

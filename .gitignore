@@ -78,6 +78,9 @@ coverage_*.txt
 unit_tests_report.txt
 verification_results.txt
 lint_report.txt
+unit-results.json
+component-results.json
+*_keys.txt
 
 # Auto-fix marker
 .auto-fix-applied

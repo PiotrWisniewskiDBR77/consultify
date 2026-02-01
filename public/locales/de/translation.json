@@ -23,7 +23,20 @@
     "submit": "Absenden",
     "confirm": "Bestätigen",
     "yes": "Ja",
-    "no": "Nein"
+    "no": "Nein",
+    "goals": "Goals",
+    "challenges": "Challenges",
+    "megatrends": "Megatrends",
+    "strategy": "Strategy",
+    "rollout": "Rollout",
+    "users": "Users",
+    "projects": "Projects",
+    "analytics": "Analytics",
+    "team": "Team",
+    "workspace": "Workspace",
+    "consultant": "Consultant",
+    "invites": "Invites",
+    "affiliate": "Affiliate"
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -196,5 +209,367 @@
     "integrations": "Integrationen",
     "security": "Sicherheit",
     "appearance": "Erscheinungsbild"
+  },
+  "landing": {
+    "hero": {
+      "title": "Think bigger.Do smarter",
+      "subtitleLine1": "Your",
+      "subtitleLine1End": "for Enterprise Strategy.",
+      "slogans": {
+        "1": "Months of consulting. Minutes of AI. Better results.",
+        "2": "Transform decisions. Accelerate outcomes.",
+        "3": "Enterprise intelligence. Instant clarity.",
+        "4": "AI-powered strategy. Real-time insights.",
+        "5": "Consulting reimagined. Results delivered."
+      },
+      "tagline": {
+        "line1": "AI consulting.",
+        "line2": "No slides.",
+        "line3": "Just decisions."
+      },
+      "cards": {
+        "demo": {
+          "title": "Interactive Demo",
+          "description": "Explore Consultinity with AI-guided walkthrough. No signup required.",
+          "meta": "GUIDED EXPERIENCE",
+          "cta": "Start Demo"
+        },
+        "trial": {
+          "title": "Free Trial",
+          "description": "14-day full access to all features. Start your transformation today.",
+          "meta": "14 DAYS FREE",
+          "cta": "Start Free Trial"
+        },
+        "video": {
+          "title": "Watch How It Works",
+          "description": "See Consultinity in action with real enterprise transformation examples.",
+          "meta": "3 MIN VIDEO",
+          "cta": "Play Video"
+        },
+        "expert": {
+          "title": "Talk to Expert",
+          "description": "Schedule a personalized consultation with our strategy specialists.",
+          "meta": "HUMAN TOUCH",
+          "cta": "Book Consultation"
+        },
+        "login": {
+          "title": "Welcome Back",
+          "description": "Continue your transformation journey. Your workspace awaits.",
+          "meta": "EXISTING USER",
+          "cta": "Log In"
+        }
+      }
+    },
+    "topBar": {
+      "demo": "Demo",
+      "trial": "Trial",
+      "login": "Log in",
+      "signUp": "Sign up"
+    },
+    "methodology": {
+      "badge": "Our Methodology",
+      "heading": "AI-Driven Strategic Transformation"
+    },
+    "steps": {
+      "diagnostic": {
+        "title": "Diagnostic Assessment",
+        "desc": "AI analyzes your organization's digital maturity, identifies gaps, and benchmarks against industry standards."
+      },
+      "roadmap": {
+        "title": "Strategic Roadmap",
+        "desc": "Generate actionable transformation roadmap with prioritized initiatives, timelines, and resource requirements."
+      },
+      "approval": {
+        "title": "Human Governance",
+        "desc": "Every strategic decision requires human approval. Full accountability and control remain with your leadership."
+      }
+    }
+  },
+  "partner": {
+    "becomePartner": "Become Partner"
+  },
+  "showcase": {
+    "common": {
+      "execute": "Execute",
+      "moreTools": "More Tools",
+      "watchVideo": "Watch Video",
+      "tryFree": "Try It Free",
+      "methodologyIntro": "Methodology Introduction",
+      "framework": "Framework",
+      "learnOurMethods": "Learn Our Methods",
+      "watchTeaser": "Watch our 90-second teaser explaining this methodology.",
+      "readyToTry": "Ready to try it? Start your transformation today.",
+      "startTrial": "Start Free Trial",
+      "integratedHint": "Knowledge base and audits integrated in the Discovery panel"
+    },
+    "audits": {
+      "hero": {
+        "badge": "Industrial Excellence",
+        "title1": "BASELINE YOUR",
+        "title2": "DIGITAL MATURITY",
+        "subtitle": "Consultinity integrates world-class audit methodologies used by Harvard experts to drive data-driven change across global industries."
+      },
+      "cta": {
+        "header": "TAKE THE NEXT STEP IN",
+        "headerAccent": "YOUR TRANSFORMATION",
+        "description": "Assessments are only the beginning. Discover the full suite of AI-powered tools designed to turn maturity insights into operational results."
+      },
+      "items": {
+        "drd": {
+          "fullName": "Digital Readiness Diagnosis",
+          "description": "Advanced tool for assessing digital maturity and creating development roadmaps.",
+          "longDescription": "Digital Readiness Diagnosis (DRD) is a proprietary DBR77 methodology designed to support companies in their digital transformation journey. It covers assessment of digital maturity, analysis of external factors, and creation of detailed development roadmaps.",
+          "externalLinkLabel": "About DRD",
+          "dimensions": {
+            "0": "Organizational Readiness",
+            "1": "Digital Maturity",
+            "2": "External Factors",
+            "3": "Development Roadmap"
+          },
+          "benefits": {
+            "0": "Structured Transformation",
+            "1": "Clear Investment Path",
+            "2": "Risk Mitigation",
+            "3": "Strategic Alignment"
+          }
+        },
+        "siri": {
+          "fullName": "Smart Industry Readiness Index",
+          "description": "Global standard for evaluating Industry 4.0 maturity across 3 key pillars.",
+          "longDescription": "The Smart Industry Readiness Index (SIRI) is a global initiative created in partnership with the Singapore EDB and WEF. As the international standard for I4.0, it evaluates 16 dimensions across Process, Technology, and Organization to prioritize transformation efforts.",
+          "externalLinkLabel": "About SIRI",
+          "dimensions": {
+            "0": "Process Maturity",
+            "1": "Technology Adoption",
+            "2": "Organizational Excellence",
+            "3": "Industry 4.0 Alignment"
+          },
+          "benefits": {
+            "0": "Global Benchmarking",
+            "1": "Standardized Framework",
+            "2": "Cross-Industry Comparison",
+            "3": "Strategic Prioritization"
+          }
+        },
+        "adma": {
+          "fullName": "Advanced Digital Maturity Assessment",
+          "description": "European standard for \"Factory of the Future\" digital transformation audits.",
+          "longDescription": "ADMA was developed by the European Commission to assist companies in adopting advanced manufacturing technologies. It assesses a company's digital maturity across seven key areas, guiding them towards becoming a world-class Factory of the Future.",
+          "externalLinkLabel": "About ADMA",
+          "dimensions": {
+            "0": "Advanced Technologies",
+            "1": "Digital Factory",
+            "2": "Value Chain Integration",
+            "3": "People-Centric Change"
+          },
+          "benefits": {
+            "0": "European Standards",
+            "1": "Factory of the Future Roadmap",
+            "2": "Innovation Focus",
+            "3": "Eco-System Integration"
+          }
+        },
+        "lean-4-0": {
+          "name": "Lean 4.0",
+          "fullName": "Lean 4.0 (DBR77 Methodology)",
+          "description": "3-Phase optimization path: Measure, Optimize, and Automate.",
+          "longDescription": "Lean 4.0 is a specialized DBR77 methodology that bridges classic Lean manufacturing with Industry 4.0 technology. It follows a rigorous 3-phase path: Measure (establishing data-driven baselines), Optimize (eliminating waste), and Automate (high-ROI technology injection).",
+          "externalLinkLabel": "About Lean 4.0",
+          "dimensions": {
+            "0": "Measure",
+            "1": "Optimize",
+            "2": "Automate",
+            "3": "ROI Focus"
+          },
+          "benefits": {
+            "0": "Waste Elimination",
+            "1": "Data-Driven Baselines",
+            "2": "High-ROI Automation",
+            "3": "Operational Stabilisation"
+          }
+        }
+      }
+    },
+    "tools": {
+      "hero": {
+        "badge": "Elite Education",
+        "title1": "MASTER OUR",
+        "title2": "METHODOLOGIES",
+        "subtitle": "Discover the AI-powered frameworks that drive high-impact consulting results. Short teasers on how to apply classic tools to modern industry."
+      },
+      "blocks": {
+        "strategic": {
+          "name": "Strategic Consulting Tools",
+          "description": "Classic frameworks powered by AI for strategic analysis and decision-making"
+        },
+        "operational": {
+          "name": "Operational Excellence Tools",
+          "description": "Process optimization, efficiency analysis, and lean manufacturing tools"
+        },
+        "digital": {
+          "name": "Digital Transformation",
+          "description": "Technology assessment, automation roadmaps, and digital maturity tools"
+        },
+        "change-management": {
+          "name": "Change Management",
+          "description": "People-centric tools for adoption, communication, and organizational change"
+        }
+      },
+      "items": {
+        "dynamic-swot": {
+          "name": "Dynamic SWOT Analysis",
+          "description": "AI-driven SWOT that connects strengths with opportunities and weaknesses with threats to generate actionable strategic initiatives.",
+          "outputs": {
+            "0": "SWOT Matrix",
+            "1": "S+O/W+T Combinations",
+            "2": "Strategic Initiatives"
+          }
+        },
+        "market-forces": {
+          "name": "Market Forces Analysis",
+          "description": "Analyze competitive forces with data-driven scoring and margin protection initiatives for sustainable competitive advantage.",
+          "outputs": {
+            "0": "5 Forces Diagram",
+            "1": "Margin Risk Assessment",
+            "2": "Competitive Initiatives"
+          }
+        },
+        "portfolio-priority": {
+          "name": "Strategic Portfolio Prioritization",
+          "description": "Classify and prioritize strategic initiatives based on impact potential and resource constraints using proven BCG methodology.",
+          "outputs": {
+            "0": "BCG-style Grid",
+            "1": "Priority Ranking",
+            "2": "Stop/Scale/Merge Decisions"
+          }
+        },
+        "growth-paths": {
+          "name": "Growth Paths Analysis",
+          "description": "Map growth opportunities with ROI estimates, risk profiles, and capability requirements for strategic expansion.",
+          "outputs": {
+            "0": "Ansoff Matrix",
+            "1": "Growth ROI Estimates",
+            "2": "Capability Gap Analysis"
+          }
+        },
+        "value-chain": {
+          "name": "Value Chain Analysis",
+          "description": "Identify where value is created and leaked across activities, with optimization initiatives.",
+          "outputs": {
+            "0": "Value Chain Map",
+            "1": "Leakage Points",
+            "2": "Optimization Initiatives"
+          }
+        },
+        "value-stream-mapping": {
+          "name": "Value Stream Mapping",
+          "description": "Visualize end-to-end process flows, identify waste, and design future-state optimized value streams.",
+          "outputs": {
+            "0": "Current State Map",
+            "1": "Waste Identification",
+            "2": "Future State Design"
+          }
+        },
+        "oee-analysis": {
+          "name": "OEE Analysis",
+          "description": "Measure and improve equipment effectiveness by analyzing availability, performance, and quality metrics.",
+          "outputs": {
+            "0": "OEE Dashboard",
+            "1": "Loss Waterfall",
+            "2": "Improvement Actions"
+          }
+        },
+        "lean-assessment": {
+          "name": "Lean Maturity Assessment",
+          "description": "Assess organizational lean maturity across key dimensions and identify improvement opportunities.",
+          "outputs": {
+            "0": "Maturity Scorecard",
+            "1": "Gap Analysis",
+            "2": "Improvement Roadmap"
+          }
+        },
+        "process-capability": {
+          "name": "Process Capability Analysis",
+          "description": "Evaluate process performance against specifications and identify variation reduction opportunities.",
+          "outputs": {
+            "0": "Capability Metrics",
+            "1": "Control Charts",
+            "2": "Improvement Projects"
+          }
+        },
+        "digital-maturity": {
+          "name": "Digital Maturity Assessment",
+          "description": "Evaluate digital readiness across technology, processes, and people dimensions using industry-standard frameworks.",
+          "outputs": {
+            "0": "Maturity Radar",
+            "1": "Benchmark Comparison",
+            "2": "Transformation Roadmap"
+          }
+        },
+        "automation-roadmap": {
+          "name": "Automation Roadmap Builder",
+          "description": "Identify automation opportunities, prioritize use cases, and build a phased implementation roadmap.",
+          "outputs": {
+            "0": "Opportunity Matrix",
+            "1": "ROI Projections",
+            "2": "Implementation Timeline"
+          }
+        },
+        "technology-scanner": {
+          "name": "Technology Landscape Scanner",
+          "description": "Scan emerging technologies relevant to your industry and assess adoption readiness.",
+          "outputs": {
+            "0": "Technology Radar",
+            "1": "Adoption Assessment",
+            "2": "Pilot Recommendations"
+          }
+        },
+        "data-strategy": {
+          "name": "Data Strategy Framework",
+          "description": "Design data architecture, governance policies, and analytics capabilities for data-driven decision making.",
+          "outputs": {
+            "0": "Data Architecture",
+            "1": "Governance Framework",
+            "2": "Analytics Roadmap"
+          }
+        },
+        "adkar-assessment": {
+          "name": "ADKAR Change Assessment",
+          "description": "Assess individual and organizational readiness for change using the proven ADKAR model.",
+          "outputs": {
+            "0": "ADKAR Scores",
+            "1": "Barrier Analysis",
+            "2": "Reinforcement Plan"
+          }
+        },
+        "stakeholder-analysis": {
+          "name": "Stakeholder Analysis",
+          "description": "Map stakeholder influence, interests, and engagement strategies for successful change adoption.",
+          "outputs": {
+            "0": "Stakeholder Map",
+            "1": "Engagement Strategy",
+            "2": "Communication Plan"
+          }
+        },
+        "resistance-mapper": {
+          "name": "Resistance Pattern Mapper",
+          "description": "Identify resistance patterns, root causes, and develop targeted intervention strategies.",
+          "outputs": {
+            "0": "Resistance Heatmap",
+            "1": "Root Cause Analysis",
+            "2": "Intervention Playbook"
+          }
+        },
+        "communication-planner": {
+          "name": "Change Communication Planner",
+          "description": "Design multi-channel communication campaigns aligned with change milestones.",
+          "outputs": {
+            "0": "Communication Calendar",
+            "1": "Message Templates",
+            "2": "Channel Strategy"
+          }
+        }
+      }
+    }
   }
 }

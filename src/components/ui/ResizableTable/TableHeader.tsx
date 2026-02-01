@@ -3,7 +3,7 @@
  * ClickUp-style table header
  */
 
-import { Minus, Square, CheckSquare } from 'lucide-react';
+import { CheckSquare, Minus, Square } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { ColumnResizer } from './ColumnResizer';
@@ -74,8 +74,9 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
           const width = columnWidths[column.id] || column.width;
           const isLast = index === columns.length - 1;
           const filterValue = filters[column.id];
-          const hasActiveFilter =
-            Array.isArray(filterValue) ? filterValue.length > 0 : !!filterValue;
+          const hasActiveFilter = Array.isArray(filterValue)
+            ? filterValue.length > 0
+            : !!filterValue;
 
           return (
             <th
@@ -93,9 +94,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
               }}
             >
               <div className="flex items-center gap-1">
-                <span className={hasActiveFilter ? 'text-primary-500' : ''}>
-                  {column.label}
-                </span>
+                <span className={hasActiveFilter ? 'text-primary-500' : ''}>{column.label}</span>
 
                 {/* Filter Dropdown */}
                 {column.filterable && column.filterOptions && (

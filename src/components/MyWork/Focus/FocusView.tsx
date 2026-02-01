@@ -163,8 +163,14 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
   const { t } = useTranslation();
   const [showQuickActions, setShowQuickActions] = useState(false);
 
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging: isSortableDragging } =
-    useSortable({ id: item.id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging: isSortableDragging,
+  } = useSortable({ id: item.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -243,7 +249,9 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
                       : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
                   }`}
                 >
-                  {item.type === 'decision' ? t('myWork.focus.decision', 'Decision') : t('myWork.focus.task', 'Task')}
+                  {item.type === 'decision'
+                    ? t('myWork.focus.decision', 'Decision')
+                    : t('myWork.focus.task', 'Task')}
                 </span>
                 {item.initiativeName && (
                   <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
@@ -326,7 +334,9 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
                 title={t('myWork.focus.actions.snooze', 'Snooze')}
               >
                 <Clock size={14} />
-                <span className="hidden sm:inline">{t('myWork.focus.actions.snooze', 'Snooze')}</span>
+                <span className="hidden sm:inline">
+                  {t('myWork.focus.actions.snooze', 'Snooze')}
+                </span>
               </button>
               <button
                 onClick={(e) => {
@@ -337,7 +347,9 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
                 title={t('myWork.focus.actions.delegate', 'Delegate')}
               >
                 <UserPlus size={14} />
-                <span className="hidden sm:inline">{t('myWork.focus.actions.delegate', 'Delegate')}</span>
+                <span className="hidden sm:inline">
+                  {t('myWork.focus.actions.delegate', 'Delegate')}
+                </span>
               </button>
             </div>
             <button
@@ -376,7 +388,9 @@ const FocusCardOverlay: React.FC<{ item: FocusItem }> = ({ item }) => {
           >
             {item.type === 'decision' ? 'Decision' : 'Task'}
           </span>
-          <h4 className="text-sm font-semibold text-navy-900 dark:text-white truncate mt-1">{item.title}</h4>
+          <h4 className="text-sm font-semibold text-navy-900 dark:text-white truncate mt-1">
+            {item.title}
+          </h4>
         </div>
       </div>
     </div>
@@ -409,7 +423,9 @@ const FocusColumnComponent: React.FC<FocusColumnProps> = ({
   const completedCount = items.filter((i) => i.isCompleted).length;
 
   return (
-    <div className={`flex flex-col rounded-xl border ${config.borderColor} ${config.bgColor} min-h-[400px]`}>
+    <div
+      className={`flex flex-col rounded-xl border ${config.borderColor} ${config.bgColor} min-h-[400px]`}
+    >
       {/* Column Header */}
       <div className="flex items-center justify-between p-4 border-b border-inherit">
         <div className="flex items-center gap-2">
@@ -531,10 +547,14 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
                     <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full" />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-purple-600 flex items-center justify-center">
-                      <span className="text-xs font-medium text-white">{user.name.charAt(0).toUpperCase()}</span>
+                      <span className="text-xs font-medium text-white">
+                        {user.name.charAt(0).toUpperCase()}
+                      </span>
                     </div>
                   )}
-                  <span className="text-sm font-medium text-navy-900 dark:text-white">{user.name}</span>
+                  <span className="text-sm font-medium text-navy-900 dark:text-white">
+                    {user.name}
+                  </span>
                 </button>
               ))}
             </div>
@@ -637,35 +657,37 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
       });
 
       // Map decisions to FocusItems
-      const decisionItems: FocusItem[] = decisions.slice(0, 10).map((decision: any, idx: number) => {
-        let column: FocusColumn = 'thisWeek';
-        if (decision.isOverdue || (decision.daysWaiting && decision.daysWaiting > 5)) {
-          column = 'today';
-        } else if (decision.dueDate) {
-          const dueDate = new Date(decision.dueDate);
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          if (dueDate <= today) {
+      const decisionItems: FocusItem[] = decisions
+        .slice(0, 10)
+        .map((decision: any, idx: number) => {
+          let column: FocusColumn = 'thisWeek';
+          if (decision.isOverdue || (decision.daysWaiting && decision.daysWaiting > 5)) {
             column = 'today';
+          } else if (decision.dueDate) {
+            const dueDate = new Date(decision.dueDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (dueDate <= today) {
+              column = 'today';
+            }
           }
-        }
 
-        return {
-          id: `decision-${decision.id}`,
-          type: 'decision' as const,
-          title: decision.title,
-          description: decision.description,
-          column,
-          position: idx,
-          priority: decision.priority?.toLowerCase(),
-          dueDate: decision.dueDate,
-          isOverdue: decision.isOverdue,
-          daysWaiting: decision.daysWaiting,
-          decisionType: decision.decisionType,
-          initiativeName: decision.projectName || decision.relatedObjectName,
-          isCompleted: decision.status === 'APPROVED' || decision.status === 'REJECTED',
-        };
-      });
+          return {
+            id: `decision-${decision.id}`,
+            type: 'decision' as const,
+            title: decision.title,
+            description: decision.description,
+            column,
+            position: idx,
+            priority: decision.priority?.toLowerCase(),
+            dueDate: decision.dueDate,
+            isOverdue: decision.isOverdue,
+            daysWaiting: decision.daysWaiting,
+            decisionType: decision.decisionType,
+            initiativeName: decision.projectName || decision.relatedObjectName,
+            isCompleted: decision.status === 'APPROVED' || decision.status === 'REJECTED',
+          };
+        });
 
       setItems([...taskItems, ...decisionItems]);
     } catch (error) {
@@ -684,7 +706,9 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
   const itemsByColumn = useMemo(() => {
     return {
       today: items.filter((i) => i.column === 'today').sort((a, b) => a.position - b.position),
-      thisWeek: items.filter((i) => i.column === 'thisWeek').sort((a, b) => a.position - b.position),
+      thisWeek: items
+        .filter((i) => i.column === 'thisWeek')
+        .sort((a, b) => a.position - b.position),
       later: items.filter((i) => i.column === 'later').sort((a, b) => a.position - b.position),
     };
   }, [items]);
@@ -709,7 +733,9 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
     // If dragging over another item, determine which column it's in
     if (overItem && activeItem.column !== overItem.column) {
       setItems((prev) =>
-        prev.map((item) => (item.id === activeItem.id ? { ...item, column: overItem.column } : item))
+        prev.map((item) =>
+          item.id === activeItem.id ? { ...item, column: overItem.column } : item
+        )
       );
     }
   };
@@ -735,7 +761,10 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
         const newColumnItems = arrayMove(columnItems, oldIndex, newIndex);
         setItems((prev) => {
           const otherItems = prev.filter((i) => i.column !== activeItem.column);
-          return [...otherItems, ...newColumnItems.map((item, idx) => ({ ...item, position: idx }))];
+          return [
+            ...otherItems,
+            ...newColumnItems.map((item, idx) => ({ ...item, position: idx })),
+          ];
         });
       }
     }
@@ -756,7 +785,9 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
   const handleComplete = async (item: FocusItem) => {
     try {
       const newCompleted = !item.isCompleted;
-      setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, isCompleted: newCompleted } : i)));
+      setItems((prev) =>
+        prev.map((i) => (i.id === item.id ? { ...i, isCompleted: newCompleted } : i))
+      );
 
       const endpoint =
         item.type === 'task'
@@ -764,11 +795,19 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
           : `/decisions/${item.id.replace('decision-', '')}`;
 
       await Api.put(endpoint, {
-        status: newCompleted ? (item.type === 'task' ? 'done' : 'APPROVED') : (item.type === 'task' ? 'todo' : 'PENDING'),
+        status: newCompleted
+          ? item.type === 'task'
+            ? 'done'
+            : 'APPROVED'
+          : item.type === 'task'
+            ? 'todo'
+            : 'PENDING',
       });
 
       toast.success(
-        newCompleted ? t('myWork.focus.completed', 'Marked as done!') : t('myWork.focus.reopened', 'Reopened')
+        newCompleted
+          ? t('myWork.focus.completed', 'Marked as done!')
+          : t('myWork.focus.reopened', 'Reopened')
       );
     } catch (error) {
       console.error('Failed to complete item:', error);
@@ -802,7 +841,9 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
       if (!item) return;
 
       const endpoint =
-        item.type === 'task' ? `/tasks/${itemId.replace('task-', '')}/assign` : `/decisions/${itemId.replace('decision-', '')}/delegate`;
+        item.type === 'task'
+          ? `/tasks/${itemId.replace('task-', '')}/assign`
+          : `/decisions/${itemId.replace('decision-', '')}/delegate`;
 
       await Api.post(endpoint, { userId });
 
@@ -877,7 +918,11 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
       {/* Delegate Modal */}
       <AnimatePresence>
         {delegateItem && (
-          <DelegateModal item={delegateItem} onClose={() => setDelegateItem(null)} onDelegate={handleDelegate} />
+          <DelegateModal
+            item={delegateItem}
+            onClose={() => setDelegateItem(null)}
+            onDelegate={handleDelegate}
+          />
         )}
       </AnimatePresence>
     </div>

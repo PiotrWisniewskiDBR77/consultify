@@ -308,9 +308,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
       Api.get('/decisions?limit=5')
         .then((res) => {
           if (Array.isArray(res)) {
-            setPendingDecisions(
-              res.filter((d) => ['PENDING', 'ESCALATED'].includes(d.status))
-            );
+            setPendingDecisions(res.filter((d) => ['PENDING', 'ESCALATED'].includes(d.status)));
           }
         })
         .catch(() => {});

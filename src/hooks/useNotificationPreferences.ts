@@ -20,10 +20,13 @@ const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
 ];
 
 const buildDefaultCategories = (): Record<NotificationCategory, ChannelSettings> => {
-  return NOTIFICATION_CATEGORIES.reduce((acc, category) => {
-    acc[category] = { inapp: true, push: false, email: false };
-    return acc;
-  }, {} as Record<NotificationCategory, ChannelSettings>);
+  return NOTIFICATION_CATEGORIES.reduce(
+    (acc, category) => {
+      acc[category] = { inapp: true, push: false, email: false };
+      return acc;
+    },
+    {} as Record<NotificationCategory, ChannelSettings>
+  );
 };
 
 const defaultPreferences: MyWorkNotificationPreferences = {
@@ -116,7 +119,8 @@ export const useNotificationPreferences = () => {
         return {
           ...prev,
           dailyDigest: type === 'daily' ? { ...prev.dailyDigest, ...updates } : prev.dailyDigest,
-          weeklyDigest: type === 'weekly' ? { ...prev.weeklyDigest, ...updates } : prev.weeklyDigest,
+          weeklyDigest:
+            type === 'weekly' ? { ...prev.weeklyDigest, ...updates } : prev.weeklyDigest,
         };
       });
       simulateSave();

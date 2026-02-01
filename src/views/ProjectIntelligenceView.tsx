@@ -42,9 +42,9 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { Api } from '@/services/api';
 import { sendMessageToAI } from '@/services/ai/gemini';
 import { INSIGHT_DETECTION_PROMPT, INTERVIEW_SYSTEM_PROMPT } from '@/services/ai/intelligence';
+import { Api } from '@/services/api';
 
 import {
   CATEGORY_CONFIG,
@@ -118,7 +118,10 @@ const normalizeInsightCategory = (raw: string | undefined): InsightCategory | nu
 };
 
 const parseDetectionJson = (raw: string): unknown[] => {
-  const cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();
+  const cleaned = raw
+    .replace(/```json/g, '')
+    .replace(/```/g, '')
+    .trim();
   try {
     const parsed = JSON.parse(cleaned);
     return Array.isArray(parsed) ? parsed : [];
@@ -128,7 +131,8 @@ const parseDetectionJson = (raw: string): unknown[] => {
 };
 
 export const ProjectIntelligenceView: React.FC = () => {
-  const { currentProjectId, isChatCollapsed, toggleChatCollapse, activeChatMessages } = useAppStore();
+  const { currentProjectId, isChatCollapsed, toggleChatCollapse, activeChatMessages } =
+    useAppStore();
   const [activeTab, setActiveTab] = useState<TabType>('interview');
   const [insights, setInsights] = useState<ProjectInsight[]>([]);
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
@@ -309,12 +313,7 @@ export const ProjectIntelligenceView: React.FC = () => {
         extractionInProgressRef.current = false;
         lastProcessedMessageIdRef.current = lastAiMessage.id;
       });
-  }, [
-    activeChatMessages,
-    activeSessionId,
-    currentProjectId,
-    extractInsightsFromConversation,
-  ]);
+  }, [activeChatMessages, activeSessionId, currentProjectId, extractInsightsFromConversation]);
 
   // Seed demo data
   const handleSeedDemoData = async () => {

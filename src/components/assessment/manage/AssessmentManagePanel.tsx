@@ -1,6 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import { ActivityLogPanel } from '@/components/assessment/ActivityLogPanel';
+import { TeamManagementPanel } from '@/components/assessment/manage/TeamManagementPanel';
+import {
+  GateDecision,
+  GateType,
+  WorkflowStagesTable,
+} from '@/components/assessment/manage/WorkflowStagesTable';
 import { Api } from '@/services/api';
 import { DRD_STRUCTURE, getAreaById } from '@/services/drdStructure';
 
@@ -178,6 +185,7 @@ export function AssessmentManagePanel(props: { assessmentId: string; assessmentN
   const [requestBusyId, setRequestBusyId] = useState<string | null>(null);
   const [roleBusyUserId, setRoleBusyUserId] = useState<string | null>(null);
   const [roleEdits, setRoleEdits] = useState<Record<string, RoleRecord['role']>>({});
+  const [gateDecisions, setGateDecisions] = useState<GateDecision[]>([]);
 
   const title = useMemo(() => assessmentName || 'Assessment', [assessmentName]);
   const canManageTeam = Boolean(eligibility?.roleInfo?.permissions?.canManageTeam);
@@ -196,6 +204,7 @@ export function AssessmentManagePanel(props: { assessmentId: string; assessmentN
       initiativesResp,
       batchesResp,
       assignmentsResp,
+      gateDecisionsResp,
     ] = await Promise.all([
       Api.get(`/assessment-workflow-v2/${assessmentId}/roles`),
       Api.get(`/assessment-workflow-v2/${assessmentId}/access-requests`),
@@ -209,6 +218,9 @@ export function AssessmentManagePanel(props: { assessmentId: string; assessmentN
       })),
       Api.get(`/assessment-workflow-v2/${assessmentId}/assignments`).catch(() => ({
         assignments: [],
+      })),
+      Api.get(`/assessment-workflow-v2/${assessmentId}/gate-decisions`).catch(() => ({
+        decisions: [],
       })),
     ]);
     setRoles(Array.isArray(rolesResp?.roles) ? rolesResp.roles : []);
@@ -249,7 +261,137 @@ export function AssessmentManagePanel(props: { assessmentId: string; assessmentN
         ? (assignmentsResp as any).assignments
         : []
     );
+    setGateDecisions(
+      Array.isArray((gateDecisionsResp as any)?.decisions)
+        ? (gateDecisionsResp as any).decisions
+        : []
+    );
   };
+
+  // Gate action handlers for WorkflowStagesTable
+  const handleGateAction = useCallback(
+    async (gateType: GateType, action: 'request' | 'approve' | 'reject', comment?: string) => {
+      setError(null);
+      try {
+        if (action === 'request') {
+          // Map gate types to existing API endpoints
+          if (gateType === 'REQUEST_REVIEW') {
+            await Api.post(`/assessment-workflow-v2/${assessmentId}/request-review`, {
+              comment,
+            });
+          } else if (gateType === 'GENERATE_INITIATIVES') {
+            await Api.post(`/assessment-workflow-v2/${assessmentId}/generate-initiatives`, {
+              methodologyId: 'impact-feasibility',
+              count: 5,
+              includeChatContext: true,
+            });
+          }
+        } else if (action === 'approve') {
+          if (gateType === 'APPROVE_ASSESSMENT') {
+            await Api.post(`/assessment-workflow-v2/${assessmentId}/approve`, {});
+          } else if (gateType === 'APPROVE_REPORT') {
+            // Report approval would need separate endpoint
+            await Api.post(`/assessment-workflow-v2/${assessmentId}/approve-report`, {});
+          }
+        } else if (action === 'reject') {
+          await Api.post(`/assessment-workflow-v2/${assessmentId}/send-back`, {
+            comment: comment || 'Rejected',
+          });
+        }
+        toast.success(`Gate action completed: ${action}`);
+        await reload();
+      } catch (e: any) {
+        const errorMsg = e?.message || `Failed to ${action}`;
+        setError(errorMsg);
+        toast.error(errorMsg);
+      }
+    },
+    [assessmentId]
+  );
+
+  const handleAssignGate = useCallback(
+    async (gateType: GateType, assigneeId: string) => {
+      setError(null);
+      try {
+        await Api.put(`/assessment-workflow-v2/${assessmentId}/gate-decisions/${gateType}`, {
+          assigneeId,
+        });
+        toast.success('Assignee updated');
+        await reload();
+      } catch (e: any) {
+        const errorMsg = e?.message || 'Failed to assign gate';
+        setError(errorMsg);
+        toast.error(errorMsg);
+      }
+    },
+    [assessmentId]
+  );
+
+  // Team management handlers
+  const handleSearchUsers = useCallback(async (query: string) => {
+    if (!query || query.length < 2) return [];
+    try {
+      const resp = await Api.get(`/users/search?q=${encodeURIComponent(query)}&limit=10`);
+      return (resp as any)?.users || [];
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const handleAddMember = useCallback(
+    async (userId: string, role: string) => {
+      await Api.post(`/assessment-workflow-v2/${assessmentId}/roles`, {
+        userId,
+        role,
+      });
+      toast.success('Member added successfully');
+      await reload();
+    },
+    [assessmentId]
+  );
+
+  const handleUpdateMember = useCallback(
+    async (userId: string, role: string) => {
+      await Api.put(`/assessment-workflow-v2/${assessmentId}/roles/${userId}`, {
+        role,
+      });
+      toast.success('Role updated');
+      await reload();
+    },
+    [assessmentId]
+  );
+
+  const handleRemoveMember = useCallback(
+    async (userId: string) => {
+      await Api.delete(`/assessment-workflow-v2/${assessmentId}/roles/${userId}`);
+      toast.success('Member removed');
+      await reload();
+    },
+    [assessmentId]
+  );
+
+  const handleAssignArea = useCallback(
+    async (areaId: string, userId: string, dueAt?: string) => {
+      await Api.put(`/assessment-workflow-v2/${assessmentId}/assignments`, {
+        areaId,
+        assignedUserId: userId,
+        dueAt: dueAt ? new Date(dueAt).toISOString() : null,
+        status: 'ACTIVE',
+      });
+      toast.success('Area assigned');
+      await reload();
+    },
+    [assessmentId]
+  );
+
+  const handleRemoveAssignment = useCallback(
+    async (assignmentId: string) => {
+      await Api.delete(`/assessment-workflow-v2/${assessmentId}/assignments/${assignmentId}`);
+      toast.success('Assignment removed');
+      await reload();
+    },
+    [assessmentId]
+  );
 
   useEffect(() => {
     // Keep role edit state in sync with loaded roles (preserve local edits where possible)
@@ -352,337 +494,52 @@ export function AssessmentManagePanel(props: { assessmentId: string; assessmentN
         ) : error ? (
           <div className="p-6 text-sm text-red-600 dark:text-red-300">{error}</div>
         ) : tab === 'team' ? (
-          <div className="p-6 space-y-4">
-            <div className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white/60 dark:bg-navy-900/40 p-4">
-              <div className="text-sm font-semibold text-slate-900 dark:text-white">Add member</div>
-              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Search users in your organization and assign a role.
-              </div>
-              <div className="mt-3 grid md:grid-cols-3 gap-3 items-end">
-                <div className="md:col-span-2">
-                  <label className="text-xs text-slate-500 dark:text-slate-400">User search</label>
-                  <input
-                    value={userQuery}
-                    onChange={(e) => setUserQuery(e.target.value)}
-                    disabled={!canManageTeam}
-                    className="mt-1 w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                    placeholder="name or email…"
-                  />
-                  <div className="mt-2 max-h-44 overflow-auto rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/40">
-                    {(users || []).length === 0 ? (
-                      <div className="p-3 text-sm text-slate-500 dark:text-slate-400">
-                        {canManageTeam
-                          ? 'No users found.'
-                          : 'You do not have permission to manage team.'}
-                      </div>
-                    ) : (
-                      (users || []).map((u) => (
-                        <button
-                          key={u.id}
-                          type="button"
-                          onClick={() => setSelectedUserId(u.id)}
-                          className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors ${
-                            selectedUserId === u.id ? 'bg-purple-50/70 dark:bg-purple-900/10' : ''
-                          }`}
-                        >
-                          <div className="font-medium text-slate-900 dark:text-white">{u.name}</div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400">
-                            {u.email}
-                          </div>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400">Role</label>
-                  <select
-                    className="mt-1 w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                    value={newRole}
-                    onChange={(e) => setNewRole(e.target.value as any)}
-                    disabled={!canManageTeam}
-                  >
-                    <option value="viewer">viewer</option>
-                    <option value="editor">editor</option>
-                    <option value="manager">manager</option>
-                    <option value="admin">admin</option>
-                  </select>
-                  <button
-                    type="button"
-                    disabled={!canManageTeam || !selectedUserId || roleBusyUserId !== null}
-                    onClick={async () => {
-                      setRoleBusyUserId(selectedUserId);
-                      setError(null);
-                      try {
-                        await Api.post(`/assessment-workflow-v2/${assessmentId}/roles`, {
-                          userId: selectedUserId,
-                          role: newRole,
-                        });
-                        setSelectedUserId('');
-                        await reload();
-                      } catch (e: any) {
-                        setError(e?.message || 'Failed to assign role');
-                      } finally {
-                        setRoleBusyUserId(null);
-                      }
-                    }}
-                    className="mt-3 w-full h-10 px-4 rounded-lg bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-sm font-semibold transition-colors"
-                  >
-                    {roleBusyUserId === selectedUserId ? 'Assigning…' : 'Assign role'}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white/60 dark:bg-navy-900/40 p-4">
-              <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                Assignments
-              </div>
-              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Assign responsibility for areas (DRD only).
-              </div>
-
-              {!isDRD ? (
-                <div className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-                  Assignments UI is currently implemented for DRD assessments.
-                </div>
-              ) : (
-                <>
-                  <div className="mt-3 grid md:grid-cols-4 gap-3 items-end">
-                    <div>
-                      <label className="text-xs text-slate-500 dark:text-slate-400">Axis</label>
-                      <select
-                        className="mt-1 w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                        value={String(assignAxisId)}
-                        onChange={(e) => {
-                          const nextAxis = Number(e.target.value || 1);
-                          setAssignAxisId(nextAxis);
-                          const firstArea = DRD_STRUCTURE.find((a) => a.id === nextAxis)?.areas?.[0]
-                            ?.id;
-                          if (firstArea) setAssignAreaId(firstArea);
-                        }}
-                      >
-                        {DRD_STRUCTURE.map((a) => (
-                          <option key={a.id} value={a.id}>
-                            {a.id}. {a.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-xs text-slate-500 dark:text-slate-400">Area</label>
-                      <select
-                        className="mt-1 w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                        value={assignAreaId}
-                        onChange={(e) => setAssignAreaId(e.target.value)}
-                      >
-                        {(DRD_STRUCTURE.find((a) => a.id === assignAxisId)?.areas || []).map(
-                          (area) => (
-                            <option key={area.id} value={area.id}>
-                              {area.id} — {area.name}
-                            </option>
-                          )
-                        )}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-xs text-slate-500 dark:text-slate-400">User</label>
-                      <select
-                        className="mt-1 w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                        value={assignUserId}
-                        onChange={(e) => setAssignUserId(e.target.value)}
-                      >
-                        <option value="">Select user…</option>
-                        {(users || []).map((u) => (
-                          <option key={u.id} value={u.id}>
-                            {u.name} ({u.email})
-                          </option>
-                        ))}
-                      </select>
-                      <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                        Tip: use the search above to find users.
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs text-slate-500 dark:text-slate-400">Due date</label>
-                      <input
-                        type="date"
-                        value={assignDueAt}
-                        onChange={(e) => setAssignDueAt(e.target.value)}
-                        className="mt-1 w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-3">
-                    <button
-                      type="button"
-                      disabled={!canManageTeam || !assignAreaId || !assignUserId}
-                      onClick={async () => {
-                        setError(null);
-                        try {
-                          await Api.put(`/assessment-workflow-v2/${assessmentId}/assignments`, {
-                            areaId: assignAreaId,
-                            assignedUserId: assignUserId,
-                            dueAt: assignDueAt ? new Date(assignDueAt).toISOString() : null,
-                            status: 'ACTIVE',
-                          });
-                          await reload();
-                        } catch (e: any) {
-                          setError(e?.message || 'Failed to save assignment');
-                        }
-                      }}
-                      className="h-10 px-4 rounded-lg bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-sm font-semibold transition-colors"
-                    >
-                      Save assignment
-                    </button>
-                  </div>
-
-                  <div className="mt-4 rounded-lg border border-slate-200/80 dark:border-navy-700 overflow-hidden">
-                    <div className="px-3 py-2 bg-slate-50/80 dark:bg-navy-900/40 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                      Current assignments ({assignments.length})
-                    </div>
-                    <div className="divide-y divide-slate-200 dark:divide-navy-800">
-                      {assignments.length === 0 ? (
-                        <div className="p-3 text-sm text-slate-500 dark:text-slate-400">
-                          No assignments yet.
-                        </div>
-                      ) : (
-                        assignments.map((a) => {
-                          const area = getAreaById(a.area_id);
-                          const assignee =
-                            roles.find((r) => r.userId === a.assigned_user_id)?.userName ||
-                            roles.find((r) => r.userId === a.assigned_user_id)?.userEmail ||
-                            a.assigned_user_id;
-                          return (
-                            <div key={a.id} className="p-3 flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <div className="text-sm text-slate-900 dark:text-white truncate">
-                                  {a.area_id} — {area?.name || 'Area'}
-                                </div>
-                                <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                                  Assigned to: {assignee}
-                                  {a.due_at
-                                    ? ` • due ${new Date(a.due_at).toLocaleDateString()}`
-                                    : ''}
-                                </div>
-                              </div>
-                              <span className="text-[11px] px-2 py-0.5 rounded-full border border-slate-200/80 dark:border-navy-700 text-slate-600 dark:text-slate-300">
-                                {a.status || 'ACTIVE'}
-                              </span>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white/60 dark:bg-navy-900/40 overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-200/60 dark:border-navy-800">
-                <div className="text-sm font-semibold text-slate-900 dark:text-white">Roles</div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">
-                  Permissions are computed per role (admin/manager/editor/viewer).
-                </div>
-              </div>
-              <div className="divide-y divide-slate-200 dark:divide-navy-800">
-                {roles.length === 0 ? (
-                  <div className="p-6 text-sm text-slate-500 dark:text-slate-400">
-                    No roles assigned.
-                  </div>
-                ) : (
-                  roles.map((r) => (
-                    <div key={r.id} className="p-4">
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="min-w-0">
-                          <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                            {r.userName || r.userEmail || r.userId}
-                          </div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                            {r.userEmail || '—'} • {r.role}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-300 flex-wrap justify-end">
-                          <span className="px-2 py-1 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/60 dark:bg-navy-900/40">
-                            Edit: {r.canEdit ? 'yes' : 'no'}
-                          </span>
-                          <span className="px-2 py-1 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/60 dark:bg-navy-900/40">
-                            Manage: {r.canManageTeam ? 'yes' : 'no'}
-                          </span>
-                          <select
-                            className="h-8 px-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-[12px] text-slate-900 dark:text-white"
-                            value={roleEdits[r.userId] || r.role}
-                            disabled={!canManageTeam || roleBusyUserId === r.userId}
-                            onChange={(e) => {
-                              const nextRole = e.target.value as RoleRecord['role'];
-                              setRoleEdits((prev) => ({ ...prev, [r.userId]: nextRole }));
-                            }}
-                            aria-label="Role"
-                          >
-                            <option value="admin">admin</option>
-                            <option value="manager">manager</option>
-                            <option value="editor">editor</option>
-                            <option value="viewer">viewer</option>
-                          </select>
-                          <button
-                            type="button"
-                            disabled={
-                              !canManageTeam ||
-                              roleBusyUserId !== null ||
-                              (roleEdits[r.userId] || r.role) === r.role
-                            }
-                            onClick={async () => {
-                              const nextRole = roleEdits[r.userId] || r.role;
-                              setRoleBusyUserId(r.userId);
-                              setError(null);
-                              try {
-                                await Api.put(
-                                  `/assessment-workflow-v2/${assessmentId}/roles/${r.userId}`,
-                                  {
-                                    role: nextRole,
-                                  }
-                                );
-                                await reload();
-                              } catch (e: any) {
-                                setError(e?.message || 'Failed to update role');
-                              } finally {
-                                setRoleBusyUserId(null);
-                              }
-                            }}
-                            className="h-8 px-3 rounded-lg bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-[12px] font-semibold transition-colors"
-                          >
-                            {roleBusyUserId === r.userId ? 'Saving…' : 'Save'}
-                          </button>
-                          <button
-                            type="button"
-                            disabled={!canManageTeam || roleBusyUserId !== null}
-                            onClick={async () => {
-                              if (!confirm('Remove this role assignment?')) return;
-                              setRoleBusyUserId(r.userId);
-                              setError(null);
-                              try {
-                                await Api.delete(
-                                  `/assessment-workflow-v2/${assessmentId}/roles/${r.userId}`
-                                );
-                                await reload();
-                              } catch (e: any) {
-                                setError(e?.message || 'Failed to remove role');
-                              } finally {
-                                setRoleBusyUserId(null);
-                              }
-                            }}
-                            className="h-8 px-3 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-[12px] font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors disabled:opacity-60"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
+          <div className="p-4">
+            <TeamManagementPanel
+              assessmentId={assessmentId}
+              assessmentType={assessmentType}
+              members={roles.map((r) => ({
+                id: r.id,
+                assessmentId: r.assessmentId,
+                userId: r.userId,
+                organizationId: r.organizationId,
+                role: r.role,
+                canEdit: Boolean(r.canEdit),
+                canApprove: Boolean(r.canApprove),
+                canManageTeam: Boolean(r.canManageTeam),
+                canChangeStatus: Boolean(r.canChangeStatus),
+                canGenerateReport: Boolean(r.canGenerateReport),
+                canGenerateInitiatives: Boolean(r.canGenerateInitiatives),
+                assignedAreas: r.assignedAreas || null,
+                assignedBy: r.assignedBy || '',
+                assignedAt: r.assignedAt || '',
+                updatedAt: r.updatedAt || '',
+                userName: r.userName,
+                userEmail: r.userEmail,
+              }))}
+              assignments={assignments.map((a) => ({
+                id: a.id,
+                assessmentId: a.assessment_id,
+                areaId: a.area_id,
+                areaName: getAreaById(a.area_id)?.name,
+                assignedUserId: a.assigned_user_id,
+                assignedUserName: roles.find((r) => r.userId === a.assigned_user_id)?.userName,
+                assignedUserEmail: roles.find((r) => r.userId === a.assigned_user_id)?.userEmail,
+                assignedBy: a.assigned_by,
+                assignedAt: a.assigned_at,
+                dueAt: a.due_at,
+                status: a.status || 'ACTIVE',
+              }))}
+              canManageTeam={canManageTeam}
+              onRefresh={reload}
+              onSearchUsers={handleSearchUsers}
+              onAddMember={handleAddMember}
+              onUpdateMember={handleUpdateMember}
+              onRemoveMember={handleRemoveMember}
+              onAssignArea={handleAssignArea}
+              onRemoveAssignment={handleRemoveAssignment}
+              drdStructure={DRD_STRUCTURE}
+            />
           </div>
         ) : tab === 'initiatives' ? (
           <div className="p-6 space-y-4">
@@ -1156,353 +1013,34 @@ export function AssessmentManagePanel(props: { assessmentId: string; assessmentN
             )}
           </div>
         ) : (
-          <div className="p-6">
-            <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div className="min-w-0">
-                <div className="text-sm font-semibold text-slate-900 dark:text-white">Workflow</div>
-                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Manage preparation → review → approval. Initiatives and reports are in dedicated
-                  tabs.
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    setLoading(true);
-                    setError(null);
-                    await reload();
-                  } catch (e: any) {
-                    setError(e?.message || 'Failed to refresh');
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-                className="h-9 px-3 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors"
-              >
-                Refresh
-              </button>
-            </div>
-
-            <div className="mt-4 grid lg:grid-cols-2 gap-4">
-              <div className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white/60 dark:bg-navy-900/40 p-4">
-                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Current status
-                </div>
-                <div className="mt-2 flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {workflow?.status || '—'}
-                  </span>
-                </div>
-                <div className="mt-3 text-xs text-slate-600 dark:text-slate-300">
-                  Completion:{' '}
-                  <span className="font-semibold">
-                    {typeof workflow?.completionPercent === 'number'
-                      ? `${Math.round(workflow.completionPercent)}%`
-                      : '—'}
-                  </span>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white/60 dark:bg-navy-900/40 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      Eligibility
-                    </div>
-                    <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
-                      {eligibility?.checks?.every((c) => c.severity !== 'blocking' || c.pass)
-                        ? 'Eligible'
-                        : 'Blocked'}
-                    </div>
-                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      Role: {eligibility?.roleInfo?.role || '—'}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-3 space-y-2">
-                  {(eligibility?.checks || []).map((c) => (
-                    <div key={c.key} className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-sm text-slate-700 dark:text-slate-200 truncate">
-                          {c.label}
-                        </div>
-                        {c.reason ? (
-                          <div className="text-xs text-slate-500 dark:text-slate-400">
-                            {c.reason}
-                          </div>
-                        ) : null}
-                      </div>
-                      <span
-                        className={`shrink-0 text-[11px] px-2 py-0.5 rounded-full border ${
-                          c.pass
-                            ? 'bg-green-100/60 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200/60 dark:border-green-900/30'
-                            : c.severity === 'blocking'
-                              ? 'bg-rose-100/60 dark:bg-rose-900/20 text-rose-700 dark:text-rose-200 border-rose-200/60 dark:border-rose-900/30'
-                              : 'bg-amber-100/60 dark:bg-amber-900/20 text-amber-700 dark:text-amber-200 border-amber-200/60 dark:border-amber-900/30'
-                        }`}
-                      >
-                        {c.pass ? 'PASS' : c.severity === 'blocking' ? 'BLOCK' : 'WARN'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 grid lg:grid-cols-2 gap-4">
-              <div className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white/60 dark:bg-navy-900/40 p-4">
-                <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Audit phase
-                </div>
-                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Manage preparation and execution phases (stored in context snapshot).
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs text-slate-500 dark:text-slate-400">Phase</label>
-                    <select
-                      className="mt-1 w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                      value={auditPhase}
-                      onChange={(e) => setAuditPhase(e.target.value as any)}
-                      disabled={!canManage}
-                    >
-                      <option value="PREP">PREP</option>
-                      <option value="FIELDWORK">FIELDWORK</option>
-                      <option value="VALIDATION">VALIDATION</option>
-                      <option value="REVIEW">REVIEW</option>
-                      <option value="APPROVAL">APPROVAL</option>
-                    </select>
-                  </div>
-                  <div className="flex items-end">
-                    <button
-                      type="button"
-                      disabled={!canManage}
-                      onClick={async () => {
-                        setError(null);
-                        try {
-                          const nextCtx = {
-                            ...assessmentContextSnapshot,
-                            audit: {
-                              ...(assessmentContextSnapshot?.audit || {}),
-                              phase: auditPhase,
-                              notes: auditNotes,
-                              updatedAt: new Date().toISOString(),
-                            },
-                          };
-                          await Api.put(`/assessment-workflow-v2/${assessmentId}`, {
-                            contextSnapshot: nextCtx,
-                          });
-                          await reload();
-                        } catch (e: any) {
-                          setError(e?.message || 'Failed to save audit phase');
-                        }
-                      }}
-                      className="w-full h-10 px-4 rounded-lg bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-sm font-semibold transition-colors"
-                    >
-                      Save phase
-                    </button>
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <label className="text-xs text-slate-500 dark:text-slate-400">Notes</label>
-                  <textarea
-                    value={auditNotes}
-                    onChange={(e) => setAuditNotes(e.target.value)}
-                    className="mt-1 w-full min-h-[84px] px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                    placeholder="What is the audit team focusing on right now?"
-                    disabled={!canManage}
-                  />
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white/60 dark:bg-navy-900/40 p-4">
-                <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Decision settings (optional)
-                </div>
-                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  These fields will be attached to workflow/initiative actions when supported.
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-3">
-                  <div className="col-span-2">
-                    <label className="text-xs text-slate-500 dark:text-slate-400">
-                      Decision owner
-                    </label>
-                    <select
-                      className="mt-1 w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                      value={decisionOwnerId}
-                      onChange={(e) => setDecisionOwnerId(e.target.value)}
-                      disabled={!canManage}
-                    >
-                      <option value="">(default: you)</option>
-                      {(users || []).map((u) => (
-                        <option key={u.id} value={u.id}>
-                          {u.name} ({u.email})
-                        </option>
-                      ))}
-                    </select>
-                    <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                      Tip: use Team → Add member search to load users into this list.
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs text-slate-500 dark:text-slate-400">Due date</label>
-                    <input
-                      type="date"
-                      value={decisionDueDate}
-                      onChange={(e) => setDecisionDueDate(e.target.value)}
-                      className="mt-1 w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                      disabled={!canManage}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-slate-500 dark:text-slate-400">Priority</label>
-                    <select
-                      className="mt-1 w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                      value={decisionPriority}
-                      onChange={(e) => setDecisionPriority(e.target.value as any)}
-                      disabled={!canManage}
-                    >
-                      <option value="low">low</option>
-                      <option value="medium">medium</option>
-                      <option value="high">high</option>
-                      <option value="critical">critical</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 grid lg:grid-cols-2 gap-4">
-              <div className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white/60 dark:bg-navy-900/40 p-4">
-                <div className="text-sm font-semibold text-slate-900 dark:text-white">Review</div>
-                <div className="mt-2 space-y-2">
-                  <label className="text-xs text-slate-500 dark:text-slate-400">
-                    Optional note
-                  </label>
-                  <textarea
-                    value={reviewComment}
-                    onChange={(e) => setReviewComment(e.target.value)}
-                    className="w-full min-h-[84px] px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                    placeholder="(optional) what should reviewers focus on?"
-                  />
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <button
-                      type="button"
-                      disabled={
-                        actionBusy !== null || !eligibility?.actions?.requestReview?.allowed
-                      }
-                      onClick={async () => {
-                        setActionBusy('request-review');
-                        setError(null);
-                        try {
-                          await Api.post(`/assessment-workflow-v2/${assessmentId}/request-review`, {
-                            ...(reviewComment.trim() ? { comment: reviewComment.trim() } : {}),
-                            ...(decisionOwnerId ? { decisionOwnerId } : {}),
-                            ...(decisionDueDate
-                              ? { dueDate: new Date(decisionDueDate).toISOString() }
-                              : {}),
-                            ...(decisionPriority ? { priority: decisionPriority } : {}),
-                          });
-                          await reload();
-                        } catch (e: any) {
-                          setError(e?.message || 'Failed to submit for review');
-                        } finally {
-                          setActionBusy(null);
-                        }
-                      }}
-                      className="h-10 px-4 rounded-lg bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-sm font-semibold transition-colors"
-                    >
-                      {actionBusy === 'request-review' ? 'Submitting…' : 'Submit for review'}
-                    </button>
-                    {!eligibility?.actions?.requestReview?.allowed &&
-                    (eligibility?.actions?.requestReview?.blockedBy || []).length ? (
-                      <div className="text-xs text-slate-500 dark:text-slate-400">
-                        Blocked:{' '}
-                        {(eligibility?.actions?.requestReview?.blockedBy || []).join(' • ')}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white/60 dark:bg-navy-900/40 p-4">
-                <div className="text-sm font-semibold text-slate-900 dark:text-white">Approval</div>
-                <div className="mt-2 space-y-2">
-                  <label className="text-xs text-slate-500 dark:text-slate-400">
-                    Send back comment (required)
-                  </label>
-                  <textarea
-                    value={sendBackComment}
-                    onChange={(e) => setSendBackComment(e.target.value)}
-                    className="w-full min-h-[84px] px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                    placeholder="Explain what needs to be fixed…"
-                  />
-
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <button
-                      type="button"
-                      disabled={actionBusy !== null || !eligibility?.actions?.approve?.allowed}
-                      onClick={async () => {
-                        setActionBusy('approve');
-                        setError(null);
-                        try {
-                          await Api.post(`/assessment-workflow-v2/${assessmentId}/approve`, {
-                            ...(decisionOwnerId ? { decisionOwnerId } : {}),
-                            ...(decisionDueDate
-                              ? { dueDate: new Date(decisionDueDate).toISOString() }
-                              : {}),
-                            ...(decisionPriority ? { priority: decisionPriority } : {}),
-                          });
-                          await reload();
-                        } catch (e: any) {
-                          setError(e?.message || 'Failed to approve');
-                        } finally {
-                          setActionBusy(null);
-                        }
-                      }}
-                      className="h-10 px-4 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors disabled:opacity-60"
-                    >
-                      {actionBusy === 'approve' ? 'Approving…' : 'Approve'}
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={
-                        actionBusy !== null ||
-                        sendBackComment.trim().length < 2 ||
-                        !eligibility?.actions?.sendBack?.allowed
-                      }
-                      onClick={async () => {
-                        setActionBusy('send-back');
-                        setError(null);
-                        try {
-                          await Api.post(`/assessment-workflow-v2/${assessmentId}/send-back`, {
-                            comment: sendBackComment.trim(),
-                          });
-                          await reload();
-                        } catch (e: any) {
-                          setError(e?.message || 'Failed to send back');
-                        } finally {
-                          setActionBusy(null);
-                        }
-                      }}
-                      className="h-10 px-4 rounded-lg bg-rose-500 hover:bg-rose-600 disabled:bg-rose-300 text-white text-sm font-semibold transition-colors"
-                    >
-                      {actionBusy === 'send-back' ? 'Sending…' : 'Send back'}
-                    </button>
-                  </div>
-                  {!eligibility?.actions?.approve?.allowed &&
-                  (eligibility?.actions?.approve?.blockedBy || []).length ? (
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                      Approve blocked:{' '}
-                      {(eligibility?.actions?.approve?.blockedBy || []).join(' • ')}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            </div>
+          <div className="p-4">
+            <WorkflowStagesTable
+              assessmentId={assessmentId}
+              currentStatus={(workflow?.status as any) || 'DRAFT'}
+              completionPercent={
+                typeof workflow?.completionPercent === 'number' ? workflow.completionPercent : 0
+              }
+              confidenceAvg={eligibility?.assessment?.confidenceAvg || 0}
+              reportApproved={Boolean((eligibility?.assessment as any)?.reportApprovedAt)}
+              eligibilityChecks={(eligibility?.checks || []).map((c) => ({
+                key: c.key,
+                label: c.label,
+                pass: c.pass,
+                severity: c.severity,
+                reason: c.reason,
+              }))}
+              gateDecisions={gateDecisions}
+              roles={roles.map((r) => ({
+                userId: r.userId,
+                userName: r.userName,
+                userEmail: r.userEmail,
+                role: r.role,
+              }))}
+              canManage={canManage}
+              onRefresh={reload}
+              onGateAction={handleGateAction}
+              onAssignGate={handleAssignGate}
+            />
           </div>
         )}
       </div>

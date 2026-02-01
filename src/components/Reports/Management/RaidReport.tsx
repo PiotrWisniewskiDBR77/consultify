@@ -6,7 +6,7 @@
 import { AlertTriangle, FileText, Flag, Sparkles } from 'lucide-react';
 import React from 'react';
 
-import { ManagementReport, RaidReportContent, RAGStatus } from '../../../types';
+import { ManagementReport, RAGStatus, RaidReportContent } from '../../../types';
 import { RAGIndicator } from './shared/RAGIndicator';
 import { ReportFooter } from './shared/ReportFooter';
 import { ReportHeader } from './shared/ReportHeader';
@@ -26,11 +26,7 @@ const getOverallStatus = (content: RaidReportContent): RAGStatus => {
   return 'GREEN';
 };
 
-const renderSectionTable = (
-  title: string,
-  items: RaidReportContent['risks'],
-  accent: string
-) => (
+const renderSectionTable = (title: string, items: RaidReportContent['risks'], accent: string) => (
   <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
     <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700 flex items-center gap-2">
       <span className={`w-2 h-2 rounded-full ${accent}`} />
@@ -134,9 +130,7 @@ export const RaidReport: React.FC<RaidReportProps> = ({ report, className = '' }
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle size={18} className="text-red-500" />
-            <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
-              Escalations
-            </h3>
+            <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Escalations</h3>
           </div>
           <div className="space-y-3 text-sm">
             {content.escalations.map((escalation) => (
@@ -165,10 +159,8 @@ export const RaidReport: React.FC<RaidReportProps> = ({ report, className = '' }
         </div>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           Overall RAID status is{' '}
-          <span className="font-medium text-slate-700 dark:text-slate-200">
-            {overallStatus}
-          </span>
-          . Escalations are calculated from open issues, dependency blockers, and critical risks.
+          <span className="font-medium text-slate-700 dark:text-slate-200">{overallStatus}</span>.
+          Escalations are calculated from open issues, dependency blockers, and critical risks.
         </p>
       </div>
 

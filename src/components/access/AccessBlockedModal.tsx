@@ -50,17 +50,18 @@ export const AccessBlockedModal: React.FC = () => {
       detail.message ||
       (code === 'TRIAL_PROFILE_INCOMPLETE'
         ? 'Complete organization setup to start your trial AI experience.'
-        :
-      (code === 'AI_TOKEN_BUDGET_EXCEEDED'
-        ? 'Your trial AI budget has been used. Add a payment method to continue using AI.'
-        : code === 'AI_LIMIT_REACHED'
-          ? 'You have reached your AI limit. Upgrade to continue.'
-          : code === 'TRIAL_EXPIRED'
-            ? 'Your trial has expired. Upgrade to continue.'
-            : 'This action is blocked in your current access level.'));
+        : code === 'AI_TOKEN_BUDGET_EXCEEDED'
+          ? 'Your trial AI budget has been used. Add a payment method to continue using AI.'
+          : code === 'AI_LIMIT_REACHED'
+            ? 'You have reached your AI limit. Upgrade to continue.'
+            : code === 'TRIAL_EXPIRED'
+              ? 'Your trial has expired. Upgrade to continue.'
+              : 'This action is blocked in your current access level.');
     const cta = detail.cta || getDefaultCta(code) || undefined;
     const isDemoBlock =
-      code === 'DEMO_TIME_EXPIRED' || code === 'DEMO_AI_SESSION_LIMIT_REACHED' || code === 'DEMO_READ_ONLY';
+      code === 'DEMO_TIME_EXPIRED' ||
+      code === 'DEMO_AI_SESSION_LIMIT_REACHED' ||
+      code === 'DEMO_READ_ONLY';
     return { code, message, cta, isDemoBlock };
   }, [detail]);
 
@@ -74,7 +75,9 @@ export const AccessBlockedModal: React.FC = () => {
       const e = evt as CustomEvent<{ message?: string; action?: string }>;
       setDetail({
         code: 'DEMO_READ_ONLY',
-        message: e.detail?.message || 'Demo mode is read-only. Start a free trial to create your own data.',
+        message:
+          e.detail?.message ||
+          'Demo mode is read-only. Start a free trial to create your own data.',
       });
       setOpen(true);
     };
@@ -141,4 +144,3 @@ export const AccessBlockedModal: React.FC = () => {
     </div>
   );
 };
-

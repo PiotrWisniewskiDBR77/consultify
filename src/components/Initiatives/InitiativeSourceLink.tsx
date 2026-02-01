@@ -3,7 +3,7 @@
  * Displays source link for initiatives (tool, assessment, interview)
  */
 
-import { ExternalLink, Sparkles, FileText, ClipboardList } from 'lucide-react';
+import { ClipboardList, ExternalLink, FileText, Sparkles } from 'lucide-react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 

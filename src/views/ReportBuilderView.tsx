@@ -104,7 +104,7 @@ const ReportsList: React.FC<ReportsListProps> = ({ onCreateNew, onOpenReport }) 
   // Handle duplicate
   const handleDuplicate = async (reportId: string) => {
     try {
-      const response = await Api.post(`/report-builder/${reportId}/duplicate`);
+      const response = await Api.post(`/report-builder/${reportId}/duplicate`, {});
       setReports((prev) => [response?.report, ...prev]);
       setActionMenuId(null);
     } catch (err) {

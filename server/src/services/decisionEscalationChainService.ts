@@ -1,7 +1,7 @@
 /**
  * Decision Escalation Chain Service
  * Manages escalation chains, auto-escalation, and notifications for decisions
- * 
+ *
  * Features:
  * - Define escalation chains per decision or organization
  * - Auto-escalate overdue decisions based on chain
@@ -76,7 +76,6 @@ interface DecisionRow {
 // ==========================================
 
 export class DecisionEscalationChainService {
-  
   // ==========================================
   // ESCALATION CHAIN MANAGEMENT
   // ==========================================
@@ -124,10 +123,9 @@ export class DecisionEscalationChainService {
     );
 
     // Delete existing chain
-    await queryHelpers.queryRun(
-      `DELETE FROM decision_escalation_chain WHERE decision_id = ?`,
-      [decisionId]
-    );
+    await queryHelpers.queryRun(`DELETE FROM decision_escalation_chain WHERE decision_id = ?`, [
+      decisionId,
+    ]);
 
     // Insert new chain
     const result: EscalationChainLevel[] = [];
@@ -155,14 +153,18 @@ export class DecisionEscalationChainService {
       result.push({ ...level, id });
     }
 
-    logger.info(`[DecisionEscalationChainService] Set chain for decision ${decisionId}: ${chain.length} levels`);
+    logger.info(
+      `[DecisionEscalationChainService] Set chain for decision ${decisionId}: ${chain.length} levels`
+    );
     return result;
   }
 
   /**
    * Get organization default escalation chain
    */
-  static async getOrganizationDefaultChain(organizationId: string): Promise<EscalationChainLevel[]> {
+  static async getOrganizationDefaultChain(
+    organizationId: string
+  ): Promise<EscalationChainLevel[]> {
     const template = await queryHelpers.queryOne<{ chain_config: string }>(
       `SELECT chain_config FROM decision_escalation_templates 
        WHERE organization_id = ? AND is_default = 1`,
@@ -259,7 +261,7 @@ export class DecisionEscalationChainService {
 
         // Get escalation chain
         const chain = await this.getEscalationChain(decision.id);
-        
+
         // Find next escalation level
         const nextLevelConfig = chain.find(
           (c) => c.level > currentLevel && overdueHours >= c.delayHours
@@ -267,13 +269,18 @@ export class DecisionEscalationChainService {
 
         if (nextLevelConfig) {
           // Escalate
-          await this.escalateToLevel(decision, nextLevelConfig, 'auto', 'Automatic escalation - decision overdue');
+          await this.escalateToLevel(
+            decision,
+            nextLevelConfig,
+            'auto',
+            'Automatic escalation - decision overdue'
+          );
           results.escalated++;
           results.notified++;
         } else if (currentLevel === 0 && overdueHours >= 0) {
           // Send reminder without escalating
-          const lastReminder = decision.last_reminder_sent_at 
-            ? new Date(decision.last_reminder_sent_at).getTime() 
+          const lastReminder = decision.last_reminder_sent_at
+            ? new Date(decision.last_reminder_sent_at).getTime()
             : 0;
           const hoursSinceReminder = (Date.now() - lastReminder) / (1000 * 60 * 60);
 
@@ -284,12 +291,17 @@ export class DecisionEscalationChainService {
         }
       } catch (err: any) {
         results.errors++;
-        logger.warn(`[DecisionEscalationChainService] Error processing decision ${decision.id}:`, err.message);
+        logger.warn(
+          `[DecisionEscalationChainService] Error processing decision ${decision.id}:`,
+          err.message
+        );
       }
     }
 
     if (results.escalated > 0 || results.notified > 0) {
-      logger.info(`[DecisionEscalationChainService] Processed ${results.processed}, escalated ${results.escalated}, notified ${results.notified}`);
+      logger.info(
+        `[DecisionEscalationChainService] Processed ${results.processed}, escalated ${results.escalated}, notified ${results.notified}`
+      );
     }
 
     return results;
@@ -309,7 +321,7 @@ export class DecisionEscalationChainService {
 
     // Find the user to escalate to
     let newDeciderId = levelConfig.escalateToUserId;
-    
+
     if (!newDeciderId && levelConfig.escalateToRole) {
       newDeciderId = await this.resolveRoleToUser(decision, levelConfig.escalateToRole);
     }
@@ -326,7 +338,16 @@ export class DecisionEscalationChainService {
         updated_at = ?
        WHERE id = ?`,
       newDeciderId
-        ? [levelConfig.level, nowIso, triggeredBy, reason, newDeciderId, newDeciderId, nowIso, decision.id]
+        ? [
+            levelConfig.level,
+            nowIso,
+            triggeredBy,
+            reason,
+            newDeciderId,
+            newDeciderId,
+            nowIso,
+            decision.id,
+          ]
         : [levelConfig.level, nowIso, triggeredBy, reason, nowIso, decision.id]
     );
 
@@ -357,7 +378,9 @@ export class DecisionEscalationChainService {
       await this.sendEscalationNotification(decision, newDeciderId, levelConfig, reason);
     }
 
-    logger.info(`[DecisionEscalationChainService] Escalated decision ${decision.id} from level ${previousLevel} to ${levelConfig.level}`);
+    logger.info(
+      `[DecisionEscalationChainService] Escalated decision ${decision.id} from level ${previousLevel} to ${levelConfig.level}`
+    );
   }
 
   /**
@@ -380,10 +403,10 @@ export class DecisionEscalationChainService {
 
     const currentLevel = decision.escalation_level || 0;
     const chain = await this.getEscalationChain(decisionId);
-    
+
     // Find next level or create ad-hoc level
     let nextLevel = chain.find((c) => c.level > currentLevel);
-    
+
     if (!nextLevel) {
       nextLevel = {
         id: 'manual',
@@ -421,14 +444,16 @@ export class DecisionEscalationChainService {
         3: 'Project Sponsor',
       };
 
-      const priority = levelConfig.level >= 3 ? 'urgent' : levelConfig.level >= 2 ? 'high' : 'normal';
+      const priority =
+        levelConfig.level >= 3 ? 'urgent' : levelConfig.level >= 2 ? 'high' : 'normal';
 
       await notificationService.send({
         userId: toUserId,
         organizationId: decision.organization_id,
         type: 'decision_escalated',
         title: `Decision Escalated (Level ${levelConfig.level})`,
-        body: levelConfig.notifyMessage || 
+        body:
+          levelConfig.notifyMessage ||
           `Decision "${decision.title}" has been escalated to you as ${levelNames[levelConfig.level] || `Level ${levelConfig.level}`}. Reason: ${reason}`,
         entityType: 'decision',
         entityId: decision.id,
@@ -451,14 +476,20 @@ export class DecisionEscalationChainService {
         });
       }
     } catch (err: any) {
-      logger.warn(`[DecisionEscalationChainService] Failed to send escalation notification:`, err.message);
+      logger.warn(
+        `[DecisionEscalationChainService] Failed to send escalation notification:`,
+        err.message
+      );
     }
   }
 
   /**
    * Send overdue reminder (without escalating)
    */
-  private static async sendOverdueReminder(decision: DecisionRow, overdueHours: number): Promise<void> {
+  private static async sendOverdueReminder(
+    decision: DecisionRow,
+    overdueHours: number
+  ): Promise<void> {
     const nowIso = new Date().toISOString();
 
     if (!decision.decider_id) return;
@@ -480,10 +511,10 @@ export class DecisionEscalationChainService {
       });
 
       // Update last reminder time
-      await queryHelpers.queryRun(
-        `UPDATE decisions SET last_reminder_sent_at = ? WHERE id = ?`,
-        [nowIso, decision.id]
-      );
+      await queryHelpers.queryRun(`UPDATE decisions SET last_reminder_sent_at = ? WHERE id = ?`, [
+        nowIso,
+        decision.id,
+      ]);
     } catch (err: any) {
       logger.warn(`[DecisionEscalationChainService] Failed to send overdue reminder:`, err.message);
     }
@@ -496,7 +527,10 @@ export class DecisionEscalationChainService {
   /**
    * Resolve role to specific user ID
    */
-  private static async resolveRoleToUser(decision: DecisionRow, role: string): Promise<string | undefined> {
+  private static async resolveRoleToUser(
+    decision: DecisionRow,
+    role: string
+  ): Promise<string | undefined> {
     switch (role) {
       case 'backup_decider':
         return decision.backup_decider_id || undefined;
@@ -578,7 +612,9 @@ export class DecisionEscalationChainService {
   /**
    * Create escalation template for organization
    */
-  static async createTemplate(template: Omit<EscalationTemplate, 'id'>): Promise<EscalationTemplate> {
+  static async createTemplate(
+    template: Omit<EscalationTemplate, 'id'>
+  ): Promise<EscalationTemplate> {
     const id = uuidv4();
     const nowIso = new Date().toISOString();
 

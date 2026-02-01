@@ -24,13 +24,15 @@ import {
   Plus,
   RefreshCw,
   Search,
+  Sparkles,
   Trash2,
   Upload,
   User,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { ImportReportModal } from '../Reports/ImportReportModal';
 import { NewReportModal } from './modals/NewReportModal';
@@ -87,8 +89,9 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   pendingAssessmentId,
   onOpenReport,
 }) => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const navigate = useNavigate();
   // State
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -300,12 +303,20 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
               Import
             </button>
             <button
+              onClick={() => navigate('/reports/builder?new=true')}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium rounded-lg transition-all shadow-md hover:shadow-lg group relative"
+              title={isPolish ? 'Utwórz raport z pomocą AI' : 'Create AI-powered report'}
+            >
+              <Sparkles size={18} />
+              {isPolish ? 'Nowy Raport (AI)' : 'New Report (AI)'}
+            </button>
+            <button
               onClick={() => setShowStageGate(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors group relative"
+              className="flex items-center gap-2 px-4 py-2.5 border border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 font-medium rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors group relative"
               title="Approved Assessment → Draft Report → Final Report → Generate Initiatives"
             >
               <Plus size={18} />
-              New Report
+              {isPolish ? 'Szybki raport' : 'Quick Report'}
               <span className="hidden group-hover:block absolute top-full right-0 mt-2 px-3 py-2 bg-navy-900 dark:bg-navy-800 text-white text-xs rounded-lg shadow-lg whitespace-nowrap z-50">
                 Workflow: Assessment → Report → Initiatives
               </span>
@@ -377,138 +388,46 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
           </div>
         ) : (
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-slate-50 dark:bg-navy-900/50 sticky top-0">
-              <tr>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Report
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Author
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Assessment
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Initiatives
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Updated
-                </th>
-                <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-              {filteredReports.map((report) => {
-                const statusConfig = STATUS_CONFIG[report.status] || STATUS_CONFIG.DRAFT;
+            <table className="w-full">
+              <thead className="bg-slate-50 dark:bg-navy-900/50 sticky top-0">
+                <tr>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Report
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Author
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Assessment
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Initiatives
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Updated
+                  </th>
+                  <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+                {filteredReports.map((report) => {
+                  const statusConfig = STATUS_CONFIG[report.status] || STATUS_CONFIG.DRAFT;
 
-                return (
-                  <tr
-                    key={report.id}
-                    className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                          <FileText className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <button
-                          onClick={() => {
-                            if (onOpenReport) {
-                              onOpenReport(report.id, report.name, report.status);
-                            } else {
-                              setEditingReportId(report.id);
-                            }
-                          }}
-                          className="font-medium text-navy-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors text-left"
-                        >
-                          {report.name}
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (onOpenReport) {
-                              onOpenReport(report.id, report.name, report.status);
-                            } else {
-                              setEditingReportId(report.id);
-                            }
-                          }}
-                          className="p-1 text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded transition-colors"
-                          title="Open report"
-                        >
-                          <ArrowRight size={14} />
-                        </button>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div
-                        className="flex items-center gap-2 cursor-default"
-                        title={report.createdBy}
-                      >
-                        <div className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-xs font-medium text-purple-700 dark:text-purple-300">
-                          {report.createdBy
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')
-                            .slice(0, 2)
-                            .toUpperCase()}
-                        </div>
-                        <span className="text-sm text-slate-600 dark:text-slate-400 truncate max-w-[60px]">
-                          {report.createdBy.split(' ')[0]}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-slate-500 dark:text-slate-400">
-                      {report.assessmentName}
-                    </td>
-                    <td className="px-4 py-4">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}
-                      >
-                        {statusConfig.icon}
-                        {statusConfig.label}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      {report.initiativesGenerated ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                          <Lightbulb size={12} />
-                          {report.initiativesCount} generated
-                        </span>
-                      ) : (
-                        <span className="text-sm text-slate-400 dark:text-slate-500">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-slate-500 dark:text-slate-400">
-                      {formatDate(report.updatedAt)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-1">
-                        {/* Primary Action - context-dependent */}
-                        {report.status === 'DRAFT' ? (
-                          // Draft - Finalize is primary
-                          <button
-                            onClick={() => handleFinalizeReport(report.id)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors"
-                          >
-                            <CheckCircle2 size={14} />
-                            Finalize
-                          </button>
-                        ) : report.status === 'FINAL' && !report.initiativesGenerated ? (
-                          // Final without initiatives - Generate is primary
-                          <button
-                            onClick={() => onCreateInitiatives(report.id)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
-                          >
-                            <Lightbulb size={14} />
-                            Initiatives
-                          </button>
-                        ) : (
-                          // Default - View
+                  return (
+                    <tr
+                      key={report.id}
+                      className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                            <FileText className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                          </div>
                           <button
                             onClick={() => {
                               if (onOpenReport) {
@@ -517,119 +436,215 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                                 setEditingReportId(report.id);
                               }
                             }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                            className="font-medium text-navy-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors text-left"
                           >
-                            <Eye size={14} />
-                            View
+                            {report.name}
                           </button>
-                        )}
-
-                        {/* Download PDF - for final reports */}
-                        {report.status === 'FINAL' && (
                           <button
-                            onClick={() => handleExportPDF(report.id, report.name)}
-                            className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
-                            title="Download PDF"
+                            onClick={() => {
+                              if (onOpenReport) {
+                                onOpenReport(report.id, report.name, report.status);
+                              } else {
+                                setEditingReportId(report.id);
+                              }
+                            }}
+                            className="p-1 text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded transition-colors"
+                            title="Open report"
                           >
-                            <Download size={16} />
+                            <ArrowRight size={14} />
                           </button>
-                        )}
-
-                        {/* More menu - all secondary actions */}
-                        <div className="relative">
-                          <button
-                            onClick={() =>
-                              setActiveRowMenu(activeRowMenu === report.id ? null : report.id)
-                            }
-                            className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
-                          >
-                            <MoreVertical size={16} />
-                          </button>
-
-                          {activeRowMenu === report.id && (
-                            <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-navy-900 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1 z-10">
-                              <button
-                                onClick={() => {
-                                  if (onOpenReport) {
-                                    onOpenReport(report.id, report.name, report.status);
-                                  } else {
-                                    setEditingReportId(report.id);
-                                  }
-                                  setActiveRowMenu(null);
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
-                              >
-                                {report.status === 'DRAFT' ? <Edit size={14} /> : <Eye size={14} />}
-                                {report.status === 'DRAFT' ? 'Edit' : 'View'} Report
-                              </button>
-                              {report.status === 'DRAFT' && (
-                                <button
-                                  onClick={() => {
-                                    handleFinalizeReport(report.id);
-                                    setActiveRowMenu(null);
-                                  }}
-                                  className="w-full text-left px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/10 flex items-center gap-2"
-                                >
-                                  <CheckCircle2 size={14} />
-                                  Finalize
-                                </button>
-                              )}
-                              {report.status === 'FINAL' && !report.initiativesGenerated && (
-                                <button
-                                  onClick={() => {
-                                    onCreateInitiatives(report.id);
-                                    setActiveRowMenu(null);
-                                  }}
-                                  className="w-full text-left px-4 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/10 flex items-center gap-2"
-                                >
-                                  <Lightbulb size={14} />
-                                  Generate Initiatives
-                                </button>
-                              )}
-                              <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
-                              <button
-                                onClick={() => {
-                                  handleExportPDF(report.id, report.name);
-                                  setActiveRowMenu(null);
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
-                              >
-                                <FileText size={14} />
-                                Export PDF
-                              </button>
-                              <button
-                                onClick={() => {
-                                  handleExportExcel(report.id, report.name);
-                                  setActiveRowMenu(null);
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
-                              >
-                                <FileOutput size={14} />
-                                Export Excel
-                              </button>
-                              <button className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2">
-                                <RefreshCw size={14} />
-                                Duplicate
-                              </button>
-                              {report.status === 'DRAFT' && (
-                                <>
-                                  <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
-                                  <button className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2">
-                                    <Trash2 size={14} />
-                                    Delete
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          )}
                         </div>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div
+                          className="flex items-center gap-2 cursor-default"
+                          title={report.createdBy}
+                        >
+                          <div className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-xs font-medium text-purple-700 dark:text-purple-300">
+                            {report.createdBy
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')
+                              .slice(0, 2)
+                              .toUpperCase()}
+                          </div>
+                          <span className="text-sm text-slate-600 dark:text-slate-400 truncate max-w-[60px]">
+                            {report.createdBy.split(' ')[0]}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-sm text-slate-500 dark:text-slate-400">
+                        {report.assessmentName}
+                      </td>
+                      <td className="px-4 py-4">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}
+                        >
+                          {statusConfig.icon}
+                          {statusConfig.label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4">
+                        {report.initiativesGenerated ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                            <Lightbulb size={12} />
+                            {report.initiativesCount} generated
+                          </span>
+                        ) : (
+                          <span className="text-sm text-slate-400 dark:text-slate-500">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 text-sm text-slate-500 dark:text-slate-400">
+                        {formatDate(report.updatedAt)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-end gap-1">
+                          {/* Primary Action - context-dependent */}
+                          {report.status === 'DRAFT' ? (
+                            // Draft - Finalize is primary
+                            <button
+                              onClick={() => handleFinalizeReport(report.id)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors"
+                            >
+                              <CheckCircle2 size={14} />
+                              Finalize
+                            </button>
+                          ) : report.status === 'FINAL' && !report.initiativesGenerated ? (
+                            // Final without initiatives - Generate is primary
+                            <button
+                              onClick={() => onCreateInitiatives(report.id)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
+                            >
+                              <Lightbulb size={14} />
+                              Initiatives
+                            </button>
+                          ) : (
+                            // Default - View
+                            <button
+                              onClick={() => {
+                                if (onOpenReport) {
+                                  onOpenReport(report.id, report.name, report.status);
+                                } else {
+                                  setEditingReportId(report.id);
+                                }
+                              }}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                            >
+                              <Eye size={14} />
+                              View
+                            </button>
+                          )}
+
+                          {/* Download PDF - for final reports */}
+                          {report.status === 'FINAL' && (
+                            <button
+                              onClick={() => handleExportPDF(report.id, report.name)}
+                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
+                              title="Download PDF"
+                            >
+                              <Download size={16} />
+                            </button>
+                          )}
+
+                          {/* More menu - all secondary actions */}
+                          <div className="relative">
+                            <button
+                              onClick={() =>
+                                setActiveRowMenu(activeRowMenu === report.id ? null : report.id)
+                              }
+                              className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
+                            >
+                              <MoreVertical size={16} />
+                            </button>
+
+                            {activeRowMenu === report.id && (
+                              <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-navy-900 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1 z-10">
+                                <button
+                                  onClick={() => {
+                                    if (onOpenReport) {
+                                      onOpenReport(report.id, report.name, report.status);
+                                    } else {
+                                      setEditingReportId(report.id);
+                                    }
+                                    setActiveRowMenu(null);
+                                  }}
+                                  className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
+                                >
+                                  {report.status === 'DRAFT' ? (
+                                    <Edit size={14} />
+                                  ) : (
+                                    <Eye size={14} />
+                                  )}
+                                  {report.status === 'DRAFT' ? 'Edit' : 'View'} Report
+                                </button>
+                                {report.status === 'DRAFT' && (
+                                  <button
+                                    onClick={() => {
+                                      handleFinalizeReport(report.id);
+                                      setActiveRowMenu(null);
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/10 flex items-center gap-2"
+                                  >
+                                    <CheckCircle2 size={14} />
+                                    Finalize
+                                  </button>
+                                )}
+                                {report.status === 'FINAL' && !report.initiativesGenerated && (
+                                  <button
+                                    onClick={() => {
+                                      onCreateInitiatives(report.id);
+                                      setActiveRowMenu(null);
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/10 flex items-center gap-2"
+                                  >
+                                    <Lightbulb size={14} />
+                                    Generate Initiatives
+                                  </button>
+                                )}
+                                <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
+                                <button
+                                  onClick={() => {
+                                    handleExportPDF(report.id, report.name);
+                                    setActiveRowMenu(null);
+                                  }}
+                                  className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
+                                >
+                                  <FileText size={14} />
+                                  Export PDF
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleExportExcel(report.id, report.name);
+                                    setActiveRowMenu(null);
+                                  }}
+                                  className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
+                                >
+                                  <FileOutput size={14} />
+                                  Export Excel
+                                </button>
+                                <button className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2">
+                                  <RefreshCw size={14} />
+                                  Duplicate
+                                </button>
+                                {report.status === 'DRAFT' && (
+                                  <>
+                                    <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
+                                    <button className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2">
+                                      <Trash2 size={14} />
+                                      Delete
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

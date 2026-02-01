@@ -74,9 +74,7 @@ const PriorityBadge: React.FC<{ priority?: string }> = ({ priority }) => {
   return (
     <span
       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-        isCritical
-          ? 'bg-red-500 text-white animate-pulse'
-          : 'bg-orange-500 text-white'
+        isCritical ? 'bg-red-500 text-white animate-pulse' : 'bg-orange-500 text-white'
       }`}
     >
       {isCritical ? <Zap size={10} /> : <Flag size={10} />}
@@ -94,9 +92,7 @@ const EscalationBadge: React.FC<{ level?: string }> = ({ level }) => {
   return (
     <span
       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-        isRed
-          ? 'bg-red-600 text-white animate-pulse'
-          : 'bg-amber-500 text-white'
+        isRed ? 'bg-red-600 text-white animate-pulse' : 'bg-amber-500 text-white'
       }`}
     >
       {isRed ? <Flame size={10} /> : <TrendingUp size={10} />}
@@ -153,18 +149,16 @@ const DecisionCard: React.FC<{
       <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
           {/* Type Badge */}
-          <span
-            className={`px-2 py-1 text-xs font-medium rounded text-white ${typeInfo.color}`}
-          >
+          <span className={`px-2 py-1 text-xs font-medium rounded text-white ${typeInfo.color}`}>
             {typeInfo.icon} {typeInfo.label}
           </span>
-          
+
           {/* Priority */}
           <PriorityBadge priority={decision.priority} />
-          
+
           {/* Escalation */}
           <EscalationBadge level={decision.escalationLevel} />
-          
+
           {/* Overdue */}
           {isOverdue && decision.escalationLevel !== 'red' && (
             <span className="px-2 py-1 text-xs font-bold bg-red-500 text-white rounded">
@@ -195,9 +189,7 @@ const DecisionCard: React.FC<{
       </div>
 
       {/* Title */}
-      <h3 className="font-semibold text-navy-900 dark:text-white mb-1">
-        {decision.title}
-      </h3>
+      <h3 className="font-semibold text-navy-900 dark:text-white mb-1">{decision.title}</h3>
 
       {/* Description */}
       {decision.description && (
@@ -214,9 +206,7 @@ const DecisionCard: React.FC<{
             {decision.requestedByName}
           </span>
         )}
-        {decision.projectName && (
-          <span>Project: {decision.projectName}</span>
-        )}
+        {decision.projectName && <span>Project: {decision.projectName}</span>}
         {decision.relatedObjectType && decision.relatedObjectName && (
           <span>
             {decision.relatedObjectType}: {decision.relatedObjectName}
@@ -328,25 +318,23 @@ export const DecisionsRequiredSection: React.FC<DecisionsRequiredSectionProps> =
     // Escalated red first
     if (a.escalationLevel === 'red' && b.escalationLevel !== 'red') return -1;
     if (b.escalationLevel === 'red' && a.escalationLevel !== 'red') return 1;
-    
+
     // Then amber
     if (a.escalationLevel === 'amber' && b.escalationLevel !== 'amber') return -1;
     if (b.escalationLevel === 'amber' && a.escalationLevel !== 'amber') return 1;
-    
+
     // Then overdue
     const aOverdue = (a.daysUntilDeadline || 0) < 0;
     const bOverdue = (b.daysUntilDeadline || 0) < 0;
     if (aOverdue && !bOverdue) return -1;
     if (bOverdue && !aOverdue) return 1;
-    
+
     // Then by days waiting
     return (b.daysWaiting || 0) - (a.daysWaiting || 0);
   });
 
   // Limit items
-  const displayDecisions = maxItems
-    ? filteredDecisions.slice(0, maxItems)
-    : filteredDecisions;
+  const displayDecisions = maxItems ? filteredDecisions.slice(0, maxItems) : filteredDecisions;
 
   const hasMore = maxItems && filteredDecisions.length > maxItems;
 
@@ -370,11 +358,7 @@ export const DecisionsRequiredSection: React.FC<DecisionsRequiredSectionProps> =
 
       <div className="space-y-4">
         {displayDecisions.map((decision) => (
-          <DecisionCard
-            key={decision.id}
-            decision={decision}
-            onClick={onDecisionClick}
-          />
+          <DecisionCard key={decision.id} decision={decision} onClick={onDecisionClick} />
         ))}
       </div>
 

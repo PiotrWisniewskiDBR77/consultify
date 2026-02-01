@@ -130,6 +130,14 @@ export function useUniversalVoice(options: UseUniversalVoiceOptions = {}): UseUn
   const continuousModeRef = useRef(false);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Sync settings when initialSettings change
+  useEffect(() => {
+    setSettings((prev) => ({
+      ...prev,
+      ...initialSettings,
+    }));
+  }, [initialSettings]);
+
   // Check browser support
   const isSupported =
     typeof window !== 'undefined' &&

@@ -118,7 +118,7 @@ const StatusMachine = {
       }
     }
 
-    if (from === INITIATIVE_STATUSES.PLANNING && to === INITIATIVE_STATUSES.REVIEW) {
+    if (from === INITIATIVE_STATUSES.REVIEW && to === INITIATIVE_STATUSES.PROMOTED) {
       if (context.charterCompleteness !== undefined && context.charterCompleteness < 60) {
         return {
           valid: false,
@@ -127,7 +127,7 @@ const StatusMachine = {
       }
     }
 
-    if (from === INITIATIVE_STATUSES.REVIEW && to === INITIATIVE_STATUSES.APPROVED) {
+    if (from === INITIATIVE_STATUSES.PLANNING && to === INITIATIVE_STATUSES.APPROVED) {
       if (context.requiresApproval && !context.isApproved) {
         return { valid: false, reason: 'Governance approval required for this transition' };
       }
@@ -139,9 +139,12 @@ const StatusMachine = {
       }
     }
 
-    if (from === INITIATIVE_STATUSES.APPROVED && to === INITIATIVE_STATUSES.EXECUTING) {
+    if (from === INITIATIVE_STATUSES.APPROVED && to === INITIATIVE_STATUSES.SCHEDULED) {
       if (context.requiresScheduling && !context.isScheduled) {
-        return { valid: false, reason: 'Initiative must be scheduled in roadmap before execution' };
+        return {
+          valid: false,
+          reason: 'Initiative must be scheduled in roadmap before scheduling',
+        };
       }
     }
 

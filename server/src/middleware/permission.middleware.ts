@@ -117,8 +117,12 @@ export const requirePermission = (permissionKey: string) => {
       const roleCandidates = getRoleCandidates(userRole);
       let hasPermission = false;
       for (const candidateRole of roleCandidates) {
-        // eslint-disable-next-line no-await-in-loop
-        hasPermission = await PermissionService.hasPermission(userId, orgId, permissionKey, candidateRole);
+        hasPermission = await PermissionService.hasPermission(
+          userId,
+          orgId,
+          permissionKey,
+          candidateRole
+        );
         if (hasPermission) break;
       }
 
@@ -170,7 +174,6 @@ export const requireAnyPermission = (permissionKeys: string[]) => {
       const roleCandidates = getRoleCandidates(userRole);
       for (const permissionKey of permissionKeys) {
         for (const candidateRole of roleCandidates) {
-          // eslint-disable-next-line no-await-in-loop
           const hasPermission = await PermissionService.hasPermission(
             userId,
             orgId,
@@ -231,8 +234,12 @@ export const requireAllPermissions = (permissionKeys: string[]) => {
       for (const permissionKey of permissionKeys) {
         let hasPermission = false;
         for (const candidateRole of roleCandidates) {
-          // eslint-disable-next-line no-await-in-loop
-          hasPermission = await PermissionService.hasPermission(userId, orgId, permissionKey, candidateRole);
+          hasPermission = await PermissionService.hasPermission(
+            userId,
+            orgId,
+            permissionKey,
+            candidateRole
+          );
           if (hasPermission) break;
         }
         if (!hasPermission) missingPermissions.push(permissionKey);

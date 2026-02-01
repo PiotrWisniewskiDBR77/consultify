@@ -98,9 +98,11 @@ export const Scheduler = {
     // 7. Task Overdue Reminders (assignee/owner/backup) - Run every 30 minutes
     const job7 = cron.schedule('*/30 * * * *', () => {
       logger.info('[Scheduler] Running Task Overdue Stakeholder Notifications');
-      taskAssignmentService.checkAndNotifyOverdueStakeholders({ limit: 200 }).catch((err: Error) => {
-        logger.error('[Scheduler] Task Overdue Notification job failed:', err.message);
-      });
+      taskAssignmentService
+        .checkAndNotifyOverdueStakeholders({ limit: 200 })
+        .catch((err: Error) => {
+          logger.error('[Scheduler] Task Overdue Notification job failed:', err.message);
+        });
     });
     this.jobs.push(job7);
 

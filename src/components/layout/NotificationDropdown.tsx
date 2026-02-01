@@ -16,7 +16,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { buildNotificationContent } from '@/components/Notifications/notificationContent';
-import { useNotificationSnooze, type SnoozePreset } from '@/hooks/useNotificationSnooze';
+import { type SnoozePreset, useNotificationSnooze } from '@/hooks/useNotificationSnooze';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
@@ -141,7 +141,7 @@ export const NotificationDropdown = () => {
   // Handle opening chat with notification context
   const handleOpenChat = (notification: Notification, event: React.MouseEvent) => {
     event.stopPropagation();
-    
+
     // Ensure chat panel is visible
     if (isChatCollapsed) {
       toggleChatCollapse();
@@ -155,10 +155,13 @@ export const NotificationDropdown = () => {
       severity: notification.severity,
       title: notification.title,
       message: notification.message,
-      relatedEntity: notification.relatedObjectType && notification.relatedObjectId ? {
-        type: notification.relatedObjectType,
-        id: notification.relatedObjectId,
-      } : null,
+      relatedEntity:
+        notification.relatedObjectType && notification.relatedObjectId
+          ? {
+              type: notification.relatedObjectType,
+              id: notification.relatedObjectId,
+            }
+          : null,
       projectId: notification.projectId || null,
       projectName: notification.projectName || null,
     });
@@ -172,16 +175,16 @@ export const NotificationDropdown = () => {
     event.stopPropagation();
     snooze(notificationId, preset);
     setShowSnoozeMenu(null);
-    
+
     const presetLabels: Record<SnoozePreset, { en: string; pl: string }> = {
       '1h': { en: '1 hour', pl: '1 godzinę' },
       '4h': { en: '4 hours', pl: '4 godziny' },
-      'tomorrow': { en: 'tomorrow', pl: 'jutro' },
-      'next_week': { en: 'next week', pl: 'za tydzień' },
+      tomorrow: { en: 'tomorrow', pl: 'jutro' },
+      next_week: { en: 'next week', pl: 'za tydzień' },
     };
     toast.success(
-      isPolish 
-        ? `Powiadomienie odłożone na ${presetLabels[preset].pl}` 
+      isPolish
+        ? `Powiadomienie odłożone na ${presetLabels[preset].pl}`
         : `Notification snoozed for ${presetLabels[preset].en}`
     );
   };
@@ -310,7 +313,7 @@ export const NotificationDropdown = () => {
                 <div className="animate-spin w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full mx-auto mb-2"></div>
                 {isPolish ? 'Ładowanie...' : 'Loading...'}
               </div>
-            ) : notifications.filter(n => !isSnoozed(n.id)).length === 0 ? (
+            ) : notifications.filter((n) => !isSnoozed(n.id)).length === 0 ? (
               <div className="p-8 text-center flex flex-col items-center">
                 <div className="w-12 h-12 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-3">
                   <Bell size={20} className="text-slate-300" />
@@ -325,134 +328,156 @@ export const NotificationDropdown = () => {
             ) : (
               <div className="divide-y divide-slate-50 dark:divide-white/5">
                 {notifications
-                  .filter(n => !isSnoozed(n.id)) // Filter out snoozed notifications
+                  .filter((n) => !isSnoozed(n.id)) // Filter out snoozed notifications
                   .map((notification) =>
-                  (() => {
-                    const contract = buildNotificationContent(notification as any, isPolish);
-                    const primaryLabel =
-                      contract.primaryCta.kind === 'none' 
-                        ? (isPolish ? 'Otwórz' : 'Open') 
-                        : contract.primaryCta.label;
-                    return (
-                      <div
-                        key={notification.id}
-                        className={`group relative p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${
-                          !notification.isRead
-                            ? notification.type.includes('ai')
-                              ? 'bg-purple-50/50 dark:bg-purple-900/20'
-                              : 'bg-slate-50 dark:bg-navy-800/30'
-                            : ''
-                        }`}
-                        onClick={() => openInMyWork(notification)}
-                      >
-                        <div className="flex gap-3 pr-8">
-                          <div
-                            className={`mt-0.5 shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${!notification.isRead ? 'bg-white dark:bg-white/10 shadow-sm border border-slate-200 dark:border-navy-700' : 'bg-slate-100 dark:bg-white/5'}`}
-                          >
-                            {getIcon(notification.type)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2 mb-1">
-                              <p
-                                className={`text-sm font-semibold leading-tight ${!notification.isRead ? 'text-navy-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}
-                              >
-                                {notification.title}
-                              </p>
-                              <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0 whitespace-nowrap mt-0.5">
-                                {formatTime(notification.createdAt)}
-                              </span>
-                            </div>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
-                              {contract.whyImportant}
-                            </p>
-
-                            {/* Action Button */}
-                            <div className="mt-2 inline-flex items-center gap-2">
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700">
-                                {contract.priority}
-                              </span>
-                              <span className="inline-flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 bg-purple-50 dark:bg-purple-900/20 px-2.5 py-1 rounded-md transition-colors hover:bg-purple-100 dark:hover:bg-purple-900/30">
-                                {primaryLabel} <ArrowRight size={12} />
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Actions - Always visible for better UX */}
-                        <div className="absolute right-2 top-2 flex items-center gap-1 bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-slate-100 dark:border-navy-700">
-                          {/* Chat button */}
-                          <button
-                            onClick={(e) => handleOpenChat(notification, e)}
-                            className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/20 rounded-md transition-colors"
-                            title={isPolish ? 'Otwórz czat' : 'Open chat'}
-                          >
-                            <MessageSquare size={14} />
-                          </button>
-                          
-                          {/* Snooze button with dropdown */}
-                          <div className="relative">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setShowSnoozeMenu(showSnoozeMenu === notification.id ? null : notification.id);
-                              }}
-                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/20 rounded-md transition-colors"
-                              title={isPolish ? 'Odłóż' : 'Snooze'}
+                    (() => {
+                      const contract = buildNotificationContent(notification as any, isPolish);
+                      const primaryLabel =
+                        contract.primaryCta.kind === 'none'
+                          ? isPolish
+                            ? 'Otwórz'
+                            : 'Open'
+                          : contract.primaryCta.label;
+                      return (
+                        <div
+                          key={notification.id}
+                          className={`group relative p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${
+                            !notification.isRead
+                              ? notification.type.includes('ai')
+                                ? 'bg-purple-50/50 dark:bg-purple-900/20'
+                                : 'bg-slate-50 dark:bg-navy-800/30'
+                              : ''
+                          }`}
+                          onClick={() => openInMyWork(notification)}
+                        >
+                          <div className="flex gap-3 pr-8">
+                            <div
+                              className={`mt-0.5 shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${!notification.isRead ? 'bg-white dark:bg-white/10 shadow-sm border border-slate-200 dark:border-navy-700' : 'bg-slate-100 dark:bg-white/5'}`}
                             >
-                              <Clock size={14} />
+                              {getIcon(notification.type)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2 mb-1">
+                                <p
+                                  className={`text-sm font-semibold leading-tight ${!notification.isRead ? 'text-navy-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}
+                                >
+                                  {notification.title}
+                                </p>
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0 whitespace-nowrap mt-0.5">
+                                  {formatTime(notification.createdAt)}
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
+                                {contract.whyImportant}
+                              </p>
+
+                              {/* Action Button */}
+                              <div className="mt-2 inline-flex items-center gap-2">
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700">
+                                  {contract.priority}
+                                </span>
+                                <span className="inline-flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 bg-purple-50 dark:bg-purple-900/20 px-2.5 py-1 rounded-md transition-colors hover:bg-purple-100 dark:hover:bg-purple-900/30">
+                                  {primaryLabel} <ArrowRight size={12} />
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Actions - Always visible for better UX */}
+                          <div className="absolute right-2 top-2 flex items-center gap-1 bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-slate-100 dark:border-navy-700">
+                            {/* Chat button */}
+                            <button
+                              onClick={(e) => handleOpenChat(notification, e)}
+                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/20 rounded-md transition-colors"
+                              title={isPolish ? 'Otwórz czat' : 'Open chat'}
+                            >
+                              <MessageSquare size={14} />
                             </button>
-                            {showSnoozeMenu === notification.id && (
-                              <>
-                                <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setShowSnoozeMenu(null); }} />
-                                <div className="absolute right-0 top-full mt-1 z-50 py-1 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 min-w-[100px]">
-                                  {[
-                                    { preset: '1h' as SnoozePreset, label: isPolish ? '1 godz.' : '1 hour' },
-                                    { preset: '4h' as SnoozePreset, label: isPolish ? '4 godz.' : '4 hours' },
-                                    { preset: 'tomorrow' as SnoozePreset, label: isPolish ? 'Jutro' : 'Tomorrow' },
-                                    { preset: 'next_week' as SnoozePreset, label: isPolish ? 'Za tydzień' : 'Next week' },
-                                  ].map(({ preset, label }) => (
-                                    <button
-                                      key={preset}
-                                      onClick={(e) => handleSnooze(notification.id, preset, e)}
-                                      className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
-                                    >
-                                      {label}
-                                    </button>
-                                  ))}
-                                </div>
-                              </>
+
+                            {/* Snooze button with dropdown */}
+                            <div className="relative">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setShowSnoozeMenu(
+                                    showSnoozeMenu === notification.id ? null : notification.id
+                                  );
+                                }}
+                                className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/20 rounded-md transition-colors"
+                                title={isPolish ? 'Odłóż' : 'Snooze'}
+                              >
+                                <Clock size={14} />
+                              </button>
+                              {showSnoozeMenu === notification.id && (
+                                <>
+                                  <div
+                                    className="fixed inset-0 z-40"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setShowSnoozeMenu(null);
+                                    }}
+                                  />
+                                  <div className="absolute right-0 top-full mt-1 z-50 py-1 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 min-w-[100px]">
+                                    {[
+                                      {
+                                        preset: '1h' as SnoozePreset,
+                                        label: isPolish ? '1 godz.' : '1 hour',
+                                      },
+                                      {
+                                        preset: '4h' as SnoozePreset,
+                                        label: isPolish ? '4 godz.' : '4 hours',
+                                      },
+                                      {
+                                        preset: 'tomorrow' as SnoozePreset,
+                                        label: isPolish ? 'Jutro' : 'Tomorrow',
+                                      },
+                                      {
+                                        preset: 'next_week' as SnoozePreset,
+                                        label: isPolish ? 'Za tydzień' : 'Next week',
+                                      },
+                                    ].map(({ preset, label }) => (
+                                      <button
+                                        key={preset}
+                                        onClick={(e) => handleSnooze(notification.id, preset, e)}
+                                        className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                                      >
+                                        {label}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+
+                            {!notification.isRead && (
+                              <button
+                                onClick={(e) => handleMarkAsRead(notification.id, e)}
+                                className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/20 rounded-md transition-colors"
+                                title={isPolish ? 'Oznacz jako przeczytane' : 'Mark as read'}
+                              >
+                                <Check size={14} />
+                              </button>
                             )}
+                            <button
+                              onClick={(e) => handleDelete(notification.id, e)}
+                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/20 rounded-md transition-colors"
+                              title={isPolish ? 'Usuń' : 'Delete'}
+                            >
+                              <Trash2 size={14} />
+                            </button>
                           </div>
 
                           {!notification.isRead && (
-                            <button
-                              onClick={(e) => handleMarkAsRead(notification.id, e)}
-                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/20 rounded-md transition-colors"
-                              title={isPolish ? 'Oznacz jako przeczytane' : 'Mark as read'}
-                            >
-                              <Check size={14} />
-                            </button>
+                            <div
+                              className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-full ${
+                                notification.type.includes('ai') ? 'bg-indigo-500' : 'bg-purple-500'
+                              }`}
+                            ></div>
                           )}
-                          <button
-                            onClick={(e) => handleDelete(notification.id, e)}
-                            className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/20 rounded-md transition-colors"
-                            title={isPolish ? 'Usuń' : 'Delete'}
-                          >
-                            <Trash2 size={14} />
-                          </button>
                         </div>
-
-                        {!notification.isRead && (
-                          <div
-                            className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-full ${
-                              notification.type.includes('ai') ? 'bg-indigo-500' : 'bg-purple-500'
-                            }`}
-                          ></div>
-                        )}
-                      </div>
-                    );
-                  })()
-                )}
+                      );
+                    })()
+                  )}
               </div>
             )}
           </div>
@@ -461,10 +486,14 @@ export const NotificationDropdown = () => {
           {notifications.length > 0 && (
             <div className="px-4 py-3 border-t border-slate-100 dark:border-navy-700 bg-slate-50/50 dark:bg-white/5 flex items-center justify-between">
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                {notifications.filter(n => !isSnoozed(n.id)).length}{' '}
-                {isPolish 
-                  ? (notifications.filter(n => !isSnoozed(n.id)).length === 1 ? 'powiadomienie' : 'powiadomień')
-                  : (notifications.filter(n => !isSnoozed(n.id)).length === 1 ? 'notification' : 'notifications')}
+                {notifications.filter((n) => !isSnoozed(n.id)).length}{' '}
+                {isPolish
+                  ? notifications.filter((n) => !isSnoozed(n.id)).length === 1
+                    ? 'powiadomienie'
+                    : 'powiadomień'
+                  : notifications.filter((n) => !isSnoozed(n.id)).length === 1
+                    ? 'notification'
+                    : 'notifications'}
                 {getSnoozedIds().length > 0 && (
                   <span className="ml-2 text-amber-500">
                     ({getSnoozedIds().length} {isPolish ? 'odłożone' : 'snoozed'})

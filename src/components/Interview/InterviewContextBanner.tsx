@@ -1,6 +1,6 @@
 /**
  * InterviewContextBanner
- * 
+ *
  * Shows a banner indicating available interview context.
  * Used in Tools and Assessment to indicate that context is available.
  */
@@ -9,29 +9,33 @@ import { Brain, ChevronRight, ExternalLink, Sparkles, X } from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useInterviewContext, OrganizationContext, InterviewInsight } from '@/hooks/useInterviewContext';
+import {
+  InterviewInsight,
+  OrganizationContext,
+  useInterviewContext,
+} from '@/hooks/useInterviewContext';
 
 interface InterviewContextBannerProps {
   /**
    * Whether to show in compact mode (single line)
    */
   compact?: boolean;
-  
+
   /**
    * Callback when context is imported
    */
   onImportContext?: (context: OrganizationContext, insights: InterviewInsight[]) => void;
-  
+
   /**
    * Whether import has been done for this session
    */
   isImported?: boolean;
-  
+
   /**
    * Target type for export
    */
   targetType?: 'tool_session' | 'assessment_session';
-  
+
   /**
    * Target session ID for export
    */
@@ -46,7 +50,8 @@ export const InterviewContextBanner: React.FC<InterviewContextBannerProps> = ({
   targetId,
 }) => {
   const navigate = useNavigate();
-  const { context, insights, hasContext, completenessPercent, exportToTarget } = useInterviewContext();
+  const { context, insights, hasContext, completenessPercent, exportToTarget } =
+    useInterviewContext();
   const [isDismissed, setIsDismissed] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -111,7 +116,7 @@ export const InterviewContextBanner: React.FC<InterviewContextBannerProps> = ({
         <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg shrink-0">
           <Brain className="text-purple-600 dark:text-purple-400" size={20} />
         </div>
-        
+
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <h4 className="font-semibold text-navy-900 dark:text-white">
@@ -121,9 +126,10 @@ export const InterviewContextBanner: React.FC<InterviewContextBannerProps> = ({
               {completenessPercent}% complete
             </span>
           </div>
-          
+
           <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">
-            You have organizational context from a previous interview session. Use it to enrich your analysis.
+            You have organizational context from a previous interview session. Use it to enrich your
+            analysis.
           </p>
 
           {/* Context preview */}

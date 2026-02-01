@@ -16,9 +16,9 @@ export { MyTasksListContent } from './MyTasksListContent';
 export { NotificationsContent } from './NotificationsContent';
 
 // Detail view components (for dynamic tabs)
-export { TaskDetailView } from './TaskDetailView';
 export { DecisionDetailView } from './DecisionDetailView';
 export { NotificationDetailView } from './NotificationDetailView';
+export { TaskDetailView } from './TaskDetailView';
 
 // ============================================================================
 // LEGACY COMPONENTS (kept for backward compatibility)
@@ -78,8 +78,8 @@ export { QuickActions } from './shared/QuickActions';
 // ============================================================================
 export { DecisionsPanel } from './DecisionsPanel';
 export { FocusBoard } from './Focus/FocusBoard';
-export { FocusView } from './Focus/FocusView';
 export type { FocusColumn, FocusItem, FocusItemType } from './Focus/FocusView';
+export { FocusView } from './Focus/FocusView';
 export { InboxTriage } from './Inbox/InboxTriage';
 export { NotificationSettings } from './NotificationSettings';
 export { PersonalExecutionBar } from './PersonalExecutionBar';

@@ -54,7 +54,7 @@ export const useVoiceChat = (): UseVoiceChatReturn => {
         en: 'en',
         de: 'de',
         es: 'es',
-        ja: 'ja',
+        jp: 'jp',
         ar: 'ar',
       };
       const targetLang = langCodeMap[i18nLang] || 'pl';

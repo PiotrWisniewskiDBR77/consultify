@@ -5,19 +5,19 @@
  */
 
 import {
+  closestCenter,
   DndContext,
   DragEndEvent,
   DragOverEvent,
   DragStartEvent,
   KeyboardSensor,
   PointerSensor,
-  closestCenter,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
 import {
-  SortableContext,
   arrayMove,
+  SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
@@ -54,7 +54,7 @@ export const useDragAndDrop = <T extends { id: string }>({
     (event: DragStartEvent) => {
       const { active } = event;
       setActiveId(active.id as string);
-      
+
       const item = items.find((i) => i.id === active.id);
       if (item && onDragStart) {
         onDragStart(item);
@@ -71,7 +71,7 @@ export const useDragAndDrop = <T extends { id: string }>({
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
-      
+
       setActiveId(null);
       setOverId(null);
 
@@ -108,21 +108,21 @@ export const useDragAndDrop = <T extends { id: string }>({
     // DnD Kit components (for re-export)
     DndContext,
     SortableContext,
-    
+
     // Sensor configuration
     sensors,
-    
+
     // Event handlers
     handleDragStart,
     handleDragOver,
     handleDragEnd,
     handleDragCancel,
-    
+
     // State
     activeId,
     overId,
     activeItem,
-    
+
     // Utilities
     itemIds: items.map((i) => i.id),
     sortingStrategy: verticalListSortingStrategy,

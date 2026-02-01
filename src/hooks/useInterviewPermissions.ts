@@ -1,11 +1,11 @@
 /**
  * useInterviewPermissions
- * 
+ *
  * Hook do sprawdzania uprawnień użytkownika w module Interview.
  * Obsługuje dwa poziomy ról:
  * 1. Rola organizacyjna (users.role) - SUPERADMIN, ADMIN, PROJECT_MANAGER, TEAM_MEMBER, VIEWER
  * 2. Rola projektowa (project_members.project_role) - PMO_LEAD, WORKSTREAM_OWNER, etc.
- * 
+ *
  * @see wdrozenia/standards/05-RBAC-PERMISSIONS.md
  */
 
@@ -39,16 +39,16 @@ export interface InterviewPermissions {
   canViewManaged: boolean;
   canViewOverdue: boolean;
   canSendReminder: boolean;
-  
+
   // Scope przydziałów
   assignmentScope: AssignmentScope;
-  
+
   // Role projektowe użytkownika
   projectMemberships: ProjectMembership[];
-  
+
   // Pomocnicze
   isLoading: boolean;
-  
+
   // Funkcje pomocnicze
   canAssignToUser: (userId: string, projectId?: string) => boolean;
   getAssignableProjects: () => ProjectMembership[];
@@ -72,7 +72,7 @@ export const useInterviewPermissions = (): InterviewPermissions => {
         // Pobierz projekty użytkownika z API
         const response = await Api.get('/pmo/projects/my-memberships');
         const memberships = Array.isArray(response) ? response : response?.memberships || [];
-        
+
         setProjectMemberships(
           memberships.map((m: any) => ({
             projectId: m.projectId || m.project_id,
@@ -138,7 +138,13 @@ export const useInterviewPermissions = (): InterviewPermissions => {
       type: 'projects',
       projectIds: [],
     };
-  }, [hasOrgLevelAssignPermission, hasProjectLevelAssignPermission, projectMemberships, currentOrganization, currentUser]);
+  }, [
+    hasOrgLevelAssignPermission,
+    hasProjectLevelAssignPermission,
+    projectMemberships,
+    currentOrganization,
+    currentUser,
+  ]);
 
   // Sprawdź czy można przydzielić do konkretnego użytkownika
   const canAssignToUser = useCallback(

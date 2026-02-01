@@ -1,11 +1,11 @@
 /**
  * Interview Module - v2.0 ModuleHub Golden Standard
- * 
+ *
  * 5 Categories: Strategy, Operations, Digital, People, Finance
  * Task-list style with inline edit, status per question, confidence score
  * 4 Tabs: Questions, Notes, Evidence, Summary
  * ONLY facts - NO recommendations
- * 
+ *
  * @see docs/wdrozenia/UI_UX_GOLDEN_STANDARD.md
  * @see PROMPT 8 in wdrozenia/PROMPTY_DLA_AGENTOW.md
  */
@@ -29,19 +29,25 @@ export { InsightCreatorModal } from './InsightCreatorModal';
 export { InsightViewer } from './InsightViewer';
 
 // Components
-export { CategorySidebar, CATEGORY_CONFIG, CATEGORY_ORDER } from './CategorySidebar';
-export { QuestionsList } from './QuestionsList';
-export { NotesPanel } from './NotesPanel';
-export { EvidencePanel } from './EvidencePanel';
+export { CATEGORY_CONFIG, CATEGORY_ORDER, CategorySidebar } from './CategorySidebar';
 export { CompanyFactsPanel } from './CompanyFactsPanel';
+export { EvidencePanel } from './EvidencePanel';
+export { NotesPanel } from './NotesPanel';
+export { QuestionsList } from './QuestionsList';
 
 // Legacy components (for backward compatibility)
-export { InterviewSummary } from './InterviewSummary';
 export { InterviewContextBanner } from './InterviewContextBanner';
+export { InterviewSummary } from './InterviewSummary';
 
 // Types
-export type { InterviewCategory, CategoryProgress, CategorySidebarProps } from './CategorySidebar';
-export type { QuestionStatus, InterviewQuestion, QuestionsListProps } from './QuestionsList';
+export type { CategoryProgress, CategorySidebarProps, InterviewCategory } from './CategorySidebar';
+export type {
+  CompanyFactsPanelProps,
+  CompanyProfile,
+  KeyMetric,
+  OpenGap,
+  Stakeholder,
+} from './CompanyFactsPanel';
+export type { EvidencePanelProps, EvidenceType, InterviewEvidence } from './EvidencePanel';
 export type { InterviewNote, NotesPanelProps } from './NotesPanel';
-export type { EvidenceType, InterviewEvidence, EvidencePanelProps } from './EvidencePanel';
-export type { CompanyProfile, KeyMetric, Stakeholder, OpenGap, CompanyFactsPanelProps } from './CompanyFactsPanel';
+export type { InterviewQuestion, QuestionsListProps, QuestionStatus } from './QuestionsList';

@@ -11,15 +11,15 @@
  * - Uses small state tables created with IF NOT EXISTS for triage/focus persistence.
  */
 
-import { Router, type Response } from 'express';
+import { type Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import NotificationService from '../services/notificationService.js';
-import logger from '../utils/Logger.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
 const router = Router();
@@ -42,17 +42,19 @@ type InboxUrgency = 'critical' | 'high' | 'normal' | 'low';
 
 type FocusColumn = 'today' | 'thisWeek' | 'later';
 
-type InboxItemKey =
-  | `task:${string}`
-  | `decision:${string}`
-  | `notification:${string}`;
+type InboxItemKey = `task:${string}` | `decision:${string}` | `notification:${string}`;
 
 interface InboxItem {
   id: string;
   type: InboxItemType;
   title: string;
   description?: string;
-  source: { type: 'user' | 'system' | 'ai'; userId?: string; userName?: string; avatarUrl?: string };
+  source: {
+    type: 'user' | 'system' | 'ai';
+    userId?: string;
+    userName?: string;
+    avatarUrl?: string;
+  };
   receivedAt: string;
   urgency: InboxUrgency;
   linkedTaskId?: string;
@@ -255,7 +257,12 @@ router.get(
     const today = todayIsoDate();
 
     const triagedRows =
-      (await queryHelpers.queryAll<{ item_key: string; action: string; params_json?: string; triaged_at: string }>(
+      (await queryHelpers.queryAll<{
+        item_key: string;
+        action: string;
+        params_json?: string;
+        triaged_at: string;
+      }>(
         `SELECT item_key, action, params_json, triaged_at FROM my_work_inbox_triage WHERE user_id = ?`,
         [userId]
       )) || [];
@@ -272,7 +279,11 @@ router.get(
           params = undefined;
         }
       }
-      triagedMap.set(r.item_key, { action: r.action as TriageAction, params, triagedAt: r.triaged_at });
+      triagedMap.set(r.item_key, {
+        action: r.action as TriageAction,
+        params,
+        triagedAt: r.triaged_at,
+      });
     }
 
     // 1) Overdue tasks (assigned)
@@ -409,7 +420,9 @@ router.get(
         urgent: visible.filter((i) => i.urgency === 'critical' || i.urgency === 'high'),
         new_assignments: visible.filter((i) => i.type === 'new_assignment'),
         mentions: visible.filter((i) => i.type === 'mention'),
-        review_requests: visible.filter((i) => i.type === 'review_request' || i.type === 'decision_request'),
+        review_requests: visible.filter(
+          (i) => i.type === 'review_request' || i.type === 'decision_request'
+        ),
         other: visible.filter(
           (i) =>
             !['new_assignment', 'mention', 'review_request', 'decision_request'].includes(i.type)
@@ -444,13 +457,20 @@ router.post(
 
     const action = String(req.body?.action || '') as TriageAction;
     const params = (req.body?.params || undefined) as Record<string, unknown> | undefined;
-    const itemKey = String(req.body?.itemKey || req.body?._key || req.query.itemKey || '') as InboxItemKey;
+    const itemKey = String(
+      req.body?.itemKey || req.body?._key || req.query.itemKey || ''
+    ) as InboxItemKey;
 
-    if (!action || !['accept_today', 'schedule', 'delegate', 'archive', 'reject'].includes(action)) {
+    if (
+      !action ||
+      !['accept_today', 'schedule', 'delegate', 'archive', 'reject'].includes(action)
+    ) {
       return res.status(400).json({ error: 'Invalid action' });
     }
     if (!itemKey || !itemKey.includes(':')) {
-      return res.status(400).json({ error: 'Missing itemKey (expected task:<id> | decision:<id> | notification:<id>)' });
+      return res.status(400).json({
+        error: 'Missing itemKey (expected task:<id> | decision:<id> | notification:<id>)',
+      });
     }
 
     const triagedAt = new Date().toISOString();
@@ -552,7 +572,10 @@ router.post(
     const params = (req.body?.params || undefined) as Record<string, unknown> | undefined;
     const itemKeys = (req.body?.itemKeys || req.body?.item_keys || []) as string[];
 
-    if (!action || !['accept_today', 'schedule', 'delegate', 'archive', 'reject'].includes(action)) {
+    if (
+      !action ||
+      !['accept_today', 'schedule', 'delegate', 'archive', 'reject'].includes(action)
+    ) {
       return res.status(400).json({ error: 'Invalid action' });
     }
     if (!Array.isArray(itemKeys) || itemKeys.length === 0) {
@@ -674,7 +697,8 @@ router.get(
     const completedCount = Number((completed as any)?.completed || 0);
     const overdueCount = Number((overdue as any)?.overdue || 0);
     const totalDone = Number((onTime as any)?.totalDone || 0);
-    const onTimeRate = totalDone > 0 ? Math.round((Number((onTime as any)?.onTime || 0) / totalDone) * 100) : 0;
+    const onTimeRate =
+      totalDone > 0 ? Math.round((Number((onTime as any)?.onTime || 0) / totalDone) * 100) : 0;
 
     res.json({
       total,

@@ -47,6 +47,20 @@ interface GenerateParams {
   methodologyId: string;
   count: number;
   includeChatContext: boolean;
+  /**
+   * Optional report context to complement assessment answers.
+   * When provided, it should be treated as the "synthesis layer".
+   */
+  reportContext?: Record<string, any> | null;
+  /**
+   * Optional list of existing initiatives (for deduplication guidance).
+   */
+  existingInitiatives?: Array<{
+    id?: string;
+    title?: string;
+    status?: string;
+    reportId?: string;
+  }> | null;
   userId: string;
 }
 
@@ -54,6 +68,7 @@ interface PersistParams {
   assessment: AssessmentRow;
   batchId: string;
   initiatives: GeneratedInitiative[];
+  reportId?: string | null;
   userId: string;
 }
 
@@ -213,7 +228,14 @@ class AssessmentInitiativeService {
    * Generate initiatives from assessment
    */
   static async generateFromAssessment(params: GenerateParams): Promise<GeneratedInitiative[]> {
-    const { assessment, methodologyId, count, includeChatContext, userId } = params;
+    const {
+      assessment,
+      methodologyId,
+      count,
+      includeChatContext,
+      reportContext,
+      existingInitiatives,
+    } = params;
 
     const methodology = METHODOLOGIES[methodologyId] || METHODOLOGIES['impact-feasibility'];
     const categories = ASSESSMENT_CATEGORY_MAPPING[assessment.assessment_type] || ['general'];
@@ -230,6 +252,11 @@ class AssessmentInitiativeService {
     const answers = safeParseJson<Record<string, any>>(assessment.answers_json, {});
     const scoreSummary = safeParseJson<Record<string, any>>(assessment.score_summary, {});
     const contextSnapshot = safeParseJson<Record<string, any>>(assessment.context_snapshot, {});
+    const mergedContextSnapshot: Record<string, any> = {
+      ...contextSnapshot,
+      ...(reportContext ? { report: reportContext } : {}),
+      ...(existingInitiatives ? { existingInitiatives } : {}),
+    };
 
     // Build prompt for AI
     const prompt = this.buildPrompt({
@@ -240,7 +267,7 @@ class AssessmentInitiativeService {
       categories,
       count,
       includeChatContext,
-      contextSnapshot,
+      contextSnapshot: mergedContextSnapshot,
     });
 
     try {
@@ -292,6 +319,10 @@ Assessment: ${assessment.name}
 Type: ${assessment.assessment_type}
 Methodology: ${methodology.name}
 
+You MUST use BOTH sources of truth:
+1) detailed assessment answers and scores (below)
+2) report narrative/synthesis context (if provided below)
+
 Assessment Scores:
 ${JSON.stringify(scoreSummary, null, 2)}
 
@@ -325,6 +356,17 @@ Categories to consider: ${categories.join(', ')}
 
     if (contextSnapshot.report) {
       prompt += `\nLatest assessment report context:\n${JSON.stringify(contextSnapshot.report, null, 2)}\n`;
+    }
+
+    if (Array.isArray((contextSnapshot as any).existingInitiatives)) {
+      const existing = (contextSnapshot as any).existingInitiatives as Array<any>;
+      if (existing.length) {
+        prompt += `\nExisting initiatives (do NOT duplicate; propose different initiatives):\n${JSON.stringify(
+          existing.slice(0, 50),
+          null,
+          2
+        )}\n`;
+      }
     }
 
     prompt += `
@@ -520,37 +562,87 @@ Return a JSON array with exactly ${count} initiatives in this format:
   static async persistInitiatives(
     params: PersistParams
   ): Promise<{ id: string; title: string; status: string }[]> {
-    const { assessment, batchId, initiatives, userId } = params;
+    const { assessment, batchId, initiatives, userId, reportId } = params;
     const now = new Date().toISOString();
     const created: { id: string; title: string; status: string }[] = [];
+
+    // Some deployments may have different initiatives table schemas.
+    // Detect available columns once (cached in-memory).
+    const getInitiativesColumns = (() => {
+      let cache: Set<string> | null | undefined = undefined;
+      return async (): Promise<Set<string> | null> => {
+        if (cache !== undefined) return cache;
+        try {
+          const rows = (await queryHelpers.queryAll(`PRAGMA table_info(initiatives)`)) as Array<{
+            name?: string;
+          }>;
+          cache = new Set((rows || []).map((r) => r.name).filter(Boolean) as string[]);
+          return cache;
+        } catch {
+          // Unknown schema: return null to avoid inserting optional columns.
+          cache = null;
+          return cache;
+        }
+      };
+    })();
+
+    const columns = await getInitiativesColumns();
+    const baseAllowedWhenUnknown = new Set([
+      'id',
+      'organization_id',
+      'project_id',
+      'name',
+      'title',
+      'description',
+      'status',
+      'priority',
+      'risk_level',
+      'category',
+      'source_type',
+      'source_id',
+      'created_by',
+      'created_at',
+      'updated_at',
+    ]);
 
     for (const initiative of initiatives) {
       const id = uuidv4();
 
-      // Insert into initiatives table
+      // Insert into initiatives table (schema-variant safe)
+      const cols: string[] = [];
+      const values: unknown[] = [];
+      const push = (col: string, value: unknown) => {
+        if (columns === null && !baseAllowedWhenUnknown.has(col)) return;
+        if (columns && !columns.has(col)) return;
+        cols.push(col);
+        values.push(value);
+      };
+
+      push('id', id);
+      push('organization_id', assessment.organization_id);
+      push('project_id', assessment.project_id || null);
+      push('name', initiative.title);
+      push('title', initiative.title);
+      push('description', initiative.description);
+      push('status', 'DRAFT');
+      push('priority', initiative.priority);
+      push('risk_level', initiative.risk);
+      push('category', initiative.category);
+      // Prefer linking to the report (source), but keep assessment linkage via assessment_initiative_links.
+      push('source_type', reportId ? 'assessment_report' : 'assessment');
+      push('source_id', reportId ? String(reportId) : assessment.id);
+      // If initiatives.report_id exists, set it.
+      if (columns?.has('report_id')) {
+        push('report_id', reportId ? String(reportId) : null);
+      }
+      push('created_by', userId);
+      push('created_at', now);
+      push('updated_at', now);
+
+      const placeholders = cols.map(() => '?').join(', ');
       await queryHelpers.queryRun(
-        `INSERT INTO initiatives (
-          id, organization_id, project_id, name, title, description,
-          status, priority, risk_level, category, source_type, source_id,
-          created_by, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          id,
-          assessment.organization_id,
-          assessment.project_id || null,
-          initiative.title,
-          initiative.title,
-          initiative.description,
-          'DRAFT', // Always start as DRAFT
-          initiative.priority,
-          initiative.risk,
-          initiative.category,
-          'assessment', // source_type
-          assessment.id, // source_id
-          userId,
-          now,
-          now,
-        ]
+        `INSERT INTO initiatives (${cols.join(', ')}) VALUES (${placeholders})`,
+        values
       );
 
       // Create link

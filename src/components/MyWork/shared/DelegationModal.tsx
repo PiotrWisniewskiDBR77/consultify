@@ -266,8 +266,8 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
                     ? 'Wybierz osoby (można wiele)'
                     : 'Select people (multiple allowed)'
                   : isPolish
-                  ? 'Wybierz osobę'
-                  : 'Select person'}
+                    ? 'Wybierz osobę'
+                    : 'Select person'}
               </label>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {filteredUsers.map((user) => (
@@ -341,8 +341,8 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
                       ? 'Co chcesz wiedzieć? Jakie pytania masz?'
                       : 'What do you want to know? What questions do you have?'
                     : isPolish
-                    ? 'Dodatkowe informacje dla odbiorcy...'
-                    : 'Additional information for the recipient...'
+                      ? 'Dodatkowe informacje dla odbiorcy...'
+                      : 'Additional information for the recipient...'
                 }
                 className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-500 resize-none"
               />
@@ -362,23 +362,19 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
               disabled={submitting || selectedUsers.length === 0}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {submitting ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <Send size={16} />
-              )}
+              {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
               <span>
                 {delegationType === 'full'
                   ? isPolish
                     ? 'Przekaż'
                     : 'Delegate'
                   : delegationType === 'input'
-                  ? isPolish
-                    ? 'Wyślij prośbę'
-                    : 'Send Request'
-                  : isPolish
-                  ? 'Wyślij'
-                  : 'Send'}
+                    ? isPolish
+                      ? 'Wyślij prośbę'
+                      : 'Send Request'
+                    : isPolish
+                      ? 'Wyślij'
+                      : 'Send'}
               </span>
             </button>
           </div>

@@ -1,11 +1,11 @@
 /**
  * @deprecated This component is LEGACY and will be removed.
  * Use InitiativeDocumentView instead for the canonical full initiative view.
- * 
+ *
  * InitiativeDetailCard
  * Full initiative detail view as a dynamic card (not modal)
  * Can be rendered directly in ModuleHub content area
- * 
+ *
  * MIGRATION NOTE: Replace usages with InitiativeDocumentView from './InitiativeDocumentView'
  */
 
@@ -41,9 +41,9 @@ import { FullInitiative, InitiativeStatus, StrategicGoal, User } from '../../typ
 import { InitiativeFinancialIntegration } from '../Economics/InitiativeFinancialIntegration';
 import { InitiativeIntelligenceTab } from '../InitiativeIntelligenceTab';
 import { InitiativeTasksTab } from '../InitiativeTasksTab';
-import { InitiativeSourceLink } from './InitiativeSourceLink';
 import { Button } from '../ui/primitives/Button';
 import { Select } from '../ui/select';
+import { InitiativeSourceLink } from './InitiativeSourceLink';
 
 interface InitiativeDetailCardProps {
   initiativeId: string;

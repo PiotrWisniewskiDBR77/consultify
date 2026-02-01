@@ -1,7 +1,7 @@
 /**
  * NewSessionModal
  * Enhanced modal for creating interview assignments
- * 
+ *
  * Supports:
  * - Starting for yourself
  * - Assigning to team members (single or multiple)
@@ -21,8 +21,8 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -93,9 +93,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
       setLoadingMembers(true);
       try {
         // Load project members or organization users
-        const endpoint = currentProjectId 
-          ? `/projects/${currentProjectId}/members`
-          : '/users';
+        const endpoint = currentProjectId ? `/projects/${currentProjectId}/members` : '/users';
         const res = await Api.get(endpoint);
         const members = Array.isArray(res) ? res : (res as any)?.users || [];
         setTeamMembers(
@@ -138,18 +136,21 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
     }
   }, [isOpen]);
 
-  const handleToggleAssignee = useCallback((userId: string) => {
-    setSelectedAssignees(prev => {
-      if (prev.includes(userId)) {
-        // If removing and this was the lead, clear lead
-        if (teamLeadId === userId) {
-          setTeamLeadId('');
+  const handleToggleAssignee = useCallback(
+    (userId: string) => {
+      setSelectedAssignees((prev) => {
+        if (prev.includes(userId)) {
+          // If removing and this was the lead, clear lead
+          if (teamLeadId === userId) {
+            setTeamLeadId('');
+          }
+          return prev.filter((id) => id !== userId);
         }
-        return prev.filter(id => id !== userId);
-      }
-      return [...prev, userId];
-    });
-  }, [teamLeadId]);
+        return [...prev, userId];
+      });
+    },
+    [teamLeadId]
+  );
 
   const handleSubmit = useCallback(async () => {
     // Validation
@@ -164,7 +165,9 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
     }
 
     if (mode === 'team' && selectedAssignees.length === 0) {
-      toast.error(isPolish ? 'Wybierz przynajmniej jedną osobę' : 'Please select at least one assignee');
+      toast.error(
+        isPolish ? 'Wybierz przynajmniej jedną osobę' : 'Please select at least one assignee'
+      );
       return;
     }
 
@@ -181,9 +184,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
         onCreated(session);
       } else {
         // Create assignment for team
-        const assigneeIds = selectedAssignees.length > 0 
-          ? selectedAssignees 
-          : [currentUser?.id];
+        const assigneeIds = selectedAssignees.length > 0 ? selectedAssignees : [currentUser?.id];
 
         const assignment = await Api.post('/interview/assignments', {
           templateId: selectedTemplateId,
@@ -204,19 +205,29 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [mode, selectedTemplateId, dueDate, selectedAssignees, teamLeadId, priority, notes, currentProjectId, currentUser, isPolish, onCreated, onClose]);
+  }, [
+    mode,
+    selectedTemplateId,
+    dueDate,
+    selectedAssignees,
+    teamLeadId,
+    priority,
+    notes,
+    currentProjectId,
+    currentUser,
+    isPolish,
+    onCreated,
+    onClose,
+  ]);
 
-  const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
+  const selectedTemplate = templates.find((t) => t.id === selectedTemplateId);
 
   if (!isOpen) return null;
 
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/60 z-40"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 bg-black/60 z-40" onClick={onClose} />
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -228,10 +239,9 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                 {isPolish ? 'Utwórz wywiad' : 'Create Interview'}
               </h2>
               <p className="text-slate-400 text-sm">
-                {isPolish 
-                  ? 'Rozpocznij dla siebie lub przydziel zespolowi' 
-                  : 'Start for yourself or assign to team'
-                }
+                {isPolish
+                  ? 'Rozpocznij dla siebie lub przydziel zespolowi'
+                  : 'Start for yourself or assign to team'}
               </p>
             </div>
             <button
@@ -255,9 +265,10 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                   onClick={() => setMode('myself')}
                   className={`
                     flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border text-sm font-medium transition-all
-                    ${mode === 'myself'
-                      ? 'bg-primary-500/15 border-primary-500 text-primary-400'
-                      : 'bg-navy-800 border-navy-700 text-slate-300 hover:border-slate-500'
+                    ${
+                      mode === 'myself'
+                        ? 'bg-primary-500/15 border-primary-500 text-primary-400'
+                        : 'bg-navy-800 border-navy-700 text-slate-300 hover:border-slate-500'
                     }
                   `}
                 >
@@ -269,9 +280,10 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                   onClick={() => setMode('team')}
                   className={`
                     flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border text-sm font-medium transition-all
-                    ${mode === 'team'
-                      ? 'bg-primary-500/15 border-primary-500 text-primary-400'
-                      : 'bg-navy-800 border-navy-700 text-slate-300 hover:border-slate-500'
+                    ${
+                      mode === 'team'
+                        ? 'bg-primary-500/15 border-primary-500 text-primary-400'
+                        : 'bg-navy-800 border-navy-700 text-slate-300 hover:border-slate-500'
                     }
                   `}
                 >
@@ -311,35 +323,38 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
 
                 {showTemplateDropdown && (
                   <div className="absolute top-full left-0 right-0 mt-1 z-10 max-h-60 overflow-auto bg-navy-800 border border-navy-700 rounded-lg shadow-xl">
-                    {templates.filter(t => (t as any).status === 'approved').map(template => (
-                      <button
-                        key={template.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedTemplateId(template.id);
-                          setShowTemplateDropdown(false);
-                        }}
-                        className={`
+                    {templates
+                      .filter((t) => (t as any).status === 'approved')
+                      .map((template) => (
+                        <button
+                          key={template.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedTemplateId(template.id);
+                            setShowTemplateDropdown(false);
+                          }}
+                          className={`
                           w-full flex items-center justify-between px-4 py-3 text-left transition-colors
-                          ${selectedTemplateId === template.id 
-                            ? 'bg-primary-500/10 text-primary-400' 
-                            : 'text-slate-300 hover:bg-navy-700'
+                          ${
+                            selectedTemplateId === template.id
+                              ? 'bg-primary-500/10 text-primary-400'
+                              : 'text-slate-300 hover:bg-navy-700'
                           }
                         `}
-                      >
-                        <div>
-                          <span className="font-medium">{template.name}</span>
-                          {template.description && (
-                            <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">
-                              {template.description}
-                            </p>
+                        >
+                          <div>
+                            <span className="font-medium">{template.name}</span>
+                            {template.description && (
+                              <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">
+                                {template.description}
+                              </p>
+                            )}
+                          </div>
+                          {selectedTemplateId === template.id && (
+                            <Check size={16} className="text-primary-400" />
                           )}
-                        </div>
-                        {selectedTemplateId === template.id && (
-                          <Check size={16} className="text-primary-400" />
-                        )}
-                      </button>
-                    ))}
+                        </button>
+                      ))}
                   </div>
                 )}
               </div>
@@ -360,29 +375,35 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                   <div className="max-h-40 overflow-auto space-y-1 bg-navy-800/50 rounded-lg p-2 border border-navy-700">
                     {teamMembers.length === 0 ? (
                       <p className="text-slate-500 text-sm p-2">
-                        {isPolish ? 'Brak dostepnych czlonkow zespolu' : 'No team members available'}
+                        {isPolish
+                          ? 'Brak dostepnych czlonkow zespolu'
+                          : 'No team members available'}
                       </p>
                     ) : (
-                      teamMembers.map(member => (
+                      teamMembers.map((member) => (
                         <button
                           key={member.id}
                           type="button"
                           onClick={() => handleToggleAssignee(member.id)}
                           className={`
                             w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors
-                            ${selectedAssignees.includes(member.id)
-                              ? 'bg-primary-500/15 text-primary-400'
-                              : 'text-slate-300 hover:bg-navy-700'
+                            ${
+                              selectedAssignees.includes(member.id)
+                                ? 'bg-primary-500/15 text-primary-400'
+                                : 'text-slate-300 hover:bg-navy-700'
                             }
                           `}
                         >
-                          <div className={`
+                          <div
+                            className={`
                             w-5 h-5 rounded border flex items-center justify-center transition-colors
-                            ${selectedAssignees.includes(member.id)
-                              ? 'bg-primary-500 border-primary-500'
-                              : 'border-slate-500'
+                            ${
+                              selectedAssignees.includes(member.id)
+                                ? 'bg-primary-500 border-primary-500'
+                                : 'border-slate-500'
                             }
-                          `}>
+                          `}
+                          >
                             {selectedAssignees.includes(member.id) && (
                               <Check size={12} className="text-white" />
                             )}
@@ -414,10 +435,12 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                       className="w-full px-3 py-2 rounded-lg bg-navy-800 border border-navy-700 text-white text-sm"
                     >
                       <option value="">{isPolish ? 'Wybierz lidera...' : 'Select lead...'}</option>
-                      {selectedAssignees.map(id => {
-                        const member = teamMembers.find(m => m.id === id);
+                      {selectedAssignees.map((id) => {
+                        const member = teamMembers.find((m) => m.id === id);
                         return member ? (
-                          <option key={id} value={id}>{member.name}</option>
+                          <option key={id} value={id}>
+                            {member.name}
+                          </option>
                         ) : null;
                       })}
                     </select>
@@ -432,7 +455,10 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                 {isPolish ? 'Termin' : 'Due Date'} *
               </label>
               <div className="relative">
-                <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Calendar
+                  size={16}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                />
                 <input
                   type="date"
                   value={dueDate}
@@ -455,15 +481,19 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                     onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
                     className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-navy-800 border border-navy-700 text-left hover:border-slate-500 transition-colors"
                   >
-                    <span className={`px-2 py-1 rounded-full text-xs ${PRIORITY_CONFIG[priority].color}`}>
-                      {isPolish ? PRIORITY_CONFIG[priority].labelPl : PRIORITY_CONFIG[priority].label}
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs ${PRIORITY_CONFIG[priority].color}`}
+                    >
+                      {isPolish
+                        ? PRIORITY_CONFIG[priority].labelPl
+                        : PRIORITY_CONFIG[priority].label}
                     </span>
                     <ChevronDown size={16} className="text-slate-400" />
                   </button>
 
                   {showPriorityDropdown && (
                     <div className="absolute top-full left-0 right-0 mt-1 z-10 bg-navy-800 border border-navy-700 rounded-lg shadow-xl">
-                      {(Object.keys(PRIORITY_CONFIG) as Priority[]).map(p => (
+                      {(Object.keys(PRIORITY_CONFIG) as Priority[]).map((p) => (
                         <button
                           key={p}
                           type="button"
@@ -473,13 +503,12 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                           }}
                           className={`
                             w-full flex items-center justify-between px-4 py-3 text-left transition-colors
-                            ${priority === p 
-                              ? 'bg-primary-500/10' 
-                              : 'hover:bg-navy-700'
-                            }
+                            ${priority === p ? 'bg-primary-500/10' : 'hover:bg-navy-700'}
                           `}
                         >
-                          <span className={`px-2 py-1 rounded-full text-xs ${PRIORITY_CONFIG[p].color}`}>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs ${PRIORITY_CONFIG[p].color}`}
+                          >
                             {isPolish ? PRIORITY_CONFIG[p].labelPl : PRIORITY_CONFIG[p].label}
                           </span>
                           {priority === p && <Check size={16} className="text-primary-400" />}
@@ -500,7 +529,11 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder={isPolish ? 'Dodaj instrukcje dla przypisanych...' : 'Add instructions for assignees...'}
+                  placeholder={
+                    isPolish
+                      ? 'Dodaj instrukcje dla przypisanych...'
+                      : 'Add instructions for assignees...'
+                  }
                   rows={3}
                   className="w-full px-4 py-3 rounded-lg bg-navy-800 border border-navy-700 text-white text-sm placeholder-slate-500 resize-none"
                 />
@@ -532,10 +565,13 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
               ) : (
                 <>
                   <Plus size={16} />
-                  {mode === 'myself' 
-                    ? (isPolish ? 'Rozpocznij' : 'Start') 
-                    : (isPolish ? 'Przydziel' : 'Assign')
-                  }
+                  {mode === 'myself'
+                    ? isPolish
+                      ? 'Rozpocznij'
+                      : 'Start'
+                    : isPolish
+                      ? 'Przydziel'
+                      : 'Assign'}
                 </>
               )}
             </button>

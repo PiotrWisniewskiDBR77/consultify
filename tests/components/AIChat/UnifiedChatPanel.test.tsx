@@ -8,6 +8,20 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Fix JSDOM navigation error
+if (typeof window !== 'undefined') {
+  const noop = () => {};
+  Object.defineProperty(window, 'location', {
+    value: {
+      ...window.location,
+      assign: vi.fn(noop),
+      replace: vi.fn(noop),
+      reload: vi.fn(noop),
+    },
+    writable: true,
+  });
+}
+
 // Mock dependencies
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({

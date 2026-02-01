@@ -16,10 +16,7 @@ const METHODOLOGIES = [
   { id: 'operational-efficiency', label: 'Operational Efficiency' },
 ];
 
-const METHODOLOGY_PREVIEW: Record<
-  string,
-  { category: string; priority: string; risk: string }
-> = {
+const METHODOLOGY_PREVIEW: Record<string, { category: string; priority: string; risk: string }> = {
   'impact-feasibility': { category: 'Strategy', priority: 'P1', risk: 'Medium' },
   'value-effort': { category: 'Operations', priority: 'P2', risk: 'Low' },
   'risk-compliance': { category: 'Process Auto', priority: 'P1', risk: 'High' },
@@ -75,9 +72,9 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
       : count;
 
   const handleGenerate = () => {
-    onGenerate({ 
-      methodologyId, 
-      count: finalCount, 
+    onGenerate({
+      methodologyId,
+      count: finalCount,
       includeChatContext,
       decisionOwnerId: decisionOwnerId || undefined,
     });
@@ -90,7 +87,10 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
             {isPolish ? 'Generate initiatives' : 'Generate initiatives'}
           </h3>
-          <button onClick={onClose} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800">
+          <button
+            onClick={onClose}
+            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+          >
             <X className="w-4 h-4 text-slate-500" />
           </button>
         </div>
@@ -150,7 +150,8 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
 
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {isPolish ? 'Decision Owner' : 'Decision Owner'} {isPolish ? '(opcjonalnie)' : '(optional)'}
+              {isPolish ? 'Decision Owner' : 'Decision Owner'}{' '}
+              {isPolish ? '(opcjonalnie)' : '(optional)'}
             </label>
             <select
               value={decisionOwnerId}

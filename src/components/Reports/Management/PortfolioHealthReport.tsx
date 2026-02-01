@@ -92,19 +92,20 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {content.healthDrivers.map(
             (driver: PortfolioHealthReportContent['healthDrivers'][number]) => (
-            <div
-              key={driver.category}
-              className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-navy-700 p-3"
-            >
-              <div>
-                <p className="text-sm font-medium text-navy-900 dark:text-white">
-                  {driver.category}
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{driver.summary}</p>
+              <div
+                key={driver.category}
+                className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-navy-700 p-3"
+              >
+                <div>
+                  <p className="text-sm font-medium text-navy-900 dark:text-white">
+                    {driver.category}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{driver.summary}</p>
+                </div>
+                <RAGIndicator status={driver.status} size="sm" showLabel />
               </div>
-              <RAGIndicator status={driver.status} size="sm" showLabel />
-            </div>
-          ))}
+            )
+          )}
         </div>
       </div>
 
@@ -129,24 +130,25 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
             <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-sm">
               {content.projectHealth.map(
                 (project: PortfolioHealthReportContent['projectHealth'][number]) => (
-                <tr key={project.projectId} className="hover:bg-slate-50 dark:hover:bg-white/5">
-                  <td className="px-4 py-3 font-medium text-navy-900 dark:text-white">
-                    {project.projectName}
-                  </td>
-                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
-                    {project.ownerName || '—'}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <RAGIndicator status={project.status} size="sm" showLabel />
-                  </td>
-                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
-                    {project.keyIssues?.length ? project.keyIssues.join(', ') : 'No major issues'}
-                  </td>
-                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
-                    {project.nextMilestone || '—'}
-                  </td>
-                </tr>
-              ))}
+                  <tr key={project.projectId} className="hover:bg-slate-50 dark:hover:bg-white/5">
+                    <td className="px-4 py-3 font-medium text-navy-900 dark:text-white">
+                      {project.projectName}
+                    </td>
+                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
+                      {project.ownerName || '—'}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <RAGIndicator status={project.status} size="sm" showLabel />
+                    </td>
+                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
+                      {project.keyIssues?.length ? project.keyIssues.join(', ') : 'No major issues'}
+                    </td>
+                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
+                      {project.nextMilestone || '—'}
+                    </td>
+                  </tr>
+                )
+              )}
             </tbody>
           </table>
         </div>
@@ -163,13 +165,16 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
           <div className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
             {content.decisionsRequired.map(
               (decision: PortfolioHealthReportContent['decisionsRequired'][number]) => (
-              <div key={decision.id} className="flex items-center justify-between gap-4">
-                <span className="font-medium text-navy-900 dark:text-white">{decision.title}</span>
-                <span className="text-xs text-slate-400 dark:text-slate-500">
-                  Due {decision.deadline}
-                </span>
-              </div>
-            ))}
+                <div key={decision.id} className="flex items-center justify-between gap-4">
+                  <span className="font-medium text-navy-900 dark:text-white">
+                    {decision.title}
+                  </span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500">
+                    Due {decision.deadline}
+                  </span>
+                </div>
+              )
+            )}
           </div>
         </div>
       )}
@@ -178,9 +183,7 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
         <div className="bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-200 dark:border-red-500/30 p-6">
           <div className="flex items-center gap-2 mb-3">
             <AlertTriangle size={18} className="text-red-500" />
-            <h3 className="text-lg font-semibold text-red-700 dark:text-red-400">
-              Escalations
-            </h3>
+            <h3 className="text-lg font-semibold text-red-700 dark:text-red-400">Escalations</h3>
           </div>
           <ul className="space-y-2 text-sm text-red-700 dark:text-red-300">
             {content.warnings.map((warning: string, index: number) => (

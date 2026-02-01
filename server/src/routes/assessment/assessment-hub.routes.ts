@@ -46,45 +46,99 @@ router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
 
     logger.info(`[AssessmentHub] Fetching assessments for org: ${organizationId}`);
 
-    // Get assessments from database
-    // Uses framework_type and framework_data from seeded data
-    const assessments = await new Promise<any[]>((resolve, reject) => {
-      db.all(
-        `SELECT 
-                    id,
-                    organization_id as organizationId,
-                    name,
-                    description,
-                    status,
-                    created_at as createdAt,
-                    updated_at as updatedAt,
-                    COALESCE(framework_type, 'DRD') as type,
-                    CASE COALESCE(framework_type, 'DRD')
-                      WHEN 'DRD' THEN 'Digital Readiness Diagnosis'
-                      WHEN 'SIRI' THEN 'Smart Industry Readiness Index'
-                      WHEN 'ADMA' THEN 'Advanced Digital Maturity Assessment'
-                      WHEN 'CMMI' THEN 'Capability Maturity Model Integration'
-                      WHEN 'LEAN' THEN 'Lean 4.0 Assessment'
-                      ELSE 'Assessment'
-                    END as projectName,
-                    framework_data as frameworkData
-                FROM assessments 
-                WHERE organization_id = ?
-                ORDER BY updated_at DESC`,
-        [organizationId],
-        (err: Error | null, rows: any[]) => {
-          if (err) reject(err);
-          else resolve(rows || []);
-        }
-      );
-    });
+    // Get assessments from database.
+    // Prefer workflow-v2 schema (assessment_type, completion_percent, answers_json) but stay compatible
+    // with legacy seeded schema (framework_type, framework_data).
+    const rows = await (async (): Promise<any[]> => {
+      try {
+        return await new Promise<any[]>((resolve, reject) => {
+          db.all(
+            `SELECT 
+                id,
+                organization_id as organizationId,
+                name,
+                COALESCE(description, '') as description,
+                status,
+                created_at as createdAt,
+                updated_at as updatedAt,
+                COALESCE(assessment_type, framework_type, 'DRD') as type,
+                completion_percent as completionPercent,
+                score_summary as scoreSummary,
+                framework_data as frameworkData
+             FROM assessments 
+             WHERE organization_id = ?
+             ORDER BY updated_at DESC`,
+            [organizationId],
+            (err: Error | null, rows2: any[]) => {
+              if (err) reject(err);
+              else resolve(rows2 || []);
+            }
+          );
+        });
+      } catch (e: any) {
+        // Ultra-legacy fallback (framework_type + framework_data only)
+        return await new Promise<any[]>((resolve, reject) => {
+          db.all(
+            `SELECT 
+                id,
+                organization_id as organizationId,
+                name,
+                COALESCE(description, '') as description,
+                status,
+                created_at as createdAt,
+                updated_at as updatedAt,
+                COALESCE(framework_type, 'DRD') as type,
+                framework_data as frameworkData
+             FROM assessments 
+             WHERE organization_id = ?
+             ORDER BY updated_at DESC`,
+            [organizationId],
+            (err: Error | null, rows2: any[]) => {
+              if (err) reject(err);
+              else resolve(rows2 || []);
+            }
+          );
+        });
+      }
+    })();
 
-    const normalized = (assessments || []).map((a: any) => {
-      const data = safeJsonParse<{ progress?: number; overallScore?: number }>(a.frameworkData, {});
+    const normalized = (rows || []).map((a: any) => {
+      const legacy = safeJsonParse<{ progress?: number; overallScore?: number }>(
+        a.frameworkData,
+        {}
+      );
+      const summary = safeJsonParse<any>(a.scoreSummary, {});
+
+      const progress =
+        typeof a.completionPercent === 'number'
+          ? Number(a.completionPercent)
+          : Number(legacy.progress || 0);
+
+      const overallScore =
+        typeof summary?.overall?.actual === 'number'
+          ? Number(summary.overall.actual)
+          : Number(legacy.overallScore || 0);
+
+      const type = String(a.type || 'DRD').toUpperCase();
+
       return {
         ...a,
-        progress: Number(data.progress || 0),
-        overallScore: Number(data.overallScore || 0),
+        type,
+        progress,
+        overallScore,
+        // Human-readable label (used in some legacy UI surfaces as "projectName")
+        projectName:
+          type === 'DRD'
+            ? 'Digital Readiness Diagnosis'
+            : type === 'SIRI'
+              ? 'Smart Industry Readiness Index'
+              : type === 'ADMA'
+                ? 'Advanced Digital Maturity Assessment'
+                : type === 'CMMI'
+                  ? 'Capability Maturity Model Integration'
+                  : type === 'LEAN'
+                    ? 'Lean 4.0 Assessment'
+                    : 'Assessment',
       };
     });
 
@@ -143,14 +197,10 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 
       sql += ' ORDER BY created_at DESC';
 
-      db.all(
-        sql,
-        params,
-        (err: Error | null, rows: any[]) => {
-          if (err) reject(err);
-          else resolve(rows || []);
-        }
-      );
+      db.all(sql, params, (err: Error | null, rows: any[]) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+      });
     });
 
     const normalized = (assessments || []).map((a: any) => {
@@ -213,7 +263,10 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Assessment not found' });
     }
 
-    const data = safeJsonParse<{ progress?: number; overallScore?: number }>(assessment.frameworkData, {});
+    const data = safeJsonParse<{ progress?: number; overallScore?: number }>(
+      assessment.frameworkData,
+      {}
+    );
     res.json({
       assessment: {
         ...assessment,

@@ -14,16 +14,45 @@ import * as path from 'path';
 // Configuration - resolve from project root
 const LOCALES_DIR = path.resolve(__dirname, '../../../public/locales');
 const SOURCE_LOCALE = 'en';
-const TARGET_LOCALES = ['pl', 'de', 'es', 'ar', 'ja'];
+const TARGET_LOCALES = ['pl', 'de', 'es', 'ar', 'jp'];
 const ALL_LOCALES = [SOURCE_LOCALE, ...TARGET_LOCALES];
 const NAMESPACES = ['translation.json', 'assessment-module.json', 'discovery.json'];
 
 // Technical terms that should remain in English
 const TECHNICAL_TERMS = [
-  'API', 'SSO', 'ROI', 'KPI', 'OKR', 'CEO', 'CTO', 'CFO', 'COO',
-  'ERP', 'CRM', 'MES', 'WMS', 'IoT', 'AI', 'ML', 'DRD', 'SIRI',
-  'ADMA', 'CMMI', 'GDPR', 'SOC2', 'ISO', 'OAuth', 'JWT', 'JSON',
-  'CSV', 'PDF', 'URL', 'UUID', 'ID', 'Consultinity', 'DBR77',
+  'API',
+  'SSO',
+  'ROI',
+  'KPI',
+  'OKR',
+  'CEO',
+  'CTO',
+  'CFO',
+  'COO',
+  'ERP',
+  'CRM',
+  'MES',
+  'WMS',
+  'IoT',
+  'AI',
+  'ML',
+  'DRD',
+  'SIRI',
+  'ADMA',
+  'CMMI',
+  'GDPR',
+  'SOC2',
+  'ISO',
+  'OAuth',
+  'JWT',
+  'JSON',
+  'CSV',
+  'PDF',
+  'URL',
+  'UUID',
+  'ID',
+  'Consultinity',
+  'DBR77',
 ];
 
 // Helper: Flatten nested object to dot notation keys
@@ -67,19 +96,19 @@ function extractPlaceholders(text: string): string[] {
 function shouldSkipTranslation(value: string): boolean {
   // Skip technical terms
   if (TECHNICAL_TERMS.includes(value)) return true;
-  
+
   // Skip pure numbers
   if (/^\d+$/.test(value)) return true;
-  
+
   // Skip URLs
   if (/^https?:\/\//.test(value)) return true;
-  
+
   // Skip template-only values
   if (/^{{.*}}$/.test(value)) return true;
-  
+
   // Skip short acronyms
   if (/^[A-Z]{2,5}$/.test(value)) return true;
-  
+
   return false;
 }
 
@@ -104,15 +133,15 @@ describe('Translation Keys Validation', () => {
     it.each(ALL_LOCALES)('%s: all translation files should be valid JSON', (locale) => {
       for (const namespace of NAMESPACES) {
         const filePath = path.join(LOCALES_DIR, locale, namespace);
-        
+
         if (fs.existsSync(filePath)) {
           const content = fs.readFileSync(filePath, 'utf-8');
-          
+
           // Should not throw
           expect(() => JSON.parse(content)).not.toThrow();
-          
+
           // Should not have BOM
-          expect(content.charCodeAt(0)).not.toBe(0xFEFF);
+          expect(content.charCodeAt(0)).not.toBe(0xfeff);
         }
       }
     });
@@ -124,27 +153,27 @@ describe('Translation Keys Validation', () => {
         it.each(TARGET_LOCALES)('%s: should have all keys from English source', (locale) => {
           const sourceData = translations[SOURCE_LOCALE][namespace];
           const targetData = translations[locale][namespace];
-          
+
           if (!sourceData) {
             console.warn(`Source file missing: ${SOURCE_LOCALE}/${namespace}`);
             return;
           }
-          
+
           if (!targetData) {
             throw new Error(`Target file missing: ${locale}/${namespace}`);
           }
-          
+
           const sourceKeys = Object.keys(flattenObject(sourceData));
           const targetKeys = new Set(Object.keys(flattenObject(targetData)));
-          
-          const missingKeys = sourceKeys.filter(key => !targetKeys.has(key));
-          
+
+          const missingKeys = sourceKeys.filter((key) => !targetKeys.has(key));
+
           if (missingKeys.length > 0) {
             console.warn(`${locale}/${namespace}: Missing ${missingKeys.length} keys`);
             // Show first 10 missing keys for debugging
             console.warn('First 10 missing:', missingKeys.slice(0, 10));
           }
-          
+
           // Allow up to 5% missing keys for now (can be tightened later)
           const missingPercentage = (missingKeys.length / sourceKeys.length) * 100;
           expect(missingPercentage).toBeLessThan(10);
@@ -157,18 +186,18 @@ describe('Translation Keys Validation', () => {
     NAMESPACES.forEach((namespace) => {
       it.each(TARGET_LOCALES)('%s/%s: should not have empty string values', (locale) => {
         const targetData = translations[locale][namespace];
-        
+
         if (!targetData) return;
-        
+
         const flatTarget = flattenObject(targetData);
         const emptyKeys = Object.entries(flatTarget)
           .filter(([_, value]) => value === '')
           .map(([key]) => key);
-        
+
         if (emptyKeys.length > 0) {
           console.warn(`${locale}/${namespace}: ${emptyKeys.length} empty values`);
         }
-        
+
         expect(emptyKeys.length).toBe(0);
       });
     });
@@ -180,35 +209,35 @@ describe('Translation Keys Validation', () => {
         it.each(TARGET_LOCALES)('%s: placeholders should match source', (locale) => {
           const sourceData = translations[SOURCE_LOCALE][namespace];
           const targetData = translations[locale][namespace];
-          
+
           if (!sourceData || !targetData) return;
-          
+
           const sourceFlat = flattenObject(sourceData);
           const targetFlat = flattenObject(targetData);
-          
+
           const mismatchedKeys: string[] = [];
-          
+
           for (const key in sourceFlat) {
             const sourceValue = sourceFlat[key];
             const targetValue = targetFlat[key];
-            
+
             if (typeof sourceValue !== 'string' || typeof targetValue !== 'string') {
               continue;
             }
-            
+
             const sourcePlaceholders = extractPlaceholders(sourceValue);
             const targetPlaceholders = extractPlaceholders(targetValue);
-            
+
             if (JSON.stringify(sourcePlaceholders) !== JSON.stringify(targetPlaceholders)) {
               mismatchedKeys.push(key);
             }
           }
-          
+
           if (mismatchedKeys.length > 0) {
             console.warn(`${locale}/${namespace}: ${mismatchedKeys.length} placeholder mismatches`);
             console.warn('First 5:', mismatchedKeys.slice(0, 5));
           }
-          
+
           // Allow up to 1% placeholder mismatches
           const mismatchPercentage = (mismatchedKeys.length / Object.keys(sourceFlat).length) * 100;
           expect(mismatchPercentage).toBeLessThan(2);
@@ -229,18 +258,18 @@ describe('Translation Keys Validation', () => {
     function isLikelyUntranslated(sourceValue: string, targetValue: string): boolean {
       if (sourceValue !== targetValue) return false;
       if (shouldSkipTranslation(sourceValue)) return false;
-      
+
       // Check for English patterns
       for (const pattern of englishPatterns) {
         if (pattern.test(sourceValue)) return true;
       }
-      
+
       // Long ASCII-only strings are likely untranslated
-      const words = sourceValue.split(/\s+/).filter(w => w.length > 0);
+      const words = sourceValue.split(/\s+/).filter((w) => w.length > 0);
       if (words.length >= 3 && !/[^\u0020-\u007E]/.test(sourceValue)) {
         return true;
       }
-      
+
       return false;
     }
 
@@ -249,34 +278,38 @@ describe('Translation Keys Validation', () => {
         it.each(TARGET_LOCALES)('%s: should have translated strings', (locale) => {
           const sourceData = translations[SOURCE_LOCALE][namespace];
           const targetData = translations[locale][namespace];
-          
+
           if (!sourceData || !targetData) return;
-          
+
           const sourceFlat = flattenObject(sourceData);
           const targetFlat = flattenObject(targetData);
-          
+
           const untranslatedKeys: string[] = [];
-          
+
           for (const key in sourceFlat) {
             const sourceValue = sourceFlat[key];
             const targetValue = targetFlat[key];
-            
+
             if (typeof sourceValue !== 'string' || typeof targetValue !== 'string') {
               continue;
             }
-            
+
             if (isLikelyUntranslated(sourceValue, targetValue)) {
               untranslatedKeys.push(key);
             }
           }
-          
-          const totalKeys = Object.keys(sourceFlat).filter(k => typeof sourceFlat[k] === 'string').length;
+
+          const totalKeys = Object.keys(sourceFlat).filter(
+            (k) => typeof sourceFlat[k] === 'string'
+          ).length;
           const untranslatedPercentage = (untranslatedKeys.length / totalKeys) * 100;
-          
+
           if (untranslatedKeys.length > 0) {
-            console.warn(`${locale}/${namespace}: ${untranslatedKeys.length} potentially untranslated (${untranslatedPercentage.toFixed(1)}%)`);
+            console.warn(
+              `${locale}/${namespace}: ${untranslatedKeys.length} potentially untranslated (${untranslatedPercentage.toFixed(1)}%)`
+            );
           }
-          
+
           // Allow up to 40% untranslated for now (improve over time)
           expect(untranslatedPercentage).toBeLessThan(50);
         });
@@ -296,14 +329,14 @@ describe('Translation Keys Validation', () => {
         it.each(TARGET_LOCALES)('%s: value types should match source', (locale) => {
           const sourceData = translations[SOURCE_LOCALE][namespace];
           const targetData = translations[locale][namespace];
-          
+
           if (!sourceData || !targetData) return;
-          
+
           const sourceFlat = flattenObject(sourceData);
           const targetFlat = flattenObject(targetData);
-          
+
           const typeMismatches: string[] = [];
-          
+
           for (const key in sourceFlat) {
             if (key in targetFlat) {
               if (!checkTypeMatch(sourceFlat[key], targetFlat[key])) {
@@ -311,12 +344,12 @@ describe('Translation Keys Validation', () => {
               }
             }
           }
-          
+
           if (typeMismatches.length > 0) {
             console.warn(`${locale}/${namespace}: ${typeMismatches.length} type mismatches`);
             console.warn('Keys:', typeMismatches.slice(0, 5));
           }
-          
+
           expect(typeMismatches.length).toBe(0);
         });
       });
@@ -343,18 +376,18 @@ describe('Translation Keys Validation', () => {
 
     it.each(TARGET_LOCALES)('%s: should have all critical UI keys', (locale) => {
       const targetData = translations[locale]['translation.json'];
-      
+
       if (!targetData) {
         throw new Error(`Missing translation.json for ${locale}`);
       }
-      
+
       const targetFlat = flattenObject(targetData);
-      const missingCritical = criticalKeys.filter(key => !(key in targetFlat));
-      
+      const missingCritical = criticalKeys.filter((key) => !(key in targetFlat));
+
       if (missingCritical.length > 0) {
         console.warn(`${locale}: Missing critical keys:`, missingCritical);
       }
-      
+
       // Allow up to 2 missing critical keys for now (should be 0 eventually)
       expect(missingCritical.length).toBeLessThanOrEqual(2);
     });
@@ -363,16 +396,16 @@ describe('Translation Keys Validation', () => {
   describe('RTL Language Support (Arabic)', () => {
     it('Arabic translations should use RTL-compatible characters', () => {
       const arData = translations['ar']['translation.json'];
-      
+
       if (!arData) {
         console.warn('Arabic translation file not found');
         return;
       }
-      
+
       const arFlat = flattenObject(arData);
       let arabicTextCount = 0;
       let nonArabicTextCount = 0;
-      
+
       for (const value of Object.values(arFlat)) {
         if (typeof value === 'string' && value.length > 0) {
           // Check if contains Arabic script
@@ -383,10 +416,10 @@ describe('Translation Keys Validation', () => {
           }
         }
       }
-      
+
       const arabicPercentage = (arabicTextCount / (arabicTextCount + nonArabicTextCount)) * 100;
       console.log(`Arabic text ratio: ${arabicPercentage.toFixed(1)}%`);
-      
+
       // At least 30% should contain Arabic characters
       expect(arabicPercentage).toBeGreaterThan(20);
     });
@@ -394,17 +427,17 @@ describe('Translation Keys Validation', () => {
 
   describe('Japanese Language Support', () => {
     it('Japanese translations should use CJK characters', () => {
-      const jaData = translations['ja']['translation.json'];
-      
+      const jaData = translations['jp']['translation.json'];
+
       if (!jaData) {
         console.warn('Japanese translation file not found');
         return;
       }
-      
+
       const jaFlat = flattenObject(jaData);
       let japaneseTextCount = 0;
       let nonJapaneseTextCount = 0;
-      
+
       for (const value of Object.values(jaFlat)) {
         if (typeof value === 'string' && value.length > 0) {
           // Check if contains Japanese script (Hiragana, Katakana, Kanji)
@@ -415,10 +448,11 @@ describe('Translation Keys Validation', () => {
           }
         }
       }
-      
-      const japanesePercentage = (japaneseTextCount / (japaneseTextCount + nonJapaneseTextCount)) * 100;
+
+      const japanesePercentage =
+        (japaneseTextCount / (japaneseTextCount + nonJapaneseTextCount)) * 100;
       console.log(`Japanese text ratio: ${japanesePercentage.toFixed(1)}%`);
-      
+
       // At least 30% should contain Japanese characters
       expect(japanesePercentage).toBeGreaterThan(20);
     });

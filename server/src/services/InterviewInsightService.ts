@@ -16,10 +16,10 @@ import { llmService } from './ai/llmService.js';
 // TYPES
 // ==========================================
 
-export type InsightPromptType = 
-  | 'summary' 
-  | 'trends' 
-  | 'problems' 
+export type InsightPromptType =
+  | 'summary'
+  | 'trends'
+  | 'problems'
   | 'recommendations'
   | 'comparison'
   | 'gaps'

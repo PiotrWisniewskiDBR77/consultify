@@ -131,10 +131,7 @@ export const useBreadcrumbs = () => {
     currentView === AppView.FULL_STEP3_ROADMAP
   ) {
     section = t('sidebar.initiatives', 'Initiatives');
-    if (
-      currentView === AppView.PORTFOLIO_ROADMAP ||
-      currentView === AppView.FULL_STEP3_ROADMAP
-    ) {
+    if (currentView === AppView.PORTFOLIO_ROADMAP || currentView === AppView.FULL_STEP3_ROADMAP) {
       sub = t('initiatives.roadmap', 'Roadmap');
     } else {
       sub = '';
@@ -229,10 +226,7 @@ export const useBreadcrumbs = () => {
       sub = t('settings.profile', 'Profile');
     } else if (currentView === AppView.SETTINGS_BILLING) {
       sub = t('settings.billing', 'Billing');
-    } else if (
-      currentView === AppView.SETTINGS_AI ||
-      currentView === AppView.SETTINGS_AI_MODULE
-    ) {
+    } else if (currentView === AppView.SETTINGS_AI || currentView === AppView.SETTINGS_AI_MODULE) {
       sub = t('settings.ai', 'AI');
     } else if (
       currentView === AppView.SETTINGS_NOTIFICATIONS ||

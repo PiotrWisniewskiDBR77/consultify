@@ -508,11 +508,13 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
       {/* Status & Actions */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          {([
-            { value: 'DRAFT', label: 'Draft' },
-            { value: 'REVIEW', label: 'Review' },
-            { value: 'APPROVED', label: 'Approved' },
-          ] as const).map((item) => (
+          {(
+            [
+              { value: 'DRAFT', label: 'Draft' },
+              { value: 'REVIEW', label: 'Review' },
+              { value: 'APPROVED', label: 'Approved' },
+            ] as const
+          ).map((item) => (
             <button
               key={item.value}
               onClick={() => handleStatusChange(item.value)}

@@ -18,16 +18,16 @@ import type {
 export type { ColumnDef, ColumnWidths, DateRange, FilterOption, TableFilters } from './types';
 
 // Re-export components
+export {
+  type BulkAction,
+  BulkActionBar,
+  createDecisionBulkActions,
+  createNotificationBulkActions,
+  createTaskBulkActions,
+} from './BulkActionBar';
 export { ColumnResizer } from './ColumnResizer';
 export { FilterDropdown } from './FilterDropdown';
 export { TableHeader } from './TableHeader';
-export {
-  BulkActionBar,
-  createTaskBulkActions,
-  createDecisionBulkActions,
-  createNotificationBulkActions,
-  type BulkAction,
-} from './BulkActionBar';
 
 export const ResizableTable: React.FC<ResizableTableProps> = ({
   columns,

@@ -209,5 +209,367 @@
     "integrations": "Integracje",
     "security": "Bezpieczeństwo",
     "appearance": "Wygląd"
+  },
+  "showcase": {
+    "common": {
+      "execute": "Realizuj",
+      "moreTools": "Więcej narzędzi",
+      "watchVideo": "Obejrzyj wideo",
+      "tryFree": "Wypróbuj za darmo",
+      "methodologyIntro": "Wprowadzenie do metodologii",
+      "framework": "Framework",
+      "learnOurMethods": "Poznaj nasze metody",
+      "watchTeaser": "Obejrzyj nasz 90-sekundowy teaser wyjaśniający tę metodologię.",
+      "readyToTry": "Gotowy do wypróbowania? Rozpocznij transformację już dziś.",
+      "startTrial": "Rozpocznij darmowy okres próbny",
+      "integratedHint": "Baza wiedzy i audyty zintegrowane w panelu Discovery"
+    },
+    "audits": {
+      "hero": {
+        "badge": "Doskonałość Przemysłowa",
+        "title1": "WYZNACZ POZIOM SWOJEJ",
+        "title2": "DOJRZAŁOŚCI CYFROWEJ",
+        "subtitle": "Consultinity integruje światowej klasy metodologie audytowe stosowane przez ekspertów Harvardu, aby napędzać zmiany oparte na danych w globalnym przemyśle."
+      },
+      "cta": {
+        "header": "ZRÓB KOLEJNY KROK W",
+        "headerAccent": "TWOJEJ TRANSFORMACJI",
+        "description": "Oceny to dopiero początek. Odkryj pełen zestaw narzędzi opartych na AI, zaprojektowanych w celu przekształcenia spostrzeżeń z audytów w wyniki operacyjne."
+      },
+      "items": {
+        "drd": {
+          "fullName": "Cyfrowa Diagnostyka Gotowości (DRD)",
+          "description": "Zaawansowane narzędzie do oceny dojrzałości cyfrowej i tworzenia map drogowych rozwoju.",
+          "longDescription": "Cyfrowa Diagnostyka Gotowości (DRD) to autorska metodologia DBR77 zaprojektowana w celu wspierania firm w ich drodze do transformacji cyfrowej. Obejmuje ocenę dojrzałości cyfrowej, analizę czynników zewnętrznych oraz tworzenie szczegółowych map drogowych rozwoju.",
+          "externalLinkLabel": "O metodzie DRD",
+          "dimensions": {
+            "0": "Gotowość Organizacyjna",
+            "1": "Dojrzałość Cyfrowa",
+            "2": "Czynniki Zewnętrzne",
+            "3": "Mapa Drogowa Rozwoju"
+          },
+          "benefits": {
+            "0": "Strukturalna Transformacja",
+            "1": "Jasna Ścieżka Inwestycyjna",
+            "2": "Mitygacja Ryzyk",
+            "3": "Wyrównanie Strategiczne"
+          }
+        },
+        "siri": {
+          "fullName": "Smart Industry Readiness Index",
+          "description": "Globalny standard oceny dojrzałości Industry 4.0 w 3 kluczowych filarach.",
+          "longDescription": "Smart Industry Readiness Index (SIRI) to globalna inicjatywa stworzona we współpracy z Singapore EDB i WEF. Jako międzynarodowy standard I4.0 ocenia 16 wymiarów w obszarach Procesów, Technologii i Organizacji w celu ustalenia priorytetów transformacji.",
+          "externalLinkLabel": "O metodzie SIRI",
+          "dimensions": {
+            "0": "Dojrzałość Procesowa",
+            "1": "Adopcja Technologii",
+            "2": "Doskonałość Organizacyjna",
+            "3": "Zgodność z Industry 4.0"
+          },
+          "benefits": {
+            "0": "Globalny Benchmarking",
+            "1": "Standaryzowany Framework",
+            "2": "Porównanie Międzybranżowe",
+            "3": "Priorytetyzacja Strategiczna"
+          }
+        },
+        "adma": {
+          "fullName": "Advanced Digital Maturity Assessment",
+          "description": "Europejski standard audytów transformacji cyfrowej dla \"Fabryki Przyszłości\".",
+          "longDescription": "ADMA została opracowana przez Komisję Europejską, aby pomóc firmom we wdrażaniu zaawansowanych technologii produkcyjnych. Ocenia dojrzałość cyfrową firmy w siedmiu kluczowych obszarach, prowadząc ją w kierunku stania się światowej klasy Fabryką Przyszłości.",
+          "externalLinkLabel": "O metodzie ADMA",
+          "dimensions": {
+            "0": "Zaawansowane Technologie",
+            "1": "Fabryka Cyfrowa",
+            "2": "Integracja Łańcucha Wartości",
+            "3": "Zmiana Zorientowana na Ludzi"
+          },
+          "benefits": {
+            "0": "Standardy Europejskie",
+            "1": "Mapa drogowa Fabryki Przyszłości",
+            "2": "Koncentracja na Innowacji",
+            "3": "Integracja Ekosystemu"
+          }
+        },
+        "lean-4-0": {
+          "name": "Lean 4.0",
+          "fullName": "Lean 4.0 (Metodologia DBR77)",
+          "description": "3-fazowa ścieżka optymalizacji: Pomierz, Zoptymalizuj i Automatyzuj.",
+          "longDescription": "Lean 4.0 to specjalistyczna metodologia DBR77, która łączy klasyczną koncepcję Lean manufacturing z technologią Industry 4.0. Realizowana jest poprzez rygorystyczną 3-fazową ścieżkę: Pomiar (ustalenie baz danych), Optymalizacja (eliminacja marnotrawstwa) i Automatyzacja (wdrożenie technologii o wysokim ROI).",
+          "externalLinkLabel": "O metodzie Lean 4.0",
+          "dimensions": {
+            "0": "Pomiar",
+            "1": "Optymalizacja",
+            "2": "Automatyzacja",
+            "3": "Skoncentrowanie na ROI"
+          },
+          "benefits": {
+            "0": "Eliminacja Marnotrawstwa",
+            "1": "Bazy Danych",
+            "2": "Automatyzacja o wysokim ROI",
+            "3": "Stabilizacja Operacyjna"
+          }
+        }
+      }
+    },
+    "tools": {
+      "hero": {
+        "badge": "Elitarna Edukacja",
+        "title1": "OPANUJ NASZE",
+        "title2": "METODOLOGIE",
+        "subtitle": "Odkryj frameworki wspierane przez AI, które zapewniają wysokiej jakości wyniki konsultingowe. Krótkie teasery o tym, jak stosować klasyczne narzędzia w nowoczesnym przemyśle."
+      },
+      "blocks": {
+        "strategic": {
+          "name": "Narzędzia Strategiczne",
+          "description": "Klasyczne frameworki wspierane przez AI do analizy strategicznej i podejmowania decyzji"
+        },
+        "operational": {
+          "name": "Doskonałość Operacyjna",
+          "description": "Optymalizacja procesów, analiza efektywności i narzędzia lean manufacturing"
+        },
+        "digital": {
+          "name": "Transformacja Cyfrowa",
+          "description": "Ocena technologii, mapy drogowe automatyzacji i narzędzia dojrzałości cyfrowej"
+        },
+        "change-management": {
+          "name": "Zarządzanie Zmianą",
+          "description": "Narzędzia zorientowane na ludzi w obszarach adopcji, komunikacji i zmian organizacyjnych"
+        }
+      },
+      "items": {
+        "dynamic-swot": {
+          "name": "Dynamiczna Analiza SWOT",
+          "description": "SWOT wspierany przez AI, który łączy mocne strony z szansami, a słabe z zagrożeniami, generując wykonalne inicjatywy strategiczne.",
+          "outputs": {
+            "0": "Macierz SWOT",
+            "1": "Kombinacje S+O/W+T",
+            "2": "Inicjatywy Strategiczne"
+          }
+        },
+        "market-forces": {
+          "name": "Analiza Sił Rynkowych",
+          "description": "Analiza sił konkurencyjnych z punktacją opartą na danych i inicjatywami ochrony marży dla trwałej przewagi konkurencyjnej.",
+          "outputs": {
+            "0": "Diagram 5 Sił Portera",
+            "1": "Ocena Ryzyka Marży",
+            "2": "Inicjatywy Konkurencyjne"
+          }
+        },
+        "portfolio-priority": {
+          "name": "Strategiczna Priorytetyzacja Portfolio",
+          "description": "Klasyfikacja i priorytetyzacja inicjatyw strategicznych na podstawie potencjału wpływu i ograniczeń zasobowych przy użyciu metodologii BCG.",
+          "outputs": {
+            "0": "Siatka w stylu BCG",
+            "1": "Ranking Priorytetów",
+            "2": "Decyzje Zatrzymaj/Skaluj/Połącz"
+          }
+        },
+        "growth-paths": {
+          "name": "Analiza Ścieżek Wzrostu",
+          "description": "Mapowanie możliwości wzrostu z szacunkami ROI, profilami ryzyka i wymaganiami kompetencyjnymi dla ekspansji strategicznej.",
+          "outputs": {
+            "0": "Macierz Ansoffa",
+            "1": "Szacunki ROI Wzrostu",
+            "2": "Analiza Luk Kompetencyjnych"
+          }
+        },
+        "value-chain": {
+          "name": "Analiza Łańcucha Wartości",
+          "description": "Identyfikacja miejsc, gdzie wartość jest tworzona, a gdzie tracona, wraz z inicjatywami optymalizacyjnymi.",
+          "outputs": {
+            "0": "Mapa Łańcucha Wartości",
+            "1": "Punkty Wycieku Wartości",
+            "2": "Inicjatywy Optymalizacyjne"
+          }
+        },
+        "value-stream-mapping": {
+          "name": "Mapowanie Strumienia Wartości",
+          "description": "Wizualizacja przepływów procesów, identyfikacja marnotrawstwa i projektowanie zoptymalizowanych strumieni wartości stanu przyszłego.",
+          "outputs": {
+            "0": "Mapa Stanu Obecnego",
+            "1": "Identyfikacja Marnotrawstwa",
+            "2": "Projekt Stanu Przyszłego"
+          }
+        },
+        "oee-analysis": {
+          "name": "Analiza OEE",
+          "description": "Mierzenie i poprawa efektywności wyposażenia poprzez analizę wskaźników dostępności, wydajności i jakości.",
+          "outputs": {
+            "0": "Panel OEE",
+            "1": "Waterfall Strat",
+            "2": "Działania Doskonalące"
+          }
+        },
+        "lean-assessment": {
+          "name": "Ocena Dojrzałości Lean",
+          "description": "Ocena dojrzałości lean organizacji w kluczowych wymiarach i identyfikacja możliwości poprawy.",
+          "outputs": {
+            "0": "Scorecard Dojrzałości",
+            "1": "Analiza Luk",
+            "2": "Mapa Drogowa Poprawy"
+          }
+        },
+        "process-capability": {
+          "name": "Analiza Zdolności Procesu",
+          "description": "Ocena wydajności procesu w odniesieniu do specyfikacji i identyfikacja możliwości redukcji zmienności.",
+          "outputs": {
+            "0": "Metryki Zdolności",
+            "1": "Karty Kontrolne",
+            "2": "Projekty Doskonalące"
+          }
+        },
+        "digital-maturity": {
+          "name": "Ocena Dojrzałości Cyfrowej",
+          "description": "Ocena gotowości cyfrowej w wymiarach technologii, procesów i ludzi przy użyciu standardowych frameworków branżowych.",
+          "outputs": {
+            "0": "Radar Dojrzałości",
+            "1": "Porównanie Benchmarkowe",
+            "2": "Mapa Drogowa Transformacji"
+          }
+        },
+        "automation-roadmap": {
+          "name": "Kreator Mapy Drogowej Automatyzacji",
+          "description": "Identyfikacja możliwości automatyzacji, priorytetyzacja przypadków użycia i budowa etapowej mapy drogowej wdrożenia.",
+          "outputs": {
+            "0": "Macierz Możliwości",
+            "1": "Projekcje ROI",
+            "2": "Harmonogram Wdrożenia"
+          }
+        },
+        "technology-scanner": {
+          "name": "Skaner Krajobrazu Technologicznego",
+          "description": "Skanowanie wschodzących technologii odpowiednich dla Twojej branży i ocena gotowości do ich adopcji.",
+          "outputs": {
+            "0": "Radar Technologiczny",
+            "1": "Ocena Adopcji",
+            "2": "Rekomendacje Pilotowe"
+          }
+        },
+        "data-strategy": {
+          "name": "Framework Strategii Danych",
+          "description": "Projektowanie architektury danych, polityk ładu i możliwości analitycznych dla podejmowania decyzji opartych na danych.",
+          "outputs": {
+            "0": "Architektura Danych",
+            "1": "Zasady Ładu Danych",
+            "2": "Mapa Drogowa Analityki"
+          }
+        },
+        "adkar-assessment": {
+          "name": "Ocena Zmiany ADKAR",
+          "description": "Ocena indywidualnej i organizacyjnej gotowości do zmiany przy użyciu sprawdzonego modelu ADKAR.",
+          "outputs": {
+            "0": "Wyniki ADKAR",
+            "1": "Analiza Barier",
+            "2": "Plan Wzmocnienia"
+          }
+        },
+        "stakeholder-analysis": {
+          "name": "Analiza Interesariuszy",
+          "description": "Mapowanie wpływu, interesów i strategii zaangażowania interesariuszy dla udanej adopcji zmian.",
+          "outputs": {
+            "0": "Mapa Interesariuszy",
+            "1": "Strategia Zaangażowania",
+            "2": "Plan Komunikacji"
+          }
+        },
+        "resistance-mapper": {
+          "name": "Mapowanie Wzorców Oporu",
+          "description": "Identyfikacja wzorców oporu, przyczyn źródłowych i opracowanie ukierunkowanych strategii interwencji.",
+          "outputs": {
+            "0": "Heatmapa Oporu",
+            "1": "Analiza Przyczyn Źródłowych",
+            "2": "Playbook Interwencji"
+          }
+        },
+        "communication-planner": {
+          "name": "Planer Komunikacji Zmiany",
+          "description": "Projektowanie wielokanałowych kampanii komunikacyjnych dopasowanych do etapów zmiany.",
+          "outputs": {
+            "0": "Kalendarz Komunikacji",
+            "1": "Szablony Komunikatów",
+            "2": "Strategia Kanałów"
+          }
+        }
+      }
+    }
+  },
+  "landing": {
+    "hero": {
+      "title": "Think bigger.Do smarter",
+      "subtitleLine1": "Your",
+      "subtitleLine1End": "for Enterprise Strategy.",
+      "slogans": {
+        "1": "Months of consulting. Minutes of AI. Better results.",
+        "2": "Transform decisions. Accelerate outcomes.",
+        "3": "Enterprise intelligence. Instant clarity.",
+        "4": "AI-powered strategy. Real-time insights.",
+        "5": "Consulting reimagined. Results delivered."
+      },
+      "tagline": {
+        "line1": "AI consulting.",
+        "line2": "No slides.",
+        "line3": "Just decisions."
+      },
+      "cards": {
+        "demo": {
+          "title": "Interactive Demo",
+          "description": "Explore Consultinity with AI-guided walkthrough. No signup required.",
+          "meta": "GUIDED EXPERIENCE",
+          "cta": "Start Demo"
+        },
+        "trial": {
+          "title": "Free Trial",
+          "description": "14-day full access to all features. Start your transformation today.",
+          "meta": "14 DAYS FREE",
+          "cta": "Start Free Trial"
+        },
+        "video": {
+          "title": "Watch How It Works",
+          "description": "See Consultinity in action with real enterprise transformation examples.",
+          "meta": "3 MIN VIDEO",
+          "cta": "Play Video"
+        },
+        "expert": {
+          "title": "Talk to Expert",
+          "description": "Schedule a personalized consultation with our strategy specialists.",
+          "meta": "HUMAN TOUCH",
+          "cta": "Book Consultation"
+        },
+        "login": {
+          "title": "Welcome Back",
+          "description": "Continue your transformation journey. Your workspace awaits.",
+          "meta": "EXISTING USER",
+          "cta": "Log In"
+        }
+      }
+    },
+    "topBar": {
+      "demo": "Demo",
+      "trial": "Trial",
+      "login": "Log in",
+      "signUp": "Sign up"
+    },
+    "methodology": {
+      "badge": "Our Methodology",
+      "heading": "AI-Driven Strategic Transformation"
+    },
+    "steps": {
+      "diagnostic": {
+        "title": "Diagnostic Assessment",
+        "desc": "AI analyzes your organization's digital maturity, identifies gaps, and benchmarks against industry standards."
+      },
+      "roadmap": {
+        "title": "Strategic Roadmap",
+        "desc": "Generate actionable transformation roadmap with prioritized initiatives, timelines, and resource requirements."
+      },
+      "approval": {
+        "title": "Human Governance",
+        "desc": "Every strategic decision requires human approval. Full accountability and control remain with your leadership."
+      }
+    }
+  },
+  "partner": {
+    "becomePartner": "Become Partner"
   }
 }

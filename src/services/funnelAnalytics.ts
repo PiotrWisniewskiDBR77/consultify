@@ -31,4 +31,3 @@ export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string
     // ignore
   }
 }
-

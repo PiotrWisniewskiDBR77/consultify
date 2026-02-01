@@ -109,11 +109,13 @@ export class TaskAssignmentService {
 
         const priority = String(task.priority || '').toLowerCase();
         const notifPriority =
-          priority === 'critical' || priority === 'urgent' ? 'urgent' : overdueDays && overdueDays >= 3 ? 'high' : 'normal';
+          priority === 'critical' || priority === 'urgent'
+            ? 'urgent'
+            : overdueDays && overdueDays >= 3
+              ? 'high'
+              : 'normal';
 
-        const title = overdueDays
-          ? `Task overdue (${overdueDays}d)`
-          : 'Task overdue';
+        const title = overdueDays ? `Task overdue (${overdueDays}d)` : 'Task overdue';
         const bodyBase = `Task "${task.title}" is overdue${due ? ` (due: ${String(due).slice(0, 10)})` : ''}.`;
 
         for (const userId of recipients) {

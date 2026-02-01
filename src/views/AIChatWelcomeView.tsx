@@ -30,8 +30,8 @@ import { SmartSuggestions } from '../components/AIChat/SmartSuggestions';
 import { TTSIndicator } from '../components/AIChat/TTSIndicator';
 import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
 import { useAIStream } from '../hooks/useAIStream';
-import { cleanTextForSpeech, useTextToSpeech } from '../hooks/useTextToSpeech';
-import { useVoiceConversation } from '../hooks/useVoiceConversation';
+import { cleanTextForSpeech } from '../hooks/useTextToSpeech';
+import { useUniversalVoice } from '../hooks/useUniversalVoice';
 import { useAppStore } from '../store/useAppStore';
 import { Conversation, useConversationStore } from '../store/useConversationStore';
 import { usePMOStore } from '../store/usePMOStore';
@@ -129,36 +129,21 @@ export const AIChatWelcomeView: React.FC = () => {
   // AI context
   const { pmoContext, globalContext, screenContext } = useAIContext();
 
-  // Text-to-Speech for AI responses
-  const {
-    speak,
-    stop: stopSpeaking,
-    state: ttsState,
-    isSupported: ttsSupported,
-  } = useTextToSpeech();
-
-  // Voice conversation for continuous mode
+  // Universal Voice System
   const {
     state: voiceState,
-    startContinuousMode,
-    stopContinuousMode,
-    speak: voiceSpeak,
-    stopSpeaking: voiceStopSpeaking,
+    startListening,
+    stopListening,
+    speak,
+    stopSpeaking,
     isSupported: voiceSupported,
-  } = useVoiceConversation({
-    onTranscript: (text, isFinal) => {
-      if (isFinal && text.trim()) {
-        // Handled by continuous mode auto-send
-      }
-    },
-    onSendMessage: async (message) => {
-      await handleSend(message);
-    },
+  } = useUniversalVoice({
+    onSendMessage: (msg) => handleSend(msg),
     settings: {
-      language: 'pl-PL',
-      continuousListening: true,
-      autoSpeak: true,
-      silenceTimeout: 2500,
+      autoSpeakResponses: true,
+      sttProvider: 'whisper',
+      ttsProvider: 'openai',
+      language: t.language || 'pl',
     },
   });
 
@@ -214,7 +199,7 @@ export const AIChatWelcomeView: React.FC = () => {
 
   // Speak AI responses in voice mode
   useEffect(() => {
-    if (!voiceModeEnabled || !ttsSupported || isStreaming) return;
+    if (!voiceModeEnabled || !voiceSupported || isStreaming) return;
 
     const lastMessage = activeChatMessages[activeChatMessages.length - 1];
     if (lastMessage?.role === 'ai' && lastMessage.content) {
@@ -226,7 +211,7 @@ export const AIChatWelcomeView: React.FC = () => {
         speak(contentToSpeak);
       }
     }
-  }, [activeChatMessages, voiceModeEnabled, ttsSupported, isStreaming, speak]);
+  }, [activeChatMessages, voiceModeEnabled, voiceSupported, isStreaming, speak]);
 
   // Handle voice mode change
   const handleVoiceModeChange = useCallback(
@@ -246,14 +231,14 @@ export const AIChatWelcomeView: React.FC = () => {
   // Handle continuous voice mode toggle
   const handleContinuousVoiceToggle = useCallback(() => {
     if (continuousVoiceMode) {
-      stopContinuousMode();
+      stopListening();
       setContinuousVoiceMode(false);
     } else {
-      startContinuousMode();
+      startListening();
       setContinuousVoiceMode(true);
       setVoiceModeEnabled(true);
     }
-  }, [continuousVoiceMode, startContinuousMode, stopContinuousMode]);
+  }, [continuousVoiceMode, startListening, stopListening]);
 
   // Handle AI action execution
   const handleAIAction = useCallback(
@@ -429,7 +414,7 @@ For example: REMEMBER: preferred_language: Polish`;
       isStreaming,
       coThinkerPhase,
       voiceModeEnabled,
-      ttsSupported,
+      voiceSupported,
     ]
   );
 
@@ -715,24 +700,22 @@ For example: REMEMBER: preferred_language: Polish`;
 
                   return (
                     <div key={pa.id} className="flex items-center justify-between text-sm">
-                    <span className="text-yellow-800 dark:text-yellow-200">
-                      🔔 {message}
-                    </span>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleConfirmPendingAction(pa.id, true)}
-                        className="px-3 py-1 bg-green-500 text-white rounded-md text-xs hover:bg-green-600"
-                      >
-                        Potwierdź
-                      </button>
-                      <button
-                        onClick={() => handleConfirmPendingAction(pa.id, false)}
-                        className="px-3 py-1 bg-red-500 text-white rounded-md text-xs hover:bg-red-600"
-                      >
-                        Anuluj
-                      </button>
+                      <span className="text-yellow-800 dark:text-yellow-200">🔔 {message}</span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleConfirmPendingAction(pa.id, true)}
+                          className="px-3 py-1 bg-green-500 text-white rounded-md text-xs hover:bg-green-600"
+                        >
+                          Potwierdź
+                        </button>
+                        <button
+                          onClick={() => handleConfirmPendingAction(pa.id, false)}
+                          className="px-3 py-1 bg-red-500 text-white rounded-md text-xs hover:bg-red-600"
+                        >
+                          Anuluj
+                        </button>
+                      </div>
                     </div>
-                  </div>
                   );
                 })}
               </div>
@@ -774,9 +757,12 @@ For example: REMEMBER: preferred_language: Polish`;
               <EnhancedChatInput
                 onSend={handleSend}
                 disabled={isStreaming || isActionExecuting}
-                placeholder={t('aiChat.placeholder', 'Ask anything...')}
+                placeholder={t('aiChat.placeholder', 'Start a transformation...')}
                 voiceModeEnabled={voiceModeEnabled}
                 onVoiceModeChange={handleVoiceModeChange}
+                voiceState={voiceState}
+                startVoiceListening={startListening}
+                stopVoiceListening={stopListening}
               />
             </div>
           </div>

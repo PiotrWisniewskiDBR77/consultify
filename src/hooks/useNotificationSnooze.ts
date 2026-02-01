@@ -19,7 +19,7 @@ export type SnoozePreset = '1h' | '4h' | 'tomorrow' | 'next_week';
 
 const getSnoozeUntilDate = (preset: SnoozePreset): Date => {
   const now = new Date();
-  
+
   switch (preset) {
     case '1h':
       return new Date(now.getTime() + 60 * 60 * 1000);
@@ -69,9 +69,7 @@ export const useNotificationSnooze = () => {
         const parsed: SnoozedNotification[] = JSON.parse(stored);
         // Filter out expired snoozes
         const now = new Date();
-        const active = parsed.filter(
-          (sn) => new Date(sn.snoozedUntil) > now
-        );
+        const active = parsed.filter((sn) => new Date(sn.snoozedUntil) > now);
         setSnoozedNotifications(active);
         // Update storage if we filtered out any
         if (active.length !== parsed.length) {

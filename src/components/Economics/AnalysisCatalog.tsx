@@ -86,7 +86,8 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
   }, [loadAnalyses]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this analysis? This action cannot be undone.')) return;
+    if (!confirm('Are you sure you want to delete this analysis? This action cannot be undone.'))
+      return;
     try {
       await Api.deleteDigitizationAnalysis(id);
       toast.success('Analysis deleted');
@@ -208,7 +209,6 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
     }
     return true;
   });
-
 
   return (
     <div className="p-6 space-y-6">
@@ -466,8 +466,8 @@ const EmptyState: React.FC<{ onCreateNew: () => void; onImport: () => void }> = 
     </div>
     <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">No analyses</h3>
     <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-md">
-      Start assessing your organization's digital maturity. Create a new analysis or import
-      dane z Excel.
+      Start assessing your organization's digital maturity. Create a new analysis or import dane z
+      Excel.
     </p>
     <div className="flex gap-3">
       <button

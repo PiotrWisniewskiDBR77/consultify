@@ -5,9 +5,12 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  AlertCircle,
+  BarChart3,
   Calendar,
   CheckCircle2,
   CheckSquare,
+  Clock,
   Edit,
   Eye,
   Loader2,
@@ -16,29 +19,27 @@ import {
   Plus,
   Square,
   Trash2,
-  User,
   TrendingUp,
-  BarChart3,
-  AlertCircle,
-  Clock,
+  User,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { Api } from '@/services/api';
-import { Task } from '@/types';
 import {
   BulkActionBar,
-  ColumnResizer,
-  createTaskBulkActions,
   type ColumnDef,
+  ColumnResizer,
   type ColumnWidths,
-  type TableFilters,
+  createTaskBulkActions,
   PRIORITY_FILTER_OPTIONS,
+  type TableFilters,
   TASK_STATUS_FILTER_OPTIONS,
 } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
+import { Api } from '@/services/api';
+import { Task } from '@/types';
+
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 
@@ -268,7 +269,7 @@ const TASK_COLUMNS: ColumnDef[] = [
 ];
 
 // Default column widths
-const getDefaultColumnWidths = (): ColumnWidths => 
+const getDefaultColumnWidths = (): ColumnWidths =>
   TASK_COLUMNS.reduce((acc, col) => ({ ...acc, [col.id]: col.width }), {});
 
 // Row hover animation variants
@@ -276,10 +277,10 @@ const rowVariants = {
   initial: { opacity: 0, y: 4 },
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, x: -10 },
-  hover: { 
-    y: -2, 
+  hover: {
+    y: -2,
     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-    transition: { duration: 0.2 }
+    transition: { duration: 0.2 },
   },
 };
 
@@ -293,15 +294,24 @@ const TaskTableRow: React.FC<{
   onDelete: (taskId: string) => void;
   onClick: (taskId: string, taskData?: Task) => void;
   columnWidths: ColumnWidths;
-}> = ({ task, isSelected, isFocused, onSelect, onToggleComplete, onDelete, onClick, columnWidths }) => {
+}> = ({
+  task,
+  isSelected,
+  isFocused,
+  onSelect,
+  onToggleComplete,
+  onDelete,
+  onClick,
+  columnWidths,
+}) => {
   const [showMenu, setShowMenu] = useState(false);
   const { t } = useTranslation();
-  
+
   const isCompleted = ['done', 'completed', 'validated'].includes(task.status?.toLowerCase() || '');
   const overdue = isOverdue(task.dueDate, task.status);
   const priorityConfig = getPriorityConfig(task.priority);
   const statusConfig = getStatusConfig(task.status);
-  const assigneeName = task.assignee?.firstName 
+  const assigneeName = task.assignee?.firstName
     ? `${task.assignee.firstName} ${task.assignee.lastName || ''}`.trim()
     : '-';
   const assigneeInitial = assigneeName !== '-' ? assigneeName[0].toUpperCase() : '';
@@ -332,9 +342,10 @@ const TaskTableRow: React.FC<{
           }}
           className={`
             w-5 h-5 rounded border flex items-center justify-center transition-all
-            ${isSelected
-              ? 'bg-primary-500 border-primary-500 text-white'
-              : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
+            ${
+              isSelected
+                ? 'bg-primary-500 border-primary-500 text-white'
+                : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
             }
           `}
         >
@@ -344,7 +355,7 @@ const TaskTableRow: React.FC<{
 
       {/* Priority Dot */}
       <td className="w-8 px-1 py-2.5" style={{ width: columnWidths.indicator }}>
-        <div 
+        <div
           className={`w-2.5 h-2.5 rounded-full ${priorityConfig.dot} ${overdue ? 'animate-pulse' : ''}`}
           title={priorityConfig.label}
         />
@@ -356,9 +367,7 @@ const TaskTableRow: React.FC<{
         <div className="flex flex-col">
           <span
             className={`text-sm font-medium ${
-              isCompleted
-                ? 'line-through text-slate-500'
-                : 'text-slate-900 dark:text-white'
+              isCompleted ? 'line-through text-slate-500' : 'text-slate-900 dark:text-white'
             }`}
           >
             {task.title}
@@ -508,19 +517,19 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const { t } = useTranslation();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  
+
   // Column widths state (for resizable columns)
   const [columnWidths, setColumnWidths] = useState<ColumnWidths>(getDefaultColumnWidths());
-  
+
   // Filter state (session only)
   const [tableFilters, setTableFilters] = useState<TableFilters>({});
-  
+
   // Open filter dropdown state
   const [openFilterId, setOpenFilterId] = useState<string | null>(null);
-  
+
   // Keyboard navigation state
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const [searchInputRef, setSearchInputRef] = useState<HTMLInputElement | null>(null);
@@ -579,7 +588,13 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     });
 
     // Sort each group by priority then due date
-    const priorityOrder: Record<string, number> = { urgent: 0, critical: 0, high: 1, medium: 2, low: 3 };
+    const priorityOrder: Record<string, number> = {
+      urgent: 0,
+      critical: 0,
+      high: 1,
+      medium: 2,
+      low: 3,
+    };
     Object.keys(groups).forEach((key) => {
       groups[key as TaskTimeGroup].sort((a, b) => {
         const ap = priorityOrder[a.priority?.toLowerCase() || 'medium'] ?? 2;
@@ -607,21 +622,19 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const taskStats = useMemo(() => {
     const allTasks = groupedTasks.all;
     const total = allTasks.length;
-    const completed = allTasks.filter((t) => 
+    const completed = allTasks.filter((t) =>
       ['done', 'completed', 'validated'].includes(t.status?.toLowerCase() || '')
     ).length;
-    const inProgress = allTasks.filter((t) => 
+    const inProgress = allTasks.filter((t) =>
       ['in_progress', 'in progress', 'review'].includes(t.status?.toLowerCase() || '')
     ).length;
-    const blocked = allTasks.filter((t) => 
-      t.status?.toLowerCase() === 'blocked'
-    ).length;
-    const todo = allTasks.filter((t) => 
+    const blocked = allTasks.filter((t) => t.status?.toLowerCase() === 'blocked').length;
+    const todo = allTasks.filter((t) =>
       ['todo', 'to do'].includes(t.status?.toLowerCase() || '')
     ).length;
     const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
     const overdue = groupedTasks.overdue.length;
-    const critical = allTasks.filter((t) => 
+    const critical = allTasks.filter((t) =>
       ['critical', 'urgent'].includes(t.priority?.toLowerCase() || '')
     ).length;
 
@@ -654,7 +667,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
       await Api.updateTask(taskId, { status: completed ? 'completed' : 'todo' });
       setTasks((prev) =>
         prev.map((t) =>
-          t.id === taskId ? { ...t, status: completed ? 'completed' : 'todo' } as Task : t
+          t.id === taskId ? ({ ...t, status: completed ? 'completed' : 'todo' } as Task) : t
         )
       );
       toast.success(completed ? 'Task completed' : 'Task reopened');
@@ -680,7 +693,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
   // Calculate total visible tasks for select all
   const allVisibleTaskIds = useMemo(() => {
-    return new Set(groupedTasks.all.map(task => task.id));
+    return new Set(groupedTasks.all.map((task) => task.id));
   }, [groupedTasks]);
 
   // Selection helpers
@@ -732,14 +745,10 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const handleBulkComplete = async () => {
     try {
       await Promise.all(
-        Array.from(selectedIds).map((id) =>
-          Api.updateTask(id, { status: 'completed' })
-        )
+        Array.from(selectedIds).map((id) => Api.updateTask(id, { status: 'completed' }))
       );
       setTasks((prev) =>
-        prev.map((t) =>
-          selectedIds.has(t.id) ? { ...t, status: 'completed' } as Task : t
-        )
+        prev.map((t) => (selectedIds.has(t.id) ? ({ ...t, status: 'completed' } as Task) : t))
       );
       toast.success(`${selectedIds.size} tasks completed`);
       setSelectedIds(new Set());
@@ -774,9 +783,8 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   }, [groupedTasks]);
 
   // Get focused task
-  const focusedTask = focusedIndex >= 0 && focusedIndex < flatTaskList.length 
-    ? flatTaskList[focusedIndex] 
-    : null;
+  const focusedTask =
+    focusedIndex >= 0 && focusedIndex < flatTaskList.length ? flatTaskList[focusedIndex] : null;
 
   // Keyboard shortcuts
   const { showHelp, setShowHelp } = useKeyboardShortcuts({
@@ -813,7 +821,9 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     },
     onToggleComplete: async () => {
       if (focusedTask) {
-        const isCompleted = ['done', 'completed', 'validated'].includes(focusedTask.status?.toLowerCase() || '');
+        const isCompleted = ['done', 'completed', 'validated'].includes(
+          focusedTask.status?.toLowerCase() || ''
+        );
         await handleToggleComplete(focusedTask.id, !isCompleted);
       }
     },
@@ -822,9 +832,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
         try {
           await Api.updateTask(focusedTask.id, { priority });
           setTasks((prev) =>
-            prev.map((t) =>
-              t.id === focusedTask.id ? { ...t, priority } as Task : t
-            )
+            prev.map((t) => (t.id === focusedTask.id ? ({ ...t, priority } as Task) : t))
           );
           toast.success(`Priority set to ${priority}`);
         } catch {
@@ -852,18 +860,18 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   // Flat list of all tasks (no grouping) - must be before early returns
   const allFilteredTasks = useMemo(() => {
     let result: Task[] = [...groupedTasks.all];
-    
+
     // Apply table filters
     const statusFilter = tableFilters.status as string[] | undefined;
     const priorityFilter = tableFilters.priority as string[] | undefined;
-    
+
     if (statusFilter?.length) {
-      result = result.filter(task => statusFilter.includes(task.status?.toLowerCase() || ''));
+      result = result.filter((task) => statusFilter.includes(task.status?.toLowerCase() || ''));
     }
     if (priorityFilter?.length) {
-      result = result.filter(task => priorityFilter.includes(task.priority?.toLowerCase() || ''));
+      result = result.filter((task) => priorityFilter.includes(task.priority?.toLowerCase() || ''));
     }
-    
+
     return result;
   }, [groupedTasks, tableFilters]);
 
@@ -875,7 +883,10 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
           <div className="mb-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
             {/* Show loading state for stats */}
             {[...Array(7)].map((_, i) => (
-              <div key={i} className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-4 animate-pulse">
+              <div
+                key={i}
+                className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-4 animate-pulse"
+              >
                 <div className="h-4 bg-slate-200 dark:bg-navy-700 rounded w-16 mb-2"></div>
                 <div className="h-8 bg-slate-200 dark:bg-navy-700 rounded w-12"></div>
               </div>
@@ -1013,13 +1024,13 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
         ) : (
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
             <table className="w-full" style={{ minWidth: 900 }}>
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
-                {/* Select All */}
-                <th className="w-10 px-2 py-2">
-                  <button
-                    onClick={() => handleSelectAll(!allSelected)}
-                    className={`
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
+                  {/* Select All */}
+                  <th className="w-10 px-2 py-2">
+                    <button
+                      onClick={() => handleSelectAll(!allSelected)}
+                      className={`
                       w-5 h-5 rounded border flex items-center justify-center transition-colors
                       ${
                         allSelected
@@ -1029,108 +1040,143 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                             : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-400'
                       }
                     `}
+                    >
+                      {allSelected ? (
+                        <CheckSquare size={14} />
+                      ) : someSelected ? (
+                        <Minus size={14} />
+                      ) : (
+                        <Square size={14} />
+                      )}
+                    </button>
+                  </th>
+                  <th className="w-8 px-1 py-2"></th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    Task
+                  </th>
+
+                  {/* Status with Filter */}
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.status }}
                   >
-                    {allSelected ? (
-                      <CheckSquare size={14} />
-                    ) : someSelected ? (
-                      <Minus size={14} />
-                    ) : (
-                      <Square size={14} />
-                    )}
-                  </button>
-                </th>
-                <th className="w-8 px-1 py-2"></th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Task</th>
-                
-                {/* Status with Filter */}
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.status }}>
-                  <div className="flex items-center gap-1">
-                    <span className={(tableFilters.status as string[])?.length ? 'text-primary-500' : ''}>Status</span>
-                    <FilterDropdown
-                      column={TASK_COLUMNS.find(c => c.id === 'status')!}
-                      value={tableFilters.status as string[]}
-                      onChange={(val) => handleFilterChange('status', val as string[])}
-                      isOpen={openFilterId === 'status'}
-                      onToggle={() => setOpenFilterId(openFilterId === 'status' ? null : 'status')}
-                      onClose={() => setOpenFilterId(null)}
+                    <div className="flex items-center gap-1">
+                      <span
+                        className={
+                          (tableFilters.status as string[])?.length ? 'text-primary-500' : ''
+                        }
+                      >
+                        Status
+                      </span>
+                      <FilterDropdown
+                        column={TASK_COLUMNS.find((c) => c.id === 'status')!}
+                        value={tableFilters.status as string[]}
+                        onChange={(val) => handleFilterChange('status', val as string[])}
+                        isOpen={openFilterId === 'status'}
+                        onToggle={() =>
+                          setOpenFilterId(openFilterId === 'status' ? null : 'status')
+                        }
+                        onClose={() => setOpenFilterId(null)}
+                      />
+                    </div>
+                    <ColumnResizer
+                      columnId="status"
+                      currentWidth={columnWidths.status}
+                      minWidth={100}
+                      maxWidth={160}
+                      onResize={handleColumnResize}
                     />
-                  </div>
-                  <ColumnResizer
-                    columnId="status"
-                    currentWidth={columnWidths.status}
-                    minWidth={100}
-                    maxWidth={160}
-                    onResize={handleColumnResize}
-                  />
-                </th>
-                
-                {/* Priority with Filter */}
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.priority }}>
-                  <div className="flex items-center gap-1">
-                    <span className={(tableFilters.priority as string[])?.length ? 'text-primary-500' : ''}>Priority</span>
-                    <FilterDropdown
-                      column={TASK_COLUMNS.find(c => c.id === 'priority')!}
-                      value={tableFilters.priority as string[]}
-                      onChange={(val) => handleFilterChange('priority', val as string[])}
-                      isOpen={openFilterId === 'priority'}
-                      onToggle={() => setOpenFilterId(openFilterId === 'priority' ? null : 'priority')}
-                      onClose={() => setOpenFilterId(null)}
+                  </th>
+
+                  {/* Priority with Filter */}
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.priority }}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span
+                        className={
+                          (tableFilters.priority as string[])?.length ? 'text-primary-500' : ''
+                        }
+                      >
+                        Priority
+                      </span>
+                      <FilterDropdown
+                        column={TASK_COLUMNS.find((c) => c.id === 'priority')!}
+                        value={tableFilters.priority as string[]}
+                        onChange={(val) => handleFilterChange('priority', val as string[])}
+                        isOpen={openFilterId === 'priority'}
+                        onToggle={() =>
+                          setOpenFilterId(openFilterId === 'priority' ? null : 'priority')
+                        }
+                        onClose={() => setOpenFilterId(null)}
+                      />
+                    </div>
+                    <ColumnResizer
+                      columnId="priority"
+                      currentWidth={columnWidths.priority}
+                      minWidth={80}
+                      maxWidth={130}
+                      onResize={handleColumnResize}
                     />
-                  </div>
-                  <ColumnResizer
-                    columnId="priority"
-                    currentWidth={columnWidths.priority}
-                    minWidth={80}
-                    maxWidth={130}
-                    onResize={handleColumnResize}
-                  />
-                </th>
-                
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.date }}>
-                  <span>Due Date</span>
-                  <ColumnResizer
-                    columnId="date"
-                    currentWidth={columnWidths.date}
-                    minWidth={90}
-                    maxWidth={140}
-                    onResize={handleColumnResize}
-                  />
-                </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.assignee }}>
-                  <span>Assignee</span>
-                  <ColumnResizer
-                    columnId="assignee"
-                    currentWidth={columnWidths.assignee}
-                    minWidth={100}
-                    maxWidth={180}
-                    onResize={handleColumnResize}
-                  />
-                </th>
-                <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: columnWidths.actions }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <AnimatePresence>
-                {allFilteredTasks.map((task) => (
-                  <TaskTableRow
-                    key={task.id}
-                    task={task}
-                    isSelected={selectedIds.has(task.id)}
-                    isFocused={focusedTask?.id === task.id}
-                    onSelect={handleSelectTask}
-                    onToggleComplete={handleToggleComplete}
-                    onDelete={handleDelete}
-                    onClick={onTaskClick}
-                    columnWidths={columnWidths}
-                  />
-                ))}
-              </AnimatePresence>
-            </tbody>
-          </table>
+                  </th>
+
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.date }}
+                  >
+                    <span>Due Date</span>
+                    <ColumnResizer
+                      columnId="date"
+                      currentWidth={columnWidths.date}
+                      minWidth={90}
+                      maxWidth={140}
+                      onResize={handleColumnResize}
+                    />
+                  </th>
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.assignee }}
+                  >
+                    <span>Assignee</span>
+                    <ColumnResizer
+                      columnId="assignee"
+                      currentWidth={columnWidths.assignee}
+                      minWidth={100}
+                      maxWidth={180}
+                      onResize={handleColumnResize}
+                    />
+                  </th>
+                  <th
+                    className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
+                    style={{ width: columnWidths.actions }}
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <AnimatePresence>
+                  {allFilteredTasks.map((task) => (
+                    <TaskTableRow
+                      key={task.id}
+                      task={task}
+                      isSelected={selectedIds.has(task.id)}
+                      isFocused={focusedTask?.id === task.id}
+                      onSelect={handleSelectTask}
+                      onToggleComplete={handleToggleComplete}
+                      onDelete={handleDelete}
+                      onClick={onTaskClick}
+                      columnWidths={columnWidths}
+                    />
+                  ))}
+                </AnimatePresence>
+              </tbody>
+            </table>
           </div>
         )}
       </div>
-      
+
       {/* Bulk Action Bar - Only show when tasks exist */}
       {tasks.length > 0 && (
         <BulkActionBar
@@ -1139,20 +1185,19 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
           actions={bulkActions}
         />
       )}
-      
+
       {/* Keyboard Shortcuts Help Modal */}
-      <KeyboardShortcutsHelp
-        isOpen={showHelp}
-        onClose={() => setShowHelp(false)}
-      />
-      
+      <KeyboardShortcutsHelp isOpen={showHelp} onClose={() => setShowHelp(false)} />
+
       {/* Keyboard hint */}
       <div className="fixed bottom-4 left-4 z-40 hidden lg:block">
         <button
           onClick={() => setShowHelp(true)}
           className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 text-xs hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
         >
-          <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 text-[10px] font-mono">?</kbd>
+          <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 text-[10px] font-mono">
+            ?
+          </kbd>
           <span>{t('keyboard.shortcuts', 'Keyboard shortcuts')}</span>
         </button>
       </div>

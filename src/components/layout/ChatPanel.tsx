@@ -30,7 +30,7 @@ import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-import { useVoiceChat } from '../../hooks/useVoiceChat';
+import { useUniversalVoice } from '../../hooks/useUniversalVoice';
 import { useAppStore } from '../../store/useAppStore';
 import { useArtifactsStore } from '../../store/useArtifactsStore';
 import { useConversationStore } from '../../store/useConversationStore';
@@ -43,6 +43,7 @@ import {
   ToolCallInfo,
 } from '../../types';
 import { CitationList } from '../AIChat/CitationList';
+import { EnhancedChatInput } from '../AIChat/EnhancedChatInput';
 import { InlineResponseFeedback } from '../AIChat/InlineResponseFeedback';
 import { ThinkingBlock } from '../AIChat/Messages/ThinkingBlock';
 import { AIFeedbackButton } from '../AIFeedbackButton';
@@ -168,17 +169,30 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   const displaySubtitle = subtitle || t('chat.subHeader');
   const [inputValue, setInputValue] = useState('');
   const [selectedMultiOptions, setSelectedMultiOptions] = useState<string[]>([]);
-  const [isRecording, setIsRecording] = useState(false);
-  const [speechSupported, setSpeechSupported] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const { activeConversationId: conversationId } = useConversationStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastMessageIdRef = useRef<string | null>(null);
 
-  // Voice Chat (TTS) Integration
-  const { speak, stopSpeaking, isSpeaking, voiceEnabled, toggleVoice, ttsSupported } =
-    useVoiceChat();
+  // Universal Voice System
+  const {
+    state: voiceState,
+    startListening,
+    stopListening,
+    speak,
+    stopSpeaking,
+    isSupported: voiceSupported,
+  } = useUniversalVoice({
+    onSendMessage: async (text) => onSendMessage(text),
+    settings: {
+      autoSpeakResponses: true,
+      sttProvider: 'whisper',
+      ttsProvider: 'openai',
+      language: t.language || 'pl',
+    },
+  });
 
-  const { activeConversationId: conversationId } = useConversationStore();
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const toggleVoice = () => setVoiceEnabled(!voiceEnabled);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -190,93 +204,20 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
   // Auto-read AI responses when voice is enabled
   useEffect(() => {
-    if (!voiceEnabled || !ttsSupported) return;
+    if (!voiceEnabled || !voiceSupported || isTyping) return;
 
     // Find the last AI message that isn't currently streaming
     const lastAIMessage = [...messages]
       .reverse()
       .find((msg) => msg.role === 'ai' && msg.id !== 'stream');
 
-    if (lastAIMessage && lastAIMessage.id !== lastMessageIdRef.current && !isTyping) {
+    if (lastAIMessage && lastAIMessage.id !== lastMessageIdRef.current) {
       lastMessageIdRef.current = lastAIMessage.id;
       speak(lastAIMessage.content);
     }
-  }, [messages, voiceEnabled, ttsSupported, isTyping, speak]);
+  }, [messages, voiceEnabled, voiceSupported, isTyping, speak]);
 
-  // Initialize Speech Recognition
-  useEffect(() => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      setSpeechSupported(true);
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
-
-      // Set language based on i18n setting
-      const i18nLang = localStorage.getItem('i18nextLng') || 'pl';
-      const langMap: Record<string, string> = {
-        pl: 'pl-PL',
-        en: 'en-US',
-        de: 'de-DE',
-        es: 'es-ES',
-        ja: 'ja-JP',
-        ar: 'ar-SA',
-      };
-      recognition.lang = langMap[i18nLang] || 'pl-PL';
-      console.log('[ChatPanel] Speech recognition language:', recognition.lang);
-
-      recognition.onresult = (event: any) => {
-        const transcript = Array.from(event.results)
-          .map((result: any) => result[0].transcript)
-          .join('');
-        setInputValue(transcript);
-      };
-
-      recognition.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
-        setIsRecording(false);
-      };
-
-      recognition.onend = () => {
-        setIsRecording(false);
-      };
-
-      recognitionRef.current = recognition;
-    }
-
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.abort();
-      }
-    };
-  }, []);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputValue.trim()) {
-      onSendMessage(inputValue);
-      setInputValue('');
-      // Stop recording if active
-      if (isRecording && recognitionRef.current) {
-        recognitionRef.current.stop();
-        setIsRecording(false);
-      }
-    }
-  };
-
-  const toggleRecording = () => {
-    if (!recognitionRef.current) return;
-
-    if (isRecording) {
-      recognitionRef.current.stop();
-      setIsRecording(false);
-    } else {
-      setInputValue('');
-      recognitionRef.current.start();
-      setIsRecording(true);
-    }
-  };
+  // Speech Recognition logic removed in favor of Universal Voice PTT
 
   const handleMultiSelectToggle = (value: string) => {
     if (selectedMultiOptions.includes(value)) {
@@ -407,7 +348,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           <p className="text-[10px] text-slate-500 dark:text-slate-400">{displaySubtitle}</p>
         </div>
         {/* Voice Toggle Button */}
-        {ttsSupported && (
+        {voiceSupported && t.language && (
           <button
             onClick={toggleVoice}
             className={`p-2 rounded-lg transition-all flex items-center gap-1.5 text-xs ${
@@ -625,17 +566,19 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                       )}
 
                       {/* Speak */}
-                      {ttsSupported && msg.role === 'ai' && (
+                      {voiceSupported && msg.role === 'ai' && (
                         <button
-                          onClick={() => (isSpeaking ? stopSpeaking() : speak(msg.content))}
-                          className={`p-1.5 rounded-md ${isSpeaking ? 'text-red-500 hover:text-red-600' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'} hover:bg-slate-100 dark:hover:bg-navy-700`}
+                          onClick={() =>
+                            voiceState.isSpeaking ? stopSpeaking() : speak(msg.content)
+                          }
+                          className={`p-1.5 rounded-md ${voiceState.isSpeaking ? 'text-red-500 hover:text-red-600' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'} hover:bg-slate-100 dark:hover:bg-navy-700`}
                           title={
-                            isSpeaking
+                            voiceState.isSpeaking
                               ? t('chat.actions.stop', 'Stop')
                               : t('chat.actions.speak', 'Speak')
                           }
                         >
-                          {isSpeaking ? <Square size={14} /> : <Volume2 size={14} />}
+                          {voiceState.isSpeaking ? <Square size={14} /> : <Volume2 size={14} />}
                         </button>
                       )}
                     </div>
@@ -725,17 +668,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 <div className="ml-9 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <AIFeedbackButton context="chat" data={msg.content} />
                   {/* Read aloud button */}
-                  {ttsSupported && (
+                  {voiceSupported && (
                     <button
-                      onClick={() => (isSpeaking ? stopSpeaking() : speak(msg.content))}
+                      onClick={() => (voiceState.isSpeaking ? stopSpeaking() : speak(msg.content))}
                       className={`p-1.5 rounded-md transition-all ${
-                        isSpeaking
+                        voiceState.isSpeaking
                           ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
                           : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
                       }`}
-                      title={isSpeaking ? 'Zatrzymaj' : 'Przeczytaj'}
+                      title={voiceState.isSpeaking ? 'Zatrzymaj' : 'Przeczytaj'}
                     >
-                      {isSpeaking ? <Square size={12} /> : <Volume2 size={12} />}
+                      {voiceState.isSpeaking ? <Square size={12} /> : <Volume2 size={12} />}
                     </button>
                   )}
                 </div>

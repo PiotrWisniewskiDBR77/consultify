@@ -152,8 +152,15 @@ export function setDependencies(newDeps: { db?: IDatabase } = {}): void {
 export async function createOrganization(
   params: CreateOrganizationParams
 ): Promise<CreateOrganizationResult> {
-  const { userId, name, attribution = null, attributionData = null, industry = null, domain = null, vatNumber = null } =
-    params;
+  const {
+    userId,
+    name,
+    attribution = null,
+    attributionData = null,
+    industry = null,
+    domain = null,
+    vatNumber = null,
+  } = params;
   const orgId = uuidv4();
   const now = new Date().toISOString();
   const attributionJson =

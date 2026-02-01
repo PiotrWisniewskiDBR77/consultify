@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { ToolVideoModal } from '@/components/Education/ToolVideoModal';
@@ -70,6 +71,7 @@ interface ToolCardProps {
 }
 
 const ToolCard: React.FC<ToolCardProps> = ({ tool, blockColor, onWatchVideo, onTryTool }) => {
+  const { t } = useTranslation();
   const colorClasses: Record<string, { bg: string; text: string; border: string; hover: string }> =
     {
       emerald: {
@@ -113,7 +115,7 @@ const ToolCard: React.FC<ToolCardProps> = ({ tool, blockColor, onWatchVideo, onT
         {tool.thumbnailUrl ? (
           <img
             src={tool.thumbnailUrl}
-            alt={tool.name}
+            alt={t(`showcase.tools.items.${tool.id}.name`)}
             className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
@@ -132,7 +134,8 @@ const ToolCard: React.FC<ToolCardProps> = ({ tool, blockColor, onWatchVideo, onT
         {/* Framework Badge */}
         <div className="absolute top-3 left-3">
           <span className="px-2 py-1 bg-black/60 backdrop-blur-sm text-white text-xs font-medium rounded-full">
-            {tool.framework}
+            {t(`showcase.tools.items.${tool.id}.framework` as any) ||
+              t('showcase.common.framework')}
           </span>
         </div>
       </div>
@@ -147,23 +150,23 @@ const ToolCard: React.FC<ToolCardProps> = ({ tool, blockColor, onWatchVideo, onT
           </div>
           <div>
             <h3 className="font-bold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-              {tool.name}
+              {t(`showcase.tools.items.${tool.id}.name`)}
             </h3>
           </div>
         </div>
 
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-2">
-          {tool.description}
+          {t(`showcase.tools.items.${tool.id}.description`)}
         </p>
 
         {/* Outputs */}
         <div className="flex flex-wrap gap-1.5 mb-4">
-          {tool.outputs.slice(0, 3).map((output, idx) => (
+          {[0, 1, 2].map((idx) => (
             <span
               key={idx}
               className={`px-2 py-0.5 text-xs rounded-full ${colors.bg} ${colors.text}`}
             >
-              {output}
+              {t(`showcase.tools.items.${tool.id}.outputs.${idx}` as any)}
             </span>
           ))}
         </div>
@@ -175,13 +178,13 @@ const ToolCard: React.FC<ToolCardProps> = ({ tool, blockColor, onWatchVideo, onT
             className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
           >
             <Play size={14} />
-            Watch Demo
+            {t('showcase.common.watchVideo')}
           </button>
           <button
             onClick={onTryTool}
             className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-semibold rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all"
           >
-            Try Free
+            {t('showcase.common.tryFree')}
             <ArrowRight size={14} />
           </button>
         </div>
@@ -202,6 +205,7 @@ interface BlockSectionProps {
 }
 
 const BlockSection: React.FC<BlockSectionProps> = ({ block, tools, onWatchVideo, onTryTool }) => {
+  const { t } = useTranslation();
   const BlockIcon = BLOCK_ICONS[block.icon] || Target;
 
   return (
@@ -214,8 +218,12 @@ const BlockSection: React.FC<BlockSectionProps> = ({ block, tools, onWatchVideo,
           <BlockIcon size={28} className="text-white" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{block.name}</h2>
-          <p className="text-slate-600 dark:text-slate-400">{block.description}</p>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+            {t(`showcase.tools.blocks.${block.id}.name`)}
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400">
+            {t(`showcase.tools.blocks.${block.id}.description`)}
+          </p>
         </div>
       </div>
 
@@ -241,7 +249,8 @@ const BlockSection: React.FC<BlockSectionProps> = ({ block, tools, onWatchVideo,
 
 export const ToolsShowcasePage: React.FC = () => {
   const navigate = useNavigate();
-  const { currentUser, setAuthInitialStep } = useAppStore();
+  const { t } = useTranslation();
+  const { currentUser } = useAppStore();
   const [selectedTool, setSelectedTool] = useState<EducationTool | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -312,21 +321,19 @@ export const ToolsShowcasePage: React.FC = () => {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full text-sm font-medium mb-6">
               <Sparkles size={16} className="text-purple-400" />
-              AI-Powered Consulting Tools
+              {t('showcase.tools.hero.badge')}
             </div>
 
             <h1 className="text-4xl lg:text-6xl font-bold tracking-tight mb-6">
-              Master the
+              {t('showcase.tools.hero.title1')}
               <br />
               <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                Elite Consulting Standard
+                {t('showcase.tools.hero.title2')}
               </span>
             </h1>
 
             <p className="text-lg lg:text-xl text-white/70 max-w-3xl mx-auto mb-8">
-              A curated knowledge base and 40+ AI-powered tools utilized by Harvard graduates at
-              leading global consulting firms. Master the methodologies behind the world's most
-              successful strategic transformations.
+              {t('showcase.tools.hero.subtitle')}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -334,14 +341,14 @@ export const ToolsShowcasePage: React.FC = () => {
                 onClick={() => navigate('/trial')}
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg text-lg"
               >
-                Start Free Trial
+                {t('showcase.common.startTrial')}
                 <ArrowRight size={20} />
               </button>
               <a
                 href="#tools"
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-all border border-white/20"
               >
-                Explore Tools
+                {t('showcase.common.learnOurMethods')}
                 <ChevronRight size={20} />
               </a>
             </div>
@@ -368,9 +375,8 @@ export const ToolsShowcasePage: React.FC = () => {
       {/* Availability Message */}
       <div className="max-w-7xl mx-auto px-4 pb-16 text-center">
         <div className="inline-block p-6 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 shadow-sm max-w-2xl">
-          <p className="text-slate-600 dark:text-slate-400 font-medium">
-            💡 Wszystkie narzędzia są dostępne po zalogowaniu do aplikacji w panelu{' '}
-            <span className="text-purple-600 dark:text-purple-400 font-bold">Baza Wiedzy</span>.
+          <p className="text-slate-600 dark:text-slate-400 font-medium italic">
+            💡 {t('showcase.common.integratedHint')}
           </p>
         </div>
       </div>
@@ -379,26 +385,19 @@ export const ToolsShowcasePage: React.FC = () => {
       <section className="bg-gradient-to-r from-purple-600 to-indigo-600 py-16">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-            Ready to Transform Your Organization?
+            {t('showcase.common.readyToTry')}
           </h2>
           <p className="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
-            Start your free trial and get full access to all 40+ tools, AI-assisted analysis, and
-            collaborative workspaces.
+            {t('showcase.tools.hero.subtitle')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => navigate('/trial')}
               className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-purple-700 font-semibold rounded-xl hover:bg-slate-100 transition-all shadow-lg text-lg"
             >
-              Start Free Trial
+              {t('showcase.common.startTrial')}
               <ArrowRight size={20} />
             </button>
-            <Link
-              to="/contact"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/20 text-white font-semibold rounded-xl hover:bg-white/30 transition-all border border-white/30"
-            >
-              Talk to Expert
-            </Link>
           </div>
         </div>
       </section>

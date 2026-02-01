@@ -53,21 +53,23 @@
   * {
     /* @apply border-border; */
   }
+
   body {
     @apply bg-background text-foreground;
   }
 
   /* Japanese language font - Noto Sans JP for full character support */
-  :lang(ja),
-  [lang="ja"],
-  html[lang="ja"] body,
-  .lang-ja {
+  :lang(jp),
+  [lang="jp"],
+  html[lang="jp"] body,
+  .lang-jp {
     font-family: 'Noto Sans JP', 'Inter', sans-serif;
   }
 }
 
 /* Admin Module Styles - Clean Enterprise Design */
 @layer components {
+
   /* Admin Card - Base container with clear boundaries */
   .admin-card {
     @apply bg-white dark:bg-navy-900/50 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm;
@@ -181,7 +183,7 @@
     @apply flex items-center divide-x divide-slate-200 dark:divide-white/10;
   }
 
-  .admin-stats-row > * {
+  .admin-stats-row>* {
     @apply px-4 first:pl-0 last:pr-0;
   }
 }

@@ -722,6 +722,9 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
       '2. Jeśli użytkownik pyta o swoje zadania lub inicjatywy, odwołuj się do danych z sekcji KONTEKST UŻYTKOWNIKA.',
       '3. Proponuj konkretne działania bazując na aktualnym stanie pracy użytkownika.',
       '4. Jeśli są blokery lub problemy, proaktywnie oferuj pomoc w ich rozwiązaniu.',
+      '5. MULTI-LANGUAGE SUPPORT: Twoją natywną funkcją jest obsługa 6 języków: polski (pl), angielski (en), niemiecki (de), hiszpański (es), arabski (ar), japoński (ja).',
+      '6. Zawsze odpowiadaj w tym samym języku, w którym zwrócił się do Ciebie użytkownik. Jeśli użytkownik mówi po polsku, odpowiadaj po polsku. Jeśli po japońsku - po japońsku, itd.',
+      '7. Dbaj o naturalność i poprawność językową w każdym z tych języków.',
     ];
 
     // Add context-specific instructions

@@ -9,9 +9,9 @@ import { z } from 'zod';
 
 import type { AuthRequest } from '../middleware/auth.middleware.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
-import decisionService from '../services/decisionService.js';
-import DecisionEscalationChainService from '../services/decisionEscalationChainService.js';
 import DecisionDelegationService from '../services/decisionDelegationService.js';
+import DecisionEscalationChainService from '../services/decisionEscalationChainService.js';
+import decisionService from '../services/decisionService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -134,8 +134,6 @@ router.get(
     });
   })
 );
-
-
 
 /**
  * GET /api/decisions/pending
@@ -443,7 +441,11 @@ router.put(
       return res.status(400).json({ error: 'Chain must be an array' });
     }
 
-    const result = await DecisionEscalationChainService.setEscalationChain(decisionId, chain, userId);
+    const result = await DecisionEscalationChainService.setEscalationChain(
+      decisionId,
+      chain,
+      userId
+    );
 
     return res.json({
       success: true,
@@ -794,12 +796,10 @@ router.post(
       return res.status(400).json({ error: 'Opinion is required' });
     }
 
-    const result = await DecisionDelegationService.submitInput(
-      delegationId,
-      userId,
-      opinion,
-      { recommendation, confidenceLevel }
-    );
+    const result = await DecisionDelegationService.submitInput(delegationId, userId, opinion, {
+      recommendation,
+      confidenceLevel,
+    });
 
     return res.json({
       success: true,

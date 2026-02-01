@@ -157,7 +157,11 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
     }
 
     // Initiative-specific navigation
-    if (typeActions.includes('open_initiative') && onOpenInitiative && notification.relatedObjectId) {
+    if (
+      typeActions.includes('open_initiative') &&
+      onOpenInitiative &&
+      notification.relatedObjectId
+    ) {
       return (
         <button
           onClick={(e) => {

@@ -225,7 +225,8 @@ router.post(
       // Access policy enforcement (Demo/Trial/Paid) for streaming
       // NOTE: streaming pipeline bypasses AIOrchestrator, so enforce here.
       // --------------------------------------------------------
-      const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
+      const AccessPolicyService = (await import('../services/accessPolicyService.js'))
+        .default as any;
       const aiAccessContext = await AccessPolicyService.getAIAccessContext(req.organizationId!);
       const aiAccessCheck = await AccessPolicyService.checkAccess(req.organizationId!, 'ai_call');
 
@@ -370,7 +371,10 @@ router.post(
               await AccessPolicyService.trackTokenUsage(req.organizationId!, estimatedTokens);
             }
           } catch (usageErr: any) {
-            logger.warn('[AI Stream] Failed to track trial token usage:', usageErr?.message || usageErr);
+            logger.warn(
+              '[AI Stream] Failed to track trial token usage:',
+              usageErr?.message || usageErr
+            );
           }
         }
         return res.end();

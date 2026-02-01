@@ -292,8 +292,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <BarChart2 size={14} />
           <span>
-            Click "Open Analysis" to see full scores and perform detailed analysis
-            financial
+            Click "Open Analysis" to see full scores and perform detailed analysis financial
           </span>
         </div>
       </div>

@@ -280,9 +280,12 @@ Be specific to the organization's industry and market position.`;
       }
     } else if (toolType === 'growth-paths') {
       if (
-        ['market-penetration', 'market-development', 'product-development', 'diversification'].includes(
-          currentStepDef.id
-        )
+        [
+          'market-penetration',
+          'market-development',
+          'product-development',
+          'diversification',
+        ].includes(currentStepDef.id)
       ) {
         prompt = `Suggest 3-5 initiatives for the ${currentStepDef.name} quadrant.
 
@@ -310,9 +313,13 @@ Return JSON:
 {"scenarios": [{"title": "...", "likelihood": 3, "notes": "..."}]}`;
       }
     } else if (
-      ['sop-builder', 'a3-problem-solving', 'smed-planner', 'dms-builder', 'inventory-autopilot'].includes(
-        toolType
-      )
+      [
+        'sop-builder',
+        'a3-problem-solving',
+        'smed-planner',
+        'dms-builder',
+        'inventory-autopilot',
+      ].includes(toolType)
     ) {
       if (currentStepDef.id !== 'context' && currentStepDef.id !== 'summary') {
         prompt = `Provide 3-5 concise items for ${currentStepDef.name}.
@@ -432,9 +439,13 @@ Return JSON:
 Return JSON:
 {"summary": "...", "insights": ["..."], "initiatives": [{"title": "...", "description": "...", "rationale": "..."}]}`;
     } else if (
-      ['sop-builder', 'a3-problem-solving', 'smed-planner', 'dms-builder', 'inventory-autopilot'].includes(
-        toolType
-      )
+      [
+        'sop-builder',
+        'a3-problem-solving',
+        'smed-planner',
+        'dms-builder',
+        'inventory-autopilot',
+      ].includes(toolType)
     ) {
       prompt = `Summarize the operational analysis:
 1. Executive Summary

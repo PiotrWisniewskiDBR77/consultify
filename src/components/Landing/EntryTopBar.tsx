@@ -4,7 +4,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { changeLanguage, LANGUAGE_DISPLAY_CODES, LANGUAGE_NAMES, SUPPORTED_LANGUAGES } from '../../i18n';
+import {
+  changeLanguage,
+  LANGUAGE_DISPLAY_CODES,
+  LANGUAGE_NAMES,
+  SUPPORTED_LANGUAGES,
+} from '../../i18n';
 import { useAppStore } from '../../store/useAppStore';
 
 interface EntryTopBarProps {

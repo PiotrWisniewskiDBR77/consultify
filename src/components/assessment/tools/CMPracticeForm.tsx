@@ -10,8 +10,6 @@
  * 20 Practice Areas with 5-level maturity scale (1-5).
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   AlertTriangle,
   ArrowRight,
@@ -26,16 +24,18 @@ import {
   Rocket,
   Target,
 } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
-  CMMI_CATEGORIES,
-  CMMI_PRACTICE_AREAS,
-  CMMI_MATURITY_LEVELS,
-  CMMICategory,
-  CMMIPracticeArea,
+  calculateAverageScore,
   calculateCategoryScore,
   calculateOverallMaturityLevel,
-  calculateAverageScore,
+  CMMI_CATEGORIES,
+  CMMI_MATURITY_LEVELS,
+  CMMI_PRACTICE_AREAS,
+  CMMICategory,
+  CMMIPracticeArea,
 } from '../../../services/cmmiStructure';
 
 // Types
@@ -137,7 +137,7 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
   // Calculate progress
   const progress = useMemo(() => {
     let filledPracticeAreas = 0;
-    let totalPracticeAreas = CMMI_PRACTICE_AREAS.length;
+    const totalPracticeAreas = CMMI_PRACTICE_AREAS.length;
     let totalScore = 0;
     let count = 0;
 
@@ -494,9 +494,7 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
                     {categoryData.averageLevel}
                   </span>
                 )}
-                <span className="text-xs text-slate-500">
-                  ({category.practiceAreaIds.length})
-                </span>
+                <span className="text-xs text-slate-500">({category.practiceAreaIds.length})</span>
               </button>
             );
           })}
@@ -531,9 +529,7 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
               <span className="text-xs text-slate-400 uppercase tracking-wider">
                 Category Average
               </span>
-              <div
-                className={`text-2xl font-bold text-${CATEGORY_COLORS[activeCategoryId]}-400`}
-              >
+              <div className={`text-2xl font-bold text-${CATEGORY_COLORS[activeCategoryId]}-400`}>
                 {currentCategoryData.averageLevel || '-'}
               </div>
             </div>

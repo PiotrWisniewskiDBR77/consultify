@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, Clock, Play, X } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { EducationTool } from '@/data/toolEducationData';
 
@@ -46,6 +47,7 @@ export const ToolVideoModal: React.FC<ToolVideoModalProps> = ({
   onClose,
   onTryTool,
 }) => {
+  const { t } = useTranslation();
   if (!tool) return null;
 
   return (
@@ -76,8 +78,13 @@ export const ToolVideoModal: React.FC<ToolVideoModalProps> = ({
                   <DynamicIcon name={tool.icon} size={20} className="text-white" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900 dark:text-white">{tool.name}</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{tool.framework}</p>
+                  <h3 className="font-bold text-slate-900 dark:text-white">
+                    {t(`showcase.tools.items.${tool.id}.name`)}
+                  </h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {t(`showcase.tools.items.${tool.id}.framework` as any) ||
+                      t('showcase.common.framework')}
+                  </p>
                 </div>
               </div>
               <button
@@ -114,20 +121,22 @@ export const ToolVideoModal: React.FC<ToolVideoModalProps> = ({
 
             {/* Content */}
             <div className="p-6">
-              <p className="text-slate-600 dark:text-slate-400 mb-4">{tool.description}</p>
+              <p className="text-slate-600 dark:text-slate-400 mb-4">
+                {t(`showcase.tools.items.${tool.id}.description`)}
+              </p>
 
               {/* Outputs */}
               <div className="mb-6">
                 <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  What you'll get:
+                  {t('showcase.common.whatYouGet')}:
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {tool.outputs.map((output, idx) => (
+                  {[0, 1, 2].map((idx) => (
                     <span
                       key={idx}
                       className="px-3 py-1 text-sm rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
                     >
-                      {output}
+                      {t(`showcase.tools.items.${tool.id}.outputs.${idx}` as any)}
                     </span>
                   ))}
                 </div>

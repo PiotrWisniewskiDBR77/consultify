@@ -1,7 +1,7 @@
 /**
  * Plan Limits Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Plan limit checking middleware (no-op fallback for tests)
  */
 

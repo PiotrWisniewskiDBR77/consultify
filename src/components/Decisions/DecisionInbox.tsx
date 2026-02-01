@@ -19,7 +19,7 @@ import {
   TrendingUp,
   User,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
@@ -70,42 +70,45 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
   const effectiveProjectId = projectId || currentProjectId;
 
   // Fetch decisions
-  const fetchDecisions = useCallback(async (isRefresh = false) => {
-    try {
-      if (isRefresh) setRefreshing(true);
-      else setLoading(true);
+  const fetchDecisions = useCallback(
+    async (isRefresh = false) => {
+      try {
+        if (isRefresh) setRefreshing(true);
+        else setLoading(true);
 
-      const url = effectiveProjectId
-        ? `/decisions?projectId=${effectiveProjectId}&includeAll=true`
-        : '/decisions?includeAll=true';
+        const url = effectiveProjectId
+          ? `/decisions?projectId=${effectiveProjectId}&includeAll=true`
+          : '/decisions?includeAll=true';
 
-      const data = await Api.get(url);
-      const decisionsList = Array.isArray(data) ? data : data?.decisions || [];
+        const data = await Api.get(url);
+        const decisionsList = Array.isArray(data) ? data : data?.decisions || [];
 
-      // Enhance decisions with computed fields
-      const enhanced = decisionsList.map((d: Decision) => {
-        const daysWaiting =
-          d.daysWaiting ||
-          Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24));
-        const isOverdue = daysWaiting > 7;
-        const daysOverdue = Math.max(0, daysWaiting - 7);
-        return {
-          ...d,
-          daysWaiting,
-          isOverdue,
-          daysOverdue,
-          escalationLevel: d.escalationLevel || 0,
-        };
-      });
+        // Enhance decisions with computed fields
+        const enhanced = decisionsList.map((d: Decision) => {
+          const daysWaiting =
+            d.daysWaiting ||
+            Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+          const isOverdue = daysWaiting > 7;
+          const daysOverdue = Math.max(0, daysWaiting - 7);
+          return {
+            ...d,
+            daysWaiting,
+            isOverdue,
+            daysOverdue,
+            escalationLevel: d.escalationLevel || 0,
+          };
+        });
 
-      setDecisions(enhanced);
-    } catch (error) {
-      console.error('Failed to fetch decisions:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [effectiveProjectId]);
+        setDecisions(enhanced);
+      } catch (error) {
+        console.error('Failed to fetch decisions:', error);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [effectiveProjectId]
+  );
 
   useEffect(() => {
     fetchDecisions();
@@ -145,8 +148,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
     if (contextFilter !== 'all') {
       filtered = filtered.filter(
         (d) =>
-          d.contextType === contextFilter ||
-          d.relatedObjectType?.toLowerCase() === contextFilter
+          d.contextType === contextFilter || d.relatedObjectType?.toLowerCase() === contextFilter
       );
     }
 
@@ -418,40 +420,38 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
 
               {showFilters && (
                 <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1 z-20">
-                  {(['all', 'overdue', 'thisWeek', 'blocking', 'critical', 'high'] as FilterType[]).map(
-                    (filter) => (
-                      <button
-                        key={filter}
-                        onClick={() => {
-                          setFilterType(filter);
-                          setShowFilters(false);
-                        }}
-                        className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2 ${
-                          filterType === filter
-                            ? 'text-purple-600 dark:text-purple-400 font-medium'
-                            : 'text-slate-700 dark:text-slate-300'
-                        }`}
-                      >
-                        {filter === 'overdue' && <AlertCircle size={14} className="text-red-500" />}
-                        {filter === 'blocking' && <Clock size={14} className="text-orange-500" />}
-                        {filter === 'critical' && (
-                          <TrendingUp size={14} className="text-red-500" />
-                        )}
-                        {filter === 'high' && <TrendingUp size={14} className="text-orange-500" />}
-                        {filter === 'all'
-                          ? t('decisions.filterAll', 'All')
-                          : filter === 'overdue'
-                            ? t('decisions.filterOverdue', 'Overdue')
-                            : filter === 'thisWeek'
-                              ? t('decisions.filterThisWeek', 'This Week')
-                              : filter === 'blocking'
-                                ? t('decisions.filterBlocking', 'Blocking')
-                                : filter === 'critical'
-                                  ? t('decisions.filterCritical', 'Critical')
-                                  : t('decisions.filterHigh', 'High+')}
-                      </button>
-                    )
-                  )}
+                  {(
+                    ['all', 'overdue', 'thisWeek', 'blocking', 'critical', 'high'] as FilterType[]
+                  ).map((filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => {
+                        setFilterType(filter);
+                        setShowFilters(false);
+                      }}
+                      className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2 ${
+                        filterType === filter
+                          ? 'text-purple-600 dark:text-purple-400 font-medium'
+                          : 'text-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      {filter === 'overdue' && <AlertCircle size={14} className="text-red-500" />}
+                      {filter === 'blocking' && <Clock size={14} className="text-orange-500" />}
+                      {filter === 'critical' && <TrendingUp size={14} className="text-red-500" />}
+                      {filter === 'high' && <TrendingUp size={14} className="text-orange-500" />}
+                      {filter === 'all'
+                        ? t('decisions.filterAll', 'All')
+                        : filter === 'overdue'
+                          ? t('decisions.filterOverdue', 'Overdue')
+                          : filter === 'thisWeek'
+                            ? t('decisions.filterThisWeek', 'This Week')
+                            : filter === 'blocking'
+                              ? t('decisions.filterBlocking', 'Blocking')
+                              : filter === 'critical'
+                                ? t('decisions.filterCritical', 'Critical')
+                                : t('decisions.filterHigh', 'High+')}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>

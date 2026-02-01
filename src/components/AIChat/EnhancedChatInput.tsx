@@ -19,11 +19,7 @@ import { AudioWaveform, Mic, Plus, Send, Square, StopCircle, Wrench } from 'luci
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import {
-  CloudFile,
-  CloudProviderId,
-  useCloudIntegrations,
-} from '../../hooks/useCloudIntegrations';
+import { CloudFile, CloudProviderId, useCloudIntegrations } from '../../hooks/useCloudIntegrations';
 import { useAppStore } from '../../store/useAppStore';
 import { AddFilesMenu } from './AddFilesMenu';
 import { CloudFilePicker } from './CloudFilePicker';
@@ -42,6 +38,18 @@ interface EnhancedChatInputProps {
   className?: string;
   voiceModeEnabled?: boolean;
   onVoiceModeChange?: (enabled: boolean) => void;
+
+  // Voice Props from Parent
+  voiceState?: {
+    isListening: boolean;
+    isSpeaking: boolean;
+    isProcessing: boolean;
+    audioLevel: number;
+    recordingDuration: number;
+    interimTranscript: string;
+  };
+  startVoiceListening?: () => void;
+  stopVoiceListening?: () => void;
 }
 
 // ============================================================================
@@ -57,6 +65,9 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   className = '',
   voiceModeEnabled = false,
   onVoiceModeChange,
+  voiceState,
+  startVoiceListening,
+  stopVoiceListening,
 }) => {
   const { t } = useTranslation();
   const { aiFreezeStatus } = useAppStore();
@@ -102,7 +113,15 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   const isDisabled = disabled || aiFreezeStatus.isFrozen;
   const hasText = value.trim().length > 0;
   const canSend = hasText && !isDisabled;
-  const isRecordingAny = isDictating || isVoiceConversation;
+
+  // Use either internal or external voice state
+  const isDictatingVal = isDictating;
+  const isVoiceConversationVal = voiceState ? voiceState.isListening : isVoiceConversation;
+  const isRecordingAny = isDictatingVal || isVoiceConversationVal;
+
+  const currentAudioLevel = voiceState ? voiceState.audioLevel : audioLevel;
+  const currentRecordingDuration = voiceState ? voiceState.recordingDuration : recordingDuration;
+  const currentInterimTranscript = voiceState ? voiceState.interimTranscript : interimTranscript;
 
   // ========================================================================
   // Initialize Speech Recognition
@@ -473,13 +492,45 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
       handleSend();
     } else {
       // Empty → Toggle voice conversation
-      if (isVoiceConversation) {
-        stopVoiceConversation();
+      if (isVoiceConversationVal) {
+        if (stopVoiceListening) stopVoiceListening();
+        else stopVoiceConversation();
       } else {
-        startVoiceConversation();
+        if (startVoiceListening) startVoiceListening();
+        else startVoiceConversation();
       }
     }
-  }, [hasText, handleSend, isVoiceConversation, stopVoiceConversation, startVoiceConversation]);
+  }, [
+    hasText,
+    handleSend,
+    isVoiceConversationVal,
+    stopVoiceListening,
+    stopVoiceConversation,
+    startVoiceListening,
+    startVoiceConversation,
+  ]);
+
+  // Push-to-Talk Handlers
+  const handlePTTStart = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      if (hasText || isDisabled) return;
+      e.preventDefault();
+      if (startVoiceListening) startVoiceListening();
+      else startVoiceConversation();
+    },
+    [hasText, isDisabled, startVoiceListening, startVoiceConversation]
+  );
+
+  const handlePTTEnd = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      if (isVoiceConversationVal) {
+        e.preventDefault();
+        if (stopVoiceListening) stopVoiceListening();
+        else stopVoiceConversation();
+      }
+    },
+    [isVoiceConversationVal, stopVoiceListening, stopVoiceConversation]
+  );
 
   const handleDictationClick = useCallback(() => {
     if (isDictating) {
@@ -558,7 +609,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
       )}
 
       {/* Live Transcript Indicator */}
-      {(isDictating || isVoiceConversation) && (
+      {(isDictating || isVoiceConversationVal) && (
         <div className="flex items-center gap-2 mb-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
           {/* Audio Level Bars */}
           <div className="flex items-center gap-0.5 h-4">
@@ -567,25 +618,25 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 key={i}
                 className="w-1 bg-blue-500 rounded-full transition-all duration-75"
                 style={{
-                  height: `${Math.max(4, Math.min(16, audioLevel * 20 * (i + 1)))}px`,
-                  opacity: audioLevel > i * 0.2 ? 1 : 0.3,
+                  height: `${Math.max(4, Math.min(16, currentAudioLevel * 20 * (i + 1)))}px`,
+                  opacity: currentAudioLevel > i * 0.2 ? 1 : 0.3,
                 }}
               />
             ))}
           </div>
 
           <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
-            {isVoiceConversation ? 'Voice Conversation' : 'Dictation'}
+            {isVoiceConversationVal ? 'Voice Conversation' : 'Dictation'}
           </span>
 
           <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-            {Math.floor(recordingDuration / 60)}:
-            {(recordingDuration % 60).toString().padStart(2, '0')}
+            {Math.floor(currentRecordingDuration / 60)}:
+            {(currentRecordingDuration % 60).toString().padStart(2, '0')}
           </span>
 
-          {interimTranscript && (
+          {currentInterimTranscript && (
             <span className="flex-1 text-xs text-slate-600 dark:text-slate-400 italic truncate">
-              "{interimTranscript}"
+              "{currentInterimTranscript}"
             </span>
           )}
         </div>
@@ -669,6 +720,10 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             {/* Dynamic Button: Voice Conversation OR Send */}
             <button
               onClick={handleDynamicButtonClick}
+              onMouseDown={handlePTTStart}
+              onMouseUp={handlePTTEnd}
+              onTouchStart={handlePTTStart}
+              onTouchEnd={handlePTTEnd}
               disabled={isDisabled || (hasText && !canSend)}
               className={`
                                 p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center
@@ -677,23 +732,24 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                                     ? canSend
                                       ? 'bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-500/25'
                                       : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                                    : isVoiceConversation
+                                    : isVoiceConversationVal
                                       ? 'bg-green-500 text-white shadow-lg shadow-green-500/30 animate-pulse'
                                       : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 hover:bg-primary-100 hover:text-primary-600 dark:hover:bg-primary-900/30 dark:hover:text-primary-400'
                                 }
                                 ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}
+                                ${isVoiceConversationVal && voiceState ? 'scale-110 ring-2 ring-primary-500' : ''}
                             `}
               title={
                 hasText
                   ? t('aiChat.send', 'Send')
-                  : isVoiceConversation
+                  : isVoiceConversationVal
                     ? t('aiChat.stopVoice', 'Stop voice conversation')
                     : t('aiChat.startVoice', 'Start voice conversation (auto-send)')
               }
             >
               {hasText ? (
                 <Send size={18} />
-              ) : isVoiceConversation ? (
+              ) : isVoiceConversationVal ? (
                 <Square size={18} className="fill-current" />
               ) : (
                 <AudioWaveform size={18} />

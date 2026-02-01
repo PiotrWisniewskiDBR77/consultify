@@ -6,9 +6,8 @@ import { useAIStream } from '../../hooks/useAIStream';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, ChatMessage, ChatOption } from '../../types';
 import { AIUsageIndicator } from '../AIUsageIndicator';
-import { ChatPanel } from '../layout/ChatPanel';
-import { LLMSelector } from '../LLMSelector';
 import { AIRoleBadge } from './AIRoleBadge';
+import { UnifiedChatPanel } from './UnifiedChatPanel';
 
 interface ChatOverlayProps {
   hideTrigger?: boolean;
@@ -201,27 +200,24 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false })
         )}
       </div>
 
-      {/* Content using ChatPanel */}
+      {/* Content using UnifiedChatPanel */}
       <div className="flex-1 overflow-hidden relative flex flex-col">
-        <ChatPanel
-          messages={
-            isStreaming
-              ? [
-                  ...activeChatMessages,
-                  {
-                    id: 'stream',
-                    role: 'ai',
-                    content: streamedContent,
-                    timestamp: new Date(),
-                  } as ChatMessage,
-                ]
-              : activeChatMessages
+        <UnifiedChatPanel
+          mode="split" // Use split mode for compact overlay look
+          showModeToggle={true}
+          onModeToggle={() => {
+            toggleChat();
+            setCurrentView(AppView.AI_CHAT);
+          }}
+          showHistoryTrigger={true}
+          showFocusMode={false} // Keep it simple in overlay
+          workspaceContext={
+            {
+              type: 'project',
+              projectId: pmoContext.projectId || undefined,
+              entityName: pmoContext.currentScreen,
+            } as any
           }
-          isTyping={isBotTyping}
-          onSendMessage={handleSendMessage}
-          onOptionSelect={handleOptionSelect}
-          showThinking={showThinking}
-          {...({} as any)}
         />
       </div>
     </div>

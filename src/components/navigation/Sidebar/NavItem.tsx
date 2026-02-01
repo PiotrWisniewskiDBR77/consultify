@@ -90,11 +90,12 @@ export const NavItem: React.FC<NavItemProps> = ({
           ${showFull ? 'px-3' : 'px-0 justify-center'}
           rounded-xl
           ${isLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-          ${isHighlighted
-            ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
-            : isParentActive
-              ? 'text-navy-900 dark:text-white font-medium bg-slate-50 dark:bg-white/5'
-              : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
+          ${
+            isHighlighted
+              ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+              : isParentActive
+                ? 'text-navy-900 dark:text-white font-medium bg-slate-50 dark:bg-white/5'
+                : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
           }
         `}
         title={getTooltip()}
@@ -105,9 +106,10 @@ export const NavItem: React.FC<NavItemProps> = ({
             <span
               className={`
                 transition-colors
-                ${isHighlighted || isParentActive
-                  ? 'text-primary-600 dark:text-primary-400'
-                  : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'
+                ${
+                  isHighlighted || isParentActive
+                    ? 'text-primary-600 dark:text-primary-400'
+                    : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'
                 }
               `}
             >

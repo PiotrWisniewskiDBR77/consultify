@@ -205,8 +205,8 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
 
   if (compact) {
     return (
-    <motion.div
-      data-testid="portfolio-health"
+      <motion.div
+        data-testid="portfolio-health"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4 flex items-center gap-4"

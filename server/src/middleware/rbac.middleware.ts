@@ -1,7 +1,7 @@
 /**
  * RBAC Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Role-Based Access Control middleware
  */
 

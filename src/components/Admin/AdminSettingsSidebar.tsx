@@ -248,7 +248,10 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
           {t('admin.settings.title', 'SETTINGS')}
         </h1>
         <p className="text-sm text-slate-400 dark:text-slate-500 mt-0.5">
-          {t('admin.settings.subtitle', 'Organization profile, billing, security, and feedback management')}
+          {t(
+            'admin.settings.subtitle',
+            'Organization profile, billing, security, and feedback management'
+          )}
         </p>
       </div>
 

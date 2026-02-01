@@ -893,7 +893,8 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
 
       setDecisions(enhanced);
       const myCount = enhanced.filter(
-        (d: Decision) => ['PENDING', 'ESCALATED'].includes(d.status) && d.decisionOwnerId === currentUserId
+        (d: Decision) =>
+          ['PENDING', 'ESCALATED'].includes(d.status) && d.decisionOwnerId === currentUserId
       ).length;
       const awaitingCount = enhanced.filter(
         (d: Decision) =>
