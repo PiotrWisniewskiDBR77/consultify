@@ -20,6 +20,7 @@ import { User } from './types';
 // Lazy load views for public routes that might be outside main app logic if needed
 const AcceptInvitationView = React.lazy(() => import('./views/AcceptInvitationView'));
 const PublicReportView = React.lazy(() => import('./views/reports/PublicReportView'));
+const PublicReportBuilderView = React.lazy(() => import('./views/reports/PublicReportBuilderView'));
 
 const InviteRouteWrapper = () => {
   const { token } = useParams<{ token: string }>();
@@ -210,6 +211,20 @@ function AppContent() {
               }
             >
               <PublicReportView />
+            </React.Suspense>
+          }
+        />
+        <Route
+          path="/shared/report/:token"
+          element={
+            <React.Suspense
+              fallback={
+                <div className="flex h-screen items-center justify-center">
+                  <Loader2 className="animate-spin text-primary" />
+                </div>
+              }
+            >
+              <PublicReportBuilderView />
             </React.Suspense>
           }
         />

@@ -27,7 +27,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ElementType, FC, useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { Api } from '@/services/api';
@@ -40,6 +40,7 @@ export type GateType =
   | 'REQUEST_REVIEW'
   | 'APPROVE_REPORT'
   | 'APPROVE_ASSESSMENT'
+  | 'GENERATE_REPORT'
   | 'GENERATE_INITIATIVES';
 
 export type GateStatus = 'NOT_STARTED' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'SKIPPED';
@@ -172,8 +173,18 @@ const WORKFLOW_STAGES: Omit<
     approverRole: 'admin',
   },
   {
-    id: 'approved',
+    id: 'generate-report',
     order: 5,
+    stage: 'APPROVED',
+    label: 'Generate Report',
+    description: 'Generate analytical report from assessment data',
+    gate: 'GENERATE_REPORT',
+    gateLabel: 'GENERATE_REPORT',
+    approverRole: 'manager',
+  },
+  {
+    id: 'approved',
+    order: 6,
     stage: 'APPROVED',
     label: 'Approved',
     description: 'Assessment approved, can generate initiatives',
@@ -213,6 +224,13 @@ const GATE_CONFIG: Record<
     bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
     borderColor: 'border-emerald-200 dark:border-emerald-500/30',
     actionLabel: 'Approve Assessment',
+  },
+  GENERATE_REPORT: {
+    icon: FileText,
+    color: 'text-cyan-600 dark:text-cyan-400',
+    bgColor: 'bg-cyan-50 dark:bg-cyan-500/10',
+    borderColor: 'border-cyan-200 dark:border-cyan-500/30',
+    actionLabel: 'Generate Report',
   },
   GENERATE_INITIATIVES: {
     icon: Sparkles,
@@ -303,7 +321,7 @@ const getDaysWaiting = (dateStr?: string): number => {
 // Row Component
 // ============================================
 
-const WorkflowStageRow: React.FC<{
+const WorkflowStageRow: FC<{
   stage: WorkflowStage;
   roles: WorkflowStagesTableProps['roles'];
   canManage: boolean;
@@ -611,7 +629,24 @@ const WorkflowStageRow: React.FC<{
 
         {/* Actions */}
         <td className="px-3 py-3 min-w-[140px]">
-          {stage.gate && isActionable && canTakeAction ? (
+          {/* Special action buttons for GENERATE_REPORT and GENERATE_INITIATIVES */}
+          {stage.gate === 'GENERATE_REPORT' && stage.isCurrent && canTakeAction ? (
+            <button
+              onClick={() => handleAction('request')}
+              disabled={actionBusy}
+              className="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-600 disabled:bg-cyan-300 text-white text-xs font-semibold transition-colors"
+            >
+              {actionBusy ? <Loader2 size={12} className="animate-spin" /> : 'Generate Report'}
+            </button>
+          ) : stage.gate === 'GENERATE_INITIATIVES' && stage.isCurrent && canTakeAction ? (
+            <button
+              onClick={() => handleAction('request')}
+              disabled={actionBusy}
+              className="px-3 py-1.5 rounded-lg bg-rose-500 hover:bg-rose-600 disabled:bg-rose-300 text-white text-xs font-semibold transition-colors"
+            >
+              {actionBusy ? <Loader2 size={12} className="animate-spin" /> : 'Generate Initiatives'}
+            </button>
+          ) : stage.gate && isActionable && canTakeAction ? (
             <div className="flex items-center gap-1">
               {gateStatus === 'NOT_STARTED' && (
                 <button
@@ -780,7 +815,7 @@ const WorkflowStageRow: React.FC<{
 // Main Component
 // ============================================
 
-export const WorkflowStagesTable: React.FC<WorkflowStagesTableProps> = ({
+export const WorkflowStagesTable: FC<WorkflowStagesTableProps> = ({
   assessmentId,
   currentStatus,
   completionPercent,

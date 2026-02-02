@@ -97,9 +97,7 @@ Lista endpointów assessment (CRUD + workflow + generate initiatives + attachmen
 | POST   | `/reviews/:reviewId/start`         | Rozpoczęcie review        |
 | POST   | `/reviews/:reviewId/submit`        | Zakończenie review        |
 
----
-
-### Assessment AI
+---### Assessment AI
 
 **Base path:** `/api/assessment-ai`
 

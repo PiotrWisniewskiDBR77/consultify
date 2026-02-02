@@ -3,6 +3,9 @@ import {
   ArrowRight,
   CheckCircle2,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Crosshair,
   Grid2X2,
   HelpCircle,
   Link2,
@@ -11,10 +14,11 @@ import {
   Menu,
   MessageSquare,
   Paperclip,
+  Target,
   User,
   X,
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 
 import { AssessmentToolShell } from '@/components/assessment/AssessmentToolShell';
 import { LevelAttachments } from '@/components/assessment/LevelAttachments';
@@ -130,13 +134,27 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
   const [activeLevel, setActiveLevel] = useState<number>(currentLevel ?? 1);
   const [isDetailsOpen, setIsDetailsOpen] = useState(true);
   const [isExplanationExpanded, setIsExplanationExpanded] = useState(false);
-  // In matrix, we want content visible by default (tech examples per cell)
-  const [matrixShowText, setMatrixShowText] = useState(true);
   const [matrixCompact, setMatrixCompact] = useState(true);
   const [activeCardPanel, setActiveCardPanel] = useState<
     'questions' | 'comment' | 'attachments' | 'links' | null
   >(null);
   const [linkDraft, setLinkDraft] = useState('');
+  const [isNavCollapsed, setIsNavCollapsed] = useState(false);
+
+  // Matrix cell popup state
+  const [popupCell, setPopupCell] = useState<{ areaId: string; level: number } | null>(null);
+  const [popupPosition, setPopupPosition] = useState<{
+    top: number;
+    left: number;
+    arrowPosition: 'top' | 'bottom' | 'left' | 'right';
+    arrowOffset: number;
+  } | null>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
+
+  // Hover tooltip state (lightweight)
+  const [hoverCell, setHoverCell] = useState<{ areaId: string; level: number } | null>(null);
+  const [hoverPosition, setHoverPosition] = useState<{ top: number; left: number } | null>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Sync with external axis control
   React.useEffect(() => {
@@ -268,6 +286,135 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isMatrixFullscreen]);
+
+  // Close popup on Escape or click outside
+  React.useEffect(() => {
+    if (!popupCell) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPopupCell(null);
+    };
+    const onClick = (e: MouseEvent) => {
+      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
+        setPopupCell(null);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    // Delay click listener to avoid immediate close
+    setTimeout(() => window.addEventListener('click', onClick), 10);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('click', onClick);
+    };
+  }, [popupCell]);
+
+  // Helper to open popup at cell position with smart positioning
+  const openCellPopup = (areaId: string, level: number, e: React.MouseEvent<HTMLButtonElement>) => {
+    // Clear any hover tooltip
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    setHoverCell(null);
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+
+    // Popup dimensions (approximate)
+    const popupWidth = 360;
+    const popupHeight = 400;
+    const gap = 12;
+
+    let top = 0;
+    let left = 0;
+    let arrowPosition: 'top' | 'bottom' | 'left' | 'right' = 'bottom';
+    let arrowOffset = 0;
+
+    // Calculate best position: prefer below, then above, then right, then left
+    const spaceAbove = rect.top;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceLeft = rect.left;
+    const spaceRight = viewportWidth - rect.right;
+
+    if (spaceBelow >= popupHeight + gap) {
+      // Position below
+      top = rect.bottom + gap;
+      left = rect.left + rect.width / 2 - popupWidth / 2;
+      arrowPosition = 'top';
+      arrowOffset = popupWidth / 2;
+    } else if (spaceAbove >= popupHeight + gap) {
+      // Position above
+      top = rect.top - popupHeight - gap;
+      left = rect.left + rect.width / 2 - popupWidth / 2;
+      arrowPosition = 'bottom';
+      arrowOffset = popupWidth / 2;
+    } else if (spaceRight >= popupWidth + gap) {
+      // Position to the right
+      top = rect.top + rect.height / 2 - popupHeight / 2;
+      left = rect.right + gap;
+      arrowPosition = 'left';
+      arrowOffset = popupHeight / 2;
+    } else if (spaceLeft >= popupWidth + gap) {
+      // Position to the left
+      top = rect.top + rect.height / 2 - popupHeight / 2;
+      left = rect.left - popupWidth - gap;
+      arrowPosition = 'right';
+      arrowOffset = popupHeight / 2;
+    } else {
+      // Fallback: center in viewport
+      top = (viewportHeight - popupHeight) / 2;
+      left = (viewportWidth - popupWidth) / 2;
+      arrowPosition = 'top';
+      arrowOffset = popupWidth / 2;
+    }
+
+    // Keep within viewport bounds
+    if (left < 16) {
+      arrowOffset = arrowOffset - (16 - left);
+      left = 16;
+    }
+    if (left + popupWidth > viewportWidth - 16) {
+      const overflow = left + popupWidth - (viewportWidth - 16);
+      arrowOffset = arrowOffset + overflow;
+      left = viewportWidth - popupWidth - 16;
+    }
+    if (top < 16) top = 16;
+    if (top + popupHeight > viewportHeight - 16) top = viewportHeight - popupHeight - 16;
+
+    // Clamp arrow offset
+    arrowOffset = Math.max(
+      20,
+      Math.min(
+        arrowOffset,
+        arrowPosition === 'top' || arrowPosition === 'bottom' ? popupWidth - 20 : popupHeight - 20
+      )
+    );
+
+    setPopupPosition({ top, left, arrowPosition, arrowOffset });
+    setPopupCell({ areaId, level });
+  };
+
+  // Helper to show hover tooltip
+  const showHoverTooltip = (
+    areaId: string,
+    level: number,
+    e: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    if (popupCell) return; // Don't show tooltip if popup is open
+
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+
+    hoverTimeoutRef.current = setTimeout(() => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setHoverPosition({
+        top: rect.top - 8,
+        left: rect.left + rect.width / 2,
+      });
+      setHoverCell({ areaId, level });
+    }, 400); // 400ms delay before showing tooltip
+  };
+
+  const hideHoverTooltip = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    setHoverCell(null);
+  };
 
   const setAchieved = (lvl: number, checked: boolean) => {
     if (readOnly) return;
@@ -464,6 +611,17 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
           </div>
         )}
       </div>
+
+      {/* Collapse button at bottom */}
+      <div className="p-2 border-t border-slate-200 dark:border-navy-800">
+        <button
+          onClick={() => setIsNavCollapsed(true)}
+          className="w-full flex items-center justify-center gap-1 py-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded transition-colors"
+          title="Collapse panel"
+        >
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
     </div>
   );
 
@@ -530,15 +688,6 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                         />
                         Spacious
                       </label>
-                      <label className="inline-flex items-center gap-2 select-none">
-                        <input
-                          type="checkbox"
-                          checked={matrixShowText}
-                          onChange={(e) => setMatrixShowText(e.target.checked)}
-                          className="h-4 w-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/30"
-                        />
-                        Show technologies
-                      </label>
                     </div>
                   </div>
 
@@ -562,24 +711,6 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                     gridTemplateColumns: `240px repeat(${axisAreas.length}, minmax(150px, 1fr))`,
                   }}
                 >
-                  {/* Top header row */}
-                  <div className="sticky top-0 left-0 z-30 rounded-xl border border-white/10 bg-navy-950/95 backdrop-blur p-3 shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
-                    <div className="text-sm font-semibold text-white">Maturity level</div>
-                    <div className="text-[11px] text-slate-300">Rows (higher → lower)</div>
-                    <div className="mt-2 text-[11px] text-slate-300 leading-snug">
-                      Click: open details · Shift+Click: set TO-BE
-                    </div>
-                  </div>
-                  {axisAreas.map((area) => (
-                    <div
-                      key={`h-${area.id}`}
-                      className="sticky top-0 z-20 rounded-xl border border-white/10 bg-navy-950/95 backdrop-blur p-3 shadow-[0_10px_30px_rgba(0,0,0,0.22)]"
-                    >
-                      {/* X-axis labels + AS/TO moved to bottom strip */}
-                      <div className="min-h-[56px]" />
-                    </div>
-                  ))}
-
                   {/* Level rows (high -> low) */}
                   {Array.from({ length: levelCount }, (_, i) => levelCount - i).map((level) => {
                     const levelLabels: Record<number, string> = {
@@ -602,7 +733,9 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                               <span className="text-purple-200">{level}.</span> {label}
                             </div>
                           </div>
-                          <div className="mt-1 text-[11px] text-slate-300">Hover: see details</div>
+                          <div className="mt-1 text-[11px] text-slate-300">
+                            Hover for preview · Click for details
+                          </div>
                         </div>
 
                         {/* Cells */}
@@ -617,14 +750,33 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                           const areaLevelInfo = area.levels?.find((l) => l.level === level);
                           const knowledge = getDRDKnowledge(area.id, level);
                           const techs = knowledge?.suggestedTechnologies || [];
-                          const displayTechs = techs.slice(0, matrixCompact ? 2 : 3);
+
+                          // Check if this cell is selected (popup open)
+                          const isSelected =
+                            popupCell?.areaId === area.id && popupCell?.level === level;
+                          // Check if any popup is open (for dimming other cells)
+                          const hasActivePopup = popupCell !== null;
 
                           return (
                             <button
                               key={`${area.id}-${level}`}
                               type="button"
-                              className={`group rounded-xl border border-white/10 bg-white/5 text-left hover:bg-white/7 transition-colors ${
-                                matrixCompact ? 'p-2' : 'p-3'
+                              className={`group relative rounded-lg border transition-all duration-200 text-left ${
+                                matrixCompact ? 'p-2' : 'p-2.5'
+                              } ${
+                                isSelected
+                                  ? 'border-white/60 bg-white/20 ring-2 ring-white/30 scale-[1.02] z-10'
+                                  : hasActivePopup
+                                    ? 'opacity-40'
+                                    : ''
+                              } ${
+                                !isSelected && !hasActivePopup && isAchieved
+                                  ? 'border-purple-400/50 bg-purple-500/25 hover:bg-purple-500/35'
+                                  : !isSelected && !hasActivePopup && isTarget
+                                    ? 'border-blue-400/40 bg-blue-500/15 hover:bg-blue-500/25'
+                                    : !isSelected && !hasActivePopup
+                                      ? 'border-white/10 bg-white/[0.02] hover:bg-white/[0.06]'
+                                      : ''
                               }`}
                               onClick={(e) => {
                                 if (e.shiftKey && !readOnly) {
@@ -637,123 +789,61 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                   );
                                   return;
                                 }
-                                setAreaId(area.id);
-                                onAreaChange?.(area.id);
-                                setLevel(level);
-                                setViewMode('surveys');
+                                // Open popup overlay instead of navigating
+                                openCellPopup(area.id, level, e);
                               }}
-                              title={`${area.name} · Level ${level}${areaLevelInfo?.title ? ` · ${areaLevelInfo.title}` : ''}${
-                                isAchieved ? ' · AS-IS' : isTarget ? ' · TO-BE' : ''
-                              }`}
+                              onMouseEnter={(e) => showHoverTooltip(area.id, level, e)}
+                              onMouseLeave={hideHoverTooltip}
                               aria-label={`${area.name}, level ${level}`}
                             >
-                              {/* “Cloud” bubble */}
-                              <div
-                                className={`relative rounded-2xl ${
-                                  matrixCompact
-                                    ? 'px-3 py-2 min-h-[52px]'
-                                    : 'px-3 py-2.5 min-h-[64px]'
-                                } flex items-center ${
-                                  isAchieved
-                                    ? 'bg-purple-500/70 text-white shadow-[0_0_22px_rgba(168,85,247,0.30)] ring-1 ring-purple-300/60'
-                                    : isTarget
-                                      ? 'bg-blue-500/15 text-blue-100 ring-1 ring-blue-300/60'
-                                      : 'bg-navy-900/40 text-slate-200/80 ring-1 ring-white/10'
-                                } backdrop-blur-sm`}
-                              >
-                                {/* Scan-first marker */}
-                                <div className="mr-3 shrink-0 flex flex-col items-center justify-center">
-                                  <div
-                                    className={`h-8 w-8 rounded-xl flex items-center justify-center text-xs font-extrabold ${
-                                      isAchieved
-                                        ? 'bg-white/15 ring-1 ring-white/20 text-white'
-                                        : isTarget
-                                          ? 'bg-blue-500/20 ring-1 ring-blue-300/40 text-blue-100'
-                                          : 'bg-white/5 ring-1 ring-white/10 text-slate-300'
-                                    }`}
-                                  >
-                                    {level}
+                              {/* Ultra-simple cell: just 2-3 keywords */}
+                              {(() => {
+                                // Prefer key technologies, fallback to short title
+                                const keyTechs = [
+                                  'AI',
+                                  'ML',
+                                  'RPA',
+                                  'IoT',
+                                  'AGV',
+                                  'WMS',
+                                  'MES',
+                                  'ERP',
+                                  'CRM',
+                                  'BI',
+                                  'API',
+                                  'EDI',
+                                  'PLM',
+                                  'APS',
+                                  'TMS',
+                                  'YMS',
+                                ];
+                                const highlighted = techs
+                                  .filter((t) => keyTechs.includes(t))
+                                  .slice(0, 2);
+                                const shortTitle = areaLevelInfo?.title
+                                  ? areaLevelInfo.title.split(' ').slice(0, 3).join(' ')
+                                  : null;
+                                const displayContent =
+                                  highlighted.length > 0
+                                    ? highlighted.join(' · ')
+                                    : shortTitle || '—';
+
+                                return (
+                                  <div className="h-full min-h-[40px] flex items-center justify-center text-center px-1">
+                                    <span
+                                      className={`text-[11px] font-medium leading-tight ${
+                                        isAchieved
+                                          ? 'text-white'
+                                          : isTarget
+                                            ? 'text-blue-100'
+                                            : 'text-slate-400'
+                                      }`}
+                                    >
+                                      {displayContent}
+                                    </span>
                                   </div>
-                                  {!matrixCompact && (
-                                    <div className="mt-1 text-[10px] text-slate-200/80">
-                                      {isAchieved ? 'AS' : isTarget ? 'TO' : '—'}
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Optional always-on content (technologies per cell) */}
-                                <div className="min-w-0 flex-1">
-                                  {matrixShowText ? (
-                                    <div className="space-y-1">
-                                      <div className="flex flex-wrap gap-1">
-                                        {displayTechs.length > 0 ? (
-                                          displayTechs.map((t) => (
-                                            <span
-                                              key={t}
-                                              className={`max-w-full truncate px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                                                isAchieved
-                                                  ? 'bg-white/15 text-white ring-1 ring-white/15'
-                                                  : isTarget
-                                                    ? 'bg-blue-500/20 text-blue-100 ring-1 ring-blue-300/30'
-                                                    : 'bg-white/8 text-slate-200 ring-1 ring-white/10'
-                                              }`}
-                                              title={t}
-                                            >
-                                              {t}
-                                            </span>
-                                          ))
-                                        ) : (
-                                          <span className="text-[11px] text-slate-400">—</span>
-                                        )}
-                                        {techs.length > displayTechs.length && (
-                                          <span className="text-[10px] text-slate-200/70">
-                                            +{techs.length - displayTechs.length}
-                                          </span>
-                                        )}
-                                      </div>
-                                      {!matrixCompact && areaLevelInfo?.title && (
-                                        <div className="text-[10px] text-slate-200/75 line-clamp-1">
-                                          {areaLevelInfo.title}
-                                        </div>
-                                      )}
-                                    </div>
-                                  ) : (
-                                    <div className="text-[11px] leading-snug text-slate-200/75">
-                                      <span className="text-slate-300/70">Hover for details</span>
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Hover tooltip (keeps grid clean) */}
-                                {!matrixShowText && (
-                                  <div className="pointer-events-none absolute left-2 right-2 bottom-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <div className="rounded-lg border border-white/10 bg-navy-950/95 backdrop-blur px-2 py-1 text-[11px] text-slate-100 shadow-[0_12px_30px_rgba(0,0,0,0.45)]">
-                                      <div className="font-semibold text-white">
-                                        {area.id} · Level {level}
-                                      </div>
-                                      <div className="text-slate-200/90">
-                                        {areaLevelInfo?.title || '—'}
-                                      </div>
-                                      {techs.length > 0 && (
-                                        <div className="mt-1 text-slate-200/80">
-                                          {techs.slice(0, 6).join(' · ')}
-                                          {techs.length > 6 ? ` · +${techs.length - 6} more` : ''}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Corner markers */}
-                                {isAchieved && (
-                                  <span className="absolute -top-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-purple-500 ring-2 ring-navy-950">
-                                    <CheckCircle2 className="h-3.5 w-3.5 text-white" />
-                                  </span>
-                                )}
-                                {isTarget && (
-                                  <span className="absolute -top-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 ring-2 ring-navy-950" />
-                                )}
-                              </div>
+                                );
+                              })()}
                             </button>
                           );
                         })}
@@ -762,45 +852,49 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                   })}
 
                   {/* Bottom X-axis strip (process areas) */}
-                  <div className="sticky bottom-0 left-0 z-30 rounded-xl border border-white/10 bg-navy-950/95 backdrop-blur p-3 shadow-[0_-10px_30px_rgba(0,0,0,0.35)]">
-                    <div className="text-sm font-semibold text-white">Process area</div>
-                    <div className="text-[11px] text-slate-300">X-axis</div>
+                  <div className="sticky bottom-0 left-0 z-30 rounded-xl border border-white/10 bg-navy-950/95 backdrop-blur p-2 shadow-[0_-10px_30px_rgba(0,0,0,0.35)]">
+                    <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                      Area
+                    </div>
                   </div>
-                  {axisAreas.map((area) => (
-                    <button
-                      key={`x-${area.id}`}
-                      type="button"
-                      onClick={() => {
-                        setAreaId(area.id);
-                        onAreaChange?.(area.id);
-                        setViewMode('surveys');
-                      }}
-                      className="sticky bottom-0 z-20 rounded-xl border border-white/10 bg-gradient-to-b from-white/10 to-white/6 backdrop-blur p-3 text-left hover:from-white/14 hover:to-white/8 transition-colors shadow-[0_-10px_30px_rgba(0,0,0,0.22)] relative"
-                    >
-                      <div className="pr-24">
-                        <div className="text-[11px] font-mono text-slate-300">{area.id}</div>
-                        <div className="mt-0.5 text-sm font-semibold text-white leading-snug line-clamp-2">
+                  {axisAreas.map((area) => {
+                    const s = getAreaState(value, area.id, levelCount);
+                    const achieved = s.achievedLevel || 0;
+                    const target = s.targetLevel || 0;
+                    return (
+                      <button
+                        key={`x-${area.id}`}
+                        type="button"
+                        onClick={() => {
+                          setAreaId(area.id);
+                          onAreaChange?.(area.id);
+                          setViewMode('surveys');
+                        }}
+                        className="sticky bottom-0 z-20 rounded-xl border border-white/10 bg-gradient-to-b from-white/10 to-white/6 backdrop-blur p-2 text-left hover:from-white/14 hover:to-white/8 transition-colors shadow-[0_-10px_30px_rgba(0,0,0,0.22)]"
+                      >
+                        {/* Top line: ID + badges */}
+                        <div className="flex items-center justify-between gap-1 mb-1">
+                          <span className="text-[11px] font-bold text-purple-300">{area.id}</span>
+                          <div className="flex items-center gap-1">
+                            {achieved > 0 && (
+                              <span className="px-1.5 py-0.5 rounded bg-purple-500/25 text-[9px] font-bold text-purple-200">
+                                AS {achieved}
+                              </span>
+                            )}
+                            {target > 0 && (
+                              <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-[9px] font-bold text-blue-200">
+                                TO {target}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {/* Area name - 2 lines max */}
+                        <div className="text-[11px] font-medium text-white leading-tight line-clamp-2">
                           {area.name}
                         </div>
-                      </div>
-                      {(() => {
-                        const s = getAreaState(value, area.id, levelCount);
-                        const achieved = s.achievedLevel || 0;
-                        const target = s.targetLevel || 0;
-                        if (achieved === 0 && target === 0) return null;
-                        return (
-                          <div className="absolute top-2 right-2 flex items-center gap-1.5">
-                            <span className="px-1.5 py-0.5 rounded-md bg-purple-500/20 ring-1 ring-purple-300/30 text-[10px] font-semibold text-purple-100">
-                              AS {achieved || '—'}
-                            </span>
-                            <span className="px-1.5 py-0.5 rounded-md bg-blue-500/15 ring-1 ring-blue-300/30 text-[10px] font-semibold text-blue-100">
-                              TO {target || '—'}
-                            </span>
-                          </div>
-                        );
-                      })()}
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -864,6 +958,341 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                 );
               })()}
             </div>
+
+            {/* Hover Tooltip (lightweight) */}
+            {hoverCell &&
+              hoverPosition &&
+              !popupCell &&
+              (() => {
+                const tooltipArea = axisAreas.find((a) => a.id === hoverCell.areaId);
+                const tooltipLevelInfo = tooltipArea?.levels?.find(
+                  (l) => l.level === hoverCell.level
+                );
+                const tooltipKnowledge = getDRDKnowledge(hoverCell.areaId, hoverCell.level);
+                const tooltipState = getAreaState(value, hoverCell.areaId, levelCount);
+                const tooltipAchieved = tooltipState.achievedLevel || 0;
+                const tooltipTarget = tooltipState.targetLevel || 0;
+                const isTooltipAchieved = hoverCell.level <= tooltipAchieved;
+                const isTooltipTarget =
+                  tooltipTarget > 0 && hoverCell.level <= tooltipTarget && !isTooltipAchieved;
+                const tooltipTechs = (tooltipKnowledge?.suggestedTechnologies || []).slice(0, 3);
+
+                return (
+                  <div
+                    className="fixed z-[150] pointer-events-none animate-in fade-in slide-in-from-bottom-2 duration-200"
+                    style={{
+                      top: hoverPosition.top,
+                      left: hoverPosition.left,
+                      transform: 'translate(-50%, -100%)',
+                    }}
+                  >
+                    <div className="rounded-xl border border-white/20 bg-navy-950/95 backdrop-blur-lg shadow-xl px-3 py-2 max-w-[240px]">
+                      {/* Arrow */}
+                      <div className="absolute left-1/2 -bottom-1.5 -translate-x-1/2 w-3 h-3 rotate-45 bg-navy-950/95 border-r border-b border-white/20" />
+
+                      <div className="text-xs font-semibold text-white mb-1">
+                        {tooltipLevelInfo?.title || `Level ${hoverCell.level}`}
+                      </div>
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <span
+                          className={`text-[9px] font-semibold px-1.5 py-0.5 rounded ${
+                            isTooltipAchieved
+                              ? 'bg-purple-500/30 text-purple-200'
+                              : isTooltipTarget
+                                ? 'bg-blue-500/25 text-blue-200'
+                                : 'bg-white/10 text-slate-400'
+                          }`}
+                        >
+                          {isTooltipAchieved ? 'AS-IS' : isTooltipTarget ? 'TO-BE' : 'Not assessed'}
+                        </span>
+                      </div>
+                      {tooltipTechs.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {tooltipTechs.map((t) => (
+                            <span
+                              key={t}
+                              className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-white/10 text-slate-300"
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <div className="mt-1.5 text-[9px] text-slate-500">Click for details</div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+            {/* Cell Detail Popup Overlay */}
+            {popupCell && popupPosition && (
+              <div
+                ref={popupRef}
+                className="fixed z-[200] w-[360px] rounded-2xl border border-white/20 bg-navy-950/98 backdrop-blur-xl shadow-[0_25px_60px_rgba(0,0,0,0.5)] animate-in fade-in zoom-in-95 duration-200"
+                style={{ top: popupPosition.top, left: popupPosition.left }}
+              >
+                {/* Arrow indicator */}
+                {popupPosition.arrowPosition === 'top' && (
+                  <div
+                    className="absolute -top-2 w-4 h-4 rotate-45 bg-navy-950/98 border-l border-t border-white/20"
+                    style={{ left: popupPosition.arrowOffset - 8 }}
+                  />
+                )}
+                {popupPosition.arrowPosition === 'bottom' && (
+                  <div
+                    className="absolute -bottom-2 w-4 h-4 rotate-45 bg-navy-950/98 border-r border-b border-white/20"
+                    style={{ left: popupPosition.arrowOffset - 8 }}
+                  />
+                )}
+                {popupPosition.arrowPosition === 'left' && (
+                  <div
+                    className="absolute -left-2 w-4 h-4 rotate-45 bg-navy-950/98 border-l border-b border-white/20"
+                    style={{ top: popupPosition.arrowOffset - 8 }}
+                  />
+                )}
+                {popupPosition.arrowPosition === 'right' && (
+                  <div
+                    className="absolute -right-2 w-4 h-4 rotate-45 bg-navy-950/98 border-r border-t border-white/20"
+                    style={{ top: popupPosition.arrowOffset - 8 }}
+                  />
+                )}
+
+                {(() => {
+                  const popupArea = axisAreas.find((a) => a.id === popupCell.areaId);
+                  const popupLevelInfo = popupArea?.levels?.find(
+                    (l) => l.level === popupCell.level
+                  );
+                  const popupKnowledge = getDRDKnowledge(popupCell.areaId, popupCell.level);
+                  const popupState = getAreaState(value, popupCell.areaId, levelCount);
+                  const popupAchieved = popupState.achievedLevel || 0;
+                  const popupTarget = popupState.targetLevel || 0;
+                  const isPopupAchieved = popupCell.level <= popupAchieved;
+                  const isPopupTarget =
+                    popupTarget > 0 && popupCell.level <= popupTarget && !isPopupAchieved;
+                  const popupTechs = popupKnowledge?.suggestedTechnologies || [];
+
+                  return (
+                    <>
+                      {/* Header */}
+                      <div className="p-4 border-b border-white/10">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`h-10 w-10 rounded-xl flex items-center justify-center text-lg font-bold ${
+                                isPopupAchieved
+                                  ? 'bg-purple-500 text-white'
+                                  : isPopupTarget
+                                    ? 'bg-blue-500/50 text-blue-100'
+                                    : 'bg-white/10 text-slate-300'
+                              }`}
+                            >
+                              {popupCell.level}
+                            </div>
+                            <div>
+                              <div className="text-sm font-bold text-white">
+                                {popupLevelInfo?.title || `Level ${popupCell.level}`}
+                              </div>
+                              <div className="text-xs text-slate-400">
+                                {popupArea?.name} · {popupCell.areaId}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAreaId(popupCell.areaId);
+                                onAreaChange?.(popupCell.areaId);
+                                setLevel(popupCell.level);
+                                setViewMode('surveys');
+                                setPopupCell(null);
+                              }}
+                              className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+                            >
+                              Open
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setPopupCell(null)}
+                              className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Status badges */}
+                        <div className="mt-3 flex items-center gap-2">
+                          <span
+                            className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
+                              isPopupAchieved
+                                ? 'bg-purple-500/30 text-purple-200 ring-1 ring-purple-400/30'
+                                : 'bg-white/5 text-slate-400 ring-1 ring-white/10'
+                            }`}
+                          >
+                            {isPopupAchieved ? 'AS-IS (Achieved)' : 'Not achieved'}
+                          </span>
+                          {isPopupTarget && (
+                            <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-blue-500/25 text-blue-200 ring-1 ring-blue-400/30">
+                              TO-BE (Target)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Content */}
+                      <div className="p-4 space-y-3 max-h-[280px] overflow-y-auto">
+                        {/* Description */}
+                        {popupLevelInfo?.description && (
+                          <div>
+                            <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                              Description
+                            </div>
+                            <div className="text-xs text-slate-300 leading-relaxed">
+                              {popupLevelInfo.description}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Example */}
+                        {popupKnowledge?.example && (
+                          <div>
+                            <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                              Example
+                            </div>
+                            <div className="text-xs text-slate-300 leading-relaxed">
+                              {popupKnowledge.example}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Technologies */}
+                        {popupTechs.length > 0 && (
+                          <div>
+                            <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                              Technologies
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {popupTechs.map((t) => {
+                                const isKey = [
+                                  'AI',
+                                  'ML',
+                                  'RPA',
+                                  'IoT',
+                                  'AGV',
+                                  'WMS',
+                                  'MES',
+                                  'ERP',
+                                  'CRM',
+                                  'BI',
+                                  'API',
+                                  'EDI',
+                                ].includes(t);
+                                return (
+                                  <span
+                                    key={t}
+                                    className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                                      isKey
+                                        ? 'bg-amber-500/20 text-amber-200 border border-amber-400/30'
+                                        : 'bg-white/5 text-slate-300 border border-white/10'
+                                    }`}
+                                  >
+                                    {t}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="p-4 border-t border-white/10">
+                        {/* Quick actions row - toggleable buttons */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            disabled={readOnly}
+                            onClick={() => {
+                              const cur = getAreaState(value, popupCell.areaId, levelCount);
+                              const curAchieved = Number(cur.achievedLevel || 0);
+
+                              if (isPopupAchieved) {
+                                // Toggle off: clear achieved for this level
+                                // Find the highest level below this one that should remain achieved
+                                const newAchieved = popupCell.level > 1 ? popupCell.level - 1 : 0;
+                                onChange(
+                                  setAreaState(value, popupCell.areaId, {
+                                    ...cur,
+                                    achievedLevel:
+                                      curAchieved === popupCell.level ? newAchieved : curAchieved,
+                                  })
+                                );
+                              } else {
+                                // Set as achieved - clear target if it was set to this level
+                                onChange(
+                                  setAreaState(value, popupCell.areaId, {
+                                    ...cur,
+                                    achievedLevel: popupCell.level,
+                                    targetLevel:
+                                      cur.targetLevel === popupCell.level
+                                        ? undefined
+                                        : cur.targetLevel,
+                                  })
+                                );
+                              }
+                            }}
+                            className={`flex-1 h-9 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 ${
+                              isPopupAchieved
+                                ? 'bg-purple-500 text-white hover:bg-purple-600'
+                                : 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30'
+                            }`}
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            {isPopupAchieved ? 'Achieved' : 'Set AS-IS'}
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={readOnly}
+                            onClick={() => {
+                              const cur = getAreaState(value, popupCell.areaId, levelCount);
+                              const curTarget = Number(cur.targetLevel || 0);
+
+                              if (curTarget === popupCell.level) {
+                                // Toggle off: clear target
+                                onChange(
+                                  setAreaState(value, popupCell.areaId, {
+                                    ...cur,
+                                    targetLevel: undefined,
+                                  })
+                                );
+                              } else {
+                                // Set as target
+                                onChange(
+                                  setAreaState(value, popupCell.areaId, {
+                                    ...cur,
+                                    targetLevel: popupCell.level,
+                                  })
+                                );
+                              }
+                            }}
+                            className={`flex-1 h-9 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 ${
+                              isPopupTarget
+                                ? 'bg-blue-500 text-white hover:bg-blue-600'
+                                : 'bg-blue-500/20 text-blue-300 hover:bg-blue-500/30'
+                            }`}
+                          >
+                            <Target className="w-3.5 h-3.5" />
+                            {isPopupTarget ? 'Target' : 'Set TO-BE'}
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
           </div>
         )}
 
@@ -1252,23 +1681,26 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                 <div />
 
                                 <div className="flex items-center justify-center gap-2">
+                                  {/* Single-choice radio-like buttons: only one can be active at a time */}
                                   <button
                                     type="button"
                                     disabled={readOnly}
                                     onClick={() => {
-                                      // Toggle Achieved for this level.
-                                      // If already achieved (even implicitly), clicking again will un-achieve this level
-                                      // by lowering the achievedLevel to (level - 1).
                                       const cur = getAreaState(value, areaId, levelCount);
                                       const curAchieved = Number(cur.achievedLevel || 0);
-                                      const already = curAchieved >= lvl.level;
+                                      const alreadyAchieved = curAchieved >= lvl.level;
 
-                                      // Ensure mutual exclusivity: Achieved clears Skip and "Target on this level".
-                                      setLevelDecision(lvl.level, undefined);
-                                      if (Number(cur.targetLevel || 0) === lvl.level)
-                                        setTargetLevel(undefined);
-
-                                      setAchieved(lvl.level, !already);
+                                      if (alreadyAchieved) {
+                                        // Toggle off: clear achieved for this level
+                                        setAchieved(lvl.level, false);
+                                      } else {
+                                        // Select Achieved: clear Target and Skip for this level first
+                                        if (Number(cur.targetLevel || 0) === lvl.level) {
+                                          setTargetLevel(undefined);
+                                        }
+                                        setLevelDecision(lvl.level, undefined);
+                                        setAchieved(lvl.level, true);
+                                      }
                                     }}
                                     className={`h-10 w-28 rounded-lg text-sm font-semibold border transition-colors ${
                                       achieved
@@ -1283,24 +1715,21 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                     type="button"
                                     disabled={readOnly}
                                     onClick={() => {
-                                      // Toggle Target for this level.
                                       const cur = getAreaState(value, areaId, levelCount);
                                       const alreadyTarget =
                                         Number(cur.targetLevel || 0) === lvl.level;
 
-                                      // Ensure mutual exclusivity: Target clears Skip.
-                                      setLevelDecision(lvl.level, undefined);
-
-                                      // If the level is currently achieved, Target means "not achieved" (to-be),
-                                      // so we lower achievedLevel below this level.
-                                      if (
-                                        !alreadyTarget &&
-                                        Number(cur.achievedLevel || 0) >= lvl.level
-                                      ) {
-                                        setAchieved(lvl.level, false);
+                                      if (alreadyTarget) {
+                                        // Toggle off: clear target
+                                        setTargetLevel(undefined);
+                                      } else {
+                                        // Select Target: clear Achieved (if at this level) and Skip first
+                                        if (Number(cur.achievedLevel || 0) >= lvl.level) {
+                                          setAchieved(lvl.level, false);
+                                        }
+                                        setLevelDecision(lvl.level, undefined);
+                                        setTargetLevel(lvl.level);
                                       }
-
-                                      setTargetLevel(alreadyTarget ? undefined : lvl.level);
                                     }}
                                     className={`h-10 w-28 rounded-lg text-sm font-semibold border transition-colors ${
                                       isTarget
@@ -1315,32 +1744,23 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                     type="button"
                                     disabled={readOnly}
                                     onClick={() => {
-                                      // Toggle Skip (explicit "not planned") for this level.
                                       const cur = getAreaState(value, areaId, levelCount);
                                       const alreadySkipped =
                                         (cur.levelDecisions || {})[String(lvl.level)] === 'skip';
 
                                       if (alreadySkipped) {
-                                        // Un-skip -> back to transparent (not achieved, not target, no skip)
+                                        // Toggle off: clear skip
                                         setLevelDecision(lvl.level, undefined);
-                                        return;
+                                      } else {
+                                        // Select Skip: clear Achieved (if at this level) and Target first
+                                        if (Number(cur.achievedLevel || 0) >= lvl.level) {
+                                          setAchieved(lvl.level, false);
+                                        }
+                                        if (Number(cur.targetLevel || 0) === lvl.level) {
+                                          setTargetLevel(undefined);
+                                        }
+                                        setLevelDecision(lvl.level, 'skip');
                                       }
-
-                                      if (Number(cur.achievedLevel || 0) >= lvl.level) {
-                                        const ok = window.confirm(
-                                          `Skipping Level ${lvl.level} will lower the maximum achieved level to ${lvl.level - 1}. Continue?`
-                                        );
-                                        if (!ok) return;
-                                      }
-
-                                      // Ensure mutual exclusivity: Skip clears "Target on this level".
-                                      if (Number(cur.targetLevel || 0) === lvl.level) {
-                                        setTargetLevel(undefined);
-                                      }
-
-                                      // Skip always implies "not achieved" at this level
-                                      setAchieved(lvl.level, false);
-                                      setLevelDecision(lvl.level, 'skip');
                                     }}
                                     className={`h-10 w-28 rounded-lg text-sm font-semibold border transition-colors ${
                                       isSkipped
@@ -1456,15 +1876,6 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                           />
                           Spacious
                         </label>
-                        <label className="inline-flex items-center gap-2 select-none">
-                          <input
-                            type="checkbox"
-                            checked={matrixShowText}
-                            onChange={(e) => setMatrixShowText(e.target.checked)}
-                            className="h-4 w-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/30"
-                          />
-                          Show technologies
-                        </label>
                       </div>
                     </div>
                   </div>
@@ -1477,24 +1888,6 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                         gridTemplateColumns: `240px repeat(${axisAreas.length}, minmax(180px, 1fr))`,
                       }}
                     >
-                      {/* Top header row */}
-                      <div className="sticky top-0 left-0 z-30 rounded-xl border border-white/10 bg-navy-950/95 backdrop-blur p-3 shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
-                        <div className="text-sm font-semibold text-white">Maturity level</div>
-                        <div className="text-[11px] text-slate-300">Rows (higher → lower)</div>
-                        <div className="mt-2 text-[11px] text-slate-300 leading-snug">
-                          Click: open details · Shift+Click: set TO-BE
-                        </div>
-                      </div>
-                      {axisAreas.map((area) => (
-                        <div
-                          key={`h-fs-${area.id}`}
-                          className="sticky top-0 z-20 rounded-xl border border-white/10 bg-navy-950/95 backdrop-blur p-3 shadow-[0_10px_30px_rgba(0,0,0,0.22)]"
-                        >
-                          {/* X-axis labels + AS/TO moved to bottom strip */}
-                          <div className="min-h-[56px]" />
-                        </div>
-                      ))}
-
                       {/* Level rows (high -> low) */}
                       {Array.from({ length: levelCount }, (_, i) => levelCount - i).map((level) => {
                         const levelLabels: Record<number, string> = {
@@ -1516,7 +1909,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                 <span className="text-purple-200">{level}.</span> {label}
                               </div>
                               <div className="mt-1 text-[11px] text-slate-300">
-                                Hover: see details
+                                Click for details
                               </div>
                             </div>
 
@@ -1531,14 +1924,19 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                               const areaLevelInfo = area.levels?.find((l) => l.level === level);
                               const knowledge = getDRDKnowledge(area.id, level);
                               const techs = knowledge?.suggestedTechnologies || [];
-                              const displayTechs = techs.slice(0, 3);
 
                               return (
                                 <button
                                   key={`cell-fs-${area.id}-${level}`}
                                   type="button"
-                                  className={`group rounded-xl border border-white/10 bg-white/5 text-left hover:bg-white/7 transition-colors ${
-                                    matrixCompact ? 'p-2' : 'p-3'
+                                  className={`group relative rounded-lg border transition-all duration-200 text-left ${
+                                    matrixCompact ? 'p-2' : 'p-2.5'
+                                  } ${
+                                    isAchieved
+                                      ? 'border-purple-400/50 bg-purple-500/25 hover:bg-purple-500/35'
+                                      : isTarget
+                                        ? 'border-blue-400/40 bg-blue-500/15 hover:bg-blue-500/25'
+                                        : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.06]'
                                   }`}
                                   onClick={(e) => {
                                     if (e.shiftKey && !readOnly) {
@@ -1557,154 +1955,55 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                     setViewMode('surveys');
                                     setIsMatrixFullscreen(false);
                                   }}
-                                  title={`${area.name} · Level ${level}${areaLevelInfo?.title ? ` · ${areaLevelInfo.title}` : ''}${
-                                    isAchieved ? ' · AS-IS' : isTarget ? ' · TO-BE' : ''
-                                  }`}
                                   aria-label={`${area.name}, level ${level}`}
                                 >
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="text-[11px] font-semibold text-slate-100">
-                                      {areaLevelInfo?.title
-                                        ? areaLevelInfo.title
-                                        : `Level ${level}`}
-                                    </div>
-                                    <div
-                                      className={`text-[10px] px-1.5 py-0.5 rounded-full border ${
-                                        isAchieved
-                                          ? 'bg-purple-500/30 text-purple-100 border-purple-300/30'
-                                          : isTarget
-                                            ? 'bg-blue-500/25 text-blue-100 border-blue-300/30'
-                                            : 'bg-white/5 text-slate-200 border-white/10'
-                                      }`}
-                                    >
-                                      {isAchieved ? 'AS-IS' : isTarget ? 'TO-BE' : '—'}
-                                    </div>
-                                  </div>
+                                  {/* Ultra-simple cell: just 2-3 keywords */}
+                                  {(() => {
+                                    const keyTechs = [
+                                      'AI',
+                                      'ML',
+                                      'RPA',
+                                      'IoT',
+                                      'AGV',
+                                      'WMS',
+                                      'MES',
+                                      'ERP',
+                                      'CRM',
+                                      'BI',
+                                      'API',
+                                      'EDI',
+                                      'PLM',
+                                      'APS',
+                                      'TMS',
+                                      'YMS',
+                                    ];
+                                    const highlighted = techs
+                                      .filter((t) => keyTechs.includes(t))
+                                      .slice(0, 2);
+                                    const shortTitle = areaLevelInfo?.title
+                                      ? areaLevelInfo.title.split(' ').slice(0, 3).join(' ')
+                                      : null;
+                                    const displayContent =
+                                      highlighted.length > 0
+                                        ? highlighted.join(' \u00b7 ')
+                                        : shortTitle || '\u2014';
 
-                                  {matrixShowText && (
-                                    <div className="mt-1 text-[11px] text-slate-200/90 line-clamp-2">
-                                      {knowledge?.example || ''}
-                                    </div>
-                                  )}
-
-                                  {matrixShowText && displayTechs.length > 0 && (
-                                    <div className="mt-2 flex flex-wrap gap-1">
-                                      {displayTechs.map((t) => (
+                                    return (
+                                      <div className="h-full min-h-[40px] flex items-center justify-center text-center px-1">
                                         <span
-                                          key={t}
-                                          className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/5 text-slate-100 border border-white/10"
+                                          className={`text-[11px] font-medium leading-tight ${
+                                            isAchieved
+                                              ? 'text-white'
+                                              : isTarget
+                                                ? 'text-blue-100'
+                                                : 'text-slate-400'
+                                          }`}
                                         >
-                                          {t}
+                                          {displayContent}
                                         </span>
-                                      ))}
-                                    </div>
-                                  )}
-                                  <div
-                                    className={`relative rounded-2xl ${
-                                      matrixCompact
-                                        ? 'px-3 py-2 min-h-[56px]'
-                                        : 'px-3 py-2.5 min-h-[68px]'
-                                    } flex items-center ${
-                                      isAchieved
-                                        ? 'bg-purple-500/70 text-white shadow-[0_0_22px_rgba(168,85,247,0.30)] ring-1 ring-purple-300/60'
-                                        : isTarget
-                                          ? 'bg-blue-500/15 text-blue-100 ring-1 ring-blue-300/60'
-                                          : 'bg-navy-900/40 text-slate-200/80 ring-1 ring-white/10'
-                                    } backdrop-blur-sm`}
-                                  >
-                                    <div className="mr-3 shrink-0 flex flex-col items-center justify-center">
-                                      <div
-                                        className={`h-8 w-8 rounded-xl flex items-center justify-center text-xs font-extrabold ${
-                                          isAchieved
-                                            ? 'bg-white/15 ring-1 ring-white/20 text-white'
-                                            : isTarget
-                                              ? 'bg-blue-500/20 ring-1 ring-blue-300/40 text-blue-100'
-                                              : 'bg-white/5 ring-1 ring-white/10 text-slate-300'
-                                        }`}
-                                      >
-                                        {level}
                                       </div>
-                                      {!matrixCompact && (
-                                        <div className="mt-1 text-[10px] text-slate-200/80">
-                                          {isAchieved ? 'AS' : isTarget ? 'TO' : '—'}
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    <div className="min-w-0 flex-1">
-                                      {matrixShowText ? (
-                                        <div className="space-y-1">
-                                          <div className="flex flex-wrap gap-1">
-                                            {displayTechs.length > 0 ? (
-                                              displayTechs.map((t) => (
-                                                <span
-                                                  key={t}
-                                                  className={`max-w-full truncate px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                                                    isAchieved
-                                                      ? 'bg-white/15 text-white ring-1 ring-white/15'
-                                                      : isTarget
-                                                        ? 'bg-blue-500/20 text-blue-100 ring-1 ring-blue-300/30'
-                                                        : 'bg-white/8 text-slate-200 ring-1 ring-white/10'
-                                                  }`}
-                                                  title={t}
-                                                >
-                                                  {t}
-                                                </span>
-                                              ))
-                                            ) : (
-                                              <span className="text-[11px] text-slate-400">—</span>
-                                            )}
-                                            {techs.length > displayTechs.length && (
-                                              <span className="text-[10px] text-slate-200/70">
-                                                +{techs.length - displayTechs.length}
-                                              </span>
-                                            )}
-                                          </div>
-                                          {!matrixCompact && areaLevelInfo?.title && (
-                                            <div className="text-[10px] text-slate-200/75 line-clamp-1">
-                                              {areaLevelInfo.title}
-                                            </div>
-                                          )}
-                                        </div>
-                                      ) : (
-                                        <div className="text-[11px] leading-snug text-slate-200/75">
-                                          <span className="text-slate-300/70">
-                                            Hover for details
-                                          </span>
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    {!matrixShowText && (
-                                      <div className="pointer-events-none absolute left-2 right-2 bottom-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <div className="rounded-lg border border-white/10 bg-navy-950/95 backdrop-blur px-2 py-1 text-[11px] text-slate-100 shadow-[0_12px_30px_rgba(0,0,0,0.45)]">
-                                          <div className="font-semibold text-white">
-                                            {area.id} · Level {level}
-                                          </div>
-                                          <div className="text-slate-200/90">
-                                            {areaLevelInfo?.title || '—'}
-                                          </div>
-                                          {techs.length > 0 && (
-                                            <div className="mt-1 text-slate-200/80">
-                                              {techs.slice(0, 6).join(' · ')}
-                                              {techs.length > 6
-                                                ? ` · +${techs.length - 6} more`
-                                                : ''}
-                                            </div>
-                                          )}
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {isAchieved && (
-                                      <span className="absolute -top-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-purple-500 ring-2 ring-navy-950">
-                                        <CheckCircle2 className="h-3.5 w-3.5 text-white" />
-                                      </span>
-                                    )}
-                                    {isTarget && (
-                                      <span className="absolute -top-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 ring-2 ring-navy-950" />
-                                    )}
-                                  </div>
+                                    );
+                                  })()}
                                 </button>
                               );
                             })}
@@ -1713,46 +2012,52 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                       })}
 
                       {/* Bottom X-axis strip (process areas) */}
-                      <div className="sticky bottom-0 left-0 z-30 rounded-xl border border-white/10 bg-navy-950/95 backdrop-blur p-3 shadow-[0_-10px_30px_rgba(0,0,0,0.35)]">
-                        <div className="text-sm font-semibold text-white">Process area</div>
-                        <div className="text-[11px] text-slate-300">X-axis</div>
+                      <div className="sticky bottom-0 left-0 z-30 rounded-xl border border-white/10 bg-navy-950/95 backdrop-blur p-2 shadow-[0_-10px_30px_rgba(0,0,0,0.35)]">
+                        <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                          Area
+                        </div>
                       </div>
-                      {axisAreas.map((area) => (
-                        <button
-                          key={`x-fs-${area.id}`}
-                          type="button"
-                          onClick={() => {
-                            setAreaId(area.id);
-                            onAreaChange?.(area.id);
-                            setViewMode('surveys');
-                            setIsMatrixFullscreen(false);
-                          }}
-                          className="sticky bottom-0 z-20 rounded-xl border border-white/10 bg-gradient-to-b from-white/10 to-white/6 backdrop-blur p-3 text-left hover:from-white/14 hover:to-white/8 transition-colors shadow-[0_-10px_30px_rgba(0,0,0,0.22)] relative"
-                        >
-                          <div className="pr-24">
-                            <div className="text-[11px] font-mono text-slate-300">{area.id}</div>
-                            <div className="mt-0.5 text-sm font-semibold text-white leading-snug line-clamp-2">
+                      {axisAreas.map((area) => {
+                        const s = getAreaState(value, area.id, levelCount);
+                        const achieved = s.achievedLevel || 0;
+                        const target = s.targetLevel || 0;
+                        return (
+                          <button
+                            key={`x-fs-${area.id}`}
+                            type="button"
+                            onClick={() => {
+                              setAreaId(area.id);
+                              onAreaChange?.(area.id);
+                              setViewMode('surveys');
+                              setIsMatrixFullscreen(false);
+                            }}
+                            className="sticky bottom-0 z-20 rounded-xl border border-white/10 bg-gradient-to-b from-white/10 to-white/6 backdrop-blur p-2 text-left hover:from-white/14 hover:to-white/8 transition-colors shadow-[0_-10px_30px_rgba(0,0,0,0.22)]"
+                          >
+                            {/* Top line: ID + badges */}
+                            <div className="flex items-center justify-between gap-1 mb-1">
+                              <span className="text-[11px] font-bold text-purple-300">
+                                {area.id}
+                              </span>
+                              <div className="flex items-center gap-1">
+                                {achieved > 0 && (
+                                  <span className="px-1.5 py-0.5 rounded bg-purple-500/25 text-[9px] font-bold text-purple-200">
+                                    AS {achieved}
+                                  </span>
+                                )}
+                                {target > 0 && (
+                                  <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-[9px] font-bold text-blue-200">
+                                    TO {target}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            {/* Area name - 2 lines max */}
+                            <div className="text-[11px] font-medium text-white leading-tight line-clamp-2">
                               {area.name}
                             </div>
-                          </div>
-                          {(() => {
-                            const s = getAreaState(value, area.id, levelCount);
-                            const achieved = s.achievedLevel || 0;
-                            const target = s.targetLevel || 0;
-                            if (achieved === 0 && target === 0) return null;
-                            return (
-                              <div className="absolute top-2 right-2 flex items-center gap-1.5">
-                                <span className="px-1.5 py-0.5 rounded-md bg-purple-500/20 ring-1 ring-purple-300/30 text-[10px] font-semibold text-purple-100">
-                                  AS {achieved || '—'}
-                                </span>
-                                <span className="px-1.5 py-0.5 rounded-md bg-blue-500/15 ring-1 ring-blue-300/30 text-[10px] font-semibold text-blue-100">
-                                  TO {target || '—'}
-                                </span>
-                              </div>
-                            );
-                          })()}
-                        </button>
-                      ))}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -1828,11 +2133,28 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
     </div>
   );
 
+  // Wrapper for content panel with expand button when nav is collapsed
+  const contentWithExpandButton = (
+    <div className="relative h-full">
+      {leftOverride ?? contentPanel}
+      {/* Expand button - visible only when nav is collapsed */}
+      {isNavCollapsed && (
+        <button
+          onClick={() => setIsNavCollapsed(false)}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-1.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 border-r-0 rounded-l-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 shadow-sm transition-colors"
+          title="Expand navigation"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <AssessmentToolShell
-      left={leftOverride ?? contentPanel}
+      left={contentWithExpandButton}
       right={navPanel}
-      isRightOpen={isSidebarOpen}
+      isRightOpen={isSidebarOpen && !isNavCollapsed}
       rightWidthClass="w-[320px]"
       rightSide="right"
     />

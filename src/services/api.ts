@@ -731,39 +731,13 @@ export const Api = {
   getOrganizations: async (): Promise<any[]> => {
     try {
       const res = await fetch(`${API_URL}/superadmin/organizations`, { headers: getHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.length > 0) return data;
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to fetch organizations');
+      return data;
     } catch (e) {
-      // Fall through to mock data
+      console.error('[Api] Error fetching organizations:', e);
+      throw e;
     }
-    // Mock data for demo
-    return [
-      { id: 'org-1', name: 'TechnoLex SA', plan: 'enterprise', status: 'active', user_count: 47 },
-      {
-        id: 'org-2',
-        name: 'Nordic Innovations',
-        plan: 'professional',
-        status: 'active',
-        user_count: 23,
-      },
-      {
-        id: 'org-3',
-        name: 'Global Finance Corp',
-        plan: 'enterprise',
-        status: 'suspended',
-        user_count: 156,
-      },
-      { id: 'org-4', name: 'StartUp Studio', plan: 'starter', status: 'active', user_count: 12 },
-      {
-        id: 'org-5',
-        name: 'Digital Agency Pro',
-        plan: 'professional',
-        status: 'trial',
-        user_count: 34,
-      },
-    ];
   },
 
   updateOrganization: async (
@@ -2096,19 +2070,78 @@ export const Api = {
   },
 
   // FEEDBACK & LEARNING
+  /**
+   * Submit detailed feedback on AI response (v2.0 Adaptive System)
+   */
   aiFeedback: async (feedback: {
-    context: string;
-    prompt: string;
-    response: string;
-    rating: number;
-    correction?: string;
+    messageId: string;
+    conversationId?: string;
+    rating: 'positive' | 'negative' | 'neutral';
+    lengthFeedback?: string;
+    detailFeedback?: string;
+    formatFeedback?: string;
+    wantedMode?: string;
+    customFeedback?: string;
+    responseMode?: string;
+    responseLength?: number;
+    capability?: string;
+    // v2.0 specific fields
+    actionability?: number;
+    accuracy?: number;
+    expectedFormat?: string;
+    missingInfo?: string;
+    screenContext?: string;
+    focusMode?: string;
   }): Promise<void> => {
-    const res = await fetch(`${API_URL}/ai/feedback`, {
+    const res = await fetch(`${API_URL}/ai-feedback/response`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(feedback),
     });
-    if (!res.ok) throw new Error('Failed to save feedback');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to submit feedback');
+  },
+
+  /**
+   * Submit general AI feedback (Legacy / Training compatibility)
+   */
+  submitAIFeedback: async (data: {
+    context: string;
+    prompt: string;
+    response: string;
+    helpful: boolean;
+    comment?: string;
+  }): Promise<void> => {
+    const res = await fetch(`${API_URL}/ai-feedback`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        ...data,
+        rating: data.helpful ? 'positive' : 'negative',
+        feedbackType: data.helpful ? 'HELPFUL' : 'NOT_HELPFUL',
+      }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error || 'Failed to submit feedback');
+    }
+  },
+
+  // WEBHOOKS (Consolidated from extensions)
+  getWebhooks: async (): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/webhooks`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch webhooks');
+    return res.json();
+  },
+
+  createWebhook: async (data: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/webhooks`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to create webhook');
+    return res.json();
   },
 
   // --- AI STRATEGIC BOARD ---
@@ -6735,11 +6768,6 @@ export const Api = {
     return { success: true, webhookId };
   },
 
-  // Feedback
-  submitAIFeedback: async (feedback: any) => {
-    return { success: true, feedback };
-  },
-
   // Metrics
   getOrgMetricsEvents: async (_filters?: any) => {
     return { events: [], metrics: {} };
@@ -6801,55 +6829,48 @@ export const Api = {
   },
 
   // List files from cloud provider
-  listCloudFiles: async (providerId: string, folderId?: string) => {
-    console.log(`[CloudAPI] Listing files from ${providerId}, folder: ${folderId}`);
-    // Demo data
-    return {
-      files: [
-        { id: '1', name: 'Dokumenty projektowe', mimeType: 'folder', size: 0, isFolder: true },
-        { id: '2', name: 'Prezentacje', mimeType: 'folder', size: 0, isFolder: true },
-        {
-          id: '3',
-          name: 'Raport Q4 2025.pdf',
-          mimeType: 'application/pdf',
-          size: 2453000,
-          isFolder: false,
-          modifiedAt: '2025-12-15',
-        },
-        {
-          id: '4',
-          name: 'Budżet projektu.xlsx',
-          mimeType: 'application/vnd.ms-excel',
-          size: 156000,
-          isFolder: false,
-          modifiedAt: '2025-12-10',
-        },
-        {
-          id: '5',
-          name: 'Notatki ze spotkania.docx',
-          mimeType: 'application/msword',
-          size: 45000,
-          isFolder: false,
-          modifiedAt: '2025-12-08',
-        },
-      ],
-      nextPageToken: null,
-    };
+  listCloudFiles: async (providerId: string, folderId?: string): Promise<any[]> => {
+    try {
+      const url = folderId
+        ? `${API_URL}/integrations/${providerId}/files?folderId=${folderId}`
+        : `${API_URL}/integrations/${providerId}/files`;
+      const res = await fetch(url, { headers: getHeaders() });
+      if (res.status === 501) {
+        console.warn(`[Api] Cloud provider ${providerId} is not implemented in backend.`);
+        return []; // Return empty as stub fallback
+      }
+      if (!res.ok) throw new Error('Failed to list cloud files');
+      return res.json();
+    } catch (e) {
+      console.error('[Api] Error listing cloud files:', e);
+      return [];
+    }
   },
 
   // Get file download URL
   getCloudFileDownloadUrl: async (providerId: string, fileId: string) => {
     console.log(`[CloudAPI] Getting download URL for ${providerId}/${fileId}`);
     // In real implementation, this would return a signed URL
-    return { downloadUrl: `/api/cloud/${providerId}/files/${fileId}/download` };
+    return { downloadUrl: `${API_URL}/integrations/${providerId}/files/${fileId}/download` };
   },
 
   // Download file from cloud
   downloadCloudFile: async (providerId: string, fileId: string): Promise<Blob> => {
-    console.log(`[CloudAPI] Downloading file ${providerId}/${fileId}`);
-    // In real implementation, this would download the actual file
-    // For demo, return empty blob
-    return new Blob(['Demo file content'], { type: 'text/plain' });
+    try {
+      const res = await fetch(`${API_URL}/integrations/${providerId}/files/${fileId}/download`, {
+        headers: getHeaders(),
+      });
+      if (res.status === 501) {
+        throw new Error('CLOUD_NOT_IMPLEMENTED');
+      }
+      if (!res.ok) throw new Error('Failed to download cloud file');
+      return res.blob();
+    } catch (e: any) {
+      if (e.message === 'CLOUD_NOT_IMPLEMENTED') {
+        throw new Error('Cloud integration is not implemented on the server yet.');
+      }
+      throw e;
+    }
   },
 };
 

@@ -36,6 +36,12 @@ export class TestDatabaseFactory {
           if (failed) return;
           db.run(sql, (err) => {
             if (err && !failed) {
+              console.error(
+                '[TestDatabaseFactory] Schema error:',
+                err.message,
+                'SQL:',
+                sql.substring(0, 50)
+              );
               failed = true;
               reject(err);
             }
@@ -53,6 +59,10 @@ export class TestDatabaseFactory {
   }
 
   static enhanceDb(db) {
+    // Add compatibility with server/database.ts initialization check
+    db.initPromise = Promise.resolve();
+    db.__CLOSED__ = false;
+
     // Add promise wrappers for services expecting async methods
     db.runAsync = function (sql, params = []) {
       return new Promise((resolve, reject) => {

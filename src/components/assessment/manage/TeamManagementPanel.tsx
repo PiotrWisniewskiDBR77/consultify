@@ -29,7 +29,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ElementType, FC, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { Api } from '@/services/api';
@@ -108,7 +108,7 @@ const ROLE_CONFIG: Record<
   TeamRole,
   {
     label: string;
-    icon: React.ElementType;
+    icon: ElementType;
     color: string;
     bgColor: string;
     borderColor: string;
@@ -165,7 +165,7 @@ const ROLE_CONFIG: Record<
 // Add Member Modal Component
 // ============================================
 
-const AddMemberModal: React.FC<{
+const AddMemberModal: FC<{
   isOpen: boolean;
   onClose: () => void;
   onAdd: (userId: string, role: TeamRole) => Promise<void>;
@@ -215,8 +215,9 @@ const AddMemberModal: React.FC<{
     try {
       await onAdd(selectedUser.id, selectedRole);
       onClose();
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to add member');
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error?.message || 'Failed to add member');
     } finally {
       setAdding(false);
     }
@@ -275,6 +276,12 @@ const AddMemberModal: React.FC<{
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search by name or email..."
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                data-lpignore="true"
+                data-form-type="other"
                 className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors"
               />
               {searching && (
@@ -428,7 +435,7 @@ const AddMemberModal: React.FC<{
 // Team Member Row Component
 // ============================================
 
-const TeamMemberRow: React.FC<{
+const TeamMemberRow: FC<{
   member: TeamMember;
   canManageTeam: boolean;
   onUpdateRole: (userId: string, role: TeamRole) => Promise<void>;
@@ -451,8 +458,9 @@ const TeamMemberRow: React.FC<{
     try {
       await onUpdateRole(member.userId, selectedRole);
       setIsEditing(false);
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to update role');
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error?.message || 'Failed to update role');
     } finally {
       setBusy(false);
     }
@@ -463,8 +471,9 @@ const TeamMemberRow: React.FC<{
     setBusy(true);
     try {
       await onRemove(member.userId);
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to remove member');
+    } catch (err) {
+      const error = err as Error;
+      toast.error(error?.message || 'Failed to remove member');
     } finally {
       setBusy(false);
     }
@@ -628,7 +637,7 @@ const TeamMemberRow: React.FC<{
 // Main Component
 // ============================================
 
-export const TeamManagementPanel: React.FC<TeamManagementPanelProps> = ({
+export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
   assessmentId,
   assessmentType,
   members,

@@ -58,9 +58,13 @@ export interface ReportSection {
   length: SectionLength;
   language: SectionLanguage;
   customPrompt?: string;
+  blockTypeId?: string;
+  blockConfig?: Record<string, unknown>;
+  renderKind?: string;
   generatedContent?: string;
   editedContent?: string;
   tiptapContent?: string;
+  contentFormat?: string;
   generatedAt?: string;
   repeatFor?: string;
   repeatKey?: string;
@@ -69,6 +73,7 @@ export interface ReportSection {
 export interface Report {
   id: string;
   organizationId: string;
+  projectId?: string;
   sourceType: ReportSourceType;
   sourceId: string;
   sourceName?: string;
@@ -76,6 +81,8 @@ export interface Report {
   title: string;
   description?: string;
   reportType: string;
+  config?: Record<string, unknown>;
+  companyContext?: Record<string, unknown>;
   status: ReportStatus;
   createdBy: string;
   createdAt: string;
@@ -144,7 +151,8 @@ export function useReportBuilder() {
       sourceType: ReportSourceType,
       sourceId: string,
       title: string,
-      description?: string
+      description?: string,
+      config?: Record<string, unknown>
     ): Promise<{ report: Report; sections: ReportSection[] } | null> => {
       try {
         setState((prev) => ({ ...prev, isLoading: true, error: null }));
@@ -154,6 +162,7 @@ export function useReportBuilder() {
           sourceId,
           title,
           description,
+          config,
         });
 
         const { report, sections } = response || {};
@@ -191,12 +200,11 @@ export function useReportBuilder() {
         report,
         sections,
         sourceType: report?.sourceType,
-        currentStep:
-          report?.status === 'DRAFT'
-            ? 1
-            : report?.status === 'GENERATED' || report?.status === 'IN_REVIEW'
-              ? 3
-              : 2,
+        // Wizard steps:
+        // 0 = Intent (must be completed before outline/generation)
+        // 1 = Outline / structure
+        // 2 = Generate & Edit
+        currentStep: report?.status === 'CONFIGURING' ? 0 : report?.status === 'DRAFT' ? 1 : 2,
       }));
 
       return true;
@@ -256,7 +264,13 @@ export function useReportBuilder() {
       reportId: string,
       title: string,
       afterSectionKey?: string,
-      options?: { length?: SectionLength; language?: SectionLanguage }
+      options?: {
+        length?: SectionLength;
+        language?: SectionLanguage;
+        blockTypeId?: string;
+        blockConfig?: Record<string, unknown>;
+        renderKind?: string;
+      }
     ): Promise<ReportSection | null> => {
       try {
         setState((prev) => ({ ...prev, isLoading: true, error: null }));
@@ -471,6 +485,29 @@ export function useReportBuilder() {
     }
   }, []);
 
+  const sendBackReport = useCallback(async (reportId: string): Promise<boolean> => {
+    try {
+      setState((prev) => ({ ...prev, isLoading: true, error: null }));
+
+      await Api.post(`/report-builder/${reportId}/send-back`, {});
+
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        report: prev.report ? { ...prev.report, status: 'GENERATED' } : null,
+      }));
+
+      return true;
+    } catch (err: any) {
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: err?.error || err.message || 'Failed to send report back',
+      }));
+      return false;
+    }
+  }, []);
+
   const duplicateReport = useCallback(
     async (
       reportId: string,
@@ -493,6 +530,141 @@ export function useReportBuilder() {
           error: err?.error || err.message || 'Failed to duplicate report',
         }));
         return null;
+      }
+    },
+    []
+  );
+
+  // ==========================================
+  // EXPORT & SHARE METHODS
+  // ==========================================
+
+  const exportPdf = useCallback(async (reportId: string): Promise<void> => {
+    try {
+      setState((prev) => ({ ...prev, isLoading: true, error: null }));
+
+      // Trigger download via browser
+      const url = `/api/report-builder/${reportId}/export/pdf`;
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'report.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setState((prev) => ({ ...prev, isLoading: false }));
+    } catch (err: any) {
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: err?.error || err.message || 'Failed to export PDF',
+      }));
+    }
+  }, []);
+
+  const getExports = useCallback(
+    async (
+      reportId: string
+    ): Promise<Array<{
+      id: string;
+      format: string;
+      exportedAt: string;
+      downloadCount: number;
+    }> | null> => {
+      try {
+        const response = await Api.get(`/report-builder/${reportId}/exports`);
+        return response?.exports || [];
+      } catch (err: any) {
+        setState((prev) => ({
+          ...prev,
+          error: err?.error || err.message || 'Failed to fetch exports',
+        }));
+        return null;
+      }
+    },
+    []
+  );
+
+  const createShareLink = useCallback(
+    async (
+      reportId: string,
+      options?: {
+        password?: string;
+        expiresInDays?: number;
+        showCompanyLogo?: boolean;
+        showConsultinityBranding?: boolean;
+        customMessage?: string;
+      }
+    ): Promise<{
+      id: string;
+      token: string;
+      url: string;
+      hasPassword: boolean;
+      expiresAt?: string;
+    } | null> => {
+      try {
+        setState((prev) => ({ ...prev, isLoading: true, error: null }));
+
+        const response = await Api.post(`/report-builder/${reportId}/share`, options || {});
+
+        setState((prev) => ({ ...prev, isLoading: false }));
+
+        return response?.link || null;
+      } catch (err: any) {
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: err?.error || err.message || 'Failed to create share link',
+        }));
+        return null;
+      }
+    },
+    []
+  );
+
+  const getShareLinks = useCallback(
+    async (
+      reportId: string
+    ): Promise<Array<{
+      id: string;
+      token: string;
+      url: string;
+      hasPassword: boolean;
+      expiresAt?: string;
+      viewCount: number;
+      createdAt: string;
+    }> | null> => {
+      try {
+        const response = await Api.get(`/report-builder/${reportId}/share`);
+        return response?.links || [];
+      } catch (err: any) {
+        setState((prev) => ({
+          ...prev,
+          error: err?.error || err.message || 'Failed to fetch share links',
+        }));
+        return null;
+      }
+    },
+    []
+  );
+
+  const revokeShareLink = useCallback(
+    async (reportId: string, linkId: string): Promise<boolean> => {
+      try {
+        setState((prev) => ({ ...prev, isLoading: true, error: null }));
+
+        await Api.delete(`/report-builder/${reportId}/share/${linkId}`);
+
+        setState((prev) => ({ ...prev, isLoading: false }));
+
+        return true;
+      } catch (err: any) {
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: err?.error || err.message || 'Failed to revoke share link',
+        }));
+        return false;
       }
     },
     []
@@ -592,7 +764,15 @@ export function useReportBuilder() {
     updateSectionContent,
     finalizeReport,
     approveReport,
+    sendBackReport,
     duplicateReport,
+
+    // Export & Share
+    exportPdf,
+    getExports,
+    createShareLink,
+    getShareLinks,
+    revokeShareLink,
 
     // Local Updates
     updateLocalSection,

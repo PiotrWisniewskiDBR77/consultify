@@ -104,23 +104,25 @@ class FeedbackLearningServiceClass {
       await this.learnFromPatterns();
     }
 
-    // Send to backend for storage
+    // Send to backend for storage (v2.0 Adaptive System)
     try {
-      await Api.submitAIFeedback({
+      await Api.aiFeedback({
         messageId: feedback.messageId,
         conversationId: feedback.conversationId,
-        helpful: feedback.rating === 'positive',
+        rating: feedback.rating,
         lengthFeedback: feedback.lengthFeedback,
         detailFeedback: feedback.detailFeedback,
-        styleFeedback: feedback.styleFeedback,
         customFeedback: feedback.customFeedback,
-        // New adaptive style fields
+        wantedMode: feedback.wantedMode,
+        // Advanced v2.0 fields
         actionability: feedback.actionability,
         accuracy: feedback.accuracy,
         expectedFormat: feedback.expectedFormat,
         missingInfo: feedback.missingInfo,
         screenContext: feedback.screenContext,
         focusMode: feedback.focusMode,
+        responseMode: feedback.focusMode,
+        capability: feedback.workspaceContext || 'chat',
       });
     } catch (err: any) {
       console.error('[FeedbackLearning] Failed to submit to backend:', err);

@@ -40,8 +40,9 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
         if (!mounted) return;
         setError(String(e?.message || 'Failed to load tool session'));
       } finally {
-        if (!mounted) return;
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     })();
     return () => {
@@ -70,8 +71,9 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
         if (!mounted) return;
         setCatalogMarkdown(null);
       } finally {
-        if (!mounted) return;
-        setIsCatalogLoading(false);
+        if (mounted) {
+          setIsCatalogLoading(false);
+        }
       }
     })();
     return () => {

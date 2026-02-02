@@ -1,7 +1,7 @@
 /**
  * ReportGenerationService - Unit Tests (L1)
  * Tests for report generation functionality
- * 
+ *
  * Coverage target: 95%+
  */
 
@@ -14,7 +14,7 @@ const mockDb = {
   run: vi.fn(),
 };
 
-vi.mock('../../../../server/src/database/Database.js', () => ({
+vi.mock('../../../server/src/database/Database.js', () => ({
   getDatabase: vi.fn().mockResolvedValue(mockDb),
 }));
 
@@ -24,7 +24,7 @@ vi.mock('uuid', () => ({
 }));
 
 // Mock logger
-vi.mock('../../../../server/src/utils/Logger.js', () => ({
+vi.mock('../../../server/src/utils/Logger.js', () => ({
   default: {
     info: vi.fn(),
     error: vi.fn(),
@@ -33,7 +33,7 @@ vi.mock('../../../../server/src/utils/Logger.js', () => ({
 }));
 
 // ReportGenerationService exports individual functions
-import { generateReport } from '../../../../server/src/services/reportGenerationService';
+import { generateReport } from '../../../server/src/services/reportGenerationService';
 
 describe('ReportGenerationService', () => {
   beforeEach(() => {

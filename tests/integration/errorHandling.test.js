@@ -81,11 +81,11 @@ describe('Error Handling & Resilience', () => {
     // 2. Reset modules
     vi.resetModules();
 
-    // 3. Import app/db
-    const dbModule = await import('../../server/database.js');
+    // 3. Import app/db - use correct relative path
+    const dbModule = await import('../../../server/database.js');
     db = dbModule.default;
 
-    const appModule = await import('../../server/src/index.ts');
+    const appModule = await import('../../../server/src/index.ts');
     app = appModule.default || appModule;
 
     await db.initPromise;

@@ -347,6 +347,21 @@ Create professional, insightful content appropriate for this section.`,
   }
 }
 
+function interpolateTemplate(template: string, vars: Record<string, unknown>): string {
+  const safe = (v: unknown) => {
+    if (v === null || v === undefined) return '';
+    if (typeof v === 'string') return v;
+    try {
+      return JSON.stringify(v, null, 2);
+    } catch {
+      return String(v);
+    }
+  };
+  return template.replace(/\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/g, (_m, key) =>
+    safe((vars as any)[key])
+  );
+}
+
 // ==========================================
 // MOCK AI GENERATION (replace with real AI)
 // ==========================================
@@ -760,6 +775,36 @@ export async function generateSectionContent(
   // Get prompts for this section type
   const prompts = getSectionPrompt(section.sectionType as SectionType, context);
 
+  // If this is a user-defined block type (custom section with block_type_id),
+  // prefer the block type prompt template over the generic "custom" prompt.
+  if ((section as any).blockTypeId) {
+    const bt = await queryOne<any>(
+      `
+      SELECT * FROM report_builder_block_types
+      WHERE id = ? AND is_active = 1 AND (organization_id IS NULL OR organization_id = ?)
+      LIMIT 1
+    `,
+      [(section as any).blockTypeId, organizationId]
+    );
+
+    const promptTemplate: string | null | undefined = bt?.prompt_template || null;
+    if (promptTemplate) {
+      const vars = {
+        report: context.report,
+        section: context.section,
+        companyContext: context.companyContext,
+        assessment: context.sourceData.assessment,
+        axisData: context.sourceData.axisData,
+        blockConfig: (section as any).blockConfig || null,
+        facts: {
+          company: context.companyContext,
+          assessment: context.sourceData.assessment,
+        },
+      };
+      prompts.user = interpolateTemplate(promptTemplate, vars);
+    }
+  }
+
   // Calculate max tokens based on length setting
   const maxTokens =
     {
@@ -767,6 +812,58 @@ export async function generateSectionContent(
       medium: 1200,
       long: 2500,
     }[section.length] || 1200;
+
+  // Special-case: matrix sections are deterministic visualizations derived from scores.
+  if (section.sectionType === 'matrix') {
+    const scores: any = (context.sourceData as any)?.assessment?.scores || {};
+    const axes: any[] = Array.isArray(scores?.axes) ? scores.axes : [];
+    const scaleMax =
+      axes.length > 0
+        ? Math.max(
+            1,
+            ...axes.map((a) => Number(a?.maxScore || a?.fullMark || a?.scaleMax || 7) || 7),
+            7
+          )
+        : 7;
+
+    const matrixData = {
+      type: 'assessment_matrix',
+      scaleMax,
+      axes: axes.map((a) => ({
+        axisId: String(a?.axisId || a?.id || ''),
+        axisName: String(a?.axisName || a?.name || ''),
+        score: Number(a?.score || 0),
+        maxScore: Number(a?.maxScore || scaleMax),
+        gap: a?.gap !== undefined ? Number(a.gap) : undefined,
+      })),
+    };
+
+    const now = new Date().toISOString();
+    const content = JSON.stringify(matrixData);
+
+    await queryRun(
+      `
+      UPDATE report_builder_sections
+      SET generated_content = ?, generated_at = ?, tokens_used = ?, generation_model = ?,
+          source_data_snapshot = ?, content_format = ?, render_kind = ?, updated_at = ?
+      WHERE report_id = ? AND section_key = ?
+    `,
+      [
+        content,
+        now,
+        0,
+        'deterministic-matrix-v1',
+        JSON.stringify({ ...context.sourceData, matrixData }),
+        'json',
+        'matrix',
+        now,
+        reportId,
+        sectionKey,
+      ]
+    );
+
+    return { content, tokensUsed: 0 };
+  }
 
   // Call AI
   const result = await callAI(prompts.system, prompts.user, maxTokens);

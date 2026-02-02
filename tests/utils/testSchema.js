@@ -32,7 +32,16 @@ export const TEST_SCHEMA = [
         trial_warning_sent_at DATETIME,
         trial_tokens_used INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        valid_until DATETIME
+        valid_until DATETIME,
+        monthly_budget_usd REAL,
+        budget_alert_threshold REAL,
+        budget_period_start DATETIME,
+        budget_spent_current_period REAL DEFAULT 0,
+        memory_usage_mb_current REAL DEFAULT 0,
+        cpu_usage_percent_current REAL DEFAULT 0,
+        cpu_usage_percent_avg REAL DEFAULT 0,
+        concurrent_ai_jobs_current INTEGER DEFAULT 0,
+        concurrent_ai_jobs_count INTEGER DEFAULT 0
     )`,
   `CREATE TABLE IF NOT EXISTS project_memory (
         id TEXT PRIMARY KEY,
@@ -664,6 +673,9 @@ export const TEST_SCHEMA = [
         max_seats INTEGER DEFAULT 0,
         features TEXT DEFAULT '[]',
         is_active INTEGER DEFAULT 1,
+        memory_limit_mb REAL DEFAULT 0,
+        cpu_quota_percent REAL DEFAULT 100,
+        max_concurrent_ai_jobs INTEGER DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
   `CREATE TABLE IF NOT EXISTS organization_seats (
@@ -1858,4 +1870,24 @@ export const TEST_SCHEMA = [
     VALUES ('demo-user', 'demo-org', 'piotr.wisniewski@demo.com', '123456', 'Demo', 'User', 'user', 'active')`,
   `INSERT OR IGNORE INTO users (id, organization_id, email, password, first_name, last_name, role, status)
     VALUES ('e2e-user', 'demo-org', 'e2e-test@consultinity.dev', '$2b$10$xKTb1.5vZT.2ThRs/iRCLuHni43AUHaG7Hf9STKRQCudtsY1ZXxTe', 'E2E', 'User', 'user', 'active')`,
+  `CREATE TABLE IF NOT EXISTS budget_expenses (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        amount REAL NOT NULL,
+        category TEXT NOT NULL CHECK (category IN ('TOKENS', 'STORAGE', 'COMPUTE', 'API', 'OTHER')),
+        description TEXT,
+        metadata TEXT DEFAULT '{}',
+        recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS user_quotas (
+        user_id TEXT PRIMARY KEY,
+        storage_quota_mb INTEGER,
+        api_rate_limit_per_hour INTEGER,
+        ai_requests_per_day INTEGER,
+        max_concurrent_jobs INTEGER,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`,
 ];

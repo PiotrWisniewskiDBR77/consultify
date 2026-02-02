@@ -279,6 +279,27 @@ export function AssessmentManagePanel(props: { assessmentId: string; assessmentN
             await Api.post(`/assessment-workflow-v2/${assessmentId}/request-review`, {
               comment,
             });
+          } else if (gateType === 'APPROVE_REPORT') {
+            // Request report approval - generates report first if needed
+            await Api.post(`/assessment-workflow-v2/${assessmentId}/report`, {
+              format: 'pdf',
+            });
+          } else if (gateType === 'APPROVE_ASSESSMENT') {
+            // This would typically be triggered after report is approved
+            // For now, just update the gate decision status
+            await Api.put(`/assessment-workflow-v2/${assessmentId}/gate-decisions/${gateType}`, {
+              status: 'PENDING',
+            });
+          } else if (gateType === 'GENERATE_REPORT') {
+            // Generate analytical report
+            await Api.post(`/assessment-workflow-v2/${assessmentId}/report`, {
+              format: 'pdf',
+              type: 'analytical',
+            });
+            // Mark gate as approved after generation
+            await Api.put(`/assessment-workflow-v2/${assessmentId}/gate-decisions/${gateType}`, {
+              status: 'APPROVED',
+            });
           } else if (gateType === 'GENERATE_INITIATIVES') {
             await Api.post(`/assessment-workflow-v2/${assessmentId}/generate-initiatives`, {
               methodologyId: 'impact-feasibility',
@@ -288,14 +309,39 @@ export function AssessmentManagePanel(props: { assessmentId: string; assessmentN
           }
         } else if (action === 'approve') {
           if (gateType === 'APPROVE_ASSESSMENT') {
-            await Api.post(`/assessment-workflow-v2/${assessmentId}/approve`, {});
+            await Api.post(`/assessment-workflow-v2/${assessmentId}/approve`, { comment });
           } else if (gateType === 'APPROVE_REPORT') {
-            // Report approval would need separate endpoint
-            await Api.post(`/assessment-workflow-v2/${assessmentId}/approve-report`, {});
+            // Correct endpoint path: /report/approve
+            await Api.post(`/assessment-workflow-v2/${assessmentId}/report/approve`, { comment });
+          } else if (gateType === 'REQUEST_REVIEW') {
+            // Approving review request moves to IN_REVIEW
+            await Api.put(`/assessment-workflow-v2/${assessmentId}/gate-decisions/${gateType}`, {
+              status: 'APPROVED',
+            });
+          } else if (gateType === 'GENERATE_REPORT') {
+            // Mark report generation as complete
+            await Api.put(`/assessment-workflow-v2/${assessmentId}/gate-decisions/${gateType}`, {
+              status: 'APPROVED',
+            });
+          } else if (gateType === 'GENERATE_INITIATIVES') {
+            // Mark initiatives generation as complete
+            await Api.put(`/assessment-workflow-v2/${assessmentId}/gate-decisions/${gateType}`, {
+              status: 'APPROVED',
+            });
           }
         } else if (action === 'reject') {
-          await Api.post(`/assessment-workflow-v2/${assessmentId}/send-back`, {
-            comment: comment || 'Rejected',
+          if (
+            gateType === 'REQUEST_REVIEW' ||
+            gateType === 'APPROVE_REPORT' ||
+            gateType === 'APPROVE_ASSESSMENT'
+          ) {
+            await Api.post(`/assessment-workflow-v2/${assessmentId}/send-back`, {
+              comment: comment || 'Rejected',
+            });
+          }
+          // Also update gate decision status
+          await Api.put(`/assessment-workflow-v2/${assessmentId}/gate-decisions/${gateType}`, {
+            status: 'REJECTED',
           });
         }
         toast.success(`Gate action completed: ${action}`);
@@ -327,16 +373,45 @@ export function AssessmentManagePanel(props: { assessmentId: string; assessmentN
     [assessmentId]
   );
 
-  // Team management handlers
-  const handleSearchUsers = useCallback(async (query: string) => {
-    if (!query || query.length < 2) return [];
-    try {
-      const resp = await Api.get(`/users/search?q=${encodeURIComponent(query)}&limit=10`);
-      return (resp as any)?.users || [];
-    } catch {
-      return [];
-    }
-  }, []);
+  // Get organizationId from roles or workflow
+  const organizationId = useMemo(() => {
+    return roles[0]?.organizationId || workflow?.organizationId || null;
+  }, [roles, workflow]);
+
+  // Team management handlers - search only within organization members
+  const handleSearchUsers = useCallback(
+    async (query: string) => {
+      if (!query || query.length < 2) return [];
+      if (!organizationId) return [];
+      try {
+        // Fetch organization members and filter by query
+        const members = await Api.get(`/organizations/${organizationId}/members`);
+        const membersList = Array.isArray(members) ? members : [];
+
+        const queryLower = query.toLowerCase();
+        const filtered = membersList
+          .filter((m: any) => {
+            // Fields from getMembers: user_id, first_name, last_name, email
+            const firstName = (m.first_name || '').toLowerCase();
+            const lastName = (m.last_name || '').toLowerCase();
+            const fullName = `${firstName} ${lastName}`.trim();
+            const email = (m.email || '').toLowerCase();
+            return fullName.includes(queryLower) || email.includes(queryLower);
+          })
+          .slice(0, 10)
+          .map((m: any) => ({
+            id: m.user_id,
+            email: m.email,
+            name: [m.first_name, m.last_name].filter(Boolean).join(' ') || m.email,
+          }));
+
+        return filtered;
+      } catch {
+        return [];
+      }
+    },
+    [organizationId]
+  );
 
   const handleAddMember = useCallback(
     async (userId: string, role: string) => {

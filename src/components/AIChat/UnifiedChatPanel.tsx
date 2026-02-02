@@ -40,7 +40,7 @@ import remarkGfm from 'remark-gfm';
 import { useAIStream } from '../../hooks/useAIStream';
 import { useDemoSession } from '../../hooks/useDemoSession';
 import { useUniversalVoice } from '../../hooks/useUniversalVoice';
-import { submitAIFeedback } from '../../services/api-extensions';
+import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { useArtifactsStore } from '../../store/useArtifactsStore';
 import { ConversationMessage, useConversationStore } from '../../store/useConversationStore';
@@ -109,6 +109,15 @@ interface UnifiedChatPanelProps {
 
   /** Optional role name override */
   roleName?: string;
+
+  /** Callback when user selects an interactive option */
+  onOptionSelect?: (option: { id: string; label: string; value: string }) => void;
+
+  /** Callback when user selects multiple interactive options */
+  onMultiSelectSubmit?: (values: string[]) => void;
+
+  /** Optional messages override for ephemeral/specialized views */
+  customMessages?: ChatMessage[];
 }
 
 // ============================================================================
@@ -131,6 +140,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   onNavigateToActions,
   systemPrompt,
   roleName,
+  onOptionSelect,
+  onMultiSelectSubmit,
+  customMessages,
 }) => {
   const { t } = useTranslation();
 
@@ -164,7 +176,15 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const { addArtifact, togglePanel: toggleArtifactsPanel } = useArtifactsStore();
 
-  // Voice Hook
+  // ========================================================================
+  // Local state (must be declared before hooks that depend on them)
+  // ========================================================================
+
+  const [focusMode, setFocusMode] = useState<FocusMode>('all');
+  const [voiceModeEnabled, setVoiceModeEnabled] = useState(false);
+  const [autoReadEnabled, setAutoReadEnabled] = useState(false);
+
+  // Voice Hook (uses autoReadEnabled state)
   const {
     speak,
     stopSpeaking,
@@ -173,13 +193,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     stopListening,
     settings: voiceSettings,
     updateSettings: updateVoiceSettings,
+    isSupported: ttsSupported,
   } = useUniversalVoice({
     onSendMessage: (msg) => handleSendMessage(msg),
     settings: {
       autoSpeakResponses: autoReadEnabled,
       sttProvider: 'whisper',
       ttsProvider: 'openai',
-      language: t.language || 'pl',
+      language: 'pl',
     },
   });
 
@@ -190,17 +211,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     aiInteractionsLimit,
     consumeAIInteraction,
   } = useDemoSession();
-
-  // ========================================================================
-  // Local state
-  // ========================================================================
-
-  const [focusMode, setFocusMode] = useState<FocusMode>('all');
-  const [voiceModeEnabled, setVoiceModeEnabled] = useState(false);
-  const [autoReadEnabled, setAutoReadEnabled] = useState(false);
   const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
+  const [selectedMultiOptions, setSelectedMultiOptions] = useState<string[]>([]);
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -280,15 +294,19 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       thinkingSteps: msg.metadata?.thinkingSteps as any,
       artifacts: msg.metadata?.artifacts,
       citations: msg.metadata?.citations,
+      options: msg.metadata?.options,
+      multiSelect: msg.metadata?.multiSelect,
       isStreaming: false,
     })) as ChatMessage[];
   }, [activeMessages]);
 
-  // Add streaming message if actively streaming
+  // Combined messages to display
   const displayMessages = useMemo(() => {
+    const baseMessages = customMessages || messages;
+
     if (isStreaming && streamedContent) {
       return [
-        ...messages,
+        ...baseMessages,
         {
           id: 'stream',
           role: 'ai' as const,
@@ -299,8 +317,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         },
       ];
     }
-    return messages;
-  }, [messages, isStreaming, streamedContent, thinkingSteps]);
+
+    return baseMessages;
+  }, [messages, customMessages, isStreaming, streamedContent, thinkingSteps]);
 
   // ========================================================================
   // Scroll to bottom on new messages
@@ -487,26 +506,22 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         const messageIndex = displayMessages.findIndex((m) => m.id === messageId);
         const userMessage = messageIndex > 0 ? displayMessages[messageIndex - 1]?.content : '';
 
-        // Convert ResponseFeedback to API format
-        const apiPayload = {
-          context: workspaceContext?.type || 'general',
-          prompt: userMessage,
-          response: messageContent,
-          helpful: feedback.rating === 'positive',
-          comment:
-            [
-              feedback.lengthFeedback ? `Length: ${feedback.lengthFeedback}` : '',
-              feedback.detailFeedback ? `Detail: ${feedback.detailFeedback}` : '',
-              feedback.wantedMode ? `Wanted: ${feedback.wantedMode}` : '',
-              feedback.customFeedback || '',
-            ]
-              .filter(Boolean)
-              .join('; ') || undefined,
-        };
+        // Send detailed feedback to v2.0 adaptive system
+        await Api.aiFeedback({
+          messageId,
+          conversationId: activeConversationId || undefined,
+          rating: feedback.rating,
+          lengthFeedback: feedback.lengthFeedback,
+          detailFeedback: feedback.detailFeedback,
+          wantedMode: feedback.wantedMode,
+          customFeedback: feedback.customFeedback,
+          screenContext: workspaceContext?.type,
+          focusMode: focusMode,
+          responseMode: focusMode, // Map focusMode to responseMode for learning
+          capability: workspaceContext?.type || 'chat',
+        });
 
-        await submitAIFeedback(apiPayload);
-
-        console.log('[UnifiedChatPanel] Feedback submitted:', {
+        console.log('[UnifiedChatPanel] Detailed feedback submitted via Api.aiFeedback:', {
           messageId,
           conversationId: activeConversationId,
           rating: feedback.rating,
@@ -517,11 +532,32 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           ),
         });
       } catch (err) {
-        console.error('[UnifiedChatPanel] Failed to submit feedback:', err);
+        console.error('[UnifiedChatPanel] Failed to submit specific feedback:', err);
       }
     },
     [displayMessages, workspaceContext, activeConversationId]
   );
+
+  const handleMultiSelectToggle = (value: string) => {
+    setSelectedMultiOptions((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
+  };
+
+  const handleMultiSelectConfirm = () => {
+    if (selectedMultiOptions.length > 0) {
+      if (onMultiSelectSubmit) {
+        onMultiSelectSubmit(selectedMultiOptions);
+      } else if (onOptionSelect) {
+        onOptionSelect({
+          id: 'multi-confirm',
+          label: t('chat.confirmSelection', 'Confirm Selection'),
+          value: selectedMultiOptions.join(', '),
+        });
+      }
+      setSelectedMultiOptions([]);
+    }
+  };
 
   // ========================================================================
   // Render helpers
@@ -727,6 +763,53 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               onFeedback={(feedback) => handleFeedback(msg.id, msg.content, feedback)}
               compact={isCompact}
             />
+          </div>
+        )}
+
+        {/* Interactive Options */}
+        {msg.role === 'ai' && !msg.isStreaming && msg.options && msg.options.length > 0 && (
+          <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-3 flex flex-wrap gap-2`}>
+            {msg.multiSelect ? (
+              <div className="flex flex-col gap-3 w-full">
+                <div className="flex flex-wrap gap-2">
+                  {msg.options.map((option) => {
+                    const isSelected = selectedMultiOptions.includes(option.value);
+                    return (
+                      <button
+                        key={option.id}
+                        onClick={() => handleMultiSelectToggle(option.value)}
+                        className={`px-3 py-1.5 text-xs rounded-full border transition-all flex items-center gap-1.5 ${
+                          isSelected
+                            ? 'bg-primary-100 dark:bg-primary-900/30 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300'
+                            : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                        }`}
+                      >
+                        {option.label}
+                        {isSelected && <Check size={12} />}
+                      </button>
+                    );
+                  })}
+                </div>
+                {isLastMessage && selectedMultiOptions.length > 0 && (
+                  <button
+                    onClick={handleMultiSelectConfirm}
+                    className="self-start px-4 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
+                  >
+                    {t('chat.confirmSelection', 'Confirm Selection')}
+                  </button>
+                )}
+              </div>
+            ) : (
+              msg.options.map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => onOptionSelect?.(option)}
+                  className="px-3 py-1.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 text-xs rounded-full hover:bg-primary-50 dark:hover:bg-primary-900/10 hover:border-primary-300 dark:hover:border-primary-700 hover:text-primary-700 dark:hover:text-primary-300 transition-all"
+                >
+                  {option.label}
+                </button>
+              ))
+            )}
           </div>
         )}
       </div>

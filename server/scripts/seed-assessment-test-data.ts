@@ -306,10 +306,48 @@ async function main() {
 
   const db = await createDatabase();
 
-  // Determine org from existing users (matches MyWork seeder behavior)
-  const userQuery = await db.query(`SELECT id, organization_id FROM users LIMIT 1`, []);
-  const userId = userQuery?.rows?.[0]?.id || 'system';
-  const orgId = userQuery?.rows?.[0]?.organization_id || DEFAULT_ORG_ID;
+  const targetOrgFromEnv =
+    (process.env.TARGET_ORG_ID ||
+      process.env.ORG_ID ||
+      process.env.ORGANIZATION_ID ||
+      process.env.ORG) ??
+    '';
+
+  // Determine org: prefer env override, otherwise pick the org with the most existing assessments,
+  // otherwise fall back to DEFAULT_ORG_ID.
+  let orgId = targetOrgFromEnv.trim() || '';
+  if (!orgId) {
+    try {
+      const orgCounts = await db.query(
+        `SELECT organization_id as orgId, COUNT(*) as count
+         FROM assessments
+         GROUP BY organization_id
+         ORDER BY count DESC`,
+        []
+      );
+      orgId = orgCounts?.rows?.[0]?.orgId || '';
+    } catch {
+      // ignore
+    }
+  }
+  if (!orgId) orgId = DEFAULT_ORG_ID;
+
+  // Choose a user from that org (fallback to any user / system)
+  let userId = 'system';
+  try {
+    const u = await db.query(`SELECT id FROM users WHERE organization_id = ? LIMIT 1`, [orgId]);
+    userId = u?.rows?.[0]?.id || userId;
+  } catch {
+    // ignore
+  }
+  if (userId === 'system') {
+    try {
+      const anyU = await db.query(`SELECT id FROM users LIMIT 1`, []);
+      userId = anyU?.rows?.[0]?.id || userId;
+    } catch {
+      // ignore
+    }
+  }
 
   log.info(`Seeding ${seed.length} DRD assessments into org ${orgId}`);
 

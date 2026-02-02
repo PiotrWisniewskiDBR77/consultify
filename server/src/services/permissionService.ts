@@ -384,11 +384,16 @@ export async function hasPermission(
     if (rolePermission) return true;
 
     // If the role has no permissions seeded at all, use narrow fallback mapping.
-    const hasAnyRolePerm = await DbPromise.get<{ '1'?: number }>(
-      db,
-      `SELECT 1 FROM role_permissions WHERE role = ? LIMIT 1`,
-      [userRole]
-    ).catch(() => null);
+    let hasAnyRolePerm: { '1'?: number } | null = null;
+    try {
+      hasAnyRolePerm = await DbPromise.get<{ '1'?: number }>(
+        db,
+        `SELECT 1 FROM role_permissions WHERE role = ? LIMIT 1`,
+        [userRole]
+      );
+    } catch {
+      hasAnyRolePerm = null;
+    }
     if (!hasAnyRolePerm) {
       return allowFallbackInterview(permissionKey);
     }

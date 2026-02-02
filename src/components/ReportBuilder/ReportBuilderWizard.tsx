@@ -11,7 +11,6 @@ import {
   Check,
   CheckCircle2,
   ClipboardCheck,
-  FileText,
   Loader2,
   Settings2,
   Sparkles,
@@ -21,10 +20,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { Api } from '../../services/api';
 import ConfigureStructureStep from './steps/ConfigureStructureStep';
 import GenerateStep from './steps/GenerateStep';
+import { IntentStep, type ReportIntent } from './steps/IntentStep';
 import ReviewEditStep from './steps/ReviewEditStep';
-import SourceSelectStep from './steps/SourceSelectStep';
 import useReportBuilder from './useReportBuilder';
 
 // ==========================================
@@ -43,35 +43,27 @@ interface WizardStep {
 const STEPS: WizardStep[] = [
   {
     id: 0,
-    title: 'Select Source',
-    titlePl: 'Wybierz Źródło',
-    description: 'Choose the assessment or data source for your report',
-    descriptionPl: 'Wybierz ocenę lub źródło danych do raportu',
+    title: 'Define Intent',
+    titlePl: 'Ustal Parametry',
+    description: 'Set the report intent and required parameters before writing',
+    descriptionPl: 'Ustal intencję raportu i wymagane parametry przed generowaniem',
     icon: ClipboardCheck,
   },
   {
     id: 1,
-    title: 'Configure Structure',
-    titlePl: 'Skonfiguruj Strukturę',
-    description: 'Customize report sections and generation options',
-    descriptionPl: 'Dostosuj sekcje raportu i opcje generowania',
+    title: 'Outline',
+    titlePl: 'Układ / Bloki',
+    description: 'Edit blocks, order, and section options',
+    descriptionPl: 'Edytuj bloki, kolejność i ustawienia sekcji',
     icon: Settings2,
   },
   {
     id: 2,
-    title: 'Generate Report',
-    titlePl: 'Generuj Raport',
-    description: 'AI will generate content for each section',
-    descriptionPl: 'AI wygeneruje treść dla każdej sekcji',
+    title: 'Generate & Edit',
+    titlePl: 'Generuj i Edytuj',
+    description: 'Generate content, review, and submit for verification',
+    descriptionPl: 'Wygeneruj treść, przejrzyj i wyślij do weryfikacji',
     icon: Sparkles,
-  },
-  {
-    id: 3,
-    title: 'Review & Edit',
-    titlePl: 'Przegląd i Edycja',
-    description: 'Review, edit, and finalize your report',
-    descriptionPl: 'Przejrzyj, edytuj i zatwierdź raport',
-    icon: FileText,
   },
 ];
 
@@ -130,13 +122,36 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
     generateSection,
     updateSectionContent,
     finalizeReport,
+    approveReport,
+    sendBackReport,
     updateLocalSection,
     reorderSections,
+    exportPdf,
+    createShareLink,
+    getShareLinks,
+    revokeShareLink,
   } = useReportBuilder();
 
   const [reportTitle, setReportTitle] = useState('');
   const [reportDescription, setReportDescription] = useState('');
   const [initialSourceLoaded, setInitialSourceLoaded] = useState(false);
+  const [intent, setIntent] = useState<ReportIntent>({
+    audience: 'executive',
+    goal: 'diagnosis',
+    language: i18n.language?.startsWith('pl') ? 'pl' : 'en',
+    tone: 'consulting',
+    scope: 'full',
+    focusedAxes: [],
+    visuals: { assessmentMatrix: true },
+  });
+
+  // If we loaded an existing report with config.intent, hydrate local intent
+  useEffect(() => {
+    const cfg: any = report?.config;
+    if (cfg?.intent && typeof cfg.intent === 'object') {
+      setIntent((prev) => ({ ...prev, ...(cfg.intent as any) }));
+    }
+  }, [report?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Initialize from URL params (when coming from Assessment)
   useEffect(() => {
@@ -176,16 +191,39 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
   // HANDLERS
   // ==========================================
 
-  const handleSourceSelect = useCallback(async () => {
+  const handleIntentComplete = useCallback(async () => {
     if (!sourceType || !selectedSource) return;
 
     const title = reportTitle || `${selectedSource.name} Report`;
-    const result = await createReport(sourceType, selectedSource.id, title, reportDescription);
-
-    if (result) {
+    const config = {
+      invocationProfileId: intent.profileId || 'default',
+      intent,
+    };
+    // If we already have a report (e.g. returning to CONFIGURING), update intent instead of creating a new one.
+    if (report?.id) {
+      await Api.put(`/report-builder/${report.id}/intent`, { config });
       nextStep();
+      return;
     }
-  }, [sourceType, selectedSource, reportTitle, reportDescription, createReport, nextStep]);
+
+    const result = await createReport(
+      sourceType,
+      selectedSource.id,
+      title,
+      reportDescription,
+      config
+    );
+    if (result) nextStep();
+  }, [
+    sourceType,
+    selectedSource,
+    reportTitle,
+    reportDescription,
+    intent,
+    report?.id,
+    createReport,
+    nextStep,
+  ]);
 
   const handleConfigComplete = useCallback(async () => {
     if (!report) return;
@@ -202,11 +240,8 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
   const handleGenerate = useCallback(async () => {
     if (!report) return;
 
-    const success = await generateReport(report.id, false);
-    if (success) {
-      nextStep();
-    }
-  }, [report, generateReport, nextStep]);
+    await generateReport(report.id, false);
+  }, [report, generateReport]);
 
   const handleFinalize = useCallback(async () => {
     if (!report) return;
@@ -216,6 +251,17 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
       onComplete(report.id);
     }
   }, [report, finalizeReport, onComplete]);
+
+  const handleApprove = useCallback(async () => {
+    if (!report) return;
+    const success = await approveReport(report.id);
+    if (success && onComplete) onComplete(report.id);
+  }, [report, approveReport, onComplete]);
+
+  const handleSendBack = useCallback(async () => {
+    if (!report) return;
+    await sendBackReport(report.id);
+  }, [report, sendBackReport]);
 
   const handleCancel = useCallback(() => {
     reset();
@@ -284,15 +330,17 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
     switch (currentStep) {
       case 0:
         return (
-          <SourceSelectStep
+          <IntentStep
             sourceType={sourceType}
             selectedSource={selectedSource}
             reportTitle={reportTitle}
             reportDescription={reportDescription}
+            intent={intent}
             onSourceTypeChange={setSourceType}
             onSourceSelect={setSelectedSource}
             onTitleChange={setReportTitle}
             onDescriptionChange={setReportDescription}
+            onIntentChange={(patch) => setIntent((prev) => ({ ...prev, ...patch }))}
             fetchSources={fetchSources}
             isLoading={isLoading}
           />
@@ -305,7 +353,16 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
             sections={sections}
             onUpdateSection={updateLocalSection}
             onReorderSections={reorderSections}
-            onAddSection={async (title) => (report ? addCustomSection(report.id, title) : null)}
+            onAddSection={async (args) =>
+              report
+                ? addCustomSection(report.id, args.title, undefined, {
+                    length: args.length,
+                    language: args.language,
+                    blockTypeId: args.blockTypeId,
+                    renderKind: args.renderKind,
+                  })
+                : null
+            }
             onRemoveSection={async (key) => (report ? removeSection(report.id, key) : false)}
             onSaveConfig={async (updates) => {
               if (!report) return;
@@ -316,22 +373,10 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
         );
 
       case 2:
-        return (
-          <GenerateStep
-            report={report}
-            sections={sections}
-            isGenerating={isGenerating}
-            progress={generationProgress}
-            onGenerate={handleGenerate}
-            onRegenerateSection={async (key, prompt) => {
-              if (!report) return;
-              await generateSection(report.id, key, prompt);
-            }}
-          />
-        );
-
-      case 3:
-        return (
+        return report?.status === 'GENERATED' ||
+          report?.status === 'IN_REVIEW' ||
+          report?.status === 'APPROVED' ||
+          report?.status === 'UTILIZED' ? (
           <ReviewEditStep
             report={report}
             sections={sections}
@@ -344,7 +389,37 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
               await generateSection(report.id, key, prompt);
             }}
             onFinalize={handleFinalize}
+            onApprove={handleApprove}
+            onSendBack={handleSendBack}
+            onExportPdf={async () => {
+              if (!report) return;
+              await exportPdf(report.id);
+            }}
+            onCreateShareLink={async (options) => {
+              if (!report) return null;
+              return createShareLink(report.id, options);
+            }}
+            onGetShareLinks={async () => {
+              if (!report) return null;
+              return getShareLinks(report.id);
+            }}
+            onRevokeShareLink={async (linkId) => {
+              if (!report) return false;
+              return revokeShareLink(report.id, linkId);
+            }}
             isLoading={isLoading}
+          />
+        ) : (
+          <GenerateStep
+            report={report}
+            sections={sections}
+            isGenerating={isGenerating}
+            progress={generationProgress}
+            onGenerate={handleGenerate}
+            onRegenerateSection={async (key, prompt) => {
+              if (!report) return;
+              await generateSection(report.id, key, prompt);
+            }}
           />
         );
 
@@ -362,9 +437,8 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
         case 1:
           return sections.filter((s) => s.enabled).length > 0;
         case 2:
-          return report?.status === 'GENERATED';
-        case 3:
-          return true;
+          // Either ready to generate (enabled sections exist) or ready to submit for review
+          return sections.filter((s) => s.enabled).length > 0;
         default:
           return false;
       }
@@ -373,13 +447,17 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
     const nextLabel = (() => {
       switch (currentStep) {
         case 0:
-          return isPl ? 'Utwórz Raport' : 'Create Report';
+          return isPl ? 'Zapisz parametry' : 'Save intent';
         case 1:
-          return isPl ? 'Generuj' : 'Generate';
+          return isPl ? 'Przejdź do generowania' : 'Proceed to generation';
         case 2:
-          return isPl ? 'Przejdź do Edycji' : 'Go to Edit';
-        case 3:
-          return isPl ? 'Finalizuj Raport' : 'Finalize Report';
+          return report?.status === 'GENERATED'
+            ? isPl
+              ? 'Wyślij do weryfikacji'
+              : 'Submit for review'
+            : isPl
+              ? 'Generuj'
+              : 'Generate';
         default:
           return isPl ? 'Dalej' : 'Next';
       }
@@ -388,20 +466,14 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
     const handleNext = () => {
       switch (currentStep) {
         case 0:
-          handleSourceSelect();
+          handleIntentComplete();
           break;
         case 1:
           handleConfigComplete();
           break;
         case 2:
-          if (report?.status === 'GENERATED') {
-            nextStep();
-          } else {
-            handleGenerate();
-          }
-          break;
-        case 3:
-          handleFinalize();
+          if (report?.status === 'GENERATED') handleFinalize();
+          else handleGenerate();
           break;
       }
     };
@@ -442,8 +514,6 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
           >
             {isLoading || isGenerating ? (
               <Loader2 className="w-4 h-4 animate-spin" />
-            ) : currentStep === 3 ? (
-              <CheckCircle2 className="w-4 h-4" />
             ) : (
               <ArrowRight className="w-4 h-4" />
             )}

@@ -26,8 +26,10 @@ export class VoiceController {
       });
 
       res.status(200).json({ text });
-    } catch (error: any) {
-      logger.error(`[VoiceController] STT Error: ${error.message}`);
+    } catch (error) {
+      if (error instanceof Error) {
+        logger.error(`[VoiceController] STT Error: ${error.message}`);
+      }
       res.status(500).json({ error: 'Transcription failed' });
     }
   }
@@ -52,8 +54,10 @@ export class VoiceController {
       });
 
       res.status(200).send(audioBuffer);
-    } catch (error: any) {
-      logger.error(`[VoiceController] TTS Error: ${error.message}`);
+    } catch (error) {
+      if (error instanceof Error) {
+        logger.error(`[VoiceController] TTS Error: ${error.message}`);
+      }
       res.status(500).json({ error: 'Speech synthesis failed' });
     }
   }

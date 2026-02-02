@@ -31,6 +31,7 @@ interface AddFilesMenuProps {
   onCloudFileSelect?: (provider: CloudProviderId, fileId: string, fileName: string) => void;
   onConnectCloud?: (provider: CloudProviderId) => void;
   connectedProviders?: CloudProviderId[];
+  isCloudImplemented?: boolean;
   disabled?: boolean;
 }
 
@@ -86,6 +87,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
   onCloudFileSelect,
   onConnectCloud,
   connectedProviders = [],
+  isCloudImplemented = false,
   disabled = false,
 }) => {
   const { t } = useTranslation();
@@ -126,6 +128,20 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
   };
 
   const handleCloudClick = (provider: CloudProvider) => {
+    if (!isCloudImplemented) {
+      toast('Integracje z chmurą zostaną dodane wkrótce', {
+        icon: '⏳',
+        duration: 3000,
+        style: {
+          borderRadius: '10px',
+          background: '#334155',
+          color: '#fff',
+        },
+      });
+      setIsOpen(false);
+      return;
+    }
+
     if (provider.connected) {
       // Open file picker for this provider
       onCloudFileSelect?.(provider.id, '', '');
@@ -216,12 +232,17 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
                 >
                   {provider.name}
                 </div>
+                {!isCloudImplemented && (
+                  <div className="text-[10px] text-slate-400 dark:text-slate-500 leading-tight">
+                    {t('common.comingSoon', 'Już wkrótce')}
+                  </div>
+                )}
               </div>
               {provider.connected ? (
                 <Cloud size={14} className="text-green-500" />
-              ) : (
+              ) : isCloudImplemented ? (
                 <Link2 size={14} className="text-slate-400 dark:text-slate-500" />
-              )}
+              ) : null}
             </button>
           ))}
 

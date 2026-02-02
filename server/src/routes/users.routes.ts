@@ -5,6 +5,7 @@
  * Includes:
  * - Basic CRUD operations
  * - Avatar upload/delete
+ * - User search (for team management)
  */
 
 import { Response, Router } from 'express';
@@ -13,10 +14,10 @@ import multer from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
-import { dbGet, dbRun } from '../database/dbHelpers';
-import { asyncHandler } from '../middleware/asyncHandler';
-import { AuthRequest, verifyToken } from '../middleware/auth';
-import { logger } from '../utils/logger';
+import { asyncHandler } from '../middleware/asyncHandler.js';
+import { AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -53,6 +54,74 @@ const avatarUpload = multer({
 });
 
 // ===========================================
+// USER SEARCH (for team management)
+// ===========================================
+
+/**
+ * GET /api/users/search
+ * Search users in the same organization by name or email
+ * Used by TeamManagementPanel to add members to assessments
+ */
+router.get(
+  '/search',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const organizationId = req.user?.organizationId;
+    const query = String(req.query.q || '').trim();
+    const limit = Math.min(parseInt(String(req.query.limit || '10')), 50);
+
+    if (!organizationId) {
+      return res.status(400).json({ error: 'Organization context required' });
+    }
+
+    if (query.length < 2) {
+      return res.json({ users: [] });
+    }
+
+    try {
+      const searchPattern = `%${query}%`;
+      const users = await dbAll<{
+        id: string;
+        email: string;
+        first_name: string;
+        last_name: string;
+        avatar_url: string;
+      }>(
+        `SELECT id, email, first_name, last_name, avatar_url
+         FROM users 
+         WHERE organization_id = ?
+           AND status = 'active'
+           AND (
+             email LIKE ? 
+             OR first_name LIKE ? 
+             OR last_name LIKE ?
+             OR (first_name || ' ' || last_name) LIKE ?
+           )
+         ORDER BY first_name, last_name
+         LIMIT ?`,
+        [organizationId, searchPattern, searchPattern, searchPattern, searchPattern, limit]
+      );
+
+      // Map to expected format for TeamManagementPanel
+      const mappedUsers = (users || []).map((u) => ({
+        id: u.id,
+        email: u.email,
+        name: u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.email,
+        avatarUrl: u.avatar_url,
+      }));
+
+      logger.info(
+        `[users] Search for "${query}" in org ${organizationId} returned ${mappedUsers.length} results`
+      );
+      return res.json({ users: mappedUsers });
+    } catch (err: any) {
+      logger.error('[users] Error searching users:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// ===========================================
 // BASIC USER OPERATIONS
 // ===========================================
 
@@ -67,7 +136,7 @@ router.get(
     const organizationId = req.user?.organizationId;
 
     try {
-      const users = await dbGet(
+      const users = await dbAll(
         `SELECT id, email, first_name, last_name, role, avatar_url, status, created_at
              FROM users 
              WHERE organization_id = ?

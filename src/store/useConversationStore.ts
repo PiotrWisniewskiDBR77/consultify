@@ -95,6 +95,9 @@ export interface ConversationMessage {
     voiceProvider?: string;
     voiceId?: string;
     transcribedFrom?: 'whisper' | 'web';
+    // Interactive options
+    options?: Array<{ id: string; label: string; value: string }>;
+    multiSelect?: boolean;
   };
   tokenCount?: number;
   modelUsed?: string;

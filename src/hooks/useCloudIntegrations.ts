@@ -58,5 +58,6 @@ export const useCloudIntegrations = () => {
     activeProvider,
     closeFilePicker,
     selectFile,
+    isImplemented: false, // Flag indicating backend is currently stubbed
   };
 };

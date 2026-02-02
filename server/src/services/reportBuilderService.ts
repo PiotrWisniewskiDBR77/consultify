@@ -74,6 +74,9 @@ export interface SectionRecord {
   length: SectionLength;
   language: SectionLanguage;
   customPrompt?: string;
+  blockTypeId?: string;
+  blockConfig?: Record<string, unknown>;
+  renderKind?: string;
   generatedContent?: string;
   editedContent?: string;
   contentFormat: string;
@@ -95,6 +98,11 @@ export interface CreateReportParams {
   sourceId: string;
   title: string;
   description?: string;
+  /**
+   * Report-level configuration snapshot captured before generation.
+   * Used for "intent" (audience/goal/scope/etc) and invocation profile selection.
+   */
+  config?: Record<string, unknown>;
   createdBy: string;
   templateId?: string;
 }
@@ -113,6 +121,26 @@ export interface GenerateSectionParams {
   reportId: string;
   sectionKey: string;
   regenerate?: boolean;
+}
+
+export type BlockRenderKind = 'markdown' | 'callout' | 'table' | 'chart' | 'matrix' | 'json';
+
+export interface BlockTypeRecord {
+  id: string;
+  organizationId?: string | null;
+  name: string;
+  description?: string | null;
+  sourceTypes?: string[] | null;
+  renderKind: BlockRenderKind;
+  promptTemplate?: string | null;
+  inputSchema?: Record<string, unknown> | null;
+  defaultLength?: SectionLength;
+  defaultLanguage?: SectionLanguage;
+  isSystem?: boolean;
+  isActive?: boolean;
+  createdBy?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // ==========================================
@@ -164,6 +192,7 @@ interface AssessmentSourceData {
   name: string;
   assessmentType: string;
   status: string;
+  projectId?: string;
   organizationName: string;
   answers: Record<string, unknown>;
   scores: Record<string, unknown>;
@@ -179,6 +208,7 @@ async function getAssessmentSourceData(sourceId: string): Promise<AssessmentSour
     assessment_type: string;
     status: string;
     organization_id: string;
+    project_id?: string;
     answers_json: string;
     score_summary: string;
     context_snapshot: string;
@@ -202,6 +232,7 @@ async function getAssessmentSourceData(sourceId: string): Promise<AssessmentSour
     name: row.name,
     assessmentType: row.assessment_type,
     status: row.status,
+    projectId: (row as any).project_id,
     organizationName: (row as any).org_name || 'Unknown',
     answers: JSON.parse(row.answers_json || '{}'),
     scores: JSON.parse(row.score_summary || '{}'),
@@ -308,12 +339,21 @@ export async function createReport(params: CreateReportParams): Promise<{
   report: ReportRecord;
   sections: SectionRecord[];
 }> {
-  const { organizationId, sourceType, sourceId, title, description, createdBy, templateId } =
-    params;
+  const {
+    organizationId,
+    sourceType,
+    sourceId,
+    title,
+    description,
+    config,
+    createdBy,
+    templateId,
+  } = params;
 
   // Get source data
   let sourceName = '';
   let sourceFramework = '';
+  let projectId: string | null = null;
   let companyContext: Record<string, unknown> = {};
 
   if (sourceType === 'ASSESSMENT') {
@@ -323,6 +363,7 @@ export async function createReport(params: CreateReportParams): Promise<{
 
     sourceName = assessment.name;
     sourceFramework = assessment.assessmentType;
+    projectId = assessment.projectId ? String(assessment.projectId) : null;
     companyContext = {
       organizationName: assessment.organizationName,
       assessmentType: assessment.assessmentType,
@@ -342,14 +383,15 @@ export async function createReport(params: CreateReportParams): Promise<{
   await queryRun(
     `
     INSERT INTO report_builder_reports (
-      id, organization_id, source_type, source_id, source_name, source_framework,
-      title, description, report_type, company_context_json, status,
+      id, organization_id, project_id, source_type, source_id, source_name, source_framework,
+      title, description, report_type, config_json, company_context_json, status,
       created_by, created_at, updated_at, version
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, 1)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CONFIGURING', ?, ?, ?, 1)
   `,
     [
       reportId,
       organizationId,
+      projectId,
       sourceType,
       sourceId,
       sourceName,
@@ -357,6 +399,7 @@ export async function createReport(params: CreateReportParams): Promise<{
       title,
       description,
       reportType,
+      config ? JSON.stringify(config) : null,
       JSON.stringify(companyContext),
       createdBy,
       now,
@@ -431,6 +474,7 @@ export async function createReport(params: CreateReportParams): Promise<{
   const report: ReportRecord = {
     id: reportId,
     organizationId,
+    projectId: projectId || undefined,
     sourceType,
     sourceId,
     sourceName,
@@ -438,8 +482,9 @@ export async function createReport(params: CreateReportParams): Promise<{
     title,
     description,
     reportType,
+    config: config || undefined,
     companyContext,
-    status: 'DRAFT',
+    status: 'CONFIGURING',
     createdBy,
     createdAt: now,
     updatedAt: now,
@@ -515,6 +560,11 @@ export async function getReport(
       length: s.length,
       language: s.language,
       customPrompt: s.custom_prompt,
+      blockTypeId: (s as any).block_type_id || undefined,
+      blockConfig: (s as any).block_config_json
+        ? JSON.parse((s as any).block_config_json)
+        : undefined,
+      renderKind: (s as any).render_kind || undefined,
       generatedContent: s.generated_content,
       editedContent: s.edited_content,
       contentFormat: s.content_format,
@@ -583,6 +633,179 @@ export async function listReports(
     approvedAt: row.approved_at,
     version: row.version,
   }));
+}
+
+// ==========================================
+// BLOCK TYPES (Library)
+// ==========================================
+
+export async function listBlockTypes(organizationId: string): Promise<BlockTypeRecord[]> {
+  const rows = await queryAll<any>(
+    `
+    SELECT *
+    FROM report_builder_block_types
+    WHERE is_active = 1 AND (organization_id IS NULL OR organization_id = ?)
+    ORDER BY is_system DESC, name ASC
+  `,
+    [organizationId]
+  );
+
+  return rows.map((r) => ({
+    id: r.id,
+    organizationId: r.organization_id,
+    name: r.name,
+    description: r.description,
+    sourceTypes: r.source_types_json ? JSON.parse(r.source_types_json) : null,
+    renderKind: (r.render_kind || 'markdown') as BlockRenderKind,
+    promptTemplate: r.prompt_template,
+    inputSchema: r.input_schema_json ? JSON.parse(r.input_schema_json) : null,
+    defaultLength: (r.default_length || 'medium') as SectionLength,
+    defaultLanguage: (r.default_language || 'business') as SectionLanguage,
+    isSystem: Boolean(r.is_system),
+    isActive: Boolean(r.is_active),
+    createdBy: r.created_by,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  }));
+}
+
+export async function createBlockType(params: {
+  organizationId: string;
+  userId: string;
+  name: string;
+  description?: string;
+  sourceTypes?: string[];
+  renderKind: BlockRenderKind;
+  promptTemplate?: string;
+  inputSchema?: Record<string, unknown> | null;
+  defaultLength?: SectionLength;
+  defaultLanguage?: SectionLanguage;
+}): Promise<BlockTypeRecord> {
+  const id = uuidv4();
+  const now = new Date().toISOString();
+  await queryRun(
+    `
+    INSERT INTO report_builder_block_types (
+      id, organization_id, name, description,
+      source_types_json, render_kind, prompt_template, input_schema_json,
+      default_length, default_language,
+      is_system, is_active,
+      created_by, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?, ?, ?)
+  `,
+    [
+      id,
+      params.organizationId,
+      params.name,
+      params.description || null,
+      params.sourceTypes ? JSON.stringify(params.sourceTypes) : null,
+      params.renderKind,
+      params.promptTemplate || null,
+      params.inputSchema ? JSON.stringify(params.inputSchema) : null,
+      params.defaultLength || 'medium',
+      params.defaultLanguage || 'business',
+      params.userId,
+      now,
+      now,
+    ]
+  );
+
+  return {
+    id,
+    organizationId: params.organizationId,
+    name: params.name,
+    description: params.description || null,
+    sourceTypes: params.sourceTypes || null,
+    renderKind: params.renderKind,
+    promptTemplate: params.promptTemplate || null,
+    inputSchema: params.inputSchema || null,
+    defaultLength: params.defaultLength || 'medium',
+    defaultLanguage: params.defaultLanguage || 'business',
+    isSystem: false,
+    isActive: true,
+    createdBy: params.userId,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+export async function updateBlockType(
+  blockTypeId: string,
+  organizationId: string,
+  userId: string,
+  patch: Partial<{
+    name: string;
+    description: string | null;
+    sourceTypes: string[] | null;
+    renderKind: BlockRenderKind;
+    promptTemplate: string | null;
+    inputSchema: Record<string, unknown> | null;
+    defaultLength: SectionLength;
+    defaultLanguage: SectionLanguage;
+    isActive: boolean;
+  }>
+): Promise<void> {
+  const existing = await queryOne<any>(
+    `SELECT * FROM report_builder_block_types WHERE id = ? AND organization_id = ?`,
+    [blockTypeId, organizationId]
+  );
+  if (!existing) throw new Error('Block type not found');
+  if (existing.is_system) throw new Error('System block types cannot be modified');
+
+  const sets: string[] = ['updated_at = ?'];
+  const params: unknown[] = [new Date().toISOString()];
+
+  const push = (col: string, value: unknown) => {
+    sets.push(`${col} = ?`);
+    params.push(value);
+  };
+
+  if (patch.name !== undefined) push('name', patch.name);
+  if (patch.description !== undefined) push('description', patch.description);
+  if (patch.sourceTypes !== undefined)
+    push('source_types_json', patch.sourceTypes ? JSON.stringify(patch.sourceTypes) : null);
+  if (patch.renderKind !== undefined) push('render_kind', patch.renderKind);
+  if (patch.promptTemplate !== undefined) push('prompt_template', patch.promptTemplate);
+  if (patch.inputSchema !== undefined)
+    push('input_schema_json', patch.inputSchema ? JSON.stringify(patch.inputSchema) : null);
+  if (patch.defaultLength !== undefined) push('default_length', patch.defaultLength);
+  if (patch.defaultLanguage !== undefined) push('default_language', patch.defaultLanguage);
+  if (patch.isActive !== undefined) push('is_active', patch.isActive ? 1 : 0);
+
+  params.push(blockTypeId, organizationId);
+
+  await queryRun(
+    `
+    UPDATE report_builder_block_types
+    SET ${sets.join(', ')}
+    WHERE id = ? AND organization_id = ?
+  `,
+    params
+  );
+  void userId; // reserved for future auditing
+}
+
+export async function deactivateBlockType(
+  blockTypeId: string,
+  organizationId: string,
+  userId: string
+): Promise<void> {
+  const existing = await queryOne<any>(
+    `SELECT * FROM report_builder_block_types WHERE id = ? AND organization_id = ?`,
+    [blockTypeId, organizationId]
+  );
+  if (!existing) throw new Error('Block type not found');
+  if (existing.is_system) throw new Error('System block types cannot be deactivated');
+
+  await queryRun(
+    `
+    UPDATE report_builder_block_types
+    SET is_active = 0, updated_at = ?
+    WHERE id = ? AND organization_id = ?
+  `,
+    [new Date().toISOString(), blockTypeId, organizationId]
+  );
+  void userId; // reserved for future auditing
 }
 
 /**
@@ -656,6 +879,11 @@ export async function updateSectionConfig(
     length: s.length,
     language: s.language,
     customPrompt: s.custom_prompt,
+    blockTypeId: (s as any).block_type_id || undefined,
+    blockConfig: (s as any).block_config_json
+      ? JSON.parse((s as any).block_config_json)
+      : undefined,
+    renderKind: (s as any).render_kind || undefined,
     generatedContent: s.generated_content,
     editedContent: s.edited_content,
     contentFormat: s.content_format,
@@ -680,6 +908,9 @@ export async function addCustomSection(
     afterSectionKey?: string;
     length?: SectionLength;
     language?: SectionLanguage;
+    blockTypeId?: string;
+    blockConfig?: Record<string, unknown> | null;
+    renderKind?: string;
   }
 ): Promise<SectionRecord> {
   const {
@@ -688,6 +919,9 @@ export async function addCustomSection(
     afterSectionKey,
     length = 'medium',
     language = 'business',
+    blockTypeId,
+    blockConfig,
+    renderKind,
   } = params;
 
   // Get current max order
@@ -730,10 +964,26 @@ export async function addCustomSection(
     `
     INSERT INTO report_builder_sections (
       id, report_id, section_key, section_type, title, order_index,
-      enabled, required, length, language, content_format, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, 1, 0, ?, ?, 'markdown', ?, ?)
+      enabled, required, length, language, content_format,
+      block_type_id, block_config_json, render_kind,
+      created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, 1, 0, ?, ?, 'markdown', ?, ?, ?, ?, ?)
   `,
-    [sectionId, reportId, sectionKey, sectionType, title, orderIndex, length, language, now, now]
+    [
+      sectionId,
+      reportId,
+      sectionKey,
+      sectionType,
+      title,
+      orderIndex,
+      length,
+      language,
+      blockTypeId || null,
+      blockConfig ? JSON.stringify(blockConfig) : null,
+      renderKind || null,
+      now,
+      now,
+    ]
   );
 
   return {
@@ -747,6 +997,9 @@ export async function addCustomSection(
     required: false,
     length,
     language,
+    blockTypeId: blockTypeId || undefined,
+    blockConfig: blockConfig || undefined,
+    renderKind: renderKind || undefined,
     contentFormat: 'markdown',
   };
 }
@@ -850,9 +1103,15 @@ export async function updateReportStatus(
   if (status === 'GENERATED') {
     additionalFields = ', generated_at = ?';
     params.push(now);
+  } else if (status === 'IN_REVIEW') {
+    additionalFields = ', submitted_at = ?';
+    params.push(now);
   } else if (status === 'APPROVED') {
     additionalFields = ', approved_at = ?, approved_by = ?';
     params.push(now, userId);
+  } else if (status === 'UTILIZED') {
+    additionalFields = ', utilized_at = ?';
+    params.push(now);
   }
 
   params.push(reportId);
@@ -867,6 +1126,28 @@ export async function updateReportStatus(
   );
 
   await logActivity(reportId, `STATUS_${status}`, userId);
+}
+
+/**
+ * Update report-level configuration (intent, invocation profile, etc.).
+ * Does not change report status by itself (caller decides).
+ */
+export async function updateReportConfig(
+  reportId: string,
+  organizationId: string,
+  config: Record<string, unknown> | null,
+  userId: string
+): Promise<void> {
+  const now = new Date().toISOString();
+  await queryRun(
+    `
+    UPDATE report_builder_reports
+    SET config_json = ?, updated_at = ?, updated_by = ?
+    WHERE id = ? AND organization_id = ?
+  `,
+    [config ? JSON.stringify(config) : null, now, userId, reportId, organizationId]
+  );
+  await logActivity(reportId, 'CONFIG_UPDATED', userId);
 }
 
 /**
@@ -1019,6 +1300,311 @@ export async function getSourceDataForReport(
 }
 
 // ==========================================
+// EXPORT & SHARE TYPES
+// ==========================================
+
+export interface ReportExportRecord {
+  id: string;
+  reportId: string;
+  reportType: string;
+  format: 'pdf' | 'pptx' | 'docx' | 'xlsx';
+  filePath?: string;
+  fileSize?: number;
+  language: string;
+  exportedBy: string;
+  exportedAt: string;
+  downloadCount: number;
+  lastDownloadAt?: string;
+}
+
+export interface PublicLinkRecord {
+  id: string;
+  reportId: string;
+  reportType: string;
+  organizationId: string;
+  linkToken: string;
+  passwordHash?: string;
+  expiresAt?: string;
+  showCompanyLogo: boolean;
+  showConsultinityBranding: boolean;
+  customMessage?: string;
+  viewCount: number;
+  lastViewedAt?: string;
+  createdBy: string;
+  createdAt: string;
+  revokedAt?: string;
+}
+
+// ==========================================
+// EXPORT FUNCTIONS
+// ==========================================
+
+/**
+ * Create export record for a report
+ */
+export async function createExportRecord(params: {
+  reportId: string;
+  reportType: string;
+  format: 'pdf' | 'pptx' | 'docx' | 'xlsx';
+  filePath: string;
+  fileSize: number;
+  language?: string;
+  exportedBy: string;
+}): Promise<ReportExportRecord> {
+  const id = uuidv4();
+  const now = new Date().toISOString();
+
+  await queryRun(
+    `
+    INSERT INTO report_exports (
+      id, report_id, report_type, format, file_path, file_size,
+      language, exported_by, exported_at, download_count
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+  `,
+    [
+      id,
+      params.reportId,
+      params.reportType,
+      params.format,
+      params.filePath,
+      params.fileSize,
+      params.language || 'en',
+      params.exportedBy,
+      now,
+    ]
+  );
+
+  return {
+    id,
+    reportId: params.reportId,
+    reportType: params.reportType,
+    format: params.format,
+    filePath: params.filePath,
+    fileSize: params.fileSize,
+    language: params.language || 'en',
+    exportedBy: params.exportedBy,
+    exportedAt: now,
+    downloadCount: 0,
+  };
+}
+
+/**
+ * Get export records for a report
+ */
+export async function getExportRecords(reportId: string): Promise<ReportExportRecord[]> {
+  const rows = await queryAll<any>(
+    `
+    SELECT * FROM report_exports
+    WHERE report_id = ?
+    ORDER BY exported_at DESC
+  `,
+    [reportId]
+  );
+
+  return rows.map((r) => ({
+    id: r.id,
+    reportId: r.report_id,
+    reportType: r.report_type,
+    format: r.format,
+    filePath: r.file_path,
+    fileSize: r.file_size,
+    language: r.language,
+    exportedBy: r.exported_by,
+    exportedAt: r.exported_at,
+    downloadCount: r.download_count,
+    lastDownloadAt: r.last_download_at,
+  }));
+}
+
+/**
+ * Increment download count for an export
+ */
+export async function incrementExportDownload(exportId: string): Promise<void> {
+  await queryRun(
+    `
+    UPDATE report_exports
+    SET download_count = download_count + 1, last_download_at = ?
+    WHERE id = ?
+  `,
+    [new Date().toISOString(), exportId]
+  );
+}
+
+// ==========================================
+// PUBLIC LINK FUNCTIONS
+// ==========================================
+
+/**
+ * Create a public share link for a report
+ */
+export async function createPublicLink(params: {
+  reportId: string;
+  reportType: string;
+  organizationId: string;
+  createdBy: string;
+  passwordHash?: string;
+  expiresAt?: string;
+  showCompanyLogo?: boolean;
+  showConsultinityBranding?: boolean;
+  customMessage?: string;
+}): Promise<PublicLinkRecord> {
+  const id = uuidv4();
+  const linkToken = uuidv4().replace(/-/g, ''); // Clean token for URL
+  const now = new Date().toISOString();
+
+  await queryRun(
+    `
+    INSERT INTO report_public_links (
+      id, report_id, report_type, organization_id, link_token,
+      password_hash, expires_at, show_company_logo, show_consultinity_branding,
+      custom_message, view_count, created_by, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
+  `,
+    [
+      id,
+      params.reportId,
+      params.reportType,
+      params.organizationId,
+      linkToken,
+      params.passwordHash || null,
+      params.expiresAt || null,
+      params.showCompanyLogo !== false ? 1 : 0,
+      params.showConsultinityBranding !== false ? 1 : 0,
+      params.customMessage || null,
+      params.createdBy,
+      now,
+    ]
+  );
+
+  return {
+    id,
+    reportId: params.reportId,
+    reportType: params.reportType,
+    organizationId: params.organizationId,
+    linkToken,
+    passwordHash: params.passwordHash,
+    expiresAt: params.expiresAt,
+    showCompanyLogo: params.showCompanyLogo !== false,
+    showConsultinityBranding: params.showConsultinityBranding !== false,
+    customMessage: params.customMessage,
+    viewCount: 0,
+    createdBy: params.createdBy,
+    createdAt: now,
+  };
+}
+
+/**
+ * Get public links for a report
+ */
+export async function getPublicLinks(
+  reportId: string,
+  organizationId: string
+): Promise<PublicLinkRecord[]> {
+  const rows = await queryAll<any>(
+    `
+    SELECT * FROM report_public_links
+    WHERE report_id = ? AND organization_id = ? AND revoked_at IS NULL
+    ORDER BY created_at DESC
+  `,
+    [reportId, organizationId]
+  );
+
+  return rows.map((r) => ({
+    id: r.id,
+    reportId: r.report_id,
+    reportType: r.report_type,
+    organizationId: r.organization_id,
+    linkToken: r.link_token,
+    passwordHash: r.password_hash,
+    expiresAt: r.expires_at,
+    showCompanyLogo: Boolean(r.show_company_logo),
+    showConsultinityBranding: Boolean(r.show_consultinity_branding),
+    customMessage: r.custom_message,
+    viewCount: r.view_count,
+    lastViewedAt: r.last_viewed_at,
+    createdBy: r.created_by,
+    createdAt: r.created_at,
+    revokedAt: r.revoked_at,
+  }));
+}
+
+/**
+ * Get public link by token (for public access)
+ */
+export async function getPublicLinkByToken(linkToken: string): Promise<{
+  link: PublicLinkRecord;
+  report: ReportRecord;
+  sections: SectionRecord[];
+} | null> {
+  const linkRow = await queryOne<any>(
+    `
+    SELECT * FROM report_public_links
+    WHERE link_token = ? AND revoked_at IS NULL
+  `,
+    [linkToken]
+  );
+
+  if (!linkRow) return null;
+
+  // Check expiration
+  if (linkRow.expires_at && new Date(linkRow.expires_at) < new Date()) {
+    return null;
+  }
+
+  // Get report data
+  const reportData = await getReport(linkRow.report_id, linkRow.organization_id);
+  if (!reportData) return null;
+
+  // Increment view count
+  await queryRun(
+    `
+    UPDATE report_public_links
+    SET view_count = view_count + 1, last_viewed_at = ?
+    WHERE id = ?
+  `,
+    [new Date().toISOString(), linkRow.id]
+  );
+
+  return {
+    link: {
+      id: linkRow.id,
+      reportId: linkRow.report_id,
+      reportType: linkRow.report_type,
+      organizationId: linkRow.organization_id,
+      linkToken: linkRow.link_token,
+      passwordHash: linkRow.password_hash,
+      expiresAt: linkRow.expires_at,
+      showCompanyLogo: Boolean(linkRow.show_company_logo),
+      showConsultinityBranding: Boolean(linkRow.show_consultinity_branding),
+      customMessage: linkRow.custom_message,
+      viewCount: linkRow.view_count + 1,
+      lastViewedAt: new Date().toISOString(),
+      createdBy: linkRow.created_by,
+      createdAt: linkRow.created_at,
+      revokedAt: linkRow.revoked_at,
+    },
+    report: reportData.report,
+    sections: reportData.sections,
+  };
+}
+
+/**
+ * Revoke a public link
+ */
+export async function revokePublicLink(linkId: string, organizationId: string): Promise<boolean> {
+  const result = await queryRun(
+    `
+    UPDATE report_public_links
+    SET revoked_at = ?
+    WHERE id = ? AND organization_id = ? AND revoked_at IS NULL
+  `,
+    [new Date().toISOString(), linkId, organizationId]
+  );
+
+  return result.changes > 0;
+}
+
+// ==========================================
 // EXPORTS
 // ==========================================
 
@@ -1029,13 +1615,27 @@ const ReportBuilderService = {
   createReport,
   getReport,
   listReports,
+  listBlockTypes,
+  createBlockType,
+  updateBlockType,
+  deactivateBlockType,
   updateSectionConfig,
   addCustomSection,
   removeSection,
   updateSectionContent,
   updateReportStatus,
+  updateReportConfig,
   duplicateReport,
   getSourceDataForReport,
+  // Export functions
+  createExportRecord,
+  getExportRecords,
+  incrementExportDownload,
+  // Public link functions
+  createPublicLink,
+  getPublicLinks,
+  getPublicLinkByToken,
+  revokePublicLink,
 };
 
 export default ReportBuilderService;

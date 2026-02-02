@@ -61,9 +61,8 @@ Każda pozycja:
   - `Reassign`
   - `Update plan`---
 
-## Workflow (jak to działa)
+## Workflow (jak to działa)1. Zdarzenie w systemie (blocked task / overdue decision / no response) tworzy **Inbox item**
 
-1. Zdarzenie w systemie (blocked task / overdue decision / no response) tworzy **Inbox item**
 2. Użytkownik wykonuje Primary CTA
 3. Po akcji:
    - presja się zamyka (cisza) albo eskaluje (jeśli brak reakcji)

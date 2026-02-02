@@ -4,10 +4,10 @@ import React, { useEffect, useState } from 'react';
 import { AIMessageHistory } from '@/services/ai/gemini';
 import { Api } from '@/services/api'; // Using Api service for consistency
 
-import { ChatPanel } from '../components/layout/ChatPanel';
+import { UnifiedChatPanel } from '../components/AIChat/UnifiedChatPanel';
 import { useAIStream } from '../hooks/useAIStream';
 import { useAppStore } from '../store/useAppStore';
-import { AppView, ChatMessage, FullSession, SessionMode } from '../types';
+import { AppView, FullSession, SessionMode } from '../types';
 interface Module1ContextViewProps {
   currentUser: { id: string }; // Replace `any` with a more specific type
   fullSession: FullSession;
@@ -194,8 +194,8 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({
             </div>
           </div>
         </div>
-        <ChatPanel
-          messages={
+        <UnifiedChatPanel
+          customMessages={
             isStreaming
               ? [
                   ...messages,
@@ -204,13 +204,14 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({
                     role: 'ai',
                     content: streamedContent,
                     timestamp: new Date(),
-                  } as ChatMessage,
+                    isStreaming: true,
+                  },
                 ]
               : messages
           }
-          onSendMessage={handleSendMessage}
-          isTyping={isBotTyping}
+          onMessageSent={handleSendMessage}
           onOptionSelect={(opt) => handleSendMessage(opt.value)}
+          disabled={isBotTyping}
         />
       </div>
       {/* Right: Context Status Panel */}

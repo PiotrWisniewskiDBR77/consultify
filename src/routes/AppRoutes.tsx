@@ -841,27 +841,29 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={`${ROUTES.ASSESSMENT.ROOT}/*`}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Assessment']} noPadding>
-              <RouteErrorBoundary>
-                <Routes>
-                  {/* Assessment Session Editor (Workflow v2) */}
-                  <Route
-                    path=":framework/:assessmentId"
-                    element={<AssessmentSessionEditorView />}
-                  />
-                  {/* Main Assessment Hub - unified view */}
-                  <Route index element={<AssessmentHub />} />
-                  <Route path="overview" element={<AssessmentHub />} />
-                  <Route path="summary" element={<AssessmentHub />} />
-                  {/* Framework-specific routes (backward compatibility) */}
-                  <Route path="drd" element={<AssessmentHub />} />
-                  <Route path="siri" element={<AssessmentHub />} />
-                  <Route path="adma" element={<AssessmentHub />} />
-                  <Route path="cmmi" element={<AssessmentHub />} />
-                  <Route path="lean" element={<AssessmentHub />} />
-                </Routes>
-              </RouteErrorBoundary>
-            </MainLayout>
+            <ProtectedRoute requireAuth={true}>
+              <MainLayout breadcrumbs={breadcrumbs || ['Assessment']} noPadding>
+                <RouteErrorBoundary>
+                  <Routes>
+                    {/* Assessment Session Editor (Workflow v2) */}
+                    <Route
+                      path=":framework/:assessmentId"
+                      element={<AssessmentSessionEditorView />}
+                    />
+                    {/* Main Assessment Hub - unified view */}
+                    <Route index element={<AssessmentHub />} />
+                    <Route path="overview" element={<AssessmentHub />} />
+                    <Route path="summary" element={<AssessmentHub />} />
+                    {/* Framework-specific routes (backward compatibility) */}
+                    <Route path="drd" element={<AssessmentHub />} />
+                    <Route path="siri" element={<AssessmentHub />} />
+                    <Route path="adma" element={<AssessmentHub />} />
+                    <Route path="cmmi" element={<AssessmentHub />} />
+                    <Route path="lean" element={<AssessmentHub />} />
+                  </Routes>
+                </RouteErrorBoundary>
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
 

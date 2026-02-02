@@ -644,9 +644,8 @@ wdrozenia/modules/reports/
 4. Duplicate functionality
 5. Dynamic menu
 
-### Faza 3: Extended
+### Faza 3: Extended1. PPTX export
 
-1. PPTX export
 2. Report templates
 3. Version history
 4. Comments & review workflow

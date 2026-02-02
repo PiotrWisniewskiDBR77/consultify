@@ -175,6 +175,87 @@ function queryRun(
 }
 
 // ==========================================
+// SCHEMA (SQLite-first, best-effort)
+// ==========================================
+
+let _schemaEnsured = false;
+
+/**
+ * Ensure required tables for workflow "Manage" exist.
+ *
+ * Dev SQLite DBs may miss some tables if migrations were skipped. The UI calls
+ * endpoints that assume these exist (roles + access requests). Missing tables
+ * cause hard errors like: SQLITE_ERROR: no such table: assessment_access_requests
+ *
+ * Uses CREATE TABLE IF NOT EXISTS (safe to run repeatedly).
+ * Best-effort: if DB doesn't support these statements, we log and continue.
+ */
+async function ensureAssessmentPermissionSchema(): Promise<void> {
+  if (_schemaEnsured) return;
+  _schemaEnsured = true;
+
+  try {
+    await queryRun(
+      `CREATE TABLE IF NOT EXISTS assessment_roles (
+        id TEXT PRIMARY KEY,
+        assessment_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        organization_id TEXT NOT NULL,
+        role TEXT NOT NULL,
+        can_edit INTEGER DEFAULT 0,
+        can_approve INTEGER DEFAULT 0,
+        can_manage_team INTEGER DEFAULT 0,
+        can_change_status INTEGER DEFAULT 0,
+        can_generate_report INTEGER DEFAULT 0,
+        can_generate_initiatives INTEGER DEFAULT 0,
+        assigned_areas TEXT,
+        assigned_by TEXT NOT NULL,
+        assigned_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )`,
+      []
+    );
+    await queryRun(
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_assessment_roles_unique
+       ON assessment_roles(assessment_id, user_id, organization_id)`,
+      []
+    );
+
+    await queryRun(
+      `CREATE TABLE IF NOT EXISTS assessment_access_requests (
+        id TEXT PRIMARY KEY,
+        assessment_id TEXT NOT NULL,
+        organization_id TEXT NOT NULL,
+        requester_id TEXT NOT NULL,
+        requested_role TEXT NOT NULL,
+        requested_areas TEXT,
+        justification TEXT NOT NULL,
+        priority TEXT DEFAULT 'NORMAL',
+        status TEXT DEFAULT 'PENDING',
+        reviewed_by TEXT,
+        reviewed_at TEXT,
+        review_notes TEXT,
+        granted_role TEXT,
+        granted_permissions TEXT,
+        granted_areas TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )`,
+      []
+    );
+    await queryRun(
+      `CREATE INDEX IF NOT EXISTS idx_assessment_access_requests_assessment
+       ON assessment_access_requests(assessment_id, organization_id, status)`,
+      []
+    );
+  } catch (err: any) {
+    logger.warn(
+      `[AssessmentPermissionService] Failed to ensure permission schema (continuing): ${err?.message || err}`
+    );
+  }
+}
+
+// ==========================================
 // PERMISSION CALCULATION
 // ==========================================
 
@@ -277,6 +358,7 @@ export async function getUserRole(
   userId: string,
   organizationId: string
 ): Promise<UserRoleInfo> {
+  await ensureAssessmentPermissionSchema();
   try {
     // First check if user is the assessment creator (always admin)
     const assessment = await queryOne<{ created_by: string }>(
@@ -372,12 +454,33 @@ export async function hasPermission(
 
 /**
  * Get all roles for an assessment
+ * Includes the assessment creator as Admin (owner) even if not in assessment_roles table
  */
 export async function getAssessmentRoles(
   assessmentId: string,
   organizationId: string
 ): Promise<AssessmentRoleRecord[]> {
+  await ensureAssessmentPermissionSchema();
   try {
+    // First, get the assessment creator (owner)
+    const assessment = await queryOne<{
+      created_by: string;
+      created_at: string;
+      creator_email: string;
+      creator_first_name: string;
+      creator_last_name: string;
+    }>(
+      `SELECT a.created_by, a.created_at, 
+              u.email as creator_email,
+              u.first_name as creator_first_name,
+              u.last_name as creator_last_name
+       FROM assessments a
+       LEFT JOIN users u ON a.created_by = u.id
+       WHERE a.id = ? AND a.organization_id = ?`,
+      [assessmentId, organizationId]
+    );
+
+    // Get explicit role assignments
     const rows = await queryAll<{
       id: string;
       assessment_id: string;
@@ -409,7 +512,7 @@ export async function getAssessmentRoles(
       [assessmentId, organizationId]
     );
 
-    return rows.map((row) => ({
+    const roles: AssessmentRoleRecord[] = rows.map((row) => ({
       id: row.id,
       assessmentId: row.assessment_id,
       userId: row.user_id,
@@ -431,6 +534,38 @@ export async function getAssessmentRoles(
           : row.user_email || undefined,
       userEmail: row.user_email || undefined,
     }));
+
+    // Add the creator as Admin if not already in the roles list
+    if (assessment?.created_by) {
+      const creatorAlreadyInRoles = roles.some((r) => r.userId === assessment.created_by);
+      if (!creatorAlreadyInRoles) {
+        const ownerPermissions = getDefaultPermissions('admin');
+        roles.unshift({
+          id: `owner-${assessment.created_by}`,
+          assessmentId,
+          userId: assessment.created_by,
+          organizationId,
+          role: 'admin',
+          canEdit: ownerPermissions.canEdit,
+          canApprove: ownerPermissions.canApprove,
+          canManageTeam: ownerPermissions.canManageTeam,
+          canChangeStatus: ownerPermissions.canChangeStatus,
+          canGenerateReport: ownerPermissions.canGenerateReport,
+          canGenerateInitiatives: ownerPermissions.canGenerateInitiatives,
+          assignedAreas: null,
+          assignedBy: 'system',
+          assignedAt: assessment.created_at || new Date().toISOString(),
+          updatedAt: assessment.created_at || new Date().toISOString(),
+          userName:
+            assessment.creator_first_name && assessment.creator_last_name
+              ? `${assessment.creator_first_name} ${assessment.creator_last_name}`
+              : assessment.creator_email || undefined,
+          userEmail: assessment.creator_email || undefined,
+        });
+      }
+    }
+
+    return roles;
   } catch (error) {
     logger.error('[AssessmentPermissionService] Error getting assessment roles:', error);
     return [];
@@ -441,6 +576,7 @@ export async function getAssessmentRoles(
  * Assign or update a role for a user
  */
 export async function assignRole(params: AssignRoleParams): Promise<AssessmentRoleRecord> {
+  await ensureAssessmentPermissionSchema();
   const {
     assessmentId,
     userId,
@@ -535,6 +671,7 @@ export async function removeRole(
   userId: string,
   organizationId: string
 ): Promise<boolean> {
+  await ensureAssessmentPermissionSchema();
   const result = await queryRun(
     `DELETE FROM assessment_roles 
      WHERE assessment_id = ? AND user_id = ? AND organization_id = ?`,
@@ -560,6 +697,7 @@ export async function removeRole(
 export async function createAccessRequest(
   params: CreateAccessRequestParams
 ): Promise<AssessmentAccessRequest> {
+  await ensureAssessmentPermissionSchema();
   const {
     assessmentId,
     organizationId,
@@ -636,6 +774,7 @@ export async function getAccessRequests(
   organizationId: string,
   status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
 ): Promise<AssessmentAccessRequest[]> {
+  await ensureAssessmentPermissionSchema();
   let sql = `
     SELECT ar.*,
            u.email as requester_email,
@@ -721,6 +860,7 @@ export async function getAccessRequests(
 export async function approveAccessRequest(
   params: ApproveAccessRequestParams
 ): Promise<AssessmentAccessRequest> {
+  await ensureAssessmentPermissionSchema();
   const { requestId, reviewerId, grantedRole, grantedPermissions, grantedAreas, notes } = params;
 
   // Get the request
@@ -798,6 +938,7 @@ export async function rejectAccessRequest(
   reviewerId: string,
   reason: string
 ): Promise<AssessmentAccessRequest> {
+  await ensureAssessmentPermissionSchema();
   const request = await queryOne<{
     id: string;
     assessment_id: string;
@@ -845,6 +986,7 @@ export async function cancelAccessRequest(
   requestId: string,
   requesterId: string
 ): Promise<boolean> {
+  await ensureAssessmentPermissionSchema();
   const result = await queryRun(
     `UPDATE assessment_access_requests 
      SET status = 'CANCELLED', updated_at = ?
@@ -866,6 +1008,7 @@ export async function getAssessmentAdmins(
   assessmentId: string,
   organizationId: string
 ): Promise<{ userId: string; userName?: string; userEmail?: string }[]> {
+  await ensureAssessmentPermissionSchema();
   // Get assessment creator
   const assessment = await queryOne<{
     created_by: string;

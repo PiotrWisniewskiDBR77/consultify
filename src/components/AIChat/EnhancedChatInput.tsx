@@ -81,6 +81,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     activeProvider,
     closeFilePicker,
     selectFile,
+    isImplemented: isCloudImplemented,
   } = useCloudIntegrations();
 
   // Input state
@@ -682,6 +683,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               onCloudFileSelect={handleCloudFileSelect}
               onConnectCloud={handleConnectCloud}
               connectedProviders={connectedProviderIds}
+              isCloudImplemented={isCloudImplemented}
               disabled={isDisabled}
             />
             <ToolsMenu

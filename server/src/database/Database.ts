@@ -68,13 +68,10 @@ export async function createDatabase(): Promise<IDatabase> {
     return existing;
   }
 
-  console.log('[Database] createDatabase() called. MOCK_DB:', process.env.MOCK_DB);
-
   if (
     process.env.MOCK_DB === 'true' ||
     (process.env.NODE_ENV === 'test' && process.env.MOCK_DB !== 'false' && !process.env.SQLITE_PATH)
   ) {
-    console.log('[Database] Using MOCK database.');
     const mockDb = (global as any).__TEST_DB_MOCK__ || createMockDatabase();
     setToGlobal(mockDb);
     return mockDb;
@@ -87,7 +84,6 @@ export async function createDatabase(): Promise<IDatabase> {
   }
 
   // Default to SQLite (direct sqlite3 connection)
-  console.log('[Database] Initializing SQLite connection...');
   const sqlite3Module: any = await import('sqlite3').then((m) => (m as any).default || m);
   const sqlite3 = sqlite3Module?.verbose ? sqlite3Module.verbose() : sqlite3Module;
   const sqlitePath = databaseConfig.sqlite?.path || process.env.SQLITE_PATH;
@@ -122,12 +118,14 @@ export async function getDatabaseAsync(): Promise<IDatabase> {
  * Get internal database singleton instance (synchronous)
  */
 export function getDatabaseInstance(): IDatabase {
-  const existing = getFromGlobal();
-  if (existing && !(existing as any).__CLOSED__) {
-    return existing;
+  const globalDb = getFromGlobal();
+  if (globalDb && !(globalDb as any).__CLOSED__) {
+    return globalDb;
   }
 
-  console.log('[Database] getDatabaseInstance() (SYNC) needs initialization.');
+  if (dbInstance && !(dbInstance as any).__CLOSED__) {
+    return dbInstance;
+  }
 
   if (
     process.env.NODE_ENV === 'test' &&

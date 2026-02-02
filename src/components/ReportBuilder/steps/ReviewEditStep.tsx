@@ -22,11 +22,23 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 
+import { ExportSharePanel } from '../ExportSharePanel';
 import type { Report, ReportSection } from '../useReportBuilder';
+import { AssessmentMatrix, type AssessmentMatrixData } from '../visuals/AssessmentMatrix';
 
 // ==========================================
 // TYPES
 // ==========================================
+
+interface ShareLink {
+  id: string;
+  token: string;
+  url: string;
+  hasPassword: boolean;
+  expiresAt?: string;
+  viewCount: number;
+  createdAt: string;
+}
 
 interface ReviewEditStepProps {
   report: Report | null;
@@ -34,6 +46,24 @@ interface ReviewEditStepProps {
   onUpdateContent: (sectionKey: string, content: string) => Promise<void>;
   onRegenerateSection: (sectionKey: string, customPrompt?: string) => Promise<void>;
   onFinalize: () => Promise<void>;
+  onApprove?: () => Promise<void>;
+  onSendBack?: () => Promise<void>;
+  onExportPdf?: () => Promise<void>;
+  onCreateShareLink?: (options?: {
+    password?: string;
+    expiresInDays?: number;
+    showCompanyLogo?: boolean;
+    showConsultinityBranding?: boolean;
+    customMessage?: string;
+  }) => Promise<{
+    id: string;
+    token: string;
+    url: string;
+    hasPassword: boolean;
+    expiresAt?: string;
+  } | null>;
+  onGetShareLinks?: () => Promise<ShareLink[] | null>;
+  onRevokeShareLink?: (linkId: string) => Promise<boolean>;
   isLoading: boolean;
 }
 
@@ -59,6 +89,18 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
 
   // Get current content (edited takes precedence)
   const currentContent = section.editedContent || section.generatedContent || '';
+
+  const maybeMatrixData = (() => {
+    const wantsMatrix = section.sectionType === 'matrix' || section.renderKind === 'matrix';
+    if (!wantsMatrix) return null;
+    try {
+      const parsed = JSON.parse(currentContent || '{}') as AssessmentMatrixData;
+      if (parsed && (parsed as any).type === 'assessment_matrix') return parsed;
+      return null;
+    } catch {
+      return null;
+    }
+  })();
 
   // Start editing
   const handleStartEdit = useCallback(() => {
@@ -196,8 +238,14 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
               </div>
             </div>
           ) : (
-            <div className="prose prose-slate dark:prose-invert max-w-none">
-              <ReactMarkdown>{currentContent || '*No content generated*'}</ReactMarkdown>
+            <div>
+              {maybeMatrixData ? (
+                <AssessmentMatrix data={maybeMatrixData} />
+              ) : (
+                <div className="prose prose-slate dark:prose-invert max-w-none">
+                  <ReactMarkdown>{currentContent || '*No content generated*'}</ReactMarkdown>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -276,6 +324,12 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
   onUpdateContent,
   onRegenerateSection,
   onFinalize,
+  onApprove,
+  onSendBack,
+  onExportPdf,
+  onCreateShareLink,
+  onGetShareLinks,
+  onRevokeShareLink,
   isLoading,
 }) => {
   const { i18n } = useTranslation();
@@ -344,24 +398,40 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
           </button>
         </div>
 
-        {/* Status Badge */}
-        {report && (
-          <div
-            className={`
-            flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium
-            ${
-              report.status === 'APPROVED'
-                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                : report.status === 'IN_REVIEW'
-                  ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
-                  : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-            }
-          `}
-          >
-            {report.status === 'APPROVED' && <CheckCircle2 className="w-4 h-4" />}
-            {report.status}
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {/* Export & Share Panel */}
+          {report && onExportPdf && onCreateShareLink && onGetShareLinks && onRevokeShareLink && (
+            <ExportSharePanel
+              reportId={report.id}
+              reportTitle={report.title}
+              reportStatus={report.status}
+              onExportPdf={onExportPdf}
+              onCreateShareLink={onCreateShareLink}
+              onGetShareLinks={onGetShareLinks}
+              onRevokeShareLink={onRevokeShareLink}
+              isLoading={isLoading}
+            />
+          )}
+
+          {/* Status Badge */}
+          {report && (
+            <div
+              className={`
+              flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium
+              ${
+                report.status === 'APPROVED'
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                  : report.status === 'IN_REVIEW'
+                    ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
+                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+              }
+            `}
+            >
+              {report.status === 'APPROVED' && <CheckCircle2 className="w-4 h-4" />}
+              {report.status}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Content */}
@@ -418,6 +488,49 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
                 )}
                 {isPl ? 'Finalizuj Raport' : 'Finalize Report'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Review actions */}
+      {report?.status === 'IN_REVIEW' && (
+        <div className="mt-8 p-6 bg-yellow-50 dark:bg-yellow-900/10 rounded-xl border border-yellow-200 dark:border-yellow-800">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center flex-shrink-0">
+              <CheckCircle2 className="w-6 h-6 text-yellow-700 dark:text-yellow-300" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-yellow-900 dark:text-yellow-100">
+                {isPl ? 'Weryfikacja' : 'In Review'}
+              </h3>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                {isPl
+                  ? 'Raport jest w weryfikacji. Możesz go zatwierdzić lub odesłać do poprawek.'
+                  : 'This report is in review. You can approve it or send it back for changes.'}
+              </p>
+
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                {onSendBack && (
+                  <button
+                    onClick={onSendBack}
+                    disabled={isLoading}
+                    className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                  >
+                    {isPl ? 'Odeślij do poprawek' : 'Send back'}
+                  </button>
+                )}
+                {onApprove && (
+                  <button
+                    onClick={onApprove}
+                    disabled={isLoading}
+                    className="flex items-center gap-2 px-5 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                  >
+                    <Check className="w-4 h-4" />
+                    {isPl ? 'Zatwierdź' : 'Approve'}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>

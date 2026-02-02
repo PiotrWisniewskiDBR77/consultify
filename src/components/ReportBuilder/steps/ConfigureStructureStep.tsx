@@ -15,8 +15,10 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { Api } from '@/services/api';
 
 import type { Report, ReportSection, SectionLanguage, SectionLength } from '../useReportBuilder';
 
@@ -29,7 +31,13 @@ interface ConfigureStructureStepProps {
   sections: ReportSection[];
   onUpdateSection: (sectionKey: string, updates: Partial<ReportSection>) => void;
   onReorderSections: (newOrder: string[]) => void;
-  onAddSection: (title: string) => Promise<ReportSection | null>;
+  onAddSection: (args: {
+    title: string;
+    blockTypeId?: string;
+    renderKind?: string;
+    length?: SectionLength;
+    language?: SectionLanguage;
+  }) => Promise<ReportSection | null>;
   onRemoveSection: (sectionKey: string) => Promise<boolean>;
   onSaveConfig: (
     updates: Array<{
@@ -236,16 +244,44 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
 
 interface AddSectionModalProps {
   onClose: () => void;
-  onAdd: (title: string) => void;
+  onAdd: (args: {
+    title: string;
+    blockTypeId?: string;
+    renderKind?: string;
+    length?: SectionLength;
+    language?: SectionLanguage;
+  }) => void;
   isPl: boolean;
+  blockTypes: Array<{
+    id: string;
+    name: string;
+    renderKind?: string;
+    defaultLength?: SectionLength;
+    defaultLanguage?: SectionLanguage;
+  }>;
+  isLoadingBlocks: boolean;
 }
 
-const AddSectionModal: React.FC<AddSectionModalProps> = ({ onClose, onAdd, isPl }) => {
+const AddSectionModal: React.FC<AddSectionModalProps> = ({
+  onClose,
+  onAdd,
+  isPl,
+  blockTypes,
+  isLoadingBlocks,
+}) => {
   const [title, setTitle] = useState('');
+  const [selectedBlockTypeId, setSelectedBlockTypeId] = useState<string>('');
 
   const handleAdd = () => {
     if (title.trim()) {
-      onAdd(title.trim());
+      const bt = blockTypes.find((b) => b.id === selectedBlockTypeId);
+      onAdd({
+        title: title.trim(),
+        blockTypeId: bt?.id || undefined,
+        renderKind: bt?.renderKind || undefined,
+        length: bt?.defaultLength,
+        language: bt?.defaultLanguage,
+      });
       onClose();
     }
   };
@@ -263,6 +299,33 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({ onClose, onAdd, isPl 
         </div>
 
         <div className="p-4">
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            {isPl ? 'Typ bloku' : 'Block type'}
+          </label>
+          <select
+            value={selectedBlockTypeId}
+            onChange={(e) => {
+              const id = e.target.value;
+              setSelectedBlockTypeId(id);
+              const bt = blockTypes.find((b) => b.id === id);
+              if (bt && !title) setTitle(bt.name);
+            }}
+            className="w-full mb-4 px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">{isPl ? 'Custom (tytuł + prompt)' : 'Custom (title + prompt)'}</option>
+            {isLoadingBlocks ? (
+              <option value="" disabled>
+                {isPl ? 'Ładowanie…' : 'Loading…'}
+              </option>
+            ) : (
+              blockTypes.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))
+            )}
+          </select>
+
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
             {isPl ? 'Tytuł Sekcji' : 'Section Title'}
           </label>
@@ -316,7 +379,27 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
 
   const [optionsSection, setOptionsSection] = useState<ReportSection | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [blockTypes, setBlockTypes] = useState<
+    Array<{
+      id: string;
+      name: string;
+      renderKind?: string;
+      defaultLength?: SectionLength;
+      defaultLanguage?: SectionLanguage;
+    }>
+  >([]);
+  const [isLoadingBlocks, setIsLoadingBlocks] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!showAddModal) return;
+    // Lazy-load block types when user opens "Add section"
+    setIsLoadingBlocks(true);
+    Api.get('/report-builder/block-types')
+      .then((res: any) => setBlockTypes(res?.blocks || []))
+      .catch(() => setBlockTypes([]))
+      .finally(() => setIsLoadingBlocks(false));
+  }, [showAddModal]);
 
   // Sort sections by order
   const sortedSections = [...sections].sort((a, b) => a.orderIndex - b.orderIndex);
@@ -368,8 +451,14 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
 
   // Add new section
   const handleAddSection = useCallback(
-    async (title: string) => {
-      await onAddSection(title);
+    async (args: {
+      title: string;
+      blockTypeId?: string;
+      renderKind?: string;
+      length?: SectionLength;
+      language?: SectionLanguage;
+    }) => {
+      await onAddSection(args);
     },
     [onAddSection]
   );
@@ -549,6 +638,8 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
           onClose={() => setShowAddModal(false)}
           onAdd={handleAddSection}
           isPl={isPl}
+          blockTypes={blockTypes}
+          isLoadingBlocks={isLoadingBlocks}
         />
       )}
     </div>

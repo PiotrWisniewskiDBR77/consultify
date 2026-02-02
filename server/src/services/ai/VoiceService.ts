@@ -47,8 +47,10 @@ export class VoiceService {
       });
 
       return transcription.text;
-    } catch (error: any) {
-      logger.error(`[VoiceService] Transcription failed: ${error.message}`);
+    } catch (error) {
+      if (error instanceof Error) {
+        logger.error(`[VoiceService] Transcription failed: ${error.message}`);
+      }
       throw error;
     }
   }
@@ -71,8 +73,10 @@ export class VoiceService {
 
       const buffer = Buffer.from(await mp3.arrayBuffer());
       return buffer;
-    } catch (error: any) {
-      logger.error(`[VoiceService] Synthesis failed: ${error.message}`);
+    } catch (error) {
+      if (error instanceof Error) {
+        logger.error(`[VoiceService] Synthesis failed: ${error.message}`);
+      }
       throw error;
     }
   }

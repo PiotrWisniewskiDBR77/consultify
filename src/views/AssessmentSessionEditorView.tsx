@@ -2,6 +2,7 @@ import {
   ArrowLeft,
   Check,
   Edit3,
+  FileText,
   Info,
   Loader2,
   Lock,
@@ -454,8 +455,9 @@ export const AssessmentSessionEditorView: React.FC = () => {
           console.error('[AssessmentSessionEditorView] Auto-save failed:', e);
           // Silent fail for auto-save; user can manually save if needed
         } finally {
-          if (!isMountedRef.current) return;
-          setIsSaving(false);
+          if (isMountedRef.current) {
+            setIsSaving(false);
+          }
         }
       }, 600);
     },
@@ -1063,6 +1065,26 @@ export const AssessmentSessionEditorView: React.FC = () => {
             >
               <MessageSquare className="w-4 h-4" />
               <span>Chat</span>
+            </button>
+
+            {/* Report Builder button */}
+            <button
+              onClick={() => {
+                if (!assessmentId) return;
+                const qs = new URLSearchParams({
+                  new: 'true',
+                  sourceType: 'ASSESSMENT',
+                  sourceId: assessmentId,
+                  ...(assessment?.name ? { sourceName: assessment.name } : {}),
+                });
+                navigate(`/reports/builder?${qs.toString()}`);
+              }}
+              className="hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors"
+              title="Create report from this assessment"
+              type="button"
+            >
+              <FileText className="w-4 h-4" />
+              <span>Report</span>
             </button>
 
             {/* Save button - only when can edit and not locked */}

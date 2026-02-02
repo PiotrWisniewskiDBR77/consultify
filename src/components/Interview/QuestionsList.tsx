@@ -152,20 +152,6 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
 
   // Wszystkie pytania domyślnie zamknięte dla czytelności
   const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  // Jeśli nie ma kategorii, nie renderuj nic
-  if (!category) {
-    return null;
-  }
-
-  // Nie auto-rozwijaj pytań przy zmianie kategorii - użytkownik sam zdecyduje, co otworzyć
-  // useEffect(() => {
-  //   const nextUnanswered =
-  //     categoryQuestions.find((q) => q.status !== 'answered')?.id ||
-  //     categoryQuestions[0]?.id ||
-  //     null;
-  //   setExpandedId(nextUnanswered);
-  // }, [category]); // eslint-disable-line react-hooks/exhaustive-deps
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [newQuestionText, setNewQuestionText] = useState('');
@@ -455,6 +441,11 @@ Rules:
       </div>
     );
   };
+
+  // Jeśli nie ma kategorii, nie renderuj nic
+  if (!category) {
+    return null;
+  }
 
   if (isLoading) {
     return (

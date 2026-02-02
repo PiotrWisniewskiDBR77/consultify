@@ -328,7 +328,8 @@ export class LLMService {
   }
 
   async call(params: CallParams): Promise<Record<string, unknown>> {
-    let { type, modelConfig, stream, schema, tools, cache, cacheTtl } = params;
+    const { type, stream, schema, tools, cache, cacheTtl } = params;
+    let { modelConfig } = params;
 
     // Intelligent Caching (Skip for streams/tools/reasoning for now)
     // We can cache simple text/structured generation

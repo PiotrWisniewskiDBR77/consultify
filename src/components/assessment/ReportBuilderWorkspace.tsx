@@ -31,7 +31,7 @@ import { useTranslation } from 'react-i18next';
 
 import { type AIAction, useReportSections } from '../../hooks/useReportSections';
 import { useAppStore } from '../../store/useAppStore';
-import { ChatPanel } from '../layout/ChatPanel';
+import { UnifiedChatPanel } from '../AIChat/UnifiedChatPanel';
 import { SplitLayout } from '../layout/SplitLayout';
 import { ReportBuilder } from '../Reports/ReportBuilder';
 import { ReportHeader } from '../Reports/ReportHeader';
@@ -318,12 +318,15 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
         // Add bot response
         setIsBotTyping(true);
         setTimeout(() => {
+          // Use addMessage from useConversationStore if possible, but for now addChatMessage is fine
           addChatMessage({
+            id: `ai-edit-${Date.now()}`,
             role: 'ai',
             content: isPolish
               ? `Wykonuję akcję "${action}" na wybranej sekcji...`
               : `Executing "${action}" on the selected section...`,
-          } as any);
+            timestamp: new Date(),
+          });
           setIsBotTyping(false);
         }, 500);
       }
@@ -572,15 +575,21 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
               </button>
             </div>
             <div className="flex-1 overflow-hidden">
-              <ChatPanel
-                messages={activeChatMessages}
-                onSendMessage={(text: any) => {
-                  addChatMessage({ role: 'user', content: text } as any);
+              <UnifiedChatPanel
+                mode="split"
+                customMessages={activeChatMessages}
+                onMessageSent={(text: string) => {
+                  addChatMessage({
+                    id: `user-${Date.now()}`,
+                    role: 'user',
+                    content: text,
+                    timestamp: new Date(),
+                  });
                 }}
-                onOptionSelect={() => {}}
-                isTyping={isBotTyping}
+                showModeToggle={false}
+                showHistoryTrigger={false}
+                showFocusMode={false}
                 title={isPolish ? 'Czat AI' : 'AI Chat'}
-                subtitle={isPolish ? 'Edytuj raport przez czat' : 'Edit report via chat'}
               />
             </div>
           </div>

@@ -1,7 +1,7 @@
 /**
  * AIPolicyEngine - Unit Tests (L1)
  * Tests for AI policy evaluation and enforcement
- * 
+ *
  * Coverage target: 95%+
  */
 
@@ -11,13 +11,13 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 const mockDbGet = vi.fn();
 const mockDbRun = vi.fn();
 
-vi.mock('../../../../server/src/utils/DbPromise.js', () => ({
+vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   get: (...args: any[]) => mockDbGet(...args),
   run: (...args: any[]) => mockDbRun(...args),
 }));
 
 // Mock logger
-vi.mock('../../../../server/src/utils/Logger.js', () => ({
+vi.mock('../../../server/src/utils/Logger.js', () => ({
   default: {
     info: vi.fn(),
     error: vi.fn(),
@@ -26,7 +26,7 @@ vi.mock('../../../../server/src/utils/Logger.js', () => ({
 }));
 
 // Mock aiRoleGuard
-vi.mock('../../../../server/src/services/aiRoleGuard.js', () => ({
+vi.mock('../../../server/src/services/aiRoleGuard.js', () => ({
   default: {
     getRoleCapabilities: vi.fn().mockResolvedValue({}),
     getProjectRole: vi.fn().mockResolvedValue('ADVISOR'),
@@ -35,7 +35,7 @@ vi.mock('../../../../server/src/services/aiRoleGuard.js', () => ({
 }));
 
 // Mock regulatoryModeGuard
-vi.mock('../../../../server/src/services/regulatoryModeGuard.js', () => ({
+vi.mock('../../../server/src/services/regulatoryModeGuard.js', () => ({
   default: {
     isRegulatoryModeEnabled: vi.fn().mockResolvedValue(false),
     getRegulatoryPrompt: vi.fn().mockResolvedValue(null),
@@ -46,7 +46,7 @@ import AIPolicyEngine, {
   POLICY_LEVELS,
   POLICY_HIERARCHY,
   ACTION_POLICY_REQUIREMENTS,
-} from '../../../../server/src/services/aiPolicyEngine';
+} from '../../../server/src/services/aiPolicyEngine';
 
 describe('AIPolicyEngine', () => {
   beforeEach(() => {
@@ -102,7 +102,7 @@ describe('AIPolicyEngine', () => {
 
     it('should include regulatory mode if enabled', async () => {
       mockDbGet.mockResolvedValue({ value: 'ASSISTED' });
-      const regulatoryGuard = await import('../../../../server/src/services/regulatoryModeGuard.js');
+      const regulatoryGuard = await import('../../../server/src/services/regulatoryModeGuard.js');
       vi.mocked(regulatoryGuard.default.isRegulatoryModeEnabled).mockResolvedValue(true);
       vi.mocked(regulatoryGuard.default.getRegulatoryPrompt).mockResolvedValue('Regulatory prompt');
 

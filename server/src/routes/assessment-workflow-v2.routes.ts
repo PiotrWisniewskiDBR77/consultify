@@ -1037,6 +1037,7 @@ router.put('/:assessmentId/gate-decisions/:gateType', async (req, res) => {
       'REQUEST_REVIEW',
       'APPROVE_REPORT',
       'APPROVE_ASSESSMENT',
+      'GENERATE_REPORT',
       'GENERATE_INITIATIVES',
     ];
     if (!validGates.includes(String(gateType).toUpperCase())) {
@@ -1086,6 +1087,7 @@ router.put('/:assessmentId/gate-decisions/:gateType', async (req, res) => {
         REQUEST_REVIEW: { from: 'DRAFT', to: 'IN_REVIEW', role: 'manager' },
         APPROVE_REPORT: { from: 'IN_REVIEW', to: 'AWAITING_APPROVAL', role: 'admin' },
         APPROVE_ASSESSMENT: { from: 'AWAITING_APPROVAL', to: 'APPROVED', role: 'admin' },
+        GENERATE_REPORT: { from: 'APPROVED', to: 'APPROVED', role: 'manager' },
         GENERATE_INITIATIVES: { from: 'APPROVED', to: 'APPROVED', role: 'manager' },
       };
 

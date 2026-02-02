@@ -144,6 +144,7 @@ import raidRoutes from './routes/raid.routes.js';
 import rapidleanRoutes from './routes/rapidlean.routes.js';
 import referralRoutes from './routes/referrals.routes.js';
 import reportBuilderRoutes from './routes/report-builder.routes.js';
+import reportBuilderPublicRoutes from './routes/report-builder-public.routes.js';
 import reportCommentsRoutes from './routes/report-comments.routes.js';
 import reportsRoutes from './routes/reports.routes.js';
 import resourceManagementRoutes from './routes/resourceManagement.routes.js';
@@ -392,8 +393,14 @@ export class ApiGateway {
       app.use('/api/pmo-analysis', pmoAnalysisRoutes);
       app.use('/api/pmo-context', pmoContextRoutes);
       app.use('/api/pmo', pmoRoutes);
+      // Compatibility mounts (some clients expect PMO-scoped prefixes)
+      app.use('/api/pmo/projects', projectRoutes);
+      app.use('/api/pmo/initiatives', initiativesRoutes);
+      app.use('/api/pmo/tasks', taskRoutes);
       app.use('/api/pmo-domains', pmoDomainsRoutes);
-      app.use('/api/projects', projectMembersRoutes);
+      // The project-members router is currently a stub (returns 501). Mount it on a dedicated prefix
+      // so it doesn't interfere with the real /api/projects routes.
+      app.use('/api/project-members', projectMembersRoutes);
       app.use('/api', workstreamsRoutes);
       app.use('/api/org/work-mode', workModeRoutes);
       app.use('/api/pmo-roles', pmoRolesRoutes);
@@ -430,6 +437,7 @@ export class ApiGateway {
       app.use('/api/promo', promoRoutes);
       app.use('/api/partners', partnerRoutes);
       app.use('/api/public/partner', publicPartnerRouter); // Public partner code validation
+      app.use('/api/public/report', reportBuilderPublicRoutes); // Public shared reports
       app.use('/api/superadmin/partner-settlements', superAdminPartnerRouter); // SuperAdmin partner settlements
       app.use('/api/superadmin/partner-config', partnerConfigRouter); // SuperAdmin partner configuration
       app.use('/api/settlements', settlementRoutes);

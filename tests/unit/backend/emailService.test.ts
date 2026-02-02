@@ -1,7 +1,7 @@
 /**
  * EmailService - Unit Tests (L1)
  * Tests for email sending functionality
- * 
+ *
  * Coverage target: 95%+
  */
 
@@ -13,7 +13,7 @@ const mockDb = {
   all: vi.fn(),
 };
 
-vi.mock('../../../../server/src/database/Database.js', () => ({
+vi.mock('../../../server/src/database/Database.js', () => ({
   getDatabase: vi.fn().mockResolvedValue(mockDb),
 }));
 
@@ -37,13 +37,13 @@ const mockConfig = {
   SMTP_FROM: 'noreply@example.com',
 };
 
-vi.mock('../../../../server/src/config/Config.js', () => ({
+vi.mock('../../../server/src/config/Config.js', () => ({
   default: mockConfig,
   config: mockConfig,
 }));
 
 // Mock logger
-vi.mock('../../../../server/src/utils/Logger.js', () => ({
+vi.mock('../../../server/src/utils/Logger.js', () => ({
   default: {
     info: vi.fn(),
     error: vi.fn(),
@@ -52,13 +52,13 @@ vi.mock('../../../../server/src/utils/Logger.js', () => ({
 }));
 
 // Import after mocks are set up
-let emailService: typeof import('../../../../server/src/services/emailService');
+let emailService: typeof import('../../../server/src/services/emailService');
 
 describe('EmailService', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     // Dynamically import after mocks are set up
-    emailService = await import('../../../../server/src/services/emailService');
+    emailService = await import('../../../server/src/services/emailService');
   });
 
   afterEach(() => {

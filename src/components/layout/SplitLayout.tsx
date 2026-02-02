@@ -21,7 +21,6 @@ import { createWorkspaceContext, getDefaultWorkspaceType } from '../../types/wor
 import { ArtifactsPanel } from '../AIChat/Artifacts/ArtifactsPanel';
 import { FocusModeSelector } from '../AIChat/Input/FocusModeSelector';
 import { UnifiedChatPanel } from '../AIChat/UnifiedChatPanel';
-import { ChatPanel } from './ChatPanel';
 
 interface SplitLayoutProps {
   children: React.ReactNode;
@@ -265,40 +264,18 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
             </div>
           )}
 
-          {useUnifiedChat ? (
-            <UnifiedChatPanel
-              mode="split"
-              workspaceContext={workspaceContext}
-              showModeToggle={true}
-              onModeToggle={handleExpandToFullChat}
-              showHistoryTrigger={true}
-              showFocusMode={true}
-              title={typeof title === 'string' ? title : undefined}
-              systemPrompt={chatSystemPrompt}
-              roleName={chatRoleName}
-            />
-          ) : (
-            <ChatPanel
-              messages={
-                isStreaming
-                  ? [
-                      ...activeChatMessages,
-                      {
-                        id: 'streaming-ai',
-                        role: 'ai',
-                        content: streamedContent,
-                        timestamp: new Date(),
-                      } as ChatMessage,
-                    ]
-                  : activeChatMessages
-              }
-              onSendMessage={handleSendMessage}
-              onOptionSelect={handleOptionSelect}
-              isTyping={isBotTyping}
-              title={title}
-              subtitle={subtitle}
-            />
-          )}
+          <UnifiedChatPanel
+            mode="split"
+            workspaceContext={workspaceContext}
+            showModeToggle={true}
+            onModeToggle={handleExpandToFullChat}
+            showHistoryTrigger={true}
+            showFocusMode={true}
+            title={typeof title === 'string' ? title : undefined}
+            systemPrompt={chatSystemPrompt}
+            roleName={chatRoleName}
+            onSendMessage={onSendMessage} // Pass override if provided
+          />
         </div>
       )}
       {/* Desktop Collapsed Trigger */}
@@ -378,39 +355,18 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
               </button>
             </div>
 
-            {/* Chat Panel */}
             <div className="flex-1 overflow-hidden">
-              {useUnifiedChat ? (
-                <UnifiedChatPanel
-                  mode="split"
-                  workspaceContext={workspaceContext}
-                  showModeToggle={true}
-                  onModeToggle={handleExpandToFullChat}
-                  showHistoryTrigger={true}
-                  showFocusMode={false} // Compact on mobile
-                  systemPrompt={chatSystemPrompt}
-                  roleName={chatRoleName}
-                />
-              ) : (
-                <ChatPanel
-                  messages={
-                    isStreaming
-                      ? [
-                          ...activeChatMessages,
-                          {
-                            id: 'streaming-ai',
-                            role: 'ai',
-                            content: streamedContent,
-                            timestamp: new Date(),
-                          } as ChatMessage,
-                        ]
-                      : activeChatMessages
-                  }
-                  onSendMessage={handleSendMessage}
-                  onOptionSelect={handleOptionSelect}
-                  isTyping={isBotTyping}
-                />
-              )}
+              <UnifiedChatPanel
+                mode="split"
+                workspaceContext={workspaceContext}
+                showModeToggle={true}
+                onModeToggle={handleExpandToFullChat}
+                showHistoryTrigger={true}
+                showFocusMode={false} // Compact on mobile
+                systemPrompt={chatSystemPrompt}
+                roleName={chatRoleName}
+                onSendMessage={onSendMessage} // Pass override if provided
+              />
             </div>
           </div>
         </div>

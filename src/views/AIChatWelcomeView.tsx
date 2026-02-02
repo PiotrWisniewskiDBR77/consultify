@@ -30,13 +30,13 @@ import { SmartSuggestions } from '../components/AIChat/SmartSuggestions';
 import { TTSIndicator } from '../components/AIChat/TTSIndicator';
 import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
 import { useAIStream } from '../hooks/useAIStream';
-import { cleanTextForSpeech } from '../hooks/useTextToSpeech';
 import { useUniversalVoice } from '../hooks/useUniversalVoice';
 import { useAppStore } from '../store/useAppStore';
-import { Conversation, useConversationStore } from '../store/useConversationStore';
+import { useConversationStore } from '../store/useConversationStore';
 import { usePMOStore } from '../store/usePMOStore';
 import { ChatCitation, ChatMessage, ChatResponseAction } from '../types';
 import { MessageFeedback } from '../types';
+import { cleanTextForSpeech } from '../utils/textCleaning';
 
 // Time-aware greeting helper
 const getTimeContext = () => {
@@ -137,6 +137,7 @@ export const AIChatWelcomeView: React.FC = () => {
     speak,
     stopSpeaking,
     isSupported: voiceSupported,
+    endConversation: stopContinuousMode,
   } = useUniversalVoice({
     onSendMessage: (msg) => handleSend(msg),
     settings: {
@@ -402,7 +403,7 @@ For example: REMEMBER: preferred_language: Polish`;
       startStream(message.trim(), history, systemPrompt, fullContext);
 
       // Auto-speak in voice mode
-      if (voiceModeEnabled && ttsSupported) {
+      if (voiceModeEnabled && voiceSupported) {
         // Speech will be triggered when streaming completes
       }
     },
@@ -646,7 +647,7 @@ For example: REMEMBER: preferred_language: Polish`;
                       )}
 
                       {/* Voice Mode Indicator */}
-                      {isAiMessage && !isStreamingThis && voiceModeEnabled && ttsSupported && (
+                      {isAiMessage && !isStreamingThis && voiceModeEnabled && voiceSupported && (
                         <button
                           onClick={() => speak(cleanTextForSpeech(displayContent))}
                           className="mt-2 text-xs text-slate-400 dark:text-slate-500 hover:text-primary-500 flex items-center gap-1"
@@ -672,7 +673,7 @@ For example: REMEMBER: preferred_language: Polish`;
                           onReport={handleReport}
                           onRegenerate={handleRegenerate}
                           onSpeak={
-                            ttsSupported
+                            voiceSupported
                               ? (content) => speak(cleanTextForSpeech(content))
                               : undefined
                           }

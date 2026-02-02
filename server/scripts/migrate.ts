@@ -85,7 +85,10 @@ async function getAppliedMigrations(): Promise<AppliedMigration[]> {
 /**
  * Apply a single migration
  */
-async function applyMigration(migration: Migration): Promise<boolean> {
+async function applyMigration(
+  migration: Migration,
+  options: { safeMode?: boolean } = {}
+): Promise<boolean> {
   const db = await getDatabase();
   const startTime = Date.now();
 
@@ -455,20 +458,29 @@ async function applyMigration(migration: Migration): Promise<boolean> {
     return true;
   } catch (error) {
     const executionTime = Date.now() - startTime;
-    logger.error(`[Migrate] ❌ Failed to apply ${migration.filename}:`, error);
+    const safeMode = options.safeMode === true;
+    if (safeMode) {
+      logger.warn(
+        `[Migrate] ⚠️ Safe mode: skipping failed migration ${migration.filename} (recording as skipped)`
+      );
+    } else {
+      logger.error(`[Migrate] ❌ Failed to apply ${migration.filename}:`, error);
+    }
 
-    // Record failed migration
+    // Record failed migration (or "skipped" as success in safe mode to avoid blocking local dev on mixed-dialect migrations).
     try {
+      const status = safeMode ? 'success' : 'failed';
+      const checksum = safeMode ? `skipped:${migration.checksum}` : migration.checksum;
       await db.run(
         `INSERT OR REPLACE INTO schema_migrations (version, filename, checksum, execution_time_ms, status)
-                 VALUES (?, ?, ?, ?, 'failed')`,
-        [migration.version, migration.filename, migration.checksum, executionTime]
+                 VALUES (?, ?, ?, ?, ?)`,
+        [migration.version, migration.filename, checksum, executionTime, status]
       );
     } catch (recordError) {
       logger.error('[Migrate] Failed to record migration failure:', recordError);
     }
 
-    return false;
+    return safeMode ? true : false;
   }
 }
 
@@ -524,6 +536,7 @@ async function runMigrations(options: { backfill?: boolean } = {}): Promise<void
   const appliedMigrations = await getAppliedMigrations();
 
   const dbType = process.env.DB_TYPE || 'sqlite';
+  const safeMode = dbType === 'sqlite' && (process.env.MIGRATE_MODE || '').toLowerCase() === 'safe';
 
   logger.info(`[Migrate] Found ${allMigrations.length} migration files`);
   logger.info(`[Migrate] ${appliedMigrations.length} migrations already applied`);
@@ -575,7 +588,7 @@ async function runMigrations(options: { backfill?: boolean } = {}): Promise<void
   logger.info(`[Migrate] Found ${pendingMigrations.length} pending migrations`);
 
   for (const migration of pendingMigrations) {
-    const success = await applyMigration(migration);
+    const success = await applyMigration(migration, { safeMode });
     if (!success) {
       logger.error('[Migrate] ❌ Migration failed, stopping...');
       process.exit(1);
