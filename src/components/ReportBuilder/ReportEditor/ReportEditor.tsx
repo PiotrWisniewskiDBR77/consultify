@@ -8,6 +8,7 @@
  */
 
 import {
+  BookTemplate,
   ChevronDown,
   ChevronRight,
   Download,
@@ -36,6 +37,7 @@ import type { Report, ReportSection, ReportSourceType, SourceOption } from '../u
 import { BlockCard } from './BlockCard';
 import { BlockPalette } from './BlockPalette';
 import { SettingsPanel } from './SettingsPanel';
+import { TemplatesModal } from './TemplatesModal';
 
 // ==========================================
 // TYPES
@@ -65,6 +67,10 @@ export interface ReportStyling {
 }
 
 export interface BlockConfig {
+  /**
+   * For persisted blocks, this MUST be the backend `sectionKey`.
+   * For newly created blocks it will be a temporary key: `tmp_*`.
+   */
   id: string;
   type: string;
   title: string;
@@ -73,11 +79,18 @@ export interface BlockConfig {
   length: 'short' | 'medium' | 'long';
   includeVisuals: boolean;
   customPrompt?: string;
+  blockTypeId?: string;
+  renderKind?: string;
   enabled: boolean;
   orderIndex: number;
   content?: string;
   isGenerating?: boolean;
   isGenerated?: boolean;
+  /**
+   * Block-specific settings from BlockSettingsRegistry.
+   * These settings customize how the block is generated and rendered.
+   */
+  blockSettings?: Record<string, unknown>;
 }
 
 interface ReportEditorProps {
@@ -85,6 +98,7 @@ interface ReportEditorProps {
   sourceType?: ReportSourceType;
   sourceId?: string;
   sourceName?: string;
+  templateId?: string;
   onSave?: (reportId: string) => void;
   onClose?: () => void;
 }
@@ -98,6 +112,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   sourceType: initialSourceType,
   sourceId: initialSourceId,
   sourceName: initialSourceName,
+  templateId: initialTemplateId,
   onSave,
   onClose,
 }) => {
@@ -128,6 +143,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showBlockPalette, setShowBlockPalette] = useState(false);
+  const [showTemplatesModal, setShowTemplatesModal] = useState(false);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [settingsSection, setSettingsSection] = useState<'intent' | 'styling' | 'export'>('intent');
   const [isSettingsPanelCollapsed, setIsSettingsPanelCollapsed] = useState(false);
@@ -137,17 +153,24 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   const [sourceId, setSourceId] = useState<string | null>(initialSourceId || null);
   const [sourceName, setSourceName] = useState<string | null>(initialSourceName || null);
   const [reportTitle, setReportTitle] = useState('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
+    initialTemplateId || null
+  );
 
   // Load existing report
   useEffect(() => {
     if (reportId) {
       loadReport(reportId);
+    } else if (initialTemplateId) {
+      // Initialize from template (generator mode)
+      loadTemplate(initialTemplateId);
+      setReportTitle(`${initialSourceName || 'Assessment'} - Report`);
     } else if (initialSourceType && initialSourceId) {
       // Initialize with default blocks for source type
       initializeDefaultBlocks(initialSourceType);
       setReportTitle(`${initialSourceName || 'Assessment'} - Report`);
     }
-  }, [reportId, initialSourceType, initialSourceId, initialSourceName]);
+  }, [reportId, initialSourceType, initialSourceId, initialSourceName, initialTemplateId]);
 
   const loadReport = async (id: string) => {
     setIsLoading(true);
@@ -159,6 +182,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         setSourceType(response.report.sourceType);
         setSourceId(response.report.sourceId);
         setSourceName(response.report.sourceName);
+        setSelectedTemplateId((response.report as any).templateId || null);
 
         // Load intent from config
         if (response.report.config?.intent) {
@@ -168,21 +192,63 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         // Convert sections to blocks
         if (response.sections) {
           const loadedBlocks: BlockConfig[] = response.sections.map((s: ReportSection) => ({
-            id: s.id,
-            type: s.sectionType,
+            // IMPORTANT: use sectionKey as stable identifier
+            id: s.sectionKey,
+            type: (s as any).blockTypeId || s.sectionType,
             title: s.title,
             length: s.length || 'medium',
-            includeVisuals: s.renderKind === 'matrix' || false,
+            includeVisuals:
+              s.renderKind === 'matrix' ||
+              Boolean(
+                (s as any).renderKind &&
+                ['json', 'matrix', 'table', 'chart', 'callout'].includes(
+                  String((s as any).renderKind)
+                )
+              ),
+            blockTypeId: (s as any).blockTypeId,
+            renderKind: (s as any).renderKind,
             enabled: s.enabled,
             orderIndex: s.orderIndex,
             content: s.editedContent || s.generatedContent,
             isGenerated: Boolean(s.generatedContent),
+            customPrompt: s.customPrompt,
           }));
           setBlocks(loadedBlocks.sort((a, b) => a.orderIndex - b.orderIndex));
         }
       }
     } catch (err) {
       console.error('Failed to load report:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadTemplate = async (templateId: string) => {
+    setIsLoading(true);
+    try {
+      const res = await Api.get(`/report-builder/templates/${templateId}`);
+      const tpl = res?.template;
+      if (!tpl) return;
+      setSelectedTemplateId(templateId);
+      const sections: any[] = Array.isArray(tpl.sectionsJson) ? tpl.sectionsJson : [];
+      const templateBlocks: BlockConfig[] = sections.map((s, idx) => ({
+        id: String(s.key || `tpl_${idx}`),
+        type: String(s.blockTypeId || s.type || 'custom'),
+        title: String(s.title || s.name || s.key || 'Section'),
+        length: (s.defaultLength || s.length || 'medium') as any,
+        includeVisuals: Boolean(
+          s.renderKind === 'matrix' ||
+          ['json', 'matrix', 'table', 'chart', 'callout'].includes(String(s.renderKind || ''))
+        ),
+        customPrompt: s.customPrompt || undefined,
+        blockTypeId: s.blockTypeId || undefined,
+        renderKind: s.renderKind || undefined,
+        enabled: s.enabled !== undefined ? Boolean(s.enabled) : true,
+        orderIndex: typeof s.order === 'number' ? s.order : idx,
+      }));
+      setBlocks(templateBlocks.sort((a, b) => a.orderIndex - b.orderIndex));
+    } catch (err) {
+      console.error('Failed to load template:', err);
     } finally {
       setIsLoading(false);
     }
@@ -257,7 +323,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   const addBlock = useCallback(
     (blockType: string, title: string, afterIndex?: number) => {
       const newBlock: BlockConfig = {
-        id: `block_${Date.now()}`,
+        id: `tmp_${Date.now()}`,
         type: blockType,
         title,
         length: 'medium',
@@ -323,14 +389,66 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       if (report?.id) {
         // Update existing
         await Api.put(`/report-builder/${report.id}/intent`, { config });
-        // Update sections
-        const sectionUpdates = blocks.map((b) => ({
-          sectionKey: b.id,
-          enabled: b.enabled,
-          orderIndex: b.orderIndex,
-          title: b.title,
-          length: b.length,
-        }));
+        // Persist new blocks first (tmp_ ids)
+        const workingBlocks = [...blocks].sort((a, b) => a.orderIndex - b.orderIndex);
+        for (let i = 0; i < workingBlocks.length; i++) {
+          const b = workingBlocks[i];
+          if (!b.id.startsWith('tmp_')) continue;
+
+          const afterSectionKey =
+            i > 0 && !workingBlocks[i - 1].id.startsWith('tmp_')
+              ? workingBlocks[i - 1].id
+              : undefined;
+
+          const normalizedSectionType = (
+            [
+              'cover',
+              'summary',
+              'methodology',
+              'matrix',
+              'axis_analysis',
+              'list',
+              'recommendations',
+              'action_plan',
+              'appendix',
+              'custom',
+            ] as const
+          ).includes(b.type as any)
+            ? (b.type as any)
+            : 'custom';
+
+          const created = await Api.post(`/report-builder/${report.id}/sections`, {
+            title: b.title,
+            sectionType: normalizedSectionType,
+            afterSectionKey,
+            length: b.length,
+            customPrompt: b.customPrompt,
+            blockTypeId: b.blockTypeId,
+            renderKind: b.type === 'matrix' ? 'matrix' : b.renderKind,
+          });
+
+          const newSectionKey = created?.section?.sectionKey;
+          if (newSectionKey) {
+            workingBlocks[i] = { ...b, id: newSectionKey };
+          }
+        }
+
+        // Sync local ids if needed
+        if (workingBlocks.some((b) => b.id.startsWith('tmp_')) === false) {
+          setBlocks(workingBlocks.map((b, idx) => ({ ...b, orderIndex: idx })));
+        }
+
+        // Update sections config for persisted blocks only
+        const sectionUpdates = workingBlocks
+          .filter((b) => !b.id.startsWith('tmp_'))
+          .map((b, idx) => ({
+            sectionKey: b.id,
+            enabled: b.enabled,
+            orderIndex: idx,
+            title: b.title,
+            length: b.length,
+            customPrompt: b.customPrompt,
+          }));
         await Api.put(`/report-builder/${report.id}/config`, { sections: sectionUpdates });
       } else {
         // Create new
@@ -339,9 +457,91 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           sourceId,
           title: reportTitle || `${sourceName} - Report`,
           config,
+          templateId: selectedTemplateId || undefined,
         });
         if (response?.report) {
           setReport(response.report);
+          // Sync server-created sections (from template) with local desired blocks:
+          const newReportId = response.report.id as string;
+          const serverSections: ReportSection[] = Array.isArray(response.sections)
+            ? response.sections
+            : [];
+
+          const desiredOrder = [...blocks].sort((a, b) => a.orderIndex - b.orderIndex);
+          const desiredKeys = new Set(
+            desiredOrder.filter((b) => !b.id.startsWith('tmp_')).map((b) => b.id)
+          );
+          const serverKeys = new Set(serverSections.map((s: any) => String(s.sectionKey)));
+
+          // Delete sections that were created by template but removed in UI
+          for (const s of serverSections) {
+            const key = String((s as any).sectionKey);
+            if (key && !desiredKeys.has(key)) {
+              await Api.delete(`/report-builder/${newReportId}/sections/${key}`);
+            }
+          }
+
+          // Create any blocks not present on server (tmp_ or custom keys)
+          const workingBlocks = [...desiredOrder];
+          for (let i = 0; i < workingBlocks.length; i++) {
+            const b = workingBlocks[i];
+            if (!b.id.startsWith('tmp_') && serverKeys.has(b.id)) continue;
+            if (!b.id.startsWith('tmp_') && desiredKeys.has(b.id) && !serverKeys.has(b.id)) {
+              // key-based custom block not present server-side
+            }
+            if (!b.id.startsWith('tmp_') && serverKeys.has(b.id)) continue;
+
+            const afterSectionKey =
+              i > 0 && !workingBlocks[i - 1].id.startsWith('tmp_')
+                ? workingBlocks[i - 1].id
+                : undefined;
+            const normalizedSectionType = (
+              [
+                'cover',
+                'summary',
+                'methodology',
+                'matrix',
+                'axis_analysis',
+                'list',
+                'recommendations',
+                'action_plan',
+                'appendix',
+                'custom',
+              ] as const
+            ).includes(b.type as any)
+              ? (b.type as any)
+              : 'custom';
+
+            const created = await Api.post(`/report-builder/${newReportId}/sections`, {
+              title: b.title,
+              sectionType: normalizedSectionType,
+              afterSectionKey,
+              length: b.length,
+              customPrompt: b.customPrompt,
+              blockTypeId: b.blockTypeId,
+              renderKind: b.type === 'matrix' ? 'matrix' : b.renderKind,
+            });
+            const newSectionKey = created?.section?.sectionKey;
+            if (newSectionKey) {
+              workingBlocks[i] = { ...b, id: newSectionKey };
+            }
+          }
+
+          // Update config order/title/etc
+          const sectionUpdates = workingBlocks
+            .filter((b) => !b.id.startsWith('tmp_'))
+            .map((b, idx) => ({
+              sectionKey: b.id,
+              enabled: b.enabled,
+              orderIndex: idx,
+              title: b.title,
+              length: b.length,
+              customPrompt: b.customPrompt,
+            }));
+          await Api.put(`/report-builder/${newReportId}/config`, { sections: sectionUpdates });
+
+          // Reload report to get final persisted ordering/content
+          await loadReport(newReportId);
           onSave?.(response.report.id);
         }
       }
