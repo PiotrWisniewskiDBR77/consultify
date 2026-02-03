@@ -105,8 +105,10 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
 
         // Get what model the backend would pick for this tier
         const result = await Api.getRecommendedProvider(activeTier.id);
-        if (result && result.recommendation && typeof result.recommendation === 'object') {
-          setActiveModelName((result.recommendation as any).model_id);
+        if (result && result.recommendation) {
+          const rec = result.recommendation as any;
+          // backend returns { provider, model, reason }
+          setActiveModelName(rec.model || rec.model_id || rec.recommendation || '');
         }
       } catch (err) {
         console.error('Failed to get recommendation:', err);

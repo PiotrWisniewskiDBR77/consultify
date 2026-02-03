@@ -606,6 +606,8 @@ export const Api = {
         organizationData?: boolean;
       };
       responseStyle?: 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
+      selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
+      selectedModelId?: string | null;
     }
   ) => {
     try {
@@ -638,6 +640,13 @@ export const Api = {
           aiModes,
           knowledgeSources,
           responseStyle,
+          // Model routing
+          selectedTier: options?.selectedTier,
+          selectedModelId: options?.selectedModelId ?? null,
+          // Common context hints (keep as top-level so backend validator doesn't strip them)
+          projectId: context?.projectId,
+          screenContext: context?.screenContext,
+          focusMode: context?.focusMode,
         }),
       });
 
@@ -4868,11 +4877,29 @@ export const Api = {
   // Lifecycle (legacy - use getLifecycleStages instead)
   getCustomerLifecycle: async () => [],
   // Recommended provider
-  getRecommendedProvider: async (context?: any) => ({
-    provider: 'openai',
-    reason: 'Default',
-    recommendation: 'openai',
-  }),
+  getRecommendedProvider: async (tierOrContext?: any) => {
+    // Backwards-compatible signature:
+    // - if string: treat as tier
+    // - if object: read { tier }
+    const tier =
+      typeof tierOrContext === 'string'
+        ? tierOrContext
+        : typeof tierOrContext === 'object'
+          ? tierOrContext?.tier
+          : undefined;
+
+    const params = new URLSearchParams();
+    if (tier) params.set('tier', String(tier));
+
+    const res = await fetch(`${API_URL}/llm/providers/recommended?${params.toString()}`, {
+      headers: getHeaders(),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error((data as any)?.error || 'Failed to fetch recommended provider');
+    }
+    return data;
+  },
   // User API Keys
   getUserApiKeys: async () => [],
   deleteUserApiKey: async (keyId: string) => ({ success: true }),

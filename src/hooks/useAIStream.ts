@@ -129,6 +129,8 @@ export const useAIStream = (options: StreamOptions = {}) => {
             showReasoning: aiConfig?.showReasoning,
             knowledgeSources: aiConfig?.knowledgeSources,
             responseStyle: aiConfig?.responseStyle,
+            selectedTier: (aiConfig as any)?.selectedTier,
+            selectedModelId: (aiConfig as any)?.selectedModelId ?? null,
           }
         );
       } catch (error) {
