@@ -23,6 +23,7 @@ import type {
 } from '../../types/ai.types.js';
 import logger from '../../utils/Logger.js';
 import { llmService } from './llmService.js';
+import modelRouter from './modelRouter.js';
 
 // Lazy load AIContextBuilder to avoid circular dependencies
 let _AIContextBuilder: any = null;
@@ -217,6 +218,7 @@ export class AIPipeline {
             provider: modelConfig.provider,
             id: modelConfig.model,
             endpoint: (modelConfig as any).endpoint,
+            apiKey: (modelConfig as any).apiKey,
           },
           systemPrompt: prompt.find((m) => m.role === 'system')?.content || '',
           messages: prompt
@@ -526,7 +528,7 @@ export class AIPipeline {
     }
 
     // 8. Behavioral instructions
-    parts.push(this.buildBehavioralInstructions(capability, ctx));
+    parts.push(this.buildBehavioralInstructions(capability, ctx, request));
 
     return parts.filter(Boolean).join('\n\n');
   }
@@ -715,7 +717,11 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
     return `## WIEDZA KONTEKSTOWA\n${sections.join('\n')}`;
   }
 
-  private buildBehavioralInstructions(capability: AICapability, ctx: any): string {
+  private buildBehavioralInstructions(
+    capability: AICapability,
+    ctx: any,
+    request: AIPipelineRequest
+  ): string {
     const instructions: string[] = [
       '## INSTRUKCJE',
       '1. Odpowiadaj konkretnie i pomocnie, wykorzystując powyższy kontekst.',
@@ -726,6 +732,54 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
       '6. Zawsze odpowiadaj w tym samym języku, w którym zwrócił się do Ciebie użytkownik. Jeśli użytkownik mówi po polsku, odpowiadaj po polsku. Jeśli po japońsku - po japońsku, itd.',
       '7. Dbaj o naturalność i poprawność językową w każdym z tych języków.',
     ];
+
+    // Chat runtime modes (ToolsMenu)
+    const aiModes = request.options?.aiModes || (ctx as any)?.aiModes;
+    const knowledgeSources = request.options?.knowledgeSources || (ctx as any)?.knowledgeSources;
+    const responseStyle = request.options?.responseStyle || (ctx as any)?.responseStyle;
+
+    if (aiModes?.deepResearch) {
+      instructions.push(
+        '8. TRYB: Deep Research — zanim odpowiesz, doprecyzuj brakujące informacje i przedstaw uporządkowaną analizę, założenia oraz rekomendacje.'
+      );
+    }
+
+    if (aiModes?.webSearch) {
+      instructions.push(
+        '9. TRYB: Web Search — jeśli potrzebujesz aktualnych danych z internetu, poproś użytkownika o link lub źródło. Nie udawaj, że wykonałeś wyszukiwanie, jeśli nie masz dostępu do web.'
+      );
+    }
+
+    if (aiModes?.showReasoning) {
+      instructions.push(
+        '10. TRYB: Reasoning ON — dodaj krótki, wysokopoziomowy opis toku rozumowania w tagach <thinking>...</thinking>. Nie ujawniaj danych wrażliwych ani długich rozważań.'
+      );
+    } else {
+      instructions.push('10. TRYB: Reasoning OFF — nie używaj tagów <thinking>...</thinking>.');
+    }
+
+    if (responseStyle) {
+      const styleMap: Record<string, string> = {
+        normal: 'Standardowy styl odpowiedzi (zbalansowany).',
+        learning: 'Styl edukacyjny: tłumacz krok po kroku, dodawaj krótkie przykłady.',
+        concise: 'Styl zwięzły: tylko najważniejsze punkty, bez dygresji.',
+        explanatory: 'Styl wyjaśniający: więcej kontekstu i uzasadnienia, ale bez lania wody.',
+        formal: 'Styl formalny: język urzędowy/biznesowy, precyzyjny i neutralny.',
+      };
+      instructions.push(`11. Styl odpowiedzi: ${styleMap[responseStyle] || responseStyle}`);
+    }
+
+    if (knowledgeSources) {
+      const enabled: string[] = [];
+      if (knowledgeSources.pmoDocuments) enabled.push('pmoDocuments');
+      if (knowledgeSources.projectData) enabled.push('projectData');
+      if (knowledgeSources.organizationData) enabled.push('organizationData');
+      if (enabled.length) {
+        instructions.push(
+          `12. Źródła wiedzy (preferowane): ${enabled.join(', ')}. Jeśli w kontekście brakuje danych, dopytaj użytkownika zamiast halucynować.`
+        );
+      }
+    }
 
     // Add context-specific instructions
     if (ctx?.execution?.capacityStatus === 'OVERLOADED') {
@@ -755,29 +809,69 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
   private async selectModel(
     request: AIPipelineRequest,
     capability: AICapability
-  ): Promise<{ provider: string; model: string; maxTokens: number; endpoint?: string }> {
-    // Use Ollama as default local provider if available
-    const provider = request.options?.provider || 'ollama';
-    const model = request.options?.model || 'gemma3:27b';
+  ): Promise<{
+    provider: string;
+    model: string;
+    maxTokens: number;
+    endpoint?: string | null;
+    apiKey?: string | null;
+  }> {
+    // 1) Explicit overrides from request options (user-selected model or direct provider/model)
+    const selectedTier = request.options?.selectedTier;
+    const explicitModel = request.options?.selectedModelId || request.options?.model;
+    const explicitProvider = request.options?.provider;
 
-    // For Ollama, use local endpoint
-    const endpoint = provider === 'ollama' ? 'http://localhost:11434/v1' : undefined;
+    if (explicitModel) {
+      // If provider not provided, let ModelRouter infer provider & resolve endpoint/apiKey.
+      const tierForConfig = (selectedTier || 'STANDARD') as any;
+      const cfg = await modelRouter.getProviderConfig(explicitModel, tierForConfig);
+      const provider = explicitProvider || cfg.provider;
+      const endpoint =
+        explicitProvider && explicitProvider === 'ollama'
+          ? 'http://localhost:11434/v1'
+          : cfg.endpoint;
+
+      logger.info(`[AIPipeline] Selected explicit model: ${provider}/${cfg.id}`);
+      return {
+        provider,
+        model: cfg.id,
+        maxTokens: request.options?.maxTokens || capability.maxTokens,
+        endpoint,
+        apiKey: cfg.apiKey,
+      };
+    }
+
+    // 2) Dynamic routing by tier/capability
+    const routingCapability = request.capability === 'chatStream' ? 'chat' : request.capability;
+    const routed = await modelRouter.select({
+      capability: routingCapability,
+      organizationId: request.organizationId,
+      options: { tier: selectedTier },
+      tier: selectedTier,
+    } as any);
 
     logger.info(
-      `[AIPipeline] Selected model: ${provider}/${model}, endpoint: ${endpoint || 'default'}`
+      `[AIPipeline] Routed model: ${routed.provider}/${routed.id} (tier: ${routed.tier})`
     );
 
     return {
-      provider,
-      model,
+      provider: routed.provider,
+      model: routed.id,
       maxTokens: request.options?.maxTokens || capability.maxTokens,
-      endpoint,
+      endpoint: routed.endpoint,
+      apiKey: routed.apiKey,
     };
   }
 
   private async executeWithProvider(
     messages: ChatMessage[],
-    modelConfig: { provider: string; model: string; maxTokens: number },
+    modelConfig: {
+      provider: string;
+      model: string;
+      maxTokens: number;
+      endpoint?: string | null;
+      apiKey?: string | null;
+    },
     options?: AIOptions
   ): Promise<{
     content: string;
@@ -794,6 +888,8 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
         modelConfig: {
           provider: modelConfig.provider,
           id: modelConfig.model,
+          endpoint: modelConfig.endpoint || undefined,
+          apiKey: modelConfig.apiKey || undefined,
         },
         systemPrompt: systemMessage?.content || '',
         messages: nonSystemMessages.map((m) => ({
@@ -822,7 +918,13 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
 
   private async executeStreamingWithProvider(
     messages: ChatMessage[],
-    modelConfig: { provider: string; model: string; maxTokens: number },
+    modelConfig: {
+      provider: string;
+      model: string;
+      maxTokens: number;
+      endpoint?: string | null;
+      apiKey?: string | null;
+    },
     options: AIOptions | undefined,
     onChunk: StreamCallback
   ): Promise<void> {
@@ -835,6 +937,8 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
         modelConfig: {
           provider: modelConfig.provider,
           id: modelConfig.model,
+          endpoint: modelConfig.endpoint || undefined,
+          apiKey: modelConfig.apiKey || undefined,
         },
         systemPrompt: systemMessage?.content || '',
         messages: nonSystemMessages.map((m) => ({

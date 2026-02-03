@@ -144,6 +144,23 @@ router.post(
       language?: string;
       conversationId?: string;
       resumeFromPartial?: boolean;
+      // Extended AI chat configuration (ToolsMenu + routing)
+      projectId?: string;
+      screenContext?: Record<string, unknown>;
+      focusMode?: string;
+      selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
+      selectedModelId?: string | null;
+      aiModes?: {
+        deepResearch?: boolean;
+        webSearch?: boolean;
+        showReasoning?: boolean;
+      };
+      knowledgeSources?: {
+        pmoDocuments?: boolean;
+        projectData?: boolean;
+        organizationData?: boolean;
+      };
+      responseStyle?: 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
     };
 
     const {
@@ -155,6 +172,14 @@ router.post(
       language,
       conversationId,
       resumeFromPartial,
+      projectId: bodyProjectId,
+      screenContext: bodyScreenContext,
+      focusMode: bodyFocusMode,
+      selectedTier,
+      selectedModelId,
+      aiModes,
+      knowledgeSources,
+      responseStyle,
     } = body;
 
     const streamSessionId = conversationId || `stream-${req.userId}-${Date.now()}`;
@@ -272,16 +297,16 @@ router.post(
       const projectId =
         (context as any)?.projectId ||
         (context as any)?.workspaceContext?.projectId ||
-        (req.body as any)?.projectId ||
+        bodyProjectId ||
         null;
 
       const screenContext =
         (context as any)?.screenContext ||
         (context as any)?.workspaceContext ||
-        (req.body as any)?.screenContext ||
+        bodyScreenContext ||
         null;
 
-      const focusMode = (context as any)?.focusMode || (req.body as any)?.focusMode || 'all';
+      const focusMode = (context as any)?.focusMode || bodyFocusMode || 'all';
 
       const pipelineRequest = {
         type: 'chat',
@@ -297,16 +322,28 @@ router.post(
         screenContext, // Full screen context for AI awareness
         focusMode, // Focus mode for context filtering
         context: {
+          ...(context || {}),
           projectId,
           screenContext,
           focusMode,
           conversationId,
-          ...context,
+          // Tools & routing options (used by AIPipeline prompt + model selection)
+          aiModes,
+          knowledgeSources,
+          responseStyle,
+          selectedTier,
+          selectedModelId,
         },
         stream: true,
         options: {
           role: roleName,
           systemInstruction: enhancedSystemInstruction,
+          // Tools & routing options
+          aiModes,
+          knowledgeSources,
+          responseStyle,
+          selectedTier,
+          selectedModelId,
         },
       };
 

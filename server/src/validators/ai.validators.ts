@@ -35,6 +35,29 @@ export const ChatStreamRequestSchema = z.object({
   systemInstruction: z.string().optional(),
   context: z.record(z.string(), z.unknown()).optional(),
   roleName: z.string().optional(),
+  // NOTE: these fields are intentionally whitelisted because validateBody()
+  // replaces req.body with parsed data, stripping unknown keys by default.
+  // They are required for end-to-end chat feature toggles (ToolsMenu), routing, and context.
+  projectId: z.string().uuid().optional(),
+  screenContext: z.record(z.string(), z.unknown()).optional(),
+  focusMode: z.string().optional(),
+  selectedTier: z.enum(['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING']).optional(),
+  selectedModelId: z.union([z.string().min(1), z.null()]).optional(),
+  aiModes: z
+    .object({
+      deepResearch: z.boolean().optional(),
+      webSearch: z.boolean().optional(),
+      showReasoning: z.boolean().optional(),
+    })
+    .optional(),
+  knowledgeSources: z
+    .object({
+      pmoDocuments: z.boolean().optional(),
+      projectData: z.boolean().optional(),
+      organizationData: z.boolean().optional(),
+    })
+    .optional(),
+  responseStyle: z.enum(['normal', 'learning', 'concise', 'explanatory', 'formal']).optional(),
   language: z
     .string()
     .transform((lang) => {

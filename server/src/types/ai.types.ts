@@ -98,6 +98,23 @@ export interface AIContext {
   attachments?: AIAttachment[];
   projectContext?: ProjectContext;
   userPreferences?: UserPreferences;
+  /**
+   * Optional chat/runtime configuration coming from the client chat UI.
+   * NOTE: not all upstream context builders will populate this yet; it is safe to omit.
+   */
+  aiModes?: {
+    deepResearch?: boolean;
+    webSearch?: boolean;
+    showReasoning?: boolean;
+  };
+  knowledgeSources?: {
+    pmoDocuments?: boolean;
+    projectData?: boolean;
+    organizationData?: boolean;
+  };
+  responseStyle?: 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
+  selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
+  selectedModelId?: string | null;
 }
 
 export interface AIAttachment {
@@ -138,6 +155,27 @@ export interface AIOptions {
   enableThinking?: boolean;
   outputFormat?: OutputFormat;
   timeout?: number;
+  /**
+   * Chat UI / routing controls (sent from frontend)
+   */
+  aiModes?: {
+    deepResearch?: boolean;
+    webSearch?: boolean;
+    showReasoning?: boolean;
+  };
+  knowledgeSources?: {
+    pmoDocuments?: boolean;
+    projectData?: boolean;
+    organizationData?: boolean;
+  };
+  responseStyle?: 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
+  selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
+  selectedModelId?: string | null;
+  /**
+   * Internal pipeline options
+   */
+  role?: string;
+  systemInstruction?: string;
 }
 
 // ==========================================
