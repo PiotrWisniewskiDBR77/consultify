@@ -160,10 +160,17 @@ const ThinkingStepItem: React.FC<{
     pending: 'opacity-50',
     in_progress: 'animate-pulse',
     done: 'opacity-100',
+    processing: 'animate-pulse',
+    completed: 'opacity-100',
+    failed: 'opacity-100',
   };
 
   return (
-    <div className={`flex items-start gap-2 ${statusStyles[step.status]}`}>
+    <div
+      className={`flex items-start gap-2 ${
+        statusStyles[step.status as keyof typeof statusStyles] || 'opacity-100'
+      }`}
+    >
       {/* Status indicator */}
       <div className="flex flex-col items-center flex-shrink-0">
         <div

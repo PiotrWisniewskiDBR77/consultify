@@ -8,11 +8,11 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 
 // Mock database
-const mockDb = {
+const mockDb = vi.hoisted(() => ({
   run: vi.fn(),
   all: vi.fn(),
   get: vi.fn(),
-};
+}));
 
 vi.mock('../../../server/src/database/Database.js', () => ({
   getDatabase: vi.fn().mockResolvedValue(mockDb),
@@ -131,6 +131,7 @@ describe('AuditService', () => {
         },
       ];
 
+      mockDb.get.mockResolvedValue({ count: mockLogs.length });
       mockDb.all.mockResolvedValue(mockLogs);
 
       const filters = {
@@ -141,20 +142,24 @@ describe('AuditService', () => {
       const logs = await getLogs(filters);
 
       expect(logs).toBeDefined();
-      expect(Array.isArray(logs)).toBe(true);
+      expect(Array.isArray(logs.entries)).toBe(true);
+      expect(logs.entries).toHaveLength(1);
       expect(mockDb.all).toHaveBeenCalled();
     });
 
     it('should handle empty filters', async () => {
+      mockDb.get.mockResolvedValue({ count: 0 });
       mockDb.all.mockResolvedValue([]);
 
-      const logs = await service.getLogs({});
+      const logs = await getLogs({});
 
       expect(logs).toBeDefined();
-      expect(Array.isArray(logs)).toBe(true);
+      expect(Array.isArray(logs.entries)).toBe(true);
+      expect(logs.entries).toHaveLength(0);
     });
 
     it('should filter by date range', async () => {
+      mockDb.get.mockResolvedValue({ count: 0 });
       mockDb.all.mockResolvedValue([]);
 
       const filters = {
@@ -162,7 +167,7 @@ describe('AuditService', () => {
         toDate: new Date('2026-01-31'),
       };
 
-      await service.getLogs(filters);
+      await getLogs(filters);
 
       expect(mockDb.all).toHaveBeenCalled();
       const sql = mockDb.all.mock.calls[0][0];

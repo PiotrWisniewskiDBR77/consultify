@@ -357,7 +357,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
         <div className="p-4">
           {block.content ? (
             <div className="prose prose-sm dark:prose-invert max-w-none text-slate-600 dark:text-slate-300">
-              <ReactMarkdown>{block.content.slice(0, 500)}...</ReactMarkdown>
+              <ReactMarkdown>{`${block.content.slice(0, 500)}...`}</ReactMarkdown>
             </div>
           ) : (
             <div className="flex items-center justify-center py-8 text-slate-400">

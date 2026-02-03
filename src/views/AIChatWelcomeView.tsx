@@ -66,7 +66,7 @@ const getTimeContext = () => {
 };
 
 export const AIChatWelcomeView: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // App state
@@ -144,7 +144,7 @@ export const AIChatWelcomeView: React.FC = () => {
       autoSpeakResponses: true,
       sttProvider: 'whisper',
       ttsProvider: 'openai',
-      language: t.language || 'pl',
+      language: (i18n.language as any) || 'pl',
     },
   });
 

@@ -193,7 +193,7 @@ export const useStudioDocument = (options: UseStudioDocumentOptions = {}) => {
   // Handle connection
   const onConnect = useCallback(
     (connection: Connection) => {
-      setEdges((eds) =>
+      setEdges((eds: any) =>
         addEdge(
           {
             ...connection,
@@ -247,7 +247,7 @@ export const useStudioDocument = (options: UseStudioDocumentOptions = {}) => {
   // Add nodes
   const addNodes = useCallback(
     (newNodes: Node[]) => {
-      setNodes((prev) => [...prev, ...newNodes]);
+      setNodes((prev: any) => [...prev, ...newNodes]);
       setHasUnsavedChanges(true);
     },
     [setNodes]
@@ -256,7 +256,7 @@ export const useStudioDocument = (options: UseStudioDocumentOptions = {}) => {
   // Add edges
   const addEdges = useCallback(
     (newEdges: Edge[]) => {
-      setEdges((prev) => [...prev, ...newEdges]);
+      setEdges((prev: any) => [...prev, ...newEdges]);
       setHasUnsavedChanges(true);
     },
     [setEdges]

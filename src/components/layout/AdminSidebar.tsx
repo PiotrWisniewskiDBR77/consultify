@@ -284,7 +284,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              toggleSidebarCollapse();
+              toggleSidebarCollapse?.();
               setIsHovered(false);
             }}
             className="absolute right-2 p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"

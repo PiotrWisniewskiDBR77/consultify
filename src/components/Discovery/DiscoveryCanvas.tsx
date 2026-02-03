@@ -305,7 +305,7 @@ const DiscoveryCanvasInner: React.FC = () => {
           className="!bg-transparent !shadow-none !border-0"
         />
         <MiniMap
-          nodeColor={(n) => {
+          nodeColor={(n: any) => {
             const colors: Record<string, string> = {
               painPoint: '#ef4444',
               insight: '#f59e0b',

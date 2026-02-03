@@ -160,7 +160,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   onMessageFeedback,
   enableEnhancedMessages = true,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { aiFreezeStatus, editChatMessage, deleteChatMessage, setMessageFeedback } = useAppStore();
   const { addArtifact, togglePanel } = useArtifactsStore();
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
@@ -187,9 +187,21 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       autoSpeakResponses: true,
       sttProvider: 'whisper',
       ttsProvider: 'openai',
-      language: t.language || 'pl',
+      language: (i18n.language as any) || 'pl',
     },
   });
+
+  const speechSupported = voiceSupported;
+  const isRecording = Boolean((voiceState as any)?.isListening);
+  const toggleRecording = () => (isRecording ? stopListening() : startListening());
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = inputValue.trim();
+    if (!text || aiFreezeStatus.isFrozen) return;
+    onSendMessage(text);
+    setInputValue('');
+  };
 
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const toggleVoice = () => setVoiceEnabled(!voiceEnabled);
@@ -348,7 +360,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           <p className="text-[10px] text-slate-500 dark:text-slate-400">{displaySubtitle}</p>
         </div>
         {/* Voice Toggle Button */}
-        {voiceSupported && t.language && (
+        {voiceSupported && i18n.language && (
           <button
             onClick={toggleVoice}
             className={`p-2 rounded-lg transition-all flex items-center gap-1.5 text-xs ${

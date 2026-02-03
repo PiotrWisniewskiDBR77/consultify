@@ -238,6 +238,20 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const { startStream, isStreaming, streamedContent } = useAIStream({
     onStreamDone: async (fullText, thinking, artifacts) => {
+      const artifactsForConversation: Array<{
+        id: string;
+        type: string;
+        title: string;
+        content: string;
+        language?: string;
+      }> = (artifacts || []).map((a) => ({
+        id: a.id,
+        type: String((a as any).type),
+        title: String((a as any).title || 'Artifact'),
+        content: String((a as any).content || ''),
+        language: (a as any).language,
+      }));
+
       // Save AI response to conversation store
       if (activeConversationId) {
         try {
@@ -248,7 +262,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             messageType: 'text',
             metadata: {
               thinkingSteps: thinking as any,
-              artifacts,
+              artifacts: artifactsForConversation,
             },
           });
         } catch (err) {

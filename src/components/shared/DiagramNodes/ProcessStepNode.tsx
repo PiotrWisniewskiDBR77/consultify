@@ -37,7 +37,7 @@ export const ProcessStepNode: React.FC<NodeProps<ProcessStepData>> = memo(
       <div
         className={`
                 min-w-[160px] max-w-[240px] rounded-lg border-2 transition-all duration-200
-                ${statusColors[status]}
+                ${statusColors[status as keyof typeof statusColors]}
                 ${selected ? 'ring-2 ring-blue-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-900' : ''}
             `}
       >
@@ -53,7 +53,11 @@ export const ProcessStepNode: React.FC<NodeProps<ProcessStepData>> = memo(
         <div className="p-3">
           <div className="flex items-start gap-2">
             {/* Status Indicator */}
-            <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${statusIndicator[status]}`} />
+            <div
+              className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
+                statusIndicator[status as keyof typeof statusIndicator]
+              }`}
+            />
 
             <div className="flex-1 min-w-0">
               {/* Icon */}

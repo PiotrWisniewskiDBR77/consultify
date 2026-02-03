@@ -33,7 +33,7 @@ import { toast } from 'react-hot-toast';
 
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
-import { LLMProvider } from '../../types';
+import type { LLMProviderConfig } from '../../types';
 
 // Health Status Types
 interface ProviderStatus {
@@ -85,7 +85,7 @@ interface LLMStatus {
 
 export const AdminLLMView: React.FC = () => {
   // Providers State
-  const [providers, setProviders] = useState<LLMProvider[]>([]);
+  const [providers, setProviders] = useState<LLMProviderConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -102,7 +102,7 @@ export const AdminLLMView: React.FC = () => {
   const [prompts, setPrompts] = useState<any[]>([]);
   const [editingPrompt, setEditingPrompt] = useState<any | null>(null);
 
-  const [form, setForm] = useState<Partial<LLMProvider>>({
+  const [form, setForm] = useState<Partial<LLMProviderConfig>>({
     name: '',
     provider: 'openai',
     api_key: '',
@@ -255,7 +255,7 @@ export const AdminLLMView: React.FC = () => {
 
   const [testingConnection, setTestingConnection] = useState(false);
 
-  const handleTestConnection = async (config: Partial<LLMProvider>) => {
+  const handleTestConnection = async (config: Partial<LLMProviderConfig>) => {
     setTestingConnection(true);
     try {
       const result = await Api.testLLMConnection(config);
@@ -315,7 +315,7 @@ export const AdminLLMView: React.FC = () => {
     }
   };
 
-  const handleEdit = (p: LLMProvider) => {
+  const handleEdit = (p: LLMProviderConfig) => {
     setEditingId(p.id);
     setForm(p);
     setShowModal(true);

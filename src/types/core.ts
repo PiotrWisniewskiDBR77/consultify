@@ -1,3 +1,15 @@
+import type {
+  AIPreferences,
+  AIProjectRole,
+  ChatCitation,
+  ChatOption,
+  ChatResponseAction,
+  OrgAISettings,
+  SuperAdminAISettings,
+  ToolCallInfo,
+  UserAISettings,
+} from './domain/ai';
+
 export interface Invoice {
   id: string;
   created_at: string;

@@ -21,12 +21,14 @@ export const QuoteNode: React.FC<NodeProps<QuoteNodeData>> = memo(({ data, selec
     neutral: 'border-l-slate-400',
   };
 
+  const sentimentKey = (sentiment || 'neutral') as keyof typeof sentimentColors;
+
   return (
     <div
       className={`
                 group relative
                 bg-slate-50 dark:bg-slate-800/50
-                border-2 border-l-4 ${sentimentColors[sentiment]}
+                border-2 border-l-4 ${sentimentColors[sentimentKey] || sentimentColors.neutral}
                 ${selected ? 'border-slate-500 ring-2 ring-slate-500/30' : 'border-slate-200 dark:border-slate-700'}
                 rounded-xl p-3
                 min-w-[160px] max-w-[200px]

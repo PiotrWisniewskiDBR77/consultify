@@ -37,7 +37,6 @@ import type { Report, ReportSection, ReportSourceType, SourceOption } from '../u
 import { BlockCard } from './BlockCard';
 import { BlockPalette } from './BlockPalette';
 import { SettingsPanel } from './SettingsPanel';
-import { TemplatesModal } from './TemplatesModal';
 
 // ==========================================
 // TYPES
@@ -143,7 +142,6 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showBlockPalette, setShowBlockPalette] = useState(false);
-  const [showTemplatesModal, setShowTemplatesModal] = useState(false);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [settingsSection, setSettingsSection] = useState<'intent' | 'styling' | 'export'>('intent');
   const [isSettingsPanelCollapsed, setIsSettingsPanelCollapsed] = useState(false);

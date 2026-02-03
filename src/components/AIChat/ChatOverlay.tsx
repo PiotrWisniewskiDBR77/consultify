@@ -6,6 +6,7 @@ import { useAIStream } from '../../hooks/useAIStream';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, ChatMessage, ChatOption } from '../../types';
 import { AIUsageIndicator } from '../AIUsageIndicator';
+import { LLMSelector } from '../LLMSelector';
 import { AIRoleBadge } from './AIRoleBadge';
 import { UnifiedChatPanel } from './UnifiedChatPanel';
 

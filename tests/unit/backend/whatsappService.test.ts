@@ -113,19 +113,18 @@ describe('WhatsappService', () => {
     });
 
     it('should handle send errors gracefully', async () => {
-      mockTwilioMessage.create.mockRejectedValue(new Error('Network error'));
+      // Use a sync throw to avoid Vitest "Unhandled Rejection" noise
+      mockTwilioMessage.create.mockImplementationOnce(() => {
+        throw new Error('Network error');
+      });
 
-      try {
-        await mockTwilioMessage.create({
+      expect(() =>
+        mockTwilioMessage.create({
           from: 'whatsapp:+14155238886',
           to: 'whatsapp:+15551234567',
           body: 'Test message',
-        });
-        // Should not reach here
-        expect(true).toBe(false);
-      } catch (error: any) {
-        expect(error.message).toBe('Network error');
-      }
+        })
+      ).toThrow('Network error');
     });
 
     it('should skip sending when disabled', async () => {

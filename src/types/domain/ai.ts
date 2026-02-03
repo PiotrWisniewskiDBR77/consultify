@@ -157,9 +157,10 @@ export interface ConversationContext {
   assessmentId?: string;
   screenId?: string;
   persona?: AIPersona;
-  focusMode?: AIFocusMode;
+  focusMode?: FocusMode | AIFocusMode | string;
   systemPrompt?: string;
   customInstructions?: string;
+  aiContext?: AIContext; // Full contextual 6-layer snapshot
 }
 
 /**
@@ -527,18 +528,6 @@ export interface AIContext {
   currentScreen?: string;
   selectedObjectId?: string;
   selectedObjectType?: string;
-}
-
-export interface ConversationContext {
-  projectId?: string;
-  initiativeId?: string;
-  assessmentId?: string;
-  screenId?: string;
-  persona?: AIPersona;
-  focusMode?: FocusMode | string;
-  systemPrompt?: string;
-  customInstructions?: string;
-  aiContext?: AIContext; // Full contextual 6-layer snapshot
 }
 
 /**
@@ -1038,10 +1027,18 @@ export interface AICharterRequest {
 /** AI Generated Charter */
 export interface AIGeneratedCharter {
   id?: string;
+  /** Optional display name used in UI previews */
+  name?: string;
   summary?: string;
   applicantOneLiner?: string;
   strategicIntent?: 'Grow' | 'Fix' | 'Stabilize' | 'De-risk' | 'Build Capability';
   hypothesis?: string;
+  /** Optional timeline summary used by UI */
+  timeline?: string;
+  /** Optional priority label used by UI */
+  priority?: 'High' | 'Medium' | 'Low' | string;
+  /** Optional derived ROI estimate used by UI */
+  estimatedROI?: number;
 
   // Structured sections
   problemStructured: any; // ProblemStructured from core

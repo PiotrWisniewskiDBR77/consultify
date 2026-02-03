@@ -205,7 +205,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
   };
 
   const handleRegenerateSection = async (section: string) => {
-    if (generatedCharter) {
+    if (generatedCharter?.id) {
       const context = {
         gaps: gaps.filter((g) => g.selected),
         constraints,

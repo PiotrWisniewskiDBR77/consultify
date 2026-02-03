@@ -1124,7 +1124,7 @@ export const Api = {
     if (!res.ok) throw new Error('Failed to add provider');
   },
 
-  updateLLMProvider: async (id: string, data: Partial<LLMProvider>) => {
+  updateLLMProvider: async (id: string, data: any) => {
     const res = await fetch(`${API_URL}/llm/providers/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
@@ -1135,7 +1135,7 @@ export const Api = {
   },
 
   testLLMConnection: async (
-    config: Partial<LLMProvider>
+    config: any
   ): Promise<{ success: boolean; message: string; response?: string }> => {
     const res = await fetch(`${API_URL}/llm/test`, {
       method: 'POST',

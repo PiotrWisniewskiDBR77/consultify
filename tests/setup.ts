@@ -410,6 +410,10 @@ vi.mock('../server/services/emailService.js', () => ({
     send: vi.fn().mockResolvedValue(true),
     sendEmail: vi.fn().mockResolvedValue(true),
   },
+  // Named exports used by some unit tests
+  send: vi.fn().mockResolvedValue(true),
+  sendEmail: vi.fn().mockResolvedValue(true),
+  setDependencies: vi.fn(),
 }));
 
 vi.mock('../server/services/notificationService.js', () => ({

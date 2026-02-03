@@ -1,29 +1,35 @@
 /**
- * ReportGenerationService - Unit Tests (L1)
- * Tests for report generation functionality
+ * ReportGenerationService - Unit Tests
  *
- * Coverage target: 95%+
+ * Current implementation exposes:
+ * - `generateSectionContent`
+ * - `generateFullReport`
+ * - `regenerateSection`
+ *
+ * These tests focus on the public API and mock DB + ReportBuilderService.
  */
 
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mock database
-const mockDb = {
-  get: vi.fn(),
-  all: vi.fn(),
-  run: vi.fn(),
-};
-
-vi.mock('../../../server/src/database/Database.js', () => ({
-  getDatabase: vi.fn().mockResolvedValue(mockDb),
+const mockDb = vi.hoisted(() => ({
+  run: vi.fn((sql: string, params: any, cb?: any) => {
+    const callback = typeof params === 'function' ? params : cb;
+    if (callback) callback.call({ changes: 1 }, null);
+  }),
+  get: vi.fn((sql: string, params: any, cb?: any) => {
+    const callback = typeof params === 'function' ? params : cb;
+    if (callback) callback(null, null);
+  }),
 }));
 
-// Mock uuid
+vi.mock('../../../server/src/database/index.js', () => ({
+  getDatabase: () => mockDb,
+}));
+
 vi.mock('uuid', () => ({
   v4: vi.fn().mockReturnValue('test-report-uuid'),
 }));
 
-// Mock logger
 vi.mock('../../../server/src/utils/Logger.js', () => ({
   default: {
     info: vi.fn(),
@@ -32,178 +38,94 @@ vi.mock('../../../server/src/utils/Logger.js', () => ({
   },
 }));
 
-// ReportGenerationService exports individual functions
-import { generateReport } from '../../../server/src/services/reportGenerationService';
+vi.mock('../../../server/src/services/reportBuilderService.js', () => ({
+  default: {
+    getReport: vi.fn(),
+    getSourceDataForReport: vi.fn(),
+    updateReportStatus: vi.fn(),
+  },
+}));
+
+import ReportBuilderService from '../../../server/src/services/reportBuilderService.js';
+import {
+  generateFullReport,
+  generateSectionContent,
+} from '../../../server/src/services/reportGenerationService';
 
 describe('ReportGenerationService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
+  it('generates deterministic JSON for matrix sections', async () => {
+    (ReportBuilderService as any).getReport.mockResolvedValue({
+      report: { companyContext: {} },
+      sections: [
+        {
+          sectionKey: 'matrix',
+          sectionType: 'matrix',
+          title: 'Matrix',
+          length: 'short',
+          enabled: true,
+          orderIndex: 0,
+        },
+      ],
+    });
+
+    (ReportBuilderService as any).getSourceDataForReport.mockResolvedValue({
+      assessment: {
+        assessmentType: 'DRD',
+        name: 'Test Assessment',
+        scores: { axes: [{ axisId: 'a1', axisName: 'Axis 1', score: 3, maxScore: 7 }] },
+        answers: {},
+      },
+      axesData: {},
+    });
+
+    const result = await generateSectionContent('report-1', 'matrix', 'org-1', 'user-1');
+    expect(result.tokensUsed).toBe(0);
+    const parsed = JSON.parse(result.content);
+    expect(parsed.type).toBe('assessment_matrix');
+    expect(mockDb.run).toHaveBeenCalled();
   });
 
-  describe('generateReport', () => {
-    it('should generate assessment report successfully', async () => {
-      const mockAssessment = {
-        id: 'assessment-1',
-        name: 'Test Assessment',
-        framework: 'DRD',
-        overall_score: 75,
-        maturity_level: 3,
-        completed_at: '2026-01-26T10:00:00Z',
-      };
-
-      const mockDimensionScores = [
-        { dimension_id: 'dim-1', dimension_name: 'Data Management', score: 80, max_score: 100 },
-        { dimension_id: 'dim-2', dimension_name: 'Process Automation', score: 70, max_score: 100 },
-      ];
-
-      mockDb.get.mockResolvedValue(mockAssessment);
-      mockDb.all.mockResolvedValue(mockDimensionScores);
-      mockDb.run.mockResolvedValue({ lastID: 1, changes: 1 });
-
-      const result = await generateReport(
+  it('generates full report and updates status', async () => {
+    (ReportBuilderService as any).getReport.mockResolvedValue({
+      report: { companyContext: {} },
+      sections: [
         {
-          reportType: 'assessment',
-          sourceId: 'assessment-1',
-          language: 'en',
+          sectionKey: 'matrix',
+          sectionType: 'matrix',
+          title: 'Matrix',
+          length: 'short',
+          enabled: true,
+          orderIndex: 0,
+          generatedContent: null,
         },
-        'org-1'
-      );
-
-      expect(result).toBeDefined();
-      expect(result.type).toBe('assessment');
-      expect(mockDb.get).toHaveBeenCalled();
-      expect(mockDb.all).toHaveBeenCalled();
+      ],
     });
 
-    it('should throw error if assessment not found', async () => {
-      mockDb.get.mockResolvedValue(null);
-
-      await expect(
-        generateReport(
-          {
-            reportType: 'assessment',
-            sourceId: 'non-existent',
-            language: 'en',
-          },
-          'org-1'
-        )
-      ).rejects.toThrow();
-    });
-
-    it('should handle missing dimension scores gracefully', async () => {
-      const mockAssessment = {
-        id: 'assessment-1',
+    (ReportBuilderService as any).getSourceDataForReport.mockResolvedValue({
+      assessment: {
+        assessmentType: 'DRD',
         name: 'Test Assessment',
-        framework: 'DRD',
-        overall_score: 75,
-        maturity_level: 3,
-        completed_at: '2026-01-26T10:00:00Z',
-      };
-
-      mockDb.get.mockResolvedValue(mockAssessment);
-      mockDb.all.mockResolvedValue([]); // No dimension scores
-      mockDb.run.mockResolvedValue({ lastID: 1, changes: 1 });
-
-      const result = await generateReport(
-        {
-          reportType: 'assessment',
-          sourceId: 'assessment-1',
-          language: 'en',
-        },
-        'org-1'
-      );
-
-      expect(result).toBeDefined();
-      expect(result.type).toBe('assessment');
-    });
-  });
-
-  describe('generateAssessmentReport (private)', () => {
-    it('should create report with correct structure', async () => {
-      const mockAssessment = {
-        id: 'assessment-1',
-        name: 'Test Assessment',
-        framework: 'DRD',
-        overall_score: 75,
-        maturity_level: 3,
-        completed_at: '2026-01-26T10:00:00Z',
-      };
-
-      mockDb.get.mockResolvedValue(mockAssessment);
-      mockDb.all.mockResolvedValue([]);
-      mockDb.run.mockResolvedValue({ lastID: 1, changes: 1 });
-
-      const result = await generateReport(
-        {
-          reportType: 'assessment',
-          sourceId: 'assessment-1',
-          language: 'en',
-        },
-        'org-1'
-      );
-
-      expect(result.id).toContain('report-');
-      expect(result.title).toContain('DRD');
-      expect(result.title).toContain('Test Assessment');
+        scores: { axes: [{ axisId: 'a1', axisName: 'Axis 1', score: 3, maxScore: 7 }] },
+        answers: {},
+      },
+      axesData: {},
     });
 
-    it('should map maturity levels correctly', async () => {
-      const maturityLevels = [1, 2, 3, 4, 5];
-      const expectedLabels = ['Initial', 'Developing', 'Defined', 'Managed', 'Optimizing'];
-
-      for (let i = 0; i < maturityLevels.length; i++) {
-        const mockAssessment = {
-          id: `assessment-${i}`,
-          name: 'Test',
-          framework: 'DRD',
-          overall_score: 50,
-          maturity_level: maturityLevels[i],
-          completed_at: '2026-01-26T10:00:00Z',
-        };
-
-        mockDb.get.mockResolvedValue(mockAssessment);
-        mockDb.all.mockResolvedValue([]);
-        mockDb.run.mockResolvedValue({ lastID: 1, changes: 1 });
-
-        const result = await generateReport({
-          reportType: 'assessment',
-          sourceId: `assessment-${i}`,
-          language: 'en',
-          organizationId: 'org-1',
-        });
-
-        expect(result.content).toContain(expectedLabels[i]);
-      }
-    });
-  });
-
-  describe('Error handling', () => {
-    it('should handle database errors gracefully', async () => {
-      mockDb.get.mockRejectedValue(new Error('Database connection failed'));
-
-      await expect(
-        generateReport({
-          reportType: 'assessment',
-          sourceId: 'assessment-1',
-          language: 'en',
-          organizationId: 'org-1',
-        })
-      ).rejects.toThrow();
-    });
-
-    it('should validate required parameters', async () => {
-      await expect(
-        generateReport({
-          reportType: 'assessment' as any,
-          sourceId: '',
-          language: 'en',
-          organizationId: 'org-1',
-        })
-      ).rejects.toThrow();
-    });
+    const res = await generateFullReport('report-1', 'org-1', 'user-1', { regenerateAll: true });
+    expect(res.generatedSections).toContain('matrix');
+    expect((ReportBuilderService as any).updateReportStatus).toHaveBeenCalledWith(
+      'report-1',
+      'GENERATING',
+      'user-1'
+    );
+    expect((ReportBuilderService as any).updateReportStatus).toHaveBeenCalledWith(
+      'report-1',
+      'GENERATED',
+      'user-1'
+    );
   });
 });

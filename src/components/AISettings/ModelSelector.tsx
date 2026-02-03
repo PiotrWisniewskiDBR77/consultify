@@ -20,12 +20,12 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { LLMProvider } from '../../types';
+import type { LLMProviderConfig } from '../../types/domain/ai';
 
 interface ModelSelectorProps {
   value: string | null;
   onChange: (modelId: string | null) => void;
-  availableModels?: LLMProvider[];
+  availableModels?: LLMProviderConfig[];
   visibleModelIds?: string[];
   onVisibilityChange?: (modelIds: string[]) => void;
   showVisibilityToggle?: boolean;
@@ -54,7 +54,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   loading = false,
   className = '',
 }) => {
-  const [models, setModels] = useState<LLMProvider[]>(availableModels);
+  const [models, setModels] = useState<LLMProviderConfig[]>(availableModels);
 
   useEffect(() => {
     const fetchModels = async () => {

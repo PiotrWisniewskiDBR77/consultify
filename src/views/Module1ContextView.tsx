@@ -7,6 +7,7 @@ import { Api } from '@/services/api'; // Using Api service for consistency
 import { UnifiedChatPanel } from '../components/AIChat/UnifiedChatPanel';
 import { useAIStream } from '../hooks/useAIStream';
 import { useAppStore } from '../store/useAppStore';
+import type { ChatMessage } from '../types';
 import { AppView, FullSession, SessionMode } from '../types';
 interface Module1ContextViewProps {
   currentUser: { id: string }; // Replace `any` with a more specific type

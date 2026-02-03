@@ -274,7 +274,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
             title={typeof title === 'string' ? title : undefined}
             systemPrompt={chatSystemPrompt}
             roleName={chatRoleName}
-            onSendMessage={onSendMessage} // Pass override if provided
+            onMessageSent={onSendMessage} // Pass override if provided
           />
         </div>
       )}
@@ -365,7 +365,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                 showFocusMode={false} // Compact on mobile
                 systemPrompt={chatSystemPrompt}
                 roleName={chatRoleName}
-                onSendMessage={onSendMessage} // Pass override if provided
+                onMessageSent={onSendMessage} // Pass override if provided
               />
             </div>
           </div>

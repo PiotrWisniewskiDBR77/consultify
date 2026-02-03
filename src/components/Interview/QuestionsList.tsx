@@ -237,6 +237,7 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
   // Add new question
   const handleAddQuestion = useCallback(async () => {
     if (!newQuestionText.trim()) return;
+    if (!category) return;
     await onAddQuestion(category, newQuestionText.trim());
     setNewQuestionText('');
     setShowNewQuestion(false);

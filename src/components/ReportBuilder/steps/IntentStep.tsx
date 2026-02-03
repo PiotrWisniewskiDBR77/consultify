@@ -124,9 +124,10 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
   const handleProfileSelect = (profileId: string) => {
     const profile = profiles.find((p) => p.id === profileId);
     if (profile) {
+      const defaultIntent = (profile.defaultIntent || {}) as unknown as Partial<ReportIntent>;
       onIntentChange({
         profileId,
-        ...(profile.defaultIntent || {}),
+        ...defaultIntent,
       });
     }
   };

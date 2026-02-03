@@ -323,7 +323,7 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                           Name
                         </label>
                         <div className="text-lg font-bold text-navy-900 dark:text-white">
-                          {renderEditableText(charter.name, 'name', ['name'])}
+                          {renderEditableText(charter.name || '', 'name', ['name'])}
                         </div>
                       </div>
                       <div>
