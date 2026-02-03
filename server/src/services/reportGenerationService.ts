@@ -86,6 +86,235 @@ const LANGUAGE_GUIDANCE: Record<SectionLanguage, string> = {
   general: 'Use clear, accessible language. Avoid jargon. Target audience: All stakeholders.',
 };
 
+/**
+ * Build guidance string from block-specific settings
+ * Translates frontend settings into AI-understandable instructions
+ */
+function buildSettingsGuidance(sectionType: string, settings: Record<string, unknown>): string {
+  if (!settings || Object.keys(settings).length === 0) return '';
+
+  const guidance: string[] = [];
+
+  // Content settings
+  if (settings.maxRecommendations !== undefined) {
+    guidance.push(`- Include maximum ${settings.maxRecommendations} recommendations`);
+  }
+  if (settings.maxFindings !== undefined) {
+    guidance.push(`- Include maximum ${settings.maxFindings} findings`);
+  }
+  if (settings.maxItems !== undefined) {
+    guidance.push(`- Include maximum ${settings.maxItems} items`);
+  }
+  if (settings.maxItemsPerQuadrant !== undefined) {
+    guidance.push(`- Include maximum ${settings.maxItemsPerQuadrant} items per quadrant`);
+  }
+  if (settings.maxLevels !== undefined) {
+    guidance.push(`- Use maximum ${settings.maxLevels} levels of depth`);
+  }
+  if (settings.maxSteps !== undefined) {
+    guidance.push(`- Include maximum ${settings.maxSteps} steps`);
+  }
+  if (settings.maxScenarios !== undefined) {
+    guidance.push(`- Include maximum ${settings.maxScenarios} scenarios`);
+  }
+  if (settings.maxFactors !== undefined) {
+    guidance.push(`- Include maximum ${settings.maxFactors} factors`);
+  }
+  if (settings.maxSubjects !== undefined) {
+    guidance.push(`- Compare maximum ${settings.maxSubjects} subjects`);
+  }
+  if (settings.maxDimensions !== undefined) {
+    guidance.push(`- Use maximum ${settings.maxDimensions} dimensions`);
+  }
+  if (settings.maxRows !== undefined) {
+    guidance.push(`- Include maximum ${settings.maxRows} rows`);
+  }
+
+  // Prioritization
+  if (settings.prioritization) {
+    const priorityMap: Record<string, string> = {
+      impact: 'Prioritize by business impact (highest impact first)',
+      effort: 'Prioritize by effort required (lowest effort first)',
+      quick_wins: 'Prioritize quick wins (high impact, low effort first)',
+    };
+    if (priorityMap[settings.prioritization as string]) {
+      guidance.push(`- ${priorityMap[settings.prioritization as string]}`);
+    }
+  }
+
+  // Analysis depth
+  if (settings.analysisDepth) {
+    const depthMap: Record<string, string> = {
+      overview: 'Provide a high-level overview only',
+      detailed: 'Provide detailed analysis with supporting evidence',
+      comprehensive: 'Provide comprehensive analysis with all available details',
+    };
+    if (depthMap[settings.analysisDepth as string]) {
+      guidance.push(`- ${depthMap[settings.analysisDepth as string]}`);
+    }
+  }
+
+  // Time horizon
+  if (settings.timeHorizon) {
+    const horizonMap: Record<string, string> = {
+      short: 'Focus on short-term actions (0-3 months)',
+      medium: 'Focus on medium-term actions (3-12 months)',
+      long: 'Focus on long-term strategic initiatives (12+ months)',
+    };
+    if (horizonMap[settings.timeHorizon as string]) {
+      guidance.push(`- ${horizonMap[settings.timeHorizon as string]}`);
+    }
+  }
+
+  // Grouping
+  if (settings.groupBy) {
+    guidance.push(`- Group items by ${settings.groupBy}`);
+  }
+  if (settings.sortBy) {
+    guidance.push(`- Sort items by ${settings.sortBy}`);
+  }
+
+  // Boolean flags for content inclusion
+  if (settings.includeKeyMetrics === true) {
+    guidance.push('- Include key metrics and KPIs');
+  }
+  if (settings.includeComparisons === true) {
+    guidance.push('- Include benchmark comparisons');
+  }
+  if (settings.highlightGaps === true) {
+    guidance.push('- Highlight gaps between current and target state');
+  }
+  if (settings.includeTimeline === true) {
+    guidance.push('- Include implementation timeline');
+  }
+  if (settings.includeOwners === true) {
+    guidance.push('- Suggest responsible owners for each item');
+  }
+  if (settings.includeResources === true) {
+    guidance.push('- Include resource requirements');
+  }
+  if (settings.includeMilestones === true) {
+    guidance.push('- Include key milestones');
+  }
+  if (settings.includeRisks === true) {
+    guidance.push('- Include associated risks');
+  }
+  if (settings.includeEvidence === true) {
+    guidance.push('- Include supporting evidence for each finding');
+  }
+  if (settings.includeFramework === true) {
+    guidance.push('- Describe the assessment framework used');
+  }
+  if (settings.includeDataSources === true) {
+    guidance.push('- Describe data sources and collection methods');
+  }
+  if (settings.showCorrelations === true) {
+    guidance.push('- Include strategic correlations (SO/WO/ST/WT)');
+  }
+  if (settings.showStrategies === true) {
+    guidance.push('- Include strategic recommendations for each correlation');
+  }
+  if (settings.showTrends === true) {
+    guidance.push('- Include trend indicators (increasing/stable/decreasing)');
+  }
+  if (settings.showDrivers === true) {
+    guidance.push('- Include key drivers for each force/factor');
+  }
+  if (settings.showAttractiveness === true) {
+    guidance.push('- Include overall industry attractiveness assessment');
+  }
+  if (settings.showImpact === true) {
+    guidance.push('- Include impact assessment for each item');
+  }
+  if (settings.showRootCause === true) {
+    guidance.push('- Clearly identify and highlight the root cause');
+  }
+  if (settings.showKaizen === true) {
+    guidance.push('- Mark improvement opportunities (Kaizen points)');
+  }
+  if (settings.showEscalation === true) {
+    guidance.push('- Include escalation matrix with thresholds');
+  }
+  if (settings.highlightCritical === true) {
+    guidance.push('- Highlight critical items requiring immediate attention');
+  }
+  if (settings.highlightQuickWins === true) {
+    guidance.push('- Highlight quick wins (high impact, low effort)');
+  }
+  if (settings.highlightOutOfControl === true) {
+    guidance.push('- Highlight out-of-control data points');
+  }
+
+  // Style preferences
+  if (settings.executiveStyle === true) {
+    guidance.push('- Use executive summary style (concise, action-oriented)');
+  }
+  if (settings.compactMode === true) {
+    guidance.push('- Use compact format with minimal descriptions');
+  }
+
+  // Output format
+  if (settings.outputFormat) {
+    const formatMap: Record<string, string> = {
+      prose: 'Write in prose/paragraph format',
+      bullets: 'Use bullet points throughout',
+      mixed: 'Mix prose with bullet points as appropriate',
+    };
+    if (formatMap[settings.outputFormat as string]) {
+      guidance.push(`- ${formatMap[settings.outputFormat as string]}`);
+    }
+  }
+
+  // Layout preferences (for visual blocks)
+  if (settings.orientation) {
+    guidance.push(`- Use ${settings.orientation} orientation`);
+  }
+  if (settings.layout) {
+    guidance.push(`- Use ${settings.layout} layout`);
+  }
+  if (settings.columns) {
+    guidance.push(`- Organize into ${settings.columns} columns`);
+  }
+  if (settings.variant) {
+    guidance.push(`- Use ${settings.variant} variant style`);
+  }
+
+  // Threshold settings
+  if (settings.threshold !== undefined) {
+    guidance.push(`- Use ${settings.threshold}% as the threshold`);
+  }
+  if (settings.gridSize) {
+    guidance.push(`- Use ${settings.gridSize}x${settings.gridSize} grid`);
+  }
+  if (settings.levels) {
+    guidance.push(`- Use ${settings.levels} maturity levels`);
+  }
+
+  // Axis labels for matrices
+  if (settings.xAxisLabel) {
+    guidance.push(`- X-axis represents: ${settings.xAxisLabel}`);
+  }
+  if (settings.yAxisLabel) {
+    guidance.push(`- Y-axis represents: ${settings.yAxisLabel}`);
+  }
+
+  // Categories for fishbone
+  if (settings.categories && typeof settings.categories === 'string') {
+    guidance.push(`- Use these categories: ${settings.categories}`);
+  }
+
+  // Focus areas
+  if (
+    settings.focusAreas &&
+    typeof settings.focusAreas === 'string' &&
+    settings.focusAreas.trim()
+  ) {
+    guidance.push(`- Focus on these areas: ${settings.focusAreas}`);
+  }
+
+  return guidance.join('\n');
+}
+
 function getSectionPrompt(
   sectionType: SectionType,
   context: GenerationContext
@@ -99,10 +328,17 @@ function getSectionPrompt(
   const scores = sourceData.assessment?.scores || {};
   const answers = sourceData.assessment?.answers || {};
 
+  // Block-specific settings from frontend
+  const blockSettings = section.blockConfig || {};
+
+  // Build settings guidance string from blockSettings
+  const settingsGuidance = buildSettingsGuidance(sectionType, blockSettings);
+
   const baseSystem = `You are a senior management consultant creating a professional assessment report.
 Write in ${section.language} style. ${languageGuidance}
 Target length: ${lengthGuidance}
-${section.customPrompt ? `\nAdditional guidance: ${section.customPrompt}` : ''}`;
+${section.customPrompt ? `\nAdditional guidance: ${section.customPrompt}` : ''}
+${settingsGuidance ? `\nBlock-specific settings:\n${settingsGuidance}` : ''}`;
 
   switch (sectionType) {
     case 'cover':
