@@ -300,6 +300,13 @@ export const Sidebar: React.FC = () => {
       icon: <MessageSquare size={20} />,
       viewId: AppView.AI_CHAT,
     },
+    // 1.5 My Work - centrum pracy (Inbox / Focus / Tasks / Decisions)
+    {
+      id: 'MY_WORK',
+      label: t('myWork.title', 'My Work'),
+      icon: <Briefcase size={20} />,
+      viewId: AppView.MY_WORK,
+    },
     // 2. Interview - ustrukturyzowana rozmowa z AI konsultantem
     {
       id: 'INTERVIEW',
@@ -764,7 +771,7 @@ export const Sidebar: React.FC = () => {
                       ? '/assets/logos/logo-dark.png'
                       : '/assets/logos/logo-light.png'
                   }
-                  alt="DBR77 Consultinity"
+                  alt="Consultinity"
                   className="h-8 w-auto object-contain"
                 />
               </div>

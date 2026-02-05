@@ -1,6 +1,6 @@
 # Reports Module – Data Model
 
-## Status: 🔨 W PLANOWANIU
+## Status: ✅ ZAIMPLEMENTOWANY (MVP+)
 
 ---
 
@@ -32,14 +32,14 @@
 
 ---
 
-## 📋 Tabele
+## 📋 Tabele (stan faktyczny w DB)
 
-### 1. `reports` – Główna tabela raportów
+### 1. `report_builder_reports` – Główna tabela raportów
 
 ```sql
--- Migration: XXX_report_builder.sql
+-- Migration: 503_report_builder.sql (+ 508_report_builder_template_id.sql)
 
-CREATE TABLE IF NOT EXISTS reports (
+CREATE TABLE IF NOT EXISTS report_builder_reports (
   -- Primary key
   id TEXT PRIMARY KEY,
 
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS reports (
   description TEXT,
   report_type TEXT NOT NULL,  -- 'ASSESSMENT_DRD' | 'ASSESSMENT_SIRI' | etc.
 
-  -- Template reference
+  -- Template reference (selected template)
   template_id TEXT,
 
   -- Configuration (JSON)
@@ -96,23 +96,22 @@ CREATE TABLE IF NOT EXISTS reports (
   FOREIGN KEY (organization_id) REFERENCES organizations(id),
   FOREIGN KEY (created_by) REFERENCES users(id),
   FOREIGN KEY (approved_by) REFERENCES users(id),
-  FOREIGN KEY (parent_report_id) REFERENCES reports(id),
-  FOREIGN KEY (template_id) REFERENCES report_templates(id)
+  FOREIGN KEY (parent_report_id) REFERENCES report_builder_reports(id)
 );
 
 -- Indexes
-CREATE INDEX IF NOT EXISTS idx_reports_organization ON reports(organization_id);
-CREATE INDEX IF NOT EXISTS idx_reports_source ON reports(source_type, source_id);
-CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
-CREATE INDEX IF NOT EXISTS idx_reports_created_by ON reports(created_by);
-CREATE INDEX IF NOT EXISTS idx_reports_type ON reports(report_type);
-CREATE INDEX IF NOT EXISTS idx_reports_created_at ON reports(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_rb_reports_organization ON report_builder_reports(organization_id);
+CREATE INDEX IF NOT EXISTS idx_rb_reports_source ON report_builder_reports(source_type, source_id);
+CREATE INDEX IF NOT EXISTS idx_rb_reports_status ON report_builder_reports(status);
+CREATE INDEX IF NOT EXISTS idx_rb_reports_created_by ON report_builder_reports(created_by);
+CREATE INDEX IF NOT EXISTS idx_rb_reports_type ON report_builder_reports(report_type);
+CREATE INDEX IF NOT EXISTS idx_rb_reports_created_at ON report_builder_reports(created_at DESC);
 ```
 
-### 2. `report_sections` – Sekcje raportu
+### 2. `report_builder_sections` – Sekcje raportu
 
 ```sql
-CREATE TABLE IF NOT EXISTS report_sections (
+CREATE TABLE IF NOT EXISTS report_builder_sections (
   -- Primary key
   id TEXT PRIMARY KEY,
   report_id TEXT NOT NULL,
@@ -137,7 +136,12 @@ CREATE TABLE IF NOT EXISTS report_sections (
   -- Content
   generated_content TEXT,  -- AI-generated content (markdown/JSON)
   edited_content TEXT,  -- User-edited content (takes precedence)
-  content_format TEXT DEFAULT 'markdown',  -- 'markdown' | 'json' | 'html'
+  content_format TEXT DEFAULT 'markdown',  -- 'markdown' | 'json' | 'tiptap'
+
+  -- Dynamic blocks (optional)
+  block_type_id TEXT,
+  block_config_json TEXT,
+  render_kind TEXT,
 
   -- Generation metadata
   generated_at TIMESTAMP,
@@ -152,20 +156,20 @@ CREATE TABLE IF NOT EXISTS report_sections (
   repeat_key TEXT,  -- e.g., '1' for axis 1, '1A' for area 1A
   repeat_name TEXT,  -- e.g., 'Digital Processes'
 
-  FOREIGN KEY (report_id) REFERENCES reports(id) ON DELETE CASCADE,
+  FOREIGN KEY (report_id) REFERENCES report_builder_reports(id) ON DELETE CASCADE,
   FOREIGN KEY (edited_by) REFERENCES users(id)
 );
 
 -- Indexes
-CREATE INDEX IF NOT EXISTS idx_report_sections_report ON report_sections(report_id);
-CREATE INDEX IF NOT EXISTS idx_report_sections_key ON report_sections(report_id, section_key);
-CREATE INDEX IF NOT EXISTS idx_report_sections_order ON report_sections(report_id, order_index);
+CREATE INDEX IF NOT EXISTS idx_rb_sections_report ON report_builder_sections(report_id);
+CREATE INDEX IF NOT EXISTS idx_rb_sections_key ON report_builder_sections(report_id, section_key);
+CREATE INDEX IF NOT EXISTS idx_rb_sections_order ON report_builder_sections(report_id, order_index);
 ```
 
-### 3. `report_templates` – Szablony raportów
+### 3. `report_builder_templates` – Szablony raportów
 
 ```sql
-CREATE TABLE IF NOT EXISTS report_templates (
+CREATE TABLE IF NOT EXISTS report_builder_templates (
   id TEXT PRIMARY KEY,
   organization_id TEXT,  -- NULL for system templates
 
@@ -193,14 +197,14 @@ CREATE TABLE IF NOT EXISTS report_templates (
   FOREIGN KEY (created_by) REFERENCES users(id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_report_templates_org ON report_templates(organization_id);
-CREATE INDEX IF NOT EXISTS idx_report_templates_type ON report_templates(source_type, report_type);
+CREATE INDEX IF NOT EXISTS idx_rb_templates_org ON report_builder_templates(organization_id);
+CREATE INDEX IF NOT EXISTS idx_rb_templates_type ON report_builder_templates(source_type, report_type);
 ```
 
-### 4. `report_sessions` – Dynamiczne menu (otwarte raporty)
+### 4. `report_builder_sessions` – Dynamiczne menu (otwarte raporty)
 
 ```sql
-CREATE TABLE IF NOT EXISTS report_sessions (
+CREATE TABLE IF NOT EXISTS report_builder_sessions (
   id TEXT PRIMARY KEY,
   report_id TEXT NOT NULL,
   user_id TEXT NOT NULL,
@@ -215,15 +219,15 @@ CREATE TABLE IF NOT EXISTS report_sessions (
   navigation_state TEXT,  -- Current step, section, scroll position
 
   UNIQUE(report_id, user_id),
-  FOREIGN KEY (report_id) REFERENCES reports(id) ON DELETE CASCADE,
+  FOREIGN KEY (report_id) REFERENCES report_builder_reports(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_report_sessions_user ON report_sessions(user_id, organization_id);
-CREATE INDEX IF NOT EXISTS idx_report_sessions_opened ON report_sessions(opened_at DESC);
+CREATE INDEX IF NOT EXISTS idx_rb_sessions_user ON report_builder_sessions(user_id, organization_id);
+CREATE INDEX IF NOT EXISTS idx_rb_sessions_opened ON report_builder_sessions(opened_at DESC);
 ```
 
-### 5. `report_activity` – Activity log
+### 5. `report_builder_activity` – Activity log
 
 ```sql
 CREATE TABLE IF NOT EXISTS report_activity (

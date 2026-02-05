@@ -18,10 +18,20 @@ export { SourceSelectStep } from './steps/SourceSelectStep';
 // Composer
 export { ReportsComposer } from './ReportsComposer';
 
+// Comment Panel
+export { ReportBuilderCommentPanel } from './ReportBuilderCommentPanel';
+
 // Types
 export type {
+  CanApproveResult,
+  CommentAnchor,
+  CommentPriority,
+  CommentStatus,
+  CommentSummary,
+  CommentType,
   Report,
   ReportBuilderState,
+  ReportComment,
   ReportSection,
   ReportSourceType,
   ReportStatus,

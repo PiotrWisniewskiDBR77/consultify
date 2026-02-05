@@ -273,9 +273,14 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
 
   // Report internal level changes
   React.useEffect(() => {
+    // IMPORTANT:
+    // When `currentLevel` prop is provided, the editor is controlled by the parent.
+    // In that mode, calling `onLevelChange` here can create an update loop:
+    // parent updates -> prop sync setsActiveLevel -> this effect fires -> parent updates -> ...
+    if (currentLevel !== undefined) return;
     onLevelChange?.(activeLevel);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeLevel]);
+  }, [activeLevel, currentLevel]);
 
   // Close fullscreen matrix on Escape
   React.useEffect(() => {
@@ -306,6 +311,13 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
       window.removeEventListener('click', onClick);
     };
   }, [popupCell]);
+
+  // Cleanup timeouts on unmount to avoid stale callbacks during navigation
+  React.useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    };
+  }, []);
 
   // Helper to open popup at cell position with smart positioning
   const openCellPopup = (areaId: string, level: number, e: React.MouseEvent<HTMLButtonElement>) => {
@@ -401,8 +413,14 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
 
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
 
+    // IMPORTANT:
+    // - React synthetic events are invalid after the handler returns.
+    // - We must not reference `e` inside setTimeout (it can become null).
+    const target = e.currentTarget;
+
     hoverTimeoutRef.current = setTimeout(() => {
-      const rect = e.currentTarget.getBoundingClientRect();
+      if (!target || !target.isConnected) return;
+      const rect = target.getBoundingClientRect();
       setHoverPosition({
         top: rect.top - 8,
         left: rect.left + rect.width / 2,

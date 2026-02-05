@@ -7,7 +7,7 @@
  * Step 2 Finalization: Enterprise+ Ready
  */
 
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { useAppStore } from '../store/useAppStore';
 
@@ -81,16 +81,25 @@ const getAuthToken = (): string | null => {
 };
 
 export const AccessPolicyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentUser } = useAppStore();
+  // NOTE (React 19 + useSyncExternalStore):
+  // Avoid selectors that return a new object each call (even with shallow),
+  // because it can trigger "getSnapshot should be cached" and update loops.
+  const currentUser = useAppStore((s) => s.currentUser);
   const [snapshot, setSnapshot] = useState<PolicySnapshot | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const authKey = useMemo(() => {
+    if (!currentUser?.isAuthenticated) return null;
+    return currentUser.id || null;
+  }, [currentUser?.id, currentUser?.isAuthenticated]);
+
   const fetchSnapshot = useCallback(async () => {
     const token = getAuthToken();
 
-    if (!currentUser || !token) {
-      setSnapshot(null);
+    if (!currentUser?.isAuthenticated || !token) {
+      // Don't spam state updates if we're already cleared.
+      setSnapshot((prev) => (prev === null ? prev : null));
       return;
     }
 
@@ -105,6 +114,12 @@ export const AccessPolicyProvider: React.FC<{ children: React.ReactNode }> = ({ 
         },
       });
 
+      if (response.status === 404) {
+        // Backend may not have this endpoint in some dev/stub setups.
+        setSnapshot(null);
+        return;
+      }
+
       if (!response.ok) {
         throw new Error('Failed to fetch policy snapshot');
       }
@@ -117,12 +132,17 @@ export const AccessPolicyProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } finally {
       setLoading(false);
     }
-  }, [currentUser]);
+  }, [currentUser?.isAuthenticated]);
 
   // Fetch on mount and auth change
   useEffect(() => {
-    fetchSnapshot();
-  }, [fetchSnapshot]);
+    // Only fetch when an authenticated user is present.
+    if (authKey) {
+      fetchSnapshot();
+    } else {
+      setSnapshot(null);
+    }
+  }, [authKey, fetchSnapshot]);
 
   const isActionBlocked = useCallback(
     (action: string): boolean => {

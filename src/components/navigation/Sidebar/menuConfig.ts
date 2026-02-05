@@ -17,20 +17,16 @@ import {
   ClipboardList,
   CreditCard,
   Factory,
-  Globe,
   LayoutDashboard,
   Lightbulb,
   Map,
   MessageSquare,
   Rocket,
-  Scale,
   Settings,
   Shield,
-  Target,
   TrendingUp,
   Users,
   Wrench,
-  Zap,
 } from 'lucide-react';
 import React from 'react';
 
@@ -141,38 +137,8 @@ export function getOrganizationMenuItem(t: TranslationFn): MenuItem {
     id: 'ORGANIZATION',
     label: t('sidebar.organization'),
     icon: React.createElement(Factory, { size: 20 }),
-    subItems: [
-      {
-        id: 'CTX_1',
-        label: t('sidebar.context.profile'),
-        viewId: AppView.CONTEXT_BUILDER_PROFILE,
-        icon: React.createElement(Target, { size: 16 }),
-      },
-      {
-        id: 'CTX_2',
-        label: t('sidebar.context.goals'),
-        viewId: AppView.CONTEXT_BUILDER_GOALS,
-        icon: React.createElement(Target, { size: 16 }),
-      },
-      {
-        id: 'CTX_3',
-        label: t('sidebar.context.challenges'),
-        viewId: AppView.CONTEXT_BUILDER_CHALLENGES,
-        icon: React.createElement(Scale, { size: 16 }),
-      },
-      {
-        id: 'CTX_4',
-        label: t('sidebar.context.megatrends'),
-        viewId: AppView.CONTEXT_BUILDER_MEGATRENDS,
-        icon: React.createElement(Globe, { size: 16 }),
-      },
-      {
-        id: 'CTX_5',
-        label: t('sidebar.context.strategy'),
-        viewId: AppView.CONTEXT_BUILDER_STRATEGY,
-        icon: React.createElement(Zap, { size: 16 }),
-      },
-    ],
+    viewId: AppView.CONTEXT_BUILDER_PROFILE,
+    // No subItems - organization module has its own internal navigation (like Settings)
   };
 }
 

@@ -43,8 +43,7 @@ interface ToolMode {
   id: string;
   icon: React.ElementType;
   labelKey: string;
-  label: string;
-  description: string;
+  descKey: string;
   enabled?: boolean;
 }
 
@@ -52,8 +51,7 @@ interface KnowledgeSource {
   id: string;
   icon: React.ElementType;
   labelKey: string;
-  label: string;
-  description: string;
+  descKey: string;
   enabled: boolean;
 }
 
@@ -63,15 +61,15 @@ type ResponseStyle = 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal
 interface StyleOption {
   id: ResponseStyle;
   icon: React.ElementType;
-  label: string;
+  labelKey: string;
 }
 
 const RESPONSE_STYLES: StyleOption[] = [
-  { id: 'normal', icon: MessageSquare, label: 'Normalny' },
-  { id: 'learning', icon: GraduationCap, label: 'Edukacyjny' },
-  { id: 'concise', icon: Zap, label: 'Zwięzły' },
-  { id: 'explanatory', icon: BookOpen, label: 'Wyjaśniający' },
-  { id: 'formal', icon: Pen, label: 'Formalny' },
+  { id: 'normal', icon: MessageSquare, labelKey: 'aiChat.menu.styles.normal' },
+  { id: 'learning', icon: GraduationCap, labelKey: 'aiChat.menu.styles.learning' },
+  { id: 'concise', icon: Zap, labelKey: 'aiChat.menu.styles.concise' },
+  { id: 'explanatory', icon: BookOpen, labelKey: 'aiChat.menu.styles.explanatory' },
+  { id: 'formal', icon: Pen, labelKey: 'aiChat.menu.styles.formal' },
 ];
 
 export const ToolsMenu: React.FC<ToolsMenuProps> = ({
@@ -128,33 +126,29 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     {
       id: 'deepResearch',
       icon: Search,
-      labelKey: 'aiChat.menu.deepResearch',
-      label: 'Głęboka analiza',
-      description: 'Dogłębne badanie tematu',
+      labelKey: 'aiChat.menu.modes.deepResearch.label',
+      descKey: 'aiChat.menu.modes.deepResearch.desc',
       enabled: deepResearch,
     },
     {
       id: 'webSearch',
       icon: Globe,
-      labelKey: 'aiChat.menu.webSearch',
-      label: 'Wyszukiwanie web',
-      description: 'Dane w czasie rzeczywistym',
+      labelKey: 'aiChat.menu.modes.webSearch.label',
+      descKey: 'aiChat.menu.modes.webSearch.desc',
       enabled: webSearch,
     },
     {
       id: 'showReasoning',
       icon: Sparkles,
-      labelKey: 'aiChat.menu.showReasoning',
-      label: 'Pokaż rozumowanie',
-      description: 'Widoczny tok myślenia AI',
+      labelKey: 'aiChat.menu.modes.showReasoning.label',
+      descKey: 'aiChat.menu.modes.showReasoning.desc',
       enabled: showReasoning,
     },
     {
       id: 'textToSpeech',
       icon: Volume2,
-      labelKey: 'aiChat.menu.textToSpeech',
-      label: 'Czytaj odpowiedzi',
-      description: 'Automatyczne czytanie na głos',
+      labelKey: 'aiChat.menu.modes.textToSpeech.label',
+      descKey: 'aiChat.menu.modes.textToSpeech.desc',
       enabled: textToSpeech,
     },
   ];
@@ -164,25 +158,22 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     {
       id: 'pmoDocuments',
       icon: BookOpen,
-      labelKey: 'aiChat.menu.pmoDocuments',
-      label: 'Dokumenty PMO',
-      description: 'ISO 21500, PMBOK, PRINCE2',
+      labelKey: 'aiChat.menu.sources.pmoDocuments.label',
+      descKey: 'aiChat.menu.sources.pmoDocuments.desc',
       enabled: knowledgeSources?.pmoDocuments ?? false,
     },
     {
       id: 'projectData',
       icon: Database,
-      labelKey: 'aiChat.menu.projectData',
-      label: 'Dane projektu',
-      description: 'Inicjatywy, zadania, decyzje',
+      labelKey: 'aiChat.menu.sources.projectData.label',
+      descKey: 'aiChat.menu.sources.projectData.desc',
       enabled: knowledgeSources?.projectData ?? false,
     },
     {
       id: 'organizationData',
       icon: Building2,
-      labelKey: 'aiChat.menu.organizationData',
-      label: 'Dane organizacji',
-      description: 'Zespoły, role, procesy',
+      labelKey: 'aiChat.menu.sources.organizationData.label',
+      descKey: 'aiChat.menu.sources.organizationData.desc',
       enabled: knowledgeSources?.organizationData ?? false,
     },
   ];
@@ -215,16 +206,12 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       setAIConfig({ maxMode: newValue });
     }
 
-    // Show toast notification
-    const modeLabels: Record<string, string> = {
-      deepResearch: 'Głęboka analiza',
-      webSearch: 'Wyszukiwanie web',
-      showReasoning: 'Pokaż rozumowanie',
-      textToSpeech: 'Czytanie odpowiedzi',
-    };
-    const label = modeLabels[modeId] || modeId;
+    const label = t(`aiChat.menu.modes.${modeId}.label`, modeId);
     const icon = modeId === 'textToSpeech' ? '🔊' : '✓';
-    toast.success(`${label}: ${newValue ? 'włączone' : 'wyłączone'}`, { duration: 2000, icon });
+    toast.success(
+      t(newValue ? 'aiChat.menu.toast.enabled' : 'aiChat.menu.toast.disabled', { label }),
+      { duration: 2000, icon }
+    );
 
     onToolSelect(`toggle:${modeId}`);
   };
@@ -239,14 +226,11 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     };
     setAIConfig({ knowledgeSources: newSources });
 
-    // Show toast notification
-    const sourceLabels: Record<string, string> = {
-      pmoDocuments: 'Dokumenty PMO',
-      projectData: 'Dane projektu',
-      organizationData: 'Dane organizacji',
-    };
-    const label = sourceLabels[sourceId] || sourceId;
-    toast.success(`${label}: ${newValue ? 'włączone' : 'wyłączone'}`, { duration: 2000 });
+    const label = t(`aiChat.menu.sources.${sourceId}.label`, sourceId);
+    toast.success(
+      t(newValue ? 'aiChat.menu.toast.enabled' : 'aiChat.menu.toast.disabled', { label }),
+      { duration: 2000 }
+    );
 
     onToolSelect(`source:${sourceId}`);
   };
@@ -257,6 +241,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled}
+        data-testid="chat-tools-button"
         className={`
                     relative p-2 rounded-lg transition-colors
                     ${
@@ -328,7 +313,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 <div
                   className={`flex-1 text-sm font-medium ${isEnabled ? 'text-primary-700 dark:text-primary-300' : 'text-slate-700 dark:text-slate-300'}`}
                 >
-                  {t(mode.labelKey, mode.label)}
+                  {t(mode.labelKey)}
                 </div>
                 {isEnabled ? (
                   <ToggleRight size={22} className="text-primary-500 shrink-0" />
@@ -377,7 +362,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 <div
                   className={`flex-1 text-sm font-medium ${isEnabled ? 'text-green-700 dark:text-green-300' : 'text-slate-700 dark:text-slate-300'}`}
                 >
-                  {t(source.labelKey, source.label)}
+                  {t(source.labelKey)}
                 </div>
                 {isEnabled ? (
                   <ToggleRight size={22} className="text-green-500 shrink-0" />
@@ -415,7 +400,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 {t('aiChat.menu.responseStyle', 'Styl odpowiedzi')}
               </div>
               <span className="text-xs text-slate-500 dark:text-slate-400">
-                {RESPONSE_STYLES.find((s) => s.id === responseStyle)?.label || 'Normalny'}
+                {t(`aiChat.menu.styles.${responseStyle || 'normal'}`, 'Normal')}
               </span>
               <ChevronRight
                 size={14}
@@ -438,7 +423,10 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                       onClick={() => {
                         setAIConfig({ responseStyle: style.id });
                         setShowStyleSubmenu(false);
-                        toast.success(`Styl odpowiedzi: ${style.label}`, { duration: 2000 });
+                        const styleLabel = t(style.labelKey);
+                        toast.success(t('aiChat.menu.toast.responseStyle', { style: styleLabel }), {
+                          duration: 2000,
+                        });
                         onToolSelect(`style:${style.id}`);
                       }}
                       className={`
@@ -455,7 +443,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                       <span
                         className={`flex-1 text-sm ${isSelected ? 'text-primary-700 dark:text-primary-300 font-medium' : 'text-slate-700 dark:text-slate-300'}`}
                       >
-                        {style.label}
+                        {t(style.labelKey)}
                       </span>
                       {isSelected && <Check size={14} className="text-primary-500 shrink-0" />}
                     </button>
@@ -535,7 +523,10 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                         value={ttsVoice || ''}
                         onChange={(e) => {
                           setAIConfig({ ttsVoice: e.target.value || null });
-                          toast.success('Głos zmieniony', { duration: 1500, icon: '🔊' });
+                          toast.success(t('aiChat.menu.ttsVoiceChanged', 'Voice changed'), {
+                            duration: 1500,
+                            icon: '🔊',
+                          });
                         }}
                         className="w-full px-2 py-1.5 text-sm bg-slate-100 dark:bg-navy-700 border-0 rounded-lg text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-primary-500"
                       >
@@ -558,7 +549,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                         if ('speechSynthesis' in window) {
                           window.speechSynthesis.cancel();
                           const utterance = new SpeechSynthesisUtterance(
-                            'Cześć, to jest test głosu.'
+                            t('aiChat.menu.ttsTestUtterance', 'Hi, this is a voice test.')
                           );
                           utterance.rate = ttsRate ?? 1;
                           if (ttsVoice) {

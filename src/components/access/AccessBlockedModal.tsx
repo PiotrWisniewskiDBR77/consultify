@@ -20,6 +20,9 @@ const SALES_CALL_URL =
 
 function getDefaultCta(code?: string): AccessBlockedCTA | null {
   switch (code) {
+    case 'ORG_NOT_FOUND':
+    case 'ORG_INACTIVE':
+      return { label: 'Log in again', href: '/auth?mode=login' };
     case 'TRIAL_PROFILE_INCOMPLETE':
       return { label: 'Complete setup', href: '/org-setup' };
     case 'DEMO_TIME_EXPIRED':
@@ -48,21 +51,26 @@ export const AccessBlockedModal: React.FC = () => {
     const code = detail.code || 'ACCESS_BLOCKED';
     const message =
       detail.message ||
-      (code === 'TRIAL_PROFILE_INCOMPLETE'
-        ? 'Complete organization setup to start your trial AI experience.'
-        : code === 'AI_TOKEN_BUDGET_EXCEEDED'
-          ? 'Your trial AI budget has been used. Add a payment method to continue using AI.'
-          : code === 'AI_LIMIT_REACHED'
-            ? 'You have reached your AI limit. Upgrade to continue.'
-            : code === 'TRIAL_EXPIRED'
-              ? 'Your trial has expired. Upgrade to continue.'
-              : 'This action is blocked in your current access level.');
+      (code === 'ORG_NOT_FOUND'
+        ? 'Organization not found. Please log in again to refresh your session.'
+        : code === 'ORG_INACTIVE'
+          ? 'Your organization is inactive. Please contact support or log in again.'
+          : code === 'TRIAL_PROFILE_INCOMPLETE'
+            ? 'Complete organization setup to start your trial AI experience.'
+            : code === 'AI_TOKEN_BUDGET_EXCEEDED'
+              ? 'Your trial AI budget has been used. Add a payment method to continue using AI.'
+              : code === 'AI_LIMIT_REACHED'
+                ? 'You have reached your AI limit. Upgrade to continue.'
+                : code === 'TRIAL_EXPIRED'
+                  ? 'Your trial has expired. Upgrade to continue.'
+                  : 'This action is blocked in your current access level.');
     const cta = detail.cta || getDefaultCta(code) || undefined;
     const isDemoBlock =
       code === 'DEMO_TIME_EXPIRED' ||
       code === 'DEMO_AI_SESSION_LIMIT_REACHED' ||
       code === 'DEMO_READ_ONLY';
-    return { code, message, cta, isDemoBlock };
+    const isOrgError = code === 'ORG_NOT_FOUND' || code === 'ORG_INACTIVE';
+    return { code, message, cta, isDemoBlock, isOrgError };
   }, [detail]);
 
   useEffect(() => {

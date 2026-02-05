@@ -3,6 +3,13 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vitest/config';
 
+const VITEST_HEAP_MB = (() => {
+  const raw = process.env.VITEST_HEAP_MB;
+  if (!raw) return NaN;
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : NaN;
+})();
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -186,6 +193,7 @@ export default defineConfig({
     env: {
       DB_TYPE: 'sqlite',
       NODE_ENV: 'test',
+      ENABLE_TEST_GATEWAY: 'true', // Mount full Gateway routes for integration tests
     },
     setupFiles: './tests/setup.ts',
     include: [
@@ -226,6 +234,8 @@ export default defineConfig({
     // Optimize test execution
     pool: 'forks', // Use forks instead of threads to avoid napi_throw with SQLite native bindings
     singleFork: false,
+    // Pass Node flags to runner workers (Vitest v4 pool rework)
+    execArgv: Number.isFinite(VITEST_HEAP_MB) ? [`--max-old-space-size=${VITEST_HEAP_MB}`] : [],
     // Enable test file parallelization (but not within files)
     fileParallelism: true,
     // Enhanced timeout configuration for stability

@@ -138,6 +138,9 @@ const REQUIRED_COLUMNS: Record<string, string[]> = {
   users: ['organization_id', 'role', 'status', 'email'],
   organizations: ['plan', 'status', 'name'],
   tasks: ['project_id', 'organization_id', 'status', 'priority'],
+  // Used by audit/activity logging across the app (including AI chat).
+  // Older dev SQLite DBs may miss `entity_name` - we auto-repair by adding TEXT column on startup.
+  activity_logs: ['entity_name'],
   user_api_keys: [
     'scopes',
     'expires_at',

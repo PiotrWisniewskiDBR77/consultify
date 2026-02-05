@@ -13,6 +13,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import { isValidLanguage, type SupportedLanguage } from '@/i18n';
 import { Api } from '@/services/api';
 
 import { AppView, ChatMessage } from '../types';
@@ -26,12 +27,26 @@ import {
 
 const STORE_DEBUG = import.meta.env.VITE_STORE_DEBUG === 'true';
 
+function getAppLanguageFallback(): SupportedLanguage {
+  try {
+    const raw = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
+    return (isValidLanguage(raw) ? raw : 'en') as SupportedLanguage;
+  } catch {
+    return 'en';
+  }
+}
+
 // ==================== TYPES ====================
 
 export interface Conversation {
   id: string;
   title: string;
   titleSource: 'auto' | 'user';
+  /**
+   * Per-conversation language (independent from UI language).
+   * Stored in backend as `conversations.language`.
+   */
+  language?: SupportedLanguage;
 
   /**
    * PMO Project ID - Reference to business transformation project
@@ -98,6 +113,11 @@ export interface ConversationMessage {
     // Interactive options
     options?: Array<{ id: string; label: string; value: string }>;
     multiSelect?: boolean;
+    /**
+     * Optional diagnostics for persisted AI/system messages.
+     * Useful for debugging stream failures without polluting message content.
+     */
+    error?: string;
   };
   tokenCount?: number;
   modelUsed?: string;
@@ -189,6 +209,18 @@ interface ConversationState {
   activeConversationId: string | null;
   activeMessages: ConversationMessage[];
 
+  /**
+   * Language used for the chat conversation.
+   *
+   * - UI language is managed by i18n (settings).
+   * - Chat language is chosen by the user per conversation.
+   * - If a conversation has no explicit language yet, we fall back to draftChatLanguage.
+   * - draftChatLanguage defaults to current app language (i18nextLng) but can be changed by the user
+   *   before starting a new conversation.
+   */
+  draftChatLanguage: SupportedLanguage;
+  chatLanguageByConversationId: Record<string, SupportedLanguage>;
+
   // UI State
   isLoading: boolean;
   isSidebarOpen: boolean;
@@ -239,6 +271,10 @@ interface ConversationState {
   setSearchQuery: (query: string) => void;
   toggleShowArchived: () => void;
   clearActiveChat: () => void;
+
+  // Actions - Language
+  setDraftChatLanguage: (lang: SupportedLanguage) => void;
+  setConversationChatLanguage: (conversationId: string, lang: SupportedLanguage) => void;
 
   // Actions - Title
   generateTitle: (id: string) => Promise<void>;
@@ -307,6 +343,8 @@ export const useConversationStore = create<ConversationState>()(
       conversations: [],
       activeConversationId: null,
       activeMessages: [],
+      draftChatLanguage: getAppLanguageFallback(),
+      chatLanguageByConversationId: {},
       isLoading: false,
       isSidebarOpen: false,
       searchQuery: '',
@@ -337,10 +375,17 @@ export const useConversationStore = create<ConversationState>()(
           });
 
           const conversations = result.conversations.map(mapApiConversation);
-          set({
-            conversations,
-            groupedConversations: groupConversations(conversations),
-            isLoading: false,
+          set((state) => {
+            const nextMap = { ...state.chatLanguageByConversationId };
+            for (const c of conversations) {
+              if (c.language) nextMap[c.id] = c.language;
+            }
+            return {
+              conversations,
+              groupedConversations: groupConversations(conversations),
+              chatLanguageByConversationId: nextMap,
+              isLoading: false,
+            };
           });
         } catch (err) {
           console.error('[ConversationStore] Fetch error:', err);
@@ -353,10 +398,24 @@ export const useConversationStore = create<ConversationState>()(
         try {
           const result = await Api.getConversation(id);
           const messages = result.messages.map(mapApiMessage);
-          set({
-            activeConversationId: id,
-            activeMessages: messages,
-            isLoading: false,
+          set((state) => {
+            const fromApiRaw = result?.language;
+            const fromApiBase = fromApiRaw ? String(fromApiRaw).split('-')[0] : null;
+            const fromApi = fromApiBase && isValidLanguage(fromApiBase) ? fromApiBase : null;
+            const existing = state.chatLanguageByConversationId[id];
+            const resolved =
+              (fromApi as any) || existing || state.draftChatLanguage || getAppLanguageFallback();
+            return {
+              activeConversationId: id,
+              activeMessages: messages,
+              isLoading: false,
+              // Ensure we always have a language for the selected conversation
+              draftChatLanguage: resolved,
+              chatLanguageByConversationId: {
+                ...state.chatLanguageByConversationId,
+                [id]: resolved,
+              },
+            };
           });
         } catch (err) {
           console.error('[ConversationStore] Fetch conversation error:', err);
@@ -368,13 +427,16 @@ export const useConversationStore = create<ConversationState>()(
 
       createConversation: async (options) => {
         try {
+          const language = get().draftChatLanguage || getAppLanguageFallback();
           const result = await Api.createConversation({
             title: options?.title,
             projectId: options?.projectId,
             pmoContext: options?.pmoContext,
+            language,
           });
 
           const conversation = mapApiConversation(result);
+          const conversationLanguage = conversation.language || language;
 
           set((state) => {
             const newConversations = [conversation, ...state.conversations];
@@ -383,6 +445,10 @@ export const useConversationStore = create<ConversationState>()(
               groupedConversations: groupConversations(newConversations),
               activeConversationId: conversation.id,
               activeMessages: [],
+              chatLanguageByConversationId: {
+                ...state.chatLanguageByConversationId,
+                [conversation.id]: conversationLanguage,
+              },
             };
           });
 
@@ -435,14 +501,47 @@ export const useConversationStore = create<ConversationState>()(
       // ==================== MESSAGES ====================
 
       addMessage: async (message) => {
-        const { activeConversationId, activeMessages } = get();
+        const { activeConversationId } = get();
+        const conversationId = message.conversationId || activeConversationId;
+        if (!conversationId) throw new Error('No active conversation');
 
-        if (!activeConversationId) {
-          throw new Error('No active conversation');
-        }
+        // Optimistic UI: append immediately so chat feels responsive (especially in split mode).
+        const optimisticId = `local-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        const optimisticMessage: ConversationMessage = {
+          id: optimisticId,
+          conversationId,
+          role: message.role,
+          content: message.content,
+          messageType: message.messageType || 'text',
+          metadata: { ...(message.metadata || {}), local: true } as any,
+          tokenCount: message.tokenCount,
+          modelUsed: message.modelUsed,
+          createdAt: new Date(),
+        };
+
+        set((state) => {
+          // Only append to activeMessages if this conversation is currently active
+          const shouldAppend = state.activeConversationId === conversationId;
+          return {
+            activeMessages: shouldAppend
+              ? [...state.activeMessages, optimisticMessage]
+              : state.activeMessages,
+            conversations: state.conversations.map((c) =>
+              c.id === conversationId
+                ? {
+                    ...c,
+                    messageCount: (c.messageCount || 0) + 1,
+                    lastMessagePreview: message.content.slice(0, 200),
+                    lastMessageAt: new Date(),
+                    updatedAt: new Date(),
+                  }
+                : c
+            ),
+          };
+        });
 
         try {
-          const result = await Api.addConversationMessage(activeConversationId, {
+          const result = await Api.addConversationMessage(conversationId, {
             role: message.role,
             content: message.content,
             messageType: message.messageType,
@@ -453,29 +552,40 @@ export const useConversationStore = create<ConversationState>()(
 
           const newMessage = mapApiMessage(result);
 
-          set((state) => ({
-            activeMessages: [...state.activeMessages, newMessage],
-            conversations: state.conversations.map((c) =>
-              c.id === activeConversationId
-                ? {
-                    ...c,
-                    messageCount: c.messageCount + 1,
-                    lastMessagePreview: message.content.slice(0, 200),
-                    lastMessageAt: new Date(),
-                    updatedAt: new Date(),
-                  }
-                : c
-            ),
-          }));
+          set((state) => {
+            const isActive = state.activeConversationId === conversationId;
+            const nextActiveMessages = isActive
+              ? state.activeMessages.map((m) => (m.id === optimisticId ? newMessage : m))
+              : state.activeMessages;
+            return {
+              activeMessages: nextActiveMessages,
+            };
+          });
 
           // Trigger title generation after first exchange
-          if (activeMessages.length === 1 && message.role === 'ai') {
-            get().generateTitle(activeConversationId);
+          const after = get().activeMessages;
+          if (
+            after.length === 2 &&
+            message.role === 'ai' &&
+            get().activeConversationId === conversationId
+          ) {
+            get().generateTitle(conversationId);
           }
 
           return newMessage;
         } catch (err) {
           console.error('[ConversationStore] Add message error:', err);
+          // Keep optimistic message but mark it as failed so UI can show it if needed.
+          set((state) => {
+            if (state.activeConversationId !== conversationId) return {};
+            return {
+              activeMessages: state.activeMessages.map((m) =>
+                m.id === optimisticId
+                  ? ({ ...m, metadata: { ...(m.metadata || {}), localError: true } } as any)
+                  : m
+              ),
+            };
+          });
           throw err;
         }
       },
@@ -515,6 +625,10 @@ export const useConversationStore = create<ConversationState>()(
 
       setActiveConversation: (id) => {
         if (id) {
+          const existing = get().chatLanguageByConversationId[id];
+          if (existing) {
+            set({ draftChatLanguage: existing });
+          }
           get().fetchConversation(id);
         } else {
           set({ activeConversationId: null, activeMessages: [] });
@@ -535,6 +649,24 @@ export const useConversationStore = create<ConversationState>()(
 
       clearActiveChat: () => {
         set({ activeConversationId: null, activeMessages: [] });
+      },
+
+      // ==================== LANGUAGE ====================
+
+      setDraftChatLanguage: (lang) => {
+        set({ draftChatLanguage: lang });
+      },
+
+      setConversationChatLanguage: (conversationId, lang) => {
+        set((state) => ({
+          draftChatLanguage: lang,
+          chatLanguageByConversationId: {
+            ...state.chatLanguageByConversationId,
+            [conversationId]: lang,
+          },
+        }));
+        // Persist to backend (best-effort)
+        void get().updateConversation(conversationId, { language: lang } as any);
       },
 
       // ==================== TITLE ====================
@@ -747,6 +879,8 @@ export const useConversationStore = create<ConversationState>()(
         showArchived: state.showArchived,
         displayMode: state.displayMode,
         activeConversationId: state.activeConversationId, // Persist active conversation across screens
+        draftChatLanguage: state.draftChatLanguage,
+        chatLanguageByConversationId: state.chatLanguageByConversationId,
       }),
       onRehydrate: () => {
         // When store rehydrates, we need to fetch messages for active conversation
@@ -776,10 +910,15 @@ export const useConversationStore = create<ConversationState>()(
 // ==================== API MAPPERS ====================
 
 function mapApiConversation(api: any): Conversation {
+  const languageBase = api.language ? String(api.language).split('-')[0] : null;
   return {
     id: api.id,
     title: api.title,
     titleSource: api.title_source || 'auto',
+    language:
+      languageBase && isValidLanguage(languageBase)
+        ? (languageBase as SupportedLanguage)
+        : undefined,
     projectId: api.project_id,
     chatProjectId: api.chat_project_id || null,
     organizationId: api.organization_id,

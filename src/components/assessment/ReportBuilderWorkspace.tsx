@@ -70,6 +70,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
     aiAction,
     regenerateReport,
     finalizeReport,
+    approveReport,
     exportPdf,
     exportExcel,
     setActiveSection,
@@ -180,8 +181,8 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
   const handleFinalize = useCallback(async () => {
     const confirmed = window.confirm(
       isPolish
-        ? 'Czy na pewno chcesz sfinalizować raport? Po finalizacji nie będzie można go edytować.'
-        : 'Are you sure you want to finalize this report? It cannot be edited after finalization.'
+        ? 'Wysłać raport do zatwierdzenia (status FINAL)? Nadal będzie można go edytować do momentu zatwierdzenia.'
+        : 'Submit the report for approval (set status FINAL)? You can still edit it until it is approved.'
     );
 
     if (!confirmed) return;
@@ -196,6 +197,25 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
       toast.error(isPolish ? 'Błąd finalizacji raportu' : 'Failed to finalize report');
     }
   }, [finalizeReport, isPolish]);
+
+  const handleApprove = useCallback(async () => {
+    const confirmed = window.confirm(
+      isPolish
+        ? 'Zatwierdzić raport? Po zatwierdzeniu będzie widoczny globalnie i zablokowany do edycji.'
+        : 'Approve the report? It will become globally visible and locked for editing.'
+    );
+    if (!confirmed) return;
+
+    setIsFinalizing(true);
+    const success = await approveReport();
+    setIsFinalizing(false);
+
+    if (success) {
+      toast.success(isPolish ? 'Raport zatwierdzony' : 'Report approved');
+    } else {
+      toast.error(isPolish ? 'Błąd zatwierdzenia' : 'Failed to approve report');
+    }
+  }, [approveReport, isPolish]);
 
   // Handle regenerate
   const handleRegenerate = useCallback(async () => {
@@ -435,7 +455,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
   // Main workspace
   if (!report) return null;
 
-  const readOnly = report.status !== 'DRAFT';
+  const readOnly = report.status === 'APPROVED' || report.status === 'ARCHIVED';
 
   // Build the report content for SplitLayout
   const reportContent = (
@@ -466,6 +486,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
         onBack={isFullscreen ? () => setIsFullscreen(false) : onClose}
         onSave={handleSave}
         onFinalize={handleFinalize}
+        onApprove={handleApprove}
         onRegenerate={handleRegenerate}
         onExportPdf={handleExportPdf}
         onExportExcel={handleExportExcel}
@@ -497,7 +518,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
             report={{
               id: report.id,
               name: report.name,
-              status: report.status as 'DRAFT' | 'FINAL',
+              status: (report.status === 'APPROVED' ? 'FINAL' : report.status) as 'DRAFT' | 'FINAL',
               assessmentId: report.assessmentId,
               assessmentName: report.assessmentName,
               projectName: report.projectName,

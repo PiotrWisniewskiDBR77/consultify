@@ -9,14 +9,46 @@
 // CRITICAL: Load environment variables FIRST, before any other imports
 // This ensures DATABASE_URL and other env vars are available when DatabaseConfig loads
 import dotenv from 'dotenv';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load .env from project root (parent directory) BEFORE other imports
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+// Load .env from *repo root* BEFORE other imports.
+// Note: this file lives in `server/src`, so:
+// - `../../.env` points to `server/.env` (NOT repo root)
+// - `../../../.env` points to `<repo>/.env`
+//
+// In local dev we want `.env` to win even if the shell already has stale values exported.
+// In production (e.g. Railway) we want real environment variables to win.
+const isProductionEnv = process.env.NODE_ENV === 'production';
+const repoRootEnvPath = path.resolve(__dirname, '../../../.env');
+const serverEnvPath = path.resolve(__dirname, '../../.env');
+
+// Prefer repo-root `.env` (workspace-level config), fallback to `server/.env` for legacy setups.
+const envPathToUse = fs.existsSync(repoRootEnvPath) ? repoRootEnvPath : serverEnvPath;
+
+dotenv.config({
+  path: envPathToUse,
+  override: !isProductionEnv,
+});
+
+// Dev-only visibility: confirm which .env was loaded (helps debug "keys pasted but not used").
+if (!isProductionEnv) {
+  // eslint-disable-next-line no-console
+  console.log('[Env] Loaded from:', envPathToUse);
+  // eslint-disable-next-line no-console
+  console.log('[Env] JWT_SECRET length:', process.env.JWT_SECRET?.length || 0);
+  // eslint-disable-next-line no-console
+  console.log('[Env] OPENAI_API_KEY set:', !!process.env.OPENAI_API_KEY);
+  // eslint-disable-next-line no-console
+  console.log(
+    '[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:',
+    !!process.env.GEMINI_API_KEY || !!process.env.GOOGLE_AI_API_KEY
+  );
+}
 
 // Now import other modules (they can use environment variables)
 import compression from 'compression';
@@ -24,7 +56,6 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
-import fs from 'fs';
 import helmet from 'helmet';
 import http from 'http';
 

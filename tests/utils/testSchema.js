@@ -1038,6 +1038,7 @@ export const TEST_SCHEMA = [
         decision_rationale TEXT,
         decided_at DATETIME,
         created_by TEXT,
+        audit_trail TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,

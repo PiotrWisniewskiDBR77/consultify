@@ -17,8 +17,14 @@ export const RouterSync: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const { setCurrentViewState, setSessionMode, setAuthInitialStep, currentView, currentUser } =
-    useAppStore();
+  // NOTE (React 19 + useSyncExternalStore):
+  // Avoid selectors that return new objects/arrays each call (even with shallow),
+  // because it can trigger "getSnapshot should be cached" warnings/loops.
+  const setCurrentViewState = useAppStore((s) => s.setCurrentViewState);
+  const setSessionMode = useAppStore((s) => s.setSessionMode);
+  const setAuthInitialStep = useAppStore((s) => s.setAuthInitialStep);
+  const currentView = useAppStore((s) => s.currentView);
+  const currentUser = useAppStore((s) => s.currentUser);
 
   // Use refs to prevent infinite loops
   const isNavigatingRef = useRef(false);

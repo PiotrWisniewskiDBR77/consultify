@@ -1,7 +1,8 @@
-import { MessageSquare, MoreVertical, Star } from 'lucide-react';
+import { MessageSquare, Star } from 'lucide-react';
 import React from 'react';
 
 import { Conversation } from '../../store/useConversationStore';
+import { ConversationActions } from './ConversationActions';
 
 interface ConversationItemProps {
   conversation: Conversation;
@@ -42,7 +43,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
             {conversation.title || 'New Conversation'}
           </h4>
         </div>
-        {conversation.isPinned && (
+        {conversation.starred && (
           <Star size={12} className="text-amber-400 fill-amber-400 shrink-0 mt-1" />
         )}
       </div>
@@ -54,15 +55,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
       )}
 
       <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            // Open context menu (not implemented here)
-          }}
-          className="p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
-        >
-          <MoreVertical size={14} />
-        </button>
+        <ConversationActions conversation={conversation} />
       </div>
     </div>
   );

@@ -48,6 +48,7 @@ const CreateConversationSchema = z.object({
   projectId: z.string().uuid().optional(),
   chatProjectId: z.string().uuid().optional(),
   pmoContext: z.record(z.unknown()).optional(),
+  language: z.enum(['en', 'pl', 'de', 'ar', 'jp', 'es']).optional(),
 });
 
 const ConversationIdParamSchema = z.object({
@@ -61,6 +62,7 @@ const UpdateConversationSchema = z.object({
   tags: z.array(z.string()).optional(),
   pmoContext: z.record(z.unknown()).optional(),
   chatProjectId: z.string().uuid().nullable().optional(),
+  language: z.enum(['en', 'pl', 'de', 'ar', 'jp', 'es']).optional(),
 });
 
 const AddMessageSchema = z.object({
@@ -157,7 +159,7 @@ router.get(
         `
                 SELECT 
                     id, title, title_source, project_id, chat_project_id, organization_id,
-                    starred, archived, tags, pmo_context, message_count,
+                    starred, archived, tags, pmo_context, language, message_count,
                     last_message_preview, last_message_at, created_at, updated_at
                 FROM conversations
                 ${whereClause}
@@ -189,7 +191,7 @@ router.post(
   verifyToken,
   validateBody(CreateConversationSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { title, projectId, chatProjectId, pmoContext } = req.body;
+    const { title, projectId, chatProjectId, pmoContext, language } = req.body;
 
     try {
       const id = uuidv4();
@@ -199,8 +201,8 @@ router.post(
         `
                 INSERT INTO conversations (
                     id, user_id, organization_id, project_id, chat_project_id,
-                    title, title_source, pmo_context, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    title, title_source, pmo_context, language, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `,
         [
           id,
@@ -211,6 +213,7 @@ router.post(
           title || 'New conversation',
           title ? 'user' : 'auto',
           pmoContext ? JSON.stringify(pmoContext) : '{}',
+          language || 'en',
           now,
           now,
         ]
@@ -326,6 +329,11 @@ router.patch(
       if (updates.chatProjectId !== undefined) {
         setClauses.push('chat_project_id = ?');
         params.push(updates.chatProjectId);
+      }
+
+      if (updates.language !== undefined) {
+        setClauses.push('language = ?');
+        params.push(updates.language);
       }
 
       params.push(id);

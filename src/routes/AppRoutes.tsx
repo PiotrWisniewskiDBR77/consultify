@@ -120,6 +120,11 @@ const FullReportsView = React.lazy(() =>
 const ReportBuilderView = React.lazy(() =>
   import('@/views/ReportBuilderView').then((m) => ({ default: m.ReportBuilderView }))
 );
+const AssessmentReportBuilderView = React.lazy(() =>
+  import('@/views/AssessmentReportBuilderView').then((m) => ({
+    default: m.AssessmentReportBuilderView,
+  }))
+);
 const KpiOkrView = React.lazy(() =>
   import('@/views/KpiOkrView').then((m) => ({ default: m.KpiOkrView }))
 );
@@ -971,6 +976,18 @@ export const AppRoutes: React.FC = () => {
           }
         />
         {/* Report Builder Module */}
+        <Route
+          path="/assessment-reports/:reportId"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Assessment', 'Reports', 'Builder']} noPadding>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <AssessmentReportBuilderView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
         <Route
           path="/reports/builder"
           element={

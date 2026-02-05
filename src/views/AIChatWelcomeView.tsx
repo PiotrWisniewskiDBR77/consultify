@@ -17,6 +17,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 
 import { useAIContext } from '@/contexts/AIContext';
+import { isValidLanguage, type SupportedLanguage } from '@/i18n';
 import { Api } from '@/services/api';
 
 import { ChatExportModal } from '../components/AIChat/ChatExportModal';
@@ -27,6 +28,8 @@ import { EnhancedChatInput } from '../components/AIChat/EnhancedChatInput';
 import { MessageActions } from '../components/AIChat/Messages/MessageActions';
 import { ResponseActions } from '../components/AIChat/ResponseActions';
 import { SmartSuggestions } from '../components/AIChat/SmartSuggestions';
+import { ThinkingBlock } from '../components/AIChat/Messages/ThinkingBlock';
+import { ThinkingStatusLine } from '../components/AIChat/ThinkingStatusLine';
 import { TTSIndicator } from '../components/AIChat/TTSIndicator';
 import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
 import { useAIStream } from '../hooks/useAIStream';
@@ -68,10 +71,19 @@ const getTimeContext = () => {
 export const AIChatWelcomeView: React.FC = () => {
   const { t, i18n } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastBackendSyncSigRef = useRef<string>('');
 
   // App state
-  const { currentUser, currentProjectId, activeChatMessages, addChatMessage, clearChat } =
-    useAppStore();
+  const {
+    currentUser,
+    currentProjectId,
+    activeChatMessages,
+    addChatMessage,
+    clearChat,
+    setChatMessages,
+    updateLastChatMessage,
+  } = useAppStore();
+  const activeChatMessagesRef = useRef(activeChatMessages);
   const { projectName } = usePMOStore();
 
   // Derived state for compatibility
@@ -84,6 +96,7 @@ export const AIChatWelcomeView: React.FC = () => {
   const {
     activeConversationId,
     activeMessages,
+    isLoading: isConversationLoading,
     isSidebarOpen,
     toggleSidebar,
     createConversation,
@@ -92,7 +105,24 @@ export const AIChatWelcomeView: React.FC = () => {
     setActiveConversation,
     clearActiveChat,
     generateTitle,
+    draftChatLanguage,
+    chatLanguageByConversationId,
+    setConversationChatLanguage,
   } = useConversationStore();
+
+  const chatLanguage: SupportedLanguage = useMemo(() => {
+    const activeLang = activeConversationId
+      ? chatLanguageByConversationId[activeConversationId]
+      : undefined;
+    const candidate =
+      activeLang ||
+      draftChatLanguage ||
+      i18n.language ||
+      localStorage.getItem('i18nextLng') ||
+      'en';
+    const base = String(candidate).split('-')[0];
+    return (isValidLanguage(base) ? base : 'en') as SupportedLanguage;
+  }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage, i18n.language]);
 
   // AI stream with persistence callback
   const handleStreamDone = useCallback(
@@ -122,9 +152,77 @@ export const AIChatWelcomeView: React.FC = () => {
     [addMessage, activeConversationId, generateTitle]
   );
 
-  const { isStreaming, streamedContent, startStream } = useAIStream({
+  const { isStreaming, streamedContent, startStream, thinkingSteps } = useAIStream({
     onStreamDone: handleStreamDone,
+    onStreamError: (err) => {
+      console.error('[Chat] Stream error:', err);
+      // Make the failure visible to the user by filling the last (AI placeholder) message.
+      updateLastChatMessage?.(
+        '⚠️ Nie udało się połączyć z AI. Sprawdź logi backendu i konsolę przeglądarki (Network/Console).'
+      );
+    },
   });
+
+  // Keep latest UI messages in a ref so effects can read them without depending on the full array.
+  useEffect(() => {
+    activeChatMessagesRef.current = activeChatMessages;
+  }, [activeChatMessages]);
+
+  // Sync conversation-store messages into legacy chat UI state when user selects a conversation.
+  // Important: do NOT sync while streaming, otherwise we would overwrite the streaming placeholder message.
+  // Also: do NOT overwrite local UI with a partial backend list (prevents "nothing happens" when
+  // backend persists only the user message but AI stream fails, which would remove the AI placeholder).
+  useEffect(() => {
+    if (isStreaming) return;
+    if (!activeConversationId) return;
+
+    const backendCount = (activeMessages || []).length;
+    const uiCount = (activeChatMessagesRef.current || []).length;
+
+    // If backend is behind UI, do not sync yet (avoid dropping UI-only placeholder/stream/error text).
+    // We will sync once backend catches up (e.g. after AI response is persisted).
+    if (backendCount > 0 && backendCount < uiCount) return;
+    if (backendCount === 0 && uiCount > 0) return;
+
+    const mapped = (activeMessages || []).map((m) => ({
+      id: m.id,
+      role: m.role,
+      content: m.content,
+      timestamp: m.createdAt,
+      citations: m.metadata?.citations,
+      actions: m.metadata?.actions,
+      options: m.metadata?.options,
+      multiSelect: m.metadata?.multiSelect,
+    })) as any;
+
+    // Prevent infinite update loops:
+    // - mapped is a new array/object every run, and setChatMessages updates activeChatMessages,
+    //   which can re-trigger this effect if we depend on it.
+    // We sync only when backend payload meaningfully changed.
+    const sig =
+      String(activeConversationId) +
+      ':' +
+      (activeMessages || [])
+        .map((m) => `${m.id}|${m.role}|${String(m.content || '').length}`)
+        .join(',');
+
+    if (lastBackendSyncSigRef.current === sig) return;
+
+    // If the UI already matches this payload, don't set again.
+    const uiSig =
+      String(activeConversationId) +
+      ':' +
+      (activeChatMessagesRef.current || [])
+        .map((m) => `${m.id}|${m.role}|${String((m as any).content || '').length}`)
+        .join(',');
+    if (uiSig === sig) {
+      lastBackendSyncSigRef.current = sig;
+      return;
+    }
+
+    lastBackendSyncSigRef.current = sig;
+    setChatMessages(mapped);
+  }, [activeConversationId, activeMessages, isStreaming, setChatMessages]);
 
   // AI context
   const { pmoContext, globalContext, screenContext } = useAIContext();
@@ -144,7 +242,7 @@ export const AIChatWelcomeView: React.FC = () => {
       autoSpeakResponses: true,
       sttProvider: 'whisper',
       ttsProvider: 'openai',
-      language: (i18n.language as any) || 'pl',
+      language: chatLanguage,
     },
   });
 
@@ -295,10 +393,28 @@ export const AIChatWelcomeView: React.FC = () => {
 
       // Create new conversation if needed
       if (!conversationId) {
-        const newConv = await createConversation({
-          projectId: selectedProject?.id,
-        });
-        conversationId = newConv.id;
+        try {
+          const newConv = await createConversation({
+            projectId: selectedProject?.id,
+          });
+          conversationId = newConv.id;
+
+          // Ensure continuity: immediately activate the new conversation in the conversation store.
+          // Without this, other screens can "forget" the chat and bounce back to the welcome state.
+          setActiveConversation(newConv.id);
+          setConversationChatLanguage(newConv.id, chatLanguage);
+        } catch (err) {
+          console.error('[Chat] Failed to create conversation:', err);
+          // Show error in chat so user knows what happened
+          addChatMessage({
+            id: Date.now().toString(),
+            role: 'ai',
+            content:
+              '⚠️ Nie udało się utworzyć konwersacji. Sprawdź czy jesteś zalogowany i spróbuj ponownie.',
+            timestamp: new Date(),
+          });
+          return;
+        }
       }
 
       // Add user message
@@ -334,7 +450,9 @@ export const AIChatWelcomeView: React.FC = () => {
       addChatMessage(aiMsg);
 
       // Build context
-      const history = activeChatMessages.map((m) => ({
+      // Important: `activeChatMessages` here does NOT yet include `userMsg`/`aiMsg` (state updates are async),
+      // so we build history explicitly.
+      const history = [...activeChatMessagesRef.current, userMsg].map((m) => ({
         role: m.role === 'user' ? 'user' : 'model',
         parts: [{ text: m.content }],
       }));
@@ -345,6 +463,7 @@ export const AIChatWelcomeView: React.FC = () => {
         global: globalContext,
         isWelcomeScreen: activeMessages.length === 0,
         conversationId,
+        conversationLanguage: chatLanguage,
       };
 
       // Harvard-Level Co-Thinker System Prompt
@@ -375,7 +494,7 @@ COMMUNICATION RULES:
 - Speak at executive level - concise, impactful, no fluff
 - Use McKinsey SCQA structure for complex answers: Situation → Complication → Question → Answer
 - Always provide: (1) Your perspective, (2) Supporting data, (3) Clear next action
-- For Polish speakers: Respond in Polish unless asked otherwise
+- Conversation language: ${chatLanguage}. Respond in this language unless the user explicitly asks otherwise.
 
 CONTEXT:
 - User: ${currentUser?.firstName || 'User'} (${currentUser?.role || 'Stakeholder'})
@@ -400,7 +519,15 @@ If the user explicitly asks you to remember something, include a line in your re
 REMEMBER: [key]: [value]
 For example: REMEMBER: preferred_language: Polish`;
 
-      startStream(message.trim(), history, systemPrompt, fullContext);
+      startStream(
+        message.trim(),
+        history,
+        systemPrompt,
+        fullContext,
+        undefined,
+        undefined,
+        chatLanguage
+      );
 
       // Auto-speak in voice mode
       if (voiceModeEnabled && voiceSupported) {
@@ -409,13 +536,24 @@ For example: REMEMBER: preferred_language: Polish`;
     },
     [
       activeConversationId,
-      activeChatMessages,
       selectedProject,
       currentUser,
       isStreaming,
       coThinkerPhase,
+      chatLanguage,
       voiceModeEnabled,
       voiceSupported,
+      createConversation,
+      setActiveConversation,
+      setConversationChatLanguage,
+      addChatMessage,
+      addMessage,
+      startStream,
+      screenContext,
+      pmoContext,
+      globalContext,
+      activeMessages.length,
+      aiMemoryContext,
     ]
   );
 
@@ -569,6 +707,26 @@ For example: REMEMBER: preferred_language: Polish`;
   );
 
   const hasMessages = activeChatMessages.length > 0;
+  const currentThinkingLabel =
+    thinkingSteps.find((s) => s.status === 'in_progress')?.label ||
+    thinkingSteps.find((s) => s.status === 'pending')?.label ||
+    '';
+
+  // Loading state — conversation is selected but messages haven't arrived yet
+  // (e.g. after page reload / cross-screen navigation while rehydration fetches)
+  const isRehydrating = !!activeConversationId && !hasMessages && isConversationLoading;
+  if (isRehydrating) {
+    return (
+      <div className="h-full w-full bg-slate-50 dark:bg-navy-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-slate-400 dark:text-slate-500">
+            {t('aiChat.loadingConversation', 'Loading conversation…')}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // Chat View (when messages exist)
   if (hasMessages) {
@@ -612,6 +770,17 @@ For example: REMEMBER: preferred_language: Polish`;
 
                 return (
                   <div key={msg.id} className={`mb-6 ${msg.role === 'user' ? 'text-right' : ''}`}>
+                    {/* Thinking Block - 5-step progress (visible during streaming) */}
+                    {isAiMessage && isStreamingThis && thinkingSteps.length > 0 && (
+                      <div className="mb-2 max-w-[85%]">
+                        <ThinkingBlock
+                          steps={thinkingSteps}
+                          isStreaming={true}
+                          defaultExpanded={!displayContent}
+                        />
+                      </div>
+                    )}
+
                     <div
                       className={`inline-block max-w-[85%] ${
                         msg.role === 'user'
@@ -620,9 +789,15 @@ For example: REMEMBER: preferred_language: Polish`;
                       }`}
                     >
                       <div className="whitespace-pre-wrap text-[15px] leading-relaxed">
+                        {/* Cursor-like thinking indicator - inline label while thinking */}
+                        <ThinkingStatusLine
+                          label={currentThinkingLabel || t('thinking.processing', 'Thinking…')}
+                          className="mb-2"
+                          show={isStreamingThis && thinkingSteps.length > 0}
+                        />
                         {displayContent}
-                        {isStreamingThis && (
-                          <span className="inline-block w-2 h-5 bg-primary-500 ml-1 animate-pulse" />
+                        {isStreamingThis && displayContent && (
+                          <span className="inline-block w-2 h-5 bg-primary-500 ml-1 animate-pulse rounded-sm" />
                         )}
                       </div>
 
@@ -788,7 +963,7 @@ For example: REMEMBER: preferred_language: Polish`;
       {/* Main Welcome Area - Full width, sidebar is overlay */}
       <div className="h-full flex flex-col overflow-hidden">
         {/* Header with Sidebar Toggle */}
-        <div className="shrink-0 h-14 flex items-center px-4 justify-between absolute top-0 left-0 right-0 z-10">
+        <div className="shrink-0 h-14 flex items-center px-4 justify-start absolute top-0 left-0 right-0 z-10">
           <div className="flex items-center gap-2">
             <button
               onClick={() => toggleSidebar()}

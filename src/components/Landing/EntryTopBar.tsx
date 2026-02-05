@@ -81,17 +81,15 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
         {/* Logo + Brand Name */}
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
-            {/* DBR77 Logo - links to company website */}
+            {/* Consultinity Logo */}
             <a
-              href="https://dbr77.com"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/"
               className="group"
-              title="DBR77 Robotics - Company Website"
+              title="Consultinity"
             >
               <img
                 src="/assets/logos/logo-dark.png"
-                alt="DBR77"
+                alt="Consultinity"
                 className="h-8 transition-transform duration-300 group-hover:scale-110 group-hover:brightness-110"
               />
             </a>

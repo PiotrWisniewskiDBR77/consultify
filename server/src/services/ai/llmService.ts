@@ -182,18 +182,52 @@ async function getLLMConfigService(): Promise<{
 
 function getProviderSync(modelConfig: ModelConfig) {
   const providerName = String(modelConfig.provider || '');
-  const apiKey = typeof modelConfig.apiKey === 'string' ? modelConfig.apiKey : undefined;
+  const apiKey =
+    typeof modelConfig.apiKey === 'string'
+      ? modelConfig.apiKey
+      : typeof modelConfig.api_key === 'string'
+        ? modelConfig.api_key
+        : undefined;
   const endpoint = typeof modelConfig.endpoint === 'string' ? modelConfig.endpoint : undefined;
+  const normalizedApiKey = apiKey?.trim();
+  const isPlaceholderKey =
+    !!normalizedApiKey &&
+    (normalizedApiKey.startsWith('sk-demo-') ||
+      normalizedApiKey.includes('placeholder') ||
+      normalizedApiKey === 'YOUR_GEMINI_API_KEY_HERE' ||
+      normalizedApiKey === 'YOUR_OPENAI_API_KEY_HERE');
+  const effectiveApiKey = isPlaceholderKey ? undefined : normalizedApiKey;
+
+  // IMPORTANT: Prefer environment keys over DB-stored keys.
+  // Reason: in local + Railway deployments, env vars are the intended source of truth.
+  // DB keys are still supported as a fallback when env vars are not set.
+  const envOpenAI = process.env.OPENAI_API_KEY?.trim();
+  const envGemini = (
+    process.env.GEMINI_API_KEY ||
+    // preferred naming in this repo
+    process.env.GOOGLE_AI_API_KEY ||
+    // legacy fallback(s)
+    (process.env as any).GOOGLE_API_KEY ||
+    (process.env as any).GOOGLE_API_KEY
+  )?.trim();
 
   switch (providerName.toLowerCase()) {
     case 'openai':
+      if (!envOpenAI && !effectiveApiKey) {
+        throw new Error('No OpenAI API key configured (set OPENAI_API_KEY).');
+      }
       return createOpenAI({
-        apiKey: apiKey || process.env.OPENAI_API_KEY,
+        apiKey: envOpenAI || effectiveApiKey,
       });
     case 'google':
     case 'gemini':
+      if (!envGemini && !effectiveApiKey) {
+        throw new Error(
+          'No Gemini/Google API key configured (set GEMINI_API_KEY or GOOGLE_AI_API_KEY).'
+        );
+      }
       return createGoogleGenerativeAI({
-        apiKey: apiKey || process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY,
+        apiKey: envGemini || effectiveApiKey,
       });
     case 'deepseek':
     case 'z_ai':
@@ -201,17 +235,17 @@ function getProviderSync(modelConfig: ModelConfig) {
     case 'qwen':
     case 'mistral':
       return createOpenAI({
-        apiKey,
+        apiKey: effectiveApiKey,
         baseURL: endpoint || 'https://api.deepseek.com',
       });
     case 'nvidia':
       return createOpenAI({
-        apiKey,
+        apiKey: effectiveApiKey,
         baseURL: endpoint || 'https://integrate.api.nvidia.com/v1',
       });
     case 'cohere':
       return createOpenAI({
-        apiKey,
+        apiKey: effectiveApiKey,
         baseURL: endpoint || 'https://api.cohere.ai/v1',
       });
     case 'ollama':
@@ -221,7 +255,7 @@ function getProviderSync(modelConfig: ModelConfig) {
       });
     default:
       return createOpenAI({
-        apiKey: apiKey || process.env.OPENAI_API_KEY,
+        apiKey: effectiveApiKey || process.env.OPENAI_API_KEY,
       });
   }
 }

@@ -40,6 +40,7 @@ interface SettingsPanelProps {
   onStylingChange: (updates: Partial<ReportStyling>) => void;
   activeSection: 'intent' | 'styling' | 'export';
   onSectionChange: (section: 'intent' | 'styling' | 'export') => void;
+  exportPanel?: React.ReactNode;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
 }
@@ -57,6 +58,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onStylingChange,
   activeSection,
   onSectionChange,
+  exportPanel,
   isCollapsed = false,
   onToggleCollapse,
 }) => {
@@ -500,40 +502,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 {renderToggle(
                   styling.showBranding,
                   (v) => onStylingChange({ showBranding: v }),
-                  isPl ? 'Branding Consultify' : 'Consultify Branding'
+                  isPl ? 'Branding Consultinity' : 'Consultinity Branding'
                 )}
               </div>
             )}
           </>
         )}
 
-        {activeSection === 'export' && (
-          <div className="p-4 space-y-4">
-            <button className="w-full flex items-center gap-3 px-4 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors">
-              <Download className="w-5 h-5 text-slate-500" />
-              <div className="text-left">
-                <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                  {isPl ? 'Eksportuj PDF' : 'Export PDF'}
-                </div>
-                <div className="text-xs text-slate-400">
-                  {isPl ? 'Pobierz jako dokument PDF' : 'Download as PDF document'}
-                </div>
-              </div>
-            </button>
-
-            <button className="w-full flex items-center gap-3 px-4 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors">
-              <Share2 className="w-5 h-5 text-slate-500" />
-              <div className="text-left">
-                <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                  {isPl ? 'Udostępnij link' : 'Share Link'}
-                </div>
-                <div className="text-xs text-slate-400">
-                  {isPl ? 'Utwórz publiczny link' : 'Create public share link'}
-                </div>
-              </div>
-            </button>
-          </div>
-        )}
+        {activeSection === 'export' && <div className="p-4 space-y-4">{exportPanel || null}</div>}
       </div>
     </aside>
   );

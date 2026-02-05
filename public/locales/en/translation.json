@@ -114,7 +114,12 @@
     "workspace": "Workspace",
     "consultant": "Consultant",
     "invites": "Invites",
-    "affiliate": "Affiliate"
+    "affiliate": "Affiliate",
+    "active": "active",
+    "select": "Select",
+    "connected": "connected",
+    "comingSoon": "Coming soon",
+    "root": "Root"
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -570,6 +575,120 @@
           }
         }
       }
+    }
+  },
+  "thinking": {
+    "processing": "Thinking…",
+    "analyzing": "Analyzing your question…",
+    "context": "Gathering context…",
+    "drafting": "Drafting the answer…"
+  },
+  "contextBadge": {
+    "aiSees": "AI sees",
+    "project": "Project",
+    "focus": "Focus"
+  },
+  "aiChat": {
+    "language": "Conversation language",
+    "chatMenuTitle": "Menu",
+    "openSidebar": "Open sidebar",
+    "newChat": "New conversation",
+    "dailyBrief": "Daily brief",
+    "suggestions": {
+      "title": "Suggested for you",
+      "startAssessment": "Start your digital maturity assessment"
+    },
+    "quickActions": {
+      "planWeek": {
+        "label": "Plan the week",
+        "prompt": "Help me plan priorities for the next week"
+      },
+      "createDiagram": {
+        "label": "Create a diagram",
+        "prompt": "Create a process diagram for onboarding a new client"
+      }
+    },
+    "history": "History",
+    "placeholder": "How can I help you?",
+    "contextPlaceholder": "How can I help with {{context}}?",
+    "welcome": "Start a conversation",
+    "welcomeSubtitle": "Ask questions, get insights, and collaborate with AI",
+    "loadingConversation": "Loading conversation…",
+    "autoReadOn": "Enable voice reading",
+    "autoReadOff": "Disable voice reading",
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "subtitle": {
+      "morning": "Ready to drive your transformation forward?",
+      "afternoon": "Let's make progress on your initiatives",
+      "evening": "Review your transformation journey"
+    },
+    "frozenPlaceholder": "AI temporarily unavailable",
+    "dictating": "Dictating…",
+    "voiceConversation": "Listening… speak naturally",
+    "groups": {
+      "pinned": "Pinned",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "thisWeek": "This week",
+      "lastMonth": "Last month",
+      "older": "Older",
+      "archived": "Archived"
+    },
+    "menu": {
+      "tools": "AI tools",
+      "aiModes": "AI modes",
+      "knowledgeSources": "Knowledge sources",
+      "responseStyle": "Response style",
+      "ttsSettings": "Voice settings",
+      "ttsSpeed": "Speed",
+      "ttsVoice": "Voice",
+      "ttsAutoVoice": "Auto (detect language)",
+      "ttsVoiceChanged": "Voice changed",
+      "ttsTest": "Test voice",
+      "ttsTestUtterance": "Hi, this is a voice test.",
+      "addFiles": "Add files",
+      "uploadFromDevice": "From device",
+      "cloudStorage": "Cloud",
+      "connectInSettings": "Connect more in Settings → Integrations",
+      "modes": {
+        "deepResearch": { "label": "Deep analysis", "desc": "In-depth exploration of a topic" },
+        "webSearch": { "label": "Web search", "desc": "Real-time information" },
+        "showReasoning": { "label": "Show reasoning", "desc": "Expose the AI's chain of thought" },
+        "textToSpeech": { "label": "Read responses", "desc": "Automatically read responses aloud" }
+      },
+      "sources": {
+        "pmoDocuments": { "label": "PMO documents", "desc": "ISO 21500, PMBOK, PRINCE2" },
+        "projectData": { "label": "Project data", "desc": "Initiatives, tasks, decisions" },
+        "organizationData": { "label": "Organization data", "desc": "Teams, roles, processes" }
+      },
+      "styles": {
+        "normal": "Normal",
+        "learning": "Learning",
+        "concise": "Concise",
+        "explanatory": "Explanatory",
+        "formal": "Formal"
+      },
+      "toast": {
+        "enabled": "{{label}}: enabled",
+        "disabled": "{{label}}: disabled",
+        "responseStyle": "Response style: {{style}}",
+        "filesAddedOne": "Added: {{name}}",
+        "filesAddedMany": "Added {{count}} files",
+        "cloudComingSoon": "Cloud integrations will be added soon",
+        "openingProvider": "Opening {{provider}}…",
+        "redirectIntegrations": "Redirecting to integration settings"
+      }
+    },
+    "cloudPicker": {
+      "demoMode": "Demo mode",
+      "demoModeDesc": "Sample files are shown. Cloud integration will be added soon.",
+      "noFiles": "No files",
+      "selectFile": "Select file",
+      "downloading": "Downloading: {{name}}"
     }
   }
 }

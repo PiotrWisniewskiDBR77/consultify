@@ -9,7 +9,7 @@ Lista endpointów assessment (CRUD + workflow + generate initiatives + attachmen
 - Plan: `wdrozenia/plan-assessment-initiatives.md`
 - Kod: `server/src/routes/assessment/` oraz `server/src/routes/assessment.routes.ts` (jeśli występuje)
 
-**Ostatnia aktualizacja:** 2026-01-29
+**Ostatnia aktualizacja:** 2026-02-04
 
 ---
 
@@ -27,6 +27,18 @@ Lista endpointów assessment (CRUD + workflow + generate initiatives + attachmen
 | DELETE | `/:id`   | Usunięcie assessmentu                               |
 
 **Szczegóły:** Zobacz `02-api-detail.md`
+
+#### Initiatives (Assessment scope)
+
+| Method | Endpoint | Opis |
+| ------ | -------- | ---- |
+| POST | `/:assessmentId/generate-initiatives` | Quick generate (batch ≤7) |
+| GET  | `/:assessmentId/generated-initiatives` | Lista inicjatyw po linkach (`assessment_initiative_links`) |
+| POST | `/:assessmentId/initiative-generation-runs` | Enterprise GenerationRun (50+) – create/start |
+| GET  | `/:assessmentId/initiative-generation-runs` | Historia run (audit) |
+| GET  | `/:assessmentId/initiative-generation-runs/:runId` | Progress run |
+| GET  | `/:assessmentId/initiative-generation-runs/:runId/initiatives` | Preview inicjatyw run |
+| POST | `/:assessmentId/initiative-generation-runs/:runId/submit-for-review` | Bulk `DRAFT → PENDING_REVIEW` |
 
 ---
 
@@ -134,9 +146,7 @@ Lista endpointów assessment (CRUD + workflow + generate initiatives + attachmen
 
 ### Assessments (Legacy)
 
-**Base path:** `/api/assessments`
-
-| Method | Endpoint                             | Opis                           |
+**Base path:** `/api/assessments`| Method | Endpoint                             | Opis                           |
 | ------ | ------------------------------------ | ------------------------------ |
 | GET    | `/my-assessments`                    | Lista assessmentów użytkownika |
 | GET    | `/:id`                               | Szczegóły assessmentu          |
@@ -149,6 +159,16 @@ Lista endpointów assessment (CRUD + workflow + generate initiatives + attachmen
 | GET    | `/:id/responses`                     | Lista odpowiedzi               |
 | GET    | `/frameworks/list`                   | Lista frameworków              |
 | GET    | `/frameworks/:frameworkId/questions` | Pytania dla frameworku         |
+
+---
+
+## Assessment Reports – report-only initiatives
+
+**Base path:** `/api/assessment-reports`
+
+| Method | Endpoint | Opis |
+| ------ | -------- | ---- |
+| POST | `/:reportId/generate-initiatives` | Start report-only GenerationRun (50+) |
 
 ---
 

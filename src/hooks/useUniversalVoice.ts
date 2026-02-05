@@ -131,12 +131,39 @@ export function useUniversalVoice(options: UseUniversalVoiceOptions = {}): UseUn
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Sync settings when initialSettings change
+  const initialSettingsKey = [
+    initialSettings.inputMode ?? '',
+    initialSettings.autoSendDelay ?? '',
+    initialSettings.ttsVoice ?? '',
+    initialSettings.ttsSpeed ?? '',
+    initialSettings.ttsProvider ?? '',
+    initialSettings.sttProvider ?? '',
+    initialSettings.autoSpeakResponses ?? '',
+    initialSettings.language ?? '',
+    initialSettings.showLiveTranscript ?? '',
+  ].join('|');
+
   useEffect(() => {
-    setSettings((prev) => ({
-      ...prev,
-      ...initialSettings,
-    }));
-  }, [initialSettings]);
+    // `initialSettings` is often passed as an inline object from components.
+    // In React, that means a new reference on each render, which would make this effect
+    // fire continuously and can cause "Maximum update depth exceeded".
+    // We only update state if any value actually changed.
+    setSettings((prev) => {
+      let changed = false;
+      const next: VoiceSettings = { ...prev };
+      for (const [key, value] of Object.entries(initialSettings) as Array<
+        [keyof VoiceSettings, VoiceSettings[keyof VoiceSettings]]
+      >) {
+        if (value === undefined) continue;
+        if (prev[key] !== value) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (next as any)[key] = value;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [initialSettingsKey]);
 
   // Check browser support
   const isSupported =
@@ -597,7 +624,21 @@ export function useUniversalVoice(options: UseUniversalVoiceOptions = {}): UseUn
   // ========================================================================
 
   const updateSettings = useCallback((newSettings: Partial<VoiceSettings>) => {
-    setSettings((prev) => ({ ...prev, ...newSettings }));
+    setSettings((prev) => {
+      let changed = false;
+      const next: VoiceSettings = { ...prev };
+      for (const [key, value] of Object.entries(newSettings) as Array<
+        [keyof VoiceSettings, VoiceSettings[keyof VoiceSettings]]
+      >) {
+        if (value === undefined) continue;
+        if (prev[key] !== value) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (next as any)[key] = value;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
   }, []);
 
   const getAvailableVoices = useCallback(async () => {
@@ -637,13 +678,31 @@ export function useUniversalVoice(options: UseUniversalVoiceOptions = {}): UseUn
   // Cleanup
   // ========================================================================
 
+  // IMPORTANT:
+  // This must run ONLY on unmount. If we depend on callbacks that change each render,
+  // React will run the cleanup on every render and we can create an update loop
+  // (cleanup calls setState -> render -> cleanup -> ...).
+  const stopListeningRef = useRef(stopListening);
+  const stopSpeakingRef = useRef(stopSpeaking);
+  const stopAudioLevelMonitoringRef = useRef(stopAudioLevelMonitoring);
+
+  useEffect(() => {
+    stopListeningRef.current = stopListening;
+  }, [stopListening]);
+  useEffect(() => {
+    stopSpeakingRef.current = stopSpeaking;
+  }, [stopSpeaking]);
+  useEffect(() => {
+    stopAudioLevelMonitoringRef.current = stopAudioLevelMonitoring;
+  }, [stopAudioLevelMonitoring]);
+
   useEffect(() => {
     return () => {
-      stopListening();
-      stopSpeaking();
-      stopAudioLevelMonitoring();
+      stopListeningRef.current();
+      stopSpeakingRef.current();
+      stopAudioLevelMonitoringRef.current();
     };
-  }, [stopListening, stopSpeaking, stopAudioLevelMonitoring]);
+  }, []);
 
   // ========================================================================
   // Return

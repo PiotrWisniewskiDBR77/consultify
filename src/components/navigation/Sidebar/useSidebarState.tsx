@@ -14,23 +14,30 @@ import { createWorkspaceContext, getDefaultWorkspaceType } from '../../../types/
 import { ActiveFloatingState, MenuItem } from './types';
 
 export function useSidebarState() {
-  const {
-    currentView,
-    setCurrentView,
-    logout,
-    isSidebarOpen,
-    setIsSidebarOpen,
-    currentUser,
-    freeSessionData,
-    fullSessionData,
-    theme,
-    isSidebarCollapsed,
-    toggleSidebarCollapse,
-    isChatSlidingPanelOpen,
-    toggleChatSlidingPanel,
-    navigateWithChatContext,
-    currentProjectId,
-  } = useAppStore();
+  // NOTE (React 19 + useSyncExternalStore):
+  // Avoid selectors returning new objects/arrays each call (even with shallow),
+  // because it can trigger "getSnapshot should be cached" warnings/loops.
+  const currentView = useAppStore((s) => s.currentView);
+  const setCurrentView = useAppStore((s) => s.setCurrentView);
+  const logout = useAppStore((s) => s.logout);
+  const isSidebarOpen = useAppStore((s) => s.isSidebarOpen);
+  const setIsSidebarOpen = useAppStore((s) => s.setIsSidebarOpen);
+  const currentUser = useAppStore((s) => s.currentUser);
+  const freeStep1Completed = useAppStore((s) => Boolean(s.freeSessionData?.step1Completed));
+  const freeStep2Completed = useAppStore((s) => Boolean(s.freeSessionData?.step2Completed));
+  const freeStep3Completed = useAppStore((s) => Boolean(s.freeSessionData?.step3Completed));
+  const fullStep1Completed = useAppStore((s) => Boolean(s.fullSessionData?.step1Completed));
+  const fullStep2Completed = useAppStore((s) => Boolean(s.fullSessionData?.step2Completed));
+  const fullStep3Completed = useAppStore((s) => Boolean(s.fullSessionData?.step3Completed));
+  const fullStep4Completed = useAppStore((s) => Boolean(s.fullSessionData?.step4Completed));
+  const fullStep5Completed = useAppStore((s) => Boolean(s.fullSessionData?.step5Completed));
+  const theme = useAppStore((s) => s.theme);
+  const isSidebarCollapsed = useAppStore((s) => s.isSidebarCollapsed);
+  const toggleSidebarCollapse = useAppStore((s) => s.toggleSidebarCollapse);
+  const isChatSlidingPanelOpen = useAppStore((s) => s.isChatSlidingPanelOpen);
+  const toggleChatSlidingPanel = useAppStore((s) => s.toggleChatSlidingPanel);
+  const navigateWithChatContext = useAppStore((s) => s.navigateWithChatContext);
+  const currentProjectId = useAppStore((s) => s.currentProjectId);
 
   const { displayMode, setDisplayMode, setWorkspaceContext, activeConversationId } =
     useConversationStore();
@@ -42,21 +49,31 @@ export function useSidebarState() {
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Derived state
-  const showFull = !isSidebarCollapsed && !isTablet;
+  // Keep consistent with Sidebar.tsx: allow expanded mode on tablet/narrow windows, only block on mobile.
+  const showFull = !isSidebarCollapsed && !isMobile;
 
   // Calculate completed views
   const completedViews = React.useMemo(() => {
     const completed: AppView[] = [];
-    if (freeSessionData.step1Completed) completed.push(AppView.QUICK_STEP1_PROFILE);
-    if (freeSessionData.step2Completed) completed.push(AppView.QUICK_STEP2_USER_CONTEXT);
-    if (freeSessionData.step3Completed) completed.push(AppView.QUICK_STEP3_EXPECTATIONS);
-    if (fullSessionData.step1Completed) completed.push(AppView.FULL_STEP1_ASSESSMENT);
-    if (fullSessionData.step2Completed) completed.push(AppView.FULL_STEP2_INITIATIVES);
-    if (fullSessionData.step3Completed) completed.push(AppView.FULL_STEP3_ROADMAP);
-    if (fullSessionData.step4Completed) completed.push(AppView.FULL_STEP4_ROI);
-    if (fullSessionData.step5Completed) completed.push(AppView.FULL_STEP5_EXECUTION);
+    if (freeStep1Completed) completed.push(AppView.QUICK_STEP1_PROFILE);
+    if (freeStep2Completed) completed.push(AppView.QUICK_STEP2_USER_CONTEXT);
+    if (freeStep3Completed) completed.push(AppView.QUICK_STEP3_EXPECTATIONS);
+    if (fullStep1Completed) completed.push(AppView.FULL_STEP1_ASSESSMENT);
+    if (fullStep2Completed) completed.push(AppView.FULL_STEP2_INITIATIVES);
+    if (fullStep3Completed) completed.push(AppView.FULL_STEP3_ROADMAP);
+    if (fullStep4Completed) completed.push(AppView.FULL_STEP4_ROI);
+    if (fullStep5Completed) completed.push(AppView.FULL_STEP5_EXECUTION);
     return completed;
-  }, [freeSessionData, fullSessionData]);
+  }, [
+    freeStep1Completed,
+    freeStep2Completed,
+    freeStep3Completed,
+    fullStep1Completed,
+    fullStep2Completed,
+    fullStep3Completed,
+    fullStep4Completed,
+    fullStep5Completed,
+  ]);
 
   // Navigation handlers
   const navigateToFullChat = useCallback(() => {

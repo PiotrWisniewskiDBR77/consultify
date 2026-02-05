@@ -1,0 +1,541 @@
+import { ChevronDown, FileText, Grid3X3, List, Loader2, Plus, X } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+
+import { cn } from '@/utils/cn';
+
+type ReportTemplate = {
+  id: string;
+  name: string;
+  description?: string | null;
+  reportType?: string | null;
+  isSystem?: boolean;
+  isDefault?: boolean;
+};
+
+type ViewMode = 'grid' | 'table';
+type SourceFilter = 'all' | 'application' | 'organization';
+type RecipientFilter = 'all' | 'board' | 'bank' | 'team';
+type FrameworkFilter = 'all' | 'drd' | 'siri' | 'adma';
+
+// Helper to detect recipient from template name/description
+function detectRecipient(tpl: ReportTemplate): RecipientFilter {
+  const text = `${tpl.name} ${tpl.description || ''}`.toLowerCase();
+  if (text.includes('zarząd') || text.includes('board') || text.includes('executive')) return 'board';
+  if (text.includes('bank') || text.includes('financial') || text.includes('instytucj')) return 'bank';
+  return 'team';
+}
+
+// Helper to detect framework from reportType or name
+function detectFramework(tpl: ReportTemplate): FrameworkFilter {
+  const type = (tpl.reportType || '').toUpperCase();
+  const name = tpl.name.toUpperCase();
+  if (type.includes('DRD') || name.includes('DRD')) return 'drd';
+  if (type.includes('SIRI') || name.includes('SIRI')) return 'siri';
+  if (type.includes('ADMA') || name.includes('ADMA')) return 'adma';
+  return 'drd'; // default
+}
+
+export function ReportTemplatePickerModal(props: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (template: ReportTemplate) => void | Promise<void>;
+  onNewTemplate?: () => void;
+}) {
+  const { isOpen, onClose, onSelect, onNewTemplate } = props;
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<ReportTemplate[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [recipientFilter, setRecipientFilter] = useState<RecipientFilter>('all');
+  const [frameworkFilter, setFrameworkFilter] = useState<FrameworkFilter>('all');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    setSelectedId(null);
+    setSubmitting(false);
+
+    const token = localStorage.getItem('token');
+    fetch('/api/assessment-reports/templates?sourceType=ASSESSMENT', {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    })
+      .then(async (r) => {
+        const json = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(json?.error || json?.message || 'Failed to load templates');
+        return json;
+      })
+      .then((json) => {
+        if (cancelled) return;
+        setTemplates(Array.isArray(json?.templates) ? json.templates : []);
+      })
+      .catch((e: any) => {
+        if (cancelled) return;
+        setError(e?.message || 'Failed to load templates');
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
+  const filtered = useMemo(() => {
+    let result = templates;
+
+    // Source filter
+    if (sourceFilter === 'application') {
+      result = result.filter((t) => t.isSystem);
+    } else if (sourceFilter === 'organization') {
+      result = result.filter((t) => !t.isSystem);
+    }
+
+    // Recipient filter
+    if (recipientFilter !== 'all') {
+      result = result.filter((t) => detectRecipient(t) === recipientFilter);
+    }
+
+    // Framework filter
+    if (frameworkFilter !== 'all') {
+      result = result.filter((t) => detectFramework(t) === frameworkFilter);
+    }
+
+    return result;
+  }, [templates, sourceFilter, recipientFilter, frameworkFilter]);
+
+  // Check if any filters are active (for showing reset option)
+  const hasActiveFilters = recipientFilter !== 'all' || frameworkFilter !== 'all';
+
+  const clearFilters = () => {
+    setRecipientFilter('all');
+    setFrameworkFilter('all');
+  };
+
+  const selectedTemplate = selectedId ? templates.find((t) => t.id === selectedId) : null;
+
+  const handleSelect = async (tpl: ReportTemplate) => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await onSelect(tpl);
+      onClose();
+    } catch (e: any) {
+      setError(e?.message || 'Failed to start report');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={() => !submitting && onClose()}
+        aria-label="Close"
+      />
+
+      <div
+        className={cn(
+          'relative w-full max-w-3xl h-[600px] overflow-hidden rounded-2xl',
+          'bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700',
+          'shadow-2xl flex flex-col'
+        )}
+      >
+        {/* Header */}
+        <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                Select Report Template
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {filtered.length} available templates
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={submitting}
+            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Toolbar */}
+        <div className="px-5 py-3 border-b border-slate-100 dark:border-navy-800 flex flex-wrap items-center justify-between gap-3">
+          {/* Source filter tabs */}
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-navy-800">
+            {[
+              { id: 'all' as const, label: 'All' },
+              { id: 'application' as const, label: 'Application' },
+              { id: 'organization' as const, label: 'Organization' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setSourceFilter(tab.id)}
+                className={cn(
+                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                  sourceFilter === tab.id
+                    ? 'bg-white dark:bg-navy-700 text-slate-900 dark:text-white shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Subtle filters + View toggle */}
+          <div className="flex items-center gap-3">
+            {/* Recipient filter */}
+            <div className="relative">
+              <select
+                value={recipientFilter}
+                onChange={(e) => setRecipientFilter(e.target.value as RecipientFilter)}
+                className={cn(
+                  'appearance-none text-xs pl-2 pr-6 py-1 rounded-md border cursor-pointer transition-colors',
+                  'bg-transparent focus:outline-none focus:ring-1 focus:ring-purple-400',
+                  recipientFilter !== 'all'
+                    ? 'border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300'
+                    : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400'
+                )}
+              >
+                <option value="all">Recipient</option>
+                <option value="board">Board</option>
+                <option value="bank">Bank</option>
+                <option value="team">Team</option>
+              </select>
+              <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+            </div>
+
+            {/* Framework filter */}
+            <div className="relative">
+              <select
+                value={frameworkFilter}
+                onChange={(e) => setFrameworkFilter(e.target.value as FrameworkFilter)}
+                className={cn(
+                  'appearance-none text-xs pl-2 pr-6 py-1 rounded-md border cursor-pointer transition-colors',
+                  'bg-transparent focus:outline-none focus:ring-1 focus:ring-purple-400',
+                  frameworkFilter !== 'all'
+                    ? 'border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300'
+                    : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400'
+                )}
+              >
+                <option value="all">Framework</option>
+                <option value="drd">DRD</option>
+                <option value="siri">SIRI</option>
+                <option value="adma">ADMA</option>
+              </select>
+              <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+            </div>
+
+            {/* Clear filters (only when active) */}
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              >
+                Clear
+              </button>
+            )}
+
+            {/* Separator */}
+            <div className="w-px h-4 bg-slate-200 dark:bg-navy-700" />
+
+            {/* View toggle */}
+            <div className="flex items-center gap-1 p-0.5 rounded-md bg-slate-100 dark:bg-navy-800">
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={cn(
+                  'p-1 rounded transition-colors',
+                  viewMode === 'grid'
+                    ? 'bg-white dark:bg-navy-700 text-purple-600 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                )}
+                title="Grid view"
+              >
+                <Grid3X3 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('table')}
+                className={cn(
+                  'p-1 rounded transition-colors',
+                  viewMode === 'table'
+                    ? 'bg-white dark:bg-navy-700 text-purple-600 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                )}
+                title="Table view"
+              >
+                <List className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* New Template button */}
+            <button
+              type="button"
+              onClick={onNewTemplate}
+              disabled={!onNewTemplate}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 disabled:cursor-not-allowed text-white text-xs font-medium transition-colors"
+              title="Create new template"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              New Template
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-h-0 overflow-auto p-5">
+          {loading ? (
+            <div className="py-12 flex items-center justify-center gap-2 text-slate-600 dark:text-slate-300">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>Loading templates…</span>
+            </div>
+          ) : error ? (
+            <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-sm">
+              {error}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="py-12 text-center text-slate-500 dark:text-slate-400">
+              No templates in this category.
+            </div>
+          ) : viewMode === 'grid' ? (
+            /* Grid View */
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {filtered.map((tpl) => {
+                const isSelected = tpl.id === selectedId;
+                const framework = detectFramework(tpl);
+                const recipient = detectRecipient(tpl);
+                return (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => setSelectedId(tpl.id)}
+                    onDoubleClick={() => handleSelect(tpl)}
+                    className={cn(
+                      'text-left p-3.5 rounded-xl border transition-all',
+                      'hover:shadow-md',
+                      isSelected
+                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                        : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-purple-300 dark:hover:border-purple-700'
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="font-medium text-sm text-slate-900 dark:text-white line-clamp-1">
+                        {tpl.name}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {tpl.isSystem ? (
+                          <span className="text-[9px] px-1 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400">
+                            app
+                          </span>
+                        ) : (
+                          <span className="text-[9px] px-1 py-0.5 rounded bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
+                            org
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
+                      {tpl.description || 'No description'}
+                    </div>
+                    {/* Subtle metadata row */}
+                    <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-800 flex items-center gap-2">
+                      <span className={cn(
+                        'text-[9px] px-1 py-0.5 rounded font-medium',
+                        framework === 'drd' && 'bg-blue-50 dark:bg-blue-900/20 text-blue-500 dark:text-blue-400',
+                        framework === 'siri' && 'bg-amber-50 dark:bg-amber-900/20 text-amber-500 dark:text-amber-400',
+                        framework === 'adma' && 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 dark:text-emerald-400'
+                      )}>
+                        {framework.toUpperCase()}
+                      </span>
+                      <span className="text-[9px] text-slate-400 dark:text-slate-500 capitalize">
+                        {recipient}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            /* Table View */
+            <div className="rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-navy-800 text-left">
+                    <th className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400">
+                      <span className="text-xs">Name</span>
+                    </th>
+                    <th className="px-4 py-2 font-medium hidden sm:table-cell">
+                      <div className="relative inline-flex items-center gap-1">
+                        <select
+                          value={frameworkFilter}
+                          onChange={(e) => setFrameworkFilter(e.target.value as FrameworkFilter)}
+                          className={cn(
+                            'appearance-none text-xs pl-1 pr-4 py-0.5 rounded cursor-pointer transition-colors',
+                            'bg-transparent border-0 focus:outline-none focus:ring-0',
+                            frameworkFilter !== 'all'
+                              ? 'text-purple-600 dark:text-purple-400 font-medium'
+                              : 'text-slate-500 dark:text-slate-400'
+                          )}
+                        >
+                          <option value="all">Framework</option>
+                          <option value="drd">DRD</option>
+                          <option value="siri">SIRI</option>
+                          <option value="adma">ADMA</option>
+                        </select>
+                        <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+                      </div>
+                    </th>
+                    <th className="px-4 py-2 font-medium hidden md:table-cell">
+                      <div className="relative inline-flex items-center gap-1">
+                        <select
+                          value={recipientFilter}
+                          onChange={(e) => setRecipientFilter(e.target.value as RecipientFilter)}
+                          className={cn(
+                            'appearance-none text-xs pl-1 pr-4 py-0.5 rounded cursor-pointer transition-colors',
+                            'bg-transparent border-0 focus:outline-none focus:ring-0',
+                            recipientFilter !== 'all'
+                              ? 'text-purple-600 dark:text-purple-400 font-medium'
+                              : 'text-slate-500 dark:text-slate-400'
+                          )}
+                        >
+                          <option value="all">Recipient</option>
+                          <option value="board">Board</option>
+                          <option value="bank">Bank</option>
+                          <option value="team">Team</option>
+                        </select>
+                        <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+                      </div>
+                    </th>
+                    <th className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 w-20">
+                      <span className="text-xs">Source</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-navy-800">
+                  {filtered.map((tpl) => {
+                    const isSelected = tpl.id === selectedId;
+                    const framework = detectFramework(tpl);
+                    const recipient = detectRecipient(tpl);
+                    return (
+                      <tr
+                        key={tpl.id}
+                        onClick={() => setSelectedId(tpl.id)}
+                        onDoubleClick={() => handleSelect(tpl)}
+                        className={cn(
+                          'cursor-pointer transition-colors',
+                          isSelected
+                            ? 'bg-purple-50 dark:bg-purple-900/20'
+                            : 'hover:bg-slate-50 dark:hover:bg-navy-800/50'
+                        )}
+                      >
+                        <td className="px-4 py-2.5">
+                          <div className="font-medium text-sm text-slate-900 dark:text-white">
+                            {tpl.name}
+                          </div>
+                          <div className="text-[11px] text-slate-400 dark:text-slate-500 line-clamp-1 mt-0.5">
+                            {tpl.description || 'No description'}
+                          </div>
+                        </td>
+                        <td className="px-4 py-2.5 hidden sm:table-cell">
+                          <span className={cn(
+                            'text-[10px] px-1.5 py-0.5 rounded font-medium',
+                            framework === 'drd' && 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
+                            framework === 'siri' && 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
+                            framework === 'adma' && 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
+                          )}>
+                            {framework.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 hidden md:table-cell">
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 capitalize">
+                            {recipient}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          {tpl.isSystem ? (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400">
+                              app
+                            </span>
+                          ) : (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
+                              org
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-3 border-t border-slate-200 dark:border-navy-700 flex items-center justify-between gap-3">
+          <div className="text-sm text-slate-500 dark:text-slate-400">
+            {selectedTemplate ? (
+              <>
+                Selected:{' '}
+                <span className="font-medium text-slate-700 dark:text-slate-200">
+                  {selectedTemplate.name}
+                </span>
+              </>
+            ) : (
+              'Double-click or select and click "Generate"'
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={submitting}
+              className="px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={!selectedTemplate || submitting}
+              onClick={() => selectedTemplate && handleSelect(selectedTemplate)}
+              className="px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors inline-flex items-center gap-2"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Generating…
+                </>
+              ) : (
+                'Generate Report'
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

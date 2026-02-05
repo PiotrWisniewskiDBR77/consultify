@@ -13,6 +13,63 @@ Discovery tools -> generowanie inicjatyw (DRAFT) z DoD i gate decisions.
 W module Tools „raport” jest artefaktem Discovery (snapshot + approval + eksport), a nie raportem zarządczym:
 - `wdrozenia/standards/entities/04-TOOL-REPORT.md`
 
+## AI Chat System Health (L6) - 18 Poziomów Testów ✅ ZAIMPLEMENTOWANE
+
+### Wersja: 3.0.0 | Testy: 75 | Status: 100% PASS
+
+### Dokumentacja
+- **Raport sprawności AI** - `wdrozenia/modules/tools/AI-CHAT-SYSTEM-HEALTH.md`
+- **Plan stabilizacji** - `wdrozenia/modules/tools/AI-SYSTEM-STABILIZATION-PLAN.md`
+
+### Podstawowe testy (L6.1-L6.8) - ✅ Zaimplementowane (22 testy)
+| Test | Obszar | Testy | Status |
+|------|--------|-------|--------|
+| L6.1 | Cloud Integrations | 2 | ✅ |
+| L6.2 | Tools Menu | 3 | ✅ |
+| L6.3 | Chat Conversation | 3 | ✅ |
+| L6.4 | Voice System | 3 | ✅ |
+| L6.5 | History Management | 3 | ✅ |
+| L6.6 | LLM Management | 3 | ✅ |
+| L6.7 | End-to-End Flow | 2 | ✅ |
+| L6.8 | Health Summary | 3 | ✅ |
+
+### Zaawansowane testy (L6.9-L6.18) - ✅ Zaimplementowane (53 testy)
+| Test | Obszar | Testy | Status |
+|------|--------|-------|--------|
+| L6.9 | Vector DB / Embeddings | 5 | ✅ |
+| L6.10 | AI Memory System | 5 | ✅ |
+| L6.11 | AI Learning System | 6 | ✅ |
+| L6.12 | User Style Profiles | 4 | ✅ |
+| L6.13 | Context Builder (RAG) | 4 | ✅ |
+| L6.14 | AI Database Tables | 7 | ✅ |
+| L6.15 | AI Pipeline & Streaming | 7 | ✅ |
+| L6.16 | AI Admin Management | 6 | ✅ |
+| L6.17 | AI Quality & Observability | 7 | ✅ |
+| L6.18 | Complete System Summary | 2 | ✅ |
+
+### API Endpoints
+- Health Check: `GET /api/ai/health-check`
+- Health Check (Full): `GET /api/ai/health-check?advanced=true`
+- Summary: `GET /api/ai/health-check/summary`
+- Advanced: `GET /api/ai/health-check/advanced`
+- Subsystem: `GET /api/ai/health-check/subsystem/:name`
+  - Basic: cloud, tools, chat, voice, history, llm
+  - Advanced: vector, embeddings, memory, learning, style, context, rag, database, tables, pipeline, admin, quality, observability
+
+### Testy E2E
+```bash
+# Wszystkie testy L6 (75 testów)
+npx playwright test tests/e2e/ai-system-health.spec.ts
+
+# Pojedyncza grupa
+npx playwright test tests/e2e/ai-system-health.spec.ts -g "L6.9"
+
+# Tylko zaawansowane
+npx playwright test tests/e2e/ai-system-health.spec.ts -g "L6.1[0-8]"
+```
+
+---
+
 ## Dokumentacja funkcjonalnosci
 
 ### Frontend

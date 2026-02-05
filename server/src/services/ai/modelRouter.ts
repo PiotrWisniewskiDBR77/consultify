@@ -205,7 +205,16 @@ export class ModelRouter {
       return this.getProviderConfig(override.model_id, (override.tier || tier) as Tier);
     }
 
-    const availableModels = await this.getModelsForTier(tier, organizationId);
+    // If an env var is explicitly set to empty string, treat that provider as disabled.
+    // This is used for single-provider local tests (e.g. Gemini-only with OPENAI_API_KEY=).
+    const openaiDisabled =
+      process.env.OPENAI_API_KEY !== undefined && String(process.env.OPENAI_API_KEY).trim() === '';
+
+    const availableModelsRaw = await this.getModelsForTier(tier, organizationId);
+    const availableModels = openaiDisabled
+      ? availableModelsRaw.filter((m) => String(m.provider || '').toLowerCase() !== 'openai')
+      : availableModelsRaw;
+
     if (availableModels.length > 0) {
       const selectedModel = await this.selectWithRoundRobin(tier, organizationId, availableModels);
       if (selectedModel) {
@@ -254,7 +263,11 @@ export class ModelRouter {
     }
 
     const defaultProvider = await this.getDefaultProvider();
-    if (defaultProvider && defaultProvider.api_key) {
+    if (
+      defaultProvider &&
+      defaultProvider.api_key &&
+      !(openaiDisabled && String(defaultProvider.provider || '').toLowerCase() === 'openai')
+    ) {
       aiLogger.info(
         'ModelRouter',
         `Using database default: ${defaultProvider.model_id} (${defaultProvider.provider})`
@@ -268,7 +281,29 @@ export class ModelRouter {
       };
     }
 
-    const model = TIER_DEFAULTS[tier];
+    // Static fallback should respect what providers are actually configured.
+    // This enables "Gemini-only" setups without changing DB defaults.
+    const hasOpenAI = !!(process.env.OPENAI_API_KEY || '').trim();
+    const hasGemini = !!(
+      (process.env.GEMINI_API_KEY ||
+        process.env.GOOGLE_AI_API_KEY ||
+        // legacy fallback
+        (process.env as any).GOOGLE_API_KEY ||
+        '') as string
+    ).trim();
+
+    const geminiDefaultByTier: Record<string, string> = {
+      BUDGET: 'gemini-1.5-flash',
+      STANDARD: 'gemini-1.5-pro',
+      PREMIUM: 'gemini-1.5-pro',
+      REASONING: 'gemini-1.5-pro',
+      VISION: 'gemini-1.5-pro',
+    };
+
+    const model =
+      !hasOpenAI && hasGemini
+        ? geminiDefaultByTier[tier] || 'gemini-1.5-flash'
+        : TIER_DEFAULTS[tier];
     aiLogger.warn('ModelRouter', `Using static fallback: ${model} for tier ${tier}`);
     return this.getProviderConfig(model, tier);
   }
@@ -615,7 +650,14 @@ export class ModelRouter {
 
     if (!provider || !provider.api_key) {
       const envKey = this.getEnvKeyForProvider(providerName);
-      const envApiKey = process.env[envKey];
+      const envApiKey =
+        process.env[envKey] ||
+        // Also accept repo-standard + legacy keys for Google/Gemini
+        (providerName === 'google' || providerName === 'gemini'
+          ? process.env.GOOGLE_AI_API_KEY ||
+            process.env.GOOGLE_API_KEY ||
+            process.env.GEMINI_API_KEY
+          : undefined);
       if (envApiKey) {
         aiLogger.info('ModelRouter', `Using env fallback for ${providerName}`);
         return {
@@ -715,8 +757,9 @@ export class ModelRouter {
     const envKeys: Record<string, string> = {
       openai: 'OPENAI_API_KEY',
       anthropic: 'ANTHROPIC_API_KEY',
-      google: 'GOOGLE_API_KEY',
-      gemini: 'GOOGLE_API_KEY',
+      // Prefer repo-standard names (Gemini). Keep legacy keys as fallback in getProviderConfig.
+      google: 'GEMINI_API_KEY',
+      gemini: 'GEMINI_API_KEY',
       deepseek: 'DEEPSEEK_API_KEY',
       cohere: 'COHERE_API_KEY',
       nvidia: 'NVIDIA_API_KEY',

@@ -9,6 +9,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { Api } from '@/services/api';
 
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
@@ -25,6 +26,8 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
+import { InitiativesGenerationWizardModal } from './InitiativesGenerationWizardModal';
+import { NewAssessmentReportModal } from './modals/NewAssessmentReportModal';
 import { NewAssessmentData, NewAssessmentModal } from './NewAssessmentModal';
 
 // Assessment Framework Types
@@ -108,6 +111,17 @@ interface AssessmentFromAPI {
   organizationId?: string;
 }
 
+interface ReportBuilderReportFromAPI {
+  id: string;
+  name: string;
+  status: string;
+  assessmentId?: string;
+  assessmentName?: string;
+  assessmentType?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 // Map API status to canonical InitiativeStatus
 const mapApiStatus = (status: string): InitiativeStatusType => {
   const s = status?.toUpperCase() || 'DRAFT';
@@ -133,6 +147,15 @@ const mapApiStatus = (status: string): InitiativeStatusType => {
   return statusMap[s] || 'DRAFT';
 };
 
+const mapReportBuilderStatusToHubStatus = (status: string): InitiativeStatusType => {
+  const s = status?.toUpperCase() || 'DRAFT';
+  if (s === 'APPROVED') return 'APPROVED';
+  if (s === 'FINAL') return 'PENDING_REVIEW';
+  if (s === 'ARCHIVED') return 'CANCELLED';
+  if (s === 'DRAFT') return 'DRAFT';
+  return 'DRAFT';
+};
+
 // Map API type to AssessmentFramework
 const mapApiFramework = (type: string | undefined): AssessmentFramework => {
   if (!type) return 'DRD';
@@ -149,6 +172,8 @@ interface AssessmentHubProps {
 
 export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list' }) => {
   const navigate = useNavigate();
+  const { isEnabled } = useFeatureFlags();
+  const wizardEnabled = isEnabled('assessmentInitiativesWizard');
   // State
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
   const [viewMode, setViewMode] = useState<ViewMode>('table');
@@ -158,10 +183,12 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
   const [showNewAssessmentModal, setShowNewAssessmentModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [showInitiativesWizard, setShowInitiativesWizard] = useState(false);
+  const [showNewReportModal, setShowNewReportModal] = useState(false);
 
   // API data state
   const [assessments, setAssessments] = useState<AssessmentFromAPI[]>([]);
-  const [reports, setReports] = useState<AssessmentFromAPI[]>([]);
+  const [reports, setReports] = useState<ReportBuilderReportFromAPI[]>([]);
   const [initiatives, setInitiatives] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -188,8 +215,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         const assessmentData = assessmentResponse?.assessments || [];
         setAssessments(Array.isArray(assessmentData) ? assessmentData : []);
 
-        // Fetch reports (Assessment Reports module)
-        const reportsResponse = await Api.get('/assessment-reports').catch(() => null);
+        // Fetch APPROVED + FINAL (legacy) reports.
+        // UI still defaults to APPROVED-only visibility, but this prevents "disappearing" legacy FINAL reports.
+        const reportsResponse = await Api.get('/assessment-reports?status=APPROVED,FINAL').catch(
+          () => null
+        );
         const reportData = reportsResponse?.reports || [];
         setReports(Array.isArray(reportData) ? reportData : []);
 
@@ -215,7 +245,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     try {
       const [assessmentsRes, reportsRes, initiativesRes] = await Promise.all([
         Api.get('/assessments/my-assessments').catch(() => null),
-        Api.get('/assessment-reports').catch(() => null),
+        Api.get('/assessment-reports?status=APPROVED,FINAL').catch(() => null),
         Api.get('/initiatives?source=assessment').catch(() => []),
       ]);
 
@@ -244,7 +274,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
 
   // Reset status filter when tab changes
   useEffect(() => {
-    setStatusFilter('all');
+    // Reports tab: default to showing only globally visible reports (APPROVED).
+    // Other tabs: no status filter (all).
+    setStatusFilter(activeTab === 'reports' ? 'APPROVED' : 'all');
   }, [activeTab]);
 
   // Calculate status counts for dropdown
@@ -266,7 +298,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
 
     counts.all = data.length;
     data.forEach((item) => {
-      const status = mapApiStatus(item.status);
+      const status =
+        activeTab === 'reports'
+          ? mapReportBuilderStatusToHubStatus(String(item.status || 'DRAFT'))
+          : mapApiStatus(item.status);
       counts[status] = (counts[status] || 0) + 1;
     });
 
@@ -286,16 +321,18 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         id: 'reports' as ModuleTab,
         label: 'Reports',
         icon: <FileText size={16} />,
+        // Count all report documents (APPROVED + legacy FINAL),
+        // while the default filter still shows APPROVED only.
         count: reports.length,
       },
       {
         id: 'initiatives' as ModuleTab,
         label: 'Initiatives',
         icon: <Lightbulb size={16} />,
-        count: initiatives.length,
+        count: initiatives.filter((i) => String(i?.status || '').toUpperCase() !== 'DRAFT').length,
       },
     ],
-    [assessments.length, reports.length, initiatives.length]
+    [assessments.length, reports, initiatives]
   );
 
   // Table columns for assessments
@@ -364,10 +401,19 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const handleOpenDocument = useCallback(
     (row: any) => {
       // Determine document type based on active tab
-      const docType = activeTab === 'initiatives' ? 'initiative' : 'assessment';
+      const docType =
+        activeTab === 'initiatives'
+          ? 'initiative'
+          : activeTab === 'reports'
+            ? 'report'
+            : 'assessment';
 
       // For assessments, open the actual editor route (instead of placeholder card)
       if (docType === 'assessment') {
+        // Give immediate UX feedback: editor boot can take ~1–2s on first load.
+        const tid = toast.loading('Opening assessment…');
+        window.setTimeout(() => toast.dismiss(tid), 1500);
+
         const framework = (row.framework || row.type || 'DRD').toString().toLowerCase();
         // Resume last known position (DRD only for now)
         if (framework === 'drd') {
@@ -389,6 +435,14 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           }
         }
         navigate(`/assessment/${framework}/${row.id}`);
+        return;
+      }
+
+      // For reports, open the report builder editor directly
+      if (docType === 'report') {
+        const tid = toast.loading('Opening report…');
+        window.setTimeout(() => toast.dismiss(tid), 1500);
+        navigate(`/assessment-reports/${row.id}`);
         return;
       }
 
@@ -473,24 +527,26 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       case 'reports':
         data = reports.map((item) => ({
           id: item.id,
-          name: item.name,
-          framework: mapApiFramework(item.type),
-          status: mapApiStatus(item.status),
-          progress: item.progress ?? 100,
+          name: (item as any).name || (item as any).title,
+          framework: mapApiFramework((item as any).assessmentType),
+          status: mapReportBuilderStatusToHubStatus(item.status),
+          progress: mapReportBuilderStatusToHubStatus(item.status) === 'APPROVED' ? 100 : 60,
           updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
         }));
         break;
       case 'initiatives':
-        data = initiatives.map((item) => ({
-          id: item.id,
-          name: item.name || item.title,
-          framework: mapApiFramework(item.sourceType),
-          status: mapApiStatus(item.status),
-          progress: 100,
-          updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
-          priority: item.priority || 'medium',
-          impact: item.impact || 'medium',
-        }));
+        data = initiatives
+          .filter((item) => String(item.status || '').toUpperCase() !== 'DRAFT')
+          .map((item) => ({
+            id: item.id,
+            name: item.name || item.title,
+            framework: mapApiFramework(item.sourceType),
+            status: mapApiStatus(item.status),
+            progress: 100,
+            updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
+            priority: item.priority || 'medium',
+            impact: item.impact || 'medium',
+          }));
         break;
       default:
         data = [];
@@ -671,18 +727,21 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   // Dynamic new item handler based on active tab
   const handleNewItem = useCallback(() => {
     if (activeTab === 'reports') {
-      navigate('/reports/builder?new=true');
+      setShowNewReportModal(true);
     } else if (activeTab === 'initiatives') {
-      // TODO: handle new initiative
-      toast.error('New initiative flow not implemented yet');
+      if (!wizardEnabled) {
+        toast.error('Initiatives wizard is disabled (feature flag).');
+        return;
+      }
+      setShowInitiativesWizard(true);
     } else {
       handleNewAssessment();
     }
-  }, [activeTab, navigate, handleNewAssessment]);
+  }, [activeTab, handleNewAssessment, wizardEnabled]);
 
   // Dynamic new item label based on active tab
   const getNewItemLabel = () => {
-    if (activeTab === 'reports') return 'New Report (AI)';
+    if (activeTab === 'reports') return 'New Report';
     if (activeTab === 'initiatives') return 'New Initiative';
     return 'New Assessment';
   };
@@ -740,11 +799,35 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         {renderContent()}
       </ModuleHub>
 
+      <InitiativesGenerationWizardModal
+        isOpen={showInitiativesWizard}
+        onClose={() => setShowInitiativesWizard(false)}
+        assessments={assessments.map((a) => ({
+          id: a.id,
+          name: a.name,
+          type: a.type,
+          status: a.status,
+        }))}
+        onCompleted={() => refreshData()}
+      />
+
       {/* New Assessment Modal */}
       <NewAssessmentModal
         isOpen={showNewAssessmentModal}
         onClose={() => setShowNewAssessmentModal(false)}
         onSuccess={handleAssessmentCreated}
+      />
+
+      <NewAssessmentReportModal
+        isOpen={showNewReportModal}
+        onClose={() => setShowNewReportModal(false)}
+        assessments={assessments.map((a) => ({
+          id: a.id,
+          name: a.name,
+          type: a.type,
+          status: a.status,
+        }))}
+        onCreated={(reportId) => navigate(`/assessment-reports/${reportId}`)}
       />
     </>
   );

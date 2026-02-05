@@ -15,6 +15,12 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
+const isMissingSqliteTable = (error: any, tableName: string): boolean => {
+  const msg = String(error?.message || '').toLowerCase();
+  const code = String(error?.code || '').toUpperCase();
+  return code === 'SQLITE_ERROR' && msg.includes(`no such table: ${tableName}`.toLowerCase());
+};
+
 // ==================== VALIDATION SCHEMAS ====================
 
 const CreateProjectSchema = z.object({
@@ -74,6 +80,12 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
       total: projects.length,
     });
   } catch (error: any) {
+    // Graceful degradation for dev DBs missing optional feature tables.
+    // This prevents the whole UI from failing during local development.
+    if (isMissingSqliteTable(error, 'chat_projects')) {
+      logger.warn('[ChatProjects] chat_projects table missing - returning empty list');
+      return res.json({ projects: [], total: 0 });
+    }
     logger.error('[ChatProjects] Get all error:', error);
     res.status(500).json({ error: 'Failed to fetch projects' });
   }
@@ -128,6 +140,10 @@ router.get('/:id', verifyToken, async (req: Request, res: Response) => {
       conversations,
     });
   } catch (error: any) {
+    if (isMissingSqliteTable(error, 'chat_projects')) {
+      logger.warn('[ChatProjects] chat_projects table missing - returning 404');
+      return res.status(404).json({ error: 'Project not found' });
+    }
     logger.error('[ChatProjects] Get one error:', error);
     res.status(500).json({ error: 'Failed to fetch project' });
   }

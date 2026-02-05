@@ -13,6 +13,16 @@
 
 Pełna personalizacja wyglądu aplikacji dla klientów Enterprise - logo, kolory, domena, email branding.
 
+## Logo source of truth (Consultinity)
+
+**Source of truth for Consultinity logos:** `Logo consultinity/`
+
+Derived runtime assets (used by the app) are generated into `public/` via:
+
+- `npm run branding:generate`
+
+See `docs/branding/LOGOS.md` for details.
+
 ## White-label Features
 
 ```

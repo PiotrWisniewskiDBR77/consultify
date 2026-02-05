@@ -14,6 +14,60 @@ export const ChatRequestSchema = z.object({
   selectedObjectType: z.string().optional(),
 });
 
+// Chat Confirm Request (Deep Thinking Confirm step)
+export const ChatConfirmRequestSchema = z.object({
+  message: z.string().min(1, 'Message is required'),
+  history: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant', 'model']),
+        content: z.string().optional(),
+        parts: z
+          .array(
+            z.object({
+              text: z.string(),
+            })
+          )
+          .optional(),
+      })
+    )
+    .optional(),
+  systemInstruction: z.string().optional(),
+  context: z.record(z.string(), z.unknown()).optional(),
+  roleName: z.string().optional(),
+  // Keep parity with stream schema for ToolsMenu & routing
+  projectId: z.string().uuid().optional(),
+  screenContext: z.record(z.string(), z.unknown()).optional(),
+  focusMode: z.string().optional(),
+  selectedTier: z.enum(['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING']).optional(),
+  selectedModelId: z.union([z.string().min(1), z.null()]).optional(),
+  aiModes: z
+    .object({
+      deepResearch: z.boolean().optional(),
+      webSearch: z.boolean().optional(),
+      showReasoning: z.boolean().optional(),
+    })
+    .optional(),
+  knowledgeSources: z
+    .object({
+      pmoDocuments: z.boolean().optional(),
+      projectData: z.boolean().optional(),
+      organizationData: z.boolean().optional(),
+    })
+    .optional(),
+  responseStyle: z.enum(['normal', 'learning', 'concise', 'explanatory', 'formal']).optional(),
+  language: z
+    .string()
+    .transform((lang) => {
+      if (!lang) return 'en';
+      const base = lang.split('-')[0].toLowerCase();
+      const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'ar'];
+      return validLangs.includes(base) ? base : 'en';
+    })
+    .optional(),
+  conversationId: z.string().optional(),
+});
+
 // Chat Stream Request
 export const ChatStreamRequestSchema = z.object({
   message: z.string().min(1, 'Message is required'),

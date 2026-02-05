@@ -28,7 +28,7 @@ export type SectionType =
   | 'appendix'
   | 'custom';
 
-export type ReportStatus = 'DRAFT' | 'FINAL' | 'ARCHIVED';
+export type ReportStatus = 'DRAFT' | 'FINAL' | 'APPROVED' | 'ARCHIVED';
 
 export interface ReportSection {
   id: string;
@@ -116,6 +116,7 @@ interface UseReportSectionsReturn {
   ) => Promise<boolean>;
   regenerateReport: (templateId?: string) => Promise<boolean>;
   finalizeReport: () => Promise<boolean>;
+  approveReport: () => Promise<boolean>;
   exportPdf: () => Promise<void>;
   exportExcel: () => Promise<void>;
   setActiveSection: (sectionId: string | null) => void;
@@ -512,6 +513,36 @@ export const useReportSections = (reportId: string | null): UseReportSectionsRet
     }
   }, [reportId]);
 
+  // Approve report (FINAL -> APPROVED)
+  const approveReport = useCallback(async (): Promise<boolean> => {
+    if (!reportId) return false;
+    setIsSaving(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/assessment-reports/${reportId}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to approve report');
+      }
+      setReport((prev) => (prev ? { ...prev, status: 'APPROVED', isComplete: true } : null));
+      return true;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setError(message);
+      console.error('[useReportSections] Approve error:', err);
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [reportId]);
+
   // Export to PDF
   const exportPdf = useCallback(async () => {
     if (!reportId) return;
@@ -626,6 +657,7 @@ export const useReportSections = (reportId: string | null): UseReportSectionsRet
     aiAction,
     regenerateReport,
     finalizeReport,
+    approveReport,
     exportPdf,
     exportExcel,
     setActiveSection,

@@ -1,11 +1,14 @@
 /**
  * ReportsTable
  *
- * Table view for assessment reports:
- * - Draft reports (being edited)
- * - Final reports (approved, can generate initiatives)
+ * Global reports table for Assessment module:
+ * - Shows only reports that have reached IN_REVIEW status or higher
+ * - All assessment reports across all assessments
+ * - Uses Report Builder API
  *
- * Reports are created from approved assessments.
+ * Reports created from approved assessments first appear in the assessment's
+ * Manager → Reports panel. Once they reach IN_REVIEW status, they also
+ * appear here in this global view.
  */
 
 import {
@@ -24,36 +27,63 @@ import {
   Plus,
   RefreshCw,
   Search,
+  Send,
   Sparkles,
   Trash2,
   Upload,
   User,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { Api } from '../../services/api';
 import { ImportReportModal } from '../Reports/ImportReportModal';
 import { NewReportModal } from './modals/NewReportModal';
 import { StageGateModal } from './modals/StageGateModal';
 import { ReportEditor } from './ReportEditor';
+
+// ============================================
+// Types
+// ============================================
+
+type ReportStatus =
+  | 'DRAFT'
+  | 'CONFIGURING'
+  | 'GENERATING'
+  | 'GENERATED'
+  | 'IN_REVIEW'
+  | 'APPROVED'
+  | 'SENT_INTERNAL'
+  | 'SENT_EXTERNAL'
+  | 'UTILIZED';
 
 interface Report {
   id: string;
   name: string;
   assessmentId: string;
   assessmentName: string;
-  status: 'DRAFT' | 'FINAL' | 'ARCHIVED';
+  status: ReportStatus;
   createdAt: string;
   updatedAt: string;
   createdBy: string;
+  createdByName?: string;
   canGenerateInitiatives: boolean;
   initiativesGenerated: boolean;
   initiativesCount: number;
 }
 
-type FilterStatus = 'all' | 'draft' | 'final';
+// Statuses visible in this global table (IN_REVIEW and above)
+const VISIBLE_STATUSES: ReportStatus[] = [
+  'IN_REVIEW',
+  'APPROVED',
+  'SENT_INTERNAL',
+  'SENT_EXTERNAL',
+  'UTILIZED',
+];
+
+type FilterStatus = 'all' | 'in_review' | 'approved' | 'sent';
 
 type AssessmentFramework = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
 
@@ -65,23 +95,68 @@ interface ReportsTableProps {
   onOpenReport?: (reportId: string, reportName: string, status?: string) => void;
 }
 
-const STATUS_CONFIG = {
+// ============================================
+// Status Config
+// ============================================
+
+const STATUS_CONFIG: Record<
+  ReportStatus,
+  {
+    label: string;
+    color: string;
+    icon: React.ReactElement;
+  }
+> = {
   DRAFT: {
     label: 'Draft',
-    color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    color: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
     icon: <Edit size={14} />,
   },
-  FINAL: {
-    label: 'Final',
+  CONFIGURING: {
+    label: 'Configuring',
+    color: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
+    icon: <Edit size={14} />,
+  },
+  GENERATING: {
+    label: 'Generating',
+    color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
+    icon: <Loader2 size={14} className="animate-spin" />,
+  },
+  GENERATED: {
+    label: 'Generated',
+    color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    icon: <FileText size={14} />,
+  },
+  IN_REVIEW: {
+    label: 'In Review',
+    color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+    icon: <Eye size={14} />,
+  },
+  APPROVED: {
+    label: 'Approved',
     color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
     icon: <CheckCircle2 size={14} />,
   },
-  ARCHIVED: {
-    label: 'Archived',
-    color: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500',
-    icon: <Clock size={14} />,
+  SENT_INTERNAL: {
+    label: 'Sent Internal',
+    color: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+    icon: <Send size={14} />,
+  },
+  SENT_EXTERNAL: {
+    label: 'Sent External',
+    color: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
+    icon: <ArrowRight size={14} />,
+  },
+  UTILIZED: {
+    label: 'Utilized',
+    color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
+    icon: <Sparkles size={14} />,
   },
 };
+
+// ============================================
+// Main Component
+// ============================================
 
 export const ReportsTable: React.FC<ReportsTableProps> = ({
   projectId,
@@ -92,6 +167,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const navigate = useNavigate();
+
   // State
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -104,71 +180,95 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   const [showStageGate, setShowStageGate] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
 
-  // Fetch reports
+  // Fetch reports from Report Builder API
   const fetchReports = useCallback(async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      // Fetch all reports for org, optionally filter by project
-      const url = projectId
-        ? `/api/assessment-reports?projectId=${projectId}`
-        : `/api/assessment-reports`;
-      const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      // Fetch reports with IN_REVIEW+ status from Report Builder API
+      const statusFilter = VISIBLE_STATUSES.join(',');
+      const response = await Api.get(
+        `/report-builder?sourceType=ASSESSMENT&statusIn=${statusFilter}`
+      );
+      const apiReports = response?.reports || [];
 
-      if (response.ok) {
-        const data = await response.json();
-        setReports(data.reports || []);
-      }
+      // Map API response to component's expected format
+      const mappedReports: Report[] = apiReports.map((r: any) => ({
+        id: r.id,
+        name: r.title,
+        assessmentId: r.sourceId,
+        assessmentName: r.sourceName || '',
+        status: r.status as ReportStatus,
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+        createdBy: r.createdByName || r.createdBy || '',
+        createdByName: r.createdByName,
+        canGenerateInitiatives:
+          r.status === 'APPROVED' || r.status === 'SENT_INTERNAL' || r.status === 'SENT_EXTERNAL',
+        initiativesGenerated: false, // TODO: Check if initiatives exist
+        initiativesCount: 0,
+      }));
+
+      setReports(mappedReports);
     } catch (err) {
       console.error('[ReportsTable] Error:', err);
     } finally {
       setIsLoading(false);
     }
-  }, [projectId]);
+  }, []);
 
   useEffect(() => {
-    // Always fetch - projectId is optional filter
     fetchReports();
   }, [fetchReports]);
 
-  // Create report from assessment
-  const handleCreateReport = async (assessmentId: string, name: string) => {
-    setIsCreatingReport(true);
+  // Approve report
+  const handleApproveReport = async (reportId: string) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/assessment-reports', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ assessmentId, name, projectId }),
-      });
-
-      if (response.ok) {
-        await fetchReports();
-        setShowNewReportModal(false);
-      }
+      await Api.post(`/report-builder/${reportId}/approve`, {});
+      toast.success(isPolish ? 'Raport zatwierdzony' : 'Report approved');
+      await fetchReports();
     } catch (err) {
-      console.error('[ReportsTable] Create error:', err);
-    } finally {
-      setIsCreatingReport(false);
+      console.error('[ReportsTable] Approve error:', err);
+      toast.error(isPolish ? 'Nie udało się zatwierdzić raportu' : 'Failed to approve report');
     }
   };
 
-  // Finalize report (draft → final)
-  const handleFinalizeReport = async (reportId: string) => {
+  // Mark as sent internally
+  const handleMarkSentInternal = async (reportId: string) => {
     try {
-      const token = localStorage.getItem('token');
-      await fetch(`/api/assessment-reports/${reportId}/finalize`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await Api.post(`/report-builder/${reportId}/mark-sent-internal`, {});
+      toast.success(isPolish ? 'Oznaczono jako wysłany wewnętrznie' : 'Marked as sent internally');
       await fetchReports();
     } catch (err) {
-      console.error('[ReportsTable] Finalize error:', err);
+      console.error('[ReportsTable] Mark sent internal error:', err);
+      toast.error(
+        isPolish ? 'Nie udało się oznaczyć jako wysłany' : 'Failed to mark as sent internally'
+      );
+    }
+  };
+
+  // Mark as sent externally
+  const handleMarkSentExternal = async (reportId: string) => {
+    try {
+      await Api.post(`/report-builder/${reportId}/mark-sent-external`, {});
+      toast.success(isPolish ? 'Oznaczono jako wysłany zewnętrznie' : 'Marked as sent externally');
+      await fetchReports();
+    } catch (err) {
+      console.error('[ReportsTable] Mark sent external error:', err);
+      toast.error(
+        isPolish ? 'Nie udało się oznaczyć jako wysłany' : 'Failed to mark as sent externally'
+      );
+    }
+  };
+
+  // Send back to draft
+  const handleSendBack = async (reportId: string) => {
+    try {
+      await Api.post(`/report-builder/${reportId}/send-back`, {});
+      toast.success(isPolish ? 'Raport odesłany do edycji' : 'Report sent back for editing');
+      await fetchReports();
+    } catch (err) {
+      console.error('[ReportsTable] Send back error:', err);
+      toast.error(isPolish ? 'Nie udało się odesłać raportu' : 'Failed to send report back');
     }
   };
 
@@ -176,7 +276,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   const handleExportPDF = async (reportId: string, reportName: string) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/assessment-reports/${reportId}/export/pdf`, {
+      const response = await fetch(`/api/report-builder/${reportId}/export/pdf`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -201,54 +301,29 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
     }
   };
 
-  // Export Excel
-  const handleExportExcel = async (reportId: string, reportName: string) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/assessment-reports/${reportId}/export/excel`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${reportName.replace(/\s+/g, '_')}_Report.xlsx`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        toast.success(isPolish ? 'Eksport Excel zakończony' : 'Excel export completed');
-      } else {
-        console.error('Excel export failed');
-        toast.error(isPolish ? 'Nie udało się wyeksportować Excel' : 'Failed to export Excel');
-      }
-    } catch (err) {
-      console.error('[ReportsTable] Excel Export error:', err);
-      toast.error(isPolish ? 'Błąd eksportu Excel' : 'Excel export error');
-    }
-  };
-
   // Filter reports
-  const filteredReports = reports.filter((report) => {
-    // Status filter
-    if (filterStatus !== 'all') {
-      if (filterStatus === 'draft' && report.status !== 'DRAFT') return false;
-      if (filterStatus === 'final' && report.status !== 'FINAL') return false;
-    }
+  const filteredReports = useMemo(() => {
+    return reports.filter((report) => {
+      // Status filter
+      if (filterStatus !== 'all') {
+        if (filterStatus === 'in_review' && report.status !== 'IN_REVIEW') return false;
+        if (filterStatus === 'approved' && report.status !== 'APPROVED') return false;
+        if (filterStatus === 'sent' && !['SENT_INTERNAL', 'SENT_EXTERNAL'].includes(report.status))
+          return false;
+      }
 
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      return (
-        report.name.toLowerCase().includes(query) ||
-        report.assessmentName.toLowerCase().includes(query)
-      );
-    }
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        return (
+          report.name.toLowerCase().includes(query) ||
+          report.assessmentName.toLowerCase().includes(query)
+        );
+      }
 
-    return true;
-  });
+      return true;
+    });
+  }, [reports, filterStatus, searchQuery]);
 
   // Format date
   const formatDate = (dateStr: string) => {
@@ -261,10 +336,23 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   };
 
   // Stats
-  const stats = {
-    total: reports.length,
-    draft: reports.filter((r) => r.status === 'DRAFT').length,
-    final: reports.filter((r) => r.status === 'FINAL').length,
+  const stats = useMemo(
+    () => ({
+      total: reports.length,
+      inReview: reports.filter((r) => r.status === 'IN_REVIEW').length,
+      approved: reports.filter((r) => r.status === 'APPROVED').length,
+      sent: reports.filter((r) => ['SENT_INTERNAL', 'SENT_EXTERNAL'].includes(r.status)).length,
+    }),
+    [reports]
+  );
+
+  // Handle open report
+  const handleOpenReport = (reportId: string, reportName: string, status?: string) => {
+    if (onOpenReport) {
+      onOpenReport(reportId, reportName, status);
+    } else {
+      navigate(`/reports/builder?reportId=${reportId}`);
+    }
   };
 
   // If editing a report, show the editor
@@ -288,38 +376,31 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
       <div className="shrink-0 px-6 py-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-navy-900 dark:text-white">Reports</h2>
+            <h2 className="text-xl font-bold text-navy-900 dark:text-white">
+              {isPolish ? 'Raporty' : 'Reports'}
+            </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Assessment reports created from approved assessments
+              {isPolish
+                ? 'Raporty z ocen w statusie przeglądu i wyższych'
+                : 'Assessment reports in review status and above'}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowImportModal(true)}
               className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
-              title="Import an external assessment report (PDF/Excel)"
+              title={isPolish ? 'Importuj raport zewnętrzny' : 'Import external report'}
             >
               <Upload size={18} />
-              Import
+              {isPolish ? 'Importuj' : 'Import'}
             </button>
             <button
               onClick={() => navigate('/reports/builder?new=true')}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium rounded-lg transition-all shadow-md hover:shadow-lg group relative"
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium rounded-lg transition-all shadow-md hover:shadow-lg"
               title={isPolish ? 'Utwórz raport z pomocą AI' : 'Create AI-powered report'}
             >
               <Sparkles size={18} />
-              {isPolish ? 'Nowy Raport (AI)' : 'New Report (AI)'}
-            </button>
-            <button
-              onClick={() => setShowStageGate(true)}
-              className="flex items-center gap-2 px-4 py-2.5 border border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 font-medium rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors group relative"
-              title="Approved Assessment → Draft Report → Final Report → Generate Initiatives"
-            >
-              <Plus size={18} />
-              {isPolish ? 'Szybki raport' : 'Quick Report'}
-              <span className="hidden group-hover:block absolute top-full right-0 mt-2 px-3 py-2 bg-navy-900 dark:bg-navy-800 text-white text-xs rounded-lg shadow-lg whitespace-nowrap z-50">
-                Workflow: Assessment → Report → Initiatives
-              </span>
+              {isPolish ? 'Nowy Raport' : 'New Report'}
             </button>
           </div>
         </div>
@@ -330,19 +411,25 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
             onClick={() => setFilterStatus('all')}
             className={`text-sm ${filterStatus === 'all' ? 'text-purple-600 dark:text-purple-400 font-medium' : 'text-slate-500'}`}
           >
-            All ({stats.total})
+            {isPolish ? 'Wszystkie' : 'All'} ({stats.total})
           </button>
           <button
-            onClick={() => setFilterStatus('draft')}
-            className={`text-sm ${filterStatus === 'draft' ? 'text-purple-600 dark:text-purple-400 font-medium' : 'text-slate-500'}`}
+            onClick={() => setFilterStatus('in_review')}
+            className={`text-sm ${filterStatus === 'in_review' ? 'text-purple-600 dark:text-purple-400 font-medium' : 'text-slate-500'}`}
           >
-            Draft ({stats.draft})
+            {isPolish ? 'W przeglądzie' : 'In Review'} ({stats.inReview})
           </button>
           <button
-            onClick={() => setFilterStatus('final')}
-            className={`text-sm ${filterStatus === 'final' ? 'text-purple-600 dark:text-purple-400 font-medium' : 'text-slate-500'}`}
+            onClick={() => setFilterStatus('approved')}
+            className={`text-sm ${filterStatus === 'approved' ? 'text-purple-600 dark:text-purple-400 font-medium' : 'text-slate-500'}`}
           >
-            Final ({stats.final})
+            {isPolish ? 'Zatwierdzone' : 'Approved'} ({stats.approved})
+          </button>
+          <button
+            onClick={() => setFilterStatus('sent')}
+            className={`text-sm ${filterStatus === 'sent' ? 'text-purple-600 dark:text-purple-400 font-medium' : 'text-slate-500'}`}
+          >
+            {isPolish ? 'Wysłane' : 'Sent'} ({stats.sent})
           </button>
         </div>
 
@@ -357,7 +444,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search reports..."
+              placeholder={isPolish ? 'Szukaj raportów...' : 'Search reports...'}
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
             />
           </div>
@@ -380,10 +467,18 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
           <div className="flex flex-col items-center justify-center h-64 text-center">
             <FileOutput className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-3" />
             <p className="text-slate-500 dark:text-slate-400 mb-2">
-              {searchQuery ? 'No reports match your search' : 'No reports yet'}
+              {searchQuery
+                ? isPolish
+                  ? 'Brak raportów pasujących do wyszukiwania'
+                  : 'No reports match your search'
+                : isPolish
+                  ? 'Brak raportów w przeglądzie'
+                  : 'No reports in review yet'}
             </p>
             <p className="text-sm text-slate-400 dark:text-slate-500 mb-4">
-              Create a report from an approved assessment
+              {isPolish
+                ? 'Raporty pojawią się tutaj po przesłaniu do przeglądu'
+                : 'Reports will appear here after being submitted for review'}
             </p>
           </div>
         ) : (
@@ -392,31 +487,28 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
               <thead className="bg-slate-50 dark:bg-navy-900/50 sticky top-0">
                 <tr>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Report
+                    {isPolish ? 'Raport' : 'Report'}
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Author
+                    {isPolish ? 'Autor' : 'Author'}
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Assessment
+                    {isPolish ? 'Ocena' : 'Assessment'}
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     Status
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Initiatives
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Updated
+                    {isPolish ? 'Zaktualizowany' : 'Updated'}
                   </th>
                   <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Actions
+                    {isPolish ? 'Akcje' : 'Actions'}
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-white/10">
                 {filteredReports.map((report) => {
-                  const statusConfig = STATUS_CONFIG[report.status] || STATUS_CONFIG.DRAFT;
+                  const statusConfig = STATUS_CONFIG[report.status] || STATUS_CONFIG.IN_REVIEW;
 
                   return (
                     <tr
@@ -429,29 +521,10 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                             <FileText className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                           </div>
                           <button
-                            onClick={() => {
-                              if (onOpenReport) {
-                                onOpenReport(report.id, report.name, report.status);
-                              } else {
-                                setEditingReportId(report.id);
-                              }
-                            }}
+                            onClick={() => handleOpenReport(report.id, report.name, report.status)}
                             className="font-medium text-navy-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors text-left"
                           >
                             {report.name}
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (onOpenReport) {
-                                onOpenReport(report.id, report.name, report.status);
-                              } else {
-                                setEditingReportId(report.id);
-                              }
-                            }}
-                            className="p-1 text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded transition-colors"
-                            title="Open report"
-                          >
-                            <ArrowRight size={14} />
                           </button>
                         </div>
                       </td>
@@ -461,7 +534,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                           title={report.createdBy}
                         >
                           <div className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-xs font-medium text-purple-700 dark:text-purple-300">
-                            {report.createdBy
+                            {(report.createdByName || report.createdBy || '?')
                               .split(' ')
                               .map((n) => n[0])
                               .join('')
@@ -469,7 +542,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                               .toUpperCase()}
                           </div>
                           <span className="text-sm text-slate-600 dark:text-slate-400 truncate max-w-[60px]">
-                            {report.createdBy.split(' ')[0]}
+                            {(report.createdByName || report.createdBy || '').split(' ')[0]}
                           </span>
                         </div>
                       </td>
@@ -484,59 +557,52 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                           {statusConfig.label}
                         </span>
                       </td>
-                      <td className="px-4 py-4">
-                        {report.initiativesGenerated ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                            <Lightbulb size={12} />
-                            {report.initiativesCount} generated
-                          </span>
-                        ) : (
-                          <span className="text-sm text-slate-400 dark:text-slate-500">—</span>
-                        )}
-                      </td>
                       <td className="px-4 py-4 text-sm text-slate-500 dark:text-slate-400">
                         {formatDate(report.updatedAt)}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-1">
-                          {/* Primary Action - context-dependent */}
-                          {report.status === 'DRAFT' ? (
-                            // Draft - Finalize is primary
+                          {/* Primary Action based on status */}
+                          {report.status === 'IN_REVIEW' ? (
                             <button
-                              onClick={() => handleFinalizeReport(report.id)}
+                              onClick={() => handleApproveReport(report.id)}
                               className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors"
                             >
                               <CheckCircle2 size={14} />
-                              Finalize
+                              {isPolish ? 'Zatwierdź' : 'Approve'}
                             </button>
-                          ) : report.status === 'FINAL' && !report.initiativesGenerated ? (
-                            // Final without initiatives - Generate is primary
+                          ) : report.status === 'APPROVED' ? (
                             <button
-                              onClick={() => onCreateInitiatives(report.id)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
+                              onClick={() => handleMarkSentInternal(report.id)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-colors"
                             >
-                              <Lightbulb size={14} />
-                              Initiatives
+                              <Send size={14} />
+                              {isPolish ? 'Wyślij wewn.' : 'Send Internal'}
+                            </button>
+                          ) : report.status === 'SENT_INTERNAL' ? (
+                            <button
+                              onClick={() => handleMarkSentExternal(report.id)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-teal-600 hover:bg-teal-500 text-white rounded-lg transition-colors"
+                            >
+                              <ArrowRight size={14} />
+                              {isPolish ? 'Wyślij zewn.' : 'Send External'}
                             </button>
                           ) : (
-                            // Default - View
                             <button
-                              onClick={() => {
-                                if (onOpenReport) {
-                                  onOpenReport(report.id, report.name, report.status);
-                                } else {
-                                  setEditingReportId(report.id);
-                                }
-                              }}
+                              onClick={() =>
+                                handleOpenReport(report.id, report.name, report.status)
+                              }
                               className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
                             >
                               <Eye size={14} />
-                              View
+                              {isPolish ? 'Podgląd' : 'View'}
                             </button>
                           )}
 
-                          {/* Download PDF - for final reports */}
-                          {report.status === 'FINAL' && (
+                          {/* Download PDF - for approved+ reports */}
+                          {['APPROVED', 'SENT_INTERNAL', 'SENT_EXTERNAL', 'UTILIZED'].includes(
+                            report.status
+                          ) && (
                             <button
                               onClick={() => handleExportPDF(report.id, report.name)}
                               className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
@@ -546,7 +612,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                             </button>
                           )}
 
-                          {/* More menu - all secondary actions */}
+                          {/* More menu */}
                           <div className="relative">
                             <button
                               onClick={() =>
@@ -558,84 +624,117 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                             </button>
 
                             {activeRowMenu === report.id && (
-                              <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-navy-900 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1 z-10">
-                                <button
-                                  onClick={() => {
-                                    if (onOpenReport) {
-                                      onOpenReport(report.id, report.name, report.status);
-                                    } else {
-                                      setEditingReportId(report.id);
-                                    }
-                                    setActiveRowMenu(null);
-                                  }}
-                                  className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
-                                >
-                                  {report.status === 'DRAFT' ? (
-                                    <Edit size={14} />
-                                  ) : (
+                              <>
+                                <div
+                                  className="fixed inset-0 z-40"
+                                  onClick={() => setActiveRowMenu(null)}
+                                />
+                                <div className="absolute right-0 top-full mt-1 w-52 bg-white dark:bg-navy-900 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1 z-50">
+                                  <button
+                                    onClick={() => {
+                                      handleOpenReport(report.id, report.name, report.status);
+                                      setActiveRowMenu(null);
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
+                                  >
                                     <Eye size={14} />
+                                    {isPolish ? 'Podgląd raportu' : 'View Report'}
+                                  </button>
+
+                                  {report.status === 'IN_REVIEW' && (
+                                    <>
+                                      <button
+                                        onClick={() => {
+                                          handleApproveReport(report.id);
+                                          setActiveRowMenu(null);
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/10 flex items-center gap-2"
+                                      >
+                                        <CheckCircle2 size={14} />
+                                        {isPolish ? 'Zatwierdź' : 'Approve'}
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          handleSendBack(report.id);
+                                          setActiveRowMenu(null);
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/10 flex items-center gap-2"
+                                      >
+                                        <ArrowRight size={14} className="rotate-180" />
+                                        {isPolish ? 'Odeślij do edycji' : 'Send Back'}
+                                      </button>
+                                    </>
                                   )}
-                                  {report.status === 'DRAFT' ? 'Edit' : 'View'} Report
-                                </button>
-                                {report.status === 'DRAFT' && (
-                                  <button
-                                    onClick={() => {
-                                      handleFinalizeReport(report.id);
-                                      setActiveRowMenu(null);
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/10 flex items-center gap-2"
-                                  >
-                                    <CheckCircle2 size={14} />
-                                    Finalize
-                                  </button>
-                                )}
-                                {report.status === 'FINAL' && !report.initiativesGenerated && (
-                                  <button
-                                    onClick={() => {
-                                      onCreateInitiatives(report.id);
-                                      setActiveRowMenu(null);
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/10 flex items-center gap-2"
-                                  >
-                                    <Lightbulb size={14} />
-                                    Generate Initiatives
-                                  </button>
-                                )}
-                                <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
-                                <button
-                                  onClick={() => {
-                                    handleExportPDF(report.id, report.name);
-                                    setActiveRowMenu(null);
-                                  }}
-                                  className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
-                                >
-                                  <FileText size={14} />
-                                  Export PDF
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    handleExportExcel(report.id, report.name);
-                                    setActiveRowMenu(null);
-                                  }}
-                                  className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
-                                >
-                                  <FileOutput size={14} />
-                                  Export Excel
-                                </button>
-                                <button className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2">
-                                  <RefreshCw size={14} />
-                                  Duplicate
-                                </button>
-                                {report.status === 'DRAFT' && (
-                                  <>
-                                    <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
-                                    <button className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2">
-                                      <Trash2 size={14} />
-                                      Delete
+
+                                  {report.status === 'APPROVED' && (
+                                    <button
+                                      onClick={() => {
+                                        handleMarkSentInternal(report.id);
+                                        setActiveRowMenu(null);
+                                      }}
+                                      className="w-full text-left px-4 py-2 text-sm text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/10 flex items-center gap-2"
+                                    >
+                                      <Send size={14} />
+                                      {isPolish
+                                        ? 'Oznacz jako wysłany wewn.'
+                                        : 'Mark Sent Internal'}
                                     </button>
-                                  </>
-                                )}
-                              </div>
+                                  )}
+
+                                  {report.status === 'SENT_INTERNAL' && (
+                                    <button
+                                      onClick={() => {
+                                        handleMarkSentExternal(report.id);
+                                        setActiveRowMenu(null);
+                                      }}
+                                      className="w-full text-left px-4 py-2 text-sm text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/10 flex items-center gap-2"
+                                    >
+                                      <ArrowRight size={14} />
+                                      {isPolish
+                                        ? 'Oznacz jako wysłany zewn.'
+                                        : 'Mark Sent External'}
+                                    </button>
+                                  )}
+
+                                  {[
+                                    'APPROVED',
+                                    'SENT_INTERNAL',
+                                    'SENT_EXTERNAL',
+                                    'UTILIZED',
+                                  ].includes(report.status) && (
+                                    <>
+                                      <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
+                                      <button
+                                        onClick={() => {
+                                          handleExportPDF(report.id, report.name);
+                                          setActiveRowMenu(null);
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
+                                      >
+                                        <FileText size={14} />
+                                        {isPolish ? 'Eksportuj PDF' : 'Export PDF'}
+                                      </button>
+                                    </>
+                                  )}
+
+                                  {report.canGenerateInitiatives &&
+                                    !report.initiativesGenerated && (
+                                      <>
+                                        <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
+                                        <button
+                                          onClick={() => {
+                                            onCreateInitiatives(report.id);
+                                            setActiveRowMenu(null);
+                                          }}
+                                          className="w-full text-left px-4 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/10 flex items-center gap-2"
+                                        >
+                                          <Lightbulb size={14} />
+                                          {isPolish ? 'Generuj inicjatywy' : 'Generate Initiatives'}
+                                        </button>
+                                      </>
+                                    )}
+                                </div>
+                              </>
                             )}
                           </div>
                         </div>
@@ -686,7 +785,9 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
           onImported={(reportId) => {
             fetchReports();
             setShowImportModal(false);
-            toast.success('Report imported successfully');
+            toast.success(
+              isPolish ? 'Raport zaimportowany pomyślnie' : 'Report imported successfully'
+            );
           }}
         />
       )}

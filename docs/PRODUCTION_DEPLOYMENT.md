@@ -14,6 +14,13 @@ npm run dev
 # Starts both frontend (Vite) and backend (tsx watch)
 ```
 
+#### Backend dev notes (SQLite demo data)
+
+- `npm run dev:backend` uruchamia backend na SQLite i **automatycznie**:
+  - odpala migracje (`db:migrate:safe`)
+  - seeduje demo dane (DBR77), żeby w UI nie było „No assessments found”
+- Domyślna baza dev: `data/dev/consultinity.db` (ustawiane przez `SQLITE_PATH`)
+
 ### Production (Compiled - Recommended)
 
 ```bash

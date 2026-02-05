@@ -9,6 +9,19 @@ export interface InitiativeTemplate {
   category: string;
   description: string | null;
   applicableAxes: string[];
+  /**
+   * Card scope determines which sections are visible/required in the initiative UI.
+   * Stored inside template_data.cardScope for flexibility.
+   */
+  cardScope?: {
+    showTasks?: boolean;
+    showDecisions?: boolean;
+    showRaid?: boolean;
+    showGates?: boolean;
+    showFinancialAnalysis?: boolean;
+    showFinancialImpact?: boolean;
+    showTeam?: boolean;
+  };
   problemStructured?: string | null;
   targetState?: string | null;
   killCriteria: string[];
@@ -312,6 +325,7 @@ export class InitiativeTemplateService {
       category: row.category,
       description: row.description,
       applicableAxes,
+      cardScope: templateData.cardScope || undefined,
       problemStructured: templateData.problemStructured,
       targetState: templateData.targetState,
       killCriteria: templateData.killCriteria || [],

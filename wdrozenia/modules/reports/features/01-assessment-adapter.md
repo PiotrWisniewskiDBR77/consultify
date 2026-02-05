@@ -1,6 +1,6 @@
 # Reports Module – Assessment Source Adapter
 
-## Status: 🔨 W PLANOWANIU
+## Status: ✅ ZAIMPLEMENTOWANY (DRD/SIRI) + 🔄 ROZBUDOWA (ADMA/CMMI/LEAN)
 
 ---
 
@@ -16,9 +16,20 @@ Adapter do ekstrakcji danych z zatwierdzonego assessmentu (DRD, SIRI, ADMA, etc.
 | --------- | ----- | ------------------- | ---------------------- |
 | DRD       | 1-7   | 7 osi, 34 obszary   | ✅ Pełna implementacja |
 | SIRI      | 0-5   | 3 bloki, 8 wymiarów | ✅ Pełna implementacja |
-| ADMA      | 1-5   | 5 filarów           | 🔄 W planowaniu        |
+| ADMA      | 1-5   | 5 filarów           | 🔄 W rozbudowie        |
 | CMMI      | 1-5   | 3 kategorie         | 🔄 W planowaniu        |
 | Lean 4.0  | 1-5   | 3 wymiary           | 🔄 W planowaniu        |
+
+---
+
+## 🧭 Gdzie w UI są raporty z Assessment?
+
+Raporty generowane przez **Report Builder** dla źródła `ASSESSMENT` są widoczne:
+
+- w kontekście konkretnego assessmentu: **Assessment → Manage → Reports**
+- globalnie: **Assessment Hub → zakładka Reports** (lista raportów typu `sourceType=ASSESSMENT`)
+
+Edytor raportu otwiera się zawsze w **Report Builder**: `/reports/builder?reportId=<id>`.
 
 ---
 

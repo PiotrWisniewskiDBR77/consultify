@@ -100,7 +100,7 @@ const scopeLabels = {
   },
 };
 
-const statusLabels = {
+const statusLabels: Record<ManagementReportStatus, { label: string; color: string }> = {
   DRAFT: {
     label: 'Draft',
     color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
@@ -108,6 +108,10 @@ const statusLabels = {
   FINAL: {
     label: 'Final',
     color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  },
+  APPROVED: {
+    label: 'Approved',
+    color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
   },
   ARCHIVED: {
     label: 'Archived',

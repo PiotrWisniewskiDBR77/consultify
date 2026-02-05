@@ -30,6 +30,8 @@ import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
+import activityService from '../services/ActivityService.js';
+import AssessmentInitiativeGenerationRunService from '../services/assessmentInitiativeGenerationRunService.js';
 import AssessmentPermissionService from '../services/assessmentPermissionService.js';
 import NotificationService from '../services/notificationService.js';
 import logger from '../utils/Logger.js';
@@ -39,6 +41,7 @@ import {
   ApproveReportSchema,
   AssignAssessmentRoleSchema,
   CreateAssessmentSchema,
+  CreateInitiativeGenerationRunSchema,
   CreateManualInitiativeFromAssessmentSchema,
   GenerateInitiativesSchema,
   GenerateReportSchema,
@@ -727,6 +730,20 @@ router.post('/:assessmentId/roles', validateBody(AssignAssessmentRoleSchema), as
       assignedAreas: assignedAreas || undefined,
     });
 
+    // Best-effort activity log
+    activityService
+      .log({
+        organizationId: String(organizationId),
+        userId: String(actorId),
+        action: 'TEAM_MEMBER_ADDED',
+        entityType: 'ASSESSMENT',
+        entityId: String(assessmentId),
+        metadata: { targetUserId: String(userId), role },
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent') || undefined,
+      })
+      .catch(() => {});
+
     return res.status(201).json({ role: record });
   } catch (err: any) {
     logger.error('[AssessmentWorkflowV2] Error assigning role:', err);
@@ -761,6 +778,20 @@ router.put(
         assignedAreas: assignedAreas || undefined,
       });
 
+      // Best-effort activity log
+      activityService
+        .log({
+          organizationId: String(organizationId),
+          userId: String(actorId),
+          action: 'TEAM_MEMBER_ROLE_UPDATED',
+          entityType: 'ASSESSMENT',
+          entityId: String(assessmentId),
+          metadata: { targetUserId: String(userId), role },
+          ipAddress: req.ip,
+          userAgent: req.get('user-agent') || undefined,
+        })
+        .catch(() => {});
+
       return res.json({ role: record });
     } catch (err: any) {
       logger.error('[AssessmentWorkflowV2] Error updating role:', err);
@@ -776,7 +807,7 @@ router.put(
 router.delete('/:assessmentId/roles/:userId', async (req, res) => {
   try {
     const { assessmentId, userId } = req.params as any;
-    const { organizationId } = getAuthContext(req);
+    const { userId: actorId, organizationId } = getAuthContext(req);
 
     const ok = await requireAssessmentPermission(req, res, 'canManageTeam');
     if (!ok) return;
@@ -787,6 +818,23 @@ router.delete('/:assessmentId/roles/:userId', async (req, res) => {
       String(organizationId)
     );
     if (!removed) return res.status(404).json({ error: 'Role not found' });
+
+    // Best-effort activity log
+    if (actorId) {
+      activityService
+        .log({
+          organizationId: String(organizationId),
+          userId: String(actorId),
+          action: 'TEAM_MEMBER_REMOVED',
+          entityType: 'ASSESSMENT',
+          entityId: String(assessmentId),
+          metadata: { targetUserId: String(userId) },
+          ipAddress: req.ip,
+          userAgent: req.get('user-agent') || undefined,
+        })
+        .catch(() => {});
+    }
+
     return res.json({ ok: true });
   } catch (err: any) {
     logger.error('[AssessmentWorkflowV2] Error removing role:', err);
@@ -805,6 +853,176 @@ router.post(
   }
 );
 router.get('/:assessmentId/generated-initiatives', AssessmentController.getGeneratedInitiatives);
+
+/**
+ * Enterprise: initiative generation runs (50+ initiatives via sub-batches)
+ */
+router.post(
+  '/:assessmentId/initiative-generation-runs',
+  validateBody(CreateInitiativeGenerationRunSchema),
+  async (req, res) => {
+    try {
+      const { assessmentId } = req.params as any;
+      const { userId, organizationId } = getAuthContext(req);
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const ok = await requireAssessmentFlag(req, res, 'canGenerateInitiatives');
+      if (!ok) return;
+
+      const {
+        mode,
+        methodologyId,
+        requestedCount,
+        batchSize,
+        includeChatContext,
+        reportId,
+        templateId,
+        consultantBrief,
+      } = req.body || {};
+      if (String(mode || '').toUpperCase() === 'REPORT_ONLY' && !reportId) {
+        return res.status(400).json({ error: 'reportId is required for REPORT_ONLY mode' });
+      }
+
+      const run = await AssessmentInitiativeGenerationRunService.createAndStart({
+        assessmentId: String(assessmentId),
+        organizationId: String(organizationId),
+        userId: String(userId),
+        mode,
+        methodologyId,
+        requestedCount,
+        batchSize: typeof batchSize === 'number' ? batchSize : 7,
+        includeChatContext: includeChatContext !== undefined ? Boolean(includeChatContext) : true,
+        reportId: reportId ? String(reportId) : null,
+        templateId: templateId ? String(templateId) : null,
+        consultantBrief: consultantBrief ? String(consultantBrief) : null,
+      } as any);
+
+      return res.status(202).json({ runId: run.runId });
+    } catch (err: any) {
+      logger.error('[AssessmentWorkflowV2] Error creating initiative generation run:', err);
+      return res.status(500).json({ error: 'Failed to create run', message: err.message });
+    }
+  }
+);
+
+router.get('/:assessmentId/initiative-generation-runs', async (req, res) => {
+  try {
+    const { assessmentId } = req.params as any;
+    const { userId, organizationId } = getAuthContext(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const roleInfo = await AssessmentPermissionService.getUserRole(
+      String(assessmentId),
+      String(userId),
+      String(organizationId)
+    );
+    if (!roleInfo?.permissions?.canView) {
+      return res.status(403).json({ error: 'Permission denied', required: 'canView' });
+    }
+
+    const runs = await AssessmentInitiativeGenerationRunService.listRuns(
+      String(assessmentId),
+      String(organizationId)
+    );
+    return res.json({ runs });
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflowV2] Error listing initiative generation runs:', err);
+    return res.status(500).json({ error: 'Failed to list runs', message: err.message });
+  }
+});
+
+router.get('/:assessmentId/initiative-generation-runs/:runId', async (req, res) => {
+  try {
+    const { assessmentId, runId } = req.params as any;
+    const { userId, organizationId } = getAuthContext(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const roleInfo = await AssessmentPermissionService.getUserRole(
+      String(assessmentId),
+      String(userId),
+      String(organizationId)
+    );
+    if (!roleInfo?.permissions?.canView) {
+      return res.status(403).json({ error: 'Permission denied', required: 'canView' });
+    }
+
+    const progress = await AssessmentInitiativeGenerationRunService.getProgress(
+      String(runId),
+      String(organizationId)
+    );
+    if (!progress) return res.status(404).json({ error: 'Run not found' });
+    if (String(progress.assessmentId) !== String(assessmentId)) {
+      return res.status(404).json({ error: 'Run not found for this assessment' });
+    }
+    return res.json({ run: progress });
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflowV2] Error fetching initiative generation run:', err);
+    return res.status(500).json({ error: 'Failed to fetch run', message: err.message });
+  }
+});
+
+router.get('/:assessmentId/initiative-generation-runs/:runId/initiatives', async (req, res) => {
+  try {
+    const { assessmentId, runId } = req.params as any;
+    const { userId, organizationId } = getAuthContext(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const roleInfo = await AssessmentPermissionService.getUserRole(
+      String(assessmentId),
+      String(userId),
+      String(organizationId)
+    );
+    if (!roleInfo?.permissions?.canView) {
+      return res.status(403).json({ error: 'Permission denied', required: 'canView' });
+    }
+
+    const progress = await AssessmentInitiativeGenerationRunService.getProgress(
+      String(runId),
+      String(organizationId)
+    );
+    if (!progress) return res.status(404).json({ error: 'Run not found' });
+    if (String(progress.assessmentId) !== String(assessmentId)) {
+      return res.status(404).json({ error: 'Run not found for this assessment' });
+    }
+
+    const initiatives = await AssessmentInitiativeGenerationRunService.listRunInitiatives(
+      String(runId),
+      String(organizationId),
+      200
+    );
+    return res.json({ initiatives });
+  } catch (err: any) {
+    logger.error('[AssessmentWorkflowV2] Error listing run initiatives:', err);
+    return res.status(500).json({ error: 'Failed to list run initiatives', message: err.message });
+  }
+});
+
+router.post(
+  '/:assessmentId/initiative-generation-runs/:runId/submit-for-review',
+  async (req, res) => {
+    try {
+      const { assessmentId, runId } = req.params as any;
+      const { userId, organizationId } = getAuthContext(req);
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const ok = await requireAssessmentFlag(req, res, 'canManage');
+      if (!ok) return;
+
+      const actorRole = String((req.user as any)?.role || '').toUpperCase();
+      const result = await AssessmentInitiativeGenerationRunService.bulkSubmitRunDrafts({
+        runId: String(runId),
+        assessmentId: String(assessmentId),
+        organizationId: String(organizationId),
+        actorId: String(userId),
+        actorRole,
+      });
+      return res.json({ success: true, updated: result.updated });
+    } catch (err: any) {
+      logger.error('[AssessmentWorkflowV2] Error submitting run drafts for review:', err);
+      return res.status(500).json({ error: 'Failed to submit drafts', message: err.message });
+    }
+  }
+);
 
 /**
  * GET /api/assessment-workflow-v2/:assessmentId/initiative-batches

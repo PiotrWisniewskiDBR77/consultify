@@ -86,6 +86,101 @@ const LANGUAGE_GUIDANCE: Record<SectionLanguage, string> = {
   general: 'Use clear, accessible language. Avoid jargon. Target audience: All stakeholders.',
 };
 
+// Verbosity levels control the richness and detail of generated content
+type VerbosityLevel = 'concise' | 'standard' | 'detailed' | 'comprehensive';
+
+const VERBOSITY_GUIDANCE: Record<VerbosityLevel, string> = {
+  concise:
+    'Be concise and to the point. Every sentence should add value. Avoid repetition and filler words.',
+  standard:
+    'Use a balanced approach. Include necessary context and explanations without excessive detail.',
+  detailed:
+    'Provide thorough explanations with supporting details. Use multiple paragraphs to explore different aspects. Include context and background information.',
+  comprehensive:
+    'Maximize detail and depth. Use extensive explanations, multiple examples for each point, and thorough analysis. Include industry context, best practices references, and actionable insights. Each section should be exhaustive.',
+};
+
+// Writing style options
+type WritingStyle = 'formal' | 'professional' | 'consultative' | 'persuasive';
+
+const WRITING_STYLE_GUIDANCE: Record<WritingStyle, string> = {
+  formal:
+    'Use formal academic tone. Avoid contractions. Use passive voice where appropriate. Maintain objectivity.',
+  professional: 'Use professional business tone. Clear and direct. Active voice. Results-focused.',
+  consultative:
+    'Use advisory tone. Frame content as expert recommendations. Include "we recommend", "consider", "based on our analysis".',
+  persuasive:
+    'Use persuasive tone to drive action. Emphasize benefits, urgency, and competitive advantage. Include strong calls to action.',
+};
+
+// Illustration preferences
+type IllustrationLevel = 'minimal' | 'moderate' | 'extensive';
+
+const ILLUSTRATION_GUIDANCE: Record<IllustrationLevel, string> = {
+  minimal: 'Include examples only when essential for understanding. Focus on concepts.',
+  moderate: 'Include relevant examples to illustrate key points. Balance theory with practice.',
+  extensive:
+    'Include multiple examples, case studies, and real-world scenarios for every major point. Use analogies and comparisons to make concepts relatable.',
+};
+
+/**
+ * Build style guidance from report config
+ * These settings control the overall "voice" and detail level of the generated content
+ */
+function buildStyleGuidance(config?: Record<string, unknown>): string {
+  if (!config) return '';
+
+  const guidance: string[] = [];
+
+  // Verbosity level
+  const verbosity = (config.verbosity as VerbosityLevel) || 'standard';
+  if (VERBOSITY_GUIDANCE[verbosity]) {
+    guidance.push(`VERBOSITY: ${VERBOSITY_GUIDANCE[verbosity]}`);
+  }
+
+  // Writing style
+  const style = (config.writingStyle as WritingStyle) || 'professional';
+  if (WRITING_STYLE_GUIDANCE[style]) {
+    guidance.push(`STYLE: ${WRITING_STYLE_GUIDANCE[style]}`);
+  }
+
+  // Illustration level
+  const illustration = (config.illustrationLevel as IllustrationLevel) || 'moderate';
+  if (ILLUSTRATION_GUIDANCE[illustration]) {
+    guidance.push(`EXAMPLES: ${ILLUSTRATION_GUIDANCE[illustration]}`);
+  }
+
+  // Custom focus areas
+  if (config.focusAreas && typeof config.focusAreas === 'string') {
+    guidance.push(`FOCUS: Pay special attention to: ${config.focusAreas}`);
+  }
+
+  // Custom tone/voice
+  if (config.customTone && typeof config.customTone === 'string') {
+    guidance.push(`TONE: ${config.customTone}`);
+  }
+
+  // Key messages to emphasize
+  if (config.keyMessages && typeof config.keyMessages === 'string') {
+    guidance.push(`KEY MESSAGES: Ensure these points are emphasized: ${config.keyMessages}`);
+  }
+
+  // Word usage preferences
+  if (config.preferTechnicalTerms === true) {
+    guidance.push('Use precise technical terminology where appropriate.');
+  }
+  if (config.useMetrics === true) {
+    guidance.push(
+      'Include specific metrics, percentages, and quantitative data wherever possible.'
+    );
+  }
+  if (config.includeReferences === true) {
+    guidance.push('Include references to industry standards, best practices, and methodologies.');
+  }
+
+  return guidance.length > 0 ? '\n\nSTYLE REQUIREMENTS:\n' + guidance.join('\n') : '';
+}
+
 /**
  * Build guidance string from block-specific settings
  * Translates frontend settings into AI-understandable instructions
@@ -334,11 +429,16 @@ function getSectionPrompt(
   // Build settings guidance string from blockSettings
   const settingsGuidance = buildSettingsGuidance(sectionType, blockSettings);
 
+  // Get report-level style settings from config
+  const reportConfig = report.config || {};
+  const styleGuidance = buildStyleGuidance(reportConfig);
+
   const baseSystem = `You are a senior management consultant creating a professional assessment report.
 Write in ${section.language} style. ${languageGuidance}
 Target length: ${lengthGuidance}
 ${section.customPrompt ? `\nAdditional guidance: ${section.customPrompt}` : ''}
-${settingsGuidance ? `\nBlock-specific settings:\n${settingsGuidance}` : ''}`;
+${settingsGuidance ? `\nBlock-specific settings:\n${settingsGuidance}` : ''}
+${styleGuidance}`;
 
   switch (sectionType) {
     case 'cover':

@@ -1,19 +1,31 @@
-# Assessment – Generate Initiative
+# Assessment – Generate Initiatives (Quick batch + Enterprise Wizard 50+)
 
-## Status: ✅ ZAIMPLEMENTOWANE
+## Status: ✅ ZAIMPLEMENTOWANE (P0)
 
-**Backend:** `server/src/services/AssessmentInitiativeService.ts`  
-**Frontend:** `src/components/assessment/modals/GenerateInitiativesModal.tsx`
+**Backend (single batch ≤7):** `server/src/services/AssessmentInitiativeService.ts`  
+**Backend (GenerationRun 50+):** `server/src/services/assessmentInitiativeGenerationRunService.ts`  
+**Frontend (Manage):** `src/components/assessment/manage/InitiativesManagementPanel.tsx`  
+**Frontend (Hub + Wizard modal):** `src/components/assessment/AssessmentHub.tsx`, `src/components/assessment/InitiativesGenerationWizardModal.tsx`
 
 ---
 
 ## 📋 Opis
 
-Generowanie inicjatyw transformacyjnych z zatwierdzonego Assessment:
+System wspiera dwa sposoby generowania inicjatyw w module Assessment:
+
+### A) Quick generate (batch ≤7)
+
 - 5 metodologii priorytetyzacji
-- Max 7 inicjatyw per batch
-- Powiązanie source_type='assessment'
-- Inicjatywy jako DRAFT
+- **Max 7 inicjatyw na batch** (stabilność i przewidywalność)
+- Inicjatywy są zapisywane jako **`DRAFT`** i linkowane do assessmentu
+- Opcjonalny kontekst raportu (`reportId`) – poprawia jakość, nie jest wymagany
+
+### B) Enterprise Wizard + GenerationRun (50+)
+
+- Generowanie portfela (np. 50+) w jednym uruchomieniu
+- Serwer dzieli całość na sub-batche (domyślnie 7), zapisuje postęp i retry
+- Po zakończeniu run inicjatywy są dostępne jako `DRAFT` w Manage (per-assessment)
+- Wizard oferuje preview i bulk akcje, w tym **Submit for review** (`DRAFT → PENDING_REVIEW`)
 
 ---
 
@@ -29,8 +41,10 @@ Generowanie inicjatyw transformacyjnych z zatwierdzonego Assessment:
 ### Warunki Generowania
 
 1. ✅ Assessment musi być APPROVED
-2. ✅ Raport musi być zatwierdzony
-3. ✅ DoD spełnione (completion >= 100%, confidence >= 3)
+2. ✅ Uprawnienie: **ASSESSMENT_GENERATE_INITIATIVES**
+3. ✅ Tryb `REPORT_ONLY` wymaga raportu (i jego zatwierdzenia, jeśli raport ma status w danym środowisku)
+
+Uwaga: raport **nie jest wymagany** dla generowania z assessmentu (`ASSESSMENT_REPORT`), ale może być przekazany jako kontekst (`reportId`).
 
 ---
 
@@ -250,15 +264,15 @@ const ASSESSMENT_CATEGORY_MAPPING: Record<string, Record<string, string>> = {
 ## 🔧 API Endpoint
 
 ```http
-POST /api/assessment-workflow/:id/generate-initiatives
+POST /api/assessment-workflow-v2/:assessmentId/generate-initiatives
 Authorization: Bearer {token}
 Permission: ASSESSMENT_GENERATE_INITIATIVES
 
 {
-  "methodology": "rice",
+  "methodologyId": "rice",
   "count": 5,
-  "includeInterviewContext": true,
-  "includeChatContext": false
+  "includeChatContext": true,
+  "reportId": "optional"
 }
 
 Response:
@@ -278,6 +292,49 @@ Response:
   "generatedAt": "2026-01-27T10:00:00Z"
 }
 ```
+
+### Enterprise: GenerationRun (50+)
+
+```http
+POST /api/assessment-workflow-v2/:assessmentId/initiative-generation-runs
+Authorization: Bearer {token}
+Permission: ASSESSMENT_GENERATE_INITIATIVES
+
+{
+  "mode": "ASSESSMENT_REPORT" | "REPORT_ONLY",
+  "methodologyId": "impact-feasibility" | "moscow" | "rice" | "value-effort" | "strategic-fit",
+  "requestedCount": 50,
+  "batchSize": 7,
+  "includeChatContext": true,
+  "reportId": "required for REPORT_ONLY",
+  "templateId": "tpl-card-standard (optional)",
+  "consultantBrief": "optional"
+}
+```
+
+Progress i operacje:
+
+- `GET  /api/assessment-workflow-v2/:assessmentId/initiative-generation-runs/:runId`
+- `GET  /api/assessment-workflow-v2/:assessmentId/initiative-generation-runs/:runId/initiatives` (preview)
+- `POST /api/assessment-workflow-v2/:assessmentId/initiative-generation-runs/:runId/submit-for-review` (bulk `DRAFT → PENDING_REVIEW`)
+
+### Report-only (wejście raportowe)
+
+```http
+POST /api/assessment-reports/:reportId/generate-initiatives
+Authorization: Bearer {token}
+Permission: ASSESSMENT_GENERATE_INITIATIVES
+
+{
+  "methodologyId": "rice",
+  "requestedCount": 30,
+  "batchSize": 7,
+  "templateId": "tpl-card-lite",
+  "consultantBrief": "optional"
+}
+```
+
+Szczegóły GenerationRun: `wdrozenia/modules/assessment/features/03-initiative-generation-runs.md`
 
 ---
 
@@ -306,10 +363,13 @@ const generateFallbackInitiatives = (assessment: Assessment): GeneratedInitiativ
 ## ✅ Weryfikacja
 
 - [x] 5 metodologii priorytetyzacji
-- [x] Max 7 inicjatyw
+- [x] Max 7 inicjatyw per batch
+- [x] Enterprise GenerationRun (50+) z progress/retry
 - [x] AI generation z promptem
 - [x] Fallback initiatives
 - [x] source_type='assessment'
 - [x] Inicjatywy jako DRAFT
 - [x] Assessment-Initiative linking
 - [x] Audit logging
+- [x] Wizard: preview + bulk Submit for review (`DRAFT → PENDING_REVIEW`)
+- [x] Template card-scope (`initiatives.initiative_template_id`)

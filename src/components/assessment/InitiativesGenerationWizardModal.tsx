@@ -1,0 +1,580 @@
+import {
+  ArrowRight,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  Sparkles,
+  X,
+} from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
+
+import { Api } from '@/services/api';
+import { cn } from '@/utils/cn';
+
+type GenerationMode = 'ASSESSMENT_REPORT' | 'REPORT_ONLY';
+type RunStatus = 'RUNNING' | 'SUCCEEDED' | 'PARTIAL' | 'FAILED' | 'CANCELLED';
+
+type AssessmentOption = {
+  id: string;
+  name: string;
+  type?: string;
+  status?: string;
+};
+
+type RunProgress = {
+  runId: string;
+  assessmentId: string;
+  status: RunStatus;
+  mode: GenerationMode;
+  methodologyId: string;
+  requestedCount: number;
+  batchSize: number;
+  generatedCount: number;
+  batchesPlanned: number;
+  batchesCreated: number;
+  batchesSucceeded: number;
+  batchesFailed: number;
+  updatedAt?: string | null;
+  error?: string | null;
+};
+
+export function InitiativesGenerationWizardModal(props: {
+  isOpen: boolean;
+  onClose: () => void;
+  initialAssessmentId?: string | null;
+  assessments?: AssessmentOption[];
+  onCompleted?: () => void;
+}) {
+  const { isOpen, onClose, initialAssessmentId, assessments: assessmentsProp, onCompleted } = props;
+
+  const [phase, setPhase] = useState<'config' | 'running' | 'done'>('config');
+  const [assessments, setAssessments] = useState<AssessmentOption[]>(assessmentsProp || []);
+  const [assessmentId, setAssessmentId] = useState<string>(initialAssessmentId || '');
+  const [mode, setMode] = useState<GenerationMode>('ASSESSMENT_REPORT');
+  const [methodologyId, setMethodologyId] = useState<string>('impact-feasibility');
+  const [requestedCount, setRequestedCount] = useState<number>(20);
+  const [includeChatContext, setIncludeChatContext] = useState<boolean>(true);
+  const [consultantBrief, setConsultantBrief] = useState<string>('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const [loadingAssessments, setLoadingAssessments] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [runId, setRunId] = useState<string | null>(null);
+  const [progress, setProgress] = useState<RunProgress | null>(null);
+  const [runInitiatives, setRunInitiatives] = useState<
+    Array<{ id: string; title: string; status: string }>
+  >([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  const pollTimer = useRef<number | null>(null);
+
+  const canStart = useMemo(() => {
+    if (!assessmentId) return false;
+    if (!Number.isFinite(requestedCount) || requestedCount < 1) return false;
+    return true;
+  }, [assessmentId, requestedCount]);
+
+  // Load assessments list
+  useEffect(() => {
+    if (!isOpen) return;
+    if (assessmentsProp && assessmentsProp.length) {
+      setAssessments(assessmentsProp);
+      setLoadingAssessments(false);
+      return;
+    }
+    let cancelled = false;
+    setLoadingAssessments(true);
+    Api.get('/assessments/my-assessments')
+      .then((resp: any) => {
+        if (cancelled) return;
+        const list = Array.isArray(resp?.assessments) ? resp.assessments : [];
+        setAssessments(
+          list.map((a: any) => ({
+            id: a.id,
+            name: a.name,
+            type: a.type,
+            status: a.status,
+          }))
+        );
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (cancelled) return;
+        setLoadingAssessments(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, assessmentsProp]);
+
+  // Reset state when opening
+  useEffect(() => {
+    if (!isOpen) return;
+    setPhase('config');
+    setAssessmentId(initialAssessmentId || '');
+    setRunId(null);
+    setProgress(null);
+    setStarting(false);
+    setShowAdvanced(false);
+  }, [isOpen, initialAssessmentId]);
+
+  // Poll run progress
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!runId || !assessmentId) return;
+
+    const stop = () => {
+      if (pollTimer.current) window.clearInterval(pollTimer.current);
+      pollTimer.current = null;
+    };
+
+    const tick = async () => {
+      try {
+        const resp = await Api.get(
+          `/assessment-workflow-v2/${encodeURIComponent(assessmentId)}/initiative-generation-runs/${encodeURIComponent(runId)}`
+        );
+        const run = (resp as any)?.run as RunProgress | undefined;
+        if (run) {
+          setProgress(run);
+          if (run.status !== 'RUNNING') {
+            stop();
+            setPhase('done');
+            if (run.status === 'SUCCEEDED') toast.success('Initiatives generated');
+            if (run.status === 'PARTIAL') toast.success('Initiatives generated (partial)');
+            if (run.status === 'FAILED') toast.error(run.error || 'Initiatives generation failed');
+            onCompleted?.();
+          }
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    tick();
+    pollTimer.current = window.setInterval(tick, 1500);
+    return () => stop();
+  }, [isOpen, runId, assessmentId, onCompleted]);
+
+  // Load run initiatives (done phase)
+  useEffect(() => {
+    if (!isOpen || phase !== 'done' || !runId || !assessmentId) return;
+    let cancelled = false;
+    Api.get(
+      `/assessment-workflow-v2/${encodeURIComponent(assessmentId)}/initiative-generation-runs/${encodeURIComponent(runId)}/initiatives`
+    )
+      .then((resp: any) => {
+        if (cancelled) return;
+        setRunInitiatives(Array.isArray(resp?.initiatives) ? resp.initiatives : []);
+      })
+      .catch(() => setRunInitiatives([]));
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, phase, runId, assessmentId]);
+
+  const startRun = async () => {
+    if (!canStart) return;
+    setStarting(true);
+    try {
+      const body: any = {
+        mode,
+        methodologyId,
+        requestedCount: Math.max(1, Math.min(200, Number(requestedCount) || 1)),
+        batchSize: 7,
+        includeChatContext,
+      };
+      if (consultantBrief.trim()) body.consultantBrief = consultantBrief.trim();
+
+      const resp = await Api.post(
+        `/assessment-workflow-v2/${encodeURIComponent(assessmentId)}/initiative-generation-runs`,
+        body
+      );
+      const id = String((resp as any)?.runId || '');
+      if (!id) throw new Error('Missing runId');
+      setRunId(id);
+      setPhase('running');
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to start generation');
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  const disableClose = starting || phase === 'running' || submitting;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={() => !disableClose && onClose()}
+        aria-label="Close"
+      />
+
+      <div
+        className={cn(
+          'relative w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-2xl',
+          'bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700',
+          'shadow-2xl flex flex-col'
+        )}
+      >
+        {/* Header */}
+        <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                Generuj inicjatywy
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {phase === 'config'
+                  ? 'Wybierz ocenę i uruchom generator'
+                  : phase === 'running'
+                    ? 'Trwa generowanie…'
+                    : 'Gotowe'}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={disableClose}
+            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 transition-colors disabled:opacity-50"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-auto p-5">
+          {phase === 'config' ? (
+            <div className="space-y-5">
+              {/* Assessment selection */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-900 dark:text-white">
+                  Ocena źródłowa
+                </label>
+                {loadingAssessments ? (
+                  <div className="flex items-center gap-2 h-11 px-4 text-sm text-slate-500">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Ładowanie…
+                  </div>
+                ) : (
+                  <select
+                    value={assessmentId}
+                    onChange={(e) => setAssessmentId(e.target.value)}
+                    className={cn(
+                      'w-full h-11 px-4 rounded-xl border text-sm',
+                      'border-slate-200 bg-white text-slate-900',
+                      'dark:border-navy-700 dark:bg-navy-900 dark:text-white',
+                      'focus:outline-none focus:ring-2 focus:ring-emerald-500/25 focus:border-emerald-500/40'
+                    )}
+                  >
+                    <option value="">— wybierz ocenę —</option>
+                    {assessments.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name} ({a.type?.toUpperCase() || 'ASSESSMENT'})
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              {/* Main options row */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-900 dark:text-white">
+                    Metodologia
+                  </label>
+                  <select
+                    value={methodologyId}
+                    onChange={(e) => setMethodologyId(e.target.value)}
+                    className={cn(
+                      'w-full h-11 px-4 rounded-xl border text-sm',
+                      'border-slate-200 bg-white text-slate-900',
+                      'dark:border-navy-700 dark:bg-navy-900 dark:text-white',
+                      'focus:outline-none focus:ring-2 focus:ring-emerald-500/25 focus:border-emerald-500/40'
+                    )}
+                  >
+                    <option value="impact-feasibility">Impact × Feasibility</option>
+                    <option value="moscow">MoSCoW</option>
+                    <option value="rice">RICE</option>
+                    <option value="value-effort">Value × Effort</option>
+                    <option value="strategic-fit">Strategic Fit</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-900 dark:text-white">
+                    Liczba inicjatyw
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setRequestedCount((p) => Math.max(1, p - 5))}
+                      className="h-11 w-11 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                    >
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      max={200}
+                      value={requestedCount}
+                      onChange={(e) => setRequestedCount(Number(e.target.value))}
+                      className={cn(
+                        'flex-1 h-11 px-3 text-center rounded-xl border text-sm',
+                        'border-slate-200 bg-white text-slate-900',
+                        'dark:border-navy-700 dark:bg-navy-900 dark:text-white',
+                        'focus:outline-none focus:ring-2 focus:ring-emerald-500/25'
+                      )}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setRequestedCount((p) => Math.min(200, p + 5))}
+                      className="h-11 w-11 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Advanced options toggle */}
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+              >
+                {showAdvanced ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+                Opcje zaawansowane
+              </button>
+
+              {showAdvanced && (
+                <div className="space-y-4 p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/50">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-900 dark:text-white">
+                        Tryb
+                      </label>
+                      <select
+                        value={mode}
+                        onChange={(e) => setMode(e.target.value as GenerationMode)}
+                        className={cn(
+                          'w-full h-10 px-3 rounded-lg border text-sm',
+                          'border-slate-200 bg-white text-slate-900',
+                          'dark:border-navy-700 dark:bg-navy-950 dark:text-white'
+                        )}
+                      >
+                        <option value="ASSESSMENT_REPORT">Assessment + Report</option>
+                        <option value="REPORT_ONLY">Report only</option>
+                      </select>
+                    </div>
+
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={includeChatContext}
+                        onChange={(e) => setIncludeChatContext(e.target.checked)}
+                        className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                      />
+                      <span className="text-sm text-slate-700 dark:text-slate-200">
+                        Uwzględnij kontekst czatu
+                      </span>
+                    </label>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-900 dark:text-white">
+                      Notatka konsultanta (opcjonalnie)
+                    </label>
+                    <textarea
+                      value={consultantBrief}
+                      onChange={(e) => setConsultantBrief(e.target.value)}
+                      rows={3}
+                      placeholder="Ograniczenia, priorytety klienta, oczekiwane rezultaty…"
+                      className={cn(
+                        'w-full px-3 py-2 rounded-lg border text-sm',
+                        'border-slate-200 bg-white text-slate-900 placeholder:text-slate-400',
+                        'dark:border-navy-700 dark:bg-navy-950 dark:text-white dark:placeholder:text-slate-500'
+                      )}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : phase === 'running' ? (
+            <div className="py-10 flex flex-col items-center justify-center text-center">
+              <div className="relative">
+                <div className="w-16 h-16 rounded-full border-4 border-emerald-200 dark:border-emerald-800" />
+                <div className="absolute inset-0 w-16 h-16 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
+                <Sparkles size={24} className="absolute inset-0 m-auto text-emerald-500" />
+              </div>
+              <div className="mt-4 text-base font-semibold text-slate-900 dark:text-white">
+                Generowanie inicjatyw…
+              </div>
+              <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                Możesz zamknąć okno — proces kontynuuje w tle.
+              </div>
+
+              {progress && (
+                <div className="mt-6 w-full max-w-xs text-left space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-600 dark:text-slate-300">Wygenerowano</span>
+                    <span className="font-medium text-slate-900 dark:text-white">
+                      {progress.generatedCount}/{progress.requestedCount}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600 dark:text-slate-300">Partie</span>
+                    <span className="font-medium text-slate-900 dark:text-white">
+                      {progress.batchesSucceeded + progress.batchesFailed}/{progress.batchesPlanned}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-start gap-3 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                <div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                    Generowanie zakończone
+                  </div>
+                  <div className="text-sm text-slate-600 dark:text-slate-300">
+                    Drafty inicjatyw są zapisane i powiązane z oceną.
+                  </div>
+                </div>
+              </div>
+
+              {progress?.error && (
+                <div className="text-sm text-rose-600 dark:text-rose-300">{progress.error}</div>
+              )}
+
+              {runInitiatives.length > 0 && (
+                <div className="rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+                  <div className="px-4 py-2.5 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 text-sm font-medium text-slate-900 dark:text-white">
+                    Podgląd ({runInitiatives.length})
+                  </div>
+                  <div className="max-h-48 overflow-auto divide-y divide-slate-100 dark:divide-navy-800">
+                    {runInitiatives.slice(0, 10).map((it) => (
+                      <div
+                        key={it.id}
+                        className="px-4 py-2.5 flex items-center justify-between gap-3"
+                      >
+                        <span className="text-sm text-slate-700 dark:text-slate-200 truncate">
+                          {it.title}
+                        </span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 shrink-0">
+                          {it.status}
+                        </span>
+                      </div>
+                    ))}
+                    {runInitiatives.length > 10 && (
+                      <div className="px-4 py-2.5 text-xs text-slate-500 dark:text-slate-400">
+                        …i {runInitiatives.length - 10} więcej
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-3 border-t border-slate-200 dark:border-navy-700 flex items-center justify-end gap-2">
+          {phase === 'config' ? (
+            <>
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={disableClose}
+                className="px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                Anuluj
+              </button>
+              <button
+                type="button"
+                disabled={!canStart || starting}
+                onClick={startRun}
+                className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors inline-flex items-center gap-2"
+              >
+                {starting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Uruchamiam…
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Generuj inicjatywy
+                  </>
+                )}
+              </button>
+            </>
+          ) : phase === 'running' ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 text-sm font-medium transition-colors"
+            >
+              Zamknij
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!runId || !assessmentId) return;
+                  setSubmitting(true);
+                  try {
+                    const resp = await Api.post(
+                      `/assessment-workflow-v2/${encodeURIComponent(assessmentId)}/initiative-generation-runs/${encodeURIComponent(runId)}/submit-for-review`,
+                      {}
+                    );
+                    const updated = Number((resp as any)?.updated || 0);
+                    toast.success(`Przesłano ${updated} inicjatyw do przeglądu`);
+                    onCompleted?.();
+                  } catch (e: any) {
+                    toast.error(e?.message || 'Nie udało się przesłać');
+                  } finally {
+                    setSubmitting(false);
+                  }
+                }}
+                disabled={submitting || !runId}
+                className="px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 text-sm font-medium transition-colors disabled:opacity-50 inline-flex items-center gap-2"
+              >
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                Prześlij do przeglądu
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onCompleted?.();
+                  onClose();
+                }}
+                className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium transition-colors"
+              >
+                Zamknij
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default InitiativesGenerationWizardModal;

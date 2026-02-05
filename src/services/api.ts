@@ -14,17 +14,34 @@ if (!correlationId) {
   sessionStorage.setItem('correlationId', correlationId);
 }
 
-export const getHeaders = () => {
-  const token = tokenService.getToken();
+// ---------------------------------------------------------------------------
+// Perf: avoid JSON.parse(localStorage) on every request.
+// localStorage access + JSON.parse are synchronous and can cause noticeable UI jank
+// when the app polls multiple endpoints (notifications, onboarding, etc.).
+// ---------------------------------------------------------------------------
+type DemoFlags = { isDemoMode: boolean; isDemoSession: boolean };
 
-  // Check if demo mode is enabled from localStorage
+let _cachedStorageRaw: string | null | undefined = undefined;
+let _cachedDemoFlags: DemoFlags = { isDemoMode: false, isDemoSession: false };
+
+function getDemoFlags(): DemoFlags {
+  const DEMO_EMAIL = 'piotr.wisniewski@demo.com';
+  let raw: string | null = null;
+  try {
+    raw = localStorage.getItem('consultinity-storage');
+  } catch {
+    // ignore
+  }
+
+  // Only re-parse when the underlying raw value changes
+  if (raw === _cachedStorageRaw) return _cachedDemoFlags;
+  _cachedStorageRaw = raw;
+
   let isDemoMode = false;
   let isDemoSession = false;
-  const DEMO_EMAIL = 'piotr.wisniewski@demo.com';
   try {
-    const storageData = localStorage.getItem('consultinity-storage');
-    if (storageData) {
-      const parsed = JSON.parse(storageData);
+    if (raw) {
+      const parsed = JSON.parse(raw);
       isDemoMode = parsed?.state?.isDemoMode === true;
       const persistedUser = parsed?.state?.currentUser;
       isDemoSession =
@@ -36,16 +53,40 @@ export const getHeaders = () => {
     // Ignore parsing errors
   }
 
-  // Get user language from localStorage (i18next stores it there)
+  _cachedDemoFlags = { isDemoMode, isDemoSession };
+  return _cachedDemoFlags;
+}
+
+let _cachedI18nRaw: string | null | undefined = undefined;
+let _cachedLang = 'en';
+
+function getCachedUserLanguage(): string {
+  let raw: string | null = null;
+  try {
+    raw = localStorage.getItem('i18nextLng');
+  } catch {
+    // ignore
+  }
+
+  if (raw === _cachedI18nRaw) return _cachedLang;
+  _cachedI18nRaw = raw;
+
   let userLanguage = 'en';
   try {
-    const i18nextLng = localStorage.getItem('i18nextLng');
-    if (i18nextLng) {
-      userLanguage = i18nextLng.split('-')[0].toLowerCase(); // Extract base language (e.g., 'pl' from 'pl-PL')
-    }
+    if (raw) userLanguage = raw.split('-')[0].toLowerCase();
   } catch {
-    // Ignore parsing errors, use default
+    // ignore
   }
+
+  _cachedLang = userLanguage;
+  return _cachedLang;
+}
+
+export const getHeaders = () => {
+  const token = tokenService.getToken();
+
+  const { isDemoMode, isDemoSession } = getDemoFlags();
+  const userLanguage = getCachedUserLanguage();
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -566,6 +607,27 @@ export const Api = {
 
   // --- AI ---
   // --- AI ---
+  deepThinkingEvent: async (args: {
+    eventType: 'copied';
+    sessionId: string;
+    conversationId?: string;
+    payload?: Record<string, unknown>;
+  }) => {
+    const response = await fetch(`${API_URL}/ai/deep-thinking/events`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(args),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const msg = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
+      const err: any = new Error(msg);
+      err.code = data?.code;
+      throw err;
+    }
+    return data;
+  },
+
   chatWithAI: async (
     message: string,
     history: any[],
@@ -584,6 +646,72 @@ export const Api = {
       console.error('API Chat Error', error);
       throw error;
     }
+  },
+
+  chatConfirm: async (
+    message: string,
+    history: any[],
+    systemInstruction?: string,
+    context?: any,
+    roleName?: string,
+    language?: string,
+    options?: {
+      deepResearch?: boolean;
+      webSearch?: boolean;
+      showReasoning?: boolean;
+      knowledgeSources?: {
+        pmoDocuments?: boolean;
+        projectData?: boolean;
+        organizationData?: boolean;
+      };
+      responseStyle?: 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
+      selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
+      selectedModelId?: string | null;
+    }
+  ) => {
+    const aiModes = {
+      deepResearch: options?.deepResearch ?? false,
+      webSearch: options?.webSearch ?? false,
+      showReasoning: options?.showReasoning ?? false,
+    };
+
+    const knowledgeSources = {
+      pmoDocuments: options?.knowledgeSources?.pmoDocuments ?? true,
+      projectData: options?.knowledgeSources?.projectData ?? true,
+      organizationData: options?.knowledgeSources?.organizationData ?? false,
+    };
+
+    const responseStyle = options?.responseStyle ?? 'normal';
+
+    const response = await fetch(`${API_URL}/ai/chat/confirm`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        message,
+        history,
+        systemInstruction,
+        context,
+        roleName,
+        language,
+        aiModes,
+        knowledgeSources,
+        responseStyle,
+        selectedTier: options?.selectedTier,
+        selectedModelId: options?.selectedModelId ?? null,
+        projectId: context?.projectId,
+        screenContext: context?.screenContext,
+        focusMode: context?.focusMode,
+      }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const msg = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
+      const err: any = new Error(msg);
+      err.code = data?.code;
+      throw err;
+    }
+    return data;
   },
 
   chatWithAIStream: async (
@@ -650,11 +778,88 @@ export const Api = {
         }),
       });
 
+      // If backend didn't return SSE (e.g. 401/403 JSON), surface it immediately.
+      // Otherwise the client would read a non-SSE body, never call onChunk, and appear as "nothing happens".
+      if (!response.ok) {
+        let parsed: any = null;
+        let rawText = '';
+        try {
+          parsed = await response.clone().json();
+        } catch {
+          // ignore
+        }
+        try {
+          rawText = await response.text();
+        } catch {
+          // ignore
+        }
+
+        const codeRaw = parsed?.code || parsed?.errorCode || parsed?.reasonCode;
+        const code =
+          typeof codeRaw === 'string' && codeRaw.trim().length > 0
+            ? codeRaw
+            : `HTTP_${response.status}`;
+        const serverMsg =
+          parsed?.message ||
+          parsed?.error ||
+          rawText ||
+          `HTTP ${response.status} ${response.statusText}`;
+
+        // Only show the "Access required" modal for genuine access/auth blocks.
+        const accessErrorCodes = new Set([
+          'ORG_NOT_FOUND',
+          'ORG_INACTIVE',
+          'ACCESS_BLOCKED',
+          'DEMO_READ_ONLY',
+          'DEMO_TIME_EXPIRED',
+          'DEMO_AI_SESSION_LIMIT_REACHED',
+          'TRIAL_EXPIRED',
+          'AI_LIMIT_REACHED',
+          'TRIAL_PROFILE_INCOMPLETE',
+          'AI_TOKEN_BUDGET_EXCEEDED',
+          'INSUFFICIENT_TOKENS',
+        ]);
+        const isAccessError =
+          response.status === 401 || response.status === 403 || accessErrorCodes.has(code);
+
+        if (isAccessError) {
+          try {
+            window.dispatchEvent(
+              new CustomEvent('access:blocked', {
+                detail: {
+                  code,
+                  message: serverMsg,
+                  accessContext: parsed?.accessContext,
+                },
+              })
+            );
+          } catch {
+            // ignore
+          }
+        }
+
+        // Also show a short inline error so the assistant bubble doesn't stay empty.
+        const uiLang = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
+        const friendly =
+          code === 'ORG_NOT_FOUND'
+            ? uiLang === 'pl'
+              ? '⚠️ Brak organizacji w sesji. Wyloguj się i zaloguj ponownie.'
+              : '⚠️ Organization not found in session. Please log out and log in again.'
+            : uiLang === 'pl'
+              ? `⚠️ Nie udało się uruchomić AI (${code}).`
+              : `⚠️ AI request failed (${code}).`;
+        onChunk(friendly);
+        onDone();
+        return;
+      }
+
       if (!response.body) throw new Error('ReadableStream not supported');
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
+      let accessErrorShownInline = false;
+      let hasAnyVisibleOutput = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -670,24 +875,88 @@ export const Api = {
           if (part.startsWith('data: ')) {
             const dataStr = part.replace('data: ', '').trim();
             if (dataStr === '[DONE]') {
+              // If stream ends without any visible output, show a friendly fallback
+              // (prevents "nothing happens" UX).
+              if (!hasAnyVisibleOutput) {
+                const uiLang = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
+                const friendly =
+                  uiLang === 'pl'
+                    ? '⚠️ AI nie zwróciło odpowiedzi. Sprawdź konfigurację providera (OPENAI_API_KEY / GEMINI_API_KEY) oraz logi backendu.'
+                    : '⚠️ AI returned no output. Check LLM provider config (OPENAI_API_KEY / GEMINI_API_KEY) and backend logs.';
+                onChunk(friendly);
+              }
               onDone();
               return;
             }
             try {
               const data = JSON.parse(dataStr);
 
-              // Handle Thought/Thinking Events
-              if (data.type === 'thought' && onThinking) {
-                onThinking(data);
-                continue;
+              // Handle non-text stream events (thinking/progress/state/research)
+              // - legacy: { type: 'thought', ... }
+              // - new: { type: 'dt_state', ... } / { type: 'research_progress', ... }
+              if (typeof data.type === 'string' && onThinking && data.type !== 'error') {
+                // Only treat as an event when it's not a normal text chunk
+                const hasText =
+                  typeof (data as any).text === 'string' && (data as any).text.length > 0;
+                if (!hasText) {
+                  onThinking(data);
+                  continue;
+                }
               }
 
-              if (data.text) onChunk(data.text);
+              if (typeof data.text === 'string') {
+                // Backend may emit empty string; treat only non-empty text as visible output.
+                if (data.text.length > 0) {
+                  hasAnyVisibleOutput = true;
+                  onChunk(data.text);
+                }
+              }
               if (data.error) {
+                // Errors are visible output (either inline or via friendly message).
                 console.error('Stream error from server:', data.error, data.code);
 
-                // Show the error inline (so the user isn't left with an empty assistant bubble)
-                onChunk(data.error);
+                // Access/auth errors - show modal, don't pollute chat
+                const accessErrorCodes = [
+                  'ORG_NOT_FOUND',
+                  'ORG_INACTIVE',
+                  'ACCESS_BLOCKED',
+                  'DEMO_READ_ONLY',
+                  'DEMO_TIME_EXPIRED',
+                  'DEMO_AI_SESSION_LIMIT_REACHED',
+                  'TRIAL_EXPIRED',
+                  'AI_LIMIT_REACHED',
+                  'TRIAL_PROFILE_INCOMPLETE',
+                ];
+
+                const dataCode = typeof data.code === 'string' ? data.code : String(data.code || '');
+                const isAccessError = accessErrorCodes.includes(dataCode);
+
+                // UX: Always show *something* in the chat bubble when stream ends with access errors,
+                // otherwise the placeholder stays empty and the UI hides it (looks like "thinking then reset").
+                if (isAccessError) {
+                  if (!accessErrorShownInline) {
+                    accessErrorShownInline = true;
+                    const uiLang = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
+                    const friendly =
+                      data.code === 'ORG_NOT_FOUND'
+                        ? uiLang === 'pl'
+                          ? '⚠️ Brak organizacji w sesji. Wyloguj się i zaloguj ponownie.'
+                          : '⚠️ Organization not found in session. Please log out and log in again.'
+                        : data.code === 'ORG_INACTIVE'
+                          ? uiLang === 'pl'
+                            ? '⚠️ Organizacja jest nieaktywna. Zaloguj się ponownie lub skontaktuj się z administratorem.'
+                            : '⚠️ Organization is inactive. Please log in again or contact an admin.'
+                          : uiLang === 'pl'
+                            ? `⚠️ Brak dostępu (${data.code}).`
+                            : `⚠️ Access blocked (${data.code}).`;
+                    hasAnyVisibleOutput = true;
+                    onChunk(friendly);
+                  }
+                } else {
+                  // Non-access errors: show inline (so user isn't left with an empty assistant bubble)
+                  hasAnyVisibleOutput = true;
+                  onChunk(data.error);
+                }
 
                 // Budget freeze (existing behavior)
                 if (data.code === 'AI_BUDGET_EXHAUSTED') {
@@ -697,13 +966,13 @@ export const Api = {
                     reason: data.error,
                     scope: data.budgetStatus?.scope || 'Global',
                   });
-                } else {
-                  // Unified access-blocked UX hook
+                } else if (isAccessError) {
+                  // Unified access-blocked UX hook (only for access/auth blocks)
                   try {
                     window.dispatchEvent(
                       new CustomEvent('access:blocked', {
                         detail: {
-                          code: data.code || 'ACCESS_BLOCKED',
+                          code: dataCode || 'ACCESS_BLOCKED',
                           message: data.error,
                           accessContext: data.accessContext,
                         },
@@ -720,6 +989,18 @@ export const Api = {
           }
         }
       }
+
+      // If the SSE stream ended without any visible output, show a friendly fallback.
+      // This prevents the UX where the assistant bubble stays empty and gets hidden.
+      if (!hasAnyVisibleOutput) {
+        const uiLang = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
+        const friendly =
+          uiLang === 'pl'
+            ? '⚠️ AI nie zwróciło odpowiedzi. Najczęściej oznacza to brak konfiguracji dostawcy (np. OPENAI_API_KEY / GEMINI_API_KEY) na backendzie.'
+            : '⚠️ AI returned an empty response. This usually means no LLM provider is configured on the backend (e.g. OPENAI_API_KEY / GEMINI_API_KEY).';
+        onChunk(friendly);
+      }
+
       onDone();
     } catch (error) {
       console.error('API Chat Stream Error', error);
@@ -2151,6 +2432,25 @@ export const Api = {
     });
     if (!res.ok) throw new Error('Failed to create webhook');
     return res.json();
+  },
+
+  updateWebhook: async (webhookId: string, data: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/webhooks/${webhookId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to update webhook');
+    return res.json();
+  },
+
+  deleteWebhook: async (webhookId: string): Promise<{ success: true }> => {
+    const res = await fetch(`${API_URL}/webhooks/${webhookId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to delete webhook');
+    return { success: true };
   },
 
   // --- AI STRATEGIC BOARD ---
@@ -4154,6 +4454,7 @@ export const Api = {
     title?: string;
     projectId?: string;
     pmoContext?: Record<string, any>;
+    language?: string;
   }): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/conversations`, {
       method: 'POST',
@@ -4185,6 +4486,7 @@ export const Api = {
       tags?: string[];
       pmoContext?: Record<string, any>;
       chatProjectId?: string | null;
+      language?: string;
     }
   ): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/conversations/${id}`, {
@@ -6682,23 +6984,6 @@ export const Api = {
 
   saveAIVoice: async (settings: any) => {
     return { success: true, settings };
-  },
-
-  // Webhooks
-  getWebhooks: async () => {
-    return { webhooks: [] };
-  },
-
-  createWebhook: async (webhook: any) => {
-    return { success: true, webhook: { id: `wh-${Date.now()}`, ...webhook } };
-  },
-
-  updateWebhook: async (_webhookId: string, data: any) => {
-    return { success: true, webhook: data };
-  },
-
-  deleteWebhook: async (webhookId: string) => {
-    return { success: true, webhookId };
   },
 
   // System/Enterprise

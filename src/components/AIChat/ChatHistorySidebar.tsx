@@ -158,6 +158,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
       {/* Sidebar Panel - Floating Overlay */}
       {/* Position to the right of navigation sidebar: left-16 (64px) when collapsed, left-64 (256px) when expanded */}
       <div
+        data-testid="chat-history-sidebar"
         className={`
                 fixed top-0 h-full z-40
                 bg-white dark:bg-navy-900 
@@ -178,6 +179,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
             </h3>
             <button
               onClick={toggleSidebar}
+              data-testid="chat-history-close"
               className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
               title={t('aiChat.closeSidebar', 'Close sidebar')}
             >
@@ -188,6 +190,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
           {/* New Chat Button */}
           <button
             onClick={handleNewChat}
+            data-testid="chat-history-new-chat"
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-medium text-sm transition-colors shadow-sm hover:shadow-md"
           >
             <Plus size={18} />

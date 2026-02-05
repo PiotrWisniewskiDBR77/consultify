@@ -111,7 +111,7 @@ class ActivityService {
 
       const activityId = uuidv4();
 
-      await this.deps.dbRun(sql, [
+      const runResult = await this.deps.dbRun(sql, [
         activityId,
         organizationId,
         userId || null,
@@ -125,6 +125,33 @@ class ActivityService {
         userAgent || null,
         correlationId,
       ]);
+
+      // Backward-compatible fallback for older SQLite schemas (missing `entity_name` column).
+      // Some dev DBs were created before this column existed; logging must not break the request flow.
+      if (
+        (runResult as any)?.success === false &&
+        typeof (runResult as any)?.error === 'string' &&
+        (runResult as any).error.includes('no column named entity_name')
+      ) {
+        const fallbackSql = `
+                  INSERT INTO activity_logs 
+                  (id, organization_id, user_id, action, entity_type, entity_id, old_value, new_value, ip_address, user_agent, correlation_id)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              `;
+        await this.deps.dbRun(fallbackSql, [
+          activityId,
+          organizationId,
+          userId || null,
+          action,
+          entityType,
+          entityId || null,
+          oldValue ? JSON.stringify(oldValue) : null,
+          newValue || metadata ? JSON.stringify(newValue || metadata) : null,
+          ipAddress || null,
+          userAgent || null,
+          correlationId,
+        ]);
+      }
     } catch (err) {
       const error = err as Error;
       if (process.env.NODE_ENV !== 'production') {

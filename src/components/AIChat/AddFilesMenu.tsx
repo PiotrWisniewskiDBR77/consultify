@@ -121,7 +121,9 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
       onFileSelect(files);
       setIsOpen(false);
       toast.success(
-        files.length === 1 ? `Dodano: ${files[0].name}` : `Dodano ${files.length} plików`,
+        files.length === 1
+          ? t('aiChat.menu.toast.filesAddedOne', { name: files[0].name })
+          : t('aiChat.menu.toast.filesAddedMany', { count: files.length }),
         { duration: 2000 }
       );
     }
@@ -129,7 +131,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
 
   const handleCloudClick = (provider: CloudProvider) => {
     if (!isCloudImplemented) {
-      toast('Integracje z chmurą zostaną dodane wkrótce', {
+      toast(t('aiChat.menu.toast.cloudComingSoon', 'Cloud integrations will be added soon'), {
         icon: '⏳',
         duration: 3000,
         style: {
@@ -145,11 +147,16 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
     if (provider.connected) {
       // Open file picker for this provider
       onCloudFileSelect?.(provider.id, '', '');
-      toast.success(`Otwieranie ${provider.name}...`, { duration: 1500 });
+      toast.success(t('aiChat.menu.toast.openingProvider', { provider: provider.name }), {
+        duration: 1500,
+      });
     } else {
       // Prompt to connect
       onConnectCloud?.(provider.id);
-      toast(`Przekierowanie do ustawień integracji`, { icon: '🔗', duration: 2000 });
+      toast(t('aiChat.menu.toast.redirectIntegrations', 'Redirecting…'), {
+        icon: '🔗',
+        duration: 2000,
+      });
     }
     setIsOpen(false);
   };

@@ -327,10 +327,27 @@ router.get(
     const unreadNotifications =
       (await queryHelpers.queryAll<any>(
         `
-        SELECT id, type, title, body, priority, entity_type as entityType, entity_id as entityId, created_at as createdAt
+        -- NOTE: SQLite dev schema uses message + related_object_* (legacy).
+        -- We alias to {body, entityType, entityId} for inbox compatibility.
+        SELECT
+          id,
+          type,
+          title,
+          message as body,
+          priority,
+          COALESCE(related_object_type,
+            CASE
+              WHEN task_id IS NOT NULL THEN 'task'
+              WHEN initiative_id IS NOT NULL THEN 'initiative'
+              WHEN project_id IS NOT NULL THEN 'project'
+              ELSE NULL
+            END
+          ) as entityType,
+          COALESCE(related_object_id, task_id, initiative_id, project_id, related_id) as entityId,
+          created_at as createdAt
         FROM notifications
         WHERE user_id = ?
-          AND read = 0
+          AND COALESCE(is_read, read, 0) = 0
         ORDER BY created_at DESC
         LIMIT ?
       `,

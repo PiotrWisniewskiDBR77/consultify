@@ -260,6 +260,19 @@ async function applyMigration(
         .replace(/CREATE\s+POLICY[\s\S]*?;/gi, '')
         .replace(/DROP\s+POLICY[\s\S]*?;/gi, '');
 
+      // 11. SQLite safety: strip explicit transaction control statements.
+      // Our runner executes statements one-by-one; migrations that include BEGIN/COMMIT (common in Postgres)
+      // can leave SQLite in an open transaction (especially if some statements are skipped in safe mode),
+      // causing "cannot start a transaction within a transaction" on subsequent runs.
+      if ((process.env.DB_TYPE || 'sqlite') === 'sqlite') {
+        cleanContent = cleanContent
+          .replace(/^\s*BEGIN\s*;?\s*$/gim, '')
+          .replace(/^\s*BEGIN\s+TRANSACTION\s*;?\s*$/gim, '')
+          .replace(/^\s*COMMIT\s*;?\s*$/gim, '')
+          .replace(/^\s*ROLLBACK\s*;?\s*$/gim, '')
+          .replace(/^\s*END\s*;?\s*$/gim, '');
+      }
+
       // 5. Split statements carefully (don't split inside strings/blocks)
       let protectedContent = '';
       let inSingleQuote = false;
@@ -316,6 +329,14 @@ async function applyMigration(
 
       for (const statement of statements) {
         try {
+          // Skip no-op transaction statements on SQLite (defense-in-depth)
+          if ((process.env.DB_TYPE || 'sqlite') === 'sqlite') {
+            const upper = statement.trim().toUpperCase().replace(/;+\s*$/, '');
+            if (upper === 'BEGIN' || upper === 'BEGIN TRANSACTION' || upper === 'COMMIT' || upper === 'ROLLBACK' || upper === 'END') {
+              continue;
+            }
+          }
+
           // SQLite doesn't support multi-column ALTER TABLE ... ADD COLUMN ... , ADD COLUMN ...
           // Split such statements into multiple ALTER TABLE statements.
           const dbTypeRuntime = process.env.DB_TYPE || 'sqlite';

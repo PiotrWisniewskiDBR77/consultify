@@ -117,6 +117,21 @@ const ACTION_CONFIG: Record<string, { label: string; icon: React.ReactNode; colo
     icon: <MessageSquare className="w-4 h-4" />,
     color: 'text-pink-600 dark:text-pink-400 bg-pink-100 dark:bg-pink-900/30',
   },
+  TEAM_MEMBER_ADDED: {
+    label: 'Team member added',
+    icon: <User className="w-4 h-4" />,
+    color: 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30',
+  },
+  TEAM_MEMBER_ROLE_UPDATED: {
+    label: 'Team member role updated',
+    icon: <User className="w-4 h-4" />,
+    color: 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30',
+  },
+  TEAM_MEMBER_REMOVED: {
+    label: 'Team member removed',
+    icon: <User className="w-4 h-4" />,
+    color: 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30',
+  },
 };
 
 const DEFAULT_ACTION_CONFIG = {

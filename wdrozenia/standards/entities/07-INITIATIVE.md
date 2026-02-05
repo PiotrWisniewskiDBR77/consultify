@@ -88,6 +88,36 @@ W platformie **status determinuje moduł**, w którym inicjatywa jest “obsług
 
 To jest świadoma decyzja produktowa: jeden artefakt ma 2 powierzchnie UI.
 
+---
+
+## Templates “card scope” (zakres karty inicjatywy)
+
+To **nie jest “typ inicjatywy”**, tylko **konfiguracja sekcji/artefaktów**, które są widoczne i wymagane na karcie inicjatywy.
+
+### Store (DB)
+
+- `initiative_templates.template_data.cardScope` – deklaratywny zakres sekcji (np. decisions/economics)
+- `initiatives.initiative_template_id` – aktualnie wybrany template dla inicjatywy
+
+### Seed (P0)
+
+Publiczne template’y (stabilne ID):
+
+- `tpl-card-lite` – minimalna karta (bez decisions, bez economics)
+- `tpl-card-standard` – standard enterprise
+- `tpl-card-governance` – governance-heavy (decisions/gates/RAID)
+- `tpl-card-economics` – economics-heavy (financial analysis + impact)
+
+### API (P0)
+
+- `GET /api/initiatives/templates` – lista template’ów (public + org)
+- `GET /api/initiatives/templates/:templateId` – szczegóły (w tym `cardScope`)
+- `PATCH /api/initiatives/:id/template` – zmiana template’u inicjatywy w trakcie lifecycle
+
+### UI (P0)
+
+`InitiativeDocumentView` renderuje sekcje warunkowo zgodnie z `cardScope` (np. ukrycie economics lub decisions).
+
 ### 1) Quick Review Drawer (50% width)
 
 Cel: **szybka ocena i orientacja**, bez ciężkiej edycji.

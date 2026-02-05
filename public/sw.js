@@ -2,9 +2,20 @@
 // - We only cache the app shell and ALWAYS try network-first for navigations.
 // - This prevents "zero changes" after deploy (stale cached index.html).
 // - Bump CACHE_VERSION when changing caching strategy.
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `consultinity-${CACHE_VERSION}`;
-const APP_SHELL_URLS = ['/', '/index.html', '/manifest.json'];
+const APP_SHELL_URLS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/favicon.png',
+  '/favicon-16.png',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/assets/logos/logo-light.png',
+  '/assets/logos/logo-dark.png',
+  '/assets/logos/logo-icon.png',
+];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

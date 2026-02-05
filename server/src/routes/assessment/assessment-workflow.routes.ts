@@ -812,7 +812,7 @@ router.get('/:assessmentId/activity-logs', async (req: AuthRequest, res: Respons
     // Try multiple query variants to handle different schema versions
     let logs: any[] = [];
 
-    // Query variant 1: Standard schema with created_at
+    // Query variant 1: activity_logs (current baseline schema)
     try {
       logs = await new Promise<any[]>((resolve, reject) => {
         db.all(
@@ -821,19 +821,19 @@ router.get('/:assessmentId/activity-logs', async (req: AuthRequest, res: Respons
             al.created_at as timestamp,
             al.user_id as userId,
             al.action,
-            al.resource_type as resourceType,
-            al.resource_id as resourceId,
-            al.details,
+            al.entity_type as resourceType,
+            al.entity_id as resourceId,
+            al.new_value as details,
             al.ip_address as ipAddress,
             u.email as userEmail,
             COALESCE(u.first_name || ' ' || u.last_name, u.email) as userName
-          FROM audit_logs al
+          FROM activity_logs al
           LEFT JOIN users u ON al.user_id = u.id
-          WHERE al.resource_id = ? 
-            AND al.organization_id = ?
+          WHERE al.organization_id = ?
+            AND al.entity_id = ?
           ORDER BY al.created_at DESC
           LIMIT ?`,
-          [assessmentId, organizationId, limit],
+          [organizationId, assessmentId, limit],
           (err: Error | null, rows: any[]) => {
             if (err) reject(err);
             else resolve(rows || []);
@@ -841,7 +841,7 @@ router.get('/:assessmentId/activity-logs', async (req: AuthRequest, res: Respons
         );
       });
     } catch (e1: any) {
-      // Query variant 2: Schema with timestamp column and action_type
+      // Query variant 2: audit_logs (legacy schema with created_at + action)
       try {
         logs = await new Promise<any[]>((resolve, reject) => {
           db.all(
@@ -917,13 +917,13 @@ router.post('/:assessmentId/log-activity', async (req: AuthRequest, res: Respons
 
     await new Promise<void>((resolve, reject) => {
       db.run(
-        `INSERT INTO audit_logs 
-          (id, user_id, organization_id, action, resource_type, resource_id, details, ip_address, user_agent, created_at)
+        `INSERT INTO activity_logs 
+          (id, organization_id, user_id, action, entity_type, entity_id, new_value, ip_address, user_agent, created_at)
         VALUES (?, ?, ?, ?, 'ASSESSMENT', ?, ?, ?, ?, datetime('now'))`,
         [
           logId,
-          userId,
           organizationId,
+          userId,
           action,
           assessmentId,
           JSON.stringify(details || {}),

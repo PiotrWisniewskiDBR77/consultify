@@ -9,6 +9,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { AdminInitiativeCreatorPanel } from '../../components/Admin/AdminInitiativeCreatorPanel';
 import {
   AdminSettingsSection,
   AdminSettingsSidebar,
@@ -17,7 +18,7 @@ import { AuditExportPanel } from '../../components/Admin/AuditExportPanel';
 import { BrandingSettingsPanel } from '../../components/Admin/BrandingSettingsPanel';
 import { DataGovernancePanel } from '../../components/Admin/DataGovernancePanel';
 import { IntegrationsManagementPanel } from '../../components/Admin/IntegrationsManagementPanel';
-import { InterviewAssignmentsPanel } from '../../components/Admin/InterviewAssignmentsPanel';
+import { ReportsTable } from '../../components/assessment/ReportsTable';
 import { PaymentMethodsPanel } from '../../components/billing/PaymentMethodsPanel';
 import { SubscriptionManager } from '../../components/billing/SubscriptionManager';
 import { TaxSettingsForm } from '../../components/billing/TaxSettingsForm';
@@ -52,9 +53,13 @@ const sectionMeta: Record<AdminSettingsSection, { title: string; subtitle: strin
   security: { title: 'Security', subtitle: 'Manage security settings and access controls' },
   governance: { title: 'Governance', subtitle: 'Configure data governance policies' },
   audit: { title: 'Audit', subtitle: 'View and export audit logs' },
-  interviews: {
-    title: 'Interview Assignments',
-    subtitle: 'Assign interview templates to users and manage send-back workflow',
+  'report-creator': {
+    title: 'Kreator raportów',
+    subtitle: 'Twórz raporty z różnych źródeł danych',
+  },
+  'initiative-creator': {
+    title: 'Kreator inicjatyw',
+    subtitle: 'Generuj inicjatywy na podstawie analiz',
   },
   integrations: { title: 'Integrations', subtitle: 'Manage third-party integrations' },
   api: { title: 'API', subtitle: 'Manage API keys and access' },
@@ -148,6 +153,46 @@ const AdminFeedbackView: React.FC = () => {
   );
 };
 
+// Admin Reports Panel - Wrapper for ReportsTable
+const AdminReportsPanel: React.FC = () => {
+  const { currentProjectId } = useAppStore();
+  const navigate = useNavigate();
+
+  const handleCreateInitiatives = useCallback(
+    (reportId: string) => {
+      // Navigate to initiatives generator with the report
+      navigate(`/assessment/initiatives?reportId=${reportId}`);
+    },
+    [navigate]
+  );
+
+  const handleOpenReport = useCallback(
+    (reportId: string, reportName: string, status?: string) => {
+      // Navigate to report builder workspace
+      navigate(`/reports/builder?reportId=${reportId}`);
+    },
+    [navigate]
+  );
+
+  // Use organizationId as fallback if no project selected
+  const projectId = currentProjectId || 'global';
+
+  return (
+    <div className="space-y-4">
+      <ReportsTable
+        projectId={projectId}
+        onCreateInitiatives={handleCreateInitiatives}
+        onOpenReport={handleOpenReport}
+      />
+    </div>
+  );
+};
+
+// Admin Initiatives Panel - Uses the custom AdminInitiativeCreatorPanel
+const AdminInitiativesPanel: React.FC = () => {
+  return <AdminInitiativeCreatorPanel />;
+};
+
 export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
   initialTab,
   currentUser,
@@ -231,8 +276,10 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
         return <DataGovernancePanel />;
       case 'audit':
         return <AuditExportPanel />;
-      case 'interviews':
-        return <InterviewAssignmentsPanel />;
+      case 'report-creator':
+        return <AdminReportsPanel />;
+      case 'initiative-creator':
+        return <AdminInitiativesPanel />;
       case 'integrations':
         return <IntegrationsManagementPanel />;
       case 'api':

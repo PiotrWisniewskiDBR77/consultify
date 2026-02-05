@@ -40,6 +40,8 @@ interface ExportSharePanelProps {
   reportTitle?: string;
   reportStatus: string;
   onExportPdf: () => Promise<void>;
+  onExportPptx?: () => Promise<void>;
+  onExportWord?: () => Promise<void>;
   onCreateShareLink: (options?: {
     password?: string;
     expiresInDays?: number;
@@ -67,6 +69,8 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
   reportTitle,
   reportStatus,
   onExportPdf,
+  onExportPptx,
+  onExportWord,
   onCreateShareLink,
   onGetShareLinks,
   onRevokeShareLink,
@@ -103,6 +107,16 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
 
   const handleExportPdf = async () => {
     await onExportPdf();
+  };
+
+  const handleExportPptx = async () => {
+    if (!onExportPptx) return;
+    await onExportPptx();
+  };
+
+  const handleExportWord = async () => {
+    if (!onExportWord) return;
+    await onExportWord();
   };
 
   const handleCreateLink = async () => {
@@ -163,6 +177,38 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
         )}
         <span>PDF</span>
       </button>
+
+      {/* Export PPTX Button */}
+      {onExportPptx && (
+        <button
+          onClick={handleExportPptx}
+          disabled={isLoading}
+          className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
+        >
+          {isLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Download className="w-4 h-4" />
+          )}
+          <span>PPTX</span>
+        </button>
+      )}
+
+      {/* Export Word Button */}
+      {onExportWord && (
+        <button
+          onClick={handleExportWord}
+          disabled={isLoading}
+          className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
+        >
+          {isLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <FileText className="w-4 h-4" />
+          )}
+          <span>{isPl ? 'Word' : 'Word'}</span>
+        </button>
+      )}
 
       {/* Share Button */}
       <button
@@ -266,7 +312,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                     onChange={(e) => setShowBranding(e.target.checked)}
                     className="rounded border-slate-300"
                   />
-                  {isPl ? 'Pokaż branding Consultify' : 'Show Consultify branding'}
+                  {isPl ? 'Pokaż branding Consultinity' : 'Show Consultinity branding'}
                 </label>
 
                 <button

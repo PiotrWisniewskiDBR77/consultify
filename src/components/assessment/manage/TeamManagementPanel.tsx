@@ -189,11 +189,9 @@ const AddMemberModal: FC<{
   }, [isOpen]);
 
   useEffect(() => {
+    if (!isOpen) return;
+
     const search = async () => {
-      if (query.length < 2) {
-        setUsers([]);
-        return;
-      }
       setSearching(true);
       try {
         const results = await onSearchUsers(query);
@@ -205,9 +203,15 @@ const AddMemberModal: FC<{
       }
     };
 
+    // If user hasn't typed yet, fetch the default list immediately (no debounce).
+    if (String(query || '').trim().length === 0) {
+      void search();
+      return;
+    }
+
     const debounce = setTimeout(search, 300);
     return () => clearTimeout(debounce);
-  }, [query, onSearchUsers, existingMemberIds]);
+  }, [isOpen, query, onSearchUsers, existingMemberIds]);
 
   const handleAdd = async () => {
     if (!selectedUser) return;
@@ -320,10 +324,18 @@ const AddMemberModal: FC<{
               </div>
             )}
 
-            {query.length >= 2 && users.length === 0 && !searching && (
+            {String(query || '').trim().length >= 2 && users.length === 0 && !searching && (
               <div className="mt-2 p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-center">
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   No users found matching "{query}"
+                </p>
+              </div>
+            )}
+
+            {String(query || '').trim().length < 2 && users.length === 0 && !searching && (
+              <div className="mt-2 p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-center">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  No available organization members to add.
                 </p>
               </div>
             )}

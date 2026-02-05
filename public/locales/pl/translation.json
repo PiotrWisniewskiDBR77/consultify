@@ -36,7 +36,12 @@
     "workspace": "Przestrzeń robocza",
     "consultant": "Konsultant",
     "invites": "Zaproszenia",
-    "affiliate": "Partner"
+    "affiliate": "Partner",
+    "active": "aktywne",
+    "select": "Wybierz",
+    "connected": "połączone",
+    "comingSoon": "Już wkrótce",
+    "root": "Główny"
   },
   "sidebar": {
     "dashboard": "Panel",
@@ -571,5 +576,119 @@
   },
   "partner": {
     "becomePartner": "Become Partner"
+  },
+  "thinking": {
+    "processing": "Myślę…",
+    "analyzing": "Analizuję Twoje pytanie…",
+    "context": "Zbieram kontekst…",
+    "drafting": "Przygotowuję odpowiedź…"
+  },
+  "contextBadge": {
+    "aiSees": "AI widzi",
+    "project": "Projekt",
+    "focus": "Fokus"
+  },
+  "aiChat": {
+    "language": "Język rozmowy",
+    "chatMenuTitle": "Menu",
+    "openSidebar": "Otwórz panel boczny",
+    "newChat": "Nowa rozmowa",
+    "dailyBrief": "Dzienny brief",
+    "suggestions": {
+      "title": "Propozycje dla Ciebie",
+      "startAssessment": "Rozpocznij ocenę dojrzałości cyfrowej"
+    },
+    "quickActions": {
+      "planWeek": {
+        "label": "Zaplanuj tydzień",
+        "prompt": "Pomóż mi zaplanować priorytety na najbliższy tydzień"
+      },
+      "createDiagram": {
+        "label": "Stwórz diagram",
+        "prompt": "Stwórz diagram procesu dla onboardingu nowego klienta"
+      }
+    },
+    "history": "Historia",
+    "placeholder": "Jak mogę Ci pomóc?",
+    "contextPlaceholder": "Jak mogę pomóc z {{context}}?",
+    "welcome": "Rozpocznij rozmowę",
+    "welcomeSubtitle": "Zadawaj pytania, uzyskuj wglądy i współpracuj z AI",
+    "loadingConversation": "Ładowanie rozmowy…",
+    "autoReadOn": "Włącz czytanie na głos",
+    "autoReadOff": "Wyłącz czytanie na głos",
+    "greeting": {
+      "morning": "Dzień dobry",
+      "afternoon": "Dzień dobry",
+      "evening": "Dobry wieczór"
+    },
+    "subtitle": {
+      "morning": "Gotowy napędzać Twoją transformację?",
+      "afternoon": "Kontynuujmy prace nad Twoimi inicjatywami",
+      "evening": "Przejrzyj swoją podróż transformacyjną"
+    },
+    "frozenPlaceholder": "AI tymczasowo niedostępne",
+    "dictating": "Dyktowanie…",
+    "voiceConversation": "Słucham… mów swobodnie",
+    "groups": {
+      "pinned": "Przypięte",
+      "today": "Dzisiaj",
+      "yesterday": "Wczoraj",
+      "thisWeek": "Ten tydzień",
+      "lastMonth": "Ostatni miesiąc",
+      "older": "Starsze",
+      "archived": "Archiwum"
+    },
+    "menu": {
+      "tools": "Narzędzia AI",
+      "aiModes": "Tryby AI",
+      "knowledgeSources": "Źródła wiedzy",
+      "responseStyle": "Styl odpowiedzi",
+      "ttsSettings": "Ustawienia głosu",
+      "ttsSpeed": "Szybkość",
+      "ttsVoice": "Głos",
+      "ttsAutoVoice": "Auto (wykryj język)",
+      "ttsVoiceChanged": "Głos zmieniony",
+      "ttsTest": "Testuj głos",
+      "ttsTestUtterance": "Cześć, to jest test głosu.",
+      "addFiles": "Dodaj pliki",
+      "uploadFromDevice": "Z urządzenia",
+      "cloudStorage": "Chmura",
+      "connectInSettings": "Połącz więcej w Ustawieniach → Integracje",
+      "modes": {
+        "deepResearch": { "label": "Głęboka analiza", "desc": "Dogłębne badanie tematu" },
+        "webSearch": { "label": "Wyszukiwanie w sieci", "desc": "Informacje w czasie rzeczywistym" },
+        "showReasoning": { "label": "Pokaż rozumowanie", "desc": "Widoczny tok myślenia AI" },
+        "textToSpeech": { "label": "Czytaj odpowiedzi", "desc": "Automatyczne czytanie na głos" }
+      },
+      "sources": {
+        "pmoDocuments": { "label": "Dokumenty PMO", "desc": "ISO 21500, PMBOK, PRINCE2" },
+        "projectData": { "label": "Dane projektu", "desc": "Inicjatywy, zadania, decyzje" },
+        "organizationData": { "label": "Dane organizacji", "desc": "Zespoły, role, procesy" }
+      },
+      "styles": {
+        "normal": "Normalny",
+        "learning": "Edukacyjny",
+        "concise": "Zwięzły",
+        "explanatory": "Wyjaśniający",
+        "formal": "Formalny"
+      },
+      "toast": {
+        "enabled": "{{label}}: włączone",
+        "disabled": "{{label}}: wyłączone",
+        "responseStyle": "Styl odpowiedzi: {{style}}",
+        "filesAddedOne": "Dodano: {{name}}",
+        "filesAddedMany": "Dodano {{count}} plików",
+        "cloudComingSoon": "Integracje z chmurą zostaną dodane wkrótce",
+        "openingProvider": "Otwieranie {{provider}}…",
+        "redirectIntegrations": "Przekierowanie do ustawień integracji"
+      }
+    },
+    "cloudPicker": {
+      "demoMode": "Tryb demonstracyjny",
+      "demoModeDesc": "Wyświetlane są przykładowe pliki. Integracja z chmurą zostanie dodana wkrótce.",
+      "noFiles": "Brak plików",
+      "selectFile": "Wybierz plik",
+      "downloading": "Pobieranie: {{name}}"
+    }
   }
 }

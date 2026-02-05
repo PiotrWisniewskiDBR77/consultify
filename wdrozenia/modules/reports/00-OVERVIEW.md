@@ -1,8 +1,8 @@
 # 🧩 Moduł: Reports (Generyczny Generator Raportów) – Overview
 
-## Status: 🔨 W PLANOWANIU
+## Status: ✅ ZAIMPLEMENTOWANY (MVP+)
 
-**Ostatnia aktualizacja:** 2026-01-31
+**Ostatnia aktualizacja:** 2026-02-04
 
 ---
 
@@ -20,7 +20,7 @@ Generyczny moduł tworzenia raportów, który:
 2. **Wizard-based** – prowadzi użytkownika krok po kroku przez proces tworzenia raportu
 3. **AI-powered** – automatycznie generuje treść na podstawie źródła danych i metodologii
 4. **Konfigurowalny** – użytkownik może modyfikować strukturę, długość, styl języka
-5. **Eksportowalny** – PDF, opcjonalnie PPTX, HTML
+5. **Eksportowalny** – PDF, PPTX, Word (.doc)
 
 ---
 
@@ -62,22 +62,29 @@ Generyczny moduł tworzenia raportów, który:
 - [x] AI-powered generation (treść na bazie oceny + metodologii)
 - [x] Edytor WYSIWYG dla wygenerowanego raportu
 - [x] Export PDF
-- [x] Statusy: DRAFT → IN_PROGRESS → IN_REVIEW → APPROVED → UTILIZED
+- [x] Export Word (.doc)
+- [x] Statusy: CONFIGURING → DRAFT → GENERATING → GENERATED → IN_REVIEW → APPROVED → UTILIZED
 - [x] Dynamiczne menu (otwarte raporty, max 6)
 - [x] Duplikowanie raportów
 
 ### Should Have
 
-- [ ] Export PPTX
-- [ ] Szablony raportów (templates)
-- [ ] Wersjonowanie raportów
+- [x] Export PPTX (PptxExportService z pptxgenjs)
+- [x] Szablony raportów (templates marketplace z CRUD, import/export)
+- [x] Wersjonowanie raportów (auto/manual snapshots, diff view, rollback)
 - [ ] Komentarze i review workflow
 
 ### Could Have
 
-- [ ] Schedule raportów (cykliczne generowanie)
-- [ ] Public share links
-- [ ] Integracja z Initiatives (auto-generate initiatives z raportu)
+- [x] Schedule raportów (cykliczne generowanie - ScheduledReportService)
+- [x] Public share links
+- [x] Integracja z Initiatives (auto-generate initiatives z raportu - ReportInitiativeService)
+
+### Nowe funkcjonalności (2026-02-04)
+
+- [x] Import zewnętrznych raportów DRD/SIRI/ADMA (UnifiedImportWizard)
+- [x] AI-powered sugestie poziomów i technologii (AISuggestionService)
+- [x] Bulk operations (multi-select, copy-paste, batch update)
 
 ---
 
@@ -398,11 +405,12 @@ CREATE INDEX idx_report_sections_report ON report_sections(report_id);
 
 ### Export
 
-| Method | Endpoint                                          | Opis          |
-| ------ | ------------------------------------------------- | ------------- |
-| POST   | `/api/report-builder/:id/export/pdf`              | Generate PDF  |
-| POST   | `/api/report-builder/:id/export/pptx`             | Generate PPTX |
-| GET    | `/api/report-builder/:id/export/:format/download` | Download file |
+| Method | Endpoint                          | Opis                          |
+| ------ | --------------------------------- | ----------------------------- |
+| GET    | `/api/report-builder/:id/export/pdf`  | Generuj + pobierz PDF         |
+| GET    | `/api/report-builder/:id/export/pptx` | Generuj + pobierz PPTX        |
+| GET    | `/api/report-builder/:id/export/doc`  | Generuj + pobierz Word (.doc) |
+| GET    | `/api/report-builder/:id/exports`     | Lista rekordów eksportu       |
 
 ### Sessions (Dynamic menu)
 
@@ -617,7 +625,7 @@ wdrozenia/modules/reports/
 
 ### Otwarte decyzje
 
-1. **PPTX export** – czy implementować w MVP?
+1. **DOCX export** – czy dokładamy „prawdziwy” `.docx` (biblioteka `docx`) obok obecnego `.doc`?
 2. **Templates marketplace** – czy użytkownicy mogą dzielić się szablonami?
 3. **AI provider** – OpenAI vs Anthropic vs other dla generowania?
 4. **Offline export** – czy PDF ma być generowany server-side czy client-side?
@@ -644,9 +652,53 @@ wdrozenia/modules/reports/
 4. Duplicate functionality
 5. Dynamic menu
 
-### Faza 3: Extended1. PPTX export
+### Faza 3: Extended ✅ COMPLETED
 
-2. Report templates
-3. Version history
-4. Comments & review workflow
-5. Additional source adapters (Interview, Tool)
+1. ✅ PPTX export (PptxExportService)
+2. ✅ Report templates (marketplace z CRUD, import/export)
+3. ✅ Version history (auto/manual snapshots, diff, rollback)
+4. Comments & review workflow (TODO)
+5. Additional source adapters (Interview, Tool) (TODO)
+
+### Faza 4: Import & AI ✅ COMPLETED (2026-02-04)
+
+1. ✅ Import zewnętrznych raportów (ReportImportService)
+   - Multi-format: PDF, Excel, Word, JSON, CSV
+   - AI-powered framework detection (DRD, SIRI, ADMA)
+   - Intelligent score extraction and mapping
+   - 5-step wizard (UnifiedImportWizard)
+   - Choice: Assessment (editable) or Report (finalized)
+
+2. ✅ AI-powered suggestions (AISuggestionService)
+   - Level recommendations based on benchmarks
+   - Technology suggestions with roadmap
+   - Gap analysis with priorities
+   - Industry-specific recommendations
+
+3. ✅ Bulk operations (BulkOperationsToolbar)
+   - Multi-select with keyboard shortcuts
+   - Copy-paste between assessments
+   - Batch level updates
+   - Batch notes editing
+
+4. ✅ Initiative generation (ReportInitiativeService)
+   - Auto-generate initiatives from gaps
+   - Template-based initiative creation
+   - Priority and type classification
+   - Roadmap generation
+
+5. ✅ Scheduled reports (ScheduledReportService)
+   - Cron-based scheduling
+   - Multiple delivery methods (email, webhook, storage)
+   - Execution history tracking
+   - Pause/resume functionality
+
+### Faza 5: Assessment Editors ✅ COMPLETED (2026-02-04)1. ✅ SIRI Assessment Editor (SIRIAssessmentEditor.tsx)
+   - 3 Building Blocks, 8 Dimensions, 16 Prioritisation Areas
+   - Interactive level selector with descriptions
+   - Matrix view for quick overview
+   - Gap analysis visualization2. ✅ ADMA Assessment Editor (ADMAAssessmentEditor.tsx)
+   - 5 Pillars, 12 Dimensions
+   - Radar chart visualization
+   - Matrix view with all dimensions
+   - Level characteristics display

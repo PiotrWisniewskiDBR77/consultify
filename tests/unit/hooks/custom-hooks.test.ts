@@ -266,17 +266,20 @@ describe('Custom Hooks', () => {
     });
 
     describe('useInterval', () => {
-        it('should call callback at interval', async () => {
+        it('should call callback at interval', () => {
             let count = 0;
 
+            vi.useFakeTimers();
             const intervalId = setInterval(() => {
                 count++;
             }, 10);
 
-            await new Promise((r) => setTimeout(r, 55));
+            vi.advanceTimersByTime(55);
             clearInterval(intervalId);
+            vi.useRealTimers();
 
-            expect(count).toBeGreaterThanOrEqual(4);
+            // Fires at 10, 20, 30, 40, 50ms => 5 times
+            expect(count).toBeGreaterThanOrEqual(5);
         });
 
         it('should stop on cleanup', () => {

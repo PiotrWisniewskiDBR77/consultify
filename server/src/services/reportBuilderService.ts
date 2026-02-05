@@ -24,6 +24,8 @@ export type ReportStatus =
   | 'GENERATED'
   | 'IN_REVIEW'
   | 'APPROVED'
+  | 'SENT_INTERNAL'
+  | 'SENT_EXTERNAL'
   | 'UTILIZED';
 export type SectionLength = 'short' | 'medium' | 'long';
 export type SectionLanguage = 'technical' | 'business' | 'general';
@@ -43,6 +45,7 @@ export interface ReportRecord {
   id: string;
   organizationId: string;
   projectId?: string;
+  templateId?: string;
   sourceType: ReportSourceType;
   sourceId: string;
   sourceName?: string;
@@ -308,21 +311,36 @@ export async function listAssessmentSources(organizationId: string): Promise<
  */
 export async function getTemplateForSource(
   sourceType: ReportSourceType,
-  framework?: string
+  framework?: string,
+  organizationId?: string
 ): Promise<{ id: string; sections: unknown[] } | null> {
   const reportType = framework ? `${sourceType}_${framework}` : sourceType;
 
-  const row = await queryOne<{ id: string; sections_json: string }>(
-    `
-    SELECT id, sections_json
-    FROM report_builder_templates
-    WHERE source_type = ? AND (report_type = ? OR report_type IS NULL)
-    AND is_default = 1
-    ORDER BY CASE WHEN report_type IS NULL THEN 1 ELSE 0 END, report_type DESC
-    LIMIT 1
-  `,
-    [sourceType, reportType]
-  );
+  let row: { id: string; sections_json: string } | null = null;
+  try {
+    row = await queryOne<{ id: string; sections_json: string }>(
+      `
+      SELECT id, sections_json
+      FROM report_builder_templates
+      WHERE source_type = ?
+        AND (report_type = ? OR report_type IS NULL)
+        AND (organization_id IS NULL OR organization_id = ?)
+      AND is_default = 1
+      ORDER BY CASE WHEN report_type IS NULL THEN 1 ELSE 0 END, report_type DESC
+      LIMIT 1
+    `,
+      [sourceType, reportType, organizationId || null]
+    );
+  } catch (err: any) {
+    // Graceful degradation: in some local SQLite DBs this optional table may not exist yet.
+    // Returning null lets the route respond 404 instead of crashing the whole UI with 500.
+    const msg = String(err?.message || '').toLowerCase();
+    const code = String(err?.code || '').toUpperCase();
+    if (code === 'SQLITE_ERROR' && msg.includes('no such table: report_builder_templates')) {
+      return null;
+    }
+    throw err;
+  }
 
   if (!row) return null;
 
@@ -372,11 +390,38 @@ export async function createReport(params: CreateReportParams): Promise<{
   }
 
   // Get template
-  const template = await getTemplateForSource(sourceType, sourceFramework);
-  if (!template) throw new Error('No template found for this source type');
+  const derivedReportType = sourceFramework ? `${sourceType}_${sourceFramework}` : sourceType;
+
+  let templateIdToUse: string | undefined;
+  let templateSections: unknown[] = [];
+
+  if (templateId) {
+    const tpl = await getTemplateById(templateId, organizationId);
+    if (!tpl) throw new Error('Template not found');
+
+    // Validate compatibility
+    const tplSourceType = String((tpl as any).source_type || '').toUpperCase();
+    const tplReportType = (tpl as any).report_type ? String((tpl as any).report_type) : null;
+    if (tplSourceType && tplSourceType !== sourceType) {
+      throw new Error('Template source type mismatch');
+    }
+    if (tplReportType && tplReportType !== derivedReportType) {
+      throw new Error('Template report type mismatch');
+    }
+
+    templateIdToUse = String((tpl as any).id);
+    templateSections = (tpl as any).sections_json
+      ? JSON.parse(String((tpl as any).sections_json || '[]'))
+      : [];
+  } else {
+    const template = await getTemplateForSource(sourceType, sourceFramework, organizationId);
+    if (!template) throw new Error('No template found for this source type');
+    templateIdToUse = template.id;
+    templateSections = template.sections || [];
+  }
 
   const reportId = uuidv4();
-  const reportType = sourceFramework ? `${sourceType}_${sourceFramework}` : sourceType;
+  const reportType = derivedReportType;
   const now = new Date().toISOString();
 
   // Create report
@@ -384,9 +429,9 @@ export async function createReport(params: CreateReportParams): Promise<{
     `
     INSERT INTO report_builder_reports (
       id, organization_id, project_id, source_type, source_id, source_name, source_framework,
-      title, description, report_type, config_json, company_context_json, status,
+      title, description, report_type, template_id, config_json, company_context_json, status,
       created_by, created_at, updated_at, version
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CONFIGURING', ?, ?, ?, 1)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CONFIGURING', ?, ?, ?, 1)
   `,
     [
       reportId,
@@ -399,6 +444,7 @@ export async function createReport(params: CreateReportParams): Promise<{
       title,
       description,
       reportType,
+      templateIdToUse || null,
       config ? JSON.stringify(config) : null,
       JSON.stringify(companyContext),
       createdBy,
@@ -408,7 +454,7 @@ export async function createReport(params: CreateReportParams): Promise<{
   );
 
   // Create sections from template
-  const templateSections = template.sections as Array<{
+  const typedTemplateSections = templateSections as Array<{
     key: string;
     type: SectionType;
     title: string;
@@ -422,7 +468,7 @@ export async function createReport(params: CreateReportParams): Promise<{
 
   const sections: SectionRecord[] = [];
 
-  for (const tplSection of templateSections) {
+  for (const tplSection of typedTemplateSections) {
     const sectionId = uuidv4();
 
     await queryRun(
@@ -475,6 +521,7 @@ export async function createReport(params: CreateReportParams): Promise<{
     id: reportId,
     organizationId,
     projectId: projectId || undefined,
+    templateId: templateIdToUse,
     sourceType,
     sourceId,
     sourceName,
@@ -530,6 +577,7 @@ export async function getReport(
       id: row.id,
       organizationId: row.organization_id,
       projectId: row.project_id,
+      templateId: row.template_id || undefined,
       sourceType: row.source_type,
       sourceId: row.source_id,
       sourceName: row.source_name,
@@ -587,7 +635,13 @@ export async function getReport(
  */
 export async function listReports(
   organizationId: string,
-  filters?: { status?: ReportStatus; sourceType?: ReportSourceType; search?: string }
+  filters?: {
+    status?: ReportStatus;
+    statusIn?: ReportStatus[];
+    sourceType?: ReportSourceType;
+    sourceId?: string;
+    search?: string;
+  }
 ): Promise<ReportRecord[]> {
   let sql = `
     SELECT r.*, u.first_name || ' ' || u.last_name as created_by_name
@@ -601,9 +655,17 @@ export async function listReports(
     sql += ` AND r.status = ?`;
     params.push(filters.status);
   }
+  if (filters?.statusIn && filters.statusIn.length > 0) {
+    sql += ` AND r.status IN (${filters.statusIn.map(() => '?').join(', ')})`;
+    params.push(...filters.statusIn);
+  }
   if (filters?.sourceType) {
     sql += ` AND r.source_type = ?`;
     params.push(filters.sourceType);
+  }
+  if (filters?.sourceId) {
+    sql += ` AND r.source_id = ?`;
+    params.push(filters.sourceId);
   }
   if (filters?.search) {
     sql += ` AND r.title LIKE ?`;
@@ -618,6 +680,7 @@ export async function listReports(
     id: row.id,
     organizationId: row.organization_id,
     projectId: row.project_id,
+    templateId: row.template_id || undefined,
     sourceType: row.source_type,
     sourceId: row.source_id,
     sourceName: row.source_name,
@@ -1109,6 +1172,12 @@ export async function updateReportStatus(
   } else if (status === 'APPROVED') {
     additionalFields = ', approved_at = ?, approved_by = ?';
     params.push(now, userId);
+  } else if (status === 'SENT_INTERNAL') {
+    additionalFields = ', sent_internal_at = ?, sent_internal_by = ?';
+    params.push(now, userId);
+  } else if (status === 'SENT_EXTERNAL') {
+    additionalFields = ', sent_external_at = ?, sent_external_by = ?';
+    params.push(now, userId);
   } else if (status === 'UTILIZED') {
     additionalFields = ', utilized_at = ?';
     params.push(now);
@@ -1169,12 +1238,12 @@ export async function duplicateReport(
     `
     INSERT INTO report_builder_reports (
       id, organization_id, project_id, source_type, source_id, source_name, source_framework,
-      title, description, report_type, config_json, company_context_json, status,
+      title, description, report_type, template_id, config_json, company_context_json, status,
       created_by, created_at, updated_at, version, parent_report_id
     )
     SELECT 
       ?, organization_id, project_id, source_type, source_id, source_name, source_framework,
-      ?, description, report_type, config_json, company_context_json, 'DRAFT',
+      ?, description, report_type, template_id, config_json, company_context_json, 'DRAFT',
       ?, ?, ?, 1, ?
     FROM report_builder_reports WHERE id = ?
   `,
@@ -1605,6 +1674,540 @@ export async function revokePublicLink(linkId: string, organizationId: string): 
 }
 
 // ==========================================
+// TEMPLATE MARKETPLACE FUNCTIONS
+// ==========================================
+
+/**
+ * List all templates (system + organization)
+ */
+export async function listTemplates(
+  organizationId: string,
+  options?: { sourceType?: string; isPublic?: boolean; isSystem?: boolean }
+): Promise<any[]> {
+  let sql = `
+    SELECT * FROM report_builder_templates
+    WHERE (organization_id IS NULL OR organization_id = ? OR is_public = 1)
+  `;
+  const params: any[] = [organizationId];
+
+  if (options?.sourceType) {
+    sql += ` AND source_type = ?`;
+    params.push(options.sourceType);
+  }
+
+  if (options?.isSystem) {
+    sql += ` AND is_system = 1`;
+  }
+
+  if (options?.isPublic) {
+    sql += ` AND is_public = 1`;
+  }
+
+  sql += ` ORDER BY is_system DESC, name ASC`;
+
+  const rows = await queryAll<any>(sql, params);
+  return rows.map((row) => ({
+    ...row,
+    sections: row.sections_json ? JSON.parse(row.sections_json) : [],
+    defaultOptions: row.default_options_json ? JSON.parse(row.default_options_json) : null,
+  }));
+}
+
+/**
+ * Get template by ID
+ */
+export async function getTemplateById(
+  templateId: string,
+  organizationId: string
+): Promise<any | null> {
+  const row = await queryOne<any>(
+    `
+    SELECT * FROM report_builder_templates
+    WHERE id = ? AND (organization_id IS NULL OR organization_id = ? OR is_public = 1)
+  `,
+    [templateId, organizationId]
+  );
+
+  return row;
+}
+
+/**
+ * Create a new template
+ */
+export async function createTemplate(params: {
+  id: string;
+  organizationId: string;
+  name: string;
+  description?: string;
+  sourceType: string;
+  reportType?: string;
+  sections: any[];
+  defaultOptions?: any;
+  isPublic?: boolean;
+  createdBy: string;
+}): Promise<any> {
+  const now = new Date().toISOString();
+
+  await queryRun(
+    `
+    INSERT INTO report_builder_templates (
+      id, organization_id, name, description, source_type, report_type,
+      sections_json, default_options_json, is_system, is_default, is_public,
+      created_by, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?, ?)
+  `,
+    [
+      params.id,
+      params.organizationId,
+      params.name,
+      params.description || null,
+      params.sourceType,
+      params.reportType || null,
+      JSON.stringify(params.sections),
+      params.defaultOptions ? JSON.stringify(params.defaultOptions) : null,
+      params.isPublic ? 1 : 0,
+      params.createdBy,
+      now,
+      now,
+    ]
+  );
+
+  return getTemplateById(params.id, params.organizationId);
+}
+
+/**
+ * Update a template
+ */
+export async function updateTemplate(
+  templateId: string,
+  organizationId: string,
+  updates: {
+    name?: string;
+    description?: string;
+    sections?: any[];
+    defaultOptions?: any;
+    isPublic?: boolean;
+  }
+): Promise<any | null> {
+  // Check if template exists and is editable (not system)
+  const existing = await queryOne<any>(
+    `SELECT * FROM report_builder_templates WHERE id = ? AND organization_id = ? AND is_system = 0`,
+    [templateId, organizationId]
+  );
+
+  if (!existing) return null;
+
+  const setClauses: string[] = [];
+  const params: any[] = [];
+
+  if (updates.name !== undefined) {
+    setClauses.push('name = ?');
+    params.push(updates.name);
+  }
+  if (updates.description !== undefined) {
+    setClauses.push('description = ?');
+    params.push(updates.description);
+  }
+  if (updates.sections !== undefined) {
+    setClauses.push('sections_json = ?');
+    params.push(JSON.stringify(updates.sections));
+  }
+  if (updates.defaultOptions !== undefined) {
+    setClauses.push('default_options_json = ?');
+    params.push(JSON.stringify(updates.defaultOptions));
+  }
+  if (updates.isPublic !== undefined) {
+    setClauses.push('is_public = ?');
+    params.push(updates.isPublic ? 1 : 0);
+  }
+
+  if (setClauses.length === 0) return existing;
+
+  setClauses.push('updated_at = ?');
+  params.push(new Date().toISOString());
+  params.push(templateId);
+  params.push(organizationId);
+
+  await queryRun(
+    `UPDATE report_builder_templates SET ${setClauses.join(', ')} WHERE id = ? AND organization_id = ?`,
+    params
+  );
+
+  return getTemplateById(templateId, organizationId);
+}
+
+/**
+ * Delete a template
+ */
+export async function deleteTemplate(templateId: string, organizationId: string): Promise<boolean> {
+  const result = await queryRun(
+    `DELETE FROM report_builder_templates WHERE id = ? AND organization_id = ? AND is_system = 0`,
+    [templateId, organizationId]
+  );
+
+  return result.changes > 0;
+}
+
+/**
+ * Duplicate a template
+ */
+export async function duplicateTemplate(
+  templateId: string,
+  organizationId: string,
+  userId: string,
+  newName?: string
+): Promise<any | null> {
+  const original = await getTemplateById(templateId, organizationId);
+  if (!original) return null;
+
+  const newId = uuidv4();
+  const name = newName || `${original.name} (Copy)`;
+
+  return createTemplate({
+    id: newId,
+    organizationId,
+    name,
+    description: original.description,
+    sourceType: original.source_type,
+    reportType: original.report_type,
+    sections: original.sections_json ? JSON.parse(original.sections_json) : [],
+    defaultOptions: original.default_options_json
+      ? JSON.parse(original.default_options_json)
+      : null,
+    isPublic: false,
+    createdBy: userId,
+  });
+}
+
+// ==========================================
+// VERSION HISTORY FUNCTIONS
+// ==========================================
+
+/**
+ * Create a version snapshot of a report
+ */
+export async function createVersion(
+  reportId: string,
+  organizationId: string,
+  userId: string,
+  options?: {
+    changeType?: 'auto' | 'manual' | 'rollback';
+    changeSummary?: string;
+    previousStatus?: string;
+    newStatus?: string;
+  }
+): Promise<any> {
+  // Get current report with sections
+  const reportData = await getReport(reportId, organizationId);
+  if (!reportData) throw new Error('Report not found');
+
+  // Get next version number
+  const lastVersion = await queryOne<{ max_version: number }>(
+    `SELECT MAX(version_number) as max_version FROM report_builder_versions WHERE report_id = ?`,
+    [reportId]
+  );
+  const versionNumber = (lastVersion?.max_version || 0) + 1;
+
+  const versionId = uuidv4();
+  const snapshot = {
+    report: reportData.report,
+    sections: reportData.sections,
+    snapshotAt: new Date().toISOString(),
+  };
+
+  await queryRun(
+    `
+    INSERT INTO report_builder_versions (
+      id, report_id, version_number, snapshot_json,
+      change_summary, change_type, previous_status, new_status,
+      created_by, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `,
+    [
+      versionId,
+      reportId,
+      versionNumber,
+      JSON.stringify(snapshot),
+      options?.changeSummary || null,
+      options?.changeType || 'manual',
+      options?.previousStatus || null,
+      options?.newStatus || null,
+      userId,
+      new Date().toISOString(),
+    ]
+  );
+
+  logger.info('[ReportBuilder] Version created', { reportId, versionNumber, userId });
+
+  return {
+    id: versionId,
+    reportId,
+    versionNumber,
+    changeType: options?.changeType || 'manual',
+    changeSummary: options?.changeSummary,
+    createdBy: userId,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * List versions for a report
+ */
+export async function listVersions(reportId: string, organizationId: string): Promise<any[]> {
+  // Verify report belongs to organization
+  const report = await queryOne<any>(
+    `SELECT id FROM report_builder_reports WHERE id = ? AND organization_id = ?`,
+    [reportId, organizationId]
+  );
+  if (!report) return [];
+
+  const rows = await queryAll<any>(
+    `
+    SELECT v.*, u.name as created_by_name
+    FROM report_builder_versions v
+    LEFT JOIN users u ON v.created_by = u.id
+    WHERE v.report_id = ?
+    ORDER BY v.version_number DESC
+  `,
+    [reportId]
+  );
+
+  return rows.map((row) => ({
+    id: row.id,
+    reportId: row.report_id,
+    versionNumber: row.version_number,
+    changeType: row.change_type,
+    changeSummary: row.change_summary,
+    previousStatus: row.previous_status,
+    newStatus: row.new_status,
+    createdBy: row.created_by,
+    createdByName: row.created_by_name,
+    createdAt: row.created_at,
+  }));
+}
+
+/**
+ * Get a specific version
+ */
+export async function getVersion(versionId: string, organizationId: string): Promise<any | null> {
+  const row = await queryOne<any>(
+    `
+    SELECT v.*, r.organization_id
+    FROM report_builder_versions v
+    JOIN report_builder_reports r ON v.report_id = r.id
+    WHERE v.id = ? AND r.organization_id = ?
+  `,
+    [versionId, organizationId]
+  );
+
+  if (!row) return null;
+
+  return {
+    id: row.id,
+    reportId: row.report_id,
+    versionNumber: row.version_number,
+    snapshot: row.snapshot_json ? JSON.parse(row.snapshot_json) : null,
+    changeType: row.change_type,
+    changeSummary: row.change_summary,
+    previousStatus: row.previous_status,
+    newStatus: row.new_status,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+  };
+}
+
+/**
+ * Compare two versions
+ */
+export async function compareVersions(
+  versionId1: string,
+  versionId2: string,
+  organizationId: string
+): Promise<any | null> {
+  const v1 = await getVersion(versionId1, organizationId);
+  const v2 = await getVersion(versionId2, organizationId);
+
+  if (!v1 || !v2) return null;
+  if (v1.reportId !== v2.reportId) return null;
+
+  // Calculate differences
+  const differences: any[] = [];
+
+  // Compare report-level fields
+  const r1 = v1.snapshot?.report || {};
+  const r2 = v2.snapshot?.report || {};
+
+  const reportFields = ['title', 'description', 'status'];
+  for (const field of reportFields) {
+    if (r1[field] !== r2[field]) {
+      differences.push({
+        type: 'report',
+        field,
+        oldValue: r1[field],
+        newValue: r2[field],
+      });
+    }
+  }
+
+  // Compare sections
+  const s1 = v1.snapshot?.sections || [];
+  const s2 = v2.snapshot?.sections || [];
+
+  const s1Map = new Map(s1.map((s: any) => [s.section_key, s]));
+  const s2Map = new Map(s2.map((s: any) => [s.section_key, s]));
+
+  // Check for added/removed sections
+  for (const [key, section] of s2Map) {
+    if (!s1Map.has(key)) {
+      differences.push({
+        type: 'section_added',
+        sectionKey: key,
+        title: (section as any).title,
+      });
+    }
+  }
+
+  for (const [key, section] of s1Map) {
+    if (!s2Map.has(key)) {
+      differences.push({
+        type: 'section_removed',
+        sectionKey: key,
+        title: (section as any).title,
+      });
+    }
+  }
+
+  // Check for modified sections
+  for (const [key, section1] of s1Map) {
+    const section2 = s2Map.get(key);
+    if (section2) {
+      const s1Content = (section1 as any).generated_content || '';
+      const s2Content = (section2 as any).generated_content || '';
+      if (s1Content !== s2Content) {
+        differences.push({
+          type: 'section_modified',
+          sectionKey: key,
+          title: (section1 as any).title,
+          oldLength: s1Content.length,
+          newLength: s2Content.length,
+        });
+      }
+    }
+  }
+
+  return {
+    version1: {
+      id: v1.id,
+      versionNumber: v1.versionNumber,
+      createdAt: v1.createdAt,
+    },
+    version2: {
+      id: v2.id,
+      versionNumber: v2.versionNumber,
+      createdAt: v2.createdAt,
+    },
+    differences,
+    totalChanges: differences.length,
+  };
+}
+
+/**
+ * Rollback to a specific version
+ */
+export async function rollbackToVersion(
+  versionId: string,
+  organizationId: string,
+  userId: string
+): Promise<any | null> {
+  const version = await getVersion(versionId, organizationId);
+  if (!version || !version.snapshot) return null;
+
+  const reportId = version.reportId;
+  const snapshot = version.snapshot;
+
+  // Create a new version before rollback
+  await createVersion(reportId, organizationId, userId, {
+    changeType: 'rollback',
+    changeSummary: `Rollback to version ${version.versionNumber}`,
+    previousStatus: snapshot.report?.status,
+    newStatus: snapshot.report?.status,
+  });
+
+  // Update report
+  await queryRun(
+    `
+    UPDATE report_builder_reports
+    SET title = ?, description = ?, status = ?, updated_at = ?
+    WHERE id = ? AND organization_id = ?
+  `,
+    [
+      snapshot.report?.title,
+      snapshot.report?.description,
+      snapshot.report?.status,
+      new Date().toISOString(),
+      reportId,
+      organizationId,
+    ]
+  );
+
+  // Delete existing sections and recreate from snapshot
+  await queryRun(`DELETE FROM report_builder_sections WHERE report_id = ?`, [reportId]);
+
+  for (const section of snapshot.sections || []) {
+    await queryRun(
+      `
+      INSERT INTO report_builder_sections (
+        id, report_id, section_key, section_type, title, order_index,
+        enabled, required, length, language, custom_prompt,
+        block_type_id, block_config_json, render_kind,
+        generated_content, edited_content, content_format,
+        tiptap_content, source_data_snapshot, generated_at,
+        tokens_used, edited_at, edited_by,
+        repeat_for, repeat_key, repeat_name, repeat_data
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+      [
+        uuidv4(),
+        reportId,
+        section.section_key,
+        section.section_type,
+        section.title,
+        section.order_index,
+        section.enabled ? 1 : 0,
+        section.required ? 1 : 0,
+        section.length,
+        section.language,
+        section.custom_prompt,
+        section.block_type_id,
+        section.block_config_json,
+        section.render_kind,
+        section.generated_content,
+        section.edited_content,
+        section.content_format || 'markdown',
+        section.tiptap_content,
+        section.source_data_snapshot,
+        section.generated_at,
+        section.tokens_used,
+        section.edited_at,
+        section.edited_by,
+        section.repeat_for,
+        section.repeat_key,
+        section.repeat_name,
+        section.repeat_data,
+      ]
+    );
+  }
+
+  logger.info('[ReportBuilder] Rollback completed', {
+    reportId,
+    toVersion: version.versionNumber,
+    userId,
+  });
+
+  return getReport(reportId, organizationId);
+}
+
+// ==========================================
 // EXPORTS
 // ==========================================
 
@@ -1636,6 +2239,19 @@ const ReportBuilderService = {
   getPublicLinks,
   getPublicLinkByToken,
   revokePublicLink,
+  // Template marketplace functions
+  listTemplates,
+  getTemplateById,
+  createTemplate,
+  updateTemplate,
+  deleteTemplate,
+  duplicateTemplate,
+  // Version history functions
+  createVersion,
+  listVersions,
+  getVersion,
+  compareVersions,
+  rollbackToVersion,
 };
 
 export default ReportBuilderService;

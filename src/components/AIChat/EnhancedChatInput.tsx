@@ -667,6 +667,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           placeholder={placeholderText}
           disabled={isDisabled}
           rows={1}
+          data-testid="chat-input"
           className={`
                         w-full bg-transparent text-navy-900 dark:text-white
                         placeholder-slate-400 dark:placeholder-slate-500
@@ -700,6 +701,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               <button
                 onClick={handleDictationClick}
                 disabled={isDisabled}
+                data-testid="chat-mic-button"
                 className={`
                                     flex items-center gap-1.5 p-2 rounded-lg transition-all
                                     ${

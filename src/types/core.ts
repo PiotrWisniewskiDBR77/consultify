@@ -5532,7 +5532,7 @@ export type ManagementReportType =
   | 'PORTFOLIO_HEALTH'
   | 'RAID';
 export type ManagementReportScope = 'PORTFOLIO' | 'PROJECT';
-export type ManagementReportStatus = 'DRAFT' | 'FINAL' | 'ARCHIVED';
+export type ManagementReportStatus = 'DRAFT' | 'FINAL' | 'APPROVED' | 'ARCHIVED';
 
 /**
  * RAG Status (Red/Amber/Green) - PRINCE2 Traffic Light Reporting

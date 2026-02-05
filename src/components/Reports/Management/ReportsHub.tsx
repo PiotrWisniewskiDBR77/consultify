@@ -92,6 +92,7 @@ const SCOPE_META: Record<ManagementReportScope, { label: string; color: string }
 const STATUS_META: Record<ManagementReportStatus, { label: string; dotColor: string }> = {
   DRAFT: { label: 'Draft', dotColor: 'bg-amber-400' },
   FINAL: { label: 'Final', dotColor: 'bg-emerald-400' },
+  APPROVED: { label: 'Approved', dotColor: 'bg-purple-400' },
   ARCHIVED: { label: 'Archived', dotColor: 'bg-slate-400' },
 };
 

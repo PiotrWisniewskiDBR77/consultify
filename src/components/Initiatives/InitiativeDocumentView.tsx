@@ -464,6 +464,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   // Core state
   const [initiative, setInitiative] = useState<any | null>(null);
+  const [initiativeTemplate, setInitiativeTemplate] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -543,6 +544,21 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const [currentUserId] = useState<string>('current-user');
 
+  // Template-driven "card scope" (which sections are visible/required)
+  const cardScope = useMemo(() => {
+    const defaults = {
+      showTasks: true,
+      showDecisions: true,
+      showRaid: true,
+      showGates: true,
+      showFinancialAnalysis: true,
+      showFinancialImpact: true,
+      showTeam: true,
+    };
+    const fromTemplate = initiativeTemplate?.cardScope || {};
+    return { ...defaults, ...fromTemplate };
+  }, [initiativeTemplate]);
+
   const toggleSection = (id: string) => {
     setExpandedSections((prev) => {
       const next = new Set(prev);
@@ -570,6 +586,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     try {
       const data = await Api.getInitiativeById(initiativeId);
       setInitiative(data);
+      setInitiativeTemplate(null); // refetch template after initiative loads
       setSummary(data.summary || data.description || '');
       setDescription(data.description || '');
       setTags(data.tags || []);
@@ -693,6 +710,28 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setIsLoading(false);
     }
   }, [initiativeId]);
+
+  // Fetch initiative template details (cardScope)
+  useEffect(() => {
+    const tplId = initiative?.initiativeTemplateId || initiative?.initiative_template_id;
+    if (!tplId) {
+      setInitiativeTemplate(null);
+      return;
+    }
+    let cancelled = false;
+    Api.get(`/initiatives/templates/${encodeURIComponent(String(tplId))}`)
+      .then((resp: any) => {
+        if (cancelled) return;
+        setInitiativeTemplate(resp?.template || null);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setInitiativeTemplate(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [initiative?.initiativeTemplateId, initiative?.initiative_template_id]);
 
   useEffect(() => {
     fetchAll();
@@ -1388,893 +1427,775 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               onToggleExpand={() => toggleSection('comments')}
             />
 
-            {/* 3. Tasks & Milestones (Zadania z kamieniami milowymi) */}
-            <CollapsibleSection
-              id="tasks"
-              title={isPolish ? 'Zadania i kamienie milowe' : 'Tasks & Milestones'}
-              icon={<CheckSquare size={18} className="text-emerald-500 dark:text-emerald-400" />}
-              iconBg="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/20 dark:to-teal-500/20"
-              expanded={expandedSections.has('tasks')}
-              onToggle={() => toggleSection('tasks')}
-              badge={
-                <div className="flex items-center gap-2">
-                  {milestones.length > 0 && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 flex items-center gap-1">
-                      <Milestone size={10} />
-                      {milestones.length}
-                    </span>
-                  )}
-                  <span className="text-xs text-slate-400">
-                    {tasksDone}/{tasks.length}
-                  </span>
-                </div>
-              }
-              actions={
-                <div className="flex items-center gap-2">
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowCreateTask(true);
-                    }}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 text-xs font-medium transition-all"
-                  >
-                    <Plus size={14} />
-                    <span>{isPolish ? 'Nowe' : 'New'}</span>
-                  </motion.button>
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleGenerateAI('tasks');
-                    }}
-                    disabled={isGeneratingAI === 'tasks'}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-medium transition-all disabled:opacity-50"
-                    title={isPolish ? 'AI zasugeruje zadania' : 'AI will suggest tasks'}
-                  >
-                    {isGeneratingAI === 'tasks' ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <Sparkles size={14} />
-                    )}
-                    <span>AI</span>
-                  </motion.button>
-                </div>
-              }
-            >
-              {/* Create Task Form */}
-              {showCreateTask && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-4 p-4 rounded-xl border-2 border-emerald-300 dark:border-emerald-500/50 bg-emerald-50/30 dark:bg-emerald-500/5 space-y-3"
-                >
-                  <input
-                    type="text"
-                    value={newTaskTitle}
-                    onChange={(e) => setNewTaskTitle(e.target.value)}
-                    placeholder={isPolish ? 'Tytuł zadania...' : 'Task title...'}
-                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
-                    autoFocus
-                  />
-                  <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={newTaskIsMilestone}
-                        onChange={(e) => setNewTaskIsMilestone(e.target.checked)}
-                        className="w-4 h-4 rounded border-slate-300 text-purple-500 focus:ring-purple-500"
-                      />
-                      <span className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                        <Milestone size={14} />
-                        {isPolish ? 'Kamień milowy' : 'Milestone'}
-                      </span>
-                    </label>
-                    {newTaskIsMilestone && (
-                      <input
-                        type="date"
-                        value={newTaskMilestoneDate}
-                        onChange={(e) => setNewTaskMilestoneDate(e.target.value)}
-                        className="px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
-                      />
-                    )}
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <button
-                      onClick={() => setShowCreateTask(false)}
-                      className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700"
-                    >
-                      {isPolish ? 'Anuluj' : 'Cancel'}
-                    </button>
-                    <button
-                      onClick={handleCreateTask}
-                      disabled={isMutating || !newTaskTitle.trim()}
-                      className="px-3 py-1.5 text-xs bg-emerald-500 text-white rounded-lg disabled:opacity-50"
-                    >
-                      {isPolish ? 'Utwórz' : 'Create'}
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Milestones Timeline */}
-              {milestones.length > 0 && (
-                <div className="mb-4 p-3 rounded-xl bg-purple-50/50 dark:bg-purple-500/5 border border-purple-200/50 dark:border-purple-500/20">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Milestone size={14} className="text-purple-500" />
-                    <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase">
-                      {isPolish ? 'Kamienie milowe' : 'Milestones'}
-                    </span>
-                  </div>
-                  <div className="space-y-2">
-                    {milestones.map((m) => (
-                      <div
-                        key={m.id}
-                        className="flex items-center justify-between p-2 rounded-lg bg-white/50 dark:bg-navy-800/50 cursor-pointer hover:bg-white/80 dark:hover:bg-navy-800/80 transition-colors"
-                        onClick={() => onOpenTask?.(m.id)}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`w-2.5 h-2.5 rounded-full ${m.status === 'done' || m.status === 'DONE' ? 'bg-emerald-500' : 'bg-purple-500'}`}
-                          />
-                          <span className="text-sm text-slate-700 dark:text-slate-300">
-                            {m.title}
-                          </span>
-                        </div>
-                        {m.milestoneDate && (
-                          <span className="text-xs text-slate-400">
-                            {new Date(m.milestoneDate).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Tasks List */}
-              {tasks.length === 0 && !showCreateTask ? (
-                <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
-                  <CheckSquare
-                    size={24}
-                    className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
-                  />
-                  <p className="text-sm text-slate-400">
-                    {isPolish ? 'Brak zadań' : 'No tasks yet'}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {tasks
-                    .filter((t) => !t.isMilestone)
-                    .map((task) => (
-                      <div
-                        key={task.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-slate-50/50 dark:bg-navy-800/50 border border-slate-200/50 dark:border-navy-700/50 hover:border-emerald-500/30 cursor-pointer transition-all"
-                        onClick={() => onOpenTask?.(task.id)}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-2.5 h-2.5 rounded-full ${
-                              task.status === 'done' || task.status === 'DONE'
-                                ? 'bg-emerald-500'
-                                : task.status === 'in_progress' || task.status === 'IN_PROGRESS'
-                                  ? 'bg-blue-500'
-                                  : task.status === 'blocked' || task.status === 'BLOCKED'
-                                    ? 'bg-red-500'
-                                    : 'bg-slate-400'
-                            }`}
-                          />
-                          <span className="text-sm text-slate-700 dark:text-slate-300">
-                            {task.title}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {task.assigneeName && (
-                            <span className="text-xs text-slate-400">{task.assigneeName}</span>
-                          )}
-                          {task.dueDate && (
-                            <span className="text-xs text-slate-400">
-                              {new Date(task.dueDate).toLocaleDateString()}
-                            </span>
-                          )}
-                          <ExternalLink size={14} className="text-slate-400" />
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
-
-              {/* Progress Bar */}
-              {tasks.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-slate-500">
-                      {isPolish ? 'Postęp' : 'Progress'}
-                    </span>
-                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                      {Math.round((tasksDone / tasks.length) * 100)}%
-                    </span>
-                  </div>
-                  <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${(tasksDone / tasks.length) * 100}%` }}
-                      className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
-                    />
-                  </div>
-                </div>
-              )}
-            </CollapsibleSection>
-
-            {/* 4. Decisions (Decyzje) */}
-            <CollapsibleSection
-              id="decisions"
-              title={isPolish ? 'Decyzje' : 'Decisions'}
-              icon={<Scale size={18} className="text-amber-500 dark:text-amber-400" />}
-              iconBg="bg-gradient-to-br from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20"
-              expanded={expandedSections.has('decisions')}
-              onToggle={() => toggleSection('decisions')}
-              badge={
-                decisions.length > 0 ? (
-                  <span className="text-xs text-slate-400">
-                    {decisions.filter((d) => d.status === 'APPROVED').length}/{decisions.length}
-                  </span>
-                ) : undefined
-              }
-              actions={
-                <div className="flex items-center gap-2">
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowCreateDecision(true);
-                    }}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 text-xs font-medium transition-all"
-                  >
-                    <Plus size={14} />
-                    <span>{isPolish ? 'Nowa' : 'New'}</span>
-                  </motion.button>
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleGenerateAI('decisions');
-                    }}
-                    disabled={isGeneratingAI === 'decisions'}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-medium transition-all disabled:opacity-50"
-                    title={isPolish ? 'AI zasugeruje decyzje' : 'AI will suggest decisions'}
-                  >
-                    {isGeneratingAI === 'decisions' ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <Sparkles size={14} />
-                    )}
-                    <span>AI</span>
-                  </motion.button>
-                </div>
-              }
-            >
-              {showCreateDecision && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-4 p-4 rounded-xl border-2 border-amber-300 dark:border-amber-500/50 bg-amber-50/30 dark:bg-amber-500/5 space-y-3"
-                >
-                  <input
-                    type="text"
-                    value={newDecisionTitle}
-                    onChange={(e) => setNewDecisionTitle(e.target.value)}
-                    placeholder={isPolish ? 'Tytuł decyzji...' : 'Decision title...'}
-                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
-                    autoFocus
-                  />
-                  <select
-                    value={newDecisionType}
-                    onChange={(e) => setNewDecisionType(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
-                  >
-                    <option value="GOVERNANCE_DECISION_MAKING">Go/No-Go</option>
-                    <option value="RESOURCE_RESPONSIBILITY">Resources Commit</option>
-                    <option value="SCHEDULE_MILESTONES">Schedule Lock</option>
-                    <option value="BUDGET_APPROVAL">Budget Approval</option>
-                    <option value="OTHER">Other</option>
-                  </select>
-                  <div className="flex justify-end gap-2">
-                    <button
-                      onClick={() => setShowCreateDecision(false)}
-                      className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700"
-                    >
-                      {isPolish ? 'Anuluj' : 'Cancel'}
-                    </button>
-                    <button
-                      onClick={handleCreateDecision}
-                      disabled={isMutating || !newDecisionTitle.trim()}
-                      className="px-3 py-1.5 text-xs bg-amber-500 text-white rounded-lg disabled:opacity-50"
-                    >
-                      {isPolish ? 'Utwórz' : 'Create'}
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-              {decisions.length === 0 && !showCreateDecision ? (
-                <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
-                  <Scale size={24} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-                  <p className="text-sm text-slate-400">
-                    {isPolish ? 'Brak decyzji' : 'No decisions yet'}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {decisions.map((d) => (
-                    <div
-                      key={d.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-slate-50/50 dark:bg-navy-800/50 border border-slate-200/50 dark:border-navy-700/50 hover:border-amber-500/30 cursor-pointer transition-all"
-                      onClick={() => onOpenDecision?.(d.id)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-2.5 h-2.5 rounded-full ${d.status === 'APPROVED' ? 'bg-emerald-500' : d.status === 'REJECTED' ? 'bg-red-500' : 'bg-amber-500'}`}
-                        />
-                        <div>
-                          <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                            {d.title}
-                          </p>
-                          <p className="text-xs text-slate-400">{d.type}</p>
-                        </div>
-                      </div>
-                      <span
-                        className={`px-2 py-0.5 text-[10px] font-medium rounded ${d.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400' : d.status === 'REJECTED' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}`}
-                      >
-                        {d.status}
+            {cardScope.showTasks !== false && (
+              <>
+                {/* 3. Tasks & Milestones (Zadania z kamieniami milowymi) */}
+                <CollapsibleSection
+                  id="tasks"
+                  title={isPolish ? 'Zadania i kamienie milowe' : 'Tasks & Milestones'}
+                  icon={
+                    <CheckSquare size={18} className="text-emerald-500 dark:text-emerald-400" />
+                  }
+                  iconBg="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/20 dark:to-teal-500/20"
+                  expanded={expandedSections.has('tasks')}
+                  onToggle={() => toggleSection('tasks')}
+                  badge={
+                    <div className="flex items-center gap-2">
+                      {milestones.length > 0 && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 flex items-center gap-1">
+                          <Milestone size={10} />
+                          {milestones.length}
+                        </span>
+                      )}
+                      <span className="text-xs text-slate-400">
+                        {tasksDone}/{tasks.length}
                       </span>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CollapsibleSection>
-
-            {/* 5. RAID Log */}
-            <CollapsibleSection
-              id="raid"
-              title="RAID Log"
-              icon={<AlertTriangle size={18} className="text-rose-500 dark:text-rose-400" />}
-              iconBg="bg-gradient-to-br from-rose-500/10 to-red-500/10 dark:from-rose-500/20 dark:to-red-500/20"
-              expanded={expandedSections.has('raid')}
-              onToggle={() => toggleSection('raid')}
-              badge={
-                <div className="flex items-center gap-2">
-                  {criticalRaids > 0 && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400">
-                      {criticalRaids} {isPolish ? 'kryt.' : 'crit.'}
-                    </span>
-                  )}
-                  <span className="text-xs text-slate-400">{raidItems.length}</span>
-                </div>
-              }
-              actions={
-                <div className="flex items-center gap-2">
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowCreateRaid(true);
-                    }}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 text-xs font-medium transition-all"
-                  >
-                    <Plus size={14} />
-                    <span>{isPolish ? 'Dodaj' : 'Add'}</span>
-                  </motion.button>
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleGenerateAI('raid');
-                    }}
-                    disabled={isGeneratingAI === 'raid'}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-medium transition-all disabled:opacity-50"
-                    title={isPolish ? 'AI zidentyfikuje ryzyka' : 'AI will identify risks'}
-                  >
-                    {isGeneratingAI === 'raid' ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <Sparkles size={14} />
-                    )}
-                    <span>AI</span>
-                  </motion.button>
-                </div>
-              }
-            >
-              {showCreateRaid && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-4 p-4 rounded-xl border-2 border-rose-300 dark:border-rose-500/50 bg-rose-50/30 dark:bg-rose-500/5 space-y-3"
-                >
-                  <input
-                    type="text"
-                    value={newRaidTitle}
-                    onChange={(e) => setNewRaidTitle(e.target.value)}
-                    placeholder={isPolish ? 'Tytuł...' : 'Title...'}
-                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
-                    autoFocus
-                  />
-                  <textarea
-                    value={newRaidDescription}
-                    onChange={(e) => setNewRaidDescription(e.target.value)}
-                    placeholder={isPolish ? 'Opis (opcjonalnie)...' : 'Description (optional)...'}
-                    rows={2}
-                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm resize-none"
-                  />
-                  <div className="grid grid-cols-2 gap-2">
-                    <select
-                      value={newRaidType}
-                      onChange={(e) => setNewRaidType(e.target.value as any)}
-                      className="px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
-                    >
-                      <option value="risk">{isPolish ? 'Ryzyko' : 'Risk'}</option>
-                      <option value="assumption">{isPolish ? 'Założenie' : 'Assumption'}</option>
-                      <option value="issue">{isPolish ? 'Problem' : 'Issue'}</option>
-                      <option value="dependency">{isPolish ? 'Zależność' : 'Dependency'}</option>
-                    </select>
-                    <select
-                      value={newRaidSeverity}
-                      onChange={(e) => setNewRaidSeverity(e.target.value as any)}
-                      className="px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
-                    >
-                      <option value="LOW">{isPolish ? 'Niski' : 'Low'}</option>
-                      <option value="MEDIUM">{isPolish ? 'Średni' : 'Medium'}</option>
-                      <option value="HIGH">{isPolish ? 'Wysoki' : 'High'}</option>
-                      <option value="CRITICAL">{isPolish ? 'Krytyczny' : 'Critical'}</option>
-                    </select>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <button
-                      onClick={() => setShowCreateRaid(false)}
-                      className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700"
-                    >
-                      {isPolish ? 'Anuluj' : 'Cancel'}
-                    </button>
-                    <button
-                      onClick={handleCreateRaid}
-                      disabled={isMutating || !newRaidTitle.trim()}
-                      className="px-3 py-1.5 text-xs bg-rose-500 text-white rounded-lg disabled:opacity-50"
-                    >
-                      {isPolish ? 'Utwórz' : 'Create'}
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* RAID Summary */}
-              {raidItems.length > 0 && (
-                <div className="mb-4 grid grid-cols-4 gap-2">
-                  {(['risk', 'assumption', 'issue', 'dependency'] as const).map((type) => {
-                    const count = raidItems.filter((r) => r.type === type).length;
-                    const config = RAID_TYPE_CONFIG[type];
-                    return (
-                      <div
-                        key={type}
-                        className={`p-2 rounded-lg text-center ${config.color.replace('text-', 'bg-').replace('/20', '/10')}`}
+                  }
+                  actions={
+                    <div className="flex items-center gap-2">
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowCreateTask(true);
+                        }}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 text-xs font-medium transition-all"
                       >
-                        <div className="text-lg font-bold">{count}</div>
-                        <div className="text-[10px] uppercase">
-                          {isPolish ? config.labelPl : config.label}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {raidItems.length === 0 && !showCreateRaid ? (
-                <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
-                  <AlertTriangle
-                    size={24}
-                    className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
-                  />
-                  <p className="text-sm text-slate-400">
-                    {isPolish ? 'Brak elementów RAID' : 'No RAID items'}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {raidItems.map((r) => (
-                    <div
-                      key={r.id}
-                      className="p-3 rounded-lg bg-slate-50/50 dark:bg-navy-800/50 border border-slate-200/50 dark:border-navy-700/50"
+                        <Plus size={14} />
+                        <span>{isPolish ? 'Nowe' : 'New'}</span>
+                      </motion.button>
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleGenerateAI('tasks');
+                        }}
+                        disabled={isGeneratingAI === 'tasks'}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-medium transition-all disabled:opacity-50"
+                        title={isPolish ? 'AI zasugeruje zadania' : 'AI will suggest tasks'}
+                      >
+                        {isGeneratingAI === 'tasks' ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Sparkles size={14} />
+                        )}
+                        <span>AI</span>
+                      </motion.button>
+                    </div>
+                  }
+                >
+                  {/* Create Task Form */}
+                  {showCreateTask && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-4 p-4 rounded-xl border-2 border-emerald-300 dark:border-emerald-500/50 bg-emerald-50/30 dark:bg-emerald-500/5 space-y-3"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-medium ${RAID_TYPE_CONFIG[r.type].color}`}
-                          >
-                            {isPolish
-                              ? RAID_TYPE_CONFIG[r.type].labelPl
-                              : RAID_TYPE_CONFIG[r.type].label}
+                      <input
+                        type="text"
+                        value={newTaskTitle}
+                        onChange={(e) => setNewTaskTitle(e.target.value)}
+                        placeholder={isPolish ? 'Tytuł zadania...' : 'Task title...'}
+                        className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
+                        autoFocus
+                      />
+                      <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={newTaskIsMilestone}
+                            onChange={(e) => setNewTaskIsMilestone(e.target.checked)}
+                            className="w-4 h-4 rounded border-slate-300 text-purple-500 focus:ring-purple-500"
+                          />
+                          <span className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                            <Milestone size={14} />
+                            {isPolish ? 'Kamień milowy' : 'Milestone'}
                           </span>
-                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                            {r.title}
-                          </span>
-                        </div>
-                        {r.severity && (
-                          <span
-                            className={`text-[10px] px-2 py-0.5 rounded ${SEVERITY_CONFIG[r.severity].color}`}
-                          >
-                            {isPolish
-                              ? SEVERITY_CONFIG[r.severity].labelPl
-                              : SEVERITY_CONFIG[r.severity].label}
-                          </span>
+                        </label>
+                        {newTaskIsMilestone && (
+                          <input
+                            type="date"
+                            value={newTaskMilestoneDate}
+                            onChange={(e) => setNewTaskMilestoneDate(e.target.value)}
+                            className="px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
+                          />
                         )}
                       </div>
-                      {r.description && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {r.description}
-                        </p>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => setShowCreateTask(false)}
+                          className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700"
+                        >
+                          {isPolish ? 'Anuluj' : 'Cancel'}
+                        </button>
+                        <button
+                          onClick={handleCreateTask}
+                          disabled={isMutating || !newTaskTitle.trim()}
+                          className="px-3 py-1.5 text-xs bg-emerald-500 text-white rounded-lg disabled:opacity-50"
+                        >
+                          {isPolish ? 'Utwórz' : 'Create'}
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Milestones Timeline */}
+                  {milestones.length > 0 && (
+                    <div className="mb-4 p-3 rounded-xl bg-purple-50/50 dark:bg-purple-500/5 border border-purple-200/50 dark:border-purple-500/20">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Milestone size={14} className="text-purple-500" />
+                        <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase">
+                          {isPolish ? 'Kamienie milowe' : 'Milestones'}
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        {milestones.map((m) => (
+                          <div
+                            key={m.id}
+                            className="flex items-center justify-between p-2 rounded-lg bg-white/50 dark:bg-navy-800/50 cursor-pointer hover:bg-white/80 dark:hover:bg-navy-800/80 transition-colors"
+                            onClick={() => onOpenTask?.(m.id)}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div
+                                className={`w-2.5 h-2.5 rounded-full ${m.status === 'done' || m.status === 'DONE' ? 'bg-emerald-500' : 'bg-purple-500'}`}
+                              />
+                              <span className="text-sm text-slate-700 dark:text-slate-300">
+                                {m.title}
+                              </span>
+                            </div>
+                            {m.milestoneDate && (
+                              <span className="text-xs text-slate-400">
+                                {new Date(m.milestoneDate).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tasks List */}
+                  {tasks.length === 0 && !showCreateTask ? (
+                    <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
+                      <CheckSquare
+                        size={24}
+                        className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                      />
+                      <p className="text-sm text-slate-400">
+                        {isPolish ? 'Brak zadań' : 'No tasks yet'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {tasks
+                        .filter((t) => !t.isMilestone)
+                        .map((task) => (
+                          <div
+                            key={task.id}
+                            className="flex items-center justify-between p-3 rounded-lg bg-slate-50/50 dark:bg-navy-800/50 border border-slate-200/50 dark:border-navy-700/50 hover:border-emerald-500/30 cursor-pointer transition-all"
+                            onClick={() => onOpenTask?.(task.id)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`w-2.5 h-2.5 rounded-full ${
+                                  task.status === 'done' || task.status === 'DONE'
+                                    ? 'bg-emerald-500'
+                                    : task.status === 'in_progress' || task.status === 'IN_PROGRESS'
+                                      ? 'bg-blue-500'
+                                      : task.status === 'blocked' || task.status === 'BLOCKED'
+                                        ? 'bg-red-500'
+                                        : 'bg-slate-400'
+                                }`}
+                              />
+                              <span className="text-sm text-slate-700 dark:text-slate-300">
+                                {task.title}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {task.assigneeName && (
+                                <span className="text-xs text-slate-400">{task.assigneeName}</span>
+                              )}
+                              {task.dueDate && (
+                                <span className="text-xs text-slate-400">
+                                  {new Date(task.dueDate).toLocaleDateString()}
+                                </span>
+                              )}
+                              <ExternalLink size={14} className="text-slate-400" />
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+
+                  {/* Progress Bar */}
+                  {tasks.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-slate-500">
+                          {isPolish ? 'Postęp' : 'Progress'}
+                        </span>
+                        <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                          {Math.round((tasksDone / tasks.length) * 100)}%
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(tasksDone / tasks.length) * 100}%` }}
+                          className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </CollapsibleSection>
+              </>
+            )}
+
+            {cardScope.showDecisions !== false && (
+              <>
+                {/* 4. Decisions (Decyzje) */}
+                <CollapsibleSection
+                  id="decisions"
+                  title={isPolish ? 'Decyzje' : 'Decisions'}
+                  icon={<Scale size={18} className="text-amber-500 dark:text-amber-400" />}
+                  iconBg="bg-gradient-to-br from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20"
+                  expanded={expandedSections.has('decisions')}
+                  onToggle={() => toggleSection('decisions')}
+                  badge={
+                    decisions.length > 0 ? (
+                      <span className="text-xs text-slate-400">
+                        {decisions.filter((d) => d.status === 'APPROVED').length}/{decisions.length}
+                      </span>
+                    ) : undefined
+                  }
+                  actions={
+                    <div className="flex items-center gap-2">
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowCreateDecision(true);
+                        }}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 text-xs font-medium transition-all"
+                      >
+                        <Plus size={14} />
+                        <span>{isPolish ? 'Nowa' : 'New'}</span>
+                      </motion.button>
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleGenerateAI('decisions');
+                        }}
+                        disabled={isGeneratingAI === 'decisions'}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-medium transition-all disabled:opacity-50"
+                        title={isPolish ? 'AI zasugeruje decyzje' : 'AI will suggest decisions'}
+                      >
+                        {isGeneratingAI === 'decisions' ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Sparkles size={14} />
+                        )}
+                        <span>AI</span>
+                      </motion.button>
+                    </div>
+                  }
+                >
+                  {showCreateDecision && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-4 p-4 rounded-xl border-2 border-amber-300 dark:border-amber-500/50 bg-amber-50/30 dark:bg-amber-500/5 space-y-3"
+                    >
+                      <input
+                        type="text"
+                        value={newDecisionTitle}
+                        onChange={(e) => setNewDecisionTitle(e.target.value)}
+                        placeholder={isPolish ? 'Tytuł decyzji...' : 'Decision title...'}
+                        className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
+                        autoFocus
+                      />
+                      <select
+                        value={newDecisionType}
+                        onChange={(e) => setNewDecisionType(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
+                      >
+                        <option value="GOVERNANCE_DECISION_MAKING">Go/No-Go</option>
+                        <option value="RESOURCE_RESPONSIBILITY">Resources Commit</option>
+                        <option value="SCHEDULE_MILESTONES">Schedule Lock</option>
+                        <option value="BUDGET_APPROVAL">Budget Approval</option>
+                        <option value="OTHER">Other</option>
+                      </select>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => setShowCreateDecision(false)}
+                          className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700"
+                        >
+                          {isPolish ? 'Anuluj' : 'Cancel'}
+                        </button>
+                        <button
+                          onClick={handleCreateDecision}
+                          disabled={isMutating || !newDecisionTitle.trim()}
+                          className="px-3 py-1.5 text-xs bg-amber-500 text-white rounded-lg disabled:opacity-50"
+                        >
+                          {isPolish ? 'Utwórz' : 'Create'}
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                  {decisions.length === 0 && !showCreateDecision ? (
+                    <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
+                      <Scale
+                        size={24}
+                        className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                      />
+                      <p className="text-sm text-slate-400">
+                        {isPolish ? 'Brak decyzji' : 'No decisions yet'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {decisions.map((d) => (
+                        <div
+                          key={d.id}
+                          className="flex items-center justify-between p-3 rounded-lg bg-slate-50/50 dark:bg-navy-800/50 border border-slate-200/50 dark:border-navy-700/50 hover:border-amber-500/30 cursor-pointer transition-all"
+                          onClick={() => onOpenDecision?.(d.id)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`w-2.5 h-2.5 rounded-full ${d.status === 'APPROVED' ? 'bg-emerald-500' : d.status === 'REJECTED' ? 'bg-red-500' : 'bg-amber-500'}`}
+                            />
+                            <div>
+                              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                {d.title}
+                              </p>
+                              <p className="text-xs text-slate-400">{d.type}</p>
+                            </div>
+                          </div>
+                          <span
+                            className={`px-2 py-0.5 text-[10px] font-medium rounded ${d.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400' : d.status === 'REJECTED' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}`}
+                          >
+                            {d.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CollapsibleSection>
+              </>
+            )}
+
+            {cardScope.showRaid !== false && (
+              <>
+                {/* 5. RAID Log */}
+                <CollapsibleSection
+                  id="raid"
+                  title="RAID Log"
+                  icon={<AlertTriangle size={18} className="text-rose-500 dark:text-rose-400" />}
+                  iconBg="bg-gradient-to-br from-rose-500/10 to-red-500/10 dark:from-rose-500/20 dark:to-red-500/20"
+                  expanded={expandedSections.has('raid')}
+                  onToggle={() => toggleSection('raid')}
+                  badge={
+                    <div className="flex items-center gap-2">
+                      {criticalRaids > 0 && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400">
+                          {criticalRaids} {isPolish ? 'kryt.' : 'crit.'}
+                        </span>
+                      )}
+                      <span className="text-xs text-slate-400">{raidItems.length}</span>
+                    </div>
+                  }
+                  actions={
+                    <div className="flex items-center gap-2">
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowCreateRaid(true);
+                        }}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 text-xs font-medium transition-all"
+                      >
+                        <Plus size={14} />
+                        <span>{isPolish ? 'Dodaj' : 'Add'}</span>
+                      </motion.button>
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleGenerateAI('raid');
+                        }}
+                        disabled={isGeneratingAI === 'raid'}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-medium transition-all disabled:opacity-50"
+                        title={isPolish ? 'AI zidentyfikuje ryzyka' : 'AI will identify risks'}
+                      >
+                        {isGeneratingAI === 'raid' ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Sparkles size={14} />
+                        )}
+                        <span>AI</span>
+                      </motion.button>
+                    </div>
+                  }
+                >
+                  {showCreateRaid && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-4 p-4 rounded-xl border-2 border-rose-300 dark:border-rose-500/50 bg-rose-50/30 dark:bg-rose-500/5 space-y-3"
+                    >
+                      <input
+                        type="text"
+                        value={newRaidTitle}
+                        onChange={(e) => setNewRaidTitle(e.target.value)}
+                        placeholder={isPolish ? 'Tytuł...' : 'Title...'}
+                        className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
+                        autoFocus
+                      />
+                      <textarea
+                        value={newRaidDescription}
+                        onChange={(e) => setNewRaidDescription(e.target.value)}
+                        placeholder={
+                          isPolish ? 'Opis (opcjonalnie)...' : 'Description (optional)...'
+                        }
+                        rows={2}
+                        className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm resize-none"
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <select
+                          value={newRaidType}
+                          onChange={(e) => setNewRaidType(e.target.value as any)}
+                          className="px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
+                        >
+                          <option value="risk">{isPolish ? 'Ryzyko' : 'Risk'}</option>
+                          <option value="assumption">
+                            {isPolish ? 'Założenie' : 'Assumption'}
+                          </option>
+                          <option value="issue">{isPolish ? 'Problem' : 'Issue'}</option>
+                          <option value="dependency">
+                            {isPolish ? 'Zależność' : 'Dependency'}
+                          </option>
+                        </select>
+                        <select
+                          value={newRaidSeverity}
+                          onChange={(e) => setNewRaidSeverity(e.target.value as any)}
+                          className="px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
+                        >
+                          <option value="LOW">{isPolish ? 'Niski' : 'Low'}</option>
+                          <option value="MEDIUM">{isPolish ? 'Średni' : 'Medium'}</option>
+                          <option value="HIGH">{isPolish ? 'Wysoki' : 'High'}</option>
+                          <option value="CRITICAL">{isPolish ? 'Krytyczny' : 'Critical'}</option>
+                        </select>
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => setShowCreateRaid(false)}
+                          className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700"
+                        >
+                          {isPolish ? 'Anuluj' : 'Cancel'}
+                        </button>
+                        <button
+                          onClick={handleCreateRaid}
+                          disabled={isMutating || !newRaidTitle.trim()}
+                          className="px-3 py-1.5 text-xs bg-rose-500 text-white rounded-lg disabled:opacity-50"
+                        >
+                          {isPolish ? 'Utwórz' : 'Create'}
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* RAID Summary */}
+                  {raidItems.length > 0 && (
+                    <div className="mb-4 grid grid-cols-4 gap-2">
+                      {(['risk', 'assumption', 'issue', 'dependency'] as const).map((type) => {
+                        const count = raidItems.filter((r) => r.type === type).length;
+                        const config = RAID_TYPE_CONFIG[type];
+                        return (
+                          <div
+                            key={type}
+                            className={`p-2 rounded-lg text-center ${config.color.replace('text-', 'bg-').replace('/20', '/10')}`}
+                          >
+                            <div className="text-lg font-bold">{count}</div>
+                            <div className="text-[10px] uppercase">
+                              {isPolish ? config.labelPl : config.label}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {raidItems.length === 0 && !showCreateRaid ? (
+                    <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
+                      <AlertTriangle
+                        size={24}
+                        className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                      />
+                      <p className="text-sm text-slate-400">
+                        {isPolish ? 'Brak elementów RAID' : 'No RAID items'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {raidItems.map((r) => (
+                        <div
+                          key={r.id}
+                          className="p-3 rounded-lg bg-slate-50/50 dark:bg-navy-800/50 border border-slate-200/50 dark:border-navy-700/50"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-medium ${RAID_TYPE_CONFIG[r.type].color}`}
+                              >
+                                {isPolish
+                                  ? RAID_TYPE_CONFIG[r.type].labelPl
+                                  : RAID_TYPE_CONFIG[r.type].label}
+                              </span>
+                              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                {r.title}
+                              </span>
+                            </div>
+                            {r.severity && (
+                              <span
+                                className={`text-[10px] px-2 py-0.5 rounded ${SEVERITY_CONFIG[r.severity].color}`}
+                              >
+                                {isPolish
+                                  ? SEVERITY_CONFIG[r.severity].labelPl
+                                  : SEVERITY_CONFIG[r.severity].label}
+                              </span>
+                            )}
+                          </div>
+                          {r.description && (
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              {r.description}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CollapsibleSection>
+              </>
+            )}
+
+            {cardScope.showGates !== false && (
+              <>
+                {/* 6. Gate Readiness & Timeline (Bramki i harmonogram) */}
+                <CollapsibleSection
+                  id="gateReadiness"
+                  title={isPolish ? 'Gotowość bramki i harmonogram' : 'Gate Readiness & Timeline'}
+                  icon={<Flag size={18} className="text-indigo-500 dark:text-indigo-400" />}
+                  iconBg="bg-gradient-to-br from-indigo-500/10 to-violet-500/10 dark:from-indigo-500/20 dark:to-violet-500/20"
+                  expanded={expandedSections.has('gateReadiness')}
+                  onToggle={() => toggleSection('gateReadiness')}
+                  badge={
+                    <div className="flex items-center gap-2">
+                      {nextGate && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">
+                          {isPolish ? 'Następna' : 'Next'}: {nextGate}
+                        </span>
+                      )}
+                      {requiredGates.length > 0 && (
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400">
+                          {
+                            requiredGates.filter((g) => getGateStatus(g.pmoDomain) === 'APPROVED')
+                              .length
+                          }
+                          /{requiredGates.length}
+                        </span>
                       )}
                     </div>
-                  ))}
-                </div>
-              )}
-            </CollapsibleSection>
-
-            {/* 6. Gate Readiness & Timeline (Bramki i harmonogram) */}
-            <CollapsibleSection
-              id="gateReadiness"
-              title={isPolish ? 'Gotowość bramki i harmonogram' : 'Gate Readiness & Timeline'}
-              icon={<Flag size={18} className="text-indigo-500 dark:text-indigo-400" />}
-              iconBg="bg-gradient-to-br from-indigo-500/10 to-violet-500/10 dark:from-indigo-500/20 dark:to-violet-500/20"
-              expanded={expandedSections.has('gateReadiness')}
-              onToggle={() => toggleSection('gateReadiness')}
-              badge={
-                <div className="flex items-center gap-2">
-                  {nextGate && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">
-                      {isPolish ? 'Następna' : 'Next'}: {nextGate}
-                    </span>
-                  )}
-                  {requiredGates.length > 0 && (
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400">
-                      {
-                        requiredGates.filter((g) => getGateStatus(g.pmoDomain) === 'APPROVED')
-                          .length
-                      }
-                      /{requiredGates.length}
-                    </span>
-                  )}
-                </div>
-              }
-              actions={
-                <div className="flex items-center gap-2">
-                  {nextGateConfig && canRequestApproval && (
-                    <motion.button
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRequestApproval(
-                          nextGateConfig.requiredRole === 'owner' ? 'owner' : 'sponsor',
-                          nextGate!
-                        );
-                      }}
-                      disabled={isMutating}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 text-xs font-medium transition-all disabled:opacity-50"
-                      title={isPolish ? 'Wyślij prośbę o zatwierdzenie' : 'Request approval'}
-                    >
-                      <Send size={14} />
-                      <span>{isPolish ? 'Wyślij' : 'Request'}</span>
-                    </motion.button>
-                  )}
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleGenerateAI('gates');
-                    }}
-                    disabled={isGeneratingAI === 'gates'}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-medium transition-all disabled:opacity-50"
-                    title={isPolish ? 'AI przeanalizuje gotowość' : 'AI will analyze readiness'}
-                  >
-                    {isGeneratingAI === 'gates' ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <Sparkles size={14} />
-                    )}
-                    <span>AI</span>
-                  </motion.button>
-                </div>
-              }
-            >
-              {/* Gate Timeline Visual */}
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                    {isPolish ? 'Przebieg bramek' : 'Gate Timeline'}
-                  </span>
-                </div>
-
-                {/* Timeline visualization */}
-                <div className="relative">
-                  {/* Progress line */}
-                  <div className="absolute top-4 left-0 right-0 h-1 bg-slate-200 dark:bg-navy-700 rounded-full" />
-                  <div
-                    className="absolute top-4 left-0 h-1 bg-gradient-to-r from-emerald-500 to-purple-500 rounded-full transition-all duration-500"
-                    style={{
-                      width: `${(() => {
-                        const gateOrder = [
-                          'PROMOTE',
-                          'APPROVE',
-                          'SCHEDULE',
-                          'COMPLETE',
-                          'START_TRACKING',
-                        ];
-                        const currentIdx = nextGate
-                          ? gateOrder.indexOf(nextGate)
-                          : gateOrder.length;
-                        return Math.max(0, (currentIdx / gateOrder.length) * 100);
-                      })()}%`,
-                    }}
-                  />
-
-                  {/* Gate nodes */}
-                  <div className="relative flex justify-between">
-                    {Object.entries(GATE_CONFIG)
-                      .filter(([key]) => !['BLOCK', 'UNBLOCK'].includes(key))
-                      .map(([key, config], idx, arr) => {
-                        const isPast = (() => {
-                          const gateOrder = [
-                            'PROMOTE',
-                            'APPROVE',
-                            'SCHEDULE',
-                            'COMPLETE',
-                            'START_TRACKING',
-                          ];
-                          const currentIdx = nextGate
-                            ? gateOrder.indexOf(nextGate)
-                            : gateOrder.length;
-                          return gateOrder.indexOf(key) < currentIdx;
-                        })();
-                        const isCurrent = key === nextGate;
-                        const isFuture = !isPast && !isCurrent;
-
-                        return (
-                          <div
-                            key={key}
-                            className="flex flex-col items-center"
-                            style={{ width: `${100 / arr.length}%` }}
-                          >
-                            <motion.div
-                              initial={{ scale: 0.8 }}
-                              animate={{ scale: isCurrent ? 1.2 : 1 }}
-                              className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all ${
-                                isPast
-                                  ? 'bg-emerald-500 border-emerald-500 text-white'
-                                  : isCurrent
-                                    ? 'bg-purple-500 border-purple-500 text-white shadow-lg shadow-purple-500/40'
-                                    : 'bg-white dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-400'
-                              }`}
-                            >
-                              {isPast ? (
-                                <Check size={14} />
-                              ) : isCurrent ? (
-                                <Flag size={14} />
-                              ) : (
-                                <span className="text-xs font-bold">{idx + 1}</span>
-                              )}
-                            </motion.div>
-                            <div className={`mt-2 text-center ${isCurrent ? 'font-semibold' : ''}`}>
-                              <p
-                                className={`text-[10px] ${isPast ? 'text-emerald-500' : isCurrent ? 'text-purple-500' : 'text-slate-400'}`}
-                              >
-                                {isPolish ? config.namePl.split(' ')[0] : config.name.split(' ')[0]}
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Current Gate Details */}
-              {nextGateConfig && (
-                <div className="mb-4 p-4 rounded-xl bg-gradient-to-br from-purple-500/5 to-indigo-500/5 dark:from-purple-500/10 dark:to-indigo-500/10 border border-purple-200/50 dark:border-purple-500/20">
-                  <div className="flex items-center justify-between mb-3">
+                  }
+                  actions={
                     <div className="flex items-center gap-2">
-                      <div className="p-2 rounded-lg bg-purple-500/20">
-                        <Flag size={16} className="text-purple-500" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                          {isPolish ? 'Aktualna bramka' : 'Current Gate'}:{' '}
-                          {isPolish ? nextGateConfig.namePl : nextGateConfig.name}
-                        </h4>
-                        <p className="text-xs text-slate-500">
-                          {isPolish ? nextGateConfig.descriptionPl : nextGateConfig.description}
-                        </p>
-                      </div>
+                      {nextGateConfig && canRequestApproval && (
+                        <motion.button
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRequestApproval(
+                              nextGateConfig.requiredRole === 'owner' ? 'owner' : 'sponsor',
+                              nextGate!
+                            );
+                          }}
+                          disabled={isMutating}
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 text-xs font-medium transition-all disabled:opacity-50"
+                          title={isPolish ? 'Wyślij prośbę o zatwierdzenie' : 'Request approval'}
+                        >
+                          <Send size={14} />
+                          <span>{isPolish ? 'Wyślij' : 'Request'}</span>
+                        </motion.button>
+                      )}
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleGenerateAI('gates');
+                        }}
+                        disabled={isGeneratingAI === 'gates'}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-medium transition-all disabled:opacity-50"
+                        title={isPolish ? 'AI przeanalizuje gotowość' : 'AI will analyze readiness'}
+                      >
+                        {isGeneratingAI === 'gates' ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Sparkles size={14} />
+                        )}
+                        <span>AI</span>
+                      </motion.button>
                     </div>
-                  </div>
-
-                  {/* Requirements Checklist */}
-                  <div className="space-y-2 mb-4">
-                    <span className="text-[10px] font-semibold text-slate-500 uppercase">
-                      {isPolish ? 'Lista kontrolna wymagań' : 'Requirements Checklist'}
-                    </span>
-                    <div className="grid grid-cols-2 gap-2">
-                      {nextGateConfig.requirements.map((req) => {
-                        const hasReq =
-                          req === 'title'
-                            ? !!initiative?.name
-                            : req === 'problem'
-                              ? !!summary
-                              : req === 'owner'
-                                ? !!ownerId
-                                : req === 'sponsor'
-                                  ? !!sponsorId
-                                  : req === 'timeline'
-                                    ? !!targetDate
-                                    : req === 'team'
-                                      ? stakeholders.length > 0
-                                      : req === 'risks'
-                                        ? raidItems.some((r) => r.type === 'risk')
-                                        : req === 'objective'
-                                          ? !!summary
-                                          : req === 'scope'
-                                            ? !!description
-                                            : req === 'capacity'
-                                              ? true // Would check team availability
-                                              : req === 'dependencies'
-                                                ? true // Would check dependencies mapped
-                                                : req === 'all_tasks_done'
-                                                  ? tasks.every((t) => t.status === 'DONE')
-                                                  : req === 'delivery_confirmed'
-                                                    ? false // Would check delivery confirmation
-                                                    : req === 'baseline_kpis'
-                                                      ? false // Would check KPIs defined
-                                                      : req === 'tracking_period'
-                                                        ? false // Would check tracking period
-                                                        : req === 'blocked_reason'
-                                                          ? false
-                                                          : req === 'impact_assessment'
-                                                            ? false
-                                                            : req === 'resolution_decision'
-                                                              ? false
-                                                              : req === 'updated_timeline'
-                                                                ? false
-                                                                : true;
-
-                        const reqLabels: Record<string, { en: string; pl: string }> = {
-                          title: { en: 'Title defined', pl: 'Tytuł zdefiniowany' },
-                          problem: { en: 'Problem statement', pl: 'Opis problemu' },
-                          owner: { en: 'Owner assigned', pl: 'Właściciel przypisany' },
-                          sponsor: { en: 'Sponsor assigned', pl: 'Sponsor przypisany' },
-                          timeline: { en: 'Timeline set', pl: 'Harmonogram ustalony' },
-                          team: { en: 'Team assigned', pl: 'Zespół przypisany' },
-                          risks: { en: 'Risks identified', pl: 'Ryzyka zidentyfikowane' },
-                          objective: { en: 'Objective defined', pl: 'Cel zdefiniowany' },
-                          scope: { en: 'Scope defined', pl: 'Zakres zdefiniowany' },
-                          capacity: { en: 'Capacity confirmed', pl: 'Zasoby potwierdzone' },
-                          dependencies: { en: 'Dependencies mapped', pl: 'Zależności zmapowane' },
-                          all_tasks_done: {
-                            en: 'All tasks done',
-                            pl: 'Wszystkie zadania ukończone',
-                          },
-                          delivery_confirmed: {
-                            en: 'Delivery confirmed',
-                            pl: 'Dostawa potwierdzona',
-                          },
-                          baseline_kpis: { en: 'Baseline KPIs', pl: 'Bazowe KPI' },
-                          tracking_period: { en: 'Tracking period', pl: 'Okres śledzenia' },
-                          blocked_reason: { en: 'Block reason', pl: 'Powód blokady' },
-                          impact_assessment: { en: 'Impact assessment', pl: 'Ocena wpływu' },
-                          resolution_decision: {
-                            en: 'Resolution decision',
-                            pl: 'Decyzja o rozwiązaniu',
-                          },
-                          updated_timeline: {
-                            en: 'Updated timeline',
-                            pl: 'Zaktualizowany harmonogram',
-                          },
-                        };
-
-                        return (
-                          <div
-                            key={req}
-                            className={`flex items-center gap-2 p-2 rounded-lg ${
-                              hasReq
-                                ? 'bg-emerald-500/10 border border-emerald-500/20'
-                                : 'bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700'
-                            }`}
-                          >
-                            <div
-                              className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                                hasReq ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-navy-600'
-                              }`}
-                            >
-                              {hasReq ? (
-                                <Check size={12} className="text-white" />
-                              ) : (
-                                <X size={12} className="text-white" />
-                              )}
-                            </div>
-                            <span
-                              className={`text-xs ${hasReq ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}
-                            >
-                              {isPolish ? reqLabels[req]?.pl : reqLabels[req]?.en || req}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Readiness Score */}
-                  <div className="mb-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-slate-500">
-                        {isPolish ? 'Gotowość' : 'Readiness'}
-                      </span>
-                      <span className="text-xs font-semibold text-purple-500">
-                        {(() => {
-                          const metCount = nextGateConfig.requirements.filter((req) => {
-                            return req === 'title'
-                              ? !!initiative?.name
-                              : req === 'problem'
-                                ? !!summary
-                                : req === 'owner'
-                                  ? !!ownerId
-                                  : req === 'sponsor'
-                                    ? !!sponsorId
-                                    : req === 'timeline'
-                                      ? !!targetDate
-                                      : req === 'team'
-                                        ? stakeholders.length > 0
-                                        : req === 'risks'
-                                          ? raidItems.some((r) => r.type === 'risk')
-                                          : req === 'objective'
-                                            ? !!summary
-                                            : req === 'scope'
-                                              ? !!description
-                                              : req === 'all_tasks_done'
-                                                ? tasks.every((t) => t.status === 'DONE')
-                                                : false;
-                          }).length;
-                          return Math.round((metCount / nextGateConfig.requirements.length) * 100);
-                        })()}
-                        %
+                  }
+                >
+                  {/* Gate Timeline Visual */}
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                        {isPolish ? 'Przebieg bramek' : 'Gate Timeline'}
                       </span>
                     </div>
-                    <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{
+
+                    {/* Timeline visualization */}
+                    <div className="relative">
+                      {/* Progress line */}
+                      <div className="absolute top-4 left-0 right-0 h-1 bg-slate-200 dark:bg-navy-700 rounded-full" />
+                      <div
+                        className="absolute top-4 left-0 h-1 bg-gradient-to-r from-emerald-500 to-purple-500 rounded-full transition-all duration-500"
+                        style={{
                           width: `${(() => {
-                            const metCount = nextGateConfig.requirements.filter((req) => {
-                              return req === 'title'
+                            const gateOrder = [
+                              'PROMOTE',
+                              'APPROVE',
+                              'SCHEDULE',
+                              'COMPLETE',
+                              'START_TRACKING',
+                            ];
+                            const currentIdx = nextGate
+                              ? gateOrder.indexOf(nextGate)
+                              : gateOrder.length;
+                            return Math.max(0, (currentIdx / gateOrder.length) * 100);
+                          })()}%`,
+                        }}
+                      />
+
+                      {/* Gate nodes */}
+                      <div className="relative flex justify-between">
+                        {Object.entries(GATE_CONFIG)
+                          .filter(([key]) => !['BLOCK', 'UNBLOCK'].includes(key))
+                          .map(([key, config], idx, arr) => {
+                            const isPast = (() => {
+                              const gateOrder = [
+                                'PROMOTE',
+                                'APPROVE',
+                                'SCHEDULE',
+                                'COMPLETE',
+                                'START_TRACKING',
+                              ];
+                              const currentIdx = nextGate
+                                ? gateOrder.indexOf(nextGate)
+                                : gateOrder.length;
+                              return gateOrder.indexOf(key) < currentIdx;
+                            })();
+                            const isCurrent = key === nextGate;
+                            const isFuture = !isPast && !isCurrent;
+
+                            return (
+                              <div
+                                key={key}
+                                className="flex flex-col items-center"
+                                style={{ width: `${100 / arr.length}%` }}
+                              >
+                                <motion.div
+                                  initial={{ scale: 0.8 }}
+                                  animate={{ scale: isCurrent ? 1.2 : 1 }}
+                                  className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all ${
+                                    isPast
+                                      ? 'bg-emerald-500 border-emerald-500 text-white'
+                                      : isCurrent
+                                        ? 'bg-purple-500 border-purple-500 text-white shadow-lg shadow-purple-500/40'
+                                        : 'bg-white dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-400'
+                                  }`}
+                                >
+                                  {isPast ? (
+                                    <Check size={14} />
+                                  ) : isCurrent ? (
+                                    <Flag size={14} />
+                                  ) : (
+                                    <span className="text-xs font-bold">{idx + 1}</span>
+                                  )}
+                                </motion.div>
+                                <div
+                                  className={`mt-2 text-center ${isCurrent ? 'font-semibold' : ''}`}
+                                >
+                                  <p
+                                    className={`text-[10px] ${isPast ? 'text-emerald-500' : isCurrent ? 'text-purple-500' : 'text-slate-400'}`}
+                                  >
+                                    {isPolish
+                                      ? config.namePl.split(' ')[0]
+                                      : config.name.split(' ')[0]}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Current Gate Details */}
+                  {nextGateConfig && (
+                    <div className="mb-4 p-4 rounded-xl bg-gradient-to-br from-purple-500/5 to-indigo-500/5 dark:from-purple-500/10 dark:to-indigo-500/10 border border-purple-200/50 dark:border-purple-500/20">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="p-2 rounded-lg bg-purple-500/20">
+                            <Flag size={16} className="text-purple-500" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                              {isPolish ? 'Aktualna bramka' : 'Current Gate'}:{' '}
+                              {isPolish ? nextGateConfig.namePl : nextGateConfig.name}
+                            </h4>
+                            <p className="text-xs text-slate-500">
+                              {isPolish ? nextGateConfig.descriptionPl : nextGateConfig.description}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Requirements Checklist */}
+                      <div className="space-y-2 mb-4">
+                        <span className="text-[10px] font-semibold text-slate-500 uppercase">
+                          {isPolish ? 'Lista kontrolna wymagań' : 'Requirements Checklist'}
+                        </span>
+                        <div className="grid grid-cols-2 gap-2">
+                          {nextGateConfig.requirements.map((req) => {
+                            const hasReq =
+                              req === 'title'
                                 ? !!initiative?.name
                                 : req === 'problem'
                                   ? !!summary
@@ -2292,272 +2213,442 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                               ? !!summary
                                               : req === 'scope'
                                                 ? !!description
-                                                : req === 'all_tasks_done'
-                                                  ? tasks.every((t) => t.status === 'DONE')
-                                                  : false;
-                            }).length;
-                            return Math.round(
-                              (metCount / nextGateConfig.requirements.length) * 100
+                                                : req === 'capacity'
+                                                  ? true // Would check team availability
+                                                  : req === 'dependencies'
+                                                    ? true // Would check dependencies mapped
+                                                    : req === 'all_tasks_done'
+                                                      ? tasks.every((t) => t.status === 'DONE')
+                                                      : req === 'delivery_confirmed'
+                                                        ? false // Would check delivery confirmation
+                                                        : req === 'baseline_kpis'
+                                                          ? false // Would check KPIs defined
+                                                          : req === 'tracking_period'
+                                                            ? false // Would check tracking period
+                                                            : req === 'blocked_reason'
+                                                              ? false
+                                                              : req === 'impact_assessment'
+                                                                ? false
+                                                                : req === 'resolution_decision'
+                                                                  ? false
+                                                                  : req === 'updated_timeline'
+                                                                    ? false
+                                                                    : true;
+
+                            const reqLabels: Record<string, { en: string; pl: string }> = {
+                              title: { en: 'Title defined', pl: 'Tytuł zdefiniowany' },
+                              problem: { en: 'Problem statement', pl: 'Opis problemu' },
+                              owner: { en: 'Owner assigned', pl: 'Właściciel przypisany' },
+                              sponsor: { en: 'Sponsor assigned', pl: 'Sponsor przypisany' },
+                              timeline: { en: 'Timeline set', pl: 'Harmonogram ustalony' },
+                              team: { en: 'Team assigned', pl: 'Zespół przypisany' },
+                              risks: { en: 'Risks identified', pl: 'Ryzyka zidentyfikowane' },
+                              objective: { en: 'Objective defined', pl: 'Cel zdefiniowany' },
+                              scope: { en: 'Scope defined', pl: 'Zakres zdefiniowany' },
+                              capacity: { en: 'Capacity confirmed', pl: 'Zasoby potwierdzone' },
+                              dependencies: {
+                                en: 'Dependencies mapped',
+                                pl: 'Zależności zmapowane',
+                              },
+                              all_tasks_done: {
+                                en: 'All tasks done',
+                                pl: 'Wszystkie zadania ukończone',
+                              },
+                              delivery_confirmed: {
+                                en: 'Delivery confirmed',
+                                pl: 'Dostawa potwierdzona',
+                              },
+                              baseline_kpis: { en: 'Baseline KPIs', pl: 'Bazowe KPI' },
+                              tracking_period: { en: 'Tracking period', pl: 'Okres śledzenia' },
+                              blocked_reason: { en: 'Block reason', pl: 'Powód blokady' },
+                              impact_assessment: { en: 'Impact assessment', pl: 'Ocena wpływu' },
+                              resolution_decision: {
+                                en: 'Resolution decision',
+                                pl: 'Decyzja o rozwiązaniu',
+                              },
+                              updated_timeline: {
+                                en: 'Updated timeline',
+                                pl: 'Zaktualizowany harmonogram',
+                              },
+                            };
+
+                            return (
+                              <div
+                                key={req}
+                                className={`flex items-center gap-2 p-2 rounded-lg ${
+                                  hasReq
+                                    ? 'bg-emerald-500/10 border border-emerald-500/20'
+                                    : 'bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700'
+                                }`}
+                              >
+                                <div
+                                  className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                                    hasReq ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-navy-600'
+                                  }`}
+                                >
+                                  {hasReq ? (
+                                    <Check size={12} className="text-white" />
+                                  ) : (
+                                    <X size={12} className="text-white" />
+                                  )}
+                                </div>
+                                <span
+                                  className={`text-xs ${hasReq ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}
+                                >
+                                  {isPolish ? reqLabels[req]?.pl : reqLabels[req]?.en || req}
+                                </span>
+                              </div>
                             );
-                          })()}%`,
-                        }}
-                        transition={{ duration: 0.5, ease: 'easeOut' }}
-                        className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full"
-                      />
-                    </div>
-                  </div>
+                          })}
+                        </div>
+                      </div>
 
-                  {/* Approver Info */}
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-white/50 dark:bg-navy-900/50 border border-slate-200/50 dark:border-navy-700/50">
-                    <div className="flex items-center gap-2">
-                      <User size={14} className="text-slate-400" />
-                      <span className="text-xs text-slate-500">
-                        {isPolish ? 'Wymagana aprobata' : 'Required approval'}:
-                      </span>
-                      <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                        {getRoleLabel(nextGateConfig.requiredRole, isPolish)}
-                      </span>
-                    </div>
-                    {nextGateConfig.requiredRole === 'sponsor' && sponsorId && (
-                      <span className="text-xs text-purple-500">
-                        {getUserDisplayName(sponsorId)}
-                      </span>
-                    )}
-                    {nextGateConfig.requiredRole === 'owner' && ownerId && (
-                      <span className="text-xs text-purple-500">{getUserDisplayName(ownerId)}</span>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* All Gates Status (Legacy gates from GATE_DEFINITIONS) */}
-              {requiredGates.length > 0 && (
-                <div className="space-y-2">
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase block mb-2">
-                    {isPolish
-                      ? 'Wymagane zatwierdzenia dla statusu'
-                      : 'Required approvals for status'}
-                  </span>
-                  {requiredGates.map((g) => {
-                    const gs = getGateStatus(g.pmoDomain);
-                    const ok = gs === 'APPROVED';
-                    return (
-                      <div
-                        key={g.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-slate-50/50 dark:bg-navy-800/50 border border-slate-200/50 dark:border-navy-700/50"
-                      >
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                              ok
-                                ? 'bg-emerald-500'
-                                : gs === 'PENDING'
-                                  ? 'bg-amber-500'
-                                  : 'bg-slate-300 dark:bg-navy-600'
-                            }`}
-                          >
-                            {ok ? (
-                              <Check size={12} className="text-white" />
-                            ) : gs === 'PENDING' ? (
-                              <Clock size={12} className="text-white" />
-                            ) : (
-                              <X size={12} className="text-white" />
-                            )}
-                          </div>
-                          <span className="text-sm text-slate-700 dark:text-slate-300">
-                            {g.label}
+                      {/* Readiness Score */}
+                      <div className="mb-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs text-slate-500">
+                            {isPolish ? 'Gotowość' : 'Readiness'}
+                          </span>
+                          <span className="text-xs font-semibold text-purple-500">
+                            {(() => {
+                              const metCount = nextGateConfig.requirements.filter((req) => {
+                                return req === 'title'
+                                  ? !!initiative?.name
+                                  : req === 'problem'
+                                    ? !!summary
+                                    : req === 'owner'
+                                      ? !!ownerId
+                                      : req === 'sponsor'
+                                        ? !!sponsorId
+                                        : req === 'timeline'
+                                          ? !!targetDate
+                                          : req === 'team'
+                                            ? stakeholders.length > 0
+                                            : req === 'risks'
+                                              ? raidItems.some((r) => r.type === 'risk')
+                                              : req === 'objective'
+                                                ? !!summary
+                                                : req === 'scope'
+                                                  ? !!description
+                                                  : req === 'all_tasks_done'
+                                                    ? tasks.every((t) => t.status === 'DONE')
+                                                    : false;
+                              }).length;
+                              return Math.round(
+                                (metCount / nextGateConfig.requirements.length) * 100
+                              );
+                            })()}
+                            %
                           </span>
                         </div>
-                        <span
-                          className={`px-2 py-0.5 text-[10px] font-medium rounded ${
-                            ok
-                              ? 'bg-emerald-500/20 text-emerald-400'
-                              : gs === 'PENDING'
-                                ? 'bg-amber-500/20 text-amber-400'
-                                : 'bg-slate-500/20 text-slate-400'
-                          }`}
-                        >
-                          {gs === 'MISSING' ? (isPolish ? 'Nie zgłoszono' : 'Not requested') : gs}
+                        <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{
+                              width: `${(() => {
+                                const metCount = nextGateConfig.requirements.filter((req) => {
+                                  return req === 'title'
+                                    ? !!initiative?.name
+                                    : req === 'problem'
+                                      ? !!summary
+                                      : req === 'owner'
+                                        ? !!ownerId
+                                        : req === 'sponsor'
+                                          ? !!sponsorId
+                                          : req === 'timeline'
+                                            ? !!targetDate
+                                            : req === 'team'
+                                              ? stakeholders.length > 0
+                                              : req === 'risks'
+                                                ? raidItems.some((r) => r.type === 'risk')
+                                                : req === 'objective'
+                                                  ? !!summary
+                                                  : req === 'scope'
+                                                    ? !!description
+                                                    : req === 'all_tasks_done'
+                                                      ? tasks.every((t) => t.status === 'DONE')
+                                                      : false;
+                                }).length;
+                                return Math.round(
+                                  (metCount / nextGateConfig.requirements.length) * 100
+                                );
+                              })()}%`,
+                            }}
+                            transition={{ duration: 0.5, ease: 'easeOut' }}
+                            className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Approver Info */}
+                      <div className="flex items-center justify-between p-2 rounded-lg bg-white/50 dark:bg-navy-900/50 border border-slate-200/50 dark:border-navy-700/50">
+                        <div className="flex items-center gap-2">
+                          <User size={14} className="text-slate-400" />
+                          <span className="text-xs text-slate-500">
+                            {isPolish ? 'Wymagana aprobata' : 'Required approval'}:
+                          </span>
+                          <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                            {getRoleLabel(nextGateConfig.requiredRole, isPolish)}
+                          </span>
+                        </div>
+                        {nextGateConfig.requiredRole === 'sponsor' && sponsorId && (
+                          <span className="text-xs text-purple-500">
+                            {getUserDisplayName(sponsorId)}
+                          </span>
+                        )}
+                        {nextGateConfig.requiredRole === 'owner' && ownerId && (
+                          <span className="text-xs text-purple-500">
+                            {getUserDisplayName(ownerId)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* All Gates Status (Legacy gates from GATE_DEFINITIONS) */}
+                  {requiredGates.length > 0 && (
+                    <div className="space-y-2">
+                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase block mb-2">
+                        {isPolish
+                          ? 'Wymagane zatwierdzenia dla statusu'
+                          : 'Required approvals for status'}
+                      </span>
+                      {requiredGates.map((g) => {
+                        const gs = getGateStatus(g.pmoDomain);
+                        const ok = gs === 'APPROVED';
+                        return (
+                          <div
+                            key={g.id}
+                            className="flex items-center justify-between p-3 rounded-lg bg-slate-50/50 dark:bg-navy-800/50 border border-slate-200/50 dark:border-navy-700/50"
+                          >
+                            <div className="flex items-center gap-2">
+                              <div
+                                className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                                  ok
+                                    ? 'bg-emerald-500'
+                                    : gs === 'PENDING'
+                                      ? 'bg-amber-500'
+                                      : 'bg-slate-300 dark:bg-navy-600'
+                                }`}
+                              >
+                                {ok ? (
+                                  <Check size={12} className="text-white" />
+                                ) : gs === 'PENDING' ? (
+                                  <Clock size={12} className="text-white" />
+                                ) : (
+                                  <X size={12} className="text-white" />
+                                )}
+                              </div>
+                              <span className="text-sm text-slate-700 dark:text-slate-300">
+                                {g.label}
+                              </span>
+                            </div>
+                            <span
+                              className={`px-2 py-0.5 text-[10px] font-medium rounded ${
+                                ok
+                                  ? 'bg-emerald-500/20 text-emerald-400'
+                                  : gs === 'PENDING'
+                                    ? 'bg-amber-500/20 text-amber-400'
+                                    : 'bg-slate-500/20 text-slate-400'
+                              }`}
+                            >
+                              {gs === 'MISSING'
+                                ? isPolish
+                                  ? 'Nie zgłoszono'
+                                  : 'Not requested'
+                                : gs}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* No gates message */}
+                  {!nextGateConfig && requiredGates.length === 0 && (
+                    <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
+                      <CheckCircle2 size={24} className="mx-auto mb-2 text-emerald-500" />
+                      <p className="text-sm text-slate-500">
+                        {isPolish ? 'Wszystkie bramki przejdzone!' : 'All gates passed!'}
+                      </p>
+                    </div>
+                  )}
+                </CollapsibleSection>
+              </>
+            )}
+
+            {cardScope.showFinancialAnalysis !== false && (
+              <>
+                {/* 7. Financial Analysis (Analiza finansowa) */}
+                <CollapsibleSection
+                  id="financialAnalysis"
+                  title={isPolish ? 'Analiza finansowa' : 'Financial Analysis'}
+                  icon={<BarChart3 size={18} className="text-cyan-500 dark:text-cyan-400" />}
+                  iconBg="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 dark:from-cyan-500/20 dark:to-blue-500/20"
+                  expanded={expandedSections.has('financialAnalysis')}
+                  onToggle={() => toggleSection('financialAnalysis')}
+                  actions={
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleGenerateAI('financial');
+                      }}
+                      disabled={isGeneratingAI === 'financial'}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-medium transition-all disabled:opacity-50"
+                      title={isPolish ? 'AI oszacuje koszty' : 'AI will estimate costs'}
+                    >
+                      {isGeneratingAI === 'financial' ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Sparkles size={14} />
+                      )}
+                      <span>AI</span>
+                    </motion.button>
+                  }
+                >
+                  <div className="space-y-4">
+                    {/* Cost Breakdown */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/50 dark:border-navy-700/50">
+                        <div className="flex items-center gap-2 mb-2">
+                          <DollarSign size={14} className="text-blue-500" />
+                          <span className="text-xs font-medium text-slate-500 uppercase">
+                            CAPEX
+                          </span>
+                        </div>
+                        <div className="text-2xl font-bold text-slate-700 dark:text-white">
+                          {initiative.costCapex || initiative.cost_capex
+                            ? `$${(initiative.costCapex || initiative.cost_capex).toLocaleString()}`
+                            : '-'}
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1">
+                          {isPolish ? 'Nakłady inwestycyjne' : 'Capital expenditure'}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/50 dark:border-navy-700/50">
+                        <div className="flex items-center gap-2 mb-2">
+                          <DollarSign size={14} className="text-orange-500" />
+                          <span className="text-xs font-medium text-slate-500 uppercase">OPEX</span>
+                        </div>
+                        <div className="text-2xl font-bold text-slate-700 dark:text-white">
+                          {initiative.costOpex || initiative.cost_opex
+                            ? `$${(initiative.costOpex || initiative.cost_opex).toLocaleString()}`
+                            : '-'}
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1">
+                          {isPolish ? 'Koszty operacyjne' : 'Operating expenditure'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* ROI & Payback */}
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="p-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-500/10 border border-emerald-200/50 dark:border-emerald-500/20 text-center">
+                        <div className="text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase mb-1">
+                          ROI
+                        </div>
+                        <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                          {initiative.expectedRoi || initiative.expected_roi
+                            ? `${(initiative.expectedRoi || initiative.expected_roi).toFixed(1)}x`
+                            : '-'}
+                        </div>
+                      </div>
+                      <div className="p-3 rounded-xl bg-blue-50/80 dark:bg-blue-500/10 border border-blue-200/50 dark:border-blue-500/20 text-center">
+                        <div className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase mb-1">
+                          NPV
+                        </div>
+                        <div className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                          {initiative.npv ? `$${initiative.npv.toLocaleString()}` : '-'}
+                        </div>
+                      </div>
+                      <div className="p-3 rounded-xl bg-purple-50/80 dark:bg-purple-500/10 border border-purple-200/50 dark:border-purple-500/20 text-center">
+                        <div className="text-xs font-medium text-purple-600 dark:text-purple-400 uppercase mb-1">
+                          {isPolish ? 'Zwrot' : 'Payback'}
+                        </div>
+                        <div className="text-xl font-bold text-purple-600 dark:text-purple-400">
+                          {initiative.paybackMonths ? `${initiative.paybackMonths}m` : '-'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CollapsibleSection>
+              </>
+            )}
+
+            {cardScope.showFinancialImpact !== false && (
+              <>
+                {/* 8. Financial Impact (Wpływ finansowy) */}
+                <CollapsibleSection
+                  id="financialImpact"
+                  title={isPolish ? 'Wpływ na wynik finansowy' : 'Financial Impact'}
+                  icon={<TrendingUp size={18} className="text-emerald-500 dark:text-emerald-400" />}
+                  iconBg="bg-gradient-to-br from-emerald-500/10 to-green-500/10 dark:from-emerald-500/20 dark:to-green-500/20"
+                  expanded={expandedSections.has('financialImpact')}
+                  onToggle={() => toggleSection('financialImpact')}
+                >
+                  <div className="space-y-4">
+                    {/* P&L Impact */}
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-500/10 dark:to-teal-500/10 border border-emerald-200/50 dark:border-emerald-500/20">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          {isPolish ? 'Wpływ na P&L' : 'P&L Impact'}
+                        </span>
+                        <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-500">
+                          {isPolish ? 'Prognoza' : 'Forecast'}
                         </span>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <div className="flex items-center gap-1 text-xs text-slate-500 mb-1">
+                            <TrendingUp size={12} className="text-emerald-500" />
+                            {isPolish ? 'Przychody' : 'Revenue'}
+                          </div>
+                          <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                            {initiative.revenueImpact
+                              ? `+$${initiative.revenueImpact.toLocaleString()}`
+                              : '-'}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1 text-xs text-slate-500 mb-1">
+                            <TrendingDown size={12} className="text-blue-500" />
+                            {isPolish ? 'Oszczędności' : 'Cost Savings'}
+                          </div>
+                          <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                            {initiative.costSavings
+                              ? `$${initiative.costSavings.toLocaleString()}`
+                              : '-'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
-              {/* No gates message */}
-              {!nextGateConfig && requiredGates.length === 0 && (
-                <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
-                  <CheckCircle2 size={24} className="mx-auto mb-2 text-emerald-500" />
-                  <p className="text-sm text-slate-500">
-                    {isPolish ? 'Wszystkie bramki przejdzone!' : 'All gates passed!'}
-                  </p>
-                </div>
-              )}
-            </CollapsibleSection>
-
-            {/* 7. Financial Analysis (Analiza finansowa) */}
-            <CollapsibleSection
-              id="financialAnalysis"
-              title={isPolish ? 'Analiza finansowa' : 'Financial Analysis'}
-              icon={<BarChart3 size={18} className="text-cyan-500 dark:text-cyan-400" />}
-              iconBg="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 dark:from-cyan-500/20 dark:to-blue-500/20"
-              expanded={expandedSections.has('financialAnalysis')}
-              onToggle={() => toggleSection('financialAnalysis')}
-              actions={
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleGenerateAI('financial');
-                  }}
-                  disabled={isGeneratingAI === 'financial'}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-medium transition-all disabled:opacity-50"
-                  title={isPolish ? 'AI oszacuje koszty' : 'AI will estimate costs'}
-                >
-                  {isGeneratingAI === 'financial' ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Sparkles size={14} />
-                  )}
-                  <span>AI</span>
-                </motion.button>
-              }
-            >
-              <div className="space-y-4">
-                {/* Cost Breakdown */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/50 dark:border-navy-700/50">
-                    <div className="flex items-center gap-2 mb-2">
-                      <DollarSign size={14} className="text-blue-500" />
-                      <span className="text-xs font-medium text-slate-500 uppercase">CAPEX</span>
-                    </div>
-                    <div className="text-2xl font-bold text-slate-700 dark:text-white">
-                      {initiative.costCapex || initiative.cost_capex
-                        ? `$${(initiative.costCapex || initiative.cost_capex).toLocaleString()}`
-                        : '-'}
-                    </div>
-                    <p className="text-xs text-slate-400 mt-1">
-                      {isPolish ? 'Nakłady inwestycyjne' : 'Capital expenditure'}
-                    </p>
-                  </div>
-                  <div className="p-4 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/50 dark:border-navy-700/50">
-                    <div className="flex items-center gap-2 mb-2">
-                      <DollarSign size={14} className="text-orange-500" />
-                      <span className="text-xs font-medium text-slate-500 uppercase">OPEX</span>
-                    </div>
-                    <div className="text-2xl font-bold text-slate-700 dark:text-white">
-                      {initiative.costOpex || initiative.cost_opex
-                        ? `$${(initiative.costOpex || initiative.cost_opex).toLocaleString()}`
-                        : '-'}
-                    </div>
-                    <p className="text-xs text-slate-400 mt-1">
-                      {isPolish ? 'Koszty operacyjne' : 'Operating expenditure'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* ROI & Payback */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="p-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-500/10 border border-emerald-200/50 dark:border-emerald-500/20 text-center">
-                    <div className="text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase mb-1">
-                      ROI
-                    </div>
-                    <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                      {initiative.expectedRoi || initiative.expected_roi
-                        ? `${(initiative.expectedRoi || initiative.expected_roi).toFixed(1)}x`
-                        : '-'}
-                    </div>
-                  </div>
-                  <div className="p-3 rounded-xl bg-blue-50/80 dark:bg-blue-500/10 border border-blue-200/50 dark:border-blue-500/20 text-center">
-                    <div className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase mb-1">
-                      NPV
-                    </div>
-                    <div className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                      {initiative.npv ? `$${initiative.npv.toLocaleString()}` : '-'}
-                    </div>
-                  </div>
-                  <div className="p-3 rounded-xl bg-purple-50/80 dark:bg-purple-500/10 border border-purple-200/50 dark:border-purple-500/20 text-center">
-                    <div className="text-xs font-medium text-purple-600 dark:text-purple-400 uppercase mb-1">
-                      {isPolish ? 'Zwrot' : 'Payback'}
-                    </div>
-                    <div className="text-xl font-bold text-purple-600 dark:text-purple-400">
-                      {initiative.paybackMonths ? `${initiative.paybackMonths}m` : '-'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CollapsibleSection>
-
-            {/* 8. Financial Impact (Wpływ finansowy) */}
-            <CollapsibleSection
-              id="financialImpact"
-              title={isPolish ? 'Wpływ na wynik finansowy' : 'Financial Impact'}
-              icon={<TrendingUp size={18} className="text-emerald-500 dark:text-emerald-400" />}
-              iconBg="bg-gradient-to-br from-emerald-500/10 to-green-500/10 dark:from-emerald-500/20 dark:to-green-500/20"
-              expanded={expandedSections.has('financialImpact')}
-              onToggle={() => toggleSection('financialImpact')}
-            >
-              <div className="space-y-4">
-                {/* P&L Impact */}
-                <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-500/10 dark:to-teal-500/10 border border-emerald-200/50 dark:border-emerald-500/20">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      {isPolish ? 'Wpływ na P&L' : 'P&L Impact'}
-                    </span>
-                    <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-500">
-                      {isPolish ? 'Prognoza' : 'Forecast'}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
+                    {/* Benefits Realization */}
                     <div>
-                      <div className="flex items-center gap-1 text-xs text-slate-500 mb-1">
-                        <TrendingUp size={12} className="text-emerald-500" />
-                        {isPolish ? 'Przychody' : 'Revenue'}
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-medium text-slate-500 uppercase">
+                          {isPolish ? 'Realizacja korzyści' : 'Benefits Realization'}
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          {initiative.benefitsRealized || 0}%
+                        </span>
                       </div>
-                      <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                        {initiative.revenueImpact
-                          ? `+$${initiative.revenueImpact.toLocaleString()}`
-                          : '-'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1 text-xs text-slate-500 mb-1">
-                        <TrendingDown size={12} className="text-blue-500" />
-                        {isPolish ? 'Oszczędności' : 'Cost Savings'}
-                      </div>
-                      <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                        {initiative.costSavings
-                          ? `$${initiative.costSavings.toLocaleString()}`
-                          : '-'}
+                      <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${initiative.benefitsRealized || 0}%` }}
+                          className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
+                        />
                       </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Benefits Realization */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-slate-500 uppercase">
-                      {isPolish ? 'Realizacja korzyści' : 'Benefits Realization'}
-                    </span>
-                    <span className="text-xs text-slate-400">
-                      {initiative.benefitsRealized || 0}%
-                    </span>
-                  </div>
-                  <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${initiative.benefitsRealized || 0}%` }}
-                      className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
-                    />
-                  </div>
-                </div>
-              </div>
-            </CollapsibleSection>
+                </CollapsibleSection>
+              </>
+            )}
 
             {/* 9. Activity Log (Historia zmian) */}
             <CollapsibleSection
@@ -3017,107 +3108,115 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               </div>
             </CollapsibleSection>
 
-            {/* 3. Team - Role descriptions */}
-            <CollapsibleSection
-              id="team"
-              title={isPolish ? 'Zespół' : 'Team'}
-              icon={<Users size={18} className="text-indigo-500 dark:text-indigo-400" />}
-              iconBg="bg-gradient-to-br from-indigo-500/10 to-violet-500/10 dark:from-indigo-500/20 dark:to-violet-500/20"
-              expanded={expandedSections.has('team')}
-              onToggle={() => toggleSection('team')}
-            >
-              <div className="space-y-4">
-                {/* Owner */}
-                <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/50 dark:border-navy-700/50">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-lg bg-blue-500/10">
-                        <User size={14} className="text-blue-500" />
-                      </div>
-                      <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase">
-                        {isPolish ? 'Właściciel' : 'Owner'}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                    {isPolish
-                      ? 'Odpowiada za realizację inicjatywy, podejmuje decyzje operacyjne i raportuje postępy.'
-                      : 'Responsible for initiative delivery, makes operational decisions and reports progress.'}
-                  </p>
-                  <select
-                    value={ownerId}
-                    onChange={(e) => setOwnerId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-blue-400"
-                  >
-                    <option value="">
-                      {isPolish ? 'Wybierz właściciela...' : 'Select owner...'}
-                    </option>
-                    {users.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.firstName} {user.lastName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Sponsor */}
-                <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/50 dark:border-navy-700/50">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-lg bg-purple-500/10">
-                        <Target size={14} className="text-purple-500" />
-                      </div>
-                      <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase">
-                        Sponsor
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                    {isPolish
-                      ? 'Sponsor biznesowy, zapewnia zasoby i wsparcie, usuwa przeszkody organizacyjne.'
-                      : 'Business sponsor, provides resources and support, removes organizational obstacles.'}
-                  </p>
-                  <select
-                    value={sponsorId}
-                    onChange={(e) => setSponsorId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400"
-                  >
-                    <option value="">
-                      {isPolish ? 'Wybierz sponsora...' : 'Select sponsor...'}
-                    </option>
-                    {users.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.firstName} {user.lastName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Quick team summary */}
-                {(ownerName || sponsorName) && (
-                  <div className="pt-3 border-t border-slate-200 dark:border-navy-700">
-                    <div className="flex items-center gap-4 text-xs">
-                      {ownerName && (
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center">
-                            <User size={12} className="text-blue-500" />
+            {cardScope.showTeam !== false && (
+              <>
+                {/* 3. Team - Role descriptions */}
+                <CollapsibleSection
+                  id="team"
+                  title={isPolish ? 'Zespół' : 'Team'}
+                  icon={<Users size={18} className="text-indigo-500 dark:text-indigo-400" />}
+                  iconBg="bg-gradient-to-br from-indigo-500/10 to-violet-500/10 dark:from-indigo-500/20 dark:to-violet-500/20"
+                  expanded={expandedSections.has('team')}
+                  onToggle={() => toggleSection('team')}
+                >
+                  <div className="space-y-4">
+                    {/* Owner */}
+                    <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/50 dark:border-navy-700/50">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1.5 rounded-lg bg-blue-500/10">
+                            <User size={14} className="text-blue-500" />
                           </div>
-                          <span className="text-slate-600 dark:text-slate-400">{ownerName}</span>
+                          <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase">
+                            {isPolish ? 'Właściciel' : 'Owner'}
+                          </span>
                         </div>
-                      )}
-                      {sponsorName && (
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center">
-                            <Target size={12} className="text-purple-500" />
-                          </div>
-                          <span className="text-slate-600 dark:text-slate-400">{sponsorName}</span>
-                        </div>
-                      )}
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                        {isPolish
+                          ? 'Odpowiada za realizację inicjatywy, podejmuje decyzje operacyjne i raportuje postępy.'
+                          : 'Responsible for initiative delivery, makes operational decisions and reports progress.'}
+                      </p>
+                      <select
+                        value={ownerId}
+                        onChange={(e) => setOwnerId(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-blue-400"
+                      >
+                        <option value="">
+                          {isPolish ? 'Wybierz właściciela...' : 'Select owner...'}
+                        </option>
+                        {users.map((user) => (
+                          <option key={user.id} value={user.id}>
+                            {user.firstName} {user.lastName}
+                          </option>
+                        ))}
+                      </select>
                     </div>
+
+                    {/* Sponsor */}
+                    <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/50 dark:border-navy-700/50">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1.5 rounded-lg bg-purple-500/10">
+                            <Target size={14} className="text-purple-500" />
+                          </div>
+                          <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase">
+                            Sponsor
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                        {isPolish
+                          ? 'Sponsor biznesowy, zapewnia zasoby i wsparcie, usuwa przeszkody organizacyjne.'
+                          : 'Business sponsor, provides resources and support, removes organizational obstacles.'}
+                      </p>
+                      <select
+                        value={sponsorId}
+                        onChange={(e) => setSponsorId(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400"
+                      >
+                        <option value="">
+                          {isPolish ? 'Wybierz sponsora...' : 'Select sponsor...'}
+                        </option>
+                        {users.map((user) => (
+                          <option key={user.id} value={user.id}>
+                            {user.firstName} {user.lastName}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Quick team summary */}
+                    {(ownerName || sponsorName) && (
+                      <div className="pt-3 border-t border-slate-200 dark:border-navy-700">
+                        <div className="flex items-center gap-4 text-xs">
+                          {ownerName && (
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center">
+                                <User size={12} className="text-blue-500" />
+                              </div>
+                              <span className="text-slate-600 dark:text-slate-400">
+                                {ownerName}
+                              </span>
+                            </div>
+                          )}
+                          {sponsorName && (
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center">
+                                <Target size={12} className="text-purple-500" />
+                              </div>
+                              <span className="text-slate-600 dark:text-slate-400">
+                                {sponsorName}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </CollapsibleSection>
+                </CollapsibleSection>
+              </>
+            )}
 
             {/* 4. Timeline */}
             <CollapsibleSection

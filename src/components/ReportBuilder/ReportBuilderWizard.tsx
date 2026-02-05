@@ -124,6 +124,8 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
     finalizeReport,
     approveReport,
     sendBackReport,
+    markSentInternal,
+    markSentExternal,
     updateLocalSection,
     reorderSections,
     exportPdf,
@@ -263,6 +265,16 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
     await sendBackReport(report.id);
   }, [report, sendBackReport]);
 
+  const handleMarkSentInternal = useCallback(async () => {
+    if (!report) return;
+    await markSentInternal(report.id);
+  }, [report, markSentInternal]);
+
+  const handleMarkSentExternal = useCallback(async () => {
+    if (!report) return;
+    await markSentExternal(report.id);
+  }, [report, markSentExternal]);
+
   const handleCancel = useCallback(() => {
     reset();
     onCancel?.();
@@ -376,6 +388,8 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
         return report?.status === 'GENERATED' ||
           report?.status === 'IN_REVIEW' ||
           report?.status === 'APPROVED' ||
+          report?.status === 'SENT_INTERNAL' ||
+          report?.status === 'SENT_EXTERNAL' ||
           report?.status === 'UTILIZED' ? (
           <ReviewEditStep
             report={report}
@@ -391,6 +405,8 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
             onFinalize={handleFinalize}
             onApprove={handleApprove}
             onSendBack={handleSendBack}
+            onMarkSentInternal={handleMarkSentInternal}
+            onMarkSentExternal={handleMarkSentExternal}
             onExportPdf={async () => {
               if (!report) return;
               await exportPdf(report.id);

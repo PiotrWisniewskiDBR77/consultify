@@ -603,42 +603,109 @@ export async function assignRole(params: AssignRoleParams): Promise<AssessmentRo
     role === 'manager' ||
     (role === 'manager' && permissions.canGenerateInitiatives);
 
-  await queryRun(
-    `INSERT INTO assessment_roles 
-     (id, assessment_id, user_id, organization_id, role, 
-      can_edit, can_approve, can_manage_team, can_change_status,
-      can_generate_report, can_generate_initiatives, assigned_areas, 
-      assigned_by, assigned_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-     ON CONFLICT (assessment_id, user_id) DO UPDATE SET
-       role = excluded.role,
-       can_edit = excluded.can_edit,
-       can_approve = excluded.can_approve,
-       can_manage_team = excluded.can_manage_team,
-       can_change_status = excluded.can_change_status,
-       can_generate_report = excluded.can_generate_report,
-       can_generate_initiatives = excluded.can_generate_initiatives,
-       assigned_areas = excluded.assigned_areas,
-       assigned_by = excluded.assigned_by,
-       updated_at = excluded.updated_at`,
-    [
-      id,
-      assessmentId,
-      userId,
-      organizationId,
-      role,
-      canEdit ? 1 : 0,
-      canApprove ? 1 : 0,
-      canManageTeam ? 1 : 0,
-      canChangeStatus ? 1 : 0,
-      canGenerateReport ? 1 : 0,
-      canGenerateInitiatives ? 1 : 0,
-      assignedAreas ? JSON.stringify(assignedAreas) : null,
-      assignedBy,
-      now,
-      now,
-    ]
-  );
+  try {
+    await queryRun(
+      `INSERT INTO assessment_roles 
+       (id, assessment_id, user_id, organization_id, role, 
+        can_edit, can_approve, can_manage_team, can_change_status,
+        can_generate_report, can_generate_initiatives, assigned_areas, 
+        assigned_by, assigned_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT (assessment_id, user_id, organization_id) DO UPDATE SET
+         role = excluded.role,
+         can_edit = excluded.can_edit,
+         can_approve = excluded.can_approve,
+         can_manage_team = excluded.can_manage_team,
+         can_change_status = excluded.can_change_status,
+         can_generate_report = excluded.can_generate_report,
+         can_generate_initiatives = excluded.can_generate_initiatives,
+         assigned_areas = excluded.assigned_areas,
+         assigned_by = excluded.assigned_by,
+         updated_at = excluded.updated_at`,
+      [
+        id,
+        assessmentId,
+        userId,
+        organizationId,
+        role,
+        canEdit ? 1 : 0,
+        canApprove ? 1 : 0,
+        canManageTeam ? 1 : 0,
+        canChangeStatus ? 1 : 0,
+        canGenerateReport ? 1 : 0,
+        canGenerateInitiatives ? 1 : 0,
+        assignedAreas ? JSON.stringify(assignedAreas) : null,
+        assignedBy,
+        now,
+        now,
+      ]
+    );
+  } catch (err: any) {
+    const msg = String(err?.message || err || '');
+    // Some SQLite DBs might be missing the expected UNIQUE constraint/index for the UPSERT target.
+    // Fallback to a manual upsert to avoid breaking team management.
+    if (msg.includes('ON CONFLICT clause does not match any PRIMARY KEY or UNIQUE constraint')) {
+      const update = await queryRun(
+        `UPDATE assessment_roles
+         SET role = ?,
+             can_edit = ?,
+             can_approve = ?,
+             can_manage_team = ?,
+             can_change_status = ?,
+             can_generate_report = ?,
+             can_generate_initiatives = ?,
+             assigned_areas = ?,
+             assigned_by = ?,
+             updated_at = ?
+         WHERE assessment_id = ? AND user_id = ? AND organization_id = ?`,
+        [
+          role,
+          canEdit ? 1 : 0,
+          canApprove ? 1 : 0,
+          canManageTeam ? 1 : 0,
+          canChangeStatus ? 1 : 0,
+          canGenerateReport ? 1 : 0,
+          canGenerateInitiatives ? 1 : 0,
+          assignedAreas ? JSON.stringify(assignedAreas) : null,
+          assignedBy,
+          now,
+          assessmentId,
+          userId,
+          organizationId,
+        ]
+      );
+
+      if (update.changes === 0) {
+        await queryRun(
+          `INSERT INTO assessment_roles
+           (id, assessment_id, user_id, organization_id, role,
+            can_edit, can_approve, can_manage_team, can_change_status,
+            can_generate_report, can_generate_initiatives, assigned_areas,
+            assigned_by, assigned_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            id,
+            assessmentId,
+            userId,
+            organizationId,
+            role,
+            canEdit ? 1 : 0,
+            canApprove ? 1 : 0,
+            canManageTeam ? 1 : 0,
+            canChangeStatus ? 1 : 0,
+            canGenerateReport ? 1 : 0,
+            canGenerateInitiatives ? 1 : 0,
+            assignedAreas ? JSON.stringify(assignedAreas) : null,
+            assignedBy,
+            now,
+            now,
+          ]
+        );
+      }
+    } else {
+      throw err;
+    }
+  }
 
   logger.info(
     `[AssessmentPermissionService] Role assigned: ${role} to user ${userId} for assessment ${assessmentId}`

@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { ActivityLogPanel } from '@/components/assessment/ActivityLogPanel';
+import { InitiativesManagementPanel } from '@/components/assessment/manage/InitiativesManagementPanel';
+import { ReportsManagementPanel } from '@/components/assessment/manage/ReportsManagementPanel';
 import { TeamManagementPanel } from '@/components/assessment/manage/TeamManagementPanel';
 import {
   GateDecision,
@@ -132,10 +134,16 @@ type LinkedInitiative = {
   batch_id?: string;
 };
 
-export function AssessmentManagePanel(props: { assessmentId: string; assessmentName?: string }) {
-  const { assessmentId, assessmentName } = props;
+export function AssessmentManagePanel(props: {
+  assessmentId: string;
+  assessmentName?: string;
+  initialTab?: TabId;
+  onOpenReport?: (reportId: string) => void;
+  onCreateReport?: () => void;
+}) {
+  const { assessmentId, assessmentName, initialTab, onOpenReport, onCreateReport } = props;
 
-  const [tab, setTab] = useState<TabId>('workflow');
+  const [tab, setTab] = useState<TabId>(initialTab || 'workflow');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [roles, setRoles] = useState<RoleRecord[]>([]);
@@ -194,6 +202,12 @@ export function AssessmentManagePanel(props: { assessmentId: string; assessmentN
     .toUpperCase()
     .trim();
   const isDRD = assessmentType === 'DRD';
+
+  // Allow parent to drive tab selection (e.g., header shortcuts)
+  useEffect(() => {
+    if (!initialTab) return;
+    setTab(initialTab);
+  }, [initialTab]);
 
   const reload = async () => {
     const [
@@ -381,31 +395,37 @@ export function AssessmentManagePanel(props: { assessmentId: string; assessmentN
   // Team management handlers - search only within organization members
   const handleSearchUsers = useCallback(
     async (query: string) => {
-      if (!query || query.length < 2) return [];
       if (!organizationId) return [];
       try {
         // Fetch organization members and filter by query
         const members = await Api.get(`/organizations/${organizationId}/members`);
         const membersList = Array.isArray(members) ? members : [];
 
-        const queryLower = query.toLowerCase();
-        const filtered = membersList
-          .filter((m: any) => {
-            // Fields from getMembers: user_id, first_name, last_name, email
-            const firstName = (m.first_name || '').toLowerCase();
-            const lastName = (m.last_name || '').toLowerCase();
-            const fullName = `${firstName} ${lastName}`.trim();
-            const email = (m.email || '').toLowerCase();
-            return fullName.includes(queryLower) || email.includes(queryLower);
-          })
-          .slice(0, 10)
+        const normalized = membersList
           .map((m: any) => ({
             id: m.user_id,
             email: m.email,
             name: [m.first_name, m.last_name].filter(Boolean).join(' ') || m.email,
-          }));
+          }))
+          .filter((u: OrgUser) => Boolean(u.id) && Boolean(u.email));
 
-        return filtered;
+        const q = String(query || '').trim();
+        if (q.length < 2) {
+          // Default list for the modal (no/short query): show some org users to pick from.
+          // Keep it bounded to avoid rendering huge lists.
+          return normalized
+            .sort((a: OrgUser, b: OrgUser) => (a.name || a.email).localeCompare(b.name || b.email))
+            .slice(0, 50);
+        }
+
+        const queryLower = q.toLowerCase();
+        return normalized
+          .filter((u: OrgUser) => {
+            const name = (u.name || '').toLowerCase();
+            const email = (u.email || '').toLowerCase();
+            return name.includes(queryLower) || email.includes(queryLower);
+          })
+          .slice(0, 50);
       } catch {
         return [];
       }
@@ -529,37 +549,33 @@ export function AssessmentManagePanel(props: { assessmentId: string; assessmentN
         <div className="min-w-0">
           <div className="text-lg font-semibold text-slate-900 dark:text-white">Manage</div>
           <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
-            {title} • permissions, workflow, and access requests
+            {title} • permissions, workflow, and logs
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          {(['workflow', 'team', 'reports', 'initiatives', 'access', 'logs'] as TabId[]).map(
-            (id) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setTab(id)}
-                className={`h-9 px-3 rounded-lg border text-sm font-medium transition-colors ${
-                  tab === id
-                    ? 'border-purple-200/60 dark:border-purple-900/30 bg-purple-50/70 dark:bg-purple-900/10 text-purple-700 dark:text-purple-200'
-                    : 'border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900'
-                }`}
-              >
-                {id === 'workflow'
-                  ? 'Workflow'
-                  : id === 'team'
-                    ? 'Team'
-                    : id === 'reports'
-                      ? 'Reports'
-                      : id === 'initiatives'
-                        ? 'Initiatives'
-                        : id === 'access'
-                          ? 'Access requests'
-                          : 'Logs'}
-              </button>
-            )
-          )}
+          {(['workflow', 'team', 'reports', 'initiatives', 'logs'] as TabId[]).map((id) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTab(id)}
+              className={`h-9 px-3 rounded-lg border text-sm font-medium transition-colors ${
+                tab === id
+                  ? 'border-purple-200/60 dark:border-purple-900/30 bg-purple-50/70 dark:bg-purple-900/10 text-purple-700 dark:text-purple-200'
+                  : 'border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900'
+              }`}
+            >
+              {id === 'workflow'
+                ? 'Workflow'
+                : id === 'team'
+                  ? 'Team'
+                  : id === 'reports'
+                    ? 'Reports'
+                    : id === 'initiatives'
+                      ? 'Initiatives'
+                      : 'Logs'}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -617,395 +633,48 @@ export function AssessmentManagePanel(props: { assessmentId: string; assessmentN
             />
           </div>
         ) : tab === 'initiatives' ? (
-          <div className="p-6 space-y-4">
-            <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div className="min-w-0">
-                <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Initiatives
-                </div>
-                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Generate, create, and review initiatives linked to this assessment.
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    setLoading(true);
-                    setError(null);
-                    await reload();
-                  } catch (e: any) {
-                    setError(e?.message || 'Failed to refresh');
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-                className="h-9 px-3 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors"
-              >
-                Refresh
-              </button>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white/60 dark:bg-navy-900/40 p-4">
-              <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                Generate initiatives
-              </div>
-              <div className="mt-2 grid md:grid-cols-3 gap-3 items-end">
-                <div className="md:col-span-2">
-                  <label className="text-xs text-slate-500 dark:text-slate-400">Methodology</label>
-                  <select
-                    className="mt-1 w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                    value={methodologyId}
-                    onChange={(e) => setMethodologyId(e.target.value as any)}
-                  >
-                    <option value="impact-feasibility">Impact x Feasibility</option>
-                    <option value="moscow">MoSCoW</option>
-                    <option value="rice">RICE</option>
-                    <option value="value-effort">Value x Effort</option>
-                    <option value="strategic-fit">Strategic Fit</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400">Count</label>
-                  <select
-                    className="mt-1 w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                    value={String(initiativeCount)}
-                    onChange={(e) => setInitiativeCount(Number(e.target.value))}
-                  >
-                    {[3, 4, 5, 6, 7].map((n) => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center gap-3 flex-wrap">
-                <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-                  <input
-                    type="checkbox"
-                    checked={includeChatContext}
-                    onChange={(e) => setIncludeChatContext(e.target.checked)}
-                  />
-                  Include chat context
-                </label>
-                <button
-                  type="button"
-                  disabled={
-                    actionBusy !== null || !eligibility?.actions?.generateInitiatives?.allowed
-                  }
-                  onClick={async () => {
-                    setActionBusy('gen-init');
-                    setError(null);
-                    try {
-                      await Api.post(
-                        `/assessment-workflow-v2/${assessmentId}/generate-initiatives`,
-                        {
-                          methodologyId,
-                          count: initiativeCount,
-                          includeChatContext,
-                          ...(decisionOwnerId ? { decisionOwnerId } : {}),
-                          ...(decisionDueDate
-                            ? { dueDate: new Date(decisionDueDate).toISOString() }
-                            : {}),
-                          ...(decisionPriority ? { priority: decisionPriority } : {}),
-                        }
-                      );
-                      await reload();
-                    } catch (e: any) {
-                      setError(e?.message || 'Failed to generate initiatives');
-                    } finally {
-                      setActionBusy(null);
-                    }
-                  }}
-                  className="h-10 px-4 rounded-lg bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-sm font-semibold transition-colors"
-                >
-                  {actionBusy === 'gen-init' ? 'Generating…' : 'Generate initiatives'}
-                </button>
-                {!eligibility?.actions?.generateInitiatives?.allowed &&
-                (eligibility?.actions?.generateInitiatives?.blockedBy || []).length ? (
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
-                    Blocked:{' '}
-                    {(eligibility?.actions?.generateInitiatives?.blockedBy || []).join(' • ')}
-                  </div>
-                ) : null}
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white/60 dark:bg-navy-900/40 p-4">
-              <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                Create initiative (manual)
-              </div>
-              <div className="mt-3 grid md:grid-cols-3 gap-3">
-                <div className="md:col-span-2">
-                  <label className="text-xs text-slate-500 dark:text-slate-400">Title</label>
-                  <input
-                    value={initiativeTitle}
-                    onChange={(e) => setInitiativeTitle(e.target.value)}
-                    className="mt-1 w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                    placeholder="Initiative title…"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400">Priority</label>
-                  <select
-                    className="mt-1 w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                    value={initiativePriority}
-                    onChange={(e) => setInitiativePriority(e.target.value as any)}
-                  >
-                    <option value="low">low</option>
-                    <option value="medium">medium</option>
-                    <option value="high">high</option>
-                    <option value="critical">critical</option>
-                  </select>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="text-xs text-slate-500 dark:text-slate-400">Description</label>
-                  <textarea
-                    value={initiativeDescription}
-                    onChange={(e) => setInitiativeDescription(e.target.value)}
-                    className="mt-1 w-full min-h-[88px] px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                    placeholder="Short description…"
-                  />
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-xs text-slate-500 dark:text-slate-400">Risk</label>
-                    <select
-                      className="mt-1 w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                      value={initiativeRisk}
-                      onChange={(e) => setInitiativeRisk(e.target.value as any)}
-                    >
-                      <option value="low">low</option>
-                      <option value="medium">medium</option>
-                      <option value="high">high</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs text-slate-500 dark:text-slate-400">
-                      Category (optional)
-                    </label>
-                    <input
-                      value={initiativeCategory}
-                      onChange={(e) => setInitiativeCategory(e.target.value)}
-                      className="mt-1 w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                      placeholder="e.g. digital_transformation"
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="mt-3">
-                <button
-                  type="button"
-                  disabled={!initiativeTitle.trim() || actionBusy !== null}
-                  onClick={async () => {
-                    setActionBusy('gen-init');
-                    setError(null);
-                    try {
-                      await Api.post(`/assessment-workflow-v2/${assessmentId}/initiatives`, {
-                        title: initiativeTitle.trim(),
-                        description: initiativeDescription.trim()
-                          ? initiativeDescription.trim()
-                          : null,
-                        priority: initiativePriority,
-                        risk: initiativeRisk,
-                        category: initiativeCategory.trim() ? initiativeCategory.trim() : null,
-                      });
-                      setInitiativeTitle('');
-                      setInitiativeDescription('');
-                      setInitiativeCategory('');
-                      await reload();
-                    } catch (e: any) {
-                      setError(e?.message || 'Failed to create initiative');
-                    } finally {
-                      setActionBusy(null);
-                    }
-                  }}
-                  className="h-10 px-4 rounded-lg bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-sm font-semibold transition-colors"
-                >
-                  Create initiative
-                </button>
-              </div>
-            </div>
-
-            <div className="grid lg:grid-cols-2 gap-4">
-              <div className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white/60 dark:bg-navy-900/40 p-4">
-                <div className="text-sm font-semibold text-slate-900 dark:text-white">Batches</div>
-                <div className="mt-3 space-y-2">
-                  {(batches || []).length === 0 ? (
-                    <div className="text-sm text-slate-500 dark:text-slate-400">
-                      No batches yet.
-                    </div>
-                  ) : (
-                    (batches || []).map((b) => (
-                      <div key={b.id} className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-sm text-slate-900 dark:text-white truncate">
-                            {b.methodologyId} • {b.initiativesCount}
-                          </div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                            {b.generatedByName} • {new Date(b.createdAt).toLocaleString()}
-                          </div>
-                        </div>
-                        <span className="text-[11px] px-2 py-0.5 rounded-full border border-slate-200/80 dark:border-navy-700 text-slate-600 dark:text-slate-300">
-                          {b.includeChatContext ? 'chat' : 'no chat'}
-                        </span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white/60 dark:bg-navy-900/40 p-4">
-                <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Linked initiatives
-                </div>
-                <div className="mt-3 space-y-2">
-                  {(linkedInitiatives || []).length === 0 ? (
-                    <div className="text-sm text-slate-500 dark:text-slate-400">
-                      No initiatives yet.
-                    </div>
-                  ) : (
-                    (linkedInitiatives || []).map((i) => (
-                      <div key={i.id} className="flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-sm text-slate-900 dark:text-white truncate">
-                            {i.title}
-                          </div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                            {String(i.status || '').toUpperCase()}
-                            {i.batch_id ? ` • ${i.batch_id}` : ''}
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            window.location.href = `/initiatives`;
-                          }}
-                          className="h-8 px-3 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-[12px] font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors"
-                        >
-                          Open
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
+          <div className="p-4">
+            <InitiativesManagementPanel
+              assessmentId={assessmentId}
+              assessmentName={title}
+              workflowStatus={workflow?.status || 'DRAFT'}
+              canManage={canManage}
+              canGenerateInitiatives={Boolean(eligibility?.actions?.generateInitiatives?.allowed)}
+              onRefresh={reload}
+              onGenerateInitiatives={async (config) => {
+                setActionBusy('gen-init');
+                setError(null);
+                try {
+                  await Api.post(`/assessment-workflow-v2/${assessmentId}/generate-initiatives`, {
+                    methodologyId: config.methodologyId,
+                    count: config.count,
+                    includeChatContext: config.includeChatContext,
+                  });
+                  await reload();
+                } catch (e: any) {
+                  setError(e?.message || 'Failed to generate initiatives');
+                  throw e;
+                } finally {
+                  setActionBusy(null);
+                }
+              }}
+            />
           </div>
         ) : tab === 'reports' ? (
-          <div className="p-6 space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-semibold text-slate-900 dark:text-white">Reports</div>
-                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Create professional reports from this assessment
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  // Navigate to Report Builder with assessment pre-selected
-                  window.location.href = `/reports/builder?new=true&sourceType=ASSESSMENT&sourceId=${assessmentId}&sourceName=${encodeURIComponent(title)}`;
-                }}
-                disabled={workflow?.status !== 'APPROVED'}
-                className={`
-                  flex items-center gap-2 h-10 px-4 rounded-lg font-medium text-sm transition-all
-                  ${
-                    workflow?.status === 'APPROVED'
-                      ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20'
-                      : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
-                  }
-                `}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                New Report
-              </button>
-            </div>
-
-            {/* Status info */}
-            {workflow?.status !== 'APPROVED' && (
-              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <svg
-                    className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                    />
-                  </svg>
-                  <div>
-                    <div className="font-medium text-amber-800 dark:text-amber-200">
-                      Assessment not approved
-                    </div>
-                    <div className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                      Reports can only be created from approved assessments. Current status:{' '}
-                      <strong>{workflow?.status || 'Unknown'}</strong>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Quick info */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl border border-slate-200 dark:border-navy-800 bg-white/60 dark:bg-navy-900/40">
-                <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Report Builder
-                </div>
-                <div className="mt-2 text-sm text-slate-700 dark:text-slate-200">
-                  Create comprehensive reports with customizable sections, AI-generated content, and
-                  professional formatting.
-                </div>
-                <button
-                  type="button"
-                  onClick={() => (window.location.href = '/reports/builder')}
-                  className="mt-3 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                >
-                  Open Report Builder →
-                </button>
-              </div>
-
-              <div className="p-4 rounded-xl border border-slate-200 dark:border-navy-800 bg-white/60 dark:bg-navy-900/40">
-                <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Assessment Info
-                </div>
-                <div className="mt-2 space-y-1 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">Status:</span>
-                    <span className="font-medium text-slate-900 dark:text-white">
-                      {workflow?.status || '-'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">Framework:</span>
-                    <span className="font-medium text-slate-900 dark:text-white">
-                      {assessmentType || 'DRD'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">Completion:</span>
-                    <span className="font-medium text-slate-900 dark:text-white">
-                      {workflow?.completionPercent || 0}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="p-4">
+            <ReportsManagementPanel
+              assessmentId={assessmentId}
+              assessmentName={title}
+              workflowStatus={workflow?.status || 'DRAFT'}
+              canManage={canManage}
+              onRefresh={reload}
+              onOpenReport={(reportId) => onOpenReport?.(reportId)}
+              onCreateReport={onCreateReport}
+              onCreateInitiatives={(reportId) => {
+                // Switch to initiatives tab and trigger generation
+                setTab('initiatives');
+              }}
+            />
           </div>
         ) : tab === 'logs' ? (
           <div className="h-[min(72vh,780px)] overflow-auto">

@@ -159,7 +159,282 @@ router.get(
 );
 
 // ==========================================
-// TEMPLATE ENDPOINTS
+// TEMPLATE MARKETPLACE ENDPOINTS
+// ==========================================
+
+/**
+ * GET /api/report-builder/templates
+ * List all available templates (system + organization)
+ */
+router.get('/templates', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { organizationId } = getAuthContext(req);
+    const { sourceType, isPublic, isSystem } = req.query;
+
+    const templates = await ReportBuilderService.listTemplates(organizationId, {
+      sourceType: sourceType as string | undefined,
+      isPublic: isPublic === 'true',
+      isSystem: isSystem === 'true',
+    });
+
+    res.json({ templates });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error listing templates:', err);
+    next(err);
+  }
+});
+
+/**
+ * POST /api/report-builder/templates
+ * Create a new report template
+ */
+router.post('/templates', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { organizationId, userId } = getAuthContext(req);
+    const { name, description, sourceType, reportType, sections, defaultOptions, isPublic } =
+      req.body;
+
+    if (!name || !sourceType || !sections) {
+      return res.status(400).json({ error: 'Name, sourceType, and sections are required' });
+    }
+
+    const templateId = uuidv4();
+    const template = await ReportBuilderService.createTemplate({
+      id: templateId,
+      organizationId,
+      name,
+      description,
+      sourceType,
+      reportType,
+      sections,
+      defaultOptions,
+      isPublic: isPublic || false,
+      createdBy: userId,
+    });
+
+    logger.info('[ReportBuilder] Template created', { templateId, userId });
+    res.status(201).json({ template });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error creating template:', err);
+    next(err);
+  }
+});
+
+/**
+ * GET /api/report-builder/templates/:templateId/details
+ * Get template details by ID
+ */
+router.get(
+  '/templates/:templateId/details',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { templateId } = req.params;
+      const { organizationId } = getAuthContext(req);
+
+      const template = await ReportBuilderService.getTemplateById(templateId, organizationId);
+      if (!template) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+
+      // Normalize: include parsed JSON fields for frontend convenience
+      const sections =
+        (template as any).sections_json && typeof (template as any).sections_json === 'string'
+          ? JSON.parse((template as any).sections_json || '[]')
+          : (template as any).sections || [];
+      const defaultOptions =
+        (template as any).default_options_json &&
+        typeof (template as any).default_options_json === 'string'
+          ? JSON.parse((template as any).default_options_json || 'null')
+          : (template as any).defaultOptions || null;
+
+      res.json({
+        template: {
+          ...template,
+          sections,
+          defaultOptions,
+        },
+      });
+    } catch (err) {
+      logger.error('[ReportBuilder] Error getting template:', err);
+      next(err);
+    }
+  }
+);
+
+/**
+ * PUT /api/report-builder/templates/:templateId
+ * Update a template
+ */
+router.put('/templates/:templateId', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { templateId } = req.params;
+    const { organizationId, userId } = getAuthContext(req);
+    const { name, description, sections, defaultOptions, isPublic } = req.body;
+
+    const template = await ReportBuilderService.updateTemplate(templateId, organizationId, {
+      name,
+      description,
+      sections,
+      defaultOptions,
+      isPublic,
+    });
+
+    if (!template) {
+      return res.status(404).json({ error: 'Template not found or not editable' });
+    }
+
+    logger.info('[ReportBuilder] Template updated', { templateId, userId });
+    res.json({ template });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error updating template:', err);
+    next(err);
+  }
+});
+
+/**
+ * DELETE /api/report-builder/templates/:templateId
+ * Delete a template
+ */
+router.delete('/templates/:templateId', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { templateId } = req.params;
+    const { organizationId, userId } = getAuthContext(req);
+
+    const deleted = await ReportBuilderService.deleteTemplate(templateId, organizationId);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Template not found or cannot be deleted' });
+    }
+
+    logger.info('[ReportBuilder] Template deleted', { templateId, userId });
+    res.json({ success: true });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error deleting template:', err);
+    next(err);
+  }
+});
+
+/**
+ * POST /api/report-builder/templates/:templateId/duplicate
+ * Duplicate a template
+ */
+router.post(
+  '/templates/:templateId/duplicate',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { templateId } = req.params;
+      const { organizationId, userId } = getAuthContext(req);
+      const { name } = req.body;
+
+      const newTemplate = await ReportBuilderService.duplicateTemplate(
+        templateId,
+        organizationId,
+        userId,
+        name
+      );
+
+      if (!newTemplate) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+
+      logger.info('[ReportBuilder] Template duplicated', {
+        originalId: templateId,
+        newId: newTemplate.id,
+        userId,
+      });
+      res.status(201).json({ template: newTemplate });
+    } catch (err) {
+      logger.error('[ReportBuilder] Error duplicating template:', err);
+      next(err);
+    }
+  }
+);
+
+/**
+ * POST /api/report-builder/templates/import
+ * Import template from JSON
+ */
+router.post('/templates/import', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { organizationId, userId } = getAuthContext(req);
+    const { templateJson } = req.body;
+
+    if (!templateJson) {
+      return res.status(400).json({ error: 'templateJson is required' });
+    }
+
+    let templateData;
+    try {
+      templateData = typeof templateJson === 'string' ? JSON.parse(templateJson) : templateJson;
+    } catch {
+      return res.status(400).json({ error: 'Invalid JSON format' });
+    }
+
+    const templateId = uuidv4();
+    const template = await ReportBuilderService.createTemplate({
+      id: templateId,
+      organizationId,
+      name: templateData.name || 'Imported Template',
+      description: templateData.description,
+      sourceType: templateData.sourceType || 'ASSESSMENT',
+      reportType: templateData.reportType,
+      sections: templateData.sections || [],
+      defaultOptions: templateData.defaultOptions,
+      isPublic: false,
+      createdBy: userId,
+    });
+
+    logger.info('[ReportBuilder] Template imported', { templateId, userId });
+    res.status(201).json({ template });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error importing template:', err);
+    next(err);
+  }
+});
+
+/**
+ * GET /api/report-builder/templates/:templateId/export
+ * Export template as JSON
+ */
+router.get(
+  '/templates/:templateId/export',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { templateId } = req.params;
+      const { organizationId } = getAuthContext(req);
+
+      const template = await ReportBuilderService.getTemplateById(templateId, organizationId);
+      if (!template) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+
+      const exportData = {
+        name: template.name,
+        description: template.description,
+        sourceType: template.source_type,
+        reportType: template.report_type,
+        sections: JSON.parse(template.sections_json || '[]'),
+        defaultOptions: template.default_options_json
+          ? JSON.parse(template.default_options_json)
+          : null,
+        exportedAt: new Date().toISOString(),
+        version: '1.0',
+      };
+
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${template.name.replace(/[^a-z0-9]/gi, '_')}.json"`
+      );
+      res.json(exportData);
+    } catch (err) {
+      logger.error('[ReportBuilder] Error exporting template:', err);
+      next(err);
+    }
+  }
+);
+
+// ==========================================
+// TEMPLATE SOURCE TYPE ENDPOINT
 // ==========================================
 
 /**
@@ -170,10 +445,12 @@ router.get('/templates/:sourceType', async (req: Request, res: Response, next: N
   try {
     const { sourceType } = req.params;
     const { framework } = req.query;
+    const { organizationId } = getAuthContext(req);
 
     const template = await ReportBuilderService.getTemplateForSource(
       sourceType.toUpperCase() as any,
-      framework as string | undefined
+      framework as string | undefined,
+      organizationId
     );
 
     if (!template) {
@@ -338,11 +615,19 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { organizationId } = getAuthContext(req);
-    const { status, sourceType, search } = req.query;
+    const { status, statusIn, sourceType, sourceId, search } = req.query;
+
+    // Parse statusIn if provided as comma-separated string
+    let statusInArray: string[] | undefined;
+    if (statusIn && typeof statusIn === 'string') {
+      statusInArray = statusIn.split(',').map((s) => s.trim().toUpperCase());
+    }
 
     const reports = await ReportBuilderService.listReports(organizationId, {
       status: status as any,
+      statusIn: statusInArray as any,
       sourceType: sourceType as any,
+      sourceId: sourceId as string,
       search: search as string,
     });
 
@@ -599,17 +884,39 @@ router.delete(
 /**
  * PUT /api/report-builder/:id/sections/:sectionKey/content
  * Update section content (user edit)
+ * Auto-revert: If report is IN_REVIEW, editing content automatically reverts status to GENERATED
  */
 router.put(
   '/:id/sections/:sectionKey/content',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id, sectionKey } = req.params;
-      const { userId } = getAuthContext(req);
+      const { userId, organizationId } = getAuthContext(req);
       const { content, contentFormat } = req.body;
 
       if (content === undefined) {
         return res.status(400).json({ error: 'content is required' });
+      }
+
+      // Check current status for auto-revert logic
+      const reportData = await ReportBuilderService.getReport(id, organizationId);
+      if (!reportData) {
+        return res.status(404).json({ error: 'Report not found' });
+      }
+
+      const previousStatus = reportData.report.status;
+      let statusReverted = false;
+
+      // AUTO-REVERT: Editing content in IN_REVIEW automatically reverts to GENERATED
+      if (previousStatus === 'IN_REVIEW') {
+        await ReportBuilderService.updateReportStatus(id, 'GENERATED', userId);
+        statusReverted = true;
+        logger.info('[ReportBuilder] Review invalidated - content edited, reverting to GENERATED', {
+          reportId: id,
+          sectionKey,
+          previousStatus,
+          userId,
+        });
       }
 
       await ReportBuilderService.updateSectionContent(
@@ -622,7 +929,12 @@ router.put(
 
       logger.info('[ReportBuilder] Section content updated', { reportId: id, sectionKey });
 
-      res.json({ success: true });
+      res.json({
+        success: true,
+        statusReverted,
+        previousStatus: statusReverted ? previousStatus : undefined,
+        currentStatus: statusReverted ? 'GENERATED' : previousStatus,
+      });
     } catch (err) {
       logger.error('[ReportBuilder] Error updating section content:', err);
       next(err);
@@ -761,6 +1073,7 @@ router.post('/:id/finalize', async (req: Request, res: Response, next: NextFunct
 /**
  * POST /api/report-builder/:id/approve
  * Approve report
+ * Gate: Cannot approve if there are open comments
  */
 router.post('/:id/approve', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -776,6 +1089,20 @@ router.post('/:id/approve', async (req: Request, res: Response, next: NextFuncti
       return res.status(400).json({ error: 'Report must be in review to approve' });
     }
 
+    // GATE CHECK: No open comments allowed
+    const approvalCheck = await ReportBuilderCommentsService.canApproveReport(id);
+    if (!approvalCheck.canApprove) {
+      logger.warn('[ReportBuilder] Approval blocked - open comments', {
+        reportId: id,
+        openCount: approvalCheck.openCount,
+      });
+      return res.status(400).json({
+        error: 'Cannot approve report with open comments',
+        openCommentsCount: approvalCheck.openCount,
+        blockers: approvalCheck.blockers,
+      });
+    }
+
     await ReportBuilderService.updateReportStatus(id, 'APPROVED', userId);
 
     logger.info('[ReportBuilder] Report approved', { reportId: id });
@@ -789,7 +1116,7 @@ router.post('/:id/approve', async (req: Request, res: Response, next: NextFuncti
 
 /**
  * POST /api/report-builder/:id/send-back
- * Send report back to generated status
+ * Send report back to draft status for re-editing
  */
 router.post('/:id/send-back', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -805,13 +1132,71 @@ router.post('/:id/send-back', async (req: Request, res: Response, next: NextFunc
       return res.status(400).json({ error: 'Report must be in review to send back' });
     }
 
-    await ReportBuilderService.updateReportStatus(id, 'GENERATED', userId);
+    await ReportBuilderService.updateReportStatus(id, 'DRAFT', userId);
 
-    logger.info('[ReportBuilder] Report sent back', { reportId: id });
+    logger.info('[ReportBuilder] Report sent back to draft', { reportId: id });
 
-    res.json({ success: true, status: 'GENERATED' });
+    res.json({ success: true, status: 'DRAFT' });
   } catch (err) {
     logger.error('[ReportBuilder] Error sending report back:', err);
+    next(err);
+  }
+});
+
+/**
+ * POST /api/report-builder/:id/mark-sent-internal
+ * Mark approved report as sent internally
+ */
+router.post('/:id/mark-sent-internal', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const { userId, organizationId } = getAuthContext(req);
+
+    const report = await ReportBuilderService.getReport(id, organizationId);
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    if (report.report.status !== 'APPROVED') {
+      return res.status(400).json({ error: 'Report must be approved to mark as sent internally' });
+    }
+
+    await ReportBuilderService.updateReportStatus(id, 'SENT_INTERNAL', userId);
+
+    logger.info('[ReportBuilder] Report marked as sent internally', { reportId: id, userId });
+
+    res.json({ success: true, status: 'SENT_INTERNAL' });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error marking report as sent internally:', err);
+    next(err);
+  }
+});
+
+/**
+ * POST /api/report-builder/:id/mark-sent-external
+ * Mark report as sent externally (after sent internally)
+ */
+router.post('/:id/mark-sent-external', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const { userId, organizationId } = getAuthContext(req);
+
+    const report = await ReportBuilderService.getReport(id, organizationId);
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    if (report.report.status !== 'SENT_INTERNAL') {
+      return res.status(400).json({ error: 'Report must be marked as sent internally first' });
+    }
+
+    await ReportBuilderService.updateReportStatus(id, 'SENT_EXTERNAL', userId);
+
+    logger.info('[ReportBuilder] Report marked as sent externally', { reportId: id, userId });
+
+    res.json({ success: true, status: 'SENT_EXTERNAL' });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error marking report as sent externally:', err);
     next(err);
   }
 });
@@ -982,6 +1367,129 @@ const writeReportBuilderPdf = async (
   });
 };
 
+const escapeHtml = (input: string) =>
+  input
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+
+/**
+ * Very small markdown-to-HTML formatter (good enough for Word .doc export).
+ * We intentionally keep it simple and robust.
+ */
+const markdownToHtmlLite = (md: string): string => {
+  const lines = String(md || '').split(/\r?\n/);
+  const out: string[] = [];
+  let inList = false;
+
+  const closeList = () => {
+    if (inList) {
+      out.push('</ul>');
+      inList = false;
+    }
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trimEnd();
+    if (!line.trim()) {
+      closeList();
+      out.push('<p>&nbsp;</p>');
+      continue;
+    }
+
+    // Headings
+    if (line.startsWith('### ')) {
+      closeList();
+      out.push(`<h3>${escapeHtml(line.slice(4))}</h3>`);
+      continue;
+    }
+    if (line.startsWith('## ')) {
+      closeList();
+      out.push(`<h2>${escapeHtml(line.slice(3))}</h2>`);
+      continue;
+    }
+    if (line.startsWith('# ')) {
+      closeList();
+      out.push(`<h1>${escapeHtml(line.slice(2))}</h1>`);
+      continue;
+    }
+
+    // Bullets
+    if (/^[-*]\s+/.test(line)) {
+      if (!inList) {
+        out.push('<ul>');
+        inList = true;
+      }
+      out.push(`<li>${escapeHtml(line.replace(/^[-*]\s+/, ''))}</li>`);
+      continue;
+    }
+
+    closeList();
+
+    // Basic inline cleanup (drop markdown markers)
+    const cleaned = line
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/`(.*?)`/g, '$1')
+      .replace(/\[(.*?)\]\(.*?\)/g, '$1');
+
+    out.push(`<p>${escapeHtml(cleaned)}</p>`);
+  }
+
+  closeList();
+  return out.join('\n');
+};
+
+const writeReportBuilderWordDoc = async (report: any, sections: any[], filePath: string) => {
+  const title = report.title || report.name || 'Report';
+  const subtitleParts: string[] = [];
+  if (report.organizationName) subtitleParts.push(String(report.organizationName));
+  if (report.sourceFramework) subtitleParts.push(String(report.sourceFramework));
+  if (report.sourceName) subtitleParts.push(String(report.sourceName));
+
+  const body: string[] = [];
+  body.push(`<h1>${escapeHtml(String(title))}</h1>`);
+  if (subtitleParts.length) {
+    body.push(`<p><em>${escapeHtml(subtitleParts.join(' • '))}</em></p>`);
+  }
+  body.push('<hr />');
+
+  const enabledSections = (sections || [])
+    .filter((s) => s && s.enabled)
+    .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+
+  for (const section of enabledSections) {
+    const sectionTitle = section.title || section.sectionKey || 'Section';
+    body.push(`<h2>${escapeHtml(String(sectionTitle))}</h2>`);
+    const content = section.editedContent || section.generatedContent || '';
+    body.push(markdownToHtmlLite(String(content)));
+    body.push('<br />');
+  }
+
+  const html = `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${escapeHtml(String(title))}</title>
+    <style>
+      body { font-family: Calibri, Arial, sans-serif; color: #0f172a; }
+      h1 { font-size: 24pt; margin: 0 0 8pt 0; }
+      h2 { font-size: 16pt; margin: 18pt 0 6pt 0; }
+      h3 { font-size: 13pt; margin: 14pt 0 6pt 0; }
+      p, li { font-size: 11pt; line-height: 1.35; }
+      hr { border: 0; border-top: 1px solid #e2e8f0; margin: 10pt 0 14pt 0; }
+    </style>
+  </head>
+  <body>
+    ${body.join('\n')}
+  </body>
+</html>`;
+
+  await fs.promises.writeFile(filePath, html, 'utf8');
+};
+
 /**
  * GET /api/report-builder/:id/export/pdf
  * Export report as PDF
@@ -1031,6 +1539,141 @@ router.get('/:id/export/pdf', async (req: Request, res: Response, next: NextFunc
 });
 
 /**
+ * GET /api/report-builder/:id/export/doc
+ * Export report as a Word document (.doc, HTML)
+ */
+router.get('/:id/export/doc', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const { userId, organizationId } = getAuthContext(req);
+
+    const reportData = await ReportBuilderService.getReport(id, organizationId);
+    if (!reportData) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    const exportDir = await ensureExportDir();
+    const fileName = `${id}-${Date.now()}.doc`;
+    const filePath = path.join(exportDir, fileName);
+
+    await writeReportBuilderWordDoc(reportData.report, reportData.sections, filePath);
+
+    const stats = await fs.promises.stat(filePath);
+
+    await ReportBuilderService.createExportRecord({
+      reportId: id,
+      reportType: 'report_builder',
+      format: 'doc',
+      filePath,
+      fileSize: stats.size,
+      language: 'pl',
+      exportedBy: userId,
+    });
+
+    logger.info('[ReportBuilder] Word (.doc) exported', { reportId: id, userId });
+
+    res.setHeader('Content-Type', 'application/msword');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${reportData.report.title || 'report'}.doc"`
+    );
+    return res.sendFile(filePath);
+  } catch (err: any) {
+    logger.error('[ReportBuilder] Error exporting Word (.doc):', err);
+    return res.status(500).json({ error: 'Failed to export Word', message: err.message });
+  }
+});
+
+/**
+ * GET /api/report-builder/:id/export/pptx
+ * Export report as PowerPoint presentation
+ */
+router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const { userId, organizationId } = getAuthContext(req);
+    const { template, language } = req.query;
+
+    const reportData = await ReportBuilderService.getReport(id, organizationId);
+    if (!reportData) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    // Dynamically import PptxExportService
+    const { PptxExportService } = await import('../services/report/PptxExportService.js');
+    const pptxService = new PptxExportService();
+
+    // Prepare report data for PPTX export
+    const pptxReportData = {
+      id: reportData.report.id,
+      name: reportData.report.title || reportData.report.name || 'Report',
+      sourceType: reportData.report.source_type || 'ASSESSMENT',
+      sourceFramework: reportData.report.source_framework,
+      organizationName: reportData.report.organization_name,
+      projectName: reportData.report.project_name,
+      createdAt: reportData.report.created_at,
+      intentConfig: reportData.report.intent_config
+        ? JSON.parse(reportData.report.intent_config)
+        : undefined,
+      sections: (reportData.sections || []).map((s: any) => ({
+        key: s.section_key,
+        title: s.title || s.section_key,
+        type: s.section_type,
+        content: s.generated_content || '',
+        renderKind: s.render_kind,
+        data: s.data_json ? JSON.parse(s.data_json) : undefined,
+      })),
+      scoreSummary: reportData.report.score_summary
+        ? JSON.parse(reportData.report.score_summary)
+        : undefined,
+    };
+
+    // Generate PPTX
+    const buffer = await pptxService.generatePresentation(pptxReportData, {
+      template: (template as any) || 'corporate',
+      language: (language as any) || 'pl',
+      includeCharts: true,
+      includeToc: true,
+    });
+
+    // Save to exports directory
+    const exportDir = await ensureExportDir();
+    const fileName = `${id}-${Date.now()}.pptx`;
+    const filePath = path.join(exportDir, fileName);
+    await fs.promises.writeFile(filePath, buffer);
+
+    // Get file size
+    const stats = await fs.promises.stat(filePath);
+
+    // Create export record
+    await ReportBuilderService.createExportRecord({
+      reportId: id,
+      reportType: 'report_builder',
+      format: 'pptx',
+      filePath,
+      fileSize: stats.size,
+      language: (language as string) || 'pl',
+      exportedBy: userId,
+    });
+
+    logger.info('[ReportBuilder] PPTX exported', { reportId: id, userId });
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${reportData.report.title || 'report'}.pptx"`
+    );
+    return res.sendFile(filePath);
+  } catch (err: any) {
+    logger.error('[ReportBuilder] Error exporting PPTX:', err);
+    return res.status(500).json({ error: 'Failed to export PPTX', message: err.message });
+  }
+});
+
+/**
  * GET /api/report-builder/:id/exports
  * List export records for a report
  */
@@ -1052,6 +1695,130 @@ router.get('/:id/exports', async (req: Request, res: Response, next: NextFunctio
     next(err);
   }
 });
+
+// ==========================================
+// VERSION HISTORY ENDPOINTS
+// ==========================================
+
+/**
+ * GET /api/report-builder/:id/versions
+ * List all versions of a report
+ */
+router.get('/:id/versions', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const { organizationId } = getAuthContext(req);
+
+    const versions = await ReportBuilderService.listVersions(id, organizationId);
+    res.json({ versions });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error listing versions:', err);
+    next(err);
+  }
+});
+
+/**
+ * POST /api/report-builder/:id/versions
+ * Create a new version snapshot
+ */
+router.post('/:id/versions', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const { userId, organizationId } = getAuthContext(req);
+    const { changeSummary } = req.body;
+
+    const version = await ReportBuilderService.createVersion(id, organizationId, userId, {
+      changeType: 'manual',
+      changeSummary,
+    });
+
+    logger.info('[ReportBuilder] Version created manually', { reportId: id, userId });
+    res.status(201).json({ version });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error creating version:', err);
+    next(err);
+  }
+});
+
+/**
+ * GET /api/report-builder/versions/:versionId
+ * Get a specific version with full snapshot
+ */
+router.get('/versions/:versionId', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { versionId } = req.params;
+    const { organizationId } = getAuthContext(req);
+
+    const version = await ReportBuilderService.getVersion(versionId, organizationId);
+    if (!version) {
+      return res.status(404).json({ error: 'Version not found' });
+    }
+
+    res.json({ version });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error getting version:', err);
+    next(err);
+  }
+});
+
+/**
+ * GET /api/report-builder/versions/:versionId1/compare/:versionId2
+ * Compare two versions
+ */
+router.get(
+  '/versions/:versionId1/compare/:versionId2',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { versionId1, versionId2 } = req.params;
+      const { organizationId } = getAuthContext(req);
+
+      const comparison = await ReportBuilderService.compareVersions(
+        versionId1,
+        versionId2,
+        organizationId
+      );
+
+      if (!comparison) {
+        return res.status(404).json({ error: 'Versions not found or not comparable' });
+      }
+
+      res.json({ comparison });
+    } catch (err) {
+      logger.error('[ReportBuilder] Error comparing versions:', err);
+      next(err);
+    }
+  }
+);
+
+/**
+ * POST /api/report-builder/versions/:versionId/rollback
+ * Rollback report to a specific version
+ */
+router.post(
+  '/versions/:versionId/rollback',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { versionId } = req.params;
+      const { userId, organizationId } = getAuthContext(req);
+
+      const report = await ReportBuilderService.rollbackToVersion(
+        versionId,
+        organizationId,
+        userId
+      );
+
+      if (!report) {
+        return res.status(404).json({ error: 'Version not found' });
+      }
+
+      logger.info('[ReportBuilder] Rollback completed', { versionId, userId });
+      res.json({ report, message: 'Rollback successful' });
+    } catch (err) {
+      logger.error('[ReportBuilder] Error rolling back:', err);
+      next(err);
+    }
+  }
+);
 
 // ==========================================
 // PUBLIC SHARE LINK ENDPOINTS
@@ -1196,66 +1963,307 @@ router.delete('/:id/share/:linkId', async (req: Request, res: Response, next: Ne
 });
 
 // ==========================================
-// PUBLIC ACCESS ENDPOINT (no auth required)
+// COMMENTS ENDPOINTS
 // ==========================================
 
 /**
- * GET /api/report-builder/public/:token
- * Access a shared report via public link (no auth required)
+ * GET /api/report-builder/:id/comments
+ * List comments for a report with optional filters
  */
-router.get(
-  '/public/:token',
-  // Skip auth middleware for this route - handled in main router setup
+router.get('/:id/comments', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const { organizationId } = getAuthContext(req);
+    const { sectionKey, status, commentType, parentOnly } = req.query;
+
+    // Verify report exists and belongs to org
+    const report = await ReportBuilderService.getReport(id, organizationId);
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    const filters: any = {};
+    if (sectionKey !== undefined) filters.sectionKey = sectionKey === 'null' ? null : sectionKey;
+    if (status) {
+      filters.status =
+        typeof status === 'string' && status.includes(',') ? status.split(',') : status;
+    }
+    if (commentType) filters.commentType = commentType;
+    if (parentOnly === 'true') filters.parentOnly = true;
+
+    const comments = await ReportBuilderCommentsService.listComments(id, filters);
+    const summary = await ReportBuilderCommentsService.getCommentSummary(id);
+
+    res.json({ comments, summary });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error listing comments:', err);
+    next(err);
+  }
+});
+
+/**
+ * GET /api/report-builder/:id/comments/summary
+ * Get comment summary/counts for a report
+ */
+router.get('/:id/comments/summary', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const { organizationId } = getAuthContext(req);
+
+    // Verify report exists
+    const report = await ReportBuilderService.getReport(id, organizationId);
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    const summary = await ReportBuilderCommentsService.getCommentSummary(id);
+    const canApprove = await ReportBuilderCommentsService.canApproveReport(id);
+
+    res.json({ summary, canApprove });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error getting comment summary:', err);
+    next(err);
+  }
+});
+
+/**
+ * POST /api/report-builder/:id/comments
+ * Create a new comment
+ */
+router.post('/:id/comments', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const { userId, organizationId } = getAuthContext(req);
+    const { sectionKey, anchor, commentType, content, parentCommentId, priority, tags } = req.body;
+
+    if (!content || typeof content !== 'string' || !content.trim()) {
+      return res.status(400).json({ error: 'Content is required' });
+    }
+
+    // Verify report exists and belongs to org
+    const report = await ReportBuilderService.getReport(id, organizationId);
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    // Get user name from database
+    const { getDatabase } = await import('../database/index.js');
+    const db = getDatabase();
+    const user = await new Promise<any>((resolve, reject) => {
+      db.get('SELECT name, avatar FROM users WHERE id = ?', [userId], (err: any, row: any) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+
+    const comment = await ReportBuilderCommentsService.createComment({
+      reportId: id,
+      sectionKey,
+      anchor,
+      userId,
+      userName: user?.name,
+      userAvatar: user?.avatar,
+      commentType,
+      content: content.trim(),
+      parentCommentId,
+      priority,
+      tags,
+    });
+
+    logger.info('[ReportBuilder] Comment created', { reportId: id, commentId: comment.id, userId });
+
+    res.status(201).json({ comment });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error creating comment:', err);
+    next(err);
+  }
+});
+
+/**
+ * GET /api/report-builder/:id/comments/:commentId
+ * Get a specific comment
+ */
+router.get('/:id/comments/:commentId', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id, commentId } = req.params;
+    const { organizationId } = getAuthContext(req);
+
+    // Verify report exists
+    const report = await ReportBuilderService.getReport(id, organizationId);
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    const comment = await ReportBuilderCommentsService.getComment(commentId);
+    if (!comment || comment.reportId !== id) {
+      return res.status(404).json({ error: 'Comment not found' });
+    }
+
+    res.json({ comment });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error getting comment:', err);
+    next(err);
+  }
+});
+
+/**
+ * PATCH /api/report-builder/:id/comments/:commentId
+ * Update a comment (content, status, etc.)
+ */
+router.patch(
+  '/:id/comments/:commentId',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { token } = req.params;
-      const { password } = req.query;
+      const { id, commentId } = req.params;
+      const { userId, organizationId } = getAuthContext(req);
+      const { content, commentType, status, resolutionNotes, priority, tags } = req.body;
 
-      const result = await ReportBuilderService.getPublicLinkByToken(token);
-
-      if (!result) {
-        return res.status(404).json({ error: 'Link not found or expired' });
+      // Verify report exists
+      const report = await ReportBuilderService.getReport(id, organizationId);
+      if (!report) {
+        return res.status(404).json({ error: 'Report not found' });
       }
 
-      // Check password if required
-      if (result.link.passwordHash) {
-        if (!password || typeof password !== 'string') {
-          return res.status(401).json({ error: 'Password required', requiresPassword: true });
-        }
-
-        const passwordValid = await bcrypt.compare(password, result.link.passwordHash);
-        if (!passwordValid) {
-          return res.status(401).json({ error: 'Invalid password', requiresPassword: true });
-        }
+      // Verify comment exists and belongs to this report
+      const existing = await ReportBuilderCommentsService.getComment(commentId);
+      if (!existing || existing.reportId !== id) {
+        return res.status(404).json({ error: 'Comment not found' });
       }
 
-      // Return report data for public view
-      res.json({
-        report: {
-          id: result.report.id,
-          title: result.report.title,
-          sourceName: result.report.sourceName,
-          status: result.report.status,
-          createdAt: result.report.createdAt,
-        },
-        sections: result.sections
-          .filter((s) => s.enabled)
-          .sort((a, b) => a.orderIndex - b.orderIndex)
-          .map((s) => ({
-            sectionKey: s.sectionKey,
-            sectionType: s.sectionType,
-            title: s.title,
-            content: s.editedContent || s.generatedContent || '',
-            renderKind: s.renderKind,
-          })),
-        branding: {
-          showCompanyLogo: result.link.showCompanyLogo,
-          showConsultinityBranding: result.link.showConsultinityBranding,
-          customMessage: result.link.customMessage,
-        },
+      const updates: any = {};
+      if (content !== undefined) updates.content = content;
+      if (commentType !== undefined) updates.commentType = commentType;
+      if (status !== undefined) updates.status = status;
+      if (resolutionNotes !== undefined) updates.resolutionNotes = resolutionNotes;
+      if (priority !== undefined) updates.priority = priority;
+      if (tags !== undefined) updates.tags = tags;
+
+      const comment = await ReportBuilderCommentsService.updateComment(commentId, userId, updates);
+
+      logger.info('[ReportBuilder] Comment updated', {
+        reportId: id,
+        commentId,
+        updates: Object.keys(updates),
       });
+
+      res.json({ comment });
     } catch (err) {
-      logger.error('[ReportBuilder] Error accessing public link:', err);
+      logger.error('[ReportBuilder] Error updating comment:', err);
+      next(err);
+    }
+  }
+);
+
+/**
+ * DELETE /api/report-builder/:id/comments/:commentId
+ * Delete a comment
+ */
+router.delete(
+  '/:id/comments/:commentId',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id, commentId } = req.params;
+      const { userId, organizationId } = getAuthContext(req);
+
+      // Verify report exists
+      const report = await ReportBuilderService.getReport(id, organizationId);
+      if (!report) {
+        return res.status(404).json({ error: 'Report not found' });
+      }
+
+      // Verify comment exists and belongs to this report
+      const existing = await ReportBuilderCommentsService.getComment(commentId);
+      if (!existing || existing.reportId !== id) {
+        return res.status(404).json({ error: 'Comment not found' });
+      }
+
+      await ReportBuilderCommentsService.deleteComment(commentId, userId);
+
+      logger.info('[ReportBuilder] Comment deleted', { reportId: id, commentId, userId });
+
+      res.json({ success: true });
+    } catch (err) {
+      logger.error('[ReportBuilder] Error deleting comment:', err);
+      next(err);
+    }
+  }
+);
+
+/**
+ * POST /api/report-builder/:id/comments/:commentId/resolve
+ * Quick resolve a comment
+ */
+router.post(
+  '/:id/comments/:commentId/resolve',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id, commentId } = req.params;
+      const { userId, organizationId } = getAuthContext(req);
+      const { resolutionNotes } = req.body;
+
+      // Verify report exists
+      const report = await ReportBuilderService.getReport(id, organizationId);
+      if (!report) {
+        return res.status(404).json({ error: 'Report not found' });
+      }
+
+      const comment = await ReportBuilderCommentsService.updateComment(commentId, userId, {
+        status: 'RESOLVED',
+        resolutionNotes,
+      });
+
+      if (!comment) {
+        return res.status(404).json({ error: 'Comment not found' });
+      }
+
+      logger.info('[ReportBuilder] Comment resolved', { reportId: id, commentId, userId });
+
+      // Return updated summary
+      const summary = await ReportBuilderCommentsService.getCommentSummary(id);
+
+      res.json({ comment, summary });
+    } catch (err) {
+      logger.error('[ReportBuilder] Error resolving comment:', err);
+      next(err);
+    }
+  }
+);
+
+/**
+ * POST /api/report-builder/:id/comments/bulk-resolve
+ * Resolve multiple comments at once
+ */
+router.post(
+  '/:id/comments/bulk-resolve',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const { userId, organizationId } = getAuthContext(req);
+      const { commentIds, resolutionNotes } = req.body;
+
+      if (!Array.isArray(commentIds) || commentIds.length === 0) {
+        return res.status(400).json({ error: 'commentIds array is required' });
+      }
+
+      // Verify report exists
+      const report = await ReportBuilderService.getReport(id, organizationId);
+      if (!report) {
+        return res.status(404).json({ error: 'Report not found' });
+      }
+
+      const resolvedCount = await ReportBuilderCommentsService.resolveComments(
+        commentIds,
+        userId,
+        resolutionNotes
+      );
+
+      logger.info('[ReportBuilder] Bulk resolve', { reportId: id, resolvedCount, userId });
+
+      const summary = await ReportBuilderCommentsService.getCommentSummary(id);
+
+      res.json({ resolvedCount, summary });
+    } catch (err) {
+      logger.error('[ReportBuilder] Error bulk resolving comments:', err);
       next(err);
     }
   }

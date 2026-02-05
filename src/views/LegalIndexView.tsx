@@ -219,7 +219,7 @@ export const LegalIndexView: React.FC = () => {
               <span className="text-sm font-medium">Back to Home</span>
             </Link>
             <Link to="/" className="flex items-center gap-2 text-white">
-              <img src="/assets/logos/logo-dark.png" alt="DBR77" className="h-6" />
+              <img src="/assets/logos/logo-dark.png" alt="Consultinity" className="h-6" />
               <span className="font-bold">Consultinity</span>
             </Link>
           </div>

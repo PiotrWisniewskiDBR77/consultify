@@ -135,8 +135,8 @@ describe('ReportHeader Component', () => {
       expect(defaultProps.onSave).toHaveBeenCalled();
     });
 
-    it('hides save button for FINAL status', () => {
-      render(<ReportHeader {...defaultProps} status="FINAL" />);
+    it('hides save button for APPROVED status', () => {
+      render(<ReportHeader {...defaultProps} status="APPROVED" />);
 
       expect(screen.queryByText('Save')).not.toBeInTheDocument();
     });
@@ -146,26 +146,26 @@ describe('ReportHeader Component', () => {
     it('renders for DRAFT status', () => {
       render(<ReportHeader {...defaultProps} />);
 
-      expect(screen.getByText('Finalize')).toBeInTheDocument();
+      expect(screen.getByText('Submit')).toBeInTheDocument();
     });
 
     it('hides for FINAL status', () => {
       render(<ReportHeader {...defaultProps} status="FINAL" />);
 
-      expect(screen.queryByText('Finalize')).not.toBeInTheDocument();
+      expect(screen.queryByText('Submit')).not.toBeInTheDocument();
     });
 
     it('disables when hasUnsavedChanges', () => {
       render(<ReportHeader {...defaultProps} hasUnsavedChanges={true} />);
 
-      const finalizeButton = screen.getByText('Finalize').closest('button');
+      const finalizeButton = screen.getByText('Submit').closest('button');
       expect(finalizeButton).toBeDisabled();
     });
 
     it('calls onFinalize when clicked', async () => {
       render(<ReportHeader {...defaultProps} />);
 
-      await user.click(screen.getByText('Finalize'));
+      await user.click(screen.getByText('Submit'));
 
       expect(defaultProps.onFinalize).toHaveBeenCalled();
     });

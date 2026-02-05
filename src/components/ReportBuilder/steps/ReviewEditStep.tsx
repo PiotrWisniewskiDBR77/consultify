@@ -5,6 +5,7 @@
  */
 
 import {
+  ArrowRight,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -15,6 +16,7 @@ import {
   Loader2,
   RefreshCw,
   Save,
+  Send,
   Sparkles,
   X,
 } from 'lucide-react';
@@ -48,6 +50,8 @@ interface ReviewEditStepProps {
   onFinalize: () => Promise<void>;
   onApprove?: () => Promise<void>;
   onSendBack?: () => Promise<void>;
+  onMarkSentInternal?: () => Promise<void>;
+  onMarkSentExternal?: () => Promise<void>;
   onExportPdf?: () => Promise<void>;
   onCreateShareLink?: (options?: {
     password?: string;
@@ -326,6 +330,8 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
   onFinalize,
   onApprove,
   onSendBack,
+  onMarkSentInternal,
+  onMarkSentExternal,
   onExportPdf,
   onCreateShareLink,
   onGetShareLinks,
@@ -423,11 +429,17 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
                   ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
                   : report.status === 'IN_REVIEW'
                     ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
-                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                    : report.status === 'SENT_INTERNAL'
+                      ? 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300'
+                      : report.status === 'SENT_EXTERNAL'
+                        ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300'
+                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
               }
             `}
             >
               {report.status === 'APPROVED' && <CheckCircle2 className="w-4 h-4" />}
+              {report.status === 'SENT_INTERNAL' && <Send className="w-4 h-4" />}
+              {report.status === 'SENT_EXTERNAL' && <ArrowRight className="w-4 h-4" />}
               {report.status}
             </div>
           )}
@@ -531,6 +543,95 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
                   </button>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Approved actions - Mark as sent internally */}
+      {report?.status === 'APPROVED' && onMarkSentInternal && (
+        <div className="mt-8 p-6 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl border border-emerald-200 dark:border-emerald-800">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
+              <CheckCircle2 className="w-6 h-6 text-emerald-700 dark:text-emerald-300" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-emerald-900 dark:text-emerald-100">
+                {isPl ? 'Raport zatwierdzony' : 'Report Approved'}
+              </h3>
+              <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-1">
+                {isPl
+                  ? 'Raport został zatwierdzony. Oznacz jako wysłany wewnętrznie, gdy przekażesz go do zespołu.'
+                  : 'Report has been approved. Mark as sent internally when you share it with the team.'}
+              </p>
+
+              <button
+                onClick={onMarkSentInternal}
+                disabled={isLoading}
+                className="mt-4 flex items-center gap-2 px-5 py-2 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 disabled:opacity-50"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+                {isPl ? 'Oznacz jako wysłany wewnętrznie' : 'Mark as Sent Internally'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sent Internal actions - Mark as sent externally */}
+      {report?.status === 'SENT_INTERNAL' && onMarkSentExternal && (
+        <div className="mt-8 p-6 bg-cyan-50 dark:bg-cyan-900/10 rounded-xl border border-cyan-200 dark:border-cyan-800">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-full bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center flex-shrink-0">
+              <Send className="w-6 h-6 text-cyan-700 dark:text-cyan-300" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-cyan-900 dark:text-cyan-100">
+                {isPl ? 'Wysłany wewnętrznie' : 'Sent Internally'}
+              </h3>
+              <p className="text-sm text-cyan-700 dark:text-cyan-300 mt-1">
+                {isPl
+                  ? 'Raport został wysłany wewnętrznie. Oznacz jako wysłany zewnętrznie, gdy przekażesz go do klienta.'
+                  : 'Report has been sent internally. Mark as sent externally when you share it with the client.'}
+              </p>
+
+              <button
+                onClick={onMarkSentExternal}
+                disabled={isLoading}
+                className="mt-4 flex items-center gap-2 px-5 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ArrowRight className="w-4 h-4" />
+                )}
+                {isPl ? 'Oznacz jako wysłany zewnętrznie' : 'Mark as Sent Externally'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sent External - Final status info */}
+      {report?.status === 'SENT_EXTERNAL' && (
+        <div className="mt-8 p-6 bg-teal-50 dark:bg-teal-900/10 rounded-xl border border-teal-200 dark:border-teal-800">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0">
+              <ArrowRight className="w-6 h-6 text-teal-700 dark:text-teal-300" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-teal-900 dark:text-teal-100">
+                {isPl ? 'Wysłany zewnętrznie' : 'Sent Externally'}
+              </h3>
+              <p className="text-sm text-teal-700 dark:text-teal-300 mt-1">
+                {isPl
+                  ? 'Raport został wysłany do klienta. Cykl życia raportu został zakończony.'
+                  : 'Report has been sent to the client. The report lifecycle is complete.'}
+              </p>
             </div>
           </div>
         </div>

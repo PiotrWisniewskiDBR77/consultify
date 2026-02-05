@@ -19,6 +19,11 @@ export type ReportLanguageCode = 'pl' | 'en';
 export type ReportTone = 'consulting' | 'neutral' | 'decisive';
 export type ReportScope = 'full' | 'executive' | 'focused';
 
+// New style parameters for controlling generation verbosity
+export type VerbosityLevel = 'concise' | 'standard' | 'detailed' | 'comprehensive';
+export type WritingStyle = 'formal' | 'professional' | 'consultative' | 'persuasive';
+export type IllustrationLevel = 'minimal' | 'moderate' | 'extensive';
+
 export interface ReportIntent {
   audience: ReportAudience;
   goal: ReportGoal;
@@ -30,6 +35,12 @@ export interface ReportIntent {
     assessmentMatrix?: boolean;
   };
   profileId?: string;
+  // Style parameters
+  verbosity?: VerbosityLevel;
+  writingStyle?: WritingStyle;
+  illustrationLevel?: IllustrationLevel;
+  useMetrics?: boolean;
+  includeReferences?: boolean;
 }
 
 interface InvocationProfile {
@@ -380,6 +391,114 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
               {isPl ? 'Dodaj macierz oceny (DRD)' : 'Include assessment matrix (DRD)'}
             </label>
           </div>
+        </div>
+      </div>
+
+      {/* Style & Verbosity Settings */}
+      <div className="border-t border-slate-200 dark:border-slate-700 pt-8 space-y-6">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+            {isPl ? 'Styl generowania treści' : 'Content Generation Style'}
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            {isPl
+              ? 'Te ustawienia kontrolują szczegółowość i styl generowanego tekstu'
+              : 'These settings control the detail level and style of generated content'}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {/* Verbosity */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              {isPl ? 'Szczegółowość' : 'Verbosity'}
+            </label>
+            <select
+              value={intent.verbosity || 'standard'}
+              onChange={(e) => onIntentChange({ verbosity: e.target.value as VerbosityLevel })}
+              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="concise">{isPl ? 'Zwięzły' : 'Concise'}</option>
+              <option value="standard">{isPl ? 'Standardowy' : 'Standard'}</option>
+              <option value="detailed">{isPl ? 'Szczegółowy' : 'Detailed'}</option>
+              <option value="comprehensive">{isPl ? 'Wyczerpujący' : 'Comprehensive'}</option>
+            </select>
+            <p className="text-xs text-slate-500 mt-1">
+              {intent.verbosity === 'comprehensive' &&
+                (isPl
+                  ? 'Maksymalizuje ilość tekstu i szczegółów'
+                  : 'Maximizes content detail and length')}
+              {intent.verbosity === 'detailed' &&
+                (isPl ? 'Obszerny z wieloma szczegółami' : 'Thorough with extensive details')}
+              {intent.verbosity === 'standard' &&
+                (isPl ? 'Zbalansowane podejście' : 'Balanced approach')}
+              {(intent.verbosity === 'concise' || !intent.verbosity) &&
+                (isPl ? 'Skondensowany, tylko kluczowe punkty' : 'Condensed, key points only')}
+            </p>
+          </div>
+
+          {/* Writing Style */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              {isPl ? 'Styl pisania' : 'Writing Style'}
+            </label>
+            <select
+              value={intent.writingStyle || 'professional'}
+              onChange={(e) => onIntentChange({ writingStyle: e.target.value as WritingStyle })}
+              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="formal">{isPl ? 'Formalny' : 'Formal'}</option>
+              <option value="professional">{isPl ? 'Profesjonalny' : 'Professional'}</option>
+              <option value="consultative">{isPl ? 'Doradczy' : 'Consultative'}</option>
+              <option value="persuasive">{isPl ? 'Perswazyjny' : 'Persuasive'}</option>
+            </select>
+          </div>
+
+          {/* Illustration Level */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              {isPl ? 'Przykłady' : 'Examples'}
+            </label>
+            <select
+              value={intent.illustrationLevel || 'moderate'}
+              onChange={(e) =>
+                onIntentChange({ illustrationLevel: e.target.value as IllustrationLevel })
+              }
+              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="minimal">{isPl ? 'Minimalne' : 'Minimal'}</option>
+              <option value="moderate">{isPl ? 'Umiarkowane' : 'Moderate'}</option>
+              <option value="extensive">{isPl ? 'Rozbudowane' : 'Extensive'}</option>
+            </select>
+            <p className="text-xs text-slate-500 mt-1">
+              {intent.illustrationLevel === 'extensive' &&
+                (isPl ? 'Wiele przykładów i case studies' : 'Many examples and case studies')}
+            </p>
+          </div>
+        </div>
+
+        {/* Additional options */}
+        <div className="flex flex-wrap gap-4">
+          <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+            <input
+              type="checkbox"
+              checked={Boolean(intent.useMetrics)}
+              onChange={(e) => onIntentChange({ useMetrics: e.target.checked })}
+              className="rounded border-slate-300"
+            />
+            {isPl ? 'Używaj metryk i danych liczbowych' : 'Use metrics and quantitative data'}
+          </label>
+          <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+            <input
+              type="checkbox"
+              checked={Boolean(intent.includeReferences)}
+              onChange={(e) => onIntentChange({ includeReferences: e.target.checked })}
+              className="rounded border-slate-300"
+            />
+            {isPl
+              ? 'Dodaj odniesienia do standardów branżowych'
+              : 'Include industry standard references'}
+          </label>
         </div>
       </div>
     </div>

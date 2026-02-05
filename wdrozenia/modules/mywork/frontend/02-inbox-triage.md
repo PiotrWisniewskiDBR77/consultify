@@ -14,9 +14,7 @@ Ma sterować zachowaniem organizacji: wymuszać decyzję lub ruch w taskach.
 
 ---
 
-## Zasady UX (kanon)
-
-1. Każda pozycja Inbox odpowiada na 4 pytania:
+## Zasady UX (kanon)1. Każda pozycja Inbox odpowiada na 4 pytania:
    - **Co się dzieje**
    - **Dlaczego to ważne**
    - **Co jest blokowane**
@@ -40,9 +38,7 @@ Ma sterować zachowaniem organizacji: wymuszać decyzję lub ruch w taskach.
 - Scope: projekt/program/initiative (opcjonalnie)
 - Sort: domyślnie “Criticality score”
 
-### Lista pozycji (cards lub table rows)
-
-Każda pozycja:
+### Lista pozycji (cards lub table rows)Każda pozycja:
 
 - Ikona typu (Task / Decision / Alert)
 - Tytuł (decision statement / task title)

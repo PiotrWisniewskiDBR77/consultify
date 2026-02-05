@@ -84,7 +84,10 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
   const isGenerated =
     report?.status === 'GENERATED' ||
     report?.status === 'IN_REVIEW' ||
-    report?.status === 'APPROVED';
+    report?.status === 'APPROVED' ||
+    report?.status === 'SENT_INTERNAL' ||
+    report?.status === 'SENT_EXTERNAL' ||
+    report?.status === 'UTILIZED';
 
   return (
     <div className="space-y-6">

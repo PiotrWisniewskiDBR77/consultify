@@ -299,6 +299,67 @@ export const verifyToken = asyncHandler(
       return;
     }
 
+    // --------------------------------------------------------------------
+    // E2E MODE AUTH BYPASS (deterministic Playwright runtime tests)
+    // --------------------------------------------------------------------
+    // In E2E_MODE we allow a JWT-like token that is NOT signature-verified,
+    // but MUST contain an explicit `e2e: true` claim. This is safe because:
+    // - It is gated behind E2E_MODE (never enabled in production)
+    // - It still requires the client to send a token (frontend uses it)
+    //
+    // This enables CI Playwright runtime tests without relying on seeded
+    // credentials or secrets in CI.
+    if (process.env.E2E_MODE === 'true') {
+      try {
+        const decoded = jwtLib.decode(token) as JWTPayload | null;
+        if (decoded && (decoded as any).e2e === true && decoded.id) {
+          // Best-effort: ensure the E2E user/org exist in DB so that
+          // downstream routes that rely on FK / joins (e.g. conversations)
+          // can operate normally during runtime tests.
+          try {
+            const { run } = await import('../utils/DbPromise.js');
+            const orgId =
+              decoded.organizationId || (decoded as any).organization_id || 'e2e-org-id';
+            const userRole = (decoded.role || decoded.userRole || 'ADMIN').toString().toUpperCase();
+            await run(
+              `
+                INSERT INTO organizations (id, name, plan, status)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(id) DO NOTHING
+              `,
+              [orgId, 'E2E Organization', 'enterprise', 'active']
+            );
+            await run(
+              `
+                INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO NOTHING
+              `,
+              [
+                decoded.id,
+                orgId,
+                decoded.email || 'e2e@local.test',
+                // Not used in E2E token mode (no login), but keep schema happy.
+                'e2e-not-used',
+                userRole,
+                'active',
+                (decoded.name || 'E2E').toString().split(' ')[0] || 'E2E',
+                (decoded.name || 'User').toString().split(' ').slice(1).join(' ') || 'User',
+              ]
+            );
+          } catch (seedErr) {
+            logger.warn('[AuthMiddleware] E2E seed failed (continuing):', seedErr);
+          }
+
+          // Attach without signature verification / revocation checks
+          await attachUser(decoded, req, next);
+          return;
+        }
+      } catch (e) {
+        // Ignore and fall through to normal verification
+      }
+    }
+
     try {
       const { jwt: jwtLib, config } = await getDeps();
 

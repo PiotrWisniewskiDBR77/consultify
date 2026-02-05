@@ -115,7 +115,7 @@ export const EntryFooter: React.FC = () => {
           <div className="col-span-2 space-y-6">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <img src="/assets/logos/logo-dark.png" alt="DBR77" className="h-8" />
+              <img src="/assets/logos/logo-dark.png" alt="Consultinity" className="h-8" />
               <span className="text-lg font-black tracking-tight text-navy-950 dark:text-white uppercase">
                 Consultinity
               </span>

@@ -10,6 +10,7 @@ import {
   MessageSquare,
   Save,
   Settings,
+  Sparkles,
   Unlock,
   X,
 } from 'lucide-react';
@@ -17,15 +18,20 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
+import { UnifiedChatPanel } from '@/components/AIChat/UnifiedChatPanel';
 import { DRDAssessmentEditor } from '@/components/assessment/drd/DRDAssessmentEditor';
+import { InitiativesGenerationWizardModal } from '@/components/assessment/InitiativesGenerationWizardModal';
 import { AssessmentManagePanel } from '@/components/assessment/manage/AssessmentManagePanel';
+import { ReportTemplatePickerModal } from '@/components/assessment/modals/ReportTemplatePickerModal';
 import { RequestAccessModal, useAssessmentPermissions } from '@/components/assessment/permissions';
+import { ReportBuilderWorkspace } from '@/components/assessment/ReportBuilderWorkspace';
 import { SIRIForm } from '@/components/assessment/tools/SIRIForm';
 import { Api } from '@/services/api';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
+import { createWorkspaceContext } from '@/types/workspace';
 
 type SupportedFramework = 'drd' | 'siri' | 'adma' | 'cmmi' | 'lean';
 
@@ -35,6 +41,7 @@ type AssessmentSession = {
   status: string;
   type?: string;
   completion_percent?: number;
+  confidence_avg?: number;
   created_at?: string;
   created_by?: string;
   updated_at?: string;
@@ -58,6 +65,15 @@ type DRDPosition = {
 
 function clamp(n: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, n));
+}
+
+function calcConfidenceAvgFromCompletion(completionPercent: number): number {
+  const c = Number(completionPercent || 0);
+  if (!Number.isFinite(c)) return 1;
+  if (c >= 100) return 4;
+  // Heuristic aligned with other tool workspaces:
+  // 0-19% -> 1, 20-39% -> 2, 40-59% -> 3, 60-79% -> 4, 80-99% -> 5
+  return clamp(Math.round(c / 20), 1, 5);
 }
 
 function getDrdFlatPositions(): Array<DRDPosition> {
@@ -140,8 +156,12 @@ function calcAxisProgress(
 export const AssessmentSessionEditorView: React.FC = () => {
   const navigate = useNavigate();
   const { framework: frameworkParam, assessmentId } = useParams();
-  const { setCurrentViewState, currentUser } = useAppStore();
-  const { createConversation } = useConversationStore();
+  // NOTE (React 19 + useSyncExternalStore):
+  // Avoid selectors returning new objects/arrays each call (even with shallow),
+  // because it can trigger "getSnapshot should be cached" warnings/loops.
+  const setCurrentViewState = useAppStore((s) => s.setCurrentViewState);
+  const currentUser = useAppStore((s) => s.currentUser);
+  const createConversation = useConversationStore((s) => s.createConversation);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const framework = (frameworkParam?.toLowerCase() as SupportedFramework | undefined) || undefined;
@@ -197,7 +217,15 @@ export const AssessmentSessionEditorView: React.FC = () => {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [showRequestAccessModal, setShowRequestAccessModal] = useState(false);
-  const [isManageOpen, setIsManageOpen] = useState(false);
+  const [leftWorkspace, setLeftWorkspace] = useState<'none' | 'manage' | 'chat'>('none');
+  const [manageTab, setManageTab] = useState<
+    'workflow' | 'team' | 'initiatives' | 'reports' | 'access' | 'logs'
+  >('workflow');
+  const [isInitiativesWizardOpen, setIsInitiativesWizardOpen] = useState(false);
+  const [isReportTemplatePickerOpen, setIsReportTemplatePickerOpen] = useState(false);
+  const [isReportBuilderOpen, setIsReportBuilderOpen] = useState(false);
+  const [activeReportId, setActiveReportId] = useState<string | null>(null);
+  const [reportPreparing, setReportPreparing] = useState(false);
 
   // Permissions
   const {
@@ -416,9 +444,11 @@ export const AssessmentSessionEditorView: React.FC = () => {
       saveTimerRef.current = window.setTimeout(async () => {
         setIsSaving(true);
         try {
+          const resolvedCompletion = completionPercent ?? assessment?.completion_percent ?? 0;
           const payload: any = {
             answers: nextAnswers,
-            completionPercent: completionPercent ?? assessment?.completion_percent ?? 0,
+            completionPercent: resolvedCompletion,
+            confidenceAvg: calcConfidenceAvgFromCompletion(resolvedCompletion),
           };
           if (framework === 'drd') {
             payload.navigation = {
@@ -480,9 +510,11 @@ export const AssessmentSessionEditorView: React.FC = () => {
         framework === 'drd'
           ? calcDrdCompletionPercent(answers?.drd || {})
           : (assessment?.completion_percent ?? 0);
+      const confidenceAvg = calcConfidenceAvgFromCompletion(completionPercent);
       const payload: any = {
         answers,
         completionPercent,
+        confidenceAvg,
       };
       if (framework === 'drd') {
         payload.navigation = { axisId: currentAxisId, areaId: currentAreaId, level: currentLevel };
@@ -549,9 +581,11 @@ export const AssessmentSessionEditorView: React.FC = () => {
         framework === 'drd'
           ? calcDrdCompletionPercent(answers?.drd || {})
           : (assessment?.completion_percent ?? 0);
+      const confidenceAvg = calcConfidenceAvgFromCompletion(completionPercent);
       const payload: any = {
         answers,
         completionPercent,
+        confidenceAvg,
       };
       if (framework === 'drd') {
         payload.navigation = { axisId: currentAxisId, areaId: currentAreaId, level: currentLevel };
@@ -580,20 +614,73 @@ export const AssessmentSessionEditorView: React.FC = () => {
 
     try {
       // Create new conversation with assessment context
-      const conversation = await createConversation({
+      await createConversation({
         title: `Assessment: ${assessment.name || 'Untitled'}`,
         pmoContext: {
           assessmentId: assessmentId,
         },
       });
-
-      // Navigate to chat with the new conversation
-      navigate(`/ai-chat?conversationId=${conversation.id}`);
+      // Open embedded chat workspace (left panel)
+      setLeftWorkspace('chat');
     } catch (e: any) {
       console.error('[AssessmentSessionEditorView] Failed to create chat:', e);
       toast.error('Failed to open chat');
     }
-  }, [assessmentId, assessment, createConversation, navigate]);
+  }, [assessmentId, assessment, createConversation]);
+
+  const handleOpenInitiativesWorkflow = useCallback(() => {
+    if (canManageEffective) {
+      setManageTab('initiatives');
+      setLeftWorkspace('manage');
+    }
+    setIsInitiativesWizardOpen(true);
+  }, [canManageEffective]);
+
+  const openReport = useCallback((reportId: string) => {
+    setActiveReportId(reportId);
+    setIsReportBuilderOpen(true);
+  }, []);
+
+  const handleOpenReportWorkflow = useCallback(() => {
+    if (!assessmentId || !assessment) return;
+    if (canManageEffective) {
+      setManageTab('reports');
+      setLeftWorkspace('manage');
+    }
+    setIsReportTemplatePickerOpen(true);
+  }, [assessmentId, assessment, canManageEffective]);
+
+  const handleStartNewReportFromTemplate = useCallback(
+    async (templateId: string) => {
+      if (!assessmentId || !assessment) return;
+
+      setReportPreparing(true);
+      setIsReportTemplatePickerOpen(false);
+      setIsReportBuilderOpen(true);
+      setActiveReportId(null);
+
+      try {
+        const created: any = await Api.post('/assessment-reports', {
+          assessmentId,
+          name: `Report - ${assessment?.name || 'Assessment'}`,
+          templateId,
+        });
+        const reportId = String(created?.id || created?.reportId || created?.report?.id || '');
+        if (!reportId) throw new Error('Missing report id');
+
+        await Api.generateReport(reportId, { templateId, language: 'pl' });
+        setActiveReportId(reportId);
+      } catch (e: any) {
+        console.error('[AssessmentSessionEditorView] Failed to create/generate report:', e);
+        toast.error(e?.message || 'Failed to generate report');
+        setIsReportBuilderOpen(false);
+        setActiveReportId(null);
+      } finally {
+        setReportPreparing(false);
+      }
+    },
+    [assessmentId, assessment]
+  );
 
   const assignmentByAreaId = useMemo(() => {
     const map: Record<string, any> = {};
@@ -602,6 +689,61 @@ export const AssessmentSessionEditorView: React.FC = () => {
     }
     return map;
   }, [assignments]);
+
+  const chatWorkspaceContext = useMemo(() => {
+    if (!assessmentId || !assessment) return undefined;
+    const view =
+      framework === 'drd'
+        ? AppView.ASSESSMENT_DRD
+        : framework === 'siri'
+          ? AppView.ASSESSMENT_SIRI
+          : framework === 'adma'
+            ? AppView.ASSESSMENT_ADMA
+            : framework === 'cmmi'
+              ? AppView.ASSESSMENT_CMMI
+              : framework === 'lean'
+                ? AppView.ASSESSMENT_LEAN
+                : AppView.ASSESSMENT_OVERVIEW;
+
+    const completionPercent =
+      framework === 'drd'
+        ? calcDrdCompletionPercent(answers?.drd || {})
+        : (assessment?.completion_percent ?? 0);
+    const confidenceAvg = calcConfidenceAvgFromCompletion(completionPercent);
+
+    const drdData: any = answers?.drd || {};
+    const axisProgress =
+      framework === 'drd'
+        ? DRD_STRUCTURE.map((ax) => {
+            const p = calcAxisProgress(drdData, ax.id);
+            return {
+              axisId: ax.id,
+              axisName: ax.namePL || ax.name,
+              completed: p.completed,
+              total: p.total,
+              percent: p.percent,
+            };
+          }).sort((a, b) => a.percent - b.percent)
+        : [];
+
+    return createWorkspaceContext(view, 'assessment', {
+      entityId: assessmentId,
+      entityName: assessment?.name || 'Assessment',
+      entityData: {
+        assessmentId,
+        framework,
+        status: assessment?.status,
+        completionPercent,
+        confidenceAvg,
+        currentFocus:
+          framework === 'drd'
+            ? { axisId: currentAxisId, areaId: currentAreaId, level: currentLevel }
+            : null,
+        needsWorkTopAxes: axisProgress.slice(0, 3),
+        contextSnapshot: assessment?.contextSnapshot || null,
+      },
+    });
+  }, [assessmentId, assessment, framework, answers, currentAxisId, currentAreaId, currentLevel]);
 
   const assignAreaToMe = useCallback(
     async (areaId: string) => {
@@ -838,16 +980,32 @@ export const AssessmentSessionEditorView: React.FC = () => {
           assignmentByAreaId={assignmentByAreaId}
           onAssignToMe={assignAreaToMe}
           leftOverride={
-            isManageOpen && canManageEffective ? (
+            leftWorkspace === 'manage' && canManageEffective ? (
               <AssessmentManagePanel
                 assessmentId={assessmentId}
                 assessmentName={assessment?.name}
+                initialTab={manageTab}
+                onOpenReport={(reportId) => openReport(reportId)}
+                onCreateReport={() => setIsReportTemplatePickerOpen(true)}
               />
+            ) : leftWorkspace === 'chat' ? (
+              <div className="h-full">
+                <UnifiedChatPanel
+                  mode="split"
+                  showModeToggle={false}
+                  showHistoryTrigger={true}
+                  showFocusMode={true}
+                  title="Assessment chat"
+                  workspaceContext={chatWorkspaceContext}
+                  onBack={() => setLeftWorkspace('none')}
+                  className="h-full"
+                />
+              </div>
             ) : undefined
           }
           onViewModeChange={() => {
             // Switching between Survey/Preview should exit Manage workspace
-            if (isManageOpen) setIsManageOpen(false);
+            if (leftWorkspace === 'manage') setLeftWorkspace('none');
           }}
           value={drdData}
           onChange={(next) => {
@@ -857,17 +1015,17 @@ export const AssessmentSessionEditorView: React.FC = () => {
           }}
           currentAxisId={currentAxisId}
           onAxisChange={(nextAxisId) => {
-            if (isManageOpen) setIsManageOpen(false);
+            if (leftWorkspace === 'manage') setLeftWorkspace('none');
             handleAxisChange(nextAxisId);
           }}
           currentAreaId={currentAreaId}
           onAreaChange={(nextAreaId) => {
-            if (isManageOpen) setIsManageOpen(false);
+            if (leftWorkspace === 'manage') setLeftWorkspace('none');
             handleAreaChange(nextAreaId);
           }}
           currentLevel={currentLevel}
           onLevelChange={(lvl) => {
-            if (isManageOpen) setIsManageOpen(false);
+            if (leftWorkspace === 'manage') setLeftWorkspace('none');
             handleLevelChange(lvl);
           }}
         />
@@ -1003,10 +1161,10 @@ export const AssessmentSessionEditorView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => {
-                  setIsManageOpen((v) => !v);
+                  setLeftWorkspace((v) => (v === 'manage' ? 'none' : 'manage'));
                 }}
                 className={`hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-lg border text-sm font-medium transition-colors ${
-                  isManageOpen
+                  leftWorkspace === 'manage'
                     ? 'border-purple-200/60 dark:border-purple-900/30 bg-purple-50/70 dark:bg-purple-900/10 text-purple-700 dark:text-purple-200'
                     : 'border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900'
                 }`}
@@ -1067,18 +1225,9 @@ export const AssessmentSessionEditorView: React.FC = () => {
               <span>Chat</span>
             </button>
 
-            {/* Report Builder button */}
+            {/* Report workflow (in-place overlay) */}
             <button
-              onClick={() => {
-                if (!assessmentId) return;
-                const qs = new URLSearchParams({
-                  new: 'true',
-                  sourceType: 'ASSESSMENT',
-                  sourceId: assessmentId,
-                  ...(assessment?.name ? { sourceName: assessment.name } : {}),
-                });
-                navigate(`/reports/builder?${qs.toString()}`);
-              }}
+              onClick={handleOpenReportWorkflow}
               className="hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors"
               title="Create report from this assessment"
               type="button"
@@ -1087,23 +1236,16 @@ export const AssessmentSessionEditorView: React.FC = () => {
               <span>Report</span>
             </button>
 
-            {/* Save button - only when can edit and not locked */}
-            {canEditEffective && !isLocked && (
-              <button
-                onClick={handleManualSave}
-                disabled={isSaving}
-                className="hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors"
-                title="Save (Ctrl+S / Cmd+S)"
-                type="button"
-              >
-                {isSaving ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Save className="w-4 h-4" />
-                )}
-                <span>Save</span>
-              </button>
-            )}
+            {/* Initiatives workflow (in-place overlay) */}
+            <button
+              onClick={handleOpenInitiativesWorkflow}
+              className="hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors"
+              title="Generate initiatives from this assessment"
+              type="button"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Initiatives</span>
+            </button>
 
             {/* Exit button - always visible */}
             <button
@@ -1206,6 +1348,40 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   </span>
                   <div className="mt-1 text-sm">{isLocked ? 'Read-only' : 'Editing enabled'}</div>
                 </div>
+                <div>
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Confidence
+                  </span>
+                  <div className="mt-1 text-sm tabular-nums">
+                    {calcConfidenceAvgFromCompletion(overallProgress).toFixed(1)} / 5
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Needs work
+                  </span>
+                  <div className="mt-1 text-sm">
+                    {framework === 'drd' ? (
+                      <div className="space-y-1">
+                        {(chatWorkspaceContext as any)?.entityData?.needsWorkTopAxes?.map(
+                          (ax: any) => (
+                            <div
+                              key={ax.axisId}
+                              className="flex items-center justify-between gap-3"
+                            >
+                              <span className="truncate">{ax.axisName}</span>
+                              <span className="tabular-nums text-slate-600 dark:text-slate-300">
+                                {ax.percent}%
+                              </span>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-slate-500 dark:text-slate-400">—</span>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1213,6 +1389,71 @@ export const AssessmentSessionEditorView: React.FC = () => {
       </div>
 
       <div className="flex-1 overflow-auto">{renderEditor()}</div>
+
+      {/* Embedded chat fallback for non-DRD tools (no leftOverride shell yet) */}
+      {leftWorkspace === 'chat' && framework !== 'drd' && (
+        <div className="fixed inset-0 z-40">
+          <div className="absolute inset-0 bg-black/20" onClick={() => setLeftWorkspace('none')} />
+          <div className="absolute inset-y-0 left-0 w-[min(560px,calc(100vw-32px))] m-4 rounded-2xl overflow-hidden border border-slate-200 dark:border-navy-700 shadow-2xl bg-white dark:bg-navy-900">
+            <UnifiedChatPanel
+              mode="split"
+              showModeToggle={false}
+              showHistoryTrigger={true}
+              showFocusMode={true}
+              title="Assessment chat"
+              workspaceContext={chatWorkspaceContext}
+              onBack={() => setLeftWorkspace('none')}
+              className="h-full"
+            />
+          </div>
+        </div>
+      )}
+
+      <ReportTemplatePickerModal
+        isOpen={isReportTemplatePickerOpen}
+        onClose={() => setIsReportTemplatePickerOpen(false)}
+        onSelect={(tpl) => handleStartNewReportFromTemplate(tpl.id)}
+      />
+
+      {/* Report builder overlay (direct report view) */}
+      {isReportBuilderOpen && (
+        <div className="fixed inset-0 z-50">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => {
+              if (!reportPreparing) setIsReportBuilderOpen(false);
+            }}
+          />
+          <div className="relative w-full h-full p-4">
+            <div className="mx-auto w-[min(1360px,calc(100vw-32px))] h-[min(92vh,calc(100vh-32px))] rounded-2xl overflow-hidden border border-slate-200 dark:border-navy-700 shadow-2xl bg-white dark:bg-navy-900">
+              {reportPreparing || !activeReportId ? (
+                <div className="h-full flex items-center justify-center">
+                  <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Preparing report…
+                  </div>
+                </div>
+              ) : (
+                <ReportBuilderWorkspace
+                  reportId={activeReportId}
+                  onClose={() => setIsReportBuilderOpen(false)}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Initiatives workflow overlay */}
+      <InitiativesGenerationWizardModal
+        isOpen={isInitiativesWizardOpen}
+        onClose={() => setIsInitiativesWizardOpen(false)}
+        initialAssessmentId={assessmentId}
+        onCompleted={() => {
+          // Keep user in-place; Manage panel already shows initiatives table if open.
+          toast.success('Initiatives generation completed');
+        }}
+      />
 
       {isChatContextOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">

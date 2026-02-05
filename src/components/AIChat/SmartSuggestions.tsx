@@ -60,21 +60,6 @@ const SUGGESTION_COLORS: Record<string, string> = {
   expand: 'from-purple-500/10 to-purple-600/5 border-purple-200/50 dark:border-purple-800/50',
 };
 
-// Minimal static suggestions for welcome screen
-const MINIMAL_SUGGESTIONS = [
-  { id: 'brief', text: 'Dzienny brief', prompt: '__DAILY_BRIEF__' },
-  {
-    id: 'week',
-    text: 'Zaplanuj tydzień',
-    prompt: 'Pomóż mi zaplanować priorytety na najbliższy tydzień',
-  },
-  {
-    id: 'diagram',
-    text: 'Stwórz diagram',
-    prompt: 'Stwórz diagram procesu dla onboardingu nowego klienta',
-  },
-];
-
 export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
   projectId,
   onSuggestionClick,
@@ -153,23 +138,53 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
 
   // Minimal variant - 3 subtle text suggestions
   if (variant === 'minimal') {
+    const minimalSuggestions = [
+      { id: 'brief', text: t('aiChat.dailyBrief', 'Daily brief'), prompt: '__DAILY_BRIEF__' },
+      {
+        id: 'week',
+        text: t('aiChat.quickActions.planWeek.label', 'Plan the week'),
+        prompt: t(
+          'aiChat.quickActions.planWeek.prompt',
+          'Help me plan priorities for the next week'
+        ),
+      },
+      {
+        id: 'diagram',
+        text: t('aiChat.quickActions.createDiagram.label', 'Create a diagram'),
+        prompt: t(
+          'aiChat.quickActions.createDiagram.prompt',
+          'Create a process diagram for onboarding a new client'
+        ),
+      },
+    ];
+
     return (
-      <div className={`flex items-center justify-center gap-4 ${className}`}>
-        {MINIMAL_SUGGESTIONS.map((item, idx) => (
-          <React.Fragment key={item.id}>
-            {idx > 0 && <span className="text-slate-300 dark:text-slate-700">·</span>}
-            <button
-              onClick={() => handleMinimalClick(item.prompt)}
-              className="
-                                text-xs text-slate-400 dark:text-slate-500
-                                hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300
-                                transition-colors duration-200
-                            "
-            >
-              {item.text}
-            </button>
-          </React.Fragment>
-        ))}
+      <div className={`flex items-center justify-center ${className}`}>
+        <div
+          className="
+            inline-flex items-center justify-center gap-4
+            rounded-xl border border-slate-200/70 dark:border-navy-800/70
+            bg-white/40 dark:bg-navy-950/20
+            px-4 py-2
+            backdrop-blur-sm
+          "
+        >
+          {minimalSuggestions.map((item, idx) => (
+            <React.Fragment key={item.id}>
+              {idx > 0 && <span className="text-slate-300 dark:text-slate-700">·</span>}
+              <button
+                onClick={() => handleMinimalClick(item.prompt)}
+                className="
+                  text-xs text-slate-500 dark:text-slate-400
+                  hover:text-slate-700 dark:hover:text-slate-200
+                  transition-colors duration-200
+                "
+              >
+                {item.text}
+              </button>
+            </React.Fragment>
+          ))}
+        </div>
       </div>
     );
   }

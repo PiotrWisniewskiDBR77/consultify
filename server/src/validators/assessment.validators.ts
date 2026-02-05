@@ -78,6 +78,21 @@ export const GenerateInitiativesSchema = AssessmentDecisionSchema.extend({
   reportId: z.string().min(1).optional(),
 });
 
+/**
+ * Enterprise: create a generation run (supports 50+ initiatives via sub-batches).
+ * The server orchestrates multiple batches (default batch size = 7) and exposes progress.
+ */
+export const CreateInitiativeGenerationRunSchema = AssessmentDecisionSchema.extend({
+  mode: z.enum(['ASSESSMENT_REPORT', 'REPORT_ONLY']),
+  methodologyId: z.string().min(1),
+  requestedCount: z.number().min(1).max(200),
+  batchSize: z.number().min(1).max(7).optional(),
+  includeChatContext: z.boolean().optional(),
+  reportId: z.string().min(1).optional(),
+  templateId: z.string().min(1).optional(),
+  consultantBrief: z.string().max(20000).optional(),
+});
+
 export const GenerateReportSchema = z.object({
   // Report generation might have additional options in the future
   includeRecommendations: z.boolean().optional(),
@@ -160,6 +175,9 @@ export type ApproveReportRequest = z.infer<typeof ApproveReportSchema>;
 export type ApproveAssessmentRequest = z.infer<typeof ApproveAssessmentSchema>;
 export type SendBackRequest = z.infer<typeof SendBackSchema>;
 export type GenerateInitiativesRequest = z.infer<typeof GenerateInitiativesSchema>;
+export type CreateInitiativeGenerationRunRequest = z.infer<
+  typeof CreateInitiativeGenerationRunSchema
+>;
 export type GenerateReportRequest = z.infer<typeof GenerateReportSchema>;
 
 export type UpsertAssessmentRoleRequest = z.infer<typeof UpsertAssessmentRoleSchema>;

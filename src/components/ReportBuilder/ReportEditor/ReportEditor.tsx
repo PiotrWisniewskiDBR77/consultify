@@ -33,6 +33,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
+import { ExportSharePanel } from '../ExportSharePanel';
 import type { Report, ReportSection, ReportSourceType, SourceOption } from '../useReportBuilder';
 import { BlockCard } from './BlockCard';
 import { BlockPalette } from './BlockPalette';
@@ -155,6 +156,68 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     initialTemplateId || null
   );
 
+  const reportStatus = (report?.status || 'DRAFT') as string;
+  const reportIdForActions = report?.id || reportId || null;
+
+  const downloadExport = useCallback(
+    async (format: 'pdf' | 'pptx' | 'doc', fileNameBase?: string) => {
+      if (!reportIdForActions) return;
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/report-builder/${reportIdForActions}/export/${format}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(text || `Export failed (${format})`);
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const safeTitle = (fileNameBase || reportTitle || report?.title || 'report').replace(
+        /[^\p{L}\p{N}_-]+/gu,
+        '_'
+      );
+      const ext = format === 'doc' ? 'doc' : format;
+      a.download = `${safeTitle}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    },
+    [reportIdForActions, reportTitle, report?.title]
+  );
+
+  const exportPanel = reportIdForActions ? (
+    <ExportSharePanel
+      reportId={reportIdForActions}
+      reportTitle={reportTitle}
+      reportStatus={reportStatus}
+      onExportPdf={() => downloadExport('pdf')}
+      onExportPptx={() => downloadExport('pptx')}
+      onExportWord={() => downloadExport('doc')}
+      onCreateShareLink={async (options) => {
+        const resp = await Api.post(`/report-builder/${reportIdForActions}/share`, options || {});
+        return resp?.link || null;
+      }}
+      onGetShareLinks={async () => {
+        const resp = await Api.get(`/report-builder/${reportIdForActions}/share`);
+        return resp?.links || [];
+      }}
+      onRevokeShareLink={async (linkId) => {
+        const resp = await Api.delete(`/report-builder/${reportIdForActions}/share/${linkId}`);
+        return Boolean(resp?.success);
+      }}
+      isLoading={isSaving || isGenerating}
+    />
+  ) : (
+    <div className="text-sm text-slate-500 dark:text-slate-400">
+      {isPl
+        ? 'Zapisz raport, aby odblokować eksport i udostępnianie.'
+        : 'Save the report to enable export and sharing.'}
+    </div>
+  );
+
   // Load existing report
   useEffect(() => {
     if (reportId) {
@@ -164,8 +227,8 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       loadTemplate(initialTemplateId);
       setReportTitle(`${initialSourceName || 'Assessment'} - Report`);
     } else if (initialSourceType && initialSourceId) {
-      // Initialize with default blocks for source type
-      initializeDefaultBlocks(initialSourceType);
+      // Initialize from the default template for this source (keeps frontend/backed in sync)
+      void initializeFromSource(initialSourceType, initialSourceId);
       setReportTitle(`${initialSourceName || 'Assessment'} - Report`);
     }
   }, [reportId, initialSourceType, initialSourceId, initialSourceName, initialTemplateId]);
@@ -224,11 +287,15 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   const loadTemplate = async (templateId: string) => {
     setIsLoading(true);
     try {
-      const res = await Api.get(`/report-builder/templates/${templateId}`);
+      const res = await Api.get(`/report-builder/templates/${templateId}/details`);
       const tpl = res?.template;
       if (!tpl) return;
       setSelectedTemplateId(templateId);
-      const sections: any[] = Array.isArray(tpl.sectionsJson) ? tpl.sectionsJson : [];
+      const sections: any[] = Array.isArray((tpl as any).sections)
+        ? (tpl as any).sections
+        : (tpl as any).sections_json
+          ? JSON.parse(String((tpl as any).sections_json || '[]'))
+          : [];
       const templateBlocks: BlockConfig[] = sections.map((s, idx) => ({
         id: String(s.key || `tpl_${idx}`),
         type: String(s.blockTypeId || s.type || 'custom'),
@@ -247,6 +314,58 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       setBlocks(templateBlocks.sort((a, b) => a.orderIndex - b.orderIndex));
     } catch (err) {
       console.error('Failed to load template:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const initializeFromSource = async (type: ReportSourceType, id: string) => {
+    setIsLoading(true);
+    try {
+      let framework: string | undefined;
+      if (type === 'ASSESSMENT') {
+        const src = await Api.get(`/report-builder/sources/assessment/${id}`);
+        framework = src?.framework || src?.assessmentType || undefined;
+        if (src?.name) setSourceName(String(src.name));
+      }
+
+      const templateRes = await Api.get(
+        `/report-builder/templates/${type}${framework ? `?framework=${encodeURIComponent(framework)}` : ''}`
+      );
+      const tpl = templateRes?.template;
+      if (!tpl) {
+        initializeDefaultBlocks(type);
+        return;
+      }
+
+      // The default-template endpoint returns { id, sections }
+      const sections: any[] = Array.isArray(tpl.sections) ? tpl.sections : [];
+      if (sections.length === 0) {
+        initializeDefaultBlocks(type);
+        return;
+      }
+      if (tpl.id) setSelectedTemplateId(String(tpl.id));
+
+      const defaultBlocks: BlockConfig[] = sections.map((s: any, idx: number) => ({
+        id: String(s.key || `tpl_${idx}`),
+        type: String(s.blockTypeId || s.type || 'custom'),
+        title: String(s.title || s.name || s.key || 'Section'),
+        length: (s.defaultLength || s.length || 'medium') as any,
+        includeVisuals: Boolean(
+          s.renderKind === 'matrix' ||
+          s.type === 'matrix' ||
+          ['json', 'matrix', 'table', 'chart', 'callout'].includes(String(s.renderKind || ''))
+        ),
+        customPrompt: s.customPrompt || undefined,
+        blockTypeId: s.blockTypeId || undefined,
+        renderKind: s.renderKind || undefined,
+        enabled: s.enabled !== undefined ? Boolean(s.enabled) : true,
+        orderIndex: typeof s.order === 'number' ? s.order : idx,
+      }));
+      setBlocks(defaultBlocks.sort((a, b) => a.orderIndex - b.orderIndex));
+    } catch (err) {
+      console.error('Failed to initialize from source:', err);
+      initializeDefaultBlocks(type);
     } finally {
       setIsLoading(false);
     }
@@ -471,14 +590,6 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           );
           const serverKeys = new Set(serverSections.map((s: any) => String(s.sectionKey)));
 
-          // Delete sections that were created by template but removed in UI
-          for (const s of serverSections) {
-            const key = String((s as any).sectionKey);
-            if (key && !desiredKeys.has(key)) {
-              await Api.delete(`/report-builder/${newReportId}/sections/${key}`);
-            }
-          }
-
           // Create any blocks not present on server (tmp_ or custom keys)
           const workingBlocks = [...desiredOrder];
           for (let i = 0; i < workingBlocks.length; i++) {
@@ -525,17 +636,33 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             }
           }
 
-          // Update config order/title/etc
-          const sectionUpdates = workingBlocks
-            .filter((b) => !b.id.startsWith('tmp_'))
-            .map((b, idx) => ({
-              sectionKey: b.id,
-              enabled: b.enabled,
-              orderIndex: idx,
-              title: b.title,
-              length: b.length,
-              customPrompt: b.customPrompt,
+          // Update config order/title/etc for blocks we want visible.
+          // For server sections missing in the desired blocks list, disable them instead of deleting
+          // (some sections may be required and cannot be deleted).
+          const desiredBlocksPersisted = workingBlocks.filter((b) => !b.id.startsWith('tmp_'));
+          const desiredOrderKeys = desiredBlocksPersisted.map((b) => b.id);
+          const desiredOrderIndex = new Map(desiredOrderKeys.map((k, idx) => [k, idx]));
+
+          const disabledUpdates = serverSections
+            .map((s: any) => String(s.sectionKey))
+            .filter((key) => key && !desiredOrderIndex.has(key))
+            .map((key, idx) => ({
+              sectionKey: key,
+              enabled: false,
+              // keep them after visible blocks to avoid collisions
+              orderIndex: desiredBlocksPersisted.length + idx + 100,
             }));
+
+          const visibleUpdates = desiredBlocksPersisted.map((b, idx) => ({
+            sectionKey: b.id,
+            enabled: b.enabled,
+            orderIndex: idx,
+            title: b.title,
+            length: b.length,
+            customPrompt: b.customPrompt,
+          }));
+
+          const sectionUpdates = [...visibleUpdates, ...disabledUpdates];
           await Api.put(`/report-builder/${newReportId}/config`, { sections: sectionUpdates });
 
           // Reload report to get final persisted ordering/content
@@ -732,6 +859,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           onStylingChange={(updates) => setStyling((prev) => ({ ...prev, ...updates }))}
           activeSection={settingsSection}
           onSectionChange={setSettingsSection}
+          exportPanel={exportPanel}
           isCollapsed={isSettingsPanelCollapsed}
           onToggleCollapse={() => setIsSettingsPanelCollapsed((prev) => !prev)}
         />

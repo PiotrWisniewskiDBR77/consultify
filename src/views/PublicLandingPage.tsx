@@ -44,12 +44,14 @@ export const PublicLandingPage: React.FC = () => {
       {/* HEADER — Minimalist */}
       <header className="fixed top-0 left-0 right-0 z-50 px-6 py-8">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-3 group cursor-default">
-            <div className="h-10 px-3 rounded bg-brand-600 flex items-center justify-center shadow-lg shadow-brand-600/20 group-hover:shadow-brand-600/40 transition-all duration-500">
-              <span className="text-white font-bold text-sm tracking-tight">TL</span>
-            </div>
+          <div className="flex items-center gap-3 group cursor-default select-none">
+            <img
+              src="/assets/logos/logo-light.png"
+              alt="Consultinity"
+              className="h-8 w-auto drop-shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
+            />
             <span className="text-xl font-bold tracking-[0.2em] text-white/90 group-hover:text-white transition-colors duration-500">
-              TECHNOLEX
+              CONSULTINITY
             </span>
           </div>
           {/* Navigation Links */}

@@ -1,6 +1,6 @@
 # Reports Module – API List
 
-## Status: 🔨 W PLANOWANIU
+## Status: ✅ ZAIMPLEMENTOWANY (MVP+)
 
 ---
 
@@ -13,6 +13,14 @@ Kompletna lista endpointów API dla modułu Report Builder.
 ---
 
 ## 🔌 Endpoints
+
+### Invocation Profiles
+
+| Method | Endpoint                               | Opis                                  | Auth |
+| ------ | -------------------------------------- | ------------------------------------- | ---- |
+| `GET`  | `/profiles`                            | List dostępnych profili invokacji     | ✅   |
+| `GET`  | `/profiles/:profileId`                 | Szczegóły profilu invokacji           | ✅   |
+| `GET`  | `/profiles/for-source/:sourceType`     | Profile dostępne dla danego sourceType| ✅   |
 
 ### Report CRUD
 
@@ -31,20 +39,33 @@ Kompletna lista endpointów API dla modułu Report Builder.
 | ------ | ------------------------- | --------------------------- | ---- |
 | `GET`  | `/sources/assessment`     | List approved assessments   | ✅   |
 | `GET`  | `/sources/assessment/:id` | Get assessment source data  | ✅   |
-| `GET`  | `/sources/interview`      | List completed interviews   | ✅   |
-| `GET`  | `/sources/interview/:id`  | Get interview source data   | ✅   |
-| `GET`  | `/sources/tool`           | List approved tool sessions | ✅   |
-| `GET`  | `/sources/tool/:id`       | Get tool source data        | ✅   |
+| `GET`  | `/sources/interview`      | (TODO) List completed interviews   | ✅   |
+| `GET`  | `/sources/interview/:id`  | (TODO) Get interview source data   | ✅   |
+| `GET`  | `/sources/tool`           | (TODO) List approved tool sessions | ✅   |
+| `GET`  | `/sources/tool/:id`       | (TODO) Get tool source data        | ✅   |
 
 ### Templates
 
-| Method   | Endpoint           | Opis                                 | Auth     |
-| -------- | ------------------ | ------------------------------------ | -------- |
-| `GET`    | `/templates`       | List all templates                   | ✅       |
-| `GET`    | `/templates/:type` | Get default template for source type | ✅       |
-| `POST`   | `/templates`       | Create custom template               | ✅ Admin |
-| `PUT`    | `/templates/:id`   | Update template                      | ✅ Admin |
-| `DELETE` | `/templates/:id`   | Delete template                      | ✅ Admin |
+| Method   | Endpoint                         | Opis                                       | Auth |
+| -------- | -------------------------------- | ------------------------------------------ | ---- |
+| `GET`    | `/templates`                     | List templates (system + org + public)     | ✅   |
+| `POST`   | `/templates`                     | Create template                            | ✅   |
+| `GET`    | `/templates/:templateId/details` | Get template details (incl. parsed sections)| ✅  |
+| `PUT`    | `/templates/:templateId`         | Update template (non-system, org only)     | ✅   |
+| `DELETE` | `/templates/:templateId`         | Delete template (non-system, org only)     | ✅   |
+| `POST`   | `/templates/:templateId/duplicate` | Duplicate template                         | ✅   |
+| `POST`   | `/templates/import`              | Import template JSON                       | ✅   |
+| `GET`    | `/templates/:templateId/export`  | Export template JSON                       | ✅   |
+| `GET`    | `/templates/:sourceType`         | Get default template for sourceType (+ optional `?framework=`) | ✅ |
+
+### Block Types (Library)
+
+| Method   | Endpoint                      | Opis                               | Auth |
+| -------- | ----------------------------- | ---------------------------------- | ---- |
+| `GET`    | `/block-types`                | List block types (system + org)    | ✅   |
+| `POST`   | `/block-types`                | Create org block type              | ✅   |
+| `PUT`    | `/block-types/:blockTypeId`   | Update org block type              | ✅   |
+| `DELETE` | `/block-types/:blockTypeId`   | Deactivate org block type (soft)   | ✅   |
 
 ### Section Configuration
 
@@ -60,7 +81,6 @@ Kompletna lista endpointów API dla modułu Report Builder.
 | Method | Endpoint                            | Opis                      | Auth |
 | ------ | ----------------------------------- | ------------------------- | ---- |
 | `POST` | `/:id/generate`                     | Generate all sections     | ✅   |
-| `GET`  | `/:id/generate/status`              | Get generation progress   | ✅   |
 | `POST` | `/:id/generate-section/:sectionKey` | Regenerate single section | ✅   |
 
 ### Workflow
@@ -68,27 +88,49 @@ Kompletna lista endpointów API dla modułu Report Builder.
 | Method | Endpoint        | Opis                                    | Auth       |
 | ------ | --------------- | --------------------------------------- | ---------- |
 | `POST` | `/:id/finalize` | Finalize report (GENERATED → IN_REVIEW) | ✅         |
-| `POST` | `/:id/submit`   | Submit for review                       | ✅         |
 | `POST` | `/:id/approve`  | Approve report                          | ✅ Manager |
-| `POST` | `/:id/reject`   | Reject with comments                    | ✅ Manager |
-| `POST` | `/:id/utilize`  | Mark as utilized                        | ✅         |
+| `POST` | `/:id/send-back`| Send report back (IN_REVIEW → GENERATED)| ✅         |
+| `POST` | `/:id/reject`   | (TODO) Reject with comments             | ✅ Manager |
+| `POST` | `/:id/utilize`  | (TODO) Mark as utilized                 | ✅         |
 
 ### Export
 
-| Method | Endpoint                       | Opis                   | Auth |
-| ------ | ------------------------------ | ---------------------- | ---- |
-| `POST` | `/:id/export/pdf`              | Generate PDF           | ✅   |
-| `POST` | `/:id/export/pptx`             | Generate PPTX          | ✅   |
-| `GET`  | `/:id/export/:format/download` | Download exported file | ✅   |
-| `GET`  | `/:id/export/:format/status`   | Check export status    | ✅   |
+| Method | Endpoint            | Opis                         | Auth |
+| ------ | ------------------- | ---------------------------- | ---- |
+| `GET`  | `/:id/export/pdf`   | Generate + download PDF      | ✅   |
+| `GET`  | `/:id/export/pptx`  | Generate + download PPTX     | ✅   |
+| `GET`  | `/:id/export/doc`   | Generate + download Word (.doc) | ✅ |
+| `GET`  | `/:id/exports`      | List export records          | ✅   |
 
-### Sessions (Dynamic Menu)
+**Uwagi (Word):**
+- Endpoint `/:id/export/doc` zwraca plik **`.doc` (HTML)** z nagłówkiem `Content-Type: application/msword`.
+- To jest „Word-compatible” eksport na dziś (łatwy i stabilny). Jeśli potrzebujemy „prawdziwego” `DOCX`, dodamy osobny format `docx` w przyszłości.
 
-| Method | Endpoint             | Opis                     | Auth |
-| ------ | -------------------- | ------------------------ | ---- |
-| `GET`  | `/sessions`          | Get open reports (max 6) | ✅   |
-| `POST` | `/:id/session/open`  | Open report in menu      | ✅   |
-| `POST` | `/:id/session/close` | Close report from menu   | ✅   |
+### Public Share Links
+
+| Method   | Endpoint                 | Opis                         | Auth |
+| -------- | ------------------------ | ---------------------------- | ---- |
+| `POST`   | `/:id/share`             | Create share link            | ✅   |
+| `GET`    | `/:id/share`             | List share links             | ✅   |
+| `DELETE` | `/:id/share/:linkId`     | Revoke share link            | ✅   |
+
+### Version History
+
+| Method | Endpoint                                      | Opis              | Auth |
+| ------ | --------------------------------------------- | ----------------- | ---- |
+| `GET`  | `/:id/versions`                               | List versions     | ✅   |
+| `POST` | `/:id/versions`                               | Create snapshot   | ✅   |
+| `GET`  | `/versions/:versionId`                        | Get version       | ✅   |
+| `GET`  | `/versions/:versionId1/compare/:versionId2`   | Compare versions  | ✅   |
+| `POST` | `/versions/:versionId/rollback`               | Rollback          | ✅   |
+
+### Public Access (no auth)
+
+To jest osobny router:
+
+- `GET /api/public/report/:token`
+- `GET /api/public/report/:token/pdf`
+- `POST /api/public/report/:token/verify-password`
 
 ### Activity & Comments
 

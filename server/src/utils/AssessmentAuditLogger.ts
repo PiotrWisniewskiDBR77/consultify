@@ -71,18 +71,18 @@ export class AssessmentAuditLogger {
       const auditId = uuid();
 
       const sql = `
-                INSERT INTO audit_logs (
-                    id, user_id, organization_id,
-                    action, resource_type, resource_id,
-                    details, ip_address, user_agent,
+                INSERT INTO activity_logs (
+                    id, organization_id, user_id,
+                    action, entity_type, entity_id,
+                    new_value, ip_address, user_agent,
                     created_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
             `;
 
       const runResult = await run(sql, [
         auditId,
-        params.userId,
         params.organizationId,
+        params.userId,
         params.action,
         params.resourceType,
         params.resourceId,

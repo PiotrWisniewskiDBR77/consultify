@@ -371,6 +371,22 @@ export class AIPipeline {
     memoryUsed?: boolean;
   }> {
     try {
+      // Deep Thinking autonomy: do NOT pull external/internal context (org/project/memory/RAG).
+      // Use ONLY the conversation-provided context (request.context) when deepThinking is enabled.
+      const aiModes =
+        (request.options as any)?.aiModes ||
+        ((request.context as any)?.aiModes as any) ||
+        ((request as any)?.context?.aiModes as any);
+      const isDeepThinking = aiModes?.deepResearch === true;
+      if (isDeepThinking) {
+        logger.info('[AIPipeline] Deep Thinking autonomy: skipping AIContextBuilder');
+        return {
+          context: (request.context || {}) as any,
+          ragResults: 0,
+          memoryUsed: false,
+        };
+      }
+
       const AIContextBuilder = await getAIContextBuilder();
 
       // Extract IDs from request
@@ -393,16 +409,62 @@ export class AIPipeline {
           selectedObjectType: screenContext?.selectedObjectType || null,
         });
 
+        // Enrich with user memory (preferences, expertise, communication style)
+        let userMemory = null;
+        try {
+          const aiMemoryMod = await import('./aiMemoryService.js');
+          const aiMemoryService = (aiMemoryMod as any).default || aiMemoryMod;
+          if (aiMemoryService?.getUserMemory) {
+            userMemory = await aiMemoryService.getUserMemory(userId);
+          }
+        } catch (memErr: any) {
+          logger.debug(`[AIPipeline] User memory not available: ${memErr?.message}`);
+        }
+
+        // Enrich with org memory (terminology, decision patterns)
+        let orgMemory = null;
+        try {
+          const aiMemoryMod = await import('./aiMemoryService.js');
+          const aiMemoryService = (aiMemoryMod as any).default || aiMemoryMod;
+          if (aiMemoryService?.getOrgMemory) {
+            orgMemory = await aiMemoryService.getOrgMemory(organizationId);
+          }
+        } catch (memErr: any) {
+          logger.debug(`[AIPipeline] Org memory not available: ${memErr?.message}`);
+        }
+
+        // Merge memory into context
+        const contextWithMemory = {
+          ...fullContext,
+          userMemory: userMemory
+            ? {
+                preferences: userMemory.preferences,
+                expertise: userMemory.expertise?.slice(0, 10),
+                recentTopics: userMemory.recentTopics?.slice(0, 5),
+                interactionCount: userMemory.interactionCount,
+              }
+            : null,
+          orgMemory: orgMemory
+            ? {
+                terminology: orgMemory.terminology,
+                decisionPatterns: orgMemory.decisionPatterns?.slice(0, 5),
+                aiMaturityStage: orgMemory.aiMaturityStage,
+              }
+            : null,
+        };
+
         logger.info(`[AIPipeline] Context built successfully`, {
           hasExecution: !!fullContext?.execution,
           taskCount: fullContext?.execution?.userTasks?.length || 0,
           initiativeCount: fullContext?.execution?.userInitiatives?.length || 0,
+          hasUserMemory: !!userMemory,
+          hasOrgMemory: !!orgMemory,
         });
 
         return {
-          context: fullContext,
+          context: contextWithMemory,
           ragResults: fullContext?.knowledge?.projectDocuments?.length || 0,
-          memoryUsed: !!fullContext?.execution,
+          memoryUsed: !!fullContext?.execution || !!userMemory || !!orgMemory,
         };
       }
 
@@ -441,22 +503,26 @@ export class AIPipeline {
     }
 
     // Integrate adaptive style preferences (v2.0)
-    try {
-      const adaptiveModule = await import('./adaptiveResponseService.js');
-      const adaptiveService = adaptiveModule.adaptiveResponseService || adaptiveModule.default;
+    // Deep Thinking autonomy: skip (pulls user/system preferences outside the conversation).
+    const aiModes = (request.options as any)?.aiModes || (ctx as any)?.aiModes;
+    if (!aiModes?.deepResearch) {
+      try {
+        const adaptiveModule = await import('./adaptiveResponseService.js');
+        const adaptiveService = adaptiveModule.adaptiveResponseService || adaptiveModule.default;
 
-      if (adaptiveService?.buildAdaptiveSystemPrompt && request.userId) {
-        const screenContext = (request as any).screenContext || ctx?.currentScreen;
-        systemPrompt = await adaptiveService.buildAdaptiveSystemPrompt(
-          request.userId,
-          systemPrompt,
-          screenContext ? { screenId: screenContext, screenType: screenContext } : undefined
-        );
-        logger.info('[AIPipeline] Applied adaptive style preferences for user');
+        if (adaptiveService?.buildAdaptiveSystemPrompt && request.userId) {
+          const screenContext = (request as any).screenContext || ctx?.currentScreen;
+          systemPrompt = await adaptiveService.buildAdaptiveSystemPrompt(
+            request.userId,
+            systemPrompt,
+            screenContext ? { screenId: screenContext, screenType: screenContext } : undefined
+          );
+          logger.info('[AIPipeline] Applied adaptive style preferences for user');
+        }
+      } catch (err) {
+        // Adaptive service not available, continue with base prompt
+        logger.debug('[AIPipeline] Adaptive style service not available, using base prompt');
       }
-    } catch (err) {
-      // Adaptive service not available, continue with base prompt
-      logger.debug('[AIPipeline] Adaptive style service not available, using base prompt');
     }
 
     messages.push({
@@ -510,6 +576,44 @@ export class AIPipeline {
     // 4. User execution context (tasks, initiatives, blockers)
     if (ctx?.execution) {
       parts.push(this.buildExecutionSection(ctx.execution));
+    }
+
+    // 4.5. User memory (preferences, expertise, communication style)
+    if (ctx?.userMemory) {
+      const um = ctx.userMemory;
+      const memParts: string[] = ['## PREFERENCJE UŻYTKOWNIKA'];
+      if (um.preferences?.communicationStyle)
+        memParts.push(`- Styl komunikacji: ${um.preferences.communicationStyle}`);
+      if (um.preferences?.detailLevel)
+        memParts.push(`- Poziom szczegółowości: ${um.preferences.detailLevel}`);
+      if (um.preferences?.language)
+        memParts.push(`- Preferowany język: ${um.preferences.language}`);
+      if (um.expertise?.length > 0)
+        memParts.push(`- Ekspertyza: ${um.expertise.join(', ')}`);
+      if (um.recentTopics?.length > 0)
+        memParts.push(`- Ostatnie tematy: ${um.recentTopics.join(', ')}`);
+      if (um.interactionCount)
+        memParts.push(`- Liczba dotychczasowych interakcji: ${um.interactionCount}`);
+      if (memParts.length > 1) parts.push(memParts.join('\n'));
+    }
+
+    // 4.6. Organization memory (terminology, patterns)
+    if (ctx?.orgMemory) {
+      const om = ctx.orgMemory;
+      const omParts: string[] = ['## PAMIĘĆ ORGANIZACJI'];
+      if (om.aiMaturityStage)
+        omParts.push(`- Etap dojrzałości AI: ${om.aiMaturityStage}`);
+      if (om.terminology && Object.keys(om.terminology).length > 0) {
+        const termEntries = Object.entries(om.terminology).slice(0, 10)
+          .map(([k, v]) => `  - "${k}" → "${v}"`).join('\n');
+        omParts.push(`- Terminologia organizacji:\n${termEntries}`);
+      }
+      if (om.decisionPatterns?.length > 0) {
+        const pats = om.decisionPatterns.slice(0, 3)
+          .map((p: any) => `  - ${p.type}: typowy wynik "${p.commonOutcome}" (${p.frequency}×)`).join('\n');
+        omParts.push(`- Wzorce decyzji:\n${pats}`);
+      }
+      if (omParts.length > 1) parts.push(omParts.join('\n'));
     }
 
     // 5. Pending approvals
@@ -735,7 +839,9 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
 
     // Chat runtime modes (ToolsMenu)
     const aiModes = request.options?.aiModes || (ctx as any)?.aiModes;
-    const knowledgeSources = request.options?.knowledgeSources || (ctx as any)?.knowledgeSources;
+    // Deep Thinking autonomy: never reference internal knowledge sources / system modules.
+    const knowledgeSources =
+      aiModes?.deepResearch === true ? undefined : request.options?.knowledgeSources || (ctx as any)?.knowledgeSources;
     const responseStyle = request.options?.responseStyle || (ctx as any)?.responseStyle;
 
     if (aiModes?.deepResearch) {
@@ -746,14 +852,20 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
 
     if (aiModes?.webSearch) {
       instructions.push(
-        '9. TRYB: Web Search — jeśli potrzebujesz aktualnych danych z internetu, poproś użytkownika o link lub źródło. Nie udawaj, że wykonałeś wyszukiwanie, jeśli nie masz dostępu do web.'
+        '9. TRYB: Web Search — możesz otrzymać od systemu wyniki researchu i listę źródeł. Jeśli nie masz dostępu do web lub nie masz dostarczonych źródeł, powiedz to wprost. Nie udawaj, że wykonałeś wyszukiwanie.'
       );
     }
 
     if (aiModes?.showReasoning) {
-      instructions.push(
-        '10. TRYB: Reasoning ON — dodaj krótki, wysokopoziomowy opis toku rozumowania w tagach <thinking>...</thinking>. Nie ujawniaj danych wrażliwych ani długich rozważań.'
-      );
+      if (aiModes?.deepResearch) {
+        instructions.push(
+          '10. TRYB: Reasoning ON (Deep Thinking) — dodaj sekcję "Reasoning highlights" (3–6 punktów) z wysokopoziomowymi obserwacjami: kluczowe założenia, trade-offy, dlaczego rekomendacja ma sens. NIE używaj tagów <thinking> i NIE ujawniaj chain-of-thought.'
+        );
+      } else {
+        instructions.push(
+          '10. TRYB: Reasoning ON — dodaj krótki, wysokopoziomowy opis toku rozumowania w tagach <thinking>...</thinking>. Nie ujawniaj danych wrażliwych ani długich rozważań.'
+        );
+      }
     } else {
       instructions.push('10. TRYB: Reasoning OFF — nie używaj tagów <thinking>...</thinking>.');
     }

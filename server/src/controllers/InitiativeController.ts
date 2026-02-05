@@ -9,6 +9,7 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import { canExecuteGate, GateType, getGateForTransition } from '../constants/initiativeStatuses.js';
 import notificationService from '../services/notificationService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -247,11 +248,22 @@ export class InitiativeController {
 
       // Assessment module support: show initiatives derived from assessments/reports
       if (source && source.toString().toLowerCase() === 'assessment') {
-        sql += ` AND (i.source_assessment_id IS NOT NULL OR i.source_report_id IS NOT NULL OR LOWER(COALESCE(i.created_from,'')) = 'assessment')`;
+        // Canonical source tracking (preferred): source_type/source_id
+        // Backward compatible (legacy): source_assessment_id/source_report_id/created_from
+        sql += ` AND (
+          (LOWER(COALESCE(i.source_type,'')) IN ('assessment','assessment_report') AND COALESCE(i.source_id,'') <> '')
+          OR i.source_assessment_id IS NOT NULL
+          OR i.source_report_id IS NOT NULL
+          OR LOWER(COALESCE(i.created_from,'')) = 'assessment'
+        )`;
       }
       if (sourceAssessmentId) {
-        sql += ` AND i.source_assessment_id = ?`;
-        params.push(sourceAssessmentId);
+        // Match both canonical and legacy assessment linkage
+        sql += ` AND (
+          i.source_assessment_id = ?
+          OR (LOWER(COALESCE(i.source_type,'')) = 'assessment' AND i.source_id = ?)
+        )`;
+        params.push(sourceAssessmentId, sourceAssessmentId);
       }
       sql += ` ORDER BY i.created_at DESC`;
 
@@ -267,6 +279,7 @@ export class InitiativeController {
         summary: getMultilingualText(i.summary as string, lang),
         hypothesis: i.hypothesis,
         status: i.status,
+        initiativeTemplateId: (i as any).initiative_template_id ?? null,
         progress: i.progress || 0,
         currentStage: i.current_stage,
         sourceType: i.source_type,
@@ -360,6 +373,7 @@ export class InitiativeController {
         keyRisks: safeJsonParse(i.key_risks as string, []),
         sourceType: i.source_type,
         sourceId: i.source_id,
+        initiativeTemplateId: (i as any).initiative_template_id ?? null,
       };
 
       res.json(parsed);
@@ -536,7 +550,7 @@ export class InitiativeController {
       }
 
       const existing = await queryHelpers.queryOne(
-        `SELECT status, name FROM initiatives WHERE id = ? AND organization_id = ?`,
+        `SELECT status, name, created_by FROM initiatives WHERE id = ? AND organization_id = ?`,
         [id, orgId]
       );
       if (!existing) {
@@ -548,10 +562,53 @@ export class InitiativeController {
       const nextStatus = normalizeStatus(status as string);
       const initiativeName = String((existing as any)?.name || 'Initiative');
       const actorId = req.user?.id;
+      const actorRole = String((req.user as any)?.role || '').toUpperCase();
       const actorName =
         req.user?.firstName && req.user?.lastName
           ? `${req.user.firstName} ${req.user.lastName}`
           : req.user?.email || undefined;
+
+      // RBAC + gate enforcement (enterprise governance)
+      // - Consultant can only SUBMIT_FOR_REVIEW for initiatives they authored (created_by)
+      // - PM/Lead/PMO gate approvals move initiatives to global visibility (REVIEW)
+      const gate = getGateForTransition(currentStatus as any, nextStatus as any);
+      if (gate) {
+        const isAdmin = actorRole === 'ADMIN' || actorRole === 'SUPERADMIN';
+        if (!isAdmin && !canExecuteGate(actorRole as any, gate)) {
+          res.status(403).json({
+            error: 'Permission denied for this status transition',
+            gate,
+            from: currentStatus,
+            to: nextStatus,
+            role: actorRole,
+          });
+          return;
+        }
+        if (gate === GateType.SUBMIT_FOR_REVIEW && actorRole === 'CONSULTANT') {
+          const createdBy = (existing as any)?.created_by
+            ? String((existing as any).created_by)
+            : null;
+          if (createdBy && actorId && createdBy !== String(actorId)) {
+            res.status(403).json({
+              error: 'Consultants can only submit initiatives they created',
+              gate,
+              from: currentStatus,
+              to: nextStatus,
+            });
+            return;
+          }
+        }
+        if (gate === GateType.SEND_BACK && !reason) {
+          res.status(400).json({
+            error: 'Reason is required to send back an initiative',
+            gate,
+            from: currentStatus,
+            to: nextStatus,
+            requiresReason: true,
+          });
+          return;
+        }
+      }
 
       // Gate decision validation
       // Canonical flow (PMO):

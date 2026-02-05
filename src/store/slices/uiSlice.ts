@@ -69,7 +69,9 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
   isSidebarOpen: false,
   isSidebarCollapsed: true,
 
-  isChatCollapsed: false,
+  // Perf default: keep AI panel closed unless user explicitly opens it.
+  // UnifiedChatPanel is heavy (animations, rich UI) and can degrade responsiveness across the app.
+  isChatCollapsed: true,
   chatPanelWidth: 380,
   isChatSlidingPanelOpen: false,
 

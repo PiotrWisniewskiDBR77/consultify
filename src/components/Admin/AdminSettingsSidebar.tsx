@@ -24,6 +24,7 @@ import {
   Palette,
   Receipt,
   Shield,
+  Sparkles,
   Wallet,
   Webhook,
 } from 'lucide-react';
@@ -43,7 +44,8 @@ export type AdminSettingsSection =
   | 'security'
   | 'governance'
   | 'audit'
-  | 'interviews'
+  | 'report-creator'
+  | 'initiative-creator'
   | 'integrations'
   | 'api'
   | 'feedback';
@@ -151,13 +153,18 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
         ],
       },
       {
-        id: 'interview-settings',
-        label: t('admin.sidebar.groups.interviews', 'INTERVIEWS'),
+        id: 'tools-settings',
+        label: t('admin.sidebar.groups.tools', 'TOOLS'),
         items: [
           {
-            id: 'interviews',
-            label: t('admin.tabs.interviews', 'Interview Assignments'),
+            id: 'report-creator',
+            label: t('admin.tabs.reportCreator', 'Kreator raportów'),
             icon: FileText,
+          },
+          {
+            id: 'initiative-creator',
+            label: t('admin.tabs.initiativeCreator', 'Kreator inicjatyw'),
+            icon: Sparkles,
           },
         ],
       },
@@ -245,13 +252,10 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
       {/* Header - Admin style (no icon, bold title) */}
       <div className="px-5 pt-5 pb-4">
         <h1 className="text-lg font-bold text-white tracking-wide">
-          {t('admin.settings.title', 'SETTINGS')}
+          {t('admin.settings.title', 'ADMIN')}
         </h1>
         <p className="text-sm text-slate-400 dark:text-slate-500 mt-0.5">
-          {t(
-            'admin.settings.subtitle',
-            'Organization profile, billing, security, and feedback management'
-          )}
+          {t('admin.settings.subtitle', 'Organization settings, tools, and management')}
         </p>
       </div>
 

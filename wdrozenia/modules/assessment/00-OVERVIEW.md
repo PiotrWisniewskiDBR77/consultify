@@ -1,8 +1,8 @@
 # 🧩 Moduł: Assessment – Overview
 
-## Status: ✅ KOMPLETNY (Full Workflow + Nowy Edytor DRD)
+## Status: ✅ KOMPLETNY (Full Workflow + Edytory DRD/SIRI/ADMA + AI Suggestions)
 
-**Ostatnia aktualizacja:** 2026-01-29
+**Ostatnia aktualizacja:** 2026-02-04
 
 ---
 
@@ -15,6 +15,32 @@
 ## 🎯 Cel
 
 Assessment (DRD/SIRI/...) → raport → approval → generowanie inicjatyw (DRAFT).
+
+---
+
+## 🧾 Raporty: „Assessment workflow report” vs „Report Builder”
+
+W aplikacji występują **dwa** pojęcia raportu (to było źródłem nieporozumień):
+
+1. **Assessment workflow report (artefakt workflow)**  
+   - Służy do **przejścia bramek (4 Gate Decisions)**: review / approve report / approve assessment.  
+   - Jest artefaktem procesu oceny (wyniki, luki, evidence, decyzje), a nie „ładnym raportem dla zarządu/banku”.
+
+2. **Report Builder (profesjonalne raporty / paczki PDF/PPTX/Word)**  
+   - To moduł do tworzenia **raportów prezentacyjnych** na bazie assessmentu (i innych źródeł).
+   - Umożliwia: szablony, wersjonowanie, udostępnianie, eksporty.
+   - Dokumentacja: `wdrozenia/modules/reports/00-OVERVIEW.md`
+
+### Gdzie użytkownik widzi raporty Report Builder dla Assessment?
+
+- **Assessment → Manage → Reports** (raporty powiązane z danym assessmentem)
+- **Assessment Hub → Reports** (zbiorcza lista raportów dla `sourceType=ASSESSMENT`)
+
+### Eksporty (Report Builder)
+
+- `GET /api/report-builder/:id/export/pdf`
+- `GET /api/report-builder/:id/export/pptx`
+- `GET /api/report-builder/:id/export/doc` (Word-compatible `.doc`)
 
 ## Standard artefaktu (Assessment Report)
 
@@ -46,9 +72,12 @@ Raport w module Assessment jest artefaktem Discovery (wyniki + gaps + evidence +
 - ✅ DRDForm, SIRIForm (live scoring)
 - ✅ **AssessmentSessionEditorView** - główny edytor sesji assessment
 - ✅ **DRDAssessmentEditor** - nowy interaktywny edytor DRD
+- ✅ **SIRIAssessmentEditor** - pełny edytor SIRI (3 bloki, 8 wymiarów, 16 obszarów) ✨ NEW
+- ✅ **ADMAAssessmentEditor** - pełny edytor ADMA (5 filarów, 12 wymiarów) ✨ NEW
 - ✅ **LevelAttachments** - zarządzanie załącznikami per poziom
 - ✅ MultiFwBenchmarkComparison (real API)
 - ✅ PDFImportWizard (real API)
+- ✅ **UnifiedImportWizard** - import zewnętrznych raportów (PDF/Excel/Word/JSON/CSV) ✨ NEW
 - ✅ GenerateInitiativesModal
 - ✅ AssessmentInitiativesDrawer
 - ✅ Filters & Search
@@ -59,6 +88,8 @@ Raport w module Assessment jest artefaktem Discovery (wyniki + gaps + evidence +
 - ✅ **Responsive design** (mobile-friendly sidebar)
 - ✅ **Breadcrumbs integration** (dynamiczne menu)
 - ✅ **Toast notifications** (save success/error)
+- ✅ **AISuggestionPanel** - AI-powered sugestie poziomów i technologii ✨ NEW
+- ✅ **BulkOperationsToolbar** - multi-select, copy-paste, batch update ✨ NEW
 
 ### Testy
 

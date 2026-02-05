@@ -11,6 +11,7 @@ import aiBudgetsRoutes from './ai-budgets.routes.js';
 import aiDevelopmentRoutes from './ai-development.routes.js';
 import aiDraftsRoutes from './ai-drafts.routes.js';
 import aiFeedbackRoutes from './ai-feedback.routes.js';
+import aiHealthCheckRoutes from './ai-health-check.routes.js';
 import aiInfrastructureRoutes from './ai-infrastructure.routes.js';
 import aiMemoryRoutesV1 from './ai-memory.routes.js';
 import aiNudgesRoutes from './ai-nudges.routes.js';
@@ -28,10 +29,12 @@ import aiExplainRoutes from './aiExplain.routes.js';
 import aiLearningRoutes from './aiLearning.routes.js';
 import aiMemoryRoutesV2 from './aiMemory.routes.js';
 import aiPlaybooksRoutes from './aiPlaybooks.routes.js';
+import deepThinkingRoutes from './deep-thinking.routes.js';
 
 const router = Router();
 
 // Mount all AI sub-routes
+router.use('/health-check', aiHealthCheckRoutes);
 router.use('/ab-testing', aiAbTestingRoutes);
 // Default to V2 under the canonical path
 router.use('/analytics', aiAnalyticsRoutesV2);
@@ -58,5 +61,6 @@ router.use('/coach', aiCoachRoutes);
 router.use('/explain', aiExplainRoutes);
 router.use('/learning', aiLearningRoutes);
 router.use('/playbooks', aiPlaybooksRoutes);
+router.use('/deep-thinking', deepThinkingRoutes);
 
 export default router;
