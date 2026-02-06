@@ -24,7 +24,7 @@
     "build:shared": "npm run build -w packages/shared",
     "preview": "vite preview",
     "test": "npm run test:all",
-    "test:unit": "vitest run tests/unit",
+    "test:unit": "VITEST_HEAP_MB=8192 vitest run tests/unit --maxWorkers=1 --maxConcurrency=2",
     "test:unit:critical": "vitest run tests/unit/backend/permissionService.test.ts tests/unit/backend/tokenBillingService.test.ts tests/unit/backend/regulatoryModeGuard.test.ts tests/unit/backend/accessPolicyService.test.js tests/unit/backend/services/billingService.test.ts tests/unit/backend/middleware/authMiddleware.test tests/unit/backend/middleware/permissionMiddleware.test.js --reporter=verbose",
     "test:component": "VITEST_HEAP_MB=16384 vitest run tests/components --maxWorkers=1 --maxConcurrency=2 --shard 1/8 && VITEST_HEAP_MB=16384 vitest run tests/components --maxWorkers=1 --maxConcurrency=2 --shard 2/8 && VITEST_HEAP_MB=16384 vitest run tests/components --maxWorkers=1 --maxConcurrency=2 --shard 3/8 && VITEST_HEAP_MB=16384 vitest run tests/components --maxWorkers=1 --maxConcurrency=2 --shard 4/8 && VITEST_HEAP_MB=16384 vitest run tests/components --maxWorkers=1 --maxConcurrency=2 --shard 5/8 && VITEST_HEAP_MB=16384 vitest run tests/components --maxWorkers=1 --maxConcurrency=2 --shard 6/8 && VITEST_HEAP_MB=16384 vitest run tests/components --maxWorkers=1 --maxConcurrency=2 --shard 7/8 && VITEST_HEAP_MB=16384 vitest run tests/components --maxWorkers=1 --maxConcurrency=2 --shard 8/8",
     "test:integration": "vitest run tests/integration --no-file-parallelism",

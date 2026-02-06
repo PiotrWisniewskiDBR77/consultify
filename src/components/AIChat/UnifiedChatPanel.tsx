@@ -951,9 +951,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const handleEnableDeepThinking = useCallback(() => {
     setDtHintDismissed(true);
     // Toggle Deep Thinking in aiConfig
-    const { setAiConfig } = useAppStore.getState();
-    if (typeof setAiConfig === 'function') {
-      setAiConfig({ ...aiConfig, deepResearch: true } as any);
+    const { setAIConfig } = useAppStore.getState();
+    if (typeof setAIConfig === 'function') {
+      setAIConfig({ ...aiConfig, deepResearch: true } as any);
     }
   }, [aiConfig]);
 
