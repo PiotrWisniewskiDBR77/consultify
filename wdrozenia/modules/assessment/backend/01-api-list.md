@@ -9,7 +9,7 @@ Lista endpointów assessment (CRUD + workflow + generate initiatives + attachmen
 - Plan: `wdrozenia/plan-assessment-initiatives.md`
 - Kod: `server/src/routes/assessment/` oraz `server/src/routes/assessment.routes.ts` (jeśli występuje)
 
-**Ostatnia aktualizacja:** 2026-02-04
+**Ostatnia aktualizacja:** 2026-02-05
 
 ---
 
@@ -30,15 +30,15 @@ Lista endpointów assessment (CRUD + workflow + generate initiatives + attachmen
 
 #### Initiatives (Assessment scope)
 
-| Method | Endpoint | Opis |
-| ------ | -------- | ---- |
-| POST | `/:assessmentId/generate-initiatives` | Quick generate (batch ≤7) |
-| GET  | `/:assessmentId/generated-initiatives` | Lista inicjatyw po linkach (`assessment_initiative_links`) |
-| POST | `/:assessmentId/initiative-generation-runs` | Enterprise GenerationRun (50+) – create/start |
-| GET  | `/:assessmentId/initiative-generation-runs` | Historia run (audit) |
-| GET  | `/:assessmentId/initiative-generation-runs/:runId` | Progress run |
-| GET  | `/:assessmentId/initiative-generation-runs/:runId/initiatives` | Preview inicjatyw run |
-| POST | `/:assessmentId/initiative-generation-runs/:runId/submit-for-review` | Bulk `DRAFT → PENDING_REVIEW` |
+| Method | Endpoint                                                             | Opis                                                       |
+| ------ | -------------------------------------------------------------------- | ---------------------------------------------------------- |
+| POST   | `/:assessmentId/generate-initiatives`                                | Quick generate (batch ≤7)                                  |
+| GET    | `/:assessmentId/generated-initiatives`                               | Lista inicjatyw po linkach (`assessment_initiative_links`) |
+| POST   | `/:assessmentId/initiative-generation-runs`                          | Enterprise GenerationRun (50+) – create/start              |
+| GET    | `/:assessmentId/initiative-generation-runs`                          | Historia run (audit)                                       |
+| GET    | `/:assessmentId/initiative-generation-runs/:runId`                   | Progress run                                               |
+| GET    | `/:assessmentId/initiative-generation-runs/:runId/initiatives`       | Preview inicjatyw run                                      |
+| POST   | `/:assessmentId/initiative-generation-runs/:runId/submit-for-review` | Bulk `DRAFT → PENDING_REVIEW`                              |
 
 ---
 
@@ -146,19 +146,19 @@ Lista endpointów assessment (CRUD + workflow + generate initiatives + attachmen
 
 ### Assessments (Legacy)
 
-**Base path:** `/api/assessments`| Method | Endpoint                             | Opis                           |
-| ------ | ------------------------------------ | ------------------------------ |
-| GET    | `/my-assessments`                    | Lista assessmentów użytkownika |
-| GET    | `/:id`                               | Szczegóły assessmentu          |
-| POST   | `/`                                  | Utworzenie assessmentu         |
-| PUT    | `/:id/status`                        | Zmiana statusu                 |
-| DELETE | `/:id`                               | Usunięcie                      |
-| POST   | `/:id/complete`                      | Oznaczenie jako ukończony      |
-| POST   | `/:id/generate-initiatives`          | Generowanie inicjatyw          |
-| POST   | `/:id/responses/:questionId`         | Dodanie odpowiedzi             |
-| GET    | `/:id/responses`                     | Lista odpowiedzi               |
-| GET    | `/frameworks/list`                   | Lista frameworków              |
-| GET    | `/frameworks/:frameworkId/questions` | Pytania dla frameworku         |
+| **Base path:** `/api/assessments` | Method                               | Endpoint                       | Opis |
+| --------------------------------- | ------------------------------------ | ------------------------------ | ---- |
+| GET                               | `/my-assessments`                    | Lista assessmentów użytkownika |
+| GET                               | `/:id`                               | Szczegóły assessmentu          |
+| POST                              | `/`                                  | Utworzenie assessmentu         |
+| PUT                               | `/:id/status`                        | Zmiana statusu                 |
+| DELETE                            | `/:id`                               | Usunięcie                      |
+| POST                              | `/:id/complete`                      | Oznaczenie jako ukończony      |
+| POST                              | `/:id/generate-initiatives`          | Generowanie inicjatyw          |
+| POST                              | `/:id/responses/:questionId`         | Dodanie odpowiedzi             |
+| GET                               | `/:id/responses`                     | Lista odpowiedzi               |
+| GET                               | `/frameworks/list`                   | Lista frameworków              |
+| GET                               | `/frameworks/:frameworkId/questions` | Pytania dla frameworku         |
 
 ---
 
@@ -166,9 +166,16 @@ Lista endpointów assessment (CRUD + workflow + generate initiatives + attachmen
 
 **Base path:** `/api/assessment-reports`
 
-| Method | Endpoint | Opis |
-| ------ | -------- | ---- |
-| POST | `/:reportId/generate-initiatives` | Start report-only GenerationRun (50+) |
+| Method | Endpoint                          | Opis                                                                    |
+| ------ | --------------------------------- | ----------------------------------------------------------------------- |
+| GET    | `/templates`                      | Lista szablonów raportów dla Assessment (system + org), pod picker w UI |
+| POST   | `/:reportId/generate-initiatives` | Start report-only GenerationRun (50+)                                   |
+
+### GET `/api/assessment-reports/templates` – Template list (Assessment)
+
+- Zwraca szablony z `report_builder_templates` dla `source_type='ASSESSMENT'`
+- **Tenant isolation**: widoczne są szablony systemowe (`organization_id IS NULL`) oraz szablony organizacji (`organization_id = currentOrg`)
+- W UI endpoint jest używany przez `ReportTemplatePickerModal` (Assessment → Manage → Reports)
 
 ---
 

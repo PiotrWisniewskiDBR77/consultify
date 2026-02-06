@@ -27,6 +27,18 @@ import {
 
 const STORE_DEBUG = import.meta.env.VITE_STORE_DEBUG === 'true';
 
+// ---------------------------------------------------------------------------
+// Fetch de-dupe / throttle
+// ---------------------------------------------------------------------------
+// In React 18/19 dev (StrictMode + refresh), effects can mount more than once.
+// If the network is transiently unavailable, repeated mounts can spam /api and
+// cascade into "TypeError: Failed to fetch" + UI freeze.
+const FETCH_DEDUPE_WINDOW_MS = 1500;
+let _inflightFetchConversations: Promise<void> | null = null;
+let _lastFetchConversationsAt = 0;
+const _inflightFetchConversationById: Record<string, Promise<void>> = {};
+const _lastFetchConversationAt: Record<string, number> = {};
+
 function getAppLanguageFallback(): SupportedLanguage {
   try {
     const raw = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
@@ -64,6 +76,16 @@ export interface Conversation {
   chatProjectId?: string | null;
 
   organizationId?: string;
+  /**
+   * User ID who created this conversation.
+   * Particularly important for team conversations where multiple users can add messages.
+   */
+  createdBy?: string;
+  /**
+   * Scope of the chat project this conversation belongs to ('personal' | 'team').
+   * Returned by the API via LEFT JOIN.
+   */
+  chatProjectScope?: 'personal' | 'team' | null;
   starred: boolean;
   isPinned?: boolean; // Alias for starred
   archived: boolean;
@@ -121,6 +143,12 @@ export interface ConversationMessage {
   };
   tokenCount?: number;
   modelUsed?: string;
+  /** User who wrote this message (null for AI messages) */
+  authorUserId?: string | null;
+  /** Display name of the author (resolved from users table) */
+  authorName?: string | null;
+  /** Email of the author (resolved from users table) */
+  authorEmail?: string | null;
   createdAt: Date;
 }
 
@@ -241,7 +269,11 @@ interface ConversationState {
   previousView: AppView | null;
 
   // Actions - Fetch
-  fetchConversations: (options?: { archived?: boolean; projectId?: string }) => Promise<void>;
+  fetchConversations: (options?: {
+    archived?: boolean;
+    projectId?: string;
+    scope?: 'personal' | 'team' | 'all';
+  }) => Promise<void>;
   fetchConversation: (id: string) => Promise<void>;
 
   // Actions - CRUD
@@ -367,60 +399,82 @@ export const useConversationStore = create<ConversationState>()(
       // ==================== FETCH ====================
 
       fetchConversations: async (options) => {
-        set({ isLoading: true });
-        try {
-          const result = await Api.getConversations({
-            archived: options?.archived,
-            projectId: options?.projectId,
-          });
+        const now = Date.now();
+        if (_inflightFetchConversations) return _inflightFetchConversations;
+        if (now - _lastFetchConversationsAt < FETCH_DEDUPE_WINDOW_MS) return;
+        _lastFetchConversationsAt = now;
 
-          const conversations = result.conversations.map(mapApiConversation);
-          set((state) => {
-            const nextMap = { ...state.chatLanguageByConversationId };
-            for (const c of conversations) {
-              if (c.language) nextMap[c.id] = c.language;
-            }
-            return {
-              conversations,
-              groupedConversations: groupConversations(conversations),
-              chatLanguageByConversationId: nextMap,
-              isLoading: false,
-            };
-          });
-        } catch (err) {
-          console.error('[ConversationStore] Fetch error:', err);
-          set({ isLoading: false });
-        }
+        set({ isLoading: true });
+        _inflightFetchConversations = (async () => {
+          try {
+            const result = await Api.getConversations({
+              archived: options?.archived,
+              projectId: options?.projectId,
+            });
+
+            const conversations = (result?.conversations || []).map(mapApiConversation);
+            set((state) => {
+              const nextMap = { ...state.chatLanguageByConversationId };
+              for (const c of conversations) {
+                if (c.language) nextMap[c.id] = c.language;
+              }
+              return {
+                conversations,
+                groupedConversations: groupConversations(conversations),
+                chatLanguageByConversationId: nextMap,
+                isLoading: false,
+              };
+            });
+          } catch (err) {
+            console.error('[ConversationStore] Fetch error:', err);
+            set({ isLoading: false });
+          }
+        })().finally(() => {
+          _inflightFetchConversations = null;
+        });
+
+        return _inflightFetchConversations;
       },
 
       fetchConversation: async (id: string) => {
+        const now = Date.now();
+        if (_inflightFetchConversationById[id]) return _inflightFetchConversationById[id];
+        if (now - (_lastFetchConversationAt[id] || 0) < FETCH_DEDUPE_WINDOW_MS) return;
+        _lastFetchConversationAt[id] = now;
+
         set({ isLoading: true });
-        try {
-          const result = await Api.getConversation(id);
-          const messages = result.messages.map(mapApiMessage);
-          set((state) => {
-            const fromApiRaw = result?.language;
-            const fromApiBase = fromApiRaw ? String(fromApiRaw).split('-')[0] : null;
-            const fromApi = fromApiBase && isValidLanguage(fromApiBase) ? fromApiBase : null;
-            const existing = state.chatLanguageByConversationId[id];
-            const resolved =
-              (fromApi as any) || existing || state.draftChatLanguage || getAppLanguageFallback();
-            return {
-              activeConversationId: id,
-              activeMessages: messages,
-              isLoading: false,
-              // Ensure we always have a language for the selected conversation
-              draftChatLanguage: resolved,
-              chatLanguageByConversationId: {
-                ...state.chatLanguageByConversationId,
-                [id]: resolved,
-              },
-            };
-          });
-        } catch (err) {
-          console.error('[ConversationStore] Fetch conversation error:', err);
-          set({ isLoading: false });
-        }
+        _inflightFetchConversationById[id] = (async () => {
+          try {
+            const result = await Api.getConversation(id);
+            const messages = (result?.messages || []).map(mapApiMessage);
+            set((state) => {
+              const fromApiRaw = result?.language;
+              const fromApiBase = fromApiRaw ? String(fromApiRaw).split('-')[0] : null;
+              const fromApi = fromApiBase && isValidLanguage(fromApiBase) ? fromApiBase : null;
+              const existing = state.chatLanguageByConversationId[id];
+              const resolved =
+                (fromApi as any) || existing || state.draftChatLanguage || getAppLanguageFallback();
+              return {
+                activeConversationId: id,
+                activeMessages: messages,
+                isLoading: false,
+                // Ensure we always have a language for the selected conversation
+                draftChatLanguage: resolved,
+                chatLanguageByConversationId: {
+                  ...state.chatLanguageByConversationId,
+                  [id]: resolved,
+                },
+              };
+            });
+          } catch (err) {
+            console.error('[ConversationStore] Fetch conversation error:', err);
+            set({ isLoading: false });
+          }
+        })().finally(() => {
+          delete _inflightFetchConversationById[id];
+        });
+
+        return _inflightFetchConversationById[id];
       },
 
       // ==================== CRUD ====================
@@ -922,6 +976,8 @@ function mapApiConversation(api: any): Conversation {
     projectId: api.project_id,
     chatProjectId: api.chat_project_id || null,
     organizationId: api.organization_id,
+    createdBy: api.created_by || null,
+    chatProjectScope: api.chat_project_scope || null,
     starred: api.starred || false,
     archived: api.archived || false,
     tags: api.tags || [],
@@ -944,6 +1000,9 @@ function mapApiMessage(api: any): ConversationMessage {
     metadata: api.metadata,
     tokenCount: api.token_count,
     modelUsed: api.model_used,
+    authorUserId: api.author_user_id || null,
+    authorName: api.author_name || null,
+    authorEmail: api.author_email || null,
     createdAt: new Date(api.created_at),
   };
 }

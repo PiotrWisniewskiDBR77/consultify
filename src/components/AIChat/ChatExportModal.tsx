@@ -89,7 +89,7 @@ export const ChatExportModal: React.FC<ChatExportModalProps> = ({
                   JSON Data
                 </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">
-                  Raw raw data for developers
+                  Raw data for developers
                 </div>
               </div>
             </div>

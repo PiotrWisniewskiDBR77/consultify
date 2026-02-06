@@ -2,6 +2,62 @@
 
 All notable changes to Consultinity will be documented in this file.
 
+## [Unreleased] - 2026-02-06
+
+### Added / Improved - AI Chat System (Wave 1–3 + stabilization)
+
+- **ContextBadge** (`src/components/AIChat/ContextBadge.tsx`): nowy komponent pokazujący użytkownikowi co AI "widzi" (workspace, projekt, encja, focus mode). Zintegrowany w `UnifiedChatPanel` nad obszarem wiadomości.
+
+- **SmartSuggestions kontekstowe**: podpowiedzi startowe na ekranie powitalnym zależą teraz od typu workspace (assessment → analiza/gaps, initiative → priorytetyzacja/ryzyka, roadmap → timeline/zależności, task → planowanie tygodnia/blokery, report → podsumowanie/executive summary). Fallback na generyczne sugestie.
+
+- **Retry button przy błędach streamu**: gdy AI odpowiada błędem (`⚠️`), pod wiadomością pojawia się przycisk "Spróbuj ponownie" z ikoną `RefreshCw`, automatycznie powtarzający ostatnią wiadomość użytkownika. Działa w `UnifiedChatPanel` i `AIChatWelcomeView`.
+
+- **ThinkingBlock w AIChatWelcomeView**: 5-krokowy wskaźnik myślenia AI (analiza → kontekst → wiedza → synteza → formatowanie) widoczny konsekwentnie we wszystkich trzech formatach czatu (pełnoekranowy, split, panel boczny).
+
+- **Conversation continuity — loading state**: dodany spinner ładowania gdy konwersacja jest wybrana ale wiadomości jeszcze się nie załadowały (np. po nawigacji między ekranami). Eliminuje "miganie" powrotne do ekranu powitalnego.
+
+- **Chat export (JSON/TXT)**: `ChatExportModal` podłączony do handlera eksportu — przyciski PDF/JSON/TXT generują i pobierają pliki z pełną historią rozmowy.
+
+- **MessageActions — Share & Bookmark**: Share korzysta z Web Share API (mobilne) lub kopiuje do schowka (desktop). Bookmark zapisuje wiadomość do `localStorage` z timestampem.
+
+- **FocusMode selector UX**: dodany `activeSourceCount` badge do kompaktowego selektora — widoczny gdy użytkownik wybrał tryb inny niż "All".
+
+- **SSE auto-reconnect**: `useAIStream` automatycznie ponawia próbę 1× po 1.5s gdy stream się zerwie (network error), z wyłączeniem błędów autoryzacji.
+
+- **Conversation summary endpoint** (`POST /api/conversations/:id/summarize`): kondensuje starsze wiadomości w długich rozmowach przez LLM, zostawiając ostatnie N nienaruszone.
+
+- **AI Memory w pipeline**: system prompt wzbogacony o preferencje użytkownika i pamięć organizacji z `aiMemoryService`.
+
+- **AIContextBuilder optimization**: budowanie kontekstu zrównoleglone, cap rozmiaru kontekstu (>12k chars → trimming).
+
+- **Adaptive response — zamknięcie pętli**: feedback trafia do `adaptiveResponseService.processFeedback()`, aktualizując profil stylu użytkownika.
+
+- **Voice health endpoint** (`GET /api/voice/health`).
+
+- **Circuit breaker health check probes** dla OpenAI, Gemini, Anthropic.
+
+- **AI health dashboard** (`GET /api/ai/health-check/dashboard`): skonsolidowany status AI.
+
+- **Quota checking w AIPipeline**: integracja z `BudgetManagementService.checkBudgetLimit()`.
+
+### Fixed - Runtime crashes & broken endpoints
+
+- **`/api/ai/suggestions` crashował**: brakujące `smartSuggestions.ts` i `proactiveSuggestionsService.ts`. Napisane pełne implementacje TypeScript.
+
+- **ResponseActions — raw fetch()**: zastąpiony przez `Api.executeAIAction` / `Api.genericPost`.
+
+- **Chat title auto-generation**: naprawiony stale closure bug z `activeConversationIdRef`.
+
+- **`authorName` TypeScript error**: dodane do `ChatMessage` w `types/domain/ai.ts`.
+
+### Improved - Internationalization (i18n)
+
+- **InlineResponseFeedback**: namespace `chat.feedback.*` → `aiChat.feedback.*` (34 klucze en+pl).
+- **ChatOverlay**: hardcoded PL → `t('aiChat.expandFullScreen')`.
+- **Nowe klucze i18n** (6 locales): `aiChat.retry`, `contextBadge.*`, `aiChat.feedback.*`, `aiChat.actions.*`.
+
+---
+
 ## [2.8.0] - 2025-01-XX
 
 ### Fixed - Removed All Mock Data from Production Code

@@ -139,13 +139,12 @@ export const ContextBadge: React.FC<ContextBadgeProps> = ({
         `}
       >
         <span className="text-primary-500 dark:text-primary-400 shrink-0">
-          {workspaceContext?.type
-            ? WORKSPACE_ICONS[workspaceContext.type]
-            : <Sparkles size={14} />}
+          {workspaceContext?.type ? WORKSPACE_ICONS[workspaceContext.type] : <Sparkles size={14} />}
         </span>
 
         <span className="flex-1 text-left truncate">
-          {t('contextBadge.aiSees', 'AI sees')}: <span className="font-medium text-slate-600 dark:text-slate-300">{primaryLabel}</span>
+          {t('contextBadge.aiSees', 'AI sees')}:{' '}
+          <span className="font-medium text-slate-600 dark:text-slate-300">{primaryLabel}</span>
         </span>
 
         {contextItems.length > 1 && (

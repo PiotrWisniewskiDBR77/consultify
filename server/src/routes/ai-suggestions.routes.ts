@@ -216,8 +216,12 @@ router.get(
         },
       };
 
-      const industryData = benchmarks[industry.toLowerCase()] || benchmarks.manufacturing;
-      const frameworkData = industryData[framework.toUpperCase()] || industryData.DRD;
+      const industryData =
+        benchmarks[(Array.isArray(industry) ? industry[0] : industry).toLowerCase()] ||
+        benchmarks.manufacturing;
+      const frameworkData =
+        industryData[(Array.isArray(framework) ? framework[0] : framework).toUpperCase()] ||
+        industryData.DRD;
 
       res.json({
         success: true,

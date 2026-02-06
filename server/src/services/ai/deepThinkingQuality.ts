@@ -17,12 +17,7 @@ export type DeepThinkingDoDResult = {
 export type DeepThinkingRubricScore = {
   total: number; // 0..12
   criteria: Record<
-    | 'structure'
-    | 'framing'
-    | 'options'
-    | 'recommendation'
-    | 'risks'
-    | 'actionability',
+    'structure' | 'framing' | 'options' | 'recommendation' | 'risks' | 'actionability',
     0 | 1 | 2
   >;
   notes: string[];
@@ -41,8 +36,13 @@ function extractSection(text: string, headingNeedles: string[]): string | null {
   const out: string[] = [];
   for (let i = idx + 1; i < lines.length; i += 1) {
     const line = lines[i] || '';
-    // Stop on next heading-ish line (very heuristic)
-    if (i > idx + 1 && /^[A-ZĄĆĘŁŃÓŚŹŻ][A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż\s&+/-]{2,}$/.test(line.trim())) {
+    const trimmed = line.trim();
+    // Stop on next heading: markdown ## or plain uppercase heading
+    if (
+      i > idx + 1 &&
+      (/^#{1,4}\s+\S/.test(trimmed) ||
+        /^[A-ZĄĆĘŁŃÓŚŹŻ][A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż\s&+/-]{2,}$/.test(trimmed))
+    ) {
       break;
     }
     out.push(line);
@@ -69,7 +69,11 @@ function extractOptions(text: string): string[] {
   const seen = new Set<string>();
   const uniq: string[] = [];
   for (const it of items) {
-    const norm = it.toLowerCase().replace(/[^a-ząćęłńóśźż0-9\s]/gi, '').replace(/\s+/g, ' ').trim();
+    const norm = it
+      .toLowerCase()
+      .replace(/[^a-ząćęłńóśźż0-9\s]/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
     if (!norm) continue;
     if (seen.has(norm)) continue;
     seen.add(norm);
@@ -89,7 +93,10 @@ export function validateDeepThinkingDoD(text: string, language?: string): DeepTh
     { key: 'options', needles: ['options', 'opcje', 'warianty'] },
     { key: 'recommendation', needles: ['recommendation', 'rekomendacja', 'zalecenie'] },
     { key: 'risks', needles: ['risks', 'ryzyka', 'blind spots', 'ślepe plamki'] },
-    { key: 'next_actions', needles: ['next actions', 'kolejne kroki', 'następne kroki', 'checklista'] },
+    {
+      key: 'next_actions',
+      needles: ['next actions', 'kolejne kroki', 'następne kroki', 'checklista'],
+    },
   ];
 
   const missing = required.filter((r) => !hasAny(t, r.needles)).map((r) => r.key);
@@ -167,7 +174,12 @@ export function validateDeepThinkingDoD(text: string, language?: string): DeepTh
   if (!hasAny(t, assumptionsNeedles)) missing.push('assumptions_or_gaps_missing');
 
   // Next actions: must be checklist-like AND include early signals/monitoring
-  const nextActionsSection = extractSection(t, ['next actions', 'kolejne kroki', 'następne kroki', 'checklista']);
+  const nextActionsSection = extractSection(t, [
+    'next actions',
+    'kolejne kroki',
+    'następne kroki',
+    'checklista',
+  ]);
   if (nextActionsSection) {
     if (countListItems(nextActionsSection) < 2) missing.push('next_actions_checklist_too_short');
   }
@@ -188,7 +200,8 @@ export function validateDeepThinkingDoD(text: string, language?: string): DeepTh
 
   // Anti-garbage: long but empty outputs should fail (prevent "pretty headings only").
   const exec = extractSection(t, ['executive summary', 'podsumowanie', 'streszczenie']) || '';
-  if (t.length > 1800 && exec.replace(/\s+/g, ' ').trim().length < 40) missing.push('executive_summary_too_thin');
+  if (t.length > 1800 && exec.replace(/\s+/g, ' ').trim().length < 40)
+    missing.push('executive_summary_too_thin');
 
   return { ok: missing.length === 0, missing };
 }
@@ -212,7 +225,16 @@ export function scoreDeepThinkingRubric(text: string, language?: string): DeepTh
   }
 
   const dod = validateDeepThinkingDoD(t, language);
-  const hasStructure = dod.missing.filter((m) => m.endsWith('_summary') || m.includes('framing') || m === 'options' || m === 'recommendation' || m === 'risks' || m === 'next_actions').length === 0;
+  const hasStructure =
+    dod.missing.filter(
+      (m) =>
+        m.endsWith('_summary') ||
+        m.includes('framing') ||
+        m === 'options' ||
+        m === 'recommendation' ||
+        m === 'risks' ||
+        m === 'next_actions'
+    ).length === 0;
 
   const structure: 0 | 1 | 2 = hasStructure ? 2 : dod.missing.length <= 3 ? 1 : 0;
 
@@ -224,29 +246,47 @@ export function scoreDeepThinkingRubric(text: string, language?: string): DeepTh
 
   const options = extractOptions(t);
   const optionsScore: 0 | 1 | 2 =
-    options.length >= 2 && options.length <= 4 ? (dod.missing.includes('tradeoffs_missing') ? 1 : 2) : options.length >= 2 ? 1 : 0;
+    options.length >= 2 && options.length <= 4
+      ? dod.missing.includes('tradeoffs_missing')
+        ? 1
+        : 2
+      : options.length >= 2
+        ? 1
+        : 0;
   if (optionsScore < 2) notes.push('options_need_tradeoffs_or_count_fix');
 
-  const recommendation: 0 | 1 | 2 =
-    dod.missing.includes('recommendation') ? 0 : dod.missing.includes('boundary_conditions_missing') ? 1 : 2;
+  const recommendation: 0 | 1 | 2 = dod.missing.includes('recommendation')
+    ? 0
+    : dod.missing.includes('boundary_conditions_missing')
+      ? 1
+      : 2;
   if (recommendation < 2) notes.push('recommendation_needs_boundary_conditions');
 
-  const risks: 0 | 1 | 2 =
-    dod.missing.includes('risks') ? 0 : dod.missing.includes('assumptions_or_gaps_missing') ? 1 : 2;
+  const risks: 0 | 1 | 2 = dod.missing.includes('risks')
+    ? 0
+    : dod.missing.includes('assumptions_or_gaps_missing')
+      ? 1
+      : 2;
   if (risks < 2) notes.push('risks_need_assumptions_gaps');
 
-  const nextActionsSection = extractSection(t, ['next actions', 'kolejne kroki', 'następne kroki', 'checklista']) || '';
-  const actionability: 0 | 1 | 2 =
-    !nextActionsSection
-      ? 0
-      : countListItems(nextActionsSection) >= 2 && !dod.missing.includes('early_signals_missing')
-        ? 2
-        : 1;
+  const nextActionsSection =
+    extractSection(t, ['next actions', 'kolejne kroki', 'następne kroki', 'checklista']) || '';
+  const actionability: 0 | 1 | 2 = !nextActionsSection
+    ? 0
+    : countListItems(nextActionsSection) >= 2 && !dod.missing.includes('early_signals_missing')
+      ? 2
+      : 1;
   if (actionability < 2) notes.push('next_actions_need_checklist_and_early_signals');
 
-  const criteria = { structure, framing, options: optionsScore, recommendation, risks, actionability };
+  const criteria = {
+    structure,
+    framing,
+    options: optionsScore,
+    recommendation,
+    risks,
+    actionability,
+  };
   const total = (Object.values(criteria) as number[]).reduce((a, b) => a + b, 0);
 
   return { total, criteria, notes };
 }
-

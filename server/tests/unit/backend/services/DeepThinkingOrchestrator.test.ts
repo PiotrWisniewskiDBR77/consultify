@@ -19,10 +19,18 @@ describe('DeepThinkingOrchestrator', () => {
     expect(emit).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'dt_state', state: 'research_visibility' })
     );
-    expect(emit).toHaveBeenCalledWith(expect.objectContaining({ type: 'dt_state', state: 'research' }));
-    expect(emit).toHaveBeenCalledWith(expect.objectContaining({ type: 'dt_state', state: 'thinking' }));
-    expect(emit).toHaveBeenCalledWith(expect.objectContaining({ type: 'dt_state', state: 'synthesis' }));
-    expect(emit).toHaveBeenCalledWith(expect.objectContaining({ type: 'dt_state', state: 'closure' }));
+    expect(emit).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'dt_state', state: 'research' })
+    );
+    expect(emit).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'dt_state', state: 'thinking' })
+    );
+    expect(emit).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'dt_state', state: 'synthesis' })
+    );
+    expect(emit).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'dt_state', state: 'closure' })
+    );
   });
 
   it('emits research_progress error when webSearch enabled but key missing', async () => {
@@ -50,4 +58,3 @@ describe('DeepThinkingOrchestrator', () => {
     process.env.TAVILY_API_KEY = prev;
   });
 });
-

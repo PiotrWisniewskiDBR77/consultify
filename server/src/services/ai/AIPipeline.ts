@@ -360,9 +360,41 @@ export class AIPipeline {
     return CAPABILITY_REGISTRY[name];
   }
 
-  private async checkQuota(_userId: string, _organizationId?: string): Promise<void> {
-    // TODO: Implement quota checking
-    // This will be migrated from quotaService.js
+  private async checkQuota(userId: string, organizationId?: string): Promise<void> {
+    if (!organizationId) return; // Skip for requests without org context
+
+    try {
+      const budgetMod = await import('../budgetManagementService.js');
+      const BudgetService = budgetMod.default || budgetMod;
+      if (!BudgetService?.checkBudgetLimit) return;
+
+      // Check token budget (estimate ~500 tokens per request)
+      const result = await BudgetService.checkBudgetLimit(
+        organizationId,
+        userId,
+        null, // projectId — checked separately if needed
+        'tokens',
+        500 // estimated token cost
+      );
+
+      if (result && !result.allowed) {
+        const error = new Error(
+          result.reason || 'AI token budget exceeded. Please contact your administrator.'
+        );
+        (error as any).code = 'AI_BUDGET_EXHAUSTED';
+        (error as any).budgetStatus = {
+          currentUsage: result.currentUsage,
+          budgetLimit: result.budgetLimit,
+          usagePercent: result.usagePercent,
+          scope: 'Organization',
+        };
+        throw error;
+      }
+    } catch (err: any) {
+      // Re-throw budget errors, swallow everything else (fail-open)
+      if (err?.code === 'AI_BUDGET_EXHAUSTED') throw err;
+      logger.debug(`[AIPipeline] Quota check skipped: ${err?.message}`);
+    }
   }
 
   private async buildContext(request: AIPipelineRequest): Promise<{
@@ -588,8 +620,7 @@ export class AIPipeline {
         memParts.push(`- Poziom szczegółowości: ${um.preferences.detailLevel}`);
       if (um.preferences?.language)
         memParts.push(`- Preferowany język: ${um.preferences.language}`);
-      if (um.expertise?.length > 0)
-        memParts.push(`- Ekspertyza: ${um.expertise.join(', ')}`);
+      if (um.expertise?.length > 0) memParts.push(`- Ekspertyza: ${um.expertise.join(', ')}`);
       if (um.recentTopics?.length > 0)
         memParts.push(`- Ostatnie tematy: ${um.recentTopics.join(', ')}`);
       if (um.interactionCount)
@@ -601,16 +632,19 @@ export class AIPipeline {
     if (ctx?.orgMemory) {
       const om = ctx.orgMemory;
       const omParts: string[] = ['## PAMIĘĆ ORGANIZACJI'];
-      if (om.aiMaturityStage)
-        omParts.push(`- Etap dojrzałości AI: ${om.aiMaturityStage}`);
+      if (om.aiMaturityStage) omParts.push(`- Etap dojrzałości AI: ${om.aiMaturityStage}`);
       if (om.terminology && Object.keys(om.terminology).length > 0) {
-        const termEntries = Object.entries(om.terminology).slice(0, 10)
-          .map(([k, v]) => `  - "${k}" → "${v}"`).join('\n');
+        const termEntries = Object.entries(om.terminology)
+          .slice(0, 10)
+          .map(([k, v]) => `  - "${k}" → "${v}"`)
+          .join('\n');
         omParts.push(`- Terminologia organizacji:\n${termEntries}`);
       }
       if (om.decisionPatterns?.length > 0) {
-        const pats = om.decisionPatterns.slice(0, 3)
-          .map((p: any) => `  - ${p.type}: typowy wynik "${p.commonOutcome}" (${p.frequency}×)`).join('\n');
+        const pats = om.decisionPatterns
+          .slice(0, 3)
+          .map((p: any) => `  - ${p.type}: typowy wynik "${p.commonOutcome}" (${p.frequency}×)`)
+          .join('\n');
         omParts.push(`- Wzorce decyzji:\n${pats}`);
       }
       if (omParts.length > 1) parts.push(omParts.join('\n'));
@@ -841,7 +875,9 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
     const aiModes = request.options?.aiModes || (ctx as any)?.aiModes;
     // Deep Thinking autonomy: never reference internal knowledge sources / system modules.
     const knowledgeSources =
-      aiModes?.deepResearch === true ? undefined : request.options?.knowledgeSources || (ctx as any)?.knowledgeSources;
+      aiModes?.deepResearch === true
+        ? undefined
+        : request.options?.knowledgeSources || (ctx as any)?.knowledgeSources;
     const responseStyle = request.options?.responseStyle || (ctx as any)?.responseStyle;
 
     if (aiModes?.deepResearch) {

@@ -176,7 +176,8 @@ const writePublicReportPdf = async (
  */
 router.get('/:token', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { token } = req.params;
+    const tokenParam = req.params.token;
+    const token = Array.isArray(tokenParam) ? tokenParam[0] : tokenParam;
     const { password } = req.query;
 
     const result = await ReportBuilderService.getPublicLinkByToken(token);
@@ -234,7 +235,8 @@ router.get('/:token', async (req: Request, res: Response, next: NextFunction) =>
  */
 router.get('/:token/pdf', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { token } = req.params;
+    const tokenParam = req.params.token;
+    const token = Array.isArray(tokenParam) ? tokenParam[0] : tokenParam;
     const { password } = req.query;
 
     const result = await ReportBuilderService.getPublicLinkByToken(token);
@@ -298,7 +300,8 @@ router.get('/:token/pdf', async (req: Request, res: Response, next: NextFunction
  */
 router.post('/:token/verify-password', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { token } = req.params;
+    const tokenParam = req.params.token;
+    const token = Array.isArray(tokenParam) ? tokenParam[0] : tokenParam;
     const { password } = req.body;
 
     // Get link without incrementing view count

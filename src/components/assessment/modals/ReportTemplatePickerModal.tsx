@@ -1,6 +1,7 @@
-import { ChevronDown, FileText, Grid3X3, List, Loader2, Plus, X } from 'lucide-react';
+import { ChevronDown, FileText, Grid3X3, List, Loader2, Plus, Sparkles, X } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import { TemplatesManager } from '@/components/ReportBuilder/TemplatesManager';
 import { cn } from '@/utils/cn';
 
 type ReportTemplate = {
@@ -20,8 +21,10 @@ type FrameworkFilter = 'all' | 'drd' | 'siri' | 'adma';
 // Helper to detect recipient from template name/description
 function detectRecipient(tpl: ReportTemplate): RecipientFilter {
   const text = `${tpl.name} ${tpl.description || ''}`.toLowerCase();
-  if (text.includes('zarząd') || text.includes('board') || text.includes('executive')) return 'board';
-  if (text.includes('bank') || text.includes('financial') || text.includes('instytucj')) return 'bank';
+  if (text.includes('zarząd') || text.includes('board') || text.includes('executive'))
+    return 'board';
+  if (text.includes('bank') || text.includes('financial') || text.includes('instytucj'))
+    return 'bank';
   return 'team';
 }
 
@@ -39,7 +42,7 @@ export function ReportTemplatePickerModal(props: {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (template: ReportTemplate) => void | Promise<void>;
-  onNewTemplate?: () => void;
+  onNewTemplate?: () => void | Promise<void>;
 }) {
   const { isOpen, onClose, onSelect, onNewTemplate } = props;
 
@@ -48,11 +51,18 @@ export function ReportTemplatePickerModal(props: {
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [isTemplateGeneratorOpen, setIsTemplateGeneratorOpen] = useState(false);
 
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [recipientFilter, setRecipientFilter] = useState<RecipientFilter>('all');
   const [frameworkFilter, setFrameworkFilter] = useState<FrameworkFilter>('all');
+  const closeTemplateGenerator = () => {
+    setIsTemplateGeneratorOpen(false);
+    // refresh templates list after leaving generator
+    setReloadKey((k) => k + 1);
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -87,7 +97,7 @@ export function ReportTemplatePickerModal(props: {
     return () => {
       cancelled = true;
     };
-  }, [isOpen]);
+  }, [isOpen, reloadKey]);
 
   const filtered = useMemo(() => {
     let result = templates;
@@ -294,8 +304,20 @@ export function ReportTemplatePickerModal(props: {
             {/* New Template button */}
             <button
               type="button"
-              onClick={onNewTemplate}
-              disabled={!onNewTemplate}
+              onClick={async () => {
+                if (submitting) return;
+                try {
+                  if (onNewTemplate) {
+                    await onNewTemplate();
+                    // best-effort refresh (covers cases where caller creates template)
+                    setReloadKey((k) => k + 1);
+                    return;
+                  }
+                  setIsTemplateGeneratorOpen(true);
+                } catch (e: any) {
+                  setError(e?.message || 'Failed to open template generator');
+                }
+              }}
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 disabled:cursor-not-allowed text-white text-xs font-medium transition-colors"
               title="Create new template"
             >
@@ -363,12 +385,17 @@ export function ReportTemplatePickerModal(props: {
                     </div>
                     {/* Subtle metadata row */}
                     <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-800 flex items-center gap-2">
-                      <span className={cn(
-                        'text-[9px] px-1 py-0.5 rounded font-medium',
-                        framework === 'drd' && 'bg-blue-50 dark:bg-blue-900/20 text-blue-500 dark:text-blue-400',
-                        framework === 'siri' && 'bg-amber-50 dark:bg-amber-900/20 text-amber-500 dark:text-amber-400',
-                        framework === 'adma' && 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 dark:text-emerald-400'
-                      )}>
+                      <span
+                        className={cn(
+                          'text-[9px] px-1 py-0.5 rounded font-medium',
+                          framework === 'drd' &&
+                            'bg-blue-50 dark:bg-blue-900/20 text-blue-500 dark:text-blue-400',
+                          framework === 'siri' &&
+                            'bg-amber-50 dark:bg-amber-900/20 text-amber-500 dark:text-amber-400',
+                          framework === 'adma' &&
+                            'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 dark:text-emerald-400'
+                        )}
+                      >
                         {framework.toUpperCase()}
                       </span>
                       <span className="text-[9px] text-slate-400 dark:text-slate-500 capitalize">
@@ -461,12 +488,17 @@ export function ReportTemplatePickerModal(props: {
                           </div>
                         </td>
                         <td className="px-4 py-2.5 hidden sm:table-cell">
-                          <span className={cn(
-                            'text-[10px] px-1.5 py-0.5 rounded font-medium',
-                            framework === 'drd' && 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
-                            framework === 'siri' && 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
-                            framework === 'adma' && 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
-                          )}>
+                          <span
+                            className={cn(
+                              'text-[10px] px-1.5 py-0.5 rounded font-medium',
+                              framework === 'drd' &&
+                                'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
+                              framework === 'siri' &&
+                                'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
+                              framework === 'adma' &&
+                                'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
+                            )}
+                          >
                             {framework.toUpperCase()}
                           </span>
                         </td>
@@ -522,7 +554,11 @@ export function ReportTemplatePickerModal(props: {
               type="button"
               disabled={!selectedTemplate || submitting}
               onClick={() => selectedTemplate && handleSelect(selectedTemplate)}
-              className="px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors inline-flex items-center gap-2"
+              className={
+                !selectedTemplate || submitting
+                  ? 'px-5 py-2.5 rounded-lg bg-slate-300 dark:bg-navy-700 text-slate-500 dark:text-slate-400 text-sm font-medium cursor-not-allowed inline-flex items-center gap-2'
+                  : 'px-5 py-2.5 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all inline-flex items-center gap-2'
+              }
             >
               {submitting ? (
                 <>
@@ -530,12 +566,46 @@ export function ReportTemplatePickerModal(props: {
                   Generating…
                 </>
               ) : (
-                'Generate Report'
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  Generate Report
+                </>
               )}
             </button>
           </div>
         </div>
       </div>
+
+      {/* Template generator overlay (creates organization templates) */}
+      {isTemplateGeneratorOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={closeTemplateGenerator}
+            aria-label="Close template generator"
+          />
+          <div className="relative w-full max-w-5xl h-[min(90vh,760px)] overflow-hidden rounded-2xl bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 shadow-2xl flex flex-col">
+            <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
+              <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                Template generator
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  closeTemplateGenerator();
+                }}
+                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex-1 min-h-0 overflow-auto p-5">
+              <TemplatesManager autoOpenNewTemplate />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

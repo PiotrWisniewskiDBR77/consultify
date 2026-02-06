@@ -2,7 +2,7 @@
 
 ## Status: ✅ ZAIMPLEMENTOWANY (MVP+)
 
-**Ostatnia aktualizacja:** 2026-02-04
+**Ostatnia aktualizacja:** 2026-02-05
 
 ---
 
@@ -85,6 +85,12 @@ Generyczny moduł tworzenia raportów, który:
 - [x] Import zewnętrznych raportów DRD/SIRI/ADMA (UnifiedImportWizard)
 - [x] AI-powered sugestie poziomów i technologii (AISuggestionService)
 - [x] Bulk operations (multi-select, copy-paste, batch update)
+
+### Usprawnienia UX (2026-02-05) – Assessment entrypoints
+
+- **Report template picker w module Assessment**: dodano lekki picker szablonów raportów (Application vs Organization) z widokiem Grid/Table i filtrami (Recipient/Framework).
+- **New Template → generator**: przycisk “New Template” w pickerze otwiera overlay z `TemplatesManager` i automatycznie startuje flow tworzenia nowego szablonu.
+- **Stabilność `sections_json`**: w `TemplatesManager` poprawiono parsowanie sekcji szablonu, aby bezpiecznie obsłużyć przypadki brakujących pól / string vs array.
 
 ---
 
@@ -405,8 +411,8 @@ CREATE INDEX idx_report_sections_report ON report_sections(report_id);
 
 ### Export
 
-| Method | Endpoint                          | Opis                          |
-| ------ | --------------------------------- | ----------------------------- |
+| Method | Endpoint                              | Opis                          |
+| ------ | ------------------------------------- | ----------------------------- |
 | GET    | `/api/report-builder/:id/export/pdf`  | Generuj + pobierz PDF         |
 | GET    | `/api/report-builder/:id/export/pptx` | Generuj + pobierz PPTX        |
 | GET    | `/api/report-builder/:id/export/doc`  | Generuj + pobierz Word (.doc) |
@@ -694,11 +700,12 @@ wdrozenia/modules/reports/
    - Pause/resume functionality
 
 ### Faza 5: Assessment Editors ✅ COMPLETED (2026-02-04)1. ✅ SIRI Assessment Editor (SIRIAssessmentEditor.tsx)
-   - 3 Building Blocks, 8 Dimensions, 16 Prioritisation Areas
-   - Interactive level selector with descriptions
-   - Matrix view for quick overview
-   - Gap analysis visualization2. ✅ ADMA Assessment Editor (ADMAAssessmentEditor.tsx)
-   - 5 Pillars, 12 Dimensions
-   - Radar chart visualization
-   - Matrix view with all dimensions
-   - Level characteristics display
+
+- 3 Building Blocks, 8 Dimensions, 16 Prioritisation Areas
+- Interactive level selector with descriptions
+- Matrix view for quick overview
+- Gap analysis visualization2. ✅ ADMA Assessment Editor (ADMAAssessmentEditor.tsx)
+- 5 Pillars, 12 Dimensions
+- Radar chart visualization
+- Matrix view with all dimensions
+- Level characteristics display

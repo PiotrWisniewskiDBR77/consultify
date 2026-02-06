@@ -1015,7 +1015,8 @@ router.get(
       'quality-observability': checkQualityObservability,
     };
 
-    const checkFn = checkFunctions[name.toLowerCase()];
+    const nameStr = Array.isArray(name) ? name[0] : name;
+    const checkFn = checkFunctions[nameStr.toLowerCase()];
 
     if (!checkFn) {
       return res.status(404).json({
@@ -1227,8 +1228,9 @@ router.get(
   asyncHandler(async (req: Request, res: Response) => {
     try {
       const { userId } = req.params;
-      const dailyUsage = aiCostMonitoring.getUserUsage(userId, 'day');
-      const monthlyUsage = aiCostMonitoring.getUserUsage(userId, 'month');
+      const userIdStr = Array.isArray(userId) ? userId[0] : userId;
+      const dailyUsage = aiCostMonitoring.getUserUsage(userIdStr, 'day');
+      const monthlyUsage = aiCostMonitoring.getUserUsage(userIdStr, 'month');
 
       return res.json({
         timestamp: new Date().toISOString(),
@@ -1269,9 +1271,18 @@ router.get(
         checkLLMManagement(),
       ]);
 
-      const coreSubsystems = { cloudIntegrations: cloud, toolsMenu: tools, chatConversation: chat, voiceSystem: voice, historyManagement: history, llmManagement: llm };
+      const coreSubsystems = {
+        cloudIntegrations: cloud,
+        toolsMenu: tools,
+        chatConversation: chat,
+        voiceSystem: voice,
+        historyManagement: history,
+        llmManagement: llm,
+      };
       const coreValues = Object.values(coreSubsystems);
-      const healthyCore = coreValues.filter((s) => s.status === 'healthy' || s.status === 'demo_mode').length;
+      const healthyCore = coreValues.filter(
+        (s) => s.status === 'healthy' || s.status === 'demo_mode'
+      ).length;
 
       // 2. Circuit breaker status
       let circuitBreakers: Record<string, unknown> = {};
@@ -1322,7 +1333,12 @@ router.get(
         qualitySummary = { status: 'unavailable' };
       }
 
-      const overallStatus = healthyCore === coreValues.length ? 'operational' : healthyCore >= coreValues.length / 2 ? 'degraded' : 'critical';
+      const overallStatus =
+        healthyCore === coreValues.length
+          ? 'operational'
+          : healthyCore >= coreValues.length / 2
+            ? 'degraded'
+            : 'critical';
 
       return res.json({
         timestamp: new Date().toISOString(),

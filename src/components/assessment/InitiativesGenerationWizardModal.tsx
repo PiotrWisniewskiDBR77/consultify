@@ -69,6 +69,7 @@ export function InitiativesGenerationWizardModal(props: {
   const [submitting, setSubmitting] = useState(false);
 
   const pollTimer = useRef<number | null>(null);
+  const terminalNotifiedRunIds = useRef<Set<string>>(new Set());
 
   const canStart = useMemo(() => {
     if (!assessmentId) return false;
@@ -141,10 +142,21 @@ export function InitiativesGenerationWizardModal(props: {
           if (run.status !== 'RUNNING') {
             stop();
             setPhase('done');
-            if (run.status === 'SUCCEEDED') toast.success('Initiatives generated');
-            if (run.status === 'PARTIAL') toast.success('Initiatives generated (partial)');
-            if (run.status === 'FAILED') toast.error(run.error || 'Initiatives generation failed');
-            onCompleted?.();
+            // Guard against duplicate terminal notifications (e.g. overlapping polls / StrictMode)
+            if (!terminalNotifiedRunIds.current.has(runId)) {
+              terminalNotifiedRunIds.current.add(runId);
+              if (run.status === 'SUCCEEDED')
+                toast.success('Initiatives generated', { id: `init-gen-${runId}-ok` });
+              if (run.status === 'PARTIAL')
+                toast.success('Initiatives generated (partial)', {
+                  id: `init-gen-${runId}-partial`,
+                });
+              if (run.status === 'FAILED')
+                toast.error(run.error || 'Initiatives generation failed', {
+                  id: `init-gen-${runId}-fail`,
+                });
+              onCompleted?.();
+            }
           }
         }
       } catch {
@@ -217,7 +229,7 @@ export function InitiativesGenerationWizardModal(props: {
 
       <div
         className={cn(
-          'relative w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-2xl',
+          'relative w-full max-w-3xl h-[600px] overflow-hidden rounded-2xl',
           'bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700',
           'shadow-2xl flex flex-col'
         )}
@@ -252,7 +264,7 @@ export function InitiativesGenerationWizardModal(props: {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-auto p-5">
+        <div className="flex-1 min-h-0 overflow-auto p-5">
           {phase === 'config' ? (
             <div className="space-y-5">
               {/* Assessment selection */}
@@ -556,7 +568,11 @@ export function InitiativesGenerationWizardModal(props: {
                 disabled={submitting || !runId}
                 className="px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 text-sm font-medium transition-colors disabled:opacity-50 inline-flex items-center gap-2"
               >
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                {submitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ArrowRight className="w-4 h-4" />
+                )}
                 Prześlij do przeglądu
               </button>
               <button

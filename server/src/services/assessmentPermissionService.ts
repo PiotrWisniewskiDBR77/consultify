@@ -155,7 +155,7 @@ function queryAll<T>(sql: string, params: unknown[] = []): Promise<T[]> {
 
 function queryOne<T>(sql: string, params: unknown[] = []): Promise<T | null> {
   return new Promise((resolve, reject) => {
-    db.get(sql, params, (err: Error | null, row: T) => {
+    db.get(sql, params, (err: Error | null, row: T | null) => {
       if (err) reject(err);
       else resolve(row || null);
     });

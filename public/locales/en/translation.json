@@ -616,6 +616,39 @@
     "loadingConversation": "Loading conversation…",
     "autoReadOn": "Enable voice reading",
     "autoReadOff": "Disable voice reading",
+    "retry": "Try again",
+    "expandFullScreen": "Expand to full screen",
+    "actions": {
+      "helpful": "Helpful",
+      "notHelpful": "Not helpful",
+      "copy": "Copy"
+    },
+    "feedback": {
+      "thankYou": "Thank you for your feedback!",
+      "helpUsImprove": "Help us improve",
+      "length": "Response length:",
+      "tooShort": "Too short",
+      "justRight": "Just right",
+      "tooLong": "Too long",
+      "detail": "Detail level:",
+      "tooLittle": "Too little",
+      "tooMuch": "Too much",
+      "advancedOptions": "More options",
+      "actionability": "Usefulness:",
+      "notUseful": "Not useful",
+      "veryUseful": "Very useful",
+      "accuracy": "Accuracy:",
+      "inaccurate": "Inaccurate",
+      "veryAccurate": "Accurate",
+      "preferredFormat": "Preferred format:",
+      "formatBullets": "Bullets",
+      "formatParagraphs": "Paragraphs",
+      "formatStructured": "Structured",
+      "formatConversational": "Conversational",
+      "missingInfo": "What was missing? (optional)",
+      "missingInfoPlaceholder": "Describe what was missing from the response...",
+      "submit": "Submit feedback"
+    },
     "greeting": {
       "morning": "Good morning",
       "afternoon": "Good afternoon",
@@ -689,6 +722,25 @@
       "noFiles": "No files",
       "selectFile": "Select file",
       "downloading": "Downloading: {{name}}"
+    },
+    "myProjects": "My Projects",
+    "teamProjects": "Team Projects",
+    "folders": "Folders",
+    "createFolder": "Create folder",
+    "createTeamFolder": "Create team folder",
+    "newPersonalFolder": "New personal folder",
+    "newTeamFolder": "New team folder",
+    "newFolder": "New folder",
+    "projectName": "Project name...",
+    "noProjectConversations": "No conversations in this project",
+    "noConversations": "No conversations yet",
+    "noResults": "No conversations found",
+    "startNewChat": "Start a new chat to begin",
+    "newConversation": "New conversation",
+    "closeSidebar": "Close sidebar",
+    "searchPlaceholder": "Search conversations...",
+    "sections": {
+      "archived": "Archived"
     }
   }
 }

@@ -42,6 +42,10 @@ interface SmartSuggestionsProps {
   onSuggestionClick: (suggestion: Suggestion) => void;
   className?: string;
   variant?: 'full' | 'minimal';
+  /** Workspace context for context-aware suggestions */
+  workspaceType?: string;
+  /** Entity name for personalized prompts */
+  entityName?: string;
 }
 
 const SUGGESTION_ICONS: Record<string, React.ElementType> = {
@@ -65,6 +69,8 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
   onSuggestionClick,
   className = '',
   variant = 'full',
+  workspaceType,
+  entityName,
 }) => {
   const { t } = useTranslation();
   const { setCurrentView } = useAppStore();
@@ -136,27 +142,152 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
     setDismissed((prev) => new Set(prev).add(id));
   };
 
-  // Minimal variant - 3 subtle text suggestions
+  // Minimal variant - context-aware text suggestions
   if (variant === 'minimal') {
-    const minimalSuggestions = [
-      { id: 'brief', text: t('aiChat.dailyBrief', 'Daily brief'), prompt: '__DAILY_BRIEF__' },
-      {
-        id: 'week',
-        text: t('aiChat.quickActions.planWeek.label', 'Plan the week'),
-        prompt: t(
-          'aiChat.quickActions.planWeek.prompt',
-          'Help me plan priorities for the next week'
-        ),
-      },
-      {
-        id: 'diagram',
-        text: t('aiChat.quickActions.createDiagram.label', 'Create a diagram'),
-        prompt: t(
-          'aiChat.quickActions.createDiagram.prompt',
-          'Create a process diagram for onboarding a new client'
-        ),
-      },
-    ];
+    // Build context-aware suggestions based on workspace type
+    const contextSuggestions: Array<{ id: string; text: string; prompt: string }> = [];
+
+    // Always include daily brief
+    contextSuggestions.push({
+      id: 'brief',
+      text: t('aiChat.dailyBrief', 'Daily brief'),
+      prompt: '__DAILY_BRIEF__',
+    });
+
+    // Workspace-specific suggestions
+    switch (workspaceType) {
+      case 'assessment':
+        contextSuggestions.push(
+          {
+            id: 'assess-help',
+            text: entityName
+              ? t('aiChat.quickActions.assessHelp.label', 'Analyze {{name}}', { name: entityName })
+              : t('aiChat.quickActions.assessGeneral.label', 'Assessment tips'),
+            prompt: entityName
+              ? t(
+                  'aiChat.quickActions.assessHelp.prompt',
+                  'Help me analyze the assessment "{{name}}" — what are the key findings and recommendations?',
+                  { name: entityName }
+                )
+              : t(
+                  'aiChat.quickActions.assessGeneral.prompt',
+                  'What are best practices for conducting a digital maturity assessment?'
+                ),
+          },
+          {
+            id: 'assess-gaps',
+            text: t('aiChat.quickActions.identifyGaps.label', 'Identify gaps'),
+            prompt: t(
+              'aiChat.quickActions.identifyGaps.prompt',
+              'What are the biggest gaps in our digital maturity and how should we prioritize closing them?'
+            ),
+          }
+        );
+        break;
+      case 'initiative':
+        contextSuggestions.push(
+          {
+            id: 'init-prioritize',
+            text: t('aiChat.quickActions.prioritize.label', 'Prioritize initiatives'),
+            prompt: t(
+              'aiChat.quickActions.prioritize.prompt',
+              'Help me prioritize the current initiatives by impact and feasibility'
+            ),
+          },
+          {
+            id: 'init-risks',
+            text: t('aiChat.quickActions.risks.label', 'Risk analysis'),
+            prompt: t(
+              'aiChat.quickActions.risks.prompt',
+              'What are the main risks for our active initiatives and how should we mitigate them?'
+            ),
+          }
+        );
+        break;
+      case 'roadmap':
+        contextSuggestions.push(
+          {
+            id: 'road-timeline',
+            text: t('aiChat.quickActions.timeline.label', 'Review timeline'),
+            prompt: t(
+              'aiChat.quickActions.timeline.prompt',
+              'Review our transformation roadmap timeline — are we on track?'
+            ),
+          },
+          {
+            id: 'road-deps',
+            text: t('aiChat.quickActions.dependencies.label', 'Check dependencies'),
+            prompt: t(
+              'aiChat.quickActions.dependencies.prompt',
+              'Analyze dependencies between our roadmap items and flag potential bottlenecks'
+            ),
+          }
+        );
+        break;
+      case 'task':
+        contextSuggestions.push(
+          {
+            id: 'task-plan',
+            text: t('aiChat.quickActions.planWeek.label', 'Plan the week'),
+            prompt: t(
+              'aiChat.quickActions.planWeek.prompt',
+              'Help me plan priorities for the next week'
+            ),
+          },
+          {
+            id: 'task-blockers',
+            text: t('aiChat.quickActions.blockers.label', 'Unblock me'),
+            prompt: t(
+              'aiChat.quickActions.blockers.prompt',
+              'I am blocked — help me find solutions for my current blockers'
+            ),
+          }
+        );
+        break;
+      case 'report':
+        contextSuggestions.push(
+          {
+            id: 'report-summary',
+            text: t('aiChat.quickActions.reportSummary.label', 'Summarize report'),
+            prompt: t(
+              'aiChat.quickActions.reportSummary.prompt',
+              'Summarize the key findings and action items from the current report'
+            ),
+          },
+          {
+            id: 'report-exec',
+            text: t('aiChat.quickActions.execSummary.label', 'Executive summary'),
+            prompt: t(
+              'aiChat.quickActions.execSummary.prompt',
+              'Write a concise executive summary for stakeholder communication'
+            ),
+          }
+        );
+        break;
+      default:
+        // Generic suggestions
+        contextSuggestions.push(
+          {
+            id: 'week',
+            text: t('aiChat.quickActions.planWeek.label', 'Plan the week'),
+            prompt: t(
+              'aiChat.quickActions.planWeek.prompt',
+              'Help me plan priorities for the next week'
+            ),
+          },
+          {
+            id: 'diagram',
+            text: t('aiChat.quickActions.createDiagram.label', 'Create a diagram'),
+            prompt: t(
+              'aiChat.quickActions.createDiagram.prompt',
+              'Create a process diagram for onboarding a new client'
+            ),
+          }
+        );
+    }
+
+    // Take first 3 suggestions
+    const minimalSuggestions = contextSuggestions.slice(0, 3);
 
     return (
       <div className={`flex items-center justify-center ${className}`}>

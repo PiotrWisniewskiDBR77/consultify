@@ -139,7 +139,11 @@ function registerProviderHealthChecks(): void {
           'anthropic-version': '2023-06-01',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ model: 'claude-3-haiku-20240307', max_tokens: 1, messages: [{ role: 'user', content: 'hi' }] }),
+        body: JSON.stringify({
+          model: 'claude-3-haiku-20240307',
+          max_tokens: 1,
+          messages: [{ role: 'user', content: 'hi' }],
+        }),
         signal: AbortSignal.timeout(5000),
       });
       // 200 or 429 both indicate the API is reachable

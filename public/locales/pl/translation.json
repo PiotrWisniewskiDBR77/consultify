@@ -616,6 +616,39 @@
     "loadingConversation": "Ładowanie rozmowy…",
     "autoReadOn": "Włącz czytanie na głos",
     "autoReadOff": "Wyłącz czytanie na głos",
+    "retry": "Spróbuj ponownie",
+    "expandFullScreen": "Rozwiń na pełny ekran",
+    "actions": {
+      "helpful": "Pomocne",
+      "notHelpful": "Niepomocne",
+      "copy": "Kopiuj"
+    },
+    "feedback": {
+      "thankYou": "Dziękujemy za opinię!",
+      "helpUsImprove": "Pomóż nam się poprawić",
+      "length": "Długość odpowiedzi:",
+      "tooShort": "Za krótka",
+      "justRight": "W sam raz",
+      "tooLong": "Za długa",
+      "detail": "Poziom szczegółowości:",
+      "tooLittle": "Za mało",
+      "tooMuch": "Za dużo",
+      "advancedOptions": "Więcej opcji",
+      "actionability": "Przydatność:",
+      "notUseful": "Mało",
+      "veryUseful": "Bardzo",
+      "accuracy": "Trafność:",
+      "inaccurate": "Nietrafna",
+      "veryAccurate": "Trafna",
+      "preferredFormat": "Preferowany format:",
+      "formatBullets": "Punkty",
+      "formatParagraphs": "Akapity",
+      "formatStructured": "Strukturalny",
+      "formatConversational": "Swobodny",
+      "missingInfo": "Czego brakowało? (opcjonalnie)",
+      "missingInfoPlaceholder": "Opisz czego brakowało w odpowiedzi...",
+      "submit": "Wyślij opinię"
+    },
     "greeting": {
       "morning": "Dzień dobry",
       "afternoon": "Dzień dobry",
@@ -656,7 +689,10 @@
       "connectInSettings": "Połącz więcej w Ustawieniach → Integracje",
       "modes": {
         "deepResearch": { "label": "Głęboka analiza", "desc": "Dogłębne badanie tematu" },
-        "webSearch": { "label": "Wyszukiwanie w sieci", "desc": "Informacje w czasie rzeczywistym" },
+        "webSearch": {
+          "label": "Wyszukiwanie w sieci",
+          "desc": "Informacje w czasie rzeczywistym"
+        },
         "showReasoning": { "label": "Pokaż rozumowanie", "desc": "Widoczny tok myślenia AI" },
         "textToSpeech": { "label": "Czytaj odpowiedzi", "desc": "Automatyczne czytanie na głos" }
       },
@@ -689,6 +725,25 @@
       "noFiles": "Brak plików",
       "selectFile": "Wybierz plik",
       "downloading": "Pobieranie: {{name}}"
+    },
+    "myProjects": "Moje projekty",
+    "teamProjects": "Projekty zespołu",
+    "folders": "Foldery",
+    "createFolder": "Utwórz folder",
+    "createTeamFolder": "Utwórz folder zespołu",
+    "newPersonalFolder": "Nowy folder osobisty",
+    "newTeamFolder": "Nowy folder zespołu",
+    "newFolder": "Nowy folder",
+    "projectName": "Nazwa projektu...",
+    "noProjectConversations": "Brak rozmów w tym projekcie",
+    "noConversations": "Brak rozmów",
+    "noResults": "Nie znaleziono rozmów",
+    "startNewChat": "Rozpocznij nowy czat",
+    "newConversation": "Nowa rozmowa",
+    "closeSidebar": "Zamknij panel",
+    "searchPlaceholder": "Szukaj rozmów...",
+    "sections": {
+      "archived": "Archiwum"
     }
   }
 }

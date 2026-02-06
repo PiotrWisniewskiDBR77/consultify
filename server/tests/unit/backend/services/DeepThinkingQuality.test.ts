@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { scoreDeepThinkingRubric, validateDeepThinkingDoD } from '../../../../src/services/ai/deepThinkingQuality.js';
+import {
+  scoreDeepThinkingRubric,
+  validateDeepThinkingDoD,
+} from '../../../../src/services/ai/deepThinkingQuality.js';
 
 describe('DeepThinkingQuality', () => {
   it('flags empty output', () => {
@@ -118,4 +121,3 @@ Early signals: monitor defects and lead time.
     expect(s.total).toBeGreaterThanOrEqual(9);
   });
 });
-

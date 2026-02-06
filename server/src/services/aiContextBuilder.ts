@@ -129,7 +129,9 @@ export const AIContextBuilder = {
   ): Promise<AIContext> => {
     const focusMode = options.focusMode || 'all';
     const t0 = Date.now();
-    logger.debug(`[AIContextBuilder] buildContext user=${userId} org=${organizationId} proj=${projectId} focus=${focusMode}`);
+    logger.debug(
+      `[AIContextBuilder] buildContext user=${userId} org=${organizationId} proj=${projectId} focus=${focusMode}`
+    );
 
     const PMOHealthService = await getPMOHealthService();
     const AISettingsService = await getAISettingsService();
@@ -185,25 +187,33 @@ export const AIContextBuilder = {
     // Cap context size to avoid sending excessive tokens to LLM
     const contextSizeEstimate = JSON.stringify(filteredContext).length;
     if (contextSizeEstimate > 12000) {
-      logger.warn(`[AIContextBuilder] Context is large (${contextSizeEstimate} chars), trimming execution layer`);
+      logger.warn(
+        `[AIContextBuilder] Context is large (${contextSizeEstimate} chars), trimming execution layer`
+      );
       // Trim execution layer first — it's the largest and least critical for general queries
       if (filteredContext.execution) {
         const exec = filteredContext.execution as any;
         if (exec.userTasks?.length > 5) exec.userTasks = exec.userTasks.slice(0, 5);
-        if (exec.userInitiatives?.length > 3) exec.userInitiatives = exec.userInitiatives.slice(0, 3);
-        if (exec.pendingDecisions?.length > 3) exec.pendingDecisions = exec.pendingDecisions.slice(0, 3);
+        if (exec.userInitiatives?.length > 3)
+          exec.userInitiatives = exec.userInitiatives.slice(0, 3);
+        if (exec.pendingDecisions?.length > 3)
+          exec.pendingDecisions = exec.pendingDecisions.slice(0, 3);
         if (exec.blockers?.length > 3) exec.blockers = exec.blockers.slice(0, 3);
       }
       // Trim knowledge layer
       if ((filteredContext as any).knowledge) {
         const kn = (filteredContext as any).knowledge;
         if (kn.projectDocuments?.length > 5) kn.projectDocuments = kn.projectDocuments.slice(0, 5);
-        if (kn.previousDecisions?.length > 5) kn.previousDecisions = kn.previousDecisions.slice(0, 5);
-        if (kn.strategicDirections?.length > 3) kn.strategicDirections = kn.strategicDirections.slice(0, 3);
+        if (kn.previousDecisions?.length > 5)
+          kn.previousDecisions = kn.previousDecisions.slice(0, 5);
+        if (kn.strategicDirections?.length > 3)
+          kn.strategicDirections = kn.strategicDirections.slice(0, 3);
       }
     }
 
-    logger.debug(`[AIContextBuilder] Context built in ${Date.now() - t0}ms (${contextSizeEstimate} chars)`);
+    logger.debug(
+      `[AIContextBuilder] Context built in ${Date.now() - t0}ms (${contextSizeEstimate} chars)`
+    );
     return {
       ...filteredContext,
       focusMode,

@@ -58,11 +58,14 @@ class AIHealthMonitor {
     void this.runDiagnostics().catch((err) =>
       logger.warn('[AIHealthMonitor] Initial diagnostics failed', { error: err?.message || err })
     );
-    this.intervalId = setInterval(() => {
-      void this.runDiagnostics().catch((err) =>
-        logger.warn('[AIHealthMonitor] Diagnostics failed', { error: err?.message || err })
-      );
-    }, Math.max(5000, intervalMs));
+    this.intervalId = setInterval(
+      () => {
+        void this.runDiagnostics().catch((err) =>
+          logger.warn('[AIHealthMonitor] Diagnostics failed', { error: err?.message || err })
+        );
+      },
+      Math.max(5000, intervalMs)
+    );
   }
 
   stop(): void {

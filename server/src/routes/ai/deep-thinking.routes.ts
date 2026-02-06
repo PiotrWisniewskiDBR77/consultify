@@ -26,10 +26,8 @@ router.post(
     if (!input) return res.status(400).json({ error: 'text is required' });
 
     const { validateDeepThinkingDoD } = await import('../../services/ai/deepThinkingQuality.js');
-    const {
-      detectPatterns,
-      scoreRubricV2,
-    } = await import('../../services/ai/deepThinkingEvaluationService.js');
+    const { detectPatterns, scoreRubricV2 } =
+      await import('../../services/ai/deepThinkingEvaluationService.js');
 
     const dod = validateDeepThinkingDoD(input, language);
     const rubric = scoreRubricV2(input, language);
@@ -49,11 +47,97 @@ router.post(
     const B = String(b || '').trim();
     if (!A || !B) return res.status(400).json({ error: 'a and b are required' });
 
-    const { pairwiseCompareDeepThinking } = await import(
-      '../../services/ai/deepThinkingEvaluationService.js'
-    );
+    const { pairwiseCompareDeepThinking } =
+      await import('../../services/ai/deepThinkingEvaluationService.js');
     const result = pairwiseCompareDeepThinking({ a: A, b: B, language });
     return res.json({ success: true, result });
+  })
+);
+
+/**
+ * POST /api/ai/deep-thinking/save-decision
+ * Save a Deep Thinking output as a decision/initiative in the org's decision memory.
+ */
+router.post(
+  '/save-decision',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const {
+      sessionId,
+      conversationId,
+      content,
+      type: saveType,
+    } = (req.body || {}) as {
+      sessionId?: string;
+      conversationId?: string;
+      content?: string;
+      type?: 'decision' | 'initiative';
+    };
+
+    const text = String(content || '').trim();
+    const sid = String(sessionId || '').trim();
+    if (!text || !sid) return res.status(400).json({ error: 'content and sessionId are required' });
+
+    // Extract structured data from the DT output
+    const extractSection = (heading: RegExp, fallback = ''): string => {
+      const match = text.match(new RegExp(`${heading.source}[\\s\\S]*?(?=\\n#{1,3}\\s|$)`, 'i'));
+      return match ? match[0].replace(heading, '').trim().slice(0, 2000) : fallback;
+    };
+
+    const executiveSummary =
+      extractSection(/#{1,3}\s*Executive\s+Summary/i) ||
+      extractSection(/#{1,3}\s*Podsumowanie/i) ||
+      text.slice(0, 500);
+
+    const problemFraming =
+      extractSection(/#{1,3}\s*Problem\s+(?:Framing|Definition)/i) ||
+      extractSection(/#{1,3}\s*(?:Definicja|Kontekst)\s+Problemu/i);
+
+    const recommendation = extractSection(/#{1,3}\s*Rekomendacja|Recommendation/i);
+
+    // Count options
+    const optionMatches = text.match(/#{1,4}\s*(?:Option|Opcja|Path|Ścieżka)\s+\d/gi);
+    const optionsCount = optionMatches ? optionMatches.length : 0;
+
+    const { v4: uuidv4 } = await import('uuid');
+    const id = uuidv4();
+
+    await dbRun(
+      `INSERT INTO ai_decision_outcomes
+        (id, organization_id, user_id, session_id, conversation_id,
+         decision_summary, problem_framing, options_considered, chosen_option,
+         recommendation_text, confidence_score, outcome_status, tags)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        req.organizationId!,
+        req.userId!,
+        sid,
+        conversationId || null,
+        executiveSummary,
+        problemFraming || null,
+        JSON.stringify({ count: optionsCount }),
+        null, // chosen option filled later by user
+        recommendation || null,
+        null, // confidence filled by outcome tracking
+        'pending',
+        JSON.stringify([saveType || 'decision', 'deep_thinking']),
+      ]
+    );
+
+    // Also log as a metric event
+    const { logDeepThinkingEvent } =
+      await import('../../services/ai/deepThinkingMetricsService.js');
+    await logDeepThinkingEvent({
+      organizationId: req.organizationId!,
+      userId: req.userId!,
+      sessionId: sid,
+      conversationId: conversationId || null,
+      eventType: 'copied', // reuse "copied" event type for now; represents "saved"
+      payload: { action: 'save_decision', decisionId: id, type: saveType || 'decision' },
+    });
+
+    return res.json({ success: true, decisionId: id });
   })
 );
 
@@ -79,7 +163,8 @@ router.post(
     const allowed = new Set(['copied']);
     if (!allowed.has(et)) return res.status(400).json({ error: 'unsupported eventType' });
 
-    const { logDeepThinkingEvent } = await import('../../services/ai/deepThinkingMetricsService.js');
+    const { logDeepThinkingEvent } =
+      await import('../../services/ai/deepThinkingMetricsService.js');
     await logDeepThinkingEvent({
       organizationId: req.organizationId!,
       userId: req.userId!,
@@ -191,10 +276,11 @@ router.post(
   verifyToken,
   requireRole('super_admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    await dbRun(`DELETE FROM ai_deep_thinking_metrics WHERE organization_id = ?`, [req.organizationId!]);
+    await dbRun(`DELETE FROM ai_deep_thinking_metrics WHERE organization_id = ?`, [
+      req.organizationId!,
+    ]);
     return res.json({ success: true });
   })
 );
 
 export default router;
-

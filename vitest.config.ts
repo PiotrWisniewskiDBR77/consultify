@@ -240,7 +240,7 @@ export default defineConfig({
     fileParallelism: true,
     // Enhanced timeout configuration for stability
     testTimeout: 60000, // 60 seconds per test (increased for lazy loading)
-    hookTimeout: 30000, // 30 seconds for hooks (increased for async deps)
+    hookTimeout: 120000, // 120 seconds for hooks (increased for integration DB setup)
     teardownTimeout: 10000, // 10 seconds for cleanup
 
     // Optimized concurrency for CI/CD (20+ shards)

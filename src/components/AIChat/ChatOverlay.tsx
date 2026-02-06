@@ -1,5 +1,6 @@
 import { Cpu, MapPin, Maximize2, MessageCircle, Shield, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useAIContext } from '../../contexts/AIContext';
 import { useAIStream } from '../../hooks/useAIStream';
@@ -15,6 +16,7 @@ interface ChatOverlayProps {
 }
 
 export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false }) => {
+  const { t } = useTranslation();
   const { isChatOpen, toggleChat, screenContext, pmoContext, globalContext } = useAIContext();
   const { activeChatMessages, addChatMessage, isBotTyping, setCurrentView } = useAppStore();
 
@@ -171,7 +173,7 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false })
                 setCurrentView(AppView.AI_ACTION_PROPOSALS); // Open fullscreen chat
               }}
               className="w-8 h-8 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-white transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-navy-800/40"
-              title="Rozwiń na pełny ekran"
+              title={t('aiChat.expandFullScreen', 'Expand to full screen')}
             >
               <Maximize2 size={16} />
             </button>

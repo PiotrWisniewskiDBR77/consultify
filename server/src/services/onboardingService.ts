@@ -88,9 +88,9 @@ class OnboardingService {
     }
     const db = await this.getDb();
     return new Promise<{ lastID?: number; changes?: number }>((resolve, reject) => {
-      db.run(sql, params, function (err: Error | null) {
+      db.run(sql, params, function (this: { lastID: number; changes: number }, err: Error | null) {
         if (err) reject(err);
-        else resolve({ lastID: (this as any)?.lastID, changes: (this as any)?.changes });
+        else resolve({ lastID: this?.lastID, changes: this?.changes });
       });
     });
   }
@@ -101,7 +101,7 @@ class OnboardingService {
     }
     const db = await this.getDb();
     return new Promise<T | null>((resolve, reject) => {
-      db.get(sql, params, (err: Error | null, row: T) => {
+      db.get(sql, params, (err: Error | null, row: T | null) => {
         if (err) reject(err);
         else resolve(row || null);
       });
@@ -357,7 +357,7 @@ class OnboardingService {
    */
   async saveContext(
     organizationId: string,
-    context: { role?: string; problems?: string; industry?: string; [key: string]: any }
+    context: { role?: string; problems?: string; industry?: string;[key: string]: any }
   ): Promise<{ success: boolean; status: string }> {
     const required = ['role', 'problems', 'industry'];
     for (const field of required) {

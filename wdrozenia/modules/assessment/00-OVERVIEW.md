@@ -2,7 +2,7 @@
 
 ## Status: ✅ KOMPLETNY (Full Workflow + Edytory DRD/SIRI/ADMA + AI Suggestions)
 
-**Ostatnia aktualizacja:** 2026-02-04
+**Ostatnia aktualizacja:** 2026-02-05
 
 ---
 
@@ -22,11 +22,11 @@ Assessment (DRD/SIRI/...) → raport → approval → generowanie inicjatyw (DRA
 
 W aplikacji występują **dwa** pojęcia raportu (to było źródłem nieporozumień):
 
-1. **Assessment workflow report (artefakt workflow)**  
-   - Służy do **przejścia bramek (4 Gate Decisions)**: review / approve report / approve assessment.  
+1. **Assessment workflow report (artefakt workflow)**
+   - Służy do **przejścia bramek (4 Gate Decisions)**: review / approve report / approve assessment.
    - Jest artefaktem procesu oceny (wyniki, luki, evidence, decyzje), a nie „ładnym raportem dla zarządu/banku”.
 
-2. **Report Builder (profesjonalne raporty / paczki PDF/PPTX/Word)**  
+2. **Report Builder (profesjonalne raporty / paczki PDF/PPTX/Word)**
    - To moduł do tworzenia **raportów prezentacyjnych** na bazie assessmentu (i innych źródeł).
    - Umożliwia: szablony, wersjonowanie, udostępnianie, eksporty.
    - Dokumentacja: `wdrozenia/modules/reports/00-OVERVIEW.md`
@@ -79,6 +79,7 @@ Raport w module Assessment jest artefaktem Discovery (wyniki + gaps + evidence +
 - ✅ PDFImportWizard (real API)
 - ✅ **UnifiedImportWizard** - import zewnętrznych raportów (PDF/Excel/Word/JSON/CSV) ✨ NEW
 - ✅ GenerateInitiativesModal
+- ✅ **InitiativesGenerationWizardModal** - stały rozmiar okna + stabilny polling (bez “toast storm”)
 - ✅ AssessmentInitiativesDrawer
 - ✅ Filters & Search
 - ✅ **Auto-save** z debouncing (600ms)
@@ -90,6 +91,32 @@ Raport w module Assessment jest artefaktem Discovery (wyniki + gaps + evidence +
 - ✅ **Toast notifications** (save success/error)
 - ✅ **AISuggestionPanel** - AI-powered sugestie poziomów i technologii ✨ NEW
 - ✅ **BulkOperationsToolbar** - multi-select, copy-paste, batch update ✨ NEW
+
+---
+
+## 🆕 Zmiany (wątek: finalizacja UX Assessment – Reports + Initiatives)
+
+### Report template picker (Assessment → Manage → Reports)
+
+- **Nowy modal wyboru szablonu**: `src/components/assessment/modals/ReportTemplatePickerModal.tsx`
+  - stały rozmiar okna (bez dopasowywania do zawartości) + scroll wewnętrzny
+  - dwa źródła szablonów: **Application** (system) i **Organization** (tenant)
+  - przełącznik widoku: **Grid** / **Table**
+  - minimalistyczne filtry dopasowane do celu raportów: **Recipient** + **Framework**
+  - przycisk **New Template** otwiera generator szablonów (Report Builder templates) w overlay
+
+### Initiatives generator (Assessment → Manage → Initiatives)
+
+- **Spójny rozmiar okien**: `src/components/assessment/InitiativesGenerationWizardModal.tsx` ma ten sam “frame” co modal raportów.
+- **Stabilność powiadomień**: deduplikacja powiadomień terminalnych dla run (uniknięcie wielu toastów i wielokrotnych callbacków).
+
+### Manage → Initiatives (filtry)
+
+- **Status filter dropdown (multi-select)**: w `src/components/assessment/manage/InitiativesManagementPanel.tsx` zastąpiono długą listę statusów jednym, delikatnym dropdownem:
+  - wielokrotny wybór (checkboxy)
+  - liczniki per status
+  - zamykanie po kliknięciu poza / ESC
+  - etykieta w buttonie: `All statuses` / pojedynczy status / `X selected`
 
 ### Testy
 
@@ -169,6 +196,7 @@ Raport w module Assessment jest artefaktem Discovery (wyniki + gaps + evidence +
 src/components/assessment/
 ├── AssessmentModuleHub.tsx          # Hub z listą assessmentów
 ├── AssessmentSessionEditorView.tsx  # Główny widok edytora (host)
+├── InitiativesGenerationWizardModal.tsx # Wizard 50+ (GenerationRun) + polling
 ├── drd/
 │   └── DRDAssessmentEditor.tsx      # Nowy interaktywny edytor DRD
 ├── LevelAttachments.tsx             # Komponent załączników per poziom
@@ -179,6 +207,7 @@ src/components/assessment/
 ├── modals/
 │   ├── GenerateInitiativesModal.tsx
 │   └── NewAssessmentModal.tsx
+│   └── ReportTemplatePickerModal.tsx    # Picker szablonu raportu + New Template → generator
 ├── MultiFwBenchmarkComparison.tsx
 ├── import/PDFImportWizard.tsx
 └── ...

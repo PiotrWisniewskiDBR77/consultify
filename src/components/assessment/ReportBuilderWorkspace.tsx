@@ -19,6 +19,7 @@ import {
   FileWarning,
   Loader2,
   Maximize2,
+  MessageCircle,
   MessageSquare,
   Minimize2,
   RefreshCw,
@@ -34,6 +35,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { UnifiedChatPanel } from '../AIChat/UnifiedChatPanel';
 import { SplitLayout } from '../layout/SplitLayout';
 import { ReportBuilder } from '../Reports/ReportBuilder';
+import { ReportCommentPanel } from '../Reports/ReportCommentPanel';
 import { ReportHeader } from '../Reports/ReportHeader';
 import { StickyNavigation } from '../Reports/StickyNavigation';
 import { TableOfContents } from '../Reports/TableOfContents';
@@ -85,6 +87,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
   const [isReadingMode, setIsReadingMode] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showChat, setShowChat] = useState(true);
+  const [showComments, setShowComments] = useState(false);
 
   // Memoize section info for StickyNavigation
   const sectionInfos = useMemo(() => {
@@ -554,6 +557,41 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
           />
         </div>
       </div>
+
+      {/* Comments toggle button */}
+      {!showComments && (
+        <button
+          onClick={() => setShowComments(true)}
+          className="fixed bottom-6 right-6 z-30 flex items-center gap-2 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all"
+          title={isPolish ? 'Pokaż komentarze' : 'Show comments'}
+        >
+          <MessageCircle className="w-5 h-5" />
+          <span className="text-sm font-medium">{isPolish ? 'Komentarze' : 'Comments'}</span>
+        </button>
+      )}
+
+      {/* Comments panel (slide-in from right) */}
+      {showComments && (
+        <div className="fixed top-0 right-0 bottom-0 w-[400px] z-40 bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 shadow-2xl flex flex-col">
+          <ReportCommentPanel
+            reportId={reportId}
+            sectionId={activeSection || undefined}
+            sectionName={
+              activeSection
+                ? sections?.find((s) => s.id === activeSection)?.title || undefined
+                : undefined
+            }
+            onClose={() => setShowComments(false)}
+            onRegenerateSection={
+              activeSection
+                ? (sectionId, feedback) => {
+                    handleAIAction(sectionId, 'regenerate');
+                  }
+                : undefined
+            }
+          />
+        </div>
+      )}
 
       {/* Error banner */}
       {error && (

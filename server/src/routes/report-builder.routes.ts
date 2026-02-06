@@ -20,6 +20,7 @@ import {
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import ReportBuilderCommentsService from '../services/reportBuilderCommentsService.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
 import ReportGenerationService from '../services/reportGenerationService.js';
 import logger from '../utils/Logger.js';
@@ -36,6 +37,12 @@ function getAuthContext(req: any): { userId: string; organizationId: string } {
   const userId = req?.user?.id || req?.userId || '';
   const organizationId = req?.user?.organizationId || req?.organizationId || 'org-default';
   return { userId, organizationId };
+}
+
+// Helper to safely extract string from params (handles string | string[])
+function paramStr(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) return value[0] || '';
+  return value || '';
 }
 
 // ==========================================
@@ -71,7 +78,7 @@ router.get('/profiles', async (_req: Request, res: Response, _next: NextFunction
  */
 router.get('/profiles/:profileId', async (req: Request, res: Response, _next: NextFunction) => {
   try {
-    const { profileId } = req.params;
+    const profileId = paramStr(req.params.profileId);
     const profile = getInvocationProfile(profileId);
 
     res.json({ profile });
@@ -89,7 +96,7 @@ router.get(
   '/profiles/for-source/:sourceType',
   async (req: Request, res: Response, _next: NextFunction) => {
     try {
-      const { sourceType } = req.params;
+      const sourceType = paramStr(req.params.sourceType);
       const profiles = getProfilesForSourceType(sourceType.toUpperCase()).map((p) => ({
         id: p.id,
         name: p.name,
@@ -138,7 +145,7 @@ router.get(
   '/sources/assessment/:sourceId',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { sourceId } = req.params;
+      const sourceId = paramStr(req.params.sourceId);
       const { organizationId } = getAuthContext(req);
 
       // For now, return basic source info
@@ -157,6 +164,297 @@ router.get(
     }
   }
 );
+
+/**
+ * GET /api/report-builder/sources/interview
+ * List completed interviews available for report creation
+ */
+router.get('/sources/interview', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { organizationId } = getAuthContext(req);
+    const { getDatabase } = await import('../database/index.js');
+    const db = getDatabase();
+
+    const sessions = await new Promise<any[]>((resolve, reject) => {
+      db.all(
+        `SELECT s.id, s.name, s.status, s.total_questions, s.answered_questions,
+                s.template_id, s.completed_at, s.created_at, s.updated_at,
+                u.name as ownerName
+         FROM interview_sessions s
+         LEFT JOIN users u ON u.id = s.owner_id
+         WHERE s.organization_id = ? AND s.status IN ('completed', 'in_progress')
+         ORDER BY s.updated_at DESC
+         LIMIT 100`,
+        [organizationId],
+        (err: Error | null, rows: any[]) => {
+          if (err) reject(err);
+          else resolve(rows || []);
+        }
+      );
+    });
+
+    const sources = sessions.map((s) => ({
+      id: s.id,
+      sourceType: 'INTERVIEW',
+      name: s.name || 'Interview Session',
+      status: s.status,
+      framework: 'INTERVIEW',
+      totalQuestions: s.total_questions || 0,
+      answeredQuestions: s.answered_questions || 0,
+      completionPercent:
+        s.total_questions > 0 ? Math.round((s.answered_questions / s.total_questions) * 100) : 0,
+      ownerName: s.ownerName || 'Unknown',
+      completedAt: s.completed_at,
+      createdAt: s.created_at,
+      updatedAt: s.updated_at,
+    }));
+
+    res.json({ sources });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error listing interview sources:', err);
+    next(err);
+  }
+});
+
+/**
+ * GET /api/report-builder/sources/interview/:sourceId
+ * Get interview source data for report generation
+ */
+router.get(
+  '/sources/interview/:sourceId',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const sourceId = paramStr(req.params.sourceId);
+      const { organizationId } = getAuthContext(req);
+      const { getDatabase } = await import('../database/index.js');
+      const db = getDatabase();
+
+      const session = await new Promise<any>((resolve, reject) => {
+        db.get(
+          `SELECT s.*, u.name as ownerName
+           FROM interview_sessions s
+           LEFT JOIN users u ON u.id = s.owner_id
+           WHERE s.id = ? AND s.organization_id = ?`,
+          [sourceId, organizationId],
+          (err: Error | null, row: any) => {
+            if (err) reject(err);
+            else resolve(row);
+          }
+        );
+      });
+
+      if (!session) {
+        return res.status(404).json({ error: 'Interview session not found' });
+      }
+
+      // Get questions and answers
+      const questions = await new Promise<any[]>((resolve, reject) => {
+        db.all(
+          `SELECT id, category, question_text, answer_text, status, confidence_score, tags
+           FROM interview_questions
+           WHERE session_id = ? AND organization_id = ?
+           ORDER BY sort_order ASC`,
+          [sourceId, organizationId],
+          (err: Error | null, rows: any[]) => {
+            if (err) reject(err);
+            else resolve(rows || []);
+          }
+        );
+      });
+
+      // Get notes
+      const notes = await new Promise<any[]>((resolve, reject) => {
+        db.all(
+          `SELECT id, category, title, content, created_by
+           FROM interview_notes
+           WHERE session_id = ? AND organization_id = ?
+           ORDER BY created_at ASC`,
+          [sourceId, organizationId],
+          (err: Error | null, rows: any[]) => {
+            if (err) reject(err);
+            else resolve(rows || []);
+          }
+        );
+      });
+
+      const safeJsonParse = (v: string | null | undefined, fallback: any) => {
+        if (!v) return fallback;
+        try {
+          return JSON.parse(v);
+        } catch {
+          return fallback;
+        }
+      };
+
+      res.json({
+        id: session.id,
+        sourceType: 'INTERVIEW',
+        name: session.name || 'Interview Session',
+        status: session.status,
+        ownerName: session.ownerName || 'Unknown',
+        totalQuestions: session.total_questions || 0,
+        answeredQuestions: session.answered_questions || 0,
+        summaryFacts: safeJsonParse(session.summary_facts, []),
+        summaryGaps: safeJsonParse(session.summary_gaps, []),
+        summaryConstraints: safeJsonParse(session.summary_constraints, []),
+        summaryPainPoints: safeJsonParse(session.summary_pain_points, []),
+        questions: questions.map((q) => ({
+          id: q.id,
+          category: q.category,
+          question: q.question_text,
+          answer: q.answer_text || '',
+          status: q.status,
+          confidence: q.confidence_score || 0,
+          tags: safeJsonParse(q.tags, []),
+        })),
+        notes: notes.map((n) => ({
+          id: n.id,
+          category: n.category,
+          title: n.title,
+          content: n.content,
+        })),
+        completedAt: session.completed_at,
+        createdAt: session.created_at,
+      });
+    } catch (err) {
+      logger.error('[ReportBuilder] Error getting interview source:', err);
+      next(err);
+    }
+  }
+);
+
+/**
+ * GET /api/report-builder/sources/tool
+ * List tool sessions available for report creation
+ */
+router.get('/sources/tool', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { organizationId } = getAuthContext(req);
+    const { getDatabase } = await import('../database/index.js');
+    const db = getDatabase();
+
+    const sessions = await new Promise<any[]>((resolve, reject) => {
+      db.all(
+        `SELECT ts.id, ts.name, ts.tool_type, ts.status, ts.completion_percent,
+                ts.confidence_avg, ts.created_at, ts.updated_at,
+                u.name as creatorName
+         FROM tool_sessions ts
+         LEFT JOIN users u ON u.id = ts.created_by
+         WHERE ts.organization_id = ?
+         ORDER BY ts.updated_at DESC
+         LIMIT 100`,
+        [organizationId],
+        (err: Error | null, rows: any[]) => {
+          if (err) reject(err);
+          else resolve(rows || []);
+        }
+      );
+    });
+
+    const sources = sessions.map((s) => ({
+      id: s.id,
+      sourceType: 'TOOL',
+      name: s.name || 'Tool Session',
+      status: s.status || 'DRAFT',
+      framework: s.tool_type || 'TOOL',
+      toolType: s.tool_type,
+      completionPercent: s.completion_percent || 0,
+      confidenceAvg: s.confidence_avg || 0,
+      creatorName: s.creatorName || 'Unknown',
+      createdAt: s.created_at,
+      updatedAt: s.updated_at,
+    }));
+
+    res.json({ sources });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error listing tool sources:', err);
+    next(err);
+  }
+});
+
+/**
+ * GET /api/report-builder/sources/tool/:sourceId
+ * Get tool session source data for report generation
+ */
+router.get('/sources/tool/:sourceId', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const sourceId = paramStr(req.params.sourceId);
+    const { organizationId } = getAuthContext(req);
+    const { getDatabase } = await import('../database/index.js');
+    const db = getDatabase();
+
+    const session = await new Promise<any>((resolve, reject) => {
+      db.get(
+        `SELECT ts.*, u.name as creatorName
+           FROM tool_sessions ts
+           LEFT JOIN users u ON u.id = ts.created_by
+           WHERE ts.id = ? AND ts.organization_id = ?`,
+        [sourceId, organizationId],
+        (err: Error | null, row: any) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+
+    if (!session) {
+      return res.status(404).json({ error: 'Tool session not found' });
+    }
+
+    // Get related tool works
+    const toolWorks = await new Promise<any[]>((resolve, reject) => {
+      db.all(
+        `SELECT tw.id, tw.name, tw.description, tw.tool_id, tw.status, tw.progress, tw.work_data
+           FROM tool_works tw
+           LEFT JOIN tools t ON t.id = tw.tool_id
+           WHERE tw.organization_id = ?
+           ORDER BY tw.updated_at DESC
+           LIMIT 20`,
+        [organizationId],
+        (err: Error | null, rows: any[]) => {
+          if (err) reject(err);
+          else resolve(rows || []);
+        }
+      );
+    });
+
+    const safeJsonParse = (v: string | null | undefined, fallback: any) => {
+      if (!v) return fallback;
+      try {
+        return JSON.parse(v);
+      } catch {
+        return fallback;
+      }
+    };
+
+    res.json({
+      id: session.id,
+      sourceType: 'TOOL',
+      name: session.name || 'Tool Session',
+      status: session.status,
+      toolType: session.tool_type,
+      completionPercent: session.completion_percent || 0,
+      confidenceAvg: session.confidence_avg || 0,
+      creatorName: session.creatorName || 'Unknown',
+      answers: safeJsonParse(session.answers_json, {}),
+      contextSnapshot: safeJsonParse(session.context_snapshot, {}),
+      toolWorks: toolWorks.map((tw) => ({
+        id: tw.id,
+        name: tw.name,
+        description: tw.description,
+        toolId: tw.tool_id,
+        status: tw.status,
+        progress: tw.progress || 0,
+        data: safeJsonParse(tw.work_data, {}),
+      })),
+      createdAt: session.created_at,
+      updatedAt: session.updated_at,
+    });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error getting tool source:', err);
+    next(err);
+  }
+});
 
 // ==========================================
 // TEMPLATE MARKETPLACE ENDPOINTS
@@ -228,7 +526,7 @@ router.get(
   '/templates/:templateId/details',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { templateId } = req.params;
+      const templateId = paramStr(req.params.templateId);
       const { organizationId } = getAuthContext(req);
 
       const template = await ReportBuilderService.getTemplateById(templateId, organizationId);
@@ -267,7 +565,7 @@ router.get(
  */
 router.put('/templates/:templateId', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { templateId } = req.params;
+    const templateId = paramStr(req.params.templateId);
     const { organizationId, userId } = getAuthContext(req);
     const { name, description, sections, defaultOptions, isPublic } = req.body;
 
@@ -297,7 +595,7 @@ router.put('/templates/:templateId', async (req: Request, res: Response, next: N
  */
 router.delete('/templates/:templateId', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { templateId } = req.params;
+    const templateId = paramStr(req.params.templateId);
     const { organizationId, userId } = getAuthContext(req);
 
     const deleted = await ReportBuilderService.deleteTemplate(templateId, organizationId);
@@ -321,7 +619,7 @@ router.post(
   '/templates/:templateId/duplicate',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { templateId } = req.params;
+      const templateId = paramStr(req.params.templateId);
       const { organizationId, userId } = getAuthContext(req);
       const { name } = req.body;
 
@@ -399,7 +697,7 @@ router.get(
   '/templates/:templateId/export',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { templateId } = req.params;
+      const templateId = paramStr(req.params.templateId);
       const { organizationId } = getAuthContext(req);
 
       const template = await ReportBuilderService.getTemplateById(templateId, organizationId);
@@ -443,7 +741,7 @@ router.get(
  */
 router.get('/templates/:sourceType', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { sourceType } = req.params;
+    const sourceType = paramStr(req.params.sourceType);
     const { framework } = req.query;
     const { organizationId } = getAuthContext(req);
 
@@ -535,7 +833,7 @@ router.post('/block-types', async (req: Request, res: Response, next: NextFuncti
 router.put('/block-types/:blockTypeId', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { organizationId, userId } = getAuthContext(req);
-    const { blockTypeId } = req.params;
+    const blockTypeId = paramStr(req.params.blockTypeId);
     const patch = req.body || {};
 
     await ReportBuilderService.updateBlockType(blockTypeId, organizationId, userId, patch);
@@ -556,7 +854,7 @@ router.delete(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { organizationId, userId } = getAuthContext(req);
-      const { blockTypeId } = req.params;
+      const blockTypeId = paramStr(req.params.blockTypeId);
       await ReportBuilderService.deactivateBlockType(blockTypeId, organizationId, userId);
       res.json({ success: true });
     } catch (err: any) {
@@ -644,7 +942,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
  */
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { organizationId } = getAuthContext(req);
 
     const result = await ReportBuilderService.getReport(id, organizationId);
@@ -666,7 +964,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
  */
 router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { organizationId } = getAuthContext(req);
 
     // Verify report exists and belongs to org
@@ -711,7 +1009,7 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction) =>
  */
 router.post('/:id/duplicate', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
     const { title } = req.body;
 
@@ -742,7 +1040,7 @@ router.post('/:id/duplicate', async (req: Request, res: Response, next: NextFunc
  */
 router.put('/:id/intent', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
     const { config } = req.body;
 
@@ -773,7 +1071,7 @@ router.put('/:id/intent', async (req: Request, res: Response, next: NextFunction
  */
 router.put('/:id/config', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
     const { sections } = req.body;
 
@@ -813,7 +1111,7 @@ router.put('/:id/config', async (req: Request, res: Response, next: NextFunction
  */
 router.post('/:id/sections', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const {
       title,
       sectionType,
@@ -860,7 +1158,8 @@ router.delete(
   '/:id/sections/:sectionKey',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id, sectionKey } = req.params;
+      const id = paramStr(req.params.id);
+      const sectionKey = paramStr(req.params.sectionKey);
 
       const success = await ReportBuilderService.removeSection(id, sectionKey);
 
@@ -890,7 +1189,8 @@ router.put(
   '/:id/sections/:sectionKey/content',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id, sectionKey } = req.params;
+      const id = paramStr(req.params.id);
+      const sectionKey = paramStr(req.params.sectionKey);
       const { userId, organizationId } = getAuthContext(req);
       const { content, contentFormat } = req.body;
 
@@ -952,7 +1252,7 @@ router.put(
  */
 router.post('/:id/generate', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
     const { regenerateAll } = req.body;
 
@@ -992,7 +1292,8 @@ router.post(
   '/:id/generate-section/:sectionKey',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id, sectionKey } = req.params;
+      const id = paramStr(req.params.id);
+      const sectionKey = paramStr(req.params.sectionKey);
       const { userId, organizationId } = getAuthContext(req);
       const { customPrompt } = req.body;
 
@@ -1035,7 +1336,7 @@ router.post(
  */
 router.post('/:id/finalize', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
 
     const report = await ReportBuilderService.getReport(id, organizationId);
@@ -1077,7 +1378,7 @@ router.post('/:id/finalize', async (req: Request, res: Response, next: NextFunct
  */
 router.post('/:id/approve', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
 
     const report = await ReportBuilderService.getReport(id, organizationId);
@@ -1120,7 +1421,7 @@ router.post('/:id/approve', async (req: Request, res: Response, next: NextFuncti
  */
 router.post('/:id/send-back', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
 
     const report = await ReportBuilderService.getReport(id, organizationId);
@@ -1144,12 +1445,78 @@ router.post('/:id/send-back', async (req: Request, res: Response, next: NextFunc
 });
 
 /**
+ * POST /api/report-builder/:id/reject
+ * Reject report with comments (IN_REVIEW/APPROVED -> DRAFT)
+ */
+router.post('/:id/reject', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = paramStr(req.params.id);
+    const { userId, organizationId } = getAuthContext(req);
+    const { reason, comments } = req.body || {};
+
+    const report = await ReportBuilderService.getReport(id, organizationId);
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    const status = report.report.status;
+    if (status !== 'IN_REVIEW' && status !== 'APPROVED') {
+      return res.status(400).json({ error: 'Report must be IN_REVIEW or APPROVED to reject' });
+    }
+
+    await ReportBuilderService.updateReportStatus(id, 'DRAFT', userId);
+
+    logger.info('[ReportBuilder] Report rejected', {
+      reportId: id,
+      userId,
+      reason: reason || comments || '',
+    });
+
+    res.json({ success: true, status: 'DRAFT', reason: reason || comments || '' });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error rejecting report:', err);
+    next(err);
+  }
+});
+
+/**
+ * POST /api/report-builder/:id/utilize
+ * Mark report as utilized (APPROVED/SENT_EXTERNAL -> UTILIZED)
+ */
+router.post('/:id/utilize', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = paramStr(req.params.id);
+    const { userId, organizationId } = getAuthContext(req);
+    const { notes } = req.body || {};
+
+    const report = await ReportBuilderService.getReport(id, organizationId);
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    const status = report.report.status;
+    if (status !== 'APPROVED' && status !== 'SENT_INTERNAL' && status !== 'SENT_EXTERNAL') {
+      return res.status(400).json({ error: 'Report must be APPROVED or SENT to utilize' });
+    }
+
+    await ReportBuilderService.updateReportStatus(id, 'UTILIZED', userId);
+
+    logger.info('[ReportBuilder] Report utilized', { reportId: id, userId, notes });
+
+    res.json({ success: true, status: 'UTILIZED' });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error utilizing report:', err);
+    next(err);
+  }
+});
+
+/**
  * POST /api/report-builder/:id/mark-sent-internal
  * Mark approved report as sent internally
  */
 router.post('/:id/mark-sent-internal', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
 
     const report = await ReportBuilderService.getReport(id, organizationId);
@@ -1178,7 +1545,7 @@ router.post('/:id/mark-sent-internal', async (req: Request, res: Response, next:
  */
 router.post('/:id/mark-sent-external', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
 
     const report = await ReportBuilderService.getReport(id, organizationId);
@@ -1211,7 +1578,7 @@ router.post('/:id/mark-sent-external', async (req: Request, res: Response, next:
  */
 router.get('/:id/source-data', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { organizationId } = getAuthContext(req);
 
     const sourceData = await ReportBuilderService.getSourceDataForReport(id, organizationId);
@@ -1496,7 +1863,7 @@ const writeReportBuilderWordDoc = async (report: any, sections: any[], filePath:
  */
 router.get('/:id/export/pdf', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
 
     const reportData = await ReportBuilderService.getReport(id, organizationId);
@@ -1544,7 +1911,7 @@ router.get('/:id/export/pdf', async (req: Request, res: Response, next: NextFunc
  */
 router.get('/:id/export/doc', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
 
     const reportData = await ReportBuilderService.getReport(id, organizationId);
@@ -1563,7 +1930,7 @@ router.get('/:id/export/doc', async (req: Request, res: Response, next: NextFunc
     await ReportBuilderService.createExportRecord({
       reportId: id,
       reportType: 'report_builder',
-      format: 'doc',
+      format: 'docx',
       filePath,
       fileSize: stats.size,
       language: 'pl',
@@ -1590,7 +1957,7 @@ router.get('/:id/export/doc', async (req: Request, res: Response, next: NextFunc
  */
 router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
     const { template, language } = req.query;
 
@@ -1604,28 +1971,31 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
     const pptxService = new PptxExportService();
 
     // Prepare report data for PPTX export
+    const rpt = reportData.report as any;
     const pptxReportData = {
-      id: reportData.report.id,
-      name: reportData.report.title || reportData.report.name || 'Report',
-      sourceType: reportData.report.source_type || 'ASSESSMENT',
-      sourceFramework: reportData.report.source_framework,
-      organizationName: reportData.report.organization_name,
-      projectName: reportData.report.project_name,
-      createdAt: reportData.report.created_at,
-      intentConfig: reportData.report.intent_config
-        ? JSON.parse(reportData.report.intent_config)
-        : undefined,
+      id: rpt.id,
+      name: rpt.title || rpt.name || 'Report',
+      sourceType: rpt.sourceType || rpt.source_type || 'ASSESSMENT',
+      sourceFramework: rpt.sourceFramework || rpt.source_framework,
+      organizationName: rpt.organizationName || rpt.organization_name,
+      projectName: rpt.projectName || rpt.project_name,
+      createdAt: rpt.createdAt || rpt.created_at,
+      intentConfig:
+        rpt.intentConfig || rpt.intent_config
+          ? JSON.parse(rpt.intentConfig || rpt.intent_config)
+          : undefined,
       sections: (reportData.sections || []).map((s: any) => ({
-        key: s.section_key,
-        title: s.title || s.section_key,
-        type: s.section_type,
-        content: s.generated_content || '',
-        renderKind: s.render_kind,
-        data: s.data_json ? JSON.parse(s.data_json) : undefined,
+        key: s.sectionKey || s.section_key,
+        title: s.title || s.sectionKey || s.section_key,
+        type: s.sectionType || s.section_type,
+        content: s.generatedContent || s.generated_content || '',
+        renderKind: s.renderKind || s.render_kind,
+        data: s.dataJson || s.data_json ? JSON.parse(s.dataJson || s.data_json) : undefined,
       })),
-      scoreSummary: reportData.report.score_summary
-        ? JSON.parse(reportData.report.score_summary)
-        : undefined,
+      scoreSummary:
+        rpt.scoreSummary || rpt.score_summary
+          ? JSON.parse(rpt.scoreSummary || rpt.score_summary)
+          : undefined,
     };
 
     // Generate PPTX
@@ -1679,7 +2049,7 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
  */
 router.get('/:id/exports', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { organizationId } = getAuthContext(req);
 
     // Verify report exists and belongs to org
@@ -1706,7 +2076,7 @@ router.get('/:id/exports', async (req: Request, res: Response, next: NextFunctio
  */
 router.get('/:id/versions', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { organizationId } = getAuthContext(req);
 
     const versions = await ReportBuilderService.listVersions(id, organizationId);
@@ -1723,7 +2093,7 @@ router.get('/:id/versions', async (req: Request, res: Response, next: NextFuncti
  */
 router.post('/:id/versions', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
     const { changeSummary } = req.body;
 
@@ -1746,7 +2116,7 @@ router.post('/:id/versions', async (req: Request, res: Response, next: NextFunct
  */
 router.get('/versions/:versionId', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { versionId } = req.params;
+    const versionId = paramStr(req.params.versionId);
     const { organizationId } = getAuthContext(req);
 
     const version = await ReportBuilderService.getVersion(versionId, organizationId);
@@ -1769,7 +2139,8 @@ router.get(
   '/versions/:versionId1/compare/:versionId2',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { versionId1, versionId2 } = req.params;
+      const versionId1 = paramStr(req.params.versionId1);
+      const versionId2 = paramStr(req.params.versionId2);
       const { organizationId } = getAuthContext(req);
 
       const comparison = await ReportBuilderService.compareVersions(
@@ -1798,7 +2169,7 @@ router.post(
   '/versions/:versionId/rollback',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { versionId } = req.params;
+      const versionId = paramStr(req.params.versionId);
       const { userId, organizationId } = getAuthContext(req);
 
       const report = await ReportBuilderService.rollbackToVersion(
@@ -1830,7 +2201,7 @@ router.post(
  */
 router.post('/:id/share', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
     const { password, expiresInDays, showCompanyLogo, showConsultinityBranding, customMessage } =
       req.body || {};
@@ -1900,7 +2271,7 @@ router.post('/:id/share', async (req: Request, res: Response, next: NextFunction
  */
 router.get('/:id/share', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { organizationId } = getAuthContext(req);
 
     // Verify report exists and belongs to org
@@ -1938,7 +2309,8 @@ router.get('/:id/share', async (req: Request, res: Response, next: NextFunction)
  */
 router.delete('/:id/share/:linkId', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id, linkId } = req.params;
+    const id = paramStr(req.params.id);
+    const linkId = paramStr(req.params.linkId);
     const { organizationId } = getAuthContext(req);
 
     // Verify report exists and belongs to org
@@ -1972,7 +2344,7 @@ router.delete('/:id/share/:linkId', async (req: Request, res: Response, next: Ne
  */
 router.get('/:id/comments', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { organizationId } = getAuthContext(req);
     const { sectionKey, status, commentType, parentOnly } = req.query;
 
@@ -2007,7 +2379,7 @@ router.get('/:id/comments', async (req: Request, res: Response, next: NextFuncti
  */
 router.get('/:id/comments/summary', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { organizationId } = getAuthContext(req);
 
     // Verify report exists
@@ -2032,7 +2404,7 @@ router.get('/:id/comments/summary', async (req: Request, res: Response, next: Ne
  */
 router.post('/:id/comments', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
     const { sectionKey, anchor, commentType, content, parentCommentId, priority, tags } = req.body;
 
@@ -2085,7 +2457,8 @@ router.post('/:id/comments', async (req: Request, res: Response, next: NextFunct
  */
 router.get('/:id/comments/:commentId', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id, commentId } = req.params;
+    const id = paramStr(req.params.id);
+    const commentId = paramStr(req.params.commentId);
     const { organizationId } = getAuthContext(req);
 
     // Verify report exists
@@ -2114,7 +2487,8 @@ router.patch(
   '/:id/comments/:commentId',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id, commentId } = req.params;
+      const id = paramStr(req.params.id);
+      const commentId = paramStr(req.params.commentId);
       const { userId, organizationId } = getAuthContext(req);
       const { content, commentType, status, resolutionNotes, priority, tags } = req.body;
 
@@ -2162,7 +2536,8 @@ router.delete(
   '/:id/comments/:commentId',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id, commentId } = req.params;
+      const id = paramStr(req.params.id);
+      const commentId = paramStr(req.params.commentId);
       const { userId, organizationId } = getAuthContext(req);
 
       // Verify report exists
@@ -2197,7 +2572,8 @@ router.post(
   '/:id/comments/:commentId/resolve',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id, commentId } = req.params;
+      const id = paramStr(req.params.id);
+      const commentId = paramStr(req.params.commentId);
       const { userId, organizationId } = getAuthContext(req);
       const { resolutionNotes } = req.body;
 
@@ -2237,7 +2613,7 @@ router.post(
   '/:id/comments/bulk-resolve',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const id = paramStr(req.params.id);
       const { userId, organizationId } = getAuthContext(req);
       const { commentIds, resolutionNotes } = req.body;
 

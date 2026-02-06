@@ -23,7 +23,11 @@ const __dirname = path.dirname(__filename);
 //
 // In local dev we want `.env` to win even if the shell already has stale values exported.
 // In production (e.g. Railway) we want real environment variables to win.
+//
+// In tests (Vitest), we want the *test runner* to be able to set per-worker env vars
+// like SQLITE_PATH without being overwritten by `.env`.
 const isProductionEnv = process.env.NODE_ENV === 'production';
+const isTestEnv = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
 const repoRootEnvPath = path.resolve(__dirname, '../../../.env');
 const serverEnvPath = path.resolve(__dirname, '../../.env');
 
@@ -32,7 +36,7 @@ const envPathToUse = fs.existsSync(repoRootEnvPath) ? repoRootEnvPath : serverEn
 
 dotenv.config({
   path: envPathToUse,
-  override: !isProductionEnv,
+  override: !isProductionEnv && !isTestEnv,
 });
 
 // Dev-only visibility: confirm which .env was loaded (helps debug "keys pasted but not used").
@@ -81,7 +85,7 @@ const app: Express = express();
 
 const PORT = Number(process.env.PORT) || 3005;
 const isProduction = process.env.NODE_ENV === 'production';
-const isTest = process.env.NODE_ENV === 'test';
+const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
 
 // Validate environment variables on startup (skip in test mode)
 if (!isTest && !process.env.SKIP_ENV_VALIDATION) {
@@ -921,7 +925,10 @@ if (startServer && (!isTest || process.env.E2E_MODE === 'true')) {
       logger.error('[Server] HTTP Server Error:', err);
       if (err.code === 'EADDRINUSE') {
         logger.error(`Port ${PORT} is already in use`);
-        process.exit(1);
+        // Don't exit in test mode - let the test framework handle it
+        if (!isTest) {
+          process.exit(1);
+        }
       }
     });
 

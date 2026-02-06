@@ -348,6 +348,10 @@ export interface ChatMessage {
   regenerateCount?: number;
 
   createdAt?: string | Date;
+
+  // Team conversation extensions
+  authorUserId?: string | null;
+  authorName?: string | null;
 }
 
 /**

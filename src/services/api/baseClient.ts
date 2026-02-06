@@ -59,7 +59,28 @@ export const handleResponse = async <T = unknown>(
     return res.json();
   }
 
-  const data = await res.json().catch(() => ({}));
+  // Robust error parsing (some proxies return HTML / empty bodies for errors).
+  const parsed = await (async () => {
+    try {
+      const clone = res.clone();
+      const json = await clone.json();
+      return { kind: 'json' as const, json };
+    } catch {
+      try {
+        const text = await res.text();
+        try {
+          const json = JSON.parse(text);
+          return { kind: 'json' as const, json };
+        } catch {
+          return { kind: 'text' as const, text };
+        }
+      } catch {
+        return { kind: 'none' as const };
+      }
+    }
+  })();
+
+  const data = parsed.kind === 'json' ? parsed.json : {};
 
   // Check for Demo Block
   if (
@@ -89,7 +110,15 @@ export const handleResponse = async <T = unknown>(
     throw new Error(data.error || 'AI Budget Exhausted');
   }
 
-  throw new Error(data.error || defaultError);
+  const fallbackHttp = `HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''}`;
+  const message = (data as any)?.error || (data as any)?.message || fallbackHttp || defaultError;
+
+  const err: any = new Error(message);
+  err.status = res.status;
+  err.url = res.url;
+  err.data = data;
+  if (parsed.kind === 'text') err.bodyText = parsed.text;
+  throw err;
 };
 
 /**

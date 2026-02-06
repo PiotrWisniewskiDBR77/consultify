@@ -7,7 +7,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { DRD_STRUCTURE } from '../../shared/drdStructure.js';
+import { DRD_STRUCTURE } from '../../src/services/drdStructure.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/index.js';
 import logger from '../utils/Logger.js';
@@ -167,7 +167,7 @@ function queryAll<T>(sql: string, params: unknown[] = []): Promise<T[]> {
 
 function queryOne<T>(sql: string, params: unknown[] = []): Promise<T | null> {
   return new Promise((resolve, reject) => {
-    db.get(sql, params, (err: Error | null, row: T) => {
+    db.get(sql, params, (err: Error | null, row: T | null) => {
       if (err) reject(err);
       else resolve(row || null);
     });

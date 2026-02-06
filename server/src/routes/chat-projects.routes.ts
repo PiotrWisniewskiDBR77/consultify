@@ -3,7 +3,12 @@
  * Chat Projects Routes
  *
  * CRUD routes for managing chat projects (folders/categories).
- * Allows organizing conversations into projects like Claude AI or OpenAI's project feature.
+ * Supports both PERSONAL and TEAM scopes.
+ *
+ * - Personal projects: visible only to the creator (scope = 'personal')
+ * - Team projects: visible to all org members (scope = 'team')
+ *
+ * Permission checks for team projects use chatPermissionService.
  */
 import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
@@ -11,6 +16,7 @@ import { z } from 'zod';
 
 import { getDatabase } from '../database/index.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { checkChatPermission } from '../services/chatPermissionService.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
@@ -32,6 +38,8 @@ const CreateProjectSchema = z.object({
     .optional()
     .default('#6366f1'),
   icon: z.string().max(50).optional().default('folder'),
+  /** 'personal' (default) or 'team' */
+  scope: z.enum(['personal', 'team']).optional().default('personal'),
 });
 
 const UpdateProjectSchema = z.object({
@@ -50,6 +58,7 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const orgId = (req as any).user?.organizationId;
+    const scopeFilter = (req.query as any).scope; // 'personal' | 'team' | undefined (all)
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -57,16 +66,41 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
 
     const db = getDatabase();
 
+    let whereClause: string;
+    const params: string[] = [];
+
+    if (scopeFilter === 'personal') {
+      // Only personal projects owned by this user
+      whereClause = `WHERE cp.user_id = ? AND (cp.scope = 'personal' OR cp.scope IS NULL)`;
+      params.push(userId);
+    } else if (scopeFilter === 'team') {
+      // Only team projects in user's organization
+      if (!orgId) {
+        return res.json({ projects: [], total: 0 });
+      }
+      whereClause = `WHERE cp.scope = 'team' AND cp.organization_id = ?`;
+      params.push(orgId);
+    } else {
+      // All: personal + team
+      whereClause = `WHERE cp.user_id = ?`;
+      params.push(userId);
+      if (orgId) {
+        whereClause += ` OR (cp.scope = 'team' AND cp.organization_id = ?)`;
+        params.push(orgId);
+      }
+      whereClause = `WHERE (${whereClause.replace('WHERE ', '')})`;
+    }
+
     const projectsResult = await db.query(
       `
             SELECT 
                 cp.*,
                 (SELECT COUNT(*) FROM conversations WHERE chat_project_id = cp.id) as conversation_count
             FROM chat_projects cp
-            WHERE cp.user_id = ? OR cp.organization_id = ?
-            ORDER BY cp.updated_at DESC
+            ${whereClause}
+            ORDER BY cp.scope DESC, cp.updated_at DESC
         `,
-      [userId, orgId]
+      params
     );
 
     const projects = Array.isArray(projectsResult)
@@ -80,8 +114,6 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
       total: projects.length,
     });
   } catch (error: any) {
-    // Graceful degradation for dev DBs missing optional feature tables.
-    // This prevents the whole UI from failing during local development.
     if (isMissingSqliteTable(error, 'chat_projects')) {
       logger.warn('[ChatProjects] chat_projects table missing - returning empty list');
       return res.json({ projects: [], total: 0 });
@@ -96,6 +128,7 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
 router.get('/:id', verifyToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
+    const orgId = (req as any).user?.organizationId;
     const { id } = req.params;
 
     if (!userId) {
@@ -104,15 +137,19 @@ router.get('/:id', verifyToken, async (req: Request, res: Response) => {
 
     const db = getDatabase();
 
+    // Allow access if user owns it OR it's a team project in their org
     const project = await db.queryOne(
       `
             SELECT 
                 cp.*,
                 (SELECT COUNT(*) FROM conversations WHERE chat_project_id = cp.id) as conversation_count
             FROM chat_projects cp
-            WHERE cp.id = ? AND (cp.user_id = ? OR cp.organization_id = ?)
+            WHERE cp.id = ? AND (
+              cp.user_id = ?
+              OR (cp.scope = 'team' AND cp.organization_id = ?)
+            )
         `,
-      [id, userId, (req as any).user?.organizationId]
+      [id, userId, orgId]
     );
 
     if (!project) {
@@ -122,9 +159,11 @@ router.get('/:id', verifyToken, async (req: Request, res: Response) => {
     // Get conversations in this project
     const conversationsResult = await db.query(
       `
-            SELECT * FROM conversations 
-            WHERE chat_project_id = ?
-            ORDER BY updated_at DESC
+            SELECT c.*, u.name as created_by_name
+            FROM conversations c
+            LEFT JOIN users u ON c.created_by = u.id
+            WHERE c.chat_project_id = ?
+            ORDER BY c.updated_at DESC
         `,
       [id]
     );
@@ -168,7 +207,19 @@ router.post('/', verifyToken, async (req: Request, res: Response) => {
       });
     }
 
-    const { name, description, color, icon } = validation.data;
+    const { name, description, color, icon, scope } = validation.data;
+
+    // Team projects require an organization and create_project permission
+    if (scope === 'team') {
+      if (!orgId) {
+        return res.status(400).json({ error: 'Team projects require an organization' });
+      }
+      const perm = await checkChatPermission(userId, orgId, 'create_project');
+      if (!perm.allowed) {
+        return res.status(403).json({ error: 'No permission to create team projects' });
+      }
+    }
+
     const id = uuidv4();
     const now = new Date().toISOString();
 
@@ -176,26 +227,38 @@ router.post('/', verifyToken, async (req: Request, res: Response) => {
 
     await db.run(
       `
-            INSERT INTO chat_projects (id, user_id, organization_id, name, description, color, icon, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO chat_projects (id, user_id, organization_id, name, description, color, icon, scope, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
-      [id, userId, orgId, name, description || null, color, icon, now, now]
+      [
+        id,
+        userId,
+        scope === 'team' ? orgId : orgId || null,
+        name,
+        description || null,
+        color,
+        icon,
+        scope,
+        now,
+        now,
+      ]
     );
 
     const project = {
       id,
       user_id: userId,
-      organization_id: orgId,
+      organization_id: scope === 'team' ? orgId : orgId || null,
       name,
       description,
       color,
       icon,
+      scope,
       conversation_count: 0,
       created_at: now,
       updated_at: now,
     };
 
-    logger.info(`[ChatProjects] Created project: ${id} by user ${userId}`);
+    logger.info(`[ChatProjects] Created ${scope} project: ${id} by user ${userId}`);
     res.status(201).json(project);
   } catch (error: any) {
     logger.error('[ChatProjects] Create error:', error);
@@ -208,6 +271,7 @@ router.post('/', verifyToken, async (req: Request, res: Response) => {
 router.patch('/:id', verifyToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
+    const orgId = (req as any).user?.organizationId;
     const { id } = req.params;
 
     if (!userId) {
@@ -225,16 +289,26 @@ router.patch('/:id', verifyToken, async (req: Request, res: Response) => {
     const updates = validation.data;
     const db = getDatabase();
 
-    // Check ownership
-    const existing = await db.queryOne(
-      `
-            SELECT id FROM chat_projects WHERE id = ? AND (user_id = ? OR organization_id = ?)
-        `,
-      [id, userId, (req as any).user?.organizationId]
-    );
+    // Find project (personal ownership or team in org)
+    const existing = (await db.queryOne(
+      `SELECT id, user_id, scope, organization_id FROM chat_projects
+       WHERE id = ? AND (user_id = ? OR (scope = 'team' AND organization_id = ?))`,
+      [id, userId, orgId]
+    )) as any;
 
     if (!existing) {
       return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // For team projects, check edit_project permission
+    if (existing.scope === 'team' && existing.organization_id) {
+      const isCreator = existing.user_id === userId;
+      const perm = await checkChatPermission(userId, existing.organization_id, 'edit_project', {
+        isCreator,
+      });
+      if (!perm.allowed) {
+        return res.status(403).json({ error: 'No permission to edit this team project' });
+      }
     }
 
     // Build update query
@@ -262,12 +336,7 @@ router.patch('/:id', verifyToken, async (req: Request, res: Response) => {
     values.push(new Date().toISOString());
     values.push(id);
 
-    await db.run(
-      `
-            UPDATE chat_projects SET ${fields.join(', ')} WHERE id = ?
-        `,
-      values
-    );
+    await db.run(`UPDATE chat_projects SET ${fields.join(', ')} WHERE id = ?`, values);
 
     logger.info(`[ChatProjects] Updated project: ${id}`);
     res.json({ success: true });
@@ -282,6 +351,7 @@ router.patch('/:id', verifyToken, async (req: Request, res: Response) => {
 router.delete('/:id', verifyToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
+    const orgId = (req as any).user?.organizationId;
     const { id } = req.params;
 
     if (!userId) {
@@ -290,25 +360,30 @@ router.delete('/:id', verifyToken, async (req: Request, res: Response) => {
 
     const db = getDatabase();
 
-    // Check ownership
-    const existing = await db.queryOne(
-      `
-            SELECT id FROM chat_projects WHERE id = ? AND (user_id = ? OR organization_id = ?)
-        `,
-      [id, userId, (req as any).user?.organizationId]
-    );
+    // Find project
+    const existing = (await db.queryOne(
+      `SELECT id, user_id, scope, organization_id FROM chat_projects
+       WHERE id = ? AND (user_id = ? OR (scope = 'team' AND organization_id = ?))`,
+      [id, userId, orgId]
+    )) as any;
 
     if (!existing) {
       return res.status(404).json({ error: 'Project not found' });
     }
 
+    // For team projects, check delete_project permission
+    if (existing.scope === 'team' && existing.organization_id) {
+      const isCreator = existing.user_id === userId;
+      const perm = await checkChatPermission(userId, existing.organization_id, 'delete_project', {
+        isCreator,
+      });
+      if (!perm.allowed) {
+        return res.status(403).json({ error: 'No permission to delete this team project' });
+      }
+    }
+
     // Remove project reference from conversations (don't delete conversations)
-    await db.run(
-      `
-            UPDATE conversations SET chat_project_id = NULL WHERE chat_project_id = ?
-        `,
-      [id]
-    );
+    await db.run(`UPDATE conversations SET chat_project_id = NULL WHERE chat_project_id = ?`, [id]);
 
     // Delete project
     await db.run(`DELETE FROM chat_projects WHERE id = ?`, [id]);
@@ -329,6 +404,7 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user?.id;
+      const orgId = (req as any).user?.organizationId;
       const { id, conversationId } = req.params;
 
       if (!userId) {
@@ -337,24 +413,22 @@ router.post(
 
       const db = getDatabase();
 
-      // Check project ownership
-      const project = await db.queryOne(
-        `
-            SELECT id FROM chat_projects WHERE id = ? AND (user_id = ? OR organization_id = ?)
-        `,
-        [id, userId, (req as any).user?.organizationId]
-      );
+      // Check project access (personal or team)
+      const project = (await db.queryOne(
+        `SELECT id, scope, organization_id FROM chat_projects
+         WHERE id = ? AND (user_id = ? OR (scope = 'team' AND organization_id = ?))`,
+        [id, userId, orgId]
+      )) as any;
 
       if (!project) {
         return res.status(404).json({ error: 'Project not found' });
       }
 
-      // Check conversation ownership
+      // Check conversation access (personal or team in same org)
       const conversation = await db.queryOne(
-        `
-            SELECT id FROM conversations WHERE id = ? AND user_id = ?
-        `,
-        [conversationId, userId]
+        `SELECT id FROM conversations
+         WHERE id = ? AND (user_id = ? OR organization_id = ?)`,
+        [conversationId, userId, orgId]
       );
 
       if (!conversation) {
@@ -362,12 +436,11 @@ router.post(
       }
 
       // Move conversation to project
-      await db.run(
-        `
-            UPDATE conversations SET chat_project_id = ?, updated_at = ? WHERE id = ?
-        `,
-        [id, new Date().toISOString(), conversationId]
-      );
+      await db.run(`UPDATE conversations SET chat_project_id = ?, updated_at = ? WHERE id = ?`, [
+        id,
+        new Date().toISOString(),
+        conversationId,
+      ]);
 
       logger.info(`[ChatProjects] Moved conversation ${conversationId} to project ${id}`);
       res.json({ success: true });
@@ -386,6 +459,7 @@ router.delete(
   async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user?.id;
+      const orgId = (req as any).user?.organizationId;
       const { id, conversationId } = req.params;
 
       if (!userId) {
@@ -394,14 +468,13 @@ router.delete(
 
       const db = getDatabase();
 
-      // Remove from project (set chat_project_id to NULL)
+      // Remove from project (personal or team)
       await db.run(
-        `
-            UPDATE conversations 
-            SET chat_project_id = NULL, updated_at = ? 
-            WHERE id = ? AND user_id = ? AND chat_project_id = ?
-        `,
-        [new Date().toISOString(), conversationId, userId, id]
+        `UPDATE conversations 
+         SET chat_project_id = NULL, updated_at = ? 
+         WHERE id = ? AND chat_project_id = ?
+           AND (user_id = ? OR organization_id = ?)`,
+        [new Date().toISOString(), conversationId, id, userId, orgId]
       );
 
       logger.info(`[ChatProjects] Removed conversation ${conversationId} from project ${id}`);

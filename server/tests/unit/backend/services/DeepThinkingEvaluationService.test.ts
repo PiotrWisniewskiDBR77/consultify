@@ -90,4 +90,3 @@ Early signals: monitor defects.
     expect(r.winner).toBe('A');
   });
 });
-

@@ -1228,7 +1228,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
             {/* Report workflow (in-place overlay) */}
             <button
               onClick={handleOpenReportWorkflow}
-              className="hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors"
+              className="hidden sm:inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white text-sm font-semibold shadow-sm hover:shadow-md transition-all"
               title="Create report from this assessment"
               type="button"
             >

@@ -284,8 +284,59 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
   // RENDER HELPERS
   // ==========================================
 
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        // Trigger next step
+        const canGo = (() => {
+          switch (currentStep) {
+            case 0:
+              return sourceType && selectedSource && reportTitle.trim();
+            case 1:
+              return sections.filter((s) => s.enabled).length > 0;
+            case 2:
+              return sections.filter((s) => s.enabled).length > 0;
+            default:
+              return false;
+          }
+        })();
+        if (canGo && !isLoading && !isGenerating) {
+          switch (currentStep) {
+            case 0:
+              handleIntentComplete();
+              break;
+            case 1:
+              handleConfigComplete();
+              break;
+            case 2:
+              if (report?.status === 'GENERATED') handleFinalize();
+              else handleGenerate();
+              break;
+          }
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    currentStep,
+    sourceType,
+    selectedSource,
+    reportTitle,
+    sections,
+    isLoading,
+    isGenerating,
+    report?.status,
+    handleIntentComplete,
+    handleConfigComplete,
+    handleGenerate,
+    handleFinalize,
+  ]);
+
   const renderStepIndicator = () => (
-    <div className="flex items-center justify-center mb-8">
+    <div className="flex items-center justify-center mb-8 px-4">
       {STEPS.map((step, index) => {
         const Icon = step.icon;
         const isActive = currentStep === step.id;
@@ -294,43 +345,61 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
 
         return (
           <React.Fragment key={step.id}>
-            {/* Step Circle */}
-            <button
-              onClick={() => isClickable && setStep(step.id)}
-              disabled={!isClickable}
-              className={`
-                relative flex items-center justify-center w-12 h-12 rounded-full
-                transition-all duration-200
-                ${
-                  isActive
-                    ? 'bg-blue-600 text-white ring-4 ring-blue-100 dark:ring-blue-900/30'
-                    : isCompleted
-                      ? 'bg-green-500 text-white cursor-pointer hover:bg-green-600'
-                      : 'bg-slate-200 dark:bg-slate-700 text-slate-500 cursor-not-allowed'
-                }
-              `}
-            >
-              {isCompleted ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
-            </button>
+            <div className="flex flex-col items-center">
+              {/* Step Circle */}
+              <button
+                onClick={() => isClickable && setStep(step.id)}
+                disabled={!isClickable}
+                className={`
+                  relative flex items-center justify-center w-12 h-12 rounded-full
+                  transition-all duration-300
+                  ${
+                    isActive
+                      ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white ring-4 ring-purple-100 dark:ring-purple-900/30 shadow-lg shadow-purple-200 dark:shadow-purple-900/20'
+                      : isCompleted
+                        ? 'bg-green-500 text-white cursor-pointer hover:bg-green-600 shadow-sm'
+                        : 'bg-slate-200 dark:bg-navy-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                  }
+                `}
+              >
+                {isCompleted ? <CheckCircle2 className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
+              </button>
 
-            {/* Step Label */}
-            <div
-              className={`
-              hidden md:block absolute mt-16 text-center w-32 -ml-10
-              ${isActive ? 'text-blue-600 font-medium' : 'text-slate-500'}
-            `}
-            >
-              <div className="text-sm">{isPl ? step.titlePl : step.title}</div>
+              {/* Step Label (below) */}
+              <div className="mt-2 text-center">
+                <div
+                  className={`text-xs font-semibold ${
+                    isActive
+                      ? 'text-purple-600 dark:text-purple-400'
+                      : isCompleted
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-slate-400 dark:text-slate-500'
+                  }`}
+                >
+                  {isPl ? step.titlePl : step.title}
+                </div>
+                <div className="hidden md:block text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 max-w-[120px]">
+                  {isPl ? step.descriptionPl : step.description}
+                </div>
+              </div>
             </div>
 
             {/* Connector Line */}
             {index < STEPS.length - 1 && (
-              <div
-                className={`
-                w-16 md:w-24 h-1 mx-2
-                ${currentStep > index ? 'bg-green-500' : 'bg-slate-200 dark:bg-slate-700'}
-              `}
-              />
+              <div className="flex-1 flex items-start pt-6 px-2 max-w-[120px]">
+                <div
+                  className={`
+                    w-full h-0.5 rounded-full transition-all duration-300
+                    ${
+                      currentStep > index
+                        ? 'bg-gradient-to-r from-green-400 to-green-500'
+                        : currentStep === index
+                          ? 'bg-gradient-to-r from-purple-300 to-slate-200 dark:from-purple-800 dark:to-navy-700'
+                          : 'bg-slate-200 dark:bg-navy-700'
+                    }
+                  `}
+                />
+              </div>
             )}
           </React.Fragment>
         );
@@ -495,12 +564,12 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
     };
 
     return (
-      <div className="flex items-center justify-between pt-6 border-t border-slate-200 dark:border-slate-700">
+      <div className="flex items-center justify-between pt-6 border-t border-slate-200 dark:border-navy-700">
         <div>
           {canGoBack && (
             <button
               onClick={prevStep}
-              className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors border border-transparent hover:border-slate-200 dark:hover:border-navy-700"
             >
               <ArrowLeft className="w-4 h-4" />
               {isPl ? 'Wstecz' : 'Back'}
@@ -511,7 +580,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
         <div className="flex items-center gap-3">
           <button
             onClick={handleCancel}
-            className="px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            className="px-4 py-2.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors text-sm"
           >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>
@@ -520,21 +589,32 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
             onClick={handleNext}
             disabled={!canGoNext || isLoading || isGenerating}
             className={`
-              flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-all
+              flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold transition-all text-sm
               ${
                 canGoNext && !isLoading && !isGenerating
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                  ? currentStep === 2
+                    ? 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-md hover:shadow-lg'
+                    : 'bg-purple-600 text-white hover:bg-purple-700 shadow-sm'
+                  : 'bg-slate-200 dark:bg-navy-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
               }
             `}
           >
             {isLoading || isGenerating ? (
               <Loader2 className="w-4 h-4 animate-spin" />
+            ) : currentStep === 2 ? (
+              <Sparkles className="w-4 h-4" />
             ) : (
               <ArrowRight className="w-4 h-4" />
             )}
             {nextLabel}
           </button>
+
+          {/* Keyboard shortcut hint */}
+          {canGoNext && !isLoading && !isGenerating && (
+            <span className="hidden md:inline text-[10px] text-slate-400 dark:text-slate-500">
+              Ctrl+Enter
+            </span>
+          )}
         </div>
       </div>
     );
@@ -547,22 +627,45 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
   return (
     <div className="max-w-5xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          {isPl ? 'Kreator Raportów' : 'Report Builder'}
-        </h1>
-        <p className="mt-1 text-slate-500 dark:text-slate-400">
-          {report
-            ? report.title
-            : isPl
-              ? 'Utwórz profesjonalny raport na podstawie danych z oceny'
-              : 'Create a professional report based on assessment data'}
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-purple-500/10">
+              <Sparkles className="w-6 h-6 text-purple-500" />
+            </div>
+            {isPl ? 'Kreator Raportów' : 'Report Builder'}
+          </h1>
+          <p className="mt-1 text-slate-500 dark:text-slate-400 ml-[52px]">
+            {report
+              ? report.title
+              : isPl
+                ? 'Utwórz profesjonalny raport na podstawie danych z oceny'
+                : 'Create a professional report based on assessment data'}
+          </p>
+        </div>
+        {report?.id && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400">ID: {report.id.slice(0, 12)}...</span>
+            <span
+              className={`px-2 py-1 text-xs font-medium rounded-full ${
+                report.status === 'GENERATED'
+                  ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                  : report.status === 'IN_REVIEW'
+                    ? 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400'
+                    : report.status === 'APPROVED'
+                      ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
+                      : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
+              }`}
+            >
+              {report.status}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Error Banner */}
       {error && (
-        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-3">
           <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <div className="font-medium text-red-800 dark:text-red-200">
@@ -577,18 +680,24 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
       )}
 
       {/* Step Indicator */}
-      <div className="relative mb-12">{renderStepIndicator()}</div>
+      <div className="relative mb-8">{renderStepIndicator()}</div>
 
       {/* Step Content */}
-      <div className="bg-white dark:bg-navy-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-6">
+      <div className="bg-white dark:bg-navy-900 rounded-2xl shadow-lg border border-slate-200 dark:border-navy-700 p-6 md:p-8">
         {/* Step Title */}
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-            {isPl ? STEPS[currentStep].titlePl : STEPS[currentStep].title}
-          </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {isPl ? STEPS[currentStep].descriptionPl : STEPS[currentStep].description}
-          </p>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+              <span className="text-purple-500 mr-2">{currentStep + 1}.</span>
+              {isPl ? STEPS[currentStep].titlePl : STEPS[currentStep].title}
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+              {isPl ? STEPS[currentStep].descriptionPl : STEPS[currentStep].description}
+            </p>
+          </div>
+          <div className="text-xs text-slate-400 dark:text-slate-500">
+            {isPl ? 'Krok' : 'Step'} {currentStep + 1}/{STEPS.length}
+          </div>
         </div>
 
         {/* Step Content */}

@@ -2223,6 +2223,10 @@ export interface ChatMessage {
   parentMessageId?: string; // For branching conversations (edit history)
   isStreaming?: boolean; // Currently being streamed
   streamProgress?: number; // 0-100 for progress indicator
+
+  // Team conversation extensions
+  authorUserId?: string | null; // User who sent this message (null for AI)
+  authorName?: string | null; // Display name of author
 }
 
 export interface AIMessageHistory {

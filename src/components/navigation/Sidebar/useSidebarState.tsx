@@ -4,7 +4,7 @@
  * Extracts sidebar state management from the main component.
  */
 
-import { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 
 import { useDeviceType } from '../../../hooks/useDeviceType';
 import { useAppStore } from '../../../store/useAppStore';
@@ -201,6 +201,3 @@ export function useSidebarState() {
     closeFlyout,
   };
 }
-
-// Need to import React for useMemo
-import React from 'react';

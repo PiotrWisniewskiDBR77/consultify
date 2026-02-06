@@ -12,7 +12,7 @@
  * - Action execution capabilities
  */
 
-import { PanelLeft } from 'lucide-react';
+import { PanelLeft, RefreshCw } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -26,9 +26,9 @@ import { ChatSlidingPanel } from '../components/AIChat/ChatSlidingPanel';
 import { CitationList } from '../components/AIChat/CitationList';
 import { EnhancedChatInput } from '../components/AIChat/EnhancedChatInput';
 import { MessageActions } from '../components/AIChat/Messages/MessageActions';
+import { ThinkingBlock } from '../components/AIChat/Messages/ThinkingBlock';
 import { ResponseActions } from '../components/AIChat/ResponseActions';
 import { SmartSuggestions } from '../components/AIChat/SmartSuggestions';
-import { ThinkingBlock } from '../components/AIChat/Messages/ThinkingBlock';
 import { ThinkingStatusLine } from '../components/AIChat/ThinkingStatusLine';
 import { TTSIndicator } from '../components/AIChat/TTSIndicator';
 import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
@@ -68,6 +68,19 @@ const getTimeContext = () => {
   }
 };
 
+/** Download a string as a file */
+function downloadFile(filename: string, content: string, mimeType: string): void {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 export const AIChatWelcomeView: React.FC = () => {
   const { t, i18n } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -98,6 +111,7 @@ export const AIChatWelcomeView: React.FC = () => {
     activeMessages,
     isLoading: isConversationLoading,
     isSidebarOpen,
+    workspaceContext,
     toggleSidebar,
     createConversation,
     addMessage,
@@ -109,6 +123,8 @@ export const AIChatWelcomeView: React.FC = () => {
     chatLanguageByConversationId,
     setConversationChatLanguage,
   } = useConversationStore();
+
+  const activeConversationIdRef = useRef(activeConversationId);
 
   const chatLanguage: SupportedLanguage = useMemo(() => {
     const activeLang = activeConversationId
@@ -127,29 +143,35 @@ export const AIChatWelcomeView: React.FC = () => {
   // AI stream with persistence callback
   const handleStreamDone = useCallback(
     async (fullText: string) => {
+      // Use ref to get the latest conversation ID (avoids stale closure)
+      const convId = activeConversationIdRef.current;
+      if (!convId) {
+        console.warn('[Chat] handleStreamDone: no active conversation ID');
+        return;
+      }
+
       // Persist AI response to conversation store (backend)
       try {
         await addMessage({
-          conversationId: activeConversationId!,
+          conversationId: convId,
           role: 'ai',
           content: fullText,
           messageType: 'text',
         });
 
         // Trigger title generation after first AI response
-        if (isFirstExchangeRef.current && activeConversationId) {
+        if (isFirstExchangeRef.current) {
           isFirstExchangeRef.current = false;
-          console.log('[Chat] First exchange complete, generating title...');
           // Use small delay to ensure messages are persisted
           setTimeout(() => {
-            generateTitle(activeConversationId);
+            generateTitle(convId);
           }, 500);
         }
       } catch (err) {
         console.error('[Chat] Failed to persist AI response:', err);
       }
     },
-    [addMessage, activeConversationId, generateTitle]
+    [addMessage, generateTitle]
   );
 
   const { isStreaming, streamedContent, startStream, thinkingSteps } = useAIStream({
@@ -167,6 +189,11 @@ export const AIChatWelcomeView: React.FC = () => {
   useEffect(() => {
     activeChatMessagesRef.current = activeChatMessages;
   }, [activeChatMessages]);
+
+  // Keep conversation ID ref fresh (avoids stale closures in handleStreamDone)
+  useEffect(() => {
+    activeConversationIdRef.current = activeConversationId;
+  }, [activeConversationId]);
 
   // Sync conversation-store messages into legacy chat UI state when user selects a conversation.
   // Important: do NOT sync while streaming, otherwise we would overwrite the streaming placeholder message.
@@ -611,6 +638,55 @@ For example: REMEMBER: preferred_language: Polish`;
     setShowExportModal(true);
   }, []);
 
+  const handleExportFormat = useCallback(
+    async (format: 'pdf' | 'json' | 'txt') => {
+      const messages = activeChatMessages;
+      if (!messages.length) return;
+
+      const title =
+        useConversationStore.getState().conversations.find((c) => c.id === activeConversationId)
+          ?.title || 'AI Chat Export';
+      const timestamp = new Date().toISOString().slice(0, 10);
+      const filename = `${title.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}`;
+
+      if (format === 'json') {
+        const data = JSON.stringify(
+          {
+            title,
+            exportedAt: new Date().toISOString(),
+            messageCount: messages.length,
+            messages: messages.map((m) => ({
+              role: m.role,
+              content: m.content,
+              timestamp: m.timestamp,
+            })),
+          },
+          null,
+          2
+        );
+        downloadFile(`${filename}.json`, data, 'application/json');
+      } else if (format === 'txt') {
+        const lines = messages.map(
+          (m) =>
+            `[${m.role === 'user' ? 'User' : 'AI'}] ${m.timestamp ? new Date(m.timestamp).toLocaleString() : ''}\n${m.content}\n`
+        );
+        downloadFile(
+          `${filename}.txt`,
+          `${title}\n${'='.repeat(40)}\n\n${lines.join('\n')}`,
+          'text/plain'
+        );
+      } else {
+        // PDF — fallback to text since we don't have a PDF library
+        const lines = messages.map((m) => `[${m.role === 'user' ? 'User' : 'AI'}]\n${m.content}\n`);
+        const content = `${title}\n${'='.repeat(40)}\n\n${lines.join('\n---\n\n')}`;
+        downloadFile(`${filename}.txt`, content, 'text/plain');
+      }
+
+      setShowExportModal(false);
+    },
+    [activeChatMessages, activeConversationId]
+  );
+
   // Handle daily brief
   const handleDailyBrief = useCallback(async () => {
     try {
@@ -831,6 +907,26 @@ For example: REMEMBER: preferred_language: Polish`;
                           🔊 Odtwórz
                         </button>
                       )}
+
+                      {/* Retry button for error messages */}
+                      {isAiMessage &&
+                        !isStreamingThis &&
+                        displayContent?.includes('⚠️') &&
+                        (() => {
+                          const prevUserMsg = activeChatMessages
+                            .slice(0, index)
+                            .reverse()
+                            .find((m) => m.role === 'user');
+                          return prevUserMsg ? (
+                            <button
+                              onClick={() => handleSend(prevUserMsg.content)}
+                              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors"
+                            >
+                              <RefreshCw size={12} />
+                              {t('aiChat.retry', 'Try again')}
+                            </button>
+                          ) : null;
+                        })()}
                     </div>
 
                     {/* Message Actions - shown below AI messages */}
@@ -945,7 +1041,11 @@ For example: REMEMBER: preferred_language: Polish`;
         </div>
 
         {/* Export Modal */}
-        <ChatExportModal isOpen={showExportModal} onClose={() => setShowExportModal(false)} />
+        <ChatExportModal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          onExport={handleExportFormat}
+        />
       </div>
     );
   }
@@ -1005,6 +1105,8 @@ For example: REMEMBER: preferred_language: Polish`;
               projectId={selectedProject?.id}
               onSuggestionClick={handleSuggestionClick}
               variant="minimal"
+              workspaceType={workspaceContext?.type}
+              entityName={workspaceContext?.entityName}
             />
           </div>
         </div>
@@ -1018,7 +1120,11 @@ For example: REMEMBER: preferred_language: Polish`;
       </div>
 
       {/* Export Modal */}
-      <ChatExportModal isOpen={showExportModal} onClose={() => setShowExportModal(false)} />
+      <ChatExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onExport={handleExportFormat}
+      />
 
       {/* TTS Indicator - shows when speaking */}
       <TTSIndicator />

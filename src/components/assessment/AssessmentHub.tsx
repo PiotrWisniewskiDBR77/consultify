@@ -210,22 +210,59 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       setError(null);
 
       try {
-        // Fetch assessments
-        const assessmentResponse = await Api.get('/assessments/my-assessments');
-        const assessmentData = assessmentResponse?.assessments || [];
-        setAssessments(Array.isArray(assessmentData) ? assessmentData : []);
+        const sleep = (ms: number) => new Promise((r) => window.setTimeout(r, ms));
+        const isTransient = (e: any) => {
+          const status = Number(e?.status);
+          if ([502, 503, 504].includes(status)) return true;
+          // Some browsers throw TypeError("Failed to fetch") on network issues.
+          const msg = String(e?.message || '').toLowerCase();
+          return (
+            msg.includes('failed to fetch') ||
+            msg.includes('networkerror') ||
+            msg.includes('load failed')
+          );
+        };
 
-        // Fetch APPROVED + FINAL (legacy) reports.
-        // UI still defaults to APPROVED-only visibility, but this prevents "disappearing" legacy FINAL reports.
-        const reportsResponse = await Api.get('/assessment-reports?status=APPROVED,FINAL').catch(
-          () => null
-        );
-        const reportData = reportsResponse?.reports || [];
-        setReports(Array.isArray(reportData) ? reportData : []);
+        // Warm-start / cold-backend safety:
+        // AssessmentHub is often the first module hit in a session; on cold backend/DB
+        // the first request can return 502/503/504. Retrying avoids forcing users to "switch modules".
+        const maxAttempts = 4;
+        let lastErr: any = null;
 
-        // Fetch initiatives derived from assessments
-        const initiativesResponse = await Api.get('/initiatives?source=assessment').catch(() => []);
-        setInitiatives(Array.isArray(initiativesResponse) ? initiativesResponse : []);
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          try {
+            // Fetch assessments (required)
+            const assessmentResponse = await Api.get('/assessments/my-assessments');
+            const assessmentData = assessmentResponse?.assessments || [];
+            setAssessments(Array.isArray(assessmentData) ? assessmentData : []);
+
+            // Fetch APPROVED + FINAL (legacy) reports.
+            // UI still defaults to APPROVED-only visibility, but this prevents "disappearing" legacy FINAL reports.
+            const reportsResponse = await Api.get(
+              '/assessment-reports?status=APPROVED,FINAL'
+            ).catch(() => null);
+            const reportData = reportsResponse?.reports || [];
+            setReports(Array.isArray(reportData) ? reportData : []);
+
+            // Fetch initiatives derived from assessments
+            const initiativesResponse = await Api.get('/initiatives?source=assessment').catch(
+              () => []
+            );
+            setInitiatives(Array.isArray(initiativesResponse) ? initiativesResponse : []);
+
+            lastErr = null;
+            break;
+          } catch (e: any) {
+            lastErr = e;
+            if (attempt < maxAttempts && isTransient(e)) {
+              await sleep(350 * attempt);
+              continue;
+            }
+            throw e;
+          }
+        }
+
+        if (lastErr) throw lastErr;
       } catch (err: any) {
         const message = err?.message || 'Failed to load assessments';
         setError(message);
@@ -242,6 +279,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   // Refresh function for manual reload
   const refreshData = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const [assessmentsRes, reportsRes, initiativesRes] = await Promise.all([
         Api.get('/assessments/my-assessments').catch(() => null),
@@ -765,7 +803,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         <div className="text-center">
           <p className="text-red-400 mb-4">{error}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => refreshData()}
             className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
           >
             Retry

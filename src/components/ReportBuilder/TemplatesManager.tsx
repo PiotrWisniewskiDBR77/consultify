@@ -63,6 +63,8 @@ interface Template {
 
 interface TemplatesManagerProps {
   embedded?: boolean;
+  /** When true, opens the "New Template" editor immediately on mount. */
+  autoOpenNewTemplate?: boolean;
 }
 
 // ==========================================
@@ -502,7 +504,10 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit, onDelete,
 // MAIN COMPONENT
 // ==========================================
 
-export const TemplatesManager: React.FC<TemplatesManagerProps> = ({ embedded }) => {
+export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
+  embedded,
+  autoOpenNewTemplate,
+}) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
@@ -520,15 +525,35 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({ embedded }) 
       const allTemplates = response?.templates || [];
 
       // Parse sections from sections_json if needed
-      const parsed = allTemplates.map((t: any) => ({
-        ...t,
-        sections:
-          typeof t.sections === 'string'
-            ? JSON.parse(t.sections)
-            : t.sections || t.sectionsJson
-              ? JSON.parse(t.sectionsJson)
-              : [],
-      }));
+      const parsed = allTemplates.map((t: any) => {
+        const rawSections = Array.isArray(t.sections)
+          ? t.sections
+          : typeof t.sections === 'string'
+            ? t.sections
+            : typeof t.sectionsJson === 'string'
+              ? t.sectionsJson
+              : typeof t.sections_json === 'string'
+                ? t.sections_json
+                : typeof t.sectionsJson === 'string'
+                  ? t.sectionsJson
+                  : null;
+
+        let sections: any[] = [];
+        if (Array.isArray(rawSections)) {
+          sections = rawSections;
+        } else if (typeof rawSections === 'string' && rawSections.trim()) {
+          try {
+            sections = JSON.parse(rawSections);
+          } catch {
+            sections = [];
+          }
+        }
+
+        return {
+          ...t,
+          sections,
+        };
+      });
 
       setTemplates(parsed);
     } catch (err) {
@@ -591,6 +616,14 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({ embedded }) 
     setEditingTemplate(template || null);
     setShowEditor(true);
   };
+
+  // Auto-open create flow (used by embedded generator contexts, e.g. assessment picker)
+  useEffect(() => {
+    if (autoOpenNewTemplate) {
+      openEditor();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoOpenNewTemplate]);
 
   if (isLoading) {
     return (

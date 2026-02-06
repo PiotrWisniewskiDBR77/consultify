@@ -61,7 +61,7 @@ function queryRun(sql: string, params: unknown[] = []): Promise<{ changes: numbe
 
 function queryOne<T>(sql: string, params: unknown[] = []): Promise<T | null> {
   return new Promise((resolve, reject) => {
-    db.get(sql, params, (err: Error | null, row: T) => {
+    db.get(sql, params, (err: Error | null, row: T | null) => {
       if (err) reject(err);
       else resolve(row || null);
     });
@@ -699,29 +699,92 @@ function interpolateTemplate(template: string, vars: Record<string, unknown>): s
 }
 
 // ==========================================
-// MOCK AI GENERATION (replace with real AI)
+// AI GENERATION via LLM Service
 // ==========================================
+
+let _llmServiceInstance: any = null;
+
+async function getLLMServiceInstance(): Promise<any> {
+  if (_llmServiceInstance) return _llmServiceInstance;
+  try {
+    const mod = await import('./ai/llmService.js');
+    _llmServiceInstance = mod.llmService || mod.default;
+    return _llmServiceInstance;
+  } catch (err) {
+    logger.warn('[ReportGeneration] LLM Service not available, falling back to placeholder', err);
+    return null;
+  }
+}
 
 async function callAI(
   systemPrompt: string,
   userPrompt: string,
   maxTokens: number
 ): Promise<GenerationResult> {
-  // TODO: Replace with actual AI provider (OpenAI, Anthropic, etc.)
-  // For now, generate placeholder content based on section type
-
   logger.info('[ReportGeneration] Generating content with AI...', {
     systemPromptLength: systemPrompt.length,
     userPromptLength: userPrompt.length,
     maxTokens,
   });
 
-  // Simulate AI response with meaningful placeholder
-  const content = generatePlaceholderContent(userPrompt);
+  const llm = await getLLMServiceInstance();
 
+  if (llm) {
+    try {
+      const result = await llm.call({
+        type: 'text',
+        modelConfig: { id: 'standard' },
+        systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+        maxTokens: maxTokens || 4096,
+        temperature: 0.7,
+        cache: true,
+        cacheTtl: 7200,
+      });
+
+      const content = String(result?.content || '');
+      const usage = (result?.usage || {}) as Record<string, number>;
+      const tokensUsed =
+        usage.totalTokens || usage.completionTokens || Math.floor(content.length / 4);
+      const model = String(result?.model || result?.modelId || 'llm-standard');
+
+      if (!content || content.length < 50) {
+        logger.warn(
+          '[ReportGeneration] LLM returned empty/short content, falling back to placeholder'
+        );
+        return {
+          content: generatePlaceholderContent(userPrompt),
+          tokensUsed: 0,
+          model: 'placeholder-fallback',
+        };
+      }
+
+      logger.info('[ReportGeneration] AI generation successful', {
+        contentLength: content.length,
+        tokensUsed,
+        model,
+      });
+
+      return { content, tokensUsed, model };
+    } catch (err: any) {
+      logger.error(
+        '[ReportGeneration] LLM call failed, falling back to placeholder:',
+        err?.message || err
+      );
+      return {
+        content: generatePlaceholderContent(userPrompt),
+        tokensUsed: 0,
+        model: 'placeholder-fallback',
+      };
+    }
+  }
+
+  // Fallback: generate placeholder content when LLM is not available
+  logger.info('[ReportGeneration] Using placeholder content (no LLM available)');
+  const content = generatePlaceholderContent(userPrompt);
   return {
     content,
-    tokensUsed: Math.floor(content.length / 4), // Rough estimate
+    tokensUsed: 0,
     model: 'placeholder-v1',
   };
 }

@@ -818,8 +818,40 @@ router.post('/:reportId/generate', async (req: AuthRequest, res: Response) => {
 
     const axisData = safeJsonParse<Record<string, any>>(reportRow.axis_data, {});
 
+    // Load assessment answers for context
+    let assessmentAnswers: Record<string, any> = {};
+    try {
+      const assessmentRow = await get<any>(`SELECT answers FROM assessments WHERE id = ?`, [
+        reportRow.assessment_id,
+      ]);
+      assessmentAnswers = safeJsonParse(assessmentRow?.answers, {});
+    } catch {
+      /* ignore */
+    }
+
+    // Try to load LLM service
+    let llmService: any = null;
+    try {
+      const mod = await import('../services/ai/llmService.js');
+      llmService = mod.llmService || mod.default;
+    } catch {
+      logger.warn('[AssessmentReports] LLM service not available, using draft content');
+    }
+
     // Wipe and rebuild sections
     await run(`DELETE FROM assessment_report_sections WHERE report_id = ?`, [reportId]);
+
+    const lang = language || 'pl';
+    const langLabel = lang === 'pl' ? 'Polish' : 'English';
+    const assessmentContext = `Assessment: "${reportRow.assessmentName}" (${reportRow.assessmentType || 'DRD'}), Status: ${reportRow.assessmentStatus || 'IN_PROGRESS'}`;
+    const axisDataSummary =
+      Object.keys(axisData).length > 0
+        ? `\nAxis data summary: ${JSON.stringify(axisData).slice(0, 2000)}`
+        : '';
+    const answersSummary =
+      Object.keys(assessmentAnswers).length > 0
+        ? `\nAssessment answers summary: ${JSON.stringify(assessmentAnswers).slice(0, 3000)}`
+        : '';
 
     for (const spec of templateSections) {
       const sectionId = `sec-${uuidv4()}`;
@@ -828,14 +860,75 @@ router.post('/:reportId/generate', async (req: AuthRequest, res: Response) => {
       const orderIndex = Number(spec.order ?? 0);
       const axisId = spec.repeatFor === 'axis' ? String(spec.repeatKey || '') : null;
 
-      const content = createDraftContent({
-        sectionType,
-        sectionTitle: title,
-        assessmentName: reportRow.assessmentName || 'Assessment',
-        assessmentType: String(reportRow.assessmentType || ''),
-        assessmentStatus: String(reportRow.assessmentStatus || ''),
-        axisId,
-      });
+      let content: string;
+      let isAiGenerated = 0;
+
+      // Generate content with LLM if available
+      if (llmService) {
+        try {
+          const systemPrompt = `You are a professional consulting report writer specializing in digital maturity assessments.
+Write in ${langLabel}. Use Markdown formatting. Be professional, insightful, and data-driven.
+Do NOT include placeholder text or "TBD" markers. Generate real, professional content.`;
+
+          const userPrompt = `Generate the "${title}" section (type: ${sectionType}) for a digital maturity assessment report.
+${assessmentContext}${axisDataSummary}${answersSummary}
+${axisId ? `\nThis section focuses on axis: ${axisId}` : ''}
+
+Requirements:
+- Section type: ${sectionType}
+- Length: ${spec.defaultLength || 'medium'} (${spec.defaultLength === 'short' ? '200-400' : spec.defaultLength === 'long' ? '800-1200' : '400-700'} words)
+- Style: ${spec.defaultLanguage || 'business'} (appropriate for ${spec.defaultLanguage === 'technical' ? 'IT/engineering teams' : 'business executives and management'})
+- Format: Professional Markdown with headers, bullet points, and structured content
+- Write real, actionable content based on the assessment data provided`;
+
+          const result = await llmService.call({
+            type: 'text',
+            modelConfig: { id: 'standard' },
+            systemPrompt,
+            messages: [{ role: 'user', content: userPrompt }],
+            maxTokens:
+              spec.defaultLength === 'short' ? 1024 : spec.defaultLength === 'long' ? 3072 : 2048,
+            temperature: 0.7,
+          });
+
+          const aiContent = String(result?.content || '');
+          if (aiContent.length >= 50) {
+            content = aiContent;
+            isAiGenerated = 1;
+          } else {
+            content = createDraftContent({
+              sectionType,
+              sectionTitle: title,
+              assessmentName: reportRow.assessmentName || 'Assessment',
+              assessmentType: String(reportRow.assessmentType || ''),
+              assessmentStatus: String(reportRow.assessmentStatus || ''),
+              axisId,
+            });
+          }
+        } catch (err: any) {
+          logger.error(
+            `[AssessmentReports] LLM generation failed for section ${title}:`,
+            err?.message
+          );
+          content = createDraftContent({
+            sectionType,
+            sectionTitle: title,
+            assessmentName: reportRow.assessmentName || 'Assessment',
+            assessmentType: String(reportRow.assessmentType || ''),
+            assessmentStatus: String(reportRow.assessmentStatus || ''),
+            axisId,
+          });
+        }
+      } else {
+        content = createDraftContent({
+          sectionType,
+          sectionTitle: title,
+          assessmentName: reportRow.assessmentName || 'Assessment',
+          assessmentType: String(reportRow.assessmentType || ''),
+          assessmentStatus: String(reportRow.assessmentStatus || ''),
+          axisId,
+        });
+      }
 
       const dataSnapshot = {
         template: {
@@ -853,7 +946,7 @@ router.post('/:reportId/generate', async (req: AuthRequest, res: Response) => {
           status: reportRow.assessmentStatus,
         },
         axisData,
-        language: language || null,
+        language: lang,
       };
 
       await run(
@@ -871,7 +964,7 @@ router.post('/:reportId/generate', async (req: AuthRequest, res: Response) => {
           content,
           JSON.stringify(dataSnapshot),
           orderIndex,
-          1,
+          isAiGenerated,
           1,
           userId,
           userId,
@@ -885,7 +978,7 @@ router.post('/:reportId/generate', async (req: AuthRequest, res: Response) => {
        WHERE id = ? AND organization_id = ?`,
       [
         resolvedTemplateId,
-        JSON.stringify({ templateId: resolvedTemplateId, language: language || null }),
+        JSON.stringify({ templateId: resolvedTemplateId, language: lang }),
         userId,
         reportId,
         organizationId,
@@ -1124,10 +1217,13 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
     const organizationId = req.user?.organizationId || 'org-dbr77-system';
     const userId = req.user?.id || 'user-default';
     const { reportId, sectionId } = req.params;
-    const { action } = req.body || {};
+    const { action, language, customPrompt } = req.body || {};
 
     const reportRow = await get<any>(
-      `SELECT id FROM assessment_reports WHERE id = ? AND organization_id = ?`,
+      `SELECT r.*, a.name as assessmentName, a.assessment_type as assessmentType
+       FROM assessment_reports r
+       LEFT JOIN assessments a ON a.id = r.assessment_id
+       WHERE r.id = ? AND r.organization_id = ?`,
       [reportId, organizationId]
     );
     if (!reportRow) return res.status(404).json({ error: 'Report not found' });
@@ -1142,23 +1238,92 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
     const act = String(action || '').toLowerCase();
     let next = current;
 
-    if (act === 'summarize') {
-      next = current.slice(0, 600) + (current.length > 600 ? '\n\n_(summary truncated)_\n' : '');
-    } else if (act === 'expand') {
-      next = `${current}\n\n---\n\n_TODO: expand this section with examples, metrics and context._\n`;
-    } else if (act === 'regenerate') {
-      next = createDraftContent({
-        sectionType: sectionRow.section_type as SectionType,
-        sectionTitle: sectionRow.title || 'Section',
-        assessmentName: 'Assessment',
-        assessmentType: '',
-        assessmentStatus: '',
-        axisId: sectionRow.axis_id || null,
-      });
-    } else if (act === 'improve') {
-      next = `${current}\n\n---\n\n_TODO: improve clarity, structure and tone._\n`;
-    } else if (act === 'translate') {
-      next = `${current}\n\n---\n\n_TODO: translation requested (not yet implemented)._\n`;
+    // Try to use LLM service for AI actions
+    let llmService: any = null;
+    try {
+      const mod = await import('../services/ai/llmService.js');
+      llmService = mod.llmService || mod.default;
+    } catch {
+      logger.warn('[AssessmentReports] LLM service not available for AI action');
+    }
+
+    const sectionContext = `Section: "${sectionRow.title}" (${sectionRow.section_type})\nAssessment: ${reportRow.assessmentName || 'Assessment'} (${reportRow.assessmentType || 'DRD'})`;
+
+    if (llmService) {
+      const aiPrompts: Record<string, { system: string; user: string }> = {
+        summarize: {
+          system:
+            'You are a professional report editor. Summarize the given section content concisely while preserving key insights and data. Output in Markdown format.',
+          user: `${sectionContext}\n\nPlease summarize the following section content into a concise version (about 30-40% of original length):\n\n${current}`,
+        },
+        expand: {
+          system:
+            'You are a professional consulting report writer. Expand the given section with more detail, examples, metrics, and actionable insights. Output in Markdown format.',
+          user: `${sectionContext}\n\nPlease expand the following section with more detail, real-world examples, relevant metrics, and deeper analysis:\n\n${current}`,
+        },
+        regenerate: {
+          system:
+            'You are a professional consulting report writer specializing in digital maturity assessments. Generate a comprehensive section for the report. Output in Markdown format.',
+          user: `${sectionContext}\n\nPlease regenerate this section from scratch. Create professional, insightful content appropriate for a consulting report. Use the section type and title as guidance:\n\nTitle: ${sectionRow.title}\nType: ${sectionRow.section_type}`,
+        },
+        improve: {
+          system:
+            'You are a professional editor. Improve the clarity, structure, tone and overall quality of the given report section. Fix any grammatical issues and enhance readability. Output in Markdown format.',
+          user: `${sectionContext}\n\nPlease improve the following section for better clarity, structure, and professional tone:\n\n${current}`,
+        },
+        translate: {
+          system: `You are a professional translator. Translate the following content to ${language === 'en' ? 'English' : language === 'pl' ? 'Polish' : language || 'English'}. Preserve all formatting, structure, and Markdown syntax. Maintain professional consulting tone.`,
+          user: `Translate the following report section:\n\n${current}`,
+        },
+      };
+
+      const prompts = customPrompt
+        ? {
+            system:
+              'You are a professional consulting report writer. Follow the user instructions precisely. Output in Markdown format.',
+            user: `${sectionContext}\n\nInstruction: ${customPrompt}\n\nCurrent content:\n${current}`,
+          }
+        : aiPrompts[act];
+
+      if (prompts) {
+        try {
+          const result = await llmService.call({
+            type: 'text',
+            modelConfig: { id: 'standard' },
+            systemPrompt: prompts.system,
+            messages: [{ role: 'user', content: prompts.user }],
+            maxTokens: 4096,
+            temperature: 0.7,
+          });
+          next = String(result?.content || current);
+          if (next.length < 20) next = current; // Safety fallback
+        } catch (err: any) {
+          logger.error('[AssessmentReports] LLM AI action failed:', err?.message);
+          // Fall through to stub fallbacks below
+        }
+      }
+    }
+
+    // Stub fallbacks (only used if LLM is not available or failed)
+    if (next === current && !llmService) {
+      if (act === 'summarize') {
+        next = current.slice(0, 600) + (current.length > 600 ? '\n\n_(summary truncated)_\n' : '');
+      } else if (act === 'expand') {
+        next = `${current}\n\n---\n\n_TODO: expand this section with examples, metrics and context._\n`;
+      } else if (act === 'regenerate') {
+        next = createDraftContent({
+          sectionType: sectionRow.section_type as SectionType,
+          sectionTitle: sectionRow.title || 'Section',
+          assessmentName: reportRow.assessmentName || 'Assessment',
+          assessmentType: reportRow.assessmentType || '',
+          assessmentStatus: '',
+          axisId: sectionRow.axis_id || null,
+        });
+      } else if (act === 'improve') {
+        next = `${current}\n\n---\n\n_TODO: improve clarity, structure and tone._\n`;
+      } else if (act === 'translate') {
+        next = `${current}\n\n---\n\n_TODO: translation requested (not yet implemented)._\n`;
+      }
     }
 
     const nextVersion = Number(sectionRow.version || 1) + 1;
@@ -1420,6 +1585,156 @@ router.post('/:reportId/approve', async (req: AuthRequest, res: Response) => {
   } catch (err: any) {
     logger.error('[AssessmentReports] Error approving report:', err);
     return res.status(500).json({ error: 'Failed to approve report', message: err.message });
+  }
+});
+
+// =============================================================================
+// REJECT REPORT (FINAL -> DRAFT with comments)
+// =============================================================================
+router.post('/:reportId/reject', async (req: AuthRequest, res: Response) => {
+  try {
+    await ensureAssessmentReportsSchema();
+    const organizationId = req.user?.organizationId;
+    const userId = req.user?.id;
+    const { reportId } = req.params as any;
+    const { reason, comments } = req.body || {};
+    if (!organizationId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const reportRow = await queryHelpers.queryOne<any>(
+      `SELECT r.id, r.status, r.assessment_id as assessmentId
+       FROM assessment_reports r
+       WHERE r.id = ? AND r.organization_id = ?`,
+      [String(reportId), String(organizationId)]
+    );
+    if (!reportRow) return res.status(404).json({ error: 'Report not found' });
+
+    const currentStatus = String(reportRow.status || 'DRAFT').toUpperCase();
+    if (currentStatus !== 'FINAL' && currentStatus !== 'APPROVED') {
+      return res
+        .status(409)
+        .json({ error: 'Report must be FINAL or APPROVED to reject', status: currentStatus });
+    }
+
+    // RBAC check
+    const roleInfo = await AssessmentPermissionService.getUserRole(
+      String(reportRow.assessmentId),
+      String(userId),
+      String(organizationId)
+    );
+    if (!roleInfo?.permissions?.canApprove) {
+      return res.status(403).json({ error: 'Permission denied', required: 'canApprove' });
+    }
+
+    const db = getDatabase();
+    await new Promise<void>((resolve, reject) => {
+      db.run(
+        `UPDATE assessment_reports
+         SET status = 'DRAFT', rejected_by = ?, rejected_at = CURRENT_TIMESTAMP,
+             rejection_reason = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND organization_id = ?`,
+        [
+          String(userId),
+          String(reason || comments || ''),
+          String(userId),
+          String(reportId),
+          String(organizationId),
+        ],
+        (err: Error | null) => (err ? reject(err) : resolve())
+      );
+    });
+
+    return res.json({ success: true, newStatus: 'DRAFT' });
+  } catch (err: any) {
+    logger.error('[AssessmentReports] Error rejecting report:', err);
+    return res.status(500).json({ error: 'Failed to reject report', message: err.message });
+  }
+});
+
+// =============================================================================
+// SEND BACK (FINAL -> DRAFT without full rejection)
+// =============================================================================
+router.post('/:reportId/send-back', async (req: AuthRequest, res: Response) => {
+  try {
+    await ensureAssessmentReportsSchema();
+    const organizationId = req.user?.organizationId;
+    const userId = req.user?.id;
+    const { reportId } = req.params as any;
+    const { reason } = req.body || {};
+    if (!organizationId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const reportRow = await queryHelpers.queryOne<any>(
+      `SELECT id, status FROM assessment_reports WHERE id = ? AND organization_id = ?`,
+      [String(reportId), String(organizationId)]
+    );
+    if (!reportRow) return res.status(404).json({ error: 'Report not found' });
+
+    const db = getDatabase();
+    await new Promise<void>((resolve, reject) => {
+      db.run(
+        `UPDATE assessment_reports
+         SET status = 'DRAFT', rejection_reason = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND organization_id = ?`,
+        [String(reason || ''), String(userId), String(reportId), String(organizationId)],
+        (err: Error | null) => (err ? reject(err) : resolve())
+      );
+    });
+
+    return res.json({ success: true, newStatus: 'DRAFT' });
+  } catch (err: any) {
+    logger.error('[AssessmentReports] Error sending back report:', err);
+    return res.status(500).json({ error: 'Failed to send back report', message: err.message });
+  }
+});
+
+// =============================================================================
+// UTILIZE REPORT (APPROVED -> UTILIZED)
+// =============================================================================
+router.post('/:reportId/utilize', async (req: AuthRequest, res: Response) => {
+  try {
+    await ensureAssessmentReportsSchema();
+    const organizationId = req.user?.organizationId;
+    const userId = req.user?.id;
+    const { reportId } = req.params as any;
+    const { notes } = req.body || {};
+    if (!organizationId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const reportRow = await queryHelpers.queryOne<any>(
+      `SELECT r.id, r.status, r.assessment_id as assessmentId
+       FROM assessment_reports r
+       WHERE r.id = ? AND r.organization_id = ?`,
+      [String(reportId), String(organizationId)]
+    );
+    if (!reportRow) return res.status(404).json({ error: 'Report not found' });
+
+    const currentStatus = String(reportRow.status || 'DRAFT').toUpperCase();
+    if (currentStatus !== 'APPROVED') {
+      return res
+        .status(409)
+        .json({ error: 'Report must be APPROVED to utilize', status: currentStatus });
+    }
+
+    const db = getDatabase();
+    await new Promise<void>((resolve, reject) => {
+      db.run(
+        `UPDATE assessment_reports
+         SET status = 'UTILIZED', utilized_by = ?, utilized_at = CURRENT_TIMESTAMP,
+             utilization_notes = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND organization_id = ?`,
+        [
+          String(userId),
+          String(notes || ''),
+          String(userId),
+          String(reportId),
+          String(organizationId),
+        ],
+        (err: Error | null) => (err ? reject(err) : resolve())
+      );
+    });
+
+    return res.json({ success: true, newStatus: 'UTILIZED' });
+  } catch (err: any) {
+    logger.error('[AssessmentReports] Error utilizing report:', err);
+    return res.status(500).json({ error: 'Failed to utilize report', message: err.message });
   }
 });
 

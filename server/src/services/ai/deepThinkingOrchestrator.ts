@@ -89,7 +89,8 @@ export class DeepThinkingOrchestrator {
       label: 'Research visibility',
     });
 
-    const confirm = (context as any)?.deepThinkingConfirm || (context as any)?.deepThinking?.confirm;
+    const confirm =
+      (context as any)?.deepThinkingConfirm || (context as any)?.deepThinking?.confirm;
     const planItems =
       Array.isArray(confirm?.researchPlanItems) && confirm.researchPlanItems.length
         ? confirm.researchPlanItems
@@ -212,6 +213,66 @@ export class DeepThinkingOrchestrator {
       state: 'thinking' satisfies DtState,
       label: 'Structuring decision axes and options',
     });
+
+    // 3b) Interim Insight checkpoint (hard depth only)
+    // For complex tasks, generate a preliminary insight showing emerging paths.
+    if (depth === 'hard') {
+      try {
+        const { modelRouter } = await import('./modelRouter.js');
+        const { llmService } = await import('./llmService.js');
+
+        const tier = 'STANDARD';
+        const modelCfg = await modelRouter.select({
+          capability: 'report_section',
+          tier,
+          organizationId: 'system',
+          options: { tier },
+        } as any);
+
+        const interimPrompt = [
+          'You are a senior strategy consultant. Given this problem, identify 2-3 dominant solution paths that are emerging.',
+          'For each path, provide: a short label (5-10 words) and a one-line summary.',
+          'Be concise. Output as JSON array: [{"id":"path_1","label":"...","summary":"..."}]',
+          `Language: ${(language || 'en').split('-')[0] === 'pl' ? 'Polish' : 'English'}`,
+        ].join('\n');
+
+        const interimResult = (await llmService.callText({
+          type: 'chat',
+          modelConfig: {
+            provider: modelCfg.provider,
+            id: modelCfg.id,
+            endpoint: (modelCfg as any).endpoint,
+            apiKey: (modelCfg as any).apiKey,
+          },
+          systemPrompt: interimPrompt,
+          messages: [{ role: 'user', content: message }],
+        } as any)) as any;
+
+        const rawText = String(interimResult?.content || '').trim();
+
+        // Parse JSON from response (may be wrapped in markdown code fences)
+        const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          const paths = JSON.parse(jsonMatch[0]) as Array<{
+            id: string;
+            label: string;
+            summary: string;
+          }>;
+          if (Array.isArray(paths) && paths.length > 0) {
+            emit({
+              type: 'dt_interim_insight',
+              paths: paths.slice(0, 3).map((p, i) => ({
+                id: p.id || `path_${i + 1}`,
+                label: String(p.label || ''),
+                summary: String(p.summary || ''),
+              })),
+            });
+          }
+        }
+      } catch (interimErr: any) {
+        logger.warn('[DeepThinking] Interim insight failed, continuing:', interimErr?.message);
+      }
+    }
 
     // 4) Synthesis
     emit({ type: 'dt_state', state: 'synthesis' satisfies DtState, label: 'Synthesis' });

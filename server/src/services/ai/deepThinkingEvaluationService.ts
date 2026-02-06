@@ -9,6 +9,7 @@
  */
 
 import { scoreDeepThinkingRubric, validateDeepThinkingDoD } from './deepThinkingQuality.js';
+import { detectOverreachLevel } from './deepThinkingSelfCheck.js';
 
 export type NegativePattern =
   | 'N1' // No framing
@@ -50,7 +51,13 @@ function extractSection(text: string, headingNeedles: string[]): string | null {
   const out: string[] = [];
   for (let i = idx + 1; i < lines.length; i += 1) {
     const line = lines[i] || '';
-    if (i > idx + 1 && /^[A-ZĄĆĘŁŃÓŚŹŻ][A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż\s&+/-]{2,}$/.test(line.trim())) {
+    const trimmed = line.trim();
+    // Break on next heading: markdown ## or plain uppercase heading
+    if (
+      i > idx + 1 &&
+      (/^#{1,4}\s+\S/.test(trimmed) ||
+        /^[A-ZĄĆĘŁŃÓŚŹŻ][A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż\s&+/-]{2,}$/.test(trimmed))
+    ) {
       break;
     }
     out.push(line);
@@ -70,7 +77,11 @@ function extractOptions(text: string): string[] {
   const seen = new Set<string>();
   const uniq: string[] = [];
   for (const it of items) {
-    const norm = it.toLowerCase().replace(/[^a-ząćęłńóśźż0-9\s]/gi, '').replace(/\s+/g, ' ').trim();
+    const norm = it
+      .toLowerCase()
+      .replace(/[^a-ząćęłńóśźż0-9\s]/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
     if (!norm) continue;
     if (seen.has(norm)) continue;
     seen.add(norm);
@@ -183,18 +194,16 @@ function detectEarlySignals(text: string): boolean {
   ]);
 }
 
+/** @deprecated Use detectOverreachLevel from deepThinkingSelfCheck.ts instead */
 function detectOverreach(text: string): boolean {
-  // Heuristic: specific named external authorities/standards without citations,
-  // or concrete "according to" claims. This is intentionally conservative.
-  const t = text.toLowerCase();
-  const hasAuthority =
-    hasAny(t, ['mckinsey', 'bcg', 'gartner', 'harvard', 'iso ', 'iso-', 'pwc', 'deloitte']) ||
-    hasAny(t, ['according to', 'source:', 'źródło', 'wg ', 'według ']);
-  const hasLink = /https?:\/\/\S+/i.test(text);
-  return Boolean(hasAuthority || hasLink);
+  const level = detectOverreachLevel(text);
+  return level !== 'none';
 }
 
-export function detectPatterns(text: string, language?: string): {
+export function detectPatterns(
+  text: string,
+  language?: string
+): {
   negative: NegativePattern[];
   positive: PositivePattern[];
   diagnostics: Record<string, unknown>;
@@ -202,7 +211,8 @@ export function detectPatterns(text: string, language?: string): {
   const t = String(text || '').trim();
   const dod = validateDeepThinkingDoD(t, language);
   const options = extractOptions(t);
-  const nextActions = extractSection(t, ['next actions', 'kolejne kroki', 'następne kroki', 'checklista']) || '';
+  const nextActions =
+    extractSection(t, ['next actions', 'kolejne kroki', 'następne kroki', 'checklista']) || '';
   const hasChecklist = countListItems(nextActions) >= 3;
 
   const negative = new Set<NegativePattern>();
@@ -227,10 +237,12 @@ export function detectPatterns(text: string, language?: string): {
   if (strongConfidence && !detectAssumptionsGaps(t)) negative.add('N4');
 
   // "Soup": long + missing key elements (structure-only)
-  if (t.length > 2200 && (!dod.ok || dod.missing.includes('executive_summary_too_thin'))) negative.add('N5');
+  if (t.length > 2200 && (!dod.ok || dod.missing.includes('executive_summary_too_thin')))
+    negative.add('N5');
 
   // Checklist-only: lots of steps but missing reasoning structure
-  if (hasChecklist && (options.length < 2 || dod.missing.includes('recommendation'))) negative.add('N6');
+  if (hasChecklist && (options.length < 2 || dod.missing.includes('recommendation')))
+    negative.add('N6');
 
   // No closure: no recommendation or no boundary conditions / when fails
   if (dod.missing.includes('recommendation') || !detectBoundaryConditions(t)) negative.add('N7');
@@ -244,7 +256,11 @@ export function detectPatterns(text: string, language?: string): {
   if (detectTradeoffs(t)) positive.add('P3');
   if (detectAssumptionsGaps(t)) positive.add('P4');
   if (detectBoundaryConditions(t)) positive.add('P5');
-  if (!dod.missing.includes('next_actions') && detectEarlySignals(t) && !dod.missing.includes('recommendation')) {
+  if (
+    !dod.missing.includes('next_actions') &&
+    detectEarlySignals(t) &&
+    !dod.missing.includes('recommendation')
+  ) {
     positive.add('P6');
   }
 
@@ -288,39 +304,72 @@ export function scoreRubricV2(text: string, language?: string): DeepThinkingRubr
 
   // Alternatives (0..2)
   const alternatives: 0 | 1 | 2 =
-    options.length < 2 ? 0 : options.length > 4 ? 1 : hasAny(t, ['consequence', 'impact', 'pros', 'cons', 'koszt', 'ryzyko', 'konsekwencj']) ? 2 : 1;
+    options.length < 2
+      ? 0
+      : options.length > 4
+        ? 1
+        : hasAny(t, ['consequence', 'impact', 'pros', 'cons', 'koszt', 'ryzyko', 'konsekwencj'])
+          ? 2
+          : 1;
   if (alternatives < 2) notes.push('alternatives_need_2_4_distinct_and_consequences');
 
   // Trade-offs (0..2)
-  const tradeoffs: 0 | 1 | 2 = detectTradeoffs(t) ? 2 : hasAny(t, ['vs', 'versus', 'plus', 'minus', 'zaleta', 'wada']) ? 1 : 0;
+  const tradeoffs: 0 | 1 | 2 = detectTradeoffs(t)
+    ? 2
+    : hasAny(t, ['vs', 'versus', 'plus', 'minus', 'zaleta', 'wada'])
+      ? 1
+      : 0;
   if (tradeoffs < 2) notes.push('tradeoffs_not_explicit');
 
   // Assumptions & gaps (0..2)
-  const assumptions_gaps: 0 | 1 | 2 =
-    detectAssumptionsGaps(t) ? (hasAny(t, ['assumption', 'założen']) && hasAny(t, ['gap', 'brak danych', 'unknown', 'nie wiemy']) ? 2 : 1) : 0;
+  const assumptions_gaps: 0 | 1 | 2 = detectAssumptionsGaps(t)
+    ? hasAny(t, ['assumption', 'założen']) &&
+      hasAny(t, ['gap', 'brak danych', 'unknown', 'nie wiemy'])
+      ? 2
+      : 1
+    : 0;
   if (assumptions_gaps < 2) notes.push('assumptions_gaps_need_explicitness');
 
   // Closure + recommendation/conditions (0..2)
   const hasRecommendation = !dod.missing.includes('recommendation');
-  const closure_conditions: 0 | 1 | 2 = !hasRecommendation ? 0 : detectBoundaryConditions(t) ? 2 : 1;
+  const closure_conditions: 0 | 1 | 2 = !hasRecommendation
+    ? 0
+    : detectBoundaryConditions(t)
+      ? 2
+      : 1;
   if (closure_conditions < 2) notes.push('closure_needs_boundary_conditions_and_when_fails');
 
   // Clarity (0..2) — do NOT reward length
   const exec = extractSection(t, ['executive summary', 'podsumowanie', 'streszczenie']) || '';
-  const clarityPenalty = dod.missing.includes('executive_summary_too_thin') || dod.missing.includes('next_actions_checklist_too_short');
-  const clarity: 0 | 1 | 2 =
-    !exec
-      ? 0
-      : clarityPenalty
-        ? 1
-        : t.length > 7000 && !hasAny(t, ['1)', '2)', '3)'])
-          ? 0
-          : 2;
+  const clarityPenalty =
+    dod.missing.includes('executive_summary_too_thin') ||
+    dod.missing.includes('next_actions_checklist_too_short');
+  const clarity: 0 | 1 | 2 = !exec
+    ? 0
+    : clarityPenalty
+      ? 1
+      : t.length > 7000 && !hasAny(t, ['1)', '2)', '3)'])
+        ? 0
+        : 2;
   if (clarity < 2) notes.push('clarity_needs_exec_grade_and_no_fluff');
 
-  // Safety/honesty (0..2)
-  const overreach = detectOverreach(t);
-  const safety_honesty: 0 | 1 | 2 = overreach ? (detectAssumptionsGaps(t) ? 1 : 0) : detectAssumptionsGaps(t) ? 2 : 1;
+  // Safety/honesty (0..2) — uses soft/hard overreach split
+  const overreachLevel = detectOverreachLevel(t);
+  const hasAssumptions = detectAssumptionsGaps(t);
+  let safety_honesty: 0 | 1 | 2;
+  if (overreachLevel === 'hard' && !hasAssumptions) {
+    // Hard overreach (links/"according to") without assumptions → 0
+    safety_honesty = 0;
+  } else if (overreachLevel === 'hard' && hasAssumptions) {
+    // Hard overreach mitigated by explicit assumptions → 1
+    safety_honesty = 1;
+  } else if (overreachLevel === 'soft') {
+    // Soft overreach (framework name, no link) → 1 regardless of assumptions
+    safety_honesty = hasAssumptions ? 1 : 1;
+  } else {
+    // No overreach: depends on whether assumptions are stated
+    safety_honesty = hasAssumptions ? 2 : 1;
+  }
   if (safety_honesty < 2) notes.push('safety_honesty_risk_of_overreach_or_missing_unknowns');
 
   const criteria = {
@@ -337,15 +386,19 @@ export function scoreRubricV2(text: string, language?: string): DeepThinkingRubr
   return { total, criteria, notes };
 }
 
-export function pairwiseCompareDeepThinking(args: {
-  a: string;
-  b: string;
-  language?: string;
-}): {
+export function pairwiseCompareDeepThinking(args: { a: string; b: string; language?: string }): {
   winner: 'A' | 'B' | 'TIE';
   rationale: string;
-  a: { dod: ReturnType<typeof validateDeepThinkingDoD>; rubric: DeepThinkingRubricV2; patterns: ReturnType<typeof detectPatterns> };
-  b: { dod: ReturnType<typeof validateDeepThinkingDoD>; rubric: DeepThinkingRubricV2; patterns: ReturnType<typeof detectPatterns> };
+  a: {
+    dod: ReturnType<typeof validateDeepThinkingDoD>;
+    rubric: DeepThinkingRubricV2;
+    patterns: ReturnType<typeof detectPatterns>;
+  };
+  b: {
+    dod: ReturnType<typeof validateDeepThinkingDoD>;
+    rubric: DeepThinkingRubricV2;
+    patterns: ReturnType<typeof detectPatterns>;
+  };
 } {
   const { a, b, language } = args;
   const aDod = validateDeepThinkingDoD(a, language);
@@ -370,9 +423,15 @@ export function pairwiseCompareDeepThinking(args: {
   }
 
   const rationaleLines: string[] = [];
-  rationaleLines.push(`Decision rule: DoD pass > rubric total > fewer negative patterns (never length).`);
-  rationaleLines.push(`A: DoD=${aDod.ok ? 'pass' : 'fail'} score=${aRubric.total}/14 neg=${aPatterns.negative.join(',') || '-'}`);
-  rationaleLines.push(`B: DoD=${bDod.ok ? 'pass' : 'fail'} score=${bRubric.total}/14 neg=${bPatterns.negative.join(',') || '-'}`);
+  rationaleLines.push(
+    `Decision rule: DoD pass > rubric total > fewer negative patterns (never length).`
+  );
+  rationaleLines.push(
+    `A: DoD=${aDod.ok ? 'pass' : 'fail'} score=${aRubric.total}/14 neg=${aPatterns.negative.join(',') || '-'}`
+  );
+  rationaleLines.push(
+    `B: DoD=${bDod.ok ? 'pass' : 'fail'} score=${bRubric.total}/14 neg=${bPatterns.negative.join(',') || '-'}`
+  );
   if (winner === 'A') {
     rationaleLines.push(`Winner: A — stronger compliance + decision-grade elements.`);
   } else if (winner === 'B') {
@@ -391,4 +450,3 @@ export function pairwiseCompareDeepThinking(args: {
     b: { dod: bDod, rubric: bRubric, patterns: bPatterns },
   };
 }
-

@@ -219,10 +219,21 @@ export const useAIStream = (options: StreamOptions = {}) => {
   const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
   const [deepThinkingState, setDeepThinkingState] = useState<DeepThinkingStateEvent | null>(null);
   const [researchProgress, setResearchProgress] = useState<ResearchProgressEvent | null>(null);
-  const [researchVisibility, setResearchVisibility] = useState<ResearchVisibilityEvent | null>(null);
+  const [researchVisibility, setResearchVisibility] = useState<ResearchVisibilityEvent | null>(
+    null
+  );
+  const [deepThinkingHint, setDeepThinkingHint] = useState<{
+    reason: string;
+    confidence: 'low' | 'medium' | 'high';
+  } | null>(null);
+  const [interimInsight, setInterimInsight] = useState<{
+    paths: Array<{ id: string; label: string; summary: string }>;
+  } | null>(null);
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [progress, setProgress] = useState(0);
   const abortRef = useRef({ aborted: false });
+  const retryCountRef = useRef(0);
+  const MAX_AUTO_RETRIES = 1;
   const thinkingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const thinkingClearTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -232,6 +243,8 @@ export const useAIStream = (options: StreamOptions = {}) => {
     setDeepThinkingState(null);
     setResearchProgress(null);
     setResearchVisibility(null);
+    setDeepThinkingHint(null);
+    setInterimInsight(null);
     setArtifacts([]);
     setProgress(0);
     setCurrentStreamContent('');
@@ -256,6 +269,7 @@ export const useAIStream = (options: StreamOptions = {}) => {
       language?: string
     ) => {
       abortRef.current.aborted = false;
+      retryCountRef.current = 0;
       setIsStreaming(true);
       setIsBotTyping(true);
       resetStreamState();
@@ -393,9 +407,7 @@ export const useAIStream = (options: StreamOptions = {}) => {
                   : 'Research visibility',
               content: '',
               status:
-                e.state === 'research_visibility'
-                  ? ('in_progress' as const)
-                  : ('done' as const),
+                e.state === 'research_visibility' ? ('in_progress' as const) : ('done' as const),
               timestamp: now,
               category: 'research',
             },
@@ -406,9 +418,7 @@ export const useAIStream = (options: StreamOptions = {}) => {
               status:
                 e.state === 'research'
                   ? ('in_progress' as const)
-                  : e.state === 'thinking' ||
-                      e.state === 'synthesis' ||
-                      e.state === 'closure'
+                  : e.state === 'thinking' || e.state === 'synthesis' || e.state === 'closure'
                     ? ('done' as const)
                     : ('pending' as const),
               timestamp: now,
@@ -469,12 +479,80 @@ export const useAIStream = (options: StreamOptions = {}) => {
           setResearchProgress(e);
           return;
         }
+
+        // Self-Check repair: replace streamed content entirely
+        if (evt.type === 'dt_repair_replace') {
+          const newText = String((evt as any).text || '');
+          if (newText) {
+            fullText = newText;
+            setStreamedContent(newText);
+            setCurrentStreamContent(newText);
+            updateLastChatMessage?.(newText);
+          }
+          return;
+        }
+
+        // AI-suggested Deep Thinking activation hint
+        if (evt.type === 'dt_hint') {
+          const e = evt as {
+            type: 'dt_hint';
+            reason: string;
+            confidence: 'low' | 'medium' | 'high';
+          };
+          setDeepThinkingHint({ reason: e.reason, confidence: e.confidence });
+          return;
+        }
+
+        // Interim Insight checkpoint (mid-stream emerging paths)
+        if (evt.type === 'dt_interim_insight') {
+          const e = evt as {
+            type: 'dt_interim_insight';
+            paths: Array<{ id: string; label: string; summary: string }>;
+          };
+          setInterimInsight({ paths: e.paths || [] });
+          return;
+        }
+
+        // Self-Check status (passed / repairing / best_effort)
+        if (evt.type === 'dt_selfcheck') {
+          const e = evt as {
+            type: 'dt_selfcheck';
+            status: 'repairing' | 'passed' | 'best_effort';
+            label?: string;
+            iteration?: number;
+            repairIterations?: number;
+          };
+          if (isDeepThinking) {
+            const now = new Date();
+            // Update the closure step to reflect self-check status
+            setThinkingSteps((prev) => {
+              const updated = prev.map((s) => {
+                if (s.category === 'validation') {
+                  return {
+                    ...s,
+                    label: e.label || s.label,
+                    status:
+                      e.status === 'passed' || e.status === 'best_effort'
+                        ? ('done' as const)
+                        : ('in_progress' as const),
+                    timestamp: now,
+                  };
+                }
+                return s;
+              });
+              options.onThinkingUpdate?.(updated);
+              return updated;
+            });
+          }
+          return;
+        }
       };
 
+      const mergedContext = focusMode ? { ...(context || {}), focusMode } : context;
+      const resolvedLanguage =
+        (language || localStorage.getItem('i18nextLng') || 'pl').split('-')[0] || 'pl';
+
       try {
-        const mergedContext = focusMode ? { ...(context || {}), focusMode } : context;
-        const resolvedLanguage =
-          (language || localStorage.getItem('i18nextLng') || 'pl').split('-')[0] || 'pl';
         await Api.chatWithAIStream(
           message,
           history,
@@ -496,6 +574,49 @@ export const useAIStream = (options: StreamOptions = {}) => {
           }
         );
       } catch (error) {
+        // Auto-retry once on network/stream errors (not on user abort)
+        if (
+          !abortRef.current.aborted &&
+          retryCountRef.current < MAX_AUTO_RETRIES &&
+          // Only retry on network-like errors, not on access/auth errors
+          !(error as Error)?.message?.includes('ACCESS_BLOCKED') &&
+          !(error as Error)?.message?.includes('Unauthorized')
+        ) {
+          retryCountRef.current += 1;
+          console.warn(`[useAIStream] Auto-retry ${retryCountRef.current}/${MAX_AUTO_RETRIES}…`);
+          // Small delay before retry
+          await new Promise((r) => setTimeout(r, 1500));
+          if (!abortRef.current.aborted) {
+            try {
+              await Api.chatWithAIStream(
+                message,
+                history,
+                handleChunk,
+                handleDone,
+                systemPrompt,
+                mergedContext,
+                roleName,
+                resolvedLanguage,
+                handleEvent,
+                {
+                  deepResearch: aiConfig?.deepResearch,
+                  webSearch: aiConfig?.webSearch,
+                  showReasoning: aiConfig?.showReasoning,
+                  knowledgeSources: aiConfig?.knowledgeSources,
+                  responseStyle: aiConfig?.responseStyle,
+                  selectedTier: (aiConfig as any)?.selectedTier,
+                  selectedModelId: (aiConfig as any)?.selectedModelId ?? null,
+                }
+              );
+              return; // Retry succeeded
+            } catch (retryError) {
+              // Retry also failed — fall through to error handling
+              console.error('[useAIStream] Auto-retry failed:', retryError);
+            }
+          }
+        }
+
+        retryCountRef.current = 0;
         setIsStreaming(false);
         setIsBotTyping(false);
         options.onStreamError?.(error as Error);
@@ -570,6 +691,8 @@ export const useAIStream = (options: StreamOptions = {}) => {
     deepThinkingState,
     researchProgress,
     researchVisibility,
+    deepThinkingHint,
+    interimInsight,
     artifacts,
     progress,
   };

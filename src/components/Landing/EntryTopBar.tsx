@@ -82,11 +82,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
             {/* Consultinity Logo */}
-            <a
-              href="/"
-              className="group"
-              title="Consultinity"
-            >
+            <a href="/" className="group" title="Consultinity">
               <img
                 src="/assets/logos/logo-dark.png"
                 alt="Consultinity"

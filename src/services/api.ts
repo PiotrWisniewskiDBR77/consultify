@@ -131,7 +131,32 @@ const handleResponse = async (res: Response, defaultError: string) => {
     return res.json();
   }
 
-  const data = await res.json().catch(() => ({}));
+  // Robust error parsing:
+  // - proxies sometimes return HTML for 4xx/5xx
+  // - some endpoints return empty bodies
+  // Use clone() so we can try JSON first, then fall back to text.
+  const parsed = await (async () => {
+    try {
+      const clone = res.clone();
+      const json = await clone.json();
+      return { kind: 'json' as const, json };
+    } catch {
+      try {
+        const text = await res.text();
+        // Best-effort JSON parse even if content-type is wrong.
+        try {
+          const json = JSON.parse(text);
+          return { kind: 'json' as const, json };
+        } catch {
+          return { kind: 'text' as const, text };
+        }
+      } catch {
+        return { kind: 'none' as const };
+      }
+    }
+  })();
+
+  const data = parsed.kind === 'json' ? parsed.json : {};
 
   // Normalize error payloads to a readable string.
   // Some endpoints return { error: {...} } which would otherwise surface as "[object Object]".
@@ -156,7 +181,9 @@ const handleResponse = async (res: Response, defaultError: string) => {
     }
     return fallback;
   };
-  const normalizedMessage = toErrorMessage(data, defaultError);
+  // If payload isn't helpful, include HTTP status (avoids generic "Request failed").
+  const fallbackHttp = `HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''}`;
+  const normalizedMessage = toErrorMessage(data, '') || fallbackHttp || defaultError;
 
   // Check for Demo Block
   if (
@@ -215,7 +242,12 @@ const handleResponse = async (res: Response, defaultError: string) => {
     }
   }
 
-  throw new Error(normalizedMessage);
+  const err: any = new Error(normalizedMessage || defaultError);
+  err.status = res.status;
+  err.url = res.url;
+  err.data = data;
+  if (parsed.kind === 'text') err.bodyText = parsed.text;
+  throw err;
 };
 
 export const Api = {
@@ -628,6 +660,27 @@ export const Api = {
     return data;
   },
 
+  saveDeepThinkingDecision: async (args: {
+    sessionId: string;
+    conversationId?: string;
+    content: string;
+    type?: 'decision' | 'initiative';
+  }) => {
+    const response = await fetch(`${API_URL}/ai/deep-thinking/save-decision`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(args),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const msg = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
+      const err: any = new Error(msg);
+      err.code = data?.code;
+      throw err;
+    }
+    return data;
+  },
+
   chatWithAI: async (
     message: string,
     history: any[],
@@ -928,7 +981,8 @@ export const Api = {
                   'TRIAL_PROFILE_INCOMPLETE',
                 ];
 
-                const dataCode = typeof data.code === 'string' ? data.code : String(data.code || '');
+                const dataCode =
+                  typeof data.code === 'string' ? data.code : String(data.code || '');
                 const isAccessError = accessErrorCodes.includes(dataCode);
 
                 // UX: Always show *something* in the chat bubble when stream ends with access errors,
@@ -3636,6 +3690,42 @@ export const Api = {
   },
 
   /**
+   * Reject a report (FINAL -> DRAFT with reason)
+   */
+  rejectReport: async (reportId: string, reason?: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/assessment-reports/${reportId}/reject`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ reason: reason || '' }),
+    });
+    return handleResponse(res, 'Failed to reject report');
+  },
+
+  /**
+   * Send report back for revisions (FINAL -> DRAFT)
+   */
+  sendBackReport: async (reportId: string, reason?: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/assessment-reports/${reportId}/send-back`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ reason: reason || '' }),
+    });
+    return handleResponse(res, 'Failed to send back report');
+  },
+
+  /**
+   * Mark report as utilized (APPROVED -> UTILIZED)
+   */
+  utilizeReport: async (reportId: string, notes?: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/assessment-reports/${reportId}/utilize`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ notes: notes || '' }),
+    });
+    return handleResponse(res, 'Failed to utilize report');
+  },
+
+  /**
    * Export report as PDF
    */
   exportReportPDF: async (reportId: string): Promise<Blob> => {
@@ -4424,6 +4514,9 @@ export const Api = {
     archived?: boolean;
     starred?: boolean;
     projectId?: string;
+    chatProjectId?: string;
+    /** 'personal' | 'team' | 'all' */
+    scope?: string;
     search?: string;
     limit?: number;
     offset?: number;
@@ -4437,6 +4530,8 @@ export const Api = {
     if (options?.archived !== undefined) params.append('archived', String(options.archived));
     if (options?.starred !== undefined) params.append('starred', String(options.starred));
     if (options?.projectId) params.append('projectId', options.projectId);
+    if (options?.chatProjectId) params.append('chatProjectId', options.chatProjectId);
+    if (options?.scope) params.append('scope', options.scope);
     if (options?.search) params.append('search', options.search);
     if (options?.limit) params.append('limit', String(options.limit));
     if (options?.offset) params.append('offset', String(options.offset));
@@ -4541,6 +4636,26 @@ export const Api = {
       headers: getHeaders(),
     });
     return handleResponse(res, 'Failed to generate title');
+  },
+
+  /**
+   * Summarize older messages in a conversation (context window management)
+   */
+  summarizeConversation: async (
+    conversationId: string,
+    keepRecent: number = 10
+  ): Promise<{
+    summary: string | null;
+    condensedCount: number;
+    remainingCount: number;
+    skipped?: boolean;
+  }> => {
+    const res = await fetchWithRetry(`${API_URL}/conversations/${conversationId}/summarize`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ keepRecent }),
+    });
+    return handleResponse(res, 'Failed to summarize conversation');
   },
 
   /**
@@ -5257,8 +5372,13 @@ export const Api = {
   checkIPReputation: async (ip: string) => ({ reputation: 'good', score: 100 }),
   checkDomainReputation: async (domain: string) => ({ reputation: 'good', score: 100 }),
   // Chat projects - Real API implementations
-  getChatProjects: async () => {
-    const response = await fetch(`${API_URL}/chat-projects`, { headers: getHeaders() });
+  getChatProjects: async (options?: { scope?: 'personal' | 'team' }) => {
+    const params = new URLSearchParams();
+    if (options?.scope) params.append('scope', options.scope);
+    const qs = params.toString();
+    const response = await fetch(`${API_URL}/chat-projects${qs ? `?${qs}` : ''}`, {
+      headers: getHeaders(),
+    });
     if (!response.ok) throw new Error('Failed to fetch chat projects');
     return response.json();
   },
@@ -5272,6 +5392,7 @@ export const Api = {
     description?: string;
     color?: string;
     icon?: string;
+    scope?: 'personal' | 'team';
   }) => {
     const response = await fetch(`${API_URL}/chat-projects`, {
       method: 'POST',
@@ -6616,6 +6737,30 @@ export const Api = {
       return handleResponse(res, 'Failed to execute action');
     } catch (err: any) {
       console.error('[Api] executeAIAction error:', err);
+      return { success: false, error: err.message };
+    }
+  },
+
+  /**
+   * Generic POST to an authenticated API endpoint
+   * Used by ResponseActions for dynamic AI-suggested API calls
+   */
+  genericPost: async (endpoint: string, data: Record<string, unknown> = {}): Promise<any> => {
+    try {
+      // Ensure endpoint is relative (starts with /api/)
+      const url = endpoint.startsWith('http')
+        ? endpoint
+        : endpoint.startsWith('/api/')
+          ? `${API_URL}${endpoint.replace('/api/', '/')}`
+          : `${API_URL}/${endpoint}`;
+      const res = await fetchWithRetry(url, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      });
+      return handleResponse(res, 'API call failed');
+    } catch (err: any) {
+      console.error('[Api] genericPost error:', err);
       return { success: false, error: err.message };
     }
   },

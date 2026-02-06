@@ -33,7 +33,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -41,6 +41,7 @@ import { InitiativesGenerationWizardModal } from '@/components/assessment/Initia
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { Api } from '@/services/api';
 import { getStatusActions, InitiativeStatus } from '@/types/initiative';
+import { cn } from '@/utils/cn';
 
 // ============================================
 // Types
@@ -239,6 +240,21 @@ const METHODOLOGY_OPTIONS = [
   { value: 'rice', label: 'RICE' },
   { value: 'value-effort', label: 'Value x Effort' },
   { value: 'strategic-fit', label: 'Strategic Fit' },
+];
+
+const STATUS_FILTER_OPTIONS: InitiativeStatus[] = [
+  InitiativeStatus.DRAFT,
+  InitiativeStatus.PENDING_REVIEW,
+  InitiativeStatus.REVIEW,
+  InitiativeStatus.PROMOTED,
+  InitiativeStatus.PLANNING,
+  InitiativeStatus.APPROVED,
+  InitiativeStatus.SCHEDULED,
+  InitiativeStatus.EXECUTING,
+  InitiativeStatus.BLOCKED,
+  InitiativeStatus.TRACKING,
+  InitiativeStatus.DONE,
+  InitiativeStatus.ARCHIVED,
 ];
 
 // ============================================
@@ -715,7 +731,10 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
   );
   const [editRisk, setEditRisk] = useState<'low' | 'medium' | 'high'>('medium');
   const [editCategory, setEditCategory] = useState('');
-  const [filterStatus, setFilterStatus] = useState<InitiativeStatus | 'all'>('all');
+  // Multi-select status filter; empty array means "all"
+  const [statusFilter, setStatusFilter] = useState<InitiativeStatus[]>([]);
+  const [statusFilterOpen, setStatusFilterOpen] = useState(false);
+  const statusFilterRef = useRef<HTMLDivElement | null>(null);
 
   const isApproved = workflowStatus === 'APPROVED';
 
@@ -870,12 +889,33 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
     navigate(`/initiatives?id=${initiativeId}`);
   };
 
+  // Close status filter popover on outside click / ESC
+  useEffect(() => {
+    if (!statusFilterOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setStatusFilterOpen(false);
+    };
+    const onMouseDown = (e: MouseEvent) => {
+      const el = statusFilterRef.current;
+      if (!el) return;
+      if (e.target && el.contains(e.target as Node)) return;
+      setStatusFilterOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('mousedown', onMouseDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('mousedown', onMouseDown);
+    };
+  }, [statusFilterOpen]);
+
   // Filter initiatives
   const filteredInitiatives = useMemo(() => {
     let result = initiatives;
 
-    if (filterStatus !== 'all') {
-      result = result.filter((i) => i.status === filterStatus);
+    if (statusFilter.length > 0) {
+      const selected = new Set(statusFilter);
+      result = result.filter((i) => selected.has(i.status));
     }
 
     if (searchQuery) {
@@ -889,7 +929,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
     }
 
     return result;
-  }, [initiatives, searchQuery, filterStatus]);
+  }, [initiatives, searchQuery, statusFilter]);
 
   // Stats
   const stats = useMemo(
@@ -903,6 +943,23 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
     }),
     [initiatives]
   );
+
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const s of STATUS_FILTER_OPTIONS) {
+      counts[s] = initiatives.filter((i) => i.status === s).length;
+    }
+    return counts as Record<InitiativeStatus, number>;
+  }, [initiatives]);
+
+  const statusFilterLabel = useMemo(() => {
+    if (statusFilter.length === 0) return 'All statuses';
+    if (statusFilter.length === 1) {
+      const cfg = STATUS_CONFIG[statusFilter[0]];
+      return cfg?.label || String(statusFilter[0]);
+    }
+    return `${statusFilter.length} selected`;
+  }, [statusFilter]);
 
   return (
     <div className="space-y-4">
@@ -1003,54 +1060,118 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
           </div>
         )}
 
-        {/* Stats Row */}
+        {/* Filters Row (dropdown, multi-select) */}
         <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900">
-          <div className="flex items-center gap-3 overflow-x-auto">
-            <button
-              onClick={() => setFilterStatus('all')}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors ${
-                filterStatus === 'all'
-                  ? 'bg-purple-50 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/30'
-                  : 'bg-slate-50 dark:bg-navy-800 border-slate-200 dark:border-navy-700 hover:bg-slate-100 dark:hover:bg-navy-700'
-              }`}
-            >
-              <Lightbulb
-                size={14}
-                className={filterStatus === 'all' ? 'text-purple-600' : 'text-slate-500'}
-              />
-              <span
-                className={`text-sm font-medium ${filterStatus === 'all' ? 'text-purple-700 dark:text-purple-300' : 'text-slate-700 dark:text-slate-300'}`}
+          <div className="flex items-center justify-between gap-3">
+            <div ref={statusFilterRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setStatusFilterOpen((v) => !v)}
+                className={cn(
+                  'h-10 inline-flex items-center gap-2 px-3 rounded-lg border text-sm font-medium transition-colors',
+                  'border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700',
+                  statusFilter.length > 0 &&
+                    'border-purple-200 dark:border-purple-500/30 bg-purple-50/60 dark:bg-purple-500/10'
+                )}
               >
-                {stats.total} Total
-              </span>
-            </button>
-            {Object.entries(STATUS_CONFIG)
-              .filter(([, cfg]) => Boolean(cfg))
-              .filter(([status]) => status !== InitiativeStatus.CANCELLED)
-              .map(([status, config]) => {
-                const s = status as InitiativeStatus;
-                const cfg = config!;
-                const count = initiatives.filter((i) => i.status === s).length;
-                const Icon = cfg.icon;
-                return (
-                  <button
-                    key={status}
-                    onClick={() => setFilterStatus(s)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors ${
-                      filterStatus === s
-                        ? `${cfg.bgColor} ${cfg.borderColor}`
-                        : 'bg-slate-50 dark:bg-navy-800 border-slate-200 dark:border-navy-700 hover:bg-slate-100 dark:hover:bg-navy-700'
-                    }`}
+                <Filter
+                  size={14}
+                  className={statusFilter.length > 0 ? 'text-purple-600' : 'text-slate-500'}
+                />
+                <span className="text-slate-700 dark:text-slate-200">Status</span>
+                <span className="text-slate-500 dark:text-slate-400">{statusFilterLabel}</span>
+                <ChevronDown size={14} className="text-slate-400" />
+              </button>
+
+              <AnimatePresence>
+                {statusFilterOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute left-0 mt-2 w-[320px] rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden z-20"
                   >
-                    <Icon size={14} className={filterStatus === s ? cfg.color : 'text-slate-500'} />
-                    <span
-                      className={`text-sm font-medium ${filterStatus === s ? cfg.color : 'text-slate-700 dark:text-slate-300'}`}
-                    >
-                      {count} {cfg.label}
-                    </span>
-                  </button>
-                );
-              })}
+                    <div className="px-3 py-2 border-b border-slate-100 dark:border-navy-800 flex items-center justify-between">
+                      <div className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                        Filter by status
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setStatusFilter([])}
+                          className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                        >
+                          All
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setStatusFilter([])}
+                          className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                          title="Clear selection"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="max-h-[280px] overflow-auto py-1">
+                      {STATUS_FILTER_OPTIONS.map((s) => {
+                        const cfg = STATUS_CONFIG[s];
+                        if (!cfg) return null;
+                        const Icon = cfg.icon;
+                        const checked = statusFilter.includes(s);
+                        const count = statusCounts[s] || 0;
+                        return (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => {
+                              setStatusFilter((prev) =>
+                                prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
+                              );
+                            }}
+                            className="w-full px-3 py-2 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-navy-900/60 transition-colors"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                readOnly
+                                className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+                              />
+                              <Icon size={14} className={checked ? cfg.color : 'text-slate-400'} />
+                              <span
+                                className={cn(
+                                  'text-sm truncate',
+                                  checked
+                                    ? 'text-slate-900 dark:text-white'
+                                    : 'text-slate-700 dark:text-slate-200'
+                                )}
+                              >
+                                {cfg.label}
+                              </span>
+                            </div>
+                            <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+                              {count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              Showing{' '}
+              <span className="font-medium text-slate-700 dark:text-slate-200">
+                {filteredInitiatives.length}
+              </span>{' '}
+              of{' '}
+              <span className="font-medium text-slate-700 dark:text-slate-200">{stats.total}</span>
+            </div>
           </div>
         </div>
 

@@ -61,36 +61,45 @@ router.post('/tts', verifyToken, asyncHandler(voiceController.handleTTS.bind(voi
  * GET /api/voice/health
  * Health check for voice subsystem (STT + TTS availability)
  */
-router.get('/health', asyncHandler(async (_req, res) => {
-  const checks: Record<string, { status: string; detail?: string }> = {};
+router.get(
+  '/health',
+  asyncHandler(async (_req, res) => {
+    const checks: Record<string, { status: string; detail?: string }> = {};
 
-  // Check STT availability (OpenAI Whisper)
-  const openaiKey = process.env.OPENAI_API_KEY;
-  checks.stt = {
-    status: openaiKey && openaiKey.trim().length > 0 ? 'ok' : 'unavailable',
-    detail: openaiKey && openaiKey.trim().length > 0 ? 'Whisper API key configured' : 'OPENAI_API_KEY not set — STT disabled',
-  };
+    // Check STT availability (OpenAI Whisper)
+    const openaiKey = process.env.OPENAI_API_KEY;
+    checks.stt = {
+      status: openaiKey && openaiKey.trim().length > 0 ? 'ok' : 'unavailable',
+      detail:
+        openaiKey && openaiKey.trim().length > 0
+          ? 'Whisper API key configured'
+          : 'OPENAI_API_KEY not set — STT disabled',
+    };
 
-  // Check TTS availability (OpenAI TTS)
-  checks.tts = {
-    status: openaiKey && openaiKey.trim().length > 0 ? 'ok' : 'unavailable',
-    detail: openaiKey && openaiKey.trim().length > 0 ? 'OpenAI TTS key configured' : 'OPENAI_API_KEY not set — TTS disabled',
-  };
+    // Check TTS availability (OpenAI TTS)
+    checks.tts = {
+      status: openaiKey && openaiKey.trim().length > 0 ? 'ok' : 'unavailable',
+      detail:
+        openaiKey && openaiKey.trim().length > 0
+          ? 'OpenAI TTS key configured'
+          : 'OPENAI_API_KEY not set — TTS disabled',
+    };
 
-  // Check upload directory
-  checks.storage = {
-    status: fs.existsSync(uploadDir) ? 'ok' : 'error',
-    detail: fs.existsSync(uploadDir) ? `Upload dir: ${uploadDir}` : 'Upload directory missing',
-  };
+    // Check upload directory
+    checks.storage = {
+      status: fs.existsSync(uploadDir) ? 'ok' : 'error',
+      detail: fs.existsSync(uploadDir) ? `Upload dir: ${uploadDir}` : 'Upload directory missing',
+    };
 
-  const allOk = Object.values(checks).every((c) => c.status === 'ok');
+    const allOk = Object.values(checks).every((c) => c.status === 'ok');
 
-  res.json({
-    status: allOk ? 'healthy' : 'degraded',
-    subsystem: 'voice',
-    checks,
-    timestamp: new Date().toISOString(),
-  });
-}));
+    res.json({
+      status: allOk ? 'healthy' : 'degraded',
+      subsystem: 'voice',
+      checks,
+      timestamp: new Date().toISOString(),
+    });
+  })
+);
 
 export default router;

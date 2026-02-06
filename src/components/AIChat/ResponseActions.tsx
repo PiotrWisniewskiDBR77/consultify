@@ -76,16 +76,12 @@ export const ResponseActions: React.FC<ResponseActionsProps> = ({ actions, onAct
         if (action.payload.apiCall) {
           setLoadingAction(action.id);
           try {
-            // Generic API call - customize based on your API structure
-            const response = await fetch(action.payload.apiCall, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${localStorage.getItem('token')}`,
-              },
-              body: JSON.stringify(action.payload.data || {}),
-            });
-            const result = await response.json();
+            // Use Api.post for generic API calls; Api.executeAIAction for action-specific calls
+            const endpoint = action.payload.apiCall;
+            const isActionEndpoint = endpoint.includes('/ai/actions/');
+            const result = isActionEndpoint
+              ? await Api.executeAIAction(endpoint.split('/').pop()!, action.payload.data || {})
+              : await Api.genericPost(endpoint, action.payload.data || {});
             onActionComplete?.(action, result);
           } catch (err) {
             console.error('[ResponseActions] Execute error:', err);

@@ -44,4 +44,3 @@ export async function logDeepThinkingEvent(args: {
     logger.warn('[DeepThinkingMetrics] Failed to log event:', err?.message || err);
   }
 }
-
