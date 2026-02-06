@@ -1131,67 +1131,33 @@ export const Api = {
       if (!res.ok) throw new Error('Failed to fetch activities');
       return res.json();
     } catch (error) {
-      console.error('getActivities fallback (mock)', error);
-      const now = new Date();
-      return [
-        {
-          id: 'act-1',
-          created_at: now.toISOString(),
-          user_email: 'admin@dbr77.com',
-          user_name: 'Super Admin',
-          action: 'login_success',
-          entity_type: 'user',
-          entity_name: 'Super Admin',
-          details: 'Super Admin login',
-        },
-        {
-          id: 'act-2',
-          created_at: new Date(now.getTime() - 5 * 60 * 1000).toISOString(),
-          user_email: 'admin@dbr77.com',
-          user_name: 'Super Admin',
-          action: 'settings_update',
-          entity_type: 'settings',
-          entity_name: 'Application Identity',
-          details: 'Updated app name and language',
-        },
-      ];
+      const { isDemoMode, isDemoSession } = getDemoFlags();
+      if (isDemoMode || isDemoSession) {
+        console.warn('[Api] getActivities demo fallback:', error);
+        const now = new Date();
+        return [
+          {
+            id: 'act-1',
+            created_at: now.toISOString(),
+            user_email: 'admin@demo.local',
+            user_name: 'Super Admin (Demo)',
+            action: 'login_success',
+            entity_type: 'user',
+            entity_name: 'Super Admin',
+            details: 'Demo login',
+          },
+        ];
+      }
+      console.error('[Api] getActivities error:', error);
+      throw error;
     }
   },
 
   getSuperAdminUsers: async (): Promise<User[]> => {
-    try {
-      const res = await fetch(`${API_URL}/superadmin/users`, { headers: getHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.length > 0) return data;
-      }
-    } catch (e) {
-      // Fall through to mock data
-    }
-    // Mock users data
-    return [
-      {
-        id: 'user-1',
-        name: 'Jan Kowalski',
-        email: 'jan@technolex.com',
-        role: 'admin',
-        organization_id: 'org-1',
-      } as any,
-      {
-        id: 'user-2',
-        name: 'Anna Nowak',
-        email: 'anna@nordic.io',
-        role: 'manager',
-        organization_id: 'org-2',
-      } as any,
-      {
-        id: 'user-3',
-        name: 'Maria Schmidt',
-        email: 'maria@startup.studio',
-        role: 'admin',
-        organization_id: 'org-4',
-      } as any,
-    ] as User[];
+    const res = await fetch(`${API_URL}/superadmin/users`, { headers: getHeaders() });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error((data as any)?.error || 'Failed to fetch super admin users');
+    return (Array.isArray(data) ? data : []) as User[];
   },
 
   updateSuperAdminUser: async (
@@ -1265,14 +1231,16 @@ export const Api = {
       if (!res.ok) throw new Error(data.error || 'Failed to fetch storage stats');
       return data;
     } catch (error) {
-      console.error('adminGetStorageStats fallback (mock)', error);
-      return {
-        totalSize: 0,
-        breakdown: [
-          { name: 'org-demo-acme-global', displayName: 'Acme Global', size: 0 },
-          { name: 'org-dbr77-system', displayName: 'DBR77 System', size: 0 },
-        ],
-      };
+      const { isDemoMode, isDemoSession } = getDemoFlags();
+      if (isDemoMode || isDemoSession) {
+        console.warn('[Api] adminGetStorageStats demo fallback:', error);
+        return {
+          totalSize: 0,
+          breakdown: [{ name: 'org-demo', displayName: 'Demo Org', size: 0 }],
+        };
+      }
+      console.error('[Api] adminGetStorageStats error:', error);
+      throw error;
     }
   },
 
@@ -1341,20 +1309,20 @@ export const Api = {
       if (!res.ok) throw new Error('Failed to fetch settings');
       return res.json();
     } catch (error) {
-      console.error('getSystemSettings fallback (mock)', error);
-      return {
-        app_name: 'TechnoLex',
-        default_language: 'EN',
-        maintenance_mode: 'false',
-        system_announcement: 'Welcome to TechnoLex platform',
-        enforce_mfa: 'true',
-        session_timeout_mins: '60',
-        smtp_host: 'smtp.example.com',
-        smtp_port: '587',
-        smtp_from: 'noreply@technolex.com',
-        legal_tos_url: 'https://example.com/terms',
-        legal_privacy_url: 'https://example.com/privacy',
-      };
+      const { isDemoMode, isDemoSession } = getDemoFlags();
+      if (isDemoMode || isDemoSession) {
+        console.warn('[Api] getSystemSettings demo fallback:', error);
+        return {
+          app_name: 'Consultify (Demo)',
+          default_language: 'EN',
+          maintenance_mode: 'false',
+          system_announcement: 'Demo environment',
+          enforce_mfa: 'false',
+          session_timeout_mins: '60',
+        };
+      }
+      console.error('[Api] getSystemSettings error:', error);
+      throw error;
     }
   },
 
@@ -2472,8 +2440,13 @@ export const Api = {
   },
 
   // WEBHOOKS (Consolidated from extensions)
-  getWebhooks: async (): Promise<any[]> => {
-    const res = await fetch(`${API_URL}/webhooks`, { headers: getHeaders() });
+  getWebhooks: async (organizationId?: string): Promise<any[] | { webhooks: any[] }> => {
+    const params = new URLSearchParams();
+    if (organizationId && organizationId !== 'current')
+      params.set('organizationId', organizationId);
+    const res = await fetch(`${API_URL}/webhooks${params.toString() ? `?${params}` : ''}`, {
+      headers: getHeaders(),
+    });
     if (!res.ok) throw new Error('Failed to fetch webhooks');
     return res.json();
   },
@@ -2749,38 +2722,10 @@ export const Api = {
   },
 
   getFeedback: async (): Promise<any[]> => {
-    try {
-      const res = await fetch(`${API_URL}/feedback`, { headers: getHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.length > 0) return data;
-      }
-    } catch (e) {
-      // Fall through to mock data
-    }
-    // Mock feedback data
-    return [
-      {
-        id: 'fb-1',
-        title: 'Feature Request: Dark Mode',
-        content: 'Would love a dark mode option',
-        category: 'feature_request',
-        status: 'new',
-        user_name: 'Jan Kowalski',
-        organization_name: 'TechnoLex SA',
-        created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 'fb-2',
-        title: 'Bug Report: Export',
-        content: 'PDF export not working',
-        category: 'bug',
-        status: 'pending',
-        user_name: 'Anna Nowak',
-        organization_name: 'Nordic Innovations',
-        created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ];
+    const res = await fetch(`${API_URL}/feedback`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch feedback');
+    const data = await res.json();
+    return data || [];
   },
 
   updateFeedbackStatus: async (id: string, status: string): Promise<void> => {
@@ -2849,33 +2794,35 @@ export const Api = {
     return json;
   },
 
-  // --- ACCESS CONTROL (Super Admin) - with fallback ---
+  // --- ACCESS CONTROL (Super Admin) ---
   getAccessRequests: async (): Promise<any[]> => {
-    try {
-      const res = await fetch(`${API_URL}/superadmin/access-requests`, { headers: getHeaders() });
-      if (res.ok) return res.json();
-    } catch (e) {
-      // Fall through to empty array
-    }
-    return [];
+    const res = await fetch(`${API_URL}/superadmin/access-requests`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch access requests');
+    return res.json();
   },
 
   approveAccessRequest: async (id: string, password?: string, role?: string): Promise<void> => {
-    console.log('Approving access request:', id, password ? '(with password)' : '', role || '');
+    const res = await fetch(`${API_URL}/superadmin/access-requests/${id}/approve`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ password, role }),
+    });
+    if (!res.ok) throw new Error('Failed to approve access request');
   },
 
   rejectAccessRequest: async (id: string, reason: string): Promise<void> => {
-    console.log('Rejecting access request:', id, reason);
+    const res = await fetch(`${API_URL}/superadmin/access-requests/${id}/reject`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ reason }),
+    });
+    if (!res.ok) throw new Error('Failed to reject access request');
   },
 
   getAccessCodes: async (): Promise<any[]> => {
-    try {
-      const res = await fetch(`${API_URL}/superadmin/access-codes`, { headers: getHeaders() });
-      if (res.ok) return res.json();
-    } catch (e) {
-      // Fall through to empty array
-    }
-    return [];
+    const res = await fetch(`${API_URL}/superadmin/access-codes`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch access codes');
+    return res.json();
   },
 
   acceptAccessCode: async (code: string): Promise<any> => {
@@ -2926,11 +2873,47 @@ export const Api = {
     return json;
   },
 
-  // Subscription changes
-  getSubscriptionChanges: async (filters?: any) => [],
-  getSubscriptionChangeStats: async () => ({ total: 0, pending: 0, approved: 0, rejected: 0 }),
-  approveSubscriptionChange: async (id: string, notes?: string) => ({ success: true }),
-  rejectSubscriptionChange: async (id: string, reason?: string) => ({ success: true }),
+  // Subscription changes - connected to real API
+  getSubscriptionChanges: async (filters?: any): Promise<any[]> => {
+    const params = new URLSearchParams();
+    if (filters?.status) params.set('status', filters.status);
+    if (filters?.type) params.set('type', filters.type);
+    const res = await fetch(`${API_URL}/revenue/subscription-changes?${params}`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch subscription changes');
+    return res.json();
+  },
+  getSubscriptionChangeStats: async (): Promise<{
+    total: number;
+    pending: number;
+    approved: number;
+    rejected: number;
+  }> => {
+    const res = await fetch(`${API_URL}/revenue/subscription-changes/stats`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch subscription change stats');
+    return res.json();
+  },
+  approveSubscriptionChange: async (id: string, notes?: string): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/revenue/subscription-changes/${id}/approve`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ notes }),
+    });
+    if (!res.ok) throw new Error('Failed to approve subscription change');
+    return res.json();
+  },
+  rejectSubscriptionChange: async (id: string, reason?: string): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/revenue/subscription-changes/${id}/reject`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ reason }),
+    });
+    if (!res.ok) throw new Error('Failed to reject subscription change');
+    return res.json();
+  },
 
   // Get user license plans
   getUserPlans: async (): Promise<any[]> => {
@@ -3342,32 +3325,18 @@ export const Api = {
         ? `${API_URL}/organizations/${orgId}/usage`
         : `${API_URL}/organizations/usage`;
       const res = await fetch(url, { headers: getHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && (Array.isArray(data) ? data.length > 0 : true)) return data;
-      }
+      if (!res.ok) throw new Error('Failed to fetch organization usage');
+      return res.json();
     } catch (e) {
-      // Fall through to mock data
+      const { isDemoMode, isDemoSession } = getDemoFlags();
+      if (isDemoMode || isDemoSession) {
+        console.warn('[Api] getUsageByOrganization demo fallback:', e);
+        return [
+          { id: 'org-demo', name: 'Demo Org', user_count: 5, ai_calls_30d: 120, health_score: 90 },
+        ];
+      }
+      throw e;
     }
-    // Return mock usage data
-    return [
-      { id: 'org-1', name: 'TechnoLex SA', user_count: 47, ai_calls_30d: 2340, health_score: 92 },
-      {
-        id: 'org-2',
-        name: 'Nordic Innovations',
-        user_count: 23,
-        ai_calls_30d: 1560,
-        health_score: 85,
-      },
-      {
-        id: 'org-3',
-        name: 'Global Finance Corp',
-        user_count: 156,
-        ai_calls_30d: 890,
-        health_score: 58,
-      },
-      { id: 'org-4', name: 'StartUp Studio', user_count: 12, ai_calls_30d: 3200, health_score: 95 },
-    ];
   },
 
   getOrganization: async (orgId: string): Promise<any> => {
@@ -5049,18 +5018,40 @@ export const Api = {
     return handleResponse(res, 'Request failed');
   },
 
-  // Additional stubs for missing methods
-  resolveSecurityEvent: async (eventId: string, resolution?: any) => {
-    return { success: true };
+  // Additional stubs for missing methods - connected to real API
+  resolveSecurityEvent: async (
+    eventId: string,
+    resolution?: any
+  ): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/superadmin/security/events/${eventId}/resolve`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(resolution || {}),
+    });
+    if (!res.ok) throw new Error('Failed to resolve security event');
+    return res.json();
   },
-  updateKnowledgeCandidate: async (id: string, data: any) => {
-    return { success: true };
+  updateKnowledgeCandidate: async (id: string, data: any): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/knowledge/candidates/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to update knowledge candidate');
+    return res.json();
   },
-  triggerBackup: async () => {
-    return { success: true };
+  triggerBackup: async (): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/superadmin/system/backup`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to trigger backup');
+    return res.json();
   },
-  getBackups: async () => {
-    return [];
+  getBackups: async (): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/superadmin/system/backups`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch backups');
+    return res.json();
   },
   // AI SLA and monitoring
   getAIHealthMetrics: async () => {
@@ -5257,11 +5248,40 @@ export const Api = {
   getRecognitionSchedule: async (filters?: any) => {
     return { schedule: [] };
   },
-  // Revenue Recognition
-  getRevenueRecognitions: async () => [],
-  getRevenueRecognitionStats: async () => ({ total: 0, pending: 0, recognized: 0 }),
-  recognizeRevenue: async (id: string) => ({ success: true }),
-  createRevenueRecognition: async (data: any) => ({ success: true }),
+  // Revenue Recognition - connected to real API
+  getRevenueRecognitions: async (): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/revenue/revenue-recognition`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch revenue recognitions');
+    return res.json();
+  },
+  getRevenueRecognitionStats: async (): Promise<{
+    total: number;
+    pending: number;
+    recognized: number;
+  }> => {
+    const res = await fetch(`${API_URL}/revenue/revenue-recognition/stats`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch revenue recognition stats');
+    return res.json();
+  },
+  recognizeRevenue: async (id: string): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/revenue/revenue-recognition/${id}/recognize`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to recognize revenue');
+    return res.json();
+  },
+  createRevenueRecognition: async (data: any): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/revenue/revenue-recognition`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to create revenue recognition');
+    return res.json();
+  },
   // Feature flags
   getFeatureFlags: async (filters?: any) => {
     return [];
@@ -5270,27 +5290,145 @@ export const Api = {
   getApiKeyUsage: async (keyId?: string) => {
     return { requests: 0, tokens: 0, cost: 0 };
   },
-  // DLP
-  getDLPPolicies: async () => [],
-  getDLPViolations: async (filters?: any) => [],
-  getDLPStats: async () => ({ total: 0, violations: 0, resolved: 0 }),
-  createDLPPolicy: async (data: any) => ({ success: true }),
-  toggleDLPPolicy: async (id: string, isActive?: boolean) => ({ success: true }),
-  deleteDLPPolicy: async (id: string) => ({ success: true }),
-  resolveDLPViolation: async (id: string) => ({ success: true }),
-  // Permissions
-  getAdminPermissions: async () => [],
-  getPermissionsMatrix: async () => ({ matrix: [], roles: [] }),
-  getPermissionsStats: async () => ({ total: 0, assigned: 0 }),
-  updatePermission: async (roleId: string, permission: string) => ({ success: true }),
-  createAdminPermission: async (data: any) => ({ success: true, id: '' }),
-  updateAdminPermission: async (id: string, data: any) => ({ success: true }),
-  deleteAdminPermission: async (id: string) => ({ success: true }),
-  // Threats
-  getThreatIntelligence: async () => [],
-  getThreatStats: async () => ({ total: 0, critical: 0, high: 0, medium: 0, low: 0 }),
-  resolveThreat: async (id: string) => ({ success: true }),
-  dismissThreat: async (id: string) => ({ success: true }),
+  // DLP - connected to real API
+  getDLPPolicies: async (): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/superadmin/dlp/policies`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch DLP policies');
+    return res.json();
+  },
+  getDLPViolations: async (filters?: any): Promise<any[]> => {
+    const params = new URLSearchParams();
+    if (filters?.policyId) params.set('policyId', filters.policyId);
+    if (filters?.status) params.set('status', filters.status);
+    const res = await fetch(`${API_URL}/superadmin/dlp/violations?${params}`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch DLP violations');
+    return res.json();
+  },
+  getDLPStats: async (): Promise<{ total: number; violations: number; resolved: number }> => {
+    const res = await fetch(`${API_URL}/superadmin/dlp/stats`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch DLP stats');
+    return res.json();
+  },
+  createDLPPolicy: async (data: any): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/superadmin/dlp/policies`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to create DLP policy');
+    return res.json();
+  },
+  toggleDLPPolicy: async (id: string, isActive?: boolean): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/superadmin/dlp/policies/${id}/toggle`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ isActive }),
+    });
+    if (!res.ok) throw new Error('Failed to toggle DLP policy');
+    return res.json();
+  },
+  deleteDLPPolicy: async (id: string): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/superadmin/dlp/policies/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to delete DLP policy');
+    return { success: true };
+  },
+  resolveDLPViolation: async (id: string): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/superadmin/dlp/violations/${id}/resolve`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to resolve DLP violation');
+    return res.json();
+  },
+  // Permissions - connected to real API
+  getAdminPermissions: async (): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/superadmin/permissions`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch admin permissions');
+    return res.json();
+  },
+  getPermissionsMatrix: async (): Promise<{ matrix: any[]; roles: any[] }> => {
+    const res = await fetch(`${API_URL}/superadmin/permissions/matrix`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch permissions matrix');
+    return res.json();
+  },
+  getPermissionsStats: async (): Promise<{ total: number; assigned: number }> => {
+    const res = await fetch(`${API_URL}/superadmin/permissions/stats`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch permissions stats');
+    return res.json();
+  },
+  updatePermission: async (roleId: string, permission: string): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/superadmin/permissions/${roleId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ permission }),
+    });
+    if (!res.ok) throw new Error('Failed to update permission');
+    return res.json();
+  },
+  createAdminPermission: async (data: any): Promise<{ success: boolean; id: string }> => {
+    const res = await fetch(`${API_URL}/superadmin/permissions`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to create admin permission');
+    return res.json();
+  },
+  updateAdminPermission: async (id: string, data: any): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/superadmin/permissions/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to update admin permission');
+    return res.json();
+  },
+  deleteAdminPermission: async (id: string): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/superadmin/permissions/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to delete admin permission');
+    return { success: true };
+  },
+  // Threats - connected to real API
+  getThreatIntelligence: async (): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/superadmin/threats`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch threat intelligence');
+    return res.json();
+  },
+  getThreatStats: async (): Promise<{
+    total: number;
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+  }> => {
+    const res = await fetch(`${API_URL}/superadmin/threats/stats`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch threat stats');
+    return res.json();
+  },
+  resolveThreat: async (id: string): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/superadmin/threats/${id}/resolve`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to resolve threat');
+    return res.json();
+  },
+  dismissThreat: async (id: string): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/superadmin/threats/${id}/dismiss`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to dismiss threat');
+    return res.json();
+  },
   // Lifecycle (legacy - use getLifecycleStages instead)
   getCustomerLifecycle: async () => [],
   // Recommended provider
@@ -5433,13 +5571,58 @@ export const Api = {
     if (!response.ok) throw new Error('Failed to move conversation to project');
     return response.json();
   },
-  // Analytics Reports
-  getAnalyticsReports: async (filters?: any) => [],
-  getReportExecutions: async (reportId?: string) => [],
-  createAnalyticsReport: async (data: any) => ({ success: true }),
-  deleteAnalyticsReport: async (id: string) => ({ success: true }),
-  executeAnalyticsReport: async (id: string) => ({ success: true, data: {} }),
-  scheduleAnalyticsReport: async (id: string, schedule: any) => ({ success: true }),
+  // Analytics Reports - connected to real API
+  getAnalyticsReports: async (filters?: any): Promise<any[]> => {
+    const params = new URLSearchParams();
+    if (filters?.type) params.set('type', filters.type);
+    const res = await fetch(`${API_URL}/superadmin/analytics/reports?${params}`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch analytics reports');
+    return res.json();
+  },
+  getReportExecutions: async (reportId?: string): Promise<any[]> => {
+    const url = reportId
+      ? `${API_URL}/superadmin/analytics/reports/${reportId}/executions`
+      : `${API_URL}/superadmin/analytics/executions`;
+    const res = await fetch(url, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch report executions');
+    return res.json();
+  },
+  createAnalyticsReport: async (data: any): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/superadmin/analytics/reports`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to create analytics report');
+    return res.json();
+  },
+  deleteAnalyticsReport: async (id: string): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/superadmin/analytics/reports/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to delete analytics report');
+    return { success: true };
+  },
+  executeAnalyticsReport: async (id: string): Promise<{ success: boolean; data: any }> => {
+    const res = await fetch(`${API_URL}/superadmin/analytics/reports/${id}/execute`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to execute analytics report');
+    return res.json();
+  },
+  scheduleAnalyticsReport: async (id: string, schedule: any): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/superadmin/analytics/reports/${id}/schedule`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(schedule),
+    });
+    if (!res.ok) throw new Error('Failed to schedule analytics report');
+    return res.json();
+  },
   // Customer Lifecycle - Connected to Backend
   getLifecycleStages: async () => {
     try {
@@ -5450,7 +5633,7 @@ export const Api = {
       return res.json();
     } catch (err: any) {
       console.error('[Api] getLifecycleStages error:', err);
-      return [];
+      throw err;
     }
   },
   getLifecycleTransitions: async () => {
@@ -5462,7 +5645,7 @@ export const Api = {
       return res.json();
     } catch (err: any) {
       console.error('[Api] getLifecycleTransitions error:', err);
-      return [];
+      throw err;
     }
   },
   getLifecycleStats: async () => {
@@ -5474,7 +5657,7 @@ export const Api = {
       return res.json();
     } catch (err: any) {
       console.error('[Api] getLifecycleStats error:', err);
-      return { stageStats: [], totalTransitions: 0 };
+      throw err;
     }
   },
   createLifecycleStage: async (data: any) => {
@@ -5518,7 +5701,7 @@ export const Api = {
       return res.json();
     } catch (err: any) {
       console.error('[Api] getSuccessPlaybooks error:', err);
-      return [];
+      throw err;
     }
   },
   getSuccessActions: async () => {
@@ -5530,7 +5713,7 @@ export const Api = {
       return res.json();
     } catch (err: any) {
       console.error('[Api] getSuccessActions error:', err);
-      return [];
+      throw err;
     }
   },
   getPlaybookStats: async () => {
@@ -5542,7 +5725,7 @@ export const Api = {
       return res.json();
     } catch (err: any) {
       console.error('[Api] getPlaybookStats error:', err);
-      return { total_playbooks: 0, active_playbooks: 0, total_actions: 0, completed_actions: 0 };
+      throw err;
     }
   },
   createSuccessPlaybook: async (data: any) => {
@@ -5819,7 +6002,7 @@ export const Api = {
       return res.json();
     } catch (err: any) {
       console.error('[Api] getCustomerContracts error:', err);
-      return [];
+      throw err;
     }
   },
   getContractStats: async () => {
@@ -5831,7 +6014,7 @@ export const Api = {
       return res.json();
     } catch (err: any) {
       console.error('[Api] getContractStats error:', err);
-      return { total_contracts: 0, active_contracts: 0, total_value: 0, renewals_30d: 0 };
+      throw err;
     }
   },
   getUpcomingRenewals: async (days?: number) => {
@@ -5844,7 +6027,7 @@ export const Api = {
       return res.json();
     } catch (err: any) {
       console.error('[Api] getUpcomingRenewals error:', err);
-      return [];
+      throw err;
     }
   },
   createCustomerContract: async (data: any) => {
@@ -5986,61 +6169,76 @@ export const Api = {
   getRevenueForecastStats: async () => ({ total: 0, accuracy: 0, scenarios: 0 }),
   generateRevenueForecast: async (data?: any) => ({ id: '', forecast: [] }),
   deleteRevenueForecast: async (id: string) => ({ success: true }),
-  // IP Whitelist
-  getIPWhitelist: async (orgId?: string) => [
-    {
-      id: 'ip-1',
-      ip_address: '192.168.1.0/24',
-      description: 'Office Network',
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: 'ip-2',
-      ip_address: '10.0.0.1',
-      description: 'VPN Server',
-      created_at: new Date().toISOString(),
-    },
-  ],
-  addIPWhitelist: async (orgId: string, data: any) => ({ success: true, id: `ip-${Date.now()}` }),
-  removeIPWhitelist: async (orgId: string, id: string) => ({ success: true }),
-  // Device Management (Mock Data)
-  getUserDevices: async (orgId: string, userId?: string) => [
-    {
-      id: 'dev-1',
-      device_name: 'MacBook Pro',
-      device_type: 'laptop',
-      os: 'macOS',
-      last_active: new Date().toISOString(),
-      is_blocked: false,
-    },
-    {
-      id: 'dev-2',
-      device_name: 'iPhone 15',
-      device_type: 'mobile',
-      os: 'iOS',
-      last_active: new Date().toISOString(),
-      is_blocked: false,
-    },
-  ],
-  blockDevice: async (orgId: string, deviceId: string) => ({ success: true }),
-  // Password Policy
-  getPasswordPolicy: async (orgId?: string) => ({
-    minLength: 8,
-    requireUppercase: true,
-    requireNumbers: true,
-    requireSymbols: false,
-    min_length: 8,
-    require_uppercase: 1,
-    require_lowercase: 1,
-    require_numbers: 1,
-    require_special_chars: 0,
-    max_age_days: 90,
-    prevent_reuse_count: 5,
-    lockout_attempts: 5,
-    lockout_duration_minutes: 30,
-    require_mfa: 0,
-  }),
-  updatePasswordPolicy: async (orgId: string, policy: any) => ({ success: true }),
+  // IP Whitelist - Connected to Backend (SuperAdmin)
+  getIPWhitelist: async (orgId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/organizations/${orgId}/ip-whitelist`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch IP whitelist');
+    return res.json();
+  },
+  addIPWhitelist: async (orgId: string, data: any) => {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/organizations/${orgId}/ip-whitelist`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((json as any)?.error || 'Failed to add IP to whitelist');
+    return json;
+  },
+  removeIPWhitelist: async (_orgId: string, id: string) => {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/ip-whitelist/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((json as any)?.error || 'Failed to remove IP from whitelist');
+    return json;
+  },
+  // Device Management - Connected to Backend (SuperAdmin)
+  getUserDevices: async (userId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/users/${userId}/devices`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch user devices');
+    return res.json();
+  },
+  blockDevice: async (deviceId: string, reason?: string) => {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/devices/${deviceId}/block`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ reason }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((json as any)?.error || 'Failed to block device');
+    return json;
+  },
+  // Password Policy - Connected to Backend (SuperAdmin)
+  getPasswordPolicy: async (orgId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/superadmin/organizations/${orgId}/password-policy`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((json as any)?.error || 'Failed to fetch password policy');
+    return json;
+  },
+  updatePasswordPolicy: async (orgId: string, policy: any) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/superadmin/organizations/${orgId}/password-policy`,
+      {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(policy),
+      }
+    );
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((json as any)?.error || 'Failed to update password policy');
+    return json;
+  },
   // Support Tickets - Connected to Backend
   getSupportTickets: async (filters?: any) => {
     try {
@@ -6053,7 +6251,7 @@ export const Api = {
       return res.json();
     } catch (err: any) {
       console.error('[Api] getSupportTickets error:', err);
-      return [];
+      throw err;
     }
   },
   createSupportTicket: async (data: any) => {
@@ -6066,14 +6264,17 @@ export const Api = {
       return res.json();
     } catch (err: any) {
       console.error('[Api] createSupportTicket error:', err);
-      return { success: false };
+      throw err;
     }
   },
-  // MFA Methods (Mock Data)
-  getMFAMethods: async () => [
-    { id: 'mfa-1', name: 'Authenticator App', type: 'totp', enabled: true, users_count: 45 },
-    { id: 'mfa-2', name: 'SMS Verification', type: 'sms', enabled: true, users_count: 23 },
-  ],
+  // MFA Methods - Connected to Backend (SuperAdmin)
+  getMFAMethods: async (userId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/users/${userId}/mfa`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch MFA methods');
+    return res.json();
+  },
   // Security Events - Connected to Backend
   getSecurityEvents: async (filters?: any) => {
     try {
@@ -6403,7 +6604,7 @@ export const Api = {
       return res.json();
     } catch (err: any) {
       console.error('[Api] getAutomationRules error:', err);
-      return [];
+      throw err;
     }
   },
   getAutomationStats: async () => {
@@ -6466,7 +6667,7 @@ export const Api = {
       return res.json();
     } catch (err: any) {
       console.error('[Api] getRuleExecutions error:', err);
-      return [];
+      throw err;
     }
   },
 
@@ -6482,7 +6683,7 @@ export const Api = {
       return res.json();
     } catch (err: any) {
       console.error('[Api] getCommunications error:', err);
-      return [];
+      throw err;
     }
   },
   getCommunicationStats: async () => {
@@ -6545,7 +6746,7 @@ export const Api = {
       return res.json();
     } catch (err: any) {
       console.error('[Api] getDiscoverySessions error:', err);
-      return [];
+      throw err;
     }
   },
   getDiscoverySession: async (id: string) => {
@@ -7293,14 +7494,16 @@ export const Api = {
         : `${API_URL}/integrations/${providerId}/files`;
       const res = await fetch(url, { headers: getHeaders() });
       if (res.status === 501) {
-        console.warn(`[Api] Cloud provider ${providerId} is not implemented in backend.`);
-        return []; // Return empty as stub fallback
+        throw new Error('CLOUD_NOT_IMPLEMENTED');
       }
       if (!res.ok) throw new Error('Failed to list cloud files');
       return res.json();
-    } catch (e) {
+    } catch (e: any) {
       console.error('[Api] Error listing cloud files:', e);
-      return [];
+      if (e?.message === 'CLOUD_NOT_IMPLEMENTED') {
+        throw new Error(`Cloud provider ${providerId} is not implemented on the server yet.`);
+      }
+      throw e;
     }
   },
 

@@ -77,7 +77,7 @@ export function validateImage(data: Buffer | string, mimeType?: string): ImageVa
 
     // Detect MIME type from magic bytes if not provided
     if (!detectedMime) {
-      detectedMime = detectMimeType(buffer);
+      detectedMime = detectMimeType(buffer) || undefined;
     }
 
     // Validate MIME type

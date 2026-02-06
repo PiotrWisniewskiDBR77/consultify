@@ -5,7 +5,8 @@
  * Uses pptxgenjs library for generating PPTX files.
  */
 
-import PptxGenJS from 'pptxgenjs';
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
+const PptxGenJS: any = require('pptxgenjs');
 
 import logger from '../../utils/Logger.js';
 
@@ -148,7 +149,7 @@ export class PptxExportService {
   /**
    * Define master slides with consistent styling
    */
-  private defineMasterSlides(pptx: PptxGenJS, options: PptxExportOptions): void {
+  private defineMasterSlides(pptx: any, options: PptxExportOptions): void {
     const brandColor = options.brandColor || COLORS.primary;
 
     // Title slide master
@@ -302,7 +303,7 @@ export class PptxExportService {
    * Add title slide
    */
   private addTitleSlide(
-    pptx: PptxGenJS,
+    pptx: any,
     report: ReportData,
     options: PptxExportOptions,
     isPolish: boolean
@@ -379,7 +380,7 @@ export class PptxExportService {
   /**
    * Add table of contents slide
    */
-  private addTableOfContents(pptx: PptxGenJS, sections: ReportSection[], isPolish: boolean): void {
+  private addTableOfContents(pptx: any, sections: ReportSection[], isPolish: boolean): void {
     const slide = pptx.addSlide({ masterName: 'CONTENT_SLIDE' });
 
     slide.addText(isPolish ? 'Spis treści' : 'Table of Contents', {
@@ -416,7 +417,7 @@ export class PptxExportService {
    * Add executive summary slide
    */
   private addSummarySlide(
-    pptx: PptxGenJS,
+    pptx: any,
     section: ReportSection,
     report: ReportData,
     options: PptxExportOptions,
@@ -463,7 +464,7 @@ export class PptxExportService {
    * Add score overview slide with chart
    */
   private addScoreOverviewSlide(
-    pptx: PptxGenJS,
+    pptx: any,
     report: ReportData,
     options: PptxExportOptions,
     isPolish: boolean
@@ -544,7 +545,7 @@ export class PptxExportService {
    * Add section slide
    */
   private addSectionSlide(
-    pptx: PptxGenJS,
+    pptx: any,
     section: ReportSection,
     options: PptxExportOptions,
     isPolish: boolean
@@ -619,11 +620,11 @@ export class PptxExportService {
   /**
    * Add table to slide
    */
-  private addTableToSlide(slide: PptxGenJS.Slide, data: any): void {
+  private addTableToSlide(slide: any, data: any): void {
     if (!data || !Array.isArray(data) || data.length === 0) return;
 
     const headers = Object.keys(data[0]);
-    const rows: PptxGenJS.TableRow[] = [];
+    const rows: any[] = [];
 
     // Header row
     rows.push(
@@ -664,7 +665,7 @@ export class PptxExportService {
   /**
    * Add closing slide
    */
-  private addClosingSlide(pptx: PptxGenJS, report: ReportData, isPolish: boolean): void {
+  private addClosingSlide(pptx: any, report: ReportData, isPolish: boolean): void {
     const slide = pptx.addSlide({ masterName: 'TITLE_SLIDE' });
 
     slide.addText(isPolish ? 'Dziękujemy' : 'Thank You', {
@@ -716,7 +717,7 @@ export class PptxExportService {
    */
   private prepareChartData(scoreSummary: ReportData['scoreSummary']): {
     labels: string[];
-    data: PptxGenJS.OptsChartData[];
+    data: any[];
   } {
     const labels: string[] = [];
     const actualValues: number[] = [];

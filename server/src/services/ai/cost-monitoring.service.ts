@@ -11,6 +11,7 @@
  * @version 1.0.0
  */
 
+import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
 // ============================================================================
@@ -126,6 +127,24 @@ class AICostMonitoringService {
 
     this.usageRecords.push(record);
     this.pruneOldRecords();
+
+    // Persist to DB (fire-and-forget)
+    dbRun(
+      `INSERT INTO ai_cost_usage (id,user_id,organization_id,tier,provider,model,input_tokens,output_tokens,total_tokens,cost_usd,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+      [
+        record.id,
+        record.userId,
+        record.organizationId,
+        record.tier,
+        record.provider,
+        record.model,
+        record.usage.inputTokens,
+        record.usage.outputTokens,
+        record.usage.totalTokens,
+        record.costUSD,
+        new Date(record.timestamp).toISOString(),
+      ]
+    ).catch((err) => logger.debug(`[Cost] DB persist: ${err?.message}`));
 
     // Check for budget alerts
     this.checkBudgetAlerts(organizationId);

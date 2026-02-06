@@ -8,8 +8,9 @@
  */
 
 import { ArrowLeft, Blocks, FileText, Layers, Loader2, Plus, Settings } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { Api } from '../../services/api';
 import { BlockTypesManager } from './BlockTypesManager';
@@ -176,6 +177,14 @@ export const ReportsComposer: React.FC<ReportsComposerProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
+  const navigate = useNavigate();
+
+  const handleUseTemplate = useCallback(
+    (templateId: string) => {
+      navigate(`/reports/builder?new=true&templateId=${encodeURIComponent(templateId)}`);
+    },
+    [navigate]
+  );
 
   const [activeTab, setActiveTab] = useState<ComposerTab>(initialTab);
 
@@ -243,7 +252,9 @@ export const ReportsComposer: React.FC<ReportsComposerProps> = ({
       {/* Tab Content */}
       <div className="bg-white dark:bg-navy-900 rounded-xl shadow border border-slate-200 dark:border-slate-700 p-6">
         {activeTab === 'blocks' && <BlockTypesManager embedded />}
-        {activeTab === 'templates' && <TemplatesManager embedded />}
+        {activeTab === 'templates' && (
+          <TemplatesManager embedded onUseTemplate={handleUseTemplate} />
+        )}
         {activeTab === 'profiles' && <ProfilesList />}
       </div>
     </div>

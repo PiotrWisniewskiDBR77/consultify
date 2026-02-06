@@ -7,7 +7,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { DRD_STRUCTURE } from '../../src/services/drdStructure.js';
+import { DRD_STRUCTURE } from '../data/drdStructure.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/index.js';
 import logger from '../utils/Logger.js';

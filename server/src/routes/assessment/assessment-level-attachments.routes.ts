@@ -115,6 +115,7 @@ router.post(
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
     if (!req.file) return res.status(400).json({ error: 'Missing file' });
 
+    const uploadedFile = req.file;
     const { assessmentId, axisId, levelNumber, areaId, attachmentType, description } =
       req.body || {};
     if (!assessmentId || !axisId || !levelNumber) {
@@ -138,10 +139,10 @@ router.post(
           Number(levelNumber),
           attachmentType || 'EVIDENCE',
           description || null,
-          req.file.originalname,
-          req.file.path,
-          req.file.size,
-          req.file.mimetype,
+          uploadedFile.originalname,
+          uploadedFile.path,
+          uploadedFile.size,
+          uploadedFile.mimetype,
           user.id,
         ],
         (err) => (err ? reject(err) : resolve())
@@ -152,9 +153,9 @@ router.post(
       mapRow({
         id,
         attachment_type: attachmentType || 'EVIDENCE',
-        file_name: req.file.originalname,
-        file_size: req.file.size,
-        mime_type: req.file.mimetype,
+        file_name: uploadedFile.originalname,
+        file_size: uploadedFile.size,
+        mime_type: uploadedFile.mimetype,
         description: description || null,
         created_at: new Date().toISOString(),
       })

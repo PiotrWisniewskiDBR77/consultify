@@ -1,7 +1,7 @@
 import { ChevronDown, FileText, Grid3X3, List, Loader2, Plus, Sparkles, X } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { TemplatesManager } from '@/components/ReportBuilder/TemplatesManager';
+import { ReportEditor } from '@/components/ReportBuilder/ReportEditor';
 import { cn } from '@/utils/cn';
 
 type ReportTemplate = {
@@ -52,15 +52,28 @@ export function ReportTemplatePickerModal(props: {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
-  const [isTemplateGeneratorOpen, setIsTemplateGeneratorOpen] = useState(false);
+  const [isNewTemplateMetaOpen, setIsNewTemplateMetaOpen] = useState(false);
+  const [isTemplateBuilderOpen, setIsTemplateBuilderOpen] = useState(false);
+
+  const [newTemplateName, setNewTemplateName] = useState('');
+  const [newTemplateDescription, setNewTemplateDescription] = useState('');
+  const [newTemplateRecipient, setNewTemplateRecipient] = useState<'' | 'board' | 'bank' | 'team'>(
+    ''
+  );
+  const [newTemplateSourceType, setNewTemplateSourceType] = useState<
+    'ASSESSMENT' | 'INTERVIEW' | 'TOOL' | 'INITIATIVE'
+  >('ASSESSMENT');
+  const [newTemplateFramework, setNewTemplateFramework] = useState<
+    'DRD' | 'SIRI' | 'ADMA' | 'NONE'
+  >('DRD');
 
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [recipientFilter, setRecipientFilter] = useState<RecipientFilter>('all');
   const [frameworkFilter, setFrameworkFilter] = useState<FrameworkFilter>('all');
-  const closeTemplateGenerator = () => {
-    setIsTemplateGeneratorOpen(false);
-    // refresh templates list after leaving generator
+  const closeTemplateBuilder = () => {
+    setIsTemplateBuilderOpen(false);
+    // refresh templates list after leaving template builder
     setReloadKey((k) => k + 1);
   };
 
@@ -313,7 +326,13 @@ export function ReportTemplatePickerModal(props: {
                     setReloadKey((k) => k + 1);
                     return;
                   }
-                  setIsTemplateGeneratorOpen(true);
+                  // Default to assessment template when invoked from assessment flow
+                  setNewTemplateName('');
+                  setNewTemplateDescription('');
+                  setNewTemplateRecipient('');
+                  setNewTemplateSourceType('ASSESSMENT');
+                  setNewTemplateFramework('DRD');
+                  setIsNewTemplateMetaOpen(true);
                 } catch (e: any) {
                   setError(e?.message || 'Failed to open template generator');
                 }
@@ -576,34 +595,169 @@ export function ReportTemplatePickerModal(props: {
         </div>
       </div>
 
-      {/* Template generator overlay (creates organization templates) */}
-      {isTemplateGeneratorOpen && (
+      {/* Small meta modal: name + module + description (adds context for generator) */}
+      {isNewTemplateMetaOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <button
             type="button"
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={closeTemplateGenerator}
-            aria-label="Close template generator"
+            onClick={() => setIsNewTemplateMetaOpen(false)}
+            aria-label="Close new template meta"
           />
-          <div className="relative w-full max-w-5xl h-[min(90vh,760px)] overflow-hidden rounded-2xl bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 shadow-2xl flex flex-col">
-            <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
-              <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                Template generator
+          <div className="relative w-full max-w-xl overflow-hidden rounded-2xl bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 shadow-2xl">
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
+              <div>
+                <div className="text-base font-semibold text-slate-900 dark:text-white">
+                  New template
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  Name + module + short description (gives generator context)
+                </div>
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  closeTemplateGenerator();
-                }}
+                onClick={() => setIsNewTemplateMetaOpen(false)}
                 className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 transition-colors"
+                aria-label="Close"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="flex-1 min-h-0 overflow-auto p-5">
-              <TemplatesManager autoOpenNewTemplate />
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
+                  Template name*
+                </label>
+                <input
+                  value={newTemplateName}
+                  onChange={(e) => setNewTemplateName(e.target.value)}
+                  className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                  placeholder="e.g. DRD Exec Summary v2"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
+                    Module
+                  </label>
+                  <select
+                    value={newTemplateSourceType}
+                    onChange={(e) =>
+                      setNewTemplateSourceType(
+                        e.target.value as 'ASSESSMENT' | 'INTERVIEW' | 'TOOL' | 'INITIATIVE'
+                      )
+                    }
+                    className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                  >
+                    <option value="ASSESSMENT">Assessment</option>
+                    <option value="INTERVIEW">Interview</option>
+                    <option value="TOOL">Tool</option>
+                    <option value="INITIATIVE">Initiative</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
+                    Framework (optional)
+                  </label>
+                  <select
+                    value={newTemplateFramework}
+                    onChange={(e) =>
+                      setNewTemplateFramework(e.target.value as 'DRD' | 'SIRI' | 'ADMA' | 'NONE')
+                    }
+                    className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                    disabled={newTemplateSourceType !== 'ASSESSMENT'}
+                  >
+                    <option value="DRD">DRD</option>
+                    <option value="SIRI">SIRI</option>
+                    <option value="ADMA">ADMA</option>
+                    <option value="NONE">None</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
+                  Recipient (optional)
+                </label>
+                <select
+                  value={newTemplateRecipient}
+                  onChange={(e) =>
+                    setNewTemplateRecipient(e.target.value as '' | 'board' | 'bank' | 'team')
+                  }
+                  className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                >
+                  <option value="">Not set</option>
+                  <option value="board">Board / Executive</option>
+                  <option value="bank">Bank / Financial</option>
+                  <option value="team">Team</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
+                  Description (optional)
+                </label>
+                <textarea
+                  value={newTemplateDescription}
+                  onChange={(e) => setNewTemplateDescription(e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                  placeholder="For whom, what to include, style, etc."
+                />
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/50 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsNewTemplateMetaOpen(false)}
+                className="h-10 px-4 rounded-lg border border-slate-200 dark:border-navy-700 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={!newTemplateName.trim()}
+                onClick={() => {
+                  if (!newTemplateName.trim()) return;
+                  setIsNewTemplateMetaOpen(false);
+                  setIsTemplateBuilderOpen(true);
+                }}
+                className="h-10 px-4 rounded-lg bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-sm font-semibold"
+              >
+                Open generator
+              </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Template builder overlay (uses the full report generator UI, but saves as template) */}
+      {isTemplateBuilderOpen && (
+        <div className="fixed inset-0 z-[70]">
+          <ReportEditor
+            mode="template"
+            templateMeta={{
+              name: newTemplateName,
+              description: newTemplateDescription,
+              recipient: newTemplateRecipient || undefined,
+              sourceType: newTemplateSourceType,
+              reportType:
+                newTemplateSourceType === 'ASSESSMENT' && newTemplateFramework !== 'NONE'
+                  ? `ASSESSMENT_${newTemplateFramework}`
+                  : undefined,
+            }}
+            onTemplateSaved={(tpl) => {
+              // Close builder, refresh list, and pre-select the new template
+              setIsTemplateBuilderOpen(false);
+              setReloadKey((k) => k + 1);
+              setSourceFilter('organization');
+              setSelectedId(tpl.id);
+            }}
+            onClose={closeTemplateBuilder}
+          />
         </div>
       )}
     </div>

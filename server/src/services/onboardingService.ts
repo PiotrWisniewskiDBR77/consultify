@@ -357,7 +357,7 @@ class OnboardingService {
    */
   async saveContext(
     organizationId: string,
-    context: { role?: string; problems?: string; industry?: string;[key: string]: any }
+    context: { role?: string; problems?: string; industry?: string; [key: string]: any }
   ): Promise<{ success: boolean; status: string }> {
     const required = ['role', 'problems', 'industry'];
     for (const field of required) {

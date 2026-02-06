@@ -283,31 +283,108 @@ const computeAxisDataFromAssessment = (assessment: any): Record<string, any> => 
   const answers = assessment?.answers
     ? safeJsonParse<any>(assessment.answers, {})
     : assessment?.answers;
-  if (type !== 'DRD') return {};
-
-  const drd = answers?.drd || {};
-  const areas = drd?.areas || {};
-  const axisBuckets: Record<string, { achieved: number[]; target: number[] }> = {};
-
-  Object.entries<any>(areas).forEach(([areaId, s]) => {
-    const axisId = String(areaId || '').slice(0, 1); // "1A" -> "1"
-    if (!axisId || !/^\d$/.test(axisId)) return;
-    if (!axisBuckets[axisId]) axisBuckets[axisId] = { achieved: [], target: [] };
-    const a = Number(s?.achievedLevel || 0);
-    const t = Number(s?.targetLevel || 0);
-    if (a > 0) axisBuckets[axisId].achieved.push(a);
-    if (t > 0) axisBuckets[axisId].target.push(t);
-  });
 
   const avg = (arr: number[]) => (arr.length ? arr.reduce((x, y) => x + y, 0) / arr.length : 0);
-  const out: Record<string, any> = {};
-  for (const [axisId, bucket] of Object.entries(axisBuckets)) {
-    out[axisId] = {
-      actual: Number(avg(bucket.achieved).toFixed(2)),
-      target: Number(avg(bucket.target).toFixed(2)),
-    };
+
+  // ==========================================
+  // DRD: 7 axes, areas like "1A", "1B", "2A", etc.
+  // ==========================================
+  if (type === 'DRD') {
+    const drd = answers?.drd || {};
+    const areas = drd?.areas || {};
+    const axisBuckets: Record<string, { achieved: number[]; target: number[] }> = {};
+
+    Object.entries<any>(areas).forEach(([areaId, s]) => {
+      const axisId = String(areaId || '').slice(0, 1); // "1A" -> "1"
+      if (!axisId || !/^\d$/.test(axisId)) return;
+      if (!axisBuckets[axisId]) axisBuckets[axisId] = { achieved: [], target: [] };
+      const a = Number(s?.achievedLevel || 0);
+      const t = Number(s?.targetLevel || 0);
+      if (a > 0) axisBuckets[axisId].achieved.push(a);
+      if (t > 0) axisBuckets[axisId].target.push(t);
+    });
+
+    const out: Record<string, any> = {};
+    for (const [axisId, bucket] of Object.entries(axisBuckets)) {
+      out[axisId] = {
+        actual: Number(avg(bucket.achieved).toFixed(2)),
+        target: Number(avg(bucket.target).toFixed(2)),
+      };
+    }
+    return out;
   }
-  return out;
+
+  // ==========================================
+  // SIRI: 3 Building Blocks, 8 Dimensions, 16 Prioritisation Areas
+  // ==========================================
+  if (type === 'SIRI') {
+    const siri = answers?.siri || {};
+    const out: Record<string, any> = { _framework: 'SIRI' };
+
+    // Building blocks (PROCESS, TECHNOLOGY, ORGANIZATION)
+    const blocks = siri?.buildingBlocks || {};
+    for (const [blockId, blockData] of Object.entries<any>(blocks)) {
+      out[`block_${blockId}`] = {
+        actual: Number(blockData?.current || blockData?.actual || 0),
+        target: Number(blockData?.target || 0),
+      };
+    }
+
+    // Dimensions (8 dimensions)
+    const dimensions = siri?.dimensions || {};
+    for (const [dimId, dimData] of Object.entries<any>(dimensions)) {
+      out[`dim_${dimId}`] = {
+        actual: Number(dimData?.current || dimData?.actual || 0),
+        target: Number(dimData?.target || 0),
+      };
+    }
+
+    // Prioritisation matrix (individual area scores)
+    const matrix = siri?.prioritisationMatrix || {};
+    for (const [areaId, score] of Object.entries<any>(matrix)) {
+      if (typeof score === 'number') {
+        out[`area_${areaId}`] = { actual: score, target: 0 };
+      } else if (score && typeof score === 'object') {
+        out[`area_${areaId}`] = {
+          actual: Number(score?.current || score?.actual || 0),
+          target: Number(score?.target || 0),
+        };
+      }
+    }
+
+    return out;
+  }
+
+  // ==========================================
+  // ADMA: 5 Pillars, 12 Dimensions
+  // ==========================================
+  if (type === 'ADMA') {
+    const adma = answers?.adma || {};
+    const out: Record<string, any> = { _framework: 'ADMA' };
+
+    // Pillars (strategy, smart_products, smart_operations, smart_supply, data_driven)
+    const pillars = adma?.pillars || {};
+    for (const [pillarId, pillarData] of Object.entries<any>(pillars)) {
+      out[`pillar_${pillarId}`] = {
+        actual: Number(pillarData?.current || pillarData?.actual || 0),
+        target: Number(pillarData?.target || 0),
+      };
+    }
+
+    // Dimensions (12 dimensions)
+    const dimensions = adma?.dimensions || {};
+    for (const [dimId, dimData] of Object.entries<any>(dimensions)) {
+      out[`dim_${dimId}`] = {
+        actual: Number(dimData?.current || dimData?.actual || 0),
+        target: Number(dimData?.target || 0),
+      };
+    }
+
+    return out;
+  }
+
+  // Unknown framework - return empty but try to parse any generic structure
+  return {};
 };
 
 // Best-effort init (avoid breaking route in case of migrations ordering)
@@ -738,32 +815,45 @@ router.get('/:reportId/full', async (req: AuthRequest, res: Response) => {
 
     const axisData = safeJsonParse<Record<string, any>>(reportRow.axis_data, {});
 
+    const mappedSections = (sections || []).map((s: any) => ({
+      id: s.id,
+      reportId: s.report_id,
+      sectionType: s.section_type,
+      axisId: s.axis_id || undefined,
+      areaId: s.area_id || undefined,
+      title: s.title,
+      content: s.content || '',
+      dataSnapshot: safeJsonParse(s.data_snapshot, {}),
+      orderIndex: Number(s.order_index || 0),
+      isAiGenerated: Boolean(s.is_ai_generated),
+      version: Number(s.version || 1),
+      lastEditedBy: s.updated_by || undefined,
+      createdAt: s.created_at,
+      updatedAt: s.updated_at,
+    }));
+
+    // Calculate progress based on sections with content
+    const totalSections = mappedSections.length;
+    const sectionsWithContent = mappedSections.filter(
+      (s: any) => s.content && s.content.trim().length > 10
+    ).length;
+    const progress =
+      totalSections > 0 ? Math.round((sectionsWithContent / totalSections) * 100) : 0;
+    const status = String(reportRow.status || 'DRAFT').toUpperCase();
+    const isComplete = status === 'FINAL' || status === 'APPROVED' || status === 'UTILIZED';
+
     return res.json({
       id: reportRow.id,
       name: reportRow.name || `Report - ${reportRow.assessmentName || 'Assessment'}`,
-      status: String(reportRow.status || 'DRAFT').toUpperCase(),
+      status,
       assessmentId: reportRow.assessment_id,
       assessmentName: reportRow.assessmentName || 'Assessment',
+      assessmentType: reportRow.assessmentType || 'DRD',
       axisData,
       content: {},
-      sections: (sections || []).map((s: any) => ({
-        id: s.id,
-        reportId: s.report_id,
-        sectionType: s.section_type,
-        axisId: s.axis_id || undefined,
-        areaId: s.area_id || undefined,
-        title: s.title,
-        content: s.content || '',
-        dataSnapshot: safeJsonParse(s.data_snapshot, {}),
-        orderIndex: Number(s.order_index || 0),
-        isAiGenerated: Boolean(s.is_ai_generated),
-        version: Number(s.version || 1),
-        lastEditedBy: s.updated_by || undefined,
-        createdAt: s.created_at,
-        updatedAt: s.updated_at,
-      })),
-      progress: 0,
-      isComplete: false,
+      sections: mappedSections,
+      progress,
+      isComplete,
       templateId: reportRow.template_id || null,
       createdAt: reportRow.created_at,
       updatedAt: reportRow.updated_at,
@@ -974,7 +1064,7 @@ Requirements:
 
     await run(
       `UPDATE assessment_reports
-       SET template_id = ?, generation_params = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP
+       SET template_id = ?, generation_params = ?, status = 'FINAL', updated_by = ?, updated_at = CURRENT_TIMESTAMP
        WHERE id = ? AND organization_id = ?`,
       [
         resolvedTemplateId,

@@ -70,7 +70,7 @@ export const ROUTES = {
   EXECUTION: '/execution',
   IMPLEMENTATION: '/implementation',
   ROLLOUT: '/rollout',
-  REPORTS: '/reports',
+  REPORTS: '/reports/builder',
   KPI_OKR: '/kpi-okr',
   BENEFITS: '/benefits',
 

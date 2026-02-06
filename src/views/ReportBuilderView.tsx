@@ -328,6 +328,7 @@ export const ReportBuilderView: React.FC = () => {
   const initialSourceType = searchParams.get('sourceType') as ReportSourceType | null;
   const initialSourceId = searchParams.get('sourceId');
   const initialSourceName = searchParams.get('sourceName');
+  const initialTemplateId = searchParams.get('templateId');
 
   // Determine view mode
   const isComposerTab =
@@ -381,6 +382,7 @@ export const ReportBuilderView: React.FC = () => {
         sourceType={initialSourceType || undefined}
         sourceId={initialSourceId || undefined}
         sourceName={initialSourceName || undefined}
+        templateId={initialTemplateId || undefined}
         onSave={handleEditorSave}
         onClose={handleEditorClose}
       />

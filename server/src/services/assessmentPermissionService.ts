@@ -596,12 +596,8 @@ export async function assignRole(params: AssignRoleParams): Promise<AssessmentRo
   const canApprove = role === 'admin' || (role === 'manager' && permissions.canApprove);
   const canManageTeam = role === 'admin' || (role === 'manager' && permissions.canManageTeam);
   const canChangeStatus = role === 'admin' || (role === 'manager' && permissions.canChangeStatus);
-  const canGenerateReport =
-    role === 'admin' || role === 'manager' || (role === 'manager' && permissions.canGenerateReport);
-  const canGenerateInitiatives =
-    role === 'admin' ||
-    role === 'manager' ||
-    (role === 'manager' && permissions.canGenerateInitiatives);
+  const canGenerateReport = role === 'admin' || role === 'manager';
+  const canGenerateInitiatives = role === 'admin' || role === 'manager';
 
   try {
     await queryRun(

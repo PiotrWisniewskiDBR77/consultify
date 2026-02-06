@@ -481,22 +481,26 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
 
   const isApproved = workflowStatus === 'APPROVED';
 
-  // Fetch reports for this assessment from Assessment Reports API
+  // Fetch reports for this assessment from Report Builder API
   const fetchReports = useCallback(async () => {
     try {
-      const response = await Api.get(`/assessment-reports?assessmentId=${assessmentId}`);
+      const response = await Api.get(
+        `/report-builder?sourceType=ASSESSMENT&sourceId=${encodeURIComponent(assessmentId)}`
+      );
       const apiReports = response?.reports || [];
       const mapped: Report[] = apiReports.map((r: any) => ({
-        id: r.id,
-        name: r.name,
-        assessmentId: r.assessmentId,
-        assessmentName: r.assessmentName || assessmentName || '',
+        id: String(r.id),
+        name: String(r.title || r.name || 'Report'),
+        assessmentId,
+        assessmentName: String(r.sourceName || assessmentName || ''),
         status: (String(r.status || 'DRAFT').toUpperCase() as ReportStatus) || 'DRAFT',
-        createdAt: r.createdAt,
-        updatedAt: r.updatedAt,
-        createdBy: r.createdBy || 'system',
+        createdAt: String(r.createdAt || ''),
+        updatedAt: String(r.updatedAt || ''),
+        createdBy: String(r.createdByName || r.createdBy || 'system'),
         createdByName: r.createdByName,
-        canGenerateInitiatives: String(r.status || '').toUpperCase() === 'FINAL',
+        canGenerateInitiatives: ['APPROVED', 'SENT_INTERNAL', 'SENT_EXTERNAL'].includes(
+          String(r.status || '').toUpperCase()
+        ),
         initiativesGenerated: false,
         initiativesCount: 0,
       }));
@@ -535,7 +539,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
   // Submit report to review (finalize)
   const handleFinalize = async (reportId: string) => {
     try {
-      await Api.finalizeReport(reportId);
+      await Api.post(`/report-builder/${reportId}/finalize`, {});
       toast.success('Report finalized');
       await fetchReports();
     } catch (err) {
@@ -546,7 +550,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
   const handleExportPDF = async (reportId: string, reportName: string) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/assessment-reports/${reportId}/export/pdf`, {
+      const response = await fetch(`/api/report-builder/${reportId}/export/pdf`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
@@ -572,7 +576,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
     reportName: string
   ) => {
     const token = localStorage.getItem('token');
-    const response = await fetch(`/api/assessment-reports/${reportId}/export/${format}`, {
+    const response = await fetch(`/api/report-builder/${reportId}/export/${format}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     });
     if (!response.ok) {
@@ -616,7 +620,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
 
   const handleDelete = async (reportId: string) => {
     try {
-      await Api.delete(`/assessment-reports/${reportId}`);
+      await Api.delete(`/report-builder/${reportId}`);
       toast.success('Report deleted');
       await fetchReports();
     } catch (err: any) {
@@ -628,7 +632,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
     if (onOpenReport) {
       onOpenReport(reportId, reportName, status);
     } else {
-      navigate(`/assessment-reports/${reportId}`);
+      navigate(`/reports/builder/${reportId}`);
     }
   };
 
@@ -645,8 +649,10 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
   const stats = useMemo(
     () => ({
       total: reports.length,
-      draft: reports.filter((r) => r.status === 'DRAFT').length,
-      inReview: 0,
+      draft: reports.filter((r) =>
+        ['DRAFT', 'CONFIGURING', 'GENERATING', 'GENERATED'].includes(r.status)
+      ).length,
+      inReview: reports.filter((r) => r.status === 'IN_REVIEW').length,
       approved: reports.filter((r) => r.status === 'APPROVED').length,
     }),
     [reports]

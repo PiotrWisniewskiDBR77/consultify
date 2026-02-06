@@ -65,6 +65,8 @@ interface TemplatesManagerProps {
   embedded?: boolean;
   /** When true, opens the "New Template" editor immediately on mount. */
   autoOpenNewTemplate?: boolean;
+  /** Called when user clicks on a template card to create a new report from it. */
+  onUseTemplate?: (templateId: string) => void;
 }
 
 // ==========================================
@@ -391,9 +393,16 @@ interface TemplateCardProps {
   onEdit: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
+  onUseTemplate?: () => void;
 }
 
-const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit, onDelete, onDuplicate }) => {
+const TemplateCard: React.FC<TemplateCardProps> = ({
+  template,
+  onEdit,
+  onDelete,
+  onDuplicate,
+  onUseTemplate,
+}) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [showActions, setShowActions] = useState(false);
@@ -401,7 +410,10 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit, onDelete,
   const sectionsCount = template.sections?.length || 0;
 
   return (
-    <div className="relative p-5 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 transition-colors group">
+    <div
+      className="relative p-5 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 transition-colors group cursor-pointer"
+      onClick={onUseTemplate}
+    >
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
         <div
@@ -461,9 +473,25 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit, onDelete,
 
         {/* Actions */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {onUseTemplate && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onUseTemplate();
+              }}
+              className="px-2.5 py-1 text-xs font-medium text-white bg-purple-500 hover:bg-purple-600 rounded-md transition-colors"
+              title={isPl ? 'Użyj szablonu' : 'Use template'}
+            >
+              <Sparkles size={12} className="inline mr-1" />
+              {isPl ? 'Użyj' : 'Use'}
+            </button>
+          )}
           {template.isSystem ? (
             <button
-              onClick={onDuplicate}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDuplicate();
+              }}
               className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded transition-colors"
               title={isPl ? 'Duplikuj do organizacji' : 'Duplicate to organization'}
             >
@@ -472,21 +500,30 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit, onDelete,
           ) : (
             <>
               <button
-                onClick={onEdit}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit();
+                }}
                 className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
                 title={isPl ? 'Edytuj' : 'Edit'}
               >
                 <Edit3 size={16} />
               </button>
               <button
-                onClick={onDuplicate}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDuplicate();
+                }}
                 className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded transition-colors"
                 title={isPl ? 'Duplikuj' : 'Duplicate'}
               >
                 <Copy size={16} />
               </button>
               <button
-                onClick={onDelete}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
                 className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
                 title={isPl ? 'Usuń' : 'Delete'}
               >
@@ -507,6 +544,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit, onDelete,
 export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
   embedded,
   autoOpenNewTemplate,
+  onUseTemplate,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -620,9 +658,9 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
   // Auto-open create flow (used by embedded generator contexts, e.g. assessment picker)
   useEffect(() => {
     if (autoOpenNewTemplate) {
-      openEditor();
+      setEditingTemplate(null);
+      setShowEditor(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoOpenNewTemplate]);
 
   if (isLoading) {
@@ -738,6 +776,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                     onEdit={() => {}} // System templates can't be edited
                     onDelete={() => {}} // System templates can't be deleted
                     onDuplicate={() => handleDuplicate(template)}
+                    onUseTemplate={onUseTemplate ? () => onUseTemplate(template.id) : undefined}
                   />
                 ))}
               </div>
@@ -762,6 +801,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                     onEdit={() => openEditor(template)}
                     onDelete={() => handleDelete(template.id)}
                     onDuplicate={() => handleDuplicate(template)}
+                    onUseTemplate={onUseTemplate ? () => onUseTemplate(template.id) : undefined}
                   />
                 ))}
               </div>

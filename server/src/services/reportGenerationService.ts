@@ -1403,6 +1403,79 @@ export async function regenerateSection(
 }
 
 // ==========================================
+// STUB METHODS (for route compatibility - implement as needed)
+// ==========================================
+
+/**
+ * Generate a new report (stub)
+ */
+export async function generateReport(
+  options: {
+    reportType: string;
+    sourceId: string;
+    language?: string;
+    templateId?: string;
+    includeAppendix?: boolean;
+  },
+  organizationId: string
+): Promise<{ id: string; status: string }> {
+  logger.info('[ReportGeneration] generateReport called (stub)', { options, organizationId });
+  // TODO: Implement full report generation workflow
+  return { id: 'stub-report-id', status: 'pending' };
+}
+
+/**
+ * Export report to format (stub)
+ */
+export async function exportReport(
+  reportId: string,
+  format: 'pdf' | 'pptx' | 'docx' | 'xlsx',
+  userId: string
+): Promise<{ url?: string; status: string }> {
+  logger.info('[ReportGeneration] exportReport called (stub)', { reportId, format, userId });
+  // TODO: Implement export functionality
+  return { status: 'pending', url: undefined };
+}
+
+/**
+ * Create public link for report (stub)
+ */
+export async function createPublicLink(options: {
+  reportId: string;
+  reportType: string;
+  organizationId: string;
+  userId: string;
+  password?: string;
+  expiresInDays?: number;
+  showCompanyLogo?: boolean;
+  showConsultinityBranding?: boolean;
+  customMessage?: string;
+}): Promise<{ linkToken: string; url: string; expiresAt: string }> {
+  logger.info('[ReportGeneration] createPublicLink called (stub)', { options });
+  // TODO: Implement public link creation
+  return {
+    linkToken: 'stub-token',
+    url: '/public/stub-token',
+    expiresAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Get public report (stub)
+ */
+export async function getPublicReport(
+  linkToken: string,
+  password?: string
+): Promise<{ report?: Record<string, unknown>; error?: string }> {
+  logger.info('[ReportGeneration] getPublicReport called (stub)', {
+    linkToken,
+    hasPassword: !!password,
+  });
+  // TODO: Implement public report retrieval
+  return { error: 'Not implemented' };
+}
+
+// ==========================================
 // EXPORTS
 // ==========================================
 
@@ -1410,6 +1483,10 @@ const ReportGenerationService = {
   generateSectionContent,
   generateFullReport,
   regenerateSection,
+  generateReport,
+  exportReport,
+  createPublicLink,
+  getPublicReport,
 };
 
 export default ReportGenerationService;

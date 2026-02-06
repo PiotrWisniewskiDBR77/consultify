@@ -24,7 +24,6 @@ import { InitiativesGenerationWizardModal } from '@/components/assessment/Initia
 import { AssessmentManagePanel } from '@/components/assessment/manage/AssessmentManagePanel';
 import { ReportTemplatePickerModal } from '@/components/assessment/modals/ReportTemplatePickerModal';
 import { RequestAccessModal, useAssessmentPermissions } from '@/components/assessment/permissions';
-import { ReportBuilderWorkspace } from '@/components/assessment/ReportBuilderWorkspace';
 import { SIRIForm } from '@/components/assessment/tools/SIRIForm';
 import { Api } from '@/services/api';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
@@ -223,9 +222,6 @@ export const AssessmentSessionEditorView: React.FC = () => {
   >('workflow');
   const [isInitiativesWizardOpen, setIsInitiativesWizardOpen] = useState(false);
   const [isReportTemplatePickerOpen, setIsReportTemplatePickerOpen] = useState(false);
-  const [isReportBuilderOpen, setIsReportBuilderOpen] = useState(false);
-  const [activeReportId, setActiveReportId] = useState<string | null>(null);
-  const [reportPreparing, setReportPreparing] = useState(false);
 
   // Permissions
   const {
@@ -636,10 +632,13 @@ export const AssessmentSessionEditorView: React.FC = () => {
     setIsInitiativesWizardOpen(true);
   }, [canManageEffective]);
 
-  const openReport = useCallback((reportId: string) => {
-    setActiveReportId(reportId);
-    setIsReportBuilderOpen(true);
-  }, []);
+  const openReport = useCallback(
+    (reportId: string) => {
+      // Always open the main Report Builder editor
+      navigate(`/reports/builder/${reportId}`);
+    },
+    [navigate]
+  );
 
   const handleOpenReportWorkflow = useCallback(() => {
     if (!assessmentId || !assessment) return;
@@ -651,35 +650,21 @@ export const AssessmentSessionEditorView: React.FC = () => {
   }, [assessmentId, assessment, canManageEffective]);
 
   const handleStartNewReportFromTemplate = useCallback(
-    async (templateId: string) => {
+    (templateId: string) => {
       if (!assessmentId || !assessment) return;
-
-      setReportPreparing(true);
       setIsReportTemplatePickerOpen(false);
-      setIsReportBuilderOpen(true);
-      setActiveReportId(null);
 
-      try {
-        const created: any = await Api.post('/assessment-reports', {
-          assessmentId,
-          name: `Report - ${assessment?.name || 'Assessment'}`,
-          templateId,
-        });
-        const reportId = String(created?.id || created?.reportId || created?.report?.id || '');
-        if (!reportId) throw new Error('Missing report id');
-
-        await Api.generateReport(reportId, { templateId, language: 'pl' });
-        setActiveReportId(reportId);
-      } catch (e: any) {
-        console.error('[AssessmentSessionEditorView] Failed to create/generate report:', e);
-        toast.error(e?.message || 'Failed to generate report');
-        setIsReportBuilderOpen(false);
-        setActiveReportId(null);
-      } finally {
-        setReportPreparing(false);
-      }
+      // Navigate to Report Builder in "new report" mode with assessment context + template
+      const params = new URLSearchParams({
+        new: 'true',
+        sourceType: 'ASSESSMENT',
+        sourceId: assessmentId,
+        sourceName: assessment?.name || 'Assessment',
+        templateId,
+      });
+      navigate(`/reports/builder?${params.toString()}`);
     },
-    [assessmentId, assessment]
+    [assessmentId, assessment, navigate]
   );
 
   const assignmentByAreaId = useMemo(() => {
@@ -1414,35 +1399,6 @@ export const AssessmentSessionEditorView: React.FC = () => {
         onClose={() => setIsReportTemplatePickerOpen(false)}
         onSelect={(tpl) => handleStartNewReportFromTemplate(tpl.id)}
       />
-
-      {/* Report builder overlay (direct report view) */}
-      {isReportBuilderOpen && (
-        <div className="fixed inset-0 z-50">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => {
-              if (!reportPreparing) setIsReportBuilderOpen(false);
-            }}
-          />
-          <div className="relative w-full h-full p-4">
-            <div className="mx-auto w-[min(1360px,calc(100vw-32px))] h-[min(92vh,calc(100vh-32px))] rounded-2xl overflow-hidden border border-slate-200 dark:border-navy-700 shadow-2xl bg-white dark:bg-navy-900">
-              {reportPreparing || !activeReportId ? (
-                <div className="h-full flex items-center justify-center">
-                  <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300">
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Preparing report…
-                  </div>
-                </div>
-              ) : (
-                <ReportBuilderWorkspace
-                  reportId={activeReportId}
-                  onClose={() => setIsReportBuilderOpen(false)}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Initiatives workflow overlay */}
       <InitiativesGenerationWizardModal

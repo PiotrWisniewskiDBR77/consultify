@@ -97,10 +97,10 @@ router.get(
 
     query += ` ORDER BY deadline ASC`;
 
-    const rawDecisions = await db.all(query, params);
+    const rawDecisions = (await db.all(query, params)) as Record<string, unknown>[];
 
     // Transform snake_case to camelCase for frontend compatibility
-    const decisions = (rawDecisions || []).map((d: Record<string, unknown>) => ({
+    const decisions = (rawDecisions || []).map((d) => ({
       id: d.id,
       organizationId: d.organization_id,
       projectId: d.project_id,

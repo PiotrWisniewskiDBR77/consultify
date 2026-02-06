@@ -30,6 +30,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
@@ -99,7 +100,18 @@ interface ReportEditorProps {
   sourceId?: string;
   sourceName?: string;
   templateId?: string;
+  /** When set to 'template', the editor saves a template (not a report). */
+  mode?: 'report' | 'template';
+  /** Initial metadata used in template mode. */
+  templateMeta?: {
+    name?: string;
+    description?: string;
+    recipient?: 'board' | 'bank' | 'team';
+    sourceType?: ReportSourceType;
+    reportType?: string;
+  };
   onSave?: (reportId: string) => void;
+  onTemplateSaved?: (template: { id: string; name: string }) => void;
   onClose?: () => void;
 }
 
@@ -113,11 +125,15 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   sourceId: initialSourceId,
   sourceName: initialSourceName,
   templateId: initialTemplateId,
+  mode = 'report',
+  templateMeta,
   onSave,
+  onTemplateSaved,
   onClose,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
+  const isTemplateMode = mode === 'template';
 
   // State
   const [report, setReport] = useState<Report | null>(null);
@@ -154,6 +170,23 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   const [reportTitle, setReportTitle] = useState('');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
     initialTemplateId || null
+  );
+
+  // Template-mode metadata
+  const [templateDescription, setTemplateDescription] = useState<string>(
+    templateMeta?.description || ''
+  );
+  const [templateRecipient, setTemplateRecipient] = useState<'' | 'board' | 'bank' | 'team'>(
+    templateMeta?.recipient || ''
+  );
+  const [templateSourceType, setTemplateSourceType] = useState<ReportSourceType>(
+    templateMeta?.sourceType || 'ASSESSMENT'
+  );
+  const [templateReportType, setTemplateReportType] = useState<string>(
+    templateMeta?.reportType || ''
+  );
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(
+    isTemplateMode ? initialTemplateId || null : null
   );
 
   const reportStatus = (report?.status || 'DRAFT') as string;
@@ -220,6 +253,34 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
 
   // Load existing report
   useEffect(() => {
+    // Template mode: either edit an existing template, or start from defaults.
+    if (isTemplateMode) {
+      if (templateMeta?.name) setReportTitle(templateMeta.name);
+      if (templateMeta?.description !== undefined)
+        setTemplateDescription(templateMeta.description || '');
+      if (templateMeta?.recipient !== undefined) {
+        setTemplateRecipient(
+          templateMeta.recipient === 'board' ||
+            templateMeta.recipient === 'bank' ||
+            templateMeta.recipient === 'team'
+            ? templateMeta.recipient
+            : ''
+        );
+      }
+      if (templateMeta?.sourceType) setTemplateSourceType(templateMeta.sourceType);
+      if (templateMeta?.reportType !== undefined)
+        setTemplateReportType(templateMeta.reportType || '');
+
+      if (initialTemplateId) {
+        void loadTemplate(initialTemplateId);
+        setEditingTemplateId(initialTemplateId);
+      } else {
+        initializeDefaultBlocks(templateMeta?.sourceType || templateSourceType);
+      }
+      return;
+    }
+
+    // Report mode (default)
     if (reportId) {
       loadReport(reportId);
     } else if (initialTemplateId) {
@@ -231,7 +292,16 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       void initializeFromSource(initialSourceType, initialSourceId);
       setReportTitle(`${initialSourceName || 'Assessment'} - Report`);
     }
-  }, [reportId, initialSourceType, initialSourceId, initialSourceName, initialTemplateId]);
+  }, [
+    reportId,
+    initialSourceType,
+    initialSourceId,
+    initialSourceName,
+    initialTemplateId,
+    isTemplateMode,
+    templateMeta,
+    templateSourceType,
+  ]);
 
   const loadReport = async (id: string) => {
     setIsLoading(true);
@@ -291,6 +361,16 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       const tpl = res?.template;
       if (!tpl) return;
       setSelectedTemplateId(templateId);
+      if (isTemplateMode) {
+        if (tpl?.name) setReportTitle(String(tpl.name));
+        setTemplateDescription(String(tpl.description || ''));
+        const recipient = (tpl as any)?.defaultOptions?.recipient;
+        setTemplateRecipient(
+          recipient === 'board' || recipient === 'bank' || recipient === 'team' ? recipient : ''
+        );
+        if (tpl?.sourceType) setTemplateSourceType(String(tpl.sourceType) as ReportSourceType);
+        setTemplateReportType(String(tpl.reportType || ''));
+      }
       const sections: any[] = Array.isArray((tpl as any).sections)
         ? (tpl as any).sections
         : (tpl as any).sections_json
@@ -494,6 +574,93 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
 
   // Save & Generate
   const handleSave = async () => {
+    if (isTemplateMode) {
+      const name = (reportTitle || '').trim();
+      if (!name) {
+        toast.error(isPl ? 'Nazwa szablonu jest wymagana' : 'Template name is required');
+        return;
+      }
+
+      setIsSaving(true);
+      try {
+        const normalizedSections = [...blocks]
+          .sort((a, b) => a.orderIndex - b.orderIndex)
+          .map((b, idx) => ({
+            key: b.id,
+            type: String(
+              (
+                [
+                  'cover',
+                  'summary',
+                  'methodology',
+                  'matrix',
+                  'axis_analysis',
+                  'list',
+                  'recommendations',
+                  'action_plan',
+                  'appendix',
+                  'custom',
+                ] as const
+              ).includes(b.type as any)
+                ? b.type
+                : 'custom'
+            ),
+            title: b.title,
+            required: Boolean(b.enabled),
+            enabled: Boolean(b.enabled),
+            order: idx,
+            defaultLength: b.length,
+            customPrompt: b.customPrompt,
+            blockTypeId: b.blockTypeId,
+            renderKind: b.type === 'matrix' ? 'matrix' : b.renderKind,
+            description: b.description,
+            dataSource: b.dataSource,
+            includeVisuals: Boolean(b.includeVisuals),
+          }));
+
+        let saved: any;
+        const defaultOptions =
+          templateRecipient && ['board', 'bank', 'team'].includes(templateRecipient)
+            ? { recipient: templateRecipient }
+            : null;
+        if (editingTemplateId) {
+          saved = await Api.put(`/report-builder/templates/${editingTemplateId}`, {
+            name,
+            description: templateDescription || undefined,
+            sections: normalizedSections,
+            defaultOptions,
+          });
+        } else {
+          saved = await Api.post('/report-builder/templates', {
+            name,
+            description: templateDescription || undefined,
+            sourceType: templateSourceType,
+            reportType: templateReportType || undefined,
+            sections: normalizedSections,
+            defaultOptions,
+            isPublic: false,
+          });
+        }
+
+        const tpl = saved?.template;
+        if (tpl?.id) {
+          setEditingTemplateId(String(tpl.id));
+          toast.success(isPl ? 'Szablon zapisany' : 'Template saved');
+          onTemplateSaved?.({ id: String(tpl.id), name: String(tpl.name || name) });
+        } else {
+          toast.success(isPl ? 'Szablon zapisany' : 'Template saved');
+        }
+      } catch (err: any) {
+        console.error('Failed to save template:', err);
+        toast.error(
+          err?.error || err?.message || (isPl ? 'Błąd zapisu szablonu' : 'Failed to save template')
+        );
+      } finally {
+        setIsSaving(false);
+      }
+      return;
+    }
+
     if (!sourceType || !sourceId) return;
 
     setIsSaving(true);
@@ -678,6 +845,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   };
 
   const handleGenerate = async () => {
+    if (isTemplateMode) return;
     if (!report?.id) {
       // Save first
       await handleSave();
@@ -744,7 +912,15 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             type="text"
             value={reportTitle}
             onChange={(e) => setReportTitle(e.target.value)}
-            placeholder={isPl ? 'Tytuł raportu...' : 'Report title...'}
+            placeholder={
+              isTemplateMode
+                ? isPl
+                  ? 'Nazwa szablonu...'
+                  : 'Template name...'
+                : isPl
+                  ? 'Tytuł raportu...'
+                  : 'Report title...'
+            }
             className="text-lg font-semibold bg-transparent border-none outline-none text-slate-900 dark:text-white placeholder-slate-400 w-80"
           />
         </div>
@@ -756,26 +932,36 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
           >
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {isPl ? 'Zapisz' : 'Save'}
+            {isTemplateMode
+              ? isPl
+                ? 'Zapisz szablon'
+                : 'Save template'
+              : isPl
+                ? 'Zapisz'
+                : 'Save'}
           </button>
 
-          <button className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
-            <Eye className="w-4 h-4" />
-            {isPl ? 'Podgląd' : 'Preview'}
-          </button>
+          {!isTemplateMode && (
+            <>
+              <button className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+                <Eye className="w-4 h-4" />
+                {isPl ? 'Podgląd' : 'Preview'}
+              </button>
 
-          <button
-            onClick={handleGenerate}
-            disabled={isGenerating || blocks.filter((b) => b.enabled).length === 0}
-            className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-          >
-            {isGenerating ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Sparkles className="w-4 h-4" />
-            )}
-            {isPl ? 'Generuj' : 'Generate'}
-          </button>
+              <button
+                onClick={handleGenerate}
+                disabled={isGenerating || blocks.filter((b) => b.enabled).length === 0}
+                className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                {isGenerating ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4" />
+                )}
+                {isPl ? 'Generuj' : 'Generate'}
+              </button>
+            </>
+          )}
         </div>
       </header>
 
@@ -785,7 +971,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         <main className="flex-1 overflow-y-auto p-8">
           <div className="max-w-3xl mx-auto space-y-4">
             {/* Source Info */}
-            {sourceName && (
+            {!isTemplateMode && sourceName && (
               <div className="flex items-center gap-2 text-sm text-slate-500 mb-6">
                 <Layers className="w-4 h-4" />
                 <span>
@@ -850,19 +1036,102 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         </main>
 
         {/* Right Sidebar - Settings */}
-        <SettingsPanel
-          intent={intent}
-          styling={styling}
-          sourceType={sourceType}
-          sourceName={sourceName}
-          onIntentChange={(updates) => setIntent((prev) => ({ ...prev, ...updates }))}
-          onStylingChange={(updates) => setStyling((prev) => ({ ...prev, ...updates }))}
-          activeSection={settingsSection}
-          onSectionChange={setSettingsSection}
-          exportPanel={exportPanel}
-          isCollapsed={isSettingsPanelCollapsed}
-          onToggleCollapse={() => setIsSettingsPanelCollapsed((prev) => !prev)}
-        />
+        {isTemplateMode ? (
+          <aside className="w-80 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex-shrink-0 overflow-y-auto">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800">
+              <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                {isPl ? 'Ustawienia szablonu' : 'Template settings'}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                {isPl
+                  ? 'Wybierz moduł i opisz przeznaczenie szablonu.'
+                  : 'Pick module and describe template intent.'}
+              </div>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
+                  {isPl ? 'Moduł (source type)' : 'Module (source type)'}
+                </label>
+                <select
+                  value={templateSourceType}
+                  onChange={(e) => setTemplateSourceType(e.target.value as ReportSourceType)}
+                  className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white"
+                >
+                  <option value="ASSESSMENT">Assessment</option>
+                  <option value="INTERVIEW">Interview</option>
+                  <option value="TOOL">Tool</option>
+                  <option value="INITIATIVE">Initiative</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
+                  {isPl
+                    ? 'Framework / typ raportu (opcjonalnie)'
+                    : 'Framework / report type (optional)'}
+                </label>
+                <input
+                  value={templateReportType}
+                  onChange={(e) => setTemplateReportType(e.target.value)}
+                  placeholder={
+                    isPl ? 'np. DRD, SIRI, ASSESSMENT_DRD…' : 'e.g. DRD, SIRI, ASSESSMENT_DRD…'
+                  }
+                  className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
+                  {isPl ? 'Dla kogo (opcjonalnie)' : 'Recipient (optional)'}
+                </label>
+                <select
+                  value={templateRecipient}
+                  onChange={(e) =>
+                    setTemplateRecipient(e.target.value as '' | 'board' | 'bank' | 'team')
+                  }
+                  className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white"
+                >
+                  <option value="">{isPl ? 'Nie ustawiono' : 'Not set'}</option>
+                  <option value="board">{isPl ? 'Zarząd / Executive' : 'Board / Executive'}</option>
+                  <option value="bank">{isPl ? 'Bank / Finansowy' : 'Bank / Financial'}</option>
+                  <option value="team">{isPl ? 'Zespół' : 'Team'}</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
+                  {isPl ? 'Opis' : 'Description'}
+                </label>
+                <textarea
+                  value={templateDescription}
+                  onChange={(e) => setTemplateDescription(e.target.value)}
+                  rows={4}
+                  placeholder={
+                    isPl
+                      ? 'Co ma być w tym szablonie? Dla kogo? Jaki styl?'
+                      : 'What should this template include? For whom? Which style?'
+                  }
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white"
+                />
+              </div>
+            </div>
+          </aside>
+        ) : (
+          <SettingsPanel
+            intent={intent}
+            styling={styling}
+            sourceType={sourceType}
+            sourceName={sourceName}
+            onIntentChange={(updates) => setIntent((prev) => ({ ...prev, ...updates }))}
+            onStylingChange={(updates) => setStyling((prev) => ({ ...prev, ...updates }))}
+            activeSection={settingsSection}
+            onSectionChange={setSettingsSection}
+            exportPanel={exportPanel}
+            isCollapsed={isSettingsPanelCollapsed}
+            onToggleCollapse={() => setIsSettingsPanelCollapsed((prev) => !prev)}
+          />
+        )}
       </div>
 
       {/* Block Palette Modal */}
@@ -871,7 +1140,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           onSelect={addBlock}
           onClose={() => setShowBlockPalette(false)}
           isPl={isPl}
-          sourceType={sourceType}
+          sourceType={isTemplateMode ? templateSourceType : sourceType}
         />
       )}
     </div>

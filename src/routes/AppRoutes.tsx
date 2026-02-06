@@ -963,19 +963,9 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
-        <Route
-          path={ROUTES.REPORTS}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Reports']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <FullReportsView />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
-          }
-        />
-        {/* Report Builder Module */}
+        {/* Legacy /reports redirects to Report Builder */}
+        <Route path="/reports" element={<Navigate to="/reports/builder" replace />} />
+        {/* Report Builder Module (ROUTES.REPORTS now points to /reports/builder) */}
         <Route
           path="/assessment-reports/:reportId"
           element={

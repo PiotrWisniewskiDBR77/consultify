@@ -233,7 +233,7 @@ export const useAIStream = (options: StreamOptions = {}) => {
   const [progress, setProgress] = useState(0);
   const abortRef = useRef({ aborted: false });
   const retryCountRef = useRef(0);
-  const MAX_AUTO_RETRIES = 1;
+  const MAX_AUTO_RETRIES = 3;
   const thinkingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const thinkingClearTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -574,18 +574,23 @@ export const useAIStream = (options: StreamOptions = {}) => {
           }
         );
       } catch (error) {
-        // Auto-retry once on network/stream errors (not on user abort)
+        // Auto-retry with exponential backoff on network/stream errors (not on user abort)
         if (
           !abortRef.current.aborted &&
           retryCountRef.current < MAX_AUTO_RETRIES &&
-          // Only retry on network-like errors, not on access/auth errors
+          // Only retry on network-like errors, not on access/auth/budget errors
           !(error as Error)?.message?.includes('ACCESS_BLOCKED') &&
-          !(error as Error)?.message?.includes('Unauthorized')
+          !(error as Error)?.message?.includes('Unauthorized') &&
+          !(error as Error)?.message?.includes('AI_BUDGET_EXHAUSTED') &&
+          !(error as Error)?.message?.includes('RATE_LIMIT_EXCEEDED')
         ) {
           retryCountRef.current += 1;
-          console.warn(`[useAIStream] Auto-retry ${retryCountRef.current}/${MAX_AUTO_RETRIES}…`);
-          // Small delay before retry
-          await new Promise((r) => setTimeout(r, 1500));
+          // Exponential backoff: 1.5s, 3s, 6s
+          const backoffMs = 1500 * Math.pow(2, retryCountRef.current - 1);
+          console.warn(
+            `[useAIStream] Auto-retry ${retryCountRef.current}/${MAX_AUTO_RETRIES} in ${backoffMs}ms…`
+          );
+          await new Promise((r) => setTimeout(r, backoffMs));
           if (!abortRef.current.aborted) {
             try {
               await Api.chatWithAIStream(
