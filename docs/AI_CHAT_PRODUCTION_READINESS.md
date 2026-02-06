@@ -10,7 +10,9 @@
 
 ## 📋 Executive Summary
 
-System AI Chat w Consultinity jest **w 100% gotowy do produkcji** i audytu przez inwestorów. Wszystkie komponenty zostały zaimplementowane, przetestowane i udokumentowane zgodnie z najwyższymi standardami enterprise.
+System AI Chat w Consultinity jest **produkcyjnie gotowy dla core Chat + streaming + governance (HITL, RBAC, budżety)** i audytu przez inwestorów.
+
+**Uwaga dot. zakresu:** Zaawansowane podsystemy (np. embeddings/RAG rozszerzony, memory/learning test suites L6.9–L6.17) mają osobny raport sprawności i plan testów w `wdrozenia/modules/tools/AI-CHAT-SYSTEM-HEALTH.md`. “Production ready” w tym dokumencie dotyczy zakresu endpointów i komponentów opisanych poniżej.
 
 ---
 

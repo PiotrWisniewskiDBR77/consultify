@@ -109,29 +109,27 @@ The Consultinity AI system has successfully completed all audit recommendations 
 ### New Services Created
 
 ```
-server/services/ai/
-├── rerankerService.js          # LLM re-ranking
-├── citationVerifier.js         # Citation verification
-├── proactiveSuggestionsService.js  # Proactive suggestions
-├── responseQualityService.js   # Quality scoring
-└── aiMemoryMetricsService.js   # Memory metrics
+server/src/services/ai/
+├── rerankerService.ts              # LLM re-ranking
+├── citationVerifier.ts             # Citation verification
+├── proactiveSuggestionsService.ts  # Proactive suggestions
+├── responseQualityService.ts       # Quality scoring
+└── aiMemoryMetricsService.ts       # Memory metrics
 
-server/services/
-├── secretManager.js            # Secret rotation
-└── circuitBreakerService.js    # Unified circuit breaker
+server/src/services/
+└── circuitBreakerService.ts        # Unified circuit breaker
 ```
 
 ### New Components Created
 
 ```
-components/AIChat/
+src/components/AIChat/
 ├── PendingActionsIndicator.tsx    # Action visibility
-├── ProactiveSuggestions.tsx       # Suggestions UI
+├── SmartSuggestions.tsx           # Suggestions UI
 └── ResponseQualityIndicator.tsx   # Quality indicator
 
-components/settings/
-├── AISLADashboard.tsx             # SLA monitoring
-└── AIMemoryMetricsDashboard.tsx   # Memory dashboard
+src/components/Admin/
+└── AISLADashboard.tsx             # SLA monitoring (admin)
 ```
 
 ### New Test Suites
@@ -139,13 +137,13 @@ components/settings/
 ```
 tests/
 ├── chaos/
-│   └── ai-chaos-tests.js          # Chaos engineering
+│   └── ai-chaos-tests             # Chaos engineering
 ├── security/
 │   ├── ai-multi-tenant.test.js    # Multi-tenant security
-│   ├── ai-pentest-suite.js        # Penetration tests
+│   ├── ai-pentest-suite.test.js   # Penetration tests
 │   ├── ai-prompt-injection.test.js # Injection tests
 │   ├── ai-zero-trust.test.js      # Zero-trust tests
-│   └── encryption-audit.js        # Encryption audit
+│   └── encryption-audit.test.js   # Encryption audit
 └── integration/
     └── ai-enterprise-verification.test.js  # Verification suite
 ```

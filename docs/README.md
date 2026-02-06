@@ -27,10 +27,11 @@
 ### Core Architecture
 
 - [System Architecture](architecture/SYSTEM_ARCHITECTURE.md) - High-level design & components
+- [Service Architecture](architecture/SERVICE_ARCHITECTURE.md) - Service decomposition & boundaries
 - [Infrastructure](architecture/INFRASTRUCTURE.md) - Cloud architecture & scalability
-- [Data Architecture](architecture/DATA_ARCHITECTURE.md) - Database & data flows
-- [Security Architecture](architecture/SECURITY_ARCHITECTURE.md) - Security design
-- [API Architecture](architecture/API_ARCHITECTURE.md) - API design & contracts
+- [Architecture Map](architecture/ARCHITECTURE_MAP.md) - Map of major subsystems
+- [Architecture Notes](architecture/ARCHITECTURE.md) - Additional architecture notes
+- [Partner Payout Integration](architecture/PARTNER_PAYOUT_INTEGRATION.md) - Stripe/partner payouts integration
 
 ---
 
@@ -49,11 +50,14 @@
 
 ## ⚙️ Engineering Standards
 
-- [Engineering Handbook](engineering/ENGINEERING_HANDBOOK.md) - Team handbook
-- [Development Standards](engineering/DEVELOPMENT_STANDARDS.md) - Code quality standards
-- [Testing Standards](engineering/TESTING_STANDARDS.md) - QA practices
-- [Technology Stack](engineering/TECHNOLOGY_STACK.md) - Tech decisions & rationale
-- [CI/CD Pipeline](engineering/CI_CD_PIPELINE.md) - Automation
+- [Quick Start](engineering/QUICK_START.md) - Fast setup guide
+- [Development Guide](engineering/DEVELOPMENT.md) - Local development and environment
+- [Development Workflow](engineering/DEVELOPMENT_WORKFLOW.md) - Branching/review/release workflow
+- [LLM Provider Setup](engineering/LLM_PROVIDER_SETUP.md) - AI provider configuration
+- [Branch Protection Setup](engineering/BRANCH_PROTECTION_SETUP.md) - GitHub branch protection
+- [TypeScript Migration Guide](engineering/typescript-migration-guide.md) - Backend/service migration guide
+- [Migration Verification Report](engineering/migration-verification-report.md) - Current migration state
+- [Build Optimization Guide](engineering/build-optimization-guide.md) - Build performance tips
 
 ---
 
@@ -62,11 +66,12 @@
 **Critical for Enterprise:**
 
 - [SLA/SLO](operations/SLA_SLO.md) - **99.9% uptime target** ⭐
-- [Runbooks](operations/RUNBOOKS.md) - Operational procedures
-- [Incident Management](operations/INCIDENT_MANAGEMENT.md) - Incident response
-- [Monitoring & Observability](operations/MONITORING_OBSERVABILITY.md) - Monitoring stack
-- [Deployment Procedures](operations/DEPLOYMENT_PROCEDURES.md) - Release process
+- [Deployment Guide](operations/DEPLOYMENT_GUIDE.md) - Deployment procedures / release process
+- [Production Deployment Checklist](operations/PRODUCTION_DEPLOYMENT_CHECKLIST.md) - Go-live checklist
+- [Monitoring Dashboard](operations/MONITORING_DASHBOARD.md) - Monitoring & observability entry point
+- [Incident Response Playbook](operations/INCIDENT_RESPONSE_PLAYBOOK.md) - Incident response
 - [Disaster Recovery](operations/DISASTER_RECOVERY.md) - DR & BCP
+- [Load Testing Guide](operations/LOAD_TESTING_GUIDE.md) - Load/perf testing procedures
 
 ---
 
@@ -75,20 +80,24 @@
 **VC DD Critical:**
 
 - [Compliance Matrix](security-compliance/COMPLIANCE_MATRIX.md) - **GDPR/SOC2/ISO27001** ⭐
-- [Security Policies](security-compliance/SECURITY_POLICIES.md) - Governance policies
-- [Data Protection](security-compliance/DATA_PROTECTION.md) - Privacy & GDPR
-- [Access Control](security-compliance/ACCESS_CONTROL.md) - RBAC & IAM
-- [Vulnerability Management](security-compliance/VULNERABILITY_MANAGEMENT.md) - Security testing
-- [Audit Logs](security-compliance/AUDIT_LOGS.md) - Audit trail
+- [GDPR Compliance Guide](security-compliance/GDPR_COMPLIANCE_GUIDE.md) - Article-by-article mapping
+- [SOC2 Implementation Guide](security-compliance/SOC2_IMPLEMENTATION_GUIDE.md) - Control design (TSC)
+- [DPIA - AI Processing](security-compliance/DPIA_AI_PROCESSING.md) - AI privacy assessment
+- [Encryption Configuration](security-compliance/ENCRYPTION_CONFIGURATION.md) - Crypto & key handling
+- [RBAC Audit Report](security-compliance/RBAC_AUDIT_REPORT.md) - RBAC coverage
+- [Security Runbooks](security-compliance/SECURITY_RUNBOOKS.md) - Operational security procedures
+- [Security Module Audit](security-compliance/SECURITY_MODULE_AUDIT.md) - Module-level gaps & evidence
+- [Security Mock Endpoints](security-compliance/SECURITY_MOCK_ENDPOINTS.md) - Known stubs/mocks
+- [Security Verification Request](security-compliance/SECURITY_VERIFICATION_REQUEST.md) - Verification checklist
 
 ---
 
 ## 👥 Organization & Process
 
 - [Team Structure](organization/TEAM_STRUCTURE.md) - Engineering organization
-- [IP Assignments](organization/IP_ASSIGNMENTS.md) - **CIIAA status** ⭐
-- [Onboarding](organization/ONBOARDING.md) - New hire process
-- [Development Workflow](organization/DEVELOPMENT_WORKFLOW.md) - SDLC
+- [CIIAA Execution Guide](organization/CIIAA_EXECUTION_GUIDE.md) - **IP assignment execution** ⭐
+- [DPO Job Description](organization/DPO_JOB_DESCRIPTION.md) - DPO role definition (Q1 2026)
+- [Business Metrics Collection](organization/BUSINESS_METRICS_COLLECTION.md) - Metrics program & ownership
 
 ---
 
@@ -97,9 +106,8 @@
 **VC DD Metrics:**
 
 - [Quality Metrics](metrics/QUALITY_METRICS.md) - **96% coverage, 100% pass rate** ⭐
-- [Technical KPIs](metrics/TECHNICAL_KPIS.md) - DORA metrics
-- [Performance Benchmarks](metrics/PERFORMANCE_BENCHMARKS.md) - Response times
-- [Uptime & Reliability](metrics/UPTIME_RELIABILITY.md) - Availability metrics
+- [Business Metrics](metrics/BUSINESS_METRICS.md) - Example business metric set
+- [Business Metrics Example](metrics/BUSINESS_METRICS_EXAMPLE.md) - Worked examples
 
 ---
 
@@ -107,7 +115,7 @@
 
 **For VC Technical DD:**
 
-- [DD Checklist](due-diligence/TECH DD_CHECKLIST.md) - **Pre-answered DD questions** ⭐
+- [DD Checklist](due-diligence/TECH_DD_CHECKLIST.md) - **Pre-answered DD questions** ⭐
 - [Open Source Licenses](due-diligence/OPEN_SOURCE_LICENSES.md) - OSS inventory
 - [Third-Party Services](due-diligence/THIRD_PARTY_SERVICES.md) - Vendor dependencies
 - [IP Documentation](due-diligence/IP_DOCUMENTATION.md) - Intellectual property
@@ -118,21 +126,21 @@
 
 ### For Developers
 
-1. [Engineering Handbook](engineering/ENGINEERING_HANDBOOK.md)
-2. [Development Standards](engineering/DEVELOPMENT_STANDARDS.md)
-3. [Technology Stack](engineering/TECHNOLOGY_STACK.md)
+1. [Quick Start](engineering/QUICK_START.md)
+2. [Development Guide](engineering/DEVELOPMENT.md)
+3. [Development Workflow](engineering/DEVELOPMENT_WORKFLOW.md)
 
 ### For Operations/SRE
 
 1. [SLA/SLO](operations/SLA_SLO.md)
-2. [Runbooks](operations/RUNBOOKS.md)
-3. [Incident Management](operations/INCIDENT_MANAGEMENT.md)
+2. [Production Deployment Checklist](operations/PRODUCTION_DEPLOYMENT_CHECKLIST.md)
+3. [Incident Response Playbook](operations/INCIDENT_RESPONSE_PLAYBOOK.md)
 
 ### For Security/Compliance
 
 1. [Compliance Matrix](security-compliance/COMPLIANCE_MATRIX.md)
-2. [Security Policies](security-compliance/SECURITY_POLICIES.md)
-3. [Audit Logs](security-compliance/AUDIT_LOGS.md)
+2. [GDPR Compliance Guide](security-compliance/GDPR_COMPLIANCE_GUIDE.md)
+3. [SOC2 Implementation Guide](security-compliance/SOC2_IMPLEMENTATION_GUIDE.md)
 
 ### For Investors/VC
 

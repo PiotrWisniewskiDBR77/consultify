@@ -12,8 +12,8 @@
 
 **A**: Modern, proven enterprise stack
 
-- **Frontend**: React 18 + TypeScript + Vite
-- **Backend**: Node.js + TypeScript (ES Modules) + Express
+- **Frontend**: React 19 + TypeScript + Vite
+- **Backend**: Node.js 20 + TypeScript (ES Modules) + Express 5
 - **Database**: SQLite (dev) + PostgreSQL (production-ready)
 - **Caching**: Redis (distributed caching, 20x-400x speedups)
 - **AI**: Multi-provider (Google Gemini, OpenAI, Anthropic Claude)
