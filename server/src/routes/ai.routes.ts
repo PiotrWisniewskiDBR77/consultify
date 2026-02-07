@@ -4,6 +4,7 @@
  */
 
 import { Response, Router } from 'express';
+import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
@@ -65,6 +66,165 @@ const router = Router();
 
 // Apply rate limiting to all AI routes
 router.use(aiRateLimiter);
+
+// -------------------- Chat attachments ingestion --------------------
+// This is intentionally self-contained (no StorageService / KnowledgeService dependency).
+const attachmentsUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
+  fileFilter: (_req, file, cb) => {
+    const allowed = [
+      'application/pdf',
+      'text/plain',
+      'text/markdown',
+      'text/csv',
+      'application/json',
+    ];
+    if (allowed.includes(file.mimetype) || file.mimetype.startsWith('text/')) return cb(null, true);
+    return cb(new Error(`Unsupported file type: ${file.mimetype}`));
+  },
+});
+
+router.post(
+  '/attachments/ingest',
+  verifyToken,
+  attachmentsUpload.single('file'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const orgId = req.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const filename = String(req.file.originalname || 'attachment');
+    const mimeType = String(req.file.mimetype || '');
+    const docId = uuidv4();
+
+    // Extract text from buffer
+    let text = '';
+    try {
+      if (mimeType === 'application/pdf') {
+        const pdfParseMod = (await import('pdf-parse')) as any;
+        const pdf = pdfParseMod.default || pdfParseMod;
+        const out = await pdf(req.file.buffer);
+        text = String(out?.text || '');
+      } else {
+        text = req.file.buffer.toString('utf8');
+      }
+    } catch (err: any) {
+      logger.warn('[AI Attachments] Text extraction failed:', err?.message || String(err));
+      text = '';
+    }
+
+    if (!text || text.trim().length === 0) {
+      return res.status(400).json({ error: 'Could not extract any text from file' });
+    }
+
+    // Create a knowledge_docs row (schema is minimal across DBs; extra columns are optional)
+    await dbRun(
+      `INSERT INTO knowledge_docs (id, filename, filepath, status, created_at)
+       VALUES (?, ?, ?, 'indexed', CURRENT_TIMESTAMP)`,
+      [docId, filename, ''],
+      { fallback: true } as any
+    );
+    // Best-effort optional columns (do not fail request)
+    try {
+      await dbRun(`UPDATE knowledge_docs SET category = ? WHERE id = ?`, ['chat_attachment', docId], {
+        fallback: true,
+      } as any);
+    } catch {
+      /* ignore */
+    }
+    try {
+      await dbRun(`UPDATE knowledge_docs SET organization_id = ? WHERE id = ?`, [orgId, docId], {
+        fallback: true,
+      } as any);
+    } catch {
+      /* ignore */
+    }
+
+    const makeChunks = (raw: string): Array<{ chunkIndex: number; content: string }> => {
+      const normalized = String(raw || '').replace(/\r\n/g, '\n').trim();
+      const MAX = 1200;
+      const OVERLAP = 150;
+      const out: Array<{ chunkIndex: number; content: string }> = [];
+      if (!normalized) return out;
+
+      const paras = normalized
+        .split(/\n\s*\n/g)
+        .map((p) => p.trim())
+        .filter(Boolean);
+
+      let buf = '';
+      const flush = () => {
+        const c = buf.trim();
+        if (c) out.push({ chunkIndex: out.length, content: c });
+        buf = '';
+      };
+
+      const pushLong = (p: string) => {
+        const s = p.trim();
+        if (!s) return;
+        if (s.length <= MAX) {
+          out.push({ chunkIndex: out.length, content: s });
+          return;
+        }
+        let i = 0;
+        while (i < s.length) {
+          const chunk = s.slice(i, i + MAX).trim();
+          if (chunk) out.push({ chunkIndex: out.length, content: chunk });
+          if (i + MAX >= s.length) break;
+          i = Math.max(0, i + MAX - OVERLAP);
+        }
+      };
+
+      for (const p of paras) {
+        if (!p) continue;
+        if (!buf) {
+          if (p.length <= MAX) buf = p;
+          else pushLong(p);
+          continue;
+        }
+        if (buf.length + 2 + p.length <= MAX) {
+          buf += `\n\n${p}`;
+        } else {
+          flush();
+          if (p.length <= MAX) buf = p;
+          else pushLong(p);
+        }
+      }
+      flush();
+      if (out.length === 0) pushLong(normalized);
+      return out;
+    };
+
+    const ragModule = await import('../services/ragService.js');
+    const ragService = (ragModule.default || ragModule) as any;
+
+    const chunks = makeChunks(text);
+    let embeddedChunks = 0;
+    for (const c of chunks) {
+      const chunkIndex = Number(c.chunkIndex || 0);
+      const content = String(c.content || '').trim();
+      if (!content) continue;
+      const embedding = await ragService.generateEmbedding(content);
+      await dbRun(
+        `INSERT INTO knowledge_chunks (id, doc_id, content, chunk_index, embedding)
+         VALUES (?, ?, ?, ?, ?)`,
+        [`${docId}-chk-${chunkIndex}`, docId, content, chunkIndex, JSON.stringify(embedding || [])],
+        { fallback: true } as any
+      );
+      if (embedding && Array.isArray(embedding) && embedding.length > 0) embeddedChunks += 1;
+    }
+
+    return res.status(201).json({
+      success: true,
+      docId,
+      filename,
+      mimeType,
+      totalChunks: chunks.length,
+      embeddedChunks,
+    });
+  })
+);
 
 // Lazy load services to avoid circular dependencies
 
@@ -462,6 +622,10 @@ router.post(
     let streamAborted = false;
     let streamCompleted = false;
     let deepThinkingStartedLogged = false;
+    // Tracing / diagnostics (must be in outer stream handler scope)
+    let chatRunId: string | null = null;
+    let pipelineMeta: any = null;
+    const dtStatesEmitted: string[] = [];
 
     const languageMap: Record<string, string> = {
       pl: 'Polish (Polski)',
@@ -1578,6 +1742,91 @@ router.post(
             });
           }
 
+          // ================================================================
+          // Post-stream: Quality scoring (best-effort, non-blocking)
+          // ================================================================
+          if (accumulatedContent && accumulatedContent.trim().length > 0) {
+            try {
+              const qcMod = await import('../services/ai/qualityChecker.js');
+              const qc = (qcMod as any).qualityChecker || (qcMod as any).default;
+              if (qc?.check) {
+                const qualityScore = await qc.check({
+                  question: message,
+                  response: accumulatedContent,
+                  conversationId: conversationId || undefined,
+                  messageId: chatRunId || undefined,
+                  userId: req.userId,
+                  organizationId: req.organizationId,
+                });
+                if (qualityScore && typeof qualityScore.overall === 'number') {
+                  emitSSE({ type: 'quality_score', ...qualityScore });
+                }
+              }
+            } catch (qErr: any) {
+              logger.debug('[AI Stream] Quality scoring failed:', qErr?.message);
+            }
+
+            // ================================================================
+            // Post-stream: Citation extraction (best-effort, non-blocking)
+            // ================================================================
+            try {
+              const ceMod = await import('../services/ai/citationExtractor.js');
+              const ce = (ceMod as any).citationExtractor || (ceMod as any).default;
+              if (ce?.extract) {
+                // Gather knowledge sources from context (if any RAG chunks were used)
+                const ragChunks =
+                  ((pipelineRequest as any).context?.external?.attachmentsRag?.chunks as any[]) ||
+                  [];
+                const citationResult = ce.extract(accumulatedContent, [], ragChunks);
+                if (citationResult?.citations?.length > 0) {
+                  emitSSE({
+                    type: 'citations',
+                    citations: citationResult.citations.map((c: any) => ({
+                      id: c.id,
+                      type: c.sourceType || 'document',
+                      title: c.sourceTitle || '',
+                      reference: c.sourceUrl || c.sourceId || '',
+                      link: c.sourceUrl || '',
+                      excerpt: c.text || '',
+                      confidence: c.confidence,
+                    })),
+                  });
+                }
+              }
+            } catch (cErr: any) {
+              logger.debug('[AI Stream] Citation extraction failed:', cErr?.message);
+            }
+
+            // ================================================================
+            // Post-stream: Cost monitoring (best-effort, non-blocking)
+            // ================================================================
+            try {
+              const costMod = await import('../services/ai/cost-monitoring.service.js');
+              const costSvc = (costMod as any).aiCostMonitoring || (costMod as any).default;
+              if (costSvc?.recordUsage) {
+                const estimatedInput = Math.max(10, Math.ceil((message?.length || 0) / 4));
+                const estimatedOutput = Math.max(10, Math.ceil((accumulatedContent?.length || 0) / 4));
+                // Use actual token counts from pipeline metadata when available
+                const inputTokens = (pipelineMeta as any)?.inputTokens || estimatedInput;
+                const outputTokens = (pipelineMeta as any)?.outputTokens || estimatedOutput;
+                costSvc.recordUsage(
+                  req.userId!,
+                  req.organizationId!,
+                  (selectedTier || 'STANDARD') as any,
+                  pipelineMeta?.provider || 'unknown',
+                  pipelineMeta?.model || 'unknown',
+                  {
+                    inputTokens,
+                    outputTokens,
+                    totalTokens: inputTokens + outputTokens,
+                  }
+                );
+              }
+            } catch (costErr: any) {
+              logger.debug('[AI Stream] Cost monitoring failed:', costErr?.message);
+            }
+          }
+
           streamCompleted = true;
           res.write('data: [DONE]\n\n');
 
@@ -1622,9 +1871,57 @@ router.post(
         return res.end();
       } else {
         if (isClientConnected && !res.destroyed) {
+          const nonStreamContent = String((response as { content?: string }).content || '');
           res.write(
-            `data: ${JSON.stringify({ text: (response as { content?: string }).content || '' })}\n\n`
+            `data: ${JSON.stringify({ text: nonStreamContent })}\n\n`
           );
+
+          // Post-response: quality scoring + citations + cost monitoring (same as streaming branch)
+          if (nonStreamContent.trim().length > 0) {
+            try {
+              const qcMod = await import('../services/ai/qualityChecker.js');
+              const qc = (qcMod as any).qualityChecker || (qcMod as any).default;
+              if (qc?.check) {
+                const qs = await qc.check({
+                  question: message, response: nonStreamContent,
+                  conversationId: conversationId || undefined,
+                  userId: req.userId, organizationId: req.organizationId,
+                });
+                if (qs && typeof qs.overall === 'number') emitSSE({ type: 'quality_score', ...qs });
+              }
+            } catch { /* ignore */ }
+
+            try {
+              const ceMod = await import('../services/ai/citationExtractor.js');
+              const ce = (ceMod as any).citationExtractor || (ceMod as any).default;
+              if (ce?.extract) {
+                const cr = ce.extract(nonStreamContent, [], []);
+                if (cr?.citations?.length > 0) {
+                  emitSSE({ type: 'citations', citations: cr.citations.map((c: any) => ({
+                    id: c.id, type: c.sourceType || 'document', title: c.sourceTitle || '',
+                    reference: c.sourceUrl || c.sourceId || '', link: c.sourceUrl || '',
+                    excerpt: c.text || '', confidence: c.confidence,
+                  }))});
+                }
+              }
+            } catch { /* ignore */ }
+
+            try {
+              const costMod = await import('../services/ai/cost-monitoring.service.js');
+              const costSvc = (costMod as any).aiCostMonitoring || (costMod as any).default;
+              if (costSvc?.recordUsage) {
+                const ei = Math.max(10, Math.ceil((message?.length || 0) / 4));
+                const eo = Math.max(10, Math.ceil((nonStreamContent?.length || 0) / 4));
+                const it = (pipelineMeta as any)?.inputTokens || ei;
+                const ot = (pipelineMeta as any)?.outputTokens || eo;
+                costSvc.recordUsage(req.userId!, req.organizationId!,
+                  (selectedTier || 'STANDARD') as any,
+                  pipelineMeta?.provider || 'unknown', pipelineMeta?.model || 'unknown',
+                  { inputTokens: it, outputTokens: ot, totalTokens: it + ot });
+              }
+            } catch { /* ignore */ }
+          }
+
           streamCompleted = true;
           res.write('data: [DONE]\n\n');
 
@@ -1640,7 +1937,7 @@ router.post(
                 modelId: pipelineMeta?.model || null,
                 tier: selectedTier || null,
                 latencyMs: typeof pipelineMeta?.latency === 'number' ? pipelineMeta.latency : null,
-                outputText: String((response as any)?.content || ''),
+                outputText: nonStreamContent,
                 dtStates: dtStatesEmitted,
               });
             } catch {
@@ -3132,6 +3429,28 @@ router.post(
         }
       } catch (adaptErr) {
         logger.warn('[AI] Could not update adaptive service:', (adaptErr as Error).message);
+      }
+
+      // Feed into learning system for pattern analysis and quality improvement
+      try {
+        const lsMod = await import('../services/ai/learningSystem.js');
+        const ls = (lsMod as any).learningSystem || (lsMod as any).default;
+        if (ls?.processFeedback) {
+          await ls.processFeedback({
+            id: `fb_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            userId,
+            organizationId: req.organizationId,
+            conversationId: req.body.conversationId || '',
+            messageId,
+            feedbackType: rating,
+            comment: req.body.comment || undefined,
+            correction: req.body.correction || undefined,
+            timestamp: new Date().toISOString(),
+          });
+          logger.debug(`[AI Feedback] Learning system processed feedback for message ${messageId}`);
+        }
+      } catch (learnErr) {
+        logger.warn('[AI] Could not process feedback in learning system:', (learnErr as Error).message);
       }
 
       return res.json({ success: true });
