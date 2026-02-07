@@ -226,57 +226,77 @@ router.post(
     const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: Always respond in ${langName}.]\n`;
 
     // Confirm schema (structured output)
+    // NOTE: OpenAI Structured Outputs requires ALL properties to be in 'required' array.
+    // All fields must be required (no .optional() or .default()) for OpenAI compatibility.
     const ConfirmSchema = z.object({
       understanding: z.object({
-        goal: z.string().min(1),
-        context: z.string().optional().default(''),
-        constraints: z.array(z.string()).optional().default([]),
+        goal: z.string().describe('The main goal or objective of the user request'),
+        context: z.string().describe('Additional context about the request'),
+        constraints: z.array(z.string()).describe('Any constraints or limitations'),
         expectedOutput: z
           .enum(['Decision', 'StructuredAnalysis', 'FullReport'])
-          .default('FullReport'),
-        decisionHorizon: z.string().optional().default(''),
+          .describe('The type of output expected'),
+        decisionHorizon: z.string().describe('Time horizon for the decision'),
       }),
-      isClearEnoughToProceed: z.boolean().default(true),
+      isClearEnoughToProceed: z.boolean().describe('Whether the request is clear enough to proceed'),
       missingInfoQuestions: z
         .array(
           z.object({
-            id: z.string(),
-            question: z.string(),
-            whyItMatters: z.string().optional().default(''),
+            id: z.string().describe('Unique identifier for the question'),
+            question: z.string().describe('The question to ask'),
+            whyItMatters: z.string().describe('Why this question is important'),
           })
         )
-        .default([]),
+        .describe('Questions to clarify missing information'),
       researchPlanItems: z
         .array(
           z.object({
-            id: z.string(),
+            id: z.string().describe('Unique identifier for the research item'),
             type: z.enum([
               'ConceptualFrameworks',
               'PriorPatterns',
               'UserInputs',
               'ExternalReferences',
-            ]),
-            label: z.string(),
-            rationale: z.string().optional().default(''),
+            ]).describe('Type of research'),
+            label: z.string().describe('Label for the research item'),
+            rationale: z.string().describe('Why this research is needed'),
           })
         )
-        .default([]),
-      suggestedDepth: z.enum(['Light', 'Standard', 'Hard']).default('Standard'),
+        .describe('Planned research items'),
+      suggestedDepth: z.enum(['Light', 'Standard', 'Hard']).describe('Suggested depth of analysis'),
     });
 
     const { modelRouter } = await import('../services/ai/modelRouter.js');
+    const { modelMeetsRequirements } = await import('../services/ai/modelCapabilities.js');
     const { llmService } = await import('../services/ai/llmService.js');
 
-    // Select a cost-effective model for confirm unless user explicitly requested a specific route
+    // Select a model that supports Structured Outputs (JSON Schema).
+    // This is a hard contract requirement for the confirm step.
     const tier = (selectedTier || 'BUDGET') as any;
-    const modelCfg = selectedModelId
-      ? await modelRouter.getProviderConfig(selectedModelId, tier)
-      : await modelRouter.select({
-          capability: 'chat_simple',
-          tier,
-          organizationId: req.organizationId!,
-          options: { tier },
-        } as any);
+    const requirements = { structured_outputs: true as const };
+
+    let modelCfg: any = null;
+    if (selectedModelId) {
+      try {
+        const cfg = await modelRouter.getProviderConfig(selectedModelId, tier);
+        if (modelMeetsRequirements(cfg.id, requirements)) {
+          modelCfg = cfg;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (!modelCfg) {
+      modelCfg = await modelRouter.select({
+        capability: 'chat_confirm',
+        organizationId: req.organizationId,
+        tier,
+        requirements,
+      } as any);
+    }
+
+    logger.info('[AI Confirm] Using model:', modelCfg.id, 'provider:', modelCfg.provider);
 
     const compactHistory = (history || []).slice(-8).map((m) => ({
       role: m.role === 'model' ? 'assistant' : (m.role as any),
@@ -307,21 +327,33 @@ router.post(
       `- responseStyle: ${String(responseStyle || 'normal')}`,
     ].join('\n');
 
-    const result = (await llmService.callStructured({
-      type: 'chat',
-      modelConfig: {
-        provider: modelCfg.provider,
-        id: modelCfg.id,
-        endpoint: (modelCfg as any).endpoint,
-        apiKey: (modelCfg as any).apiKey,
-      },
-      systemPrompt: sys,
-      messages: [
-        ...compactHistory.filter((m) => m.content && String(m.content).trim().length > 0),
-        { role: 'user', content: user },
-      ],
-      schema: ConfirmSchema,
-    } as any)) as any;
+    logger.info('[AI Confirm] Calling LLM with model:', modelCfg.id, 'provider:', modelCfg.provider);
+    logger.info('[AI Confirm] History length:', compactHistory.length, 'User prompt length:', user.length);
+
+    let result: any;
+    try {
+      result = (await llmService.callStructured({
+        type: 'chat',
+        modelConfig: {
+          provider: modelCfg.provider,
+          id: modelCfg.id,
+          endpoint: (modelCfg as any).endpoint,
+          apiKey: (modelCfg as any).apiKey,
+        },
+        systemPrompt: sys,
+        messages: [
+          ...compactHistory.filter((m) => m.content && String(m.content).trim().length > 0),
+          { role: 'user', content: user },
+        ],
+        schema: ConfirmSchema,
+      } as any)) as any;
+    } catch (llmError: any) {
+      logger.error('[AI Confirm] LLM call failed:', llmError?.message || llmError);
+      logger.error('[AI Confirm] LLM error stack:', llmError?.stack);
+      throw llmError;
+    }
+
+    logger.info('[AI Confirm] LLM call succeeded, returning result');
 
     return res.json({
       confirm: result.object,
@@ -1081,11 +1113,13 @@ router.post(
                         `[DeepThinking] Force-depth FAIL: response too similar. ` +
                           `Jaccard=${forceDepthDiff.jaccardSimilarity}, delta=${forceDepthDiff.rubricDelta}`
                       );
-                      // Emit warning to frontend (informational, not blocking)
+                      // Emit explicit quality FAIL signal to frontend (non-blocking, but must be visible).
                       emitSSE({
                         type: 'dt_selfcheck',
-                        status: 'force_depth_insufficient',
-                        label: 'Analysis depth may be insufficient',
+                        status: 'failed',
+                        label:
+                          'Directed deepening failed: output is too similar (insufficient depth).',
+                        forceDepthDiff,
                       });
                     }
                   }
@@ -1129,6 +1163,93 @@ router.post(
                 err?.message || err
               );
             }
+          }
+
+          // ================================================================
+          // Agent Audit Layer (Post-DT) — optional, streamed transparency
+          // ================================================================
+          try {
+            const agentAudit = (context as any)?.agentAudit || null;
+            const agentIds = Array.isArray(agentAudit?.agentIds)
+              ? agentAudit.agentIds.map((x: any) => String(x || '').trim()).filter(Boolean)
+              : [];
+            const decisionContext = agentAudit?.decisionContext || null;
+
+            if (
+              aiModes?.deepResearch &&
+              req.organizationId &&
+              req.userId &&
+              decisionContext &&
+              agentIds.length > 0
+            ) {
+              emitSSE({
+                type: 'agent_audit_state',
+                state: 'reviewing',
+                agentsTotal: agentIds.length,
+              });
+
+              const { runAgentAudit } = await import('../services/ai/agentAudit/orchestratorService.js');
+              const { createAgentAuditRun } = await import(
+                '../services/ai/agentAudit/agentAuditStore.js'
+              );
+
+              const auditOut = await runAgentAudit({
+                organizationId: req.organizationId!,
+                userId: req.userId!,
+                conversationId: conversationId || null,
+                decisionContext,
+                deepThinkingReport: accumulatedContent,
+                forceDepthDiff,
+                agentIds,
+                userIntent: agentAudit?.userIntent || 'validate',
+                language,
+                webSearchEnabled: Boolean(aiModes?.webSearch),
+                selectedTier,
+                selectedModelId,
+                loopIteration: agentAudit?.loopIteration || 1,
+                emit: emitSSE,
+              } as any);
+
+              // Persist run (best-effort)
+              try {
+                await createAgentAuditRun({
+                  id: auditOut.orchestratorRunId,
+                  organizationId: req.organizationId!,
+                  userId: req.userId!,
+                  conversationId: conversationId || null,
+                  dtSessionId: streamSessionId,
+                  userIntent: String(agentAudit?.userIntent || 'validate'),
+                  loopIteration: Number(agentAudit?.loopIteration || 1),
+                  decisionContext: decisionContext || null,
+                  selectedAgentIds: agentIds,
+                  verdict: auditOut.verdict || null,
+                  reviews: (auditOut.reviews || []).map((r: any) => ({
+                    agentId: String(r.agentId || ''),
+                    overreach: r.overreach || null,
+                    review: r,
+                  })),
+                } as any);
+              } catch {
+                /* ignore */
+              }
+
+              emitSSE({
+                type: 'agent_audit_verdict',
+                orchestratorRunId: auditOut.orchestratorRunId,
+                verdict: auditOut.verdict,
+                reviews: auditOut.reviews,
+                decisionContext,
+                agentIds,
+                userIntent: agentAudit?.userIntent || 'validate',
+                loopIteration: agentAudit?.loopIteration || 1,
+              });
+            }
+          } catch (auditErr: any) {
+            emitSSE({
+              type: 'agent_audit_state',
+              state: 'error',
+              error: String(auditErr?.message || auditErr || ''),
+            });
           }
 
           streamCompleted = true;

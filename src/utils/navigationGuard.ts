@@ -92,8 +92,8 @@ export function getSafeRoute(view: AppView): string {
   const validation = validateNavigation(view);
 
   if (!validation.valid || !validation.route) {
-    console.error(`[NavigationGuard] Invalid navigation to ${view}, redirecting to dashboard`);
-    return ROUTES.DASHBOARD;
+    console.error(`[NavigationGuard] Invalid navigation to ${view}, redirecting to chat`);
+    return ROUTES.AI_CHAT;
   }
 
   return validation.route;

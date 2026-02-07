@@ -15,10 +15,11 @@ Ma sterować zachowaniem organizacji: wymuszać decyzję lub ruch w taskach.
 ---
 
 ## Zasady UX (kanon)1. Każda pozycja Inbox odpowiada na 4 pytania:
-   - **Co się dzieje**
-   - **Dlaczego to ważne**
-   - **Co jest blokowane**
-   - **Jakiej akcji oczekujemy** (Primary CTA)
+
+- **Co się dzieje**
+- **Dlaczego to ważne**
+- **Co jest blokowane**
+- **Jakiej akcji oczekujemy** (Primary CTA)
 
 2. Inbox pokazuje tylko rzeczy wymagające reakcji:
    - Decisions wymagające aktu (pending/overdue/critical)
@@ -38,9 +39,8 @@ Ma sterować zachowaniem organizacji: wymuszać decyzję lub ruch w taskach.
 - Scope: projekt/program/initiative (opcjonalnie)
 - Sort: domyślnie “Criticality score”
 
-### Lista pozycji (cards lub table rows)Każda pozycja:
+### Lista pozycji (cards lub table rows)Każda pozycja:- Ikona typu (Task / Decision / Alert)
 
-- Ikona typu (Task / Decision / Alert)
 - Tytuł (decision statement / task title)
 - 4-liniowy opis (co/dlaczego/blokuje/akcja)
 - Badges: priority (Critical/High/Medium/Low), aging, due/critical point

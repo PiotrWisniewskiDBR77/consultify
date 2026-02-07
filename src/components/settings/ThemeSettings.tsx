@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../lib/utils';
 import Api from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
 import { SettingsDivider, SettingsFormRow, SettingsSection } from './shared';
 
 interface ThemeSettingsProps {
@@ -33,7 +34,8 @@ const ACCENT_COLORS = [
 
 export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) => {
   const { t } = useTranslation();
-  const [theme, setTheme] = useState<Theme>('system');
+  const theme = useAppStore((s) => s.theme) as Theme;
+  const toggleTheme = useAppStore((s) => s.toggleTheme);
   const [accentColor, setAccentColor] = useState('#8b5cf6');
   const [originalTheme, setOriginalTheme] = useState<Theme>('system');
   const [originalAccent, setOriginalAccent] = useState('#8b5cf6');
@@ -51,43 +53,25 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
         const savedAccent = response?.preferences?.accentColor;
 
         if (savedTheme) {
-          setTheme(savedTheme);
+          toggleTheme(savedTheme);
           setOriginalTheme(savedTheme);
-          applyTheme(savedTheme);
+        } else {
+          // Use current app theme as baseline if backend didn't return anything.
+          setOriginalTheme(useAppStore.getState().theme as Theme);
         }
         if (savedAccent) {
           setAccentColor(savedAccent);
           setOriginalAccent(savedAccent);
         }
       } catch (err) {
-        // Fallback to localStorage
-        const localTheme = localStorage.getItem('theme') as Theme;
-        if (localTheme) {
-          setTheme(localTheme);
-          setOriginalTheme(localTheme);
-          applyTheme(localTheme);
-        }
+        // Fallback to current app theme (single source of truth)
+        setOriginalTheme(useAppStore.getState().theme as Theme);
       } finally {
         setLoading(false);
       }
     };
     loadTheme();
-  }, []);
-
-  const applyTheme = (newTheme: Theme) => {
-    if (newTheme === 'system') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.documentElement.classList.toggle('dark', prefersDark);
-    } else {
-      document.documentElement.classList.toggle('dark', newTheme === 'dark');
-    }
-    localStorage.setItem('theme', newTheme);
-  };
-
-  const handleThemeChange = (newTheme: Theme) => {
-    setTheme(newTheme);
-    applyTheme(newTheme);
-  };
+  }, [toggleTheme]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -154,7 +138,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                 return (
                   <button
                     key={id}
-                    onClick={() => handleThemeChange(id)}
+                    onClick={() => toggleTheme(id)}
                     className={cn(
                       'relative p-4 rounded-xl border-2 transition-all duration-200',
                       'hover:scale-[1.02] active:scale-[0.98]',

@@ -6,6 +6,7 @@ import * as DbPromise from '../../utils/DbPromise.js';
 import { appCache } from '../redis/CacheService.js';
 import type { LLMConfigService } from './llmConfigService.js';
 import { aiLogger } from './logger.js';
+import { modelMeetsRequirements, type ModelRequirements } from './modelCapabilities.js';
 
 export const TIER_HIERARCHY = ['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING'] as const;
 export type Tier = (typeof TIER_HIERARCHY)[number] | 'VISION';
@@ -14,6 +15,7 @@ export const CAPABILITY_TIERS: Record<string, Tier> = {
   chat: 'BUDGET',
   chat_simple: 'BUDGET',
   magic_wand: 'BUDGET',
+  chat_confirm: 'BUDGET',
   chat_complex: 'STANDARD',
   report_section: 'STANDARD',
   analysis: 'STANDARD',
@@ -146,6 +148,7 @@ type SelectParams = {
   tier?: string;
   organizationId?: string;
   options?: { tier?: string };
+  requirements?: ModelRequirements;
 };
 
 let _llmConfigService: LLMConfigService | null = null;
@@ -188,7 +191,7 @@ export class ModelRouter {
   }
 
   async select(params: SelectParams): Promise<ProviderConfig> {
-    const { capability, organizationId, options = {} } = params;
+    const { capability, organizationId, options = {}, requirements } = params;
     const tier = (options.tier ||
       params.tier ||
       CAPABILITY_TIERS[capability || ''] ||
@@ -201,8 +204,14 @@ export class ModelRouter {
 
     const override = await this.getOrgOverride(organizationId, capability);
     if (override) {
-      aiLogger.info('ModelRouter', `Using org override for ${capability}: ${override.model_id}`);
-      return this.getProviderConfig(override.model_id, (override.tier || tier) as Tier);
+      if (modelMeetsRequirements(override.model_id, requirements)) {
+        aiLogger.info('ModelRouter', `Using org override for ${capability}: ${override.model_id}`);
+        return this.getProviderConfig(override.model_id, (override.tier || tier) as Tier);
+      }
+      aiLogger.warn(
+        'ModelRouter',
+        `Org override model does not meet requirements (${capability}): ${override.model_id}`
+      );
     }
 
     // If an env var is explicitly set to empty string, treat that provider as disabled.
@@ -211,9 +220,14 @@ export class ModelRouter {
       process.env.OPENAI_API_KEY !== undefined && String(process.env.OPENAI_API_KEY).trim() === '';
 
     const availableModelsRaw = await this.getModelsForTier(tier, organizationId);
-    const availableModels = openaiDisabled
+    const availableModelsFilteredByProvider = openaiDisabled
       ? availableModelsRaw.filter((m) => String(m.provider || '').toLowerCase() !== 'openai')
       : availableModelsRaw;
+    const availableModels = requirements
+      ? availableModelsFilteredByProvider.filter((m) =>
+          modelMeetsRequirements(String((m as any).model_id || m.id || ''), requirements)
+        )
+      : availableModelsFilteredByProvider;
 
     if (availableModels.length > 0) {
       const selectedModel = await this.selectWithRoundRobin(tier, organizationId, availableModels);
@@ -243,7 +257,8 @@ export class ModelRouter {
           if (
             providerConfig &&
             providerConfig.isConfigured &&
-            providerConfig.healthStatus !== 'unhealthy'
+            providerConfig.healthStatus !== 'unhealthy' &&
+            modelMeetsRequirements(String(providerConfig.model_id || providerConfig.id || ''), requirements)
           ) {
             aiLogger.info('ModelRouter', `Selected ${providerId} from config service for ${tier}`);
             return {
@@ -266,7 +281,8 @@ export class ModelRouter {
     if (
       defaultProvider &&
       defaultProvider.api_key &&
-      !(openaiDisabled && String(defaultProvider.provider || '').toLowerCase() === 'openai')
+      !(openaiDisabled && String(defaultProvider.provider || '').toLowerCase() === 'openai') &&
+      modelMeetsRequirements(String(defaultProvider.model_id || defaultProvider.id || ''), requirements)
     ) {
       aiLogger.info(
         'ModelRouter',
@@ -300,12 +316,17 @@ export class ModelRouter {
       VISION: 'gemini-1.5-pro',
     };
 
-    const model =
-      !hasOpenAI && hasGemini
-        ? geminiDefaultByTier[tier] || 'gemini-1.5-flash'
-        : TIER_DEFAULTS[tier];
-    aiLogger.warn('ModelRouter', `Using static fallback: ${model} for tier ${tier}`);
-    return this.getProviderConfig(model, tier);
+    const staticCandidates = !hasOpenAI && hasGemini
+      ? [geminiDefaultByTier[tier] || 'gemini-1.5-flash', ...(TIER_FALLBACK_CHAINS[tier] || [])]
+      : [TIER_DEFAULTS[tier], ...(TIER_FALLBACK_CHAINS[tier] || [])];
+    const staticPick = staticCandidates.find((m) => modelMeetsRequirements(String(m || ''), requirements));
+    if (!staticPick) {
+      throw new Error(
+        `No model satisfies requirements for tier ${tier} (capability=${capability || 'n/a'})`
+      );
+    }
+    aiLogger.warn('ModelRouter', `Using static fallback: ${staticPick} for tier ${tier}`);
+    return this.getProviderConfig(staticPick, tier);
   }
 
   async getModelsForTier(tier: Tier, organizationId?: string): Promise<ProviderRow[]> {

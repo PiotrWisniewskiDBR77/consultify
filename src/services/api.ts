@@ -681,6 +681,101 @@ export const Api = {
     return data;
   },
 
+  // Agent Audit Layer (Post-DeepThinking)
+  agentAuditListAgents: async () => {
+    const response = await fetch(`${API_URL}/ai/agent-audit/agents`, {
+      method: 'GET',
+      headers: getHeaders(),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const msg = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
+      const err: any = new Error(msg);
+      err.code = data?.code;
+      throw err;
+    }
+    return data;
+  },
+
+  agentAuditSuggest: async (args: {
+    decisionContext: {
+      topic: string;
+      industry?: string;
+      horizon?: string;
+      functions?: string[];
+      riskFocus?: string[];
+    };
+    userIntent?: 'validate' | 'stress_test' | 'approve';
+    language?: string;
+    maxAgents?: 2 | 3 | 4;
+  }) => {
+    const response = await fetch(`${API_URL}/ai/agent-audit/suggest`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(args),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const msg = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
+      const err: any = new Error(msg);
+      err.code = data?.code;
+      throw err;
+    }
+    return data;
+  },
+
+  agentAuditReview: async (args: {
+    decisionContext: {
+      topic: string;
+      industry?: string;
+      horizon?: string;
+      functions?: string[];
+      riskFocus?: string[];
+    };
+    deepThinkingReport: string;
+    agentIds: string[];
+    conversationId?: string;
+    dtSessionId?: string;
+    webSearchEnabled?: boolean;
+    userIntent?: 'validate' | 'stress_test' | 'approve';
+    language?: string;
+    selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
+    selectedModelId?: string | null;
+    loopIteration?: 1 | 2;
+  }) => {
+    const response = await fetch(`${API_URL}/ai/agent-audit/review`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(args),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const msg = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
+      const err: any = new Error(msg);
+      err.code = data?.code;
+      throw err;
+    }
+    return data;
+  },
+
+  agentAuditAcceptRun: async (args: { runId: string; note?: string }) => {
+    const runId = String(args.runId || '').trim();
+    if (!runId) throw new Error('runId is required');
+    const response = await fetch(`${API_URL}/ai/agent-audit/runs/${encodeURIComponent(runId)}/accept`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ note: args.note }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const msg = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
+      const err: any = new Error(msg);
+      err.code = data?.code;
+      throw err;
+    }
+    return data;
+  },
+
   chatWithAI: async (
     message: string,
     history: any[],
@@ -736,34 +831,48 @@ export const Api = {
 
     const responseStyle = options?.responseStyle ?? 'normal';
 
+    const payload = {
+      message,
+      history,
+      systemInstruction,
+      context,
+      roleName,
+      language,
+      aiModes,
+      knowledgeSources,
+      responseStyle,
+      selectedTier: options?.selectedTier,
+      selectedModelId: options?.selectedModelId ?? null,
+      projectId: context?.projectId,
+      screenContext: context?.screenContext,
+      focusMode: context?.focusMode,
+    };
+
+    console.log('[Api.chatConfirm] Sending request:', {
+      message: message?.substring(0, 50),
+      historyLength: history?.length,
+      language,
+      aiModes,
+    });
+
     const response = await fetch(`${API_URL}/ai/chat/confirm`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({
-        message,
-        history,
-        systemInstruction,
-        context,
-        roleName,
-        language,
-        aiModes,
-        knowledgeSources,
-        responseStyle,
-        selectedTier: options?.selectedTier,
-        selectedModelId: options?.selectedModelId ?? null,
-        projectId: context?.projectId,
-        screenContext: context?.screenContext,
-        focusMode: context?.focusMode,
-      }),
+      body: JSON.stringify(payload),
     });
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
+      console.error('[Api.chatConfirm] Error response:', {
+        status: response.status,
+        data,
+      });
       const msg = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
       const err: any = new Error(msg);
       err.code = data?.code;
       throw err;
     }
+    console.log('[Api.chatConfirm] Success:', { hasConfirm: !!data?.confirm });
     return data;
   },
 
@@ -789,7 +898,8 @@ export const Api = {
       responseStyle?: 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
       selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
       selectedModelId?: string | null;
-    }
+    },
+    abortSignal?: AbortSignal
   ) => {
     try {
       // Build AI config payload from options
@@ -810,6 +920,7 @@ export const Api = {
       const response = await fetch(`${API_URL}/ai/chat/stream`, {
         method: 'POST',
         headers: getHeaders(),
+        signal: abortSignal,
         body: JSON.stringify({
           message,
           history,
@@ -1006,6 +1117,18 @@ export const Api = {
                     hasAnyVisibleOutput = true;
                     onChunk(friendly);
                   }
+                } else if (dataCode === 'DEEP_THINKING_CONFIRM_REQUIRED') {
+                  // Deep Thinking requires Confirm step - this is a flow control error, not a user-facing error.
+                  // The frontend should handle this by calling /api/ai/chat/confirm first.
+                  // Show a user-friendly message instead of the raw error.
+                  const uiLang = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
+                  const friendly =
+                    uiLang === 'pl'
+                      ? '⚠️ Tryb Deep Thinking wymaga najpierw potwierdzenia zrozumienia zadania. Spróbuj ponownie.'
+                      : '⚠️ Deep Thinking mode requires confirmation first. Please try again.';
+                  hasAnyVisibleOutput = true;
+                  onChunk(friendly);
+                  console.warn('[AI Stream] Deep Thinking confirm required but not called. Check frontend flow.');
                 } else {
                   // Non-access errors: show inline (so user isn't left with an empty assistant bubble)
                   hasAnyVisibleOutput = true;
@@ -4592,6 +4715,23 @@ export const Api = {
       body: JSON.stringify(message),
     });
     return handleResponse(res, 'Failed to add message');
+  },
+
+  /**
+   * Truncate a conversation after a given message (inclusive),
+   * optionally editing that message content. Used for "edit & regenerate" UX.
+   */
+  truncateConversation: async (
+    conversationId: string,
+    afterMessageId: string,
+    editedContent?: string
+  ): Promise<{ success: boolean; deletedCount?: number }> => {
+    const res = await fetchWithRetry(`${API_URL}/conversations/${conversationId}/truncate`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ afterMessageId, editedContent }),
+    });
+    return handleResponse(res, 'Failed to truncate conversation');
   },
 
   /**

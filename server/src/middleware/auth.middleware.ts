@@ -396,6 +396,18 @@ export const verifyToken = asyncHandler(
 );
 
 /**
+ * Compatibility middleware used across legacy routes.
+ * Assumes `verifyToken` (or another auth layer) already attached `req.user`.
+ */
+export const isAuthenticated = (req: AuthRequest, res: Response, next: NextFunction): void => {
+  if (req.user) {
+    next();
+    return;
+  }
+  res.status(401).json({ error: 'Authentication required' });
+};
+
+/**
  * Optional auth - attaches user if token present, but doesn't require it
  */
 export const optionalAuth = asyncHandler(

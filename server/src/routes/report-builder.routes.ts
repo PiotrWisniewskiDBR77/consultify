@@ -9,6 +9,17 @@ import bcrypt from 'bcryptjs';
 import { NextFunction, Request, Response, Router } from 'express';
 import fs from 'fs';
 import path from 'path';
+import {
+  AlignmentType,
+  Document,
+  Footer,
+  Header,
+  HeadingLevel,
+  Packer,
+  PageNumber,
+  Paragraph,
+  TextRun,
+} from 'docx';
 import PDFDocument from 'pdfkit';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -179,7 +190,14 @@ router.get('/sources/interview', async (req: Request, res: Response, next: NextF
       db.all(
         `SELECT s.id, s.name, s.status, s.total_questions, s.answered_questions,
                 s.template_id, s.completed_at, s.created_at, s.updated_at,
-                u.name as ownerName
+                COALESCE(
+                  NULLIF(
+                    TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')),
+                    ''
+                  ),
+                  u.email,
+                  u.id
+                ) as ownerName
          FROM interview_sessions s
          LEFT JOIN users u ON u.id = s.owner_id
          WHERE s.organization_id = ? AND s.status IN ('completed', 'in_progress')
@@ -231,7 +249,15 @@ router.get(
 
       const session = await new Promise<any>((resolve, reject) => {
         db.get(
-          `SELECT s.*, u.name as ownerName
+          `SELECT s.*,
+                  COALESCE(
+                    NULLIF(
+                      TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')),
+                      ''
+                    ),
+                    u.email,
+                    u.id
+                  ) as ownerName
            FROM interview_sessions s
            LEFT JOIN users u ON u.id = s.owner_id
            WHERE s.id = ? AND s.organization_id = ?`,
@@ -1624,9 +1650,45 @@ const writeReportBuilderPdf = async (
   sections: any[],
   filePath: string
 ): Promise<void> => {
-  const doc = new PDFDocument({ margin: 48, size: 'A4' });
+  // bufferPages enables adding page numbers after content generation
+  const doc = new PDFDocument({ margin: 48, size: 'A4', bufferPages: true });
   const stream = fs.createWriteStream(filePath);
   doc.pipe(stream);
+
+  const drawHeaderFooter = (pageNumber: number, totalPages: number) => {
+    const title = String(report.title || report.name || 'Report');
+    const org = report.organizationName ? String(report.organizationName) : '';
+
+    // Header
+    doc
+      .fontSize(9)
+      .fillColor('#64748b')
+      .text(org ? `${org} • ${title}` : title, 48, 22, { align: 'left' });
+    doc
+      .moveTo(48, 36)
+      .lineTo(doc.page.width - 48, 36)
+      .lineWidth(0.5)
+      .strokeColor('#e2e8f0')
+      .stroke();
+
+    // Footer
+    const footerY = doc.page.height - 34;
+    doc
+      .moveTo(48, footerY - 6)
+      .lineTo(doc.page.width - 48, footerY - 6)
+      .lineWidth(0.5)
+      .strokeColor('#e2e8f0')
+      .stroke();
+
+    doc
+      .fontSize(8)
+      .fillColor('#94a3b8')
+      .text('Confidential', 48, footerY, { align: 'left' });
+    doc
+      .fontSize(8)
+      .fillColor('#94a3b8')
+      .text(`${pageNumber} / ${totalPages}`, 48, footerY, { align: 'right' });
+  };
 
   // Title page
   doc
@@ -1642,6 +1704,7 @@ const writeReportBuilderPdf = async (
     align: 'center',
   });
   doc.moveDown(2);
+  doc.addPage();
 
   // Sections
   const enabledSections = sections
@@ -1653,7 +1716,7 @@ const writeReportBuilderPdf = async (
     if (!content) continue;
 
     // Section title
-    doc.fontSize(16).fillColor('#1e293b').text(section.title);
+    doc.fontSize(16).fillColor('#0f172a').text(section.title);
     doc.moveDown(0.3);
 
     // Check if it's a matrix section
@@ -1723,9 +1786,14 @@ const writeReportBuilderPdf = async (
     }
   }
 
-  // Footer on last page
-  doc.fontSize(8).fillColor('#94a3b8');
-  doc.text(`Report ID: ${report.id}`, 48, doc.page.height - 40);
+  // Add headers/footers with page numbers (skip title page)
+  const range = doc.bufferedPageRange(); // { start: 0, count: N }
+  const totalPages = range.count;
+  for (let i = range.start; i < range.start + range.count; i += 1) {
+    doc.switchToPage(i);
+    if (i === 0) continue; // title page
+    drawHeaderFooter(i + 1, totalPages);
+  }
 
   doc.end();
   await new Promise<void>((resolve, reject) => {
@@ -1857,6 +1925,153 @@ const writeReportBuilderWordDoc = async (report: any, sections: any[], filePath:
   await fs.promises.writeFile(filePath, html, 'utf8');
 };
 
+const markdownToDocxParagraphs = (markdown: string): Paragraph[] => {
+  const text = String(markdown || '');
+  const lines = text.split('\n');
+  const out: Paragraph[] = [];
+
+  for (const raw of lines) {
+    const line = raw.replace(/\r/g, '');
+    if (!line.trim()) {
+      out.push(new Paragraph({ text: '' }));
+      continue;
+    }
+
+    // Headings
+    if (line.startsWith('### ')) {
+      out.push(
+        new Paragraph({
+          text: line.slice(4).trim(),
+          heading: HeadingLevel.HEADING_3,
+        })
+      );
+      continue;
+    }
+    if (line.startsWith('## ')) {
+      out.push(
+        new Paragraph({
+          text: line.slice(3).trim(),
+          heading: HeadingLevel.HEADING_2,
+        })
+      );
+      continue;
+    }
+    if (line.startsWith('# ')) {
+      out.push(
+        new Paragraph({
+          text: line.slice(2).trim(),
+          heading: HeadingLevel.HEADING_1,
+        })
+      );
+      continue;
+    }
+
+    // Bullets
+    if (/^[-*]\s+/.test(line)) {
+      out.push(
+        new Paragraph({
+          text: line.replace(/^[-*]\s+/, '').trim(),
+          bullet: { level: 0 },
+        })
+      );
+      continue;
+    }
+
+    // Basic inline cleanup (drop markdown markers)
+    const cleaned = line
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/`(.*?)`/g, '$1')
+      .replace(/\[(.*?)\]\(.*?\)/g, '$1');
+
+    out.push(new Paragraph({ children: [new TextRun(String(cleaned))] }));
+  }
+
+  return out;
+};
+
+const writeReportBuilderDocx = async (report: any, sections: any[], filePath: string) => {
+  const title = report.title || report.name || 'Report';
+  const subtitleParts: string[] = [];
+  if (report.organizationName) subtitleParts.push(String(report.organizationName));
+  if (report.sourceFramework) subtitleParts.push(String(report.sourceFramework));
+  if (report.sourceName) subtitleParts.push(String(report.sourceName));
+
+  const enabledSections = (sections || [])
+    .filter((s) => s && s.enabled)
+    .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+
+  const children: Paragraph[] = [];
+
+  // Cover-ish header
+  children.push(
+    new Paragraph({
+      text: String(title),
+      heading: HeadingLevel.TITLE,
+      alignment: AlignmentType.CENTER,
+    })
+  );
+  if (subtitleParts.length) {
+    children.push(
+      new Paragraph({
+        text: subtitleParts.join(' • '),
+        alignment: AlignmentType.CENTER,
+      })
+    );
+  }
+  children.push(new Paragraph({ text: '' }));
+
+  // Body
+  for (const section of enabledSections) {
+    const sectionTitle = section.title || section.sectionKey || 'Section';
+    children.push(
+      new Paragraph({
+        text: String(sectionTitle),
+        heading: HeadingLevel.HEADING_1,
+      })
+    );
+    const content = section.editedContent || section.generatedContent || '';
+    children.push(...markdownToDocxParagraphs(String(content)));
+    children.push(new Paragraph({ text: '' }));
+  }
+
+  const doc = new Document({
+    sections: [
+      {
+        headers: {
+          default: new Header({
+            children: [
+              new Paragraph({
+                children: [new TextRun({ text: String(title), size: 18 })],
+              }),
+            ],
+          }),
+        },
+        footers: {
+          default: new Footer({
+            children: [
+              new Paragraph({
+                children: [
+                  new TextRun({ text: 'Consultify Report', size: 16 }),
+                  new TextRun('  •  '),
+                  new TextRun({ children: [PageNumber.CURRENT] }),
+                  new TextRun(' / '),
+                  new TextRun({ children: [PageNumber.TOTAL_PAGES] }),
+                ],
+                alignment: AlignmentType.RIGHT,
+              }),
+            ],
+          }),
+        },
+        children,
+      },
+    ],
+  });
+
+  const buffer = await Packer.toBuffer(doc);
+  await fs.promises.writeFile(filePath, buffer);
+};
+
 /**
  * GET /api/report-builder/:id/export/pdf
  * Export report as PDF
@@ -1907,9 +2122,9 @@ router.get('/:id/export/pdf', async (req: Request, res: Response, next: NextFunc
 
 /**
  * GET /api/report-builder/:id/export/doc
- * Export report as a Word document (.doc, HTML)
+ * Export report as a Word document (.docx)
  */
-router.get('/:id/export/doc', async (req: Request, res: Response, next: NextFunction) => {
+const exportDocx = async (req: Request, res: Response) => {
   try {
     const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
@@ -1920,10 +2135,11 @@ router.get('/:id/export/doc', async (req: Request, res: Response, next: NextFunc
     }
 
     const exportDir = await ensureExportDir();
-    const fileName = `${id}-${Date.now()}.doc`;
+    const fileName = `${id}-${Date.now()}.docx`;
     const filePath = path.join(exportDir, fileName);
 
-    await writeReportBuilderWordDoc(reportData.report, reportData.sections, filePath);
+    // Generate real DOCX (client-ready) instead of HTML-in-.doc
+    await writeReportBuilderDocx(reportData.report, reportData.sections, filePath);
 
     const stats = await fs.promises.stat(filePath);
 
@@ -1937,19 +2153,26 @@ router.get('/:id/export/doc', async (req: Request, res: Response, next: NextFunc
       exportedBy: userId,
     });
 
-    logger.info('[ReportBuilder] Word (.doc) exported', { reportId: id, userId });
+    logger.info('[ReportBuilder] Word (.docx) exported', { reportId: id, userId });
 
-    res.setHeader('Content-Type', 'application/msword');
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    );
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="${reportData.report.title || 'report'}.doc"`
+      `attachment; filename="${reportData.report.title || 'report'}.docx"`
     );
     return res.sendFile(filePath);
   } catch (err: any) {
-    logger.error('[ReportBuilder] Error exporting Word (.doc):', err);
+    logger.error('[ReportBuilder] Error exporting Word (.docx):', err);
     return res.status(500).json({ error: 'Failed to export Word', message: err.message });
   }
-});
+};
+
+// Backward compatible + explicit endpoints
+router.get('/:id/export/doc', exportDocx);
+router.get('/:id/export/docx', exportDocx);
 
 /**
  * GET /api/report-builder/:id/export/pptx

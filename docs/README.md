@@ -45,6 +45,11 @@
   - [Analytics Module](product/modules/analytics/) - Metrics & reporting
   - [Content Module](product/modules/content/) - Content management
 
+### AI Module — Technical Specs (SSOT)
+
+- [Deep Thinking Module](modules/ai/DEEP_THINKING_MODULE.md)
+- [Agent Audit Layer (Post-DT)](modules/ai/AGENT_AUDIT_LAYER.md)
+
 ---
 
 ## ⚙️ Engineering Standards
@@ -54,6 +59,19 @@
 - [Testing Standards](engineering/TESTING_STANDARDS.md) - QA practices
 - [Technology Stack](engineering/TECHNOLOGY_STACK.md) - Tech decisions & rationale
 - [CI/CD Pipeline](engineering/CI_CD_PIPELINE.md) - Automation
+
+---
+
+## 🎨 UI/UX Standards
+
+- [UI/UX Module Standard](UI_UX_MODULE_STANDARD.md) - Global layout patterns (breadcrumbs, top bar, table conventions)
+- [App Table Standard (Golden Standard)](ui-standards/app-table-standard.md) - Decisions/Report Templates table pattern
+
+---
+
+## 📄 Reports & Exports
+
+- [Report Builder Export Standard](REPORT_BUILDER_EXPORTS_STANDARD.md) - PDF/DOCX/PPTX export baseline + quality conventions
 
 ---
 

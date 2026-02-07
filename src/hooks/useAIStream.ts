@@ -203,6 +203,43 @@ type ResearchVisibilityEvent = {
   }>;
 };
 
+type AgentAuditStateEvent = {
+  type: 'agent_audit_state';
+  state: 'reviewing' | 'aggregating' | 'done' | 'error' | string;
+  orchestratorRunId?: string;
+  agentsTotal?: number;
+  qualityStatus?: string;
+  gatesTriggered?: string[];
+  error?: string;
+};
+
+type AgentReviewProgressEvent = {
+  type: 'agent_review_progress';
+  orchestratorRunId?: string;
+  agentId: string;
+  stage: 'start' | 'kb_retrieval' | 'llm_review' | 'done' | 'rejected' | 'error' | string;
+  error?: string;
+};
+
+type AgentSourcesEvent = {
+  type: 'agent_sources';
+  orchestratorRunId?: string;
+  agentId: string;
+  kind: 'kb' | 'web' | string;
+  sources: any[];
+};
+
+type AgentAuditVerdictEvent = {
+  type: 'agent_audit_verdict';
+  orchestratorRunId: string;
+  verdict: any;
+  reviews: any[];
+  decisionContext?: any;
+  agentIds?: string[];
+  userIntent?: string;
+  loopIteration?: number;
+};
+
 type PartialResponse = {
   sessionId: string;
   content: string;
@@ -217,11 +254,20 @@ export const useAIStream = (options: StreamOptions = {}) => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamedContent, setStreamedContent] = useState('');
   const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
+  const [lastError, setLastError] = useState<Error | null>(null);
   const [deepThinkingState, setDeepThinkingState] = useState<DeepThinkingStateEvent | null>(null);
   const [researchProgress, setResearchProgress] = useState<ResearchProgressEvent | null>(null);
   const [researchVisibility, setResearchVisibility] = useState<ResearchVisibilityEvent | null>(
     null
   );
+  const [agentAuditState, setAgentAuditState] = useState<AgentAuditStateEvent | null>(null);
+  const [agentReviewProgressByAgentId, setAgentReviewProgressByAgentId] = useState<
+    Record<string, AgentReviewProgressEvent>
+  >({});
+  const [agentSourcesByAgentId, setAgentSourcesByAgentId] = useState<
+    Record<string, { kb: any[]; web: any[] }>
+  >({});
+  const [agentAuditVerdict, setAgentAuditVerdict] = useState<AgentAuditVerdictEvent | null>(null);
   const [deepThinkingHint, setDeepThinkingHint] = useState<{
     reason: string;
     confidence: 'low' | 'medium' | 'high';
@@ -232,6 +278,16 @@ export const useAIStream = (options: StreamOptions = {}) => {
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [progress, setProgress] = useState(0);
   const abortRef = useRef({ aborted: false });
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const lastRequestRef = useRef<{
+    message: string;
+    history: any[];
+    systemPrompt?: string;
+    context?: Record<string, unknown>;
+    focusMode?: string;
+    roleName?: string;
+    language?: string;
+  } | null>(null);
   const retryCountRef = useRef(0);
   const MAX_AUTO_RETRIES = 3;
   const thinkingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -243,11 +299,16 @@ export const useAIStream = (options: StreamOptions = {}) => {
     setDeepThinkingState(null);
     setResearchProgress(null);
     setResearchVisibility(null);
+    setAgentAuditState(null);
+    setAgentReviewProgressByAgentId({});
+    setAgentSourcesByAgentId({});
+    setAgentAuditVerdict(null);
     setDeepThinkingHint(null);
     setInterimInsight(null);
     setArtifacts([]);
     setProgress(0);
     setCurrentStreamContent('');
+    setLastError(null);
     if (thinkingIntervalRef.current) {
       clearInterval(thinkingIntervalRef.current);
       thinkingIntervalRef.current = null;
@@ -268,11 +329,19 @@ export const useAIStream = (options: StreamOptions = {}) => {
       roleName?: string,
       language?: string
     ) => {
+      // Save for manual retry (best-effort)
+      lastRequestRef.current = { message, history, systemPrompt, context, focusMode, roleName, language };
+
       abortRef.current.aborted = false;
       retryCountRef.current = 0;
       setIsStreaming(true);
       setIsBotTyping(true);
       resetStreamState();
+      setLastError(null);
+
+      // Create a new abort controller for this stream
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = new AbortController();
 
       let fullText = '';
       let currentThinking: ThinkingStep[] = buildDefaultThinkingSteps(language || '');
@@ -480,6 +549,39 @@ export const useAIStream = (options: StreamOptions = {}) => {
           return;
         }
 
+        // Agent Audit Layer — streamed progress/sources/verdict
+        if (evt.type === 'agent_audit_state') {
+          setAgentAuditState(evt as AgentAuditStateEvent);
+          return;
+        }
+        if (evt.type === 'agent_review_progress') {
+          const e = evt as AgentReviewProgressEvent;
+          if (e?.agentId) {
+            setAgentReviewProgressByAgentId((prev) => ({ ...prev, [e.agentId]: e }));
+          }
+          return;
+        }
+        if (evt.type === 'agent_sources') {
+          const e = evt as AgentSourcesEvent;
+          const agentId = String(e?.agentId || '').trim();
+          if (!agentId) return;
+          setAgentSourcesByAgentId((prev) => {
+            const cur = prev[agentId] || { kb: [], web: [] };
+            const next =
+              e.kind === 'web'
+                ? { ...cur, web: Array.isArray(e.sources) ? e.sources : cur.web }
+                : e.kind === 'kb'
+                  ? { ...cur, kb: Array.isArray(e.sources) ? e.sources : cur.kb }
+                  : cur;
+            return { ...prev, [agentId]: next };
+          });
+          return;
+        }
+        if (evt.type === 'agent_audit_verdict') {
+          setAgentAuditVerdict(evt as AgentAuditVerdictEvent);
+          return;
+        }
+
         // Self-Check repair: replace streamed content entirely
         if (evt.type === 'dt_repair_replace') {
           const newText = String((evt as any).text || '');
@@ -517,10 +619,16 @@ export const useAIStream = (options: StreamOptions = {}) => {
         if (evt.type === 'dt_selfcheck') {
           const e = evt as {
             type: 'dt_selfcheck';
-            status: 'repairing' | 'passed' | 'best_effort';
+            status:
+              | 'repairing'
+              | 'passed'
+              | 'best_effort'
+              | 'failed'
+              | 'force_depth_insufficient';
             label?: string;
             iteration?: number;
             repairIterations?: number;
+            forceDepthDiff?: any;
           };
           if (isDeepThinking) {
             const now = new Date();
@@ -532,7 +640,10 @@ export const useAIStream = (options: StreamOptions = {}) => {
                     ...s,
                     label: e.label || s.label,
                     status:
-                      e.status === 'passed' || e.status === 'best_effort'
+                      e.status === 'passed' ||
+                      e.status === 'best_effort' ||
+                      e.status === 'failed' ||
+                      e.status === 'force_depth_insufficient'
                         ? ('done' as const)
                         : ('in_progress' as const),
                     timestamp: now,
@@ -571,7 +682,8 @@ export const useAIStream = (options: StreamOptions = {}) => {
             responseStyle: aiConfig?.responseStyle,
             selectedTier: (aiConfig as any)?.selectedTier,
             selectedModelId: (aiConfig as any)?.selectedModelId ?? null,
-          }
+          },
+          abortControllerRef.current?.signal
         );
       } catch (error) {
         // Auto-retry with exponential backoff on network/stream errors (not on user abort)
@@ -593,6 +705,9 @@ export const useAIStream = (options: StreamOptions = {}) => {
           await new Promise((r) => setTimeout(r, backoffMs));
           if (!abortRef.current.aborted) {
             try {
+              // New controller for retry
+              abortControllerRef.current?.abort();
+              abortControllerRef.current = new AbortController();
               await Api.chatWithAIStream(
                 message,
                 history,
@@ -611,7 +726,8 @@ export const useAIStream = (options: StreamOptions = {}) => {
                   responseStyle: aiConfig?.responseStyle,
                   selectedTier: (aiConfig as any)?.selectedTier,
                   selectedModelId: (aiConfig as any)?.selectedModelId ?? null,
-                }
+                },
+                abortControllerRef.current?.signal
               );
               return; // Retry succeeded
             } catch (retryError) {
@@ -621,9 +737,16 @@ export const useAIStream = (options: StreamOptions = {}) => {
           }
         }
 
+        // If aborted, don't surface as an error
+        const err = error as any;
+        if (abortRef.current.aborted || err?.name === 'AbortError') {
+          return;
+        }
+
         retryCountRef.current = 0;
         setIsStreaming(false);
         setIsBotTyping(false);
+        setLastError(error as Error);
         options.onStreamError?.(error as Error);
       }
     },
@@ -640,10 +763,28 @@ export const useAIStream = (options: StreamOptions = {}) => {
 
   const abortStream = useCallback(() => {
     abortRef.current.aborted = true;
+    abortControllerRef.current?.abort();
     setIsStreaming(false);
     setIsBotTyping(false);
     resetStreamState();
   }, [resetStreamState, setIsBotTyping]);
+
+  const retryLastStream = useCallback(async () => {
+    if (isStreaming) return;
+    const req = lastRequestRef.current;
+    if (!req) return;
+    await startStream(
+      req.message,
+      req.history,
+      req.systemPrompt,
+      req.context,
+      req.focusMode,
+      req.roleName,
+      req.language
+    );
+  }, [isStreaming, startStream]);
+
+  const clearLastError = useCallback(() => setLastError(null), []);
 
   const checkPartialResponse = useCallback(
     async (sessionId: string): Promise<PartialResponse | null> => {
@@ -688,6 +829,9 @@ export const useAIStream = (options: StreamOptions = {}) => {
   return {
     startStream,
     abortStream,
+    retryLastStream,
+    lastError,
+    clearLastError,
     resumeFromPartial,
     checkPartialResponse,
     isStreaming,
@@ -696,6 +840,10 @@ export const useAIStream = (options: StreamOptions = {}) => {
     deepThinkingState,
     researchProgress,
     researchVisibility,
+    agentAuditState,
+    agentReviewProgressByAgentId,
+    agentSourcesByAgentId,
+    agentAuditVerdict,
     deepThinkingHint,
     interimInsight,
     artifacts,

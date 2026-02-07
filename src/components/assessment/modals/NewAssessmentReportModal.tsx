@@ -134,19 +134,19 @@ export function NewAssessmentReportModal(props: {
                 if (!assessmentId || !template?.id) return;
                 setBusy(true);
                 try {
-                  const name = selectedAssessment?.name
+                  const title = selectedAssessment?.name
                     ? `Report - ${selectedAssessment.name}`
                     : 'Report';
-                  const created: any = await Api.post('/assessment-reports', {
-                    assessmentId,
+                  const created: any = await Api.post('/report-builder', {
+                    sourceType: 'ASSESSMENT',
+                    sourceId: assessmentId,
+                    title,
+                    description: '',
                     templateId: template.id,
-                    name,
                   });
-                  const reportId = String(
-                    created?.id || created?.reportId || created?.report?.id || ''
-                  );
+                  const reportId = String(created?.report?.id || created?.id || created?.reportId || '');
                   if (!reportId) throw new Error('Missing report id');
-                  await Api.generateReport(reportId, { templateId: template.id, language: 'pl' });
+                  await Api.post(`/report-builder/${reportId}/generate`, { regenerateAll: false });
                   toast.success('Draft report generated');
                   onCreated(reportId);
                   onClose();

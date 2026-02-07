@@ -86,7 +86,7 @@ export function ReportTemplatePickerModal(props: {
     setSubmitting(false);
 
     const token = localStorage.getItem('token');
-    fetch('/api/assessment-reports/templates?sourceType=ASSESSMENT', {
+    fetch('/api/report-builder/templates?sourceType=ASSESSMENT', {
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     })
       .then(async (r) => {
@@ -719,9 +719,7 @@ export function ReportTemplatePickerModal(props: {
               </button>
               <button
                 type="button"
-                disabled={!newTemplateName.trim()}
                 onClick={() => {
-                  if (!newTemplateName.trim()) return;
                   setIsNewTemplateMetaOpen(false);
                   setIsTemplateBuilderOpen(true);
                 }}
@@ -742,7 +740,6 @@ export function ReportTemplatePickerModal(props: {
             templateMeta={{
               name: newTemplateName,
               description: newTemplateDescription,
-              recipient: newTemplateRecipient || undefined,
               sourceType: newTemplateSourceType,
               reportType:
                 newTemplateSourceType === 'ASSESSMENT' && newTemplateFramework !== 'NONE'

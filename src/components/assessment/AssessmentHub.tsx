@@ -865,7 +865,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           type: a.type,
           status: a.status,
         }))}
-        onCreated={(reportId) => navigate(`/assessment-reports/${reportId}`)}
+        onCreated={(reportId) => navigate(`/reports/builder/${reportId}`)}
       />
     </>
   );

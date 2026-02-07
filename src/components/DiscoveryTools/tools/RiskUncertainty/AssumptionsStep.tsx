@@ -1,15 +1,10 @@
 /**
- * AssumptionsStep - list key assumptions with confidence
+ * AssumptionsStep - list critical assumptions with confidence
  */
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import {
-  RiskAssumption,
-  RiskUncertaintyData,
-  ToolSession,
-  useToolStore,
-} from '@/store/useToolStore';
+import { RiskAssumption, RiskUncertaintyData, ToolSession, useToolStore } from '@/store/useToolStore';
 
 import { InlineAssist } from '../../InlineAssist';
 
@@ -22,11 +17,11 @@ const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)
 
 export const AssumptionsStep: React.FC<AssumptionsStepProps> = ({ session, isPolish }) => {
   const { updateInputData } = useToolStore();
+  const data = session.inputData as RiskUncertaintyData;
+  const assumptions = data.assumptions || [];
+
   const [text, setText] = useState('');
   const [confidence, setConfidence] = useState(3);
-
-  const data = session.inputData as RiskUncertaintyData;
-  const assumptions = data.assumptions;
 
   const handleAdd = () => {
     if (!text.trim()) return;
@@ -35,24 +30,18 @@ export const AssumptionsStep: React.FC<AssumptionsStepProps> = ({ session, isPol
       text: text.trim(),
       confidence,
     };
-    updateInputData({
-      assumptions: [...assumptions, newItem],
-    });
+    updateInputData({ assumptions: [...assumptions, newItem] });
     setText('');
     setConfidence(3);
   };
 
-  const handleRemove = (itemId: string) => {
-    updateInputData({
-      assumptions: assumptions.filter((item) => item.id !== itemId),
-    });
+  const handleRemove = (id: string) => {
+    updateInputData({ assumptions: assumptions.filter((a) => a.id !== id) });
   };
 
-  const handleUpdate = (itemId: string, nextConfidence: number) => {
+  const handleUpdate = (id: string, updates: Partial<RiskAssumption>) => {
     updateInputData({
-      assumptions: assumptions.map((item) =>
-        item.id === itemId ? { ...item, confidence: nextConfidence } : item
-      ),
+      assumptions: assumptions.map((a) => (a.id === id ? { ...a, ...updates } : a)),
     });
   };
 
@@ -60,12 +49,12 @@ export const AssumptionsStep: React.FC<AssumptionsStepProps> = ({ session, isPol
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {isPolish ? 'Kluczowe założenia' : 'Key assumptions'}
+          {isPolish ? 'Założenia krytyczne' : 'Critical assumptions'}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {isPolish
-            ? 'Zapisz kluczowe założenia i ocen ich pewność.'
-            : 'List key assumptions and set confidence.'}
+            ? 'Wypisz kluczowe założenia i oceń pewność (1–5).'
+            : 'List key assumptions and rate confidence (1–5).'}
         </p>
       </div>
 
@@ -73,11 +62,11 @@ export const AssumptionsStep: React.FC<AssumptionsStepProps> = ({ session, isPol
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder={isPolish ? 'Założenie...' : 'Assumption...'}
+          placeholder={isPolish ? 'Treść założenia...' : 'Assumption text...'}
           rows={2}
           className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
         />
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap gap-3 items-center">
           <label className="text-xs text-slate-500">
             {isPolish ? 'Pewność' : 'Confidence'}
             <select
@@ -104,8 +93,8 @@ export const AssumptionsStep: React.FC<AssumptionsStepProps> = ({ session, isPol
         <InlineAssist
           hint={
             isPolish
-              ? 'Założenia powinny być mierzalne i powiązane z ryzykiem.'
-              : 'Assumptions should be measurable and tied to risk.'
+              ? 'Zapisz założenia tak, aby dało się je zweryfikować (dane/warunki).'
+              : 'Write assumptions so they can be verified (data/conditions).'
           }
         />
       </div>
@@ -116,17 +105,22 @@ export const AssumptionsStep: React.FC<AssumptionsStepProps> = ({ session, isPol
             {isPolish ? 'Brak założeń' : 'No assumptions yet'}
           </div>
         ) : (
-          assumptions.map((item) => (
+          assumptions.map((a) => (
             <div
-              key={item.id}
+              key={a.id}
               className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700"
             >
               <div className="flex items-start justify-between gap-4">
-                <div className="text-slate-800 dark:text-slate-200">{item.text}</div>
+                <div className="min-w-0">
+                  <div className="text-slate-800 dark:text-slate-200">{a.text}</div>
+                  <div className="text-xs text-slate-500 mt-1">
+                    {isPolish ? 'Pewność' : 'Confidence'}: {a.confidence}/5
+                  </div>
+                </div>
                 <div className="flex items-center gap-2">
                   <select
-                    value={item.confidence}
-                    onChange={(e) => handleUpdate(item.id, Number(e.target.value))}
+                    value={a.confidence}
+                    onChange={(e) => handleUpdate(a.id, { confidence: Number(e.target.value) })}
                     className="px-2 py-1 text-xs rounded border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-300"
                   >
                     {[1, 2, 3, 4, 5].map((v) => (
@@ -136,7 +130,7 @@ export const AssumptionsStep: React.FC<AssumptionsStepProps> = ({ session, isPol
                     ))}
                   </select>
                   <button
-                    onClick={() => handleRemove(item.id)}
+                    onClick={() => handleRemove(a.id)}
                     className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-slate-400 hover:text-red-500"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -152,3 +146,4 @@ export const AssumptionsStep: React.FC<AssumptionsStepProps> = ({ session, isPol
 };
 
 export default AssumptionsStep;
+

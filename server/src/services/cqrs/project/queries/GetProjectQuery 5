@@ -1,2 +1,2 @@
-export * from './GetProjectQuery.js';
-export { default } from './GetProjectQuery.js';
+export * from './GetProjectQuery.ts';
+export { default } from './GetProjectQuery.ts';

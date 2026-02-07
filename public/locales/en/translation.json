@@ -742,5 +742,97 @@
     "sections": {
       "archived": "Archived"
     }
+  },
+  "agentAudit": {
+    "title": "Agent Audit Layer",
+    "suggestedReviewers": "Suggested Reviewers",
+    "willAuditAfterDT": "Will audit the Deep Thinking report",
+    "selected": "selected",
+    "settings": "Settings",
+    "auditIntent": "Audit Intent",
+    "maxReviewers": "Max Reviewers",
+    "refreshSuggestions": "Refresh Suggestions",
+    "refreshing": "Refreshing...",
+    "expectedFindings": "Expected Findings",
+    "riskAreas": "Risk Areas",
+    "detectedSignals": "Detected Signals",
+    "showMore": "Show more",
+    "showLess": "Show less",
+    "noInterference": "Agents will audit the final report only — no interference with Deep Thinking process.",
+    "reviewers": "reviewers",
+    "gatesTriggered": "gates triggered",
+    "triggeredGates": "Triggered Quality Gates",
+    "criticalRisks": "Critical Risks",
+    "agentReviews": "Agent Reviews",
+    "impactIfIgnored": "Impact if ignored",
+    "whenItFails": "When it fails",
+    "findings": "Findings",
+    "topQuestions": "Top Questions",
+    "actionableFollowups": "Actionable Followups",
+    "acceptRisk": "Accept Risk & Proceed",
+    "accepting": "Accepting...",
+    "triggerDeepening": "Trigger Directed Deepening",
+    "auditTrailNote": "Actions are recorded in the audit trail.",
+    "qualityStatus": {
+      "PASS": "PASS",
+      "PASS_WITH_RISKS": "PASS WITH RISKS",
+      "FAIL": "FAIL"
+    },
+    "gates": {
+      "A": "Gate A: Critical Finance",
+      "B": "Gate B: Consensus Risk",
+      "C": "Gate C: Missing Data",
+      "D": "Gate D: Overreach"
+    },
+    "intents": {
+      "validate": "Validate",
+      "stress_test": "Stress-test",
+      "approve": "Approve"
+    },
+    "intentDescriptions": {
+      "validate": "Standard risk and quality validation",
+      "stress_test": "Deep analysis with adversarial agent",
+      "approve": "Quick validation before approval"
+    },
+    "agentKinds": {
+      "industry": "Industry",
+      "functional": "Function",
+      "adversarial": "Adversarial"
+    },
+    "riskAreaLabels": {
+      "cashflow": "Cashflow",
+      "capex": "CAPEX",
+      "safety": "Safety",
+      "uptime": "Uptime",
+      "quality": "Quality",
+      "compliance": "Compliance",
+      "cybersecurity": "Cybersecurity",
+      "vendor_risk": "Vendor Risk",
+      "delivery_otif": "Delivery/OTIF",
+      "change_management": "Change Management",
+      "architecture_integrations": "Architecture/Integrations",
+      "other": "Other"
+    }
+  },
+  "research": {
+    "deepResearch": "Deep Research",
+    "generatingQueries": "Generating research queries...",
+    "queriesReady": "Research queries ready",
+    "searching": "Searching sources...",
+    "aggregating": "Aggregating results...",
+    "synthesizing": "Synthesizing findings...",
+    "complete": "Research complete",
+    "queries": "queries",
+    "sources": "sources",
+    "searchQueries": "Search Queries",
+    "topSources": "Top Sources",
+    "researching": "Researching"
+  },
+  "thinking": {
+    "processing": "Thinking...",
+    "analyzing": "Analyzing...",
+    "structuring": "Structuring...",
+    "synthesizing": "Synthesizing...",
+    "finalizing": "Finalizing..."
   }
 }

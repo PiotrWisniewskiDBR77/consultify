@@ -140,6 +140,13 @@ const AddMessageSchema = z.object({
   modelUsed: z.string().max(100).optional(),
 });
 
+const TruncateConversationSchema = z.object({
+  /** Message ID to keep (inclusive). All later messages will be removed. */
+  afterMessageId: z.string().min(1),
+  /** Optional edited content for that message (typically a user message edit). */
+  editedContent: z.string().min(1).optional(),
+});
+
 const BulkOperationSchema = z.object({
   ids: z.array(z.string().uuid()).min(1).max(100),
   action: z.enum(['archive', 'unarchive', 'delete', 'star', 'unstar']),
@@ -613,6 +620,133 @@ router.post(
       return res.status(201).json(message);
     } catch (err: any) {
       logger.error('[Conversations] Add message error:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// ==================== TRUNCATE / EDIT FROM MESSAGE ====================
+// ChatGPT-like: edit a user message and regenerate from that point.
+router.post(
+  '/:id/truncate',
+  verifyToken,
+  validateParams(ConversationIdParamSchema),
+  validateBody(TruncateConversationSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id: conversationId } = req.params;
+    const { afterMessageId, editedContent } = req.body as {
+      afterMessageId: string;
+      editedContent?: string;
+    };
+
+    try {
+      // Verify access (personal ownership or team membership)
+      const conversation = await findAccessibleConversation(
+        conversationId,
+        req.userId!,
+        req.organizationId
+      );
+      if (!conversation) {
+        return res.status(404).json({ error: 'Conversation not found' });
+      }
+
+      // For team conversations, require permission (reuse add_message for now)
+      const teamProject = await getTeamProjectForConversation(conversationId);
+      if (teamProject) {
+        const perm = await checkChatPermission(
+          req.userId!,
+          teamProject.organization_id,
+          'add_message'
+        );
+        if (!perm.allowed) {
+          return res
+            .status(403)
+            .json({ error: 'No permission to edit this team conversation' });
+        }
+      }
+
+      const target = await dbGet(
+        `SELECT * FROM conversation_messages WHERE id = ? AND conversation_id = ?`,
+        [afterMessageId, conversationId]
+      );
+      if (!target) {
+        return res.status(404).json({ error: 'Message not found' });
+      }
+
+      const now = new Date().toISOString();
+      const beforeCountRow = (await dbGet(
+        `SELECT COUNT(*) as count FROM conversation_messages WHERE conversation_id = ?`,
+        [conversationId]
+      )) as any;
+      const beforeCount = Number(beforeCountRow?.count || 0);
+
+      // Optionally update message content (edit) + store edit history (best-effort)
+      if (editedContent && String(target.role) === 'user') {
+        try {
+          await dbRun(
+            `INSERT INTO message_edits (id, message_id, original_content, edited_content, edited_by, created_at)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [uuidv4(), afterMessageId, target.content, editedContent, req.userId!, now]
+          );
+        } catch (_e) {
+          // message_edits table might not exist in some environments; ignore
+        }
+
+        // Increment version if column exists (SQLite handles missing columns by error; ignore)
+        try {
+          await dbRun(
+            `UPDATE conversation_messages
+             SET content = ?, version = COALESCE(version, 1) + 1
+             WHERE id = ? AND conversation_id = ?`,
+            [editedContent, afterMessageId, conversationId]
+          );
+        } catch {
+          await dbRun(
+            `UPDATE conversation_messages SET content = ? WHERE id = ? AND conversation_id = ?`,
+            [editedContent, afterMessageId, conversationId]
+          );
+        }
+      }
+
+      // Delete all messages strictly after the target timestamp.
+      // Also delete same-timestamp messages except the target (best-effort ordering).
+      await dbRun(
+        `DELETE FROM conversation_messages WHERE conversation_id = ? AND created_at > ?`,
+        [conversationId, target.created_at]
+      );
+      await dbRun(
+        `DELETE FROM conversation_messages WHERE conversation_id = ? AND created_at = ? AND id != ?`,
+        [conversationId, target.created_at, afterMessageId]
+      );
+
+      const afterCountRow = (await dbGet(
+        `SELECT COUNT(*) as count FROM conversation_messages WHERE conversation_id = ?`,
+        [conversationId]
+      )) as any;
+      const afterCount = Number(afterCountRow?.count || 0);
+      const deletedCount = Math.max(0, beforeCount - afterCount);
+
+      const last = await dbGet(
+        `SELECT content, created_at FROM conversation_messages WHERE conversation_id = ? ORDER BY created_at DESC LIMIT 1`,
+        [conversationId]
+      );
+
+      await dbRun(
+        `UPDATE conversations
+         SET message_count = ?, last_message_preview = ?, last_message_at = ?, updated_at = ?
+         WHERE id = ?`,
+        [
+          afterCount,
+          last ? String((last as any).content || '').slice(0, 200) : null,
+          last ? (last as any).created_at : null,
+          now,
+          conversationId,
+        ]
+      );
+
+      return res.json({ success: true, deletedCount });
+    } catch (err: any) {
+      logger.error('[Conversations] Truncate error:', err);
       return res.status(500).json({ error: err.message });
     }
   })

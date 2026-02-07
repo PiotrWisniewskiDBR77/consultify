@@ -28,6 +28,7 @@ W My Work nadrzędny jest **Inbox jako kolejka akcji**, nie feed informacji.
 - Notifications: `wdrozenia/standards/entities/06-NOTIFICATION.md`
 
 ## Wymóg systemowy (kontrakt)My Work musi umożliwiać w 5 sekund odpowiedź:- co blokuje ruch,
+
 - kto ma zareagować,
 - jaki jest koszt czekania (aging / cost of delay),
 - jaki jest następny krok (Primary CTA).Minimalny UX:- Inbox pokazuje tylko elementy wymagające reakcji (Decisions/Blocked Tasks/Critical).- Każdy element ma 4-liniowy format (co/dlaczego/blokuje/akcja) + Primary CTA.

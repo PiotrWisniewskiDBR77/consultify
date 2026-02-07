@@ -31,9 +31,11 @@ import { ToolsMenu } from './ToolsMenu';
 
 interface EnhancedChatInputProps {
   onSend: (message: string, attachments?: any[]) => void;
+  onStopGenerating?: () => void;
   onVoiceConversationStart?: () => void;
   onVoiceConversationEnd?: () => void;
   disabled?: boolean;
+  isStreaming?: boolean;
   placeholder?: string;
   className?: string;
   voiceModeEnabled?: boolean;
@@ -58,9 +60,11 @@ interface EnhancedChatInputProps {
 
 export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   onSend,
+  onStopGenerating,
   onVoiceConversationStart,
   onVoiceConversationEnd,
   disabled = false,
+  isStreaming = false,
   placeholder,
   className = '',
   voiceModeEnabled = false,
@@ -112,8 +116,9 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   const vadIntervalRef = useRef<number | null>(null);
 
   const isDisabled = disabled || aiFreezeStatus.isFrozen;
+  const isInputDisabled = isDisabled || isStreaming;
   const hasText = value.trim().length > 0;
-  const canSend = hasText && !isDisabled;
+  const canSend = hasText && !isInputDisabled;
 
   // Use either internal or external voice state
   const isDictatingVal = isDictating;
@@ -468,6 +473,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
 
   const handleSend = useCallback(() => {
     if (!canSend) return;
+    if (isStreaming) return;
     stopDictation();
     onSend(value.trim(), attachments.length > 0 ? attachments : undefined);
     setValue('');
@@ -475,19 +481,24 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
-  }, [canSend, value, attachments, onSend, stopDictation]);
+  }, [canSend, isStreaming, value, attachments, onSend, stopDictation]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
+        if (isStreaming) return;
         handleSend();
       }
     },
-    [handleSend]
+    [handleSend, isStreaming]
   );
 
   const handleDynamicButtonClick = useCallback(() => {
+    if (isStreaming) {
+      onStopGenerating?.();
+      return;
+    }
     if (hasText) {
       // Has text → Send
       handleSend();
@@ -502,6 +513,8 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
       }
     }
   }, [
+    isStreaming,
+    onStopGenerating,
     hasText,
     handleSend,
     isVoiceConversationVal,
@@ -514,23 +527,25 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   // Push-to-Talk Handlers
   const handlePTTStart = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
+      if (isStreaming) return;
       if (hasText || isDisabled) return;
       e.preventDefault();
       if (startVoiceListening) startVoiceListening();
       else startVoiceConversation();
     },
-    [hasText, isDisabled, startVoiceListening, startVoiceConversation]
+    [hasText, isDisabled, isStreaming, startVoiceListening, startVoiceConversation]
   );
 
   const handlePTTEnd = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
+      if (isStreaming) return;
       if (isVoiceConversationVal) {
         e.preventDefault();
         if (stopVoiceListening) stopVoiceListening();
         else stopVoiceConversation();
       }
     },
-    [isVoiceConversationVal, stopVoiceListening, stopVoiceConversation]
+    [isStreaming, isVoiceConversationVal, stopVoiceListening, stopVoiceConversation]
   );
 
   const handleDictationClick = useCallback(() => {
@@ -665,7 +680,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           placeholder={placeholderText}
-          disabled={isDisabled}
+          disabled={isInputDisabled}
           rows={1}
           data-testid="chat-input"
           className={`
@@ -685,11 +700,11 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               onConnectCloud={handleConnectCloud}
               connectedProviders={connectedProviderIds}
               isCloudImplemented={isCloudImplemented}
-              disabled={isDisabled}
+            disabled={isInputDisabled}
             />
             <ToolsMenu
               onToolSelect={(tool) => console.log('Tool selected:', tool)}
-              disabled={isDisabled}
+            disabled={isInputDisabled}
               icon={Wrench}
             />
           </div>
@@ -700,7 +715,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             {speechSupported && !isVoiceConversation && (
               <button
                 onClick={handleDictationClick}
-                disabled={isDisabled}
+                disabled={isInputDisabled}
                 data-testid="chat-mic-button"
                 className={`
                                     flex items-center gap-1.5 p-2 rounded-lg transition-all
@@ -728,11 +743,13 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               onMouseUp={handlePTTEnd}
               onTouchStart={handlePTTStart}
               onTouchEnd={handlePTTEnd}
-              disabled={isDisabled || (hasText && !canSend)}
+              disabled={isDisabled || (hasText && !canSend && !isStreaming)}
               className={`
                                 p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center
                                 ${
-                                  hasText
+                                  isStreaming
+                                    ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/25'
+                                    : hasText
                                     ? canSend
                                       ? 'bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-500/25'
                                       : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 cursor-not-allowed'
@@ -744,14 +761,18 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                                 ${isVoiceConversationVal && voiceState ? 'scale-110 ring-2 ring-primary-500' : ''}
                             `}
               title={
-                hasText
+                isStreaming
+                  ? t('aiChat.stopGenerating', 'Stop generating')
+                  : hasText
                   ? t('aiChat.send', 'Send')
                   : isVoiceConversationVal
                     ? t('aiChat.stopVoice', 'Stop voice conversation')
                     : t('aiChat.startVoice', 'Start voice conversation (auto-send)')
               }
             >
-              {hasText ? (
+              {isStreaming ? (
+                <Square size={18} className="fill-current" />
+              ) : hasText ? (
                 <Send size={18} />
               ) : isVoiceConversationVal ? (
                 <Square size={18} className="fill-current" />

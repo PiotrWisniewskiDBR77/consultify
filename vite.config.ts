@@ -21,15 +21,44 @@ export default defineConfig(({ mode }) => {
           '**/data/**',
           '**/.cursor/**',
           '**/agent-transcripts/**',
-          // macOS Finder/iCloud duplicate naming patterns
+          // macOS Finder/iCloud duplicate naming patterns - expanded to catch all numbered duplicates
           '**/* [0-9].ts',
           '**/* [0-9].tsx',
           '**/* [0-9].js',
           '**/* [0-9].jsx',
           '**/* [0-9].md',
           '**/* [0-9].html',
+          '**/* [0-9][0-9].ts',
+          '**/* [0-9][0-9].tsx',
+          '**/* [0-9][0-9].js',
+          '**/* [0-9][0-9].jsx',
+          // Ignore all src changes for stability (use manual refresh)
+          '**/node_modules/**',
         ],
+        // Use polling with longer interval to reduce CPU and reload frequency
+        usePolling: true,
+        interval: 5000,
       },
+      hmr: false, // Disable HMR completely for stability
+      proxy: {
+        '/api': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/uploads': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+      },
+    },
+    preview: {
+      // Allow running a production-like frontend on :3000
+      // while proxying API calls to the dev backend on :3001.
+      port: 3000,
+      strictPort: true,
+      host: '0.0.0.0',
       proxy: {
         '/api': {
           target: apiTarget,

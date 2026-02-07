@@ -36,7 +36,7 @@ export const ROUTES = {
   },
 
   MY_WORK: '/my-work',
-  DASHBOARD: '/dashboard',
+  DASHBOARD: '/chat', // DEPRECATED: Dashboard removed, redirects to Chat
 
   // Assessment Module
   ASSESSMENT: {
@@ -176,10 +176,10 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   // Main
   [AppView.AI_CHAT]: ROUTES.AI_CHAT,
   [AppView.MY_WORK]: ROUTES.MY_WORK,
-  [AppView.DASHBOARD]: ROUTES.DASHBOARD,
-  [AppView.USER_DASHBOARD]: ROUTES.DASHBOARD,
-  [AppView.DASHBOARD_OVERVIEW]: ROUTES.DASHBOARD,
-  [AppView.DASHBOARD_SNAPSHOT]: ROUTES.DASHBOARD,
+  [AppView.DASHBOARD]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
+  [AppView.USER_DASHBOARD]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
+  [AppView.DASHBOARD_OVERVIEW]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
+  [AppView.DASHBOARD_SNAPSHOT]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
 
   // Assessment
   [AppView.ASSESSMENT_DRD]: ROUTES.ASSESSMENT.DRD,
@@ -380,14 +380,14 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
 
   // Legacy/Fallback
   [AppView.FULL_TRANSFORMATION_CHAT]: ROUTES.AI_CHAT,
-  [AppView.MASTERCLASS]: ROUTES.DASHBOARD,
-  [AppView.RESOURCES]: ROUTES.DASHBOARD,
+  [AppView.MASTERCLASS]: ROUTES.AI_CHAT,
+  [AppView.RESOURCES]: ROUTES.AI_CHAT,
   [AppView.EXECUTIVE_VIEW]: ROUTES.EXECUTIVE,
   [AppView.KNOWLEDGE_BASE]: ROUTES.KNOWLEDGE_BASE,
   [AppView.KNOWLEDGE_BASE_ARTICLE]: ROUTES.KNOWLEDGE_BASE,
-  [AppView.STATUS_PAGE]: ROUTES.DASHBOARD,
-  [AppView.CHANGELOG]: ROUTES.DASHBOARD,
-  [AppView.HELP_ANALYTICS]: ROUTES.DASHBOARD,
+  [AppView.STATUS_PAGE]: ROUTES.AI_CHAT,
+  [AppView.CHANGELOG]: ROUTES.AI_CHAT,
+  [AppView.HELP_ANALYTICS]: ROUTES.AI_CHAT,
 };
 
 /**
@@ -399,10 +399,10 @@ export function getRouteFromAppView(view: AppView): string {
 
   if (!route) {
     console.warn(
-      `[routeConfig] WARNING: No route mapping for view "${view}", falling back to dashboard`
+      `[routeConfig] WARNING: No route mapping for view "${view}", falling back to chat`
     );
     console.warn('[routeConfig] This may indicate a missing entry in APP_VIEW_TO_ROUTE');
-    return ROUTES.DASHBOARD;
+    return ROUTES.AI_CHAT;
   }
 
   return route;

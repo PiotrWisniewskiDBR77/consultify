@@ -152,6 +152,15 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
             onClick={handleCopy}
           />
 
+          {/* Regenerate */}
+          {onRegenerate && (
+            <ActionButton
+              icon={<RefreshCw size={14} />}
+              label={t('chat.actions.regenerate', 'Regenerate')}
+              onClick={() => onRegenerate(message.id)}
+            />
+          )}
+
           {/* Download */}
           <ActionButton
             icon={<Download size={14} />}
@@ -192,15 +201,6 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
             onClick={() => setShowReportModal(true)}
             variant="danger"
           />
-
-          {/* Regenerate */}
-          {onRegenerate && (
-            <ActionButton
-              icon={<RefreshCw size={14} />}
-              label={t('chat.actions.regenerate', 'Regenerate')}
-              onClick={() => onRegenerate(message.id)}
-            />
-          )}
 
           {/* View Artifacts */}
           {hasArtifacts && onViewArtifacts && (

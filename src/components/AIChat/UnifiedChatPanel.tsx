@@ -29,6 +29,7 @@ import {
   Lightbulb,
   MessageSquare,
   Plus,
+  Pencil,
   RefreshCw,
   Sparkles,
   ThumbsDown,
@@ -182,6 +183,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     setActiveConversation,
     fetchConversation,
     clearActiveChat,
+    truncateFromMessage,
     setDisplayMode,
     expandToFullScreen,
     collapseToSplit,
@@ -198,6 +200,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [focusMode, setFocusMode] = useState<FocusMode>('all');
   const [voiceModeEnabled, setVoiceModeEnabled] = useState(false);
   const [autoReadEnabled, setAutoReadEnabled] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState<string>('');
+  const [editBusy, setEditBusy] = useState(false);
 
   const chatLanguage: SupportedLanguage = useMemo(() => {
     const activeLang = activeConversationId
@@ -255,8 +260,45 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     confirm: any;
     context: any;
     attachments?: any[];
+    agentAudit?: {
+      suggested?: any;
+      orchestratorRunId?: string;
+      selectedAgentIds: string[];
+      userIntent: 'validate' | 'stress_test' | 'approve';
+      maxAgents: 2 | 3 | 4;
+      decisionContext?: {
+        topic: string;
+        industry?: string;
+        horizon?: string;
+        functions?: string[];
+        riskFocus?: string[];
+      };
+    };
   } | null>(null);
   const [dtConfirmBusy, setDtConfirmBusy] = useState(false);
+
+  // Agent Audit Layer (registry + post-DT verdict)
+  const [agentRegistryById, setAgentRegistryById] = useState<Record<string, any>>({});
+  const [agentAuditBusy, setAgentAuditBusy] = useState(false);
+  const [agentAuditActiveTabByMessageId, setAgentAuditActiveTabByMessageId] = useState<
+    Record<string, string>
+  >({});
+  const deepThinkingRunRef = useRef<{
+    conversationId: string | null;
+    decisionContext: {
+      topic: string;
+      industry?: string;
+      horizon?: string;
+      functions?: string[];
+      riskFocus?: string[];
+    };
+    agentIds: string[];
+    userIntent: 'validate' | 'stress_test' | 'approve';
+    loopIteration: 1 | 2;
+    deepThinkingConfirm: any;
+  } | null>(null);
+  const agentAuditVerdictRef = useRef<any>(null);
+  const persistedAgentAuditRunIdsRef = useRef<Set<string>>(new Set());
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -269,6 +311,27 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     autoReadEnabledRef.current = autoReadEnabled;
   }, [autoReadEnabled]);
 
+  // Agent registry (for readable labels in approval UI)
+  useEffect(() => {
+    let mounted = true;
+    Api.agentAuditListAgents()
+      .then((res: any) => {
+        const list = (res as any)?.agents || [];
+        if (!mounted) return;
+        const map: Record<string, any> = {};
+        for (const a of list) {
+          if (a?.id) map[String(a.id)] = a;
+        }
+        setAgentRegistryById(map);
+      })
+      .catch(() => {
+        // best-effort; UI will fall back to ids
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   // Computed values
   const isSplitMode = mode === 'split' || displayMode === 'split';
   const isCompact = isSplitMode;
@@ -280,6 +343,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const {
     startStream,
+    abortStream,
+    retryLastStream,
+    lastError,
+    clearLastError,
     isStreaming,
     streamedContent,
     researchProgress,
@@ -287,6 +354,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     deepThinkingState,
     deepThinkingHint,
     interimInsight,
+    agentAuditState,
+    agentAuditVerdict,
   } = useAIStream({
     onStreamDone: async (fullText, thinking, artifacts) => {
       const safeText =
@@ -374,6 +443,141 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         speak(safeText);
       }
 
+      // Agent Audit Layer: run post-DT review on the CLOSED report
+      if (
+        aiConfig?.deepResearch &&
+        deepThinkingRunRef.current &&
+        deepThinkingRunRef.current.conversationId === activeConversationId &&
+        Array.isArray(deepThinkingRunRef.current.agentIds) &&
+        deepThinkingRunRef.current.agentIds.length > 0
+      ) {
+        try {
+          // Prefer streamed verdict (from SSE) if present; fallback to REST review otherwise.
+          const streamed = agentAuditVerdictRef.current;
+          const streamedRunId = String(streamed?.orchestratorRunId || '').trim();
+          const canUseStreamed =
+            streamed &&
+            streamed?.verdict &&
+            Array.isArray(streamed?.reviews) &&
+            streamed?.reviews?.length >= 0 &&
+            streamed?.loopIteration === deepThinkingRunRef.current.loopIteration &&
+            !persistedAgentAuditRunIdsRef.current.has(streamedRunId);
+
+          let verdict: any = null;
+          let reviews: any[] = [];
+          let runId: string | null = null;
+
+          if (canUseStreamed) {
+            verdict = streamed.verdict || {};
+            reviews = streamed.reviews || [];
+            runId = streamedRunId || null;
+          } else {
+            setAgentAuditBusy(true);
+            const reviewRes = await Api.agentAuditReview({
+              decisionContext: deepThinkingRunRef.current.decisionContext,
+              deepThinkingReport: safeText,
+              agentIds: deepThinkingRunRef.current.agentIds,
+              conversationId: activeConversationId || undefined,
+              dtSessionId: activeConversationId || undefined,
+              webSearchEnabled: aiConfig?.webSearch === true,
+              userIntent: deepThinkingRunRef.current.userIntent,
+              language: chatLanguage,
+              selectedTier: (aiConfig as any)?.selectedTier,
+              selectedModelId: (aiConfig as any)?.selectedModelId ?? null,
+              loopIteration: deepThinkingRunRef.current.loopIteration,
+            });
+            verdict = (reviewRes as any)?.verdict || {};
+            reviews = (reviewRes as any)?.reviews || [];
+            runId = String((reviewRes as any)?.orchestratorRunId || '').trim() || null;
+          }
+
+          const lines: string[] = [];
+          lines.push('**Agent Audit (post Deep Thinking)**');
+          lines.push(`- Status: **${String(verdict.qualityStatus || '—')}**`);
+          lines.push(
+            `- Gates: ${Array.isArray(verdict.gatesTriggered) && verdict.gatesTriggered.length ? verdict.gatesTriggered.join(', ') : '—'}`
+          );
+          lines.push(`- Reviewers: ${deepThinkingRunRef.current.agentIds.length}`);
+          lines.push('');
+
+          if (Array.isArray(verdict.criticalRisks) && verdict.criticalRisks.length) {
+            lines.push('**Critical risks (high)**');
+            for (const r of verdict.criticalRisks.slice(0, 6)) {
+              lines.push(
+                `- (${String(r.area || 'other')}) ${String(r.claim || '').trim()}`.trim()
+              );
+            }
+            lines.push('');
+          }
+
+          if (Array.isArray(verdict.actionableFollowups) && verdict.actionableFollowups.length) {
+            lines.push('**Actionable follow-ups (data / gaps)**');
+            for (const f of verdict.actionableFollowups.slice(0, 6)) {
+              lines.push(`- ${String(f.question || '').trim()}`.trim());
+            }
+            lines.push('');
+          }
+
+          if (verdict?.directedLoop?.deepThinkingPrompt) {
+            lines.push('**Directed deepening prompt (max 2 loops)**');
+            lines.push('```');
+            lines.push(String(verdict.directedLoop.deepThinkingPrompt || '').trim());
+            lines.push('```');
+          }
+
+          const verdictMessageContent = lines.filter(Boolean).join('\n');
+          const verdictMessageId = `agent-audit-${Date.now()}`;
+
+          // Persist verdict into conversation (survives refresh)
+          if (activeConversationId) {
+            await addMessageToConversation({
+              conversationId: activeConversationId,
+              role: 'ai',
+              content: verdictMessageContent,
+              messageType: 'text',
+              metadata: {
+                agentAudit: {
+                  kind: 'verdict',
+                  orchestratorRunId: runId,
+                  verdict,
+                  reviews,
+                  decisionContext: deepThinkingRunRef.current.decisionContext,
+                  agentIds: deepThinkingRunRef.current.agentIds,
+                  userIntent: deepThinkingRunRef.current.userIntent,
+                  loopIteration: deepThinkingRunRef.current.loopIteration,
+                },
+              } as any,
+            });
+          }
+
+          // Also add to legacy global store
+          addChatMessage({
+            id: verdictMessageId,
+            role: 'ai',
+            content: verdictMessageContent,
+            timestamp: new Date(),
+            metadata: {
+              agentAudit: {
+                kind: 'verdict',
+                orchestratorRunId: runId,
+                verdict,
+                reviews,
+                decisionContext: deepThinkingRunRef.current.decisionContext,
+                agentIds: deepThinkingRunRef.current.agentIds,
+                userIntent: deepThinkingRunRef.current.userIntent,
+                loopIteration: deepThinkingRunRef.current.loopIteration,
+              },
+            },
+          } as any);
+
+          if (runId) persistedAgentAuditRunIdsRef.current.add(runId);
+        } catch (err) {
+          console.error('[UnifiedChatPanel] Agent audit review failed:', err);
+        } finally {
+          setAgentAuditBusy(false);
+        }
+      }
+
       setThinkingSteps([]);
     },
     onStreamError: async (err) => {
@@ -419,6 +623,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       addArtifact(artifact);
     },
   });
+
+  // Keep the streamed verdict accessible from callbacks without dependency churn
+  useEffect(() => {
+    agentAuditVerdictRef.current = agentAuditVerdict;
+  }, [agentAuditVerdict]);
 
   // ========================================================================
   // Convert conversation messages to ChatMessage format
@@ -653,6 +862,26 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
           const c = (confirmRes as any)?.confirm || {};
           const u = c?.understanding || {};
+          // Agent Audit Layer: suggested reviewers (manual approval before DT)
+          const decisionContext = {
+            topic: String(content || '').trim(),
+            horizon: String(u.decisionHorizon || '').trim() || undefined,
+            industry: undefined,
+            functions: [],
+            riskFocus: [],
+          };
+          let suggestedAgentsSet: any = null;
+          try {
+            const suggestRes = await Api.agentAuditSuggest({
+              decisionContext,
+              userIntent: 'validate',
+              language: chatLanguage,
+              maxAgents: 3,
+            });
+            suggestedAgentsSet = (suggestRes as any)?.suggested || null;
+          } catch {
+            // best-effort; DT can proceed without agent layer
+          }
           const md = [
             '**My understanding of your task**',
             `- Goal: ${u.goal || ''}`,
@@ -686,6 +915,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               metadata: {
                 deepThinking: { kind: 'confirm', originalMessage: content },
                 deepThinkingConfirm: c,
+                agentAuditSuggested: suggestedAgentsSet,
               } as any,
             });
             confirmMessageId = (saved as any)?.id || confirmMessageId;
@@ -698,6 +928,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               metadata: {
                 deepThinking: { kind: 'confirm', originalMessage: content },
                 deepThinkingConfirm: c,
+                agentAuditSuggested: suggestedAgentsSet,
               },
             } as any);
           }
@@ -710,6 +941,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             confirm: c,
             context,
             attachments,
+            agentAudit: {
+              suggested: suggestedAgentsSet,
+              orchestratorRunId: String(suggestedAgentsSet?.orchestratorRunId || ''),
+              selectedAgentIds: Array.isArray(suggestedAgentsSet?.agents)
+                ? suggestedAgentsSet.agents.map((a: any) => String(a?.agentId || '')).filter(Boolean)
+                : [],
+              userIntent: 'validate',
+              maxAgents: 3,
+              decisionContext,
+            },
           });
 
           onMessageSent?.(content);
@@ -778,6 +1019,80 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     const depthRaw = dtPendingConfirm?.confirm?.suggestedDepth || 'Standard';
     const depth = String(depthRaw).toLowerCase(); // light|standard|hard
 
+    // Agent Audit Layer: lock context for post-DT review + directed loop
+    const agentIds =
+      dtPendingConfirm.agentAudit?.selectedAgentIds ||
+      (Array.isArray(dtPendingConfirm.agentAudit?.suggested?.agents)
+        ? dtPendingConfirm.agentAudit?.suggested?.agents
+            ?.map((a: any) => String(a?.agentId || '').trim())
+            .filter(Boolean)
+        : []);
+    const decisionContext =
+      dtPendingConfirm.agentAudit?.decisionContext || ({
+        topic: String(dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage || '').trim(),
+        horizon: String(dtPendingConfirm?.confirm?.understanding?.decisionHorizon || '').trim() || undefined,
+        industry: undefined,
+        functions: [],
+        riskFocus: [],
+      } as any);
+
+    deepThinkingRunRef.current = {
+      conversationId: dtPendingConfirm.conversationId,
+      decisionContext,
+      agentIds,
+      userIntent: dtPendingConfirm.agentAudit?.userIntent || 'validate',
+      loopIteration: 1,
+      deepThinkingConfirm: dtPendingConfirm.confirm,
+    };
+
+    // Persist approved agent set for transparency/history
+    if (dtPendingConfirm.conversationId) {
+      try {
+        const suggested = dtPendingConfirm.agentAudit?.suggested?.agents || [];
+        const selectedSet = new Set(agentIds);
+        const selectedAgents = (Array.isArray(suggested) ? suggested : [])
+          .map((a: any) => ({
+            agentId: String(a?.agentId || '').trim(),
+            whySelected: String(a?.whySelected || '').trim(),
+          }))
+          .filter((a: any) => a.agentId && selectedSet.has(a.agentId));
+
+        const lines: string[] = [];
+        lines.push('**Agent Audit — approved reviewers (pre Deep Thinking)**');
+        lines.push(`- Intent: **${String(dtPendingConfirm.agentAudit?.userIntent || 'validate')}**`);
+        lines.push(`- Max agents: **${String(dtPendingConfirm.agentAudit?.maxAgents || 3)}**`);
+        lines.push('');
+        for (const a of selectedAgents) {
+          const label =
+            agentRegistryById[a.agentId]?.displayName?.pl ||
+            agentRegistryById[a.agentId]?.displayName?.en ||
+            a.agentId;
+          lines.push(`- **${String(label)}**`);
+          if (a.whySelected) lines.push(`  - ${a.whySelected}`);
+        }
+
+        const approvalContent = lines.filter(Boolean).join('\n');
+        await addMessageToConversation({
+          conversationId: dtPendingConfirm.conversationId,
+          role: 'ai',
+          content: approvalContent,
+          messageType: 'text',
+          metadata: {
+            agentAudit: {
+              kind: 'approval',
+              suggested: dtPendingConfirm.agentAudit?.suggested || null,
+              selectedAgentIds: agentIds,
+              userIntent: dtPendingConfirm.agentAudit?.userIntent || 'validate',
+              maxAgents: dtPendingConfirm.agentAudit?.maxAgents || 3,
+              decisionContext,
+            },
+          } as any,
+        });
+      } catch {
+        // best-effort
+      }
+    }
+
     // Legacy placeholder in global store
     addChatMessage({
       id: `ai-${Date.now()}`,
@@ -797,6 +1112,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         deepThinkingConfirmed: true,
         deepThinkingConfirm: dtPendingConfirm.confirm,
         deepThinkingDepth: depth,
+        agentAudit: {
+          orchestratorRunId: dtPendingConfirm.agentAudit?.orchestratorRunId || null,
+          agentIds,
+          userIntent: dtPendingConfirm.agentAudit?.userIntent || 'validate',
+          loopIteration: 1,
+          decisionContext,
+        },
       },
       focusMode,
       roleName,
@@ -810,6 +1132,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     customMessages,
     messages,
     addChatMessage,
+    addMessageToConversation,
+    agentRegistryById,
     startStream,
     systemPrompt,
     focusMode,
@@ -849,7 +1173,56 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       );
 
       const c = (confirmRes as any)?.confirm || {};
-      setDtPendingConfirm((prev) => (prev ? { ...prev, confirm: c } : prev));
+      // Refresh Agent Audit suggestions after reconfirm (task may have changed)
+      const u = c?.understanding || {};
+      const decisionContext = {
+        topic: String(dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage || '').trim(),
+        horizon: String(u.decisionHorizon || '').trim() || undefined,
+        industry: undefined,
+        functions: [],
+        riskFocus: [],
+      };
+      let suggestedAgentsSet: any = null;
+      try {
+        const suggestRes = await Api.agentAuditSuggest({
+          decisionContext,
+          userIntent: dtPendingConfirm.agentAudit?.userIntent || 'validate',
+          language: chatLanguage,
+          maxAgents: dtPendingConfirm.agentAudit?.maxAgents || 3,
+        });
+        suggestedAgentsSet = (suggestRes as any)?.suggested || null;
+      } catch {
+        // ignore
+      }
+
+      setDtPendingConfirm((prev) => {
+        if (!prev) return prev;
+        const prevSelected = prev.agentAudit?.selectedAgentIds || [];
+        const nextSuggestedIds = Array.isArray(suggestedAgentsSet?.agents)
+          ? suggestedAgentsSet.agents.map((a: any) => String(a?.agentId || '')).filter(Boolean)
+          : prevSelected;
+        const nextSelected =
+          prevSelected.length > 0
+            ? nextSuggestedIds.filter((id: string) => prevSelected.includes(id))
+            : nextSuggestedIds;
+        return {
+          ...prev,
+          confirm: c,
+          agentAudit: {
+            ...(prev.agentAudit || {
+              selectedAgentIds: [],
+              userIntent: 'validate',
+              maxAgents: 3,
+            }),
+            suggested: suggestedAgentsSet || prev.agentAudit?.suggested,
+            orchestratorRunId: String(
+              suggestedAgentsSet?.orchestratorRunId || prev.agentAudit?.orchestratorRunId || ''
+            ),
+            selectedAgentIds: nextSelected,
+            decisionContext,
+          },
+        };
+      });
     } catch (err) {
       console.error('[UnifiedChatPanel] Deep Thinking reconfirm failed:', err);
       throw err;
@@ -866,6 +1239,131 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     chatLanguage,
     aiConfig,
   ]);
+
+  const refreshAgentAuditSuggestionsOnly = useCallback(
+    async (overrides?: { userIntent?: 'validate' | 'stress_test' | 'approve'; maxAgents?: 2 | 3 | 4 }) => {
+      if (!dtPendingConfirm) return;
+      const decisionContext =
+        dtPendingConfirm.agentAudit?.decisionContext || ({
+          topic: String(dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage || '').trim(),
+          industry: undefined,
+          horizon: undefined,
+          functions: [],
+          riskFocus: [],
+        } as any);
+
+      const userIntent =
+        overrides?.userIntent || dtPendingConfirm.agentAudit?.userIntent || ('validate' as const);
+      const maxAgents = overrides?.maxAgents || dtPendingConfirm.agentAudit?.maxAgents || (3 as 3);
+
+      try {
+        const suggestRes = await Api.agentAuditSuggest({
+          decisionContext,
+          userIntent,
+          language: chatLanguage,
+          maxAgents,
+        });
+        const suggestedAgentsSet = (suggestRes as any)?.suggested || null;
+
+        setDtPendingConfirm((prev) => {
+          if (!prev?.agentAudit) return prev;
+          const prevSelected = prev.agentAudit.selectedAgentIds || [];
+          const nextSuggestedIds = Array.isArray(suggestedAgentsSet?.agents)
+            ? suggestedAgentsSet.agents.map((a: any) => String(a?.agentId || '')).filter(Boolean)
+            : prevSelected;
+
+          // Preserve previous selections where possible; otherwise default to suggested list.
+          const nextSelected =
+            prevSelected.length > 0
+              ? nextSuggestedIds.filter((id: string) => prevSelected.includes(id))
+              : nextSuggestedIds;
+
+          return {
+            ...prev,
+            agentAudit: {
+              ...prev.agentAudit,
+              suggested: suggestedAgentsSet || prev.agentAudit.suggested,
+              orchestratorRunId: String(
+                suggestedAgentsSet?.orchestratorRunId || prev.agentAudit.orchestratorRunId || ''
+              ),
+              selectedAgentIds: nextSelected.slice(0, maxAgents),
+              userIntent,
+              maxAgents,
+              decisionContext,
+            },
+          };
+        });
+      } catch {
+        // best-effort; DT can proceed without agent layer
+      }
+    },
+    [dtPendingConfirm, chatLanguage]
+  );
+
+  const handleRunDirectedDeepening = useCallback(
+    async (agentAuditPayload: any) => {
+      const prompt = String(agentAuditPayload?.verdict?.directedLoop?.deepThinkingPrompt || '').trim();
+      if (!prompt) return;
+      if (isDisabled) return;
+
+      const run = deepThinkingRunRef.current;
+      if (!run) return;
+      if (run.loopIteration >= 2) return;
+
+      const nextIteration = ((run.loopIteration + 1) as 2) || 2;
+      run.loopIteration = nextIteration;
+
+      // Build backend-compatible history, excluding confirm cards
+      const base = (customMessages || messages).filter(
+        (m) => !((m as any).metadata?.deepThinking?.kind === 'confirm')
+      );
+      const history = base.map((m) => ({
+        role: m.role === 'user' ? 'user' : 'model',
+        parts: [{ text: m.content }],
+      }));
+
+      // Legacy placeholder in global store
+      addChatMessage({
+        id: `ai-${Date.now()}`,
+        role: 'ai',
+        content: '',
+        timestamp: new Date(),
+        isStreaming: true,
+      });
+
+      await startStream(
+        prompt,
+        history,
+        systemPrompt,
+        {
+          deepThinkingConfirmed: true,
+          deepThinkingConfirm: run.deepThinkingConfirm,
+          deepThinkingDepth: 'hard',
+          forceDepth: true,
+          agentAudit: {
+            agentIds: run.agentIds,
+            userIntent: run.userIntent,
+            loopIteration: nextIteration,
+            decisionContext: run.decisionContext,
+          },
+        },
+        focusMode,
+        roleName,
+        chatLanguage
+      );
+    },
+    [
+      addChatMessage,
+      chatLanguage,
+      customMessages,
+      focusMode,
+      isDisabled,
+      messages,
+      roleName,
+      startStream,
+      systemPrompt,
+    ]
+  );
 
   const handleNewChat = useCallback(async () => {
     clearActiveChat();
@@ -1020,6 +1518,154 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       setSelectedMultiOptions([]);
     }
   };
+
+  // ========================================================================
+  // Inline edit & regenerate (ChatGPT-like)
+  // ========================================================================
+
+  const handleStartEditMessage = useCallback(
+    (messageId: string) => {
+      const msg = displayMessages.find((m) => m.id === messageId);
+      if (!msg || msg.role !== 'user') return;
+      if (String(msg.id || '').startsWith('local-')) return;
+      setEditingMessageId(messageId);
+      setEditingText(msg.content || '');
+    },
+    [displayMessages]
+  );
+
+  const handleCancelEditMessage = useCallback(() => {
+    setEditingMessageId(null);
+    setEditingText('');
+  }, []);
+
+  const handleCommitEditMessage = useCallback(async () => {
+    if (!editingMessageId) return;
+    const newText = editingText.trim();
+    if (!newText) return;
+    if (!activeConversationId) return;
+    if (editBusy || isStreaming) return;
+
+    setEditBusy(true);
+    try {
+      await truncateFromMessage(editingMessageId, newText);
+
+      const msgs = useConversationStore.getState().activeMessages || [];
+      const idx = msgs.findIndex((m: any) => m.id === editingMessageId);
+      const before = idx >= 0 ? msgs.slice(0, idx) : msgs;
+      const history = before
+        .filter((m: any) => m?.content && String(m.content).trim().length > 0)
+        .map((m: any) => ({
+          role: m.role === 'user' ? 'user' : 'model',
+          parts: [{ text: String(m.content || '') }],
+        }));
+
+      const context = {
+        focusMode,
+        attachments: [],
+        workspaceContext,
+        conversationId: activeConversationId,
+        conversationLanguage: chatLanguage,
+      };
+
+      if (aiConfig?.deepResearch) {
+        if (dtConfirmBusy) return;
+        setDtConfirmBusy(true);
+        try {
+          const confirmRes = await Api.chatConfirm(
+            newText,
+            history,
+            systemPrompt,
+            context,
+            roleName,
+            chatLanguage,
+            {
+              deepResearch: aiConfig?.deepResearch,
+              webSearch: aiConfig?.webSearch,
+              showReasoning: aiConfig?.showReasoning,
+              knowledgeSources: aiConfig?.knowledgeSources,
+              responseStyle: aiConfig?.responseStyle,
+              selectedTier: (aiConfig as any)?.selectedTier || undefined,
+              selectedModelId: (aiConfig as any)?.selectedModelId ?? null,
+            }
+          );
+
+          const c = (confirmRes as any)?.confirm || {};
+          const u = c?.understanding || {};
+          const md = [
+            '**My understanding of your task**',
+            `- Goal: ${u.goal || ''}`,
+            u.context ? `- Context: ${u.context}` : '',
+            Array.isArray(u.constraints) && u.constraints.length
+              ? `- Constraints: ${u.constraints.join('; ')}`
+              : '',
+            u.expectedOutput ? `- Output: ${u.expectedOutput}` : '',
+            u.decisionHorizon ? `- Horizon: ${u.decisionHorizon}` : '',
+            '',
+            Array.isArray(c.missingInfoQuestions) && c.missingInfoQuestions.length
+              ? `**Assumptions & gaps (optional):**\n${c.missingInfoQuestions
+                  .slice(0, 3)
+                  .map((q: any, i: number) => `${i + 1}. ${q.question}`)
+                  .join('\n')}`
+              : '',
+            '',
+            '_Confirm to start Deep Thinking. Adjust if the task needs correction._',
+          ]
+            .filter(Boolean)
+            .join('\n');
+
+          const saved = await addMessageToConversation({
+            conversationId: activeConversationId,
+            role: 'ai',
+            content: md,
+            messageType: 'text',
+            metadata: {
+              deepThinking: { kind: 'confirm', originalMessage: newText },
+              deepThinkingConfirm: c,
+            } as any,
+          });
+          const confirmMessageId = (saved as any)?.id || `dt-confirm-${Date.now()}`;
+
+          setDtPendingConfirm({
+            messageId: confirmMessageId,
+            conversationId: activeConversationId,
+            originalMessage: newText,
+            editedMessage: newText,
+            confirm: c,
+            context,
+            attachments: [],
+          } as any);
+        } finally {
+          setDtConfirmBusy(false);
+        }
+      } else {
+        await startStream(newText, history, systemPrompt, context, focusMode, roleName, chatLanguage);
+      }
+
+      handleCancelEditMessage();
+    } catch (e) {
+      console.error('[UnifiedChatPanel] Edit & regenerate failed:', e);
+    } finally {
+      setEditBusy(false);
+    }
+  }, [
+    activeConversationId,
+    addMessageToConversation,
+    aiConfig,
+    chatLanguage,
+    dtConfirmBusy,
+    editBusy,
+    editingMessageId,
+    editingText,
+    focusMode,
+    handleCancelEditMessage,
+    isStreaming,
+    roleName,
+    startStream,
+    systemPrompt,
+    truncateFromMessage,
+    workspaceContext,
+  ]);
 
   // ========================================================================
   // Render helpers
@@ -1197,6 +1843,125 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                         </div>
                       ) : null}
 
+                      {/* Agent Audit Layer: manual approval of suggested reviewers */}
+                      {dtPendingConfirm?.messageId === msg.id &&
+                      Array.isArray(dtPendingConfirm.agentAudit?.suggested?.agents) &&
+                      dtPendingConfirm.agentAudit!.suggested.agents.length ? (
+                        <div className="text-xs text-slate-600 dark:text-slate-300">
+                          <div className="font-medium mb-2">
+                            Suggested reviewers (Agent Audit Layer)
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <label className="text-[11px] text-slate-500 dark:text-slate-400">
+                              Intent
+                            </label>
+                            <select
+                              value={dtPendingConfirm.agentAudit?.userIntent || 'validate'}
+                              onChange={(e) => {
+                                const next = (String(e.target.value) || 'validate') as
+                                  | 'validate'
+                                  | 'stress_test'
+                                  | 'approve';
+                                setDtPendingConfirm((prev) =>
+                                  prev?.agentAudit
+                                    ? {
+                                        ...prev,
+                                        agentAudit: { ...prev.agentAudit, userIntent: next },
+                                      }
+                                    : prev
+                                );
+                                void refreshAgentAuditSuggestionsOnly({ userIntent: next });
+                              }}
+                              className="text-[11px] bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-md px-2 py-1"
+                            >
+                              <option value="validate">Validate</option>
+                              <option value="stress_test">Stress-test</option>
+                              <option value="approve">Approve</option>
+                            </select>
+
+                            <label className="text-[11px] text-slate-500 dark:text-slate-400 ml-2">
+                              Max agents
+                            </label>
+                            <select
+                              value={dtPendingConfirm.agentAudit?.maxAgents || 3}
+                              onChange={(e) => {
+                                const next = Number(e.target.value) as 2 | 3 | 4;
+                                setDtPendingConfirm((prev) =>
+                                  prev?.agentAudit
+                                    ? {
+                                        ...prev,
+                                        agentAudit: { ...prev.agentAudit, maxAgents: next },
+                                      }
+                                    : prev
+                                );
+                                void refreshAgentAuditSuggestionsOnly({ maxAgents: next });
+                              }}
+                              className="text-[11px] bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-md px-2 py-1"
+                            >
+                              <option value={2}>2</option>
+                              <option value={3}>3</option>
+                              <option value={4}>4</option>
+                            </select>
+                          </div>
+                          <div className="space-y-1.5">
+                            {dtPendingConfirm.agentAudit!.suggested.agents
+                              .slice(0, 8)
+                              .map((a: any) => {
+                                const id = String(a?.agentId || '').trim();
+                                const isSelected = Boolean(
+                                  id && dtPendingConfirm.agentAudit!.selectedAgentIds.includes(id)
+                                );
+                                const label =
+                                  agentRegistryById[id]?.displayName?.pl ||
+                                  agentRegistryById[id]?.displayName?.en ||
+                                  id ||
+                                  '—';
+                                const why = String(a?.whySelected || '').trim();
+                                return (
+                                  <label
+                                    key={id}
+                                    className="flex items-start gap-2 bg-white/60 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700 rounded-md px-2 py-1"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      className="mt-0.5"
+                                      checked={isSelected}
+                                      onChange={() => {
+                                        setDtPendingConfirm((prev) => {
+                                          if (!prev?.agentAudit) return prev;
+                                          const cur = prev.agentAudit.selectedAgentIds || [];
+                                          const next = cur.includes(id)
+                                            ? cur.filter((x) => x !== id)
+                                            : [...cur, id];
+                                          return {
+                                            ...prev,
+                                            agentAudit: { ...prev.agentAudit, selectedAgentIds: next },
+                                          };
+                                        });
+                                      }}
+                                    />
+                                    <div className="min-w-0">
+                                      <div className="text-slate-700 dark:text-slate-200 truncate">
+                                        {label}
+                                      </div>
+                                      {why ? (
+                                        <div className="text-slate-400 dark:text-slate-500 truncate">
+                                          {why}
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  </label>
+                                );
+                              })}
+                          </div>
+                          <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                            Selected:{' '}
+                            {dtPendingConfirm.agentAudit?.selectedAgentIds?.length || 0} reviewer(s)
+                            · They will audit the final report (no interference with DT).
+                          </div>
+                        </div>
+                      ) : null}
+
                       {/* Adjust */}
                       {dtPendingConfirm?.messageId === msg.id && (
                         <div className="space-y-2">
@@ -1216,7 +1981,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                           <div className="flex flex-wrap gap-2">
                             <button
                               onClick={handleDeepThinkingProceed}
-                              disabled={dtConfirmBusy || isDisabled}
+                              disabled={
+                                dtConfirmBusy ||
+                                isDisabled ||
+                                (Array.isArray(dtPendingConfirm.agentAudit?.suggested?.agents) &&
+                                  dtPendingConfirm.agentAudit?.suggested?.agents?.length > 0 &&
+                                  (dtPendingConfirm.agentAudit?.selectedAgentIds?.length || 0) ===
+                                    0)
+                              }
                               className="px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               Confirm & proceed
@@ -1276,11 +2048,310 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       >
                         {msg.content}
                       </ReactMarkdown>
+                      {msg.role === 'ai' &&
+                        !msg.isStreaming &&
+                        (msg as any).metadata?.agentAudit?.kind === 'verdict' && (
+                          <div className="mt-3 p-3 bg-slate-50 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700 rounded-lg">
+                            {(() => {
+                              const audit = (msg as any).metadata?.agentAudit || {};
+                              const verdict = audit?.verdict || {};
+                              const reviews = Array.isArray(audit?.reviews) ? audit.reviews : [];
+                              const gates = Array.isArray(verdict?.gatesTriggered)
+                                ? verdict.gatesTriggered
+                                : [];
+                              const gateExplanations = Array.isArray(verdict?.gateExplanations)
+                                ? verdict.gateExplanations
+                                : [];
+
+                              const activeAgentId =
+                                agentAuditActiveTabByMessageId[msg.id] ||
+                                String(reviews[0]?.agentId || '').trim();
+                              const activeReview =
+                                reviews.find((r: any) => String(r?.agentId || '') === activeAgentId) ||
+                                reviews[0] ||
+                                null;
+
+                              const renderSource = (s: any, idx: number) => {
+                                if (!s || !s.type) return null;
+                                if (s.type === 'dt_section') {
+                                  return (
+                                    <div key={`${s.type}-${idx}`} className="text-[11px] text-slate-600 dark:text-slate-300">
+                                      <span className="font-medium">DT</span>
+                                      {s.quote ? `: "${String(s.quote).slice(0, 180)}"` : ''}
+                                    </div>
+                                  );
+                                }
+                                if (s.type === 'kb_snippet') {
+                                  const meta = [
+                                    String(s.title || 'KB'),
+                                    s.version ? `v${String(s.version)}` : '',
+                                    typeof s.score === 'number' ? `score=${s.score.toFixed(2)}` : '',
+                                  ]
+                                    .filter(Boolean)
+                                    .join(' · ');
+                                  return (
+                                    <div key={`${s.type}-${idx}`} className="text-[11px] text-slate-600 dark:text-slate-300">
+                                      <div>
+                                        <span className="font-medium">KB</span>
+                                        {meta ? `: ${meta}` : ''}
+                                      </div>
+                                      {s.snippet ? (
+                                        <div className="mt-1 px-2 py-1 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded text-[10px] leading-snug">
+                                          {String(s.snippet).slice(0, 220)}
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  );
+                                }
+                                if (s.type === 'web_source') {
+                                  const url = String(s.url || '').trim();
+                                  if (!url) return null;
+                                  const label = String(s.title || s.domain || url);
+                                  return (
+                                    <div key={`${s.type}-${idx}`} className="text-[11px]">
+                                      <span className="font-medium text-slate-600 dark:text-slate-300">
+                                        Web
+                                      </span>
+                                      {': '}
+                                      <a
+                                        href={url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-primary-600 hover:text-primary-700 underline"
+                                      >
+                                        {label}
+                                      </a>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              };
+
+                              return (
+                                <>
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                                      Agent Audit — details
+                                    </div>
+                                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                                      Status:{' '}
+                                      <span className="font-medium">
+                                        {String(verdict?.qualityStatus || '—')}
+                                      </span>
+                                      {gates.length ? ` · Gates: ${gates.join(', ')}` : ''}
+                                    </div>
+                                  </div>
+
+                                  {gateExplanations.length ? (
+                                    <div className="mt-2">
+                                      <div className="text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
+                                        Gate reasons
+                                      </div>
+                                      <ul className="space-y-0.5">
+                                        {gateExplanations.slice(0, 6).map((g: any, i: number) => (
+                                          <li
+                                            key={`${String(g?.gate || '')}-${i}`}
+                                            className="text-[11px] text-slate-600 dark:text-slate-300"
+                                          >
+                                            <span className="font-semibold">{String(g.gate)}</span>
+                                            {': '}
+                                            {String(g.reason || '').trim()}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  ) : null}
+
+                                  {String(verdict?.qualityStatus || '') === 'FAIL' &&
+                                  String(audit?.orchestratorRunId || '').trim() ? (
+                                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                                      <button
+                                        onClick={async () => {
+                                          if (agentAuditBusy) return;
+                                          const runId = String(audit?.orchestratorRunId || '').trim();
+                                          if (!runId) return;
+                                          setAgentAuditBusy(true);
+                                          try {
+                                            await Api.agentAuditAcceptRun({ runId });
+                                            const content = [
+                                              '**Agent Audit — risk accepted**',
+                                              `- Run: \`${runId}\``,
+                                              '- Decision: user accepted proceeding despite FAIL.',
+                                            ].join('\n');
+                                            if (activeConversationId) {
+                                              await addMessageToConversation({
+                                                conversationId: activeConversationId,
+                                                role: 'ai',
+                                                content,
+                                                messageType: 'text',
+                                                metadata: { agentAudit: { kind: 'accept', runId } } as any,
+                                              });
+                                            }
+                                            addChatMessage({
+                                              id: `agent-audit-accept-${Date.now()}`,
+                                              role: 'ai',
+                                              content,
+                                              timestamp: new Date(),
+                                              metadata: { agentAudit: { kind: 'accept', runId } },
+                                            } as any);
+                                          } catch (err) {
+                                            console.error('[UnifiedChatPanel] Failed to accept audit run:', err);
+                                          } finally {
+                                            setAgentAuditBusy(false);
+                                          }
+                                        }}
+                                        disabled={isDisabled || agentAuditBusy}
+                                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-700 hover:bg-slate-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                      >
+                                        Accept risk & proceed
+                                      </button>
+                                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                                        This is recorded in the audit trail.
+                                      </div>
+                                    </div>
+                                  ) : null}
+
+                                  {reviews.length ? (
+                                    <div className="mt-3">
+                                      <div className="flex flex-wrap gap-2">
+                                        {reviews.slice(0, 6).map((r: any) => {
+                                          const id = String(r?.agentId || '').trim();
+                                          const label =
+                                            agentRegistryById[id]?.displayName?.pl ||
+                                            agentRegistryById[id]?.displayName?.en ||
+                                            id;
+                                          const isActive = id && id === activeAgentId;
+                                          return (
+                                            <button
+                                              key={id}
+                                              onClick={() =>
+                                                setAgentAuditActiveTabByMessageId((prev) => ({
+                                                  ...prev,
+                                                  [msg.id]: id,
+                                                }))
+                                              }
+                                              className={`px-2.5 py-1 text-[11px] rounded-full border transition-colors ${
+                                                isActive
+                                                  ? 'bg-primary-100 dark:bg-primary-900/30 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300'
+                                                  : 'bg-white dark:bg-navy-950 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                                              }`}
+                                            >
+                                              {String(label)}
+                                              {String(r?.overreach || '') === 'hard' ? ' (rejected)' : ''}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+
+                                      {activeReview ? (
+                                        <div className="mt-3">
+                                          <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                                            Verdict: <span className="font-medium">{String(activeReview.verdict || '—')}</span>
+                                            {activeReview.overreach ? ` · Overreach: ${String(activeReview.overreach)}` : ''}
+                                          </div>
+
+                                          {Array.isArray(activeReview.findings) && activeReview.findings.length ? (
+                                            <div className="mt-2">
+                                              <div className="text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
+                                                Findings
+                                              </div>
+                                              <div className="space-y-2">
+                                                {activeReview.findings.slice(0, 8).map((f: any, i: number) => (
+                                                  <div
+                                                    key={`${String(f?.area || 'other')}-${i}`}
+                                                    className="p-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-md"
+                                                  >
+                                                    <div className="text-[11px] text-slate-700 dark:text-slate-200">
+                                                      <span className="font-semibold">
+                                                        {String(f.severity || '').toUpperCase()}
+                                                      </span>
+                                                      {` · ${String(f.area || 'other')}`} — {String(f.claim || '').trim()}
+                                                    </div>
+
+                                                    {Array.isArray(f.sourcesUsed) && f.sourcesUsed.length ? (
+                                                      <div className="mt-1 space-y-1">
+                                                        {f.sourcesUsed.slice(0, 4).map(renderSource)}
+                                                      </div>
+                                                    ) : null}
+
+                                                    {Array.isArray(f.missingDataQuestions) &&
+                                                    f.missingDataQuestions.length ? (
+                                                      <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-300">
+                                                        <div className="font-medium">Missing data</div>
+                                                        <ul className="list-disc pl-4">
+                                                          {f.missingDataQuestions
+                                                            .slice(0, 4)
+                                                            .map((q: any, qi: number) => (
+                                                              <li key={qi}>{String(q)}</li>
+                                                            ))}
+                                                        </ul>
+                                                      </div>
+                                                    ) : null}
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          ) : null}
+
+                                          {Array.isArray(activeReview.conflicts) && activeReview.conflicts.length ? (
+                                            <div className="mt-2">
+                                              <div className="text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
+                                                Conflicts
+                                              </div>
+                                              <ul className="list-disc pl-4 text-[11px] text-slate-600 dark:text-slate-300">
+                                                {activeReview.conflicts.slice(0, 6).map((c: any, ci: number) => (
+                                                  <li key={ci}>
+                                                    with <span className="font-medium">{String(c.withAgentId || '')}</span>
+                                                    {c.aboutArea ? ` (${String(c.aboutArea)})` : ''}:{' '}
+                                                    {String(c.conflictStatement || '')}
+                                                  </li>
+                                                ))}
+                                              </ul>
+                                            </div>
+                                          ) : null}
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  ) : null}
+                                </>
+                              );
+                            })()}
+                          </div>
+                        )}
                     </>
                   )}
                 </div>
               ) : (
-                <span>{msg.content}</span>
+                <>
+                  {editingMessageId === msg.id ? (
+                    <div className="flex flex-col gap-2">
+                      <textarea
+                        value={editingText}
+                        onChange={(e) => setEditingText(e.target.value)}
+                        rows={3}
+                        className="w-full text-sm bg-white/90 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-2 outline-none focus:ring-2 focus:ring-primary-500/40 text-navy-900 dark:text-slate-100"
+                      />
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={handleCancelEditMessage}
+                          disabled={editBusy}
+                          className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white/80 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                        >
+                          {t('common.cancel', 'Cancel')}
+                        </button>
+                        <button
+                          onClick={handleCommitEditMessage}
+                          disabled={editBusy || !editingText.trim()}
+                          className="px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50"
+                        >
+                          {editBusy ? t('common.saving', 'Saving…') : t('common.save', 'Save')}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <span>{msg.content}</span>
+                  )}
+                </>
               )}
 
               {/* Streaming indicator */}
@@ -1300,6 +2371,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   />
                 </span>
               )}
+
+              {/* Agent Audit Layer: streamed post-DT progress (keeps UI alive after text ends) */}
+              {msg.isStreaming &&
+                agentAuditState?.state &&
+                agentAuditState.state !== 'done' &&
+                agentAuditState.state !== 'error' && (
+                  <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                    Agent audit: {String(agentAuditState.state)}
+                  </div>
+                )}
 
               {/* Retry button for error messages */}
               {msg.role === 'ai' &&
@@ -1336,6 +2417,17 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   >
                     {isCopied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
                   </button>
+
+                  {/* Edit (user only) */}
+                  {msg.role === 'user' && (
+                    <button
+                      onClick={() => handleStartEditMessage(msg.id)}
+                      className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700"
+                      title={t('chat.actions.edit', 'Edit')}
+                    >
+                      <Pencil size={12} />
+                    </button>
+                  )}
 
                   {/* Quick Feedback (AI only) */}
                   {msg.role === 'ai' && (
@@ -1547,6 +2639,30 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 >
                   {t('deepThinking.continueDeeper', 'Continue to full report')}
                 </button>
+              </div>
+            </div>
+          )}
+
+        {/* Agent Audit Layer: Directed Deepening CTA */}
+        {msg.role === 'ai' &&
+          !msg.isStreaming &&
+          (msg as any).metadata?.agentAudit?.kind === 'verdict' &&
+          String((msg as any).metadata?.agentAudit?.verdict?.directedLoop?.deepThinkingPrompt || '')
+            .trim() && (
+            <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-3 flex flex-wrap gap-2`}>
+              <button
+                onClick={() => handleRunDirectedDeepening((msg as any).metadata?.agentAudit)}
+                disabled={
+                  isDisabled ||
+                  agentAuditBusy ||
+                  Number((msg as any).metadata?.agentAudit?.loopIteration || 1) >= 2
+                }
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {agentAuditBusy ? 'Running audit…' : 'Run directed deepening'}
+              </button>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 self-center">
+                Iterations: {String((msg as any).metadata?.agentAudit?.loopIteration || 1)}/2
               </div>
             </div>
           )}
@@ -1764,8 +2880,31 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         id="chat-input"
         className={`${isCompact ? 'p-2' : 'p-3'} border-t border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950`}
       >
+        {!!lastError && !isStreaming && (
+          <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
+            <div className="text-xs text-amber-800 dark:text-amber-200">
+              {t('aiChat.streamError', 'Last request failed. You can retry.')}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => retryLastStream()}
+                className="px-3 py-1 rounded-md text-xs font-medium bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                {t('common.tryAgain', 'Try again')}
+              </button>
+              <button
+                onClick={() => clearLastError()}
+                className="px-3 py-1 rounded-md text-xs font-medium bg-white/60 dark:bg-white/10 hover:bg-white/80 dark:hover:bg-white/15 text-amber-800 dark:text-amber-200"
+              >
+                {t('common.dismiss', 'Dismiss')}
+              </button>
+            </div>
+          </div>
+        )}
         <EnhancedChatInput
           onSend={handleSendMessage}
+          onStopGenerating={abortStream}
+          isStreaming={isStreaming}
           disabled={isDisabled}
           placeholder={
             workspaceContext && workspaceContext.type !== 'empty' && workspaceContext.entityName

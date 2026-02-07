@@ -126,6 +126,59 @@ export const ChatStreamRequestSchema = z.object({
   resumeFromPartial: z.boolean().optional(),
 });
 
+// ---------------------------------------------------------------------------
+// Agent Audit Layer (Post-DeepThinking)
+// ---------------------------------------------------------------------------
+
+export const AgentAuditDecisionContextSchema = z.object({
+  topic: z.string().min(1, 'topic is required'),
+  industry: z.string().optional(),
+  horizon: z.string().optional(),
+  functions: z.array(z.string()).optional().default([]),
+  riskFocus: z.array(z.string()).optional().default([]),
+});
+
+export const AgentAuditSuggestRequestSchema = z.object({
+  decisionContext: AgentAuditDecisionContextSchema,
+  userIntent: z.enum(['validate', 'stress_test', 'approve']).optional().default('validate'),
+  language: z
+    .string()
+    .transform((lang) => {
+      if (!lang) return 'en';
+      const base = lang.split('-')[0].toLowerCase();
+      const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'ar'];
+      return validLangs.includes(base) ? base : 'en';
+    })
+    .optional(),
+  maxAgents: z.union([z.literal(2), z.literal(3), z.literal(4)]).optional().default(3),
+});
+
+export const AgentAuditReviewRequestSchema = z.object({
+  decisionContext: AgentAuditDecisionContextSchema,
+  deepThinkingReport: z.string().min(1, 'deepThinkingReport is required'),
+  agentIds: z.array(z.string().min(1)).min(1),
+  conversationId: z.string().optional(),
+  dtSessionId: z.string().optional(),
+  webSearchEnabled: z.boolean().optional().default(false),
+  userIntent: z.enum(['validate', 'stress_test', 'approve']).optional().default('validate'),
+  language: z
+    .string()
+    .transform((lang) => {
+      if (!lang) return 'en';
+      const base = lang.split('-')[0].toLowerCase();
+      const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'ar'];
+      return validLangs.includes(base) ? base : 'en';
+    })
+    .optional(),
+  selectedTier: z.enum(['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING']).optional(),
+  selectedModelId: z.union([z.string().min(1), z.null()]).optional(),
+  loopIteration: z.union([z.literal(1), z.literal(2)]).optional().default(1),
+});
+
+export const AgentAuditAcceptRunRequestSchema = z.object({
+  note: z.string().max(2000).optional(),
+});
+
 // AI Context Query
 export const AIContextQuerySchema = z.object({
   screen: z.string().optional(),

@@ -50,7 +50,26 @@ export class RouteErrorBoundary extends Component<Props, State> {
     // trackError(error, errorInfo);
   }
 
+  private shouldHardReload(error: Error | null): boolean {
+    const msg = `${String(error || '')}\n${String((error as any)?.message || '')}`;
+    // Common cases:
+    // - Vite dev: "Outdated Optimize Dep" / 504
+    // - Vite/Prod: dynamic import chunk missing / stale bundle after deploy
+    return (
+      msg.includes('Outdated Optimize Dep') ||
+      msg.includes('Failed to fetch dynamically imported module') ||
+      msg.includes('dynamically imported module') ||
+      msg.includes('Importing a module script failed') ||
+      msg.includes('module script failed')
+    );
+  }
+
   handleReset = () => {
+    // For module/chunk import failures, a full reload is the only reliable recovery.
+    if (this.shouldHardReload(this.state.error)) {
+      window.location.reload();
+      return;
+    }
     this.setState({
       hasError: false,
       error: null,

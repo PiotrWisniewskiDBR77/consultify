@@ -35,9 +35,10 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { ExportSharePanel } from '../ExportSharePanel';
-import type { Report, ReportSection, ReportSourceType, SourceOption } from '../useReportBuilder';
+import type { Report, ReportSection, ReportSourceType, ReportStatus, SourceOption } from '../useReportBuilder';
 import { BlockCard } from './BlockCard';
 import { BlockPalette } from './BlockPalette';
+import { ReviewPanel } from './ReviewPanel';
 import { SettingsPanel } from './SettingsPanel';
 
 // ==========================================
@@ -47,10 +48,17 @@ import { SettingsPanel } from './SettingsPanel';
 export interface ReportIntent {
   audience: 'executive' | 'technical' | 'board' | 'operational' | 'mixed';
   goal: 'diagnosis' | 'roadmap' | 'investment_decision' | 'stakeholder_update' | 'summary';
-  language: 'pl' | 'en';
+  /** Supported languages: pl, en, de, es, ar, jp */
+  language: 'pl' | 'en' | 'de' | 'es' | 'ar' | 'jp';
   tone: 'consulting' | 'neutral' | 'decisive' | 'academic';
   scope: 'full' | 'executive' | 'focused';
   focusedAxes?: string[];
+  /** Optional: high-level structure preset (drives defaults & QA checks). */
+  requiredSectionsPreset?: 'assessment_full' | 'board_pack' | 'ops_delivery' | 'standard';
+  /** Optional: target length hint for generation and export. */
+  targetLength?: 'short' | 'standard' | 'long';
+  /** Optional: when true, blocks should include references/citations (lite, enforcement later). */
+  requireCitations?: boolean;
   visuals?: {
     assessmentMatrix?: boolean;
     charts?: boolean;
@@ -62,8 +70,20 @@ export interface ReportStyling {
   theme: 'professional' | 'modern' | 'minimal' | 'corporate';
   primaryColor: string;
   accentColor: string;
+  /** Custom color palette - user can add their own colors */
+  customColors?: string[];
   fontFamily: 'inter' | 'roboto' | 'poppins' | 'system';
+  /** Font size preset - affects H1, H2, H3, body, caption sizes */
+  fontSize?: 'small' | 'medium' | 'large';
+  /** Layout orientation - how the report is presented (horizontal = landscape, vertical = portrait) */
+  layoutOrientation?: 'horizontal' | 'vertical';
+  /** Minimal footer settings */
+  footerMode?: 'none' | 'minimal' | 'full';
+  /** Show client logo (uploaded) */
   showLogo: boolean;
+  /** Client logo URL or base64 */
+  clientLogoUrl?: string;
+  /** Show "Created in Consultinity" branding - default true */
   showBranding: boolean;
 }
 
@@ -108,6 +128,7 @@ interface ReportEditorProps {
     description?: string;
     recipient?: 'board' | 'bank' | 'team';
     sourceType?: ReportSourceType;
+    /** Tool/Framework identifier - e.g. 'DRD', 'SIRI' for Assessment */
     reportType?: string;
   };
   onSave?: (reportId: string) => void;
@@ -144,15 +165,23 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     language: isPl ? 'pl' : 'en',
     tone: 'consulting',
     scope: 'full',
+    requiredSectionsPreset: 'assessment_full',
+    targetLength: 'standard',
+    requireCitations: false,
     visuals: { assessmentMatrix: true, charts: true, icons: true },
   });
   const [styling, setStyling] = useState<ReportStyling>({
     theme: 'professional',
     primaryColor: '#3B82F6',
     accentColor: '#8B5CF6',
+    customColors: [],
     fontFamily: 'inter',
-    showLogo: true,
-    showBranding: true,
+    fontSize: 'medium',
+    layoutOrientation: 'vertical',
+    footerMode: 'minimal',
+    showLogo: false,
+    clientLogoUrl: undefined,
+    showBranding: true, // "Stworzono w Consultinity" - domyślnie włączone
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -160,7 +189,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [showBlockPalette, setShowBlockPalette] = useState(false);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
-  const [settingsSection, setSettingsSection] = useState<'intent' | 'styling' | 'export'>('intent');
+  const [settingsSection, setSettingsSection] = useState<'intent' | 'styling' | 'export' | 'review'>('intent');
   const [isSettingsPanelCollapsed, setIsSettingsPanelCollapsed] = useState(false);
 
   // Source state
@@ -172,12 +201,130 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     initialTemplateId || null
   );
 
+  // ==========================================
+  // TEMPLATE PRESETS
+  // ==========================================
+
+  const PRESET_CONFIGS: Record<
+    'assessment_full' | 'board_pack' | 'ops_delivery',
+    {
+      intent: Partial<ReportIntent>;
+      styling: Partial<ReportStyling>;
+      blocks: Array<{ type: string; title: string; titlePl: string }>;
+    }
+  > = {
+    assessment_full: {
+      intent: {
+        audience: 'executive',
+        goal: 'diagnosis',
+        tone: 'consulting',
+        scope: 'full',
+        requiredSectionsPreset: 'assessment_full',
+        targetLength: 'standard',
+        visuals: { assessmentMatrix: true, charts: true, icons: true },
+      },
+      styling: {
+        theme: 'professional',
+        layoutOrientation: 'vertical', // Portrait - standard report
+        footerMode: 'minimal',
+      },
+      blocks: [
+        { type: 'cover', title: 'Cover Page', titlePl: 'Strona tytułowa' },
+        { type: 'summary', title: 'Executive Summary', titlePl: 'Streszczenie zarządcze' },
+        { type: 'matrix', title: 'Assessment Matrix', titlePl: 'Macierz oceny' },
+        { type: 'findings', title: 'Key Findings', titlePl: 'Kluczowe wnioski' },
+        { type: 'recommendations', title: 'Recommendations', titlePl: 'Rekomendacje' },
+        { type: 'action_plan', title: 'Roadmap / Action Plan', titlePl: 'Roadmapa / Plan działań' },
+        { type: 'gap_analysis', title: 'Risks & Gaps', titlePl: 'Ryzyka i luki' },
+        { type: 'appendix', title: 'Appendix', titlePl: 'Aneks' },
+      ],
+    },
+    board_pack: {
+      intent: {
+        audience: 'board',
+        goal: 'stakeholder_update',
+        tone: 'decisive',
+        scope: 'executive',
+        requiredSectionsPreset: 'board_pack',
+        targetLength: 'short',
+        visuals: { assessmentMatrix: false, charts: true, icons: true },
+      },
+      styling: {
+        theme: 'corporate',
+        layoutOrientation: 'horizontal', // Landscape - presentation style
+        footerMode: 'minimal',
+      },
+      blocks: [
+        { type: 'cover', title: 'Cover Page', titlePl: 'Strona tytułowa' },
+        { type: 'summary', title: 'Key Message', titlePl: 'Kluczowy przekaz' },
+        { type: 'dashboard', title: 'KPI Snapshot', titlePl: 'Podsumowanie KPI' },
+        { type: 'recommendations', title: 'Decisions Needed', titlePl: 'Decyzje do podjęcia' },
+        { type: 'gap_analysis', title: 'Risks', titlePl: 'Ryzyka' },
+        { type: 'action_plan', title: 'Next Steps', titlePl: 'Następne kroki' },
+      ],
+    },
+    ops_delivery: {
+      intent: {
+        audience: 'operational',
+        goal: 'roadmap',
+        tone: 'neutral',
+        scope: 'focused',
+        requiredSectionsPreset: 'ops_delivery',
+        targetLength: 'standard',
+        visuals: { assessmentMatrix: false, charts: true, icons: false },
+      },
+      styling: {
+        theme: 'minimal',
+        layoutOrientation: 'vertical', // Portrait - document style
+        footerMode: 'full',
+      },
+      blocks: [
+        { type: 'cover', title: 'Cover Page', titlePl: 'Strona tytułowa' },
+        { type: 'summary', title: 'Objectives', titlePl: 'Cele' },
+        { type: 'context', title: 'Current State', titlePl: 'Stan obecny' },
+        { type: 'table', title: 'Backlog', titlePl: 'Backlog' },
+        { type: 'action_plan', title: 'Milestones', titlePl: 'Kamienie milowe' },
+        { type: 'table', title: 'Dependencies', titlePl: 'Zależności' },
+        { type: 'gap_analysis', title: 'Risks', titlePl: 'Ryzyka' },
+      ],
+    },
+  };
+
+  const applyPreset = useCallback(
+    (preset: 'assessment_full' | 'board_pack' | 'ops_delivery') => {
+      const config = PRESET_CONFIGS[preset];
+      if (!config) return;
+
+      // Apply intent
+      setIntent((prev) => ({ ...prev, ...config.intent }));
+
+      // Apply styling
+      setStyling((prev) => ({ ...prev, ...config.styling }));
+
+      // Replace blocks with preset defaults
+      const newBlocks: BlockConfig[] = config.blocks.map((b, idx) => ({
+        id: `preset_${preset}_${idx}_${Date.now()}`,
+        type: b.type,
+        title: isPl ? b.titlePl : b.title,
+        length: 'medium',
+        includeVisuals: true,
+        enabled: true,
+        orderIndex: idx,
+      }));
+      setBlocks(newBlocks);
+
+      toast.success(
+        isPl
+          ? `Preset "${preset.replace('_', ' ')}" zastosowany`
+          : `Preset "${preset.replace('_', ' ')}" applied`
+      );
+    },
+    [isPl]
+  );
+
   // Template-mode metadata
   const [templateDescription, setTemplateDescription] = useState<string>(
     templateMeta?.description || ''
-  );
-  const [templateRecipient, setTemplateRecipient] = useState<'' | 'board' | 'bank' | 'team'>(
-    templateMeta?.recipient || ''
   );
   const [templateSourceType, setTemplateSourceType] = useState<ReportSourceType>(
     templateMeta?.sourceType || 'ASSESSMENT'
@@ -185,15 +332,34 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   const [templateReportType, setTemplateReportType] = useState<string>(
     templateMeta?.reportType || ''
   );
+  const [templateAuthor, setTemplateAuthor] = useState<string>('');
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(
     isTemplateMode ? initialTemplateId || null : null
   );
 
-  const reportStatus = (report?.status || 'DRAFT') as string;
+  // Computed template meta for SettingsPanel
+  const templateMetaForPanel = React.useMemo(() => ({
+    sourceType: templateSourceType,
+    reportType: templateReportType,
+    description: templateDescription,
+    author: templateAuthor,
+  }), [templateSourceType, templateReportType, templateDescription, templateAuthor]);
+
+  const handleTemplateMetaChange = useCallback(
+    (updates: Partial<typeof templateMetaForPanel>) => {
+      if (updates.sourceType !== undefined) setTemplateSourceType(updates.sourceType as ReportSourceType);
+      if (updates.reportType !== undefined) setTemplateReportType(updates.reportType);
+      if (updates.description !== undefined) setTemplateDescription(updates.description);
+      if (updates.author !== undefined) setTemplateAuthor(updates.author);
+    },
+    []
+  );
+
+  const reportStatus = (report?.status || 'DRAFT') as ReportStatus;
   const reportIdForActions = report?.id || reportId || null;
 
   const downloadExport = useCallback(
-    async (format: 'pdf' | 'pptx' | 'doc', fileNameBase?: string) => {
+    async (format: 'pdf' | 'pptx' | 'docx', fileNameBase?: string) => {
       if (!reportIdForActions) return;
       const token = localStorage.getItem('token');
       const res = await fetch(`/api/report-builder/${reportIdForActions}/export/${format}`, {
@@ -211,7 +377,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         /[^\p{L}\p{N}_-]+/gu,
         '_'
       );
-      const ext = format === 'doc' ? 'doc' : format;
+      const ext = format;
       a.download = `${safeTitle}.${ext}`;
       document.body.appendChild(a);
       a.click();
@@ -228,7 +394,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       reportStatus={reportStatus}
       onExportPdf={() => downloadExport('pdf')}
       onExportPptx={() => downloadExport('pptx')}
-      onExportWord={() => downloadExport('doc')}
+      onExportWord={() => downloadExport('docx')}
       onCreateShareLink={async (options) => {
         const resp = await Api.post(`/report-builder/${reportIdForActions}/share`, options || {});
         return resp?.link || null;
@@ -242,12 +408,38 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         return Boolean(resp?.success);
       }}
       isLoading={isSaving || isGenerating}
+      blocks={blocks.map((b) => ({
+        id: b.id,
+        title: b.title,
+        enabled: b.enabled,
+        content: b.content,
+        isGenerated: b.isGenerated,
+      }))}
     />
   ) : (
     <div className="text-sm text-slate-500 dark:text-slate-400">
       {isPl
         ? 'Zapisz raport, aby odblokować eksport i udostępnianie.'
         : 'Save the report to enable export and sharing.'}
+    </div>
+  );
+
+  // Review panel for report mode
+  const reviewPanel = reportIdForActions ? (
+    <ReviewPanel
+      reportId={reportIdForActions}
+      reportStatus={reportStatus}
+      onStatusChange={(newStatus) => {
+        // Update local report state to reflect new status
+        setReport((prev) => (prev ? { ...prev, status: newStatus } : prev));
+      }}
+      isPl={isPl}
+    />
+  ) : (
+    <div className="text-sm text-slate-500 dark:text-slate-400">
+      {isPl
+        ? 'Zapisz raport, aby włączyć workflow recenzji.'
+        : 'Save the report to enable review workflow.'}
     </div>
   );
 
@@ -258,15 +450,6 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       if (templateMeta?.name) setReportTitle(templateMeta.name);
       if (templateMeta?.description !== undefined)
         setTemplateDescription(templateMeta.description || '');
-      if (templateMeta?.recipient !== undefined) {
-        setTemplateRecipient(
-          templateMeta.recipient === 'board' ||
-            templateMeta.recipient === 'bank' ||
-            templateMeta.recipient === 'team'
-            ? templateMeta.recipient
-            : ''
-        );
-      }
       if (templateMeta?.sourceType) setTemplateSourceType(templateMeta.sourceType);
       if (templateMeta?.reportType !== undefined)
         setTemplateReportType(templateMeta.reportType || '');
@@ -364,10 +547,6 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       if (isTemplateMode) {
         if (tpl?.name) setReportTitle(String(tpl.name));
         setTemplateDescription(String(tpl.description || ''));
-        const recipient = (tpl as any)?.defaultOptions?.recipient;
-        setTemplateRecipient(
-          recipient === 'board' || recipient === 'bank' || recipient === 'team' ? recipient : ''
-        );
         if (tpl?.sourceType) setTemplateSourceType(String(tpl.sourceType) as ReportSourceType);
         setTemplateReportType(String(tpl.reportType || ''));
       }
@@ -518,13 +697,20 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
 
   // Block operations
   const addBlock = useCallback(
-    (blockType: string, title: string, afterIndex?: number) => {
+    (
+      blockType: string,
+      title: string,
+      afterIndex?: number,
+      meta?: { blockTypeId?: string; renderKind?: string; defaultLength?: 'short' | 'medium' | 'long' }
+    ) => {
       const newBlock: BlockConfig = {
         id: `tmp_${Date.now()}`,
         type: blockType,
         title,
-        length: 'medium',
-        includeVisuals: blockType === 'matrix',
+        length: meta?.defaultLength || 'medium',
+        includeVisuals: blockType === 'matrix' || meta?.renderKind === 'matrix' || meta?.renderKind === 'chart',
+        blockTypeId: meta?.blockTypeId,
+        renderKind: meta?.renderKind,
         enabled: true,
         orderIndex: afterIndex !== undefined ? afterIndex + 1 : blocks.length,
       };
@@ -619,10 +805,11 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           }));
 
         let saved: any;
-        const defaultOptions =
-          templateRecipient && ['board', 'bank', 'team'].includes(templateRecipient)
-            ? { recipient: templateRecipient }
-            : null;
+        // Build defaultOptions with intent and styling for template presets
+        const defaultOptions: Record<string, unknown> = {
+          intent,
+          styling,
+        };
         if (editingTemplateId) {
           saved = await Api.put(`/report-builder/templates/${editingTemplateId}`, {
             name,
@@ -1036,102 +1223,24 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         </main>
 
         {/* Right Sidebar - Settings */}
-        {isTemplateMode ? (
-          <aside className="w-80 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex-shrink-0 overflow-y-auto">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800">
-              <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                {isPl ? 'Ustawienia szablonu' : 'Template settings'}
-              </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {isPl
-                  ? 'Wybierz moduł i opisz przeznaczenie szablonu.'
-                  : 'Pick module and describe template intent.'}
-              </div>
-            </div>
-            <div className="p-4 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
-                  {isPl ? 'Moduł (source type)' : 'Module (source type)'}
-                </label>
-                <select
-                  value={templateSourceType}
-                  onChange={(e) => setTemplateSourceType(e.target.value as ReportSourceType)}
-                  className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white"
-                >
-                  <option value="ASSESSMENT">Assessment</option>
-                  <option value="INTERVIEW">Interview</option>
-                  <option value="TOOL">Tool</option>
-                  <option value="INITIATIVE">Initiative</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
-                  {isPl
-                    ? 'Framework / typ raportu (opcjonalnie)'
-                    : 'Framework / report type (optional)'}
-                </label>
-                <input
-                  value={templateReportType}
-                  onChange={(e) => setTemplateReportType(e.target.value)}
-                  placeholder={
-                    isPl ? 'np. DRD, SIRI, ASSESSMENT_DRD…' : 'e.g. DRD, SIRI, ASSESSMENT_DRD…'
-                  }
-                  className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
-                  {isPl ? 'Dla kogo (opcjonalnie)' : 'Recipient (optional)'}
-                </label>
-                <select
-                  value={templateRecipient}
-                  onChange={(e) =>
-                    setTemplateRecipient(e.target.value as '' | 'board' | 'bank' | 'team')
-                  }
-                  className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white"
-                >
-                  <option value="">{isPl ? 'Nie ustawiono' : 'Not set'}</option>
-                  <option value="board">{isPl ? 'Zarząd / Executive' : 'Board / Executive'}</option>
-                  <option value="bank">{isPl ? 'Bank / Finansowy' : 'Bank / Financial'}</option>
-                  <option value="team">{isPl ? 'Zespół' : 'Team'}</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
-                  {isPl ? 'Opis' : 'Description'}
-                </label>
-                <textarea
-                  value={templateDescription}
-                  onChange={(e) => setTemplateDescription(e.target.value)}
-                  rows={4}
-                  placeholder={
-                    isPl
-                      ? 'Co ma być w tym szablonie? Dla kogo? Jaki styl?'
-                      : 'What should this template include? For whom? Which style?'
-                  }
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white"
-                />
-              </div>
-            </div>
-          </aside>
-        ) : (
-          <SettingsPanel
-            intent={intent}
-            styling={styling}
-            sourceType={sourceType}
-            sourceName={sourceName}
-            onIntentChange={(updates) => setIntent((prev) => ({ ...prev, ...updates }))}
-            onStylingChange={(updates) => setStyling((prev) => ({ ...prev, ...updates }))}
-            activeSection={settingsSection}
-            onSectionChange={setSettingsSection}
-            exportPanel={exportPanel}
-            isCollapsed={isSettingsPanelCollapsed}
-            onToggleCollapse={() => setIsSettingsPanelCollapsed((prev) => !prev)}
-          />
-        )}
+        <SettingsPanel
+          intent={intent}
+          styling={styling}
+          sourceType={isTemplateMode ? templateSourceType : sourceType}
+          sourceName={isTemplateMode ? null : sourceName}
+          onIntentChange={(updates) => setIntent((prev) => ({ ...prev, ...updates }))}
+          onStylingChange={(updates) => setStyling((prev) => ({ ...prev, ...updates }))}
+          activeSection={settingsSection}
+          onSectionChange={setSettingsSection}
+          isTemplateMode={isTemplateMode}
+          onApplyPreset={isTemplateMode ? applyPreset : undefined}
+          templateMeta={isTemplateMode ? templateMetaForPanel : undefined}
+          onTemplateMetaChange={isTemplateMode ? handleTemplateMetaChange : undefined}
+          exportPanel={exportPanel}
+          isCollapsed={isSettingsPanelCollapsed}
+          onToggleCollapse={() => setIsSettingsPanelCollapsed((prev) => !prev)}
+          reviewPanel={isTemplateMode ? undefined : reviewPanel}
+        />
       </div>
 
       {/* Block Palette Modal */}

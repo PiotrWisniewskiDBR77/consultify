@@ -521,13 +521,18 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   };
 
   return (
-    <div className={cn('flex flex-col h-full w-[280px] bg-navy-950 dark:bg-navy-950', className)}>
+    <div
+      className={cn(
+        'flex flex-col h-full w-[280px] bg-white dark:bg-navy-950 border-r border-slate-200 dark:border-navy-800',
+        className
+      )}
+    >
       {/* Header - Admin style (no icon, bold title) */}
       <div className="px-5 pt-5 pb-4">
-        <h1 className="text-lg font-bold text-white tracking-wide">
+        <h1 className="text-lg font-bold text-navy-900 dark:text-white tracking-wide">
           {t('settings.sidebar.title', 'SETTINGS')}
         </h1>
-        <p className="text-sm text-slate-400 dark:text-slate-500 mt-0.5">
+        <p className="text-sm text-slate-600 dark:text-slate-500 mt-0.5">
           {t('settings.sidebar.subtitle', 'Personal preferences')}
         </p>
       </div>
@@ -543,7 +548,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                 {/* Group Header - Clickable, no icon (Admin style) */}
                 <button
                   onClick={() => toggleGroup(group.id)}
-                  className="w-full flex items-center justify-between px-2 py-2.5 text-[11px] font-semibold tracking-wider text-slate-400 dark:text-slate-500 hover:text-slate-300 transition-colors"
+                  className="w-full flex items-center justify-between px-2 py-2.5 text-[11px] font-semibold tracking-wider text-slate-500 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
                 >
                   <span>{group.label}</span>
                   <ChevronDown
@@ -573,14 +578,16 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                           className={cn(
                             'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150',
                             isActive
-                              ? 'bg-violet-600/20 text-violet-300 font-medium'
-                              : 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-navy-800/20 hover:text-white'
+                              ? 'bg-violet-50 text-violet-700 font-medium dark:bg-violet-600/20 dark:text-violet-300'
+                              : 'text-slate-600 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-navy-800/20 hover:text-navy-900 dark:hover:text-white'
                           )}
                         >
                           <Icon
                             className={cn(
                               'w-4 h-4 flex-shrink-0',
-                              isActive ? 'text-violet-400' : 'text-slate-500 dark:text-slate-400'
+                              isActive
+                                ? 'text-violet-600 dark:text-violet-400'
+                                : 'text-slate-400 dark:text-slate-400'
                             )}
                           />
                           <span className="flex-1 text-left">{item.label}</span>
@@ -598,10 +605,10 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-white/5">
+      <div className="p-3 border-t border-slate-200 dark:border-white/5">
         <button
           onClick={onBack || (() => window.history.back())}
-          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded-lg transition-colors"
+          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded-lg transition-colors"
         >
           <LogOut className="w-4 h-4 rotate-180" />
           {t('settings.sidebar.backToDashboard', 'Back to Dashboard')}

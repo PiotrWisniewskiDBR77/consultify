@@ -290,6 +290,11 @@ interface ConversationState {
     message: Omit<ConversationMessage, 'id' | 'createdAt'>
   ) => Promise<ConversationMessage>;
   updateLastMessage: (content: string) => void;
+  /**
+   * Truncate conversation after a message (inclusive) and optionally edit it.
+   * Used for "edit & regenerate" UX.
+   */
+  truncateFromMessage: (messageId: string, editedContent?: string) => Promise<void>;
 
   // Actions - Organization
   starConversation: (id: string) => Promise<void>;
@@ -655,6 +660,13 @@ export const useConversationStore = create<ConversationState>()(
           }
           return { activeMessages: messages };
         });
+      },
+
+      truncateFromMessage: async (messageId: string, editedContent?: string) => {
+        const conversationId = get().activeConversationId;
+        if (!conversationId) return;
+        await Api.truncateConversation(conversationId, messageId, editedContent);
+        await get().fetchConversation(conversationId);
       },
 
       // ==================== ORGANIZATION ====================

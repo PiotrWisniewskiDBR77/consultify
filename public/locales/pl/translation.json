@@ -745,5 +745,97 @@
     "sections": {
       "archived": "Archiwum"
     }
+  },
+  "agentAudit": {
+    "title": "Agent Audit Layer",
+    "suggestedReviewers": "Sugerowani recenzenci",
+    "willAuditAfterDT": "Zaudytują raport Deep Thinking",
+    "selected": "wybrano",
+    "settings": "Ustawienia",
+    "auditIntent": "Cel audytu",
+    "maxReviewers": "Maks. recenzentów",
+    "refreshSuggestions": "Odśwież sugestie",
+    "refreshing": "Odświeżanie...",
+    "expectedFindings": "Oczekiwane ustalenia",
+    "riskAreas": "Obszary ryzyka",
+    "detectedSignals": "Wykryte sygnały",
+    "showMore": "Pokaż więcej",
+    "showLess": "Pokaż mniej",
+    "noInterference": "Agenci zaudytują tylko końcowy raport — bez ingerencji w proces Deep Thinking.",
+    "reviewers": "recenzentów",
+    "gatesTriggered": "bramek aktywowanych",
+    "triggeredGates": "Aktywowane bramki jakości",
+    "criticalRisks": "Ryzyka krytyczne",
+    "agentReviews": "Recenzje agentów",
+    "impactIfIgnored": "Skutki zignorowania",
+    "whenItFails": "Kiedy zawiedzie",
+    "findings": "Ustalenia",
+    "topQuestions": "Kluczowe pytania",
+    "actionableFollowups": "Działania do podjęcia",
+    "acceptRisk": "Zaakceptuj ryzyko i kontynuuj",
+    "accepting": "Akceptowanie...",
+    "triggerDeepening": "Uruchom ukierunkowane pogłębienie",
+    "auditTrailNote": "Działania są zapisywane w ścieżce audytu.",
+    "qualityStatus": {
+      "PASS": "PASS",
+      "PASS_WITH_RISKS": "PASS Z RYZYKAMI",
+      "FAIL": "FAIL"
+    },
+    "gates": {
+      "A": "Bramka A: Krytyczne finanse",
+      "B": "Bramka B: Konsensus ryzyka",
+      "C": "Bramka C: Brakujące dane",
+      "D": "Bramka D: Przekroczenie uprawnień"
+    },
+    "intents": {
+      "validate": "Walidacja",
+      "stress_test": "Stress-test",
+      "approve": "Zatwierdzenie"
+    },
+    "intentDescriptions": {
+      "validate": "Standardowa walidacja ryzyk i jakości",
+      "stress_test": "Głęboka analiza z agentem kontrariańskim",
+      "approve": "Szybka walidacja przed zatwierdzeniem"
+    },
+    "agentKinds": {
+      "industry": "Branża",
+      "functional": "Funkcja",
+      "adversarial": "Kontrarianin"
+    },
+    "riskAreaLabels": {
+      "cashflow": "Cashflow",
+      "capex": "CAPEX",
+      "safety": "Bezpieczeństwo",
+      "uptime": "Dostępność",
+      "quality": "Jakość",
+      "compliance": "Compliance",
+      "cybersecurity": "Cyberbezpieczeństwo",
+      "vendor_risk": "Ryzyko dostawców",
+      "delivery_otif": "OTIF/Dostawa",
+      "change_management": "Zarządzanie zmianą",
+      "architecture_integrations": "Architektura/Integracje",
+      "other": "Inne"
+    }
+  },
+  "research": {
+    "deepResearch": "Głęboka analiza",
+    "generatingQueries": "Generowanie zapytań badawczych...",
+    "queriesReady": "Zapytania badawcze gotowe",
+    "searching": "Wyszukiwanie źródeł...",
+    "aggregating": "Agregowanie wyników...",
+    "synthesizing": "Syntezowanie ustaleń...",
+    "complete": "Badanie zakończone",
+    "queries": "zapytań",
+    "sources": "źródeł",
+    "searchQueries": "Zapytania wyszukiwania",
+    "topSources": "Najlepsze źródła",
+    "researching": "Badanie"
+  },
+  "thinking": {
+    "processing": "Myślę...",
+    "analyzing": "Analizuję...",
+    "structuring": "Strukturyzuję...",
+    "synthesizing": "Syntezuję...",
+    "finalizing": "Finalizuję..."
   }
 }

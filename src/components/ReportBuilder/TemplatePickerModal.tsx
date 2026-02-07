@@ -21,6 +21,7 @@ import {
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Api } from '../../services/api';
+import { ReportEditor } from './ReportEditor';
 
 // ============================================
 // Types
@@ -45,7 +46,11 @@ export interface TemplatePickerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectTemplate: (templateId: string, templateName: string) => void;
-  onCreateClean: () => void;
+  /**
+   * Legacy callback (older flow). If provided, it will be called when user clicks "Add clean".
+   * The modal now supports creating templates directly using the main Report Editor (template mode).
+   */
+  onCreateClean?: () => void;
   sourceType: 'ASSESSMENT' | 'INTERVIEW' | 'TOOL' | 'INITIATIVE';
   framework?: string;
 }
@@ -157,6 +162,13 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
   const [loading, setLoading] = useState(true);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [isNewTemplateMetaOpen, setIsNewTemplateMetaOpen] = useState(false);
+  const [isTemplateBuilderOpen, setIsTemplateBuilderOpen] = useState(false);
+  const [newTemplateName, setNewTemplateName] = useState('');
+  const [newTemplateDescription, setNewTemplateDescription] = useState('');
+  const [newTemplateRecipient, setNewTemplateRecipient] = useState<'' | 'board' | 'bank' | 'team'>(
+    ''
+  );
 
   // Fetch templates
   const fetchTemplates = useCallback(async () => {
@@ -211,7 +223,14 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
 
   // Handle "Dodaj czysty"
   const handleCreateClean = () => {
-    onCreateClean();
+    if (onCreateClean) {
+      onCreateClean();
+      return;
+    }
+    setNewTemplateName('');
+    setNewTemplateDescription('');
+    setNewTemplateRecipient('');
+    setIsNewTemplateMetaOpen(true);
   };
 
   if (!isOpen) return null;
@@ -388,6 +407,137 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
           </div>
         </motion.div>
       </motion.div>
+
+      {/* Small meta modal: name + description + recipient */}
+      {isNewTemplateMetaOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={() => setIsNewTemplateMetaOpen(false)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 10 }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-xl bg-white dark:bg-navy-900 rounded-2xl shadow-2xl overflow-hidden"
+          >
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  New template
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Provide basic metadata, then open the generator.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsNewTemplateMetaOpen(false)}
+                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Name
+                </label>
+                <input
+                  value={newTemplateName}
+                  onChange={(e) => setNewTemplateName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                  placeholder="e.g. DRD Board Summary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Description (optional)
+                </label>
+                <textarea
+                  value={newTemplateDescription}
+                  onChange={(e) => setNewTemplateDescription(e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white resize-none"
+                  placeholder="What is this template used for?"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Recipient (optional)
+                </label>
+                <select
+                  value={newTemplateRecipient}
+                  onChange={(e) =>
+                    setNewTemplateRecipient(e.target.value as '' | 'board' | 'bank' | 'team')
+                  }
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                >
+                  <option value="">—</option>
+                  <option value="board">Board</option>
+                  <option value="bank">Bank</option>
+                  <option value="team">Team</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/50 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsNewTemplateMetaOpen(false)}
+                className="px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsNewTemplateMetaOpen(false);
+                  setIsTemplateBuilderOpen(true);
+                }}
+                className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white font-medium transition-colors"
+              >
+                Open generator
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Template builder overlay (full ReportEditor in template mode) */}
+      {isTemplateBuilderOpen && (
+        <div className="fixed inset-0 z-[70]">
+          <ReportEditor
+            mode="template"
+            templateMeta={{
+              name: newTemplateName,
+              description: newTemplateDescription,
+              sourceType: sourceType as any,
+              reportType:
+                sourceType === 'ASSESSMENT' && framework
+                  ? `ASSESSMENT_${String(framework).toUpperCase()}`
+                  : undefined,
+            }}
+            onTemplateSaved={(tpl) => {
+              setIsTemplateBuilderOpen(false);
+              // Refresh list + preselect created template
+              void fetchTemplates().then(() => {
+                setSelectedTemplateId(tpl.id);
+              });
+            }}
+            onClose={() => {
+              setIsTemplateBuilderOpen(false);
+              void fetchTemplates();
+            }}
+          />
+        </div>
+      )}
     </AnimatePresence>
   );
 };

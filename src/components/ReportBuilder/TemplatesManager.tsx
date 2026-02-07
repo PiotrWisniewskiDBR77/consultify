@@ -1,35 +1,45 @@
 /**
  * TemplatesManager
  *
- * Full CRUD management for Report Builder templates:
- * - List system (read-only) and organization templates
- * - Create new organization templates
- * - Edit organization templates
- * - Delete organization templates
- * - Duplicate system templates to organization
+ * Full CRUD management for Report Builder templates
+ * UI/UX matching the Decisions panel style exactly
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Building2,
-  CheckCircle2,
+  Calendar,
+  Check,
+  CheckSquare,
+  ChevronDown,
   Copy,
   Edit3,
   FileText,
-  GripVertical,
+  Flag,
   Loader2,
+  Minus,
   Package,
   Plus,
-  Save,
-  Sparkles,
+  RefreshCw,
+  Search,
+  Square,
   Trash2,
+  User,
+  Users,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
 
+import {
+  type ColumnDef,
+  ColumnResizer,
+  type ColumnWidths,
+  FilterDropdown,
+  type TableFilters,
+} from '@/components/ui/ResizableTable';
 import { Api } from '../../services/api';
+import { ReportEditor } from './ReportEditor/ReportEditor';
 
 // ==========================================
 // TYPES
@@ -41,10 +51,6 @@ interface TemplateSection {
   title: string;
   required: boolean;
   order: number;
-  defaultLength?: string;
-  defaultLanguage?: string;
-  repeatFor?: string;
-  repeatKey?: string;
 }
 
 interface Template {
@@ -59,482 +65,231 @@ interface Template {
   sections: TemplateSection[];
   createdAt?: string;
   updatedAt?: string;
+  // User & Audience
+  createdById?: string;
+  createdByName?: string;
+  audience?: string; // 'executive' | 'manager' | 'analyst' | 'team' | 'external'
 }
 
 interface TemplatesManagerProps {
   embedded?: boolean;
-  /** When true, opens the "New Template" editor immediately on mount. */
   autoOpenNewTemplate?: boolean;
-  /** Called when user clicks on a template card to create a new report from it. */
   onUseTemplate?: (templateId: string) => void;
 }
 
 // ==========================================
-// TEMPLATE EDITOR MODAL
+// COLUMN DEFINITIONS (Decisions-style)
 // ==========================================
 
-interface TemplateEditorModalProps {
-  template?: Template | null;
-  isOpen: boolean;
-  onClose: () => void;
-  onSaved: () => void;
-}
+const SOURCE_TYPE_FILTER_OPTIONS = [
+  { value: 'ASSESSMENT', label: 'Assessment' },
+  { value: 'INTERVIEW', label: 'Interview' },
+  { value: 'TOOL', label: 'Tool' },
+  { value: 'INITIATIVE', label: 'Initiative' },
+];
 
-const TemplateEditorModal: React.FC<TemplateEditorModalProps> = ({
-  template,
-  isOpen,
-  onClose,
-  onSaved,
-}) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+const TYPE_FILTER_OPTIONS = [
+  { value: 'system', label: 'App (System)' },
+  { value: 'org', label: 'Organization' },
+];
 
-  const isNew = !template?.id;
-  const [name, setName] = useState(template?.name || '');
-  const [description, setDescription] = useState(template?.description || '');
-  const [sourceType, setSourceType] = useState(template?.sourceType || 'ASSESSMENT');
-  const [reportType, setReportType] = useState(template?.reportType || '');
-  const [sections, setSections] = useState<TemplateSection[]>(template?.sections || []);
-  const [saving, setSaving] = useState(false);
+const AUDIENCE_FILTER_OPTIONS = [
+  { value: 'executive', label: 'Executive' },
+  { value: 'manager', label: 'Manager' },
+  { value: 'analyst', label: 'Analyst' },
+  { value: 'team', label: 'Team' },
+  { value: 'external', label: 'External' },
+];
 
-  // Reset form when template changes
-  useEffect(() => {
-    if (template) {
-      setName(template.name);
-      setDescription(template.description || '');
-      setSourceType(template.sourceType);
-      setReportType(template.reportType || '');
-      setSections(template.sections || []);
-    } else {
-      setName('');
-      setDescription('');
-      setSourceType('ASSESSMENT');
-      setReportType('');
-      setSections([]);
-    }
-  }, [template]);
+const TEMPLATE_COLUMNS: ColumnDef[] = [
+  {
+    id: 'select',
+    label: '',
+    width: 40,
+    minWidth: 40,
+    maxWidth: 40,
+    resizable: false,
+    filterable: false,
+  },
+  {
+    id: 'type',
+    label: 'Type',
+    width: 90,
+    minWidth: 80,
+    maxWidth: 120,
+    resizable: true,
+    filterable: true,
+    filterType: 'multiselect',
+    filterOptions: TYPE_FILTER_OPTIONS,
+  },
+  {
+    id: 'indicator',
+    label: '',
+    width: 32,
+    minWidth: 32,
+    maxWidth: 32,
+    resizable: false,
+    filterable: false,
+  },
+  {
+    id: 'name',
+    label: 'Template',
+    width: 220,
+    minWidth: 180,
+    resizable: false,
+    filterable: false,
+  },
+  {
+    id: 'sourceType',
+    label: 'Module',
+    width: 110,
+    minWidth: 90,
+    maxWidth: 140,
+    resizable: true,
+    filterable: true,
+    filterType: 'multiselect',
+    filterOptions: SOURCE_TYPE_FILTER_OPTIONS,
+  },
+  {
+    id: 'audience',
+    label: 'Audience',
+    width: 100,
+    minWidth: 80,
+    maxWidth: 130,
+    resizable: true,
+    filterable: true,
+    filterType: 'multiselect',
+    filterOptions: AUDIENCE_FILTER_OPTIONS,
+  },
+  {
+    id: 'createdBy',
+    label: 'User',
+    width: 120,
+    minWidth: 100,
+    maxWidth: 160,
+    resizable: true,
+    filterable: false,
+  },
+  {
+    id: 'sections',
+    label: 'Sections',
+    width: 80,
+    minWidth: 60,
+    maxWidth: 100,
+    resizable: true,
+    filterable: false,
+  },
+  {
+    id: 'updatedAt',
+    label: 'Updated',
+    width: 100,
+    minWidth: 80,
+    maxWidth: 130,
+    resizable: true,
+    filterable: false,
+  },
+  {
+    id: 'actions',
+    label: 'Actions',
+    width: 120,
+    minWidth: 100,
+    maxWidth: 140,
+    resizable: false,
+    filterable: false,
+    align: 'right',
+  },
+];
 
-  const handleSave = async () => {
-    if (!name.trim()) {
-      toast.error(isPl ? 'Nazwa jest wymagana' : 'Name is required');
-      return;
-    }
+// Default column widths
+const getDefaultColumnWidths = (): ColumnWidths =>
+  TEMPLATE_COLUMNS.reduce((acc, col) => ({ ...acc, [col.id]: col.width }), {});
 
-    setSaving(true);
-    try {
-      if (isNew) {
-        await Api.post('/report-builder/templates', {
-          name,
-          description,
-          sourceType,
-          reportType: reportType || undefined,
-          sections,
-          isPublic: false,
-        });
-        toast.success(isPl ? 'Szablon utworzony' : 'Template created');
-      } else {
-        await Api.put(`/report-builder/templates/${template!.id}`, {
-          name,
-          description,
-          reportType: reportType || undefined,
-          sections,
-        });
-        toast.success(isPl ? 'Szablon zaktualizowany' : 'Template updated');
-      }
-      onSaved();
-      onClose();
-    } catch (err: any) {
-      toast.error(err?.error || (isPl ? 'Błąd zapisywania' : 'Failed to save'));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const addSection = () => {
-    const newSection: TemplateSection = {
-      key: `custom_${Date.now()}`,
-      type: 'custom',
-      title: isPl ? 'Nowa sekcja' : 'New Section',
-      required: false,
-      order: sections.length,
-      defaultLength: 'medium',
-      defaultLanguage: 'business',
-    };
-    setSections([...sections, newSection]);
-  };
-
-  const updateSection = (index: number, updates: Partial<TemplateSection>) => {
-    const updated = [...sections];
-    updated[index] = { ...updated[index], ...updates };
-    setSections(updated);
-  };
-
-  const removeSection = (index: number) => {
-    setSections(sections.filter((_, i) => i !== index));
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-3xl max-h-[90vh] bg-white dark:bg-navy-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-      >
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-purple-500 to-blue-600 text-white rounded-lg">
-              <FileText size={20} />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                {isNew
-                  ? isPl
-                    ? 'Nowy szablon'
-                    : 'New Template'
-                  : isPl
-                    ? 'Edytuj szablon'
-                    : 'Edit Template'}
-              </h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                {isPl ? 'Organizacyjny szablon raportu' : 'Organization report template'}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 transition-colors"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Basic Info */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {isPl ? 'Nazwa szablonu' : 'Template Name'}*
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={isPl ? 'np. Raport Executive' : 'e.g. Executive Report'}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                {isPl ? 'Typ źródła' : 'Source Type'}
-              </label>
-              <select
-                value={sourceType}
-                onChange={(e) => setSourceType(e.target.value)}
-                disabled={!isNew}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white disabled:opacity-50"
-              >
-                <option value="ASSESSMENT">Assessment</option>
-                <option value="INTERVIEW">Interview</option>
-                <option value="TOOL">Tool</option>
-                <option value="INITIATIVE">Initiative</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              {isPl ? 'Opis' : 'Description'}
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={2}
-              placeholder={isPl ? 'Krótki opis szablonu...' : 'Brief template description...'}
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
-            />
-          </div>
-
-          {/* Sections */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                {isPl ? 'Sekcje szablonu' : 'Template Sections'}
-              </label>
-              <button
-                onClick={addSection}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
-              >
-                <Plus size={16} />
-                {isPl ? 'Dodaj sekcję' : 'Add Section'}
-              </button>
-            </div>
-
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {sections.length === 0 ? (
-                <div className="text-center py-8 text-slate-500 dark:text-slate-400 text-sm">
-                  {isPl
-                    ? 'Brak sekcji. Dodaj sekcje aby zdefiniować strukturę raportu.'
-                    : 'No sections. Add sections to define report structure.'}
-                </div>
-              ) : (
-                sections.map((section, index) => (
-                  <div
-                    key={section.key}
-                    className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-800 rounded-lg"
-                  >
-                    <GripVertical size={16} className="text-slate-400 cursor-grab" />
-                    <div className="flex-1 grid grid-cols-4 gap-2">
-                      <input
-                        type="text"
-                        value={section.title}
-                        onChange={(e) => updateSection(index, { title: e.target.value })}
-                        placeholder={isPl ? 'Tytuł' : 'Title'}
-                        className="px-2 py-1.5 rounded border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm"
-                      />
-                      <select
-                        value={section.type}
-                        onChange={(e) => updateSection(index, { type: e.target.value })}
-                        className="px-2 py-1.5 rounded border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm"
-                      >
-                        <option value="cover">Cover</option>
-                        <option value="summary">Summary</option>
-                        <option value="methodology">Methodology</option>
-                        <option value="matrix">Matrix</option>
-                        <option value="axis_analysis">Axis Analysis</option>
-                        <option value="list">List</option>
-                        <option value="recommendations">Recommendations</option>
-                        <option value="action_plan">Action Plan</option>
-                        <option value="appendix">Appendix</option>
-                        <option value="custom">Custom</option>
-                      </select>
-                      <select
-                        value={section.defaultLength || 'medium'}
-                        onChange={(e) => updateSection(index, { defaultLength: e.target.value })}
-                        className="px-2 py-1.5 rounded border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm"
-                      >
-                        <option value="short">{isPl ? 'Krótka' : 'Short'}</option>
-                        <option value="medium">{isPl ? 'Średnia' : 'Medium'}</option>
-                        <option value="long">{isPl ? 'Długa' : 'Long'}</option>
-                      </select>
-                      <div className="flex items-center gap-2">
-                        <label className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
-                          <input
-                            type="checkbox"
-                            checked={section.required}
-                            onChange={(e) => updateSection(index, { required: e.target.checked })}
-                            className="rounded"
-                          />
-                          {isPl ? 'Wymagana' : 'Required'}
-                        </label>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => removeSection(index)}
-                      className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/50 flex items-center justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
-          >
-            {isPl ? 'Anuluj' : 'Cancel'}
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving || !name.trim()}
-            className="flex items-center gap-2 px-5 py-2 text-sm font-semibold bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white rounded-lg transition-colors"
-          >
-            {saving ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                {isPl ? 'Zapisywanie...' : 'Saving...'}
-              </>
-            ) : (
-              <>
-                <Save size={16} />
-                {isPl ? 'Zapisz szablon' : 'Save Template'}
-              </>
-            )}
-          </button>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
+// Row animation variants (matching Decisions)
+const rowVariants = {
+  initial: { opacity: 0, y: 4 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, x: -10 },
+  hover: {
+    y: -2,
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+    transition: { duration: 0.2 },
+  },
 };
 
 // ==========================================
-// TEMPLATE CARD
+// HELPER FUNCTIONS
 // ==========================================
 
-interface TemplateCardProps {
-  template: Template;
-  onEdit: () => void;
-  onDelete: () => void;
-  onDuplicate: () => void;
-  onUseTemplate?: () => void;
-}
+// Get type badge config
+const getTypeBadgeConfig = (isSystem: boolean) => {
+  if (isSystem) {
+    return {
+      color: 'text-cyan-400',
+      bg: 'bg-cyan-500/20',
+      label: 'APP',
+      icon: Package,
+      dot: 'bg-cyan-500',
+    };
+  }
+  return {
+    color: 'text-purple-400',
+    bg: 'bg-purple-500/20',
+    label: 'ORG',
+    icon: Building2,
+    dot: 'bg-purple-500',
+  };
+};
 
-const TemplateCard: React.FC<TemplateCardProps> = ({
-  template,
-  onEdit,
-  onDelete,
-  onDuplicate,
-  onUseTemplate,
-}) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
-  const [showActions, setShowActions] = useState(false);
+// Get source type badge config
+const getSourceTypeBadgeConfig = (sourceType: string) => {
+  switch (sourceType?.toUpperCase()) {
+    case 'ASSESSMENT':
+      return { color: 'text-blue-400', bg: 'bg-blue-500/20' };
+    case 'INTERVIEW':
+      return { color: 'text-emerald-400', bg: 'bg-emerald-500/20' };
+    case 'TOOL':
+      return { color: 'text-amber-400', bg: 'bg-amber-500/20' };
+    case 'INITIATIVE':
+      return { color: 'text-pink-400', bg: 'bg-pink-500/20' };
+    default:
+      return { color: 'text-slate-400', bg: 'bg-slate-500/20' };
+  }
+};
 
-  const sectionsCount = template.sections?.length || 0;
+// Get audience badge config
+const getAudienceBadgeConfig = (audience?: string) => {
+  switch (audience?.toLowerCase()) {
+    case 'executive':
+      return { color: 'text-violet-400', bg: 'bg-violet-500/20', label: 'Executive' };
+    case 'manager':
+      return { color: 'text-blue-400', bg: 'bg-blue-500/20', label: 'Manager' };
+    case 'analyst':
+      return { color: 'text-emerald-400', bg: 'bg-emerald-500/20', label: 'Analyst' };
+    case 'team':
+      return { color: 'text-amber-400', bg: 'bg-amber-500/20', label: 'Team' };
+    case 'external':
+      return { color: 'text-rose-400', bg: 'bg-rose-500/20', label: 'External' };
+    default:
+      return { color: 'text-slate-400', bg: 'bg-slate-500/20', label: 'General' };
+  }
+};
 
-  return (
-    <div
-      className="relative p-5 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 transition-colors group cursor-pointer"
-      onClick={onUseTemplate}
-    >
-      {/* Header */}
-      <div className="flex items-start gap-3 mb-3">
-        <div
-          className={`
-          w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0
-          ${template.isSystem ? 'bg-gradient-to-br from-blue-500 to-cyan-600' : 'bg-gradient-to-br from-purple-500 to-pink-600'}
-        `}
-        >
-          {template.isSystem ? (
-            <Package className="w-5 h-5 text-white" />
-          ) : (
-            <Building2 className="w-5 h-5 text-white" />
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-slate-900 dark:text-white truncate">{template.name}</h3>
-          <div className="flex items-center gap-2 mt-0.5">
-            {template.isDefault && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded">
-                <Sparkles size={10} />
-                Default
-              </span>
-            )}
-            <span className="text-[11px] text-slate-500 dark:text-slate-400">
-              {template.isSystem
-                ? isPl
-                  ? 'Systemowy'
-                  : 'System'
-                : isPl
-                  ? 'Organizacyjny'
-                  : 'Organization'}
-            </span>
-          </div>
-        </div>
-      </div>
+// Date formatting (matching Decisions style)
+const formatDate = (dateStr?: string): string => {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dateOnly = new Date(date);
+  dateOnly.setHours(0, 0, 0, 0);
 
-      {/* Description */}
-      {template.description && (
-        <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mb-3">
-          {template.description}
-        </p>
-      )}
+  const diffDays = Math.ceil((dateOnly.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
-      {/* Footer */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
-          <div className="flex items-center gap-1">
-            <FileText size={12} />
-            <span>
-              {sectionsCount} {isPl ? 'sekcji' : 'sections'}
-            </span>
-          </div>
-          <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-navy-700 rounded text-[10px] font-medium">
-            {template.sourceType}
-          </span>
-        </div>
+  if (diffDays === 0) return 'Today';
+  if (diffDays === -1) return 'Yesterday';
+  if (diffDays > -7 && diffDays < 0) return `${Math.abs(diffDays)}d ago`;
 
-        {/* Actions */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {onUseTemplate && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onUseTemplate();
-              }}
-              className="px-2.5 py-1 text-xs font-medium text-white bg-purple-500 hover:bg-purple-600 rounded-md transition-colors"
-              title={isPl ? 'Użyj szablonu' : 'Use template'}
-            >
-              <Sparkles size={12} className="inline mr-1" />
-              {isPl ? 'Użyj' : 'Use'}
-            </button>
-          )}
-          {template.isSystem ? (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDuplicate();
-              }}
-              className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded transition-colors"
-              title={isPl ? 'Duplikuj do organizacji' : 'Duplicate to organization'}
-            >
-              <Copy size={16} />
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit();
-                }}
-                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
-                title={isPl ? 'Edytuj' : 'Edit'}
-              >
-                <Edit3 size={16} />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDuplicate();
-                }}
-                className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded transition-colors"
-                title={isPl ? 'Duplikuj' : 'Duplicate'}
-              >
-                <Copy size={16} />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete();
-                }}
-                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                title={isPl ? 'Usuń' : 'Delete'}
-              >
-                <Trash2 size={16} />
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
 // ==========================================
@@ -546,14 +301,21 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
   autoOpenNewTemplate,
   onUseTemplate,
 }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
-
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showEditor, setShowEditor] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
-  const [filter, setFilter] = useState<'all' | 'system' | 'org'>('all');
+  const [filter, setFilter] = useState<'all' | 'app' | 'org'>('all');
+  const [moduleFilter, setModuleFilter] = useState<'all' | 'assessment' | 'interview' | 'tool' | 'initiative'>('all');
+  const [formatFilter, setFormatFilter] = useState<'all' | 'horizontal' | 'vertical'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Table state (Decisions-style)
+  const [columnWidths, setColumnWidths] = useState<ColumnWidths>(getDefaultColumnWidths());
+  const [tableFilters, setTableFilters] = useState<TableFilters>({});
+  const [openFilterId, setOpenFilterId] = useState<string | null>(null);
 
   // Fetch templates
   const fetchTemplates = useCallback(async () => {
@@ -562,8 +324,20 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
       const response = await Api.get('/report-builder/templates');
       const allTemplates = response?.templates || [];
 
-      // Parse sections from sections_json if needed
       const parsed = allTemplates.map((t: any) => {
+        // Normalize backend payload (SQLite rows often return snake_case fields)
+        const normalized = {
+          sourceType: t.sourceType ?? t.source_type,
+          reportType: t.reportType ?? t.report_type,
+          isSystem: Boolean(t.isSystem ?? t.is_system),
+          isDefault: Boolean(t.isDefault ?? t.is_default),
+          isPublic: Boolean(t.isPublic ?? t.is_public),
+          createdAt: t.createdAt ?? t.created_at,
+          updatedAt: t.updatedAt ?? t.updated_at,
+          createdById: t.createdById ?? t.created_by ?? t.createdBy,
+          createdByName: t.createdByName ?? t.created_by_name ?? t.creatorName,
+        };
+
         const rawSections = Array.isArray(t.sections)
           ? t.sections
           : typeof t.sections === 'string'
@@ -572,9 +346,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               ? t.sectionsJson
               : typeof t.sections_json === 'string'
                 ? t.sections_json
-                : typeof t.sectionsJson === 'string'
-                  ? t.sectionsJson
-                  : null;
+                : null;
 
         let sections: any[] = [];
         if (Array.isArray(rawSections)) {
@@ -587,10 +359,8 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
           }
         }
 
-        return {
-          ...t,
-          sections,
-        };
+        // Prefer normalized fields for UI logic (filters, counts, rendering)
+        return { ...t, ...normalized, sections };
       });
 
       setTemplates(parsed);
@@ -605,57 +375,139 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
     fetchTemplates();
   }, [fetchTemplates]);
 
-  // Filter templates
-  const filteredTemplates = templates.filter((t) => {
-    if (filter === 'system') return t.isSystem;
-    if (filter === 'org') return !t.isSystem;
-    return true;
-  });
+  // Filter and search
+  const filteredTemplates = useMemo(() => {
+    let result = templates;
 
-  const systemTemplates = filteredTemplates.filter((t) => t.isSystem);
-  const orgTemplates = filteredTemplates.filter((t) => !t.isSystem);
-
-  // Handle delete
-  const handleDelete = async (templateId: string) => {
-    if (
-      !confirm(
-        isPl
-          ? 'Czy na pewno chcesz usunąć ten szablon?'
-          : 'Are you sure you want to delete this template?'
-      )
-    ) {
-      return;
+    // Tab filter (App/Org)
+    if (filter === 'app') {
+      result = result.filter((t) => t.isSystem);
+    } else if (filter === 'org') {
+      result = result.filter((t) => !t.isSystem);
     }
+
+    // Module filter
+    if (moduleFilter !== 'all') {
+      result = result.filter((t) => (t.sourceType || '').toLowerCase() === moduleFilter);
+    }
+
+    // Format filter (horizontal/vertical based on reportType or metadata)
+    if (formatFilter !== 'all') {
+      result = result.filter((t) => {
+        const format = (t.reportType || 'vertical').toLowerCase();
+        return format === formatFilter;
+      });
+    }
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (t) =>
+          t.name.toLowerCase().includes(query) ||
+          t.description?.toLowerCase().includes(query) ||
+          (t.sourceType || '').toLowerCase().includes(query)
+      );
+    }
+
+    // Table column filters
+    const typeFilter = tableFilters.type as string[] | undefined;
+    if (typeFilter?.length) {
+      result = result.filter((t) => {
+        const templateType = t.isSystem ? 'system' : 'org';
+        return typeFilter.includes(templateType);
+      });
+    }
+
+    const sourceTypeFilter = tableFilters.sourceType as string[] | undefined;
+    if (sourceTypeFilter?.length) {
+      result = result.filter((t) => sourceTypeFilter.includes(t.sourceType || ''));
+    }
+
+    const audienceFilter = tableFilters.audience as string[] | undefined;
+    if (audienceFilter?.length) {
+      result = result.filter((t) => audienceFilter.includes(t.audience || 'general'));
+    }
+
+    return result;
+  }, [templates, filter, moduleFilter, formatFilter, searchQuery, tableFilters]);
+
+  const appCount = templates.filter((t) => t.isSystem).length;
+  const orgCount = templates.filter((t) => !t.isSystem).length;
+
+  // Counts for filter dropdowns
+  const moduleCounts = useMemo(() => ({
+    assessment: templates.filter((t) => (t.sourceType || '').toLowerCase() === 'assessment').length,
+    interview: templates.filter((t) => (t.sourceType || '').toLowerCase() === 'interview').length,
+    tool: templates.filter((t) => (t.sourceType || '').toLowerCase() === 'tool').length,
+    initiative: templates.filter((t) => (t.sourceType || '').toLowerCase() === 'initiative').length,
+  }), [templates]);
+
+  const formatCounts = useMemo(() => ({
+    horizontal: templates.filter((t) => (t.reportType || '').toLowerCase() === 'horizontal').length,
+    vertical: templates.filter((t) => (t.reportType || 'vertical').toLowerCase() === 'vertical').length,
+  }), [templates]);
+
+  // Selection helpers
+  const allSelected = selectedIds.size > 0 && selectedIds.size === filteredTemplates.length;
+  const someSelected = selectedIds.size > 0 && selectedIds.size < filteredTemplates.length;
+
+  // Handlers
+  const handleDelete = async (templateId: string) => {
+    if (!confirm('Are you sure you want to delete this template?')) return;
 
     try {
       await Api.delete(`/report-builder/templates/${templateId}`);
-      toast.success(isPl ? 'Szablon usunięty' : 'Template deleted');
+      toast.success('Template deleted');
       fetchTemplates();
     } catch (err: any) {
-      toast.error(err?.error || (isPl ? 'Błąd usuwania' : 'Failed to delete'));
+      toast.error(err?.error || 'Failed to delete');
     }
   };
 
-  // Handle duplicate
   const handleDuplicate = async (template: Template) => {
     try {
       await Api.post(`/report-builder/templates/${template.id}/duplicate`, {
-        name: `${template.name} (${isPl ? 'Kopia' : 'Copy'})`,
+        name: `${template.name} (Copy)`,
       });
-      toast.success(isPl ? 'Szablon zduplikowany' : 'Template duplicated');
+      toast.success('Template duplicated');
       fetchTemplates();
     } catch (err: any) {
-      toast.error(err?.error || (isPl ? 'Błąd duplikowania' : 'Failed to duplicate'));
+      toast.error(err?.error || 'Failed to duplicate');
     }
   };
 
-  // Open editor
   const openEditor = (template?: Template) => {
     setEditingTemplate(template || null);
     setShowEditor(true);
   };
 
-  // Auto-open create flow (used by embedded generator contexts, e.g. assessment picker)
+  const toggleSelect = (id: string) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedIds(newSet);
+  };
+
+  const handleSelectAll = (selected: boolean) => {
+    if (selected) {
+      setSelectedIds(new Set(filteredTemplates.map((t) => t.id)));
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const handleColumnResize = useCallback((columnId: string, newWidth: number) => {
+    setColumnWidths((prev) => ({ ...prev, [columnId]: newWidth }));
+  }, []);
+
+  const handleFilterChange = useCallback((columnId: string, value: string[]) => {
+    setTableFilters((prev) => ({ ...prev, [columnId]: value }));
+  }, []);
+
   useEffect(() => {
     if (autoOpenNewTemplate) {
       setEditingTemplate(null);
@@ -672,173 +524,587 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-            {isPl ? 'Szablony Raportów' : 'Report Templates'}
-          </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {isPl
-              ? 'Zarządzaj szablonami raportów dla twojej organizacji'
-              : 'Manage report templates for your organization'}
-          </p>
-        </div>
-        <button
-          onClick={() => openEditor()}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-lg transition-colors"
-        >
-          <Plus size={18} />
-          {isPl ? 'Nowy szablon' : 'New Template'}
-        </button>
-      </div>
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-navy-950">
+      {/* Navigation Bar - Matching MyWorkHub Golden Standard */}
+      <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
+        {/* Main Navigation Row */}
+        <div className="flex items-center justify-between px-4 py-3">
+          {/* Left: Search Toggle + Tab Buttons */}
+          <div className="flex items-center gap-3">
+            {/* Search Toggle Button */}
+            <button
+              onClick={() => setShowSearch(!showSearch)}
+              className={`flex items-center justify-center h-9 w-9 rounded-lg border transition-all duration-200 ${
+                showSearch
+                  ? 'bg-purple-500/15 border-purple-500 text-purple-400'
+                  : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-500'
+              }`}
+              title="Search"
+            >
+              <Search size={16} />
+            </button>
 
-      {/* Filters */}
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => setFilter('all')}
-          className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-            filter === 'all'
-              ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
-          }`}
-        >
-          {isPl ? 'Wszystkie' : 'All'} ({templates.length})
-        </button>
-        <button
-          onClick={() => setFilter('system')}
-          className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-            filter === 'system'
-              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
-          }`}
-        >
-          <span className="flex items-center gap-1.5">
-            <Package size={14} />
-            {isPl ? 'Systemowe' : 'System'} ({templates.filter((t) => t.isSystem).length})
-          </span>
-        </button>
-        <button
-          onClick={() => setFilter('org')}
-          className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-            filter === 'org'
-              ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
-          }`}
-        >
-          <span className="flex items-center gap-1.5">
-            <Building2 size={14} />
-            {isPl ? 'Organizacyjne' : 'Organization'} ({templates.filter((t) => !t.isSystem).length}
-            )
-          </span>
-        </button>
-      </div>
+            {/* Tab Buttons - Unified height */}
+            <button
+              onClick={() => setFilter('all')}
+              className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition-all duration-200 ${
+                filter === 'all'
+                  ? 'bg-purple-500/15 border-purple-500 text-purple-300'
+                  : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-500'
+              }`}
+            >
+              <FileText size={14} />
+              <span>All</span>
+              <span
+                className={`px-1.5 text-xs rounded-full ${
+                  filter === 'all'
+                    ? 'bg-purple-500/30 text-purple-300'
+                    : 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'
+                }`}
+              >
+                {templates.length}
+              </span>
+            </button>
 
-      {/* Templates Grid */}
-      {filteredTemplates.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="p-4 rounded-full bg-slate-100 dark:bg-navy-800 inline-block mb-3">
-            <FileText size={32} className="text-slate-400" />
+            <button
+              onClick={() => setFilter('app')}
+              className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition-all duration-200 ${
+                filter === 'app'
+                  ? 'bg-cyan-500/15 border-cyan-500 text-cyan-300'
+                  : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-500'
+              }`}
+            >
+              <Package size={14} />
+              <span>App</span>
+              <span
+                className={`px-1.5 text-xs rounded-full ${
+                  filter === 'app'
+                    ? 'bg-cyan-500/30 text-cyan-300'
+                    : 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'
+                }`}
+              >
+                {appCount}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setFilter('org')}
+              className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition-all duration-200 ${
+                filter === 'org'
+                  ? 'bg-purple-500/15 border-purple-500 text-purple-300'
+                  : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-500'
+              }`}
+            >
+              <Building2 size={14} />
+              <span>Org</span>
+              <span
+                className={`px-1.5 text-xs rounded-full ${
+                  filter === 'org'
+                    ? 'bg-purple-500/30 text-purple-300'
+                    : 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'
+                }`}
+              >
+                {orgCount}
+              </span>
+            </button>
           </div>
-          <p className="text-sm font-medium text-slate-900 dark:text-white">
-            {filter === 'org'
-              ? isPl
-                ? 'Brak szablonów organizacyjnych'
-                : 'No organization templates'
-              : isPl
-                ? 'Brak szablonów'
-                : 'No templates found'}
-          </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            {isPl
-              ? 'Utwórz nowy szablon lub zduplikuj systemowy'
-              : 'Create a new template or duplicate a system one'}
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* System Templates */}
-          {systemTemplates.length > 0 && (filter === 'all' || filter === 'system') && (
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Package size={16} className="text-blue-500" />
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  {isPl ? 'Szablony systemowe' : 'System Templates'}
-                </h3>
-                <span className="text-xs text-slate-500">({systemTemplates.length})</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {systemTemplates.map((template) => (
-                  <TemplateCard
-                    key={template.id}
-                    template={template}
-                    onEdit={() => {}} // System templates can't be edited
-                    onDelete={() => {}} // System templates can't be deleted
-                    onDuplicate={() => handleDuplicate(template)}
-                    onUseTemplate={onUseTemplate ? () => onUseTemplate(template.id) : undefined}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
 
-          {/* Organization Templates */}
-          {orgTemplates.length > 0 && (filter === 'all' || filter === 'org') && (
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Building2 size={16} className="text-purple-500" />
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  {isPl ? 'Szablony organizacyjne' : 'Organization Templates'}
-                </h3>
-                <span className="text-xs text-slate-500">({orgTemplates.length})</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {orgTemplates.map((template) => (
-                  <TemplateCard
-                    key={template.id}
-                    template={template}
-                    onEdit={() => openEditor(template)}
-                    onDelete={() => handleDelete(template.id)}
-                    onDuplicate={() => handleDuplicate(template)}
-                    onUseTemplate={onUseTemplate ? () => onUseTemplate(template.id) : undefined}
-                  />
-                ))}
-              </div>
+          {/* Right: Filter Dropdowns + Action Button */}
+          <div className="flex items-center gap-2">
+            {/* Module Filter Dropdown */}
+            <div className="relative">
+              <select
+                value={moduleFilter}
+                onChange={(e) => setModuleFilter(e.target.value as typeof moduleFilter)}
+                className="appearance-none h-9 pl-3 pr-8 rounded-lg text-sm font-medium bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-500 text-slate-700 dark:text-slate-200 hover:border-purple-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all duration-200 cursor-pointer"
+              >
+                <option value="all">All Modules</option>
+                <option value="assessment">Assessment ({moduleCounts.assessment})</option>
+                <option value="interview">Interview ({moduleCounts.interview})</option>
+                <option value="tool">Tool ({moduleCounts.tool})</option>
+                <option value="initiative">Initiative ({moduleCounts.initiative})</option>
+              </select>
+              <ChevronDown
+                size={14}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none"
+              />
             </div>
-          )}
-        </div>
-      )}
 
-      {/* Info box for system templates */}
-      {filter === 'system' && (
-        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-          <div className="flex items-start gap-3">
-            <Package className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-700 dark:text-blue-300">
-              <p className="font-medium">{isPl ? 'Szablony systemowe' : 'System Templates'}</p>
-              <p className="mt-1 text-blue-600 dark:text-blue-400">
-                {isPl
-                  ? 'Szablony systemowe są tylko do odczytu. Możesz je zduplikować do szablonów organizacyjnych, aby dostosować do swoich potrzeb.'
-                  : 'System templates are read-only. You can duplicate them to organization templates to customize for your needs.'}
-              </p>
+            {/* Format Filter Dropdown */}
+            <div className="relative">
+              <select
+                value={formatFilter}
+                onChange={(e) => setFormatFilter(e.target.value as typeof formatFilter)}
+                className="appearance-none h-9 pl-3 pr-8 rounded-lg text-sm font-medium bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-500 text-slate-700 dark:text-slate-200 hover:border-purple-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all duration-200 cursor-pointer"
+              >
+                <option value="all">All Formats</option>
+                <option value="vertical">Vertical ({formatCounts.vertical})</option>
+                <option value="horizontal">Horizontal ({formatCounts.horizontal})</option>
+              </select>
+              <ChevronDown
+                size={14}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none"
+              />
             </div>
+
+            {/* Separator */}
+            <div className="w-px h-6 bg-slate-200 dark:bg-navy-600 mx-1" />
+
+            {/* Primary Action Button - Unified height */}
+            <button
+              onClick={() => openEditor()}
+              className="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-gradient-to-r from-purple-500 to-purple-600 text-white border border-white/20 hover:brightness-110 shadow-lg shadow-purple-500/25 transition-all duration-200"
+            >
+              <Plus size={14} />
+              <span>New Template</span>
+            </button>
           </div>
         </div>
-      )}
+
+        {/* Expandable Search Bar */}
+        {showSearch && (
+          <div className="px-4 pb-3">
+            <div className="relative">
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+              />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search templates..."
+                autoFocus
+                className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-all"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setShowSearch(false);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Table Container - matching Decisions style */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {filteredTemplates.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700/50 rounded-xl">
+            <div className="p-4 rounded-full bg-slate-100 dark:bg-navy-800 inline-block mb-4">
+              <FileText size={28} className="text-slate-500" />
+            </div>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              {searchQuery ? 'No templates match your search' : 'No templates found'}
+            </p>
+            <p className="text-xs text-slate-500">
+              {searchQuery ? 'Try adjusting your search terms' : 'Create a new template to get started'}
+            </p>
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700/50 rounded-xl overflow-hidden">
+            <table className="w-full" style={{ minWidth: 900 }}>
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
+                  {/* Select All */}
+                  <th className="w-10 px-2 py-2">
+                    <button
+                      onClick={() => handleSelectAll(!allSelected)}
+                      className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                        allSelected
+                          ? 'bg-purple-500 border-purple-500 text-white'
+                          : someSelected
+                            ? 'bg-purple-500/50 border-purple-500 text-white'
+                          : 'border-slate-300 dark:border-navy-500 hover:border-purple-400 text-transparent hover:text-slate-500 dark:hover:text-slate-400'
+                      }`}
+                    >
+                      {allSelected ? (
+                        <CheckSquare size={14} />
+                      ) : someSelected ? (
+                        <Minus size={14} />
+                      ) : (
+                        <Square size={14} />
+                      )}
+                    </button>
+                  </th>
+
+                  {/* Type with Filter */}
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.type }}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span
+                        className={
+                          (tableFilters.type as string[])?.length ? 'text-purple-500' : ''
+                        }
+                      >
+                        Type
+                      </span>
+                      <FilterDropdown
+                        column={TEMPLATE_COLUMNS.find((c) => c.id === 'type')!}
+                        value={tableFilters.type as string[]}
+                        onChange={(val) => handleFilterChange('type', val as string[])}
+                        isOpen={openFilterId === 'type'}
+                        onToggle={() => setOpenFilterId(openFilterId === 'type' ? null : 'type')}
+                        onClose={() => setOpenFilterId(null)}
+                      />
+                    </div>
+                    <ColumnResizer
+                      columnId="type"
+                      currentWidth={columnWidths.type}
+                      minWidth={80}
+                      maxWidth={140}
+                      onResize={handleColumnResize}
+                    />
+                  </th>
+
+                  {/* Indicator (dot) */}
+                  <th className="w-8 px-1 py-2"></th>
+
+                  {/* Template Name */}
+                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    Template
+                  </th>
+
+                  {/* Module with Filter */}
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.sourceType }}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span
+                        className={
+                          (tableFilters.sourceType as string[])?.length ? 'text-purple-500' : ''
+                        }
+                      >
+                        Module
+                      </span>
+                      <FilterDropdown
+                        column={TEMPLATE_COLUMNS.find((c) => c.id === 'sourceType')!}
+                        value={tableFilters.sourceType as string[]}
+                        onChange={(val) => handleFilterChange('sourceType', val as string[])}
+                        isOpen={openFilterId === 'sourceType'}
+                        onToggle={() =>
+                          setOpenFilterId(openFilterId === 'sourceType' ? null : 'sourceType')
+                        }
+                        onClose={() => setOpenFilterId(null)}
+                      />
+                    </div>
+                    <ColumnResizer
+                      columnId="sourceType"
+                      currentWidth={columnWidths.sourceType}
+                      minWidth={100}
+                      maxWidth={180}
+                      onResize={handleColumnResize}
+                    />
+                  </th>
+
+                  {/* Audience with Filter */}
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.audience }}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span
+                        className={
+                          (tableFilters.audience as string[])?.length ? 'text-purple-500' : ''
+                        }
+                      >
+                        Audience
+                      </span>
+                      <FilterDropdown
+                        column={TEMPLATE_COLUMNS.find((c) => c.id === 'audience')!}
+                        value={tableFilters.audience as string[]}
+                        onChange={(val) => handleFilterChange('audience', val as string[])}
+                        isOpen={openFilterId === 'audience'}
+                        onToggle={() =>
+                          setOpenFilterId(openFilterId === 'audience' ? null : 'audience')
+                        }
+                        onClose={() => setOpenFilterId(null)}
+                      />
+                    </div>
+                    <ColumnResizer
+                      columnId="audience"
+                      currentWidth={columnWidths.audience}
+                      minWidth={80}
+                      maxWidth={130}
+                      onResize={handleColumnResize}
+                    />
+                  </th>
+
+                  {/* User */}
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.createdBy }}
+                  >
+                    <span>User</span>
+                    <ColumnResizer
+                      columnId="createdBy"
+                      currentWidth={columnWidths.createdBy}
+                      minWidth={100}
+                      maxWidth={160}
+                      onResize={handleColumnResize}
+                    />
+                  </th>
+
+                  {/* Sections */}
+                  <th
+                    className="px-3 py-2 text-center text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.sections }}
+                  >
+                    <span>Sections</span>
+                    <ColumnResizer
+                      columnId="sections"
+                      currentWidth={columnWidths.sections}
+                      minWidth={60}
+                      maxWidth={100}
+                      onResize={handleColumnResize}
+                    />
+                  </th>
+
+                  {/* Updated */}
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.updatedAt }}
+                  >
+                    <span>Updated</span>
+                    <ColumnResizer
+                      columnId="updatedAt"
+                      currentWidth={columnWidths.updatedAt}
+                      minWidth={80}
+                      maxWidth={130}
+                      onResize={handleColumnResize}
+                    />
+                  </th>
+
+                  {/* Actions */}
+                  <th
+                    className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
+                    style={{ width: columnWidths.actions }}
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <AnimatePresence>
+                  {filteredTemplates.map((template) => {
+                    const typeConfig = getTypeBadgeConfig(template.isSystem);
+                    const sourceConfig = getSourceTypeBadgeConfig(template.sourceType);
+                    const TypeIcon = typeConfig.icon;
+
+                    return (
+                      <motion.tr
+                        key={template.id}
+                        variants={rowVariants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        whileHover="hover"
+                        className={`
+                          group cursor-pointer border-b border-slate-200 dark:border-navy-700/50
+                          ${selectedIds.has(template.id) ? 'bg-purple-50 dark:bg-purple-500/10' : ''}
+                          transition-colors duration-150
+                          hover:bg-slate-50 dark:hover:bg-navy-800/50
+                        `}
+                      >
+                        {/* Checkbox */}
+                        <td className="w-10 px-2 py-2.5">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleSelect(template.id);
+                            }}
+                            className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
+                              selectedIds.has(template.id)
+                                ? 'bg-purple-500 border-purple-500 text-white'
+                                : 'border-slate-300 dark:border-navy-500 hover:border-purple-400'
+                            }`}
+                          >
+                            {selectedIds.has(template.id) && <CheckSquare size={12} />}
+                          </button>
+                        </td>
+
+                        {/* Type Badge */}
+                        <td className="px-3 py-2.5" style={{ width: columnWidths.type }}>
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-semibold uppercase ${typeConfig.bg} ${typeConfig.color}`}
+                          >
+                            <TypeIcon size={11} />
+                            {typeConfig.label}
+                          </span>
+                        </td>
+
+                        {/* Indicator Dot */}
+                        <td className="w-8 px-1 py-2.5">
+                          <div
+                            className={`w-2.5 h-2.5 rounded-full ${typeConfig.dot}`}
+                            title={template.isSystem ? 'System template' : 'Organization template'}
+                          />
+                        </td>
+
+                        {/* Template Name */}
+                        <td className="px-3 py-2.5" style={{ minWidth: 200 }}>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-slate-900 dark:text-white">
+                              {template.name}
+                            </span>
+                            {template.description && (
+                              <span className="text-xs text-slate-500 mt-0.5 line-clamp-1">
+                                {template.description}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Module */}
+                        <td className="px-3 py-2.5" style={{ width: columnWidths.sourceType }}>
+                          <span
+                            className={`inline-flex px-2 py-1 rounded text-xs font-medium ${sourceConfig.bg} ${sourceConfig.color}`}
+                          >
+                            {template.sourceType || '—'}
+                          </span>
+                        </td>
+
+                        {/* Audience */}
+                        <td className="px-3 py-2.5" style={{ width: columnWidths.audience }}>
+                          {(() => {
+                            const audienceConfig = getAudienceBadgeConfig(template.audience);
+                            return (
+                              <span
+                                className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${audienceConfig.bg} ${audienceConfig.color}`}
+                              >
+                                <Users size={11} />
+                                {audienceConfig.label}
+                              </span>
+                            );
+                          })()}
+                        </td>
+
+                        {/* User */}
+                        <td className="px-3 py-2.5" style={{ width: columnWidths.createdBy }}>
+                          <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
+                            <User size={13} className="text-slate-400 dark:text-slate-500" />
+                            <span className="truncate">
+                              {template.createdByName || (template.isSystem ? 'System' : '—')}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Sections */}
+                        <td
+                          className="px-3 py-2.5 text-center"
+                          style={{ width: columnWidths.sections }}
+                        >
+                          <span className="text-sm text-slate-700 dark:text-slate-400">
+                            {template.sections?.length || 0}
+                          </span>
+                        </td>
+
+                        {/* Updated */}
+                        <td className="px-3 py-2.5" style={{ width: columnWidths.updatedAt }}>
+                          <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
+                            <Calendar size={12} className="text-slate-400 dark:text-slate-500" />
+                            {formatDate(template.updatedAt || template.createdAt)}
+                          </div>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-3 py-2.5" style={{ width: columnWidths.actions }}>
+                          <div className="flex items-center justify-end gap-1">
+                            {template.isSystem ? (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDuplicate(template);
+                                }}
+                                className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                                title="Duplicate to organization"
+                              >
+                                <Copy size={15} />
+                              </button>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEditor(template);
+                                  }}
+                                  className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                                  title="Edit"
+                                >
+                                  <Edit3 size={15} />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDuplicate(template);
+                                  }}
+                                  className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                                  title="Duplicate"
+                                >
+                                  <Copy size={15} />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(template.id);
+                                  }}
+                                  className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                                  title="Delete"
+                                >
+                                  <Trash2 size={15} />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </motion.tr>
+                    );
+                  })}
+                </AnimatePresence>
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {/* Template Editor Modal */}
       <AnimatePresence>
         {showEditor && (
-          <TemplateEditorModal
-            template={editingTemplate}
-            isOpen={showEditor}
-            onClose={() => {
-              setShowEditor(false);
-              setEditingTemplate(null);
-            }}
-            onSaved={fetchTemplates}
-          />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[70] bg-slate-50 dark:bg-navy-950"
+          >
+            <ReportEditor
+              mode="template"
+              templateId={editingTemplate?.id}
+              templateMeta={{
+                name: editingTemplate?.name || '',
+                description: editingTemplate?.description || '',
+                sourceType: (editingTemplate?.sourceType as any) || 'ASSESSMENT',
+                reportType: editingTemplate?.reportType || '',
+              }}
+              onTemplateSaved={() => {
+                setShowEditor(false);
+                setEditingTemplate(null);
+                fetchTemplates();
+              }}
+              onClose={() => {
+                setShowEditor(false);
+                setEditingTemplate(null);
+              }}
+            />
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

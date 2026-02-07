@@ -476,8 +476,9 @@ export async function createReport(params: CreateReportParams): Promise<{
       INSERT INTO report_builder_sections (
         id, report_id, section_key, section_type, title, order_index,
         enabled, required, length, language, content_format,
+        custom_prompt, block_type_id, block_config_json, render_kind,
         repeat_for, repeat_key, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'markdown', ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'markdown', ?, ?, ?, ?, ?, ?, ?, ?)
     `,
       [
         sectionId,
@@ -490,6 +491,19 @@ export async function createReport(params: CreateReportParams): Promise<{
         tplSection.required,
         tplSection.defaultLength || 'medium',
         tplSection.defaultLanguage || 'business',
+        (tplSection as any).customPrompt || (tplSection as any).promptHints || null,
+        (tplSection as any).blockTypeId || null,
+        (() => {
+          const cfg = (tplSection as any).blockSettings || (tplSection as any).config || null;
+          const extras: any = {};
+          if ((tplSection as any).description) extras.description = (tplSection as any).description;
+          if ((tplSection as any).dataSource) extras.dataSource = (tplSection as any).dataSource;
+          if ((tplSection as any).includeVisuals !== undefined)
+            extras.includeVisuals = Boolean((tplSection as any).includeVisuals);
+          const merged = cfg && typeof cfg === 'object' ? { ...(cfg as any), ...extras } : extras;
+          return Object.keys(merged || {}).length > 0 ? JSON.stringify(merged) : null;
+        })(),
+        (tplSection as any).renderKind || null,
         tplSection.repeatFor || null,
         tplSection.repeatKey || null,
         now,

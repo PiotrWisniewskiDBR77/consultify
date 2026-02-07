@@ -30,6 +30,7 @@ import aiLearningRoutes from './aiLearning.routes.js';
 import aiMemoryRoutesV2 from './aiMemory.routes.js';
 import aiPlaybooksRoutes from './aiPlaybooks.routes.js';
 import deepThinkingRoutes from './deep-thinking.routes.js';
+import agentAuditRoutes from './agent-audit.routes.js';
 
 const router = Router();
 
@@ -62,5 +63,6 @@ router.use('/explain', aiExplainRoutes);
 router.use('/learning', aiLearningRoutes);
 router.use('/playbooks', aiPlaybooksRoutes);
 router.use('/deep-thinking', deepThinkingRoutes);
+router.use('/agent-audit', agentAuditRoutes);
 
 export default router;

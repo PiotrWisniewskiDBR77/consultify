@@ -12,6 +12,55 @@ import { aiLogger } from './ai/logger.js';
 
 type _DbRow = Record<string, unknown>;
 
+let knowledgeDocsColumns: Set<string> | null = null;
+
+async function ensureKnowledgeDocsColumns(): Promise<Set<string>> {
+  if (knowledgeDocsColumns) return knowledgeDocsColumns;
+  const cols = new Set<string>();
+
+  // Try SQLite pragma first
+  try {
+    const rows = (await DbPromise.all<{ name?: string }>(`PRAGMA table_info(knowledge_docs)`, [], {
+      fallback: true,
+    })) as Array<{ name?: string }>;
+    for (const r of rows || []) {
+      const name = String(r?.name || '').trim();
+      if (name) cols.add(name);
+    }
+  } catch {
+    // ignore
+  }
+
+  // Postgres fallback
+  if (cols.size === 0 && process.env.DB_TYPE === 'postgres') {
+    try {
+      const rows = (await DbPromise.all<{ column_name?: string }>(
+        `SELECT column_name FROM information_schema.columns WHERE table_name = 'knowledge_docs'`,
+        [],
+        { fallback: true }
+      )) as Array<{ column_name?: string }>;
+      for (const r of rows || []) {
+        const name = String(r?.column_name || '').trim();
+        if (name) cols.add(name);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // Minimal fallback (for older DBs)
+  if (cols.size === 0) {
+    cols.add('id');
+    cols.add('filename');
+    cols.add('filepath');
+    cols.add('status');
+    cols.add('created_at');
+  }
+
+  knowledgeDocsColumns = cols;
+  return cols;
+}
+
 type RerankableChunk = {
   id?: string;
   content: string;
@@ -422,8 +471,17 @@ const RagService = {
     organizationId: string | null = null
   ): Promise<RerankableChunk[]> => {
     await initDeps();
+    const cols = await ensureKnowledgeDocsColumns();
+    const hasCategory = cols.has('category');
+    const hasVersion = cols.has('version');
     let sql = `
-            SELECT c.id, c.content, d.filename, d.id as doc_id
+            SELECT
+              c.id,
+              c.content,
+              d.filename,
+              d.id as doc_id
+              ${hasCategory ? ', d.category as doc_category' : ''}
+              ${hasVersion ? ', d.version as doc_version' : ''}
             FROM knowledge_chunks c
             JOIN knowledge_docs d ON c.doc_id = d.id
             WHERE 1=1
@@ -581,11 +639,21 @@ const RagService = {
     organizationId: string | null = null
   ): Promise<Array<RerankableChunk & { vectorScore: number }>> => {
     await initDeps();
+    const cols = await ensureKnowledgeDocsColumns();
+    const hasCategory = cols.has('category');
+    const hasVersion = cols.has('version');
     const queryEmbedding = await RagService.generateEmbedding(query);
     if (!queryEmbedding) return [];
 
     let sql = `
-            SELECT c.id, c.content, d.filename, c.embedding
+            SELECT
+              c.id,
+              c.content,
+              d.filename,
+              d.id as doc_id,
+              c.embedding
+              ${hasCategory ? ', d.category as doc_category' : ''}
+              ${hasVersion ? ', d.version as doc_version' : ''}
             FROM knowledge_chunks c
             JOIN knowledge_docs d ON c.doc_id = d.id
             WHERE c.embedding IS NOT NULL

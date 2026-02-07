@@ -16,6 +16,7 @@ import { AppView, AuthStep, SessionMode, User } from '@/types';
 import { AuthView } from '@/views/AuthView';
 import { ProductEntryPage } from '@/views/ProductEntryPage';
 
+import { LegacyAssessmentReportRedirect } from './LegacyAssessmentReportRedirect';
 import { ROUTES } from './routeConfig';
 
 // Lazy load views for new routes
@@ -160,10 +161,7 @@ const DiscoveryConsultantView = React.lazy(() =>
 // Become Partner (Public Partner Recruitment Page)
 const BecomePartnerView = React.lazy(() => import('@/views/BecomePartnerView'));
 
-// Dashboard
-const UserDashboardView = React.lazy(() =>
-  import('../views/UserDashboardView').then((m) => ({ default: m.UserDashboardView }))
-);
+// Dashboard - DEPRECATED: Removed, redirects to Chat
 
 // Project Intelligence (legacy)
 const ProjectIntelligenceView = React.lazy(() =>
@@ -702,22 +700,8 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Dashboard - User Dashboard View */}
-        <Route
-          path={ROUTES.DASHBOARD}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Dashboard']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="fade">
-                  <UserDashboardView
-                    currentUser={currentUser as any}
-                    onNavigate={(view) => setCurrentView(view as AppView)}
-                  />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
-          }
-        />
+        {/* Dashboard - DEPRECATED: Redirect to Chat */}
+        <Route path="/dashboard" element={<Navigate to={ROUTES.AI_CHAT} replace />} />
 
         {/* Interview Module - New Hub (ModuleHub pattern) */}
         <Route
@@ -966,18 +950,7 @@ export const AppRoutes: React.FC = () => {
         {/* Legacy /reports redirects to Report Builder */}
         <Route path="/reports" element={<Navigate to="/reports/builder" replace />} />
         {/* Report Builder Module (ROUTES.REPORTS now points to /reports/builder) */}
-        <Route
-          path="/assessment-reports/:reportId"
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Assessment', 'Reports', 'Builder']} noPadding>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <AssessmentReportBuilderView />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
-          }
-        />
+        <Route path="/assessment-reports/:reportId" element={<LegacyAssessmentReportRedirect />} />
         <Route
           path="/reports/builder"
           element={

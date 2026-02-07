@@ -70,8 +70,9 @@ const COLORS = {
 };
 
 const FONTS = {
-  title: 'Arial',
-  body: 'Arial',
+  // PowerPoint-safe "consulting" defaults (Calibri is widely available on Office installs)
+  title: 'Calibri Light',
+  body: 'Calibri',
   mono: 'Courier New',
 };
 
@@ -98,6 +99,8 @@ export class PptxExportService {
     logger.info(`[PptxExport] Generating presentation for report: ${report.id}`);
 
     const pptx = new PptxGenJS();
+    // Explicitly use 16:9 deck layout (10 x 5.625 in)
+    pptx.layout = 'LAYOUT_16x9';
 
     // Set presentation properties
     pptx.author = 'Consultify';
@@ -382,6 +385,7 @@ export class PptxExportService {
    */
   private addTableOfContents(pptx: any, sections: ReportSection[], isPolish: boolean): void {
     const slide = pptx.addSlide({ masterName: 'CONTENT_SLIDE' });
+    slide.slideNumber = { x: '92%', y: '94%', fontFace: FONTS.body, fontSize: 10, color: COLORS.darkGray };
 
     slide.addText(isPolish ? 'Spis treści' : 'Table of Contents', {
       x: 0.5,
@@ -424,6 +428,7 @@ export class PptxExportService {
     isPolish: boolean
   ): void {
     const slide = pptx.addSlide({ masterName: 'CONTENT_SLIDE' });
+    slide.slideNumber = { x: '92%', y: '94%', fontFace: FONTS.body, fontSize: 10, color: COLORS.darkGray };
 
     slide.addText(isPolish ? 'Podsumowanie wykonawcze' : 'Executive Summary', {
       x: 0.5,
@@ -470,6 +475,7 @@ export class PptxExportService {
     isPolish: boolean
   ): void {
     const slide = pptx.addSlide({ masterName: 'CONTENT_SLIDE' });
+    slide.slideNumber = { x: '92%', y: '94%', fontFace: FONTS.body, fontSize: 10, color: COLORS.darkGray };
 
     slide.addText(isPolish ? 'Przegląd wyników' : 'Score Overview', {
       x: 0.5,
@@ -552,6 +558,7 @@ export class PptxExportService {
   ): void {
     // Add section divider
     const dividerSlide = pptx.addSlide({ masterName: 'SECTION_DIVIDER' });
+    dividerSlide.slideNumber = { x: '92%', y: '94%', fontFace: FONTS.body, fontSize: 10, color: 'FFFFFF' };
     dividerSlide.addText(section.title, {
       x: 0.5,
       y: 2.3,
@@ -567,10 +574,11 @@ export class PptxExportService {
 
     // Add content slide(s)
     const content = this.cleanMarkdown(section.content);
-    const contentChunks = this.splitContentIntoSlides(content, 1500);
+    const contentChunks = this.splitContentIntoSlides(content, 900);
 
     for (let i = 0; i < contentChunks.length; i++) {
       const slide = pptx.addSlide({ masterName: 'CONTENT_SLIDE' });
+      slide.slideNumber = { x: '92%', y: '94%', fontFace: FONTS.body, fontSize: 10, color: COLORS.darkGray };
 
       const titleText =
         contentChunks.length > 1
@@ -667,6 +675,7 @@ export class PptxExportService {
    */
   private addClosingSlide(pptx: any, report: ReportData, isPolish: boolean): void {
     const slide = pptx.addSlide({ masterName: 'TITLE_SLIDE' });
+    slide.slideNumber = { x: '92%', y: '94%', fontFace: FONTS.body, fontSize: 10, color: 'FFFFFF' };
 
     slide.addText(isPolish ? 'Dziękujemy' : 'Thank You', {
       x: 0.5,
