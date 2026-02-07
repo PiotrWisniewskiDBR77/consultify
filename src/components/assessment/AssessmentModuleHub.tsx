@@ -893,6 +893,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
               onCreateInitiatives={handleCreateInitiatives}
               pendingAssessmentId={selectedAssessmentId}
               onOpenReport={handleOpenReport}
+              showAllStatuses
             />
           </React.Suspense>
         );

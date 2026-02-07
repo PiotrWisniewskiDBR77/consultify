@@ -28,7 +28,7 @@ export const Scheduler = {
 
     // Resolve lazy services
     const [ls_p, amms_p, accs_p, slas_p, tass_p, decs_p, amm_p, fs_p] = await Promise.all([
-      import('../services/ai/learningSystem.js').then((m) => (m as any).learningSystem || (m as any).default),
+      import('../services/ai/learningSystem').then((m) => (m as any).learningSystem || (m as any).default),
       import('../services/ai/aiMemoryMetricsService').then((m) => m.default),
       import('../services/aiCostControlService').then((m) => m.default),
       import('../services/slaService').then((m) => m.default),

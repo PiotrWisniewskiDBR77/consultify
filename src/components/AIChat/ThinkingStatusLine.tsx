@@ -44,8 +44,8 @@ export function ThinkingStatusLine({
     <div
       className={`
         flex items-center gap-2 
-        text-slate-400/80 dark:text-slate-500/80 
-        italic select-none
+        text-slate-500/90 dark:text-slate-400/80 
+        select-none
         transition-all duration-300 ease-out
         ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'}
         ${compact ? 'text-[11px]' : 'text-xs'}
@@ -55,38 +55,15 @@ export function ThinkingStatusLine({
       aria-live="polite"
       aria-label={displayLabel}
     >
-      {/* Animated spinner */}
-      <div className="relative flex items-center justify-center">
-        <Loader2
-          size={compact ? 12 : 14}
-          className="animate-spin text-slate-400/60 dark:text-slate-500/60"
-        />
-        {/* Subtle glow effect */}
-        <div
-          className="absolute inset-0 rounded-full bg-slate-400/10 dark:bg-slate-500/10 animate-ping"
-          style={{ animationDuration: '2s' }}
-        />
-      </div>
+      {/* Single clean spinner — enterprise-grade minimalism */}
+      <Loader2
+        size={compact ? 12 : 14}
+        className="animate-spin text-purple-500/70 dark:text-purple-400/70 flex-shrink-0"
+      />
 
-      {/* Text with subtle animation */}
-      <span className="truncate animate-pulse" style={{ animationDuration: '2.5s' }}>
+      {/* Business-language label with gentle pulse */}
+      <span className="truncate animate-pulse" style={{ animationDuration: '3s' }}>
         {displayLabel}
-      </span>
-
-      {/* Typing dots - Cursor style */}
-      <span className="flex gap-0.5 ml-1">
-        <span
-          className="w-1 h-1 rounded-full bg-slate-400/50 dark:bg-slate-500/50 animate-bounce"
-          style={{ animationDelay: '0ms', animationDuration: '1s' }}
-        />
-        <span
-          className="w-1 h-1 rounded-full bg-slate-400/50 dark:bg-slate-500/50 animate-bounce"
-          style={{ animationDelay: '200ms', animationDuration: '1s' }}
-        />
-        <span
-          className="w-1 h-1 rounded-full bg-slate-400/50 dark:bg-slate-500/50 animate-bounce"
-          style={{ animationDelay: '400ms', animationDuration: '1s' }}
-        />
       </span>
     </div>
   );

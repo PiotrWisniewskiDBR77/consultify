@@ -6,9 +6,11 @@ import {
   CheckCircle,
   Clock,
   Info,
+  Lightbulb,
   MessageSquare,
   Sparkles,
   Trash2,
+  TrendingUp,
   X,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
@@ -24,6 +26,17 @@ import { AppView } from '@/types';
 import { Api } from '../../services/api';
 import { Notification } from '../../types';
 
+interface AINudge {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  priority: 'low' | 'normal' | 'high';
+  entityType?: string;
+  entityId?: string;
+  actionUrl?: string;
+}
+
 export const NotificationDropdown = () => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -35,6 +48,8 @@ export const NotificationDropdown = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showSnoozeMenu, setShowSnoozeMenu] = useState<string | null>(null);
+  const [nudges, setNudges] = useState<AINudge[]>([]);
+  const [showInsights, setShowInsights] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const fetchNotifications = async () => {
@@ -53,12 +68,33 @@ export const NotificationDropdown = () => {
     }
   };
 
+  // Fetch AI nudges/insights
+  const fetchNudges = async () => {
+    try {
+      const response = await fetch('/api/ai/nudges', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setNudges(data.nudges || []);
+      }
+    } catch {
+      // Nudges are non-critical — fail silently
+    }
+  };
+
   useEffect(() => {
     fetchNotifications();
+    fetchNudges();
 
     // Optional: Poll for new notifications every 60s
     const interval = setInterval(fetchNotifications, 60000);
-    return () => clearInterval(interval);
+    // Poll nudges less frequently (5 min)
+    const nudgeInterval = setInterval(fetchNudges, 300000);
+    return () => {
+      clearInterval(interval);
+      clearInterval(nudgeInterval);
+    };
   }, []);
 
   useEffect(() => {
@@ -305,6 +341,62 @@ export const NotificationDropdown = () => {
               </button>
             </div>
           </div>
+
+          {/* AI Insights Section */}
+          {nudges.length > 0 && showInsights && (
+            <div className="border-b border-indigo-100 dark:border-indigo-900/30 bg-indigo-50/50 dark:bg-indigo-900/10">
+              <div className="px-4 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Sparkles size={12} className="text-indigo-500" />
+                  <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                    AI Insights
+                  </span>
+                  <span className="text-[9px] bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded-full font-medium">
+                    {nudges.length}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowInsights(false)}
+                  className="p-0.5 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 rounded transition-colors"
+                  title={isPolish ? 'Ukryj' : 'Hide'}
+                >
+                  <X size={12} />
+                </button>
+              </div>
+              <div className="px-4 pb-3 space-y-2">
+                {nudges.slice(0, 3).map((nudge) => (
+                  <div
+                    key={nudge.id}
+                    className="flex items-start gap-2.5 p-2 rounded-lg bg-white/60 dark:bg-navy-800/60 border border-indigo-100 dark:border-indigo-900/20 cursor-pointer hover:bg-white dark:hover:bg-navy-800 transition-colors"
+                    onClick={() => {
+                      if (nudge.actionUrl) {
+                        window.location.hash = nudge.actionUrl;
+                      }
+                      setIsOpen(false);
+                    }}
+                  >
+                    <div className="mt-0.5 shrink-0">
+                      {nudge.priority === 'high' ? (
+                        <AlertCircle size={14} className="text-amber-500" />
+                      ) : nudge.type === 'stalled_initiative' ? (
+                        <TrendingUp size={14} className="text-indigo-500" />
+                      ) : (
+                        <Lightbulb size={14} className="text-indigo-500" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-navy-900 dark:text-white leading-tight">
+                        {nudge.title}
+                      </p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">
+                        {nudge.message}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* List */}
           <div className="max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10 scrollbar-track-transparent">

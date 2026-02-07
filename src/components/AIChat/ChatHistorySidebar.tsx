@@ -45,6 +45,7 @@ import {
   groupConversations,
   useConversationStore,
 } from '../../store/useConversationStore';
+import { ConversationItem } from './ConversationItem';
 import { ConversationList } from './ConversationList';
 import { ConversationSearch } from './ConversationSearch';
 
@@ -197,19 +198,15 @@ const ProjectSection: React.FC<ProjectSectionProps> = ({
 
                 {/* Project Conversations */}
                 {isExpanded && projectConversations.length > 0 && (
-                  <div className="ml-6 mt-0.5 space-y-0.5">
+                  <div className="ml-4 mt-0.5 space-y-0.5">
                     {projectConversations.map((conv) => (
-                      <button
+                      <ConversationItem
                         key={conv.id}
-                        onClick={() => onSelectConversation(conv.id)}
-                        className={`w-full text-left px-2 py-1.5 rounded-lg text-sm truncate transition-colors ${
-                          activeConversationId === conv.id
-                            ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-900 dark:text-primary-100'
-                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
-                        }`}
-                      >
-                        {conv.title || t('aiChat.newConversation', 'New conversation')}
-                      </button>
+                        conversation={conv}
+                        isActive={activeConversationId === conv.id}
+                        onSelect={onSelectConversation}
+                        compact
+                      />
                     ))}
                   </div>
                 )}
@@ -312,6 +309,12 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     if (key === 'archived' && !showArchived) return false;
     return true;
   });
+
+  // Unassigned conversations (not in any folder, not archived)
+  const unassignedConversations = filteredConversations.filter(
+    (c) => !c.chatProjectId && !c.archived
+  );
+  const unassignedGroups = groupConversations(unassignedConversations);
 
   // Handle new chat - clear active and call parent handler
   const handleNewChat = () => {
@@ -424,73 +427,101 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
           />
         </div>
 
-        {/* Projects Sections (hidden during search) */}
-        {!searchQuery && (
-          <div className="border-b border-slate-200 dark:border-navy-700 pb-1">
-            {/* My Projects (Personal) */}
-            <ProjectSection
-              title={t('aiChat.myProjects', 'My Projects')}
-              icon={<Folder size={11} />}
-              projects={personalProjects}
-              expandedProjectIds={expandedProjectIds}
-              activeConversationId={activeConversationId}
-              getConversationsByProjectId={getConversationsByProjectId}
-              onToggleExpanded={toggleProjectExpanded}
-              onSelectConversation={handleSelectConversation}
-              onDeleteProject={handleDeleteProject}
-              onCreateProject={handleCreatePersonalProject}
-              createButtonLabel={t('aiChat.newPersonalFolder', 'New personal folder')}
-              emptyLabel={t('aiChat.createFolder', 'Create folder')}
-              t={t}
-            />
-
-            {/* Team Projects (Shared) */}
-            <ProjectSection
-              title={t('aiChat.teamProjects', 'Team Projects')}
-              icon={<Users size={11} />}
-              projects={teamProjects}
-              expandedProjectIds={expandedProjectIds}
-              activeConversationId={activeConversationId}
-              getConversationsByProjectId={getConversationsByProjectId}
-              onToggleExpanded={toggleProjectExpanded}
-              onSelectConversation={handleSelectConversation}
-              onDeleteProject={handleDeleteProject}
-              onCreateProject={handleCreateTeamProject}
-              createButtonLabel={t('aiChat.newTeamFolder', 'New team folder')}
-              emptyLabel={t('aiChat.createTeamFolder', 'Create team folder')}
-              t={t}
-            />
-          </div>
-        )}
-
-        {/* Conversation List */}
-        <div className="flex-1 overflow-y-auto px-3">
+        {/* Main scrollable area: Folders + Conversations */}
+        <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : visibleGroups.length === 0 ? (
-            <div className="text-center py-12 px-4">
-              <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
-                <Search size={20} className="text-slate-400 dark:text-slate-500" />
-              </div>
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                {searchQuery
-                  ? t('aiChat.noResults', 'No conversations found')
-                  : t('aiChat.noConversations', 'No conversations yet')}
-              </p>
-              {!searchQuery && (
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
-                  {t('aiChat.startNewChat', 'Start a new chat to begin')}
+          ) : searchQuery ? (
+            /* Search mode: show flat grouped results */
+            visibleGroups.length === 0 ? (
+              <div className="text-center py-12 px-4">
+                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
+                  <Search size={20} className="text-slate-400 dark:text-slate-500" />
+                </div>
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                  {t('aiChat.noResults', 'No conversations found')}
                 </p>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="px-3">
+                <ConversationList
+                  groups={displayGroups}
+                  activeId={activeConversationId}
+                  onSelect={handleSelectConversation}
+                />
+              </div>
+            )
           ) : (
-            <ConversationList
-              groups={displayGroups}
-              activeId={activeConversationId}
-              onSelect={handleSelectConversation}
-            />
+            /* Default mode: Project folders first, then unassigned conversations */
+            <>
+              {/* Project Folders (Primary Navigation) */}
+              <div className="pb-1">
+                {/* My Projects (Personal) */}
+                <ProjectSection
+                  title={t('aiChat.myProjects', 'My Projects')}
+                  icon={<Folder size={11} />}
+                  projects={personalProjects}
+                  expandedProjectIds={expandedProjectIds}
+                  activeConversationId={activeConversationId}
+                  getConversationsByProjectId={getConversationsByProjectId}
+                  onToggleExpanded={toggleProjectExpanded}
+                  onSelectConversation={handleSelectConversation}
+                  onDeleteProject={handleDeleteProject}
+                  onCreateProject={handleCreatePersonalProject}
+                  createButtonLabel={t('aiChat.newPersonalFolder', 'New personal folder')}
+                  emptyLabel={t('aiChat.createFolder', 'Create folder')}
+                  t={t}
+                />
+
+                {/* Team Projects (Shared) */}
+                <ProjectSection
+                  title={t('aiChat.teamProjects', 'Team Projects')}
+                  icon={<Users size={11} />}
+                  projects={teamProjects}
+                  expandedProjectIds={expandedProjectIds}
+                  activeConversationId={activeConversationId}
+                  getConversationsByProjectId={getConversationsByProjectId}
+                  onToggleExpanded={toggleProjectExpanded}
+                  onSelectConversation={handleSelectConversation}
+                  onDeleteProject={handleDeleteProject}
+                  onCreateProject={handleCreateTeamProject}
+                  createButtonLabel={t('aiChat.newTeamFolder', 'New team folder')}
+                  emptyLabel={t('aiChat.createTeamFolder', 'Create team folder')}
+                  t={t}
+                />
+              </div>
+
+              {/* Separator between folders and unassigned conversations */}
+              {(personalProjects.length > 0 || teamProjects.length > 0) &&
+                unassignedConversations.length > 0 && (
+                  <div className="border-t border-slate-200 dark:border-navy-700 mx-3" />
+                )}
+
+              {/* Unassigned Conversations (not in any folder) */}
+              <div className="px-3">
+                {unassignedConversations.length === 0 && personalProjects.length === 0 && teamProjects.length === 0 ? (
+                  <div className="text-center py-12 px-4">
+                    <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
+                      <Search size={20} className="text-slate-400 dark:text-slate-500" />
+                    </div>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                      {t('aiChat.noConversations', 'No conversations yet')}
+                    </p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                      {t('aiChat.startNewChat', 'Start a new chat to begin')}
+                    </p>
+                  </div>
+                ) : (
+                  <ConversationList
+                    groups={unassignedGroups}
+                    activeId={activeConversationId}
+                    onSelect={handleSelectConversation}
+                  />
+                )}
+              </div>
+            </>
           )}
         </div>
 

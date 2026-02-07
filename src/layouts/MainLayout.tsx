@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AccessBlockedModal } from '../components/access/AccessBlockedModal';
+import { ProactiveNudgeDisplay } from '../components/ai/ProactiveNudgeDisplay';
 import { UnifiedChatPanel } from '../components/AIChat/UnifiedChatPanel';
 import { AIFreezeBanner } from '../components/AIFreezeBanner';
 import { DemoSessionManager } from '../components/demo/DemoSessionManager';
@@ -140,6 +141,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       <HelpSidePanel />
       <DocumentSidePanel />
       <FeedbackSidePanel />
+
+      {/* Proactive AI Nudges - floating toast-style insights */}
+      <ProactiveNudgeDisplay
+        projectId={currentProjectId || undefined}
+        screen={currentView || undefined}
+        position="bottom-right"
+        maxVisible={3}
+      />
 
       {/* Global access/paywall modal */}
       <AccessBlockedModal />

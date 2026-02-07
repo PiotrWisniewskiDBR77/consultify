@@ -88,6 +88,7 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
         deepResearch: false,
         webSearch: true,
         showReasoning: false,
+        multiAgent: false,
         knowledgeSources: {
           pmoDocuments: true,
           projectData: true,

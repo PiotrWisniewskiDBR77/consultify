@@ -638,7 +638,24 @@ export const Api = {
   },
 
   // --- AI ---
-  // --- AI ---
+
+  /**
+   * Deep Research: Get clarification questions before starting research.
+   * Returns 2-3 questions with options to focus the research scope.
+   */
+  deepResearchClarify: async (message: string): Promise<{
+    success: boolean;
+    questions: Array<{ id: string; question: string; options: string[] }>;
+    researchType: string;
+  }> => {
+    const response = await fetch(`${API_URL}/ai/deep-research/clarify`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ message }),
+    });
+    return response.json();
+  },
+
   deepThinkingEvent: async (args: {
     eventType: 'copied';
     sessionId: string;
@@ -670,6 +687,46 @@ export const Api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(args),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const msg = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
+      const err: any = new Error(msg);
+      err.code = data?.code;
+      throw err;
+    }
+    return data;
+  },
+
+  // Organization Memory — past AI decisions
+  getAIDecisionHistory: async (args?: { search?: string; limit?: number }): Promise<any> => {
+    const params = new URLSearchParams();
+    if (args?.search) params.set('search', args.search);
+    if (args?.limit) params.set('limit', String(args.limit));
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const response = await fetch(`${API_URL}/ai/deep-thinking/decisions${qs}`, {
+      method: 'GET',
+      headers: getHeaders(),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const msg = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
+      const err: any = new Error(msg);
+      err.code = data?.code;
+      throw err;
+    }
+    return data;
+  },
+
+  // Organization Memory — org-level patterns (best practices, lessons learned)
+  getOrgPatterns: async (args?: { type?: string; limit?: number }): Promise<any> => {
+    const params = new URLSearchParams();
+    if (args?.type) params.set('type', args.type);
+    if (args?.limit) params.set('limit', String(args.limit));
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const response = await fetch(`${API_URL}/ai/deep-thinking/org-patterns${qs}`, {
+      method: 'GET',
+      headers: getHeaders(),
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -832,12 +889,13 @@ export const Api = {
       deepResearch?: boolean;
       webSearch?: boolean;
       showReasoning?: boolean;
+      multiAgent?: boolean;
       knowledgeSources?: {
         pmoDocuments?: boolean;
         projectData?: boolean;
         organizationData?: boolean;
       };
-      responseStyle?: 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
+      responseStyle?: 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal';
       selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
       selectedModelId?: string | null;
     }
@@ -846,6 +904,7 @@ export const Api = {
       deepResearch: options?.deepResearch ?? false,
       webSearch: options?.webSearch ?? false,
       showReasoning: options?.showReasoning ?? false,
+      multiAgent: options?.multiAgent ?? false,
     };
 
     const knowledgeSources = {
@@ -915,12 +974,13 @@ export const Api = {
       deepResearch?: boolean;
       webSearch?: boolean;
       showReasoning?: boolean;
+      multiAgent?: boolean;
       knowledgeSources?: {
         pmoDocuments?: boolean;
         projectData?: boolean;
         organizationData?: boolean;
       };
-      responseStyle?: 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
+      responseStyle?: 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal';
       selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
       selectedModelId?: string | null;
     },
@@ -932,6 +992,7 @@ export const Api = {
         deepResearch: options?.deepResearch ?? false,
         webSearch: options?.webSearch ?? false,
         showReasoning: options?.showReasoning ?? false,
+        multiAgent: options?.multiAgent ?? false,
       };
 
       const knowledgeSources = {
@@ -1493,7 +1554,7 @@ export const Api = {
       if (isDemoMode || isDemoSession) {
         console.warn('[Api] getSystemSettings demo fallback:', error);
         return {
-          app_name: 'Consultify (Demo)',
+          app_name: 'Consultinity (Demo)',
           default_language: 'EN',
           maintenance_mode: 'false',
           system_announcement: 'Demo environment',
@@ -2864,6 +2925,32 @@ export const Api = {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to upload document');
+    return data;
+  },
+
+  uploadChatAttachment: async (
+    file: File
+  ): Promise<{
+    success: boolean;
+    docId: string;
+    filename: string;
+    mimeType?: string;
+    totalChunks?: number;
+    embeddedChunks?: number;
+  }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const headers = getHeaders();
+    delete (headers as any)['Content-Type'];
+
+    const res = await fetch(`${API_URL}/ai/attachments/ingest`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error((data as any)?.error || 'Failed to ingest attachment');
     return data;
   },
 

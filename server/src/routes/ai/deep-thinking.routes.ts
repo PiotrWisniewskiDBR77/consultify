@@ -142,6 +142,113 @@ router.post(
 );
 
 /**
+ * GET /api/ai/deep-thinking/decisions
+ * List AI decision outcomes for the organization (with optional search).
+ * Used by Organization Memory to show past decision references.
+ */
+router.get(
+  '/decisions',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const limit = Math.min(parseInt(String(req.query.limit || '20'), 10), 100);
+    const search = String(req.query.search || '').trim();
+
+    let query = `
+      SELECT id, organization_id, user_id, session_id, conversation_id,
+             decision_summary, problem_framing, options_considered, chosen_option,
+             recommendation_text, confidence_score, outcome_status, outcome_notes,
+             outcome_metrics, tags, industry_context,
+             created_at, updated_at
+      FROM ai_decision_outcomes
+      WHERE organization_id = ?
+    `;
+    const params: any[] = [orgId];
+
+    if (search) {
+      query += ` AND (decision_summary LIKE ? OR recommendation_text LIKE ? OR problem_framing LIKE ?)`;
+      const pattern = `%${search}%`;
+      params.push(pattern, pattern, pattern);
+    }
+
+    query += ` ORDER BY created_at DESC LIMIT ?`;
+    params.push(limit);
+
+    const rows = (await dbAll(query, params)) || [];
+
+    return res.json({
+      success: true,
+      decisions: rows.map((r: any) => ({
+        id: r.id,
+        decisionSummary: r.decision_summary,
+        problemFraming: r.problem_framing,
+        optionsConsidered: r.options_considered ? JSON.parse(r.options_considered) : null,
+        chosenOption: r.chosen_option,
+        recommendationText: r.recommendation_text,
+        confidenceScore: r.confidence_score,
+        outcomeStatus: r.outcome_status,
+        outcomeNotes: r.outcome_notes,
+        tags: r.tags ? JSON.parse(r.tags) : [],
+        industryContext: r.industry_context,
+        conversationId: r.conversation_id,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+      })),
+    });
+  })
+);
+
+/**
+ * GET /api/ai/deep-thinking/org-patterns
+ * Fetch organization memory patterns (best practices, lessons learned).
+ */
+router.get(
+  '/org-patterns',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const limit = Math.min(parseInt(String(req.query.limit || '20'), 10), 100);
+    const memoryType = String(req.query.type || '').toUpperCase();
+
+    let query = `
+      SELECT id, organization_id, memory_type, title, content,
+             applicability_score, usage_count, source_project_id,
+             active, created_at, updated_at
+      FROM organization_memory
+      WHERE organization_id = ? AND active = 1
+    `;
+    const params: any[] = [orgId];
+
+    if (memoryType) {
+      query += ` AND memory_type = ?`;
+      params.push(memoryType);
+    }
+
+    query += ` ORDER BY usage_count DESC, created_at DESC LIMIT ?`;
+    params.push(limit);
+
+    const rows = (await dbAll(query, params).catch(() => [])) as any[];
+
+    return res.json({
+      success: true,
+      patterns: rows.map((r: any) => ({
+        id: r.id,
+        type: r.memory_type,
+        title: r.title,
+        content: r.content,
+        applicabilityScore: r.applicability_score,
+        usageCount: r.usage_count,
+        createdAt: r.created_at,
+      })),
+    });
+  })
+);
+
+/**
  * POST /api/ai/deep-thinking/events
  * Client-side metrics events (e.g. user copied output)
  */

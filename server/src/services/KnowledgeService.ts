@@ -1,340 +1,210 @@
 /**
- * Knowledge Service
- * Stub implementation for knowledge management
+ * Knowledge Service — provides strategic knowledge context for AI.
+ *
+ * Replaces the stub in aiContextBuilder.ts with real database queries
+ * for knowledge documents, strategic directions, and approved ideas.
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import { dbAll, dbGet } from '../database/db.js';
+import logger from '../utils/Logger.js';
 
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
-
-export class KnowledgeService {
-  static async getCandidates(status: string = 'pending') {
-    return dbAll('SELECT * FROM knowledge_candidates WHERE status = ?', [status]);
+// Use dbAll/dbGet helpers; fall back to raw if needed
+const all = async (sql: string, params: any[] = []): Promise<any[]> => {
+  try {
+    return (await dbAll(sql, params)) || [];
+  } catch {
+    return [];
   }
+};
 
-  static async addCandidate(
-    content: string,
-    reasoning: string,
-    source: string,
-    relatedAxis?: string,
-    originContext?: string
-  ) {
-    const id = uuidv4();
-    await dbRun(
-      `INSERT INTO knowledge_candidates (id, content, reasoning, source, status, related_axis, origin_context, created_at)
-             VALUES (?, ?, ?, ?, 'pending', ?, ?, datetime('now'))`,
-      [id, content, reasoning, source, relatedAxis || null, originContext || null]
-    );
-    return id;
+const get = async (sql: string, params: any[] = []): Promise<any> => {
+  try {
+    return await dbGet(sql, params);
+  } catch {
+    return null;
   }
+};
 
-  static async updateCandidateStatus(id: string, status: string, adminComment?: string) {
-    await dbRun('UPDATE knowledge_candidates SET status = ?, admin_comment = ? WHERE id = ?', [
-      status,
-      adminComment || null,
-      id,
-    ]);
-  }
+export const knowledgeService = {
+  /**
+   * Get active strategic directions for an organization.
+   * Queries organization_context for strategic goals/challenges.
+   */
+  async getActiveStrategies(organizationId?: string): Promise<any[]> {
+    if (!organizationId) return [];
 
-  static async updateCandidate(id: string, updates: any) {
-    const fields = Object.keys(updates);
-    if (fields.length === 0) return;
+    try {
+      // Try organization_context table (strategic goals, challenges, megatrends)
+      const ctx = await get(
+        `SELECT strategic_goals, challenges, megatrends, company_name, industry
+         FROM organization_context
+         WHERE organization_id = ?`,
+        [organizationId]
+      );
 
-    const setClause = fields.map((f) => `${f} = ?`).join(', ');
-    const params = [...Object.values(updates), id];
+      if (!ctx) return [];
 
-    await dbRun(`UPDATE knowledge_candidates SET ${setClause} WHERE id = ?`, params);
-  }
+      const strategies: any[] = [];
 
-  static async getAllStrategies() {
-    return dbAll('SELECT * FROM global_strategies', []);
-  }
+      // Parse strategic goals
+      if (ctx.strategic_goals) {
+        try {
+          const goals = typeof ctx.strategic_goals === 'string'
+            ? JSON.parse(ctx.strategic_goals)
+            : ctx.strategic_goals;
+          if (Array.isArray(goals)) {
+            goals.forEach((g: any, i: number) => {
+              strategies.push({
+                title: typeof g === 'string' ? g : g.title || g.name || `Goal ${i + 1}`,
+                description: typeof g === 'string' ? g : g.description || '',
+                priority: g.priority || 'medium',
+                type: 'strategic_goal',
+              });
+            });
+          }
+        } catch {
+          // Might be a plain text field
+          strategies.push({
+            title: 'Strategic Goals',
+            description: String(ctx.strategic_goals).slice(0, 500),
+            priority: 'high',
+            type: 'strategic_goal',
+          });
+        }
+      }
 
-  static async getActiveStrategies() {
-    return dbAll('SELECT * FROM global_strategies WHERE is_active = 1', []);
-  }
+      // Parse challenges
+      if (ctx.challenges) {
+        try {
+          const challenges = typeof ctx.challenges === 'string'
+            ? JSON.parse(ctx.challenges)
+            : ctx.challenges;
+          if (Array.isArray(challenges)) {
+            challenges.forEach((c: any, i: number) => {
+              strategies.push({
+                title: typeof c === 'string' ? c : c.title || c.name || `Challenge ${i + 1}`,
+                description: typeof c === 'string' ? c : c.description || '',
+                priority: c.priority || 'medium',
+                type: 'challenge',
+              });
+            });
+          }
+        } catch {
+          strategies.push({
+            title: 'Key Challenges',
+            description: String(ctx.challenges).slice(0, 500),
+            priority: 'high',
+            type: 'challenge',
+          });
+        }
+      }
 
-  static async addStrategy(title: string, description: string, createdBy: string, options: any) {
-    const id = uuidv4();
-    await dbRun(
-      `INSERT INTO global_strategies (id, title, description, created_by, success_metrics, priority, target_date, progress_percentage, is_active, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'))`,
-      [
-        id,
-        title,
-        description,
-        createdBy,
-        JSON.stringify(options.success_metrics || []),
-        options.priority || 'medium',
-        options.target_date || null,
-        options.progress_percentage || 0,
-      ]
-    );
-    return id;
-  }
+      return strategies;
+    } catch (err: any) {
+      logger.warn('[KnowledgeService] Failed to load strategies:', err?.message);
+      return [];
+    }
+  },
 
-  static async updateStrategy(id: string, updates: any) {
-    const fields = Object.keys(updates);
-    if (fields.length === 0) return;
+  /**
+   * Get approved ideas / generated initiatives from assessment batches.
+   */
+  async getApprovedIdeas(options: { organizationId?: string; projectId?: string; limit?: number }): Promise<any[]> {
+    const { organizationId, projectId, limit = 10 } = options;
 
-    const setClause = fields.map((f) => `${f} = ?`).join(', ');
-    const params = [...Object.values(updates), id];
+    try {
+      // Query initiative batches that have been generated from assessments
+      let sql = `
+        SELECT aib.id, aib.assessment_id, aib.methodology_id, aib.initiatives_count,
+               aib.status, aib.created_at
+        FROM assessment_initiative_batches aib
+      `;
+      const params: any[] = [];
 
-    await dbRun(`UPDATE global_strategies SET ${setClause} WHERE id = ?`, params);
-  }
+      if (projectId) {
+        sql += ` JOIN maturity_assessments ma ON aib.assessment_id = ma.id WHERE ma.project_id = ?`;
+        params.push(projectId);
+      } else if (organizationId) {
+        sql += ` JOIN maturity_assessments ma ON aib.assessment_id = ma.id 
+                 JOIN projects p ON ma.project_id = p.id 
+                 WHERE p.organization_id = ?`;
+        params.push(organizationId);
+      }
 
-  static async addDocument(
-    filename: string,
-    filepath: string,
-    orgId: string,
-    projectId: string | null,
-    size: number,
-    category: string | null,
-    tags: string[]
-  ) {
-    const id = uuidv4();
-    await dbRun(
-      `INSERT INTO knowledge_docs (id, filename, filepath, organization_id, project_id, file_size_bytes, status, category, tags, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, 'indexed', ?, ?, datetime('now'))`,
-      [id, filename, filepath, orgId, projectId, size, category, JSON.stringify(tags)]
-    );
-    return id;
-  }
+      sql += ` ORDER BY aib.created_at DESC LIMIT ?`;
+      params.push(limit);
 
-  static async processDocument(docId: string, text: string) {
-    // Dummy processing
-    return 1;
-  }
+      const batches = await all(sql, params);
 
-  static async getDocuments(orgId: string, userId: string, role: string) {
-    return dbAll('SELECT * FROM knowledge_docs WHERE organization_id = ?', [orgId]);
-  }
+      return batches.map((b: any) => ({
+        id: b.id,
+        content: `Initiative batch from assessment (${b.methodology_id})`,
+        category: b.methodology_id,
+        count: b.initiatives_count,
+        status: b.status,
+      }));
+    } catch (err: any) {
+      logger.warn('[KnowledgeService] Failed to load approved ideas:', err?.message);
+      return [];
+    }
+  },
 
-  static async getDocumentsByCategory(orgId: string, category: string) {
-    return dbAll('SELECT * FROM knowledge_docs WHERE organization_id = ? AND category = ?', [
-      orgId,
-      category,
-    ]);
-  }
+  /**
+   * Get knowledge documents for an organization.
+   * R10: Queries unified schema (knowledge_documents) with fallback to legacy (knowledge_docs).
+   */
+  async getDocuments(organizationId: string, projectId?: string): Promise<any[]> {
+    if (!organizationId) return [];
 
-  static async getDocumentsByStrategy(strategyId: string) {
-    // Get strategy's related document IDs and fetch them
-    const strategy = await dbGet<{ related_document_ids: string }>(
-      'SELECT related_document_ids FROM global_strategies WHERE id = ?',
-      [strategyId]
-    );
-    if (!strategy || !strategy.related_document_ids) return [];
+    // Try new schema first
+    try {
+      let sql = `
+        SELECT id, title, original_filename as filename, document_type, 
+               description, category, tags, language, word_count, 
+               processing_status, created_at
+        FROM knowledge_documents
+        WHERE (organization_id = ? OR organization_id IS NULL)
+          AND processing_status IN ('completed', 'processed', 'indexed')
+      `;
+      const params: any[] = [organizationId];
 
-    const docIds =
-      typeof strategy.related_document_ids === 'string'
-        ? JSON.parse(strategy.related_document_ids)
-        : strategy.related_document_ids;
+      if (projectId) {
+        sql += ` AND (project_id = ? OR project_id IS NULL)`;
+        params.push(projectId);
+      }
 
-    if (!docIds.length) return [];
+      sql += ` ORDER BY created_at DESC LIMIT 50`;
 
-    const placeholders = docIds.map(() => '?').join(',');
-    return dbAll(`SELECT * FROM knowledge_docs WHERE id IN (${placeholders})`, docIds);
-  }
-
-  // ==========================================
-  // APPROVED IDEAS / LIBRARY
-  // ==========================================
-
-  static async getApprovedIdeas(filters?: { category?: string }) {
-    let sql = 'SELECT * FROM knowledge_candidates WHERE status = ?';
-    const params: any[] = ['approved'];
-
-    if (filters?.category) {
-      sql += ' AND category = ?';
-      params.push(filters.category);
+      const docs = await all(sql, params);
+      if (docs.length > 0) return docs;
+    } catch {
+      // knowledge_documents table may not exist — try legacy
     }
 
-    sql += ' ORDER BY created_at DESC';
-    return dbAll(sql, params);
-  }
+    // Fallback to legacy knowledge_docs schema
+    try {
+      let sql = `
+        SELECT id, filename, filepath, status as processing_status,
+               filename as title, 'document' as document_type,
+               created_at
+        FROM knowledge_docs
+        WHERE status IN ('completed', 'processed', 'indexed', 'ready')
+      `;
+      const params: any[] = [];
 
-  static async getIdeasByCategory(category: string) {
-    return dbAll('SELECT * FROM knowledge_candidates WHERE category = ? AND status = ?', [
-      category,
-      'approved',
-    ]);
-  }
+      if (projectId) {
+        sql += ` AND project_id = ?`;
+        params.push(projectId);
+      }
 
-  static async getIdeasByProject(projectId: string) {
-    // Ideas linked to a project via related_project_ids
-    return dbAll('SELECT * FROM knowledge_candidates WHERE related_project_ids LIKE ?', [
-      `%${projectId}%`,
-    ]);
-  }
+      sql += ` ORDER BY created_at DESC LIMIT 50`;
 
-  static async linkIdeaToProject(ideaId: string, projectId: string, notes: string) {
-    // Get current project IDs
-    const idea = await dbGet<{ related_project_ids: string }>(
-      'SELECT related_project_ids FROM knowledge_candidates WHERE id = ?',
-      [ideaId]
-    );
-    if (!idea) throw new Error('Idea not found');
-
-    const currentIds = idea.related_project_ids
-      ? typeof idea.related_project_ids === 'string'
-        ? JSON.parse(idea.related_project_ids)
-        : idea.related_project_ids
-      : [];
-
-    if (!currentIds.includes(projectId)) {
-      currentIds.push(projectId);
+      return await all(sql, params);
+    } catch (err: any) {
+      logger.warn('[KnowledgeService] Failed to load documents from both schemas:', err?.message);
+      return [];
     }
+  },
+};
 
-    await dbRun(
-      'UPDATE knowledge_candidates SET related_project_ids = ?, implementation_notes = ? WHERE id = ?',
-      [JSON.stringify(currentIds), notes, ideaId]
-    );
-
-    return { changes: 1 };
-  }
-
-  // ==========================================
-  // STRATEGY MANAGEMENT
-  // ==========================================
-
-  static async toggleStrategy(id: string, isActive: boolean) {
-    await dbRun('UPDATE global_strategies SET is_active = ? WHERE id = ?', [isActive ? 1 : 0, id]);
-  }
-
-  static async updateStrategyProgress(id: string, progress: number) {
-    await dbRun('UPDATE global_strategies SET progress_percentage = ? WHERE id = ?', [
-      progress,
-      id,
-    ]);
-    return { changes: 1 };
-  }
-
-  static async getStrategyWithRelated(id: string) {
-    const strategy = await dbGet<any>('SELECT * FROM global_strategies WHERE id = ?', [id]);
-    if (!strategy) return null;
-
-    // Parse JSON fields
-    if (strategy.success_metrics && typeof strategy.success_metrics === 'string') {
-      strategy.success_metrics = JSON.parse(strategy.success_metrics);
-    }
-    if (strategy.related_document_ids && typeof strategy.related_document_ids === 'string') {
-      strategy.related_document_ids = JSON.parse(strategy.related_document_ids);
-    }
-    if (strategy.related_idea_ids && typeof strategy.related_idea_ids === 'string') {
-      strategy.related_idea_ids = JSON.parse(strategy.related_idea_ids);
-    }
-
-    // Fetch related documents
-    const relatedDocs = strategy.related_document_ids?.length
-      ? await this.getDocumentsByStrategy(id)
-      : [];
-
-    // Fetch related ideas
-    const relatedIdeas = strategy.related_idea_ids?.length
-      ? await dbAll(
-          `SELECT * FROM knowledge_candidates WHERE id IN (${strategy.related_idea_ids.map(() => '?').join(',')})`,
-          strategy.related_idea_ids
-        )
-      : [];
-
-    return {
-      ...strategy,
-      relatedDocuments: relatedDocs,
-      relatedIdeas: relatedIdeas,
-    };
-  }
-
-  static async linkStrategyToDocument(strategyId: string, documentId: string) {
-    const strategy = await dbGet<{ related_document_ids: string }>(
-      'SELECT related_document_ids FROM global_strategies WHERE id = ?',
-      [strategyId]
-    );
-    if (!strategy) throw new Error('Strategy not found');
-
-    const currentIds = strategy.related_document_ids
-      ? typeof strategy.related_document_ids === 'string'
-        ? JSON.parse(strategy.related_document_ids)
-        : strategy.related_document_ids
-      : [];
-
-    if (!currentIds.includes(documentId)) {
-      currentIds.push(documentId);
-    }
-
-    await dbRun('UPDATE global_strategies SET related_document_ids = ? WHERE id = ?', [
-      JSON.stringify(currentIds),
-      strategyId,
-    ]);
-    return { changes: 1 };
-  }
-
-  static async linkStrategyToIdea(strategyId: string, ideaId: string) {
-    const strategy = await dbGet<{ related_idea_ids: string }>(
-      'SELECT related_idea_ids FROM global_strategies WHERE id = ?',
-      [strategyId]
-    );
-    if (!strategy) throw new Error('Strategy not found');
-
-    const currentIds = strategy.related_idea_ids
-      ? typeof strategy.related_idea_ids === 'string'
-        ? JSON.parse(strategy.related_idea_ids)
-        : strategy.related_idea_ids
-      : [];
-
-    if (!currentIds.includes(ideaId)) {
-      currentIds.push(ideaId);
-    }
-
-    await dbRun('UPDATE global_strategies SET related_idea_ids = ? WHERE id = ?', [
-      JSON.stringify(currentIds),
-      strategyId,
-    ]);
-    return { changes: 1 };
-  }
-
-  static async unlinkStrategyFromDocument(strategyId: string, documentId: string) {
-    const strategy = await dbGet<{ related_document_ids: string }>(
-      'SELECT related_document_ids FROM global_strategies WHERE id = ?',
-      [strategyId]
-    );
-    if (!strategy) throw new Error('Strategy not found');
-
-    const currentIds = strategy.related_document_ids
-      ? typeof strategy.related_document_ids === 'string'
-        ? JSON.parse(strategy.related_document_ids)
-        : strategy.related_document_ids
-      : [];
-
-    const newIds = currentIds.filter((id: string) => id !== documentId);
-
-    await dbRun('UPDATE global_strategies SET related_document_ids = ? WHERE id = ?', [
-      JSON.stringify(newIds),
-      strategyId,
-    ]);
-    return { changes: 1 };
-  }
-
-  static async unlinkStrategyFromIdea(strategyId: string, ideaId: string) {
-    const strategy = await dbGet<{ related_idea_ids: string }>(
-      'SELECT related_idea_ids FROM global_strategies WHERE id = ?',
-      [strategyId]
-    );
-    if (!strategy) throw new Error('Strategy not found');
-
-    const currentIds = strategy.related_idea_ids
-      ? typeof strategy.related_idea_ids === 'string'
-        ? JSON.parse(strategy.related_idea_ids)
-        : strategy.related_idea_ids
-      : [];
-
-    const newIds = currentIds.filter((id: string) => id !== ideaId);
-
-    await dbRun('UPDATE global_strategies SET related_idea_ids = ? WHERE id = ?', [
-      JSON.stringify(newIds),
-      strategyId,
-    ]);
-    return { changes: 1 };
-  }
-}
-
-export default KnowledgeService;
+export default knowledgeService;

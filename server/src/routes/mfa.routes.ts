@@ -67,7 +67,7 @@ router.get('/status', verifyToken, isAuthenticated, async (req: Request, res: Re
       FROM user_mfa WHERE user_id = ?
     `,
       [userId]
-    );
+    ) as { enabled: boolean; method: string; backup_codes_count: number; last_verified_at: string } | null;
 
     res.json({
       enabled: mfaConfig?.enabled || false,
@@ -88,14 +88,14 @@ router.get('/status', verifyToken, isAuthenticated, async (req: Request, res: Re
 router.post('/setup', verifyToken, isAuthenticated, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
-    const user = await db.get('SELECT email FROM users WHERE id = ?', [userId]);
+    const user = await db.get('SELECT email FROM users WHERE id = ?', [userId]) as { email: string } | null;
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
     const secret = generateSecret();
-    const issuer = 'Consultify';
+    const issuer = 'Consultinity';
     const otpauthUrl = `otpauth://totp/${issuer}:${encodeURIComponent(user.email)}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
 
     // Store pending secret (not yet verified)
@@ -135,7 +135,7 @@ router.post('/verify-setup', verifyToken, isAuthenticated, async (req: Request, 
       return res.status(400).json({ error: 'Invalid token format' });
     }
 
-    const mfaConfig = await db.get('SELECT secret FROM user_mfa WHERE user_id = ?', [userId]);
+    const mfaConfig = await db.get('SELECT secret FROM user_mfa WHERE user_id = ?', [userId]) as { secret: string } | null;
 
     if (!mfaConfig?.secret) {
       return res.status(400).json({ error: 'MFA not initialized. Please start setup first.' });
@@ -196,7 +196,7 @@ router.post('/verify', verifyToken, async (req: Request, res: Response) => {
     const mfaConfig = await db.get(
       'SELECT secret, backup_codes, enabled FROM user_mfa WHERE user_id = ?',
       [userId]
-    );
+    ) as { secret: string; backup_codes: string; enabled: boolean } | null;
 
     if (!mfaConfig?.enabled) {
       return res.status(400).json({ error: 'MFA not enabled for this account' });
@@ -262,7 +262,7 @@ router.post('/disable', verifyToken, isAuthenticated, async (req: Request, res: 
 
     const mfaConfig = await db.get('SELECT secret, enabled FROM user_mfa WHERE user_id = ?', [
       userId,
-    ]);
+    ]) as { secret: string; enabled: boolean } | null;
 
     if (!mfaConfig?.enabled) {
       return res.status(400).json({ error: 'MFA is not enabled' });
@@ -306,7 +306,7 @@ router.post(
 
       const mfaConfig = await db.get('SELECT secret, enabled FROM user_mfa WHERE user_id = ?', [
         userId,
-      ]);
+      ]) as { secret: string; enabled: boolean } | null;
 
       if (!mfaConfig?.enabled) {
         return res.status(400).json({ error: 'MFA is not enabled' });

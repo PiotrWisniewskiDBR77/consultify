@@ -50,7 +50,7 @@ router.post(
 
     try {
       // Get AI Pipeline
-      const aiPipeline = await import('../services/ai/aiPipeline.js').then((m) => {
+      const aiPipeline = await import('../services/ai/AIPipeline.js').then((m) => {
         const AIPipelineClass = (m as any).AIPipeline;
         return new AIPipelineClass();
       });

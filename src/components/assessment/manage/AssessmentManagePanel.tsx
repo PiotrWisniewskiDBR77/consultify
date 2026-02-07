@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 import { ActivityLogPanel } from '@/components/assessment/ActivityLogPanel';
 import { InitiativesManagementPanel } from '@/components/assessment/manage/InitiativesManagementPanel';
@@ -142,6 +143,7 @@ export function AssessmentManagePanel(props: {
   onCreateReport?: () => void;
 }) {
   const { assessmentId, assessmentName, initialTab, onOpenReport, onCreateReport } = props;
+  const navigate = useNavigate();
 
   const [tab, setTab] = useState<TabId>(initialTab || 'workflow');
   const [loading, setLoading] = useState(false);
@@ -294,9 +296,22 @@ export function AssessmentManagePanel(props: {
               comment,
             });
           } else if (gateType === 'APPROVE_REPORT') {
-            // Request report approval - generates report first if needed
-            await Api.post(`/assessment-workflow-v2/${assessmentId}/report`, {
-              format: 'pdf',
+            // Report Builder is the source of truth for reports.
+            // Open the template picker / report creation flow (link-first).
+            if (onCreateReport) {
+              onCreateReport();
+            } else {
+              const qs = new URLSearchParams({
+                new: 'true',
+                sourceType: 'ASSESSMENT',
+                sourceId: assessmentId,
+                sourceName: assessmentName || 'Assessment',
+              });
+              navigate(`/reports/builder?${qs.toString()}`);
+            }
+            // Mark gate as pending (best-effort) to reflect that report work started.
+            await Api.put(`/assessment-workflow-v2/${assessmentId}/gate-decisions/${gateType}`, {
+              status: 'PENDING',
             });
           } else if (gateType === 'APPROVE_ASSESSMENT') {
             // This would typically be triggered after report is approved
@@ -305,14 +320,21 @@ export function AssessmentManagePanel(props: {
               status: 'PENDING',
             });
           } else if (gateType === 'GENERATE_REPORT') {
-            // Generate analytical report
-            await Api.post(`/assessment-workflow-v2/${assessmentId}/report`, {
-              format: 'pdf',
-              type: 'analytical',
-            });
-            // Mark gate as approved after generation
+            // Report Builder is the source of truth for reports.
+            if (onCreateReport) {
+              onCreateReport();
+            } else {
+              const qs = new URLSearchParams({
+                new: 'true',
+                sourceType: 'ASSESSMENT',
+                sourceId: assessmentId,
+                sourceName: assessmentName || 'Assessment',
+              });
+              navigate(`/reports/builder?${qs.toString()}`);
+            }
+            // Mark gate as pending while the report is being generated in Report Builder.
             await Api.put(`/assessment-workflow-v2/${assessmentId}/gate-decisions/${gateType}`, {
-              status: 'APPROVED',
+              status: 'PENDING',
             });
           } else if (gateType === 'GENERATE_INITIATIVES') {
             await Api.post(`/assessment-workflow-v2/${assessmentId}/generate-initiatives`, {
@@ -325,8 +347,11 @@ export function AssessmentManagePanel(props: {
           if (gateType === 'APPROVE_ASSESSMENT') {
             await Api.post(`/assessment-workflow-v2/${assessmentId}/approve`, { comment });
           } else if (gateType === 'APPROVE_REPORT') {
-            // Correct endpoint path: /report/approve
-            await Api.post(`/assessment-workflow-v2/${assessmentId}/report/approve`, { comment });
+            // Approval should be done inside Report Builder review workflow.
+            // Keep gate state updated for now.
+            await Api.put(`/assessment-workflow-v2/${assessmentId}/gate-decisions/${gateType}`, {
+              status: 'APPROVED',
+            });
           } else if (gateType === 'REQUEST_REVIEW') {
             // Approving review request moves to IN_REVIEW
             await Api.put(`/assessment-workflow-v2/${assessmentId}/gate-decisions/${gateType}`, {
@@ -541,7 +566,7 @@ export function AssessmentManagePanel(props: {
     return () => {
       cancelled = true;
     };
-  }, [assessmentId]);
+  }, [assessmentId, assessmentName, navigate, onCreateReport]);
 
   return (
     <div className="px-6 py-5">

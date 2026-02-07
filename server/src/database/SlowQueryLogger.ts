@@ -194,6 +194,28 @@ export class SlowQueryLogger {
       const logsDir = path.dirname(this.logFile);
       await fs.mkdir(logsDir, { recursive: true });
 
+      // Guard: prevent unbounded file growth (max 50MB, truncate to last 10MB)
+      try {
+        const stat = await fs.stat(this.logFile);
+        const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+        const KEEP_SIZE = 10 * 1024 * 1024; // 10MB
+        if (stat.size > MAX_SIZE) {
+          const content = await fs.readFile(this.logFile, 'utf-8');
+          const truncated = content.slice(-KEEP_SIZE);
+          // Find the first complete line after truncation
+          const firstNewline = truncated.indexOf('\n');
+          await fs.writeFile(
+            this.logFile,
+            firstNewline >= 0 ? truncated.slice(firstNewline + 1) : truncated
+          );
+          logger.info(
+            `[SlowQueryLogger] Log file truncated from ${(stat.size / 1024 / 1024).toFixed(1)}MB to ~${(KEEP_SIZE / 1024 / 1024).toFixed(0)}MB`
+          );
+        }
+      } catch {
+        // File doesn't exist yet — that's fine
+      }
+
       const logEntry = {
         timestamp: query.timestamp.toISOString(),
         executionTime: `${query.executionTime.toFixed(2)}ms`,

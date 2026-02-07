@@ -8,8 +8,15 @@ import type { Artifact, ThinkingStep } from '@/types';
 /**
  * Build localized thinking step labels for Cursor-like AI thinking indicator.
  * Uses natural, conversational phrases that change as the AI processes.
+ *
+ * Adaptive step count:
+ *   - 'light'  (1 step)  — simple/fast queries expected < 3s
+ *   - 'medium' (3 steps) — standard queries expected 3–15s
+ *   - 'deep'   (5 steps) — complex/deep-thinking queries expected > 15s
  */
-function buildDefaultThinkingSteps(language: string): ThinkingStep[] {
+type ThinkingComplexity = 'light' | 'medium' | 'deep';
+
+function buildDefaultThinkingSteps(language: string, complexity: ThinkingComplexity = 'medium'): ThinkingStep[] {
   const lang = (language || 'en').split('-')[0];
 
   // Multiple phrase variants for more natural feel - randomly selected
@@ -27,7 +34,6 @@ function buildDefaultThinkingSteps(language: string): ThinkingStep[] {
       analyzing: [
         'Analizuję Twoje pytanie…',
         'Rozważam Twoje zapytanie…',
-        'Myślę nad tym…',
         'Przygotowuję się…',
       ],
       context: [
@@ -38,12 +44,11 @@ function buildDefaultThinkingSteps(language: string): ThinkingStep[] {
       ],
       planning: ['Układam plan odpowiedzi…', 'Porządkuję wątki…', 'Wybieram podejście…'],
       validating: ['Sprawdzam spójność…', 'Weryfikuję szczegóły…', 'Dopinam odpowiedź…'],
-      composing: ['Piszę odpowiedź…', 'Składam wszystko w całość…', 'Kończę i dopracowuję…'],
+      composing: ['Przygotowuję odpowiedź…', 'Składam wszystko w całość…', 'Kończę i dopracowuję…'],
     },
     en: {
       analyzing: [
         'Analyzing your question…',
-        'Thinking about this…',
         'Processing your request…',
         'Understanding the context…',
       ],
@@ -54,8 +59,8 @@ function buildDefaultThinkingSteps(language: string): ThinkingStep[] {
         'Collecting insights…',
       ],
       planning: ['Planning the response…', 'Organizing the key points…', 'Choosing an approach…'],
-      validating: ['Checking for consistency…', 'Verifying details…', 'Sanity-checking…'],
-      composing: ['Composing the answer…', 'Putting it all together…', 'Polishing…'],
+      validating: ['Checking for consistency…', 'Verifying details…', 'Cross-referencing…'],
+      composing: ['Composing the answer…', 'Putting it all together…', 'Finalizing…'],
     },
     de: {
       analyzing: [
@@ -95,6 +100,52 @@ function buildDefaultThinkingSteps(language: string): ThinkingStep[] {
   const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
 
   const now = new Date();
+
+  // Light: single step for fast queries
+  if (complexity === 'light') {
+    return [
+      {
+        id: `think-1-${now.getTime()}`,
+        label: pick(variants.analyzing),
+        content: '',
+        status: 'in_progress' as const,
+        timestamp: now,
+        category: 'analysis',
+      },
+    ];
+  }
+
+  // Medium: 3 focused steps
+  if (complexity === 'medium') {
+    return [
+      {
+        id: `think-1-${now.getTime()}`,
+        label: pick(variants.analyzing),
+        content: '',
+        status: 'in_progress' as const,
+        timestamp: now,
+        category: 'analysis',
+      },
+      {
+        id: `think-2-${now.getTime()}`,
+        label: pick(variants.context),
+        content: '',
+        status: 'pending' as const,
+        timestamp: now,
+        category: 'research',
+      },
+      {
+        id: `think-3-${now.getTime()}`,
+        label: pick(variants.composing),
+        content: '',
+        status: 'pending' as const,
+        timestamp: now,
+        category: 'synthesis',
+      },
+    ];
+  }
+
+  // Deep: full 5-step decomposition
   return [
     {
       id: `think-1-${now.getTime()}`,
@@ -137,6 +188,26 @@ function buildDefaultThinkingSteps(language: string): ThinkingStep[] {
       category: 'synthesis',
     },
   ];
+}
+
+/**
+ * Logarithmic progress curve — fast to 60%, then asymptotically approaches 98%.
+ * Never freezes: always has some micro-movement even at high elapsed times.
+ * `elapsedMs` is time since stream started.
+ */
+function logarithmicProgress(elapsedMs: number): number {
+  // Phase 1 (0–3s): quick ramp to ~55%
+  // Phase 2 (3–15s): gradual climb to ~85%
+  // Phase 3 (15s+): asymptotic approach to 97%, never freezing
+  const t = elapsedMs / 1000; // seconds
+  if (t <= 0) return 0;
+  // Logarithmic curve: 20 * ln(1 + t) capped smoothly
+  const raw = 20 * Math.log(1 + t);
+  // Sigmoid squash so it never exceeds 97
+  const progress = 97 * (1 - Math.exp(-raw / 97));
+  // Add micro-jitter (±0.5%) to prevent visual freeze
+  const jitter = (Math.sin(t * 2.7) * 0.5);
+  return Math.min(97, Math.max(0, progress + jitter));
 }
 
 /**
@@ -195,6 +266,14 @@ type ResearchProgressEvent = {
   queries: any[];
   sources?: any[];
   error?: string;
+  /** Current research round (1 = initial, 2 = follow-up) */
+  round?: number;
+  /** Total research rounds */
+  totalRounds?: number;
+  /** Detected research type */
+  researchType?: string;
+  /** Number of completed rounds */
+  rounds?: number;
 };
 
 type ResearchVisibilityEvent = {
@@ -266,6 +345,9 @@ export const useAIStream = (options: StreamOptions = {}) => {
   const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
   const [lastError, setLastError] = useState<Error | null>(null);
   const [citations, setCitations] = useState<any[]>([]);
+  const [retryInfo, setRetryInfo] = useState<{ attempt: number; maxRetries: number; backoffMs: number } | null>(null);
+  const [streamStartedAt, setStreamStartedAt] = useState<number | null>(null);
+  const [streamCompletedSignal, setStreamCompletedSignal] = useState(false);
   const [deepThinkingState, setDeepThinkingState] = useState<DeepThinkingStateEvent | null>(null);
   const [researchProgress, setResearchProgress] = useState<ResearchProgressEvent | null>(null);
   const [researchVisibility, setResearchVisibility] = useState<ResearchVisibilityEvent | null>(
@@ -321,6 +403,9 @@ export const useAIStream = (options: StreamOptions = {}) => {
     setProgress(0);
     setCurrentStreamContent('');
     setLastError(null);
+    setRetryInfo(null);
+    setStreamStartedAt(null);
+    setStreamCompletedSignal(false);
     if (thinkingIntervalRef.current) {
       clearInterval(thinkingIntervalRef.current);
       thinkingIntervalRef.current = null;
@@ -358,24 +443,28 @@ export const useAIStream = (options: StreamOptions = {}) => {
       setIsBotTyping(true);
       resetStreamState();
       setLastError(null);
+      setStreamStartedAt(Date.now());
+      setStreamCompletedSignal(false);
 
       // Create a new abort controller for this stream
       abortControllerRef.current?.abort();
       abortControllerRef.current = new AbortController();
 
       let fullText = '';
-      let currentThinking: ThinkingStep[] = buildDefaultThinkingSteps(language || '');
+      const isDeepThinking = aiConfig?.deepResearch === true;
+      // Adaptive complexity: deep research → deep steps, web search → medium, default → medium
+      const complexity: ThinkingComplexity = isDeepThinking ? 'deep' : 'medium';
+      let currentThinking: ThinkingStep[] = buildDefaultThinkingSteps(language || '', complexity);
       let step = 0;
       let hasReceivedContent = false;
-      let thinkingProgress = 0;
-      const isDeepThinking = aiConfig?.deepResearch === true;
+      const streamStartTime = Date.now();
 
       // Make "LLM is working" visible immediately (Cursor-like)
       setThinkingSteps([...currentThinking]);
       options.onThinkingUpdate?.([...currentThinking]);
 
       // Keep the UI "alive" even before first chunk arrives.
-      // This is not model chain-of-thought; it's a UX progress narration.
+      // Uses logarithmic progress curve — never freezes, always micro-moves.
       if (thinkingIntervalRef.current) clearInterval(thinkingIntervalRef.current);
       thinkingIntervalRef.current = setInterval(() => {
         if (abortRef.current.aborted || hasReceivedContent) {
@@ -383,13 +472,29 @@ export const useAIStream = (options: StreamOptions = {}) => {
           thinkingIntervalRef.current = null;
           return;
         }
-        // Smooth-ish progress with small random increments, capped before "done"
-        const bump = 3 + Math.random() * 5;
-        thinkingProgress = Math.min(92, thinkingProgress + bump);
-        setProgress(Math.floor(thinkingProgress));
-        currentThinking = advanceThinkingSteps(currentThinking, thinkingProgress);
+        const elapsed = Date.now() - streamStartTime;
+        const pct = logarithmicProgress(elapsed);
+        setProgress(Math.floor(pct));
+        currentThinking = advanceThinkingSteps(currentThinking, pct);
         setThinkingSteps([...currentThinking]);
         options.onThinkingUpdate?.([...currentThinking]);
+
+        // Long-wait escalation labels (3-second rule: always update something)
+        if (elapsed > 30000 && !isDeepThinking) {
+          const escalationStep = currentThinking.find((s) => s.status === 'in_progress');
+          if (escalationStep && !escalationStep.label.includes('moment')) {
+            escalationStep.label = escalationStep.label.replace(/…$/, '') + ' — almost done…';
+            setThinkingSteps([...currentThinking]);
+            options.onThinkingUpdate?.([...currentThinking]);
+          }
+        } else if (elapsed > 10000 && !isDeepThinking) {
+          const escalationStep = currentThinking.find((s) => s.status === 'in_progress');
+          if (escalationStep && !escalationStep.label.includes('moment')) {
+            escalationStep.label = escalationStep.label.replace(/…$/, '') + ' — one moment…';
+            setThinkingSteps([...currentThinking]);
+            options.onThinkingUpdate?.([...currentThinking]);
+          }
+        }
       }, 350);
 
       const handleChunk = (chunk: string) => {
@@ -446,6 +551,11 @@ export const useAIStream = (options: StreamOptions = {}) => {
         setIsStreaming(false);
         setIsBotTyping(false);
         setProgress(100);
+        setRetryInfo(null);
+
+        // Flash completion signal for UI feedback (auto-clears after 2s)
+        setStreamCompletedSignal(true);
+        setTimeout(() => setStreamCompletedSignal(false), 2000);
 
         if (thinkingIntervalRef.current) {
           clearInterval(thinkingIntervalRef.current);
@@ -718,6 +828,7 @@ export const useAIStream = (options: StreamOptions = {}) => {
             deepResearch: aiConfig?.deepResearch,
             webSearch: aiConfig?.webSearch,
             showReasoning: aiConfig?.showReasoning,
+            multiAgent: aiConfig?.multiAgent,
             knowledgeSources: aiConfig?.knowledgeSources,
             responseStyle: aiConfig?.responseStyle,
             selectedTier: (aiConfig as any)?.selectedTier,
@@ -742,7 +853,10 @@ export const useAIStream = (options: StreamOptions = {}) => {
           console.warn(
             `[useAIStream] Auto-retry ${retryCountRef.current}/${MAX_AUTO_RETRIES} in ${backoffMs}ms…`
           );
+          // Surface retry status to UI so user sees transparent progress
+          setRetryInfo({ attempt: retryCountRef.current, maxRetries: MAX_AUTO_RETRIES, backoffMs });
           await new Promise((r) => setTimeout(r, backoffMs));
+          setRetryInfo(null);
           if (!abortRef.current.aborted) {
             try {
               // New controller for retry
@@ -762,6 +876,7 @@ export const useAIStream = (options: StreamOptions = {}) => {
                   deepResearch: aiConfig?.deepResearch,
                   webSearch: aiConfig?.webSearch,
                   showReasoning: aiConfig?.showReasoning,
+                  multiAgent: aiConfig?.multiAgent,
                   knowledgeSources: aiConfig?.knowledgeSources,
                   responseStyle: aiConfig?.responseStyle,
                   selectedTier: (aiConfig as any)?.selectedTier,
@@ -804,10 +919,28 @@ export const useAIStream = (options: StreamOptions = {}) => {
   const abortStream = useCallback(() => {
     abortRef.current.aborted = true;
     abortControllerRef.current?.abort();
+    const hadPartialContent = (streamedContent || '').trim().length > 0;
     setIsStreaming(false);
     setIsBotTyping(false);
-    resetStreamState();
-  }, [resetStreamState, setIsBotTyping]);
+    // Keep partial content visible if any was received
+    if (!hadPartialContent) {
+      resetStreamState();
+    } else {
+      // Clear only thinking/progress state but keep streamed content
+      setThinkingSteps([]);
+      setProgress(0);
+      setRetryInfo(null);
+      if (thinkingIntervalRef.current) {
+        clearInterval(thinkingIntervalRef.current);
+        thinkingIntervalRef.current = null;
+      }
+      if (thinkingClearTimeoutRef.current) {
+        clearTimeout(thinkingClearTimeoutRef.current);
+        thinkingClearTimeoutRef.current = null;
+      }
+    }
+    return hadPartialContent;
+  }, [resetStreamState, setIsBotTyping, streamedContent]);
 
   const retryLastStream = useCallback(async () => {
     if (isStreaming) return;
@@ -895,5 +1028,8 @@ export const useAIStream = (options: StreamOptions = {}) => {
     interimInsight,
     artifacts,
     progress,
+    retryInfo,
+    streamStartedAt,
+    streamCompletedSignal,
   };
 };

@@ -128,6 +128,8 @@ export interface GenerateSectionParams {
 
 export type BlockRenderKind = 'markdown' | 'callout' | 'table' | 'chart' | 'matrix' | 'json';
 
+export type BlockCategory = 'content' | 'data' | 'visual';
+
 export interface BlockTypeRecord {
   id: string;
   organizationId?: string | null;
@@ -141,6 +143,8 @@ export interface BlockTypeRecord {
   defaultLanguage?: SectionLanguage;
   isSystem?: boolean;
   isActive?: boolean;
+  category?: BlockCategory;
+  displayOrder?: number;
   createdBy?: string | null;
   createdAt?: string;
   updatedAt?: string;
@@ -722,7 +726,7 @@ export async function listBlockTypes(organizationId: string): Promise<BlockTypeR
     SELECT *
     FROM report_builder_block_types
     WHERE is_active = 1 AND (organization_id IS NULL OR organization_id = ?)
-    ORDER BY is_system DESC, name ASC
+    ORDER BY COALESCE(display_order, 999) ASC, is_system DESC, name ASC
   `,
     [organizationId]
   );
@@ -740,6 +744,8 @@ export async function listBlockTypes(organizationId: string): Promise<BlockTypeR
     defaultLanguage: (r.default_language || 'business') as SectionLanguage,
     isSystem: Boolean(r.is_system),
     isActive: Boolean(r.is_active),
+    category: (r.category || 'content') as BlockCategory,
+    displayOrder: r.display_order ?? 999,
     createdBy: r.created_by,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -1359,23 +1365,83 @@ export async function getSourceDataForReport(
   const assessment = await getAssessmentSourceData(report.report.sourceId);
   if (!assessment) return null;
 
-  // Extract per-axis data
+  // Extract per-axis data from DRD answers
   const axesData: Record<string, unknown> = {};
   const drdAnswers = (assessment.answers as any)?.drd?.areas || {};
 
-  // Group by axis
+  // DRD axis names for richer AI context
+  const DRD_AXIS_NAMES: Record<string, string> = {
+    '1': 'Digital Processes',
+    '2': 'Digital Products & Services',
+    '3': 'Digital Business Models',
+    '4': 'Data & Analytics',
+    '5': 'Organizational Culture',
+    '6': 'Cybersecurity & Risk',
+    '7': 'AI & Machine Learning',
+  };
+
+  // Group by axis and compute per-axis summary
   for (let i = 1; i <= 7; i++) {
     const axisKey = String(i);
     const axisAreas: Record<string, unknown> = {};
+    let totalAchieved = 0;
+    let totalTarget = 0;
+    let areaCount = 0;
 
     for (const [areaId, areaData] of Object.entries(drdAnswers)) {
       if (areaId.startsWith(axisKey)) {
         axisAreas[areaId] = areaData;
+        const area = areaData as any;
+        if (area?.achievedLevel != null) {
+          totalAchieved += area.achievedLevel;
+          totalTarget += area.targetLevel || area.achievedLevel;
+          areaCount++;
+        }
       }
     }
 
     if (Object.keys(axisAreas).length > 0) {
-      axesData[axisKey] = axisAreas;
+      axesData[axisKey] = {
+        areas: axisAreas,
+        axisName: DRD_AXIS_NAMES[axisKey] || `Axis ${axisKey}`,
+        areaCount,
+        averageScore: areaCount > 0 ? Math.round((totalAchieved / areaCount) * 10) / 10 : 0,
+        averageTarget: areaCount > 0 ? Math.round((totalTarget / areaCount) * 10) / 10 : 0,
+        gap:
+          areaCount > 0
+            ? Math.round(((totalTarget - totalAchieved) / areaCount) * 10) / 10
+            : 0,
+      };
+    }
+  }
+
+  // Ensure assessment.scores is populated — compute from answers if empty
+  if (
+    !assessment.scores ||
+    Object.keys(assessment.scores).length === 0 ||
+    !(assessment.scores as any).axes
+  ) {
+    const computedAxes: any[] = [];
+    for (const [axisKey, axisInfo] of Object.entries(axesData) as [string, any][]) {
+      computedAxes.push({
+        axisId: axisKey,
+        axisName: axisInfo.axisName,
+        score: axisInfo.averageScore,
+        maxScore: 7,
+        target: axisInfo.averageTarget,
+        gap: axisInfo.gap,
+        fullMark: 7,
+      });
+    }
+    if (computedAxes.length > 0) {
+      const overallAvg =
+        computedAxes.reduce((s, a) => s + a.score, 0) / computedAxes.length;
+      assessment.scores = {
+        axes: computedAxes,
+        overallScore: Math.round(overallAvg * 10) / 10,
+        maxScore: 7,
+        assessmentType: assessment.assessmentType,
+      };
     }
   }
 

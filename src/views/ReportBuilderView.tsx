@@ -507,8 +507,10 @@ export const ReportBuilderView: React.FC = () => {
   }, [navigate]);
 
   const handleEditorClose = useCallback(() => {
-    navigate('/reports/builder');
-  }, [navigate]);
+    // If we came from an assessment (or any other view), navigate back there
+    const returnUrl = searchParams.get('returnUrl');
+    navigate(returnUrl ? decodeURIComponent(returnUrl) : '/reports/builder');
+  }, [navigate, searchParams]);
 
   const handleEditorSave = useCallback((id: string) => {
     // Stay in editor after save

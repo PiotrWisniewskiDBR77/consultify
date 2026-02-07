@@ -229,6 +229,8 @@ export type AIArtifactType =
   | 'html'
   | 'diagram'
   | 'table'
+  | 'comparison-matrix'
+  | 'decision-timeline'
   | 'pmo-document'
   | 'pmo_document'
   | 'pmo-document' // keep explicit for readability

@@ -634,10 +634,13 @@ export const AssessmentSessionEditorView: React.FC = () => {
 
   const openReport = useCallback(
     (reportId: string) => {
-      // Always open the main Report Builder editor
-      navigate(`/reports/builder/${reportId}`);
+      // Open the Report Builder editor with a returnUrl so the close button brings back here
+      const returnUrl = encodeURIComponent(
+        `/assessment/drd/${assessmentId}?${searchParams.toString()}`
+      );
+      navigate(`/reports/builder/${reportId}?returnUrl=${returnUrl}`);
     },
-    [navigate]
+    [navigate, assessmentId, searchParams]
   );
 
   const handleOpenReportWorkflow = useCallback(() => {
@@ -650,21 +653,53 @@ export const AssessmentSessionEditorView: React.FC = () => {
   }, [assessmentId, assessment, canManageEffective]);
 
   const handleStartNewReportFromTemplate = useCallback(
-    (templateId: string) => {
+    async (templateId: string) => {
       if (!assessmentId || !assessment) return;
-      setIsReportTemplatePickerOpen(false);
 
-      // Navigate to Report Builder in "new report" mode with assessment context + template
-      const params = new URLSearchParams({
-        new: 'true',
-        sourceType: 'ASSESSMENT',
-        sourceId: assessmentId,
-        sourceName: assessment?.name || 'Assessment',
-        templateId,
-      });
-      navigate(`/reports/builder?${params.toString()}`);
+      // 1. Create the report record from the template
+      // 2. Trigger AI generation for all sections
+      // 3. Navigate to the editor with the fully-generated report
+      const toastId = toast.loading('Creating report…');
+      try {
+        const reportTitle = `${assessment?.name || 'Assessment'} - Report`;
+        const response = await Api.post('/report-builder', {
+          sourceType: 'ASSESSMENT',
+          sourceId: assessmentId,
+          title: reportTitle,
+          templateId,
+        });
+
+        const reportId = response?.report?.id;
+        if (!reportId) throw new Error('Unexpected server response');
+
+        // Auto-generate AI content for every section
+        toast.loading('Generating report content with AI…', { id: toastId });
+        try {
+          await Api.post(`/report-builder/${reportId}/generate`, {
+            regenerateAll: false,
+          });
+        } catch (genErr: any) {
+          // Generation failed but report exists — still open the editor
+          console.warn('[handleStartNewReportFromTemplate] Generation error (non-fatal):', genErr);
+        }
+
+        setIsReportTemplatePickerOpen(false);
+        toast.success('Report generated — opening editor', { id: toastId });
+
+        // Navigate to the Report Builder editor.
+        // Pass returnUrl so the editor's close button brings the user back here.
+        const returnUrl = encodeURIComponent(
+          `/assessment/drd/${assessmentId}?${searchParams.toString()}`
+        );
+        navigate(`/reports/builder/${reportId}?returnUrl=${returnUrl}`);
+      } catch (err: any) {
+        const msg = err?.error || err?.message || 'Failed to create report';
+        toast.error(msg, { id: toastId });
+        console.error('[handleStartNewReportFromTemplate] Error:', err);
+        throw err;
+      }
     },
-    [assessmentId, assessment, navigate]
+    [assessmentId, assessment, navigate, searchParams]
   );
 
   const assignmentByAreaId = useMemo(() => {

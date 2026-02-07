@@ -305,7 +305,8 @@ export interface AINudge {
   type: 'overdue_tasks' | 'stalled_initiative' | 'upcoming_deadline' | 'gap_without_initiative' | 'review_reminder';
   title: string;
   message: string;
-  priority: 'low' | 'normal' | 'high';
+  priority: 'low' | 'normal' | 'high' | 'critical';
+  recommendation?: string;
   entityType?: string;
   entityId?: string;
   actionUrl?: string;
@@ -389,6 +390,56 @@ export async function generateNudges(
     }
   } catch (err: any) {
     logger.warn('[ProactiveNudges] Failed to generate nudges:', err?.message);
+  }
+
+  // ── Optional LLM enrichment (non-blocking, with graceful fallback) ──
+  if (nudges.length > 0) {
+    const nudgesToEnrich = nudges.slice(0, 5);
+    try {
+      const pipeline = await getPipeline();
+
+      const enrichmentPrompt = `You are an enterprise PMO AI assistant. Enrich these raw data-driven alerts into actionable insights.
+For each alert, provide:
+- A more specific, actionable title (max 15 words)
+- A concrete recommendation (1 sentence, actionable next step)
+- Priority: "critical" | "high" | "normal" | "low"
+
+Raw alerts:
+${JSON.stringify(nudgesToEnrich.map(n => ({ type: n.type, title: n.title, message: n.message })))}
+
+Return a JSON array with enriched alerts. Each item should have: "title", "recommendation", "priority".
+Keep the same number of items and the same order. Return ONLY valid JSON array.`;
+
+      const response = await pipeline.process({
+        type: 'chat',
+        capability: 'nudgeEnrichment',
+        userId,
+        organizationId: organizationId || undefined,
+        prompt: enrichmentPrompt,
+        stream: false,
+      });
+
+      const enrichedText = (response as any).text || (response as any).content || '';
+      const jsonMatch = enrichedText.match(/\[[\s\S]*\]/);
+
+      if (jsonMatch) {
+        const enriched = JSON.parse(jsonMatch[0]) as Array<{
+          title?: string;
+          recommendation?: string;
+          priority?: AINudge['priority'];
+        }>;
+
+        for (let i = 0; i < Math.min(enriched.length, nudgesToEnrich.length); i++) {
+          if (enriched[i].title) nudgesToEnrich[i].title = enriched[i].title!;
+          if (enriched[i].recommendation) nudgesToEnrich[i].recommendation = enriched[i].recommendation;
+          if (enriched[i].priority) nudgesToEnrich[i].priority = enriched[i].priority!;
+        }
+        logger.debug(`[ProactiveNudges] LLM enrichment applied to ${nudgesToEnrich.length} nudge(s)`);
+      }
+    } catch (enrichErr: any) {
+      // LLM enrichment failed — use raw nudges as-is (graceful fallback)
+      logger.debug('[ProactiveNudges] LLM enrichment skipped:', enrichErr?.message);
+    }
   }
 
   return nudges;

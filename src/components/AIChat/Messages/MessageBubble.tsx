@@ -283,21 +283,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             </button>
           )}
 
-          {/* Streaming indicator */}
+          {/* Streaming indicator — inline cursor */}
           {isStreaming && isAI && (
-            <span className="inline-flex items-center gap-1 mt-2">
-              <span
-                className="w-2 h-2 bg-brand rounded-full animate-bounce"
-                style={{ animationDelay: '0ms' }}
-              />
-              <span
-                className="w-2 h-2 bg-brand rounded-full animate-bounce"
-                style={{ animationDelay: '150ms' }}
-              />
-              <span
-                className="w-2 h-2 bg-brand rounded-full animate-bounce"
-                style={{ animationDelay: '300ms' }}
-              />
+            <span className="inline-flex items-center gap-0.5 ml-1 align-baseline">
+              <span className="w-[3px] h-4 bg-brand rounded-sm animate-pulse" />
             </span>
           )}
         </div>

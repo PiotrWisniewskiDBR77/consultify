@@ -174,6 +174,12 @@ const CAPABILITY_REGISTRY: CapabilityRegistry = {
     description: 'Generate natural language explanation of chart/KPI data',
     outputFormat: 'text',
   },
+  engagementSummary: {
+    role: 'CONSULTANT',
+    maxTokens: 6000,
+    description: 'Generate weekly/monthly engagement summary report',
+    outputFormat: 'text',
+  },
 };
 
 // ==========================================
@@ -437,11 +443,55 @@ export class AIPipeline {
         ((request as any)?.context?.aiModes as any);
       const isDeepThinking = aiModes?.deepResearch === true;
       if (isDeepThinking) {
-        logger.info('[AIPipeline] Deep Thinking autonomy: skipping AIContextBuilder');
+        // v2.0: Deep Thinking gets LIGHT context (org profile + memory only).
+        // We skip heavy execution context (tasks, blockers) but include org identity
+        // for personalized research.
+        logger.info('[AIPipeline] Deep Thinking: building light context (org + memory only)');
+
+        const userId = request.userId;
+        const organizationId = request.organizationId || null;
+
+        let lightContext: any = { ...(request.context || {}) };
+
+        if (userId && organizationId) {
+          try {
+            // Get org memory (terminology, decision patterns, maturity)
+            const aiMemoryMod = await import('./aiMemoryService.js');
+            const aiMemoryService = (aiMemoryMod as any).default || aiMemoryMod;
+
+            let orgMemory = null;
+            if (aiMemoryService?.getOrgMemory) {
+              orgMemory = await aiMemoryService.getOrgMemory(organizationId);
+            }
+
+            let userMemory = null;
+            if (aiMemoryService?.getUserMemory) {
+              userMemory = await aiMemoryService.getUserMemory(userId);
+            }
+
+            if (orgMemory) {
+              lightContext.orgMemory = {
+                terminology: orgMemory.terminology,
+                decisionPatterns: orgMemory.decisionPatterns?.slice(0, 3),
+                aiMaturityStage: orgMemory.aiMaturityStage,
+              };
+            }
+
+            if (userMemory) {
+              lightContext.userMemory = {
+                preferences: userMemory.preferences,
+                expertise: userMemory.expertise?.slice(0, 5),
+              };
+            }
+          } catch (memErr: any) {
+            logger.debug(`[AIPipeline] Deep Thinking light context failed: ${memErr?.message}`);
+          }
+        }
+
         return {
-          context: (request.context || {}) as any,
+          context: lightContext as any,
           ragResults: 0,
-          memoryUsed: false,
+          memoryUsed: true,
         };
       }
 
@@ -491,6 +541,21 @@ export class AIPipeline {
           logger.debug(`[AIPipeline] Org memory not available: ${memErr?.message}`);
         }
 
+        // Load custom instructions from key-value memory
+        let customInstructions: string | null = null;
+        try {
+          const { get: dbGet } = await import('../../utils/DbPromise.js');
+          const ciRow = await dbGet(
+            'SELECT value FROM ai_user_memory WHERE user_id = ? AND key = ?',
+            [userId, 'custom_instructions']
+          );
+          if (ciRow && (ciRow as any).value) {
+            customInstructions = String((ciRow as any).value).trim().slice(0, 1000);
+          }
+        } catch {
+          // ignore — custom instructions are non-critical
+        }
+
         // Merge memory into context
         const contextWithMemory = {
           ...fullContext,
@@ -509,6 +574,7 @@ export class AIPipeline {
                 aiMaturityStage: orgMemory.aiMaturityStage,
               }
             : null,
+          customInstructions,
         };
 
         logger.info(`[AIPipeline] Context built successfully`, {
@@ -553,7 +619,7 @@ export class AIPipeline {
     const messages: ChatMessage[] = [];
 
     // Build intelligent system prompt based on context
-    let systemPrompt = this.buildSystemPrompt(capability, ctx, request);
+    let systemPrompt = await this.buildSystemPrompt(capability, ctx, request);
 
     // Add custom system instruction if provided
     if ((request.options as any)?.systemInstruction) {
@@ -611,15 +677,16 @@ export class AIPipeline {
   /**
    * Build intelligent system prompt with full context awareness
    */
-  private buildSystemPrompt(
+  private async buildSystemPrompt(
     capability: AICapability,
     ctx: any,
     request: AIPipelineRequest
-  ): string {
+  ): Promise<string> {
     const parts: string[] = [];
 
-    // 1. Role definition with screen-aware persona
-    parts.push(this.buildRoleSection(capability, ctx?.currentScreen));
+    // 1. Role definition with screen-aware persona + language
+    const conversationLang = ctx?.conversationLanguage || ctx?.userMemory?.preferences?.language || null;
+    parts.push(this.buildRoleSection(capability, ctx?.currentScreen, conversationLang));
 
     // 2. Organization context
     if (ctx?.organization) {
@@ -652,6 +719,11 @@ export class AIPipeline {
       if (um.interactionCount)
         memParts.push(`- Liczba dotychczasowych interakcji: ${um.interactionCount}`);
       if (memParts.length > 1) parts.push(memParts.join('\n'));
+    }
+
+    // 4.5b. Custom instructions (user-defined via AI preferences UI)
+    if (ctx?.customInstructions) {
+      parts.push(`## INSTRUKCJE UŻYTKOWNIKA (Custom Instructions)\n${ctx.customInstructions}`);
     }
 
     // 4.6. Organization memory (terminology, patterns)
@@ -711,15 +783,42 @@ export class AIPipeline {
       parts.push(this.buildHistoricalSection(ctx.historicalPatterns));
     }
 
+    // 7.8 Industry benchmarks (R9) — inject if assessment data exists
+    if (ctx?.assessmentData?.axisScores && ctx?.organization) {
+      try {
+        const { industryBenchmarkService } = await import('./industryBenchmarkService.js');
+        const industry = ctx.orgMemory?.industry || ctx.organization?.industry || 'manufacturing';
+        const orgScores = ctx.assessmentData.axisScores.map((a: any) => ({
+          axis: a.axis,
+          score: a.asIs || a.current_score || 0,
+        }));
+        const benchmarkCtx = industryBenchmarkService.buildBenchmarkContext(industry, orgScores);
+        if (benchmarkCtx) parts.push(benchmarkCtx);
+      } catch {
+        // Benchmark service not available — continue
+      }
+    }
+
+    // 7.9 Knowledge graph context (R8) — inject entity intelligence
+    if (ctx?.organization && request.organizationId) {
+      try {
+        const { knowledgeGraphService } = await import('./knowledgeGraphService.js');
+        const graphCtx = await knowledgeGraphService.buildGraphContext(request.organizationId, 10);
+        if (graphCtx) parts.push(graphCtx);
+      } catch {
+        // Knowledge graph not available — continue
+      }
+    }
+
     // 8. Behavioral instructions
     parts.push(this.buildBehavioralInstructions(capability, ctx, request));
 
     return parts.filter(Boolean).join('\n\n');
   }
 
-  private buildRoleSection(capability: AICapability, currentScreen?: string | null): string {
-    // Use unified persona with screen-aware emphasis
-    return buildPersonaPrompt(currentScreen);
+  private buildRoleSection(capability: AICapability, currentScreen?: string | null, language?: string | null): string {
+    // Use unified persona with screen-aware emphasis and language
+    return buildPersonaPrompt(currentScreen, language);
   }
 
   private buildOrganizationSection(org: any): string {
@@ -1093,9 +1192,10 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
     if (responseStyle) {
       const styleMap: Record<string, string> = {
         normal: 'Standardowy styl odpowiedzi (zbalansowany).',
-        learning: 'Styl edukacyjny: tłumacz krok po kroku, dodawaj krótkie przykłady.',
+        executive: 'Styl Executive: zwięzły, decyzyjny, max 3-5 bulletów, zawsze z konkretną rekomendacją. Unikaj dygresji. Format: problem → analiza → rekomendacja.',
+        analyst: 'Styl Analyst: dane, metryki, porównania, tabele. Precyzyjny i oparty na faktach. Podawaj liczby, procenty, benchmarki. Używaj tabel i wykresów tam gdzie to możliwe.',
+        coach: 'Styl Coach: zadawaj pytania naprowadzające, tłumacz krok po kroku, buduj zrozumienie. Zamiast dawać gotowe odpowiedzi — prowadź użytkownika do samodzielnych wniosków.',
         concise: 'Styl zwięzły: tylko najważniejsze punkty, bez dygresji.',
-        explanatory: 'Styl wyjaśniający: więcej kontekstu i uzasadnienia, ale bez lania wody.',
         formal: 'Styl formalny: język urzędowy/biznesowy, precyzyjny i neutralny.',
       };
       instructions.push(`11. Styl odpowiedzi: ${styleMap[responseStyle] || responseStyle}`);

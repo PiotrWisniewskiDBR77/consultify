@@ -122,7 +122,7 @@ class FeedbackAIServiceClass {
       // Get AI Pipeline for analysis
       let aiPipeline: any = null;
       try {
-        const aiModule = await import('./ai/aiPipeline.js');
+        const aiModule = await import('./ai/AIPipeline.js');
         const AIPipelineClass = (aiModule as any).AIPipeline;
         aiPipeline = new AIPipelineClass();
       } catch {

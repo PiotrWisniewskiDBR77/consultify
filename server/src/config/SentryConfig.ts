@@ -162,7 +162,7 @@ export async function initSentry(app: Express): Promise<SentryHandlers> {
     profilesSampleRate: validatedConfig.profilesSampleRate,
 
     // Filter sensitive data
-    beforeSend(event) {
+    beforeSend(event: any) {
       // Remove sensitive headers
       const request = event.request;
       if (request?.headers) {
@@ -273,7 +273,7 @@ export function captureException(error: Error, context: Context = {}): void {
     return;
   }
 
-  Sentry.withScope((scope) => {
+  Sentry.withScope((scope: any) => {
     if (context.user) {
       scope.setUser({
         id: context.user.id,
@@ -308,7 +308,7 @@ export function captureMessage(
     return;
   }
 
-  Sentry.withScope((scope) => {
+  Sentry.withScope((scope: any) => {
     if (context.tags) {
       Object.entries(context.tags).forEach(([key, value]) => {
         scope.setTag(key, value);

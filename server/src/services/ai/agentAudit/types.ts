@@ -284,7 +284,7 @@ export const OrchestratorVerdictSchema = z.object({
       kb: [],
       web: [],
     }),
-  criticalRisks: z.array(AgentReviewSchema.shape.findings.element).default([]),
+  criticalRisks: z.array(AgentReviewSchema.shape.findings.removeDefault().element).default([]),
   actionableFollowups: z
     .array(
       z.object({

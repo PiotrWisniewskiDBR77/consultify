@@ -94,6 +94,8 @@ export interface Conversation {
     assessmentId?: string;
     initiativeIds?: string[];
     roadmapId?: string;
+    taskId?: string;
+    decisionId?: string;
   };
   messageCount: number;
   lastMessagePreview?: string;
@@ -227,6 +229,28 @@ export function groupConversations(
   }
 
   return groups;
+}
+
+// ==================== HELPERS ====================
+
+/**
+ * Determine entity type from conversation pmoContext and title.
+ * Used to show dynamic icons and tags in the sidebar.
+ */
+export function getConversationEntityType(
+  conv: Conversation
+): 'assessment' | 'initiative' | 'roadmap' | 'task' | 'decision' | null {
+  const ctx = conv.pmoContext;
+  if (ctx?.assessmentId) return 'assessment';
+  if (ctx?.initiativeIds && ctx.initiativeIds.length > 0) return 'initiative';
+  if (ctx?.roadmapId) return 'roadmap';
+  if (ctx?.taskId) return 'task';
+  if (ctx?.decisionId) return 'decision';
+  // Fallback: check title prefix (set by useOpenChatWithContext)
+  const title = (conv.title || '').toLowerCase();
+  if (title.startsWith('task:') || title.startsWith('task ')) return 'task';
+  if (title.startsWith('decision:') || title.startsWith('decision ') || title.startsWith('decyzja:')) return 'decision';
+  return null;
 }
 
 // ==================== STORE INTERFACE ====================
@@ -994,10 +1018,30 @@ export const useConversationStore = create<ConversationState>()(
               '[ConversationStore] Rehydrating active conversation:',
               state.activeConversationId
             );
-            // Defer fetch to avoid race conditions
-            setTimeout(() => {
-              state.fetchConversation(state.activeConversationId!);
-            }, 100);
+
+            // Wait for auth to be ready instead of using a magic timeout.
+            // Poll every 200ms up to 5 seconds for auth token availability.
+            const convId = state.activeConversationId;
+            const maxAttempts = 25;
+            let attempt = 0;
+
+            const tryFetch = () => {
+              attempt++;
+              const token = localStorage.getItem('token');
+
+              if (token) {
+                state.fetchConversation(convId);
+              } else if (attempt < maxAttempts) {
+                setTimeout(tryFetch, 200);
+              } else {
+                console.warn(
+                  '[ConversationStore] Auth not ready after 5s, skipping rehydration fetch'
+                );
+              }
+            };
+
+            // Start checking after a brief initial delay
+            setTimeout(tryFetch, 50);
           }
         };
       },

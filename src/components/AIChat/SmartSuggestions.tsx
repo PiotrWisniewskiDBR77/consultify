@@ -46,6 +46,10 @@ interface SmartSuggestionsProps {
   workspaceType?: string;
   /** Entity name for personalized prompts */
   entityName?: string;
+  /** Cross-conversation intelligence: recent org decisions */
+  recentDecisions?: Array<{ decisionSummary: string; outcomeStatus: string }>;
+  /** Cross-conversation intelligence: org patterns */
+  orgPatterns?: Array<{ title: string; type: string }>;
 }
 
 const SUGGESTION_ICONS: Record<string, React.ElementType> = {
@@ -71,6 +75,8 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
   variant = 'full',
   workspaceType,
   entityName,
+  recentDecisions,
+  orgPatterns,
 }) => {
   const { t } = useTranslation();
   const { setCurrentView } = useAppStore();
@@ -422,8 +428,51 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
     );
   }
 
+  // Cross-conversation intelligence: add decision-derived suggestions
+  const memorySuggestions: Suggestion[] = [];
+  if (recentDecisions && recentDecisions.length > 0) {
+    // Add follow-up suggestion for the most recent decision
+    const latest = recentDecisions[0];
+    memorySuggestions.push({
+      id: 'memory-followup',
+      type: 'followup',
+      text: t('aiChat.suggestions.decisionFollowUp', 'Follow up on: {{summary}}', {
+        summary:
+          latest.decisionSummary.length > 60
+            ? latest.decisionSummary.slice(0, 60) + '…'
+            : latest.decisionSummary,
+      }),
+      priority: 90,
+      context: ['org_memory'],
+      action: {
+        type: 'chat',
+        prompt: `Follow up on the previous decision: "${latest.decisionSummary}". What has changed since then? What is the current status and are there any new risks or opportunities?`,
+      },
+    });
+  }
+  if (orgPatterns && orgPatterns.length > 0) {
+    const bestPractice = orgPatterns.find((p) => p.type === 'BEST_PRACTICE') || orgPatterns[0];
+    memorySuggestions.push({
+      id: 'memory-pattern',
+      type: 'insight',
+      text: t('aiChat.suggestions.orgPattern', 'Apply: {{title}}', {
+        title:
+          bestPractice.title.length > 50
+            ? bestPractice.title.slice(0, 50) + '…'
+            : bestPractice.title,
+      }),
+      priority: 85,
+      context: ['org_memory'],
+      action: {
+        type: 'chat',
+        prompt: `Our organization has identified this best practice: "${bestPractice.title}". How should we apply this to our current context?`,
+      },
+    });
+  }
+
   // Full variant - rich suggestions
-  const visibleSuggestions = suggestions.filter((s) => !dismissed.has(s.id));
+  const allSuggestions = [...suggestions, ...memorySuggestions];
+  const visibleSuggestions = allSuggestions.filter((s) => !dismissed.has(s.id));
 
   if (isLoading || visibleSuggestions.length === 0) {
     return null;

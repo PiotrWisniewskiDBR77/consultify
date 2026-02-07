@@ -1,8 +1,11 @@
 /**
- * ResearchProgress Component
+ * ResearchProgress Component (v2.0)
  *
- * Displays real-time progress for deep research mode.
- * Shows query execution status, source aggregation, and relevance scores.
+ * Displays real-time progress for deep research mode with:
+ * - Query execution status with round indicators (initial / follow-up)
+ * - Activity panel showing real-time research actions
+ * - Source aggregation with domain favicons and relevance scores
+ * - Deepening stage visualization (iterative deepening)
  *
  * FLOW-AI-RESEARCH: Research progress visualization
  */
@@ -14,10 +17,13 @@ import {
   ChevronUp,
   ExternalLink,
   FileSearch,
+  Globe,
   Loader2,
+  RefreshCw,
   Search,
   Sparkles,
   XCircle,
+  Zap,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -31,6 +37,8 @@ export interface ResearchQuery {
   query: string;
   purpose: string;
   status: 'pending' | 'searching' | 'done' | 'error';
+  /** 'initial' for first round, 'followup' for iterative deepening */
+  round?: 'initial' | 'followup';
   results?: SearchResult[];
   error?: string;
 }
@@ -56,11 +64,18 @@ interface ResearchProgressProps {
     | 'generating_queries'
     | 'queries_ready'
     | 'searching'
+    | 'deepening'
     | 'aggregating'
     | 'synthesizing'
     | 'complete';
   queries: ResearchQuery[];
   sources?: Source[];
+  /** Current research round (1 or 2) */
+  round?: number;
+  /** Total research rounds */
+  totalRounds?: number;
+  /** Detected research type */
+  researchType?: string;
   className?: string;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
@@ -86,6 +101,8 @@ const QueryItem: React.FC<{ query: ResearchQuery; index: number }> = ({ query, i
     error: <XCircle size={16} className="text-red-500" />,
   };
 
+  const isFollowUp = query.round === 'followup';
+
   return (
     <div className="py-2 border-b border-slate-100 dark:border-navy-700 last:border-b-0">
       <div className="flex items-start gap-2">
@@ -95,6 +112,11 @@ const QueryItem: React.FC<{ query: ResearchQuery; index: number }> = ({ query, i
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
               Q{index + 1}
             </span>
+            {isFollowUp && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 font-medium">
+                {t('research.followUp', 'Follow-up')}
+              </span>
+            )}
             <span className="text-sm text-slate-700 dark:text-slate-200 truncate">
               {query.query}
             </span>
@@ -113,7 +135,7 @@ const QueryItem: React.FC<{ query: ResearchQuery; index: number }> = ({ query, i
 
           {showResults && query.results && (
             <div className="mt-2 space-y-1 pl-2 border-l-2 border-slate-200 dark:border-navy-600">
-              {query.results.slice(0, 3).map((result, i) => (
+              {query.results.slice(0, 5).map((result, i) => (
                 <a
                   key={i}
                   href={result.url}
@@ -147,7 +169,7 @@ const QueryItem: React.FC<{ query: ResearchQuery; index: number }> = ({ query, i
 };
 
 /**
- * Source list item
+ * Source list item with domain favicon
  */
 const SourceItem: React.FC<{ source: Source; index: number }> = ({ source, index }) => (
   <a
@@ -159,6 +181,14 @@ const SourceItem: React.FC<{ source: Source; index: number }> = ({ source, index
     <span className="w-5 h-5 flex items-center justify-center text-xs font-medium bg-slate-100 dark:bg-navy-700 rounded text-slate-500">
       {index + 1}
     </span>
+    <img
+      src={`https://www.google.com/s2/favicons?domain=${source.domain}&sz=16`}
+      alt=""
+      className="w-4 h-4 flex-shrink-0"
+      onError={(e) => {
+        (e.target as HTMLImageElement).style.display = 'none';
+      }}
+    />
     <div className="flex-1 min-w-0">
       <p className="text-sm text-slate-700 dark:text-slate-200 truncate group-hover:text-primary-600">
         {source.title}
@@ -181,19 +211,43 @@ const SourceItem: React.FC<{ source: Source; index: number }> = ({ source, index
 );
 
 /**
- * Main research progress component
+ * Activity log item for real-time research tracking
+ */
+const ActivityItem: React.FC<{
+  icon: React.ReactNode;
+  text: string;
+  detail?: string;
+  isActive?: boolean;
+}> = ({ icon, text, detail, isActive }) => (
+  <div className="flex items-start gap-2 py-1.5">
+    <div className={`flex-shrink-0 mt-0.5 ${isActive ? 'animate-pulse' : ''}`}>{icon}</div>
+    <div className="min-w-0">
+      <p className="text-xs text-slate-600 dark:text-slate-300">{text}</p>
+      {detail && (
+        <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">{detail}</p>
+      )}
+    </div>
+  </div>
+);
+
+/**
+ * Main research progress component (v2.0)
  */
 export const ResearchProgress: React.FC<ResearchProgressProps> = ({
   topic,
   stage,
   queries,
   sources = [],
+  round,
+  totalRounds,
+  researchType,
   className = '',
   isExpanded: controlledExpanded,
   onToggleExpand,
 }) => {
   const { t } = useTranslation();
   const [internalExpanded, setInternalExpanded] = useState(true);
+  const [activeTab, setActiveTab] = useState<'queries' | 'activity' | 'sources'>('activity');
 
   const isExpanded = controlledExpanded ?? internalExpanded;
   const toggleExpand = onToggleExpand ?? (() => setInternalExpanded(!internalExpanded));
@@ -201,6 +255,9 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
   const completedQueries = queries.filter((q) => q.status === 'done').length;
   const totalQueries = queries.length;
   const progress = totalQueries > 0 ? (completedQueries / totalQueries) * 100 : 0;
+
+  const initialQueries = queries.filter((q) => !q.round || q.round === 'initial');
+  const followUpQueries = queries.filter((q) => q.round === 'followup');
 
   const stageLabels: Record<string, { label: string; icon: React.ReactNode }> = {
     generating_queries: {
@@ -212,8 +269,15 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
       icon: <FileSearch size={16} />,
     },
     searching: {
-      label: t('research.searching', 'Searching sources...'),
+      label:
+        round && round > 1
+          ? t('research.searchingRound', `Searching (round ${round}/${totalRounds})...`)
+          : t('research.searching', 'Searching sources...'),
       icon: <Search size={16} className="animate-pulse" />,
+    },
+    deepening: {
+      label: t('research.deepening', 'Deepening research with follow-up queries...'),
+      icon: <RefreshCw size={16} className="animate-spin" />,
     },
     aggregating: {
       label: t('research.aggregating', 'Aggregating results...'),
@@ -231,10 +295,62 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
 
   const currentStage = stageLabels[stage] || stageLabels.searching;
 
+  // Build activity log from queries
+  const activityItems: Array<{
+    icon: React.ReactNode;
+    text: string;
+    detail?: string;
+    isActive: boolean;
+  }> = [];
+
+  // Add searching activities
+  for (const q of queries) {
+    if (q.status === 'searching') {
+      activityItems.push({
+        icon: <Search size={12} className="text-primary-500" />,
+        text: `Searching: "${q.query}"`,
+        isActive: true,
+      });
+    } else if (q.status === 'done' && q.results) {
+      const domains = [...new Set(q.results.map((r) => r.source))];
+      activityItems.push({
+        icon: <CheckCircle2 size={12} className="text-green-500" />,
+        text: `Found ${q.results.length} results`,
+        detail: domains.slice(0, 3).join(', ') + (domains.length > 3 ? '...' : ''),
+        isActive: false,
+      });
+    }
+  }
+
+  // Add deepening activity
+  if (stage === 'deepening') {
+    activityItems.push({
+      icon: <RefreshCw size={12} className="text-purple-500 animate-spin" />,
+      text: t(
+        'research.generatingFollowUp',
+        'Analyzing gaps and generating follow-up queries...'
+      ),
+      isActive: true,
+    });
+  }
+
+  // Add synthesis activity
+  if (stage === 'synthesizing') {
+    activityItems.push({
+      icon: <Sparkles size={12} className="text-amber-500 animate-pulse" />,
+      text: t('research.synthesizingReport', 'Synthesizing comprehensive report...'),
+      detail: researchType
+        ? `Type: ${researchType.replace(/_/g, ' ')}`
+        : undefined,
+      isActive: true,
+    });
+  }
+
   return (
     <div
       className={`bg-gradient-to-br from-slate-50 to-indigo-50 dark:from-navy-800 dark:to-indigo-900/20 rounded-xl border border-slate-200 dark:border-navy-700 ${className}`}
     >
+      {/* Header */}
       <button
         onClick={toggleExpand}
         className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/50 dark:hover:bg-navy-700/50 transition-colors"
@@ -248,6 +364,11 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
             <h4 className="text-sm font-medium text-slate-700 dark:text-slate-200">
               {t('research.deepResearch', 'Deep Research')}
             </h4>
+            {researchType && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-medium capitalize">
+                {researchType.replace(/_/g, ' ')}
+              </span>
+            )}
             <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
               {currentStage.icon}
               {currentStage.label}
@@ -257,6 +378,26 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Source counter */}
+          {sources.length > 0 && (
+            <div className="flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 rounded-full">
+              <Globe size={12} className="text-green-600 dark:text-green-400" />
+              <span className="text-xs font-medium text-green-700 dark:text-green-300">
+                {sources.length} {t('research.sources', 'sources')}
+              </span>
+            </div>
+          )}
+
+          {/* Round indicator */}
+          {round && totalRounds && totalRounds > 1 && (
+            <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+              <Zap size={12} className="text-purple-600 dark:text-purple-400" />
+              <span className="text-xs font-medium text-purple-700 dark:text-purple-300">
+                {t('research.round', `Round ${round}/${totalRounds}`)}
+              </span>
+            </div>
+          )}
+
           <div className="text-right">
             <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
               {completedQueries}/{totalQueries}
@@ -273,29 +414,103 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
         </div>
       </button>
 
+      {/* Expanded content with tabs */}
       {isExpanded && (
         <div className="border-t border-slate-200 dark:border-navy-700">
-          <div className="p-4">
-            <h5 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-              {t('research.searchQueries', 'Search Queries')}
-            </h5>
-            <div className="max-h-48 overflow-y-auto">
-              {queries.map((query, index) => (
-                <QueryItem key={query.id} query={query} index={index} />
-              ))}
-            </div>
+          {/* Tab bar */}
+          <div className="flex border-b border-slate-200 dark:border-navy-700">
+            {(['activity', 'queries', 'sources'] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+                  activeTab === tab
+                    ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                }`}
+              >
+                {tab === 'activity' && t('research.activity', 'Activity')}
+                {tab === 'queries' &&
+                  `${t('research.queries', 'Queries')} (${totalQueries})`}
+                {tab === 'sources' &&
+                  `${t('research.topSources', 'Sources')} (${sources.length})`}
+              </button>
+            ))}
           </div>
 
-          {sources.length > 0 && (
-            <div className="p-4 border-t border-slate-200 dark:border-navy-700">
-              <h5 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                {t('research.topSources', 'Top Sources')} ({sources.length})
-              </h5>
-              <div className="max-h-40 overflow-y-auto space-y-1">
-                {sources.slice(0, 10).map((source, index) => (
-                  <SourceItem key={source.url} source={source} index={index} />
-                ))}
-              </div>
+          {/* Activity tab */}
+          {activeTab === 'activity' && (
+            <div className="p-4 max-h-64 overflow-y-auto">
+              {activityItems.length === 0 ? (
+                <p className="text-xs text-slate-400 text-center py-4">
+                  {t('research.waitingForActivity', 'Starting research...')}
+                </p>
+              ) : (
+                <div className="space-y-0.5">
+                  {activityItems.map((item, i) => (
+                    <ActivityItem key={i} {...item} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Queries tab */}
+          {activeTab === 'queries' && (
+            <div className="p-4">
+              {initialQueries.length > 0 && (
+                <>
+                  <h5 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                    {t('research.initialQueries', 'Initial Queries')} ({initialQueries.length})
+                  </h5>
+                  <div className="max-h-48 overflow-y-auto">
+                    {initialQueries.map((query, index) => (
+                      <QueryItem key={query.id} query={query} index={index} />
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {followUpQueries.length > 0 && (
+                <>
+                  <h5 className="text-xs font-medium text-purple-500 dark:text-purple-400 uppercase tracking-wider mb-2 mt-4 flex items-center gap-1">
+                    <RefreshCw size={12} />
+                    {t('research.followUpQueries', 'Follow-up Queries (Iterative Deepening)')} (
+                    {followUpQueries.length})
+                  </h5>
+                  <div className="max-h-48 overflow-y-auto">
+                    {followUpQueries.map((query, index) => (
+                      <QueryItem
+                        key={query.id}
+                        query={query}
+                        index={initialQueries.length + index}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Sources tab */}
+          {activeTab === 'sources' && (
+            <div className="p-4">
+              {sources.length > 0 ? (
+                <>
+                  <h5 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                    {t('research.topSources', 'Top Sources')} ({sources.length})
+                  </h5>
+                  <div className="max-h-64 overflow-y-auto space-y-1">
+                    {sources.slice(0, 20).map((source, index) => (
+                      <SourceItem key={source.url} source={source} index={index} />
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="text-xs text-slate-400 text-center py-4">
+                  {t('research.noSourcesYet', 'No sources found yet...')}
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -311,8 +526,10 @@ export const ResearchStatusBadge: React.FC<{
   isActive: boolean;
   queriesCompleted: number;
   totalQueries: number;
+  sourcesCount?: number;
+  round?: number;
   onClick?: () => void;
-}> = ({ isActive, queriesCompleted, totalQueries, onClick }) => {
+}> = ({ isActive, queriesCompleted, totalQueries, sourcesCount, round, onClick }) => {
   const { t } = useTranslation();
 
   if (!isActive) return null;
@@ -327,6 +544,17 @@ export const ResearchStatusBadge: React.FC<{
       <span className="text-indigo-500">
         {queriesCompleted}/{totalQueries}
       </span>
+      {sourcesCount && sourcesCount > 0 && (
+        <span className="flex items-center gap-0.5 text-green-600 dark:text-green-400">
+          <Globe size={10} />
+          {sourcesCount}
+        </span>
+      )}
+      {round && round > 1 && (
+        <span className="text-purple-500">
+          R{round}
+        </span>
+      )}
     </button>
   );
 };

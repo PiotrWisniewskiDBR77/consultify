@@ -93,7 +93,7 @@ async function getKnowledgeService() {
   if (_knowledgeServiceOverride) return _knowledgeServiceOverride;
   if (!_knowledgeService) {
     try {
-      const mod = (await import('./knowledgeService.js')) as any;
+      const mod = (await import('./KnowledgeService.js')) as any;
       _knowledgeService = mod.knowledgeService || mod.default || mod;
     } catch (e: unknown) {
       logger.warn('[AIContextBuilder] KnowledgeService not available:', (e as Error).message);

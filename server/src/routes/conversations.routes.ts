@@ -799,7 +799,7 @@ router.post(
       )) as Array<{ role: string; content: string }>;
 
       // Generate title using AI
-      const aiPipeline = await import('../services/ai/aiPipeline.js').then((m) => {
+      const aiPipeline = await import('../services/ai/AIPipeline.js').then((m) => {
         const AIPipelineClass = (m as any).AIPipeline;
         return new AIPipelineClass();
       });

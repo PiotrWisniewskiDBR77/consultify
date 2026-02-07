@@ -201,7 +201,8 @@ export const ReportsComposer: React.FC<ReportsComposerProps> = ({
       labelPl: 'Szablony',
       icon: <FileText className="w-4 h-4" />,
     },
-    { id: 'profiles', label: 'Profiles', labelPl: 'Profile', icon: <Layers className="w-4 h-4" /> },
+    // Profiles tab hidden – profiles are system-defined presets with no user-facing value currently
+    // { id: 'profiles', label: 'Profiles', labelPl: 'Profile', icon: <Layers className="w-4 h-4" /> },
   ];
 
   return (
@@ -221,8 +222,8 @@ export const ReportsComposer: React.FC<ReportsComposerProps> = ({
             </h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1">
               {isPl
-                ? 'Zarządzaj blokami, szablonami i profilami raportów'
-                : 'Manage report blocks, templates, and profiles'}
+                ? 'Zarządzaj blokami i szablonami raportów'
+                : 'Manage report blocks and templates'}
             </p>
           </div>
         </div>

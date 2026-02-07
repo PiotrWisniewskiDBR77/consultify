@@ -22,6 +22,7 @@ import { PaymentMethodsPanel } from '../../components/billing/PaymentMethodsPane
 import { SubscriptionManager } from '../../components/billing/SubscriptionManager';
 import { TaxSettingsForm } from '../../components/billing/TaxSettingsForm';
 import { UsageAlertsConfig } from '../../components/billing/UsageAlertsConfig';
+import { BlockTypesManager } from '../../components/ReportBuilder/BlockTypesManager';
 import { TemplatesManager } from '../../components/ReportBuilder/TemplatesManager';
 import { OrganizationProfileForm } from '../../components/settings/OrganizationProfileForm';
 import { SecuritySettings } from '../../components/settings/SecuritySettings';
@@ -56,6 +57,10 @@ const sectionMeta: Record<AdminSettingsSection, { title: string; subtitle: strin
   'report-creator': {
     title: 'Report Templates',
     subtitle: 'Manage report templates for your organization',
+  },
+  'block-library': {
+    title: 'Block Library',
+    subtitle: 'Define block types (render + prompt) reusable across reports',
   },
   'initiative-creator': {
     title: 'Initiative Creator',
@@ -248,6 +253,8 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
         return <AuditExportPanel />;
       case 'report-creator':
         return <AdminTemplatesPanel />;
+      case 'block-library':
+        return <BlockTypesManager embedded />;
       case 'initiative-creator':
         return <AdminInitiativesPanel />;
       case 'integrations':

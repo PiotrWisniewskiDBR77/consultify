@@ -20,7 +20,7 @@ router.get(
     const settings = await dbGet(
       'SELECT shortcuts FROM user_keyboard_shortcuts WHERE user_id = ?',
       [req.user?.id]
-    );
+    ) as { shortcuts: string } | null;
     res.json(settings?.shortcuts ? JSON.parse(settings.shortcuts) : {});
   })
 );

@@ -9,8 +9,10 @@
  */
 
 import {
+  BarChart3,
   BookOpen,
   Brain,
+  Briefcase,
   Building2,
   Check,
   ChevronRight,
@@ -24,6 +26,7 @@ import {
   Sparkles,
   ToggleLeft,
   ToggleRight,
+  Users,
   Volume2,
   Zap,
 } from 'lucide-react';
@@ -55,8 +58,8 @@ interface KnowledgeSource {
   enabled: boolean;
 }
 
-// Response Style definitions
-type ResponseStyle = 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
+// Response Style definitions — domain-specific presets for PMO/consulting
+type ResponseStyle = 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal';
 
 interface StyleOption {
   id: ResponseStyle;
@@ -66,9 +69,10 @@ interface StyleOption {
 
 const RESPONSE_STYLES: StyleOption[] = [
   { id: 'normal', icon: MessageSquare, labelKey: 'aiChat.menu.styles.normal' },
-  { id: 'learning', icon: GraduationCap, labelKey: 'aiChat.menu.styles.learning' },
+  { id: 'executive', icon: Briefcase, labelKey: 'aiChat.menu.styles.executive' },
+  { id: 'analyst', icon: BarChart3, labelKey: 'aiChat.menu.styles.analyst' },
+  { id: 'coach', icon: GraduationCap, labelKey: 'aiChat.menu.styles.coach' },
   { id: 'concise', icon: Zap, labelKey: 'aiChat.menu.styles.concise' },
-  { id: 'explanatory', icon: BookOpen, labelKey: 'aiChat.menu.styles.explanatory' },
   { id: 'formal', icon: Pen, labelKey: 'aiChat.menu.styles.formal' },
 ];
 
@@ -83,9 +87,53 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
   const [showStyleSubmenu, setShowStyleSubmenu] = useState(false);
   const [showTTSSubmenu, setShowTTSSubmenu] = useState(false);
   const [submenuPosition, setSubmenuPosition] = useState<'right' | 'left'>('right');
+  const [showCustomInstructions, setShowCustomInstructions] = useState(false);
+  const [customInstructions, setCustomInstructions] = useState('');
+  const [customInstructionsLoaded, setCustomInstructionsLoaded] = useState(false);
+  const [isSavingInstructions, setIsSavingInstructions] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const styleButtonRef = useRef<HTMLButtonElement>(null);
   const ttsButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Load custom instructions from AI memory on first open
+  React.useEffect(() => {
+    if (isOpen && !customInstructionsLoaded) {
+      fetch('/api/ai-memory', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          const ci = data.memories?.find((m: any) => m.key === 'custom_instructions');
+          if (ci?.value) setCustomInstructions(ci.value);
+          setCustomInstructionsLoaded(true);
+        })
+        .catch(() => setCustomInstructionsLoaded(true));
+    }
+  }, [isOpen, customInstructionsLoaded]);
+
+  // Save custom instructions to AI memory
+  const handleSaveInstructions = async () => {
+    setIsSavingInstructions(true);
+    try {
+      await fetch('/api/ai-memory/custom_instructions', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({
+          value: customInstructions.trim(),
+          source: 'user',
+          context: 'Custom instructions set by user via AI preferences',
+        }),
+      });
+      toast.success(t('aiChat.menu.instructionsSaved', 'Instrukcje zapisane'));
+    } catch {
+      toast.error(t('aiChat.menu.instructionsSaveError', 'Nie udalo sie zapisac'));
+    } finally {
+      setIsSavingInstructions(false);
+    }
+  };
 
   // Get available voices
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -143,6 +191,13 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       labelKey: 'aiChat.menu.modes.showReasoning.label',
       descKey: 'aiChat.menu.modes.showReasoning.desc',
       enabled: showReasoning,
+    },
+    {
+      id: 'multiAgent',
+      icon: Users,
+      labelKey: 'aiChat.menu.modes.multiAgent.label',
+      descKey: 'aiChat.menu.modes.multiAgent.desc',
+      enabled: aiConfig.multiAgent ?? false,
     },
     {
       id: 'textToSpeech',
@@ -449,6 +504,51 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                     </button>
                   );
                 })}
+              </div>
+            )}
+          </div>
+
+          {/* Custom Instructions Section */}
+          <div className="my-2 border-t border-slate-200 dark:border-navy-700" />
+          <div className="px-3 py-1">
+            <button
+              onClick={() => setShowCustomInstructions(!showCustomInstructions)}
+              className="w-full flex items-center gap-3 py-2 text-left"
+            >
+              <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-navy-700">
+                <Settings size={14} className="text-slate-400 dark:text-slate-500" />
+              </div>
+              <div className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-300">
+                {t('aiChat.menu.customInstructions', 'Moje instrukcje')}
+              </div>
+              <ChevronRight
+                size={14}
+                className={`text-slate-400 shrink-0 transition-transform ${showCustomInstructions ? 'rotate-90' : ''}`}
+              />
+            </button>
+            {showCustomInstructions && (
+              <div className="mt-1 mb-2">
+                <textarea
+                  value={customInstructions}
+                  onChange={(e) => setCustomInstructions(e.target.value.slice(0, 1000))}
+                  placeholder={t('aiChat.menu.customInstructionsPlaceholder', 'np. "Zawsze odpowiadaj po polsku", "Preferuję tabele nad tekstem", "Jestem CTO w firmie produkcyjnej"')}
+                  className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                  rows={3}
+                />
+                <div className="flex items-center justify-between mt-1.5">
+                  <span className="text-[10px] text-slate-400">
+                    {customInstructions.length}/1000
+                  </span>
+                  <button
+                    onClick={handleSaveInstructions}
+                    disabled={isSavingInstructions}
+                    className="px-3 py-1 text-xs font-medium bg-primary-600 hover:bg-primary-500 disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white rounded-lg transition-colors"
+                  >
+                    {isSavingInstructions
+                      ? t('common.saving', 'Zapisuję...')
+                      : t('common.save', 'Zapisz')}
+                  </button>
+                </div>
               </div>
             )}
           </div>

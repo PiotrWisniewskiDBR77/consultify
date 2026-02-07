@@ -39,7 +39,7 @@ router.get(
     SELECT settings FROM notification_settings WHERE user_id = ?
   `,
       [userId]
-    );
+    ) as { settings: string } | null;
 
     if (settings?.settings) {
       try {
@@ -79,7 +79,7 @@ router.put(
     ON CONFLICT(user_id) DO UPDATE SET settings = ?, updated_at = datetime('now')
   `,
       [userId, settingsJson, settingsJson]
-    );
+    ) as { success?: boolean; error?: string };
 
     if (!result.success) {
       throw new Error(result.error || 'Failed to update notification settings');
@@ -104,7 +104,7 @@ router.patch(
     const channelSettings = req.body;
 
     const validChannels = ['email', 'push', 'inApp', 'slack', 'quiet'];
-    if (!validChannels.includes(channel)) {
+    if (!validChannels.includes(String(channel))) {
       return res.status(400).json({ error: 'Invalid channel' });
     }
 
@@ -114,7 +114,7 @@ router.patch(
     SELECT settings FROM notification_settings WHERE user_id = ?
   `,
       [userId]
-    );
+    ) as { settings: string } | null;
 
     let currentSettings = DEFAULT_SETTINGS;
     if (existing?.settings) {
@@ -138,15 +138,16 @@ router.patch(
     ON CONFLICT(user_id) DO UPDATE SET settings = ?, updated_at = datetime('now')
   `,
       [userId, settingsJson, settingsJson]
-    );
+    ) as { success?: boolean; error?: string };
 
     if (!result.success) {
       throw new Error(result.error || 'Failed to update channel settings');
     }
 
+    const channelKey = String(channel);
     res.json({
       success: true,
-      [channel]: currentSettings[channel as keyof typeof DEFAULT_SETTINGS],
+      [channelKey]: currentSettings[channelKey as keyof typeof DEFAULT_SETTINGS],
     });
   })
 );
@@ -167,7 +168,7 @@ router.post(
     DELETE FROM notification_settings WHERE user_id = ?
   `,
       [userId]
-    );
+    ) as { success?: boolean; error?: string };
 
     if (!result.success) {
       throw new Error(result.error || 'Failed to reset notification settings');
@@ -191,7 +192,7 @@ router.post(
     const { channel } = req.params;
 
     const validChannels = ['email', 'push', 'slack'];
-    if (!validChannels.includes(channel)) {
+    if (!validChannels.includes(String(channel))) {
       return res.status(400).json({ error: 'Invalid channel for testing' });
     }
 

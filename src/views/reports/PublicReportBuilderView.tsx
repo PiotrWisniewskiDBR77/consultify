@@ -320,7 +320,7 @@ export const PublicReportBuilderView: React.FC = () => {
             </span>
           </div>
           {data.branding.showConsultinityBranding && (
-            <p className="mt-2 text-xs">Powered by Consultify</p>
+            <p className="mt-2 text-xs">Powered by Consultinity</p>
           )}
         </div>
       </div>

@@ -11,6 +11,7 @@ import { Request, Response, Router } from 'express';
 import { aiAssessmentFormHelper } from '../../services/aiAssessmentFormHelper.js';
 import { aiAssessmentPartner } from '../../services/aiAssessmentPartnerService.js';
 import logger from '../../utils/Logger.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 
 const router = Router();
 
@@ -25,15 +26,107 @@ interface AuthRequest extends Request {
   };
 }
 
-// Helper to get assessment data from database (simplified)
+/**
+ * Helper to get assessment data from database.
+ * Fetches assessment row + parsed answers/scores for AI processing.
+ */
 async function getAssessmentData(projectId: string, organizationId: string): Promise<any> {
-  // This would typically fetch from database
-  // For now, return a basic structure that can be enhanced
-  return {
-    projectId,
-    organizationId,
-    axes: {},
-  };
+  try {
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT id, organization_id, assessment_type, name, status,
+              completion_percent, confidence_avg,
+              answers_json, context_snapshot, score_summary
+       FROM assessments
+       WHERE id = ? AND organization_id = ?`,
+      [projectId, organizationId]
+    );
+
+    if (!row) {
+      logger.warn(`[AssessmentAI] Assessment not found: ${projectId}`);
+      return { projectId, organizationId, axes: {} };
+    }
+
+    const parseJson = (str: string | null | undefined, fallback: any = {}) => {
+      if (!str) return fallback;
+      try {
+        return JSON.parse(str);
+      } catch {
+        return fallback;
+      }
+    };
+
+    const answers = parseJson(row.answers_json, {});
+    const contextSnapshot = parseJson(row.context_snapshot, {});
+    const scoreSummary = parseJson(row.score_summary, {});
+
+    // Build axes map from answers for AI partner service consumption
+    // DRD answers: { drd: { areas: { "1A": { achievedLevel, targetLevel, ... } } } }
+    // We also need to map to the axis-level format expected by partner service
+    const axes: Record<string, { actual: number; target: number }> = {};
+
+    if (answers?.drd?.areas) {
+      // Map DRD area answers to axis-level averages
+      const axisMapping: Record<string, string[]> = {
+        processes: ['1A', '1B', '1C', '1D', '1E'],
+        digitalProducts: ['2A', '2B', '2C', '2D', '2E'],
+        businessModels: ['3A', '3B', '3C', '3D'],
+        dataManagement: ['4A', '4B', '4C', '4D', '4E'],
+        culture: ['5A', '5B', '5C', '5D', '5E'],
+        cybersecurity: ['6A', '6B', '6C', '6D', '6E'],
+        aiMaturity: ['7A', '7B', '7C', '7D', '7E'],
+      };
+
+      for (const [axisKey, areaIds] of Object.entries(axisMapping)) {
+        const areaScores = areaIds
+          .map((id) => answers.drd.areas[id])
+          .filter((a: any) => a?.achievedLevel != null);
+
+        if (areaScores.length > 0) {
+          const avgActual =
+            areaScores.reduce((sum: number, a: any) => sum + (a.achievedLevel || 0), 0) /
+            areaScores.length;
+          const avgTarget =
+            areaScores.reduce(
+              (sum: number, a: any) => sum + (a.targetLevel || a.achievedLevel || 0),
+              0
+            ) / areaScores.length;
+          axes[axisKey] = {
+            actual: Math.round(avgActual * 10) / 10,
+            target: Math.round(avgTarget * 10) / 10,
+          };
+        }
+      }
+    }
+
+    // For SIRI/ADMA — if score summary contains axis data, use it directly
+    if (scoreSummary?.axes) {
+      for (const [key, val] of Object.entries(scoreSummary.axes) as [string, any][]) {
+        if (val?.actual != null) {
+          axes[key] = { actual: val.actual, target: val.target || val.actual };
+        }
+      }
+    }
+
+    return {
+      projectId,
+      organizationId,
+      id: row.id,
+      name: row.name,
+      assessmentType: row.assessment_type || 'DRD',
+      status: row.status,
+      completionPercent: row.completion_percent,
+      confidenceAvg: row.confidence_avg,
+      answers,
+      contextSnapshot,
+      scoreSummary,
+      axes,
+      industry: contextSnapshot?.industry || contextSnapshot?.organizationProfile?.industry,
+      companySize: contextSnapshot?.companySize || contextSnapshot?.organizationProfile?.size,
+    };
+  } catch (err: any) {
+    logger.error(`[AssessmentAI] Error fetching assessment data: ${err.message}`);
+    return { projectId, organizationId, axes: {} };
+  }
 }
 
 // =============================================================================

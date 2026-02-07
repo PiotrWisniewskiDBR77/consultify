@@ -1559,7 +1559,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       >
         <div className="flex items-start justify-between gap-6">
           <div className="min-w-0">
-            <div className="text-xs uppercase tracking-wide text-slate-500">Consultify • Tools</div>
+            <div className="text-xs uppercase tracking-wide text-slate-500">Consultinity • Tools</div>
             <h1 className="text-2xl font-bold mt-1">Tool Report</h1>
             <div className="text-sm text-slate-700 mt-1">
               {toolMeta.name} • {sessionName || toolSessionId || '—'}

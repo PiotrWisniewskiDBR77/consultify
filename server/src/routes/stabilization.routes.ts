@@ -17,7 +17,7 @@ router.get(
   asyncHandler(async (_req: Request, res: Response) => {
     const dbStatus = await dbGet('SELECT COUNT(*) as tables FROM sqlite_master WHERE type = ?', [
       'table',
-    ]);
+    ]) as { tables: number } | null;
     const errorCount = await dbGet<any>(
       "SELECT COUNT(*) as count FROM error_logs WHERE created_at > datetime('now', '-1 hour')"
     );

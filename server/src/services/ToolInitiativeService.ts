@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
-import { AIPipeline } from './ai/aiPipeline.js';
+import { AIPipeline } from './ai/AIPipeline.js';
 
 type ToolSessionRow = {
   id: string;

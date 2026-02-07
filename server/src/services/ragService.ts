@@ -222,6 +222,8 @@ const RagService = {
   ): Promise<string> => {
     await initDeps();
     const { organizationId, screenContext } = filterOptions;
+    const cols = await ensureKnowledgeDocsColumns();
+    const hasOrg = cols.has('organization_id');
 
     let expandedQuery = query;
     if (screenContext) {
@@ -242,7 +244,7 @@ const RagService = {
         `;
     const params: unknown[] = [];
 
-    if (organizationId) {
+    if (organizationId && hasOrg) {
       sql += ' AND d.organization_id = ?';
       params.push(organizationId);
     }
@@ -304,6 +306,8 @@ const RagService = {
     organizationId: string | null = null
   ): Promise<string> => {
     await initDeps();
+    const cols = await ensureKnowledgeDocsColumns();
+    const hasOrg = cols.has('organization_id');
     if (!query) return '';
     const keywords = query
       .split(' ')
@@ -321,7 +325,7 @@ const RagService = {
             WHERE (${sqlParts})
         `;
 
-    if (organizationId) {
+    if (organizationId && hasOrg) {
       sql += ' AND d.organization_id = ?';
       params.push(organizationId);
     }
@@ -501,6 +505,7 @@ const RagService = {
     const cols = await ensureKnowledgeDocsColumns();
     const hasCategory = cols.has('category');
     const hasVersion = cols.has('version');
+    const hasOrg = cols.has('organization_id');
     let sql = `
             SELECT
               c.id,
@@ -515,7 +520,7 @@ const RagService = {
         `;
     const params: unknown[] = [];
 
-    if (organizationId) {
+    if (organizationId && hasOrg) {
       sql += ' AND d.organization_id = ?';
       params.push(organizationId);
     }
@@ -677,6 +682,7 @@ const RagService = {
     const cols = await ensureKnowledgeDocsColumns();
     const hasCategory = cols.has('category');
     const hasVersion = cols.has('version');
+    const hasOrg = cols.has('organization_id');
     const queryEmbedding = await RagService.generateEmbedding(query);
     if (!queryEmbedding) return [];
 
@@ -695,7 +701,7 @@ const RagService = {
         `;
     const params: unknown[] = [];
 
-    if (organizationId) {
+    if (organizationId && hasOrg) {
       sql += ' AND d.organization_id = ?';
       params.push(organizationId);
     }

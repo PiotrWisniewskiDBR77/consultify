@@ -80,7 +80,7 @@ router.get(
     const userId = req.user?.id;
     const settings = await dbGet(`SELECT settings FROM daily_brief_settings WHERE user_id = ?`, [
       userId,
-    ]);
+    ]) as { settings: string } | null;
     res.json(
       settings?.settings
         ? JSON.parse(settings.settings)

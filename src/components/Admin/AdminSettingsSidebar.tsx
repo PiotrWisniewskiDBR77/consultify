@@ -14,6 +14,7 @@
 import {
   ArrowLeft,
   Bell,
+  Blocks,
   Building2,
   ChevronDown,
   CreditCard,
@@ -45,6 +46,7 @@ export type AdminSettingsSection =
   | 'governance'
   | 'audit'
   | 'report-creator'
+  | 'block-library'
   | 'initiative-creator'
   | 'integrations'
   | 'api'
@@ -160,6 +162,11 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
             id: 'report-creator',
             label: t('admin.tabs.reportTemplates', 'Report Templates'),
             icon: FileText,
+          },
+          {
+            id: 'block-library',
+            label: t('admin.tabs.blockLibrary', 'Block Library'),
+            icon: Blocks,
           },
           {
             id: 'initiative-creator',

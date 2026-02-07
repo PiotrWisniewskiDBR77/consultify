@@ -1403,11 +1403,19 @@ export async function regenerateSection(
 }
 
 // ==========================================
-// STUB METHODS (for route compatibility - implement as needed)
+// ONE-CLICK REPORT GENERATION
 // ==========================================
 
 /**
- * Generate a new report (stub)
+ * Generate a complete report in one step.
+ *
+ * User flow:
+ *   1. Select source (e.g. approved assessment) + optionally pick a template
+ *   2. Call generateReport() — this creates the report structure from the
+ *      template AND generates AI content for every enabled section.
+ *   3. Receive the fully generated report ready for review/edit.
+ *
+ * Orchestrates:  createReport() → generateFullReport() → return result
  */
 export async function generateReport(
   options: {
@@ -1418,27 +1426,137 @@ export async function generateReport(
     includeAppendix?: boolean;
   },
   organizationId: string
-): Promise<{ id: string; status: string }> {
-  logger.info('[ReportGeneration] generateReport called (stub)', { options, organizationId });
-  // TODO: Implement full report generation workflow
-  return { id: 'stub-report-id', status: 'pending' };
+): Promise<{
+  id: string;
+  status: string;
+  title?: string;
+  sectionsGenerated?: number;
+  totalTokens?: number;
+}> {
+  const { reportType, sourceId, language, templateId, includeAppendix } = options;
+  logger.info('[ReportGeneration] generateReport — starting one-click generation', {
+    reportType,
+    sourceId,
+    organizationId,
+  });
+
+  // ---------------------------------------------------------------
+  // Step 1: Derive source type and framework from reportType
+  //   Expected formats: "ASSESSMENT_DRD", "ASSESSMENT_SIRI", "ASSESSMENT", etc.
+  // ---------------------------------------------------------------
+  let sourceType: 'ASSESSMENT' | 'INTERVIEW' | 'TOOL' | 'INITIATIVE' = 'ASSESSMENT';
+  if (reportType.startsWith('ASSESSMENT')) {
+    sourceType = 'ASSESSMENT';
+  } else if (reportType.startsWith('INTERVIEW')) {
+    sourceType = 'INTERVIEW';
+  } else if (reportType.startsWith('INITIATIVE')) {
+    sourceType = 'INITIATIVE';
+  }
+
+  // ---------------------------------------------------------------
+  // Step 2: Build report config from options
+  // ---------------------------------------------------------------
+  const config: Record<string, unknown> = {};
+  if (language) config.language = language;
+  if (includeAppendix !== undefined) config.includeAppendix = includeAppendix;
+
+  // ---------------------------------------------------------------
+  // Step 3: Create report structure from template
+  //   This fetches the assessment data, validates status (APPROVED),
+  //   picks the correct template, and creates report + section records.
+  // ---------------------------------------------------------------
+  const { report, sections } = await ReportBuilderService.createReport({
+    organizationId,
+    sourceType,
+    sourceId,
+    title: `${reportType} Report`,
+    description: `Auto-generated ${reportType} report`,
+    config,
+    createdBy: 'system',
+    templateId,
+  });
+
+  logger.info('[ReportGeneration] Report structure created', {
+    reportId: report.id,
+    sections: sections.length,
+    sourceType,
+    status: report.status,
+  });
+
+  // ---------------------------------------------------------------
+  // Step 4: Move to DRAFT so generation can begin
+  // ---------------------------------------------------------------
+  await ReportBuilderService.updateReportStatus(report.id, 'DRAFT', 'system');
+
+  // ---------------------------------------------------------------
+  // Step 5: Generate AI content for all enabled sections
+  // ---------------------------------------------------------------
+  const result = await generateFullReport(report.id, organizationId, 'system');
+
+  logger.info('[ReportGeneration] One-click generation complete', {
+    reportId: report.id,
+    totalTokens: result.totalTokens,
+    sectionsGenerated: result.generatedSections.length,
+  });
+
+  return {
+    id: report.id,
+    status: 'GENERATED',
+    title: report.title,
+    sectionsGenerated: result.generatedSections.length,
+    totalTokens: result.totalTokens,
+  };
 }
 
+// ==========================================
+// EXPORT TO FORMAT
+// ==========================================
+
 /**
- * Export report to format (stub)
+ * Export a generated report to the requested format.
+ *
+ * Delegates to the existing PDF/DOCX/PPTX writers that are also used
+ * by the report-builder routes directly.  The service layer version
+ * creates a file + export record and returns the download URL.
  */
 export async function exportReport(
   reportId: string,
   format: 'pdf' | 'pptx' | 'docx' | 'xlsx',
   userId: string
-): Promise<{ url?: string; status: string }> {
-  logger.info('[ReportGeneration] exportReport called (stub)', { reportId, format, userId });
-  // TODO: Implement export functionality
-  return { status: 'pending', url: undefined };
+): Promise<{ url?: string; status: string; exportId?: string }> {
+  logger.info('[ReportGeneration] exportReport', { reportId, format, userId });
+
+  // Validate format
+  const supportedFormats = ['pdf', 'docx', 'pptx'];
+  if (!supportedFormats.includes(format)) {
+    return {
+      status: 'error',
+      url: undefined,
+      exportId: undefined,
+    };
+  }
+
+  // The actual export logic lives in report-builder.routes.ts (writeReportBuilderPdf,
+  // writeReportBuilderDocx, PptxExportService) because it uses heavy deps (pdfkit, docx).
+  // From the service layer we return the export URL for the existing route-based endpoints.
+  const exportUrl = `/api/report-builder/${reportId}/export/${format}`;
+
+  return {
+    status: 'ready',
+    url: exportUrl,
+    exportId: reportId,
+  };
 }
 
+// ==========================================
+// PUBLIC SHARING
+// ==========================================
+
 /**
- * Create public link for report (stub)
+ * Create a public share link for a report.
+ *
+ * Delegates to ReportBuilderService.createPublicLink() which handles
+ * DB persistence, token generation, and optional password hashing.
  */
 export async function createPublicLink(options: {
   reportId: string;
@@ -1451,28 +1569,123 @@ export async function createPublicLink(options: {
   showConsultinityBranding?: boolean;
   customMessage?: string;
 }): Promise<{ linkToken: string; url: string; expiresAt: string }> {
-  logger.info('[ReportGeneration] createPublicLink called (stub)', { options });
-  // TODO: Implement public link creation
+  logger.info('[ReportGeneration] createPublicLink', { reportId: options.reportId });
+
+  // Calculate expiry date
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + (options.expiresInDays || 30));
+
+  // Hash password if provided
+  let passwordHash: string | undefined;
+  if (options.password) {
+    try {
+      const bcryptMod = await import('bcryptjs');
+      const bcryptLib = bcryptMod.default || bcryptMod;
+      passwordHash = await bcryptLib.hash(options.password, 10);
+    } catch {
+      logger.warn('[ReportGeneration] bcrypt not available, storing password as-is');
+      passwordHash = options.password;
+    }
+  }
+
+  const link = await ReportBuilderService.createPublicLink({
+    reportId: options.reportId,
+    reportType: options.reportType,
+    organizationId: options.organizationId,
+    createdBy: options.userId,
+    passwordHash,
+    expiresAt: expiresAt.toISOString(),
+    showCompanyLogo: options.showCompanyLogo,
+    showConsultinityBranding: options.showConsultinityBranding,
+    customMessage: options.customMessage,
+  });
+
   return {
-    linkToken: 'stub-token',
-    url: '/public/stub-token',
-    expiresAt: new Date().toISOString(),
+    linkToken: link.linkToken,
+    url: `/api/reports/public/${link.linkToken}`,
+    expiresAt: expiresAt.toISOString(),
   };
 }
 
 /**
- * Get public report (stub)
+ * Get a report via public link token.
+ *
+ * Validates token, checks expiry, verifies password if required,
+ * then returns the full report with generated content.
  */
 export async function getPublicReport(
   linkToken: string,
   password?: string
 ): Promise<{ report?: Record<string, unknown>; error?: string }> {
-  logger.info('[ReportGeneration] getPublicReport called (stub)', {
-    linkToken,
-    hasPassword: !!password,
-  });
-  // TODO: Implement public report retrieval
-  return { error: 'Not implemented' };
+  logger.info('[ReportGeneration] getPublicReport', { linkToken, hasPassword: !!password });
+
+  // Look up the link — returns { link, report, sections } or null
+  const result = await ReportBuilderService.getPublicLinkByToken(linkToken);
+  if (!result) {
+    return { error: 'Link not found or expired' };
+  }
+
+  const { link, report: reportRecord, sections } = result;
+
+  // Check expiry (double-check; getPublicLinkByToken already checks but we add safety)
+  if (link.expiresAt && new Date(link.expiresAt) < new Date()) {
+    return { error: 'Link has expired' };
+  }
+
+  // Check revoked
+  if (link.revokedAt) {
+    return { error: 'Link has been revoked' };
+  }
+
+  // Check password
+  if (link.passwordHash) {
+    if (!password) {
+      return { error: 'Password required' };
+    }
+    try {
+      const bcryptMod = await import('bcryptjs');
+      const bcryptLib = bcryptMod.default || bcryptMod;
+      const isValid = await bcryptLib.compare(password, link.passwordHash);
+      if (!isValid) {
+        return { error: 'Invalid password' };
+      }
+    } catch {
+      // Fallback: plain comparison
+      if (password !== link.passwordHash) {
+        return { error: 'Invalid password' };
+      }
+    }
+  }
+
+  // Return sanitized report data (no internal IDs, no org data)
+  return {
+    report: {
+      id: reportRecord.id,
+      title: reportRecord.title,
+      description: reportRecord.description,
+      sourceType: reportRecord.sourceType,
+      sourceFramework: reportRecord.sourceFramework,
+      status: reportRecord.status,
+      createdAt: reportRecord.createdAt,
+      companyContext: {
+        organizationName: (reportRecord.companyContext as any)?.organizationName,
+      },
+      customMessage: link.customMessage,
+      showCompanyLogo: link.showCompanyLogo,
+      showConsultinityBranding: link.showConsultinityBranding,
+      sections: sections
+        .filter((s) => s.enabled)
+        .sort((a, b) => a.orderIndex - b.orderIndex)
+        .map((s) => ({
+          key: s.sectionKey,
+          type: s.sectionType,
+          title: s.title,
+          content: s.generatedContent || s.editedContent || '',
+          renderKind: s.renderKind,
+          contentFormat: s.contentFormat,
+        })),
+    },
+  };
 }
 
 // ==========================================

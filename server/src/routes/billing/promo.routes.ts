@@ -62,7 +62,7 @@ router.get(
     SELECT id, discount_type, discount_value, max_uses, current_uses, valid_until, is_active
     FROM promo_codes WHERE code = ?
   `,
-      [code.toUpperCase()]
+      [String(code).toUpperCase()]
     );
     if (!promo || !promo.is_active) return res.json({ valid: false, reason: 'Invalid code' });
     if (promo.valid_until && new Date(promo.valid_until) < new Date())

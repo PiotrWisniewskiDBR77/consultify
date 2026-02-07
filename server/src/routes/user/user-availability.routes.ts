@@ -19,7 +19,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const avail = await dbGet('SELECT settings FROM user_availability WHERE user_id = ?', [
       req.user?.id,
-    ]);
+    ]) as { settings: string } | null;
     res.json(
       avail?.settings
         ? JSON.parse(avail.settings)

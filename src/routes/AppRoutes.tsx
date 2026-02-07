@@ -16,6 +16,8 @@ import { AppView, AuthStep, SessionMode, User } from '@/types';
 import { AuthView } from '@/views/AuthView';
 import { ProductEntryPage } from '@/views/ProductEntryPage';
 
+import { ConversationRouteSync } from '@/components/AIChat/ConversationRouteSync';
+
 import { LegacyAssessmentReportRedirect } from './LegacyAssessmentReportRedirect';
 import { ROUTES } from './routeConfig';
 
@@ -681,6 +683,22 @@ export const AppRoutes: React.FC = () => {
             <MainLayout breadcrumbs={breadcrumbs || ['AI Chat']}>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="fade">
+                  <ConversationRouteSync />
+                  <AIChatWelcomeView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+
+        {/* AI Chat with Conversation ID - deep link to specific conversation */}
+        <Route
+          path={ROUTES.AI_CHAT_CONVERSATION}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['AI Chat']}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="fade">
+                  <ConversationRouteSync />
                   <AIChatWelcomeView />
                 </AnimationWrapper>
               </RouteErrorBoundary>

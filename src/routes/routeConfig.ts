@@ -23,6 +23,7 @@ export const ROUTES = {
 
   // Main App Routes
   AI_CHAT: '/chat',
+  AI_CHAT_CONVERSATION: '/chat/:conversationId',
   INTERVIEW: '/interview',
   DISCOVERY_CONSULTANT: '/discovery', // Legacy alias for Interview
 
@@ -426,6 +427,9 @@ export function getAppViewFromPath(path: string): AppView | null {
 
   const exact = getAppViewFromRoute(normalized);
   if (exact) return exact;
+
+  // /chat/:conversationId → AI_CHAT
+  if (normalized.startsWith('/chat/')) return AppView.AI_CHAT;
 
   if (normalized.startsWith(ROUTES.SETTINGS.ROOT)) return AppView.SETTINGS_PROFILE_MODULE;
   if (normalized.startsWith(ROUTES.ADMIN.ROOT)) return AppView.ADMIN_DASHBOARD;

@@ -1,6 +1,9 @@
 /**
  * ThinkingBlock - Chain of Thought reasoning display
- * Shows AI's thinking process step by step with animations
+ * Shows AI's thinking process step by step with animations.
+ *
+ * Enterprise UX: auto-expands during streaming, smooth collapse on completion,
+ * live elapsed timer, and business-language status labels.
  */
 
 import {
@@ -13,7 +16,7 @@ import {
   Search,
   Sparkles,
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ThinkingStep } from '../../../types';
@@ -23,6 +26,8 @@ interface ThinkingBlockProps {
   isStreaming?: boolean;
   defaultExpanded?: boolean;
   className?: string;
+  /** Timestamp (Date.now()) when the stream started, for live elapsed counter */
+  streamStartedAt?: number | null;
 }
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
@@ -39,14 +44,63 @@ const CATEGORY_COLORS: Record<string, string> = {
   validation: 'text-amber-500 dark:text-amber-400',
 };
 
+/** Format elapsed seconds into human-readable string */
+function formatElapsed(ms: number): string {
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  const rem = s % 60;
+  return `${m}m ${rem}s`;
+}
+
 export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({
   steps,
   isStreaming = false,
   defaultExpanded = false,
   className = '',
+  streamStartedAt,
 }) => {
   const { t } = useTranslation();
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+  // Auto-expand when streaming begins, allow manual toggle
+  const [userToggled, setUserToggled] = useState(false);
+  const [userExpandState, setUserExpandState] = useState(defaultExpanded);
+  const isExpanded = userToggled ? userExpandState : (isStreaming ? true : defaultExpanded);
+
+  // Animated collapse: track if block is collapsing
+  const [isCollapsing, setIsCollapsing] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const wasStreamingRef = useRef(isStreaming);
+
+  // Live elapsed timer
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    if (!isStreaming || !streamStartedAt) {
+      setElapsed(0);
+      return;
+    }
+    const tick = () => setElapsed(Date.now() - streamStartedAt);
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [isStreaming, streamStartedAt]);
+
+  // Detect transition from streaming → done for animated collapse
+  useEffect(() => {
+    if (wasStreamingRef.current && !isStreaming && !userToggled) {
+      // Stream just finished — animate collapse
+      setIsCollapsing(true);
+      const timer = setTimeout(() => setIsCollapsing(false), 400);
+      wasStreamingRef.current = false;
+      return () => { clearTimeout(timer); };
+    }
+    wasStreamingRef.current = isStreaming;
+    return undefined;
+  }, [isStreaming, userToggled]);
+
+  const handleToggle = () => {
+    setUserToggled(true);
+    setUserExpandState(!isExpanded);
+  };
 
   // Calculate progress
   const completedSteps = steps.filter((s) => s.status === 'done').length;
@@ -68,11 +122,18 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({
 
   if (steps.length === 0) return null;
 
+  // Business-language label for collapsed header (never show bare "Thinking...")
+  const headerLabel = isStreaming
+    ? (currentStep?.label || t('thinking.processing', 'Analyzing your request...'))
+    : t('thinking.complete', 'Analysis complete');
+
+  const showContent = isExpanded || isCollapsing;
+
   return (
     <div className={`mb-3 ${className}`}>
-      {/* Collapsed Header */}
+      {/* Header */}
       <button
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={handleToggle}
         className={`
           w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm
           bg-gradient-to-r from-purple-50 to-indigo-50 
@@ -84,7 +145,7 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({
         `}
       >
         {/* Icon */}
-        <div className={`flex-shrink-0 ${isStreaming ? 'animate-pulse' : ''}`}>
+        <div className="flex-shrink-0">
           {isStreaming ? (
             <Loader2 size={16} className="text-purple-500 animate-spin" />
           ) : (
@@ -92,22 +153,20 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({
           )}
         </div>
 
-        {/* Status */}
-        <div className="flex-1 text-left">
+        {/* Status — always shows business-language label */}
+        <div className="flex-1 text-left truncate">
           <span className="font-medium text-slate-700 dark:text-slate-200">
-            {isStreaming
-              ? t('thinking.processing', 'Thinking...')
-              : t('thinking.complete', 'Reasoning complete')}
+            {headerLabel}
           </span>
-          {currentStep && isStreaming && (
-            <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">
-              {currentStep.label}
-            </span>
-          )}
         </div>
 
-        {/* Progress */}
-        <div className="flex items-center gap-2">
+        {/* Progress + elapsed */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {isStreaming && elapsed > 0 && (
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 tabular-nums">
+              {formatElapsed(elapsed)}
+            </span>
+          )}
           <span className="text-xs text-slate-500 dark:text-slate-400">
             {completedSteps}/{totalSteps}
           </span>
@@ -121,9 +180,16 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({
         </div>
       </button>
 
-      {/* Expanded Content */}
-      {isExpanded && (
-        <div className="mt-2 px-3 py-2 bg-slate-50 dark:bg-navy-800/50 rounded-lg border border-slate-100 dark:border-navy-700 space-y-2">
+      {/* Expandable Content — with animated collapse */}
+      {showContent && (
+        <div
+          ref={contentRef}
+          className={`
+            mt-2 px-3 py-2 bg-slate-50 dark:bg-navy-800/50 rounded-lg border border-slate-100 dark:border-navy-700 space-y-2
+            transition-all duration-300 ease-in-out overflow-hidden
+            ${isCollapsing ? 'max-h-0 opacity-0 mt-0 py-0' : 'max-h-[600px] opacity-100'}
+          `}
+        >
           {steps.map((step, index) => (
             <ThinkingStepItem
               key={step.id}
@@ -133,7 +199,7 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({
             />
           ))}
 
-          {/* Total duration */}
+          {/* Total duration (shown after completion) */}
           {!isStreaming && totalDuration > 0 && (
             <div className="pt-2 border-t border-slate-200 dark:border-navy-700 text-xs text-slate-500 dark:text-slate-400 text-right">
               {t('thinking.totalTime', 'Total time')}: {(totalDuration / 1000).toFixed(1)}s

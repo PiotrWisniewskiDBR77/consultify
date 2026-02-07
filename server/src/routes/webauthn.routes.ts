@@ -38,7 +38,7 @@ router.post(
 
     res.json({
       challenge,
-      rp: { name: 'Consultify', id: 'consultify.io' },
+      rp: { name: 'Consultinity', id: 'consultinity.io' },
       user: { id: userId, name: user.email, displayName: `${user.first_name} ${user.last_name}` },
       pubKeyCredParams: [
         { type: 'public-key', alg: -7 }, // ES256

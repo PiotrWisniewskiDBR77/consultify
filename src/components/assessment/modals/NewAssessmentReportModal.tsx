@@ -39,6 +39,12 @@ export function NewAssessmentReportModal(props: {
     [assessments, assessmentId]
   );
 
+  // Only approved assessments can have reports created from them (backend requirement)
+  const approvedAssessments = useMemo(
+    () => assessments.filter((a) => a.status?.toUpperCase() === 'APPROVED'),
+    [assessments]
+  );
+
   const canCreate = Boolean(assessmentId && template?.id && !busy);
 
   if (!isOpen) return null;
@@ -82,14 +88,22 @@ export function NewAssessmentReportModal(props: {
               className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
               disabled={busy}
             >
-              <option value="">Select assessment…</option>
-              {assessments.map((a) => (
+              <option value="">
+                {approvedAssessments.length === 0
+                  ? 'No approved assessments available'
+                  : 'Select assessment…'}
+              </option>
+              {approvedAssessments.map((a) => (
                 <option key={a.id} value={a.id}>
-                  {a.name} {a.type ? `(${String(a.type).toUpperCase()})` : ''}{' '}
-                  {a.status ? `• ${String(a.status).toUpperCase()}` : ''}
+                  {a.name} {a.type ? `(${String(a.type).toUpperCase()})` : ''}
                 </option>
               ))}
             </select>
+            {approvedAssessments.length === 0 && (
+              <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                Only approved assessments can be used to create reports. Approve an assessment first.
+              </p>
+            )}
           </div>
 
           <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/60 dark:bg-navy-950/40 p-4">
@@ -133,6 +147,7 @@ export function NewAssessmentReportModal(props: {
               onClick={async () => {
                 if (!assessmentId || !template?.id) return;
                 setBusy(true);
+                const toastId = toast.loading('Creating report…');
                 try {
                   const title = selectedAssessment?.name
                     ? `Report - ${selectedAssessment.name}`
@@ -148,12 +163,19 @@ export function NewAssessmentReportModal(props: {
                     created?.report?.id || created?.id || created?.reportId || ''
                   );
                   if (!reportId) throw new Error('Missing report id');
-                  await Api.post(`/report-builder/${reportId}/generate`, { regenerateAll: false });
-                  toast.success('Draft report generated');
+
+                  toast.loading('Generating report content with AI…', { id: toastId });
+                  try {
+                    await Api.post(`/report-builder/${reportId}/generate`, { regenerateAll: false });
+                  } catch (genErr: any) {
+                    console.warn('[NewAssessmentReportModal] Generation error (non-fatal):', genErr);
+                  }
+
+                  toast.success('Report generated — opening editor', { id: toastId });
                   onCreated(reportId);
                   onClose();
                 } catch (e: any) {
-                  toast.error(e?.error || e?.message || 'Failed to create report');
+                  toast.error(e?.error || e?.message || 'Failed to create report', { id: toastId });
                 } finally {
                   setBusy(false);
                 }

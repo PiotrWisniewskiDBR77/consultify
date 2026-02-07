@@ -240,7 +240,7 @@ const getAIActionExecutor = async () =>
   (await import('../services/aiActionExecutor.js')).default as any;
 const getAIAuditLogger = async () => (await import('../services/aiAuditLogger.js')).default as any;
 const getAIPipeline = async () => {
-  const { AIPipeline } = (await import('../services/ai/aiPipeline.js')) as any;
+  const { AIPipeline } = (await import('../services/ai/AIPipeline.js')) as any;
   return new AIPipeline();
 };
 
@@ -292,6 +292,158 @@ router.get(
 // ==================== CHAT ====================
 
 /**
+ * Deep Research: Generate clarification questions before research.
+ * Returns 2-3 targeted questions with options to focus the research scope.
+ */
+router.post(
+  '/deep-research/clarify',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { message } = req.body as { message: string };
+
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    try {
+      const { generateClarificationQuestions } = await import(
+        '../services/ai/deepResearchService.js'
+      );
+
+      // Use a lightweight LLM client for clarification
+      const { default: modelRouter } = await import('../services/ai/modelRouter.js');
+      const { llmService } = await import('../services/ai/llmService.js');
+
+      const modelCfg = await modelRouter.select({
+        capability: 'chat_simple',
+        organizationId: req.organizationId || undefined,
+        options: { tier: 'BUDGET' },
+      } as any);
+
+      // Build a simple OpenAI-compatible client wrapper
+      const llmClient = {
+        chat: {
+          completions: {
+            create: async (params: any) => {
+              const result = (await llmService.call({
+                type: 'chat',
+                modelConfig: {
+                  provider: modelCfg.provider,
+                  id: modelCfg.id,
+                  endpoint: (modelCfg as any).endpoint,
+                  apiKey: (modelCfg as any).apiKey,
+                },
+                systemPrompt: '',
+                messages: params.messages,
+                maxTokens: params.max_tokens || 1000,
+                temperature: params.temperature ?? 0.3,
+              })) as any;
+
+              return {
+                choices: [{ message: { content: result?.content || String(result) } }],
+              };
+            },
+          },
+        },
+      };
+
+      const result = await generateClarificationQuestions(message, llmClient);
+
+      return res.json({
+        success: true,
+        ...result,
+        researchType: (() => {
+          try {
+            const { detectResearchType } = require('../services/ai/deepResearchService.js');
+            return detectResearchType(message);
+          } catch {
+            return 'general_research';
+          }
+        })(),
+      });
+    } catch (error: any) {
+      logger.error('[AI Routes] Clarification generation failed:', error);
+      return res.status(500).json({ error: 'Failed to generate clarification questions' });
+    }
+  })
+);
+
+/**
+ * Engagement Summary (R13)
+ *
+ * Generates periodic engagement reports (weekly/monthly) as downloadable artifacts.
+ */
+router.post(
+  '/engagement-summary',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { period = 'weekly', projectId, language } = req.body as {
+      period?: 'weekly' | 'monthly';
+      projectId?: string;
+      language?: string;
+    };
+
+    try {
+      const { engagementSummaryService } = await import(
+        '../services/ai/engagementSummaryService.js'
+      );
+
+      const summary = await engagementSummaryService.generateSummary({
+        organizationId: req.organizationId || '',
+        projectId: projectId || undefined,
+        userId: req.userId || '',
+        period,
+        language: language || 'en',
+      });
+
+      const artifact = engagementSummaryService.formatAsArtifact(summary, language);
+
+      return res.json({
+        success: true,
+        summary,
+        artifact,
+      });
+    } catch (err: any) {
+      logger.error('[AI] Engagement summary error:', err);
+      return res.status(500).json({ error: 'Failed to generate engagement summary' });
+    }
+  })
+);
+
+/**
+ * Industry Benchmarks (R9)
+ *
+ * Returns benchmark data and comparisons for the organization's industry.
+ */
+router.post(
+  '/benchmarks/compare',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { industry, scores } = req.body as {
+      industry: string;
+      scores?: Array<{ axis: string; score: number }>;
+    };
+
+    try {
+      const { industryBenchmarkService } = await import(
+        '../services/ai/industryBenchmarkService.js'
+      );
+
+      if (scores && scores.length > 0) {
+        const comparisons = industryBenchmarkService.compareToBenchmarks(industry, scores);
+        return res.json({ success: true, comparisons });
+      }
+
+      const benchmarks = industryBenchmarkService.getBenchmarks(industry);
+      return res.json({ success: true, benchmarks });
+    } catch (err: any) {
+      logger.error('[AI] Benchmark comparison error:', err);
+      return res.status(500).json({ error: 'Failed to get benchmarks' });
+    }
+  })
+);
+
+/**
  * Deep Thinking: Confirm Understanding (blocking gate)
  *
  * Returns a decision-ready paraphrase of the user's task + minimal questions/gaps
@@ -315,13 +467,13 @@ router.post(
       focusMode?: string;
       selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
       selectedModelId?: string | null;
-      aiModes?: { deepResearch?: boolean; webSearch?: boolean; showReasoning?: boolean };
+      aiModes?: { deepResearch?: boolean; webSearch?: boolean; showReasoning?: boolean; multiAgent?: boolean };
       knowledgeSources?: {
         pmoDocuments?: boolean;
         projectData?: boolean;
         organizationData?: boolean;
       };
-      responseStyle?: 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
+      responseStyle?: 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal';
     };
 
     const {
@@ -560,13 +712,14 @@ router.post(
         deepResearch?: boolean;
         webSearch?: boolean;
         showReasoning?: boolean;
+        multiAgent?: boolean;
       };
       knowledgeSources?: {
         pmoDocuments?: boolean;
         projectData?: boolean;
         organizationData?: boolean;
       };
-      responseStyle?: 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
+      responseStyle?: 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal';
     };
 
     const {
@@ -1239,6 +1392,8 @@ router.post(
           language,
           context: (context || null) as any,
           aiModes: (aiModes || null) as any,
+          // v2.0: pass clarification answers for focused research
+          clarificationAnswers: (context as any)?.clarificationAnswers || null,
           emit: emitSSE,
         });
 
@@ -1294,6 +1449,61 @@ router.post(
               forceDepthTrigger: rawMsg,
             },
           } as any;
+        }
+      }
+
+      // --------------------------------------------------------
+      // Multi-Agent Decision Room routing
+      // When multiAgent mode is ON, route through the Decision Room
+      // instead of the standard pipeline for richer multi-perspective analysis.
+      // --------------------------------------------------------
+      if (aiModes?.multiAgent && message) {
+        try {
+          const { runDecisionRoom } = await import('../services/ai/advancedFeatures.js');
+          emitSSE({ type: 'status', message: 'Uruchamiam analizę wieloagentową (CFO, CTO, CHRO, COO)...' });
+
+          const decisionResult = await runDecisionRoom(
+            message,
+            JSON.stringify({
+              projectId,
+              screenContext: screenContext?.currentScreen || screenContext?.screenId || null,
+              history: (history || []).slice(-4).map((m: any) => `${m.role}: ${m.content?.slice(0, 200)}`).join('\n'),
+            }),
+            ['Opcja A', 'Opcja B'], // Default options — the AI will refine these
+            req.userId || 'anonymous',
+            req.organizationId || 'default'
+          );
+
+          // Stream the multi-agent result as structured content
+          const parts: string[] = [];
+          if (decisionResult.perspectives && decisionResult.perspectives.length > 0) {
+            for (const p of decisionResult.perspectives) {
+              parts.push(`### ${p.agentRole}\n${p.analysis}\n**Rekomendacja:** ${p.recommendation}\n**Pewność:** ${p.confidenceLevel || 0}%\n`);
+            }
+          }
+          if (decisionResult.consensus) {
+            parts.push(`---\n## Konsensus\n**Rekomendacja:** ${decisionResult.consensus.recommendation}\n**Poziom pewności:** ${decisionResult.consensus.confidenceLevel || 0}%`);
+            if (decisionResult.consensus.keyAgreements?.length > 0) {
+              parts.push(`**Zgodność:** ${decisionResult.consensus.keyAgreements.join(', ')}`);
+            }
+          }
+          const multiAgentContent = parts.join('\n');
+          emitSSE({ type: 'content', content: multiAgentContent });
+          emitSSE({ type: 'done', content: multiAgentContent });
+          emitSSE({ type: 'end' });
+
+          // Complete chat trace
+          if (chatRunId) {
+            try {
+              const svcMod = await import('../services/ai/chatTraceService.js');
+              await (svcMod.default || svcMod).completeRun({ runId: chatRunId as string });
+            } catch { /* ignore */ }
+          }
+          return; // Skip standard pipeline
+        } catch (err) {
+          logger.warn('[AI Stream] Multi-agent mode failed, falling back to standard pipeline', err);
+          emitSSE({ type: 'status', message: 'Tryb wieloagentowy niedostępny — przechodzę do standardowej analizy...' });
+          // Fall through to standard pipeline
         }
       }
 
@@ -1553,6 +1763,9 @@ router.post(
             }
           }
 
+          // Hoisted so it's accessible in both deep-thinking metrics and agent-audit scopes
+          let forceDepthDiff: any = null;
+
           // Deep Thinking ops metric: completed run (evaluate final output; do not reward length)
           if (
             aiModes?.deepResearch &&
@@ -1573,7 +1786,6 @@ router.post(
               const patternsFinal = detectPatterns(accumulatedContent, language);
 
               // Force-depth diff check: if this was a force-depth request, compare with previous answer
-              let forceDepthDiff: any = null;
               if (forceDepthTrigger || (context as any)?.forceDepth) {
                 try {
                   const { evaluateForceDepthDiff } =
@@ -1689,7 +1901,7 @@ router.post(
                 conversationId: conversationId || null,
                 decisionContext,
                 deepThinkingReport: accumulatedContent,
-                forceDepthDiff,
+                forceDepthDiff: forceDepthDiff ?? null,
                 agentIds,
                 userIntent: agentAudit?.userIntent || 'validate',
                 language,
@@ -1750,6 +1962,8 @@ router.post(
               const qcMod = await import('../services/ai/qualityChecker.js');
               const qc = (qcMod as any).qualityChecker || (qcMod as any).default;
               if (qc?.check) {
+                // Pass tier info for LLM-as-Judge (R14)
+                const selectedTier = (pipelineRequest as any)?.options?.selectedTier || 'STANDARD';
                 const qualityScore = await qc.check({
                   question: message,
                   response: accumulatedContent,
@@ -1757,6 +1971,7 @@ router.post(
                   messageId: chatRunId || undefined,
                   userId: req.userId,
                   organizationId: req.organizationId,
+                  tier: selectedTier,
                 });
                 if (qualityScore && typeof qualityScore.overall === 'number') {
                   emitSSE({ type: 'quality_score', ...qualityScore });
@@ -1764,6 +1979,22 @@ router.post(
               }
             } catch (qErr: any) {
               logger.debug('[AI Stream] Quality scoring failed:', qErr?.message);
+            }
+
+            // ================================================================
+            // Post-stream: Knowledge Graph extraction (R8, best-effort)
+            // ================================================================
+            try {
+              if (req.organizationId && accumulatedContent.length > 100) {
+                const kgMod = await import('../services/ai/knowledgeGraphService.js');
+                const kgService = (kgMod as any).knowledgeGraphService || (kgMod as any).default;
+                if (kgService?.processConversation) {
+                  // Fire and forget — don't block the stream
+                  kgService.processConversation(req.organizationId, message, accumulatedContent).catch(() => {});
+                }
+              }
+            } catch {
+              // Non-critical
             }
 
             // ================================================================
@@ -3435,7 +3666,7 @@ router.post(
 
       // Feed into learning system for pattern analysis and quality improvement
       try {
-        const lsMod = await import('../services/ai/learningSystem');
+        const lsMod = await import('../services/ai/learningSystem.js');
         const ls = (lsMod as any).learningSystem || (lsMod as any).default;
         if (ls?.processFeedback) {
           await ls.processFeedback({

@@ -4,6 +4,7 @@
  */
 
 import winston from 'winston';
+import DailyRotateFile from 'winston-daily-rotate-file';
 
 export interface LoggerMeta {
   [key: string]: unknown;
@@ -64,11 +65,21 @@ const enableFileLogs = process.env.LOG_TO_FILE === 'true' || process.env.NODE_EN
 const transports: winston.transport[] = [new winston.transports.Console()];
 if (enableFileLogs) {
   transports.push(
-    new winston.transports.File({
-      filename: 'logs/error.log',
+    new DailyRotateFile({
+      filename: 'server/logs/error-%DATE%.log',
+      datePattern: 'YYYY-MM-DD',
       level: 'error',
+      maxSize: '50m',
+      maxFiles: '7d',
+      zippedArchive: true,
     }),
-    new winston.transports.File({ filename: 'logs/all.log' })
+    new DailyRotateFile({
+      filename: 'server/logs/all-%DATE%.log',
+      datePattern: 'YYYY-MM-DD',
+      maxSize: '50m',
+      maxFiles: '7d',
+      zippedArchive: true,
+    })
   );
 }
 

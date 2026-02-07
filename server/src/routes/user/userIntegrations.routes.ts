@@ -20,7 +20,7 @@ router.get(
     const settings = await dbGet(
       'SELECT settings FROM user_integration_settings WHERE user_id = ?',
       [req.user?.id]
-    );
+    ) as { settings: string } | null;
     res.json(
       settings?.settings ? JSON.parse(settings.settings) : { connectedApps: [], syncEnabled: false }
     );

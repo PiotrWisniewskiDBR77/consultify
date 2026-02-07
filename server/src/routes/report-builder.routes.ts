@@ -2053,7 +2053,7 @@ const writeReportBuilderDocx = async (report: any, sections: any[], filePath: st
             children: [
               new Paragraph({
                 children: [
-                  new TextRun({ text: 'Consultify Report', size: 16 }),
+                  new TextRun({ text: 'Consultinity Report', size: 16 }),
                   new TextRun('  •  '),
                   new TextRun({ children: [PageNumber.CURRENT] }),
                   new TextRun(' / '),

@@ -98,6 +98,7 @@ export const RouterSync: React.FC = () => {
     // If user is not authenticated, protect private routes
     const isProtected =
       path === '/chat' ||
+      path.startsWith('/chat/') ||
       path === '/studio' ||
       path.startsWith('/admin') ||
       path.startsWith('/settings') ||
@@ -135,7 +136,7 @@ export const RouterSync: React.FC = () => {
     }
 
     // SUPERADMIN should not stay on /chat
-    if (path === '/chat' && userRole === 'SUPERADMIN') {
+    if ((path === '/chat' || path.startsWith('/chat/')) && userRole === 'SUPERADMIN') {
       console.log('[RouterSync] SUPERADMIN on /chat, redirecting to /superadmin');
       isNavigatingRef.current = true;
       navigate('/superadmin', { replace: true });
