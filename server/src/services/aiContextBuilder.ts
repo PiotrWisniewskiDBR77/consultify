@@ -348,13 +348,51 @@ export const AIContextBuilder = {
         organizationId,
       ])) || {};
 
+    // Fetch org-level patterns (best practices, lessons learned) from organization_memory
+    let orgPatterns: Array<{ type: string; title: string; content: string }> = [];
+    try {
+      const patternRows = (await all(
+        `SELECT memory_type, title, content FROM organization_memory
+         WHERE organization_id = ? AND active = 1
+         ORDER BY usage_count DESC LIMIT 5`,
+        [organizationId]
+      )) as any[];
+      orgPatterns = (patternRows || []).map((r: any) => ({
+        type: r.memory_type,
+        title: r.title,
+        content: (r.content || '').slice(0, 200),
+      }));
+    } catch {
+      // organization_memory table may not exist yet
+    }
+
+    // Fetch terminology from ai_organization_memory key-value store
+    let terminology: Record<string, string> = {};
+    try {
+      const termRows = (await all(
+        `SELECT memory_key, memory_value FROM ai_organization_memory
+         WHERE organization_id = ? AND memory_key LIKE 'terminology_%'`,
+        [organizationId]
+      )) as any[];
+      for (const r of termRows || []) {
+        const key = String(r.memory_key).replace('terminology_', '');
+        terminology[key] = String(r.memory_value || '');
+      }
+    } catch {
+      // ignore
+    }
+
     return {
       organizationId,
       organizationName: org.name || 'Unknown',
+      industry: org.industry || null,
       locations: [],
       activeProjectIds: projects.map((p: any) => p.id),
       activeProjectCount: projects.length,
       pmoMaturityLevel: memory.pmo_maturity || 'BASIC',
+      // Organization Memory: patterns and terminology for AI context
+      orgPatterns: orgPatterns.length > 0 ? orgPatterns : undefined,
+      terminology: Object.keys(terminology).length > 0 ? terminology : undefined,
     };
   },
 

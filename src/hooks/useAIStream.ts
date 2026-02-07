@@ -452,9 +452,10 @@ export const useAIStream = (options: StreamOptions = {}) => {
 
       let fullText = '';
       const isDeepThinking = aiConfig?.deepResearch === true;
-      // Adaptive complexity: deep research → deep steps, web search → medium, default → medium
-      const complexity: ThinkingComplexity = isDeepThinking ? 'deep' : 'medium';
-      let currentThinking: ThinkingStep[] = buildDefaultThinkingSteps(language || '', complexity);
+      // Adaptive complexity: start light for casual queries, escalate if response takes long
+      const initialComplexity: ThinkingComplexity = isDeepThinking ? 'deep' : 'light';
+      let currentThinking: ThinkingStep[] = buildDefaultThinkingSteps(language || '', initialComplexity);
+      let hasEscalatedComplexity = isDeepThinking; // deep starts fully expanded
       let step = 0;
       let hasReceivedContent = false;
       const streamStartTime = Date.now();
@@ -478,6 +479,19 @@ export const useAIStream = (options: StreamOptions = {}) => {
         currentThinking = advanceThinkingSteps(currentThinking, pct);
         setThinkingSteps([...currentThinking]);
         options.onThinkingUpdate?.([...currentThinking]);
+
+        // Escalate from 'light' (1 step) to 'medium' (3 steps) if response takes > 5s
+        if (!hasEscalatedComplexity && elapsed > 5000) {
+          hasEscalatedComplexity = true;
+          currentThinking = buildDefaultThinkingSteps(language || '', 'medium');
+          // Mark first step as completed to show progress
+          if (currentThinking.length > 0) {
+            currentThinking[0].status = 'completed';
+            if (currentThinking.length > 1) currentThinking[1].status = 'in_progress';
+          }
+          setThinkingSteps([...currentThinking]);
+          options.onThinkingUpdate?.([...currentThinking]);
+        }
 
         // Long-wait escalation labels (3-second rule: always update something)
         if (elapsed > 30000 && !isDeepThinking) {

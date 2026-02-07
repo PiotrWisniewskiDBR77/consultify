@@ -382,6 +382,108 @@ data: [DONE]
 | `text` | Response text chunk (sent as `{"text": "..."}`) |
 | `error` | Error message |
 
+**Additional Event Types (Deep Research / tools):**
+| Type | Description |
+|------|-------------|
+| `dt_hint` | Suggestion to enable Deep Research (when off) |
+| `dt_state` | Deep Research state machine (e.g. research, synthesis, closure) |
+| `research_visibility` | User-facing plan items for Deep Research |
+| `dt_selfcheck` | Self-check / repair loop status |
+| `citations` | Web-search citations metadata (when enabled) |
+
+**Deep Research Gate (flow-control):**
+
+If `aiModes.deepResearch = true` and the client **did not** confirm understanding, the server returns **HTTP 400 JSON**:
+
+```json
+{
+  "error": "Deep Thinking requires Confirm Understanding first. Call /api/ai/chat/confirm and then retry with context.deepThinkingConfirmed=true.",
+  "code": "DEEP_THINKING_CONFIRM_REQUIRED"
+}
+```
+
+The client should call `/api/ai/chat/confirm` and then retry stream with `context.deepThinkingConfirmed=true`.
+
+---
+
+### 4.2 Confirm Understanding (Deep Research)
+
+```http
+POST /ai/chat/confirm
+```
+
+**Purpose:** returns a structured “Confirm Understanding” object for the Deep Research flow.
+
+**Request Body:**
+
+```json
+{
+  "message": "I want a deep analysis of X ...",
+  "history": [],
+  "language": "pl",
+  "conversationId": "conv_123"
+}
+```
+
+**Response (example):**
+
+```json
+{
+  "confirm": {
+    "understanding": {
+      "goal": "...",
+      "context": "...",
+      "constraints": ["..."],
+      "expectedOutput": "StructuredAnalysis",
+      "decisionHorizon": "Średnioterminowy"
+    },
+    "isClearEnoughToProceed": false,
+    "missingInfoQuestions": [
+      { "id": "q1", "question": "...", "whyItMatters": "..." }
+    ],
+    "researchPlanItems": [
+      { "id": "r1", "type": "ConceptualFrameworks", "label": "...", "rationale": "..." }
+    ],
+    "suggestedDepth": "Standard"
+  }
+}
+```
+
+---
+
+### 4.3 Chat Attachments Ingestion (conversation-scoped RAG)
+
+```http
+POST /ai/attachments/ingest
+```
+
+**Auth:** Bearer JWT
+
+**Content-Type:** `multipart/form-data`
+
+**Form fields:**
+| Field | Type | Required | Description |
+|------|------|----------|-------------|
+| `file` | file | Yes | Text/PDF/Markdown/CSV/JSON file (max 25MB) |
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "docId": "uuid",
+  "filename": "README.md",
+  "mimeType": "text/markdown",
+  "totalChunks": 4,
+  "embeddedChunks": 0
+}
+```
+
+**Usage with chat stream:**
+
+- Put the returned `docId` into `context.attachmentDocIds`.
+- The backend will restrict retrieval to only those documents and inject matched chunks into the system instruction as `[A1]..[A5]`.
+
 ---
 
 ## 5. Chat Folders API

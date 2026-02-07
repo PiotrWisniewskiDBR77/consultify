@@ -1134,13 +1134,17 @@ This section will contain professionally written content based on the assessment
 // ==========================================
 
 /**
- * Generate content for a single section
+ * Generate content for a single section.
+ *
+ * @param targetFormat — When 'pptx', uses pptx_prompt_template from block type
+ *   to generate structured JSON instead of markdown. Default: 'markdown'.
  */
 export async function generateSectionContent(
   reportId: string,
   sectionKey: string,
   organizationId: string,
-  userId: string
+  userId: string,
+  targetFormat: 'markdown' | 'pptx' = 'markdown'
 ): Promise<{ content: string; tokensUsed: number }> {
   // Get report and section
   const reportData = await ReportBuilderService.getReport(reportId, organizationId);
@@ -1176,6 +1180,7 @@ export async function generateSectionContent(
 
   // If this is a user-defined block type (custom section with block_type_id),
   // prefer the block type prompt template over the generic "custom" prompt.
+  // When targetFormat === 'pptx', use pptx_prompt_template for structured JSON output.
   if ((section as any).blockTypeId) {
     const bt = await queryOne<any>(
       `
@@ -1186,7 +1191,12 @@ export async function generateSectionContent(
       [(section as any).blockTypeId, organizationId]
     );
 
-    const promptTemplate: string | null | undefined = bt?.prompt_template || null;
+    // Select prompt: pptx_prompt_template for PPTX v2, regular prompt_template otherwise
+    const promptTemplate: string | null | undefined =
+      targetFormat === 'pptx' && bt?.pptx_prompt_template
+        ? bt.pptx_prompt_template
+        : bt?.prompt_template || null;
+
     if (promptTemplate) {
       const vars = {
         report: context.report,
@@ -1201,6 +1211,39 @@ export async function generateSectionContent(
         },
       };
       prompts.user = interpolateTemplate(promptTemplate, vars);
+
+      // For PPTX: also update system prompt to enforce JSON output
+      if (targetFormat === 'pptx' && bt?.pptx_prompt_template) {
+        prompts.system = `${prompts.system}\n\nIMPORTANT: You MUST return ONLY valid JSON. No markdown, no explanation, no code fences. Just the JSON object.`;
+      }
+    }
+  } else if (targetFormat === 'pptx' && section.sectionType) {
+    // Even without a blockTypeId, try to find a block type by sectionType
+    // that has a pptx_prompt_template
+    const bt = await queryOne<any>(
+      `
+      SELECT * FROM report_builder_block_types
+      WHERE id = ? AND is_active = 1 AND pptx_prompt_template IS NOT NULL
+      LIMIT 1
+    `,
+      [section.sectionType]
+    );
+
+    if (bt?.pptx_prompt_template) {
+      const vars = {
+        report: context.report,
+        section: context.section,
+        companyContext: context.companyContext,
+        assessment: context.sourceData.assessment,
+        axisData: context.sourceData.axisData,
+        blockConfig: (section as any).blockConfig || null,
+        facts: {
+          company: context.companyContext,
+          assessment: context.sourceData.assessment,
+        },
+      };
+      prompts.user = interpolateTemplate(bt.pptx_prompt_template, vars);
+      prompts.system = `${prompts.system}\n\nIMPORTANT: You MUST return ONLY valid JSON. No markdown, no explanation, no code fences. Just the JSON object.`;
     }
   }
 
@@ -1309,9 +1352,19 @@ export async function generateFullReport(
   userId: string,
   options?: { regenerateAll?: boolean; onProgress?: (progress: number, sectionKey: string) => void }
 ): Promise<{ totalTokens: number; generatedSections: string[] }> {
+  logger.info('[ReportGeneration] generateFullReport START', { reportId, organizationId, userId });
+
   // Get report
   const reportData = await ReportBuilderService.getReport(reportId, organizationId);
-  if (!reportData) throw new Error('Report not found');
+  if (!reportData) {
+    logger.error('[ReportGeneration] Report not found!', { reportId, organizationId });
+    throw new Error('Report not found');
+  }
+
+  logger.info('[ReportGeneration] Report loaded, updating status to GENERATING', {
+    reportId,
+    sectionsCount: reportData.sections?.length,
+  });
 
   // Update status to GENERATING
   await ReportBuilderService.updateReportStatus(reportId, 'GENERATING', userId);

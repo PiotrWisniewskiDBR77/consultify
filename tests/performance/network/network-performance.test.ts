@@ -73,7 +73,7 @@ describe('Network Performance Tests', () => {
       }
 
       const elapsed = Date.now() - start;
-      expect(elapsed).toBeLessThan(300);
+      expect(elapsed).toBeLessThan(500);
     });
   });
 

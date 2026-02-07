@@ -679,8 +679,16 @@ export const AssessmentSessionEditorView: React.FC = () => {
             regenerateAll: false,
           });
         } catch (genErr: any) {
-          // Generation failed but report exists — still open the editor
-          console.warn('[handleStartNewReportFromTemplate] Generation error (non-fatal):', genErr);
+          // Generation failed but report exists — show warning, still open the editor
+          const genMsg = genErr?.error || genErr?.message || 'AI generation failed';
+          console.error('[handleStartNewReportFromTemplate] Generation error:', genErr);
+          toast.error(`Generation issue: ${genMsg}. You can retry in the editor.`, { id: toastId, duration: 6000 });
+          // Skip the success toast — navigate to editor below
+          const returnUrl = encodeURIComponent(
+            `/assessment/drd/${assessmentId}?${searchParams.toString()}`
+          );
+          navigate(`/reports/builder/${reportId}?returnUrl=${returnUrl}`);
+          return;
         }
 
         setIsReportTemplatePickerOpen(false);

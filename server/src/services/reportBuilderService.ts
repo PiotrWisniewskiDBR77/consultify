@@ -145,6 +145,12 @@ export interface BlockTypeRecord {
   isActive?: boolean;
   category?: BlockCategory;
   displayOrder?: number;
+  /** Explicit slide intent for PPTX v2 pipeline (from migration 525) */
+  slideIntent?: string | null;
+  /** PPTX-specific prompt that generates structured JSON (from migration 525) */
+  pptxPromptTemplate?: string | null;
+  /** JSON Schema for validating PPTX prompt output (from migration 525) */
+  pptxOutputSchema?: Record<string, unknown> | null;
   createdBy?: string | null;
   createdAt?: string;
   updatedAt?: string;
@@ -746,6 +752,9 @@ export async function listBlockTypes(organizationId: string): Promise<BlockTypeR
     isActive: Boolean(r.is_active),
     category: (r.category || 'content') as BlockCategory,
     displayOrder: r.display_order ?? 999,
+    slideIntent: r.slide_intent || null,
+    pptxPromptTemplate: r.pptx_prompt_template || null,
+    pptxOutputSchema: r.pptx_output_schema ? JSON.parse(r.pptx_output_schema) : null,
     createdBy: r.created_by,
     createdAt: r.created_at,
     updatedAt: r.updated_at,

@@ -1291,8 +1291,8 @@ export const Api = {
         const uiLang = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
         const friendly =
           uiLang === 'pl'
-            ? '⚠️ AI nie zwróciło odpowiedzi. Najczęściej oznacza to brak konfiguracji dostawcy (np. OPENAI_API_KEY / GEMINI_API_KEY) na backendzie.'
-            : '⚠️ AI returned an empty response. This usually means no LLM provider is configured on the backend (e.g. OPENAI_API_KEY / GEMINI_API_KEY).';
+            ? 'Nie udało się wygenerować odpowiedzi. Proszę spróbować ponownie za chwilę lub skontaktować się z administratorem.'
+            : 'Unable to generate a response. Please try again in a moment or contact your administrator.';
         onChunk(friendly);
       }
 

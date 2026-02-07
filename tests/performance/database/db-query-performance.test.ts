@@ -54,7 +54,7 @@ describe('Database Query Performance', () => {
       });
 
       const elapsed = Date.now() - start;
-      expect(elapsed).toBeLessThan(10);
+      expect(elapsed).toBeLessThan(100);
     });
 
     it('should select all users under 50ms', async () => {

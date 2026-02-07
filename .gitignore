@@ -156,3 +156,15 @@ Piotr_Tools/
 
 # Quarantine folder for duplicate files
 _quarantine/
+
+# Server logs (prevent committing huge log files)
+server/logs/
+
+# iCloud/Finder duplicates (macOS numbered copies)
+* [0-9]*.*
+
+# Vendored packages
+*.tgz
+
+# Analysis artifacts
+_analysis/

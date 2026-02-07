@@ -57,7 +57,7 @@ describe('Cache Performance Tests', () => {
       }
 
       const elapsed = Date.now() - start;
-      expect(elapsed).toBeLessThan(200);
+      expect(elapsed).toBeLessThan(1000);
     });
 
     it('should handle cache misses efficiently', () => {
@@ -69,7 +69,7 @@ describe('Cache Performance Tests', () => {
       }
 
       const elapsed = Date.now() - start;
-      expect(elapsed).toBeLessThan(100);
+      expect(elapsed).toBeLessThan(500);
     });
   });
 

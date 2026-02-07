@@ -30,7 +30,7 @@ import {
 } from '../config/reportInvocationProfiles.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
-import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { default as defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import ReportBuilderCommentsService from '../services/reportBuilderCommentsService.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
 import ReportGenerationService from '../services/reportGenerationService.js';
@@ -38,8 +38,8 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
-// Apply middleware
-router.use(authRateLimiter);
+// Apply middleware (use default API limiter – 1000 req/15min in dev, not the restrictive auth limiter)
+router.use(defaultRateLimiter);
 router.use(verifyToken);
 router.use(demoContextMiddleware);
 
@@ -2178,57 +2178,152 @@ router.get('/:id/export/docx', exportDocx);
 /**
  * GET /api/report-builder/:id/export/pptx
  * Export report as PowerPoint presentation
+ *
+ * Query params:
+ *   ?version=2          — use new BCG-grade pipeline (v2)
+ *   ?template=corporate — corporate | minimal | modern
+ *   ?language=pl        — pl | en
+ *   ?confidentiality=confidential — confidential | internal | public
  */
 router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
-    const { template, language } = req.query;
+    const { template, language, version, confidentiality } = req.query;
+    const useV2 = version === '2' || version === 'v2';
 
     const reportData = await ReportBuilderService.getReport(id, organizationId);
     if (!reportData) {
       return res.status(404).json({ error: 'Report not found' });
     }
 
-    // Dynamically import PptxExportService
-    const { PptxExportService } = await import('../services/report/PptxExportService.js');
-    const pptxService = new PptxExportService();
+    let buffer: Buffer;
 
-    // Prepare report data for PPTX export
-    const rpt = reportData.report as any;
-    const pptxReportData = {
-      id: rpt.id,
-      name: rpt.title || rpt.name || 'Report',
-      sourceType: rpt.sourceType || rpt.source_type || 'ASSESSMENT',
-      sourceFramework: rpt.sourceFramework || rpt.source_framework,
-      organizationName: rpt.organizationName || rpt.organization_name,
-      projectName: rpt.projectName || rpt.project_name,
-      createdAt: rpt.createdAt || rpt.created_at,
-      intentConfig:
-        rpt.intentConfig || rpt.intent_config
-          ? JSON.parse(rpt.intentConfig || rpt.intent_config)
-          : undefined,
-      sections: (reportData.sections || []).map((s: any) => ({
-        key: s.sectionKey || s.section_key,
-        title: s.title || s.sectionKey || s.section_key,
-        type: s.sectionType || s.section_type,
-        content: s.generatedContent || s.generated_content || '',
-        renderKind: s.renderKind || s.render_kind,
-        data: s.dataJson || s.data_json ? JSON.parse(s.dataJson || s.data_json) : undefined,
-      })),
-      scoreSummary:
-        rpt.scoreSummary || rpt.score_summary
-          ? JSON.parse(rpt.scoreSummary || rpt.score_summary)
-          : undefined,
-    };
+    if (useV2) {
+      // ── V2: BCG-grade component pipeline ──
+      const { PptxPipelineService } = await import('../services/report/pptx/PptxPipelineService.js');
+      const pipeline = new PptxPipelineService();
 
-    // Generate PPTX
-    const buffer = await pptxService.generatePresentation(pptxReportData, {
-      template: (template as any) || 'corporate',
-      language: (language as any) || 'pl',
-      includeCharts: true,
-      includeToc: true,
-    });
+      const rpt = reportData.report as any;
+
+      // Parse score summary if stored as JSON string
+      let scoreSummary: any = undefined;
+      const rawScore = rpt.scoreSummary || rpt.score_summary;
+      if (rawScore) {
+        try { scoreSummary = typeof rawScore === 'string' ? JSON.parse(rawScore) : rawScore; } catch { /* ignore */ }
+      }
+
+      // Parse config if stored as JSON string
+      let config: any = undefined;
+      const rawConfig = rpt.config || rpt.config_json;
+      if (rawConfig) {
+        try { config = typeof rawConfig === 'string' ? JSON.parse(rawConfig) : rawConfig; } catch { /* ignore */ }
+      }
+
+      // Pre-load block types once for slide_intent resolution
+      const allBlockTypes = await ReportBuilderService.listBlockTypes(organizationId).catch(() => []);
+      const btMap = new Map(allBlockTypes.map((bt: any) => [bt.id, bt]));
+
+      const v2Sections = (reportData.sections || []).map((s: any) => {
+        const btId = s.blockTypeId || s.block_type_id;
+        const bt = btId ? btMap.get(btId) : undefined;
+        return {
+          sectionKey: s.sectionKey || s.section_key,
+          sectionType: s.sectionType || s.section_type,
+          title: s.title || s.sectionKey || s.section_key,
+          orderIndex: s.orderIndex ?? s.order_index ?? 0,
+          enabled: s.enabled !== false,
+          blockTypeId: btId,
+          blockConfig: s.blockConfig || s.block_config,
+          renderKind: s.renderKind || s.render_kind,
+          generatedContent: s.generatedContent || s.generated_content,
+          editedContent: s.editedContent || s.edited_content,
+          contentFormat: s.contentFormat || s.content_format,
+          repeatFor: s.repeatFor || s.repeat_for,
+          repeatKey: s.repeatKey || s.repeat_key,
+          repeatName: s.repeatName || s.repeat_name,
+          repeatData: s.repeatData || s.repeat_data,
+          slideIntent: bt?.slideIntent || undefined,
+        };
+      });
+
+      const result = await pipeline.generateFromLegacyReport(
+        {
+          report: {
+            id: rpt.id,
+            title: rpt.title || rpt.name || 'Report',
+            description: rpt.description,
+            sourceType: rpt.sourceType || rpt.source_type || 'ASSESSMENT',
+            sourceFramework: rpt.sourceFramework || rpt.source_framework,
+            sourceName: rpt.sourceName || rpt.source_name,
+            config,
+            companyContext: rpt.companyContext || rpt.company_context,
+            createdAt: rpt.createdAt || rpt.created_at,
+            createdBy: rpt.createdBy || rpt.created_by || userId,
+          },
+          sections: v2Sections,
+          scoreSummary,
+          organizationName: rpt.organizationName || rpt.organization_name,
+          projectName: rpt.projectName || rpt.project_name,
+        },
+        {
+          template: (template as any) || 'corporate',
+          language: (language as any) || 'pl',
+          confidentiality: (confidentiality as any) || 'confidential',
+        }
+      );
+
+      buffer = result.buffer;
+
+      // Log pipeline stats
+      logger.info('[ReportBuilder] PPTX v2 exported', {
+        reportId: id,
+        userId,
+        slideCount: result.slideCount,
+        warnings: result.warnings.length,
+        valid: result.validation.valid,
+      });
+    } else {
+      // ── V1: Legacy monolithic export ──
+      const { PptxExportService } = await import('../services/report/PptxExportService.js');
+      const pptxService = new PptxExportService();
+
+      const rpt = reportData.report as any;
+      const pptxReportData = {
+        id: rpt.id,
+        name: rpt.title || rpt.name || 'Report',
+        sourceType: rpt.sourceType || rpt.source_type || 'ASSESSMENT',
+        sourceFramework: rpt.sourceFramework || rpt.source_framework,
+        organizationName: rpt.organizationName || rpt.organization_name,
+        projectName: rpt.projectName || rpt.project_name,
+        createdAt: rpt.createdAt || rpt.created_at,
+        intentConfig:
+          rpt.intentConfig || rpt.intent_config
+            ? JSON.parse(rpt.intentConfig || rpt.intent_config)
+            : undefined,
+        sections: (reportData.sections || []).map((s: any) => ({
+          key: s.sectionKey || s.section_key,
+          title: s.title || s.sectionKey || s.section_key,
+          type: s.sectionType || s.section_type,
+          content: s.generatedContent || s.generated_content || '',
+          renderKind: s.renderKind || s.render_kind,
+          data: s.dataJson || s.data_json ? JSON.parse(s.dataJson || s.data_json) : undefined,
+        })),
+        scoreSummary:
+          rpt.scoreSummary || rpt.score_summary
+            ? JSON.parse(rpt.scoreSummary || rpt.score_summary)
+            : undefined,
+      };
+
+      buffer = await pptxService.generatePresentation(pptxReportData, {
+        template: (template as any) || 'corporate',
+        language: (language as any) || 'pl',
+        includeCharts: true,
+        includeToc: true,
+      });
+
+      logger.info('[ReportBuilder] PPTX v1 exported', { reportId: id, userId });
+    }
 
     // Save to exports directory
     const exportDir = await ensureExportDir();
@@ -2249,8 +2344,6 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
       language: (language as string) || 'pl',
       exportedBy: userId,
     });
-
-    logger.info('[ReportBuilder] PPTX exported', { reportId: id, userId });
 
     res.setHeader(
       'Content-Type',

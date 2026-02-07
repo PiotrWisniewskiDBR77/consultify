@@ -733,8 +733,40 @@ export class LLMService {
             abortSignal: AbortSignal.timeout(60000),
           });
 
+          // Wrap textStream so that errors thrown during iteration (e.g. 429
+          // rate limit from Gemini free tier) are properly propagated instead
+          // of silently ending the iterator with zero chunks.
+          const rawStream = result.textStream;
+          const responsePromise = result.response; // resolves/rejects when the stream completes
+
+          async function* safeTextStream(): AsyncGenerator<string> {
+            let hasYielded = false;
+            try {
+              for await (const chunk of rawStream) {
+                hasYielded = true;
+                yield chunk;
+              }
+            } catch (streamError: any) {
+              // Re-throw stream iteration errors so callers can handle them
+              await circuitBreaker.recordFailure(providerId, streamError);
+              throw streamError;
+            }
+
+            // If no chunks were yielded, the underlying request likely failed
+            // silently (Vercel AI SDK may swallow errors in certain cases).
+            // Check the response promise for the actual error.
+            if (!hasYielded) {
+              try {
+                await responsePromise;
+              } catch (respError: any) {
+                await circuitBreaker.recordFailure(providerId, respError);
+                throw respError;
+              }
+            }
+          }
+
           await circuitBreaker.recordSuccess(providerId);
-          return { stream: result.textStream };
+          return { stream: safeTextStream() };
         } catch (error: unknown) {
           lastError = error as Error;
           aiLogger.warn(

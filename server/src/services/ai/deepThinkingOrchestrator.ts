@@ -418,8 +418,26 @@ export class DeepThinkingOrchestrator {
       }
     }
 
-    // 4) Synthesis
+    // 4) Synthesis — inject historical decision context (organization memory)
     emit({ type: 'dt_state', state: 'synthesis' satisfies DtState, label: 'Synthesis' });
+
+    let historicalContextAddon = '';
+    try {
+      const organizationId = (context as any)?.organizationId;
+      if (organizationId) {
+        const { buildHistoricalContextAddon } = await import('./decisionMemoryService.js');
+        historicalContextAddon = await buildHistoricalContextAddon({
+          organizationId,
+          currentProblem: message,
+          language: (language || 'en').split('-')[0],
+        });
+        if (historicalContextAddon) {
+          logger.info(`[DeepThinking] Injected historical decision context for org ${organizationId}`);
+        }
+      }
+    } catch (histErr: any) {
+      logger.debug(`[DeepThinking] Historical context not available: ${histErr?.message}`);
+    }
 
     // 5) Closure
     emit({ type: 'dt_state', state: 'closure' satisfies DtState, label: 'Closure' });
@@ -427,6 +445,7 @@ export class DeepThinkingOrchestrator {
     const researchType = researchOutput?.researchType;
     const addon = [
       buildDeepThinkingFormatAddon(showHighlights, researchType),
+      historicalContextAddon,
       researchOutput ? buildResearchAddon(researchOutput) : '',
       researchOutput ? '\n\nRules (research):\n- If sources are provided, cite them as [n].' : '',
     ]

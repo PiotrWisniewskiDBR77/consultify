@@ -239,38 +239,88 @@ export class AIPipeline {
 
       // Check if streaming is requested
       if ((request as any).stream) {
-        logger.info(
-          `[AIPipeline] Starting stream with ${modelConfig.provider}/${modelConfig.model}`
-        );
+        const systemPromptStr = prompt.find((m) => m.role === 'system')?.content || '';
+        const nonSystemMsgs = prompt
+          .filter((m) => m.role !== 'system')
+          .map((m) => ({
+            role: m.role as 'user' | 'assistant' | 'system' | 'tool',
+            content: m.content,
+          }));
 
-        // Return a stream-enabled response
-        const streamResponse = await llmService.callStream({
-          type: 'chat',
-          modelConfig: {
-            provider: modelConfig.provider,
-            id: modelConfig.model,
-            endpoint: (modelConfig as any).endpoint,
-            apiKey: (modelConfig as any).apiKey,
-          },
-          systemPrompt: prompt.find((m) => m.role === 'system')?.content || '',
-          messages: prompt
-            .filter((m) => m.role !== 'system')
-            .map((m) => ({
-              role: m.role as 'user' | 'assistant' | 'system' | 'tool',
-              content: m.content,
-            })),
-          maxTokens: modelConfig.maxTokens,
-          temperature: request.options?.temperature ?? 0.7,
-          stream: true,
-        });
+        // Try primary provider, with automatic fallback on failure (e.g. Gemini 429)
+        const FALLBACK_MODELS = [
+          { provider: 'openai', id: 'gpt-4o-mini' },
+          { provider: 'openai', id: 'gpt-4o' },
+        ];
+
+        let usedProvider = modelConfig.provider;
+        let usedModel = modelConfig.model;
+        let streamResponse: Record<string, unknown> | null = null;
+
+        // Attempt primary model
+        try {
+          logger.info(
+            `[AIPipeline] Starting stream with ${modelConfig.provider}/${modelConfig.model}`
+          );
+          streamResponse = await llmService.callStream({
+            type: 'chat',
+            modelConfig: {
+              provider: modelConfig.provider,
+              id: modelConfig.model,
+              endpoint: (modelConfig as any).endpoint,
+              apiKey: (modelConfig as any).apiKey,
+            },
+            systemPrompt: systemPromptStr,
+            messages: nonSystemMsgs,
+            maxTokens: modelConfig.maxTokens,
+            temperature: request.options?.temperature ?? 0.7,
+            stream: true,
+          });
+        } catch (primaryError: any) {
+          const isRateLimit = /quota|rate.limit|429|too many requests/i.test(
+            primaryError?.message || ''
+          );
+          logger.warn(
+            `[AIPipeline] Primary stream failed (${modelConfig.provider}/${modelConfig.model}): ${primaryError?.message?.slice(0, 200)}${isRateLimit ? ' [RATE_LIMIT — trying fallback]' : ''}`
+          );
+
+          // Try fallback models if primary fails
+          for (const fb of FALLBACK_MODELS) {
+            if (fb.provider === modelConfig.provider && fb.id === modelConfig.model) continue;
+            try {
+              logger.info(`[AIPipeline] Attempting fallback stream: ${fb.provider}/${fb.id}`);
+              streamResponse = await llmService.callStream({
+                type: 'chat',
+                modelConfig: { provider: fb.provider, id: fb.id },
+                systemPrompt: systemPromptStr,
+                messages: nonSystemMsgs,
+                maxTokens: modelConfig.maxTokens,
+                temperature: request.options?.temperature ?? 0.7,
+                stream: true,
+              });
+              usedProvider = fb.provider;
+              usedModel = fb.id;
+              logger.info(`[AIPipeline] Fallback stream started: ${fb.provider}/${fb.id}`);
+              break;
+            } catch (fbError: any) {
+              logger.warn(
+                `[AIPipeline] Fallback ${fb.provider}/${fb.id} also failed: ${fbError?.message?.slice(0, 150)}`
+              );
+            }
+          }
+
+          if (!streamResponse) {
+            throw primaryError; // All fallbacks failed — propagate original error
+          }
+        }
 
         return {
           success: true,
           content: '',
           stream: (streamResponse as { stream?: AsyncIterable<string> }).stream,
           metadata: {
-            provider: modelConfig.provider,
-            model: modelConfig.model,
+            provider: usedProvider,
+            model: usedModel,
             latency: Date.now() - startTime,
             traceId,
             ragResults: enrichedContext.ragResults,
@@ -561,18 +611,18 @@ export class AIPipeline {
           ...fullContext,
           userMemory: userMemory
             ? {
-                preferences: userMemory.preferences,
-                expertise: userMemory.expertise?.slice(0, 10),
-                recentTopics: userMemory.recentTopics?.slice(0, 5),
-                interactionCount: userMemory.interactionCount,
-              }
+              preferences: userMemory.preferences,
+              expertise: userMemory.expertise?.slice(0, 10),
+              recentTopics: userMemory.recentTopics?.slice(0, 5),
+              interactionCount: userMemory.interactionCount,
+            }
             : null,
           orgMemory: orgMemory
             ? {
-                terminology: orgMemory.terminology,
-                decisionPatterns: orgMemory.decisionPatterns?.slice(0, 5),
-                aiMaturityStage: orgMemory.aiMaturityStage,
-              }
+              terminology: orgMemory.terminology,
+              decisionPatterns: orgMemory.decisionPatterns?.slice(0, 5),
+              aiMaturityStage: orgMemory.aiMaturityStage,
+            }
             : null,
           customInstructions,
         };
@@ -649,6 +699,26 @@ export class AIPipeline {
       }
     }
 
+    // Enhance system prompt with learned instructions from user feedback
+    if (request.organizationId) {
+      try {
+        const lsPath = './learningSystem' + '.js';
+        const learningMod = await import(/* @vite-ignore */ lsPath);
+        const learningSystem = (learningMod as any).default || learningMod;
+        if (learningSystem?.enhancePrompt) {
+          const enhanced = await learningSystem.enhancePrompt(systemPrompt, request.organizationId);
+          if (enhanced?.enhancedPrompt) {
+            systemPrompt = enhanced.enhancedPrompt;
+            if (enhanced.appliedPatterns?.length > 0) {
+              logger.info(`[AIPipeline] Applied ${enhanced.appliedPatterns.length} learned instruction(s)`);
+            }
+          }
+        }
+      } catch (learnErr: any) {
+        logger.debug(`[AIPipeline] Learning system not available: ${learnErr?.message}`);
+      }
+    }
+
     messages.push({
       role: 'system',
       content: systemPrompt,
@@ -665,10 +735,35 @@ export class AIPipeline {
       }
     }
 
-    // Add user prompt
+    // Scan user prompt for PII and prompt injection before sending to LLM
+    let sanitizedPrompt = request.prompt;
+    try {
+      const secMod = await import('./enterpriseSecurity.js');
+      const security = (secMod as any).default || (secMod as any).enterpriseSecurity;
+      if (security?.scanAndSanitize) {
+        const scanResult = await security.scanAndSanitize(
+          request.prompt,
+          request.userId,
+          request.organizationId
+        );
+        if (scanResult.blocked) {
+          logger.warn(`[AIPipeline] Prompt blocked by security scan (injection detected)`);
+          throw new Error('PROMPT_BLOCKED: Input contains disallowed content');
+        }
+        if (scanResult.piiResult?.hasPII) {
+          sanitizedPrompt = scanResult.sanitizedText;
+          logger.info(`[AIPipeline] PII redacted from user prompt (${scanResult.piiResult.detections.length} items)`);
+        }
+      }
+    } catch (secErr: any) {
+      if (secErr?.message?.startsWith('PROMPT_BLOCKED')) throw secErr;
+      logger.debug(`[AIPipeline] Security scan not available: ${secErr?.message}`);
+    }
+
+    // Add user prompt (sanitized)
     messages.push({
       role: 'user',
-      content: request.prompt,
+      content: sanitizedPrompt,
     });
 
     return messages;
@@ -824,10 +919,31 @@ export class AIPipeline {
   private buildOrganizationSection(org: any): string {
     if (!org) return '';
 
-    return `## ORGANIZACJA
-- Nazwa: ${org.organizationName || 'Nieznana'}
-- Aktywne projekty: ${org.activeProjectCount || 0}
-- Poziom dojrzałości PMO: ${org.pmoMaturityLevel || 'BASIC'}`;
+    const lines = [
+      '## ORGANIZACJA',
+      `- Nazwa: ${org.organizationName || 'Nieznana'}`,
+      org.industry ? `- Branża: ${org.industry}` : '',
+      `- Aktywne projekty: ${org.activeProjectCount || 0}`,
+      `- Poziom dojrzałości PMO: ${org.pmoMaturityLevel || 'BASIC'}`,
+    ];
+
+    // Inject organization terminology for consistent language
+    if (org.terminology && Object.keys(org.terminology).length > 0) {
+      lines.push('', '### Terminologia organizacji (używaj tych terminów):');
+      for (const [term, definition] of Object.entries(org.terminology)) {
+        lines.push(`- **${term}**: ${definition}`);
+      }
+    }
+
+    // Inject org-level best practices / patterns
+    if (org.orgPatterns && org.orgPatterns.length > 0) {
+      lines.push('', '### Wzorce organizacyjne (learned from past projects):');
+      for (const p of org.orgPatterns.slice(0, 3)) {
+        lines.push(`- [${p.type}] ${p.title}: ${p.content}`);
+      }
+    }
+
+    return lines.filter(Boolean).join('\n');
   }
 
   private buildProjectSection(project: any): string {

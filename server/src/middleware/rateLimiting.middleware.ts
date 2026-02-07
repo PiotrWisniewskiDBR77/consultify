@@ -76,10 +76,10 @@ function createLimiter(opts: { windowMs: number; max: number; prefix: string; me
 // ---------------------------------------------------------------------------
 const isProd = process.env.NODE_ENV === 'production';
 
-/** Auth: 15 req / 15 min (prod) */
+/** Auth: 15 req / 15 min (prod), 5000 in dev (shared across many routes) */
 export const authRateLimiter = createLimiter({
   windowMs: 15 * 60_000,
-  max: isProd ? 15 : 200,
+  max: isProd ? 15 : 5000,
   prefix: 'auth',
   message: 'Too many authentication attempts.',
 });

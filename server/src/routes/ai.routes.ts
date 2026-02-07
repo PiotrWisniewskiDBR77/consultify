@@ -1602,34 +1602,52 @@ router.post(
       }
 
       if ((response as { stream?: AsyncIterable<string> }).stream) {
-        for await (const chunk of (response as { stream: AsyncIterable<string> }).stream) {
-          if (!isClientConnected || res.destroyed || streamAborted) {
-            logger.info(`[Stream] Aborting stream - client disconnected: ${streamSessionId}`);
-            break;
-          }
+        let streamIterationError: Error | null = null;
+        try {
+          for await (const chunk of (response as { stream: AsyncIterable<string> }).stream) {
+            if (!isClientConnected || res.destroyed || streamAborted) {
+              logger.info(`[Stream] Aborting stream - client disconnected: ${streamSessionId}`);
+              break;
+            }
 
-          if (chunk) {
-            accumulatedContent += chunk;
-            res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+            if (chunk) {
+              accumulatedContent += chunk;
+              res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
 
-            if (Date.now() - lastSaveTime > 2000) {
-              savePartialResponse(
-                streamSessionId,
-                accumulatedContent,
-                req.userId!,
-                req.organizationId!
-              ).catch((err: Error | null) =>
-                logger.warn('[Stream] Partial save failed:', (err as Error).message)
-              );
-              lastSaveTime = Date.now();
+              if (Date.now() - lastSaveTime > 2000) {
+                savePartialResponse(
+                  streamSessionId,
+                  accumulatedContent,
+                  req.userId!,
+                  req.organizationId!
+                ).catch((err: Error | null) =>
+                  logger.warn('[Stream] Partial save failed:', (err as Error).message)
+                );
+                lastSaveTime = Date.now();
+              }
             }
           }
+        } catch (iterErr: any) {
+          streamIterationError = iterErr;
+          logger.error(`[Stream] Iterator error: ${iterErr?.message?.slice(0, 300)}`);
         }
 
         if (isClientConnected && !streamAborted) {
-          // If stream produced no content, surface an explicit error.
-          // Without this, the frontend may see only [DONE] and appear "dead".
-          if (!accumulatedContent || accumulatedContent.trim().length === 0) {
+          // If the stream iterator threw (e.g. Gemini 429 rate limit), send a clear error.
+          if (streamIterationError) {
+            const errMsg = String(streamIterationError?.message || 'Stream failed');
+            const isRateLimit = /quota|rate.limit|429|too many/i.test(errMsg);
+            res.write(
+              `data: ${JSON.stringify({
+                error: isRateLimit
+                  ? 'LLM rate limit exceeded. Please wait a moment or switch to a different model tier.'
+                  : `AI stream error: ${errMsg.slice(0, 200)}`,
+                code: isRateLimit ? 'RATE_LIMIT' : 'STREAM_ERROR',
+              })}\n\n`
+            );
+          } else if (!accumulatedContent || accumulatedContent.trim().length === 0) {
+            // If stream produced no content, surface an explicit error.
+            // Without this, the frontend may see only [DONE] and appear "dead".
             res.write(
               `data: ${JSON.stringify({
                 error:
@@ -1990,7 +2008,7 @@ router.post(
                 const kgService = (kgMod as any).knowledgeGraphService || (kgMod as any).default;
                 if (kgService?.processConversation) {
                   // Fire and forget — don't block the stream
-                  kgService.processConversation(req.organizationId, message, accumulatedContent).catch(() => {});
+                  kgService.processConversation(req.organizationId, message, accumulatedContent).catch(() => { });
                 }
               }
             } catch {
@@ -3666,7 +3684,8 @@ router.post(
 
       // Feed into learning system for pattern analysis and quality improvement
       try {
-        const lsMod = await import('../services/ai/learningSystem.js');
+        const lsPath = '../services/ai/learningSystem' + '.js';
+        const lsMod = await import(/* @vite-ignore */ lsPath);
         const ls = (lsMod as any).learningSystem || (lsMod as any).default;
         if (ls?.processFeedback) {
           await ls.processFeedback({

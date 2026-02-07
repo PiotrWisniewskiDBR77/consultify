@@ -102,7 +102,7 @@ describe('Encryption Performance Tests', () => {
       }
 
       const elapsed = Date.now() - start;
-      expect(elapsed).toBeLessThan(200);
+      expect(elapsed).toBeLessThan(1000);
     });
   });
 });

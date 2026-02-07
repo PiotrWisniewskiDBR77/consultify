@@ -243,8 +243,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
       onMouseEnter={() => setHoveredMessageId(msg.id)}
       onMouseLeave={() => setHoveredMessageId(null)}
     >
-      {/* Thinking Steps (for AI messages) */}
-      {msg.role === 'ai' && hasThinkingSteps && (
+      {/* Thinking Steps (for AI messages) — only show full block for multi-step (medium/deep) */}
+      {msg.role === 'ai' && hasThinkingSteps && (msg.thinkingSteps!.length > 1) && (
         <div className={`w-full ${isCompact ? 'ml-7' : 'ml-9'} max-w-[85%]`}>
           <ThinkingBlock
             steps={msg.thinkingSteps!}
@@ -569,7 +569,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     <ThinkingStatusLine
                       compact={isCompact}
                       className="mb-1"
-                      show={msg.isStreaming === true && thinkingSteps.length > 0}
+                      show={msg.isStreaming === true && thinkingSteps.length > 0 && !msg.content?.trim()}
                       label={
                         (thinkingSteps.find((s) => s.status === 'in_progress')?.label ||
                           thinkingSteps.find((s) => s.status === 'pending')?.label ||
