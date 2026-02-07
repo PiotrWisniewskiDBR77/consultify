@@ -546,6 +546,28 @@ router.post(
           req.organizationId!
         ).catch((err: Error | null) => logger.error('[Stream] Failed to save partial:', err));
       }
+
+      // Trace: mark run as aborted (best-effort)
+      if (chatRunId && req.organizationId && req.userId) {
+        setImmediate(() => {
+          import('../services/ai/chatTraceService.js')
+            .then((mod: any) =>
+              (mod.default || mod).completeRun({
+                runId: chatRunId,
+                status: 'aborted',
+                pipelineTraceId: pipelineMeta?.traceId || pipelineMeta?.trace_id || null,
+                modelProvider: pipelineMeta?.provider || null,
+                modelId: pipelineMeta?.model || null,
+                tier: selectedTier || null,
+                outputText: accumulatedContent,
+                dtStates: dtStatesEmitted,
+              })
+            )
+            .catch(() => {
+              /* ignore */
+            });
+        });
+      }
     };
 
     req.socket?.on('close', connectionCleanup);

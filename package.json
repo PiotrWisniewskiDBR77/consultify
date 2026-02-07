@@ -15,7 +15,7 @@
     "dev:londyn": "bash ./start-londyn.sh",
     "dev:frontend": "vite --port 3000 --strictPort",
     "lint": "eslint . --report-unused-disable-directives",
-    "type-check": "tsc --noEmit",
+    "type-check": "node --max-old-space-size=8192 ./node_modules/.bin/tsc --noEmit",
     "dev:backend": "DB_TYPE=sqlite SQLITE_PATH=./data/dev/consultinity.db npm run db:migrate:safe && cd server && DB_TYPE=sqlite SQLITE_PATH=../data/dev/consultinity.db npx tsx scripts/seed-dbr77-fill-all-tables.ts && PORT=3001 DB_TYPE=sqlite SQLITE_PATH=../data/dev/consultinity.db LOG_LEVEL=info AI_LOG_LEVEL=INFO npm run dev",
     "dev:backend:fast": "DB_TYPE=sqlite SQLITE_PATH=./data/dev/consultinity.db npm run db:migrate:safe && cd server && PORT=3001 DB_TYPE=sqlite SQLITE_PATH=../data/dev/consultinity.db LOG_LEVEL=info AI_LOG_LEVEL=INFO npm run dev",
     "dev:backend:watch": "DB_TYPE=sqlite SQLITE_PATH=./data/dev/consultinity.db npm run db:migrate:safe && cd server && DB_TYPE=sqlite SQLITE_PATH=../data/dev/consultinity.db npx tsx scripts/seed-dbr77-fill-all-tables.ts && PORT=3001 DB_TYPE=sqlite SQLITE_PATH=../data/dev/consultinity.db LOG_LEVEL=info AI_LOG_LEVEL=INFO npm run dev:watch",
@@ -92,8 +92,7 @@
     "i18n:check": "npx ts-node scripts/i18n/translate-help.ts --check",
     "i18n:translate": "npx ts-node scripts/i18n/translate-help.ts --translate",
     "i18n:validate": "npx ts-node scripts/i18n/translate-help.ts --validate",
-    "branding:generate": "npx tsx scripts/branding/generate-consultinity-assets.ts"
-    ,
+    "branding:generate": "npx tsx scripts/branding/generate-consultinity-assets.ts",
     "doctor": "npx tsx scripts/dev/doctor.ts",
     "cleanup:quarantine-duplicates": "npx tsx scripts/dev/quarantine-icloud-duplicates.ts"
   },
