@@ -115,7 +115,9 @@ export const ChatTracesViewer: React.FC = () => {
                     onClick={() => id && fetchDetail(id)}
                   >
                     <td className="px-4 py-2 whitespace-nowrap text-slate-700 dark:text-slate-200">
-                      {String(r.started_at || '').slice(0, 19).replace('T', ' ')}
+                      {String(r.started_at || '')
+                        .slice(0, 19)
+                        .replace('T', ' ')}
                     </td>
                     <td className="px-4 py-2">
                       <span
@@ -146,14 +148,20 @@ export const ChatTracesViewer: React.FC = () => {
               })}
               {runs.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-slate-500 dark:text-slate-400">
+                  <td
+                    colSpan={5}
+                    className="px-4 py-6 text-center text-slate-500 dark:text-slate-400"
+                  >
                     No traces found.
                   </td>
                 </tr>
               )}
               {loading && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-slate-500 dark:text-slate-400">
+                  <td
+                    colSpan={5}
+                    className="px-4 py-6 text-center text-slate-500 dark:text-slate-400"
+                  >
                     Loading…
                   </td>
                 </tr>
@@ -180,7 +188,9 @@ export const ChatTracesViewer: React.FC = () => {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">Status</div>
-                <div className="text-slate-800 dark:text-slate-100">{String(selected.run.status)}</div>
+                <div className="text-slate-800 dark:text-slate-100">
+                  {String(selected.run.status)}
+                </div>
               </div>
               <div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">Latency</div>
@@ -208,7 +218,7 @@ export const ChatTracesViewer: React.FC = () => {
                   Request / Context
                 </div>
                 <pre className="p-3 text-xs overflow-auto text-slate-700 dark:text-slate-200">
-{JSON.stringify({ request: selectedRequest, context: selectedContext }, null, 2)}
+                  {JSON.stringify({ request: selectedRequest, context: selectedContext }, null, 2)}
                 </pre>
               </div>
             )}
@@ -219,7 +229,7 @@ export const ChatTracesViewer: React.FC = () => {
                   Eval (heuristic)
                 </div>
                 <pre className="p-3 text-xs overflow-auto text-slate-700 dark:text-slate-200">
-{JSON.stringify(selectedEval, null, 2)}
+                  {JSON.stringify(selectedEval, null, 2)}
                 </pre>
               </div>
             )}
@@ -236,12 +246,14 @@ export const ChatTracesViewer: React.FC = () => {
                         {String(e.type)}
                       </div>
                       <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                        {String(e.ts || '').slice(0, 19).replace('T', ' ')}
+                        {String(e.ts || '')
+                          .slice(0, 19)
+                          .replace('T', ' ')}
                       </div>
                     </div>
                     {e.data_json && (
                       <pre className="mt-2 text-xs overflow-auto text-slate-700 dark:text-slate-200">
-{JSON.stringify(safeParseJson(e.data_json) || e.data_json, null, 2)}
+                        {JSON.stringify(safeParseJson(e.data_json) || e.data_json, null, 2)}
                       </pre>
                     )}
                   </div>
@@ -265,4 +277,3 @@ export const ChatTracesViewer: React.FC = () => {
 };
 
 export default ChatTracesViewer;
-

@@ -850,7 +850,9 @@ router.post(
         // Trace event (best-effort)
         if (chatRunId) {
           import('../services/ai/chatTraceService.js')
-            .then((m: any) => (m.default || m).addEvent(chatRunId, 'memory_injected', { hasSummary, hasLtm }))
+            .then((m: any) =>
+              (m.default || m).addEvent(chatRunId, 'memory_injected', { hasSummary, hasLtm })
+            )
             .catch(() => {
               /* ignore */
             });
@@ -1180,7 +1182,12 @@ router.post(
           try {
             const svcMod = await import('../services/ai/chatTraceService.js');
             const chatTraceService = (svcMod.default || svcMod) as any;
-            await chatTraceService.failRun({ runId: chatRunId, code, message: msg, dtStates: dtStatesEmitted });
+            await chatTraceService.failRun({
+              runId: chatRunId,
+              code,
+              message: msg,
+              dtStates: dtStatesEmitted,
+            });
           } catch {
             /* ignore */
           }
@@ -1667,7 +1674,12 @@ router.post(
           try {
             const svcMod = await import('../services/ai/chatTraceService.js');
             const chatTraceService = (svcMod.default || svcMod) as any;
-            await chatTraceService.failRun({ runId: chatRunId, code, message: msg, dtStates: dtStatesEmitted });
+            await chatTraceService.failRun({
+              runId: chatRunId,
+              code,
+              message: msg,
+              dtStates: dtStatesEmitted,
+            });
           } catch {
             /* ignore */
           }
