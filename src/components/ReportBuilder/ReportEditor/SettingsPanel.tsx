@@ -15,8 +15,8 @@ import {
   FileText,
   Globe,
   Image,
-  LayoutGrid,
   Layers,
+  LayoutGrid,
   Monitor,
   Palette,
   Plus,
@@ -51,7 +51,10 @@ interface TemplateMeta {
 // ==========================================
 
 /** Tools/frameworks available per module (sourceType) */
-const MODULE_TOOLS: Record<ReportSourceType, { value: string; label: string; description?: string }[]> = {
+const MODULE_TOOLS: Record<
+  ReportSourceType,
+  { value: string; label: string; description?: string }[]
+> = {
   ASSESSMENT: [
     { value: 'DRD', label: 'DRD', description: 'Digital Readiness Diagnostic' },
     { value: 'SIRI', label: 'SIRI', description: 'Smart Industry Readiness Index' },
@@ -61,23 +64,39 @@ const MODULE_TOOLS: Record<ReportSourceType, { value: string; label: string; des
   ],
   TOOL: [
     { value: 'SWOT', label: 'SWOT', description: 'Strengths, Weaknesses, Opportunities, Threats' },
-    { value: 'PESTEL', label: 'PESTEL', description: 'Political, Economic, Social, Technological...' },
+    {
+      value: 'PESTEL',
+      label: 'PESTEL',
+      description: 'Political, Economic, Social, Technological...',
+    },
     { value: 'PORTER', label: 'Porter 5 Forces', description: 'Industry competitive analysis' },
     { value: 'BCG', label: 'BCG Matrix', description: 'Growth-share matrix' },
-    { value: 'CANVAS', label: 'Business Model Canvas', description: 'Business model visualization' },
+    {
+      value: 'CANVAS',
+      label: 'Business Model Canvas',
+      description: 'Business model visualization',
+    },
     { value: 'VALUE_CHAIN', label: 'Value Chain', description: 'Value chain analysis' },
     { value: 'ROADMAP', label: 'Roadmap', description: 'Strategic roadmap' },
     { value: 'OKR', label: 'OKR', description: 'Objectives and Key Results' },
   ],
   INTERVIEW: [
-    { value: 'STAKEHOLDER', label: 'Stakeholder Interview', description: 'Key stakeholder insights' },
+    {
+      value: 'STAKEHOLDER',
+      label: 'Stakeholder Interview',
+      description: 'Key stakeholder insights',
+    },
     { value: 'EXPERT', label: 'Expert Interview', description: 'Domain expert consultation' },
     { value: 'USER', label: 'User Interview', description: 'End-user research' },
   ],
   INITIATIVE: [
     { value: 'PROJECT', label: 'Project Report', description: 'Project status and progress' },
     { value: 'PROGRAM', label: 'Program Report', description: 'Multi-project program overview' },
-    { value: 'TRANSFORMATION', label: 'Transformation', description: 'Digital transformation initiative' },
+    {
+      value: 'TRANSFORMATION',
+      label: 'Transformation',
+      description: 'Digital transformation initiative',
+    },
   ],
 };
 
@@ -132,7 +151,8 @@ const QuickPreviewBar: React.FC<QuickPreviewBarProps> = ({ intent, styling, isPl
     mixed: '👥 Mixed',
   };
 
-  const orientationLabel = styling.layoutOrientation === 'horizontal' ? '📺 Landscape' : '📄 Portrait';
+  const orientationLabel =
+    styling.layoutOrientation === 'horizontal' ? '📺 Landscape' : '📄 Portrait';
   const langLabel = REPORT_LANGUAGES.find((l) => l.value === intent.language)?.flag || '🌐';
 
   return (
@@ -250,20 +270,29 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </button>
           <div className="mt-4 space-y-2">
             <button
-              onClick={() => { onToggleCollapse?.(); onSectionChange('intent'); }}
+              onClick={() => {
+                onToggleCollapse?.();
+                onSectionChange('intent');
+              }}
               className={`p-2 rounded-lg ${activeSection === 'intent' ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
             >
               <Target className="w-5 h-5" />
             </button>
             <button
-              onClick={() => { onToggleCollapse?.(); onSectionChange('styling'); }}
+              onClick={() => {
+                onToggleCollapse?.();
+                onSectionChange('styling');
+              }}
               className={`p-2 rounded-lg ${activeSection === 'styling' ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
             >
               <Palette className="w-5 h-5" />
             </button>
             {!isTemplateMode && (
               <button
-                onClick={() => { onToggleCollapse?.(); onSectionChange('review'); }}
+                onClick={() => {
+                  onToggleCollapse?.();
+                  onSectionChange('review');
+                }}
                 className={`p-2 rounded-lg ${activeSection === 'review' ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
               >
                 <ClipboardCheck className="w-5 h-5" />
@@ -336,19 +365,24 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {/* Template Info (only in template mode) */}
             {isTemplateMode && templateMeta && onTemplateMetaChange && (
-              <SectionCard title={isPl ? 'Szablon' : 'Template'} icon={<FileText className="w-4 h-4" />}>
+              <SectionCard
+                title={isPl ? 'Szablon' : 'Template'}
+                icon={<FileText className="w-4 h-4" />}
+              >
                 <div className="space-y-3">
                   {/* Module selection */}
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">{isPl ? 'Moduł' : 'Module'}</label>
+                    <label className="block text-xs text-slate-500 mb-1">
+                      {isPl ? 'Moduł' : 'Module'}
+                    </label>
                     <select
                       value={templateMeta.sourceType || 'ASSESSMENT'}
                       onChange={(e) => {
                         const newSourceType = e.target.value as ReportSourceType;
                         // Reset reportType when module changes
-                        onTemplateMetaChange?.({ 
+                        onTemplateMetaChange?.({
                           sourceType: newSourceType,
-                          reportType: MODULE_TOOLS[newSourceType]?.[0]?.value || ''
+                          reportType: MODULE_TOOLS[newSourceType]?.[0]?.value || '',
                         });
                       }}
                       className="w-full px-2 py-1.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
@@ -380,16 +414,20 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     {/* Show description of selected tool */}
                     {templateMeta.reportType && (
                       <div className="mt-1 text-[10px] text-slate-400">
-                        {MODULE_TOOLS[templateMeta.sourceType || 'ASSESSMENT']?.find(
-                          (t) => t.value === templateMeta.reportType
-                        )?.description}
+                        {
+                          MODULE_TOOLS[templateMeta.sourceType || 'ASSESSMENT']?.find(
+                            (t) => t.value === templateMeta.reportType
+                          )?.description
+                        }
                       </div>
                     )}
                   </div>
 
                   {/* Author */}
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">{isPl ? 'Autor' : 'Author'}</label>
+                    <label className="block text-xs text-slate-500 mb-1">
+                      {isPl ? 'Autor' : 'Author'}
+                    </label>
                     <input
                       value={templateMeta.author || ''}
                       onChange={(e) => onTemplateMetaChange?.({ author: e.target.value })}
@@ -412,7 +450,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
             {/* Quick Preset (template mode) */}
             {isTemplateMode && onApplyPreset && (
-              <SectionCard title={isPl ? 'Szybki preset' : 'Quick Preset'} icon={<Zap className="w-4 h-4" />}>
+              <SectionCard
+                title={isPl ? 'Szybki preset' : 'Quick Preset'}
+                icon={<Zap className="w-4 h-4" />}
+              >
                 <div className="flex gap-2">
                   {[
                     { id: 'assessment_full', label: 'Assessment', emoji: '📊' },
@@ -433,11 +474,16 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             )}
 
             {/* Audience & Goal */}
-            <SectionCard title={isPl ? 'Cel i odbiorcy' : 'Goal & Audience'} icon={<Target className="w-4 h-4" />}>
+            <SectionCard
+              title={isPl ? 'Cel i odbiorcy' : 'Goal & Audience'}
+              icon={<Target className="w-4 h-4" />}
+            >
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">{isPl ? 'Odbiorca' : 'Audience'}</label>
+                    <label className="block text-xs text-slate-500 mb-1">
+                      {isPl ? 'Odbiorca' : 'Audience'}
+                    </label>
                     <select
                       value={intent.audience}
                       onChange={(e) => onIntentChange({ audience: e.target.value as any })}
@@ -451,7 +497,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">{isPl ? 'Cel' : 'Goal'}</label>
+                    <label className="block text-xs text-slate-500 mb-1">
+                      {isPl ? 'Cel' : 'Goal'}
+                    </label>
                     <select
                       value={intent.goal}
                       onChange={(e) => onIntentChange({ goal: e.target.value as any })}
@@ -459,14 +507,18 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     >
                       <option value="diagnosis">{isPl ? 'Diagnoza' : 'Diagnosis'}</option>
                       <option value="roadmap">{isPl ? 'Roadmap' : 'Roadmap'}</option>
-                      <option value="investment_decision">{isPl ? 'Decyzja inwest.' : 'Investment'}</option>
+                      <option value="investment_decision">
+                        {isPl ? 'Decyzja inwest.' : 'Investment'}
+                      </option>
                       <option value="stakeholder_update">{isPl ? 'Update' : 'Update'}</option>
                       <option value="summary">{isPl ? 'Podsumowanie' : 'Summary'}</option>
                     </select>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">{isPl ? 'Ton' : 'Tone'}</label>
+                  <label className="block text-xs text-slate-500 mb-1">
+                    {isPl ? 'Ton' : 'Tone'}
+                  </label>
                   <div className="flex gap-1">
                     {[
                       { value: 'consulting', label: isPl ? 'Konsultingowy' : 'Consulting' },
@@ -514,7 +566,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">{isPl ? 'Długość' : 'Length'}</label>
+                    <label className="block text-xs text-slate-500 mb-1">
+                      {isPl ? 'Długość' : 'Length'}
+                    </label>
                     <select
                       value={intent.targetLength || 'standard'}
                       onChange={(e) => onIntentChange({ targetLength: e.target.value as any })}
@@ -526,10 +580,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">{isPl ? 'Preset' : 'Preset'}</label>
+                    <label className="block text-xs text-slate-500 mb-1">
+                      {isPl ? 'Preset' : 'Preset'}
+                    </label>
                     <select
                       value={intent.requiredSectionsPreset || 'standard'}
-                      onChange={(e) => onIntentChange({ requiredSectionsPreset: e.target.value as any })}
+                      onChange={(e) =>
+                        onIntentChange({ requiredSectionsPreset: e.target.value as any })
+                      }
                       className="w-full px-2 py-1.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
                     >
                       <option value="assessment_full">Assessment</option>
@@ -543,7 +601,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </SectionCard>
 
             {/* Language - 6 languages */}
-            <SectionCard title={isPl ? 'Język raportu' : 'Report Language'} icon={<Globe className="w-4 h-4" />}>
+            <SectionCard
+              title={isPl ? 'Język raportu' : 'Report Language'}
+              icon={<Globe className="w-4 h-4" />}
+            >
               <div className="grid grid-cols-3 gap-2">
                 {REPORT_LANGUAGES.map((lang) => (
                   <button
@@ -563,7 +624,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </SectionCard>
 
             {/* Visuals */}
-            <SectionCard title={isPl ? 'Wizualizacje' : 'Visuals'} icon={<Image className="w-4 h-4" />}>
+            <SectionCard
+              title={isPl ? 'Wizualizacje' : 'Visuals'}
+              icon={<Image className="w-4 h-4" />}
+            >
               <div className="space-y-2">
                 {[
                   { key: 'assessmentMatrix', label: isPl ? 'Macierz oceny' : 'Assessment Matrix' },
@@ -574,13 +638,24 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     <span className="text-sm text-slate-600 dark:text-slate-300">{v.label}</span>
                     <div
                       className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${
-                        (intent.visuals as any)?.[v.key] ?? true ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-600'
+                        ((intent.visuals as any)?.[v.key] ?? true)
+                          ? 'bg-blue-600'
+                          : 'bg-slate-300 dark:bg-slate-600'
                       }`}
-                      onClick={() => onIntentChange({ visuals: { ...intent.visuals, [v.key]: !((intent.visuals as any)?.[v.key] ?? true) } })}
+                      onClick={() =>
+                        onIntentChange({
+                          visuals: {
+                            ...intent.visuals,
+                            [v.key]: !((intent.visuals as any)?.[v.key] ?? true),
+                          },
+                        })
+                      }
                     >
-                      <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                        (intent.visuals as any)?.[v.key] ?? true ? 'left-4' : 'left-0.5'
-                      }`} />
+                      <div
+                        className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                          ((intent.visuals as any)?.[v.key] ?? true) ? 'left-4' : 'left-0.5'
+                        }`}
+                      />
                     </div>
                   </label>
                 ))}
@@ -593,7 +668,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         {activeSection === 'styling' && (
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {/* Layout */}
-            <SectionCard title={isPl ? 'Układ' : 'Layout'} icon={<LayoutGrid className="w-4 h-4" />}>
+            <SectionCard
+              title={isPl ? 'Układ' : 'Layout'}
+              icon={<LayoutGrid className="w-4 h-4" />}
+            >
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <button
@@ -626,7 +704,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   </button>
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">{isPl ? 'Stopka' : 'Footer'}</label>
+                  <label className="block text-xs text-slate-500 mb-1">
+                    {isPl ? 'Stopka' : 'Footer'}
+                  </label>
                   <select
                     value={styling.footerMode || 'minimal'}
                     onChange={(e) => onStylingChange({ footerMode: e.target.value as any })}
@@ -665,7 +745,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">{isPl ? 'Font' : 'Font'}</label>
+                    <label className="block text-xs text-slate-500 mb-1">
+                      {isPl ? 'Font' : 'Font'}
+                    </label>
                     <select
                       value={styling.fontFamily || 'inter'}
                       onChange={(e) => onStylingChange({ fontFamily: e.target.value as any })}
@@ -678,7 +760,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">{isPl ? 'Rozmiar' : 'Size'}</label>
+                    <label className="block text-xs text-slate-500 mb-1">
+                      {isPl ? 'Rozmiar' : 'Size'}
+                    </label>
                     <select
                       value={styling.fontSize || 'medium'}
                       onChange={(e) => onStylingChange({ fontSize: e.target.value as any })}
@@ -719,7 +803,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     />
                     <div>
                       <div className="text-xs text-slate-500">{isPl ? 'Główny' : 'Primary'}</div>
-                      <div className="text-[10px] font-mono text-slate-400">{styling.primaryColor}</div>
+                      <div className="text-[10px] font-mono text-slate-400">
+                        {styling.primaryColor}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -731,7 +817,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     />
                     <div>
                       <div className="text-xs text-slate-500">{isPl ? 'Akcent' : 'Accent'}</div>
-                      <div className="text-[10px] font-mono text-slate-400">{styling.accentColor}</div>
+                      <div className="text-[10px] font-mono text-slate-400">
+                        {styling.accentColor}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -780,7 +868,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <div className="space-y-4">
                 {/* Logo upload */}
                 <div>
-                  <div className="text-xs text-slate-500 mb-2">{isPl ? 'Logo klienta' : 'Client Logo'}</div>
+                  <div className="text-xs text-slate-500 mb-2">
+                    {isPl ? 'Logo klienta' : 'Client Logo'}
+                  </div>
                   {styling.clientLogoUrl ? (
                     <div className="relative inline-block">
                       <img
@@ -789,7 +879,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         className="max-h-12 rounded-lg border border-slate-200 dark:border-slate-700"
                       />
                       <button
-                        onClick={() => onStylingChange({ clientLogoUrl: undefined, showLogo: false })}
+                        onClick={() =>
+                          onStylingChange({ clientLogoUrl: undefined, showLogo: false })
+                        }
                         className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center"
                       >
                         <Trash2 className="w-3 h-3" />
@@ -830,9 +922,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       }`}
                       onClick={() => onStylingChange({ showBranding: !styling.showBranding })}
                     >
-                      <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                        styling.showBranding ? 'left-5' : 'left-1'
-                      }`} />
+                      <div
+                        className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                          styling.showBranding ? 'left-5' : 'left-1'
+                        }`}
+                      />
                     </div>
                   </label>
                 </div>
@@ -847,9 +941,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         )}
 
         {/* ========== EXPORT TAB (hidden, but kept for compatibility) ========== */}
-        {activeSection === 'export' && (
-          <div className="p-4">{exportPanel || null}</div>
-        )}
+        {activeSection === 'export' && <div className="p-4">{exportPanel || null}</div>}
       </div>
     </aside>
   );

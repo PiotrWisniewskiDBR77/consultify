@@ -50,6 +50,8 @@ frontend_*.log
 server/consultify.db
 server/database.sqlite
 junit.xml
+junit-*.xml
+reports/junit*.xml
 
 # Garbage / Backup files
 node_modules_trash

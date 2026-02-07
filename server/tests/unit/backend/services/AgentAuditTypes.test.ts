@@ -31,4 +31,3 @@ describe('AgentAudit types', () => {
     expect(parsed.findings[0].area).toBe('cashflow');
   });
 });
-

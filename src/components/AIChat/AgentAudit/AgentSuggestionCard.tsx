@@ -74,7 +74,10 @@ interface AgentSuggestionCardProps {
 // HELPER COMPONENTS
 // ==========================================
 
-const AgentKindIcon: React.FC<{ kind: AgentKind; className?: string }> = ({ kind, className = '' }) => {
+const AgentKindIcon: React.FC<{ kind: AgentKind; className?: string }> = ({
+  kind,
+  className = '',
+}) => {
   const icons = {
     industry: Building2,
     functional: User,
@@ -104,7 +107,9 @@ const AgentKindBadge: React.FC<{ kind: AgentKind; language: string }> = ({ kind,
   const { label, className } = config[kind];
 
   return (
-    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${className}`}>
+    <span
+      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${className}`}
+    >
       <AgentKindIcon kind={kind} className="w-3 h-3" />
       {label}
     </span>
@@ -167,15 +172,21 @@ export const AgentSuggestionCard: React.FC<AgentSuggestionCardProps> = ({
   const intentLabels: Record<UserIntent, { label: string; description: string }> = {
     validate: {
       label: isPl ? 'Walidacja' : 'Validate',
-      description: isPl ? 'Standardowa walidacja ryzyk i jakości' : 'Standard risk and quality validation',
+      description: isPl
+        ? 'Standardowa walidacja ryzyk i jakości'
+        : 'Standard risk and quality validation',
     },
     stress_test: {
       label: isPl ? 'Stress-test' : 'Stress-test',
-      description: isPl ? 'Głęboka analiza z agentem kontrariańskim' : 'Deep analysis with adversarial agent',
+      description: isPl
+        ? 'Głęboka analiza z agentem kontrariańskim'
+        : 'Deep analysis with adversarial agent',
     },
     approve: {
       label: isPl ? 'Zatwierdzenie' : 'Approve',
-      description: isPl ? 'Szybka walidacja przed zatwierdzeniem' : 'Quick validation before approval',
+      description: isPl
+        ? 'Szybka walidacja przed zatwierdzeniem'
+        : 'Quick validation before approval',
     },
   };
 
@@ -183,7 +194,9 @@ export const AgentSuggestionCard: React.FC<AgentSuggestionCardProps> = ({
   const canSelectMore = selectedCount < maxAgents;
 
   return (
-    <div className={`bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-navy-800 dark:to-purple-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800 ${className}`}>
+    <div
+      className={`bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-navy-800 dark:to-purple-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800 ${className}`}
+    >
       {/* Header */}
       <div className="px-4 py-3 border-b border-indigo-200 dark:border-indigo-800">
         <div className="flex items-center justify-between">
@@ -419,7 +432,10 @@ export const AgentSuggestionCard: React.FC<AgentSuggestionCardProps> = ({
 
                 {/* Selection Indicator */}
                 {isSelected && (
-                  <CheckCircle2 size={16} className="flex-shrink-0 text-indigo-600 dark:text-indigo-400" />
+                  <CheckCircle2
+                    size={16}
+                    className="flex-shrink-0 text-indigo-600 dark:text-indigo-400"
+                  />
                 )}
               </div>
             </div>
@@ -431,7 +447,10 @@ export const AgentSuggestionCard: React.FC<AgentSuggestionCardProps> = ({
       <div className="px-4 py-2 border-t border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-900/10">
         <p className="text-[10px] text-slate-500 dark:text-slate-400">
           <Shield size={10} className="inline mr-1" />
-          {t('agentAudit.noInterference', 'Agents will audit the final report only — no interference with Deep Thinking process.')}
+          {t(
+            'agentAudit.noInterference',
+            'Agents will audit the final report only — no interference with Deep Thinking process.'
+          )}
         </p>
       </div>
     </div>

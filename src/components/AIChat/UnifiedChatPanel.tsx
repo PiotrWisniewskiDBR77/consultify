@@ -28,8 +28,8 @@ import {
   History,
   Lightbulb,
   MessageSquare,
-  Plus,
   Pencil,
+  Plus,
   RefreshCw,
   Sparkles,
   ThumbsDown,
@@ -357,7 +357,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     agentAuditState,
     agentAuditVerdict,
   } = useAIStream({
-    onStreamDone: async (fullText, thinking, artifacts) => {
+    onStreamDone: async (fullText, thinking, artifacts, meta) => {
       const safeText =
         typeof fullText === 'string' && fullText.trim().length > 0
           ? fullText
@@ -391,6 +391,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             metadata: {
               thinkingSteps: thinking as any,
               artifacts: artifactsForConversation,
+              citations: Array.isArray(meta?.citations) ? meta?.citations : [],
               ...(aiConfig?.deepResearch
                 ? {
                     options: [
@@ -503,9 +504,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           if (Array.isArray(verdict.criticalRisks) && verdict.criticalRisks.length) {
             lines.push('**Critical risks (high)**');
             for (const r of verdict.criticalRisks.slice(0, 6)) {
-              lines.push(
-                `- (${String(r.area || 'other')}) ${String(r.claim || '').trim()}`.trim()
-              );
+              lines.push(`- (${String(r.area || 'other')}) ${String(r.claim || '').trim()}`.trim());
             }
             lines.push('');
           }
@@ -581,6 +580,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       setThinkingSteps([]);
     },
     onStreamError: async (err) => {
+      if ((err as any)?.code === 'DEEP_THINKING_CONFIRM_REQUIRED') {
+        // Flow-control error: do not persist as a chat message.
+        setThinkingSteps([]);
+        return;
+      }
       // Make failures visible in the conversation UI (otherwise user only sees their own messages).
       const uiLang = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
       const friendly =
@@ -747,6 +751,74 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         }
       }
 
+      // Conversation-scoped attachments: upload supported files to Knowledge Base and
+      // pass doc filters to the backend so RAG only searches within these attachments.
+      const existingAttachmentDocIds = Array.from(
+        new Set(
+          (customMessages || messages || [])
+            .flatMap((m: any) =>
+              Array.isArray(m?.metadata?.attachments) ? m.metadata.attachments : []
+            )
+            .map((a: any) => a?.docId)
+            .filter(Boolean)
+            .map((x: any) => String(x))
+        )
+      );
+
+      const files: File[] = Array.isArray(attachments)
+        ? attachments.filter(
+            (a: any): a is File => typeof File !== 'undefined' && a instanceof File
+          )
+        : [];
+
+      const uploadedAttachments: Array<{
+        docId: string;
+        filename: string;
+        mimeType?: string;
+        size?: number;
+      }> = [];
+
+      for (const file of files) {
+        const ext = String(file.name || '')
+          .split('.')
+          .pop()
+          ?.toLowerCase();
+        const supported =
+          file.type === 'application/pdf' ||
+          file.type.startsWith('text/') ||
+          file.type === 'application/json' ||
+          ['txt', 'md', 'csv', 'json'].includes(ext || '');
+
+        if (!supported) {
+          console.warn('[UnifiedChatPanel] Skipping unsupported attachment type:', {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+          });
+          continue;
+        }
+
+        try {
+          const resp = await Api.uploadKnowledgeDocument(file, 'chat_attachment', [
+            `conversation:${conversationId || 'unknown'}`,
+          ]);
+          const docId = String(resp?.docId || '');
+          if (!docId) continue;
+          uploadedAttachments.push({
+            docId,
+            filename: file.name,
+            mimeType: file.type || undefined,
+            size: file.size,
+          });
+        } catch (err) {
+          console.error('[UnifiedChatPanel] Failed to upload attachment:', err);
+        }
+      }
+
+      const attachmentDocIds = Array.from(
+        new Set([...existingAttachmentDocIds, ...uploadedAttachments.map((a) => a.docId)])
+      );
+
       // Save user message to conversation store
       if (conversationId) {
         try {
@@ -755,6 +827,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             role: 'user',
             content,
             messageType: 'text',
+            metadata:
+              uploadedAttachments.length > 0
+                ? ({ attachments: uploadedAttachments } as any)
+                : undefined,
           });
         } catch (err) {
           console.error('[UnifiedChatPanel] Failed to save user message:', err);
@@ -773,7 +849,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // Build context for AI
       const context = {
         focusMode,
-        attachments,
+        attachments: uploadedAttachments,
+        attachmentDocIds,
         workspaceContext,
         conversationId,
         conversationLanguage: chatLanguage,
@@ -945,7 +1022,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               suggested: suggestedAgentsSet,
               orchestratorRunId: String(suggestedAgentsSet?.orchestratorRunId || ''),
               selectedAgentIds: Array.isArray(suggestedAgentsSet?.agents)
-                ? suggestedAgentsSet.agents.map((a: any) => String(a?.agentId || '')).filter(Boolean)
+                ? suggestedAgentsSet.agents
+                    .map((a: any) => String(a?.agentId || ''))
+                    .filter(Boolean)
                 : [],
               userIntent: 'validate',
               maxAgents: 3,
@@ -1028,9 +1107,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             .filter(Boolean)
         : []);
     const decisionContext =
-      dtPendingConfirm.agentAudit?.decisionContext || ({
-        topic: String(dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage || '').trim(),
-        horizon: String(dtPendingConfirm?.confirm?.understanding?.decisionHorizon || '').trim() || undefined,
+      dtPendingConfirm.agentAudit?.decisionContext ||
+      ({
+        topic: String(
+          dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage || ''
+        ).trim(),
+        horizon:
+          String(dtPendingConfirm?.confirm?.understanding?.decisionHorizon || '').trim() ||
+          undefined,
         industry: undefined,
         functions: [],
         riskFocus: [],
@@ -1059,7 +1143,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
         const lines: string[] = [];
         lines.push('**Agent Audit — approved reviewers (pre Deep Thinking)**');
-        lines.push(`- Intent: **${String(dtPendingConfirm.agentAudit?.userIntent || 'validate')}**`);
+        lines.push(
+          `- Intent: **${String(dtPendingConfirm.agentAudit?.userIntent || 'validate')}**`
+        );
         lines.push(`- Max agents: **${String(dtPendingConfirm.agentAudit?.maxAgents || 3)}**`);
         lines.push('');
         for (const a of selectedAgents) {
@@ -1176,7 +1262,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // Refresh Agent Audit suggestions after reconfirm (task may have changed)
       const u = c?.understanding || {};
       const decisionContext = {
-        topic: String(dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage || '').trim(),
+        topic: String(
+          dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage || ''
+        ).trim(),
         horizon: String(u.decisionHorizon || '').trim() || undefined,
         industry: undefined,
         functions: [],
@@ -1241,11 +1329,17 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   ]);
 
   const refreshAgentAuditSuggestionsOnly = useCallback(
-    async (overrides?: { userIntent?: 'validate' | 'stress_test' | 'approve'; maxAgents?: 2 | 3 | 4 }) => {
+    async (overrides?: {
+      userIntent?: 'validate' | 'stress_test' | 'approve';
+      maxAgents?: 2 | 3 | 4;
+    }) => {
       if (!dtPendingConfirm) return;
       const decisionContext =
-        dtPendingConfirm.agentAudit?.decisionContext || ({
-          topic: String(dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage || '').trim(),
+        dtPendingConfirm.agentAudit?.decisionContext ||
+        ({
+          topic: String(
+            dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage || ''
+          ).trim(),
           industry: undefined,
           horizon: undefined,
           functions: [],
@@ -1254,7 +1348,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
       const userIntent =
         overrides?.userIntent || dtPendingConfirm.agentAudit?.userIntent || ('validate' as const);
-      const maxAgents = overrides?.maxAgents || dtPendingConfirm.agentAudit?.maxAgents || (3 as 3);
+      const maxAgents =
+        overrides?.maxAgents || dtPendingConfirm.agentAudit?.maxAgents || (3 as const);
 
       try {
         const suggestRes = await Api.agentAuditSuggest({
@@ -1302,7 +1397,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const handleRunDirectedDeepening = useCallback(
     async (agentAuditPayload: any) => {
-      const prompt = String(agentAuditPayload?.verdict?.directedLoop?.deepThinkingPrompt || '').trim();
+      const prompt = String(
+        agentAuditPayload?.verdict?.directedLoop?.deepThinkingPrompt || ''
+      ).trim();
       if (!prompt) return;
       if (isDisabled) return;
 
@@ -1639,7 +1736,15 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           setDtConfirmBusy(false);
         }
       } else {
-        await startStream(newText, history, systemPrompt, context, focusMode, roleName, chatLanguage);
+        await startStream(
+          newText,
+          history,
+          systemPrompt,
+          context,
+          focusMode,
+          roleName,
+          chatLanguage
+        );
       }
 
       handleCancelEditMessage();
@@ -1904,8 +2009,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                             </select>
                           </div>
                           <div className="space-y-1.5">
-                            {dtPendingConfirm.agentAudit!.suggested.agents
-                              .slice(0, 8)
+                            {dtPendingConfirm
+                              .agentAudit!.suggested.agents.slice(0, 8)
                               .map((a: any) => {
                                 const id = String(a?.agentId || '').trim();
                                 const isSelected = Boolean(
@@ -1935,7 +2040,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                                             : [...cur, id];
                                           return {
                                             ...prev,
-                                            agentAudit: { ...prev.agentAudit, selectedAgentIds: next },
+                                            agentAudit: {
+                                              ...prev.agentAudit,
+                                              selectedAgentIds: next,
+                                            },
                                           };
                                         });
                                       }}
@@ -1955,9 +2063,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                               })}
                           </div>
                           <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-                            Selected:{' '}
-                            {dtPendingConfirm.agentAudit?.selectedAgentIds?.length || 0} reviewer(s)
-                            · They will audit the final report (no interference with DT).
+                            Selected: {dtPendingConfirm.agentAudit?.selectedAgentIds?.length || 0}{' '}
+                            reviewer(s) · They will audit the final report (no interference with
+                            DT).
                           </div>
                         </div>
                       ) : null}
@@ -2067,7 +2175,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                                 agentAuditActiveTabByMessageId[msg.id] ||
                                 String(reviews[0]?.agentId || '').trim();
                               const activeReview =
-                                reviews.find((r: any) => String(r?.agentId || '') === activeAgentId) ||
+                                reviews.find(
+                                  (r: any) => String(r?.agentId || '') === activeAgentId
+                                ) ||
                                 reviews[0] ||
                                 null;
 
@@ -2075,7 +2185,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                                 if (!s || !s.type) return null;
                                 if (s.type === 'dt_section') {
                                   return (
-                                    <div key={`${s.type}-${idx}`} className="text-[11px] text-slate-600 dark:text-slate-300">
+                                    <div
+                                      key={`${s.type}-${idx}`}
+                                      className="text-[11px] text-slate-600 dark:text-slate-300"
+                                    >
                                       <span className="font-medium">DT</span>
                                       {s.quote ? `: "${String(s.quote).slice(0, 180)}"` : ''}
                                     </div>
@@ -2085,12 +2198,17 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                                   const meta = [
                                     String(s.title || 'KB'),
                                     s.version ? `v${String(s.version)}` : '',
-                                    typeof s.score === 'number' ? `score=${s.score.toFixed(2)}` : '',
+                                    typeof s.score === 'number'
+                                      ? `score=${s.score.toFixed(2)}`
+                                      : '',
                                   ]
                                     .filter(Boolean)
                                     .join(' · ');
                                   return (
-                                    <div key={`${s.type}-${idx}`} className="text-[11px] text-slate-600 dark:text-slate-300">
+                                    <div
+                                      key={`${s.type}-${idx}`}
+                                      className="text-[11px] text-slate-600 dark:text-slate-300"
+                                    >
                                       <div>
                                         <span className="font-medium">KB</span>
                                         {meta ? `: ${meta}` : ''}
@@ -2168,7 +2286,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                                       <button
                                         onClick={async () => {
                                           if (agentAuditBusy) return;
-                                          const runId = String(audit?.orchestratorRunId || '').trim();
+                                          const runId = String(
+                                            audit?.orchestratorRunId || ''
+                                          ).trim();
                                           if (!runId) return;
                                           setAgentAuditBusy(true);
                                           try {
@@ -2184,7 +2304,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                                                 role: 'ai',
                                                 content,
                                                 messageType: 'text',
-                                                metadata: { agentAudit: { kind: 'accept', runId } } as any,
+                                                metadata: {
+                                                  agentAudit: { kind: 'accept', runId },
+                                                } as any,
                                               });
                                             }
                                             addChatMessage({
@@ -2195,7 +2317,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                                               metadata: { agentAudit: { kind: 'accept', runId } },
                                             } as any);
                                           } catch (err) {
-                                            console.error('[UnifiedChatPanel] Failed to accept audit run:', err);
+                                            console.error(
+                                              '[UnifiedChatPanel] Failed to accept audit run:',
+                                              err
+                                            );
                                           } finally {
                                             setAgentAuditBusy(false);
                                           }
@@ -2237,7 +2362,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                                               }`}
                                             >
                                               {String(label)}
-                                              {String(r?.overreach || '') === 'hard' ? ' (rejected)' : ''}
+                                              {String(r?.overreach || '') === 'hard'
+                                                ? ' (rejected)'
+                                                : ''}
                                             </button>
                                           );
                                         })}
@@ -2246,66 +2373,88 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                                       {activeReview ? (
                                         <div className="mt-3">
                                           <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                                            Verdict: <span className="font-medium">{String(activeReview.verdict || '—')}</span>
-                                            {activeReview.overreach ? ` · Overreach: ${String(activeReview.overreach)}` : ''}
+                                            Verdict:{' '}
+                                            <span className="font-medium">
+                                              {String(activeReview.verdict || '—')}
+                                            </span>
+                                            {activeReview.overreach
+                                              ? ` · Overreach: ${String(activeReview.overreach)}`
+                                              : ''}
                                           </div>
 
-                                          {Array.isArray(activeReview.findings) && activeReview.findings.length ? (
+                                          {Array.isArray(activeReview.findings) &&
+                                          activeReview.findings.length ? (
                                             <div className="mt-2">
                                               <div className="text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
                                                 Findings
                                               </div>
                                               <div className="space-y-2">
-                                                {activeReview.findings.slice(0, 8).map((f: any, i: number) => (
-                                                  <div
-                                                    key={`${String(f?.area || 'other')}-${i}`}
-                                                    className="p-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-md"
-                                                  >
-                                                    <div className="text-[11px] text-slate-700 dark:text-slate-200">
-                                                      <span className="font-semibold">
-                                                        {String(f.severity || '').toUpperCase()}
-                                                      </span>
-                                                      {` · ${String(f.area || 'other')}`} — {String(f.claim || '').trim()}
-                                                    </div>
-
-                                                    {Array.isArray(f.sourcesUsed) && f.sourcesUsed.length ? (
-                                                      <div className="mt-1 space-y-1">
-                                                        {f.sourcesUsed.slice(0, 4).map(renderSource)}
+                                                {activeReview.findings
+                                                  .slice(0, 8)
+                                                  .map((f: any, i: number) => (
+                                                    <div
+                                                      key={`${String(f?.area || 'other')}-${i}`}
+                                                      className="p-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-md"
+                                                    >
+                                                      <div className="text-[11px] text-slate-700 dark:text-slate-200">
+                                                        <span className="font-semibold">
+                                                          {String(f.severity || '').toUpperCase()}
+                                                        </span>
+                                                        {` · ${String(f.area || 'other')}`} —{' '}
+                                                        {String(f.claim || '').trim()}
                                                       </div>
-                                                    ) : null}
 
-                                                    {Array.isArray(f.missingDataQuestions) &&
-                                                    f.missingDataQuestions.length ? (
-                                                      <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-300">
-                                                        <div className="font-medium">Missing data</div>
-                                                        <ul className="list-disc pl-4">
-                                                          {f.missingDataQuestions
+                                                      {Array.isArray(f.sourcesUsed) &&
+                                                      f.sourcesUsed.length ? (
+                                                        <div className="mt-1 space-y-1">
+                                                          {f.sourcesUsed
                                                             .slice(0, 4)
-                                                            .map((q: any, qi: number) => (
-                                                              <li key={qi}>{String(q)}</li>
-                                                            ))}
-                                                        </ul>
-                                                      </div>
-                                                    ) : null}
-                                                  </div>
-                                                ))}
+                                                            .map(renderSource)}
+                                                        </div>
+                                                      ) : null}
+
+                                                      {Array.isArray(f.missingDataQuestions) &&
+                                                      f.missingDataQuestions.length ? (
+                                                        <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-300">
+                                                          <div className="font-medium">
+                                                            Missing data
+                                                          </div>
+                                                          <ul className="list-disc pl-4">
+                                                            {f.missingDataQuestions
+                                                              .slice(0, 4)
+                                                              .map((q: any, qi: number) => (
+                                                                <li key={qi}>{String(q)}</li>
+                                                              ))}
+                                                          </ul>
+                                                        </div>
+                                                      ) : null}
+                                                    </div>
+                                                  ))}
                                               </div>
                                             </div>
                                           ) : null}
 
-                                          {Array.isArray(activeReview.conflicts) && activeReview.conflicts.length ? (
+                                          {Array.isArray(activeReview.conflicts) &&
+                                          activeReview.conflicts.length ? (
                                             <div className="mt-2">
                                               <div className="text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
                                                 Conflicts
                                               </div>
                                               <ul className="list-disc pl-4 text-[11px] text-slate-600 dark:text-slate-300">
-                                                {activeReview.conflicts.slice(0, 6).map((c: any, ci: number) => (
-                                                  <li key={ci}>
-                                                    with <span className="font-medium">{String(c.withAgentId || '')}</span>
-                                                    {c.aboutArea ? ` (${String(c.aboutArea)})` : ''}:{' '}
-                                                    {String(c.conflictStatement || '')}
-                                                  </li>
-                                                ))}
+                                                {activeReview.conflicts
+                                                  .slice(0, 6)
+                                                  .map((c: any, ci: number) => (
+                                                    <li key={ci}>
+                                                      with{' '}
+                                                      <span className="font-medium">
+                                                        {String(c.withAgentId || '')}
+                                                      </span>
+                                                      {c.aboutArea
+                                                        ? ` (${String(c.aboutArea)})`
+                                                        : ''}
+                                                      : {String(c.conflictStatement || '')}
+                                                    </li>
+                                                  ))}
                                               </ul>
                                             </div>
                                           ) : null}
@@ -2647,8 +2796,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         {msg.role === 'ai' &&
           !msg.isStreaming &&
           (msg as any).metadata?.agentAudit?.kind === 'verdict' &&
-          String((msg as any).metadata?.agentAudit?.verdict?.directedLoop?.deepThinkingPrompt || '')
-            .trim() && (
+          String(
+            (msg as any).metadata?.agentAudit?.verdict?.directedLoop?.deepThinkingPrompt || ''
+          ).trim() && (
             <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-3 flex flex-wrap gap-2`}>
               <button
                 onClick={() => handleRunDirectedDeepening((msg as any).metadata?.agentAudit)}

@@ -5,7 +5,12 @@ const WEB_CACHE_TTL_MS = 10 * 60 * 1000;
 const WEB_CACHE_MAX = 200;
 const webCache = new Map<string, CacheEntry>();
 
-function cacheKey(args: { agentId: string; language: string; query: string; maxResults: number }): string {
+function cacheKey(args: {
+  agentId: string;
+  language: string;
+  query: string;
+  maxResults: number;
+}): string {
   return `${args.agentId}|${args.language}|${args.maxResults}|${args.query.slice(0, 800)}`;
 }
 
@@ -92,4 +97,3 @@ export async function retrieveAgentAuditWebSources(args: {
     return [];
   }
 }
-

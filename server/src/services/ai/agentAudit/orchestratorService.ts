@@ -1,14 +1,14 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import logger from '../../../utils/Logger.js';
-import { getAgentDefinition } from './agentRegistry.js';
 import { retrieveAgentAuditKnowledge } from './agentAuditKnowledgeService.js';
 import { logAgentAuditEvent } from './agentAuditMetricsService.js';
 import { retrieveAgentAuditWebSources } from './agentAuditWebResearchService.js';
+import { getAgentDefinition } from './agentRegistry.js';
 import {
   AgentReviewSchema,
-  type GateExplanation,
   type DecisionContext,
+  type GateExplanation,
   type OrchestratorVerdict,
   type RiskArea,
   type SourceUsed,
@@ -234,9 +234,9 @@ function riskAreaIsFinance(a: RiskArea): boolean {
 }
 
 function fallbackSourcesUsedFromDT(evidenceFromDT: string[]): SourceUsed[] {
-  const uniq = Array.from(new Set((evidenceFromDT || []).map((s) => String(s || '').trim()))).filter(
-    Boolean
-  );
+  const uniq = Array.from(
+    new Set((evidenceFromDT || []).map((s) => String(s || '').trim()))
+  ).filter(Boolean);
   return uniq.slice(0, 6).map((quote) => ({
     type: 'dt_section' as const,
     section: 'DeepThinkingReport',
@@ -306,10 +306,10 @@ export function validateReviewWebSources(args: {
   return { ok: true };
 }
 
-export function validateNoSolutionRecommendations(args: {
-  review: any;
-  language: string;
-}): { ok: boolean; reason?: string } {
+export function validateNoSolutionRecommendations(args: { review: any; language: string }): {
+  ok: boolean;
+  reason?: string;
+} {
   const lang = (args.language || 'pl').split('-')[0];
   const isPl = lang === 'pl';
   const reviewObj = args.review || {};
@@ -345,10 +345,9 @@ export function validateNoSolutionRecommendations(args: {
   for (const f of findings) {
     const s = String(f?.suggestedDeepening || '').trim();
     if (!s) continue;
-    const ok =
-      (isPl ? allowedStartPl : allowedStartEn).some((p) =>
-        s.toLowerCase().startsWith(p.toLowerCase())
-      );
+    const ok = (isPl ? allowedStartPl : allowedStartEn).some((p) =>
+      s.toLowerCase().startsWith(p.toLowerCase())
+    );
     if (!ok) {
       return {
         ok: false,
@@ -393,16 +392,18 @@ export function validateNoSolutionRecommendations(args: {
   return { ok: true };
 }
 
-export function validateAgentContractCompleteness(args: {
-  review: any;
-  language: string;
-}): { ok: boolean; reason?: string } {
+export function validateAgentContractCompleteness(args: { review: any; language: string }): {
+  ok: boolean;
+  reason?: string;
+} {
   const lang = (args.language || 'pl').split('-')[0];
   const isPl = lang === 'pl';
   const r = args.review || {};
 
   const obs = Array.isArray(r.observations) ? r.observations.filter(Boolean) : [];
-  const chall = Array.isArray(r.challengedAssumptions) ? r.challengedAssumptions.filter(Boolean) : [];
+  const chall = Array.isArray(r.challengedAssumptions)
+    ? r.challengedAssumptions.filter(Boolean)
+    : [];
   const topQ = Array.isArray(r.topQuestions) ? r.topQuestions.filter(Boolean) : [];
   const impact = String(r.impactIfIgnored || '').trim();
   const whenFails = String(r.whenItFails || '').trim();
@@ -567,8 +568,10 @@ export async function runAgentAudit(args: ReviewArgs): Promise<{
 
       const kbQueryParts: string[] = [];
       kbQueryParts.push(String(args.decisionContext?.topic || ''));
-      if (args.decisionContext?.industry) kbQueryParts.push(`industry: ${String(args.decisionContext.industry)}`);
-      if (args.decisionContext?.horizon) kbQueryParts.push(`horizon: ${String(args.decisionContext.horizon)}`);
+      if (args.decisionContext?.industry)
+        kbQueryParts.push(`industry: ${String(args.decisionContext.industry)}`);
+      if (args.decisionContext?.horizon)
+        kbQueryParts.push(`horizon: ${String(args.decisionContext.horizon)}`);
       kbQueryParts.push(`agent: ${def.displayName?.en || def.id}`);
       if (Array.isArray(def.defaultRiskAreas) && def.defaultRiskAreas.length) {
         kbQueryParts.push(`riskAreas: ${def.defaultRiskAreas.join(', ')}`);
@@ -732,7 +735,9 @@ export async function runAgentAudit(args: ReviewArgs): Promise<{
         });
 
         const hard =
-          webValidation.ok === false || contractValidation.ok === false || recValidation.ok === false;
+          webValidation.ok === false ||
+          contractValidation.ok === false ||
+          recValidation.ok === false;
         reviews.push({
           ...withSources,
           overreach: hard ? 'hard' : parsed.overreach || 'none',
@@ -741,9 +746,9 @@ export async function runAgentAudit(args: ReviewArgs): Promise<{
               ? webValidation.reason
               : contractValidation.ok === false
                 ? contractValidation.reason
-              : recValidation.ok === false
-                ? recValidation.reason
-                : parsed.overreachReason,
+                : recValidation.ok === false
+                  ? recValidation.reason
+                  : parsed.overreachReason,
         });
         args.emit?.({
           type: 'agent_review_progress',
@@ -951,7 +956,12 @@ export function aggregateVerdict(args: {
       gate: 'A',
       reason: 'Krytyczne ryzyko finansowe (CFO/Risk) — wymagane uzupełnienie przed decyzją.',
       triggeredBy: f
-        ? { agentId: f.agentId, area: f.area as any, severity: 'high', claim: String(f.claim || '') }
+        ? {
+            agentId: f.agentId,
+            area: f.area as any,
+            severity: 'high',
+            claim: String(f.claim || ''),
+          }
         : { agentId: 'function.cfo_finance' },
     });
   }
@@ -978,7 +988,8 @@ export function aggregateVerdict(args: {
   if (gates.has('B')) {
     gateExplanations.push({
       gate: 'B',
-      reason: 'Konsensus krytycznego ryzyka: ≥2 niezależne role wskazują HIGH w tym samym obszarze.',
+      reason:
+        'Konsensus krytycznego ryzyka: ≥2 niezależne role wskazują HIGH w tym samym obszarze.',
     });
   }
 

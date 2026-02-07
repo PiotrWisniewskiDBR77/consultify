@@ -218,7 +218,7 @@ export const useBreadcrumbs = () => {
   // =====================================================
   else if (viewParts.includes('ADMIN') || location.pathname.startsWith('/admin')) {
     section = t('sidebar.adminPanel', 'Admin Panel');
-    
+
     // Check URL tab parameter for AdminSettingsModule sections
     const params = new URLSearchParams(location.search);
     const tabParam = params.get('tab');

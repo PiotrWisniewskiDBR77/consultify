@@ -149,24 +149,29 @@ const StatusBadge: React.FC<{ status: QualityStatus }> = ({ status }) => {
     PASS: {
       icon: ShieldCheck,
       label: 'PASS',
-      className: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700',
+      className:
+        'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700',
     },
     PASS_WITH_RISKS: {
       icon: ShieldAlert,
       label: 'PASS WITH RISKS',
-      className: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700',
+      className:
+        'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700',
     },
     FAIL: {
       icon: XCircle,
       label: 'FAIL',
-      className: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700',
+      className:
+        'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700',
     },
   };
 
   const { icon: Icon, label, className } = config[status];
 
   return (
-    <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold ${className}`}>
+    <div
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold ${className}`}
+    >
       <Icon size={14} />
       {label}
     </div>
@@ -175,16 +180,30 @@ const StatusBadge: React.FC<{ status: QualityStatus }> = ({ status }) => {
 
 const GateBadge: React.FC<{ gate: GateId }> = ({ gate }) => {
   const config: Record<GateId, { label: string; className: string }> = {
-    A: { label: 'Gate A: Critical Finance', className: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' },
-    B: { label: 'Gate B: Consensus Risk', className: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300' },
-    C: { label: 'Gate C: Missing Data', className: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' },
-    D: { label: 'Gate D: Overreach', className: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' },
+    A: {
+      label: 'Gate A: Critical Finance',
+      className: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+    },
+    B: {
+      label: 'Gate B: Consensus Risk',
+      className: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
+    },
+    C: {
+      label: 'Gate C: Missing Data',
+      className: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
+    },
+    D: {
+      label: 'Gate D: Overreach',
+      className: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
+    },
   };
 
   const { label, className } = config[gate];
 
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium ${className}`}>
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium ${className}`}
+    >
       {label}
     </span>
   );
@@ -198,7 +217,9 @@ const SeverityBadge: React.FC<{ severity: 'low' | 'medium' | 'high' }> = ({ seve
   };
 
   return (
-    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase ${config[severity]}`}>
+    <span
+      className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase ${config[severity]}`}
+    >
       {severity}
     </span>
   );
@@ -212,7 +233,9 @@ const SourceItem: React.FC<{ source: SourceUsed; index: number }> = ({ source, i
         <div>
           <span className="font-medium">DT Report</span>
           {source.quote && (
-            <span className="text-slate-500 dark:text-slate-400">: "{source.quote.slice(0, 120)}..."</span>
+            <span className="text-slate-500 dark:text-slate-400">
+              : "{source.quote.slice(0, 120)}..."
+            </span>
           )}
         </div>
       </div>
@@ -309,7 +332,9 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
   };
 
   return (
-    <div className={`bg-slate-50 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden ${className}`}>
+    <div
+      className={`bg-slate-50 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden ${className}`}
+    >
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
@@ -324,7 +349,8 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
               {t('agentAudit.title', 'Agent Audit Layer')}
             </h4>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {reviews.length} {t('agentAudit.reviewers', 'reviewers')} · {verdict.gatesTriggered.length} {t('agentAudit.gatesTriggered', 'gates triggered')}
+              {reviews.length} {t('agentAudit.reviewers', 'reviewers')} ·{' '}
+              {verdict.gatesTriggered.length} {t('agentAudit.gatesTriggered', 'gates triggered')}
             </p>
           </div>
         </div>
@@ -347,9 +373,7 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
                 {verdict.gateExplanations.map((ge, idx) => (
                   <div key={`${ge.gate}-${idx}`} className="flex items-start gap-2">
                     <GateBadge gate={ge.gate} />
-                    <p className="text-xs text-slate-600 dark:text-slate-300 flex-1">
-                      {ge.reason}
-                    </p>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 flex-1">{ge.reason}</p>
                   </div>
                 ))}
               </div>
@@ -387,7 +411,7 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
               <h5 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
                 {t('agentAudit.agentReviews', 'Agent Reviews')}
               </h5>
-              
+
               <div className="flex flex-wrap gap-2 mb-3">
                 {reviews.map((review) => {
                   const isActive = review.agentId === activeAgentId;
@@ -400,8 +424,8 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
                         isActive
                           ? 'bg-primary-100 dark:bg-primary-900/30 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300'
                           : isRejected
-                          ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 line-through'
-                          : 'bg-white dark:bg-navy-950 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                            ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 line-through'
+                            : 'bg-white dark:bg-navy-950 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
                       }`}
                     >
                       {getAgentLabel(review.agentId)}
@@ -419,11 +443,15 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
                       {getAgentLabel(activeReview.agentId)}
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className={`text-[10px] px-2 py-0.5 rounded ${
-                        activeReview.verdict === 'ok' ? 'bg-green-100 text-green-700' :
-                        activeReview.verdict === 'risk' ? 'bg-amber-100 text-amber-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded ${
+                          activeReview.verdict === 'ok'
+                            ? 'bg-green-100 text-green-700'
+                            : activeReview.verdict === 'risk'
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-red-100 text-red-700'
+                        }`}
+                      >
                         {activeReview.verdict.toUpperCase()}
                       </span>
                       {activeReview.overreach !== 'none' && (
@@ -439,12 +467,14 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
                     <div className="mb-3 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded text-xs">
                       {activeReview.impactIfIgnored && (
                         <p className="text-amber-800 dark:text-amber-200">
-                          <strong>{t('agentAudit.impactIfIgnored', 'Impact if ignored')}:</strong> {activeReview.impactIfIgnored}
+                          <strong>{t('agentAudit.impactIfIgnored', 'Impact if ignored')}:</strong>{' '}
+                          {activeReview.impactIfIgnored}
                         </p>
                       )}
                       {activeReview.whenItFails && (
                         <p className="text-amber-800 dark:text-amber-200 mt-1">
-                          <strong>{t('agentAudit.whenItFails', 'When it fails')}:</strong> {activeReview.whenItFails}
+                          <strong>{t('agentAudit.whenItFails', 'When it fails')}:</strong>{' '}
+                          {activeReview.whenItFails}
                         </p>
                       )}
                     </div>
@@ -458,7 +488,10 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
                       </h6>
                       <div className="space-y-2">
                         {activeReview.findings.slice(0, 5).map((finding, idx) => (
-                          <div key={idx} className="p-2 bg-slate-50 dark:bg-navy-900 rounded border border-slate-200 dark:border-navy-700">
+                          <div
+                            key={idx}
+                            className="p-2 bg-slate-50 dark:bg-navy-900 rounded border border-slate-200 dark:border-navy-700"
+                          >
                             <div className="flex items-start gap-2 mb-1">
                               <SeverityBadge severity={finding.severity} />
                               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
@@ -495,7 +528,10 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
                       </h6>
                       <ul className="space-y-1">
                         {activeReview.topQuestions.map((q, idx) => (
-                          <li key={idx} className="text-xs text-slate-600 dark:text-slate-300 flex items-start gap-1.5">
+                          <li
+                            key={idx}
+                            className="text-xs text-slate-600 dark:text-slate-300 flex items-start gap-1.5"
+                          >
                             <span className="text-slate-400">•</span>
                             {q}
                           </li>
@@ -516,14 +552,20 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
                 className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-primary-600"
               >
                 <CheckCircle2 size={14} />
-                {t('agentAudit.actionableFollowups', 'Actionable Followups')} ({verdict.actionableFollowups.length})
+                {t('agentAudit.actionableFollowups', 'Actionable Followups')} (
+                {verdict.actionableFollowups.length})
                 {showFollowups ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
               </button>
               {showFollowups && (
                 <div className="mt-2 space-y-2">
                   {verdict.actionableFollowups.map((followup) => (
-                    <div key={followup.id} className="p-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded text-xs">
-                      <p className="text-slate-700 dark:text-slate-200 font-medium">{followup.question}</p>
+                    <div
+                      key={followup.id}
+                      className="p-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded text-xs"
+                    >
+                      <p className="text-slate-700 dark:text-slate-200 font-medium">
+                        {followup.question}
+                      </p>
                       <p className="text-slate-500 dark:text-slate-400 text-[10px] mt-0.5">
                         {followup.whyCritical}
                       </p>
@@ -544,7 +586,9 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
                     disabled={isAcceptingRisk}
                     className="px-4 py-2 text-xs font-medium rounded-lg bg-slate-700 hover:bg-slate-800 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    {isAcceptingRisk ? t('agentAudit.accepting', 'Accepting...') : t('agentAudit.acceptRisk', 'Accept Risk & Proceed')}
+                    {isAcceptingRisk
+                      ? t('agentAudit.accepting', 'Accepting...')
+                      : t('agentAudit.acceptRisk', 'Accept Risk & Proceed')}
                   </button>
                 )}
                 {verdict.directedLoop && onTriggerDirectedLoop && (
@@ -552,7 +596,8 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
                     onClick={() => onTriggerDirectedLoop(verdict.directedLoop!.deepThinkingPrompt)}
                     className="px-4 py-2 text-xs font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white transition-colors"
                   >
-                    {t('agentAudit.triggerDeepening', 'Trigger Directed Deepening')} (Loop {verdict.directedLoop.iteration}/2)
+                    {t('agentAudit.triggerDeepening', 'Trigger Directed Deepening')} (Loop{' '}
+                    {verdict.directedLoop.iteration}/2)
                   </button>
                 )}
                 <p className="text-[10px] text-slate-500 dark:text-slate-400">

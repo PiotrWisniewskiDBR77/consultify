@@ -96,6 +96,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   const hasArtifacts = message.artifacts && message.artifacts.length > 0;
   const hasThinkingSteps = message.thinkingSteps && message.thinkingSteps.length > 0;
   const hasCitations = message.citations && message.citations.length > 0;
+  const attachments = useMemo(() => {
+    const raw = (message as any)?.metadata?.attachments;
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((a: any) => ({
+        docId: a?.docId ? String(a.docId) : '',
+        filename: a?.filename ? String(a.filename) : '',
+      }))
+      .filter((a: any) => a.docId || a.filename);
+  }, [message]);
 
   // Truncate long messages
   const MAX_PREVIEW_LENGTH = 2000;
@@ -187,6 +197,26 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             ${isUser ? 'text-white' : 'prose prose-sm dark:prose-invert max-w-none'}
           `}
           >
+            {attachments.length > 0 && (
+              <div
+                className={`mb-2 flex flex-wrap gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}
+              >
+                {attachments.slice(0, 8).map((a: any, idx: number) => (
+                  <span
+                    key={`${a.docId || a.filename}-${idx}`}
+                    title={a.docId ? `doc: ${a.docId}` : a.filename}
+                    className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs ${
+                      isUser
+                        ? 'bg-white/15 text-white'
+                        : 'bg-white/70 dark:bg-navy-700 text-slate-700 dark:text-slate-200 border border-slate-200/70 dark:border-navy-600'
+                    }`}
+                  >
+                    <FileCode size={12} className={isUser ? 'text-white/80' : ''} />
+                    <span className="max-w-[240px] truncate">{a.filename || 'Attachment'}</span>
+                  </span>
+                ))}
+              </div>
+            )}
             {isUser ? (
               <p className="whitespace-pre-wrap">{message.content}</p>
             ) : (

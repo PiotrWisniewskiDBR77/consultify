@@ -47,6 +47,29 @@
 
 ## 🚀 Quick Start (Development)
 
+### Recommended: Stable Dev Mode (less lag / no backend resets)
+
+This repo contains many macOS/iCloud duplicate files (e.g. `Foo 2.tsx`, `Bar 13.ts`) which can cause file-watch “storms”
+and make `vite` + `tsx watch` feel laggy or unstable.
+
+Run the stable mode:
+
+```bash
+npm run dev:stable
+```
+
+Diagnostics:
+
+```bash
+npm run doctor
+```
+
+Optional (safe) cleanup: move iCloud duplicates into `_quarantine/` (undoable by moving them back):
+
+```bash
+npm run cleanup:quarantine-duplicates
+```
+
 ### Option 1: Using Startup Script (Recommended)
 
 ```bash

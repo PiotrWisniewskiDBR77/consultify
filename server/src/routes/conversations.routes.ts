@@ -659,9 +659,7 @@ router.post(
           'add_message'
         );
         if (!perm.allowed) {
-          return res
-            .status(403)
-            .json({ error: 'No permission to edit this team conversation' });
+          return res.status(403).json({ error: 'No permission to edit this team conversation' });
         }
       }
 

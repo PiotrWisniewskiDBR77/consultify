@@ -6,9 +6,6 @@
  */
 
 import bcrypt from 'bcryptjs';
-import { NextFunction, Request, Response, Router } from 'express';
-import fs from 'fs';
-import path from 'path';
 import {
   AlignmentType,
   Document,
@@ -20,6 +17,9 @@ import {
   Paragraph,
   TextRun,
 } from 'docx';
+import { NextFunction, Request, Response, Router } from 'express';
+import fs from 'fs';
+import path from 'path';
 import PDFDocument from 'pdfkit';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -925,7 +925,11 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     res.status(201).json(result);
   } catch (err: any) {
     logger.error('[ReportBuilder] Error creating report:', err);
-    if (err.message?.includes('not found') || err.message?.includes('not approved')) {
+    if (
+      err.message?.includes('not found') ||
+      err.message?.includes('not approved') ||
+      err.message?.includes('mismatch')
+    ) {
       return res.status(400).json({ error: err.message });
     }
     next(err);
@@ -1680,10 +1684,7 @@ const writeReportBuilderPdf = async (
       .strokeColor('#e2e8f0')
       .stroke();
 
-    doc
-      .fontSize(8)
-      .fillColor('#94a3b8')
-      .text('Confidential', 48, footerY, { align: 'left' });
+    doc.fontSize(8).fillColor('#94a3b8').text('Confidential', 48, footerY, { align: 'left' });
     doc
       .fontSize(8)
       .fillColor('#94a3b8')

@@ -2,8 +2,9 @@
  * Notification Settings Routes
  * API endpoints for user notification preferences
  */
-import { Router, Request, Response } from 'express';
-import { verifyToken, isAuthenticated } from '../../middleware/auth.middleware.js';
+import { Request, Response, Router } from 'express';
+
+import { isAuthenticated, verifyToken } from '../../middleware/auth.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -19,146 +20,189 @@ const DEFAULT_SETTINGS = {
   push: { enabled: true, types: ['task', 'decision', 'mention', 'alert'] },
   inApp: { enabled: true, types: ['all'] },
   slack: { enabled: false, webhookUrl: null },
-  quiet: { enabled: false, startHour: 22, endHour: 7 }
+  quiet: { enabled: false, startHour: 22, endHour: 7 },
 };
 
 /**
  * GET /api/notification-settings
  * Get user's notification settings
  */
-router.get('/', verifyToken, isAuthenticated, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id;
+router.get(
+  '/',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
 
-  const settings = await dbGet(`
+    const settings = await dbGet(
+      `
     SELECT settings FROM notification_settings WHERE user_id = ?
-  `, [userId]);
+  `,
+      [userId]
+    );
 
-  if (settings?.settings) {
-    try {
-      res.json(JSON.parse(settings.settings));
-    } catch {
+    if (settings?.settings) {
+      try {
+        res.json(JSON.parse(settings.settings));
+      } catch {
+        res.json(DEFAULT_SETTINGS);
+      }
+    } else {
       res.json(DEFAULT_SETTINGS);
     }
-  } else {
-    res.json(DEFAULT_SETTINGS);
-  }
-}));
+  })
+);
 
 /**
  * PUT /api/notification-settings
  * Update user's notification settings
  */
-router.put('/', verifyToken, isAuthenticated, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id;
-  const newSettings = req.body;
+router.put(
+  '/',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const newSettings = req.body;
 
-  // Validate structure
-  if (!newSettings || typeof newSettings !== 'object') {
-    return res.status(400).json({ error: 'Invalid settings format' });
-  }
+    // Validate structure
+    if (!newSettings || typeof newSettings !== 'object') {
+      return res.status(400).json({ error: 'Invalid settings format' });
+    }
 
-  const settingsJson = JSON.stringify(newSettings);
+    const settingsJson = JSON.stringify(newSettings);
 
-  const result = await dbRun(`
+    const result = await dbRun(
+      `
     INSERT INTO notification_settings (user_id, settings, updated_at)
     VALUES (?, ?, datetime('now'))
     ON CONFLICT(user_id) DO UPDATE SET settings = ?, updated_at = datetime('now')
-  `, [userId, settingsJson, settingsJson]);
+  `,
+      [userId, settingsJson, settingsJson]
+    );
 
-  if (!result.success) {
-    throw new Error(result.error || 'Failed to update notification settings');
-  }
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to update notification settings');
+    }
 
-  logger.info(`[NotificationSettings] Updated for user ${userId}`);
-  res.json({ success: true });
-}));
+    logger.info(`[NotificationSettings] Updated for user ${userId}`);
+    res.json({ success: true });
+  })
+);
 
 /**
  * PATCH /api/notification-settings/:channel
  * Update specific channel settings
  */
-router.patch('/:channel', verifyToken, isAuthenticated, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id;
-  const { channel } = req.params;
-  const channelSettings = req.body;
+router.patch(
+  '/:channel',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { channel } = req.params;
+    const channelSettings = req.body;
 
-  const validChannels = ['email', 'push', 'inApp', 'slack', 'quiet'];
-  if (!validChannels.includes(channel)) {
-    return res.status(400).json({ error: 'Invalid channel' });
-  }
+    const validChannels = ['email', 'push', 'inApp', 'slack', 'quiet'];
+    if (!validChannels.includes(channel)) {
+      return res.status(400).json({ error: 'Invalid channel' });
+    }
 
-  // Get existing settings
-  const existing = await dbGet(`
+    // Get existing settings
+    const existing = await dbGet(
+      `
     SELECT settings FROM notification_settings WHERE user_id = ?
-  `, [userId]);
+  `,
+      [userId]
+    );
 
-  let currentSettings = DEFAULT_SETTINGS;
-  if (existing?.settings) {
-    try {
-      currentSettings = JSON.parse(existing.settings);
-    } catch { }
-  }
+    let currentSettings = DEFAULT_SETTINGS;
+    if (existing?.settings) {
+      try {
+        currentSettings = JSON.parse(existing.settings);
+      } catch {}
+    }
 
-  // Merge channel settings
-  currentSettings[channel as keyof typeof DEFAULT_SETTINGS] = {
-    ...currentSettings[channel as keyof typeof DEFAULT_SETTINGS],
-    ...channelSettings
-  };
+    // Merge channel settings
+    currentSettings[channel as keyof typeof DEFAULT_SETTINGS] = {
+      ...currentSettings[channel as keyof typeof DEFAULT_SETTINGS],
+      ...channelSettings,
+    };
 
-  const settingsJson = JSON.stringify(currentSettings);
+    const settingsJson = JSON.stringify(currentSettings);
 
-  const result = await dbRun(`
+    const result = await dbRun(
+      `
     INSERT INTO notification_settings (user_id, settings, updated_at)
     VALUES (?, ?, datetime('now'))
     ON CONFLICT(user_id) DO UPDATE SET settings = ?, updated_at = datetime('now')
-  `, [userId, settingsJson, settingsJson]);
+  `,
+      [userId, settingsJson, settingsJson]
+    );
 
-  if (!result.success) {
-    throw new Error(result.error || 'Failed to update channel settings');
-  }
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to update channel settings');
+    }
 
-  res.json({ success: true, [channel]: currentSettings[channel as keyof typeof DEFAULT_SETTINGS] });
-}));
+    res.json({
+      success: true,
+      [channel]: currentSettings[channel as keyof typeof DEFAULT_SETTINGS],
+    });
+  })
+);
 
 /**
  * POST /api/notification-settings/reset
  * Reset to default settings
  */
-router.post('/reset', verifyToken, isAuthenticated, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id;
+router.post(
+  '/reset',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
 
-  const result = await dbRun(`
+    const result = await dbRun(
+      `
     DELETE FROM notification_settings WHERE user_id = ?
-  `, [userId]);
+  `,
+      [userId]
+    );
 
-  if (!result.success) {
-    throw new Error(result.error || 'Failed to reset notification settings');
-  }
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to reset notification settings');
+    }
 
-  logger.info(`[NotificationSettings] Reset for user ${userId}`);
-  res.json({ success: true, settings: DEFAULT_SETTINGS });
-}));
+    logger.info(`[NotificationSettings] Reset for user ${userId}`);
+    res.json({ success: true, settings: DEFAULT_SETTINGS });
+  })
+);
 
 /**
  * POST /api/notification-settings/test/:channel
  * Send test notification
  */
-router.post('/test/:channel', verifyToken, isAuthenticated, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id;
-  const { channel } = req.params;
+router.post(
+  '/test/:channel',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { channel } = req.params;
 
-  const validChannels = ['email', 'push', 'slack'];
-  if (!validChannels.includes(channel)) {
-    return res.status(400).json({ error: 'Invalid channel for testing' });
-  }
+    const validChannels = ['email', 'push', 'slack'];
+    if (!validChannels.includes(channel)) {
+      return res.status(400).json({ error: 'Invalid channel for testing' });
+    }
 
-  // In production, this would actually send a test notification
-  logger.info(`[NotificationSettings] Test ${channel} notification for user ${userId}`);
+    // In production, this would actually send a test notification
+    logger.info(`[NotificationSettings] Test ${channel} notification for user ${userId}`);
 
-  res.json({
-    success: true,
-    message: `Test ${channel} notification sent. Check your ${channel} for the test message.`
-  });
-}));
+    res.json({
+      success: true,
+      message: `Test ${channel} notification sent. Check your ${channel} for the test message.`,
+    });
+  })
+);
 
 export default router;

@@ -4,7 +4,12 @@
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { RiskAssumption, RiskUncertaintyData, ToolSession, useToolStore } from '@/store/useToolStore';
+import {
+  RiskAssumption,
+  RiskUncertaintyData,
+  ToolSession,
+  useToolStore,
+} from '@/store/useToolStore';
 
 import { InlineAssist } from '../../InlineAssist';
 
@@ -146,4 +151,3 @@ export const AssumptionsStep: React.FC<AssumptionsStepProps> = ({ session, isPol
 };
 
 export default AssumptionsStep;
-

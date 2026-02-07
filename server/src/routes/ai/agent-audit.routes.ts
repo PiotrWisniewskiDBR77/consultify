@@ -11,12 +11,12 @@ import { Router } from 'express';
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { requireRole } from '../../middleware/rbac.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
-import { AGENTS } from '../../services/ai/agentAudit/agentRegistry.js';
 import {
   acceptAgentAuditRun,
   createAgentAuditRun,
   getAgentAuditRun,
 } from '../../services/ai/agentAudit/agentAuditStore.js';
+import { AGENTS } from '../../services/ai/agentAudit/agentRegistry.js';
 import { runAgentAudit, suggestAgents } from '../../services/ai/agentAudit/orchestratorService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet } from '../../utils/DbPromise.js';

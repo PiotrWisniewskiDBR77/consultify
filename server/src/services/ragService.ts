@@ -77,6 +77,11 @@ type SearchOptions = {
   limit?: number;
   organizationId?: string | null;
   minSimilarity?: number;
+  /**
+   * Restrict search to specific documents (conversation-scoped RAG).
+   * When provided, ONLY chunks belonging to these `knowledge_docs.id` are considered.
+   */
+  documentIds?: string[];
 };
 
 type HybridOptions = {
@@ -84,6 +89,10 @@ type HybridOptions = {
   organizationId?: string | null;
   alpha?: number;
   enableReranking?: boolean;
+  /**
+   * Restrict hybrid search to specific documents (conversation-scoped RAG).
+   */
+  documentIds?: string[];
 };
 
 type ScreenContext = {
@@ -358,9 +367,26 @@ const RagService = {
     }>
   > => {
     await initDeps();
-    const { limit = 5, organizationId, minSimilarity = 0.5 } = options;
+    const { limit = 5, organizationId, minSimilarity = 0.5, documentIds } = options;
 
     try {
+      // Conversation-scoped RAG: if documentIds are provided, bypass embeddingService.search()
+      // (which may not support doc-level filters) and use the hybrid SQL path with doc filters.
+      if (Array.isArray(documentIds) && documentIds.length > 0) {
+        const results = await RagService.hybridSearch(query, {
+          limit,
+          organizationId: organizationId || null,
+          enableReranking: true,
+          documentIds,
+        });
+        return results.map((r) => ({
+          content: r.content || '',
+          source: r.filename || 'Knowledge Base',
+          similarity: r.hybridScore || 0,
+          documentId: (r as any)?.doc_id || (r as any)?.documentId || undefined,
+        }));
+      }
+
       const results = await deps.embeddingService.search(query, {
         limit,
         organizationId: organizationId || undefined,
@@ -468,7 +494,8 @@ const RagService = {
   bm25Search: async (
     query: string,
     limit = 10,
-    organizationId: string | null = null
+    organizationId: string | null = null,
+    documentIds?: string[]
   ): Promise<RerankableChunk[]> => {
     await initDeps();
     const cols = await ensureKnowledgeDocsColumns();
@@ -491,6 +518,12 @@ const RagService = {
     if (organizationId) {
       sql += ' AND d.organization_id = ?';
       params.push(organizationId);
+    }
+
+    if (Array.isArray(documentIds) && documentIds.length > 0) {
+      const placeholders = documentIds.map(() => '?').join(',');
+      sql += ` AND d.id IN (${placeholders})`;
+      params.push(...documentIds);
     }
 
     const rows = await DbPromise.all<{ id: string; content: string; filename: string }>(
@@ -539,6 +572,7 @@ const RagService = {
       organizationId = null,
       alpha = HYBRID_CONFIG.alpha,
       enableReranking = HYBRID_CONFIG.rerankerEnabled,
+      documentIds,
     } = options;
 
     aiLogger.info(
@@ -548,8 +582,8 @@ const RagService = {
 
     const candidateLimit = limit * 3;
     const [bm25Results, vectorResults] = await Promise.all([
-      RagService.bm25Search(query, candidateLimit, organizationId),
-      RagService._vectorSearch(query, candidateLimit, organizationId),
+      RagService.bm25Search(query, candidateLimit, organizationId, documentIds),
+      RagService._vectorSearch(query, candidateLimit, organizationId, documentIds),
     ]);
 
     aiLogger.info(
@@ -636,7 +670,8 @@ const RagService = {
   _vectorSearch: async (
     query: string,
     limit: number,
-    organizationId: string | null = null
+    organizationId: string | null = null,
+    documentIds?: string[]
   ): Promise<Array<RerankableChunk & { vectorScore: number }>> => {
     await initDeps();
     const cols = await ensureKnowledgeDocsColumns();
@@ -663,6 +698,12 @@ const RagService = {
     if (organizationId) {
       sql += ' AND d.organization_id = ?';
       params.push(organizationId);
+    }
+
+    if (Array.isArray(documentIds) && documentIds.length > 0) {
+      const placeholders = documentIds.map(() => '?').join(',');
+      sql += ` AND d.id IN (${placeholders})`;
+      params.push(...documentIds);
     }
 
     const rows = await DbPromise.all<{
@@ -712,7 +753,12 @@ const RagService = {
 
   getContextHybrid: async (
     query: string,
-    options: { limit?: number; organizationId?: string; screenContext?: ScreenContext } = {}
+    options: {
+      limit?: number;
+      organizationId?: string;
+      screenContext?: ScreenContext;
+      documentIds?: string[];
+    } = {}
   ): Promise<{
     context: string;
     sources: Array<{
@@ -723,7 +769,7 @@ const RagService = {
     }>;
     metrics: Record<string, unknown>;
   }> => {
-    const { limit = 5, organizationId, screenContext } = options;
+    const { limit = 5, organizationId, screenContext, documentIds } = options;
     let expandedQuery = query;
 
     if (screenContext) {
@@ -735,6 +781,7 @@ const RagService = {
       limit,
       organizationId,
       enableReranking: true,
+      documentIds,
     });
 
     const context = results

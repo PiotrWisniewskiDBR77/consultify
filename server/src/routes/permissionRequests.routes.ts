@@ -2,64 +2,99 @@
  * Permission Requests Routes
  * API endpoints for permission elevation requests
  */
-import { Router, Request, Response } from 'express';
-import { verifyToken, isAuthenticated } from '../middleware/auth.middleware.js';
+import { Request, Response, Router } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+
 import { verifyAdmin } from '../middleware/admin.middleware.js';
+import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
-import { v4 as uuidv4 } from 'uuid';
 import logger from '../utils/Logger.js';
 
 const router = Router();
-interface AuthRequest extends Request { user?: { id: string; organizationId: string; role: string }; }
+interface AuthRequest extends Request {
+  user?: { id: string; organizationId: string; role: string };
+}
 
-router.get('/', verifyToken, verifyAdmin, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const orgId = req.user?.organizationId;
-  const status = req.query.status || 'pending';
-  const reqs = await dbAll(`
+router.get(
+  '/',
+  verifyToken,
+  verifyAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const status = req.query.status || 'pending';
+    const reqs = await dbAll(
+      `
     SELECT pr.id, pr.user_id, pr.requested_permission, pr.reason, pr.status,
            pr.created_at, pr.resolved_at, u.first_name, u.last_name, u.email
     FROM permission_requests pr
     JOIN users u ON pr.user_id = u.id
     WHERE pr.organization_id = ? AND (pr.status = ? OR ? = 'all')
     ORDER BY pr.created_at DESC
-  `, [orgId, status, status]);
-  res.json(reqs || []);
-}));
+  `,
+      [orgId, status, status]
+    );
+    res.json(reqs || []);
+  })
+);
 
-router.post('/', verifyToken, isAuthenticated, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id;
-  const orgId = req.user?.organizationId;
-  const { requestedPermission, reason } = req.body;
-  if (!requestedPermission) return res.status(400).json({ error: 'Permission required' });
-  const id = uuidv4();
-  await dbRun(`
+router.post(
+  '/',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const orgId = req.user?.organizationId;
+    const { requestedPermission, reason } = req.body;
+    if (!requestedPermission) return res.status(400).json({ error: 'Permission required' });
+    const id = uuidv4();
+    await dbRun(
+      `
     INSERT INTO permission_requests (id, user_id, organization_id, requested_permission, reason, status, created_at)
     VALUES (?, ?, ?, ?, ?, 'pending', datetime('now'))
-  `, [id, userId, orgId, requestedPermission, reason || '']);
-  logger.info(`[Permissions] Request by ${userId}: ${requestedPermission}`);
-  res.status(201).json({ success: true, id });
-}));
+  `,
+      [id, userId, orgId, requestedPermission, reason || '']
+    );
+    logger.info(`[Permissions] Request by ${userId}: ${requestedPermission}`);
+    res.status(201).json({ success: true, id });
+  })
+);
 
-router.put('/:id/approve', verifyToken, verifyAdmin, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { id } = req.params;
-  const userId = req.user?.id;
-  await dbRun(`
+router.put(
+  '/:id/approve',
+  verifyToken,
+  verifyAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const userId = req.user?.id;
+    await dbRun(
+      `
     UPDATE permission_requests SET status = 'approved', resolved_by = ?, resolved_at = datetime('now')
     WHERE id = ? AND status = 'pending'
-  `, [userId, id]);
-  res.json({ success: true });
-}));
+  `,
+      [userId, id]
+    );
+    res.json({ success: true });
+  })
+);
 
-router.put('/:id/reject', verifyToken, verifyAdmin, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { id } = req.params;
-  const userId = req.user?.id;
-  const { rejectionReason } = req.body;
-  await dbRun(`
+router.put(
+  '/:id/reject',
+  verifyToken,
+  verifyAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const userId = req.user?.id;
+    const { rejectionReason } = req.body;
+    await dbRun(
+      `
     UPDATE permission_requests SET status = 'rejected', resolved_by = ?, resolved_at = datetime('now'),
     rejection_reason = ? WHERE id = ? AND status = 'pending'
-  `, [userId, rejectionReason || '', id]);
-  res.json({ success: true });
-}));
+  `,
+      [userId, rejectionReason || '', id]
+    );
+    res.json({ success: true });
+  })
+);
 
 export default router;

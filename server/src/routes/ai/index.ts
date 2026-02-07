@@ -5,6 +5,7 @@
 
 import { Router } from 'express';
 
+import agentAuditRoutes from './agent-audit.routes.js';
 import aiAbTestingRoutes from './ai-ab-testing.routes.js';
 import aiAnalyticsRoutesV1 from './ai-analytics.routes.js';
 import aiBudgetsRoutes from './ai-budgets.routes.js';
@@ -30,7 +31,6 @@ import aiLearningRoutes from './aiLearning.routes.js';
 import aiMemoryRoutesV2 from './aiMemory.routes.js';
 import aiPlaybooksRoutes from './aiPlaybooks.routes.js';
 import deepThinkingRoutes from './deep-thinking.routes.js';
-import agentAuditRoutes from './agent-audit.routes.js';
 
 const router = Router();
 

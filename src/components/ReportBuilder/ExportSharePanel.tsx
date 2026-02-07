@@ -183,17 +183,13 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
 
     // Check for enabled blocks without content
     const enabledBlocks = blocks.filter((b) => b.enabled);
-    const emptyBlocks = enabledBlocks.filter(
-      (b) => !b.content || b.content.trim().length === 0
-    );
+    const emptyBlocks = enabledBlocks.filter((b) => !b.content || b.content.trim().length === 0);
     const notGeneratedBlocks = enabledBlocks.filter((b) => !b.isGenerated && !b.content);
 
     if (enabledBlocks.length === 0) {
       warnings.push({
         type: 'error',
-        message: isPl
-          ? 'Brak włączonych bloków w raporcie'
-          : 'No enabled blocks in the report',
+        message: isPl ? 'Brak włączonych bloków w raporcie' : 'No enabled blocks in the report',
       });
     }
 
@@ -255,23 +251,8 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
       {/* Export Buttons Row */}
       <div className="flex items-center gap-2 flex-wrap">
         {/* Export PDF Button */}
-      <button
-        onClick={handleExportPdf}
-        disabled={isLoading}
-        className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
-      >
-        {isLoading ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <Download className="w-4 h-4" />
-        )}
-        <span>PDF</span>
-      </button>
-
-      {/* Export PPTX Button */}
-      {onExportPptx && (
         <button
-          onClick={handleExportPptx}
+          onClick={handleExportPdf}
           disabled={isLoading}
           className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
         >
@@ -280,25 +261,40 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
           ) : (
             <Download className="w-4 h-4" />
           )}
-          <span>PPTX</span>
+          <span>PDF</span>
         </button>
-      )}
 
-      {/* Export Word Button */}
-      {onExportWord && (
-        <button
-          onClick={handleExportWord}
-          disabled={isLoading}
-          className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
-        >
-          {isLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <FileText className="w-4 h-4" />
-          )}
-          <span>{isPl ? 'DOCX' : 'DOCX'}</span>
-        </button>
-      )}
+        {/* Export PPTX Button */}
+        {onExportPptx && (
+          <button
+            onClick={handleExportPptx}
+            disabled={isLoading}
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
+          >
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+            <span>PPTX</span>
+          </button>
+        )}
+
+        {/* Export Word Button */}
+        {onExportWord && (
+          <button
+            onClick={handleExportWord}
+            disabled={isLoading}
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
+          >
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <FileText className="w-4 h-4" />
+            )}
+            <span>{isPl ? 'DOCX' : 'DOCX'}</span>
+          </button>
+        )}
 
         {/* Share Button */}
         <button

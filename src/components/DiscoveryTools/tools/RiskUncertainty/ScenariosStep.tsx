@@ -153,4 +153,3 @@ export const ScenariosStep: React.FC<ScenariosStepProps> = ({ session, isPolish 
 };
 
 export default ScenariosStep;
-

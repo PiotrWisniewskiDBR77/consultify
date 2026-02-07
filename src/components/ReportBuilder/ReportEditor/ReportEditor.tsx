@@ -35,7 +35,13 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { ExportSharePanel } from '../ExportSharePanel';
-import type { Report, ReportSection, ReportSourceType, ReportStatus, SourceOption } from '../useReportBuilder';
+import type {
+  Report,
+  ReportSection,
+  ReportSourceType,
+  ReportStatus,
+  SourceOption,
+} from '../useReportBuilder';
 import { BlockCard } from './BlockCard';
 import { BlockPalette } from './BlockPalette';
 import { ReviewPanel } from './ReviewPanel';
@@ -189,7 +195,9 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [showBlockPalette, setShowBlockPalette] = useState(false);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
-  const [settingsSection, setSettingsSection] = useState<'intent' | 'styling' | 'export' | 'review'>('intent');
+  const [settingsSection, setSettingsSection] = useState<
+    'intent' | 'styling' | 'export' | 'review'
+  >('intent');
   const [isSettingsPanelCollapsed, setIsSettingsPanelCollapsed] = useState(false);
 
   // Source state
@@ -338,22 +346,23 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   );
 
   // Computed template meta for SettingsPanel
-  const templateMetaForPanel = React.useMemo(() => ({
-    sourceType: templateSourceType,
-    reportType: templateReportType,
-    description: templateDescription,
-    author: templateAuthor,
-  }), [templateSourceType, templateReportType, templateDescription, templateAuthor]);
-
-  const handleTemplateMetaChange = useCallback(
-    (updates: Partial<typeof templateMetaForPanel>) => {
-      if (updates.sourceType !== undefined) setTemplateSourceType(updates.sourceType as ReportSourceType);
-      if (updates.reportType !== undefined) setTemplateReportType(updates.reportType);
-      if (updates.description !== undefined) setTemplateDescription(updates.description);
-      if (updates.author !== undefined) setTemplateAuthor(updates.author);
-    },
-    []
+  const templateMetaForPanel = React.useMemo(
+    () => ({
+      sourceType: templateSourceType,
+      reportType: templateReportType,
+      description: templateDescription,
+      author: templateAuthor,
+    }),
+    [templateSourceType, templateReportType, templateDescription, templateAuthor]
   );
+
+  const handleTemplateMetaChange = useCallback((updates: Partial<typeof templateMetaForPanel>) => {
+    if (updates.sourceType !== undefined)
+      setTemplateSourceType(updates.sourceType as ReportSourceType);
+    if (updates.reportType !== undefined) setTemplateReportType(updates.reportType);
+    if (updates.description !== undefined) setTemplateDescription(updates.description);
+    if (updates.author !== undefined) setTemplateAuthor(updates.author);
+  }, []);
 
   const reportStatus = (report?.status || 'DRAFT') as ReportStatus;
   const reportIdForActions = report?.id || reportId || null;
@@ -701,14 +710,19 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       blockType: string,
       title: string,
       afterIndex?: number,
-      meta?: { blockTypeId?: string; renderKind?: string; defaultLength?: 'short' | 'medium' | 'long' }
+      meta?: {
+        blockTypeId?: string;
+        renderKind?: string;
+        defaultLength?: 'short' | 'medium' | 'long';
+      }
     ) => {
       const newBlock: BlockConfig = {
         id: `tmp_${Date.now()}`,
         type: blockType,
         title,
         length: meta?.defaultLength || 'medium',
-        includeVisuals: blockType === 'matrix' || meta?.renderKind === 'matrix' || meta?.renderKind === 'chart',
+        includeVisuals:
+          blockType === 'matrix' || meta?.renderKind === 'matrix' || meta?.renderKind === 'chart',
         blockTypeId: meta?.blockTypeId,
         renderKind: meta?.renderKind,
         enabled: true,

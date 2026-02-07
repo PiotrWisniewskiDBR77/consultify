@@ -258,7 +258,10 @@ export class ModelRouter {
             providerConfig &&
             providerConfig.isConfigured &&
             providerConfig.healthStatus !== 'unhealthy' &&
-            modelMeetsRequirements(String(providerConfig.model_id || providerConfig.id || ''), requirements)
+            modelMeetsRequirements(
+              String(providerConfig.model_id || providerConfig.id || ''),
+              requirements
+            )
           ) {
             aiLogger.info('ModelRouter', `Selected ${providerId} from config service for ${tier}`);
             return {
@@ -282,7 +285,10 @@ export class ModelRouter {
       defaultProvider &&
       defaultProvider.api_key &&
       !(openaiDisabled && String(defaultProvider.provider || '').toLowerCase() === 'openai') &&
-      modelMeetsRequirements(String(defaultProvider.model_id || defaultProvider.id || ''), requirements)
+      modelMeetsRequirements(
+        String(defaultProvider.model_id || defaultProvider.id || ''),
+        requirements
+      )
     ) {
       aiLogger.info(
         'ModelRouter',
@@ -316,10 +322,13 @@ export class ModelRouter {
       VISION: 'gemini-1.5-pro',
     };
 
-    const staticCandidates = !hasOpenAI && hasGemini
-      ? [geminiDefaultByTier[tier] || 'gemini-1.5-flash', ...(TIER_FALLBACK_CHAINS[tier] || [])]
-      : [TIER_DEFAULTS[tier], ...(TIER_FALLBACK_CHAINS[tier] || [])];
-    const staticPick = staticCandidates.find((m) => modelMeetsRequirements(String(m || ''), requirements));
+    const staticCandidates =
+      !hasOpenAI && hasGemini
+        ? [geminiDefaultByTier[tier] || 'gemini-1.5-flash', ...(TIER_FALLBACK_CHAINS[tier] || [])]
+        : [TIER_DEFAULTS[tier], ...(TIER_FALLBACK_CHAINS[tier] || [])];
+    const staticPick = staticCandidates.find((m) =>
+      modelMeetsRequirements(String(m || ''), requirements)
+    );
     if (!staticPick) {
       throw new Error(
         `No model satisfies requirements for tier ${tier} (capability=${capability || 'n/a'})`

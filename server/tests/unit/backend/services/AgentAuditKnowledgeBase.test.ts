@@ -4,16 +4,16 @@
  * Tests for the static KB entries used by audit agents.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import {
   getAgentKB,
-  getAllKBEntries,
-  searchKB,
-  getKBByType,
-  getAgentTriggerQuestions,
-  getAgentSeverityHints,
   getAgentLimits,
+  getAgentSeverityHints,
+  getAgentTriggerQuestions,
+  getAllKBEntries,
+  getKBByType,
+  searchKB,
 } from '../../../../src/services/ai/agentAudit/agentKnowledgeBase.js';
 
 describe('AgentAuditKnowledgeBase', () => {
@@ -77,13 +77,19 @@ describe('AgentAuditKnowledgeBase', () => {
     it('should find CAPEX-related entries', () => {
       const results = searchKB('CAPEX investment ROI');
       expect(results.length).toBeGreaterThan(0);
-      expect(results.some((e) => e.domain.includes('capex') || e.content.toLowerCase().includes('capex'))).toBe(true);
+      expect(
+        results.some((e) => e.domain.includes('capex') || e.content.toLowerCase().includes('capex'))
+      ).toBe(true);
     });
 
     it('should find integration security entries', () => {
       const results = searchKB('API security authentication');
       expect(results.length).toBeGreaterThan(0);
-      expect(results.some((e) => e.domain.includes('integration') || e.content.toLowerCase().includes('api'))).toBe(true);
+      expect(
+        results.some(
+          (e) => e.domain.includes('integration') || e.content.toLowerCase().includes('api')
+        )
+      ).toBe(true);
     });
 
     it('should find OEE-related entries', () => {
@@ -141,7 +147,11 @@ describe('AgentAuditKnowledgeBase', () => {
     it('should return trigger questions for CFO agent', () => {
       const questions = getAgentTriggerQuestions('function.cfo_finance');
       expect(questions.length).toBeGreaterThan(0);
-      expect(questions.some((q) => q.toLowerCase().includes('roi') || q.toLowerCase().includes('cashflow'))).toBe(true);
+      expect(
+        questions.some(
+          (q) => q.toLowerCase().includes('roi') || q.toLowerCase().includes('cashflow')
+        )
+      ).toBe(true);
     });
 
     it('should return empty for unknown agent', () => {

@@ -30,11 +30,17 @@ export async function logAgentAuditEvent(args: {
           created_at
         ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
       `,
-      [organizationId, userId, runId, conversationId || null, eventType, payload ? JSON.stringify(payload) : null]
+      [
+        organizationId,
+        userId,
+        runId,
+        conversationId || null,
+        eventType,
+        payload ? JSON.stringify(payload) : null,
+      ]
     );
   } catch (err: any) {
     // Metrics must never break the primary flow.
     logger.warn('[AgentAuditMetrics] Failed to log event:', err?.message || err);
   }
 }
-

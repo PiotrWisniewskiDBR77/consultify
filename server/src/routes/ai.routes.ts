@@ -238,7 +238,9 @@ router.post(
           .describe('The type of output expected'),
         decisionHorizon: z.string().describe('Time horizon for the decision'),
       }),
-      isClearEnoughToProceed: z.boolean().describe('Whether the request is clear enough to proceed'),
+      isClearEnoughToProceed: z
+        .boolean()
+        .describe('Whether the request is clear enough to proceed'),
       missingInfoQuestions: z
         .array(
           z.object({
@@ -252,12 +254,9 @@ router.post(
         .array(
           z.object({
             id: z.string().describe('Unique identifier for the research item'),
-            type: z.enum([
-              'ConceptualFrameworks',
-              'PriorPatterns',
-              'UserInputs',
-              'ExternalReferences',
-            ]).describe('Type of research'),
+            type: z
+              .enum(['ConceptualFrameworks', 'PriorPatterns', 'UserInputs', 'ExternalReferences'])
+              .describe('Type of research'),
             label: z.string().describe('Label for the research item'),
             rationale: z.string().describe('Why this research is needed'),
           })
@@ -327,8 +326,18 @@ router.post(
       `- responseStyle: ${String(responseStyle || 'normal')}`,
     ].join('\n');
 
-    logger.info('[AI Confirm] Calling LLM with model:', modelCfg.id, 'provider:', modelCfg.provider);
-    logger.info('[AI Confirm] History length:', compactHistory.length, 'User prompt length:', user.length);
+    logger.info(
+      '[AI Confirm] Calling LLM with model:',
+      modelCfg.id,
+      'provider:',
+      modelCfg.provider
+    );
+    logger.info(
+      '[AI Confirm] History length:',
+      compactHistory.length,
+      'User prompt length:',
+      user.length
+    );
 
     let result: any;
     try {
@@ -438,19 +447,11 @@ router.post(
     if (aiModes?.deepResearch) {
       const confirmed = Boolean((context as any)?.deepThinkingConfirmed);
       if (!confirmed) {
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-        res.flushHeaders();
-        res.write(
-          `data: ${JSON.stringify({
-            error:
-              'Deep Thinking requires Confirm Understanding first. Call /api/ai/chat/confirm and then retry with context.deepThinkingConfirmed=true.',
-            code: 'DEEP_THINKING_CONFIRM_REQUIRED',
-          })}\n\n`
-        );
-        res.write('data: [DONE]\n\n');
-        return res.end();
+        return res.status(400).json({
+          error:
+            'Deep Thinking requires Confirm Understanding first. Call /api/ai/chat/confirm and then retry with context.deepThinkingConfirmed=true.',
+          code: 'DEEP_THINKING_CONFIRM_REQUIRED',
+        });
       }
     }
 
@@ -766,6 +767,145 @@ router.post(
           }
         } catch (_hintErr) {
           // Non-critical; swallow silently
+        }
+      }
+
+      // --------------------------------------------------------
+      // Web Search tool (non-DeepThinking mode)
+      // --------------------------------------------------------
+      // When webSearch is enabled but deepResearch is OFF, we do a lightweight search and:
+      // - stream citations metadata to the client (for UI rendering)
+      // - inject sources into system instruction so the model can ground claims
+      if (aiModes?.webSearch && !aiModes?.deepResearch) {
+        const tavilyKey = (process.env.TAVILY_API_KEY || '').trim();
+        if (!tavilyKey) {
+          emitSSE({
+            type: 'research_progress',
+            topic: message,
+            stage: 'complete',
+            queries: [],
+            sources: [],
+            error: 'Web research enabled but TAVILY_API_KEY is missing',
+          });
+        } else {
+          try {
+            const { TavilyWebSearchService } =
+              await import('../services/ai/tavilyWebSearchService.js');
+            const svc = new (TavilyWebSearchService as any)(tavilyKey);
+            const resp = await svc.search(message, { maxResults: 5, includeNews: true });
+            const results = Array.isArray(resp?.results) ? resp.results : [];
+
+            const citations = results
+              .filter((r: any) => r?.url && r?.title)
+              .slice(0, 5)
+              .map((r: any, idx: number) => ({
+                id: `web_${idx + 1}`,
+                type: 'external',
+                title: String(r.title || ''),
+                reference: String(r.url || ''),
+                link: String(r.url || ''),
+                excerpt: String(r.snippet || ''),
+              }));
+
+            emitSSE({ type: 'citations', citations });
+
+            // Inject sources into the system instruction (so the model can cite them).
+            const sourcesText = citations
+              .map((c: any, i: number) => `[${i + 1}] ${c.title}\n${c.link}\n${c.excerpt || ''}`)
+              .join('\n\n');
+
+            pipelineRequest = {
+              ...pipelineRequest,
+              options: {
+                ...(pipelineRequest.options || {}),
+                systemInstruction:
+                  String((pipelineRequest.options as any)?.systemInstruction || '') +
+                  `\n\n## WEB SOURCES (provided by tool)\n${sourcesText}\n\nRules:\n- When using any web source, cite it inline like [1], [2].\n- If sources are insufficient or contradictory, say so.\n`,
+              },
+              context: {
+                ...((pipelineRequest as any).context || {}),
+                external: {
+                  ...(context as any)?.external,
+                  webSearch: { query: message, results },
+                  citations,
+                },
+              },
+            } as any;
+          } catch (err: any) {
+            logger.warn('[AI Stream] Web search failed, continuing without it:', err?.message);
+            emitSSE({
+              type: 'research_progress',
+              topic: message,
+              stage: 'complete',
+              queries: [],
+              sources: [],
+              error: 'Web research unavailable',
+            });
+          }
+        }
+      }
+
+      // --------------------------------------------------------
+      // Conversation-scoped RAG from attached documents
+      // --------------------------------------------------------
+      // The client can attach documents to a conversation and pass their `knowledge_docs.id` as:
+      // - context.attachmentDocIds: string[]
+      // - OR context.attachments: Array<{ docId: string; ... }>
+      // We then restrict retrieval to ONLY those doc IDs.
+      const attachmentDocIdsRaw =
+        (context as any)?.attachmentDocIds ||
+        (Array.isArray((context as any)?.attachments)
+          ? (context as any).attachments.map((a: any) => a?.docId).filter(Boolean)
+          : null);
+      const attachmentDocIds = Array.isArray(attachmentDocIdsRaw)
+        ? Array.from(new Set(attachmentDocIdsRaw.map((x: any) => String(x)).filter(Boolean)))
+        : [];
+
+      if (attachmentDocIds.length > 0 && message && message.trim().length > 0) {
+        try {
+          const ragModule = await import('../services/ragService.js');
+          const ragService = (ragModule.default || ragModule) as any;
+          const chunks = await ragService.searchRelevantChunks(message, {
+            limit: 5,
+            organizationId: req.organizationId || undefined,
+            documentIds: attachmentDocIds,
+          });
+
+          if (Array.isArray(chunks) && chunks.length > 0) {
+            const attachmentsText = chunks
+              .slice(0, 5)
+              .map((c: any, i: number) => {
+                const source = String(c?.source || 'Attachment');
+                const content = String(c?.content || '').trim();
+                return `[A${i + 1}] ${source}\n${content}`;
+              })
+              .join('\n\n');
+
+            pipelineRequest = {
+              ...pipelineRequest,
+              options: {
+                ...(pipelineRequest.options || {}),
+                systemInstruction:
+                  String((pipelineRequest.options as any)?.systemInstruction || '') +
+                  `\n\n## ATTACHMENTS (conversation-scoped sources)\n${attachmentsText}\n\nRules:\n- Prefer these attachments when relevant.\n- If you use an attachment chunk, cite it inline like [A1], [A2].\n- If the attachments do not contain the needed info, say so.\n`,
+              },
+              context: {
+                ...((pipelineRequest as any).context || {}),
+                external: {
+                  ...(context as any)?.external,
+                  attachmentsRag: {
+                    documentIds: attachmentDocIds,
+                    chunks,
+                  },
+                },
+              },
+            } as any;
+          }
+        } catch (err: any) {
+          logger.warn(
+            '[AI Stream] Attachment RAG failed, continuing without it:',
+            err?.message || String(err)
+          );
         }
       }
 
@@ -1188,10 +1328,10 @@ router.post(
                 agentsTotal: agentIds.length,
               });
 
-              const { runAgentAudit } = await import('../services/ai/agentAudit/orchestratorService.js');
-              const { createAgentAuditRun } = await import(
-                '../services/ai/agentAudit/agentAuditStore.js'
-              );
+              const { runAgentAudit } =
+                await import('../services/ai/agentAudit/orchestratorService.js');
+              const { createAgentAuditRun } =
+                await import('../services/ai/agentAudit/agentAuditStore.js');
 
               const auditOut = await runAgentAudit({
                 organizationId: req.organizationId!,

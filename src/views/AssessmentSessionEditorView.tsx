@@ -1398,6 +1398,9 @@ export const AssessmentSessionEditorView: React.FC = () => {
         isOpen={isReportTemplatePickerOpen}
         onClose={() => setIsReportTemplatePickerOpen(false)}
         onSelect={(tpl) => handleStartNewReportFromTemplate(tpl.id)}
+        sourceType="ASSESSMENT"
+        framework={framework}
+        lockFramework={true}
       />
 
       {/* Initiatives workflow overlay */}

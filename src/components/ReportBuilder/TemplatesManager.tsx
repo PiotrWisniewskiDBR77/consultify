@@ -38,6 +38,7 @@ import {
   FilterDropdown,
   type TableFilters,
 } from '@/components/ui/ResizableTable';
+
 import { Api } from '../../services/api';
 import { ReportEditor } from './ReportEditor/ReportEditor';
 
@@ -306,7 +307,9 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
   const [showEditor, setShowEditor] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [filter, setFilter] = useState<'all' | 'app' | 'org'>('all');
-  const [moduleFilter, setModuleFilter] = useState<'all' | 'assessment' | 'interview' | 'tool' | 'initiative'>('all');
+  const [moduleFilter, setModuleFilter] = useState<
+    'all' | 'assessment' | 'interview' | 'tool' | 'initiative'
+  >('all');
   const [formatFilter, setFormatFilter] = useState<'all' | 'horizontal' | 'vertical'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
@@ -436,17 +439,27 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
   const orgCount = templates.filter((t) => !t.isSystem).length;
 
   // Counts for filter dropdowns
-  const moduleCounts = useMemo(() => ({
-    assessment: templates.filter((t) => (t.sourceType || '').toLowerCase() === 'assessment').length,
-    interview: templates.filter((t) => (t.sourceType || '').toLowerCase() === 'interview').length,
-    tool: templates.filter((t) => (t.sourceType || '').toLowerCase() === 'tool').length,
-    initiative: templates.filter((t) => (t.sourceType || '').toLowerCase() === 'initiative').length,
-  }), [templates]);
+  const moduleCounts = useMemo(
+    () => ({
+      assessment: templates.filter((t) => (t.sourceType || '').toLowerCase() === 'assessment')
+        .length,
+      interview: templates.filter((t) => (t.sourceType || '').toLowerCase() === 'interview').length,
+      tool: templates.filter((t) => (t.sourceType || '').toLowerCase() === 'tool').length,
+      initiative: templates.filter((t) => (t.sourceType || '').toLowerCase() === 'initiative')
+        .length,
+    }),
+    [templates]
+  );
 
-  const formatCounts = useMemo(() => ({
-    horizontal: templates.filter((t) => (t.reportType || '').toLowerCase() === 'horizontal').length,
-    vertical: templates.filter((t) => (t.reportType || 'vertical').toLowerCase() === 'vertical').length,
-  }), [templates]);
+  const formatCounts = useMemo(
+    () => ({
+      horizontal: templates.filter((t) => (t.reportType || '').toLowerCase() === 'horizontal')
+        .length,
+      vertical: templates.filter((t) => (t.reportType || 'vertical').toLowerCase() === 'vertical')
+        .length,
+    }),
+    [templates]
+  );
 
   // Selection helpers
   const allSelected = selectedIds.size > 0 && selectedIds.size === filteredTemplates.length;
@@ -704,7 +717,9 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               {searchQuery ? 'No templates match your search' : 'No templates found'}
             </p>
             <p className="text-xs text-slate-500">
-              {searchQuery ? 'Try adjusting your search terms' : 'Create a new template to get started'}
+              {searchQuery
+                ? 'Try adjusting your search terms'
+                : 'Create a new template to get started'}
             </p>
           </div>
         ) : (
@@ -721,7 +736,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                           ? 'bg-purple-500 border-purple-500 text-white'
                           : someSelected
                             ? 'bg-purple-500/50 border-purple-500 text-white'
-                          : 'border-slate-300 dark:border-navy-500 hover:border-purple-400 text-transparent hover:text-slate-500 dark:hover:text-slate-400'
+                            : 'border-slate-300 dark:border-navy-500 hover:border-purple-400 text-transparent hover:text-slate-500 dark:hover:text-slate-400'
                       }`}
                     >
                       {allSelected ? (
@@ -741,9 +756,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                   >
                     <div className="flex items-center gap-1">
                       <span
-                        className={
-                          (tableFilters.type as string[])?.length ? 'text-purple-500' : ''
-                        }
+                        className={(tableFilters.type as string[])?.length ? 'text-purple-500' : ''}
                       >
                         Type
                       </span>

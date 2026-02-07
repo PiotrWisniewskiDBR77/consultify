@@ -1,5 +1,6 @@
-import { all as dbAll, get as dbGet, run as dbRun } from '../../../utils/DbPromise.js';
 import { v4 as uuidv4 } from 'uuid';
+
+import { all as dbAll, get as dbGet, run as dbRun } from '../../../utils/DbPromise.js';
 import { logAgentAuditEvent } from './agentAuditMetricsService.js';
 
 function isMustHaveQuestion(q: unknown): boolean {
@@ -40,7 +41,9 @@ function summarizeAuditKpis(args: {
   const agentsRejected = reviews.filter((r) => String(r?.overreach || '') === 'hard').length;
   const conflictRate = agentsValid > 0 ? conflictsTotal / agentsValid : 0;
 
-  const criticalHighCount = Array.isArray(verdict?.criticalRisks) ? verdict.criticalRisks.length : 0;
+  const criticalHighCount = Array.isArray(verdict?.criticalRisks)
+    ? verdict.criticalRisks.length
+    : 0;
   const gatesTriggered = Array.isArray(verdict?.gatesTriggered) ? verdict.gatesTriggered : [];
   const sourcesCounts = verdict?.sourcesSummary?.counts || null;
 
@@ -189,10 +192,7 @@ export async function createAgentAuditRun(args: {
   }
 }
 
-export async function getAgentAuditRun(args: {
-  runId: string;
-  organizationId: string;
-}): Promise<{
+export async function getAgentAuditRun(args: { runId: string; organizationId: string }): Promise<{
   id: string;
   organizationId: string;
   userId: string;
@@ -208,7 +208,13 @@ export async function getAgentAuditRun(args: {
   verdict: any | null;
   createdAt: string;
   updatedAt: string;
-  reviews: Array<{ id: number; agentId: string; overreach: string | null; review: any; createdAt: string }>;
+  reviews: Array<{
+    id: number;
+    agentId: string;
+    overreach: string | null;
+    review: any;
+    createdAt: string;
+  }>;
 } | null> {
   const row = (await dbGet(
     `SELECT
@@ -329,4 +335,3 @@ export async function acceptAgentAuditRun(args: {
     // ignore
   }
 }
-

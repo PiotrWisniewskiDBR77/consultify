@@ -26,6 +26,12 @@ const levels = {
 };
 
 const level = () => {
+  // Allow overriding log level locally (e.g. LOG_LEVEL=info).
+  const configured = (process.env.LOG_LEVEL || '').toLowerCase();
+  if (configured && Object.prototype.hasOwnProperty.call(levels, configured)) {
+    return configured;
+  }
+
   const env = process.env.NODE_ENV || 'development';
   const isDevelopment = env === 'development' || env === 'test';
   return isDevelopment ? 'debug' : 'warn';
@@ -51,14 +57,20 @@ const format = winston.format.combine(
   })
 );
 
-const transports = [
-  new winston.transports.Console(),
-  new winston.transports.File({
-    filename: 'logs/error.log',
-    level: 'error',
-  }),
-  new winston.transports.File({ filename: 'logs/all.log' }),
-];
+// File logging can be surprisingly expensive in local dev (disk I/O + massive debug volume).
+// Enable it only when explicitly requested or in production-like environments.
+const enableFileLogs = process.env.LOG_TO_FILE === 'true' || process.env.NODE_ENV === 'production';
+
+const transports: winston.transport[] = [new winston.transports.Console()];
+if (enableFileLogs) {
+  transports.push(
+    new winston.transports.File({
+      filename: 'logs/error.log',
+      level: 'error',
+    }),
+    new winston.transports.File({ filename: 'logs/all.log' })
+  );
+}
 
 const logger = winston.createLogger({
   level: level(),
@@ -67,4 +79,5 @@ const logger = winston.createLogger({
   transports,
 });
 
+export { logger };
 export default logger;

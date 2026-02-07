@@ -171,7 +171,12 @@ export function getCurrentThinkingLabel(steps: ThinkingStep[]): string {
 }
 
 type StreamOptions = {
-  onStreamDone?: (fullText: string, thinking: ThinkingStep[], artifacts: Artifact[]) => void;
+  onStreamDone?: (
+    fullText: string,
+    thinking: ThinkingStep[],
+    artifacts: Artifact[],
+    meta?: { citations?: any[] }
+  ) => void;
   onStreamError?: (error: Error) => void;
   onThinkingUpdate?: (steps: ThinkingStep[]) => void;
   onArtifactDetected?: (artifact: Artifact) => void;
@@ -240,6 +245,11 @@ type AgentAuditVerdictEvent = {
   loopIteration?: number;
 };
 
+type CitationsEvent = {
+  type: 'citations';
+  citations: any[];
+};
+
 type PartialResponse = {
   sessionId: string;
   content: string;
@@ -255,6 +265,7 @@ export const useAIStream = (options: StreamOptions = {}) => {
   const [streamedContent, setStreamedContent] = useState('');
   const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
   const [lastError, setLastError] = useState<Error | null>(null);
+  const [citations, setCitations] = useState<any[]>([]);
   const [deepThinkingState, setDeepThinkingState] = useState<DeepThinkingStateEvent | null>(null);
   const [researchProgress, setResearchProgress] = useState<ResearchProgressEvent | null>(null);
   const [researchVisibility, setResearchVisibility] = useState<ResearchVisibilityEvent | null>(
@@ -297,6 +308,7 @@ export const useAIStream = (options: StreamOptions = {}) => {
     setStreamedContent('');
     setThinkingSteps([]);
     setDeepThinkingState(null);
+    setCitations([]);
     setResearchProgress(null);
     setResearchVisibility(null);
     setAgentAuditState(null);
@@ -330,7 +342,15 @@ export const useAIStream = (options: StreamOptions = {}) => {
       language?: string
     ) => {
       // Save for manual retry (best-effort)
-      lastRequestRef.current = { message, history, systemPrompt, context, focusMode, roleName, language };
+      lastRequestRef.current = {
+        message,
+        history,
+        systemPrompt,
+        context,
+        focusMode,
+        roleName,
+        language,
+      };
 
       abortRef.current.aborted = false;
       retryCountRef.current = 0;
@@ -453,12 +473,18 @@ export const useAIStream = (options: StreamOptions = {}) => {
         }
 
         updateLastChatMessage?.(fullText);
-        options.onStreamDone?.(fullText, currentThinking, parsedArtifacts);
+        options.onStreamDone?.(fullText, currentThinking, parsedArtifacts, { citations });
       };
 
       const handleEvent = (evt: any) => {
         if (abortRef.current.aborted) return;
         if (!evt || typeof evt !== 'object') return;
+
+        if (evt.type === 'citations') {
+          const e = evt as CitationsEvent;
+          setCitations(Array.isArray(e.citations) ? e.citations : []);
+          return;
+        }
 
         // Deep Thinking state
         if (evt.type === 'dt_state') {
@@ -582,6 +608,25 @@ export const useAIStream = (options: StreamOptions = {}) => {
           return;
         }
 
+        // Stream meta (debug/resume affinity)
+        if (evt.type === 'stream_meta') {
+          // Currently best-effort; stored in lastRequestRef via caller context.
+          return;
+        }
+
+        // Partial resume: backend may send a full/partial buffer to restore UI continuity.
+        // Treat as a replace (NOT append), otherwise we'd duplicate content.
+        if (evt.type === 'resume') {
+          const newText = String((evt as any).text || '');
+          if (newText) {
+            fullText = newText;
+            setStreamedContent(newText);
+            setCurrentStreamContent(newText);
+            updateLastChatMessage?.(newText);
+          }
+          return;
+        }
+
         // Self-Check repair: replace streamed content entirely
         if (evt.type === 'dt_repair_replace') {
           const newText = String((evt as any).text || '');
@@ -619,12 +664,7 @@ export const useAIStream = (options: StreamOptions = {}) => {
         if (evt.type === 'dt_selfcheck') {
           const e = evt as {
             type: 'dt_selfcheck';
-            status:
-              | 'repairing'
-              | 'passed'
-              | 'best_effort'
-              | 'failed'
-              | 'force_depth_insufficient';
+            status: 'repairing' | 'passed' | 'best_effort' | 'failed' | 'force_depth_insufficient';
             label?: string;
             iteration?: number;
             repairIterations?: number;
@@ -819,7 +859,13 @@ export const useAIStream = (options: StreamOptions = {}) => {
         message,
         history,
         systemPrompt,
-        { ...context, sessionId, resumeFromPartial: true },
+        {
+          ...(context || {}),
+          // Backend expects these as top-level fields (passed through by Api.chatWithAIStream)
+          conversationId: sessionId,
+          sessionId,
+          resumeFromPartial: true,
+        },
         focusMode
       );
     },
@@ -837,6 +883,7 @@ export const useAIStream = (options: StreamOptions = {}) => {
     isStreaming,
     streamedContent,
     thinkingSteps,
+    citations,
     deepThinkingState,
     researchProgress,
     researchVisibility,

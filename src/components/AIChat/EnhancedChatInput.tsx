@@ -700,11 +700,11 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               onConnectCloud={handleConnectCloud}
               connectedProviders={connectedProviderIds}
               isCloudImplemented={isCloudImplemented}
-            disabled={isInputDisabled}
+              disabled={isInputDisabled}
             />
             <ToolsMenu
               onToolSelect={(tool) => console.log('Tool selected:', tool)}
-            disabled={isInputDisabled}
+              disabled={isInputDisabled}
               icon={Wrench}
             />
           </div>
@@ -750,12 +750,12 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                                   isStreaming
                                     ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/25'
                                     : hasText
-                                    ? canSend
-                                      ? 'bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-500/25'
-                                      : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                                    : isVoiceConversationVal
-                                      ? 'bg-green-500 text-white shadow-lg shadow-green-500/30 animate-pulse'
-                                      : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 hover:bg-primary-100 hover:text-primary-600 dark:hover:bg-primary-900/30 dark:hover:text-primary-400'
+                                      ? canSend
+                                        ? 'bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-500/25'
+                                        : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                                      : isVoiceConversationVal
+                                        ? 'bg-green-500 text-white shadow-lg shadow-green-500/30 animate-pulse'
+                                        : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 hover:bg-primary-100 hover:text-primary-600 dark:hover:bg-primary-900/30 dark:hover:text-primary-400'
                                 }
                                 ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}
                                 ${isVoiceConversationVal && voiceState ? 'scale-110 ring-2 ring-primary-500' : ''}
@@ -764,10 +764,10 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 isStreaming
                   ? t('aiChat.stopGenerating', 'Stop generating')
                   : hasText
-                  ? t('aiChat.send', 'Send')
-                  : isVoiceConversationVal
-                    ? t('aiChat.stopVoice', 'Stop voice conversation')
-                    : t('aiChat.startVoice', 'Start voice conversation (auto-send)')
+                    ? t('aiChat.send', 'Send')
+                    : isVoiceConversationVal
+                      ? t('aiChat.stopVoice', 'Stop voice conversation')
+                      : t('aiChat.startVoice', 'Start voice conversation (auto-send)')
               }
             >
               {isStreaming ? (

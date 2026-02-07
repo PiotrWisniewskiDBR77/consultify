@@ -319,10 +319,7 @@ const MANUFACTURING_KB: KBEntry[] = [
       'Is standardized work documented?',
     ],
     limits: [],
-    severityHints: [
-      'No SMED analysis = MEDIUM',
-      'Missing standardized work = MEDIUM',
-    ],
+    severityHints: ['No SMED analysis = MEDIUM', 'Missing standardized work = MEDIUM'],
     content: `## Changeover Failure Patterns
 
 ### Pattern 1: Tool Search Time
@@ -365,10 +362,7 @@ const MANUFACTURING_KB: KBEntry[] = [
       'Risk assessment must be signed off before start',
       'New equipment requires safety validation',
     ],
-    severityHints: [
-      'Missing LOTO update = HIGH (blocker)',
-      'No risk assessment = HIGH (blocker)',
-    ],
+    severityHints: ['Missing LOTO update = HIGH (blocker)', 'No risk assessment = HIGH (blocker)'],
     content: `## Safety Implementation Constraints
 
 ### Non-Negotiable Requirements
@@ -465,10 +459,7 @@ const HR_KB: KBEntry[] = [
       'Are quick wins planned?',
     ],
     limits: [],
-    severityHints: [
-      'Middle management not engaged = HIGH',
-      'No WIIFM messaging = MEDIUM',
-    ],
+    severityHints: ['Middle management not engaged = HIGH', 'No WIIFM messaging = MEDIUM'],
     content: `## Change Resistance Failure Patterns
 
 ### Pattern 1: Frozen Middle
@@ -566,10 +557,7 @@ const PM_KB: KBEntry[] = [
       'Are scope boundaries explicit?',
     ],
     limits: [],
-    severityHints: [
-      'No scope baseline = HIGH',
-      'Missing change control = HIGH',
-    ],
+    severityHints: ['No scope baseline = HIGH', 'Missing change control = HIGH'],
     content: `## Scope Management Failure Patterns
 
 ### Pattern 1: Scope Creep by Consensus
@@ -664,10 +652,7 @@ const ADVERSARIAL_KB: KBEntry[] = [
       'Is "what could go wrong" addressed?',
     ],
     limits: [],
-    severityHints: [
-      'Certainty without data = HIGH',
-      'No risk acknowledgment = MEDIUM',
-    ],
+    severityHints: ['Certainty without data = HIGH', 'No risk acknowledgment = MEDIUM'],
     content: `## Overconfidence Patterns
 
 ### Pattern 1: Certainty Language
@@ -727,15 +712,16 @@ export function getAllKBEntries(): KBEntry[] {
 /**
  * Search KB entries by query
  */
-export function searchKB(query: string, options?: {
-  agentId?: string;
-  types?: KBEntryType[];
-  limit?: number;
-}): KBEntry[] {
+export function searchKB(
+  query: string,
+  options?: {
+    agentId?: string;
+    types?: KBEntryType[];
+    limit?: number;
+  }
+): KBEntry[] {
   const q = query.toLowerCase();
-  let entries = options?.agentId
-    ? getAgentKB(options.agentId)
-    : getAllKBEntries();
+  let entries = options?.agentId ? getAgentKB(options.agentId) : getAllKBEntries();
 
   if (options?.types?.length) {
     entries = entries.filter((e) => options.types!.includes(e.type));
@@ -749,7 +735,9 @@ export function searchKB(query: string, options?: {
       entry.content,
       ...entry.triggerQuestions,
       ...entry.limits,
-    ].join(' ').toLowerCase();
+    ]
+      .join(' ')
+      .toLowerCase();
 
     const words = q.split(/\s+/).filter((w) => w.length > 2);
     const matches = words.filter((w) => text.includes(w)).length;

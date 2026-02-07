@@ -144,7 +144,7 @@ export const AIChatWelcomeView: React.FC = () => {
 
   // AI stream with persistence callback
   const handleStreamDone = useCallback(
-    async (fullText: string) => {
+    async (fullText: string, _thinking?: any, _artifacts?: any, meta?: { citations?: any[] }) => {
       // Use ref to get the latest conversation ID (avoids stale closure)
       const convId = activeConversationIdRef.current;
       if (!convId) {
@@ -159,6 +159,9 @@ export const AIChatWelcomeView: React.FC = () => {
           role: 'ai',
           content: fullText,
           messageType: 'text',
+          metadata: {
+            citations: Array.isArray(meta?.citations) ? meta?.citations : [],
+          } as any,
         });
 
         // Trigger title generation after first AI response
@@ -189,6 +192,10 @@ export const AIChatWelcomeView: React.FC = () => {
     onStreamDone: handleStreamDone,
     onStreamError: (err) => {
       console.error('[Chat] Stream error:', err);
+      if ((err as any)?.code === 'DEEP_THINKING_CONFIRM_REQUIRED') {
+        // Flow-control error: do not persist as a chat message.
+        return;
+      }
       // Persist a visible error message to the conversation (so UI stays consistent with backend)
       const convId = activeConversationIdRef.current;
       if (!convId) return;
@@ -220,6 +227,7 @@ export const AIChatWelcomeView: React.FC = () => {
       content: String(m.content || ''),
       timestamp: m.createdAt || new Date(),
       type: m.messageType || 'text',
+      metadata: m.metadata,
       citations: m.metadata?.citations,
       actions: m.metadata?.actions,
       options: m.metadata?.options,
@@ -517,7 +525,7 @@ For example: REMEMBER: preferred_language: Polish`;
 
   // Handle sending a message
   const handleSend = useCallback(
-    async (message: string) => {
+    async (message: string, attachments?: any[]) => {
       if (!message.trim() || isStreaming) return;
 
       let conversationId = activeConversationId;
@@ -547,6 +555,73 @@ For example: REMEMBER: preferred_language: Polish`;
         }
       }
 
+      // Upload supported attachments into Knowledge Base and keep conversation-scoped doc filters.
+      const existingAttachmentDocIds = Array.from(
+        new Set(
+          (activeMessages || [])
+            .flatMap((m: any) =>
+              Array.isArray(m?.metadata?.attachments) ? m.metadata.attachments : []
+            )
+            .map((a: any) => a?.docId)
+            .filter(Boolean)
+            .map((x: any) => String(x))
+        )
+      );
+
+      const files: File[] = Array.isArray(attachments)
+        ? attachments.filter(
+            (a: any): a is File => typeof File !== 'undefined' && a instanceof File
+          )
+        : [];
+
+      const uploadedAttachments: Array<{
+        docId: string;
+        filename: string;
+        mimeType?: string;
+        size?: number;
+      }> = [];
+
+      for (const file of files) {
+        const ext = String(file.name || '')
+          .split('.')
+          .pop()
+          ?.toLowerCase();
+        const supported =
+          file.type === 'application/pdf' ||
+          file.type.startsWith('text/') ||
+          file.type === 'application/json' ||
+          ['txt', 'md', 'csv', 'json'].includes(ext || '');
+
+        if (!supported) {
+          console.warn('[AIChatWelcomeView] Skipping unsupported attachment type:', {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+          });
+          continue;
+        }
+
+        try {
+          const resp = await Api.uploadKnowledgeDocument(file, 'chat_attachment', [
+            `conversation:${conversationId}`,
+          ]);
+          const docId = String(resp?.docId || '');
+          if (!docId) continue;
+          uploadedAttachments.push({
+            docId,
+            filename: file.name,
+            mimeType: file.type || undefined,
+            size: file.size,
+          });
+        } catch (err) {
+          console.error('[AIChatWelcomeView] Failed to upload attachment:', err);
+        }
+      }
+
+      const attachmentDocIds = Array.from(
+        new Set([...existingAttachmentDocIds, ...uploadedAttachments.map((a) => a.docId)])
+      );
+
       // Add user message
       const userMsg: ChatMessage = {
         id: Date.now().toString(),
@@ -562,6 +637,10 @@ For example: REMEMBER: preferred_language: Polish`;
           role: 'user',
           content: message.trim(),
           messageType: 'text',
+          metadata:
+            uploadedAttachments.length > 0
+              ? ({ attachments: uploadedAttachments } as any)
+              : undefined,
         });
       } catch (err) {
         console.error('[Chat] Failed to persist user message:', err);
@@ -586,6 +665,8 @@ For example: REMEMBER: preferred_language: Polish`;
         isWelcomeScreen: activeMessages.length === 0,
         conversationId,
         conversationLanguage: chatLanguage,
+        attachmentDocIds,
+        attachments: uploadedAttachments,
       };
 
       const systemPrompt = buildSystemPrompt();
@@ -614,7 +695,45 @@ For example: REMEMBER: preferred_language: Polish`;
           );
 
           const c = (confirmRes as any)?.confirm || {};
-          const confirmMessageId = `dt-confirm-${Date.now()}`;
+          const u = c?.understanding || {};
+          const md = [
+            '**My understanding of your task**',
+            `- Goal: ${u.goal || ''}`,
+            u.context ? `- Context: ${u.context}` : '',
+            Array.isArray(u.constraints) && u.constraints.length
+              ? `- Constraints: ${u.constraints.join('; ')}`
+              : '',
+            u.expectedOutput ? `- Output: ${u.expectedOutput}` : '',
+            u.decisionHorizon ? `- Horizon: ${u.decisionHorizon}` : '',
+            '',
+            Array.isArray(c.missingInfoQuestions) && c.missingInfoQuestions.length
+              ? `**Assumptions & gaps (optional):**\n${c.missingInfoQuestions
+                  .slice(0, 3)
+                  .map((q: any, i: number) => `${i + 1}. ${q.question}`)
+                  .join('\n')}`
+              : '',
+            '',
+            '_Confirm to start Deep Thinking. Adjust if the task needs correction._',
+          ]
+            .filter(Boolean)
+            .join('\n');
+
+          let confirmMessageId = `dt-confirm-${Date.now()}`;
+          try {
+            const saved = await addMessage({
+              conversationId: conversationId!,
+              role: 'ai',
+              content: md,
+              messageType: 'text',
+              metadata: {
+                deepThinking: { kind: 'confirm', originalMessage: message.trim() },
+                deepThinkingConfirm: c,
+              } as any,
+            });
+            confirmMessageId = (saved as any)?.id || confirmMessageId;
+          } catch (persistErr) {
+            console.error('[AIChatWelcomeView] Failed to persist confirm card:', persistErr);
+          }
 
           setDtPendingConfirm({
             messageId: confirmMessageId,
@@ -666,7 +785,7 @@ For example: REMEMBER: preferred_language: Polish`;
       screenContext,
       pmoContext,
       globalContext,
-      activeMessages.length,
+      activeMessages,
       aiMemoryContext,
       aiConfig,
       dtConfirmBusy,
@@ -720,7 +839,15 @@ For example: REMEMBER: preferred_language: Polish`;
         }
       }
     },
-    [addMessage, chatLanguage, createConversation, handleSend, selectedProject, setActiveConversation, setConversationChatLanguage]
+    [
+      addMessage,
+      chatLanguage,
+      createConversation,
+      handleSend,
+      selectedProject,
+      setActiveConversation,
+      setConversationChatLanguage,
+    ]
   );
 
   // Handle new chat
@@ -820,7 +947,14 @@ For example: REMEMBER: preferred_language: Polish`;
     } catch (err) {
       console.error('[DailyBrief] Error:', err);
     }
-  }, [addMessage, chatLanguage, createConversation, selectedProject, setActiveConversation, setConversationChatLanguage]);
+  }, [
+    addMessage,
+    chatLanguage,
+    createConversation,
+    selectedProject,
+    setActiveConversation,
+    setConversationChatLanguage,
+  ]);
 
   // Handle message feedback (thumbs up/down)
   const handleFeedback = useCallback((messageId: string, feedback: MessageFeedback) => {
@@ -912,6 +1046,18 @@ For example: REMEMBER: preferred_language: Polish`;
           parts: [{ text: String(m.content || '') }],
         }));
 
+      const attachmentDocIds = Array.from(
+        new Set(
+          (msgs || [])
+            .flatMap((m: any) =>
+              Array.isArray(m?.metadata?.attachments) ? m.metadata.attachments : []
+            )
+            .map((a: any) => a?.docId)
+            .filter(Boolean)
+            .map((x: any) => String(x))
+        )
+      );
+
       const fullContext = {
         ...screenContext,
         pmo: pmoContext,
@@ -919,6 +1065,7 @@ For example: REMEMBER: preferred_language: Polish`;
         isWelcomeScreen: false,
         conversationId: activeConversationId,
         conversationLanguage: chatLanguage,
+        attachmentDocIds,
       };
       const systemPrompt = buildSystemPrompt();
 
@@ -945,7 +1092,45 @@ For example: REMEMBER: preferred_language: Polish`;
               }
             );
             const c = (confirmRes as any)?.confirm || {};
-            const confirmMessageId = `dt-confirm-${Date.now()}`;
+            const u = c?.understanding || {};
+            const md = [
+              '**My understanding of your task**',
+              `- Goal: ${u.goal || ''}`,
+              u.context ? `- Context: ${u.context}` : '',
+              Array.isArray(u.constraints) && u.constraints.length
+                ? `- Constraints: ${u.constraints.join('; ')}`
+                : '',
+              u.expectedOutput ? `- Output: ${u.expectedOutput}` : '',
+              u.decisionHorizon ? `- Horizon: ${u.decisionHorizon}` : '',
+              '',
+              Array.isArray(c.missingInfoQuestions) && c.missingInfoQuestions.length
+                ? `**Assumptions & gaps (optional):**\n${c.missingInfoQuestions
+                    .slice(0, 3)
+                    .map((q: any, i: number) => `${i + 1}. ${q.question}`)
+                    .join('\n')}`
+                : '',
+              '',
+              '_Confirm to start Deep Thinking. Adjust if the task needs correction._',
+            ]
+              .filter(Boolean)
+              .join('\n');
+
+            let confirmMessageId = `dt-confirm-${Date.now()}`;
+            try {
+              const saved = await addMessage({
+                conversationId: activeConversationId,
+                role: 'ai',
+                content: md,
+                messageType: 'text',
+                metadata: {
+                  deepThinking: { kind: 'confirm', originalMessage: newText },
+                  deepThinkingConfirm: c,
+                } as any,
+              });
+              confirmMessageId = (saved as any)?.id || confirmMessageId;
+            } catch (persistErr) {
+              console.error('[AIChatWelcomeView] Failed to persist confirm card:', persistErr);
+            }
             setDtPendingConfirm({
               messageId: confirmMessageId,
               conversationId: activeConversationId,
@@ -959,7 +1144,15 @@ For example: REMEMBER: preferred_language: Polish`;
           }
         }
       } else {
-        startStream(newText, history, systemPrompt, fullContext, undefined, undefined, chatLanguage);
+        startStream(
+          newText,
+          history,
+          systemPrompt,
+          fullContext,
+          undefined,
+          undefined,
+          chatLanguage
+        );
       }
 
       handleCancelEdit();
@@ -1112,7 +1305,9 @@ For example: REMEMBER: preferred_language: Polish`;
                                 disabled={editBusy || !editingText.trim()}
                                 className="px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50"
                               >
-                                {editBusy ? t('common.saving', 'Saving…') : t('common.save', 'Save')}
+                                {editBusy
+                                  ? t('common.saving', 'Saving…')
+                                  : t('common.save', 'Save')}
                               </button>
                             </div>
                           </div>
@@ -1183,7 +1378,10 @@ For example: REMEMBER: preferred_language: Polish`;
                           <div className="mt-4 p-4 bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 rounded-xl border border-primary-200 dark:border-primary-800">
                             <div className="flex flex-col gap-3">
                               <div className="text-sm font-medium text-primary-700 dark:text-primary-300">
-                                {t('aiChat.deepThinking.confirmTitle', 'Ready to start Deep Thinking?')}
+                                {t(
+                                  'aiChat.deepThinking.confirmTitle',
+                                  'Ready to start Deep Thinking?'
+                                )}
                               </div>
                               <textarea
                                 value={dtPendingConfirm.editedMessage}
@@ -1194,7 +1392,10 @@ For example: REMEMBER: preferred_language: Polish`;
                                 }
                                 rows={2}
                                 className="w-full text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-2 outline-none focus:ring-2 focus:ring-primary-500/40"
-                                placeholder={t('aiChat.deepThinking.editPlaceholder', 'Edit your question if needed...')}
+                                placeholder={t(
+                                  'aiChat.deepThinking.editPlaceholder',
+                                  'Edit your question if needed...'
+                                )}
                               />
                               <div className="flex gap-2">
                                 <button
@@ -1204,7 +1405,10 @@ For example: REMEMBER: preferred_language: Polish`;
                                 >
                                   {dtConfirmBusy
                                     ? t('aiChat.deepThinking.processing', 'Processing...')
-                                    : t('aiChat.deepThinking.confirm', 'Confirm & Start Deep Thinking')}
+                                    : t(
+                                        'aiChat.deepThinking.confirm',
+                                        'Confirm & Start Deep Thinking'
+                                      )}
                                 </button>
                                 <button
                                   onClick={() => setDtPendingConfirm(null)}

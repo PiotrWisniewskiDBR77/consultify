@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { aggregateVerdict, suggestAgents } from '../../../../src/services/ai/agentAudit/orchestratorService.js';
+import {
+  aggregateVerdict,
+  suggestAgents,
+} from '../../../../src/services/ai/agentAudit/orchestratorService.js';
 
 describe('AgentAuditOrchestrator', () => {
   it('suggestAgents picks an industry agent and CFO by default', () => {
@@ -142,4 +145,3 @@ describe('AgentAuditOrchestrator', () => {
     expect(verdict.qualityStatus).toBe('PASS_WITH_RISKS');
   });
 });
-

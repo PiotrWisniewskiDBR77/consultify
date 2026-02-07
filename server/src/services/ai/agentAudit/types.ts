@@ -36,12 +36,24 @@ function normalizeRiskArea(raw: unknown): RiskArea {
     return 'quality';
   }
   if (t.includes('compliance') || t.includes('regul') || t.includes('rodo')) return 'compliance';
-  if (t.includes('cyber') || t.includes('security') || t.includes('infosec')) return 'cybersecurity';
-  if (t.includes('vendor') || t.includes('supplier') || t.includes('single_source') || t.includes('tco')) {
+  if (t.includes('cyber') || t.includes('security') || t.includes('infosec'))
+    return 'cybersecurity';
+  if (
+    t.includes('vendor') ||
+    t.includes('supplier') ||
+    t.includes('single_source') ||
+    t.includes('tco')
+  ) {
     return 'vendor_risk';
   }
-  if (t.includes('otif') || t.includes('delivery') || t.includes('lead_time')) return 'delivery_otif';
-  if (t.includes('change') || t.includes('adoption') || t.includes('training') || t.includes('opór')) {
+  if (t.includes('otif') || t.includes('delivery') || t.includes('lead_time'))
+    return 'delivery_otif';
+  if (
+    t.includes('change') ||
+    t.includes('adoption') ||
+    t.includes('training') ||
+    t.includes('opór')
+  ) {
     return 'change_management';
   }
   if (t.includes('integration') || t.includes('architecture') || t.includes('api')) {
@@ -66,20 +78,23 @@ function normalizeRiskArea(raw: unknown): RiskArea {
   return allowed.has(t as RiskArea) ? (t as RiskArea) : 'other';
 }
 
-export const RiskAreaSchema = z.preprocess((v) => normalizeRiskArea(v), z.enum([
-  'cashflow',
-  'capex',
-  'safety',
-  'uptime',
-  'quality',
-  'compliance',
-  'cybersecurity',
-  'vendor_risk',
-  'delivery_otif',
-  'change_management',
-  'architecture_integrations',
-  'other',
-]));
+export const RiskAreaSchema = z.preprocess(
+  (v) => normalizeRiskArea(v),
+  z.enum([
+    'cashflow',
+    'capex',
+    'safety',
+    'uptime',
+    'quality',
+    'compliance',
+    'cybersecurity',
+    'vendor_risk',
+    'delivery_otif',
+    'change_management',
+    'architecture_integrations',
+    'other',
+  ])
+);
 
 export const DecisionContextSchema = z.object({
   topic: z.string().min(1),
@@ -94,7 +109,14 @@ export type DecisionContext = z.infer<typeof DecisionContextSchema>;
 // KB entry contract (future-proofing for per-agent KB)
 // ---------------------------------------------------------------------------
 
-export const KBEntryTypeSchema = z.enum(['checklist', 'failure', 'metric', 'constraint', 'case', 'definition']);
+export const KBEntryTypeSchema = z.enum([
+  'checklist',
+  'failure',
+  'metric',
+  'constraint',
+  'case',
+  'definition',
+]);
 export type KBEntryType = z.infer<typeof KBEntryTypeSchema>;
 
 export const KBEntrySchema = z.object({

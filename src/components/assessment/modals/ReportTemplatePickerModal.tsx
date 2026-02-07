@@ -43,8 +43,19 @@ export function ReportTemplatePickerModal(props: {
   onClose: () => void;
   onSelect: (template: ReportTemplate) => void | Promise<void>;
   onNewTemplate?: () => void | Promise<void>;
+  sourceType?: 'ASSESSMENT' | 'INTERVIEW' | 'TOOL' | 'INITIATIVE';
+  framework?: string | null; // e.g. DRD / SIRI / ADMA (case-insensitive)
+  lockFramework?: boolean;
 }) {
-  const { isOpen, onClose, onSelect, onNewTemplate } = props;
+  const {
+    isOpen,
+    onClose,
+    onSelect,
+    onNewTemplate,
+    sourceType = 'ASSESSMENT',
+    framework,
+    lockFramework = false,
+  } = props;
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +82,19 @@ export function ReportTemplatePickerModal(props: {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [recipientFilter, setRecipientFilter] = useState<RecipientFilter>('all');
   const [frameworkFilter, setFrameworkFilter] = useState<FrameworkFilter>('all');
+
+  // If called from a specific framework context (e.g. DRD assessment), default the framework filter
+  // so users can't accidentally pick incompatible templates (ADMA template for DRD assessment etc).
+  useEffect(() => {
+    if (!isOpen) return;
+    const fw = String(framework || '')
+      .trim()
+      .toLowerCase();
+    if (fw.includes('adma')) setFrameworkFilter('adma');
+    else if (fw.includes('siri')) setFrameworkFilter('siri');
+    else if (fw.includes('drd')) setFrameworkFilter('drd');
+    // else keep user-selected / default 'all'
+  }, [framework, isOpen]);
   const closeTemplateBuilder = () => {
     setIsTemplateBuilderOpen(false);
     // refresh templates list after leaving template builder
@@ -86,7 +110,7 @@ export function ReportTemplatePickerModal(props: {
     setSubmitting(false);
 
     const token = localStorage.getItem('token');
-    fetch('/api/report-builder/templates?sourceType=ASSESSMENT', {
+    fetch(`/api/report-builder/templates?sourceType=${encodeURIComponent(sourceType)}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     })
       .then(async (r) => {
@@ -110,7 +134,7 @@ export function ReportTemplatePickerModal(props: {
     return () => {
       cancelled = true;
     };
-  }, [isOpen, reloadKey]);
+  }, [isOpen, reloadKey, sourceType]);
 
   const filtered = useMemo(() => {
     let result = templates;
@@ -140,7 +164,7 @@ export function ReportTemplatePickerModal(props: {
 
   const clearFilters = () => {
     setRecipientFilter('all');
-    setFrameworkFilter('all');
+    if (!lockFramework) setFrameworkFilter('all');
   };
 
   const selectedTemplate = selectedId ? templates.find((t) => t.id === selectedId) : null;
@@ -254,6 +278,7 @@ export function ReportTemplatePickerModal(props: {
               <select
                 value={frameworkFilter}
                 onChange={(e) => setFrameworkFilter(e.target.value as FrameworkFilter)}
+                disabled={Boolean(lockFramework && framework)}
                 className={cn(
                   'appearance-none text-xs pl-2 pr-6 py-1 rounded-md border cursor-pointer transition-colors',
                   'bg-transparent focus:outline-none focus:ring-1 focus:ring-purple-400',
@@ -271,7 +296,7 @@ export function ReportTemplatePickerModal(props: {
             </div>
 
             {/* Clear filters (only when active) */}
-            {hasActiveFilters && (
+            {hasActiveFilters && !(lockFramework && framework) && (
               <button
                 type="button"
                 onClick={clearFilters}

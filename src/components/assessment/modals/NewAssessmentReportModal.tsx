@@ -144,14 +144,16 @@ export function NewAssessmentReportModal(props: {
                     description: '',
                     templateId: template.id,
                   });
-                  const reportId = String(created?.report?.id || created?.id || created?.reportId || '');
+                  const reportId = String(
+                    created?.report?.id || created?.id || created?.reportId || ''
+                  );
                   if (!reportId) throw new Error('Missing report id');
                   await Api.post(`/report-builder/${reportId}/generate`, { regenerateAll: false });
                   toast.success('Draft report generated');
                   onCreated(reportId);
                   onClose();
                 } catch (e: any) {
-                  toast.error(e?.message || 'Failed to create report');
+                  toast.error(e?.error || e?.message || 'Failed to create report');
                 } finally {
                   setBusy(false);
                 }
@@ -181,6 +183,9 @@ export function NewAssessmentReportModal(props: {
           setTemplate(tpl as any);
           setTemplatePickerOpen(false);
         }}
+        sourceType="ASSESSMENT"
+        framework={selectedAssessment?.type || null}
+        lockFramework={true}
       />
     </div>
   );

@@ -150,7 +150,10 @@ export const AgentAuditSuggestRequestSchema = z.object({
       return validLangs.includes(base) ? base : 'en';
     })
     .optional(),
-  maxAgents: z.union([z.literal(2), z.literal(3), z.literal(4)]).optional().default(3),
+  maxAgents: z
+    .union([z.literal(2), z.literal(3), z.literal(4)])
+    .optional()
+    .default(3),
 });
 
 export const AgentAuditReviewRequestSchema = z.object({
@@ -172,7 +175,10 @@ export const AgentAuditReviewRequestSchema = z.object({
     .optional(),
   selectedTier: z.enum(['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING']).optional(),
   selectedModelId: z.union([z.string().min(1), z.null()]).optional(),
-  loopIteration: z.union([z.literal(1), z.literal(2)]).optional().default(1),
+  loopIteration: z
+    .union([z.literal(1), z.literal(2)])
+    .optional()
+    .default(1),
 });
 
 export const AgentAuditAcceptRunRequestSchema = z.object({

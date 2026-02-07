@@ -761,11 +761,14 @@ export const Api = {
   agentAuditAcceptRun: async (args: { runId: string; note?: string }) => {
     const runId = String(args.runId || '').trim();
     if (!runId) throw new Error('runId is required');
-    const response = await fetch(`${API_URL}/ai/agent-audit/runs/${encodeURIComponent(runId)}/accept`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ note: args.note }),
-    });
+    const response = await fetch(
+      `${API_URL}/ai/agent-audit/runs/${encodeURIComponent(runId)}/accept`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ note: args.note }),
+      }
+    );
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       const msg = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
@@ -928,6 +931,11 @@ export const Api = {
           context,
           roleName,
           language,
+          // Streaming session affinity / resume support
+          // NOTE: backend uses `conversationId` as the stream session id to persist partial responses.
+          // If we don't pass it, the backend falls back to a timestamp-based id which the client can't predict.
+          conversationId: context?.conversationId ?? context?.sessionId,
+          resumeFromPartial: Boolean(context?.resumeFromPartial),
           // AI Configuration
           aiModes,
           knowledgeSources,
@@ -968,6 +976,14 @@ export const Api = {
           parsed?.error ||
           rawText ||
           `HTTP ${response.status} ${response.statusText}`;
+
+        // Flow-control: Deep Thinking requires an explicit Confirm step.
+        // Never render this as an assistant "message" — let callers handle the flow.
+        if (code === 'DEEP_THINKING_CONFIRM_REQUIRED') {
+          const err: any = new Error(serverMsg || code);
+          err.code = code;
+          throw err;
+        }
 
         // Only show the "Access required" modal for genuine access/auth blocks.
         const accessErrorCodes = new Set([
@@ -1019,6 +1035,16 @@ export const Api = {
 
       if (!response.body) throw new Error('ReadableStream not supported');
 
+      // Best-effort stream meta: backend exposes the resolved session id for debugging/resume flows.
+      try {
+        const sid = String(response.headers.get('X-Stream-Session-Id') || '').trim();
+        if (sid && onThinking) {
+          onThinking({ type: 'stream_meta', sessionId: sid });
+        }
+      } catch {
+        // ignore
+      }
+
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
@@ -1058,23 +1084,6 @@ export const Api = {
               // Handle non-text stream events (thinking/progress/state/research)
               // - legacy: { type: 'thought', ... }
               // - new: { type: 'dt_state', ... } / { type: 'research_progress', ... }
-              if (typeof data.type === 'string' && onThinking && data.type !== 'error') {
-                // Only treat as an event when it's not a normal text chunk
-                const hasText =
-                  typeof (data as any).text === 'string' && (data as any).text.length > 0;
-                if (!hasText) {
-                  onThinking(data);
-                  continue;
-                }
-              }
-
-              if (typeof data.text === 'string') {
-                // Backend may emit empty string; treat only non-empty text as visible output.
-                if (data.text.length > 0) {
-                  hasAnyVisibleOutput = true;
-                  onChunk(data.text);
-                }
-              }
               if (data.error) {
                 // Errors are visible output (either inline or via friendly message).
                 console.error('Stream error from server:', data.error, data.code);
@@ -1128,7 +1137,9 @@ export const Api = {
                       : '⚠️ Deep Thinking mode requires confirmation first. Please try again.';
                   hasAnyVisibleOutput = true;
                   onChunk(friendly);
-                  console.warn('[AI Stream] Deep Thinking confirm required but not called. Check frontend flow.');
+                  console.warn(
+                    '[AI Stream] Deep Thinking confirm required but not called. Check frontend flow.'
+                  );
                 } else {
                   // Non-access errors: show inline (so user isn't left with an empty assistant bubble)
                   hasAnyVisibleOutput = true;
@@ -1158,6 +1169,30 @@ export const Api = {
                   } catch {
                     // ignore
                   }
+                }
+              }
+
+              // Typed events should be routed to the event handler, even if they include `text`.
+              // This is critical for control events like:
+              // - dt_repair_replace: replace the accumulated content, not append it
+              // - resume: restore partial content before continuing
+              if (typeof data.type === 'string' && onThinking && data.type !== 'error') {
+                const hasText =
+                  typeof (data as any).text === 'string' && (data as any).text.length > 0;
+                if (hasText) {
+                  // Count as visible output even though we don't pass it through onChunk().
+                  // (useAIStream will apply it via handleEvent, e.g. replace strategy)
+                  hasAnyVisibleOutput = true;
+                }
+                onThinking(data);
+                continue;
+              }
+
+              if (typeof data.text === 'string') {
+                // Backend may emit empty string; treat only non-empty text as visible output.
+                if (data.text.length > 0) {
+                  hasAnyVisibleOutput = true;
+                  onChunk(data.text);
                 }
               }
             } catch (e) {
@@ -2789,6 +2824,12 @@ export const Api = {
   uploadKnowledgeDocument: async (file: File, category?: string, tags?: string[]): Promise<any> => {
     const formData = new FormData();
     formData.append('file', file);
+    if (category) {
+      formData.append('category', category);
+    }
+    if (Array.isArray(tags) && tags.length > 0) {
+      formData.append('tags', JSON.stringify(tags));
+    }
 
     // Content-Type header must NOT be set manually for FormData, browser sets it with boundary
     const headers = getHeaders();

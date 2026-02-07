@@ -385,7 +385,13 @@ export class PptxExportService {
    */
   private addTableOfContents(pptx: any, sections: ReportSection[], isPolish: boolean): void {
     const slide = pptx.addSlide({ masterName: 'CONTENT_SLIDE' });
-    slide.slideNumber = { x: '92%', y: '94%', fontFace: FONTS.body, fontSize: 10, color: COLORS.darkGray };
+    slide.slideNumber = {
+      x: '92%',
+      y: '94%',
+      fontFace: FONTS.body,
+      fontSize: 10,
+      color: COLORS.darkGray,
+    };
 
     slide.addText(isPolish ? 'Spis treści' : 'Table of Contents', {
       x: 0.5,
@@ -428,7 +434,13 @@ export class PptxExportService {
     isPolish: boolean
   ): void {
     const slide = pptx.addSlide({ masterName: 'CONTENT_SLIDE' });
-    slide.slideNumber = { x: '92%', y: '94%', fontFace: FONTS.body, fontSize: 10, color: COLORS.darkGray };
+    slide.slideNumber = {
+      x: '92%',
+      y: '94%',
+      fontFace: FONTS.body,
+      fontSize: 10,
+      color: COLORS.darkGray,
+    };
 
     slide.addText(isPolish ? 'Podsumowanie wykonawcze' : 'Executive Summary', {
       x: 0.5,
@@ -475,7 +487,13 @@ export class PptxExportService {
     isPolish: boolean
   ): void {
     const slide = pptx.addSlide({ masterName: 'CONTENT_SLIDE' });
-    slide.slideNumber = { x: '92%', y: '94%', fontFace: FONTS.body, fontSize: 10, color: COLORS.darkGray };
+    slide.slideNumber = {
+      x: '92%',
+      y: '94%',
+      fontFace: FONTS.body,
+      fontSize: 10,
+      color: COLORS.darkGray,
+    };
 
     slide.addText(isPolish ? 'Przegląd wyników' : 'Score Overview', {
       x: 0.5,
@@ -558,7 +576,13 @@ export class PptxExportService {
   ): void {
     // Add section divider
     const dividerSlide = pptx.addSlide({ masterName: 'SECTION_DIVIDER' });
-    dividerSlide.slideNumber = { x: '92%', y: '94%', fontFace: FONTS.body, fontSize: 10, color: 'FFFFFF' };
+    dividerSlide.slideNumber = {
+      x: '92%',
+      y: '94%',
+      fontFace: FONTS.body,
+      fontSize: 10,
+      color: 'FFFFFF',
+    };
     dividerSlide.addText(section.title, {
       x: 0.5,
       y: 2.3,
@@ -578,7 +602,13 @@ export class PptxExportService {
 
     for (let i = 0; i < contentChunks.length; i++) {
       const slide = pptx.addSlide({ masterName: 'CONTENT_SLIDE' });
-      slide.slideNumber = { x: '92%', y: '94%', fontFace: FONTS.body, fontSize: 10, color: COLORS.darkGray };
+      slide.slideNumber = {
+        x: '92%',
+        y: '94%',
+        fontFace: FONTS.body,
+        fontSize: 10,
+        color: COLORS.darkGray,
+      };
 
       const titleText =
         contentChunks.length > 1

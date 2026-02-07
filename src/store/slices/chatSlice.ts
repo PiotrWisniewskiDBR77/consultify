@@ -76,15 +76,19 @@ export const createChatSlice: StateCreator<AppState, [], [], ChatSlice> = (set) 
     maxMode: false,
     multiModel: false,
     selectedModelId: null,
-    selectedTier: 'BUDGET',
+    // Default chat quality should be competitive with mainstream assistants.
+    // Budget tier remains available as an explicit user choice.
+    selectedTier: 'STANDARD',
     // AI Modes
     deepResearch: false,
-    webSearch: false,
+    // Enable by default for Chat-like behavior on external queries.
+    // Backend will gracefully degrade if web search is unavailable.
+    webSearch: true,
     showReasoning: false,
-    // Knowledge Sources (all disabled by default)
+    // Knowledge Sources (default: use internal context where safe/useful)
     knowledgeSources: {
-      pmoDocuments: false,
-      projectData: false,
+      pmoDocuments: true,
+      projectData: true,
       organizationData: false,
     },
     // Response Style (default: normal)

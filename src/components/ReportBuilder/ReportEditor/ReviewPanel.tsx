@@ -125,7 +125,9 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
         toast.success(isPolish ? 'Komentarz dodany' : 'Comment added');
       }
     } catch (err: any) {
-      toast.error(err?.message || (isPolish ? 'Błąd dodawania komentarza' : 'Failed to add comment'));
+      toast.error(
+        err?.message || (isPolish ? 'Błąd dodawania komentarza' : 'Failed to add comment')
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -174,7 +176,9 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
       onStatusChange('IN_REVIEW');
       toast.success(isPolish ? 'Raport przekazany do recenzji' : 'Report sent for review');
     } catch (err: any) {
-      toast.error(err?.error || err?.message || (isPolish ? 'Błąd finalizacji' : 'Finalize failed'));
+      toast.error(
+        err?.error || err?.message || (isPolish ? 'Błąd finalizacji' : 'Finalize failed')
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -187,7 +191,9 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
       onStatusChange('APPROVED');
       toast.success(isPolish ? 'Raport zatwierdzony' : 'Report approved');
     } catch (err: any) {
-      toast.error(err?.error || err?.message || (isPolish ? 'Błąd zatwierdzania' : 'Approve failed'));
+      toast.error(
+        err?.error || err?.message || (isPolish ? 'Błąd zatwierdzania' : 'Approve failed')
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -207,7 +213,9 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
   };
 
   const handleReject = async () => {
-    const reason = prompt(isPolish ? 'Powód odrzucenia (opcjonalnie):' : 'Rejection reason (optional):');
+    const reason = prompt(
+      isPolish ? 'Powód odrzucenia (opcjonalnie):' : 'Rejection reason (optional):'
+    );
     setIsSubmitting(true);
     try {
       await Api.post(`/report-builder/${reportId}/reject`, { reason: reason || '' });
@@ -261,7 +269,9 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
     };
     const config = statusConfig[reportStatus] || statusConfig.DRAFT;
     return (
-      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.color}`}>
+      <span
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.color}`}
+      >
         {config.icon}
         {config.label}
       </span>
@@ -290,7 +300,11 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
               disabled={isSubmitting}
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium text-sm"
             >
-              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {isSubmitting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
               {isPolish ? 'Przekaż do recenzji' : 'Send for Review'}
             </button>
           )}
@@ -301,9 +315,19 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                 onClick={handleApprove}
                 disabled={isSubmitting || !canApprove}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium text-sm"
-                title={!canApprove ? (isPolish ? 'Rozwiąż wszystkie komentarze' : 'Resolve all comments first') : ''}
+                title={
+                  !canApprove
+                    ? isPolish
+                      ? 'Rozwiąż wszystkie komentarze'
+                      : 'Resolve all comments first'
+                    : ''
+                }
               >
-                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ThumbsUp className="w-4 h-4" />}
+                {isSubmitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ThumbsUp className="w-4 h-4" />
+                )}
                 {isPolish ? 'Zatwierdź' : 'Approve'}
               </button>
               {!canApprove && openCount > 0 && (
@@ -378,7 +402,11 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
               disabled={isSubmitting || !newCommentContent.trim()}
               className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm"
             >
-              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageSquare className="w-4 h-4" />}
+              {isSubmitting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <MessageSquare className="w-4 h-4" />
+              )}
               {isPolish ? 'Dodaj komentarz' : 'Add Comment'}
             </button>
           </div>
@@ -408,32 +436,39 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <button
-                      onClick={() => toggleComment(comment.id)}
-                      className="flex-1 text-left"
-                    >
+                    <button onClick={() => toggleComment(comment.id)} className="flex-1 text-left">
                       <div className="flex items-center gap-2">
                         {isExpanded ? (
                           <ChevronDown className="w-4 h-4 text-slate-400" />
                         ) : (
                           <ChevronRight className="w-4 h-4 text-slate-400" />
                         )}
-                        <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${
-                          comment.commentType === 'ISSUE'
-                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                            : comment.commentType === 'QUESTION'
-                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                            : comment.commentType === 'SUGGESTION'
-                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
-                            : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
-                        }`}>
+                        <span
+                          className={`text-xs font-medium px-1.5 py-0.5 rounded ${
+                            comment.commentType === 'ISSUE'
+                              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                              : comment.commentType === 'QUESTION'
+                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                                : comment.commentType === 'SUGGESTION'
+                                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                                  : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                          }`}
+                        >
                           {comment.commentType}
                         </span>
                         <span className={`text-xs ${isOpen ? 'text-amber-600' : 'text-green-600'}`}>
-                          {isOpen ? (isPolish ? 'Otwarty' : 'Open') : (isPolish ? 'Rozwiązany' : 'Resolved')}
+                          {isOpen
+                            ? isPolish
+                              ? 'Otwarty'
+                              : 'Open'
+                            : isPolish
+                              ? 'Rozwiązany'
+                              : 'Resolved'}
                         </span>
                       </div>
-                      <p className={`text-sm text-slate-700 dark:text-slate-300 mt-1 ${!isExpanded ? 'line-clamp-1' : ''}`}>
+                      <p
+                        className={`text-sm text-slate-700 dark:text-slate-300 mt-1 ${!isExpanded ? 'line-clamp-1' : ''}`}
+                      >
                         {comment.content}
                       </p>
                     </button>

@@ -1,6 +1,5 @@
 import RagService from '../../ragService.js';
 import { organizationMemoryStore } from '../organizationMemoryStore.js';
-
 import { searchKB } from './agentKnowledgeBase.js';
 import type { SourceUsed } from './types.js';
 
@@ -51,10 +50,10 @@ function hasAny(text: string, needles: string[]): boolean {
   return needles.some((n) => t.includes(n.toLowerCase()));
 }
 
-function validateKbSnippetForAudit(args: {
-  snippet: string;
-  mode: KbValidationMode;
-}): { ok: boolean; reason?: string } {
+function validateKbSnippetForAudit(args: { snippet: string; mode: KbValidationMode }): {
+  ok: boolean;
+  reason?: string;
+} {
   const snippet = String(args.snippet || '').trim();
   if (!snippet) return { ok: false, reason: 'empty_snippet' };
 
@@ -173,7 +172,9 @@ export async function retrieveAgentAuditKnowledge(args: {
       const docCategory = String((c as any).doc_category || (c as any).category || '').trim();
       const docVersionRaw = (c as any).doc_version ?? (c as any).version;
       const title = String((c as any).filename || (c as any).source || 'Knowledge Base').trim();
-      const snippet = String((c as any).content || '').trim().slice(0, 900);
+      const snippet = String((c as any).content || '')
+        .trim()
+        .slice(0, 900);
       const score =
         typeof (c as any).hybridScore === 'number'
           ? (c as any).hybridScore
@@ -210,7 +211,9 @@ export async function retrieveAgentAuditKnowledge(args: {
         const docCategory = String((c as any).doc_category || (c as any).category || '').trim();
         const docVersionRaw = (c as any).doc_version ?? (c as any).version;
         const title = String((c as any).filename || (c as any).source || 'Knowledge Base').trim();
-        const snippet = String((c as any).content || '').trim().slice(0, 900);
+        const snippet = String((c as any).content || '')
+          .trim()
+          .slice(0, 900);
         const score =
           typeof (c as any).hybridScore === 'number'
             ? (c as any).hybridScore
@@ -257,9 +260,7 @@ export async function retrieveAgentAuditKnowledge(args: {
         entry.triggerQuestions.length > 0
           ? `Key questions: ${entry.triggerQuestions.slice(0, 3).join('; ')}`
           : '',
-        entry.limits.length > 0
-          ? `Limits: ${entry.limits.slice(0, 2).join('; ')}`
-          : '',
+        entry.limits.length > 0 ? `Limits: ${entry.limits.slice(0, 2).join('; ')}` : '',
         '',
         entry.content.slice(0, 600),
       ]
@@ -326,4 +327,3 @@ export async function retrieveAgentAuditKnowledge(args: {
   cacheSet(cacheKey, final);
   return final;
 }
-

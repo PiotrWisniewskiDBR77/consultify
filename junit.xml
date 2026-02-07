@@ -1,0 +1,47 @@
+{"numTotalTestSuites":3,"numPassedTestSuites":3,"numFailedTestSuites":0,"numPendingTestSuites":0,"numTotalTests":14,"numPassedT    <testsuite name="tests/unit/hooks/useAIStream.test.ts" timestamp="2026-02-07T14:12:37.408Z" hostname="MacBook-Pro-Piotr.local" tests="14" failures="0" errors="0" skipped="0" time="1.527003459">
+        <testcase classname="tests/unit/hooks/useAIStream.test.ts" name="useAIStream &gt; should initialize with default state" time="0.009402208">
+        </testcase>
+        <testcase classname="tests/unit/hooks/useAIStream.test.ts" name="useAIStream &gt; should expose stream control functions" time="0.001142792">
+        </testcase>
+        <testcase classname="tests/unit/hooks/useAIStream.test.ts" name="useAIStream &gt; should start streaming and process chunks" time="0.002852833">
+        </testcase>
+        <testcase classname="tests/unit/hooks/useAIStream.test.ts" name="useAIStream &gt; should handle streaming errors gracefully" time="1.505063042">
+            <system-err>
+[useAIStream] Auto-retry 1/3 in 1500ms…
+
+[useAIStream] Auto-retry failed: Error: Network error
+    at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/unit/hooks/useAIStream.test.ts:134:55
+    at file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/index.js:145:11
+    at file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/index.js:915:26
+    at file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/index.js:1243:20
+    at new Promise (&lt;anonymous&gt;)
+    at runWithTimeout (file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/index.js:1209:10)
+    at file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/index.js:1653:37
+    at Traces.$ (file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/node_modules/vitest/dist/chunks/traces.U4xDYhzZ.js:115:27)
+    at trace (file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/node_modules/vitest/dist/chunks/test.B8ej_ZHS.js:239:21)
+    at runTest (file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/index.js:1653:12)
+
+            </system-err>
+        </testcase>
+        <testcase classname="tests/unit/hooks/useAIStream.test.ts" name="useAIStream &gt; should extract thinking steps from content" time="0.00158425">
+        </testcase>
+        <testcase classname="tests/unit/hooks/useAIStream.test.ts" name="useAIStream &gt; should abort stream on demand" time="0.0011875">
+        </testcase>
+        <testcase classname="tests/unit/hooks/useAIStream.test.ts" name="useAIStream &gt; should check for partial response" time="0.0009395">
+        </testcase>
+        <testcase classname="tests/unit/hooks/useAIStream.test.ts" name="useAIStream &gt; should handle partial response check failure" time="0.000997083">
+        </testcase>
+        <testcase classname="tests/unit/hooks/useAIStream.test.ts" name="useAIStream &gt; should pass focus mode to stream context" time="0.001012542">
+        </testcase>
+        <testcase classname="tests/unit/hooks/useAIStream.test.ts" name="useAIStream &gt; should reset state when starting new stream" time="0.0011385">
+        </testcase>
+        <testcase classname="tests/unit/hooks/useAIStream.test.ts" name="Thinking Step Extraction &gt; should categorize analysis steps correctly" time="0.000184792">
+        </testcase>
+        <testcase classname="tests/unit/hooks/useAIStream.test.ts" name="Thinking Step Extraction &gt; should categorize research steps correctly" time="0.000119208">
+        </testcase>
+        <testcase classname="tests/unit/hooks/useAIStream.test.ts" name="Thinking Step Extraction &gt; should categorize synthesis steps correctly" time="0.000129167">
+        </testcase>
+        <testcase classname="tests/unit/hooks/useAIStream.test.ts" name="Thinking Step Extraction &gt; should categorize validation steps correctly" time="0.000111042">
+        </testcase>
+    </testsuite>
+</testsuites>

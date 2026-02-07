@@ -6,25 +6,24 @@
  * - AgentAuditVerdictPanel: Post-DT audit results
  */
 
-export { AgentSuggestionCard } from './AgentSuggestionCard';
 export type {
-  SuggestedAgent,
-  AgentDefinition as AgentSuggestionDefinition,
-  DecisionContext,
-  UserIntent,
-  AgentKind,
-} from './AgentSuggestionCard';
-
+  ActionableFollowup,
+  AgentDefinition,
+  AgentReview,
+  Finding,
+  GateExplanation,
+  GateId,
+  OrchestratorVerdict,
+  QualityStatus,
+  RiskArea,
+  SourceUsed,
+} from './AgentAuditVerdictPanel';
 export { AgentAuditVerdictPanel } from './AgentAuditVerdictPanel';
 export type {
-  QualityStatus,
-  GateId,
-  RiskArea,
-  GateExplanation,
-  SourceUsed,
-  Finding,
-  AgentReview,
-  ActionableFollowup,
-  OrchestratorVerdict,
-  AgentDefinition,
-} from './AgentAuditVerdictPanel';
+  AgentKind,
+  AgentDefinition as AgentSuggestionDefinition,
+  DecisionContext,
+  SuggestedAgent,
+  UserIntent,
+} from './AgentSuggestionCard';
+export { AgentSuggestionCard } from './AgentSuggestionCard';
