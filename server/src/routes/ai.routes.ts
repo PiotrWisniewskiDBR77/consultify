@@ -864,16 +864,16 @@ router.post(
       const projectId = aiModes?.deepResearch
         ? null
         : (context as any)?.projectId ||
-          (context as any)?.workspaceContext?.projectId ||
-          bodyProjectId ||
-          null;
+        (context as any)?.workspaceContext?.projectId ||
+        bodyProjectId ||
+        null;
 
       const screenContext = aiModes?.deepResearch
         ? null
         : (context as any)?.screenContext ||
-          (context as any)?.workspaceContext ||
-          bodyScreenContext ||
-          null;
+        (context as any)?.workspaceContext ||
+        bodyScreenContext ||
+        null;
 
       const focusMode = (context as any)?.focusMode || bodyFocusMode || 'all';
 
@@ -958,18 +958,18 @@ router.post(
         const [convSummary, ltmAddon] = await Promise.all([
           convIdForMemory
             ? import('../services/ai/conversationSummaryService.js')
-                .then((mod: any) => (mod.default || mod).get(convIdForMemory))
-                .catch(() => '')
+              .then((mod: any) => (mod.default || mod).get(convIdForMemory))
+              .catch(() => '')
             : Promise.resolve(''),
           req.userId && req.organizationId
             ? import('../services/ai/longTermMemoryService.js')
-                .then((mod: any) =>
-                  (mod.default || mod).getPromptAddendum({
-                    userId: req.userId,
-                    organizationId: req.organizationId,
-                  })
-                )
-                .catch(() => '')
+              .then((mod: any) =>
+                (mod.default || mod).getPromptAddendum({
+                  userId: req.userId,
+                  organizationId: req.organizationId,
+                })
+              )
+              .catch(() => '')
             : Promise.resolve(''),
         ]);
 
@@ -1462,7 +1462,7 @@ router.post(
                   selfCheckVerdict = 'BEST_EFFORT';
                   logger.info(
                     `[DeepThinking SelfCheck] Best effort after ${repairIterations} repair(s). ` +
-                      `Fail reasons: ${failReasons.join(', ')}`
+                    `Fail reasons: ${failReasons.join(', ')}`
                   );
                   break;
                 }
@@ -1485,11 +1485,11 @@ router.post(
                   const modelCfg = selectedModelId
                     ? await modelRouter.getProviderConfig(selectedModelId, tier)
                     : await modelRouter.select({
-                        capability: 'report_section',
-                        tier,
-                        organizationId: req.organizationId!,
-                        options: { tier },
-                      } as any);
+                      capability: 'report_section',
+                      tier,
+                      organizationId: req.organizationId!,
+                      options: { tier },
+                    } as any);
 
                   const repairSys = buildRepairPrompt(
                     currentText,
@@ -1601,7 +1601,7 @@ router.post(
                     if (!forceDepthDiff.isSubstantiallyDifferent) {
                       logger.warn(
                         `[DeepThinking] Force-depth FAIL: response too similar. ` +
-                          `Jaccard=${forceDepthDiff.jaccardSimilarity}, delta=${forceDepthDiff.rubricDelta}`
+                        `Jaccard=${forceDepthDiff.jaccardSimilarity}, delta=${forceDepthDiff.rubricDelta}`
                       );
                       // Emit explicit quality FAIL signal to frontend (non-blocking, but must be visible).
                       emitSSE({
@@ -1897,11 +1897,13 @@ router.post(
               if (ce?.extract) {
                 const cr = ce.extract(nonStreamContent, [], []);
                 if (cr?.citations?.length > 0) {
-                  emitSSE({ type: 'citations', citations: cr.citations.map((c: any) => ({
-                    id: c.id, type: c.sourceType || 'document', title: c.sourceTitle || '',
-                    reference: c.sourceUrl || c.sourceId || '', link: c.sourceUrl || '',
-                    excerpt: c.text || '', confidence: c.confidence,
-                  }))});
+                  emitSSE({
+                    type: 'citations', citations: cr.citations.map((c: any) => ({
+                      id: c.id, type: c.sourceType || 'document', title: c.sourceTitle || '',
+                      reference: c.sourceUrl || c.sourceId || '', link: c.sourceUrl || '',
+                      excerpt: c.text || '', confidence: c.confidence,
+                    }))
+                  });
                 }
               }
             } catch { /* ignore */ }
@@ -2542,16 +2544,16 @@ router.post(
       const initiativesToGenerate =
         Object.keys(assessment).length > 0
           ? axes.filter((axis) => {
-              const axisData = assessment[axis] as
-                | { current?: number; target?: number }
-                | undefined;
-              return (
-                axisData &&
-                axisData.current !== undefined &&
-                axisData.target !== undefined &&
-                axisData.current < axisData.target
-              );
-            })
+            const axisData = assessment[axis] as
+              | { current?: number; target?: number }
+              | undefined;
+            return (
+              axisData &&
+              axisData.current !== undefined &&
+              axisData.target !== undefined &&
+              axisData.current < axisData.target
+            );
+          })
           : axes.slice(0, 5);
 
       return initiativesToGenerate.map((axis) => {
@@ -2854,11 +2856,11 @@ router.post(
 
       const depsSummary = Array.isArray(dependencies)
         ? dependencies
-            .map(
-              (dep: any) =>
-                `- ${dep.fromInitiativeId} -> ${dep.toInitiativeId} (${dep.type || 'FINISH_TO_START'})`
-            )
-            .join('\n')
+          .map(
+            (dep: any) =>
+              `- ${dep.fromInitiativeId} -> ${dep.toInitiativeId} (${dep.type || 'FINISH_TO_START'})`
+          )
+          .join('\n')
         : 'None';
 
       const conflictsPrompt = `Analyze the following initiative schedule and dependencies. Identify resource conflicts, timeline overlaps, and dependency risks.
@@ -3433,7 +3435,7 @@ router.post(
 
       // Feed into learning system for pattern analysis and quality improvement
       try {
-        const lsMod = await import('../services/ai/learningSystem.js');
+        const lsMod = await import('../services/ai/learningSystem');
         const ls = (lsMod as any).learningSystem || (lsMod as any).default;
         if (ls?.processFeedback) {
           await ls.processFeedback({
@@ -3782,6 +3784,314 @@ router.get(
     } catch (err: any) {
       logger.error('[AI] Soft cap status error:', err);
       return res.status(500).json({ success: false, error: (err as Error).message });
+    }
+  })
+);
+
+// ==================== PHASE 3: INTELLIGENT FEATURES ====================
+
+// 3.1 NL → Initiative Generator
+router.post(
+  '/generate-initiative',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { goal, projectId } = req.body;
+    if (!goal) return res.status(400).json({ error: 'Goal description is required' });
+
+    try {
+      const { generateInitiativeFromNL } = await import('../services/ai/intelligentFeatures.js');
+      const result = await generateInitiativeFromNL(
+        goal,
+        req.userId!,
+        req.organizationId!,
+        projectId
+      );
+      return res.json({ success: true, initiative: result });
+    } catch (err: any) {
+      logger.error('[AI] Generate initiative error:', err);
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// 3.2 AI Sense-Check
+router.post(
+  '/sense-check',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { data, type } = req.body;
+    if (!data) return res.status(400).json({ error: 'Data is required for sense-check' });
+
+    try {
+      const { senseCheckInitiative } = await import('../services/ai/intelligentFeatures.js');
+      const result = await senseCheckInitiative(data, req.userId!, req.organizationId!);
+      return res.json({ success: true, ...result });
+    } catch (err: any) {
+      logger.error('[AI] Sense-check error:', err);
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// 3.3 Predictive Risk Score
+router.post(
+  '/risk-score',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { initiativeData, projectContext } = req.body;
+    if (!initiativeData) return res.status(400).json({ error: 'Initiative data is required' });
+
+    try {
+      const { predictRiskScore } = await import('../services/ai/intelligentFeatures.js');
+      const result = await predictRiskScore(
+        initiativeData,
+        req.userId!,
+        req.organizationId!,
+        projectContext
+      );
+      return res.json({ success: true, ...result });
+    } catch (err: any) {
+      logger.error('[AI] Risk score error:', err);
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// 3.4 AI-Narrated Dashboards
+router.post(
+  '/narrate',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { chartType, chartData, userRole } = req.body;
+    if (!chartType || !chartData) return res.status(400).json({ error: 'Chart type and data required' });
+
+    try {
+      const { narrateChartData } = await import('../services/ai/intelligentFeatures.js');
+      const narrative = await narrateChartData(
+        chartType,
+        chartData,
+        userRole || 'analyst',
+        req.userId!,
+        req.organizationId!
+      );
+      return res.json({ success: true, narrative });
+    } catch (err: any) {
+      logger.error('[AI] Narrate error:', err);
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// 3.6 Proactive AI Nudges
+router.get(
+  '/nudges',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const projectId = req.query.projectId as string | undefined;
+
+    try {
+      const { generateNudges } = await import('../services/ai/intelligentFeatures.js');
+      const nudges = await generateNudges(req.userId!, req.organizationId!, projectId);
+      return res.json({ success: true, nudges });
+    } catch (err: any) {
+      logger.error('[AI] Nudges error:', err);
+      return res.json({ success: true, nudges: [] });
+    }
+  })
+);
+
+// ==================== PHASE 4: ADVANCED AI FEATURES ====================
+
+// 4.1 Multi-Agent Decision Room
+router.post(
+  '/decision-room',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { title, context, options } = req.body;
+    if (!title || !options?.length) {
+      return res.status(400).json({ error: 'Title and options are required' });
+    }
+
+    try {
+      const { runDecisionRoom } = await import('../services/ai/advancedFeatures.js');
+      const result = await runDecisionRoom(
+        title,
+        context || '',
+        options,
+        req.userId!,
+        req.organizationId!
+      );
+      return res.json({ success: true, ...result });
+    } catch (err: any) {
+      logger.error('[AI] Decision room error:', err);
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// 4.2 Monte Carlo ROI Forecasting
+router.post(
+  '/monte-carlo',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { baseROI, capex, opex, uncertainty, iterations } = req.body;
+    if (baseROI === undefined || capex === undefined) {
+      return res.status(400).json({ error: 'baseROI and capex are required' });
+    }
+
+    try {
+      const { runMonteCarloROI } = await import('../services/ai/advancedFeatures.js');
+      const result = runMonteCarloROI(baseROI, capex, opex || 0, uncertainty, iterations);
+      return res.json({ success: true, ...result });
+    } catch (err: any) {
+      logger.error('[AI] Monte Carlo error:', err);
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// 4.3 Intelligent Document Import
+router.post(
+  '/extract-document',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { text, documentType } = req.body;
+    if (!text) return res.status(400).json({ error: 'Document text is required' });
+
+    try {
+      const { extractDocumentData } = await import('../services/ai/advancedFeatures.js');
+      const result = await extractDocumentData(
+        text,
+        documentType || 'general',
+        req.userId!,
+        req.organizationId!
+      );
+      return res.json({ success: true, ...result });
+    } catch (err: any) {
+      logger.error('[AI] Document extraction error:', err);
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// 4.5 Conversational Assessment
+router.post(
+  '/assessment/question',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { axis, area, previousAnswers } = req.body;
+    if (!axis || !area) return res.status(400).json({ error: 'Axis and area are required' });
+
+    try {
+      const { generateAssessmentQuestion } = await import('../services/ai/advancedFeatures.js');
+      const result = await generateAssessmentQuestion(
+        axis,
+        area,
+        previousAnswers || [],
+        req.userId!,
+        req.organizationId!
+      );
+      return res.json({ success: true, ...result });
+    } catch (err: any) {
+      logger.error('[AI] Assessment question error:', err);
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+router.post(
+  '/assessment/score',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { axis, area, answer } = req.body;
+    if (!axis || !area || !answer) {
+      return res.status(400).json({ error: 'Axis, area, and answer are required' });
+    }
+
+    try {
+      const { mapAnswerToScore } = await import('../services/ai/advancedFeatures.js');
+      const result = await mapAnswerToScore(axis, area, answer, req.userId!, req.organizationId!);
+      return res.json({ success: true, ...result });
+    } catch (err: any) {
+      logger.error('[AI] Assessment score error:', err);
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// ==================== PHASE 5: PLATFORM SERVICES ====================
+
+// Per-tier rate limiting info
+router.get(
+  '/tier-limits',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { getTierLimits } = await import('../services/ai/platformServices.js');
+      const tier = (req as any).subscriptionTier || 'free';
+      return res.json({ success: true, tier, limits: getTierLimits(tier) });
+    } catch (err: any) {
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// Token estimation
+router.post(
+  '/estimate-tokens',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { text, language } = req.body;
+    if (!text) return res.status(400).json({ error: 'Text is required' });
+
+    try {
+      const { estimateTokenCount } = await import('../services/ai/platformServices.js');
+      return res.json({ success: true, estimatedTokens: estimateTokenCount(text, language) });
+    } catch (err: any) {
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// Cache stats
+router.get(
+  '/cache-stats',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { getCacheStats } = await import('../services/ai/platformServices.js');
+      return res.json({ success: true, ...getCacheStats() });
+    } catch (err: any) {
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// Industry intelligence
+router.get(
+  '/industry-benchmark',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const industry = (req.query.industry as string) || 'general';
+
+    try {
+      const { getIndustryBenchmark } = await import('../services/ai/platformServices.js');
+      return res.json({ success: true, benchmark: getIndustryBenchmark(industry) });
+    } catch (err: any) {
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+router.get(
+  '/industry-benchmarks',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { getAllIndustryBenchmarks } = await import('../services/ai/platformServices.js');
+      return res.json({ success: true, benchmarks: getAllIndustryBenchmarks() });
+    } catch (err: any) {
+      return res.status(500).json({ error: (err as Error).message });
     }
   })
 );

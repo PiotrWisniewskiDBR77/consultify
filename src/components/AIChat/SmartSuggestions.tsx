@@ -264,6 +264,108 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
           }
         );
         break;
+      case 'dashboard':
+        contextSuggestions.push(
+          {
+            id: 'dash-summary',
+            text: t('aiChat.quickActions.daySummary.label', 'Podsumuj mój dzień'),
+            prompt: t(
+              'aiChat.quickActions.daySummary.prompt',
+              'Podsumuj mój dzień — co wymaga mojej uwagi, jakie mam blokery i co powinienem zrobić?'
+            ),
+          },
+          {
+            id: 'dash-next',
+            text: t('aiChat.quickActions.nextSteps.label', 'Kolejne kroki'),
+            prompt: t(
+              'aiChat.quickActions.nextSteps.prompt',
+              'Jakie powinny być moje kolejne kroki na podstawie obecnego stanu projektów?'
+            ),
+          }
+        );
+        break;
+      case 'economics':
+      case 'financial':
+        contextSuggestions.push(
+          {
+            id: 'econ-roi',
+            text: t('aiChat.quickActions.roiAnalysis.label', 'Analiza ROI'),
+            prompt: t(
+              'aiChat.quickActions.roiAnalysis.prompt',
+              'Przeanalizuj ROI naszego portfela inicjatyw — który scenariusz jest najbardziej realistyczny?'
+            ),
+          },
+          {
+            id: 'econ-compare',
+            text: t('aiChat.quickActions.compareScenarios.label', 'Porównaj scenariusze'),
+            prompt: t(
+              'aiChat.quickActions.compareScenarios.prompt',
+              'Porównaj scenariusze finansowe (bazowy, optymistyczny, pesymistyczny) i zarekomenduj działania.'
+            ),
+          }
+        );
+        break;
+      case 'admin':
+      case 'admin_dashboard':
+        contextSuggestions.push(
+          {
+            id: 'admin-usage',
+            text: t('aiChat.quickActions.usageMetrics.label', 'Metryki użycia'),
+            prompt: t(
+              'aiChat.quickActions.usageMetrics.prompt',
+              'Pokaż mi kluczowe metryki użycia platformy — aktywność użytkowników, trendy, adoption rate.'
+            ),
+          },
+          {
+            id: 'admin-optimize',
+            text: t('aiChat.quickActions.optimize.label', 'Optymalizuj koszty'),
+            prompt: t(
+              'aiChat.quickActions.optimize.prompt',
+              'Jakie mam możliwości optymalizacji kosztów i usage w organizacji?'
+            ),
+          }
+        );
+        break;
+      case 'context_builder':
+        contextSuggestions.push(
+          {
+            id: 'ctx-fill',
+            text: t('aiChat.quickActions.helpFill.label', 'Pomóż wypełnić profil'),
+            prompt: t(
+              'aiChat.quickActions.helpFill.prompt',
+              'Pomóż mi wypełnić profil organizacji — zadawaj pytania a ja odpowiem.'
+            ),
+          },
+          {
+            id: 'ctx-challenge',
+            text: t('aiChat.quickActions.challengeGoals.label', 'Ocena celów'),
+            prompt: t(
+              'aiChat.quickActions.challengeGoals.prompt',
+              'Oceń moje cele strategiczne — czy są SMART? Co powinienem zmienić?'
+            ),
+          }
+        );
+        break;
+      case 'decision':
+        contextSuggestions.push(
+          {
+            id: 'dec-analyze',
+            text: t('aiChat.quickActions.analyzeDecision.label', 'Analizuj opcje'),
+            prompt: t(
+              'aiChat.quickActions.analyzeDecision.prompt',
+              'Przeanalizuj opcje tej decyzji — jakie są za i przeciw każdej opcji?'
+            ),
+          },
+          {
+            id: 'dec-recommend',
+            text: t('aiChat.quickActions.recommend.label', 'Rekomendacja'),
+            prompt: t(
+              'aiChat.quickActions.recommend.prompt',
+              'Na podstawie kontekstu projektu, którą opcję rekomendujesz i dlaczego?'
+            ),
+          }
+        );
+        break;
       default:
         // Generic suggestions
         contextSuggestions.push(
@@ -276,11 +378,11 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
             ),
           },
           {
-            id: 'diagram',
-            text: t('aiChat.quickActions.createDiagram.label', 'Create a diagram'),
+            id: 'overview',
+            text: t('aiChat.quickActions.overview.label', 'Przegląd sytuacji'),
             prompt: t(
-              'aiChat.quickActions.createDiagram.prompt',
-              'Create a process diagram for onboarding a new client'
+              'aiChat.quickActions.overview.prompt',
+              'Daj mi przegląd obecnej sytuacji — co idzie dobrze, co wymaga uwagi?'
             ),
           }
         );

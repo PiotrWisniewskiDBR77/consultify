@@ -18,6 +18,7 @@ import AIPolicyEngine from './aiPolicyEngine.js';
 export const ACTION_TYPES = {
   CREATE_DRAFT_TASK: 'CREATE_DRAFT_TASK',
   CREATE_DRAFT_INITIATIVE: 'CREATE_DRAFT_INITIATIVE',
+  CREATE_DRAFT_DECISION: 'CREATE_DRAFT_DECISION',
   SUGGEST_ROADMAP_CHANGE: 'SUGGEST_ROADMAP_CHANGE',
   GENERATE_REPORT: 'GENERATE_REPORT',
   PREPARE_DECISION_SUMMARY: 'PREPARE_DECISION_SUMMARY',
@@ -421,6 +422,12 @@ const AIActionExecutor = {
         case ACTION_TYPES.CREATE_DRAFT_INITIATIVE:
           result = await AIActionExecutor._executeCreateInitiative(draftContent, action);
           break;
+        case ACTION_TYPES.CREATE_DRAFT_DECISION:
+          result = await AIActionExecutor._executeCreateDecision(draftContent, action);
+          break;
+        case ACTION_TYPES.PREPARE_DECISION_SUMMARY:
+          result = await AIActionExecutor._executePrepareSummary(draftContent, action);
+          break;
         case ACTION_TYPES.GENERATE_REPORT:
           result = { reportGenerated: true, content: draftContent };
           break;
@@ -593,6 +600,43 @@ const AIActionExecutor = {
       [taskId, action.project_id, title, description, assigneeId, dueDate, action.user_id]
     );
 
+    // Post-creation notification (best-effort)
+    try {
+      const NotificationSvc = await getNotificationService();
+      if (NotificationSvc) {
+        // Notify the user who requested the task
+        await NotificationSvc.send({
+          userId: action.user_id,
+          organizationId: action.organization_id,
+          type: 'AI_ACTION_COMPLETED',
+          title: 'Task Created by AI',
+          body: `AI has created task "${title}" in your project.`,
+          entityType: 'task',
+          entityId: taskId,
+          actionUrl: `/tasks/${taskId}`,
+          priority: 'normal',
+          metadata: { projectId: action.project_id, source: 'ai_action' },
+        });
+        // If assignee is different from requester, notify them too
+        if (assigneeId && assigneeId !== action.user_id) {
+          await NotificationSvc.send({
+            userId: assigneeId,
+            organizationId: action.organization_id,
+            type: 'TASK_ASSIGNED',
+            title: 'New Task Assigned to You',
+            body: `AI has assigned you a new task: "${title}".`,
+            entityType: 'task',
+            entityId: taskId,
+            actionUrl: `/tasks/${taskId}`,
+            priority: 'normal',
+            metadata: { projectId: action.project_id, source: 'ai_action' },
+          });
+        }
+      }
+    } catch (notifErr: any) {
+      logger.warn('[AIActionExecutor] Post-task notification failed:', notifErr?.message);
+    }
+
     return { taskId, title, created: true };
   },
 
@@ -606,7 +650,116 @@ const AIActionExecutor = {
       [initiativeId, action.project_id, name, description, ownerId, priority || 'MEDIUM']
     );
 
+    // Post-creation notification (best-effort)
+    try {
+      const NotificationSvc = await getNotificationService();
+      if (NotificationSvc) {
+        await NotificationSvc.send({
+          userId: action.user_id,
+          organizationId: action.organization_id,
+          type: 'AI_ACTION_COMPLETED',
+          title: 'Initiative Created by AI',
+          body: `AI has created initiative "${name}" as a draft in your project.`,
+          entityType: 'initiative',
+          entityId: initiativeId,
+          actionUrl: `/initiatives/${initiativeId}`,
+          priority: 'normal',
+          metadata: { projectId: action.project_id, source: 'ai_action' },
+        });
+      }
+    } catch (notifErr: any) {
+      logger.warn('[AIActionExecutor] Post-initiative notification failed:', notifErr?.message);
+    }
+
     return { initiativeId, name, created: true };
+  },
+
+  _executeCreateDecision: async (draftContent: any, action: any) => {
+    const decisionId = uuidv4();
+    const { title, description, type, options, criteria, deadline } = draftContent;
+
+    await dbRun(
+      `INSERT INTO decisions (id, organization_id, project_id, title, description, type, 
+       decision_maker_id, options, criteria, deadline, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      [
+        decisionId,
+        action.organization_id,
+        action.project_id,
+        title,
+        description || '',
+        type || 'OTHER',
+        action.user_id,
+        JSON.stringify(options || []),
+        criteria || null,
+        deadline || null,
+      ]
+    );
+
+    // Post-creation notification (best-effort)
+    try {
+      const NotificationSvc = await getNotificationService();
+      if (NotificationSvc) {
+        await NotificationSvc.send({
+          userId: action.user_id,
+          organizationId: action.organization_id,
+          type: 'AI_ACTION_COMPLETED',
+          title: 'Decision Created by AI',
+          body: `AI has created decision "${title}" for your review.`,
+          entityType: 'decision',
+          entityId: decisionId,
+          actionUrl: `/decisions/${decisionId}`,
+          priority: 'high',
+          metadata: { projectId: action.project_id, source: 'ai_action' },
+        });
+      }
+    } catch (notifErr: any) {
+      logger.warn('[AIActionExecutor] Post-decision notification failed:', notifErr?.message);
+    }
+
+    return { decisionId, title, created: true };
+  },
+
+  _executePrepareSummary: async (draftContent: any, action: any) => {
+    // Generate a structured decision brief from the draft content
+    const summary = {
+      title: draftContent?.title || 'Decision Summary',
+      context: draftContent?.context || '',
+      options: (draftContent?.options || []).map((opt: any, idx: number) => ({
+        label: opt.label || opt.name || `Option ${idx + 1}`,
+        description: opt.description || '',
+        pros: opt.pros || [],
+        cons: opt.cons || [],
+        estimatedImpact: opt.estimatedImpact || 'unknown',
+      })),
+      recommendation: draftContent?.recommendation || null,
+      criteria: draftContent?.criteria || [],
+      riskAssessment: draftContent?.riskAssessment || 'Not assessed',
+      deadline: draftContent?.deadline || null,
+      preparedAt: new Date().toISOString(),
+    };
+
+    // Notify user the summary is ready
+    try {
+      const NotificationSvc = await getNotificationService();
+      if (NotificationSvc) {
+        await NotificationSvc.send({
+          userId: action.user_id,
+          organizationId: action.organization_id,
+          type: 'AI_ACTION_COMPLETED',
+          title: 'Decision Summary Ready',
+          body: `AI has prepared a decision summary: "${summary.title}" with ${summary.options.length} options.`,
+          entityType: 'ai_action',
+          entityId: action.id,
+          priority: 'normal',
+          metadata: { projectId: action.project_id, source: 'ai_action', summary },
+        });
+      }
+    } catch (notifErr: any) {
+      logger.warn('[AIActionExecutor] Post-summary notification failed:', notifErr?.message);
+    }
+
+    return { summary, prepared: true };
   },
 
   /**
@@ -638,21 +791,20 @@ const AIActionExecutor = {
     const draftName = payload.content?.title || payload.content?.name || 'unnamed item';
 
     try {
-      await NotificationSvc.create({
+      await NotificationSvc.send({
         userId: userId,
         organizationId: organizationId,
-        projectId: projectId,
         type: 'AI_ACTION_PENDING',
-        severity: 'INFO',
         title: 'AI Action Awaiting Your Approval',
-        message: `AI wants to ${actionDesc}: "${draftName}". Review and approve or reject this action.`,
-        relatedObjectType: 'ai_action',
-        relatedObjectId: actionId,
-        isActionable: true,
+        body: `AI wants to ${actionDesc}: "${draftName}". Review and approve or reject this action.`,
+        entityType: 'ai_action',
+        entityId: actionId,
         actionUrl: `/ai/actions/${actionId}`,
+        priority: 'normal',
+        metadata: { projectId, actionType, draftName },
       });
     } catch (err: any) {
-      logger.warn('[AIActionExecutor] Failed to create notification:', (err as Error).message);
+      logger.warn('[AIActionExecutor] Failed to send notification:', (err as Error).message);
     }
   },
 

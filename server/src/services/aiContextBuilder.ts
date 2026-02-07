@@ -93,11 +93,10 @@ async function getKnowledgeService() {
   if (_knowledgeServiceOverride) return _knowledgeServiceOverride;
   if (!_knowledgeService) {
     try {
-      // const mod = (await import('./knowledgeService.js')) as any;
-      const mod = {} as any; // Stubbed missing service
-      _knowledgeService = mod.default || mod.knowledgeService || mod;
+      const mod = (await import('./knowledgeService.js')) as any;
+      _knowledgeService = mod.knowledgeService || mod.default || mod;
     } catch (e: unknown) {
-      logger.warn('[AIContextBuilder] KnowledgeService not available');
+      logger.warn('[AIContextBuilder] KnowledgeService not available:', (e as Error).message);
     }
   }
   return _knowledgeService;
@@ -156,8 +155,8 @@ export const AIContextBuilder = {
       }
     }
 
-    // Fetch pending approvals and AI settings in parallel
-    const [pendingApprovals, aiSettings] = await Promise.all([
+    // Fetch enrichment layers in parallel
+    const [pendingApprovals, aiSettings, selectedEntity, assessmentData, financialData, historicalPatterns] = await Promise.all([
       AIContextBuilder._buildPendingApprovalsContext(userId, organizationId, projectId),
       (async () => {
         if (!AISettingsService) return null;
@@ -168,6 +167,10 @@ export const AIContextBuilder = {
           return null;
         }
       })(),
+      AIContextBuilder._buildSelectedEntityContext(options.selectedObjectType, options.selectedObjectId),
+      AIContextBuilder._buildAssessmentContext(projectId, organizationId),
+      AIContextBuilder._buildFinancialContext(projectId, organizationId),
+      AIContextBuilder._buildHistoricalPatternsContext(projectId, organizationId),
     ]);
 
     const fullContext = {
@@ -175,11 +178,15 @@ export const AIContextBuilder = {
       organization,
       project,
       execution,
+      selectedEntity,
       knowledge,
       external,
       pmo,
       pendingApprovals,
       aiSettings,
+      assessmentData,
+      financialData,
+      historicalPatterns,
     };
 
     const filteredContext = AIContextBuilder._applyFocusModeFilter(fullContext, focusMode);
@@ -483,7 +490,7 @@ export const AIContextBuilder = {
     let strategicDirections = [];
     if (organizationId && KnowledgeService) {
       try {
-        strategicDirections = await KnowledgeService.getActiveStrategies();
+        strategicDirections = await KnowledgeService.getActiveStrategies(organizationId);
       } catch (err: any) {
         logger.warn(
           '[AIContextBuilder] Failed to load strategic directions:',
@@ -495,7 +502,7 @@ export const AIContextBuilder = {
     let approvedIdeas = [];
     if (organizationId && KnowledgeService) {
       try {
-        approvedIdeas = await KnowledgeService.getApprovedIdeas({});
+        approvedIdeas = await KnowledgeService.getApprovedIdeas({ organizationId, projectId: projectId || undefined });
       } catch (err: any) {
         logger.warn('[AIContextBuilder] Failed to load approved ideas:', (err as Error).message);
       }
@@ -658,6 +665,354 @@ export const AIContextBuilder = {
     } catch (error: unknown) {
       logger.error('[AIContextBuilder] Failed to get pending approvals:', error);
       return { count: 0, actions: [], summary: null };
+    }
+  },
+
+  // ================================================================
+  // PHASE 1 — ENRICHMENT LAYERS
+  // ================================================================
+
+  /**
+   * Layer 4.5: Selected Entity Deep Loading
+   * Fetches full data for the entity the user is currently viewing.
+   */
+  _buildSelectedEntityContext: async (
+    objectType?: string | null,
+    objectId?: string | null
+  ) => {
+    if (!objectType || !objectId) return null;
+
+    try {
+      switch (objectType.toLowerCase()) {
+        case 'initiative': {
+          const initiative: any = await get(
+            `SELECT i.id, i.name, i.description, i.status, i.priority,
+                    i.cost_capex, i.cost_opex, i.expected_roi,
+                    i.estimated_duration_weeks, i.start_date, i.end_date,
+                    i.execution_started_at, i.completed_at,
+                    i.drd_axis, i.drd_area
+             FROM initiatives i WHERE i.id = ?`,
+            [objectId]
+          );
+          if (!initiative) return null;
+
+          const kpis = await all(
+            `SELECT name, target_value, current_value, unit FROM initiative_kpis WHERE initiative_id = ?`,
+            [objectId]
+          );
+          const deps = await all(
+            `SELECT depends_on_id, dependency_type FROM initiative_dependencies WHERE initiative_id = ?`,
+            [objectId]
+          );
+          const stakeholders = await all(
+            `SELECT user_id, role FROM initiative_stakeholders WHERE initiative_id = ? LIMIT 10`,
+            [objectId]
+          );
+
+          return {
+            type: 'initiative',
+            data: {
+              ...initiative,
+              kpis: kpis.slice(0, 10),
+              dependencies: deps.slice(0, 10),
+              stakeholders: stakeholders.slice(0, 5),
+            },
+          };
+        }
+
+        case 'task': {
+          const task: any = await get(
+            `SELECT t.id, t.title, t.description, t.status, t.priority, 
+                    t.due_date, t.progress, t.assignee_id, t.initiative_id
+             FROM tasks t WHERE t.id = ?`,
+            [objectId]
+          );
+          if (!task) return null;
+
+          const comments = await all(
+            `SELECT content, created_by, created_at FROM task_comments WHERE task_id = ? ORDER BY created_at DESC LIMIT 5`,
+            [objectId]
+          );
+          const deps = await all(
+            `SELECT depends_on_id, type FROM task_dependencies WHERE task_id = ? LIMIT 10`,
+            [objectId]
+          );
+
+          return {
+            type: 'task',
+            data: {
+              ...task,
+              recentComments: comments,
+              dependencies: deps,
+            },
+          };
+        }
+
+        case 'assessment': {
+          const assessment: any = await get(
+            `SELECT id, name, framework, status, overall_score, confidence_avg, completion_percent
+             FROM maturity_assessments WHERE id = ?`,
+            [objectId]
+          );
+          if (!assessment) return null;
+
+          const axisScores = await all(
+            `SELECT axis_id, axis_name, as_is_score, to_be_score, gap, justification
+             FROM digitization_axis_scores WHERE assessment_id = ? ORDER BY gap DESC`,
+            [objectId]
+          );
+
+          return {
+            type: 'assessment',
+            data: {
+              ...assessment,
+              axisScores: axisScores.slice(0, 15),
+              topGaps: axisScores.filter((a: any) => a.gap > 0).slice(0, 5),
+            },
+          };
+        }
+
+        case 'decision': {
+          const decision: any = await get(
+            `SELECT id, title, description, type, status, options, criteria, deadline
+             FROM decisions WHERE id = ?`,
+            [objectId]
+          );
+          if (!decision) return null;
+
+          let parsedOptions = [];
+          try {
+            parsedOptions = JSON.parse(decision.options || '[]');
+          } catch {}
+
+          return {
+            type: 'decision',
+            data: {
+              ...decision,
+              options: parsedOptions,
+            },
+          };
+        }
+
+        default:
+          return null;
+      }
+    } catch (err: any) {
+      logger.warn(`[AIContextBuilder] Entity loading failed for ${objectType}/${objectId}:`, err?.message);
+      return null;
+    }
+  },
+
+  /**
+   * Layer 7: Assessment Data Context
+   * Provides assessment scores, gaps, and recommendations for the active project.
+   */
+  _buildAssessmentContext: async (projectId: string | null, organizationId: string) => {
+    if (!projectId) return null;
+
+    try {
+      // Get the latest assessment for this project
+      const assessment: any = await get(
+        `SELECT id, name, framework, status, overall_score, confidence_avg, completion_percent
+         FROM maturity_assessments
+         WHERE project_id = ? AND status IN ('COMPLETED', 'APPROVED', 'IN_REVIEW', 'IN_PROGRESS')
+         ORDER BY created_at DESC LIMIT 1`,
+        [projectId]
+      );
+      if (!assessment) return null;
+
+      // Get axis scores
+      const axisScores = await all(
+        `SELECT axis_id, axis_name, as_is_score, to_be_score, gap
+         FROM digitization_axis_scores
+         WHERE assessment_id = ?
+         ORDER BY gap DESC`,
+        [assessment.id]
+      );
+
+      // Get digitization analysis if exists
+      const analysis: any = await get(
+        `SELECT overall_as_is, overall_to_be, overall_gap
+         FROM digitization_analyses
+         WHERE assessment_id = ? LIMIT 1`,
+        [assessment.id]
+      );
+
+      return {
+        assessmentId: assessment.id,
+        name: assessment.name,
+        framework: assessment.framework,
+        status: assessment.status,
+        overallScore: assessment.overall_score || analysis?.overall_as_is || null,
+        overallTarget: analysis?.overall_to_be || null,
+        overallGap: analysis?.overall_gap || null,
+        completionPercent: assessment.completion_percent,
+        axisScores: axisScores.slice(0, 10).map((a: any) => ({
+          axis: a.axis_name || a.axis_id,
+          asIs: a.as_is_score,
+          toBe: a.to_be_score,
+          gap: a.gap,
+        })),
+        topGaps: axisScores.filter((a: any) => a.gap > 0).slice(0, 5).map((a: any) => ({
+          axis: a.axis_name || a.axis_id,
+          gap: a.gap,
+        })),
+      };
+    } catch (err: any) {
+      logger.warn('[AIContextBuilder] Assessment context failed:', err?.message);
+      return null;
+    }
+  },
+
+  /**
+   * Layer 8: Financial Data Context
+   * Provides ROI, NPV, cost data for the project portfolio.
+   */
+  _buildFinancialContext: async (projectId: string | null, organizationId: string) => {
+    if (!projectId) return null;
+
+    try {
+      // Aggregate initiative financials
+      const financials: any = await get(
+        `SELECT 
+           COUNT(*) as initiative_count,
+           SUM(COALESCE(cost_capex, 0)) as total_capex,
+           SUM(COALESCE(cost_opex, 0)) as total_opex,
+           AVG(COALESCE(expected_roi, 0)) as avg_roi
+         FROM initiatives
+         WHERE project_id = ? AND status NOT IN ('CANCELLED', 'ARCHIVED')`,
+        [projectId]
+      );
+
+      // Get detailed financial analysis if exists
+      const analysis: any = await get(
+        `SELECT npv, irr, roi_percentage, payback_months, total_investment, total_benefit
+         FROM analysis_financials
+         WHERE project_id = ?
+         ORDER BY created_at DESC LIMIT 1`,
+        [projectId]
+      );
+
+      // Get scenario data
+      const scenarios = await all(
+        `SELECT scenario_type, npv, irr, roi_percentage, probability
+         FROM analysis_financial_scenarios
+         WHERE project_id = ?
+         ORDER BY created_at DESC LIMIT 3`,
+        [projectId]
+      );
+
+      if (!financials?.initiative_count && !analysis) return null;
+
+      return {
+        portfolio: {
+          initiativeCount: financials?.initiative_count || 0,
+          totalCapex: financials?.total_capex || 0,
+          totalOpex: financials?.total_opex || 0,
+          avgExpectedRoi: financials?.avg_roi || 0,
+        },
+        analysis: analysis ? {
+          npv: analysis.npv,
+          irr: analysis.irr,
+          roiPercentage: analysis.roi_percentage,
+          paybackMonths: analysis.payback_months,
+          totalInvestment: analysis.total_investment,
+          totalBenefit: analysis.total_benefit,
+        } : null,
+        scenarios: scenarios.map((s: any) => ({
+          type: s.scenario_type,
+          npv: s.npv,
+          irr: s.irr,
+          roi: s.roi_percentage,
+          probability: s.probability,
+        })),
+      };
+    } catch (err: any) {
+      logger.warn('[AIContextBuilder] Financial context failed:', err?.message);
+      return null;
+    }
+  },
+
+  /**
+   * Layer 9+10: Historical Patterns, RAID Items, Decision Memory
+   */
+  _buildHistoricalPatternsContext: async (projectId: string | null, organizationId: string) => {
+    try {
+      const result: any = {};
+
+      // Initiative success patterns (org-wide)
+      if (organizationId) {
+        const stats: any = await get(
+          `SELECT 
+             COUNT(*) as total,
+             SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
+             SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled,
+             AVG(CASE WHEN estimated_duration_weeks > 0 THEN estimated_duration_weeks ELSE NULL END) as avg_duration_weeks
+           FROM initiatives i
+           JOIN projects p ON i.project_id = p.id
+           WHERE p.organization_id = ?`,
+          [organizationId]
+        );
+
+        if (stats?.total > 0) {
+          result.initiativePatterns = {
+            total: stats.total,
+            completed: stats.completed || 0,
+            cancelled: stats.cancelled || 0,
+            successRate: stats.total > 0 ? Math.round(((stats.completed || 0) / stats.total) * 100) : 0,
+            avgDurationWeeks: Math.round(stats.avg_duration_weeks || 0),
+          };
+        }
+      }
+
+      // Active RAID items for project
+      if (projectId) {
+        const raidItems = await all(
+          `SELECT type, title, status, probability, impact, mitigation_plan
+           FROM raid_items
+           WHERE project_id = ? AND status IN ('OPEN', 'IN_PROGRESS', 'ACTIVE')
+           ORDER BY 
+             CASE impact WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'MEDIUM' THEN 3 ELSE 4 END
+           LIMIT 10`,
+          [projectId]
+        );
+
+        if (raidItems.length > 0) {
+          result.raidItems = raidItems.map((r: any) => ({
+            type: r.type,
+            title: r.title,
+            status: r.status,
+            probability: r.probability,
+            impact: r.impact,
+            hasMitigation: !!r.mitigation_plan,
+          }));
+        }
+      }
+
+      // Decision outcomes (org-wide learning)
+      if (organizationId) {
+        const decisionOutcomes = await all(
+          `SELECT problem_framing, chosen_option, confidence_score, actual_outcome
+           FROM ai_decision_outcomes
+           WHERE organization_id = ? AND actual_outcome IS NOT NULL
+           ORDER BY created_at DESC LIMIT 5`,
+          [organizationId]
+        );
+
+        if (decisionOutcomes.length > 0) {
+          result.decisionMemory = decisionOutcomes.map((d: any) => ({
+            problem: (d.problem_framing || '').slice(0, 100),
+            chosen: (d.chosen_option || '').slice(0, 80),
+            confidence: d.confidence_score,
+            outcome: d.actual_outcome,
+          }));
+        }
+      }
+
+      return Object.keys(result).length > 0 ? result : null;
+    } catch (err: any) {
+      logger.warn('[AIContextBuilder] Historical patterns failed:', err?.message);
+      return null;
     }
   },
 

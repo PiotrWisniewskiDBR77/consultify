@@ -51,9 +51,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   const { setDisplayMode, setWorkspaceContext, expandToFullScreen } = useConversationStore();
 
-  // Views where chat panel should NOT be shown (full-screen chat, admin, settings, etc.)
+  // Views where chat panel should NOT be shown (full-screen chat only, and settings)
+  // AI chat is now available on Admin, SuperAdmin, Context Builder, and Partner screens
   const VIEWS_WITHOUT_CHAT_PANEL: AppView[] = [
-    AppView.AI_CHAT,
+    AppView.AI_CHAT, // Full-screen chat mode — no split panel
     AppView.SETTINGS_PROFILE,
     AppView.SETTINGS_PROFILE_MODULE,
     AppView.SETTINGS_AI,
@@ -65,31 +66,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     AppView.SETTINGS_INTEGRATIONS,
     AppView.SETTINGS_INTEGRATIONS_MODULE,
     AppView.SETTINGS_APPEARANCE_MODULE,
-    AppView.ADMIN_DASHBOARD,
-    AppView.ADMIN_OVERVIEW,
-    AppView.ADMIN_ORGANIZATION,
-    AppView.ADMIN_TEAM,
-    AppView.ADMIN_WORKSPACE,
-    AppView.ADMIN_AI,
-    AppView.ADMIN_BILLING,
-    AppView.ADMIN_SECURITY,
-    AppView.PARTNER_LANDING,
-    AppView.PARTNER_DASHBOARD,
-    AppView.PARTNER_CLIENT_ACCESS,
-    AppView.PARTNER_COMMISSION,
-    AppView.PARTNER_DIRECTORY,
-    AppView.PARTNER_RESOURCES,
-    AppView.CONTEXT_BUILDER,
-    AppView.CONTEXT_BUILDER_PROFILE,
-    AppView.CONTEXT_BUILDER_GOALS,
-    AppView.CONTEXT_BUILDER_CHALLENGES,
-    AppView.CONTEXT_BUILDER_MEGATRENDS,
-    AppView.CONTEXT_BUILDER_STRATEGY,
-    AppView.SUPERADMIN_OVERVIEW,
-    AppView.SUPERADMIN_CUSTOMERS,
-    AppView.SUPERADMIN_AI_PLATFORM,
-    AppView.SUPERADMIN_SYSTEM,
-    AppView.SUPERADMIN_REVENUE,
   ];
 
   const shouldShowChatPanel = currentView ? !VIEWS_WITHOUT_CHAT_PANEL.includes(currentView) : true;

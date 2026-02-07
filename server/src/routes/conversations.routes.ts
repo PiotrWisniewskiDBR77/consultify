@@ -808,23 +808,54 @@ router.post(
         .map((m) => `${m.role}: ${m.content.slice(0, 200)}`)
         .join('\n');
 
-      const response = await aiPipeline.process({
-        type: 'chat',
-        capability: 'chat',
-        userId: req.userId!,
-        organizationId: req.organizationId!,
-        prompt: `Generate a short, descriptive title (max 50 chars) for this conversation. Return ONLY the title, no quotes or explanation:\n\n${messagesContext}`,
-        stream: false,
-      });
+      // Helper: heuristic title from first user message
+      const heuristicTitle = (): string => {
+        const firstUserMsg = messages.find((m) => m.role === 'user');
+        if (firstUserMsg?.content) {
+          const cleaned = firstUserMsg.content
+            .replace(/\n/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+          return cleaned.length > 50 ? cleaned.slice(0, 47) + '...' : cleaned;
+        }
+        return 'New conversation';
+      };
 
-      const generatedTitle = (
-        (response as any).text ||
-        (response as any).content ||
-        'New conversation'
-      )
-        .trim()
-        .replace(/^["']|["']$/g, '')
-        .slice(0, 50);
+      let generatedTitle: string;
+
+      // Try AI generation only if organizationId is available
+      if (req.organizationId) {
+        try {
+          const response = await aiPipeline.process({
+            type: 'chat',
+            capability: 'chat',
+            userId: req.userId!,
+            organizationId: req.organizationId,
+            prompt: `Generate a short, descriptive title (max 50 chars) for this conversation. Return ONLY the title, no quotes or explanation:\n\n${messagesContext}`,
+            stream: false,
+          });
+
+          generatedTitle = (
+            (response as any).text ||
+            (response as any).content ||
+            ''
+          )
+            .trim()
+            .replace(/^["']|["']$/g, '')
+            .slice(0, 50);
+
+          // If AI returned empty or default, fall back to heuristic
+          if (!generatedTitle || generatedTitle === 'New conversation') {
+            generatedTitle = heuristicTitle();
+          }
+        } catch (aiErr: any) {
+          logger.warn(`[Conversations] AI title generation failed for ${id}, using heuristic:`, aiErr?.message);
+          generatedTitle = heuristicTitle();
+        }
+      } else {
+        logger.info(`[Conversations] No organizationId for ${id}, using heuristic title`);
+        generatedTitle = heuristicTitle();
+      }
 
       // Update conversation title
       await dbRun(
@@ -837,8 +868,8 @@ router.post(
       return res.json({ title: generatedTitle });
     } catch (err: any) {
       logger.error('[Conversations] Generate title error:', err);
-      // Return success with default title on AI error
-      return res.json({ title: 'New conversation', error: err.message });
+      // Return error status instead of masking failure
+      return res.status(500).json({ error: 'Title generation failed', details: err.message });
     }
   })
 );
@@ -1097,6 +1128,91 @@ router.post(
     } catch (err: any) {
       logger.error('[Conversations] Summarize error:', err);
       return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// ==================== SEARCH BY CONTENT ====================
+
+router.get(
+  '/search',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const query = (req.query.q as string || '').trim();
+    if (!query || query.length < 2) {
+      return res.json({ conversations: [] });
+    }
+
+    try {
+      const searchPattern = `%${query}%`;
+
+      // Search in conversation titles and message content
+      const results = (await dbAll(
+        `SELECT DISTINCT c.id, c.title, c.updated_at, c.project_id, c.is_starred,
+                c.pmo_context, c.title_source
+         FROM conversations c
+         LEFT JOIN conversation_messages cm ON cm.conversation_id = c.id
+         WHERE c.user_id = ?
+           AND c.is_archived = 0
+           AND (c.title LIKE ? OR cm.content LIKE ?)
+         ORDER BY c.updated_at DESC
+         LIMIT 20`,
+        [req.userId!, searchPattern, searchPattern]
+      )) as any[];
+
+      return res.json({
+        conversations: results.map((c: any) => ({
+          id: c.id,
+          title: c.title,
+          updatedAt: c.updated_at,
+          projectId: c.project_id,
+          isStarred: c.is_starred === 1,
+          titleSource: c.title_source,
+          pmoContext: c.pmo_context ? JSON.parse(c.pmo_context) : null,
+        })),
+        query,
+      });
+    } catch (err: any) {
+      logger.error('[Conversations] Search error:', err);
+      return res.status(500).json({ error: 'Search failed' });
+    }
+  })
+);
+
+// ==================== AUTO-ARCHIVE STALE CONVERSATIONS ====================
+
+router.post(
+  '/auto-archive',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const daysOld = parseInt(req.body.daysOld) || 30;
+
+    try {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+
+      const result = await dbRun(
+        `UPDATE conversations 
+         SET is_archived = 1, updated_at = CURRENT_TIMESTAMP
+         WHERE user_id = ?
+           AND is_archived = 0
+           AND is_starred = 0
+           AND updated_at < ?
+           AND title != 'New conversation'`,
+        [req.userId!, cutoffDate.toISOString()]
+      );
+
+      const archivedCount = (result as any)?.changes || 0;
+
+      logger.info(`[Conversations] Auto-archived ${archivedCount} conversations for user ${req.userId}`);
+
+      return res.json({
+        archived: archivedCount,
+        cutoffDate: cutoffDate.toISOString(),
+      });
+    } catch (err: any) {
+      logger.error('[Conversations] Auto-archive error:', err);
+      return res.status(500).json({ error: 'Auto-archive failed' });
     }
   })
 );

@@ -164,14 +164,8 @@ export const AIChatWelcomeView: React.FC = () => {
           } as any,
         });
 
-        // Trigger title generation after first AI response
-        if (isFirstExchangeRef.current) {
-          isFirstExchangeRef.current = false;
-          // Use small delay to ensure messages are persisted
-          setTimeout(() => {
-            generateTitle(convId);
-          }, 500);
-        }
+        // Title generation is handled by useConversationStore.addMessage()
+        // after the first user+AI exchange (2 messages). No duplicate trigger needed here.
       } catch (err) {
         console.error('[Chat] Failed to persist AI response:', err);
       }
@@ -303,7 +297,6 @@ export const AIChatWelcomeView: React.FC = () => {
   const [editingText, setEditingText] = useState<string>('');
   const [editBusy, setEditBusy] = useState(false);
   const lastSpokenContentRef = useRef<string>('');
-  const isFirstExchangeRef = useRef<boolean>(true);
 
   // Get time-aware context
   const timeContext = useMemo(() => getTimeContext(), []);
@@ -602,10 +595,8 @@ For example: REMEMBER: preferred_language: Polish`;
         }
 
         try {
-          const resp = await Api.uploadKnowledgeDocument(file, 'chat_attachment', [
-            `conversation:${conversationId}`,
-          ]);
-          const docId = String(resp?.docId || '');
+          const resp = await Api.uploadChatAttachment(file);
+          const docId = String((resp as any)?.docId || '');
           if (!docId) continue;
           uploadedAttachments.push({
             docId,
@@ -856,8 +847,7 @@ For example: REMEMBER: preferred_language: Polish`;
     setDtPendingConfirm(null);
     clearLastError();
     abortStream();
-    // Reset first exchange flag for title generation
-    isFirstExchangeRef.current = true;
+    // Title generation is handled by the conversation store
   }, [abortStream, clearActiveChat, clearLastError]);
 
   // Handle export

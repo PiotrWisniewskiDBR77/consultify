@@ -22,6 +22,7 @@ import type {
   TokenUsage,
 } from '../../types/ai.types.js';
 import logger from '../../utils/Logger.js';
+import { buildPersonaPrompt } from '../../ai/persona.js';
 import { llmService } from './llmService.js';
 import modelRouter from './modelRouter.js';
 
@@ -146,6 +147,31 @@ const CAPABILITY_REGISTRY: CapabilityRegistry = {
     role: 'CONSULTANT',
     maxTokens: 4000,
     description: 'Streaming chat interaction',
+    outputFormat: 'text',
+  },
+  // Phase 3 capabilities
+  nlToInitiative: {
+    role: 'CONSULTANT',
+    maxTokens: 3000,
+    description: 'Generate structured initiative from natural language description',
+    outputFormat: 'json',
+  },
+  senseCheck: {
+    role: 'GATEKEEPER',
+    maxTokens: 1500,
+    description: 'Validate and sense-check form data (timeline, budget, consistency)',
+    outputFormat: 'json',
+  },
+  riskScore: {
+    role: 'ANALYST',
+    maxTokens: 1500,
+    description: 'Predict risk score for an initiative',
+    outputFormat: 'json',
+  },
+  narrateDashboard: {
+    role: 'ANALYST',
+    maxTokens: 1000,
+    description: 'Generate natural language explanation of chart/KPI data',
     outputFormat: 'text',
   },
 };
@@ -592,8 +618,8 @@ export class AIPipeline {
   ): string {
     const parts: string[] = [];
 
-    // 1. Role definition
-    parts.push(this.buildRoleSection(capability));
+    // 1. Role definition with screen-aware persona
+    parts.push(this.buildRoleSection(capability, ctx?.currentScreen));
 
     // 2. Organization context
     if (ctx?.organization) {
@@ -655,6 +681,11 @@ export class AIPipeline {
       parts.push(this.buildPendingApprovalsSection(ctx.pendingApprovals));
     }
 
+    // 5.5 Selected entity context (deep-loaded data for the item user is viewing)
+    if (ctx?.selectedEntity) {
+      parts.push(this.buildSelectedEntitySection(ctx.selectedEntity));
+    }
+
     // 6. Screen context
     if (ctx?.currentScreen) {
       parts.push(this.buildScreenContextSection(ctx));
@@ -665,27 +696,30 @@ export class AIPipeline {
       parts.push(this.buildKnowledgeSection(ctx.knowledge));
     }
 
+    // 7.5 Assessment data
+    if (ctx?.assessmentData) {
+      parts.push(this.buildAssessmentSection(ctx.assessmentData));
+    }
+
+    // 7.6 Financial data
+    if (ctx?.financialData) {
+      parts.push(this.buildFinancialSection(ctx.financialData));
+    }
+
+    // 7.7 Historical patterns, RAID, decision memory
+    if (ctx?.historicalPatterns) {
+      parts.push(this.buildHistoricalSection(ctx.historicalPatterns));
+    }
+
     // 8. Behavioral instructions
     parts.push(this.buildBehavioralInstructions(capability, ctx, request));
 
     return parts.filter(Boolean).join('\n\n');
   }
 
-  private buildRoleSection(capability: AICapability): string {
-    const roleDescriptions: Record<string, string> = {
-      CONSULTANT:
-        'Jesteś ekspertem PMO i doradcą transformacji cyfrowej w platformie Consultinity. Pomagasz użytkownikom w zarządzaniu projektami, inicjatywami i zadaniami.',
-      ANALYST:
-        'Jesteś analitykiem biznesowym specjalizującym się w ocenie dojrzałości cyfrowej i analizie strategicznej.',
-      STRATEGIST:
-        'Jesteś strategiem transformacji cyfrowej, pomagającym w planowaniu roadmap i priorytetyzacji inicjatyw.',
-      IMPLEMENTER:
-        'Jesteś specjalistą od wdrożeń, pomagającym w wykonaniu zadań i zarządzaniu pracą.',
-      GATEKEEPER: 'Jesteś kontrolerem jakości, weryfikującym zgodność ze standardami PMO.',
-    };
-
-    return `## ROLA
-${roleDescriptions[capability.role] || `Jesteś ${capability.role}. ${capability.description}`}`;
+  private buildRoleSection(capability: AICapability, currentScreen?: string | null): string {
+    // Use unified persona with screen-aware emphasis
+    return buildPersonaPrompt(currentScreen);
   }
 
   private buildOrganizationSection(org: any): string {
@@ -853,6 +887,155 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
     if (sections.length === 0) return '';
 
     return `## WIEDZA KONTEKSTOWA\n${sections.join('\n')}`;
+  }
+
+  private buildSelectedEntitySection(entity: any): string {
+    if (!entity?.data) return '';
+    const d = entity.data;
+    const type = entity.type;
+
+    const sections: string[] = [`## WYBRANY ELEMENT: ${type.toUpperCase()}`];
+
+    if (type === 'initiative') {
+      sections.push(`- Nazwa: ${d.name}`);
+      sections.push(`- Status: ${d.status} | Priorytet: ${d.priority}`);
+      if (d.description) sections.push(`- Opis: ${d.description.slice(0, 300)}`);
+      if (d.cost_capex) sections.push(`- CAPEX: ${d.cost_capex} | OPEX: ${d.cost_opex || 0}`);
+      if (d.expected_roi) sections.push(`- Oczekiwany ROI: ${d.expected_roi}%`);
+      if (d.estimated_duration_weeks) sections.push(`- Szacowany czas: ${d.estimated_duration_weeks} tygodni`);
+      if (d.drd_axis) sections.push(`- Oś DRD: ${d.drd_axis} / ${d.drd_area || ''}`);
+      if (d.kpis?.length > 0) {
+        sections.push(`### KPI (${d.kpis.length}):`);
+        d.kpis.slice(0, 5).forEach((k: any) => {
+          sections.push(`  - ${k.name}: ${k.current_value || '?'}/${k.target_value} ${k.unit || ''}`);
+        });
+      }
+      if (d.dependencies?.length > 0) {
+        sections.push(`- Zależności: ${d.dependencies.length} (${d.dependencies.map((dep: any) => dep.depends_on_id).join(', ')})`);
+      }
+    } else if (type === 'task') {
+      sections.push(`- Tytuł: ${d.title}`);
+      sections.push(`- Status: ${d.status} | Priorytet: ${d.priority || 'N/A'}`);
+      if (d.description) sections.push(`- Opis: ${d.description.slice(0, 200)}`);
+      if (d.due_date) sections.push(`- Termin: ${d.due_date}`);
+      if (d.progress !== undefined) sections.push(`- Postęp: ${d.progress}%`);
+      if (d.recentComments?.length > 0) {
+        sections.push(`### Ostatnie komentarze (${d.recentComments.length}):`);
+        d.recentComments.slice(0, 3).forEach((c: any) => {
+          sections.push(`  - ${c.content?.slice(0, 100)}`);
+        });
+      }
+    } else if (type === 'assessment') {
+      sections.push(`- Nazwa: ${d.name} (${d.framework})`);
+      sections.push(`- Status: ${d.status} | Ukończenie: ${d.completion_percent}%`);
+      if (d.overall_score) sections.push(`- Wynik ogólny: ${d.overall_score}`);
+      if (d.topGaps?.length > 0) {
+        sections.push(`### Top luki:`);
+        d.topGaps.slice(0, 5).forEach((g: any) => {
+          sections.push(`  - ${g.axis_name || g.axis_id}: gap = ${g.gap}`);
+        });
+      }
+    } else if (type === 'decision') {
+      sections.push(`- Tytuł: ${d.title}`);
+      sections.push(`- Typ: ${d.type} | Status: ${d.status}`);
+      if (d.description) sections.push(`- Opis: ${d.description.slice(0, 200)}`);
+      if (d.deadline) sections.push(`- Deadline: ${d.deadline}`);
+      if (d.options?.length > 0) {
+        sections.push(`### Opcje (${d.options.length}):`);
+        d.options.slice(0, 5).forEach((o: any) => {
+          sections.push(`  - ${o.label || o.name || 'Opcja'}: ${(o.description || '').slice(0, 100)}`);
+        });
+      }
+    }
+
+    return sections.join('\n');
+  }
+
+  private buildAssessmentSection(data: any): string {
+    if (!data) return '';
+    const sections: string[] = ['## OCENA DOJRZAŁOŚCI CYFROWEJ'];
+    sections.push(`- Assessment: ${data.name} (${data.framework})`);
+    sections.push(`- Status: ${data.status} | Ukończenie: ${data.completionPercent || 0}%`);
+    if (data.overallScore) sections.push(`- Wynik ogólny AS-IS: ${data.overallScore}`);
+    if (data.overallTarget) sections.push(`- Cel TO-BE: ${data.overallTarget}`);
+    if (data.overallGap) sections.push(`- Luka ogólna: ${data.overallGap}`);
+
+    if (data.axisScores?.length > 0) {
+      sections.push(`### Wyniki per oś:`);
+      data.axisScores.forEach((a: any) => {
+        const gapIndicator = a.gap > 1.5 ? ' ⚠️' : a.gap > 0.5 ? ' ↑' : '';
+        sections.push(`  - ${a.axis}: AS-IS ${a.asIs} → TO-BE ${a.toBe} (gap: ${a.gap})${gapIndicator}`);
+      });
+    }
+
+    if (data.topGaps?.length > 0) {
+      sections.push(`### Największe luki:`);
+      data.topGaps.forEach((g: any) => {
+        sections.push(`  - ${g.axis}: gap ${g.gap}`);
+      });
+    }
+
+    return sections.join('\n');
+  }
+
+  private buildFinancialSection(data: any): string {
+    if (!data) return '';
+    const sections: string[] = ['## ANALIZA FINANSOWA'];
+
+    if (data.portfolio) {
+      const p = data.portfolio;
+      sections.push(`### Portfel inicjatyw (${p.initiativeCount}):`);
+      if (p.totalCapex) sections.push(`- Łączny CAPEX: ${p.totalCapex.toLocaleString()}`);
+      if (p.totalOpex) sections.push(`- Łączny OPEX: ${p.totalOpex.toLocaleString()}`);
+      if (p.avgExpectedRoi) sections.push(`- Średni oczekiwany ROI: ${Math.round(p.avgExpectedRoi)}%`);
+    }
+
+    if (data.analysis) {
+      const a = data.analysis;
+      sections.push(`### Analiza finansowa:`);
+      if (a.npv) sections.push(`- NPV: ${a.npv.toLocaleString()}`);
+      if (a.irr) sections.push(`- IRR: ${a.irr}%`);
+      if (a.roiPercentage) sections.push(`- ROI: ${a.roiPercentage}%`);
+      if (a.paybackMonths) sections.push(`- Payback: ${a.paybackMonths} miesięcy`);
+    }
+
+    if (data.scenarios?.length > 0) {
+      sections.push(`### Scenariusze:`);
+      data.scenarios.forEach((s: any) => {
+        sections.push(`  - ${s.type}: NPV ${s.npv?.toLocaleString() || '?'}, ROI ${s.roi || '?'}%`);
+      });
+    }
+
+    return sections.join('\n');
+  }
+
+  private buildHistoricalSection(data: any): string {
+    if (!data) return '';
+    const sections: string[] = ['## WZORCE HISTORYCZNE'];
+
+    if (data.initiativePatterns) {
+      const p = data.initiativePatterns;
+      sections.push(`### Inicjatywy organizacji:`);
+      sections.push(`- Łącznie: ${p.total} | Ukończone: ${p.completed} | Anulowane: ${p.cancelled}`);
+      sections.push(`- Success rate: ${p.successRate}%`);
+      if (p.avgDurationWeeks) sections.push(`- Średni czas realizacji: ${p.avgDurationWeeks} tygodni`);
+    }
+
+    if (data.raidItems?.length > 0) {
+      sections.push(`### Aktywne ryzyka/problemy (${data.raidItems.length}):`);
+      data.raidItems.slice(0, 5).forEach((r: any) => {
+        sections.push(`  - [${r.type}] ${r.title} — impact: ${r.impact}, status: ${r.status}`);
+      });
+    }
+
+    if (data.decisionMemory?.length > 0) {
+      sections.push(`### Pamięć decyzji:`);
+      data.decisionMemory.slice(0, 3).forEach((d: any) => {
+        sections.push(`  - Problem: ${d.problem} → Wybrano: ${d.chosen} → Wynik: ${d.outcome}`);
+      });
+    }
+
+    return sections.join('\n');
   }
 
   private buildBehavioralInstructions(

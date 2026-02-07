@@ -621,14 +621,20 @@ export const useConversationStore = create<ConversationState>()(
             };
           });
 
-          // Trigger title generation after first exchange
+          // Trigger title generation after first exchange (user + AI = 2 messages)
           const after = get().activeMessages;
-          if (
-            after.length === 2 &&
+          const activeConv = get().conversations.find((c) => c.id === conversationId);
+          const needsTitle =
             message.role === 'ai' &&
-            get().activeConversationId === conversationId
-          ) {
-            get().generateTitle(conversationId);
+            after.length >= 2 &&
+            after.length <= 4 &&
+            get().activeConversationId === conversationId &&
+            (!activeConv?.title || activeConv.title === 'New conversation');
+          if (needsTitle) {
+            // Small delay to ensure backend has persisted the messages
+            setTimeout(() => {
+              get().generateTitle(conversationId);
+            }, 800);
           }
 
           return newMessage;
@@ -740,15 +746,41 @@ export const useConversationStore = create<ConversationState>()(
       generateTitle: async (id) => {
         try {
           const result = await Api.generateConversationTitle(id);
-          if (result.title) {
+          if (result.title && result.title !== 'New conversation') {
             set((state) => ({
               conversations: state.conversations.map((c) =>
                 c.id === id ? { ...c, title: result.title!, titleSource: 'auto' as const } : c
               ),
+              groupedConversations: groupConversations(
+                state.conversations.map((c) =>
+                  c.id === id ? { ...c, title: result.title!, titleSource: 'auto' as const } : c
+                )
+              ),
             }));
           }
         } catch (err) {
-          console.error('[ConversationStore] Generate title error:', err);
+          // Retry once after 3 seconds on failure
+          setTimeout(async () => {
+            try {
+              const retry = await Api.generateConversationTitle(id);
+              if (retry.title && retry.title !== 'New conversation') {
+                set((state) => ({
+                  conversations: state.conversations.map((c) =>
+                    c.id === id ? { ...c, title: retry.title!, titleSource: 'auto' as const } : c
+                  ),
+                  groupedConversations: groupConversations(
+                    state.conversations.map((c) =>
+                      c.id === id
+                        ? { ...c, title: retry.title!, titleSource: 'auto' as const }
+                        : c
+                    )
+                  ),
+                }));
+              }
+            } catch {
+              // Silent — title remains "New conversation"
+            }
+          }, 3000);
         }
       },
 
