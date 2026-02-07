@@ -752,15 +752,119 @@ router.post(
         },
       };
 
+      // --------------------------------------------------------
+      // Chat trace: create a persistent run record (admin ops)
+      // --------------------------------------------------------
+      try {
+        const svcMod = await import('../services/ai/chatTraceService.js');
+        const chatTraceService = (svcMod.default || svcMod) as any;
+        const created = await chatTraceService.createRun({
+          organizationId: req.organizationId!,
+          userId: req.userId!,
+          conversationId: conversationId || null,
+          streamSessionId,
+          capability: 'chat',
+          request: {
+            message: String(message || '').slice(0, 2000),
+            aiModes: aiModes || null,
+            knowledgeSources: knowledgeSources || null,
+            responseStyle: responseStyle || null,
+            selectedTier: selectedTier || null,
+            selectedModelId: selectedModelId || null,
+            language: language || null,
+            resumeFromPartial: Boolean(resumeFromPartial),
+          },
+          context: {
+            projectId,
+            focusMode,
+            hasScreenContext: Boolean(screenContext),
+            attachmentDocIds: (context as any)?.attachmentDocIds || null,
+          },
+        });
+        chatRunId = String(created?.runId || '') || null;
+      } catch {
+        // ignore tracing failures
+      }
+
+      // --------------------------------------------------------
+      // Memory injection (short-term summary + long-term user/org)
+      // --------------------------------------------------------
+      try {
+        const convIdForMemory = conversationId || null;
+        const [convSummary, ltmAddon] = await Promise.all([
+          convIdForMemory
+            ? import('../services/ai/conversationSummaryService.js')
+                .then((mod: any) => (mod.default || mod).get(convIdForMemory))
+                .catch(() => '')
+            : Promise.resolve(''),
+          req.userId && req.organizationId
+            ? import('../services/ai/longTermMemoryService.js')
+                .then((mod: any) =>
+                  (mod.default || mod).getPromptAddendum({
+                    userId: req.userId,
+                    organizationId: req.organizationId,
+                  })
+                )
+                .catch(() => '')
+            : Promise.resolve(''),
+        ]);
+
+        const parts: string[] = [];
+        const hasSummary = Boolean(convSummary && String(convSummary).trim().length > 0);
+        const hasLtm = Boolean(ltmAddon && String(ltmAddon).trim().length > 0);
+
+        if (hasSummary) {
+          parts.push('## SHORT-TERM MEMORY (conversation summary)');
+          parts.push(String(convSummary).trim());
+          parts.push(
+            '',
+            'Rules:',
+            '- Use this as context, but prefer the latest user message if there is conflict.',
+            '- Do not mention the existence of this summary unless asked.'
+          );
+        }
+        if (hasLtm) {
+          parts.push(String(ltmAddon).trim());
+        }
+
+        const memoryAddon = parts.join('\n');
+        if (memoryAddon.trim().length > 0) {
+          pipelineRequest = {
+            ...pipelineRequest,
+            options: {
+              ...(pipelineRequest.options || {}),
+              systemInstruction:
+                String((pipelineRequest.options as any)?.systemInstruction || '') +
+                `\n\n${memoryAddon}\n`,
+            },
+            context: {
+              ...((pipelineRequest as any).context || {}),
+              memory: {
+                conversationSummary: convSummary || '',
+                longTermInjected: hasLtm,
+              },
+            },
+          } as any;
+        }
+
+        // Trace event (best-effort)
+        if (chatRunId) {
+          import('../services/ai/chatTraceService.js')
+            .then((m: any) => (m.default || m).addEvent(chatRunId, 'memory_injected', { hasSummary, hasLtm }))
+            .catch(() => {
+              /* ignore */
+            });
+        }
+      } catch {
+        // ignore memory failures
+      }
+
       logger.info(`[AI Stream] Processing request for user ${req.userId}`, {
         projectId,
         focusMode,
         hasScreenContext: !!screenContext,
         screenId: screenContext?.screenId || screenContext?.currentScreen || 'unknown',
       });
-
-      // B1: Track emitted DT states for process integrity diagnostic
-      const dtStatesEmitted: string[] = [];
 
       const emitSSE = (payload: Record<string, unknown>) => {
         if (!isClientConnected || res.destroyed) return;
@@ -830,6 +934,18 @@ router.post(
               }));
 
             emitSSE({ type: 'citations', citations });
+            if (chatRunId) {
+              import('../services/ai/chatTraceService.js')
+                .then((m: any) =>
+                  (m.default || m).addEvent(chatRunId, 'web_search', {
+                    query: message,
+                    citationsCount: citations.length,
+                  })
+                )
+                .catch(() => {
+                  /* ignore */
+                });
+            }
 
             // Inject sources into the system instruction (so the model can cite them).
             const sourcesText = citations
@@ -922,6 +1038,19 @@ router.post(
                 },
               },
             } as any;
+
+            if (chatRunId) {
+              import('../services/ai/chatTraceService.js')
+                .then((m: any) =>
+                  (m.default || m).addEvent(chatRunId, 'attachment_rag', {
+                    attachmentDocIdsCount: attachmentDocIds.length,
+                    chunksCount: chunks.length,
+                  })
+                )
+                .catch(() => {
+                  /* ignore */
+                });
+            }
           }
         } catch (err: any) {
           logger.warn(
@@ -1017,6 +1146,24 @@ router.post(
         }
       );
 
+      pipelineMeta = (response as any)?.metadata || null;
+      if (chatRunId && pipelineMeta) {
+        import('../services/ai/chatTraceService.js')
+          .then((m: any) =>
+            (m.default || m).addEvent(chatRunId, 'pipeline_metadata', {
+              provider: pipelineMeta?.provider,
+              model: pipelineMeta?.model,
+              traceId: pipelineMeta?.traceId,
+              latencyMs: pipelineMeta?.latency,
+              hasRag: Boolean(pipelineMeta?.ragResults),
+              hasMemory: Boolean(pipelineMeta?.memoryUsed),
+            })
+          )
+          .catch(() => {
+            /* ignore */
+          });
+      }
+
       // If pipeline failed before streaming starts, surface the error as SSE (instead of silently ending).
       // Otherwise the client sees "nothing" or a misleading EMPTY_STREAM.
       if ((response as any)?.success === false && (response as any)?.error) {
@@ -1028,6 +1175,16 @@ router.post(
           (/invalid_api_key|incorrect api key/i.test(msg)
             ? 'INVALID_API_KEY'
             : 'AI_PIPELINE_ERROR');
+
+        if (chatRunId) {
+          try {
+            const svcMod = await import('../services/ai/chatTraceService.js');
+            const chatTraceService = (svcMod.default || svcMod) as any;
+            await chatTraceService.failRun({ runId: chatRunId, code, message: msg, dtStates: dtStatesEmitted });
+          } catch {
+            /* ignore */
+          }
+        }
 
         if (isClientConnected && !res.destroyed) {
           res.write(
@@ -1417,6 +1574,26 @@ router.post(
           streamCompleted = true;
           res.write('data: [DONE]\n\n');
 
+          if (chatRunId) {
+            try {
+              const svcMod = await import('../services/ai/chatTraceService.js');
+              const chatTraceService = (svcMod.default || svcMod) as any;
+              await chatTraceService.completeRun({
+                runId: chatRunId,
+                status: streamAborted ? 'aborted' : 'completed',
+                pipelineTraceId: pipelineMeta?.traceId || null,
+                modelProvider: pipelineMeta?.provider || null,
+                modelId: pipelineMeta?.model || null,
+                tier: selectedTier || null,
+                latencyMs: typeof pipelineMeta?.latency === 'number' ? pipelineMeta.latency : null,
+                outputText: accumulatedContent,
+                dtStates: dtStatesEmitted,
+              });
+            } catch {
+              /* ignore */
+            }
+          }
+
           await dbRun(`DELETE FROM ai_partial_responses WHERE session_id = ?`, [streamSessionId]);
 
           // Track token usage for trial budget (rough estimate based on chars)
@@ -1443,6 +1620,26 @@ router.post(
           );
           streamCompleted = true;
           res.write('data: [DONE]\n\n');
+
+          if (chatRunId) {
+            try {
+              const svcMod = await import('../services/ai/chatTraceService.js');
+              const chatTraceService = (svcMod.default || svcMod) as any;
+              await chatTraceService.completeRun({
+                runId: chatRunId,
+                status: 'completed',
+                pipelineTraceId: pipelineMeta?.traceId || null,
+                modelProvider: pipelineMeta?.provider || null,
+                modelId: pipelineMeta?.model || null,
+                tier: selectedTier || null,
+                latencyMs: typeof pipelineMeta?.latency === 'number' ? pipelineMeta.latency : null,
+                outputText: String((response as any)?.content || ''),
+                dtStates: dtStatesEmitted,
+              });
+            } catch {
+              /* ignore */
+            }
+          }
         }
         return res.end();
       }
@@ -1465,6 +1662,17 @@ router.post(
         const code = /invalid_api_key|incorrect api key/i.test(msg)
           ? 'INVALID_API_KEY'
           : 'AI_STREAM_ERROR';
+
+        if (chatRunId) {
+          try {
+            const svcMod = await import('../services/ai/chatTraceService.js');
+            const chatTraceService = (svcMod.default || svcMod) as any;
+            await chatTraceService.failRun({ runId: chatRunId, code, message: msg, dtStates: dtStatesEmitted });
+          } catch {
+            /* ignore */
+          }
+        }
+
         res.write(
           `data: ${JSON.stringify({
             error: msg,

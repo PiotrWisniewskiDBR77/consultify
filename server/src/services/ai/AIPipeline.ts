@@ -863,6 +863,7 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
     const instructions: string[] = [
       '## INSTRUKCJE',
       '1. Odpowiadaj konkretnie i pomocnie, wykorzystując powyższy kontekst.',
+      '1.1. Zasada jakości (CHAT): Nie odmawiaj tylko dlatego, że brakuje danych lub źródeł. Jeśli nie masz pewności: (a) podaj 2–5 hipotez, (b) zaznacz założenia, (c) zadaj maks. 3 pytania doprecyzowujące, (d) zaproponuj jak zweryfikować (np. wklejenie linku/fragmentu/plików).',
       '2. Jeśli użytkownik pyta o swoje zadania lub inicjatywy, odwołuj się do danych z sekcji KONTEKST UŻYTKOWNIKA.',
       '3. Proponuj konkretne działania bazując na aktualnym stanie pracy użytkownika.',
       '4. Jeśli są blokery lub problemy, proaktywnie oferuj pomoc w ich rozwiązaniu.',
@@ -888,7 +889,7 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
 
     if (aiModes?.webSearch) {
       instructions.push(
-        '9. TRYB: Web Search — możesz otrzymać od systemu wyniki researchu i listę źródeł. Jeśli nie masz dostępu do web lub nie masz dostarczonych źródeł, powiedz to wprost. Nie udawaj, że wykonałeś wyszukiwanie.'
+        '9. TRYB: Web Search — możesz otrzymać od systemu wyniki researchu i listę źródeł. Jeśli nie masz dostarczonych wyników/źródeł: nie udawaj, że wykonałeś wyszukiwanie. Zamiast tego przejdź w tryb best‑effort (hipotezy + pytania + plan weryfikacji) i poproś użytkownika o źródło (link/fragment/plik).'
       );
     }
 

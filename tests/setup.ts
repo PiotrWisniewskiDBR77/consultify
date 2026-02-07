@@ -583,6 +583,13 @@ vi.mock('@/services/api', () => ({
     // AI/LLM
     chatWithAI: vi.fn().mockResolvedValue('AI Response'),
     chatWithAIStream: vi.fn().mockResolvedValue({}),
+    // Agent Audit Layer (used by UnifiedChatPanel on mount)
+    agentAuditListAgents: vi.fn().mockResolvedValue({ success: true, agents: [] }),
+    agentAuditSuggest: vi.fn().mockResolvedValue({ success: true, suggested: { agents: [] } }),
+    agentAuditReview: vi
+      .fn()
+      .mockResolvedValue({ success: true, orchestratorRunId: 'run-1', verdict: {}, reviews: [] }),
+    agentAuditAcceptRun: vi.fn().mockResolvedValue({ success: true }),
     getPublicLLMProviders: vi.fn().mockResolvedValue([]),
     getRecommendedProvider: vi.fn().mockResolvedValue({ recommendation: { model_id: 'gpt-4' } }),
 
@@ -642,6 +649,12 @@ vi.mock('../../src/services/api', () => ({
     getUserPlans: vi.fn().mockResolvedValue([]),
     getOrganization: vi.fn().mockResolvedValue({ id: 'org-1' }),
     chatWithAI: vi.fn().mockResolvedValue('AI Response'),
+    agentAuditListAgents: vi.fn().mockResolvedValue({ success: true, agents: [] }),
+    agentAuditSuggest: vi.fn().mockResolvedValue({ success: true, suggested: { agents: [] } }),
+    agentAuditReview: vi
+      .fn()
+      .mockResolvedValue({ success: true, orchestratorRunId: 'run-1', verdict: {}, reviews: [] }),
+    agentAuditAcceptRun: vi.fn().mockResolvedValue({ success: true }),
     getPublicLLMProviders: vi.fn().mockResolvedValue([]),
     getRecommendedProvider: vi.fn().mockResolvedValue({ recommendation: { model_id: 'gpt-4' } }),
     getNotifications: vi.fn().mockResolvedValue([]),

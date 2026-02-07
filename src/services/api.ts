@@ -779,6 +779,28 @@ export const Api = {
     return data;
   },
 
+  // Chat Traces (Admin)
+  listChatTraces: async (args?: { limit?: number; offset?: number }) => {
+    const limit = typeof args?.limit === 'number' ? args!.limit : 50;
+    const offset = typeof args?.offset === 'number' ? args!.offset : 0;
+    const res = await fetch(
+      `${API_URL}/ai/traces/chat?limit=${encodeURIComponent(String(limit))}&offset=${encodeURIComponent(
+        String(offset)
+      )}`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to fetch chat traces');
+  },
+
+  getChatTrace: async (runId: string) => {
+    const id = String(runId || '').trim();
+    if (!id) throw new Error('runId is required');
+    const res = await fetch(`${API_URL}/ai/traces/chat/${encodeURIComponent(id)}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch chat trace');
+  },
+
   chatWithAI: async (
     message: string,
     history: any[],

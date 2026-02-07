@@ -83,13 +83,14 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
         maxMode: false,
         multiModel: false,
         selectedModelId: null,
-        selectedTier: 'BUDGET',
+        // Keep chat experience competitive after logout/login cycles.
+        selectedTier: 'STANDARD',
         deepResearch: false,
-        webSearch: false,
+        webSearch: true,
         showReasoning: false,
         knowledgeSources: {
-          pmoDocuments: false,
-          projectData: false,
+          pmoDocuments: true,
+          projectData: true,
           organizationData: false,
         },
         responseStyle: 'normal' as const,
