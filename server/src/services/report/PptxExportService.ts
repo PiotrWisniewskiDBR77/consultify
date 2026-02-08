@@ -8,7 +8,7 @@
  * Type errors are suppressed with @ts-expect-error to maintain v1 compatibility.
  */
 
-import PptxGenJS from 'pptxgenjs';
+import PptxGenJS, { type Slide, type TextProps, type ChartData } from 'pptxgenjs';
 
 import logger from '../../utils/Logger.js';
 
@@ -161,16 +161,15 @@ export class PptxExportService {
       objects: [
         {
           placeholder: {
+            name: 'title',
+            type: 'title',
             options: {
-              name: 'title',
-              type: 'title',
               x: 0.5,
               y: 2.5,
               w: 9,
               h: 1.5,
               fontSize: 44,
-              
-      fontFace: FONTS.title,
+              fontFace: FONTS.title,
               color: 'FFFFFF',
               bold: true,
               align: 'center',
@@ -180,9 +179,9 @@ export class PptxExportService {
         },
         {
           placeholder: {
+            name: 'subtitle',
+            type: 'body',
             options: {
-              name: 'subtitle',
-              type: 'body',
               x: 0.5,
               y: 4.2,
               w: 9,
@@ -235,29 +234,25 @@ export class PptxExportService {
         },
         // Footer
         {
-          text: {
-            text: 'Consultify Report',
-            options: {
-              x: 0.5,
-              y: 5.2,
-              w: 4,
-              h: 0.3,
-              fontSize: 10,
-              
-      fontFace: FONTS.body,
-              color: COLORS.darkGray,
-            },
+          text: 'Consultify Report',
+          options: {
+            x: 0.5,
+            y: 5.2,
+            w: 4,
+            h: 0.3,
+            fontSize: 10,
+            fontFace: FONTS.body,
+            color: COLORS.darkGray,
           },
         },
         // Page number
         {
-          text: {
-            text: '',
-            options: {
-              x: 8.5,
-              y: 5.2,
-              w: 1,
-              h: 0.3,
+          text: '',
+          options: {
+            x: 8.5,
+            y: 5.2,
+            w: 1,
+            h: 0.3,
               fontSize: 10,
               
       fontFace: FONTS.body,
@@ -285,16 +280,15 @@ export class PptxExportService {
         },
         {
           placeholder: {
+            name: 'title',
+            type: 'title',
             options: {
-              name: 'title',
-              type: 'title',
               x: 0.5,
               y: 2.3,
               w: 9,
               h: 1.4,
               fontSize: 36,
-              
-      fontFace: FONTS.title,
+              fontFace: FONTS.title,
               color: 'FFFFFF',
               bold: true,
               align: 'center',
@@ -545,7 +539,7 @@ export class PptxExportService {
       const chartData = this.prepareChartData(report.scoreSummary);
 
       if (chartData.labels.length > 0) {
-        slide.addChart(pptx.ChartType.bar, chartData.data, {
+        slide.addChart(pptx.ChartType.bar, chartData, {
           x: 3,
           y: 1.2,
           w: 6.5,
@@ -648,11 +642,11 @@ export class PptxExportService {
   /**
    * Add table to slide
    */
-  private addTableToSlide(slide: PptxGenJS.Slide, data: any): void {
+  private addTableToSlide(slide: Slide, data: any): void {
     if (!data || !Array.isArray(data) || data.length === 0) return;
 
     const headers = Object.keys(data[0]);
-    const rows: PptxGenJS.TableRow[] = [];
+    const rows: Array<Array<TextProps>> = [];
 
     // Header row
     rows.push(
@@ -747,10 +741,7 @@ export class PptxExportService {
   /**
    * Prepare chart data from score summary
    */
-  private prepareChartData(scoreSummary: ReportData['scoreSummary']): {
-    labels: string[];
-    data: PptxGenJS.OptsChartData[];
-  } {
+  private prepareChartData(scoreSummary: ReportData['scoreSummary']): ChartData {
     const labels: string[] = [];
     const actualValues: number[] = [];
     const targetValues: number[] = [];

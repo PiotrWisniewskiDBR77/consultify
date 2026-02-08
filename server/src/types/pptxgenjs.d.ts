@@ -30,6 +30,14 @@ declare module 'pptxgenjs' {
         type: string;
         options?: TextOptions;
       };
+      rect?: {
+        x: number;
+        y: number;
+        w: number;
+        h: number;
+        fill?: { color: string };
+        line?: { color: string };
+      };
     }>;
   }
 
@@ -69,6 +77,8 @@ declare module 'pptxgenjs' {
     addChart(chartType: string, data: ChartData, options: ChartOptions): void;
     addTable(rows: Array<Array<TextProps>>, options?: { x?: number; y?: number; w?: number; h?: number }): void;
   }
+
+  export type { Slide, TextProps, ChartData };
 
   interface WriteOptions {
     outputType?: 'nodebuffer' | 'blob' | 'base64';

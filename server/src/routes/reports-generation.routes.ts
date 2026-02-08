@@ -181,7 +181,7 @@ router.get(
       password as string | undefined
     );
 
-    if (result.error) {
+    if ('error' in result) {
       const statusCode =
         result.error === 'Password required'
           ? 401
@@ -210,7 +210,7 @@ router.post(
 
     const result = await reportGenerationService.getPublicReport(linkToken, password);
 
-    if (result.error) {
+    if ('error' in result) {
       return res.status(403).json({ error: result.error });
     }
 

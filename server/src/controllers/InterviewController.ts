@@ -971,7 +971,8 @@ export const InterviewController = {
       context: { assignment },
     });
     if (!submitGate.allow) {
-      res.status(submitGate.code === 'INVALID_STATE' ? 409 : 400).json({ error: submitGate.error || 'Gate policy violation' });
+      const gateError = submitGate as { allow: false; error: string; code?: 'FORBIDDEN' | 'INVALID_STATE' | 'MISSING_DATA' };
+      res.status(gateError.code === 'INVALID_STATE' ? 409 : 400).json({ error: gateError.error });
       return;
     }
 
@@ -1078,9 +1079,10 @@ export const InterviewController = {
       context: { assignment },
     });
     if (!sendBackGate.allow) {
+      const gateError = sendBackGate as { allow: false; error: string; code?: 'FORBIDDEN' | 'INVALID_STATE' | 'MISSING_DATA' };
       res
-        .status(sendBackGate.code === 'INVALID_STATE' ? 409 : 400)
-        .json({ error: sendBackGate.error || 'Gate policy violation' });
+        .status(gateError.code === 'INVALID_STATE' ? 409 : 400)
+        .json({ error: gateError.error });
       return;
     }
 
@@ -1172,9 +1174,10 @@ export const InterviewController = {
       context: { assignment },
     });
     if (!approveGate.allow) {
+      const gateError = approveGate as { allow: false; error: string; code?: 'FORBIDDEN' | 'INVALID_STATE' | 'MISSING_DATA' };
       res
-        .status(approveGate.code === 'INVALID_STATE' ? 409 : 400)
-        .json({ error: approveGate.error || 'Gate policy violation' });
+        .status(gateError.code === 'INVALID_STATE' ? 409 : 400)
+        .json({ error: gateError.error });
       return;
     }
 
