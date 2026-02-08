@@ -159,7 +159,7 @@ router.get('/:id', verifyToken, async (req: Request, res: Response) => {
     // Get conversations in this project
     const conversationsResult = await db.query(
       `
-            SELECT c.*, u.name as created_by_name
+            SELECT c.*, TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as created_by_name
             FROM conversations c
             LEFT JOIN users u ON c.created_by = u.id
             WHERE c.chat_project_id = ?

@@ -537,8 +537,14 @@ async function runMigrations(options: { backfill?: boolean } = {}): Promise<void
 
   // Disable foreign keys for migration flexibility (essential for SQLite schema changes)
   const db = await getDatabaseAsync();
+  const currentDbType = process.env.DB_TYPE || 'sqlite';
   // @ts-ignore - SQLite specific PRAGMA
-  await db.run('PRAGMA foreign_keys = OFF');
+  if (currentDbType === 'sqlite') {
+    await db.run('PRAGMA foreign_keys = OFF');
+  } else {
+    // PostgreSQL: disable foreign key checks temporarily
+    await db.run('SET session_replication_role = replica');
+  }
 
   // Ensure schema_migrations exists before we read/write migration state.
   // This prevents first-run failures on fresh SQLite DBs.

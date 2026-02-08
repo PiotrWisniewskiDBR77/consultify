@@ -219,21 +219,20 @@ async function createSessionFromTemplate(params: {
   }
 
   // Create session from template (snapshot)
+  // Note: Schema uses owner_id (not user_id) and doesn't have topic column
   await queryHelpers.queryRun(
     `INSERT INTO interview_sessions
-     (id, organization_id, project_id, user_id, topic, name, owner_id, status, progress_json,
+     (id, organization_id, project_id, name, owner_id, status, progress_json,
       template_id, template_version,
       assignment_id,
       started_at, last_activity_at, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       user.organizationId,
       resolvedProjectId,
-      user.id,
       name || `Interview ${new Date().toLocaleDateString()}`,
-      name || `Interview ${new Date().toLocaleDateString()}`,
-      user.id,
+      user.id, // owner_id
       'active',
       JSON.stringify({ strategy: 0, operations: 0, digital: 0, people: 0, finance: 0 }),
       template.id,
@@ -437,19 +436,18 @@ export const InterviewController = {
     const now = new Date().toISOString();
 
     // Create session
+    // Note: Schema uses owner_id (not user_id) and doesn't have topic column
     await queryHelpers.queryRun(
       `INSERT INTO interview_sessions
-       (id, organization_id, project_id, user_id, topic, name, owner_id, status, progress_json,
+       (id, organization_id, project_id, name, owner_id, status, progress_json,
         started_at, last_activity_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         user.organizationId,
         resolvedProjectId,
-        user.id,
         name || 'Discovery Interview',
-        name || 'Discovery Interview',
-        user.id,
+        user.id, // owner_id
         'active',
         JSON.stringify({ strategy: 0, operations: 0, digital: 0, people: 0, finance: 0 }),
         now,

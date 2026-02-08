@@ -242,11 +242,30 @@ function adaptQuery(sql: string): string {
   }
 
   // Replace INSERT OR IGNORE with INSERT ... ON CONFLICT DO NOTHING
-  // This is a naive regex, might need more care for specific tables involving constraints
-  if (adapted.includes('INSERT OR IGNORE')) {
-    adapted = adapted.replace('INSERT OR IGNORE', 'INSERT');
-    adapted += ' ON CONFLICT DO NOTHING';
-  }
+  // Handle both single-line and multi-line INSERT statements
+  // Step 1: Replace INSERT OR IGNORE with INSERT
+  adapted = adapted.replace(/INSERT\s+OR\s+IGNORE/gi, 'INSERT');
+  
+  // Step 2: Add ON CONFLICT clause before VALUES for INSERT statements that don't already have it
+  // Use multiline matching (s flag) to handle column lists spanning multiple lines
+  adapted = adapted.replace(
+    /(INSERT\s+INTO\s+\w+\s*\([^)]+\))(\s+)(VALUES)/gis,
+    (match, insertPart, whitespace, valuesPart) => {
+      // Skip if already has ON CONFLICT
+      if (insertPart.includes('ON CONFLICT') || match.includes('ON CONFLICT')) {
+        return match;
+      }
+      // Extract column list (handle multiline with [\s\S] or s flag)
+      const columnsMatch = insertPart.match(/\(([^)]+)\)/s);
+      if (columnsMatch) {
+        const columns = columnsMatch[1];
+        // Get first column name (handle newlines, whitespace, and potential aliases)
+        const firstColumn = columns.split(',')[0].trim().split(/\s+/)[0];
+        return `${insertPart} ON CONFLICT (${firstColumn}) DO NOTHING${whitespace}${valuesPart}`;
+      }
+      return match;
+    }
+  );
 
   return adapted;
 }

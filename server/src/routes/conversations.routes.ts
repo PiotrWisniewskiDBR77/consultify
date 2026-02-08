@@ -387,7 +387,8 @@ router.get(
                 SELECT cm.id, cm.conversation_id, cm.role, cm.content, cm.message_type,
                        cm.metadata, cm.token_count, cm.model_used, cm.author_user_id,
                        cm.created_at,
-                       u.name as author_name, u.email as author_email
+                       TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as author_name, 
+                       u.email as author_email
                 FROM conversation_messages cm
                 LEFT JOIN users u ON cm.author_user_id = u.id
                 WHERE cm.conversation_id = ?
@@ -615,7 +616,9 @@ router.post(
       // Note: Trigger in DB handles updating conversation metadata
 
       const message = await dbGet(
-        `SELECT cm.*, u.name as author_name, u.email as author_email
+        `SELECT cm.*, 
+         TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as author_name, 
+         u.email as author_email
          FROM conversation_messages cm
          LEFT JOIN users u ON cm.author_user_id = u.id
          WHERE cm.id = ?`,
