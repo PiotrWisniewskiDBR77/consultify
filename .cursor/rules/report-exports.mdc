@@ -1,0 +1,31 @@
+---
+description: Report export system — v1/v2 routing, format selection, backward compatibility
+globs: server/src/routes/report-builder.routes.ts, server/src/services/report/**/*.ts
+alwaysApply: false
+---
+
+# Report Export System
+
+## Export endpoints
+
+- `GET /api/report-builder/:id/export/pdf` — pdfkit
+- `GET /api/report-builder/:id/export/docx` — docx library
+- `GET /api/report-builder/:id/export/pptx` — v1 (legacy) or v2 (pipeline)
+  - `?version=2` → BCG-grade component pipeline (`PptxPipelineService`)
+  - default → legacy monolithic `PptxExportService`
+
+## PPTX v2 pipeline flow
+
+```
+Route → load report + block types → PptxPipelineService.generateFromLegacyReport()
+  → UnifiedJsonTransformer (sections → slides with intents)
+  → RulesEngine.validateReport() (quality gates)
+  → per slide: resolveLayout(intent) → LayoutFn → composites → atomics → pptxgenjs
+  → pptx.write() → Buffer → file → download
+```
+
+## Never break v1
+
+- `PptxExportService.ts` (v1) must remain unchanged
+- v2 is opt-in via `?version=2` query param
+- Both write to `exports/report-builder/` and create export records

@@ -125,7 +125,7 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false })
   return (
     <div
       data-tour="ai-chat"
-      className="fixed bottom-6 right-6 w-[400px] h-[600px] bg-white dark:bg-navy-900 rounded-xl shadow-2xl border border-slate-200 dark:border-navy-700 flex flex-col z-50 overflow-hidden animate-in slide-in-from-bottom-10 fade-in zoom-in-95 duration-200"
+      className="fixed bottom-6 right-6 w-[400px] h-[900px] max-h-[calc(100vh-3rem)] bg-white dark:bg-navy-900 rounded-xl shadow-2xl border border-slate-200 dark:border-navy-700 flex flex-col z-50 overflow-hidden animate-in slide-in-from-bottom-10 fade-in zoom-in-95 duration-200"
     >
       {/* Header */}
       <div className="bg-navy-950 shrink-0 border-b border-white/5">

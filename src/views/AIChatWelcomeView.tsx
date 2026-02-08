@@ -12,7 +12,16 @@
  * - Action execution capabilities
  */
 
-import { PanelLeft, RefreshCw } from 'lucide-react';
+import {
+  BarChart3,
+  Brain,
+  FileText,
+  PanelLeft,
+  RefreshCw,
+  Shield,
+  Sparkles,
+  Zap,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -29,7 +38,6 @@ import { MessageActions } from '../components/AIChat/Messages/MessageActions';
 import { ThinkingBlock } from '../components/AIChat/Messages/ThinkingBlock';
 import { ResponseActions } from '../components/AIChat/ResponseActions';
 import { SmartSuggestions } from '../components/AIChat/SmartSuggestions';
-import { ThinkingStatusLine } from '../components/AIChat/ThinkingStatusLine';
 import { TTSIndicator } from '../components/AIChat/TTSIndicator';
 import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
 import { useAIStream } from '../hooks/useAIStream';
@@ -39,6 +47,7 @@ import { useConversationStore } from '../store/useConversationStore';
 import { usePMOStore } from '../store/usePMOStore';
 import { ChatCitation, ChatMessage, ChatResponseAction } from '../types';
 import { MessageFeedback } from '../types';
+import { exportConversationToPDF } from '../utils/pdfExport';
 import { cleanTextForSpeech } from '../utils/textCleaning';
 
 // Time-aware greeting helper
@@ -84,19 +93,9 @@ function downloadFile(filename: string, content: string, mimeType: string): void
 export const AIChatWelcomeView: React.FC = () => {
   const { t, i18n } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const lastBackendSyncSigRef = useRef<string>('');
 
   // App state
-  const {
-    currentUser,
-    currentProjectId,
-    activeChatMessages,
-    addChatMessage,
-    clearChat,
-    setChatMessages,
-    updateLastChatMessage,
-  } = useAppStore();
-  const activeChatMessagesRef = useRef(activeChatMessages);
+  const { currentUser, currentProjectId, aiConfig } = useAppStore();
   const { projectName } = usePMOStore();
 
   // Derived state for compatibility
@@ -115,9 +114,9 @@ export const AIChatWelcomeView: React.FC = () => {
     toggleSidebar,
     createConversation,
     addMessage,
-    updateLastMessage,
     setActiveConversation,
     clearActiveChat,
+    truncateFromMessage,
     generateTitle,
     draftChatLanguage,
     chatLanguageByConversationId,
@@ -125,24 +124,38 @@ export const AIChatWelcomeView: React.FC = () => {
   } = useConversationStore();
 
   const activeConversationIdRef = useRef(activeConversationId);
+  const activeMessagesRef = useRef(activeMessages);
+
+  // Deep Thinking confirm state
+  const [dtConfirmBusy, setDtConfirmBusy] = useState(false);
+  const [dtPendingConfirm, setDtPendingConfirm] = useState<{
+    messageId: string;
+    conversationId: string | null;
+    originalMessage: string;
+    editedMessage: string;
+    confirm: any;
+    context: any;
+  } | null>(null);
 
   const chatLanguage: SupportedLanguage = useMemo(() => {
+    // 1. User's explicit preference (set via ChatLanguageSelector) - highest priority
+    const explicitPref = localStorage.getItem('consultinity-preferred-chat-lang');
+    // 2. Conversation-specific language (from DB/store)
     const activeLang = activeConversationId
       ? chatLanguageByConversationId[activeConversationId]
       : undefined;
-    const candidate =
-      activeLang ||
-      draftChatLanguage ||
-      i18n.language ||
-      localStorage.getItem('i18nextLng') ||
-      'en';
+    // Priority: explicit preference > conversation-specific > draft > 'pl' default
+    // NOTE: We do NOT use i18nextLng here because it reflects UI language (auto-detected
+    // from browser), not the user's chat language preference. For this Polish product,
+    // the default chat language is 'pl'.
+    const candidate = explicitPref || activeLang || draftChatLanguage || 'pl';
     const base = String(candidate).split('-')[0];
-    return (isValidLanguage(base) ? base : 'en') as SupportedLanguage;
-  }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage, i18n.language]);
+    return (isValidLanguage(base) ? base : 'pl') as SupportedLanguage;
+  }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage]);
 
   // AI stream with persistence callback
   const handleStreamDone = useCallback(
-    async (fullText: string) => {
+    async (fullText: string, _thinking?: any, _artifacts?: any, meta?: { citations?: any[] }) => {
       // Use ref to get the latest conversation ID (avoids stale closure)
       const convId = activeConversationIdRef.current;
       if (!convId) {
@@ -157,16 +170,13 @@ export const AIChatWelcomeView: React.FC = () => {
           role: 'ai',
           content: fullText,
           messageType: 'text',
+          metadata: {
+            citations: Array.isArray(meta?.citations) ? meta?.citations : [],
+          } as any,
         });
 
-        // Trigger title generation after first AI response
-        if (isFirstExchangeRef.current) {
-          isFirstExchangeRef.current = false;
-          // Use small delay to ensure messages are persisted
-          setTimeout(() => {
-            generateTitle(convId);
-          }, 500);
-        }
+        // Title generation is handled by useConversationStore.addMessage()
+        // after the first user+AI exchange (2 messages). No duplicate trigger needed here.
       } catch (err) {
         console.error('[Chat] Failed to persist AI response:', err);
       }
@@ -174,82 +184,87 @@ export const AIChatWelcomeView: React.FC = () => {
     [addMessage, generateTitle]
   );
 
-  const { isStreaming, streamedContent, startStream, thinkingSteps } = useAIStream({
+  const {
+    isStreaming,
+    streamedContent,
+    startStream,
+    thinkingSteps,
+    abortStream,
+    retryLastStream,
+    lastError,
+    clearLastError,
+  } = useAIStream({
     onStreamDone: handleStreamDone,
     onStreamError: (err) => {
       console.error('[Chat] Stream error:', err);
-      // Make the failure visible to the user by filling the last (AI placeholder) message.
-      updateLastChatMessage?.(
-        '⚠️ Nie udało się połączyć z AI. Sprawdź logi backendu i konsolę przeglądarki (Network/Console).'
-      );
+      if ((err as any)?.code === 'DEEP_THINKING_CONFIRM_REQUIRED') {
+        // Flow-control error: do not persist as a chat message.
+        return;
+      }
+      // Persist a visible error message to the conversation (so UI stays consistent with backend)
+      const convId = activeConversationIdRef.current;
+      if (!convId) return;
+      void addMessage({
+        conversationId: convId,
+        role: 'ai',
+        content:
+          '⚠️ Nie udało się połączyć z AI. Sprawdź logi backendu i konsolę przeglądarki (Network/Console).',
+        messageType: 'text',
+        metadata: { error: (err as Error)?.message || String(err) },
+      } as any);
     },
   });
-
-  // Keep latest UI messages in a ref so effects can read them without depending on the full array.
-  useEffect(() => {
-    activeChatMessagesRef.current = activeChatMessages;
-  }, [activeChatMessages]);
 
   // Keep conversation ID ref fresh (avoids stale closures in handleStreamDone)
   useEffect(() => {
     activeConversationIdRef.current = activeConversationId;
   }, [activeConversationId]);
 
-  // Sync conversation-store messages into legacy chat UI state when user selects a conversation.
-  // Important: do NOT sync while streaming, otherwise we would overwrite the streaming placeholder message.
-  // Also: do NOT overwrite local UI with a partial backend list (prevents "nothing happens" when
-  // backend persists only the user message but AI stream fails, which would remove the AI placeholder).
   useEffect(() => {
-    if (isStreaming) return;
-    if (!activeConversationId) return;
+    activeMessagesRef.current = activeMessages;
+  }, [activeMessages]);
 
-    const backendCount = (activeMessages || []).length;
-    const uiCount = (activeChatMessagesRef.current || []).length;
-
-    // If backend is behind UI, do not sync yet (avoid dropping UI-only placeholder/stream/error text).
-    // We will sync once backend catches up (e.g. after AI response is persisted).
-    if (backendCount > 0 && backendCount < uiCount) return;
-    if (backendCount === 0 && uiCount > 0) return;
-
-    const mapped = (activeMessages || []).map((m) => ({
+  // UI messages: derive from conversation store + transient UI-only messages
+  const activeChatMessages: ChatMessage[] = useMemo(() => {
+    const persisted: ChatMessage[] = (activeMessages || []).map((m: any) => ({
       id: m.id,
       role: m.role,
-      content: m.content,
-      timestamp: m.createdAt,
+      content: String(m.content || ''),
+      timestamp: m.createdAt || new Date(),
+      type: m.messageType || 'text',
+      metadata: m.metadata,
       citations: m.metadata?.citations,
       actions: m.metadata?.actions,
       options: m.metadata?.options,
       multiSelect: m.metadata?.multiSelect,
-    })) as any;
+      artifacts: m.metadata?.artifacts,
+      toolCalls: m.metadata?.toolCalls,
+      authorUserId: m.authorUserId,
+      authorName: m.authorName,
+    }));
 
-    // Prevent infinite update loops:
-    // - mapped is a new array/object every run, and setChatMessages updates activeChatMessages,
-    //   which can re-trigger this effect if we depend on it.
-    // We sync only when backend payload meaningfully changed.
-    const sig =
-      String(activeConversationId) +
-      ':' +
-      (activeMessages || [])
-        .map((m) => `${m.id}|${m.role}|${String(m.content || '').length}`)
-        .join(',');
+    const out: ChatMessage[] = [...persisted];
 
-    if (lastBackendSyncSigRef.current === sig) return;
-
-    // If the UI already matches this payload, don't set again.
-    const uiSig =
-      String(activeConversationId) +
-      ':' +
-      (activeChatMessagesRef.current || [])
-        .map((m) => `${m.id}|${m.role}|${String((m as any).content || '').length}`)
-        .join(',');
-    if (uiSig === sig) {
-      lastBackendSyncSigRef.current = sig;
-      return;
+    if (isStreaming) {
+      out.push({
+        id: 'streaming',
+        role: 'ai',
+        content: String(streamedContent || ''),
+        timestamp: new Date(),
+        isStreaming: true,
+        isThinking: true,
+        thinkingSteps: thinkingSteps as any,
+        metadata: { transient: true },
+      } as any);
     }
 
-    lastBackendSyncSigRef.current = sig;
-    setChatMessages(mapped);
-  }, [activeConversationId, activeMessages, isStreaming, setChatMessages]);
+    return out;
+  }, [activeMessages, dtPendingConfirm, isStreaming, streamedContent, thinkingSteps]);
+
+  const activeChatMessagesRef = useRef<ChatMessage[]>(activeChatMessages);
+  useEffect(() => {
+    activeChatMessagesRef.current = activeChatMessages;
+  }, [activeChatMessages]);
 
   // AI context
   const { pmoContext, globalContext, screenContext } = useAIContext();
@@ -268,7 +283,7 @@ export const AIChatWelcomeView: React.FC = () => {
     settings: {
       autoSpeakResponses: true,
       sttProvider: 'whisper',
-      ttsProvider: 'openai',
+      ttsProvider: 'web',
       language: chatLanguage,
     },
   });
@@ -289,8 +304,10 @@ export const AIChatWelcomeView: React.FC = () => {
   const [aiMemoryContext, setAiMemoryContext] = useState<string | null>(null);
   const [coThinkerPhase, setCoThinkerPhase] = useState<string>('discovery');
   const [messageFeedback, setMessageFeedback] = useState<Record<string, MessageFeedback>>({});
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState<string>('');
+  const [editBusy, setEditBusy] = useState(false);
   const lastSpokenContentRef = useRef<string>('');
-  const isFirstExchangeRef = useRef<boolean>(true);
 
   // Get time-aware context
   const timeContext = useMemo(() => getTimeContext(), []);
@@ -323,21 +340,64 @@ export const AIChatWelcomeView: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeMessages, streamedContent]);
 
-  // Speak AI responses in voice mode
+  // =========================================================================
+  // Auto-speak AI responses (voice mode OR textToSpeech from ToolsMenu)
+  // =========================================================================
+  const ttsEnabled = voiceModeEnabled || (aiConfig?.textToSpeech ?? false);
+  const spokenCharsRef = useRef(0); // how many chars of streaming content we already spoke
+
+  // Reset spoken tracker when a new stream starts
   useEffect(() => {
-    if (!voiceModeEnabled || !voiceSupported || isStreaming) return;
+    if (isStreaming) {
+      spokenCharsRef.current = 0;
+    }
+  }, [isStreaming]);
+
+  // Incremental TTS: speak sentence-by-sentence WHILE streaming
+  useEffect(() => {
+    if (!ttsEnabled || !voiceSupported || !isStreaming || !streamedContent) return;
+
+    const text = cleanTextForSpeech(streamedContent);
+    if (!text || text.length <= spokenCharsRef.current) return;
+
+    // Find complete sentences in the new (unspoken) portion
+    const unspoken = text.slice(spokenCharsRef.current);
+    // Match sentences ending with . ! ? or newlines (but not abbreviations like "np." "dr.")
+    const sentenceEnd = /(?<=[.!?])\s+|(?<=\n)\s*/g;
+    const parts = unspoken.split(sentenceEnd).filter(Boolean);
+
+    if (parts.length > 1) {
+      // We have at least one complete sentence — speak all but the last (incomplete) part
+      const toSpeak = parts.slice(0, -1).join(' ').trim();
+      if (toSpeak) {
+        console.log('[TTS] Speaking sentence:', toSpeak.slice(0, 60) + '…');
+        speak(toSpeak).catch((err) => console.warn('[TTS] speak error:', err));
+        spokenCharsRef.current += unspoken.length - parts[parts.length - 1].length;
+      }
+    }
+  }, [ttsEnabled, voiceSupported, isStreaming, streamedContent, speak]);
+
+  // Speak remaining text when streaming finishes
+  useEffect(() => {
+    if (!ttsEnabled || !voiceSupported || isStreaming) return;
 
     const lastMessage = activeChatMessages[activeChatMessages.length - 1];
     if (lastMessage?.role === 'ai' && lastMessage.content) {
       const contentToSpeak = cleanTextForSpeech(lastMessage.content);
 
-      // Only speak if it's new content
       if (contentToSpeak && contentToSpeak !== lastSpokenContentRef.current) {
         lastSpokenContentRef.current = contentToSpeak;
-        speak(contentToSpeak);
+
+        // Speak only the remaining portion (what wasn't spoken during streaming)
+        const remaining = contentToSpeak.slice(spokenCharsRef.current).trim();
+        if (remaining) {
+          console.log('[TTS] Speaking remaining:', remaining.slice(0, 60) + '…');
+          speak(remaining).catch((err) => console.warn('[TTS] speak error:', err));
+        }
+        spokenCharsRef.current = 0;
       }
     }
-  }, [activeChatMessages, voiceModeEnabled, voiceSupported, isStreaming, speak]);
+  }, [activeChatMessages, ttsEnabled, voiceSupported, isStreaming, speak]);
 
   // Handle voice mode change
   const handleVoiceModeChange = useCallback(
@@ -378,19 +438,20 @@ export const AIChatWelcomeView: React.FC = () => {
       const result = await executeAction(actionPayload);
 
       if (result.status === 'success' && result.result?.message) {
-        // Add feedback message to chat
-        const feedbackMsg: ChatMessage = {
-          id: Date.now().toString(),
-          role: 'ai',
-          content: `✅ ${result.result.message}`,
-          timestamp: new Date(),
-        };
-        addChatMessage(feedbackMsg);
+        const convId = activeConversationIdRef.current;
+        if (convId) {
+          void addMessage({
+            conversationId: convId,
+            role: 'ai',
+            content: `✅ ${result.result.message}`,
+            messageType: 'text',
+          });
+        }
       }
 
       return result;
     },
-    [executeAction, addChatMessage]
+    [executeAction, addMessage]
   );
 
   // Handle pending action confirmation
@@ -399,101 +460,23 @@ export const AIChatWelcomeView: React.FC = () => {
       const result = await confirmAction(actionId, confirmed);
 
       if (result.status === 'success') {
-        const feedbackMsg: ChatMessage = {
-          id: Date.now().toString(),
-          role: 'ai',
-          content: confirmed ? '✅ Akcja wykonana pomyślnie.' : '❌ Akcja anulowana.',
-          timestamp: new Date(),
-        };
-        addChatMessage(feedbackMsg);
-      }
-    },
-    [confirmAction, addChatMessage]
-  );
-
-  // Handle sending a message
-  const handleSend = useCallback(
-    async (message: string) => {
-      if (!message.trim() || isStreaming) return;
-
-      let conversationId = activeConversationId;
-
-      // Create new conversation if needed
-      if (!conversationId) {
-        try {
-          const newConv = await createConversation({
-            projectId: selectedProject?.id,
-          });
-          conversationId = newConv.id;
-
-          // Ensure continuity: immediately activate the new conversation in the conversation store.
-          // Without this, other screens can "forget" the chat and bounce back to the welcome state.
-          setActiveConversation(newConv.id);
-          setConversationChatLanguage(newConv.id, chatLanguage);
-        } catch (err) {
-          console.error('[Chat] Failed to create conversation:', err);
-          // Show error in chat so user knows what happened
-          addChatMessage({
-            id: Date.now().toString(),
+        const convId = activeConversationIdRef.current;
+        if (convId) {
+          void addMessage({
+            conversationId: convId,
             role: 'ai',
-            content:
-              '⚠️ Nie udało się utworzyć konwersacji. Sprawdź czy jesteś zalogowany i spróbuj ponownie.',
-            timestamp: new Date(),
+            content: confirmed ? '✅ Akcja wykonana pomyślnie.' : '❌ Akcja anulowana.',
+            messageType: 'text',
           });
-          return;
         }
       }
+    },
+    [confirmAction, addMessage]
+  );
 
-      // Add user message
-      const userMsg: ChatMessage = {
-        id: Date.now().toString(),
-        role: 'user',
-        content: message.trim(),
-        timestamp: new Date(),
-      };
-
-      // Add to legacy store for backwards compatibility
-      addChatMessage(userMsg);
-
-      // Also persist to conversation store (backend)
-      try {
-        await addMessage({
-          conversationId: conversationId!,
-          role: 'user',
-          content: message.trim(),
-          messageType: 'text',
-        });
-      } catch (err) {
-        console.error('[Chat] Failed to persist user message:', err);
-      }
-
-      // Add placeholder AI message
-      const aiMsg: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'ai',
-        content: '',
-        timestamp: new Date(),
-      };
-      addChatMessage(aiMsg);
-
-      // Build context
-      // Important: `activeChatMessages` here does NOT yet include `userMsg`/`aiMsg` (state updates are async),
-      // so we build history explicitly.
-      const history = [...activeChatMessagesRef.current, userMsg].map((m) => ({
-        role: m.role === 'user' ? 'user' : 'model',
-        parts: [{ text: m.content }],
-      }));
-
-      const fullContext = {
-        ...screenContext,
-        pmo: pmoContext,
-        global: globalContext,
-        isWelcomeScreen: activeMessages.length === 0,
-        conversationId,
-        conversationLanguage: chatLanguage,
-      };
-
-      // Harvard-Level Co-Thinker System Prompt
+  // Build system prompt for AI
+  const buildSystemPrompt = useCallback(
+    (extraContext?: string) => {
       let systemPrompt = `You are an elite Digital Transformation Consultant with a Harvard MBA and PhD, 20+ years of experience with McKinsey, BCG, and Fortune 500 companies.
 
 YOUR PERSONA:
@@ -538,6 +521,10 @@ ACTION: {"type": "navigate|create_initiative|create_task|update_assessment", "pa
         systemPrompt += `\n${aiMemoryContext}\n`;
       }
 
+      if (extraContext) {
+        systemPrompt += `\n${extraContext}\n`;
+      }
+
       systemPrompt += `
 Focus on practical recommendations for transformation initiatives, roadmaps, and organizational change.
 
@@ -545,6 +532,271 @@ MEMORY INSTRUCTIONS:
 If the user explicitly asks you to remember something, include a line in your response:
 REMEMBER: [key]: [value]
 For example: REMEMBER: preferred_language: Polish`;
+
+      return systemPrompt;
+    },
+    [currentUser, coThinkerPhase, chatLanguage, selectedProject, aiMemoryContext]
+  );
+
+  // Handle Deep Thinking proceed (after user confirms)
+  const handleDeepThinkingProceed = useCallback(async () => {
+    if (!dtPendingConfirm) return;
+    if (isStreaming) return;
+
+    const history = activeChatMessagesRef.current
+      .filter((m) => !((m as any).metadata?.deepThinking?.kind === 'confirm'))
+      .map((m) => ({
+        role: m.role === 'user' ? 'user' : 'model',
+        parts: [{ text: m.content }],
+      }));
+
+    const systemPrompt = buildSystemPrompt();
+
+    // Start stream with Deep Thinking context confirmed
+    startStream(
+      dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage,
+      history,
+      systemPrompt,
+      {
+        ...(dtPendingConfirm.context || {}),
+        deepThinkingConfirmed: true,
+        deepThinkingConfirm: dtPendingConfirm.confirm,
+      },
+      undefined,
+      undefined,
+      chatLanguage
+    );
+
+    setDtPendingConfirm(null);
+  }, [dtPendingConfirm, isStreaming, buildSystemPrompt, startStream, chatLanguage]);
+
+  // Handle sending a message
+  const handleSend = useCallback(
+    async (message: string, attachments?: any[]) => {
+      if (!message.trim() || isStreaming) return;
+
+      let conversationId = activeConversationId;
+
+      // Create new conversation if needed
+      if (!conversationId) {
+        try {
+          const newConv = await createConversation({
+            projectId: selectedProject?.id,
+          });
+          conversationId = newConv.id;
+
+          // Ensure continuity: immediately activate the new conversation in the conversation store.
+          // Without this, other screens can "forget" the chat and bounce back to the welcome state.
+          setActiveConversation(newConv.id);
+          setConversationChatLanguage(newConv.id, chatLanguage);
+        } catch (err) {
+          console.error('[Chat] Failed to create conversation:', err);
+          // Make failure visible (no conversation to persist into)
+          alert(
+            t(
+              'aiChat.createConversationFailed',
+              '⚠️ Nie udało się utworzyć konwersacji. Sprawdź czy jesteś zalogowany i spróbuj ponownie.'
+            )
+          );
+          return;
+        }
+      }
+
+      // Upload supported attachments into Knowledge Base and keep conversation-scoped doc filters.
+      const existingAttachmentDocIds = Array.from(
+        new Set(
+          (activeMessages || [])
+            .flatMap((m: any) =>
+              Array.isArray(m?.metadata?.attachments) ? m.metadata.attachments : []
+            )
+            .map((a: any) => a?.docId)
+            .filter(Boolean)
+            .map((x: any) => String(x))
+        )
+      );
+
+      const files: File[] = Array.isArray(attachments)
+        ? attachments.filter(
+            (a: any): a is File => typeof File !== 'undefined' && a instanceof File
+          )
+        : [];
+
+      const uploadedAttachments: Array<{
+        docId: string;
+        filename: string;
+        mimeType?: string;
+        size?: number;
+      }> = [];
+
+      for (const file of files) {
+        const ext = String(file.name || '')
+          .split('.')
+          .pop()
+          ?.toLowerCase();
+        const supported =
+          file.type === 'application/pdf' ||
+          file.type.startsWith('text/') ||
+          file.type === 'application/json' ||
+          ['txt', 'md', 'csv', 'json'].includes(ext || '');
+
+        if (!supported) {
+          console.warn('[AIChatWelcomeView] Skipping unsupported attachment type:', {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+          });
+          continue;
+        }
+
+        try {
+          const resp = await Api.uploadChatAttachment(file);
+          const docId = String((resp as any)?.docId || '');
+          if (!docId) continue;
+          uploadedAttachments.push({
+            docId,
+            filename: file.name,
+            mimeType: file.type || undefined,
+            size: file.size,
+          });
+        } catch (err) {
+          console.error('[AIChatWelcomeView] Failed to upload attachment:', err);
+        }
+      }
+
+      const attachmentDocIds = Array.from(
+        new Set([...existingAttachmentDocIds, ...uploadedAttachments.map((a) => a.docId)])
+      );
+
+      // Add user message
+      const userMsg: ChatMessage = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: message.trim(),
+        timestamp: new Date(),
+      };
+
+      // Also persist to conversation store (backend)
+      try {
+        await addMessage({
+          conversationId: conversationId!,
+          role: 'user',
+          content: message.trim(),
+          messageType: 'text',
+          metadata:
+            uploadedAttachments.length > 0
+              ? ({ attachments: uploadedAttachments } as any)
+              : undefined,
+        });
+      } catch (err) {
+        console.error('[Chat] Failed to persist user message:', err);
+      }
+
+      // Build context
+      // Important: `activeChatMessages` here does NOT yet include `userMsg`/`aiMsg` (state updates are async),
+      // so we build history explicitly.
+      const history = [...activeChatMessagesRef.current, userMsg]
+        .filter((m) => !(m as any)?.isStreaming && m.id !== 'streaming')
+        .filter((m) => !((m as any).metadata?.deepThinking?.kind === 'confirm'))
+        .filter((m) => m.content && m.content.trim().length > 0) // Filter out empty messages
+        .map((m) => ({
+          role: m.role === 'user' ? 'user' : 'model',
+          parts: [{ text: String(m.content || '') }],
+        }));
+
+      const fullContext = {
+        ...screenContext,
+        pmo: pmoContext,
+        global: globalContext,
+        isWelcomeScreen: activeMessages.length === 0,
+        conversationId,
+        conversationLanguage: chatLanguage,
+        attachmentDocIds,
+        attachments: uploadedAttachments,
+      };
+
+      const systemPrompt = buildSystemPrompt();
+
+      // Deep Thinking: blocking Confirm step (no streaming until user confirms)
+      if (aiConfig?.deepResearch) {
+        if (dtConfirmBusy) return;
+        setDtConfirmBusy(true);
+        try {
+          const confirmRes = await Api.chatConfirm(
+            message.trim(),
+            history,
+            systemPrompt,
+            fullContext,
+            undefined,
+            chatLanguage,
+            {
+              deepResearch: aiConfig?.deepResearch,
+              webSearch: aiConfig?.webSearch,
+              showReasoning: aiConfig?.showReasoning,
+              knowledgeSources: aiConfig?.knowledgeSources,
+              responseStyle: aiConfig?.responseStyle,
+              selectedTier: (aiConfig as any)?.selectedTier || undefined,
+              selectedModelId: (aiConfig as any)?.selectedModelId ?? null,
+            }
+          );
+
+          const c = (confirmRes as any)?.confirm || {};
+          const u = c?.understanding || {};
+          const md = [
+            '**My understanding of your task**',
+            `- Goal: ${u.goal || ''}`,
+            u.context ? `- Context: ${u.context}` : '',
+            Array.isArray(u.constraints) && u.constraints.length
+              ? `- Constraints: ${u.constraints.join('; ')}`
+              : '',
+            u.expectedOutput ? `- Output: ${u.expectedOutput}` : '',
+            u.decisionHorizon ? `- Horizon: ${u.decisionHorizon}` : '',
+            '',
+            Array.isArray(c.missingInfoQuestions) && c.missingInfoQuestions.length
+              ? `**Assumptions & gaps (optional):**\n${c.missingInfoQuestions
+                  .slice(0, 3)
+                  .map((q: any, i: number) => `${i + 1}. ${q.question}`)
+                  .join('\n')}`
+              : '',
+            '',
+            '_Confirm to start Deep Thinking. Adjust if the task needs correction._',
+          ]
+            .filter(Boolean)
+            .join('\n');
+
+          let confirmMessageId = `dt-confirm-${Date.now()}`;
+          try {
+            const saved = await addMessage({
+              conversationId: conversationId!,
+              role: 'ai',
+              content: md,
+              messageType: 'text',
+              metadata: {
+                deepThinking: { kind: 'confirm', originalMessage: message.trim() },
+                deepThinkingConfirm: c,
+              } as any,
+            });
+            confirmMessageId = (saved as any)?.id || confirmMessageId;
+          } catch (persistErr) {
+            console.error('[AIChatWelcomeView] Failed to persist confirm card:', persistErr);
+          }
+
+          setDtPendingConfirm({
+            messageId: confirmMessageId,
+            conversationId: conversationId || null,
+            originalMessage: message.trim(),
+            editedMessage: message.trim(),
+            confirm: c,
+            context: fullContext,
+          });
+
+          return; // Don't start stream yet - wait for user to confirm
+        } catch (err) {
+          console.error('[AIChatWelcomeView] Deep Thinking confirm failed:', err);
+          // Fall through to regular stream on error
+        } finally {
+          setDtConfirmBusy(false);
+        }
+      }
 
       startStream(
         message.trim(),
@@ -573,14 +825,17 @@ For example: REMEMBER: preferred_language: Polish`;
       createConversation,
       setActiveConversation,
       setConversationChatLanguage,
-      addChatMessage,
       addMessage,
       startStream,
       screenContext,
       pmoContext,
       globalContext,
-      activeMessages.length,
+      activeMessages,
       aiMemoryContext,
+      aiConfig,
+      dtConfirmBusy,
+      buildSystemPrompt,
+      t,
     ]
   );
 
@@ -601,14 +856,22 @@ For example: REMEMBER: preferred_language: Polish`;
             );
             if (response.ok) {
               const data = await response.json();
-              // Add the brief as an AI message directly
-              const briefMsg: ChatMessage = {
-                id: Date.now().toString(),
-                role: 'ai',
-                content: data.brief?.textVersion || 'Nie udało się wygenerować briefu.',
-                timestamp: new Date(),
-              };
-              addChatMessage(briefMsg);
+              const content = data.brief?.textVersion || 'Nie udało się wygenerować briefu.';
+              let convId = activeConversationIdRef.current;
+              if (!convId) {
+                const newConv = await createConversation({ projectId: selectedProject?.id });
+                convId = newConv.id;
+                setActiveConversation(newConv.id);
+                setConversationChatLanguage(newConv.id, chatLanguage);
+              }
+              if (convId) {
+                await addMessage({
+                  conversationId: convId,
+                  role: 'ai',
+                  content,
+                  messageType: 'text',
+                });
+              }
             } else {
               handleSend('Pokaż mi dzienny brief - podsumowanie moich zadań, decyzji i inicjatyw');
             }
@@ -621,17 +884,25 @@ For example: REMEMBER: preferred_language: Polish`;
         }
       }
     },
-    [handleSend, selectedProject, addChatMessage]
+    [
+      addMessage,
+      chatLanguage,
+      createConversation,
+      handleSend,
+      selectedProject,
+      setActiveConversation,
+      setConversationChatLanguage,
+    ]
   );
 
   // Handle new chat
   const handleNewChat = useCallback(() => {
-    // Clear both stores - conversation store (backend) and app store (UI)
     clearActiveChat();
-    clearChat();
-    // Reset first exchange flag for title generation
-    isFirstExchangeRef.current = true;
-  }, [clearActiveChat, clearChat]);
+    setDtPendingConfirm(null);
+    clearLastError();
+    abortStream();
+    // Title generation is handled by the conversation store
+  }, [abortStream, clearActiveChat, clearLastError]);
 
   // Handle export
   const handleExport = useCallback(() => {
@@ -676,10 +947,15 @@ For example: REMEMBER: preferred_language: Polish`;
           'text/plain'
         );
       } else {
-        // PDF — fallback to text since we don't have a PDF library
-        const lines = messages.map((m) => `[${m.role === 'user' ? 'User' : 'AI'}]\n${m.content}\n`);
-        const content = `${title}\n${'='.repeat(40)}\n\n${lines.join('\n---\n\n')}`;
-        downloadFile(`${filename}.txt`, content, 'text/plain');
+        // PDF — proper formatted document
+        await exportConversationToPDF(
+          messages.map((m) => ({
+            role: m.role,
+            content: m.content,
+            timestamp: m.timestamp,
+          })),
+          { title, filename: `${filename}.pdf` }
+        );
       }
 
       setShowExportModal(false);
@@ -700,18 +976,34 @@ For example: REMEMBER: preferred_language: Polish`;
       );
       if (response.ok) {
         const data = await response.json();
-        const briefMsg: ChatMessage = {
-          id: Date.now().toString(),
-          role: 'ai',
-          content: data.brief?.textVersion || 'Nie udało się wygenerować briefu.',
-          timestamp: new Date(),
-        };
-        addChatMessage(briefMsg);
+        const content = data.brief?.textVersion || 'Nie udało się wygenerować briefu.';
+        let convId = activeConversationIdRef.current;
+        if (!convId) {
+          const newConv = await createConversation({ projectId: selectedProject?.id });
+          convId = newConv.id;
+          setActiveConversation(newConv.id);
+          setConversationChatLanguage(newConv.id, chatLanguage);
+        }
+        if (convId) {
+          await addMessage({
+            conversationId: convId,
+            role: 'ai',
+            content,
+            messageType: 'text',
+          });
+        }
       }
     } catch (err) {
       console.error('[DailyBrief] Error:', err);
     }
-  }, [selectedProject, addChatMessage]);
+  }, [
+    addMessage,
+    chatLanguage,
+    createConversation,
+    selectedProject,
+    setActiveConversation,
+    setConversationChatLanguage,
+  ]);
 
   // Handle message feedback (thumbs up/down)
   const handleFeedback = useCallback((messageId: string, feedback: MessageFeedback) => {
@@ -767,6 +1059,175 @@ For example: REMEMBER: preferred_language: Polish`;
     });
   }, []);
 
+  const handleStartEdit = useCallback((messageId: string) => {
+    const msg = activeChatMessagesRef.current.find((m) => m.id === messageId);
+    if (!msg || msg.role !== 'user') return;
+    if (String(msg.id || '').startsWith('local-')) return;
+    setEditingMessageId(messageId);
+    setEditingText(msg.content || '');
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingMessageId(null);
+    setEditingText('');
+  }, []);
+
+  const handleCommitEdit = useCallback(async () => {
+    if (!editingMessageId) return;
+    const newText = editingText.trim();
+    if (!newText) return;
+    if (!activeConversationId) return;
+    if (editBusy || isStreaming) return;
+
+    setEditBusy(true);
+    try {
+      // Truncate conversation after edited message and update its content
+      await truncateFromMessage(editingMessageId, newText);
+
+      // Build history up to (but excluding) the edited message, then resend from that point
+      const msgs = useConversationStore.getState().activeMessages || [];
+      const idx = msgs.findIndex((m: any) => m.id === editingMessageId);
+      const before = idx >= 0 ? msgs.slice(0, idx) : msgs;
+      const history = before
+        .filter((m: any) => m?.content && String(m.content).trim().length > 0)
+        .map((m: any) => ({
+          role: m.role === 'user' ? 'user' : 'model',
+          parts: [{ text: String(m.content || '') }],
+        }));
+
+      const attachmentDocIds = Array.from(
+        new Set(
+          (msgs || [])
+            .flatMap((m: any) =>
+              Array.isArray(m?.metadata?.attachments) ? m.metadata.attachments : []
+            )
+            .map((a: any) => a?.docId)
+            .filter(Boolean)
+            .map((x: any) => String(x))
+        )
+      );
+
+      const fullContext = {
+        ...screenContext,
+        pmo: pmoContext,
+        global: globalContext,
+        isWelcomeScreen: false,
+        conversationId: activeConversationId,
+        conversationLanguage: chatLanguage,
+        attachmentDocIds,
+      };
+      const systemPrompt = buildSystemPrompt();
+
+      // If Deep Research is enabled, run confirm step again
+      if (aiConfig?.deepResearch) {
+        if (!dtConfirmBusy) {
+          setDtConfirmBusy(true);
+          try {
+            const confirmRes = await Api.chatConfirm(
+              newText,
+              history,
+              systemPrompt,
+              fullContext,
+              undefined,
+              chatLanguage,
+              {
+                deepResearch: aiConfig?.deepResearch,
+                webSearch: aiConfig?.webSearch,
+                showReasoning: aiConfig?.showReasoning,
+                knowledgeSources: aiConfig?.knowledgeSources,
+                responseStyle: aiConfig?.responseStyle,
+                selectedTier: (aiConfig as any)?.selectedTier || undefined,
+                selectedModelId: (aiConfig as any)?.selectedModelId ?? null,
+              }
+            );
+            const c = (confirmRes as any)?.confirm || {};
+            const u = c?.understanding || {};
+            const md = [
+              '**My understanding of your task**',
+              `- Goal: ${u.goal || ''}`,
+              u.context ? `- Context: ${u.context}` : '',
+              Array.isArray(u.constraints) && u.constraints.length
+                ? `- Constraints: ${u.constraints.join('; ')}`
+                : '',
+              u.expectedOutput ? `- Output: ${u.expectedOutput}` : '',
+              u.decisionHorizon ? `- Horizon: ${u.decisionHorizon}` : '',
+              '',
+              Array.isArray(c.missingInfoQuestions) && c.missingInfoQuestions.length
+                ? `**Assumptions & gaps (optional):**\n${c.missingInfoQuestions
+                    .slice(0, 3)
+                    .map((q: any, i: number) => `${i + 1}. ${q.question}`)
+                    .join('\n')}`
+                : '',
+              '',
+              '_Confirm to start Deep Thinking. Adjust if the task needs correction._',
+            ]
+              .filter(Boolean)
+              .join('\n');
+
+            let confirmMessageId = `dt-confirm-${Date.now()}`;
+            try {
+              const saved = await addMessage({
+                conversationId: activeConversationId,
+                role: 'ai',
+                content: md,
+                messageType: 'text',
+                metadata: {
+                  deepThinking: { kind: 'confirm', originalMessage: newText },
+                  deepThinkingConfirm: c,
+                } as any,
+              });
+              confirmMessageId = (saved as any)?.id || confirmMessageId;
+            } catch (persistErr) {
+              console.error('[AIChatWelcomeView] Failed to persist confirm card:', persistErr);
+            }
+            setDtPendingConfirm({
+              messageId: confirmMessageId,
+              conversationId: activeConversationId,
+              originalMessage: newText,
+              editedMessage: newText,
+              confirm: c,
+              context: fullContext,
+            });
+          } finally {
+            setDtConfirmBusy(false);
+          }
+        }
+      } else {
+        startStream(
+          newText,
+          history,
+          systemPrompt,
+          fullContext,
+          undefined,
+          undefined,
+          chatLanguage
+        );
+      }
+
+      handleCancelEdit();
+    } catch (e) {
+      console.error('[Chat] Edit & regenerate failed:', e);
+    } finally {
+      setEditBusy(false);
+    }
+  }, [
+    activeConversationId,
+    aiConfig,
+    buildSystemPrompt,
+    chatLanguage,
+    dtConfirmBusy,
+    editBusy,
+    editingMessageId,
+    editingText,
+    globalContext,
+    handleCancelEdit,
+    isStreaming,
+    pmoContext,
+    screenContext,
+    startStream,
+    truncateFromMessage,
+  ]);
+
   // Handle message regenerate
   const handleRegenerate = useCallback(
     (messageId: string) => {
@@ -783,11 +1244,6 @@ For example: REMEMBER: preferred_language: Polish`;
   );
 
   const hasMessages = activeChatMessages.length > 0;
-  const currentThinkingLabel =
-    thinkingSteps.find((s) => s.status === 'in_progress')?.label ||
-    thinkingSteps.find((s) => s.status === 'pending')?.label ||
-    '';
-
   // Loading state — conversation is selected but messages haven't arrived yet
   // (e.g. after page reload / cross-screen navigation while rehydration fetches)
   const isRehydrating = !!activeConversationId && !hasMessages && isConversationLoading;
@@ -837,6 +1293,7 @@ For example: REMEMBER: preferred_language: Polish`;
                 const isLastMessage = index === activeChatMessages.length - 1;
                 const isAiMessage = msg.role === 'ai';
                 const isStreamingThis = isStreaming && isLastMessage && isAiMessage;
+                const isEditingThis = msg.role === 'user' && editingMessageId === msg.id;
 
                 const displayContent = isStreamingThis ? streamedContent : msg.content;
 
@@ -852,7 +1309,7 @@ For example: REMEMBER: preferred_language: Polish`;
                         <ThinkingBlock
                           steps={thinkingSteps}
                           isStreaming={true}
-                          defaultExpanded={!displayContent}
+                          {...({ defaultExpanded: !displayContent } as any)}
                         />
                       </div>
                     )}
@@ -865,13 +1322,36 @@ For example: REMEMBER: preferred_language: Polish`;
                       }`}
                     >
                       <div className="whitespace-pre-wrap text-[15px] leading-relaxed">
-                        {/* Cursor-like thinking indicator - inline label while thinking */}
-                        <ThinkingStatusLine
-                          label={currentThinkingLabel || t('thinking.processing', 'Thinking…')}
-                          className="mb-2"
-                          show={isStreamingThis && thinkingSteps.length > 0}
-                        />
-                        {displayContent}
+                        {isEditingThis ? (
+                          <div className="flex flex-col gap-2">
+                            <textarea
+                              value={editingText}
+                              onChange={(e) => setEditingText(e.target.value)}
+                              rows={3}
+                              className="w-full text-sm bg-white/90 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-2 outline-none focus:ring-2 focus:ring-primary-500/40 text-navy-900 dark:text-slate-100"
+                            />
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={handleCancelEdit}
+                                disabled={editBusy}
+                                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-200 dark:bg-navy-700 hover:bg-slate-300 dark:hover:bg-navy-600 text-slate-700 dark:text-slate-300 disabled:opacity-50"
+                              >
+                                {t('common.cancel', 'Cancel')}
+                              </button>
+                              <button
+                                onClick={handleCommitEdit}
+                                disabled={editBusy || !editingText.trim()}
+                                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50"
+                              >
+                                {editBusy
+                                  ? t('common.saving', 'Saving…')
+                                  : t('common.save', 'Save')}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          displayContent
+                        )}
                         {isStreamingThis && displayContent && (
                           <span className="inline-block w-2 h-5 bg-primary-500 ml-1 animate-pulse rounded-sm" />
                         )}
@@ -927,7 +1407,75 @@ For example: REMEMBER: preferred_language: Polish`;
                             </button>
                           ) : null;
                         })()}
+
+                      {/* Deep Thinking Confirm Card */}
+                      {isAiMessage &&
+                        !isStreamingThis &&
+                        (msg as any).metadata?.deepThinking?.kind === 'confirm' &&
+                        dtPendingConfirm?.messageId === msg.id && (
+                          <div className="mt-4 p-4 bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 rounded-xl border border-primary-200 dark:border-primary-800">
+                            <div className="flex flex-col gap-3">
+                              <div className="text-sm font-medium text-primary-700 dark:text-primary-300">
+                                {t(
+                                  'aiChat.deepThinking.confirmTitle',
+                                  'Ready to start Deep Thinking?'
+                                )}
+                              </div>
+                              <textarea
+                                value={dtPendingConfirm.editedMessage}
+                                onChange={(e) =>
+                                  setDtPendingConfirm((prev) =>
+                                    prev ? { ...prev, editedMessage: e.target.value } : prev
+                                  )
+                                }
+                                rows={2}
+                                className="w-full text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-2 outline-none focus:ring-2 focus:ring-primary-500/40"
+                                placeholder={t(
+                                  'aiChat.deepThinking.editPlaceholder',
+                                  'Edit your question if needed...'
+                                )}
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={handleDeepThinkingProceed}
+                                  disabled={dtConfirmBusy || isStreaming}
+                                  className="px-4 py-2 text-sm font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                  {dtConfirmBusy
+                                    ? t('aiChat.deepThinking.processing', 'Processing...')
+                                    : t(
+                                        'aiChat.deepThinking.confirm',
+                                        'Confirm & Start Deep Thinking'
+                                      )}
+                                </button>
+                                <button
+                                  onClick={() => setDtPendingConfirm(null)}
+                                  className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-200 dark:bg-navy-700 hover:bg-slate-300 dark:hover:bg-navy-600 text-slate-700 dark:text-slate-300 transition-colors"
+                                >
+                                  {t('common.cancel', 'Cancel')}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                     </div>
+
+                    {/* User Message Actions */}
+                    {msg.role === 'user' && !isEditingThis && (
+                      <div className="mt-2 flex items-center justify-end gap-1">
+                        <MessageActions
+                          message={{
+                            id: msg.id,
+                            role: 'user',
+                            content: displayContent,
+                            timestamp: msg.timestamp,
+                            canEdit: true,
+                          }}
+                          onEdit={(id) => handleStartEdit(id)}
+                          showAlwaysVisible={true}
+                        />
+                      </div>
+                    )}
 
                     {/* Message Actions - shown below AI messages */}
                     {isAiMessage && !isStreamingThis && displayContent && (
@@ -1026,12 +1574,37 @@ For example: REMEMBER: preferred_language: Polish`;
           {/* Input at bottom */}
           <div className="shrink-0 p-4 border-t border-slate-200 dark:border-navy-700">
             <div className="max-w-3xl mx-auto">
+              {!!lastError && !isStreaming && (
+                <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
+                  <div className="text-xs text-amber-800 dark:text-amber-200">
+                    {t('aiChat.streamError', 'Last request failed. You can retry.')}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => retryLastStream()}
+                      className="px-3 py-1 rounded-md text-xs font-medium bg-amber-600 hover:bg-amber-700 text-white"
+                    >
+                      {t('common.tryAgain', 'Try again')}
+                    </button>
+                    <button
+                      onClick={() => clearLastError()}
+                      className="px-3 py-1 rounded-md text-xs font-medium bg-white/60 dark:bg-white/10 hover:bg-white/80 dark:hover:bg-white/15 text-amber-800 dark:text-amber-200"
+                    >
+                      {t('common.dismiss', 'Dismiss')}
+                    </button>
+                  </div>
+                </div>
+              )}
               <EnhancedChatInput
                 onSend={handleSend}
-                disabled={isStreaming || isActionExecuting}
+                onStopGenerating={abortStream}
+                isStreaming={isStreaming}
+                disabled={isActionExecuting}
+                variant="compact"
                 placeholder={t('aiChat.placeholder', 'Start a transformation...')}
                 voiceModeEnabled={voiceModeEnabled}
                 onVoiceModeChange={handleVoiceModeChange}
+                chatLanguage={chatLanguage}
                 voiceState={voiceState}
                 startVoiceListening={startListening}
                 stopVoiceListening={stopListening}
@@ -1090,12 +1663,37 @@ For example: REMEMBER: preferred_language: Polish`;
 
           {/* Chat Input */}
           <div className="w-full max-w-2xl">
+            {!!lastError && !isStreaming && (
+              <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
+                <div className="text-xs text-amber-800 dark:text-amber-200">
+                  {t('aiChat.streamError', 'Last request failed. You can retry.')}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => retryLastStream()}
+                    className="px-3 py-1 rounded-md text-xs font-medium bg-amber-600 hover:bg-amber-700 text-white"
+                  >
+                    {t('common.tryAgain', 'Try again')}
+                  </button>
+                  <button
+                    onClick={() => clearLastError()}
+                    className="px-3 py-1 rounded-md text-xs font-medium bg-white/60 dark:bg-white/10 hover:bg-white/80 dark:hover:bg-white/15 text-amber-800 dark:text-amber-200"
+                  >
+                    {t('common.dismiss', 'Dismiss')}
+                  </button>
+                </div>
+              </div>
+            )}
             <EnhancedChatInput
               onSend={handleSend}
-              disabled={isStreaming}
+              onStopGenerating={abortStream}
+              isStreaming={isStreaming}
+              disabled={false}
+              variant="compact"
               placeholder={t('aiChat.placeholder', 'Ask anything...')}
               voiceModeEnabled={voiceModeEnabled}
               onVoiceModeChange={handleVoiceModeChange}
+              chatLanguage={chatLanguage}
             />
           </div>
 
@@ -1108,6 +1706,88 @@ For example: REMEMBER: preferred_language: Polish`;
               workspaceType={workspaceContext?.type}
               entityName={workspaceContext?.entityName}
             />
+          </div>
+
+          {/* AI Capability Cards — shows what the AI can do */}
+          <div className="w-full max-w-3xl mt-6 grid grid-cols-2 md:grid-cols-4 gap-2">
+            {[
+              {
+                icon: Brain,
+                label: t('aiChat.capabilities.deepThinking', 'Deep Thinking'),
+                desc: t(
+                  'aiChat.capabilities.deepThinkingDesc',
+                  'Multi-step analysis with web research'
+                ),
+                color: 'text-violet-500',
+                bg: 'bg-violet-50 dark:bg-violet-900/20',
+                prompt: t(
+                  'aiChat.capabilities.deepThinkingPrompt',
+                  'Analyze the biggest risk to our current strategy and suggest 3 mitigations'
+                ),
+              },
+              {
+                icon: BarChart3,
+                label: t('aiChat.capabilities.scenarios', 'Scenario Modeling'),
+                desc: t('aiChat.capabilities.scenariosDesc', 'Monte Carlo ROI & what-if analysis'),
+                color: 'text-emerald-500',
+                bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+                prompt: t(
+                  'aiChat.capabilities.scenariosPrompt',
+                  'Run a Monte Carlo simulation for the ROI of our top initiative'
+                ),
+              },
+              {
+                icon: Shield,
+                label: t('aiChat.capabilities.riskAlerts', 'Risk Alerts'),
+                desc: t('aiChat.capabilities.riskAlertsDesc', 'Predictive risk & budget warnings'),
+                color: 'text-amber-500',
+                bg: 'bg-amber-50 dark:bg-amber-900/20',
+                prompt: t(
+                  'aiChat.capabilities.riskAlertsPrompt',
+                  'What are the top risks in my portfolio right now?'
+                ),
+              },
+              {
+                icon: Zap,
+                label: t('aiChat.capabilities.actions', 'Quick Actions'),
+                desc: t('aiChat.capabilities.actionsDesc', 'Create tasks, decisions & reports'),
+                color: 'text-blue-500',
+                bg: 'bg-blue-50 dark:bg-blue-900/20',
+                prompt: t(
+                  'aiChat.capabilities.actionsPrompt',
+                  'Create a task to review our Q1 roadmap progress'
+                ),
+              },
+            ].map((cap) => (
+              <button
+                key={cap.label}
+                onClick={() => void handleSend(cap.prompt)}
+                className="group flex flex-col items-start gap-1.5 p-2 rounded-lg border border-slate-200/60 dark:border-white/5 bg-white/60 dark:bg-white/[0.02] hover:bg-white dark:hover:bg-white/5 hover:border-slate-300 dark:hover:border-white/10 transition-all duration-200 text-left"
+              >
+                <div className={`p-1.5 rounded-md ${cap.bg}`}>
+                  <cap.icon size={16} className={cap.color} />
+                </div>
+                <div>
+                  <div className="text-[11px] font-semibold text-navy-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                    {cap.label}
+                  </div>
+                  <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight line-clamp-2">
+                    {cap.desc}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* First-time help hint */}
+          <div className="w-full max-w-2xl mt-6 text-center">
+            <p className="text-[11px] text-slate-400 dark:text-slate-600 flex items-center justify-center gap-1.5">
+              <Sparkles size={11} />
+              {t(
+                'aiChat.onboarding.hint',
+                'Tip: Try voice mode, attach files, or enable Deep Thinking for multi-step analysis'
+              )}
+            </p>
           </div>
         </div>
 

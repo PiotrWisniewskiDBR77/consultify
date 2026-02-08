@@ -1,0 +1,33 @@
+---
+description: PPTX v2 Pipeline architecture — component model, naming, layering rules
+globs: server/src/services/report/pptx/**/*.ts
+alwaysApply: false
+---
+
+# PPTX Pipeline Architecture (BCG-grade)
+
+## Layer hierarchy (bottom → top)
+
+1. **Atomics** (`atomics/`) — smallest visual units. NO context, NO layout, NO logic.
+2. **Composites** (`composites/`) — combine atomics into functional blocks.
+3. **Layouts** (`layouts/`) — 1 intent = 1 layout. Immutable. Reference composites only.
+4. **IntentResolver** — maps section/block types → `SlideIntent`.
+5. **RulesEngine** — quality gates (max bullets, max KPIs, title length).
+6. **UnifiedJsonTransformer** — converts `{report, sections}` → `UnifiedReportJSON`.
+7. **PptxPipelineService** — orchestrator: JSON → validate → layout → render → buffer.
+
+## Key types
+
+- `SlideIntent` — 15 narrative purposes (cover, executive_summary, roadmap, etc.)
+- `UnifiedReportJSON` — `{ meta, slides: [{ intent, key_message, content }] }`
+- `RenderedElement` — `{ kind, apply(slide) }` — what atomics return
+- `DesignTokens` — centralized colors/fonts/spacing (NEVER hardcode visuals)
+
+## Rules
+
+- Atomics NEVER import composites or layouts
+- Composites NEVER import layouts
+- All colors/sizes come from `DesignTokens` — no hardcoded hex values
+- Every layout must use `HeaderBar` + `SlideTitle` + `PageNumber` + `Footnote`
+- New intents require: type in `types.ts`, layout in `layouts/`, mapping in `IntentResolver`
+- Use `?version=2` on `/api/report-builder/:id/export/pptx` to activate v2

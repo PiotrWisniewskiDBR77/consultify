@@ -9,6 +9,121 @@ Szczegółowy changelog zmian w systemie AI Chat. Dokumentuje wszystkie modyfika
 
 ---
 
+## 2026-02-08 — Wave 4: Voice TTS, Attachments, Thinking Steps, Language & UX fixes
+
+### 🔊 NEW: Text-to-Speech — automatyczne czytanie odpowiedzi AI
+
+**Funkcja:** Po włączeniu "Read responses" w ToolsMenu, AI czyta odpowiedzi na głos w trakcie ich generowania.
+
+**Architektura:**
+
+- `ttsProvider` zmieniony z `'openai'` na `'web'` — używa Web Speech API przeglądarki (brak zależności od serwera)
+- **Incremental TTS**: czytanie zdanie po zdaniu w trakcie streamingu (regex: `(?<=[.!?])\s+|(?<=\n)\s*`)
+- `spokenCharsRef` śledzi wypowiedziane znaki, `handleStreamDone` mówi tylko _resztę_
+- `cleanTextForSpeech()` czyści markdown/kod/URL przed syntezą
+- Zaimplementowane w `UnifiedChatPanel.tsx` (split) i `AIChatWelcomeView.tsx` (full)
+
+**Szczegółowa dokumentacja:** → `docs/modules/ai/VOICE_TTS_MODULE.md`
+
+### 🌍 NEW: TTS obsługuje 6 języków aplikacji
+
+| App code | Locale  | Preferowane głosy     |
+| -------- | ------- | --------------------- |
+| `pl`     | `pl-PL` | Zosia, Paulina        |
+| `en`     | `en-US` | Samantha, Karen, Alex |
+| `de`     | `de-DE` | Anna, Petra           |
+| `ar`     | `ar-SA` | Maged                 |
+| `jp`     | `ja-JP` | Kyoko, O-Ren          |
+| `es`     | `es-ES` | Monica, Jorge         |
+
+**Smart Voice Selection** — `pickBestVoice(locale)` w `useUniversalVoice.ts`:
+
+1. Preferowane głosy premium (PREFERRED_VOICES)
+2. Głosy z "premium"/"enhanced"/"natural"/"neural"
+3. Locale match → language prefix match → browser default
+
+`utterance.pitch = 1.05` — cieplejszy, mniej robotyczny ton.
+
+### 📎 FIX: AI nie rozumiał załączników
+
+**Problem:** Użytkownik dołączał plik, ale AI go ignorował — treść załącznika nie trafiała do kontekstu.
+
+**Rozwiązanie (3-warstwowy fallback w `ai.routes.ts`):**
+
+1. RAG search po `knowledge_chunks`
+2. Bezpośredni odczyt z `knowledge_docs` (pełna treść)
+3. Odczyt z `knowledge_chunks` z fallback na `conversation_messages` (type: `attachment_content`)
+
+**Dodatkowe:**
+
+- Relaksacja filtra `organization_id` w `ragService.ts`
+- Toast notifications (react-hot-toast) dla statusu uploadu
+
+### 🧠 FIX: Thinking Steps — duplikaty i brak informacji
+
+**Problem 1:** Kroki myślenia wyświetlały się podwójnie.
+**Fix:** Usunięto redundantny `ThinkingStatusLine` z `AIChatWelcomeView.tsx`.
+
+**Problem 2:** Kroki myślenia były zbyt ogólne ("Myślę...").
+**Fix:**
+
+- Backend emituje SSE eventy `type: 'thought'` z konkretnymi opisami
+- Frontend (`useAIStream.ts`) obsługuje te eventy, zastępuje symulowane kroki
+- `ThinkingStatusLine.tsx`: checkmark (✓) dla done, spinner dla in_progress
+
+### 🎤 FIX: Dyktacja — timer, feedback wizualny, język
+
+| Problem                  | Fix                                                                       | Plik                    |
+| ------------------------ | ------------------------------------------------------------------------- | ----------------------- |
+| Timer stuck na 0:00      | `currentRecordingDuration` priorytetyzuje internal state podczas dyktacji | `EnhancedChatInput.tsx` |
+| Brak feedbacku "słucham" | `AudioContext` + `AnalyserNode` — animacja poziomu audio                  | `EnhancedChatInput.tsx` |
+| Nie rozumie polskiego    | `recognition.lang` priorytet: `chatLanguage` prop → fallback `pl-PL`      | `EnhancedChatInput.tsx` |
+| Brak mapowania `jp`      | Dodano `jp: 'ja-JP'` (app code `jp` ≠ BCP-47 `ja`)                        | `EnhancedChatInput.tsx` |
+
+### 🇵🇱 FIX: Domyślny język czatu — polski zamiast angielskiego
+
+**Root cause:** `i18nextLng` auto-detect → `'en'` (język przeglądarki) → propagacja do speech recognition, AI prompt, Zustand store.
+
+**Rozwiązanie:**
+
+1. Nowy klucz `consultinity-preferred-chat-lang` (jawna preferencja, nie auto-detect)
+2. `chatLanguage` resolution: `consultinity-preferred-chat-lang` → conversation-specific → draft → `'pl'`
+3. `i18nextLng` jawnie NIE jest używany do języka czatu
+4. Zustand migration v2: `draftChatLanguage` → `'pl'`, `chatLanguageByConversationId` entries `'en'` → `'pl'`
+
+### ⬆️ FIX: Floating menus — otwieranie do góry
+
+**Problem:** Menu kontekstowe (narzędzia, akcje, pliki) otwierały się w dół i znikały poza ekran.
+
+**Fix:** Zmiana na dropup:
+
+- `ToolsMenu`: `top-full mt-2` → `bottom-full mb-2`, `slide-in-from-bottom-2`
+- `MessageActions`: `top-full mt-1` → `bottom-full mb-1`
+- `AddFilesMenu`: `top-full mt-2` → `bottom-full mb-2`
+- `menuMaxHeight` obliczany z `rect.top - 24` (przestrzeń NAD triggerem)
+
+### Zmienione pliki
+
+| Plik                                                | Zmiany                                                                  |
+| --------------------------------------------------- | ----------------------------------------------------------------------- |
+| `src/hooks/useUniversalVoice.ts`                    | TTS: 6 języków, `pickBestVoice()`, `LANG_TO_BCP47`, Web Speech provider |
+| `src/components/AIChat/UnifiedChatPanel.tsx`        | Incremental TTS, auto-read, dropup, ttsProvider: 'web'                  |
+| `src/views/AIChatWelcomeView.tsx`                   | Incremental TTS, ttsEnabled, language, ttsProvider: 'web'               |
+| `src/components/AIChat/EnhancedChatInput.tsx`       | Dictation: timer, audio level, `jp` mapping, chatLanguage prop          |
+| `src/components/AIChat/ToolsMenu.tsx`               | Dropup, max-height                                                      |
+| `src/components/AIChat/Messages/MessageActions.tsx` | Dropup                                                                  |
+| `src/hooks/useAIStream.ts`                          | Thought events, language fallback                                       |
+| `src/components/AIChat/ThinkingStatusLine.tsx`      | Structured steps, visual indicators                                     |
+| `src/components/AIChat/Messages/ThinkingBlock.tsx`  | ThinkingLineItem objects                                                |
+| `src/components/AIChat/MessageRenderer.tsx`         | Last-message thinking display                                           |
+| `src/store/useConversationStore.ts`                 | Zustand v2 migration, PL default                                        |
+| `src/utils/textCleaning.ts`                         | `cleanTextForSpeech()`                                                  |
+| `server/src/routes/ai.routes.ts`                    | Attachment 3-layer fallback, thought SSE, language                      |
+| `server/src/services/ragService.ts`                 | Relaxed org_id filter                                                   |
+| `server/src/validators/ai.validators.ts`            | `multiAgent` field                                                      |
+
+---
+
 ## 2026-02-06 — Wave 1b/2b/3b: Stabilizacja + nowe funkcje
 
 ### 🔴 CRITICAL FIX: Suggestions endpoint crash
