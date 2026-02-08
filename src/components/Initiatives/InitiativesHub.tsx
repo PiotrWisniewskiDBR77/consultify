@@ -32,8 +32,8 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
-// New Initiative Drawer (50% width with Open wider)
-import { InitiativeDrawer } from './InitiativeDrawer';
+// Compact side panel (replaces old 50% drawer)
+import { InitiativeCompactPanel } from './InitiativeCompactPanel';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
@@ -611,8 +611,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         <div className="flex-1 overflow-hidden">{renderContent()}</div>
       </ModuleHub>
 
-      {/* Initiative Drawer (50% width) with Open Wider functionality */}
-      <InitiativeDrawer
+      {/* Initiative Compact Side Panel */}
+      <InitiativeCompactPanel
         initiative={selectedInitiative}
         isOpen={isSidePanelOpen}
         onClose={handleCloseSidePanel}
@@ -622,7 +622,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             setSelectedInitiative(updated);
           }
         }}
-        onOpenWider={handleOpenFullScreen}
+        onOpenFull={handleOpenFullScreen}
         users={users}
       />
 

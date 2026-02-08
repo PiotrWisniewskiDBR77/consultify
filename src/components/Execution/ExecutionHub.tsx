@@ -49,7 +49,7 @@ import { RAIDLog } from '../Implementation/RAIDLog';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import { DecisionsPanel } from '../MyWork/DecisionsPanel';
 import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
-import { InitiativeSidePanel } from '../Portfolio/InitiativeSidePanel';
+import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
 import {
   FilterableTable,
   FilterChip,
@@ -1576,7 +1576,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       >
         {renderContent()}
       </ModuleHub>
-      <InitiativeSidePanel
+      <InitiativeCompactPanel
         initiative={sidePanelInitiative}
         isOpen={isSidePanelOpen}
         onClose={() => {
@@ -1584,7 +1584,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           setSelectedInitiative(null);
         }}
         onUpdate={handlePortfolioUpdate}
-        onOpenFullDetail={(initiative) => {
+        onOpenFull={(initiative) => {
           const full = initiatives.find((item) => item.id === initiative.id);
           if (full) {
             handleOpenDocument(full);
