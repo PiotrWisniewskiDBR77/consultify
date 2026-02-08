@@ -35,6 +35,7 @@ import { useArtifactsStore } from '../../store/useArtifactsStore';
 import { useConversationStore } from '../../store/useConversationStore';
 import { Artifact, ChatMessage, FocusMode, ResponseFeedback, ThinkingStep } from '../../types';
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
+import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
 import { ContextBadge } from './ContextBadge';
 import { EnhancedChatInput } from './EnhancedChatInput';
@@ -133,8 +134,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // ========================================================================
 
   const {
-    isChatSlidingPanelOpen,
-    setChatSlidingPanelOpen,
     currentStreamContent,
     isBotTyping,
     addChatMessage,
@@ -147,6 +146,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     activeConversationId,
     activeMessages,
     isLoading: isConversationLoading,
+    isSidebarOpen,
     displayMode,
     createConversation,
     addMessage: addMessageToConversation,
@@ -154,6 +154,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     fetchConversation,
     clearActiveChat,
     truncateFromMessage,
+    toggleSidebar,
     setDisplayMode,
     expandToFullScreen,
     collapseToSplit,
@@ -169,25 +170,27 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const [focusMode, setFocusMode] = useState<FocusMode>('all');
   const [voiceModeEnabled, setVoiceModeEnabled] = useState(false);
-  const [autoReadEnabled, setAutoReadEnabled] = useState(false);
+  // Auto-read is driven by textToSpeech from ToolsMenu (aiConfig) or manual toggle
+  const [autoReadEnabled, setAutoReadEnabled] = useState(aiConfig?.textToSpeech ?? false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState<string>('');
   const [editBusy, setEditBusy] = useState(false);
 
   const chatLanguage: SupportedLanguage = useMemo(() => {
+    // 1. User's explicit preference (set via ChatLanguageSelector) - highest priority
+    const explicitPref = localStorage.getItem('consultinity-preferred-chat-lang');
+    // 2. Conversation-specific language (from DB/store)
     const activeLang = activeConversationId
       ? chatLanguageByConversationId[activeConversationId]
       : undefined;
-    // Priority: conversation-specific > draft > localStorage (user choice) > i18n > 'pl'
-    const candidate =
-      activeLang ||
-      draftChatLanguage ||
-      localStorage.getItem('i18nextLng') ||
-      i18n.language ||
-      'pl';
+    // Priority: explicit preference > conversation-specific > draft > 'pl' default
+    // NOTE: We do NOT use i18nextLng here because it reflects UI language (auto-detected
+    // from browser), not the user's chat language preference. For this Polish product,
+    // the default chat language is 'pl'.
+    const candidate = explicitPref || activeLang || draftChatLanguage || 'pl';
     const base = String(candidate).split('-')[0];
     return (isValidLanguage(base) ? base : 'pl') as SupportedLanguage;
-  }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage, i18n.language]);
+  }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage]);
 
   // Voice Hook (uses autoReadEnabled state)
   const {
@@ -204,7 +207,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     settings: {
       autoSpeakResponses: autoReadEnabled,
       sttProvider: 'whisper',
-      ttsProvider: 'openai',
+      ttsProvider: 'web',
       language: chatLanguage,
     },
   });
@@ -286,6 +289,18 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   useEffect(() => {
     autoReadEnabledRef.current = autoReadEnabled;
   }, [autoReadEnabled]);
+
+  // Sync autoReadEnabled with textToSpeech from ToolsMenu (aiConfig)
+  useEffect(() => {
+    const ttsFromConfig = aiConfig?.textToSpeech ?? false;
+    if (ttsFromConfig !== autoReadEnabled) {
+      setAutoReadEnabled(ttsFromConfig);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiConfig?.textToSpeech]);
+
+  // Ref for incremental TTS (defined here, used in effects after useAIStream)
+  const spokenCharsRef = useRef(0);
 
   // Agent registry (for readable labels in approval UI)
   useEffect(() => {
@@ -418,9 +433,15 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           : {}),
       });
 
-      // Auto-read AI response if enabled (use ref for current value)
+      // Auto-read AI response if enabled (speak only remaining text not already spoken during streaming)
       if (autoReadEnabledRef.current && safeText) {
-        speak(safeText);
+        const cleaned = cleanTextForSpeech(safeText);
+        const remaining = cleaned.slice(spokenCharsRef.current).trim();
+        if (remaining) {
+          console.log('[TTS] Speaking remaining:', remaining.slice(0, 60) + '…');
+          speak(remaining).catch((err) => console.warn('[TTS] speak error:', err));
+        }
+        spokenCharsRef.current = 0;
       }
 
       // Agent Audit Layer: run post-DT review on the CLOSED report
@@ -606,6 +627,37 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       addArtifact(artifact);
     },
   });
+
+  // =========================================================================
+  // Incremental TTS: speak sentence-by-sentence WHILE AI is streaming
+  // =========================================================================
+  useEffect(() => {
+    if (isStreaming) {
+      spokenCharsRef.current = 0;
+    }
+  }, [isStreaming]);
+
+  useEffect(() => {
+    if (!autoReadEnabledRef.current || !isStreaming || !streamedContent) return;
+
+    const text = cleanTextForSpeech(streamedContent);
+    if (!text || text.length <= spokenCharsRef.current) return;
+
+    const unspoken = text.slice(spokenCharsRef.current);
+    // Split on sentence boundaries (. ! ? followed by whitespace, or newlines)
+    const sentenceEnd = /(?<=[.!?])\s+|(?<=\n)\s*/g;
+    const parts = unspoken.split(sentenceEnd).filter(Boolean);
+
+    if (parts.length > 1) {
+      // Speak all complete sentences, keep the last (potentially incomplete) part
+      const toSpeak = parts.slice(0, -1).join(' ').trim();
+      if (toSpeak) {
+        console.log('[TTS] Speaking sentence:', toSpeak.slice(0, 60) + '…');
+        speak(toSpeak).catch((err) => console.warn('[TTS] speak error:', err));
+        spokenCharsRef.current += unspoken.length - parts[parts.length - 1].length;
+      }
+    }
+  }, [isStreaming, streamedContent, speak]);
 
   // Keep the streamed verdict accessible from callbacks without dependency churn
   useEffect(() => {
@@ -1945,11 +1997,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           {/* History toggle - second from left */}
           {showHistoryTrigger && (
             <button
-              onClick={() => setChatSlidingPanelOpen(!isChatSlidingPanelOpen)}
+              onClick={() => toggleSidebar()}
               data-testid="chat-history-button"
               data-chat-toggle
               className={`p-1.5 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors ${
-                isChatSlidingPanelOpen
+                isSidebarOpen
                   ? 'text-primary-600 dark:text-primary-400'
                   : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300'
               }`}
@@ -2112,6 +2164,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           }
           voiceModeEnabled={voiceModeEnabled}
           onVoiceModeChange={setVoiceModeEnabled}
+          chatLanguage={chatLanguage}
           voiceState={voiceState}
           startVoiceListening={startListening}
           stopVoiceListening={stopListening}

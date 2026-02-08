@@ -754,7 +754,15 @@
     "actions": {
       "helpful": "Helpful",
       "notHelpful": "Not helpful",
-      "copy": "Copy"
+      "copy": "Copy",
+      "rename": "Rename",
+      "star": "Pin to top",
+      "unstar": "Unpin",
+      "archive": "Archive",
+      "unarchive": "Unarchive",
+      "delete": "Delete",
+      "addToProject": "Add to folder",
+      "moveProject": "Change folder"
     },
     "feedback": {
       "thankYou": "Thank you for your feedback!",
@@ -883,9 +891,20 @@
     "newConversation": "New conversation",
     "closeSidebar": "Close sidebar",
     "searchPlaceholder": "Search conversations...",
+    "confirmDelete": "Are you sure you want to delete this conversation?",
     "sections": {
       "archived": "Archived"
     },
+    "moveToFolder": "Move to folder",
+    "moveToFolderFailed": "Failed to move conversation. Please try again.",
+    "removeFromFolder": "Remove from folder",
+    "currentFolder": "Current",
+    "noFolder": "No folder",
+    "noFolders": "No folders found",
+    "searchFoldersPlaceholder": "Search folders...",
+    "personalFolder": "Personal",
+    "teamFolder": "Team",
+    "createFolderFailed": "Failed to create folder. Please try again.",
     "capabilities": {
       "deepThinking": "Deep Thinking",
       "deepThinkingDesc": "Multi-step analysis with web research",

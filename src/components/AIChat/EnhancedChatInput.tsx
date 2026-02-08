@@ -38,8 +38,17 @@ interface EnhancedChatInputProps {
   isStreaming?: boolean;
   placeholder?: string;
   className?: string;
+  /**
+   * Visual density preset.
+   * - default: standard height used in main chat
+   * - compact: smaller height (used in welcome/landing-like chat screens)
+   */
+  variant?: 'default' | 'compact';
   voiceModeEnabled?: boolean;
   onVoiceModeChange?: (enabled: boolean) => void;
+
+  /** Chat/conversation language used for speech recognition (e.g. 'pl', 'en') */
+  chatLanguage?: string;
 
   // Voice Props from Parent
   voiceState?: {
@@ -67,8 +76,10 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   isStreaming = false,
   placeholder,
   className = '',
+  variant = 'default',
   voiceModeEnabled = false,
   onVoiceModeChange,
+  chatLanguage,
   voiceState,
   startVoiceListening,
   stopVoiceListening,
@@ -174,9 +185,10 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 200) + 'px';
+      const maxPx = variant === 'compact' ? 140 : 200;
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, maxPx) + 'px';
     }
-  }, [value]);
+  }, [value, variant]);
 
   // ========================================================================
   // Voice Activity Detection (VAD)
@@ -280,16 +292,19 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     recognition.continuous = true;
     recognition.interimResults = true;
 
-    const i18nLang = localStorage.getItem('i18nextLng') || 'pl';
+    // Use chatLanguage prop (conversation language) for speech recognition,
+    // falling back to localStorage/default only if not provided.
+    const effectiveLang = chatLanguage || localStorage.getItem('i18nextLng') || 'pl';
     const langMap: Record<string, string> = {
       pl: 'pl-PL',
       en: 'en-US',
       de: 'de-DE',
       es: 'es-ES',
-      ja: 'ja-JP',
+      jp: 'ja-JP',
+      ja: 'ja-JP', // alias
       ar: 'ar-SA',
     };
-    recognition.lang = langMap[i18nLang] || 'pl-PL';
+    recognition.lang = langMap[effectiveLang] || 'pl-PL';
 
     recognition.onresult = (event: any) => {
       let interim = '';
@@ -707,12 +722,14 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           className={`
                         w-full bg-transparent text-navy-900 dark:text-white
                         placeholder-slate-400 dark:placeholder-slate-500
-                        px-4 pt-4 pb-2 resize-none focus:outline-none text-[15px]
+                        px-4 ${variant === 'compact' ? 'pt-3 pb-1.5' : 'pt-4 pb-2'} resize-none focus:outline-none text-[15px]
                     `}
         />
 
         {/* Action Bar */}
-        <div className="flex items-center justify-between px-3 pb-3">
+        <div
+          className={`flex items-center justify-between px-3 ${variant === 'compact' ? 'pb-2' : 'pb-3'}`}
+        >
           {/* Left Actions */}
           <div className="flex items-center gap-1">
             <AddFilesMenu

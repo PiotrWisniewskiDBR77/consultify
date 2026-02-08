@@ -89,13 +89,14 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
   const styleButtonRef = useRef<HTMLButtonElement>(null);
   const ttsButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Calculate available space below the trigger button for menu positioning
+  // Calculate available space above the trigger button for menu positioning
+  // (menu opens upward to avoid overflowing the bottom of the viewport)
   useEffect(() => {
     if (isOpen && triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
-      // Available space below trigger minus some padding
-      const availableBelow = window.innerHeight - rect.bottom - 24;
-      setMenuMaxHeight(Math.max(200, availableBelow));
+      // Available space above trigger minus some padding
+      const availableAbove = rect.top - 24;
+      setMenuMaxHeight(Math.max(200, availableAbove));
     }
   }, [isOpen]);
 
@@ -268,16 +269,16 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
         )}
       </button>
 
-      {/* Dropdown Menu — opens downward (Gemini-style) */}
+      {/* Dropdown Menu — opens upward so it doesn't overflow bottom of viewport */}
       {isOpen && (
         <div
           className="
-                        absolute left-0 top-full mt-2 z-50
+                        absolute left-0 bottom-full mb-2 z-50
                         w-72 py-1
                         bg-white dark:bg-navy-800
                         border border-slate-200 dark:border-navy-700
                         rounded-xl shadow-xl
-                        animate-in fade-in-0 slide-in-from-top-2 duration-150
+                        animate-in fade-in-0 slide-in-from-bottom-2 duration-150
                         overflow-y-auto
                     "
           style={{ maxHeight: menuMaxHeight ? `${menuMaxHeight}px` : '70vh' }}

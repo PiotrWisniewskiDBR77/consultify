@@ -188,7 +188,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
       />
 
       {isOpen && (
-        <div className="absolute left-0 top-full mt-2 z-50 w-64 py-1 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl animate-in fade-in-0 slide-in-from-top-2 duration-150">
+        <div className="absolute left-0 bottom-full mb-2 z-50 w-64 py-1 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl animate-in fade-in-0 slide-in-from-bottom-2 duration-150">
           {/* Upload from device */}
           <button
             onClick={() => fileInputRef.current?.click()}

@@ -232,7 +232,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
             {showMore && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowMore(false)} />
-                <div className="absolute right-0 top-full mt-1 py-1 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 z-20 min-w-[160px]">
+                <div className="absolute right-0 bottom-full mb-1 py-1 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 z-20 min-w-[160px]">
                   <DropdownItem
                     icon={<Share size={14} />}
                     label={t('chat.actions.share', 'Share')}

@@ -55,7 +55,7 @@ import {
   type TaskDependency,
   type WarningThresholds,
 } from '../MyWork/shared';
-import { InitiativeNotionView } from './InitiativeNotionView';
+import { InitiativeNotionView, NOTION_NAV_GROUP_IDS } from './InitiativeNotionView';
 import { InitiativeScrollView } from './InitiativeScrollView';
 import {
   DEFAULT_SECTION_ORDER,
@@ -149,7 +149,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   // UI state
   const [viewMode, setViewMode] = useState<'notion' | 'cards' | 'scroll'>('notion');
-  const [selectedSectionKey, setSelectedSectionKey] = useState<string>('control');
+  const [selectedSectionKey, setSelectedSectionKey] = useState<string>('core');
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [isGeneratingAI, setIsGeneratingAI] = useState<string | null>(null);
   const [showCreateTask, setShowCreateTask] = useState(false);
@@ -318,7 +318,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   useEffect(() => {
     const all = [...rightSections, ...leftSections];
     if (all.length === 0) return;
-    const exists = all.some((s) => s.key === selectedSectionKey);
+    const exists =
+      all.some((s) => s.key === selectedSectionKey) ||
+      NOTION_NAV_GROUP_IDS.includes(selectedSectionKey) ||
+      selectedSectionKey === 'other';
     if (exists) return;
     const preferred = all.find((s) => s.key === 'control') || all.find((s) => s.key === 'overview');
     setSelectedSectionKey(preferred?.key || all[0].key);

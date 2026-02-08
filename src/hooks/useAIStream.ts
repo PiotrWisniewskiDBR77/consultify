@@ -54,7 +54,7 @@ function buildDefaultThinkingSteps(
   language: string,
   complexity: ThinkingComplexity = 'medium'
 ): ThinkingStep[] {
-  const lang = (language || 'en').split('-')[0];
+  const lang = (language || 'pl').split('-')[0];
 
   // Multiple phrase variants for more natural feel - randomly selected
   const labelVariants: Record<
@@ -1066,7 +1066,9 @@ export const useAIStream = (options: StreamOptions = {}) => {
 
       const mergedContext = focusMode ? { ...(context || {}), focusMode } : context;
       const resolvedLanguage =
-        (language || localStorage.getItem('i18nextLng') || 'pl').split('-')[0] || 'pl';
+        (language || localStorage.getItem('consultinity-preferred-chat-lang') || 'pl').split(
+          '-'
+        )[0] || 'pl';
 
       try {
         await Api.chatWithAIStream(

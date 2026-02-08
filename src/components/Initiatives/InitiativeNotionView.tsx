@@ -14,6 +14,73 @@ import React, { useMemo, useState } from 'react';
 import { SECTION_REGISTRY } from './sections';
 import type { SectionTypeInfo } from './sections/types';
 
+type NavGroup = {
+  id: string;
+  label: { en: string; pl: string };
+  keys: string[];
+};
+
+// Notion navigation: grouped + ordered (most important at top)
+const NAV_GROUPS: NavGroup[] = [
+  {
+    id: 'core',
+    label: { en: 'Core', pl: 'Podstawy' },
+    keys: ['overview', 'control', 'team'],
+  },
+  {
+    id: 'definition',
+    label: { en: 'Definition', pl: 'Definicja' },
+    keys: ['problemDefinition', 'targetState', 'scope'],
+  },
+  {
+    id: 'execution',
+    label: { en: 'Execution', pl: 'Realizacja' },
+    keys: ['tasks', 'timeline', 'resources', 'dependencies', 'stakeholders'],
+  },
+  {
+    id: 'governance',
+    label: { en: 'Governance', pl: 'Nadzór' },
+    keys: ['decisions', 'gates'],
+  },
+  {
+    id: 'risks',
+    label: { en: 'Risks', pl: 'Ryzyka' },
+    keys: ['raid'],
+  },
+  {
+    id: 'value',
+    label: { en: 'Value', pl: 'Wartość' },
+    keys: ['financialAnalysis', 'financialImpact', 'kpis'],
+  },
+  {
+    id: 'pilot',
+    label: { en: 'Pilot', pl: 'Pilotaż' },
+    keys: ['pilot'],
+  },
+  {
+    id: 'collaboration',
+    label: { en: 'Collaboration', pl: 'Współpraca' },
+    keys: ['comments'],
+  },
+  {
+    id: 'meta',
+    label: { en: 'Meta', pl: 'Meta' },
+    keys: ['attachments', 'linkedItems', 'tags', 'reminders', 'watchers', 'history'],
+  },
+];
+
+export const NOTION_NAV_GROUP_IDS = NAV_GROUPS.map((g) => g.id);
+
+export const NOTION_GROUP_BY_SECTION_KEY: Record<string, string> = NAV_GROUPS.reduce(
+  (acc, g) => {
+    g.keys.forEach((k) => {
+      acc[k] = g.id;
+    });
+    return acc;
+  },
+  {} as Record<string, string>
+);
+
 const SECTION_ICON_MAP: Record<string, string> = {
   overview: '📄',
   problemDefinition: '🔍',
@@ -55,6 +122,27 @@ function getSectionLabel(section: SectionTypeInfo, isPolish: boolean): string {
   return humanizeKey(section.key);
 }
 
+function getNavLabel(group: NavGroup, isPolish: boolean) {
+  return isPolish ? group.label.pl : group.label.en;
+}
+
+function getGroupIcon(id: string) {
+  // Keep it simple and recognizable
+  const map: Record<string, string> = {
+    core: '⭐',
+    definition: '🧩',
+    execution: '🚀',
+    governance: '🏛️',
+    risks: '⚠️',
+    value: '💎',
+    pilot: '🧪',
+    collaboration: '💬',
+    meta: '🧰',
+    other: '📚',
+  };
+  return map[id] || '📁';
+}
+
 export interface InitiativeNotionViewProps {
   leftSections: SectionTypeInfo[];
   rightSections: SectionTypeInfo[];
@@ -72,19 +160,103 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
 }) => {
   const [query, setQuery] = useState('');
 
-  const sectionsForNav = useMemo(() => {
+  const allSorted = useMemo(() => {
     const all = [...rightSections, ...leftSections];
+
+    // Create rank map: key -> numeric rank (group order + within-group order)
+    const rank = new Map<string, number>();
+    NAV_GROUPS.forEach((g, gi) => {
+      g.keys.forEach((key, ki) => {
+        rank.set(key, gi * 100 + ki);
+      });
+    });
+
+    return [...all].sort((a, b) => {
+      const ra = rank.get(a.key);
+      const rb = rank.get(b.key);
+      if (ra != null && rb != null) return ra - rb;
+      if (ra != null) return -1;
+      if (rb != null) return 1;
+      // Unknown sections: keep them after groups, but stable by defaultOrder then name
+      const da = (a.defaultOrder ?? 9999) as number;
+      const db = (b.defaultOrder ?? 9999) as number;
+      if (da !== db) return da - db;
+      return (a.name || a.key).localeCompare(b.name || b.key);
+    });
+  }, [leftSections, rightSections]);
+
+  const queryFiltered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return all;
-    return all.filter((s) => getSectionLabel(s, isPolish).toLowerCase().includes(q));
-  }, [leftSections, rightSections, query, isPolish]);
+    if (!q) return allSorted;
+    return allSorted.filter((s) => getSectionLabel(s, isPolish).toLowerCase().includes(q));
+  }, [allSorted, query, isPolish]);
+
+  const navGroups = useMemo(() => {
+    const byKey = new Map(queryFiltered.map((s) => [s.key, s] as const));
+    const used = new Set<string>();
+
+    const groups: Array<{ id: string; label: string; sections: SectionTypeInfo[] }> = [];
+
+    for (const g of NAV_GROUPS) {
+      const list: SectionTypeInfo[] = [];
+      for (const key of g.keys) {
+        const s = byKey.get(key);
+        if (!s) continue;
+        list.push(s);
+        used.add(key);
+      }
+      if (list.length) {
+        groups.push({ id: g.id, label: getNavLabel(g, isPolish), sections: list });
+      }
+    }
+
+    // Any remaining sections not covered by NAV_GROUPS
+    const rest = queryFiltered.filter((s) => !used.has(s.key));
+    if (rest.length) {
+      groups.push({
+        id: 'other',
+        label: isPolish ? 'Pozostałe' : 'Other',
+        sections: rest,
+      });
+    }
+    return groups;
+  }, [queryFiltered, isPolish]);
 
   const selectedSection = useMemo(() => {
-    const all = [...rightSections, ...leftSections];
-    return all.find((s) => s.key === selectedSectionKey) || all[0] || null;
-  }, [leftSections, rightSections, selectedSectionKey]);
+    return allSorted.find((s) => s.key === selectedSectionKey) || allSorted[0] || null;
+  }, [allSorted, selectedSectionKey]);
 
   const SelectedComponent = selectedSection ? SECTION_REGISTRY[selectedSection.componentKey] : null;
+  const selectedGroup = useMemo(() => {
+    // Prefer explicit group selection
+    const direct = navGroups.find((g) => g.id === selectedSectionKey);
+    if (direct) return direct;
+    // If a single section key is selected (legacy), map it to its group for consistent UX
+    const groupId = NOTION_GROUP_BY_SECTION_KEY[selectedSectionKey];
+    if (!groupId) return null;
+    return navGroups.find((g) => g.id === groupId) || null;
+  }, [navGroups, selectedSectionKey]);
+
+  const isGroupSelected = !!selectedGroup;
+  const activeGroupId = useMemo(() => {
+    if (navGroups.some((g) => g.id === selectedSectionKey)) return selectedSectionKey;
+    return NOTION_GROUP_BY_SECTION_KEY[selectedSectionKey] || selectedSectionKey;
+  }, [navGroups, selectedSectionKey]);
+
+  const renderSection = (section: SectionTypeInfo) => {
+    const Component = SECTION_REGISTRY[section.componentKey];
+    if (!Component) return null;
+    return (
+      <Component
+        key={section.key}
+        sectionType={section}
+        expanded={true}
+        onToggle={() => {
+          // In Notion view we keep the content always visible.
+        }}
+      />
+    );
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
@@ -107,22 +279,25 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
           </div>
 
           <div className="py-2 max-h-[70vh] overflow-y-auto">
-            {sectionsForNav.map((section) => {
-              const isActive = section.key === selectedSectionKey;
-              const emoji = SECTION_ICON_MAP[section.key] || '📋';
+            {/* Top-level, compressed nav (10–12 items max): show groups only */}
+            {navGroups.map((group) => {
+              const isActive = group.id === activeGroupId;
               return (
                 <button
-                  key={section.key}
-                  onClick={() => onSelectSection(section.key)}
+                  key={group.id}
+                  onClick={() => onSelectSection(group.id)}
                   className={`w-full flex items-center gap-2 px-4 py-2 text-left text-sm transition-colors ${
                     isActive
                       ? 'bg-purple-500/10 dark:bg-purple-500/15 text-purple-700 dark:text-purple-300 border-l-2 border-purple-500'
                       : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/60 border-l-2 border-transparent'
                   }`}
-                  title={getSectionLabel(section, isPolish)}
+                  title={group.label}
                 >
-                  <span className="w-5 text-base leading-none">{emoji}</span>
-                  <span className="truncate">{getSectionLabel(section, isPolish)}</span>
+                  <span className="w-5 text-base leading-none">{getGroupIcon(group.id)}</span>
+                  <span className="truncate">{group.label}</span>
+                  <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">
+                    {group.sections.length}
+                  </span>
                 </button>
               );
             })}
@@ -132,15 +307,44 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
 
       {/* Main Panel */}
       <main className="min-w-0">
-        {selectedSection && SelectedComponent ? (
-          <SelectedComponent
-            sectionType={selectedSection}
-            expanded={true}
-            onToggle={() => {
-              // In Notion view we keep the content always visible.
-              // (Section components still render inside CollapsibleSection for now.)
-            }}
-          />
+        {isGroupSelected && selectedGroup ? (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                {selectedGroup.label}
+              </div>
+              <div className="text-xs text-slate-400 dark:text-slate-500">
+                {selectedGroup.sections.length} {isPolish ? 'sekcji' : 'sections'}
+              </div>
+              {/* Quick chips to jump to a single section */}
+              <div className="flex flex-wrap gap-1.5 ml-auto">
+                {selectedGroup.sections.map((s) => (
+                  <button
+                    key={s.key}
+                    onClick={() => {
+                      const el = document.getElementById(`notion-section-${s.key}`);
+                      el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                    className="px-2 py-1 rounded-lg text-xs bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/60 transition-colors"
+                    title={getSectionLabel(s, isPolish)}
+                  >
+                    <span className="mr-1">{SECTION_ICON_MAP[s.key] || '📋'}</span>
+                    {getSectionLabel(s, isPolish)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {selectedGroup.sections.map((s) => (
+                <div key={s.key} id={`notion-section-${s.key}`} className="scroll-mt-24">
+                  {renderSection(s)}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : selectedSection && SelectedComponent ? (
+          renderSection(selectedSection)
         ) : (
           <div className="p-6 rounded-2xl bg-white/70 dark:bg-navy-900/70 border border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400">
             {isPolish ? 'Brak sekcji do wyświetlenia.' : 'No sections to display.'}

@@ -754,7 +754,15 @@
     "actions": {
       "helpful": "Pomocne",
       "notHelpful": "Niepomocne",
-      "copy": "Kopiuj"
+      "copy": "Kopiuj",
+      "rename": "Zmień nazwę",
+      "star": "Przypnij na górę",
+      "unstar": "Odepnij",
+      "archive": "Archiwizuj",
+      "unarchive": "Przywróć z archiwum",
+      "delete": "Usuń",
+      "addToProject": "Dodaj do folderu",
+      "moveProject": "Zmień folder"
     },
     "feedback": {
       "thankYou": "Dziękujemy za opinię!",
@@ -886,9 +894,20 @@
     "newConversation": "Nowa rozmowa",
     "closeSidebar": "Zamknij panel",
     "searchPlaceholder": "Szukaj rozmów...",
+    "confirmDelete": "Na pewno chcesz usunąć tę rozmowę?",
     "sections": {
       "archived": "Archiwum"
     },
+    "moveToFolder": "Przenieś do folderu",
+    "moveToFolderFailed": "Nie udało się przenieść rozmowy. Spróbuj ponownie.",
+    "removeFromFolder": "Usuń z folderu",
+    "currentFolder": "Obecnie",
+    "noFolder": "Brak folderu",
+    "noFolders": "Brak folderów",
+    "searchFoldersPlaceholder": "Szukaj folderów...",
+    "personalFolder": "Osobisty",
+    "teamFolder": "Zespołowy",
+    "createFolderFailed": "Nie udało się utworzyć folderu. Spróbuj ponownie.",
     "capabilities": {
       "deepThinking": "Deep Thinking",
       "deepThinkingDesc": "Wieloetapowa analiza z wyszukiwaniem w sieci",

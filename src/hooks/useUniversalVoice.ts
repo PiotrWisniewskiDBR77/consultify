@@ -15,6 +15,75 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 // ============================================================================
+// Language → BCP-47 mapping for all 6 supported app languages
+// ============================================================================
+
+const LANG_TO_BCP47: Record<string, string> = {
+  pl: 'pl-PL',
+  en: 'en-US',
+  de: 'de-DE',
+  ar: 'ar-SA',
+  jp: 'ja-JP',
+  es: 'es-ES',
+};
+
+/**
+ * Preferred voice names per language (ordered by priority, best first).
+ * These are the more natural-sounding voices available on macOS / Chrome.
+ * The selector tries each name in order and falls back to any voice for the locale.
+ */
+const PREFERRED_VOICES: Record<string, string[]> = {
+  'pl-PL': ['Zosia', 'Paulina', 'Google polski'],
+  'en-US': ['Samantha', 'Karen', 'Google US English', 'Alex', 'Moira'],
+  'de-DE': ['Anna', 'Petra', 'Google Deutsch', 'Helena'],
+  'ar-SA': ['Maged', 'Google العربية'],
+  'ja-JP': ['Kyoko', 'O-Ren', 'Google 日本語', 'Otoya'],
+  'es-ES': ['Monica', 'Paulina', 'Google español', 'Jorge'],
+};
+
+/**
+ * Find the best available SpeechSynthesis voice for a given BCP-47 locale.
+ * Prefers natural/premium voices listed in PREFERRED_VOICES.
+ */
+function pickBestVoice(locale: string): SpeechSynthesisVoice | null {
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return null;
+
+  const langPrefix = locale.split('-')[0]; // e.g. "pl"
+
+  // 1. Try preferred names (case-insensitive partial match)
+  const preferred = PREFERRED_VOICES[locale] ?? [];
+  for (const name of preferred) {
+    const lowerName = name.toLowerCase();
+    const match = voices.find(
+      (v) =>
+        v.name.toLowerCase().includes(lowerName) &&
+        (v.lang.startsWith(locale) || v.lang.startsWith(langPrefix))
+    );
+    if (match) return match;
+  }
+
+  // 2. Prefer voices with "premium", "enhanced", "natural" in name
+  const naturalKeywords = ['premium', 'enhanced', 'natural', 'neural'];
+  const naturalMatch = voices.find(
+    (v) =>
+      (v.lang.startsWith(locale) || v.lang.startsWith(langPrefix)) &&
+      naturalKeywords.some((kw) => v.name.toLowerCase().includes(kw))
+  );
+  if (naturalMatch) return naturalMatch;
+
+  // 3. Any voice matching the full locale
+  const localeMatch = voices.find((v) => v.lang.startsWith(locale));
+  if (localeMatch) return localeMatch;
+
+  // 4. Any voice matching just the language prefix
+  const prefixMatch = voices.find((v) => v.lang.startsWith(langPrefix));
+  if (prefixMatch) return prefixMatch;
+
+  return null;
+}
+
+// ============================================================================
 // Types
 // ============================================================================
 
@@ -170,6 +239,21 @@ export function useUniversalVoice(options: UseUniversalVoiceOptions = {}): UseUn
     typeof window !== 'undefined' &&
     navigator.mediaDevices?.getUserMedia !== undefined &&
     ('speechSynthesis' in window || true); // TTS via API always available
+
+  // Preload Web Speech voices (Chrome loads them asynchronously)
+  // We just need to trigger getVoices() early so they are ready when speak() is called.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    window.speechSynthesis.getVoices();
+    const onVoicesChanged = () => {
+      // Voices are now loaded — pickBestVoice() will find them on next speak() call
+      window.speechSynthesis.getVoices();
+    };
+    window.speechSynthesis.addEventListener('voiceschanged', onVoicesChanged);
+    return () => {
+      window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
+    };
+  }, []);
 
   // ========================================================================
   // Audio Level Monitoring (VAD)
@@ -490,6 +574,15 @@ export function useUniversalVoice(options: UseUniversalVoiceOptions = {}): UseUn
     async (text: string): Promise<void> => {
       if (!text.trim()) return;
 
+      console.log(
+        '[Voice] speak() called, provider:',
+        settings.ttsProvider,
+        'lang:',
+        settings.language,
+        'text:',
+        text.slice(0, 80)
+      );
+
       // Stop any current audio
       if (currentAudioRef.current) {
         currentAudioRef.current.pause();
@@ -505,12 +598,30 @@ export function useUniversalVoice(options: UseUniversalVoiceOptions = {}): UseUn
 
       try {
         if (settings.ttsProvider === 'web') {
-          // Web Speech Synthesis
+          // Web Speech Synthesis — supports all 6 app languages with natural voice selection
           return new Promise((resolve, reject) => {
+            // Cancel any pending/paused speech first
+            window.speechSynthesis.cancel();
+
+            const locale = LANG_TO_BCP47[settings.language] || LANG_TO_BCP47['pl'];
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang =
-              settings.language === 'pl' ? 'pl-PL' : settings.language === 'en' ? 'en-US' : 'pl-PL';
+            utterance.lang = locale;
             utterance.rate = settings.ttsSpeed;
+            // Slightly warmer pitch for a less robotic feel
+            utterance.pitch = 1.05;
+
+            // Pick the best available voice for this language
+            const bestVoice = pickBestVoice(locale);
+            if (bestVoice) {
+              utterance.voice = bestVoice;
+              console.log('[Voice] Web TTS: using voice:', bestVoice.name, 'lang:', bestVoice.lang);
+            } else {
+              console.log(
+                '[Voice] Web TTS: no preferred voice found for',
+                locale,
+                '– using browser default'
+              );
+            }
 
             utterance.onend = () => {
               setState((prev) => ({ ...prev, isSpeaking: false, mode: 'idle' }));
@@ -522,6 +633,7 @@ export function useUniversalVoice(options: UseUniversalVoiceOptions = {}): UseUn
             };
 
             utterance.onerror = (event) => {
+              console.error('[Voice] Web TTS utterance error:', event);
               setState((prev) => ({ ...prev, isSpeaking: false, mode: 'idle' }));
               reject(new Error('Speech synthesis error'));
             };

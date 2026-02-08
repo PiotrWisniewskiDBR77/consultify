@@ -138,19 +138,20 @@ export const AIChatWelcomeView: React.FC = () => {
   } | null>(null);
 
   const chatLanguage: SupportedLanguage = useMemo(() => {
+    // 1. User's explicit preference (set via ChatLanguageSelector) - highest priority
+    const explicitPref = localStorage.getItem('consultinity-preferred-chat-lang');
+    // 2. Conversation-specific language (from DB/store)
     const activeLang = activeConversationId
       ? chatLanguageByConversationId[activeConversationId]
       : undefined;
-    // Priority: conversation-specific > draft > localStorage (user choice) > i18n > 'pl'
-    const candidate =
-      activeLang ||
-      draftChatLanguage ||
-      localStorage.getItem('i18nextLng') ||
-      i18n.language ||
-      'pl';
+    // Priority: explicit preference > conversation-specific > draft > 'pl' default
+    // NOTE: We do NOT use i18nextLng here because it reflects UI language (auto-detected
+    // from browser), not the user's chat language preference. For this Polish product,
+    // the default chat language is 'pl'.
+    const candidate = explicitPref || activeLang || draftChatLanguage || 'pl';
     const base = String(candidate).split('-')[0];
     return (isValidLanguage(base) ? base : 'pl') as SupportedLanguage;
-  }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage, i18n.language]);
+  }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage]);
 
   // AI stream with persistence callback
   const handleStreamDone = useCallback(
@@ -282,7 +283,7 @@ export const AIChatWelcomeView: React.FC = () => {
     settings: {
       autoSpeakResponses: true,
       sttProvider: 'whisper',
-      ttsProvider: 'openai',
+      ttsProvider: 'web',
       language: chatLanguage,
     },
   });
@@ -339,21 +340,64 @@ export const AIChatWelcomeView: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeMessages, streamedContent]);
 
-  // Speak AI responses in voice mode
+  // =========================================================================
+  // Auto-speak AI responses (voice mode OR textToSpeech from ToolsMenu)
+  // =========================================================================
+  const ttsEnabled = voiceModeEnabled || (aiConfig?.textToSpeech ?? false);
+  const spokenCharsRef = useRef(0); // how many chars of streaming content we already spoke
+
+  // Reset spoken tracker when a new stream starts
   useEffect(() => {
-    if (!voiceModeEnabled || !voiceSupported || isStreaming) return;
+    if (isStreaming) {
+      spokenCharsRef.current = 0;
+    }
+  }, [isStreaming]);
+
+  // Incremental TTS: speak sentence-by-sentence WHILE streaming
+  useEffect(() => {
+    if (!ttsEnabled || !voiceSupported || !isStreaming || !streamedContent) return;
+
+    const text = cleanTextForSpeech(streamedContent);
+    if (!text || text.length <= spokenCharsRef.current) return;
+
+    // Find complete sentences in the new (unspoken) portion
+    const unspoken = text.slice(spokenCharsRef.current);
+    // Match sentences ending with . ! ? or newlines (but not abbreviations like "np." "dr.")
+    const sentenceEnd = /(?<=[.!?])\s+|(?<=\n)\s*/g;
+    const parts = unspoken.split(sentenceEnd).filter(Boolean);
+
+    if (parts.length > 1) {
+      // We have at least one complete sentence — speak all but the last (incomplete) part
+      const toSpeak = parts.slice(0, -1).join(' ').trim();
+      if (toSpeak) {
+        console.log('[TTS] Speaking sentence:', toSpeak.slice(0, 60) + '…');
+        speak(toSpeak).catch((err) => console.warn('[TTS] speak error:', err));
+        spokenCharsRef.current += unspoken.length - parts[parts.length - 1].length;
+      }
+    }
+  }, [ttsEnabled, voiceSupported, isStreaming, streamedContent, speak]);
+
+  // Speak remaining text when streaming finishes
+  useEffect(() => {
+    if (!ttsEnabled || !voiceSupported || isStreaming) return;
 
     const lastMessage = activeChatMessages[activeChatMessages.length - 1];
     if (lastMessage?.role === 'ai' && lastMessage.content) {
       const contentToSpeak = cleanTextForSpeech(lastMessage.content);
 
-      // Only speak if it's new content
       if (contentToSpeak && contentToSpeak !== lastSpokenContentRef.current) {
         lastSpokenContentRef.current = contentToSpeak;
-        speak(contentToSpeak);
+
+        // Speak only the remaining portion (what wasn't spoken during streaming)
+        const remaining = contentToSpeak.slice(spokenCharsRef.current).trim();
+        if (remaining) {
+          console.log('[TTS] Speaking remaining:', remaining.slice(0, 60) + '…');
+          speak(remaining).catch((err) => console.warn('[TTS] speak error:', err));
+        }
+        spokenCharsRef.current = 0;
       }
     }
-  }, [activeChatMessages, voiceModeEnabled, voiceSupported, isStreaming, speak]);
+  }, [activeChatMessages, ttsEnabled, voiceSupported, isStreaming, speak]);
 
   // Handle voice mode change
   const handleVoiceModeChange = useCallback(
@@ -1556,9 +1600,11 @@ For example: REMEMBER: preferred_language: Polish`;
                 onStopGenerating={abortStream}
                 isStreaming={isStreaming}
                 disabled={isActionExecuting}
+                variant="compact"
                 placeholder={t('aiChat.placeholder', 'Start a transformation...')}
                 voiceModeEnabled={voiceModeEnabled}
                 onVoiceModeChange={handleVoiceModeChange}
+                chatLanguage={chatLanguage}
                 voiceState={voiceState}
                 startVoiceListening={startListening}
                 stopVoiceListening={stopListening}
@@ -1643,9 +1689,11 @@ For example: REMEMBER: preferred_language: Polish`;
               onStopGenerating={abortStream}
               isStreaming={isStreaming}
               disabled={false}
+              variant="compact"
               placeholder={t('aiChat.placeholder', 'Ask anything...')}
               voiceModeEnabled={voiceModeEnabled}
               onVoiceModeChange={handleVoiceModeChange}
+              chatLanguage={chatLanguage}
             />
           </div>
 

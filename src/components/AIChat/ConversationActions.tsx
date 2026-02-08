@@ -143,7 +143,7 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
                     transition-colors
                 "
       >
-        <MoreHorizontal size={16} />
+        <MoreHorizontal size={16} className="pointer-events-none" />
       </button>
 
       {/* Dropdown Menu */}
