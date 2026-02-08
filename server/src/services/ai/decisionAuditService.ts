@@ -213,7 +213,7 @@ export async function exportForCompliance(
   if (format === 'json') {
     return {
       format: 'json',
-      data: trail,
+      data: JSON.parse(JSON.stringify(trail)) as Record<string, unknown>,
     };
   }
 

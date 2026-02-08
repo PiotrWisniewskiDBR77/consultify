@@ -971,7 +971,7 @@ export const InterviewController = {
       context: { assignment },
     });
     if (!submitGate.allow) {
-      res.status(submitGate.code === 'INVALID_STATE' ? 409 : 400).json({ error: submitGate.error });
+      res.status(submitGate.code === 'INVALID_STATE' ? 409 : 400).json({ error: submitGate.error || 'Gate policy violation' });
       return;
     }
 
@@ -1080,7 +1080,7 @@ export const InterviewController = {
     if (!sendBackGate.allow) {
       res
         .status(sendBackGate.code === 'INVALID_STATE' ? 409 : 400)
-        .json({ error: sendBackGate.error });
+        .json({ error: sendBackGate.error || 'Gate policy violation' });
       return;
     }
 
@@ -1174,7 +1174,7 @@ export const InterviewController = {
     if (!approveGate.allow) {
       res
         .status(approveGate.code === 'INVALID_STATE' ? 409 : 400)
-        .json({ error: approveGate.error });
+        .json({ error: approveGate.error || 'Gate policy violation' });
       return;
     }
 

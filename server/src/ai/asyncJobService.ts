@@ -16,8 +16,6 @@ type QueueType = {
 };
 
 // Import with type assertion (aiQueue.ts has @ts-nocheck)
-// @ts-expect-error - aiQueue.ts has @ts-nocheck, so we need to assert type
-
 import aiQueueModule from '../queues/aiQueue.js';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const aiQueue: QueueType = aiQueueModule as any as QueueType;

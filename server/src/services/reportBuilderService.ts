@@ -7,7 +7,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { DRD_STRUCTURE } from '../../src/services/drdStructure.js';
+// DRD_STRUCTURE import removed - not found in codebase
 import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/index.js';
 import logger from '../utils/Logger.js';

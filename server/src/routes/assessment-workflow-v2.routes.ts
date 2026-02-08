@@ -1008,7 +1008,7 @@ router.post(
       const ok = await requireAssessmentFlag(req, res, 'canManage');
       if (!ok) return;
 
-      const actorRole = String((req.user as any)?.role || '').toUpperCase();
+      const actorRole = String((req as any).user?.role || '').toUpperCase();
       const result = await AssessmentInitiativeGenerationRunService.bulkSubmitRunDrafts({
         runId: String(runId),
         assessmentId: String(assessmentId),

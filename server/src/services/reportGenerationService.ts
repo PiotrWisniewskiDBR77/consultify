@@ -5,6 +5,7 @@
  * Uses assessment data, company context, and methodology to generate professional reports.
  */
 
+import * as bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import type { IDatabase } from '../database/IDatabase.js';
@@ -1403,6 +1404,111 @@ export async function regenerateSection(
 }
 
 // ==========================================
+// ADDITIONAL METHODS (delegated to other services)
+// ==========================================
+
+import { createPublicLink as createPublicLinkBuilder, getPublicLinkByToken } from './reportBuilderService.js';
+
+/**
+ * Generate a report (alias for generateFullReport for backward compatibility)
+ */
+async function generateReport(
+  params: {
+    reportType: string;
+    sourceId: string;
+    language?: string;
+    templateId?: string;
+    includeAppendix?: boolean;
+  },
+  organizationId: string
+): Promise<ReportRecord> {
+  // This is a simplified wrapper - in practice, you might need to create the report first
+  // For now, we'll delegate to generateFullReport if a reportId exists
+  throw new Error('generateReport: Use generateFullReport with an existing reportId instead');
+}
+
+/**
+ * Export report to a specific format
+ */
+async function exportReport(
+  reportId: string,
+  format: 'pdf' | 'pptx' | 'docx' | 'xlsx',
+  userId: string
+): Promise<{ filePath: string; fileSize: number }> {
+  // This would typically delegate to an export service
+  // For now, return a placeholder implementation
+  throw new Error('exportReport: Export functionality not yet implemented in reportGenerationService');
+}
+
+/**
+ * Create a public link for a report
+ */
+async function createPublicLink(params: {
+  reportId: string;
+  reportType: string;
+  organizationId: string;
+  userId: string;
+  password?: string;
+  expiresInDays?: number;
+  showCompanyLogo?: boolean;
+  showConsultinityBranding?: boolean;
+  customMessage?: string;
+}): Promise<{ linkToken: string; url: string }> {
+  const expiresAt = params.expiresInDays
+    ? new Date(Date.now() + params.expiresInDays * 24 * 60 * 60 * 1000).toISOString()
+    : undefined;
+
+  const passwordHash = params.password ? await bcrypt.hash(params.password, 10) : undefined;
+
+  const link = await createPublicLinkBuilder({
+    reportId: params.reportId,
+    reportType: params.reportType,
+    organizationId: params.organizationId,
+    createdBy: params.userId,
+    passwordHash,
+    expiresAt,
+    showCompanyLogo: params.showCompanyLogo,
+    showConsultinityBranding: params.showConsultinityBranding,
+    customMessage: params.customMessage,
+  });
+
+  return {
+    linkToken: link.linkToken,
+    url: `/api/reports/public/${link.linkToken}`,
+  };
+}
+
+/**
+ * Get public report by token (with optional password verification)
+ */
+async function getPublicReport(
+  linkToken: string,
+  password?: string
+): Promise<{ report: ReportRecord; sections: SectionRecord[] } | { error: string }> {
+  const result = await getPublicLinkByToken(linkToken);
+
+  if (!result) {
+    return { error: 'Link not found or expired' };
+  }
+
+  // Check password if required
+  if (result.link.passwordHash) {
+    if (!password) {
+      return { error: 'Password required' };
+    }
+    const isValid = await bcrypt.compare(password, result.link.passwordHash);
+    if (!isValid) {
+      return { error: 'Invalid password' };
+    }
+  }
+
+  return {
+    report: result.report,
+    sections: result.sections,
+  };
+}
+
+// ==========================================
 // EXPORTS
 // ==========================================
 
@@ -1410,6 +1516,10 @@ const ReportGenerationService = {
   generateSectionContent,
   generateFullReport,
   regenerateSection,
+  generateReport,
+  exportReport,
+  createPublicLink,
+  getPublicReport,
 };
 
 export default ReportGenerationService;

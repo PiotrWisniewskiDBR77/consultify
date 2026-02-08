@@ -1288,7 +1288,7 @@ router.get(
       let circuitBreakers: Record<string, unknown> = {};
       try {
         const cbMod = await import('../../services/circuitBreakerService.js');
-        const CBS = cbMod.default || cbMod;
+        const CBS = cbMod.default || cbMod.CircuitBreakerService || cbMod;
         const statuses = CBS.getAllStatuses?.() || [];
         for (const s of statuses) {
           circuitBreakers[s.name] = {
