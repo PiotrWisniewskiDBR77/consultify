@@ -178,14 +178,15 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     const activeLang = activeConversationId
       ? chatLanguageByConversationId[activeConversationId]
       : undefined;
+    // Priority: conversation-specific > draft > localStorage (user choice) > i18n > 'pl'
     const candidate =
       activeLang ||
       draftChatLanguage ||
-      i18n.language ||
       localStorage.getItem('i18nextLng') ||
-      'en';
+      i18n.language ||
+      'pl';
     const base = String(candidate).split('-')[0];
-    return (isValidLanguage(base) ? base : 'en') as SupportedLanguage;
+    return (isValidLanguage(base) ? base : 'pl') as SupportedLanguage;
   }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage, i18n.language]);
 
   // Voice Hook (uses autoReadEnabled state)

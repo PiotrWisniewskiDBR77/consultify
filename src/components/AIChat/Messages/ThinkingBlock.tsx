@@ -9,7 +9,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ThinkingStep } from '../../../types';
-import ThinkingStatusLine from '../ThinkingStatusLine';
+import ThinkingStatusLine, { ThinkingLineItem } from '../ThinkingStatusLine';
 
 interface ThinkingBlockProps {
   steps: ThinkingStep[];
@@ -24,28 +24,32 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  const lines = useMemo(() => {
-    const raw = (steps || []).map((s) => String((s as any)?.label || '').trim()).filter(Boolean);
-    if (raw.length === 0) return [t('thinking.processing', 'Rozważam Twoje zapytanie...')];
-    // Deduplicate consecutive duplicates
-    const out: string[] = [];
-    for (const l of raw) {
-      if (out.length === 0 || out[out.length - 1] !== l) out.push(l);
-    }
-    return out.slice(-6);
-  }, [steps, t]);
+  // Build rich step items with status indicators for ThinkingStatusLine
+  const richSteps = useMemo((): ThinkingLineItem[] => {
+    const raw = (steps || [])
+      .filter((s) => String((s as any)?.label || '').trim())
+      .map((s) => ({
+        label: String((s as any)?.label || '').trim(),
+        status:
+          s.status === 'done' || s.status === 'completed'
+            ? ('done' as const)
+            : s.status === 'in_progress'
+              ? ('in_progress' as const)
+              : ('pending' as const),
+      }));
+    return raw.slice(-8);
+  }, [steps]);
 
   if (!isStreaming) return null;
   if (!steps || steps.length === 0) return null;
 
+  const fallbackLabel =
+    richSteps[richSteps.length - 1]?.label ||
+    t('thinking.processing', 'Rozważam Twoje zapytanie...');
+
   return (
     <div className={`mb-2 ${className}`}>
-      <ThinkingStatusLine
-        label={lines[lines.length - 1] || t('thinking.processing', 'Rozważam Twoje zapytanie...')}
-        lines={lines}
-        showSpinner={false}
-        show
-      />
+      <ThinkingStatusLine label={fallbackLabel} steps={richSteps} showSpinner={false} show />
     </div>
   );
 };

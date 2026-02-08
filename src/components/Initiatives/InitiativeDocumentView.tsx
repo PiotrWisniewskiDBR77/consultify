@@ -20,11 +20,14 @@ import {
   Copy,
   Download,
   ExternalLink,
+  LayoutGrid,
   Loader2,
   MessageSquare,
   MoreVertical,
+  PanelLeft,
   Save,
   Scale,
+  ScrollText,
   Share2,
   Sparkles,
   Trash2,
@@ -52,6 +55,8 @@ import {
   type TaskDependency,
   type WarningThresholds,
 } from '../MyWork/shared';
+import { InitiativeNotionView } from './InitiativeNotionView';
+import { InitiativeScrollView } from './InitiativeScrollView';
 import {
   DEFAULT_SECTION_ORDER,
   DEFAULT_VISIBLE_SECTIONS,
@@ -143,6 +148,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [endDate, setEndDate] = useState<string | null>(null);
 
   // UI state
+  const [viewMode, setViewMode] = useState<'notion' | 'cards' | 'scroll'>('notion');
+  const [selectedSectionKey, setSelectedSectionKey] = useState<string>('control');
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [isGeneratingAI, setIsGeneratingAI] = useState<string | null>(null);
   const [showCreateTask, setShowCreateTask] = useState(false);
@@ -306,6 +313,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
     return { leftSections: left, rightSections: right };
   }, [sectionTypes, visibleSections, sectionOrder]);
+
+  // Keep selected section valid when template/sections change
+  useEffect(() => {
+    const all = [...rightSections, ...leftSections];
+    if (all.length === 0) return;
+    const exists = all.some((s) => s.key === selectedSectionKey);
+    if (exists) return;
+    const preferred = all.find((s) => s.key === 'control') || all.find((s) => s.key === 'overview');
+    setSelectedSectionKey(preferred?.key || all[0].key);
+  }, [leftSections, rightSections, selectedSectionKey]);
 
   // ==========================================
   // DATA FETCHING
@@ -1012,7 +1029,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     <InitiativeContext.Provider value={contextValue}>
       <div className="h-full overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div
+            className={
+              viewMode === 'cards' ? 'grid grid-cols-1 lg:grid-cols-3 gap-6' : 'flex flex-col gap-6'
+            }
+          >
             {/* ====== HEADER - Full Width ====== */}
             <motion.div
               initial={{ opacity: 0, y: -20 }}
@@ -1077,6 +1098,48 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <MessageSquare size={16} />
                     <span>{isPolish ? 'Czat' : 'Chat'}</span>
                   </motion.button>
+                  {/* View Mode Toggle */}
+                  <div className="flex items-center rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-900/50 p-0.5 shadow-sm">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setViewMode('notion')}
+                      className={`p-2 rounded-lg transition-all duration-200 ${
+                        viewMode === 'notion'
+                          ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400 shadow-sm'
+                          : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                      }`}
+                      title={isPolish ? 'Widok Notion' : 'Notion view'}
+                    >
+                      <PanelLeft size={16} />
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setViewMode('cards')}
+                      className={`p-2 rounded-lg transition-all duration-200 ${
+                        viewMode === 'cards'
+                          ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400 shadow-sm'
+                          : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                      }`}
+                      title={isPolish ? 'Widok kart' : 'Cards view'}
+                    >
+                      <LayoutGrid size={16} />
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setViewMode('scroll')}
+                      className={`p-2 rounded-lg transition-all duration-200 ${
+                        viewMode === 'scroll'
+                          ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400 shadow-sm'
+                          : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                      }`}
+                      title={isPolish ? 'Widok dokumentu' : 'Document view'}
+                    >
+                      <ScrollText size={16} />
+                    </motion.button>
+                  </div>
                   {/* More Menu */}
                   <div className="relative">
                     <motion.button
@@ -1190,60 +1253,76 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               </div>
             </motion.div>
 
-            {/* ====== LEFT COLUMN - Dynamic Content Sections ====== */}
-            <div className="lg:col-span-2 space-y-4 order-2 lg:order-1">
-              {leftSections.map((sectionType) => {
-                const Component = SECTION_REGISTRY[sectionType.componentKey];
-                if (!Component) return null;
-                return (
-                  <Component
-                    key={sectionType.key}
-                    sectionType={sectionType}
-                    expanded={expandedSections.has(sectionType.key)}
-                    onToggle={() => toggleSection(sectionType.key)}
-                  />
-                );
-              })}
-            </div>
+            {viewMode === 'notion' ? (
+              /* ====== NOTION VIEW (Single section) ====== */
+              <InitiativeNotionView
+                leftSections={leftSections}
+                rightSections={rightSections}
+                selectedSectionKey={selectedSectionKey}
+                onSelectSection={(key) => setSelectedSectionKey(key)}
+                isPolish={isPolish}
+              />
+            ) : viewMode === 'cards' ? (
+              <>
+                {/* ====== LEFT COLUMN - Dynamic Content Sections ====== */}
+                <div className="lg:col-span-2 space-y-4 order-2 lg:order-1">
+                  {leftSections.map((sectionType) => {
+                    const Component = SECTION_REGISTRY[sectionType.componentKey];
+                    if (!Component) return null;
+                    return (
+                      <Component
+                        key={sectionType.key}
+                        sectionType={sectionType}
+                        expanded={expandedSections.has(sectionType.key)}
+                        onToggle={() => toggleSection(sectionType.key)}
+                      />
+                    );
+                  })}
+                </div>
 
-            {/* ====== RIGHT COLUMN - Dynamic Control/Meta Sections ====== */}
-            <div className="lg:col-span-1 space-y-4 order-1 lg:order-2">
-              {/* Gate Alert Banner (always check, regardless of sections) */}
-              {pendingGates.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20 border border-amber-300/50 dark:border-amber-500/30"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-amber-500/20">
-                      <AlertTriangle size={18} className="text-amber-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-                        {isPolish ? 'Wymagana decyzja bramkowa' : 'Gate decision required'}
-                      </p>
-                      <p className="text-xs text-amber-600/80 dark:text-amber-400/80">
-                        {pendingGates.map((g) => g.label).join(', ')}
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
+                {/* ====== RIGHT COLUMN - Dynamic Control/Meta Sections ====== */}
+                <div className="lg:col-span-1 space-y-4 order-1 lg:order-2">
+                  {/* Gate Alert Banner (always check, regardless of sections) */}
+                  {pendingGates.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20 border border-amber-300/50 dark:border-amber-500/30"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-amber-500/20">
+                          <AlertTriangle size={18} className="text-amber-500" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+                            {isPolish ? 'Wymagana decyzja bramkowa' : 'Gate decision required'}
+                          </p>
+                          <p className="text-xs text-amber-600/80 dark:text-amber-400/80">
+                            {pendingGates.map((g) => g.label).join(', ')}
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
 
-              {rightSections.map((sectionType) => {
-                const Component = SECTION_REGISTRY[sectionType.componentKey];
-                if (!Component) return null;
-                return (
-                  <Component
-                    key={sectionType.key}
-                    sectionType={sectionType}
-                    expanded={expandedSections.has(sectionType.key)}
-                    onToggle={() => toggleSection(sectionType.key)}
-                  />
-                );
-              })}
-            </div>
+                  {rightSections.map((sectionType) => {
+                    const Component = SECTION_REGISTRY[sectionType.componentKey];
+                    if (!Component) return null;
+                    return (
+                      <Component
+                        key={sectionType.key}
+                        sectionType={sectionType}
+                        expanded={expandedSections.has(sectionType.key)}
+                        onToggle={() => toggleSection(sectionType.key)}
+                      />
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              /* ====== SCROLL DOCUMENT VIEW ====== */
+              <InitiativeScrollView leftSections={leftSections} rightSections={rightSections} />
+            )}
           </div>
         </div>
       </div>

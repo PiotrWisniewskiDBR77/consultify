@@ -4,7 +4,25 @@
  * Uses shared ModuleHub components
  */
 
-import { Activity, Cpu, Database, FileText, Layers, Lightbulb, Workflow, X } from 'lucide-react';
+import {
+  Activity,
+  ArrowRight,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Cpu,
+  Database,
+  Download,
+  FileText,
+  Globe,
+  Layers,
+  Lightbulb,
+  Loader2,
+  Monitor,
+  Presentation,
+  Workflow,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -1169,7 +1187,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         onUpdate={() => refreshData()}
       />
 
-      {/* Report Slide-Over Panel */}
+      {/* Report Slide-Over Panel — compact summary */}
       {slideOverReportOpen && (
         <>
           {/* Backdrop */}
@@ -1183,47 +1201,34 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
               }, 300);
             }}
           />
-          {/* Slide-over panel */}
+          {/* Slide-over panel — compact width */}
           <div
-            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-3xl bg-navy-900 border-l border-navy-700 shadow-2xl overflow-hidden flex flex-col"
+            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-navy-900 border-l border-navy-700 shadow-2xl overflow-hidden flex flex-col"
             style={{ animation: 'slideInRight 0.25s ease-out' }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-navy-700 bg-navy-800/80">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                  <FileText size={16} className="text-purple-400" />
+            <div className="flex items-center justify-between px-5 py-3 border-b border-navy-700 bg-navy-800/80">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                  <FileText size={14} className="text-purple-400" />
                 </div>
-                <div>
-                  <h3 className="text-white font-semibold text-sm">Report Preview</h3>
-                  <p className="text-xs text-slate-400">Assessment Report</p>
-                </div>
+                <h3 className="text-white font-semibold text-sm">Report Summary</h3>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    if (slideOverReportId) navigate(`/reports/builder/${slideOverReportId}`);
-                  }}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 transition-colors"
-                >
-                  Open Full Editor
-                </button>
-                <button
-                  onClick={() => {
-                    setSlideOverReportOpen(false);
-                    setTimeout(() => {
-                      setSlideOverReportId(null);
-                      setSlideOverBuilderReportId(null);
-                    }, 300);
-                  }}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-navy-700 transition-colors"
-                >
-                  <X size={18} />
-                </button>
-              </div>
+              <button
+                onClick={() => {
+                  setSlideOverReportOpen(false);
+                  setTimeout(() => {
+                    setSlideOverReportId(null);
+                    setSlideOverBuilderReportId(null);
+                  }, 300);
+                }}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-navy-700 transition-colors"
+              >
+                <X size={16} />
+              </button>
             </div>
-            {/* Content — iframe to report builder */}
-            <div className="flex-1 overflow-auto p-6">
+            {/* Content — compact report summary (scrollable) */}
+            <div className="flex-1 overflow-auto p-5">
               {slideOverReportId ? (
                 <ReportSlideOverContent
                   assessmentReportId={slideOverReportId}
@@ -1235,11 +1240,27 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                   }}
                 />
               ) : (
-                <div className="flex items-center justify-center h-64 text-slate-500">
+                <div className="flex items-center justify-center h-32 text-slate-500 text-sm">
                   No report selected
                 </div>
               )}
             </div>
+            {/* Sticky footer — Open Full Editor */}
+            {slideOverReportId && (
+              <div className="shrink-0 px-5 py-4 border-t border-navy-700 bg-navy-900/95 backdrop-blur-sm">
+                <button
+                  onClick={() => {
+                    setSlideOverReportOpen(false);
+                    const targetId = slideOverBuilderReportId || slideOverReportId;
+                    if (targetId) navigate(`/reports/builder/${targetId}`);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 border border-purple-500/30 transition-colors"
+                >
+                  Open Full Editor
+                  <ArrowRight size={14} />
+                </button>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -1254,8 +1275,90 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
 };
 
 // ============================================
-// Report Slide-Over Content (lazy loaded data)
+// Status helpers for compact report summary
 // ============================================
+const REPORT_STATUS_CONFIG: Record<
+  string,
+  { label: string; color: string; bgColor: string; icon: 'clock' | 'check' | 'spinner' }
+> = {
+  DRAFT: {
+    label: 'Draft',
+    color: 'text-slate-300',
+    bgColor: 'bg-slate-500/20 border-slate-500/30',
+    icon: 'clock',
+  },
+  GENERATING: {
+    label: 'Generating...',
+    color: 'text-amber-300',
+    bgColor: 'bg-amber-500/20 border-amber-500/30',
+    icon: 'spinner',
+  },
+  FINAL: {
+    label: 'Final',
+    color: 'text-indigo-300',
+    bgColor: 'bg-indigo-500/20 border-indigo-500/30',
+    icon: 'check',
+  },
+  PENDING_APPROVAL: {
+    label: 'Pending Approval',
+    color: 'text-amber-300',
+    bgColor: 'bg-amber-500/20 border-amber-500/30',
+    icon: 'clock',
+  },
+  APPROVED: {
+    label: 'Approved',
+    color: 'text-emerald-300',
+    bgColor: 'bg-emerald-500/20 border-emerald-500/30',
+    icon: 'check',
+  },
+  REJECTED: {
+    label: 'Rejected',
+    color: 'text-red-300',
+    bgColor: 'bg-red-500/20 border-red-500/30',
+    icon: 'clock',
+  },
+  UTILIZED: {
+    label: 'Utilized',
+    color: 'text-cyan-300',
+    bgColor: 'bg-cyan-500/20 border-cyan-500/30',
+    icon: 'check',
+  },
+};
+
+// ============================================
+// Report Slide-Over Content — compact summary
+// ============================================
+// Format config for export items
+const EXPORT_FORMAT_CONFIG: Record<
+  string,
+  { label: string; icon: React.ReactNode; color: string; bgColor: string }
+> = {
+  pdf: {
+    label: 'PDF',
+    icon: <FileText size={14} />,
+    color: 'text-red-400',
+    bgColor: 'bg-red-500/15',
+  },
+  pptx: {
+    label: 'PowerPoint',
+    icon: <Presentation size={14} />,
+    color: 'text-orange-400',
+    bgColor: 'bg-orange-500/15',
+  },
+  docx: {
+    label: 'Word',
+    icon: <Globe size={14} />,
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-500/15',
+  },
+  web: {
+    label: 'Web Preview',
+    icon: <Monitor size={14} />,
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-500/15',
+  },
+};
+
 const ReportSlideOverContent: React.FC<{
   assessmentReportId: string;
   builderReportId?: string;
@@ -1263,7 +1366,12 @@ const ReportSlideOverContent: React.FC<{
 }> = ({ assessmentReportId, builderReportId, onOpenFull }) => {
   const [report, setReport] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
+  const [exports, setExports] = React.useState<any[]>([]);
+  const [exportsLoading, setExportsLoading] = React.useState(false);
+  const [downloadingId, setDownloadingId] = React.useState<string | null>(null);
+  const navigate = useNavigate();
 
+  // Fetch report data
   React.useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -1282,134 +1390,324 @@ const ReportSlideOverContent: React.FC<{
     };
   }, [assessmentReportId]);
 
+  // Fetch export records
+  React.useEffect(() => {
+    const reportId = builderReportId || assessmentReportId;
+    if (!reportId) return;
+    let cancelled = false;
+    setExportsLoading(true);
+    Api.get(`/report-builder/${reportId}/exports`)
+      .then((data: any) => {
+        if (!cancelled) setExports(data?.exports || []);
+      })
+      .catch(() => {
+        if (!cancelled) setExports([]);
+      })
+      .finally(() => {
+        if (!cancelled) setExportsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [builderReportId, assessmentReportId]);
+
+  // Download an export file
+  const handleDownloadExport = React.useCallback(
+    async (format: string) => {
+      const reportId = builderReportId || assessmentReportId;
+      if (!reportId) return;
+      setDownloadingId(format);
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/report-builder/${reportId}/export/${format}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        if (!res.ok) throw new Error(`Export failed (${format})`);
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const safeTitle = (report?.name || report?.title || 'report').replace(
+          /[^\p{L}\p{N}_-]+/gu,
+          '_'
+        );
+        a.download = `${safeTitle}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast.success(`${format.toUpperCase()} downloaded`);
+      } catch (err) {
+        console.error(`Download ${format} failed:`, err);
+        toast.error(`Failed to download ${format.toUpperCase()}`);
+      } finally {
+        setDownloadingId(null);
+      }
+    },
+    [builderReportId, assessmentReportId, report?.name, report?.title]
+  );
+
+  // Open web preview in full editor
+  const handleOpenWebPreview = React.useCallback(() => {
+    const targetId = builderReportId || assessmentReportId;
+    if (targetId) navigate(`/reports/builder/${targetId}`);
+  }, [builderReportId, assessmentReportId, navigate]);
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" />
+      <div className="flex items-center justify-center h-32">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500" />
       </div>
     );
   }
 
   if (!report) {
     return (
-      <div className="text-center text-slate-500 py-12">
-        <p>Report not found or could not be loaded.</p>
+      <div className="text-center text-slate-500 py-8">
+        <p className="text-sm">Report not found or could not be loaded.</p>
       </div>
     );
   }
 
-  if (builderReportId) {
-    return (
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
-              Report Builder
-            </div>
-            <div className="text-sm text-slate-200 truncate">
-              {report.name || report.title || 'Untitled Report'}
-            </div>
-          </div>
-          <button
-            onClick={onOpenFull}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-500/20 text-purple-200 hover:bg-purple-500/30 border border-purple-500/30 transition-colors"
-          >
-            Open full
-          </button>
-        </div>
-        <div className="rounded-xl overflow-hidden border border-navy-700 bg-navy-900/40">
-          <iframe
-            title="Report Builder"
-            src={`/reports/builder/${encodeURIComponent(builderReportId)}`}
-            className="w-full"
-            style={{ height: 'calc(100vh - 260px)' }}
-          />
-        </div>
-      </div>
-    );
-  }
+  const statusKey = String(report.status || 'DRAFT').toUpperCase();
+  const statusCfg = REPORT_STATUS_CONFIG[statusKey] || REPORT_STATUS_CONFIG.DRAFT;
+  const reportName = report.name || report.title || 'Untitled Report';
+  const templateId = report.templateId || report.template_id || null;
+  const framework =
+    templateId?.split('_')?.[0]?.toUpperCase() || report.assessmentType?.toUpperCase() || null;
+  const frameworkMeta = framework ? FRAMEWORK_META[framework as AssessmentFramework] : null;
+  const sectionCount = report.sections?.length || 0;
 
   return (
-    <div className="space-y-6">
-      {/* Report header info */}
-      <div className="bg-navy-800/60 rounded-xl p-4 border border-navy-700">
-        <h4 className="text-white font-semibold text-lg mb-2">
-          {report.name || report.title || 'Untitled Report'}
-        </h4>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <span className="text-slate-400 text-xs uppercase font-semibold">Status</span>
-            <div className="mt-1">
-              <span
-                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
-                  report.status === 'APPROVED'
-                    ? 'bg-emerald-500/20 text-emerald-300'
-                    : report.status === 'FINAL'
-                      ? 'bg-indigo-500/20 text-indigo-300'
-                      : report.status === 'DRAFT'
-                        ? 'bg-slate-500/20 text-slate-300'
-                        : 'bg-amber-500/20 text-amber-300'
-                }`}
-              >
-                {String(report.status || 'DRAFT').replace(/_/g, ' ')}
-              </span>
-            </div>
+    <div className="space-y-4">
+      {/* Report title & framework */}
+      <div>
+        <h4 className="text-white font-semibold text-base leading-snug mb-1.5">{reportName}</h4>
+        {frameworkMeta && (
+          <div className="flex items-center gap-1.5">
+            <span className={`text-${frameworkMeta.color}-400`}>{frameworkMeta.icon}</span>
+            <span className="text-xs text-slate-400">{frameworkMeta.name}</span>
           </div>
-          <div>
-            <span className="text-slate-400 text-xs uppercase font-semibold">Template</span>
-            <div className="mt-1 text-slate-300">
-              {report.templateId || report.template_id || '—'}
-            </div>
-          </div>
-          <div>
-            <span className="text-slate-400 text-xs uppercase font-semibold">Created</span>
-            <div className="mt-1 text-slate-300">
-              {report.createdAt ? new Date(report.createdAt).toLocaleDateString() : '—'}
-            </div>
-          </div>
-          <div>
-            <span className="text-slate-400 text-xs uppercase font-semibold">Updated</span>
-            <div className="mt-1 text-slate-300">
-              {report.updatedAt ? new Date(report.updatedAt).toLocaleDateString() : '—'}
-            </div>
-          </div>
+        )}
+      </div>
+
+      {/* Status badge — prominent */}
+      <div
+        className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border ${statusCfg.bgColor}`}
+      >
+        {statusCfg.icon === 'check' ? (
+          <CheckCircle2 size={16} className={statusCfg.color} />
+        ) : statusCfg.icon === 'spinner' ? (
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-400" />
+        ) : (
+          <Clock size={16} className={statusCfg.color} />
+        )}
+        <div>
+          <span className={`text-sm font-semibold ${statusCfg.color}`}>{statusCfg.label}</span>
+          <p className="text-[11px] text-slate-500 mt-0.5">
+            {statusKey === 'DRAFT' && 'Report is being prepared'}
+            {statusKey === 'GENERATING' && 'AI is generating report content'}
+            {statusKey === 'FINAL' && 'Report content is finalized'}
+            {statusKey === 'PENDING_APPROVAL' && 'Awaiting stakeholder approval'}
+            {statusKey === 'APPROVED' && 'Report has been approved'}
+            {statusKey === 'REJECTED' && 'Report was rejected — needs revision'}
+            {statusKey === 'UTILIZED' && 'Report has been delivered & used'}
+          </p>
         </div>
       </div>
 
-      {/* Executive Summary */}
+      {/* Key details */}
+      <div className="bg-navy-800/50 rounded-xl border border-navy-700/60 divide-y divide-navy-700/40">
+        {templateId && (
+          <div className="flex items-center justify-between px-3.5 py-2.5">
+            <span className="text-xs text-slate-500">Template</span>
+            <span className="text-xs text-slate-300 font-medium">{templateId}</span>
+          </div>
+        )}
+        {report.assessmentName && (
+          <div className="flex items-center justify-between px-3.5 py-2.5">
+            <span className="text-xs text-slate-500">Source Assessment</span>
+            <span className="text-xs text-slate-300 font-medium truncate max-w-[180px]">
+              {report.assessmentName}
+            </span>
+          </div>
+        )}
+        {sectionCount > 0 && (
+          <div className="flex items-center justify-between px-3.5 py-2.5">
+            <span className="text-xs text-slate-500">Sections</span>
+            <span className="text-xs text-slate-300 font-medium">{sectionCount}</span>
+          </div>
+        )}
+        <div className="flex items-center justify-between px-3.5 py-2.5">
+          <span className="text-xs text-slate-500 flex items-center gap-1">
+            <Calendar size={11} /> Created
+          </span>
+          <span className="text-xs text-slate-300">
+            {report.createdAt ? new Date(report.createdAt).toLocaleDateString() : '—'}
+          </span>
+        </div>
+        <div className="flex items-center justify-between px-3.5 py-2.5">
+          <span className="text-xs text-slate-500 flex items-center gap-1">
+            <Clock size={11} /> Last updated
+          </span>
+          <span className="text-xs text-slate-300">
+            {report.updatedAt ? new Date(report.updatedAt).toLocaleDateString() : '—'}
+          </span>
+        </div>
+      </div>
+
+      {/* Generated Reports / Exports */}
+      <div className="bg-navy-800/50 rounded-xl border border-navy-700/60 overflow-hidden">
+        <div className="px-3.5 py-2.5 border-b border-navy-700/40">
+          <h5 className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider flex items-center gap-1.5">
+            <Download size={11} />
+            Generated Reports
+          </h5>
+        </div>
+
+        {exportsLoading ? (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 size={16} className="animate-spin text-slate-500" />
+          </div>
+        ) : exports.length > 0 ? (
+          <div className="divide-y divide-navy-700/30">
+            {exports.map((exp: any) => {
+              const fmt = (exp.format || '').toLowerCase();
+              const cfg = EXPORT_FORMAT_CONFIG[fmt] || EXPORT_FORMAT_CONFIG.pdf;
+              const exportDate = exp.exportedAt || exp.exported_at;
+              return (
+                <button
+                  key={exp.id}
+                  onClick={() => handleDownloadExport(fmt)}
+                  disabled={downloadingId === fmt}
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-navy-700/40 transition-colors group"
+                >
+                  <div
+                    className={`w-7 h-7 rounded-lg ${cfg.bgColor} flex items-center justify-center ${cfg.color} shrink-0`}
+                  >
+                    {cfg.icon}
+                  </div>
+                  <div className="flex-1 text-left min-w-0">
+                    <div className="text-xs font-medium text-slate-300">{cfg.label}</div>
+                    <div className="text-[10px] text-slate-500">
+                      {exportDate
+                        ? new Date(exportDate).toLocaleDateString('pl-PL', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : '—'}
+                      {exp.fileSize ? ` · ${(exp.fileSize / 1024).toFixed(0)} KB` : ''}
+                    </div>
+                  </div>
+                  <div className="shrink-0">
+                    {downloadingId === fmt ? (
+                      <Loader2 size={14} className="animate-spin text-slate-500" />
+                    ) : (
+                      <Download
+                        size={14}
+                        className="text-slate-600 group-hover:text-slate-300 transition-colors"
+                      />
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          /* Quick-generate buttons when no exports exist */
+          <div className="p-3.5">
+            <p className="text-[11px] text-slate-500 mb-3">No exports yet. Generate now:</p>
+            <div className="grid grid-cols-3 gap-2">
+              {(['pdf', 'pptx', 'docx'] as const).map((fmt) => {
+                const cfg = EXPORT_FORMAT_CONFIG[fmt];
+                return (
+                  <button
+                    key={fmt}
+                    onClick={() => handleDownloadExport(fmt)}
+                    disabled={!!downloadingId}
+                    className={`flex flex-col items-center gap-1.5 py-2.5 px-2 rounded-lg border border-navy-700/60 hover:border-navy-600 hover:bg-navy-700/40 transition-all disabled:opacity-50 group`}
+                  >
+                    <div
+                      className={`w-8 h-8 rounded-lg ${cfg.bgColor} flex items-center justify-center ${cfg.color}`}
+                    >
+                      {downloadingId === fmt ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        cfg.icon
+                      )}
+                    </div>
+                    <span className="text-[10px] font-medium text-slate-400 group-hover:text-slate-300">
+                      {cfg.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Web preview link — always visible */}
+        <div className="border-t border-navy-700/40">
+          <button
+            onClick={handleOpenWebPreview}
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-navy-700/40 transition-colors group"
+          >
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center text-emerald-400 shrink-0">
+              <Monitor size={14} />
+            </div>
+            <div className="flex-1 text-left">
+              <div className="text-xs font-medium text-slate-300">Web Preview</div>
+              <div className="text-[10px] text-slate-500">Open in editor</div>
+            </div>
+            <ArrowRight
+              size={14}
+              className="text-slate-600 group-hover:text-slate-300 transition-colors shrink-0"
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Executive Summary — truncated */}
       {report.executiveSummary && (
-        <div className="bg-navy-800/60 rounded-xl p-4 border border-navy-700">
-          <h5 className="text-slate-300 font-semibold text-sm mb-2 uppercase tracking-wider">
+        <div className="bg-navy-800/50 rounded-xl p-3.5 border border-navy-700/60">
+          <h5 className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-1.5">
             Executive Summary
           </h5>
-          <p className="text-slate-200 text-sm leading-relaxed">{report.executiveSummary}</p>
+          <p className="text-xs text-slate-300 leading-relaxed line-clamp-4">
+            {report.executiveSummary}
+          </p>
         </div>
       )}
 
-      {/* Sections */}
-      {report.sections && report.sections.length > 0 && (
-        <div className="bg-navy-800/60 rounded-xl p-4 border border-navy-700">
-          <h5 className="text-slate-300 font-semibold text-sm mb-3 uppercase tracking-wider">
-            Sections
+      {/* Sections overview — compact list */}
+      {sectionCount > 0 && (
+        <div className="bg-navy-800/50 rounded-xl p-3.5 border border-navy-700/60">
+          <h5 className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-2">
+            Report Scope
           </h5>
-          <div className="space-y-2">
-            {report.sections.map((section: any, idx: number) => {
+          <div className="space-y-1">
+            {report.sections.slice(0, 6).map((section: any, idx: number) => {
               const sectionTitle =
                 typeof section === 'string'
                   ? section
                   : section?.title || section?.name || `Section ${idx + 1}`;
               return (
-                <div
-                  key={idx}
-                  className="flex items-center gap-3 p-2 rounded-lg bg-navy-900/50 border border-navy-700/50"
-                >
-                  <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-300 text-xs font-semibold flex items-center justify-center">
+                <div key={idx} className="flex items-center gap-2 py-1">
+                  <span className="w-4 h-4 rounded bg-purple-500/15 text-purple-400 text-[10px] font-bold flex items-center justify-center shrink-0">
                     {idx + 1}
                   </span>
-                  <span className="text-sm text-slate-300">{sectionTitle}</span>
+                  <span className="text-xs text-slate-400 truncate">{sectionTitle}</span>
                 </div>
               );
             })}
+            {sectionCount > 6 && (
+              <span className="text-[11px] text-slate-500 pl-6">
+                +{sectionCount - 6} more sections
+              </span>
+            )}
           </div>
         </div>
       )}

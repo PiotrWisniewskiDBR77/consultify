@@ -10,16 +10,22 @@
 import {
   BookTemplate,
   Check,
+  ChevronDown,
   ChevronRight,
   Download,
   Eye,
+  FileText,
+  Globe,
   Grip,
   Image,
   Layers,
   Loader2,
+  Monitor,
   MoreHorizontal,
   Palette,
   Plus,
+  Presentation,
+  RefreshCw,
   Save,
   Settings,
   Share2,
@@ -27,6 +33,7 @@ import {
   Trash2,
   Type,
   X,
+  Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -523,6 +530,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   >('intent');
   const [isSettingsPanelCollapsed, setIsSettingsPanelCollapsed] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [isExporting, setIsExporting] = useState<string | null>(null);
   const [showChapterNav, setShowChapterNav] = useState(true);
   // Version history is now rendered inline inside SettingsPanel
   const [versions, setVersions] = useState<any[]>([]);
@@ -726,6 +734,57 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       document.body.removeChild(a);
     },
     [reportIdForActions, reportTitle, report?.title]
+  );
+
+  // Version loading (defined early because handleViewExport depends on it)
+  const loadVersions = useCallback(async () => {
+    if (!report?.id) return;
+    setIsLoadingVersions(true);
+    try {
+      const res = await Api.get(`/report-builder/${report.id}/versions`);
+      setVersions(res?.versions || []);
+    } catch (err) {
+      console.error('Failed to load versions:', err);
+    } finally {
+      setIsLoadingVersions(false);
+    }
+  }, [report?.id]);
+
+  // Export + create version in one action
+  const handleViewExport = useCallback(
+    async (format: 'web' | 'pdf' | 'pptx' | 'docx') => {
+      if (format === 'web') {
+        setShowPreview(true);
+        return;
+      }
+      setIsExporting(format);
+      try {
+        await downloadExport(format);
+        // Save a version snapshot so the export is recorded in history
+        if (report?.id) {
+          const formatLabel = format.toUpperCase();
+          await Api.post(`/report-builder/${report.id}/versions`, {
+            changeSummary: isPl ? `Eksport ${formatLabel}` : `${formatLabel} export`,
+          });
+          loadVersions();
+          toast.success(
+            isPl
+              ? `Wygenerowano ${formatLabel} i zapisano wersję`
+              : `${formatLabel} exported & version saved`
+          );
+        }
+      } catch (err) {
+        console.error(`Export ${format} failed:`, err);
+        toast.error(
+          isPl
+            ? `Błąd eksportu ${format.toUpperCase()}`
+            : `Failed to export ${format.toUpperCase()}`
+        );
+      } finally {
+        setIsExporting(null);
+      }
+    },
+    [downloadExport, report?.id, isPl, loadVersions]
   );
 
   const exportPanel = reportIdForActions ? (
@@ -1495,19 +1554,6 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   // VERSION HISTORY
   // ==========================================
 
-  const loadVersions = useCallback(async () => {
-    if (!report?.id) return;
-    setIsLoadingVersions(true);
-    try {
-      const res = await Api.get(`/report-builder/${report.id}/versions`);
-      setVersions(res?.versions || []);
-    } catch (err) {
-      console.error('Failed to load versions:', err);
-    } finally {
-      setIsLoadingVersions(false);
-    }
-  }, [report?.id]);
-
   const createManualVersion = useCallback(
     async (summary?: string) => {
       if (!report?.id) return;
@@ -2063,13 +2109,14 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* 1. Save */}
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+            className={`inline-flex items-center gap-1.5 h-8 px-3.5 text-[13px] font-medium rounded-full border transition-all ${
               hasUnsavedChanges
-                ? 'text-white bg-blue-600 hover:bg-blue-700 shadow-sm'
-                : 'text-slate-500 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 opacity-60'
+                ? 'border-blue-500/40 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20'
+                : 'border-slate-600/40 bg-slate-800/40 text-slate-400 hover:bg-slate-700/60 hover:text-slate-300'
             }`}
             title={
               hasUnsavedChanges
@@ -2081,17 +2128,168 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   : 'Saved'
             }
           >
-            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {isSaving ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Save className="w-3.5 h-3.5" />
+            )}
+            {isPl ? 'Zapisz' : 'Save'}
           </button>
 
+          {/* 2. Generate (AI) */}
+          {!isTemplateMode && blocks.length > 0 && (
+            <div className="relative group">
+              <button
+                onClick={() => handleGenerate('new_only')}
+                disabled={isGenerating}
+                className="inline-flex items-center gap-1.5 h-8 px-3.5 text-[13px] font-medium rounded-full border border-purple-500/40 bg-purple-500/15 text-purple-400 hover:bg-purple-500/25 transition-all disabled:opacity-50"
+              >
+                {isGenerating ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5" />
+                )}
+                {isPl ? 'Generuj' : 'Generate'}
+                <ChevronDown className="w-3 h-3 opacity-60" />
+              </button>
+              <div className="absolute right-0 top-full mt-1.5 w-52 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1 overflow-hidden">
+                <button
+                  onClick={() => handleGenerate('new_only')}
+                  disabled={isGenerating}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-300 hover:bg-slate-700/60 transition-colors"
+                >
+                  <Zap className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
+                  <div className="text-left">
+                    <div className="text-xs font-medium">
+                      {isPl ? 'Generuj nowe' : 'Generate new'}
+                    </div>
+                    <div className="text-[10px] text-slate-500">
+                      {isPl ? 'Tylko puste sekcje' : 'Empty sections only'}
+                    </div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => handleGenerate('modified')}
+                  disabled={isGenerating}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-300 hover:bg-slate-700/60 transition-colors"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+                  <div className="text-left">
+                    <div className="text-xs font-medium">
+                      {isPl ? 'Odśwież zmienione' : 'Refresh modified'}
+                    </div>
+                    <div className="text-[10px] text-slate-500">
+                      {isPl ? 'Sekcje wymagające aktualizacji' : 'Sections needing update'}
+                    </div>
+                  </div>
+                </button>
+                <div className="border-t border-slate-700 my-1" />
+                <button
+                  onClick={() => handleGenerate('all')}
+                  disabled={isGenerating}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-300 hover:bg-slate-700/60 transition-colors"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                  <div className="text-left">
+                    <div className="text-xs font-medium">
+                      {isPl ? 'Regeneruj wszystko' : 'Regenerate all'}
+                    </div>
+                    <div className="text-[10px] text-slate-500">
+                      {isPl ? 'Nadpisz wszystkie sekcje' : 'Overwrite all sections'}
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 3. View / Export (dropdown: Web, PDF, PPTX, Word) */}
           {!isTemplateMode && (
-            <button
-              onClick={() => setShowPreview(true)}
-              className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
-            >
-              <Eye className="w-4 h-4" />
-              {isPl ? 'Podgląd' : 'Preview'}
-            </button>
+            <div className="relative group">
+              <button
+                onClick={() => handleViewExport('web')}
+                disabled={!!isExporting}
+                className="inline-flex items-center gap-1.5 h-8 px-3.5 text-[13px] font-medium rounded-full border border-emerald-500/40 bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 transition-all disabled:opacity-50"
+              >
+                {isExporting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Eye className="w-3.5 h-3.5" />
+                )}
+                {isExporting
+                  ? isPl
+                    ? `${isExporting.toUpperCase()}...`
+                    : `${isExporting.toUpperCase()}...`
+                  : isPl
+                    ? 'Podgląd'
+                    : 'View'}
+                <ChevronDown className="w-3 h-3 opacity-60" />
+              </button>
+              <div className="absolute right-0 top-full mt-1.5 w-52 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1 overflow-hidden">
+                <button
+                  onClick={() => handleViewExport('web')}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-300 hover:bg-slate-700/60 transition-colors"
+                >
+                  <Monitor className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                  <div className="text-left">
+                    <div className="text-xs font-medium">
+                      {isPl ? 'Podgląd Web' : 'Web Preview'}
+                    </div>
+                    <div className="text-[10px] text-slate-500">
+                      {isPl ? 'Podgląd w przeglądarce' : 'Preview in browser'}
+                    </div>
+                  </div>
+                </button>
+                <div className="border-t border-slate-700 my-1" />
+                <div className="px-3.5 py-1">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    {isPl ? 'Eksport i zapis do wersji' : 'Export & save to versions'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => handleViewExport('pdf')}
+                  disabled={!!isExporting}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-300 hover:bg-slate-700/60 transition-colors disabled:opacity-50"
+                >
+                  <FileText className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                  <div className="text-left">
+                    <div className="text-xs font-medium">PDF</div>
+                    <div className="text-[10px] text-slate-500">
+                      {isPl ? 'Dokument PDF' : 'PDF document'}
+                    </div>
+                  </div>
+                  <Download className="w-3 h-3 text-slate-500 ml-auto" />
+                </button>
+                <button
+                  onClick={() => handleViewExport('pptx')}
+                  disabled={!!isExporting}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-300 hover:bg-slate-700/60 transition-colors disabled:opacity-50"
+                >
+                  <Presentation className="w-3.5 h-3.5 text-orange-400 flex-shrink-0" />
+                  <div className="text-left">
+                    <div className="text-xs font-medium">PPTX</div>
+                    <div className="text-[10px] text-slate-500">
+                      {isPl ? 'Prezentacja PowerPoint' : 'PowerPoint presentation'}
+                    </div>
+                  </div>
+                  <Download className="w-3 h-3 text-slate-500 ml-auto" />
+                </button>
+                <button
+                  onClick={() => handleViewExport('docx')}
+                  disabled={!!isExporting}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-300 hover:bg-slate-700/60 transition-colors disabled:opacity-50"
+                >
+                  <Globe className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+                  <div className="text-left">
+                    <div className="text-xs font-medium">Word</div>
+                    <div className="text-[10px] text-slate-500">
+                      {isPl ? 'Dokument Word (.docx)' : 'Word document (.docx)'}
+                    </div>
+                  </div>
+                  <Download className="w-3 h-3 text-slate-500 ml-auto" />
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </header>

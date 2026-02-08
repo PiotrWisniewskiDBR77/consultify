@@ -38,7 +38,6 @@ import { MessageActions } from '../components/AIChat/Messages/MessageActions';
 import { ThinkingBlock } from '../components/AIChat/Messages/ThinkingBlock';
 import { ResponseActions } from '../components/AIChat/ResponseActions';
 import { SmartSuggestions } from '../components/AIChat/SmartSuggestions';
-import { ThinkingStatusLine } from '../components/AIChat/ThinkingStatusLine';
 import { TTSIndicator } from '../components/AIChat/TTSIndicator';
 import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
 import { useAIStream } from '../hooks/useAIStream';
@@ -142,14 +141,15 @@ export const AIChatWelcomeView: React.FC = () => {
     const activeLang = activeConversationId
       ? chatLanguageByConversationId[activeConversationId]
       : undefined;
+    // Priority: conversation-specific > draft > localStorage (user choice) > i18n > 'pl'
     const candidate =
       activeLang ||
       draftChatLanguage ||
-      i18n.language ||
       localStorage.getItem('i18nextLng') ||
-      'en';
+      i18n.language ||
+      'pl';
     const base = String(candidate).split('-')[0];
-    return (isValidLanguage(base) ? base : 'en') as SupportedLanguage;
+    return (isValidLanguage(base) ? base : 'pl') as SupportedLanguage;
   }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage, i18n.language]);
 
   // AI stream with persistence callback
@@ -1200,11 +1200,6 @@ For example: REMEMBER: preferred_language: Polish`;
   );
 
   const hasMessages = activeChatMessages.length > 0;
-  const currentThinkingLabel =
-    thinkingSteps.find((s) => s.status === 'in_progress')?.label ||
-    thinkingSteps.find((s) => s.status === 'pending')?.label ||
-    '';
-
   // Loading state — conversation is selected but messages haven't arrived yet
   // (e.g. after page reload / cross-screen navigation while rehydration fetches)
   const isRehydrating = !!activeConversationId && !hasMessages && isConversationLoading;
@@ -1283,12 +1278,6 @@ For example: REMEMBER: preferred_language: Polish`;
                       }`}
                     >
                       <div className="whitespace-pre-wrap text-[15px] leading-relaxed">
-                        {/* Cursor-like thinking indicator - inline label while thinking */}
-                        <ThinkingStatusLine
-                          label={currentThinkingLabel || t('thinking.processing', 'Thinking…')}
-                          className="mb-2"
-                          show={isStreamingThis && thinkingSteps.length > 0}
-                        />
                         {isEditingThis ? (
                           <div className="flex flex-col gap-2">
                             <textarea
