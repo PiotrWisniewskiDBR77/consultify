@@ -207,7 +207,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
                     <button
                       key={filter.id}
                       onClick={() => onStatusFilterChange?.(filter.id === 'all' ? null : filter.id)}
-                  data-testid={`status-filter-${filter.id}`}
+                      data-testid={`status-filter-${filter.id}`}
                       className={`
                         flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium
                         border transition-all duration-200

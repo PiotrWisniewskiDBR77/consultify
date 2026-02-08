@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { FullSession, LLMProvider, SessionMode, User } from '../types';
-import { tokenService } from './tokenService';
 import { trackFunnelEvent } from './funnelAnalytics';
+import { tokenService } from './tokenService';
 
 // Use relative path to allow Vite proxy to handle the request (avoiding CORS)
 // or use env var if provided.
@@ -14,17 +14,34 @@ if (!correlationId) {
   sessionStorage.setItem('correlationId', correlationId);
 }
 
-export const getHeaders = () => {
-  const token = tokenService.getToken();
+// ---------------------------------------------------------------------------
+// Perf: avoid JSON.parse(localStorage) on every request.
+// localStorage access + JSON.parse are synchronous and can cause noticeable UI jank
+// when the app polls multiple endpoints (notifications, onboarding, etc.).
+// ---------------------------------------------------------------------------
+type DemoFlags = { isDemoMode: boolean; isDemoSession: boolean };
 
-  // Check if demo mode is enabled from localStorage
+let _cachedStorageRaw: string | null | undefined = undefined;
+let _cachedDemoFlags: DemoFlags = { isDemoMode: false, isDemoSession: false };
+
+function getDemoFlags(): DemoFlags {
+  const DEMO_EMAIL = 'piotr.wisniewski@demo.com';
+  let raw: string | null = null;
+  try {
+    raw = localStorage.getItem('consultinity-storage');
+  } catch {
+    // ignore
+  }
+
+  // Only re-parse when the underlying raw value changes
+  if (raw === _cachedStorageRaw) return _cachedDemoFlags;
+  _cachedStorageRaw = raw;
+
   let isDemoMode = false;
   let isDemoSession = false;
-  const DEMO_EMAIL = 'piotr.wisniewski@demo.com';
   try {
-    const storageData = localStorage.getItem('consultinity-storage');
-    if (storageData) {
-      const parsed = JSON.parse(storageData);
+    if (raw) {
+      const parsed = JSON.parse(raw);
       isDemoMode = parsed?.state?.isDemoMode === true;
       const persistedUser = parsed?.state?.currentUser;
       isDemoSession =
@@ -36,16 +53,40 @@ export const getHeaders = () => {
     // Ignore parsing errors
   }
 
-  // Get user language from localStorage (i18next stores it there)
+  _cachedDemoFlags = { isDemoMode, isDemoSession };
+  return _cachedDemoFlags;
+}
+
+let _cachedI18nRaw: string | null | undefined = undefined;
+let _cachedLang = 'en';
+
+function getCachedUserLanguage(): string {
+  let raw: string | null = null;
+  try {
+    raw = localStorage.getItem('i18nextLng');
+  } catch {
+    // ignore
+  }
+
+  if (raw === _cachedI18nRaw) return _cachedLang;
+  _cachedI18nRaw = raw;
+
   let userLanguage = 'en';
   try {
-    const i18nextLng = localStorage.getItem('i18nextLng');
-    if (i18nextLng) {
-      userLanguage = i18nextLng.split('-')[0].toLowerCase(); // Extract base language (e.g., 'pl' from 'pl-PL')
-    }
+    if (raw) userLanguage = raw.split('-')[0].toLowerCase();
   } catch {
-    // Ignore parsing errors, use default
+    // ignore
   }
+
+  _cachedLang = userLanguage;
+  return _cachedLang;
+}
+
+export const getHeaders = () => {
+  const token = tokenService.getToken();
+
+  const { isDemoMode, isDemoSession } = getDemoFlags();
+  const userLanguage = getCachedUserLanguage();
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -90,7 +131,59 @@ const handleResponse = async (res: Response, defaultError: string) => {
     return res.json();
   }
 
-  const data = await res.json().catch(() => ({}));
+  // Robust error parsing:
+  // - proxies sometimes return HTML for 4xx/5xx
+  // - some endpoints return empty bodies
+  // Use clone() so we can try JSON first, then fall back to text.
+  const parsed = await (async () => {
+    try {
+      const clone = res.clone();
+      const json = await clone.json();
+      return { kind: 'json' as const, json };
+    } catch {
+      try {
+        const text = await res.text();
+        // Best-effort JSON parse even if content-type is wrong.
+        try {
+          const json = JSON.parse(text);
+          return { kind: 'json' as const, json };
+        } catch {
+          return { kind: 'text' as const, text };
+        }
+      } catch {
+        return { kind: 'none' as const };
+      }
+    }
+  })();
+
+  const data = parsed.kind === 'json' ? parsed.json : {};
+
+  // Normalize error payloads to a readable string.
+  // Some endpoints return { error: {...} } which would otherwise surface as "[object Object]".
+  const toErrorMessage = (payload: any, fallback: string): string => {
+    const msg = payload?.message;
+    const err = payload?.error;
+    if (typeof msg === 'string' && msg.trim()) return msg;
+    if (typeof err === 'string' && err.trim()) return err;
+    if (err != null) {
+      try {
+        return typeof err === 'string' ? err : JSON.stringify(err);
+      } catch {
+        // ignore
+      }
+    }
+    if (msg != null) {
+      try {
+        return typeof msg === 'string' ? msg : JSON.stringify(msg);
+      } catch {
+        // ignore
+      }
+    }
+    return fallback;
+  };
+  // If payload isn't helpful, include HTTP status (avoids generic "Request failed").
+  const fallbackHttp = `HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''}`;
+  const normalizedMessage = toErrorMessage(data, '') || fallbackHttp || defaultError;
 
   // Check for Demo Block
   if (
@@ -106,7 +199,7 @@ const handleResponse = async (res: Response, defaultError: string) => {
       })
     );
     // We still throw to stop execution, but the UI will handle the modal
-    throw new Error(data.message || data.error || 'Action blocked in Demo Mode');
+    throw new Error(toErrorMessage(data, 'Action blocked in Demo Mode'));
   }
 
   // Check for AI Budget Freeze (Phase 8: Prestige)
@@ -118,7 +211,7 @@ const handleResponse = async (res: Response, defaultError: string) => {
       reason: data.error,
       scope: data.budgetStatus?.scope || 'Global',
     });
-    throw new Error(data.error || 'AI Budget Exhausted');
+    throw new Error(toErrorMessage(data, 'AI Budget Exhausted'));
   }
 
   // Unified access-blocked handling (Trial expiry, AI limits, token budgets, etc.)
@@ -145,11 +238,16 @@ const handleResponse = async (res: Response, defaultError: string) => {
       } catch {
         // ignore
       }
-      throw new Error(data.message || data.error || defaultError);
+      throw new Error(normalizedMessage);
     }
   }
 
-  throw new Error(data.error || defaultError);
+  const err: any = new Error(normalizedMessage || defaultError);
+  err.status = res.status;
+  err.url = res.url;
+  err.data = data;
+  if (parsed.kind === 'text') err.bodyText = parsed.text;
+  throw err;
 };
 
 export const Api = {
@@ -541,6 +639,48 @@ export const Api = {
 
   // --- AI ---
   // --- AI ---
+  deepThinkingEvent: async (args: {
+    eventType: 'copied';
+    sessionId: string;
+    conversationId?: string;
+    payload?: Record<string, unknown>;
+  }) => {
+    const response = await fetch(`${API_URL}/ai/deep-thinking/events`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(args),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const msg = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
+      const err: any = new Error(msg);
+      err.code = data?.code;
+      throw err;
+    }
+    return data;
+  },
+
+  saveDeepThinkingDecision: async (args: {
+    sessionId: string;
+    conversationId?: string;
+    content: string;
+    type?: 'decision' | 'initiative';
+  }) => {
+    const response = await fetch(`${API_URL}/ai/deep-thinking/save-decision`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(args),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const msg = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
+      const err: any = new Error(msg);
+      err.code = data?.code;
+      throw err;
+    }
+    return data;
+  },
+
   chatWithAI: async (
     message: string,
     history: any[],
@@ -559,6 +699,72 @@ export const Api = {
       console.error('API Chat Error', error);
       throw error;
     }
+  },
+
+  chatConfirm: async (
+    message: string,
+    history: any[],
+    systemInstruction?: string,
+    context?: any,
+    roleName?: string,
+    language?: string,
+    options?: {
+      deepResearch?: boolean;
+      webSearch?: boolean;
+      showReasoning?: boolean;
+      knowledgeSources?: {
+        pmoDocuments?: boolean;
+        projectData?: boolean;
+        organizationData?: boolean;
+      };
+      responseStyle?: 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
+      selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
+      selectedModelId?: string | null;
+    }
+  ) => {
+    const aiModes = {
+      deepResearch: options?.deepResearch ?? false,
+      webSearch: options?.webSearch ?? false,
+      showReasoning: options?.showReasoning ?? false,
+    };
+
+    const knowledgeSources = {
+      pmoDocuments: options?.knowledgeSources?.pmoDocuments ?? true,
+      projectData: options?.knowledgeSources?.projectData ?? true,
+      organizationData: options?.knowledgeSources?.organizationData ?? false,
+    };
+
+    const responseStyle = options?.responseStyle ?? 'normal';
+
+    const response = await fetch(`${API_URL}/ai/chat/confirm`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        message,
+        history,
+        systemInstruction,
+        context,
+        roleName,
+        language,
+        aiModes,
+        knowledgeSources,
+        responseStyle,
+        selectedTier: options?.selectedTier,
+        selectedModelId: options?.selectedModelId ?? null,
+        projectId: context?.projectId,
+        screenContext: context?.screenContext,
+        focusMode: context?.focusMode,
+      }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const msg = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
+      const err: any = new Error(msg);
+      err.code = data?.code;
+      throw err;
+    }
+    return data;
   },
 
   chatWithAIStream: async (
@@ -581,6 +787,8 @@ export const Api = {
         organizationData?: boolean;
       };
       responseStyle?: 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
+      selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
+      selectedModelId?: string | null;
     }
   ) => {
     try {
@@ -613,14 +821,98 @@ export const Api = {
           aiModes,
           knowledgeSources,
           responseStyle,
+          // Model routing
+          selectedTier: options?.selectedTier,
+          selectedModelId: options?.selectedModelId ?? null,
+          // Common context hints (keep as top-level so backend validator doesn't strip them)
+          projectId: context?.projectId,
+          screenContext: context?.screenContext,
+          focusMode: context?.focusMode,
         }),
       });
+
+      // If backend didn't return SSE (e.g. 401/403 JSON), surface it immediately.
+      // Otherwise the client would read a non-SSE body, never call onChunk, and appear as "nothing happens".
+      if (!response.ok) {
+        let parsed: any = null;
+        let rawText = '';
+        try {
+          parsed = await response.clone().json();
+        } catch {
+          // ignore
+        }
+        try {
+          rawText = await response.text();
+        } catch {
+          // ignore
+        }
+
+        const codeRaw = parsed?.code || parsed?.errorCode || parsed?.reasonCode;
+        const code =
+          typeof codeRaw === 'string' && codeRaw.trim().length > 0
+            ? codeRaw
+            : `HTTP_${response.status}`;
+        const serverMsg =
+          parsed?.message ||
+          parsed?.error ||
+          rawText ||
+          `HTTP ${response.status} ${response.statusText}`;
+
+        // Only show the "Access required" modal for genuine access/auth blocks.
+        const accessErrorCodes = new Set([
+          'ORG_NOT_FOUND',
+          'ORG_INACTIVE',
+          'ACCESS_BLOCKED',
+          'DEMO_READ_ONLY',
+          'DEMO_TIME_EXPIRED',
+          'DEMO_AI_SESSION_LIMIT_REACHED',
+          'TRIAL_EXPIRED',
+          'AI_LIMIT_REACHED',
+          'TRIAL_PROFILE_INCOMPLETE',
+          'AI_TOKEN_BUDGET_EXCEEDED',
+          'INSUFFICIENT_TOKENS',
+        ]);
+        const isAccessError =
+          response.status === 401 || response.status === 403 || accessErrorCodes.has(code);
+
+        if (isAccessError) {
+          try {
+            window.dispatchEvent(
+              new CustomEvent('access:blocked', {
+                detail: {
+                  code,
+                  message: serverMsg,
+                  accessContext: parsed?.accessContext,
+                },
+              })
+            );
+          } catch {
+            // ignore
+          }
+        }
+
+        // Also show a short inline error so the assistant bubble doesn't stay empty.
+        const uiLang = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
+        const friendly =
+          code === 'ORG_NOT_FOUND'
+            ? uiLang === 'pl'
+              ? '⚠️ Brak organizacji w sesji. Wyloguj się i zaloguj ponownie.'
+              : '⚠️ Organization not found in session. Please log out and log in again.'
+            : uiLang === 'pl'
+              ? `⚠️ Nie udało się uruchomić AI (${code}).`
+              : `⚠️ AI request failed (${code}).`;
+        onChunk(friendly);
+        onDone();
+        return;
+      }
 
       if (!response.body) throw new Error('ReadableStream not supported');
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
+      let accessErrorShownInline = false;
+      let hasAnyVisibleOutput = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -636,24 +928,89 @@ export const Api = {
           if (part.startsWith('data: ')) {
             const dataStr = part.replace('data: ', '').trim();
             if (dataStr === '[DONE]') {
+              // If stream ends without any visible output, show a friendly fallback
+              // (prevents "nothing happens" UX).
+              if (!hasAnyVisibleOutput) {
+                const uiLang = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
+                const friendly =
+                  uiLang === 'pl'
+                    ? '⚠️ AI nie zwróciło odpowiedzi. Sprawdź konfigurację providera (OPENAI_API_KEY / GEMINI_API_KEY) oraz logi backendu.'
+                    : '⚠️ AI returned no output. Check LLM provider config (OPENAI_API_KEY / GEMINI_API_KEY) and backend logs.';
+                onChunk(friendly);
+              }
               onDone();
               return;
             }
             try {
               const data = JSON.parse(dataStr);
 
-              // Handle Thought/Thinking Events
-              if (data.type === 'thought' && onThinking) {
-                onThinking(data);
-                continue;
+              // Handle non-text stream events (thinking/progress/state/research)
+              // - legacy: { type: 'thought', ... }
+              // - new: { type: 'dt_state', ... } / { type: 'research_progress', ... }
+              if (typeof data.type === 'string' && onThinking && data.type !== 'error') {
+                // Only treat as an event when it's not a normal text chunk
+                const hasText =
+                  typeof (data as any).text === 'string' && (data as any).text.length > 0;
+                if (!hasText) {
+                  onThinking(data);
+                  continue;
+                }
               }
 
-              if (data.text) onChunk(data.text);
+              if (typeof data.text === 'string') {
+                // Backend may emit empty string; treat only non-empty text as visible output.
+                if (data.text.length > 0) {
+                  hasAnyVisibleOutput = true;
+                  onChunk(data.text);
+                }
+              }
               if (data.error) {
+                // Errors are visible output (either inline or via friendly message).
                 console.error('Stream error from server:', data.error, data.code);
 
-                // Show the error inline (so the user isn't left with an empty assistant bubble)
-                onChunk(data.error);
+                // Access/auth errors - show modal, don't pollute chat
+                const accessErrorCodes = [
+                  'ORG_NOT_FOUND',
+                  'ORG_INACTIVE',
+                  'ACCESS_BLOCKED',
+                  'DEMO_READ_ONLY',
+                  'DEMO_TIME_EXPIRED',
+                  'DEMO_AI_SESSION_LIMIT_REACHED',
+                  'TRIAL_EXPIRED',
+                  'AI_LIMIT_REACHED',
+                  'TRIAL_PROFILE_INCOMPLETE',
+                ];
+
+                const dataCode =
+                  typeof data.code === 'string' ? data.code : String(data.code || '');
+                const isAccessError = accessErrorCodes.includes(dataCode);
+
+                // UX: Always show *something* in the chat bubble when stream ends with access errors,
+                // otherwise the placeholder stays empty and the UI hides it (looks like "thinking then reset").
+                if (isAccessError) {
+                  if (!accessErrorShownInline) {
+                    accessErrorShownInline = true;
+                    const uiLang = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
+                    const friendly =
+                      data.code === 'ORG_NOT_FOUND'
+                        ? uiLang === 'pl'
+                          ? '⚠️ Brak organizacji w sesji. Wyloguj się i zaloguj ponownie.'
+                          : '⚠️ Organization not found in session. Please log out and log in again.'
+                        : data.code === 'ORG_INACTIVE'
+                          ? uiLang === 'pl'
+                            ? '⚠️ Organizacja jest nieaktywna. Zaloguj się ponownie lub skontaktuj się z administratorem.'
+                            : '⚠️ Organization is inactive. Please log in again or contact an admin.'
+                          : uiLang === 'pl'
+                            ? `⚠️ Brak dostępu (${data.code}).`
+                            : `⚠️ Access blocked (${data.code}).`;
+                    hasAnyVisibleOutput = true;
+                    onChunk(friendly);
+                  }
+                } else {
+                  // Non-access errors: show inline (so user isn't left with an empty assistant bubble)
+                  hasAnyVisibleOutput = true;
+                  onChunk(data.error);
+                }
 
                 // Budget freeze (existing behavior)
                 if (data.code === 'AI_BUDGET_EXHAUSTED') {
@@ -663,13 +1020,13 @@ export const Api = {
                     reason: data.error,
                     scope: data.budgetStatus?.scope || 'Global',
                   });
-                } else {
-                  // Unified access-blocked UX hook
+                } else if (isAccessError) {
+                  // Unified access-blocked UX hook (only for access/auth blocks)
                   try {
                     window.dispatchEvent(
                       new CustomEvent('access:blocked', {
                         detail: {
-                          code: data.code || 'ACCESS_BLOCKED',
+                          code: dataCode || 'ACCESS_BLOCKED',
                           message: data.error,
                           accessContext: data.accessContext,
                         },
@@ -686,6 +1043,18 @@ export const Api = {
           }
         }
       }
+
+      // If the SSE stream ended without any visible output, show a friendly fallback.
+      // This prevents the UX where the assistant bubble stays empty and gets hidden.
+      if (!hasAnyVisibleOutput) {
+        const uiLang = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
+        const friendly =
+          uiLang === 'pl'
+            ? '⚠️ AI nie zwróciło odpowiedzi. Najczęściej oznacza to brak konfiguracji dostawcy (np. OPENAI_API_KEY / GEMINI_API_KEY) na backendzie.'
+            : '⚠️ AI returned an empty response. This usually means no LLM provider is configured on the backend (e.g. OPENAI_API_KEY / GEMINI_API_KEY).';
+        onChunk(friendly);
+      }
+
       onDone();
     } catch (error) {
       console.error('API Chat Stream Error', error);
@@ -706,39 +1075,13 @@ export const Api = {
   getOrganizations: async (): Promise<any[]> => {
     try {
       const res = await fetch(`${API_URL}/superadmin/organizations`, { headers: getHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.length > 0) return data;
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to fetch organizations');
+      return data;
     } catch (e) {
-      // Fall through to mock data
+      console.error('[Api] Error fetching organizations:', e);
+      throw e;
     }
-    // Mock data for demo
-    return [
-      { id: 'org-1', name: 'TechnoLex SA', plan: 'enterprise', status: 'active', user_count: 47 },
-      {
-        id: 'org-2',
-        name: 'Nordic Innovations',
-        plan: 'professional',
-        status: 'active',
-        user_count: 23,
-      },
-      {
-        id: 'org-3',
-        name: 'Global Finance Corp',
-        plan: 'enterprise',
-        status: 'suspended',
-        user_count: 156,
-      },
-      { id: 'org-4', name: 'StartUp Studio', plan: 'starter', status: 'active', user_count: 12 },
-      {
-        id: 'org-5',
-        name: 'Digital Agency Pro',
-        plan: 'professional',
-        status: 'trial',
-        user_count: 34,
-      },
-    ];
   },
 
   updateOrganization: async (
@@ -1116,7 +1459,7 @@ export const Api = {
     if (!res.ok) throw new Error('Failed to add provider');
   },
 
-  updateLLMProvider: async (id: string, data: Partial<LLMProvider>) => {
+  updateLLMProvider: async (id: string, data: any) => {
     const res = await fetch(`${API_URL}/llm/providers/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
@@ -1127,7 +1470,7 @@ export const Api = {
   },
 
   testLLMConnection: async (
-    config: Partial<LLMProvider>
+    config: any
   ): Promise<{ success: boolean; message: string; response?: string }> => {
     const res = await fetch(`${API_URL}/llm/test`, {
       method: 'POST',
@@ -1349,7 +1692,8 @@ export const Api = {
       if (filters.assigneeId) params.append('assigneeId', filters.assigneeId);
       if (filters.priority) params.append('priority', filters.priority);
       if (filters.initiativeId) params.append('initiativeId', filters.initiativeId);
-      if (params.toString()) url += `? ${params.toString()}`;
+      // IMPORTANT: no leading space after "?" (breaks query parsing in some servers)
+      if (params.toString()) url += `?${params.toString()}`;
     }
     const res = await fetch(url, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch tasks');
@@ -1552,7 +1896,7 @@ export const Api = {
     if (!res.ok) throw new Error('Failed to fetch decisions');
     const data = await res.json();
     // Extract decisions array and map snake_case to camelCase
-    const decisions = Array.isArray(data) ? data : (data.decisions || []);
+    const decisions = Array.isArray(data) ? data : data.decisions || [];
     return decisions.map((d: any) => ({
       ...d,
       decisionOwnerId: d.decision_maker_id || d.decisionOwnerId,
@@ -1590,12 +1934,11 @@ export const Api = {
     return res.json();
   },
 
-  deleteDecision: async (id: string): Promise<void> => {
-    const res = await fetch(`${API_URL}/decisions/${id}`, {
-      method: 'DELETE',
-      headers: getHeaders(),
-    });
-    if (!res.ok) throw new Error('Failed to delete decision');
+  getTaskDecisions: async (taskId: string): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/decisions?taskId=${taskId}`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch task decisions');
+    const data = await res.json();
+    return Array.isArray(data) ? data : data?.decisions || [];
   },
 
   // ==========================================
@@ -1789,7 +2132,12 @@ export const Api = {
 
   generateToolInitiatives: async (
     toolId: string,
-    payload: { methodologyId: string; count: number; includeChatContext?: boolean }
+    payload: {
+      methodologyId: string;
+      count: number;
+      includeChatContext?: boolean;
+      decisionOwnerId?: string;
+    }
   ): Promise<any> => {
     const res = await fetch(`${API_URL}/tools/${toolId}/generate-initiatives`, {
       method: 'POST',
@@ -1810,6 +2158,7 @@ export const Api = {
   createAssessmentSession: async (payload: {
     assessmentType: 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
     name: string;
+    description?: string;
     projectId?: string | null;
   }): Promise<{ id: string; status: string }> => {
     const res = await fetch(`${API_URL}/assessment-workflow-v2`, {
@@ -1945,9 +2294,12 @@ export const Api = {
   },
 
   getAssessmentGeneratedInitiatives: async (assessmentId: string): Promise<any> => {
-    const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}/generated-initiatives`, {
-      headers: getHeaders(),
-    });
+    const res = await fetch(
+      `${API_URL}/assessment-workflow/${assessmentId}/generated-initiatives`,
+      {
+        headers: getHeaders(),
+      }
+    );
     return handleResponse(res, 'Failed to fetch generated initiatives');
   },
 
@@ -2062,19 +2414,97 @@ export const Api = {
   },
 
   // FEEDBACK & LEARNING
+  /**
+   * Submit detailed feedback on AI response (v2.0 Adaptive System)
+   */
   aiFeedback: async (feedback: {
-    context: string;
-    prompt: string;
-    response: string;
-    rating: number;
-    correction?: string;
+    messageId: string;
+    conversationId?: string;
+    rating: 'positive' | 'negative' | 'neutral';
+    lengthFeedback?: string;
+    detailFeedback?: string;
+    formatFeedback?: string;
+    wantedMode?: string;
+    customFeedback?: string;
+    responseMode?: string;
+    responseLength?: number;
+    capability?: string;
+    // v2.0 specific fields
+    actionability?: number;
+    accuracy?: number;
+    expectedFormat?: string;
+    missingInfo?: string;
+    screenContext?: string;
+    focusMode?: string;
   }): Promise<void> => {
-    const res = await fetch(`${API_URL}/ai/feedback`, {
+    const res = await fetch(`${API_URL}/ai-feedback/response`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(feedback),
     });
-    if (!res.ok) throw new Error('Failed to save feedback');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to submit feedback');
+  },
+
+  /**
+   * Submit general AI feedback (Legacy / Training compatibility)
+   */
+  submitAIFeedback: async (data: {
+    context: string;
+    prompt: string;
+    response: string;
+    helpful: boolean;
+    comment?: string;
+  }): Promise<void> => {
+    const res = await fetch(`${API_URL}/ai-feedback`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        ...data,
+        rating: data.helpful ? 'positive' : 'negative',
+        feedbackType: data.helpful ? 'HELPFUL' : 'NOT_HELPFUL',
+      }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error || 'Failed to submit feedback');
+    }
+  },
+
+  // WEBHOOKS (Consolidated from extensions)
+  getWebhooks: async (): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/webhooks`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch webhooks');
+    return res.json();
+  },
+
+  createWebhook: async (data: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/webhooks`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to create webhook');
+    return res.json();
+  },
+
+  updateWebhook: async (webhookId: string, data: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/webhooks/${webhookId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to update webhook');
+    return res.json();
+  },
+
+  deleteWebhook: async (webhookId: string): Promise<{ success: true }> => {
+    const res = await fetch(`${API_URL}/webhooks/${webhookId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to delete webhook');
+    return { success: true };
   },
 
   // --- AI STRATEGIC BOARD ---
@@ -3260,6 +3690,42 @@ export const Api = {
   },
 
   /**
+   * Reject a report (FINAL -> DRAFT with reason)
+   */
+  rejectReport: async (reportId: string, reason?: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/assessment-reports/${reportId}/reject`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ reason: reason || '' }),
+    });
+    return handleResponse(res, 'Failed to reject report');
+  },
+
+  /**
+   * Send report back for revisions (FINAL -> DRAFT)
+   */
+  sendBackReport: async (reportId: string, reason?: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/assessment-reports/${reportId}/send-back`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ reason: reason || '' }),
+    });
+    return handleResponse(res, 'Failed to send back report');
+  },
+
+  /**
+   * Mark report as utilized (APPROVED -> UTILIZED)
+   */
+  utilizeReport: async (reportId: string, notes?: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/assessment-reports/${reportId}/utilize`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ notes: notes || '' }),
+    });
+    return handleResponse(res, 'Failed to utilize report');
+  },
+
+  /**
    * Export report as PDF
    */
   exportReportPDF: async (reportId: string): Promise<Blob> => {
@@ -3925,10 +4391,13 @@ export const Api = {
    * Create initiative from analysis
    */
   createInitiativeFromAnalysis: async (analysisId: string): Promise<any> => {
-    const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/create-initiative`, {
-      method: 'POST',
-      headers: getHeaders(),
-    });
+    const res = await fetchWithRetry(
+      `${API_URL}/economics/analyses/${analysisId}/create-initiative`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    );
     return handleResponse(res, 'Failed to create initiative from analysis');
   },
 
@@ -3937,7 +4406,10 @@ export const Api = {
    */
   createAnalysisDecision: async (
     analysisId: string,
-    data: { decisionType: 'approve-analysis' | 'select-scenario' | 'go-no-go'; decisionMakerId?: string }
+    data: {
+      decisionType: 'approve-analysis' | 'select-scenario' | 'go-no-go';
+      decisionMakerId?: string;
+    }
   ): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/decisions`, {
       method: 'POST',
@@ -4042,6 +4514,9 @@ export const Api = {
     archived?: boolean;
     starred?: boolean;
     projectId?: string;
+    chatProjectId?: string;
+    /** 'personal' | 'team' | 'all' */
+    scope?: string;
     search?: string;
     limit?: number;
     offset?: number;
@@ -4055,6 +4530,8 @@ export const Api = {
     if (options?.archived !== undefined) params.append('archived', String(options.archived));
     if (options?.starred !== undefined) params.append('starred', String(options.starred));
     if (options?.projectId) params.append('projectId', options.projectId);
+    if (options?.chatProjectId) params.append('chatProjectId', options.chatProjectId);
+    if (options?.scope) params.append('scope', options.scope);
     if (options?.search) params.append('search', options.search);
     if (options?.limit) params.append('limit', String(options.limit));
     if (options?.offset) params.append('offset', String(options.offset));
@@ -4072,6 +4549,7 @@ export const Api = {
     title?: string;
     projectId?: string;
     pmoContext?: Record<string, any>;
+    language?: string;
   }): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/conversations`, {
       method: 'POST',
@@ -4103,6 +4581,7 @@ export const Api = {
       tags?: string[];
       pmoContext?: Record<string, any>;
       chatProjectId?: string | null;
+      language?: string;
     }
   ): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/conversations/${id}`, {
@@ -4157,6 +4636,26 @@ export const Api = {
       headers: getHeaders(),
     });
     return handleResponse(res, 'Failed to generate title');
+  },
+
+  /**
+   * Summarize older messages in a conversation (context window management)
+   */
+  summarizeConversation: async (
+    conversationId: string,
+    keepRecent: number = 10
+  ): Promise<{
+    summary: string | null;
+    condensedCount: number;
+    remainingCount: number;
+    skipped?: boolean;
+  }> => {
+    const res = await fetchWithRetry(`${API_URL}/conversations/${conversationId}/summarize`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ keepRecent }),
+    });
+    return handleResponse(res, 'Failed to summarize conversation');
   },
 
   /**
@@ -4795,11 +5294,29 @@ export const Api = {
   // Lifecycle (legacy - use getLifecycleStages instead)
   getCustomerLifecycle: async () => [],
   // Recommended provider
-  getRecommendedProvider: async (context?: any) => ({
-    provider: 'openai',
-    reason: 'Default',
-    recommendation: 'openai',
-  }),
+  getRecommendedProvider: async (tierOrContext?: any) => {
+    // Backwards-compatible signature:
+    // - if string: treat as tier
+    // - if object: read { tier }
+    const tier =
+      typeof tierOrContext === 'string'
+        ? tierOrContext
+        : typeof tierOrContext === 'object'
+          ? tierOrContext?.tier
+          : undefined;
+
+    const params = new URLSearchParams();
+    if (tier) params.set('tier', String(tier));
+
+    const res = await fetch(`${API_URL}/llm/providers/recommended?${params.toString()}`, {
+      headers: getHeaders(),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error((data as any)?.error || 'Failed to fetch recommended provider');
+    }
+    return data;
+  },
   // User API Keys
   getUserApiKeys: async () => [],
   deleteUserApiKey: async (keyId: string) => ({ success: true }),
@@ -4855,8 +5372,13 @@ export const Api = {
   checkIPReputation: async (ip: string) => ({ reputation: 'good', score: 100 }),
   checkDomainReputation: async (domain: string) => ({ reputation: 'good', score: 100 }),
   // Chat projects - Real API implementations
-  getChatProjects: async () => {
-    const response = await fetch(`${API_URL}/chat-projects`, { headers: getHeaders() });
+  getChatProjects: async (options?: { scope?: 'personal' | 'team' }) => {
+    const params = new URLSearchParams();
+    if (options?.scope) params.append('scope', options.scope);
+    const qs = params.toString();
+    const response = await fetch(`${API_URL}/chat-projects${qs ? `?${qs}` : ''}`, {
+      headers: getHeaders(),
+    });
     if (!response.ok) throw new Error('Failed to fetch chat projects');
     return response.json();
   },
@@ -4870,6 +5392,7 @@ export const Api = {
     description?: string;
     color?: string;
     icon?: string;
+    scope?: 'personal' | 'team';
   }) => {
     const response = await fetch(`${API_URL}/chat-projects`, {
       method: 'POST',
@@ -6218,6 +6741,30 @@ export const Api = {
     }
   },
 
+  /**
+   * Generic POST to an authenticated API endpoint
+   * Used by ResponseActions for dynamic AI-suggested API calls
+   */
+  genericPost: async (endpoint: string, data: Record<string, unknown> = {}): Promise<any> => {
+    try {
+      // Ensure endpoint is relative (starts with /api/)
+      const url = endpoint.startsWith('http')
+        ? endpoint
+        : endpoint.startsWith('/api/')
+          ? `${API_URL}${endpoint.replace('/api/', '/')}`
+          : `${API_URL}/${endpoint}`;
+      const res = await fetchWithRetry(url, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      });
+      return handleResponse(res, 'API call failed');
+    } catch (err: any) {
+      console.error('[Api] genericPost error:', err);
+      return { success: false, error: err.message };
+    }
+  },
+
   dismissAIAction: async (actionId: string, reason?: string) => {
     try {
       const res = await fetchWithRetry(`${API_URL}/ai/actions/${actionId}/dismiss`, {
@@ -6584,23 +7131,6 @@ export const Api = {
     return { success: true, settings };
   },
 
-  // Webhooks
-  getWebhooks: async () => {
-    return { webhooks: [] };
-  },
-
-  createWebhook: async (webhook: any) => {
-    return { success: true, webhook: { id: `wh-${Date.now()}`, ...webhook } };
-  },
-
-  updateWebhook: async (_webhookId: string, data: any) => {
-    return { success: true, webhook: data };
-  },
-
-  deleteWebhook: async (webhookId: string) => {
-    return { success: true, webhookId };
-  },
-
   // System/Enterprise
   getSystemAnalytics: async (_period?: string) => {
     return {
@@ -6695,11 +7225,6 @@ export const Api = {
     return { success: true, webhookId };
   },
 
-  // Feedback
-  submitAIFeedback: async (feedback: any) => {
-    return { success: true, feedback };
-  },
-
   // Metrics
   getOrgMetricsEvents: async (_filters?: any) => {
     return { events: [], metrics: {} };
@@ -6761,55 +7286,48 @@ export const Api = {
   },
 
   // List files from cloud provider
-  listCloudFiles: async (providerId: string, folderId?: string) => {
-    console.log(`[CloudAPI] Listing files from ${providerId}, folder: ${folderId}`);
-    // Demo data
-    return {
-      files: [
-        { id: '1', name: 'Dokumenty projektowe', mimeType: 'folder', size: 0, isFolder: true },
-        { id: '2', name: 'Prezentacje', mimeType: 'folder', size: 0, isFolder: true },
-        {
-          id: '3',
-          name: 'Raport Q4 2025.pdf',
-          mimeType: 'application/pdf',
-          size: 2453000,
-          isFolder: false,
-          modifiedAt: '2025-12-15',
-        },
-        {
-          id: '4',
-          name: 'Budżet projektu.xlsx',
-          mimeType: 'application/vnd.ms-excel',
-          size: 156000,
-          isFolder: false,
-          modifiedAt: '2025-12-10',
-        },
-        {
-          id: '5',
-          name: 'Notatki ze spotkania.docx',
-          mimeType: 'application/msword',
-          size: 45000,
-          isFolder: false,
-          modifiedAt: '2025-12-08',
-        },
-      ],
-      nextPageToken: null,
-    };
+  listCloudFiles: async (providerId: string, folderId?: string): Promise<any[]> => {
+    try {
+      const url = folderId
+        ? `${API_URL}/integrations/${providerId}/files?folderId=${folderId}`
+        : `${API_URL}/integrations/${providerId}/files`;
+      const res = await fetch(url, { headers: getHeaders() });
+      if (res.status === 501) {
+        console.warn(`[Api] Cloud provider ${providerId} is not implemented in backend.`);
+        return []; // Return empty as stub fallback
+      }
+      if (!res.ok) throw new Error('Failed to list cloud files');
+      return res.json();
+    } catch (e) {
+      console.error('[Api] Error listing cloud files:', e);
+      return [];
+    }
   },
 
   // Get file download URL
   getCloudFileDownloadUrl: async (providerId: string, fileId: string) => {
     console.log(`[CloudAPI] Getting download URL for ${providerId}/${fileId}`);
     // In real implementation, this would return a signed URL
-    return { downloadUrl: `/api/cloud/${providerId}/files/${fileId}/download` };
+    return { downloadUrl: `${API_URL}/integrations/${providerId}/files/${fileId}/download` };
   },
 
   // Download file from cloud
   downloadCloudFile: async (providerId: string, fileId: string): Promise<Blob> => {
-    console.log(`[CloudAPI] Downloading file ${providerId}/${fileId}`);
-    // In real implementation, this would download the actual file
-    // For demo, return empty blob
-    return new Blob(['Demo file content'], { type: 'text/plain' });
+    try {
+      const res = await fetch(`${API_URL}/integrations/${providerId}/files/${fileId}/download`, {
+        headers: getHeaders(),
+      });
+      if (res.status === 501) {
+        throw new Error('CLOUD_NOT_IMPLEMENTED');
+      }
+      if (!res.ok) throw new Error('Failed to download cloud file');
+      return res.blob();
+    } catch (e: any) {
+      if (e.message === 'CLOUD_NOT_IMPLEMENTED') {
+        throw new Error('Cloud integration is not implemented on the server yet.');
+      }
+      throw e;
+    }
   },
 };
 

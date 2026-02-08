@@ -33,19 +33,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run ESLint
         run: npm run lint
-      
+
       - name: Run TypeScript check
         run: npm run type-check
 
@@ -62,19 +62,19 @@ jobs:
         shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run unit tests (Shard ${{ matrix.shard }})
         run: npx vitest run tests/unit --shard=${{ matrix.shard }}/4 --reporter=junit --outputFile=junit-unit-${{ matrix.shard }}.xml
-      
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -92,19 +92,19 @@ jobs:
     needs: lint-typecheck
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run component tests
         run: npm run test:component -- --reporter=junit --outputFile=junit-component.xml
-      
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -133,21 +133,21 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run integration tests
         run: npm run test:integration -- --reporter=junit --outputFile=junit-integration.xml
         env:
           DATABASE_URL: postgres://iris:iris_test@localhost:5432/iris_test
-      
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -165,23 +165,23 @@ jobs:
     needs: lint-typecheck
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run npm audit
         run: npm audit --audit-level=high
         continue-on-error: true
-      
+
       - name: Run security tests
         run: npm run test:security -- --reporter=junit --outputFile=junit-security.xml
-      
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -199,27 +199,26 @@ jobs:
     needs: [unit-tests, component-tests]
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
-      
+
       - name: Build application
         run: npm run build
-      
+
       - name: Run E2E tests
-        run: npx playwright test --reporter=junit
-        env:
-          E2E_MODE: true
-      
+        # Deterministic spec-based L6 health suite (no web servers required)
+        run: npx playwright test tests/e2e/ai-system-health.spec.ts --reporter=junit
+
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
@@ -229,7 +228,7 @@ jobs:
             e2e-results.xml
             test-results/
           retention-days: 30
-      
+
       - name: Upload screenshots on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -237,6 +236,49 @@ jobs:
           name: e2e-screenshots
           path: test-results/
           retention-days: 7
+
+  # ═══════════════════════════════════════════════════════════════
+  # RUNTIME SMOKE (Playwright + started web servers)
+  # Deterministic AI Chat end-to-end guarantee.
+  # ═══════════════════════════════════════════════════════════════
+  e2e-runtime-smoke:
+    name: 🔥 Runtime Smoke (AI Chat)
+    runs-on: ubuntu-latest
+    needs: [unit-tests, component-tests]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Runtime Smoke (AI Chat)
+        run: npx playwright test tests/e2e/runtime --reporter=junit
+        env:
+          CI: true
+          NODE_ENV: test
+          E2E_MODE: true
+          E2E_USE_WEB_SERVER: 'true'
+          E2E_API_URL: http://127.0.0.1:3001
+          E2E_BASE_URL: http://127.0.0.1:3000
+
+      - name: Upload Runtime Smoke report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-runtime-smoke-report
+          path: |
+            e2e-results.xml
+            test-results/
+          retention-days: 30
 
   # ═══════════════════════════════════════════════════════════════
   # PERFORMANCE TESTS
@@ -247,19 +289,19 @@ jobs:
     needs: [unit-tests]
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run performance tests
         run: npm run test:performance -- --reporter=junit --outputFile=junit-performance.xml
-      
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -277,23 +319,23 @@ jobs:
     needs: [unit-tests]
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Install bc (for numeric comparison)
         run: sudo apt-get update && sudo apt-get install -y bc
-      
+
       - name: Run critical tests with coverage
         run: |
           npm run test:unit:critical -- --coverage --reporter=json-summary || true
-      
+
       - name: Check critical path coverage threshold
         run: |
           if [ -f coverage/coverage-summary.json ]; then
@@ -308,7 +350,7 @@ jobs:
           else
             echo "::warning::Coverage report not found, skipping threshold check"
           fi
-      
+
       - name: Upload critical coverage report
         if: always()
         uses: actions/upload-artifact@v4
@@ -326,26 +368,26 @@ jobs:
     needs: [unit-tests, component-tests, integration-tests]
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run tests with coverage
         run: npm run test:coverage
-      
+
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage/
           retention-days: 30
-      
+
       - name: Check coverage thresholds
         run: |
           COVERAGE=$(cat coverage/coverage-summary.json | jq '.total.lines.pct')
@@ -360,16 +402,25 @@ jobs:
   test-summary:
     name: 📋 Test Summary
     runs-on: ubuntu-latest
-    needs: [unit-tests, component-tests, integration-tests, security-tests, e2e-tests, performance-tests, critical-path-coverage]
+    needs:
+      [
+        unit-tests,
+        component-tests,
+        integration-tests,
+        security-tests,
+        e2e-tests,
+        performance-tests,
+        critical-path-coverage,
+      ]
     if: always()
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: test-artifacts
-      
+
       - name: Generate summary
         run: |
           echo "# 🧪 IRIS 6.0 Test Suite Summary" >> $GITHUB_STEP_SUMMARY

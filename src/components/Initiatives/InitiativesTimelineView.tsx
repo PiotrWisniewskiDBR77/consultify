@@ -35,9 +35,7 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
   const [aiSchedule, setAiSchedule] = useState<any | null>(null);
   const [aiConflicts, setAiConflicts] = useState<any | null>(null);
   const [aiPriorities, setAiPriorities] = useState<any | null>(null);
-  const [aiLoading, setAiLoading] = useState<'schedule' | 'conflicts' | 'priorities' | null>(
-    null
-  );
+  const [aiLoading, setAiLoading] = useState<'schedule' | 'conflicts' | 'priorities' | null>(null);
 
   useEffect(() => {
     setLocalInitiatives(initiatives);
@@ -82,29 +80,24 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
     }));
   }, [dependencies, localInitiatives]);
 
-  const handleUpdateInitiative = useCallback(
-    async (updated: any) => {
-      const { id, plannedStartDate, plannedEndDate } = updated;
-      setLocalInitiatives((prev) =>
-        prev.map((initiative) =>
-          initiative.id === id
-            ? { ...initiative, plannedStartDate, plannedEndDate }
-            : initiative
-        )
-      );
-      try {
-        await Api.patch(`/initiatives/${id}/quick-update`, {
-          plannedStartDate,
-          plannedEndDate,
-        });
-        toast.success('Schedule updated');
-      } catch (error: any) {
-        setLocalInitiatives((prev) => [...prev]);
-        toast.error('Failed to update schedule');
-      }
-    },
-    []
-  );
+  const handleUpdateInitiative = useCallback(async (updated: any) => {
+    const { id, plannedStartDate, plannedEndDate } = updated;
+    setLocalInitiatives((prev) =>
+      prev.map((initiative) =>
+        initiative.id === id ? { ...initiative, plannedStartDate, plannedEndDate } : initiative
+      )
+    );
+    try {
+      await Api.patch(`/initiatives/${id}/quick-update`, {
+        plannedStartDate,
+        plannedEndDate,
+      });
+      toast.success('Schedule updated');
+    } catch (error: any) {
+      setLocalInitiatives((prev) => [...prev]);
+      toast.error('Failed to update schedule');
+    }
+  }, []);
 
   const handleCreateDependency = useCallback(
     async (fromId: string, toId: string, type: 'FINISH_TO_START' | 'START_TO_START') => {

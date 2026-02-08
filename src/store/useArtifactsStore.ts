@@ -73,7 +73,9 @@ export const useArtifactsStore = create<ArtifactsState>()(
         set((state) => {
           const updateInArray = (artifacts: Artifact[]) =>
             artifacts.map((a) =>
-              a.id === id ? { ...a, content, version: a.version + 1, updatedAt: new Date() } : a
+              a.id === id
+                ? { ...a, content, version: (a.version ?? 0) + 1, updatedAt: new Date() }
+                : a
             );
 
           const updatedArtifacts = updateInArray(state.artifacts);
@@ -183,7 +185,9 @@ export const useArtifactsStore = create<ArtifactsState>()(
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `${artifact.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}-${Date.now()}.${extension}`;
+        link.download = `${(artifact.title ?? 'artifact')
+          .replace(/[^a-z0-9]/gi, '_')
+          .toLowerCase()}-${Date.now()}.${extension}`;
         link.click();
         URL.revokeObjectURL(url);
       },

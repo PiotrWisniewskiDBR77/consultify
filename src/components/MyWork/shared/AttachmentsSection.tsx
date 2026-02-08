@@ -6,6 +6,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  ChevronDown,
   Download,
   Eye,
   File,
@@ -44,6 +45,8 @@ interface AttachmentsSectionProps {
   readOnly?: boolean;
   maxFiles?: number;
   maxSizeMB?: number;
+  expanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
@@ -54,6 +57,8 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
   readOnly = false,
   maxFiles = 10,
   maxSizeMB = 25,
+  expanded = false,
+  onToggleExpand,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -85,9 +90,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
       // Validate
       if (attachments.length + files.length > maxFiles) {
         toast.error(
-          isPolish
-            ? `Maksymalnie ${maxFiles} plików`
-            : `Maximum ${maxFiles} files allowed`
+          isPolish ? `Maksymalnie ${maxFiles} plików` : `Maximum ${maxFiles} files allowed`
         );
         return;
       }
@@ -107,9 +110,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
         setUploading(true);
         await onUpload(files);
         toast.success(
-          isPolish
-            ? `Przesłano ${files.length} plik(ów)`
-            : `Uploaded ${files.length} file(s)`
+          isPolish ? `Przesłano ${files.length} plik(ów)` : `Uploaded ${files.length} file(s)`
         );
       } catch (error) {
         console.error('Upload failed', error);
@@ -157,38 +158,35 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-          <Paperclip size={16} />
-          <span className="text-sm font-medium">
-            {isPolish ? 'Załączniki' : 'Attachments'}
-          </span>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-navy-700/50 shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
+    >
+      {/* Collapsible Header */}
+      <motion.button
+        whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
+        whileTap={{ scale: 0.98 }}
+        onClick={onToggleExpand}
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors duration-200"
+      >
+        <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
+          <div className="p-2 rounded-xl bg-blue-500/10 dark:bg-blue-500/20">
+            <Paperclip size={18} className="text-blue-500 dark:text-blue-400" />
+          </div>
+          <span className="text-sm font-semibold">{isPolish ? 'Załączniki' : 'Attachments'}</span>
+        </div>
+        <div className="flex items-center gap-2">
           {attachments.length > 0 && (
-            <span className="px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400">
+            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
               {attachments.length}
             </span>
           )}
+          <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+            <ChevronDown size={18} className="text-slate-400" />
+          </motion.div>
         </div>
-        {!readOnly && (
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading || attachments.length >= maxFiles}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
-              text-primary-600 dark:text-primary-400 
-              hover:bg-primary-50 dark:hover:bg-primary-500/10 
-              transition-colors disabled:opacity-50"
-          >
-            {uploading ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <Plus size={14} />
-            )}
-            <span>{isPolish ? 'Dodaj' : 'Add'}</span>
-          </button>
-        )}
-      </div>
+      </motion.button>
 
       {/* Hidden File Input */}
       <input
@@ -199,117 +197,145 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
         onChange={(e) => handleFileSelect(e.target.files)}
       />
 
-      {/* Drop Zone / Attachments Grid */}
-      <div
-        onDragOver={(e) => {
-          e.preventDefault();
-          if (!readOnly) setDragOver(true);
-        }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={handleDrop}
-        className={`
+      {/* Collapsible Content */}
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0 }}
+            animate={{ height: 'auto' }}
+            exit={{ height: 0 }}
+            className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+          >
+            <div className="p-4">
+              {/* Drop Zone / Attachments Grid */}
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (!readOnly) setDragOver(true);
+                }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={handleDrop}
+                className={`
           min-h-[80px] rounded-lg border-2 border-dashed transition-all
-          ${dragOver
-            ? 'border-primary-400 bg-primary-50 dark:bg-primary-500/10'
-            : 'border-slate-200 dark:border-navy-600'
+          ${
+            dragOver
+              ? 'border-primary-400 bg-primary-50 dark:bg-primary-500/10'
+              : 'border-slate-200 dark:border-navy-600'
           }
           ${attachments.length === 0 ? 'flex items-center justify-center p-6' : 'p-3'}
         `}
-      >
-        {attachments.length === 0 ? (
-          <div className="text-center">
-            <Upload
-              size={32}
-              className="mx-auto mb-2 text-slate-300 dark:text-navy-500"
-            />
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {isPolish
-                ? 'Przeciągnij pliki lub kliknij aby dodać'
-                : 'Drag files here or click to upload'}
-            </p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-              Max {maxSizeMB}MB / {isPolish ? 'plik' : 'file'}
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {attachments.map((attachment) => (
-              <motion.div
-                key={attachment.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="group relative bg-slate-50 dark:bg-navy-800 rounded-lg p-3 border border-slate-200 dark:border-navy-600 hover:border-primary-300 dark:hover:border-primary-500/50 transition-all cursor-pointer"
-                onClick={() => canPreview(attachment.type) && setPreviewAttachment(attachment)}
               >
-                {/* Thumbnail / Icon */}
-                <div className="h-16 flex items-center justify-center mb-2">
-                  {attachment.thumbnailUrl && attachment.type.startsWith('image/') ? (
-                    <img
-                      src={attachment.thumbnailUrl}
-                      alt={attachment.name}
-                      className="max-h-16 max-w-full rounded object-cover"
-                    />
-                  ) : (
-                    getFileIcon(attachment.type, 32)
-                  )}
-                </div>
-
-                {/* File Name */}
-                <p
-                  className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate"
-                  title={attachment.name}
-                >
-                  {attachment.name}
-                </p>
-
-                {/* File Size */}
-                <p className="text-xs text-slate-400 dark:text-slate-500">
-                  {formatFileSize(attachment.size)}
-                </p>
-
-                {/* Hover Actions */}
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                  {canPreview(attachment.type) && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setPreviewAttachment(attachment);
-                      }}
-                      className="p-1.5 rounded bg-white dark:bg-navy-700 shadow-sm hover:bg-slate-100 dark:hover:bg-navy-600"
-                      title={isPolish ? 'Podgląd' : 'Preview'}
-                    >
-                      <Eye size={12} className="text-slate-600 dark:text-slate-300" />
-                    </button>
-                  )}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDownload?.(attachment) || window.open(attachment.url, '_blank');
-                    }}
-                    className="p-1.5 rounded bg-white dark:bg-navy-700 shadow-sm hover:bg-slate-100 dark:hover:bg-navy-600"
-                    title={isPolish ? 'Pobierz' : 'Download'}
+                {attachments.length === 0 ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center py-8"
                   >
-                    <Download size={12} className="text-slate-600 dark:text-slate-300" />
-                  </button>
-                  {!readOnly && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteClick(attachment);
-                      }}
-                      className="p-1.5 rounded bg-white dark:bg-navy-700 shadow-sm hover:bg-red-50 dark:hover:bg-red-500/20"
-                      title={isPolish ? 'Usuń' : 'Delete'}
+                    <motion.div
+                      animate={{ y: [0, -5, 0] }}
+                      transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+                      className="inline-block mb-4 p-4 rounded-2xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 dark:from-blue-500/20 dark:to-cyan-500/20"
                     >
-                      <Trash2 size={12} className="text-red-500" />
-                    </button>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                      <Upload size={40} className="text-blue-500 dark:text-blue-400" />
+                    </motion.div>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
+                      {isPolish
+                        ? 'Przeciągnij pliki lub kliknij aby dodać'
+                        : 'Drag files here or click to upload'}
+                    </p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                      Max {maxSizeMB}MB / {isPolish ? 'plik' : 'file'}
+                    </p>
+                  </motion.div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {attachments.map((attachment) => (
+                      <motion.div
+                        key={attachment.id}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="group relative bg-slate-50 dark:bg-navy-800 rounded-lg p-3 border border-slate-200 dark:border-navy-600 hover:border-primary-300 dark:hover:border-primary-500/50 transition-all cursor-pointer"
+                        onClick={() =>
+                          canPreview(attachment.type) && setPreviewAttachment(attachment)
+                        }
+                      >
+                        {/* Thumbnail / Icon */}
+                        <div className="h-16 flex items-center justify-center mb-2">
+                          {attachment.thumbnailUrl && attachment.type.startsWith('image/') ? (
+                            <img
+                              src={attachment.thumbnailUrl}
+                              alt={attachment.name}
+                              className="max-h-16 max-w-full rounded object-cover"
+                            />
+                          ) : (
+                            getFileIcon(attachment.type, 32)
+                          )}
+                        </div>
+
+                        {/* File Name */}
+                        <p
+                          className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate"
+                          title={attachment.name}
+                        >
+                          {attachment.name}
+                        </p>
+
+                        {/* File Size */}
+                        <p className="text-xs text-slate-400 dark:text-slate-500">
+                          {formatFileSize(attachment.size)}
+                        </p>
+
+                        {/* Hover Actions */}
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                          {canPreview(attachment.type) && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPreviewAttachment(attachment);
+                              }}
+                              className="p-1.5 rounded bg-white dark:bg-navy-700 shadow-sm hover:bg-slate-100 dark:hover:bg-navy-600"
+                              title={isPolish ? 'Podgląd' : 'Preview'}
+                            >
+                              <Eye size={12} className="text-slate-600 dark:text-slate-300" />
+                            </button>
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (onDownload) {
+                                onDownload(attachment);
+                              } else {
+                                window.open(attachment.url, '_blank');
+                              }
+                            }}
+                            className="p-1.5 rounded bg-white dark:bg-navy-700 shadow-sm hover:bg-slate-100 dark:hover:bg-navy-600"
+                            title={isPolish ? 'Pobierz' : 'Download'}
+                          >
+                            <Download size={12} className="text-slate-600 dark:text-slate-300" />
+                          </button>
+                          {!readOnly && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(attachment);
+                              }}
+                              className="p-1.5 rounded bg-white dark:bg-navy-700 shadow-sm hover:bg-red-50 dark:hover:bg-red-500/20"
+                              title={isPolish ? 'Usuń' : 'Delete'}
+                            >
+                              <Trash2 size={12} className="text-red-500" />
+                            </button>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
 
       {/* Preview Modal */}
       <AnimatePresence>
@@ -354,9 +380,9 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                   </button>
                   <button
                     onClick={() =>
-                      navigator.clipboard.writeText(previewAttachment.url).then(() =>
-                        toast.success(isPolish ? 'Link skopiowany' : 'Link copied')
-                      )
+                      navigator.clipboard
+                        .writeText(previewAttachment.url)
+                        .then(() => toast.success(isPolish ? 'Link skopiowany' : 'Link copied'))
                     }
                     className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
                     title={isPolish ? 'Kopiuj link' : 'Copy link'}
@@ -417,7 +443,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 };
 

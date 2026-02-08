@@ -247,7 +247,11 @@ router.patch(
   '/:id',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const report = await managementReportsService.updateReport(req.params.id, req.body, req.userId);
+      const report = await managementReportsService.updateReport(
+        req.params.id,
+        req.body,
+        req.userId
+      );
       return res.json({ success: true, report });
     } catch (error: any) {
       return res.status(400).json({ error: error.message || 'Unable to update report' });
@@ -376,7 +380,11 @@ router.post(
     if (!reportIds || !Array.isArray(reportIds)) {
       return res.status(400).json({ error: 'reportIds are required' });
     }
-    const result = await managementReportsService.bulkExport(reportIds, format || 'pdf', req.userId);
+    const result = await managementReportsService.bulkExport(
+      reportIds,
+      format || 'pdf',
+      req.userId
+    );
     return res.json({ success: true, ...result });
   })
 );

@@ -158,7 +158,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
     return (
       <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 animate-fade-in py-1">
         <Check size={10} className="text-green-500" />
-        {t('chat.feedback.thankYou', 'Dziękujemy za opinię!')}
+        {t('aiChat.feedback.thankYou', 'Thank you for your feedback!')}
       </div>
     );
   }
@@ -175,14 +175,14 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
                 ? 'bg-green-100 dark:bg-green-900/30 text-green-500'
                 : 'hover:bg-green-50 dark:hover:bg-green-900/20 text-slate-400 dark:text-slate-500 hover:text-green-500'
             }`}
-            title={t('chat.actions.helpful', 'Pomocne')}
+            title={t('aiChat.actions.helpful', 'Pomocne')}
           >
             <ThumbsUp size={12} />
           </button>
           <button
             onClick={() => handleInitialRating('negative')}
             className="p-1 rounded transition-colors hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 dark:text-slate-500 hover:text-red-500"
-            title={t('chat.actions.notHelpful', 'Niepomocne')}
+            title={t('aiChat.actions.notHelpful', 'Niepomocne')}
           >
             <ThumbsDown size={12} />
           </button>
@@ -197,7 +197,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-          {t('chat.feedback.helpUsImprove', 'Pomóż nam się poprawić')}
+          {t('aiChat.feedback.helpUsImprove', 'Pomóż nam się poprawić')}
         </span>
         <button
           onClick={() => {
@@ -214,7 +214,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
       {/* Length feedback */}
       <div className="space-y-1">
         <span className="text-[10px] text-slate-500 dark:text-slate-400">
-          {t('chat.feedback.length', 'Długość odpowiedzi:')}
+          {t('aiChat.feedback.length', 'Długość odpowiedzi:')}
         </span>
         <div className="flex gap-1">
           {(['too-short', 'just-right', 'too-long'] as LengthFeedback[]).map((opt) => (
@@ -227,9 +227,9 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
-              {opt === 'too-short' && t('chat.feedback.tooShort', 'Za krótka')}
-              {opt === 'just-right' && t('chat.feedback.justRight', 'W sam raz')}
-              {opt === 'too-long' && t('chat.feedback.tooLong', 'Za długa')}
+              {opt === 'too-short' && t('aiChat.feedback.tooShort', 'Za krótka')}
+              {opt === 'just-right' && t('aiChat.feedback.justRight', 'W sam raz')}
+              {opt === 'too-long' && t('aiChat.feedback.tooLong', 'Za długa')}
             </button>
           ))}
         </div>
@@ -238,7 +238,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
       {/* Detail feedback */}
       <div className="space-y-1">
         <span className="text-[10px] text-slate-500 dark:text-slate-400">
-          {t('chat.feedback.detail', 'Poziom szczegółowości:')}
+          {t('aiChat.feedback.detail', 'Poziom szczegółowości:')}
         </span>
         <div className="flex gap-1">
           {(['too-little', 'just-right', 'too-much'] as DetailFeedback[]).map((opt) => (
@@ -251,9 +251,9 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
-              {opt === 'too-little' && t('chat.feedback.tooLittle', 'Za mało')}
-              {opt === 'just-right' && t('chat.feedback.justRight', 'W sam raz')}
-              {opt === 'too-much' && t('chat.feedback.tooMuch', 'Za dużo')}
+              {opt === 'too-little' && t('aiChat.feedback.tooLittle', 'Za mało')}
+              {opt === 'just-right' && t('aiChat.feedback.justRight', 'W sam raz')}
+              {opt === 'too-much' && t('aiChat.feedback.tooMuch', 'Za dużo')}
             </button>
           ))}
         </div>
@@ -265,7 +265,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
         className="flex items-center gap-1 text-[10px] text-primary-600 dark:text-primary-400 hover:underline"
       >
         {showAdvanced ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
-        {t('chat.feedback.advancedOptions', 'Więcej opcji')}
+        {t('aiChat.feedback.advancedOptions', 'Więcej opcji')}
       </button>
 
       {/* Advanced feedback options */}
@@ -275,37 +275,37 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
           <RatingSlider
             value={actionability}
             onChange={setActionability}
-            label={t('chat.feedback.actionability', 'Przydatność:')}
-            lowLabel={t('chat.feedback.notUseful', 'Mało')}
-            highLabel={t('chat.feedback.veryUseful', 'Bardzo')}
+            label={t('aiChat.feedback.actionability', 'Przydatność:')}
+            lowLabel={t('aiChat.feedback.notUseful', 'Mało')}
+            highLabel={t('aiChat.feedback.veryUseful', 'Bardzo')}
           />
 
           {/* Accuracy rating */}
           <RatingSlider
             value={accuracy}
             onChange={setAccuracy}
-            label={t('chat.feedback.accuracy', 'Trafność:')}
-            lowLabel={t('chat.feedback.inaccurate', 'Nietrafna')}
-            highLabel={t('chat.feedback.veryAccurate', 'Trafna')}
+            label={t('aiChat.feedback.accuracy', 'Trafność:')}
+            lowLabel={t('aiChat.feedback.inaccurate', 'Nietrafna')}
+            highLabel={t('aiChat.feedback.veryAccurate', 'Trafna')}
           />
 
           {/* Expected format */}
           <div className="space-y-1">
             <span className="text-[10px] text-slate-500 dark:text-slate-400">
-              {t('chat.feedback.preferredFormat', 'Preferowany format:')}
+              {t('aiChat.feedback.preferredFormat', 'Preferowany format:')}
             </span>
             <div className="flex flex-wrap gap-1">
               {(
                 [
-                  { value: 'bullets', label: t('chat.feedback.formatBullets', 'Punkty') },
-                  { value: 'paragraphs', label: t('chat.feedback.formatParagraphs', 'Akapity') },
+                  { value: 'bullets', label: t('aiChat.feedback.formatBullets', 'Punkty') },
+                  { value: 'paragraphs', label: t('aiChat.feedback.formatParagraphs', 'Akapity') },
                   {
                     value: 'structured',
-                    label: t('chat.feedback.formatStructured', 'Strukturalny'),
+                    label: t('aiChat.feedback.formatStructured', 'Strukturalny'),
                   },
                   {
                     value: 'conversational',
-                    label: t('chat.feedback.formatConversational', 'Swobodny'),
+                    label: t('aiChat.feedback.formatConversational', 'Swobodny'),
                   },
                 ] as { value: FormatPreference; label: string }[]
               ).map((opt) => (
@@ -327,7 +327,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
           {/* Missing info textarea */}
           <div className="space-y-1">
             <span className="text-[10px] text-slate-500 dark:text-slate-400">
-              {t('chat.feedback.missingInfo', 'Czego brakowało? (opcjonalnie)')}
+              {t('aiChat.feedback.missingInfo', 'Czego brakowało? (opcjonalnie)')}
             </span>
             <textarea
               value={missingInfo}
@@ -348,7 +348,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
         onClick={handleSubmitDetailed}
         className="w-full px-3 py-1.5 text-[11px] font-medium bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
       >
-        {t('chat.feedback.submit', 'Wyślij opinię')}
+        {t('aiChat.feedback.submit', 'Wyślij opinię')}
       </button>
     </div>
   );

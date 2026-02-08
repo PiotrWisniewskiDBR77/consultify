@@ -10,7 +10,19 @@
 
 ## 📋 Executive Summary
 
-System AI Chat w Consultinity jest **w 100% gotowy do produkcji** i audytu przez inwestorów. Wszystkie komponenty zostały zaimplementowane, przetestowane i udokumentowane zgodnie z najwyższymi standardami enterprise.
+System AI Chat w Consultinity jest **produkcyjnie gotowy dla core Chat + streaming + governance (HITL, RBAC, budżety)** i audytu przez inwestorów.
+
+**Uwaga dot. zakresu:** Zaawansowane podsystemy (np. embeddings/RAG rozszerzony, memory/learning test suites L6.9–L6.17) mają osobny raport sprawności i plan testów w `wdrozenia/modules/tools/AI-CHAT-SYSTEM-HEALTH.md`. “Production ready” w tym dokumencie dotyczy zakresu endpointów i komponentów opisanych poniżej.
+
+---
+
+## 🔄 Change Log (Post-Approval)
+
+### 2026-02-03 — Streaming contract + model routing alignment
+
+- **/api/ai/chat/stream contract updated** to explicitly accept `aiModes`, `knowledgeSources`, `responseStyle`, `selectedTier`, `selectedModelId`, and top-level context hints (`projectId`, `screenContext`, `focusMode`).
+- **AIPipeline model selection** is routed via `ModelRouter` (tiers + org settings) instead of hard-coded defaults.
+- **Frontend** now forwards tier/model selection to streaming requests and uses backend `/api/llm/providers/recommended` for “current routing” display.
 
 ---
 
@@ -18,66 +30,66 @@ System AI Chat w Consultinity jest **w 100% gotowy do produkcji** i audytu przez
 
 ### 1. Backend Services (100%)
 
-| Component | Status | Lines | Coverage |
-|-----------|--------|-------|----------|
-| **AIMemoryManager** | ✅ Complete | 1,235 | Session, Project, Org, User memory |
-| **AIActionExecutor** | ✅ Complete | 690 | Policy, Approval, Execution workflow |
-| **AILearningService** | ✅ Complete | 615 | Feedback, Patterns, Quality metrics |
-| **AIPipeline** | ✅ Complete | ~2,000 | LLM orchestration, streaming |
-| **AIContextBuilder** | ✅ Complete | ~800 | Multi-layer context assembly |
-| **AIPolicyEngine** | ✅ Complete | ~500 | Role-based AI permissions |
+| Component             | Status      | Lines  | Coverage                             |
+| --------------------- | ----------- | ------ | ------------------------------------ |
+| **AIMemoryManager**   | ✅ Complete | 1,235  | Session, Project, Org, User memory   |
+| **AIActionExecutor**  | ✅ Complete | 690    | Policy, Approval, Execution workflow |
+| **AILearningService** | ✅ Complete | 615    | Feedback, Patterns, Quality metrics  |
+| **AIPipeline**        | ✅ Complete | ~2,000 | LLM orchestration, streaming         |
+| **AIContextBuilder**  | ✅ Complete | ~800   | Multi-layer context assembly         |
+| **AIPolicyEngine**    | ✅ Complete | ~500   | Role-based AI permissions            |
 
 ### 2. API Routes (100%)
 
-| Endpoint Group | Routes | Auth | Rate Limited |
-|----------------|--------|------|--------------|
-| `/api/ai/context` | 2 | ✅ | ✅ |
-| `/api/ai/chat/*` | 3 | ✅ | ✅ |
-| `/api/ai/memory/*` | 8 | ✅ | ✅ |
-| `/api/ai/actions/*` | 7 | ✅ | ✅ |
-| `/api/ai/audit/*` | 3 | ✅ | ✅ |
-| `/api/ai/suggestions/*` | 4 | ✅ | ✅ |
-| `/api/ai/quality/*` | 3 | ✅ | ✅ |
-| `/api/ai/feedback` | 2 | ✅ | ✅ |
-| `/api/ai/health` | 2 | Public | ✅ |
+| Endpoint Group          | Routes | Auth   | Rate Limited |
+| ----------------------- | ------ | ------ | ------------ |
+| `/api/ai/context`       | 2      | ✅     | ✅           |
+| `/api/ai/chat/*`        | 3      | ✅     | ✅           |
+| `/api/ai/memory/*`      | 8      | ✅     | ✅           |
+| `/api/ai/actions/*`     | 7      | ✅     | ✅           |
+| `/api/ai/audit/*`       | 3      | ✅     | ✅           |
+| `/api/ai/suggestions/*` | 4      | ✅     | ✅           |
+| `/api/ai/quality/*`     | 3      | ✅     | ✅           |
+| `/api/ai/feedback`      | 2      | ✅     | ✅           |
+| `/api/ai/health`        | 2      | Public | ✅           |
 
 ### 3. Database Schema (100%)
 
-| Table | Purpose | Migration |
-|-------|---------|-----------|
-| `ai_user_memory` | User preferences & context | 250_ai_memory_system.sql |
-| `ai_org_memory` | Organization terminology | 250_ai_memory_system.sql |
-| `ai_actions_config` | Allowed AI actions | 250_ai_memory_system.sql |
-| `ai_actions_log` | Action audit trail | 250_ai_memory_system.sql |
-| `ai_conversation_context` | Conversation state | 250_ai_memory_system.sql |
-| `ai_project_memory` | Project decisions & transitions | 075_ai_user_memory.sql |
-| `ai_user_preferences` | AI tone/style preferences | existing |
-| `ai_feedback` | User feedback collection | existing |
-| `ai_learning_patterns` | Learned behavior patterns | existing |
-| `ai_quality_metrics` | Daily quality scores | existing |
+| Table                     | Purpose                         | Migration                |
+| ------------------------- | ------------------------------- | ------------------------ |
+| `ai_user_memory`          | User preferences & context      | 250_ai_memory_system.sql |
+| `ai_org_memory`           | Organization terminology        | 250_ai_memory_system.sql |
+| `ai_actions_config`       | Allowed AI actions              | 250_ai_memory_system.sql |
+| `ai_actions_log`          | Action audit trail              | 250_ai_memory_system.sql |
+| `ai_conversation_context` | Conversation state              | 250_ai_memory_system.sql |
+| `ai_project_memory`       | Project decisions & transitions | 075_ai_user_memory.sql   |
+| `ai_user_preferences`     | AI tone/style preferences       | existing                 |
+| `ai_feedback`             | User feedback collection        | existing                 |
+| `ai_learning_patterns`    | Learned behavior patterns       | existing                 |
+| `ai_quality_metrics`      | Daily quality scores            | existing                 |
 
 ### 4. Frontend Components (100%)
 
-| Component | Status | Features |
-|-----------|--------|----------|
-| `UnifiedChatPanel` | ✅ | Main chat interface |
-| `ContextBadge` | ✅ | Visual context indicator |
-| `AIActionCard` | ✅ | Action approval cards |
-| `FocusModeSelector` | ✅ | Knowledge source dropdown |
-| `ToolsMenu` | ✅ | AI modes & quick actions |
-| `ConversationList` | ✅ | Time-grouped history |
-| `ChatHistorySidebar` | ✅ | Folders & search |
-| `InlineResponseFeedback` | ✅ | Thumbs up/down |
+| Component                | Status | Features                  |
+| ------------------------ | ------ | ------------------------- |
+| `UnifiedChatPanel`       | ✅     | Main chat interface       |
+| `ContextBadge`           | ✅     | Visual context indicator  |
+| `AIActionCard`           | ✅     | Action approval cards     |
+| `FocusModeSelector`      | ✅     | Knowledge source dropdown |
+| `ToolsMenu`              | ✅     | AI modes & quick actions  |
+| `ConversationList`       | ✅     | Time-grouped history      |
+| `ChatHistorySidebar`     | ✅     | Folders & search          |
+| `InlineResponseFeedback` | ✅     | Thumbs up/down            |
 
 ### 5. Frontend Services (100%)
 
-| Service | Status | Purpose |
-|---------|--------|---------|
-| `MemoryService` | ✅ | User/Org memory management |
-| `FeedbackLearningService` | ✅ | Feedback → Learning |
-| `useAIActionsStore` | ✅ | Actions state management |
-| `useConversationStore` | ✅ | Conversation state |
-| `useChatFolderStore` | ✅ | Chat organization |
+| Service                   | Status | Purpose                    |
+| ------------------------- | ------ | -------------------------- |
+| `MemoryService`           | ✅     | User/Org memory management |
+| `FeedbackLearningService` | ✅     | Feedback → Learning        |
+| `useAIActionsStore`       | ✅     | Actions state management   |
+| `useConversationStore`    | ✅     | Conversation state         |
+| `useChatFolderStore`      | ✅     | Chat organization          |
 
 ---
 
@@ -118,12 +130,12 @@ System AI Chat w Consultinity jest **w 100% gotowy do produkcji** i audytu przez
 
 ### Testing Coverage
 
-| Test Type | Status | Details |
-|-----------|--------|---------|
-| Unit Tests | ✅ | Services, utils, hooks |
-| Integration Tests | ✅ | API endpoints |
-| E2E Tests | ✅ | Full conversation flows |
-| Security Tests | ✅ | Auth, RBAC, injection |
+| Test Type         | Status | Details                 |
+| ----------------- | ------ | ----------------------- |
+| Unit Tests        | ✅     | Services, utils, hooks  |
+| Integration Tests | ✅     | API endpoints           |
+| E2E Tests         | ✅     | Full conversation flows |
+| Security Tests    | ✅     | Auth, RBAC, injection   |
 
 ### Code Quality
 
@@ -145,28 +157,28 @@ System AI Chat w Consultinity jest **w 100% gotowy do produkcji** i audytu przez
 
 ### Technical Documentation
 
-| Document | Status | Path |
-|----------|--------|------|
-| System Design | ✅ | `docs/AI_CHAT_SYSTEM_DESIGN.md` |
-| Data Model | ✅ | `docs/AI_CHAT_DATA_MODEL.md` |
-| API Specification | ✅ | `docs/api/AI_CHAT_API.md` |
-| Implementation Plan | ✅ | `docs/AI_CHAT_IMPLEMENTATION_PLAN.md` |
+| Document            | Status | Path                                  |
+| ------------------- | ------ | ------------------------------------- |
+| System Design       | ✅     | `docs/AI_CHAT_SYSTEM_DESIGN.md`       |
+| Data Model          | ✅     | `docs/AI_CHAT_DATA_MODEL.md`          |
+| API Specification   | ✅     | `docs/api/AI_CHAT_API.md`             |
+| Implementation Plan | ✅     | `docs/AI_CHAT_IMPLEMENTATION_PLAN.md` |
 
 ### Flow Documentation
 
-| Document | Status | Path |
-|----------|--------|------|
-| Integration Map | ✅ | `docs/flows/AI_CHAT_INTEGRATION_MAP.md` |
-| Context Flow | ✅ | `docs/flows/AI_CONTEXT_FLOW.md` |
-| Actions Flow | ✅ | `docs/flows/AI_ACTIONS_FLOW.md` |
-| Data Flow | ✅ | `docs/flows/AI_DATA_FLOW.md` |
-| Main Flow | ✅ | `docs/flows/core/AI_CHAT_ASSISTANCE_FLOW.md` |
+| Document        | Status | Path                                         |
+| --------------- | ------ | -------------------------------------------- |
+| Integration Map | ✅     | `docs/flows/AI_CHAT_INTEGRATION_MAP.md`      |
+| Context Flow    | ✅     | `docs/flows/AI_CONTEXT_FLOW.md`              |
+| Actions Flow    | ✅     | `docs/flows/AI_ACTIONS_FLOW.md`              |
+| Data Flow       | ✅     | `docs/flows/AI_DATA_FLOW.md`                 |
+| Main Flow       | ✅     | `docs/flows/core/AI_CHAT_ASSISTANCE_FLOW.md` |
 
 ### Testing Documentation
 
-| Document | Status | Path |
-|----------|--------|------|
-| Integration Tests | ✅ | `docs/testing/AI_CHAT_INTEGRATION_TESTS.md` |
+| Document          | Status | Path                                        |
+| ----------------- | ------ | ------------------------------------------- |
+| Integration Tests | ✅     | `docs/testing/AI_CHAT_INTEGRATION_TESTS.md` |
 
 ---
 
@@ -274,14 +286,14 @@ GET /api/ai/quality/aggregate   → Quality scores
 
 ## ✅ Final Sign-Off
 
-| Area | Owner | Status | Date |
-|------|-------|--------|------|
-| Backend Implementation | Engineering | ✅ Complete | 2026-01-11 |
-| Frontend Implementation | Engineering | ✅ Complete | 2026-01-11 |
-| API Documentation | Engineering | ✅ Complete | 2026-01-11 |
-| Security Review | Security | ✅ Approved | 2026-01-11 |
-| Performance Testing | QA | ✅ Passed | 2026-01-11 |
-| Documentation | Technical Writing | ✅ Complete | 2026-01-11 |
+| Area                    | Owner             | Status      | Date       |
+| ----------------------- | ----------------- | ----------- | ---------- |
+| Backend Implementation  | Engineering       | ✅ Complete | 2026-01-11 |
+| Frontend Implementation | Engineering       | ✅ Complete | 2026-01-11 |
+| API Documentation       | Engineering       | ✅ Complete | 2026-01-11 |
+| Security Review         | Security          | ✅ Approved | 2026-01-11 |
+| Performance Testing     | QA                | ✅ Passed   | 2026-01-11 |
+| Documentation           | Technical Writing | ✅ Complete | 2026-01-11 |
 
 ---
 

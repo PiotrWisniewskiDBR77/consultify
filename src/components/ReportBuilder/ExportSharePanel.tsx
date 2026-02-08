@@ -1,0 +1,419 @@
+/**
+ * ExportSharePanel
+ *
+ * Panel for exporting reports to PDF and creating/managing share links.
+ */
+
+import {
+  Calendar,
+  Check,
+  Copy,
+  Download,
+  Eye,
+  FileText,
+  Link2,
+  Loader2,
+  Lock,
+  Share2,
+  Trash2,
+  X,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+// ==========================================
+// TYPES
+// ==========================================
+
+interface ShareLink {
+  id: string;
+  token: string;
+  url: string;
+  hasPassword: boolean;
+  expiresAt?: string;
+  viewCount: number;
+  createdAt: string;
+}
+
+interface ExportSharePanelProps {
+  reportId: string;
+  reportTitle?: string;
+  reportStatus: string;
+  onExportPdf: () => Promise<void>;
+  onExportPptx?: () => Promise<void>;
+  onExportWord?: () => Promise<void>;
+  onCreateShareLink: (options?: {
+    password?: string;
+    expiresInDays?: number;
+    showCompanyLogo?: boolean;
+    showConsultinityBranding?: boolean;
+    customMessage?: string;
+  }) => Promise<{
+    id: string;
+    token: string;
+    url: string;
+    hasPassword: boolean;
+    expiresAt?: string;
+  } | null>;
+  onGetShareLinks: () => Promise<ShareLink[] | null>;
+  onRevokeShareLink: (linkId: string) => Promise<boolean>;
+  isLoading?: boolean;
+}
+
+// ==========================================
+// COMPONENT
+// ==========================================
+
+export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
+  reportId,
+  reportTitle,
+  reportStatus,
+  onExportPdf,
+  onExportPptx,
+  onExportWord,
+  onCreateShareLink,
+  onGetShareLinks,
+  onRevokeShareLink,
+  isLoading = false,
+}) => {
+  const { i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
+
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareLinks, setShareLinks] = useState<ShareLink[]>([]);
+  const [isLoadingLinks, setIsLoadingLinks] = useState(false);
+  const [isCreatingLink, setIsCreatingLink] = useState(false);
+  const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
+
+  // Share link form state
+  const [password, setPassword] = useState('');
+  const [expiresInDays, setExpiresInDays] = useState<number | ''>('');
+  const [customMessage, setCustomMessage] = useState('');
+  const [showBranding, setShowBranding] = useState(true);
+
+  // Load share links when modal opens
+  useEffect(() => {
+    if (showShareModal) {
+      loadShareLinks();
+    }
+  }, [showShareModal]);
+
+  const loadShareLinks = async () => {
+    setIsLoadingLinks(true);
+    const links = await onGetShareLinks();
+    setShareLinks(links || []);
+    setIsLoadingLinks(false);
+  };
+
+  const handleExportPdf = async () => {
+    await onExportPdf();
+  };
+
+  const handleExportPptx = async () => {
+    if (!onExportPptx) return;
+    await onExportPptx();
+  };
+
+  const handleExportWord = async () => {
+    if (!onExportWord) return;
+    await onExportWord();
+  };
+
+  const handleCreateLink = async () => {
+    setIsCreatingLink(true);
+    const link = await onCreateShareLink({
+      password: password || undefined,
+      expiresInDays: expiresInDays ? Number(expiresInDays) : undefined,
+      customMessage: customMessage || undefined,
+      showConsultinityBranding: showBranding,
+      showCompanyLogo: true,
+    });
+
+    if (link) {
+      setShareLinks((prev) => [
+        {
+          ...link,
+          viewCount: 0,
+          createdAt: new Date().toISOString(),
+        },
+        ...prev,
+      ]);
+      // Reset form
+      setPassword('');
+      setExpiresInDays('');
+      setCustomMessage('');
+    }
+    setIsCreatingLink(false);
+  };
+
+  const handleRevokeLink = async (linkId: string) => {
+    const success = await onRevokeShareLink(linkId);
+    if (success) {
+      setShareLinks((prev) => prev.filter((l) => l.id !== linkId));
+    }
+  };
+
+  const handleCopyLink = useCallback((link: ShareLink) => {
+    const fullUrl = `${window.location.origin}${link.url}`;
+    navigator.clipboard.writeText(fullUrl);
+    setCopiedLinkId(link.id);
+    setTimeout(() => setCopiedLinkId(null), 2000);
+  }, []);
+
+  const canShare = ['GENERATED', 'IN_REVIEW', 'APPROVED', 'UTILIZED'].includes(reportStatus);
+
+  return (
+    <div className="flex items-center gap-2">
+      {/* Export PDF Button */}
+      <button
+        onClick={handleExportPdf}
+        disabled={isLoading}
+        className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
+      >
+        {isLoading ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <Download className="w-4 h-4" />
+        )}
+        <span>PDF</span>
+      </button>
+
+      {/* Export PPTX Button */}
+      {onExportPptx && (
+        <button
+          onClick={handleExportPptx}
+          disabled={isLoading}
+          className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
+        >
+          {isLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Download className="w-4 h-4" />
+          )}
+          <span>PPTX</span>
+        </button>
+      )}
+
+      {/* Export Word Button */}
+      {onExportWord && (
+        <button
+          onClick={handleExportWord}
+          disabled={isLoading}
+          className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
+        >
+          {isLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <FileText className="w-4 h-4" />
+          )}
+          <span>{isPl ? 'Word' : 'Word'}</span>
+        </button>
+      )}
+
+      {/* Share Button */}
+      <button
+        onClick={() => setShowShareModal(true)}
+        disabled={!canShare}
+        className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        title={
+          !canShare ? (isPl ? 'Raport musi być wygenerowany' : 'Report must be generated') : ''
+        }
+      >
+        <Share2 className="w-4 h-4" />
+        <span>{isPl ? 'Udostępnij' : 'Share'}</span>
+      </button>
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                <Share2 className="w-5 h-5 text-blue-500" />
+                {isPl ? 'Udostępnij Raport' : 'Share Report'}
+              </h3>
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+              {/* Create New Link Section */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  {isPl ? 'Utwórz nowy link' : 'Create New Link'}
+                </h4>
+
+                {/* Password */}
+                <div>
+                  <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
+                    <Lock className="w-3 h-3 inline mr-1" />
+                    {isPl ? 'Hasło (opcjonalne)' : 'Password (optional)'}
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={
+                      isPl
+                        ? 'Pozostaw puste dla publicznego dostępu'
+                        : 'Leave empty for public access'
+                    }
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                  />
+                </div>
+
+                {/* Expiration */}
+                <div>
+                  <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
+                    <Calendar className="w-3 h-3 inline mr-1" />
+                    {isPl ? 'Wygasa po (dni)' : 'Expires after (days)'}
+                  </label>
+                  <input
+                    type="number"
+                    value={expiresInDays}
+                    onChange={(e) => setExpiresInDays(e.target.value ? Number(e.target.value) : '')}
+                    placeholder={
+                      isPl
+                        ? 'Pozostaw puste dla linku bez wygaśnięcia'
+                        : 'Leave empty for no expiration'
+                    }
+                    min={1}
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                  />
+                </div>
+
+                {/* Custom Message */}
+                <div>
+                  <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
+                    <FileText className="w-3 h-3 inline mr-1" />
+                    {isPl ? 'Wiadomość (opcjonalna)' : 'Message (optional)'}
+                  </label>
+                  <input
+                    type="text"
+                    value={customMessage}
+                    onChange={(e) => setCustomMessage(e.target.value)}
+                    placeholder={
+                      isPl ? 'Np. "Raport dla zarządu"' : 'E.g., "Report for management"'
+                    }
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                  />
+                </div>
+
+                {/* Branding Toggle */}
+                <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showBranding}
+                    onChange={(e) => setShowBranding(e.target.checked)}
+                    className="rounded border-slate-300"
+                  />
+                  {isPl ? 'Pokaż branding Consultinity' : 'Show Consultinity branding'}
+                </label>
+
+                <button
+                  onClick={handleCreateLink}
+                  disabled={isCreatingLink}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {isCreatingLink ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Link2 className="w-4 h-4" />
+                  )}
+                  {isPl ? 'Utwórz Link' : 'Create Link'}
+                </button>
+              </div>
+
+              {/* Existing Links Section */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  {isPl ? 'Aktywne linki' : 'Active Links'}
+                </h4>
+
+                {isLoadingLinks ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+                  </div>
+                ) : shareLinks.length === 0 ? (
+                  <div className="text-center py-8 text-slate-500">
+                    {isPl ? 'Brak aktywnych linków' : 'No active links'}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {shareLinks.map((link) => (
+                      <div
+                        key={link.id}
+                        className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-slate-700"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 text-sm text-slate-900 dark:text-white">
+                            <Link2 className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                            <span className="truncate font-mono text-xs">{link.url}</span>
+                            {link.hasPassword && (
+                              <Lock className="w-3 h-3 text-amber-500 flex-shrink-0" />
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+                            <span className="flex items-center gap-1">
+                              <Eye className="w-3 h-3" />
+                              {link.viewCount} {isPl ? 'wyświetleń' : 'views'}
+                            </span>
+                            {link.expiresAt && (
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {isPl ? 'Wygasa' : 'Expires'}:{' '}
+                                {new Date(link.expiresAt).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 ml-2">
+                          <button
+                            onClick={() => handleCopyLink(link)}
+                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+                            title={isPl ? 'Kopiuj link' : 'Copy link'}
+                          >
+                            {copiedLinkId === link.id ? (
+                              <Check className="w-4 h-4 text-green-500" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => handleRevokeLink(link.id)}
+                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                            title={isPl ? 'Usuń link' : 'Revoke link'}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-slate-200 dark:border-slate-700">
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="w-full px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+              >
+                {isPl ? 'Zamknij' : 'Close'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ExportSharePanel;

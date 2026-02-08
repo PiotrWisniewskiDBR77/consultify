@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { beforeAll, vi, beforeEach, afterEach } from 'vitest';
+import { beforeAll, vi, beforeEach } from 'vitest';
 import { mockLLMApi } from './__mocks__/llmApi.js';
 import { setupAutoCleanup } from './helpers/testCleanup';
 
@@ -12,79 +12,43 @@ setupAutoCleanup();
 
 // Global mock for react-i18next to prevent "Cannot read properties of undefined (reading 'en')" errors
 vi.mock('react-i18next', () => {
-  // Helper function to create nested translation objects with language properties
-  const createTranslationObject = (key: string, defaultValue?: any): any => {
-    // If defaultValue is provided and is an object, use it
-    if (defaultValue && typeof defaultValue === 'object' && !Array.isArray(defaultValue)) {
-      return defaultValue;
-    }
+  // NOTE:
+  // Component tests were hitting OOM with stacks involving `Builtins_ProxyGetProperty`.
+  // The previous mock created/cached many Proxies (potentially unbounded across a large suite).
+  // For tests we only need:
+  // - `t()` to return a stable value
+  // - `t(..., { returnObjects: true })` to return something that supports `.en` access
+  //   and deep property/indexing without allocating new objects indefinitely.
+  //
+  // This singleton proxy returns itself for any nested property/index access, and returns
+  // a deterministic string for language access. It is intentionally *key-agnostic* to
+  // keep memory usage bounded across the entire test run.
+  const LANGS = new Set(['en', 'pl', 'de', 'fr', 'es', 'it', 'ja', 'zh']);
+  const RETURN_OBJECTS_LEAF = '__i18n__';
 
-    // Create a proxy that handles all property access
-    return new Proxy(
-      {},
-      {
-        get(target, prop: string) {
-          // Handle language properties (.en, .pl, etc.) - return the key or a safe value
-          if (['en', 'pl', 'de', 'fr', 'es', 'it', 'ja', 'zh'].includes(prop)) {
-            return defaultValue || key;
-          }
-          // Handle common nested properties that might be accessed
-          if (
-            [
-              'scenarios',
-              'deepDive',
-              'recommended',
-              'title',
-              'subtitle',
-              'name',
-              'description',
-              'gains',
-              'sacrifices',
-              'narrative',
-            ].includes(prop)
-          ) {
-            return createTranslationObject(`${key}.${prop}`);
-          }
-          // Handle array access (e.g., t.scenarios[id])
-          if (typeof prop === 'string' && /^[a-zA-Z0-9_-]+$/.test(prop)) {
-            return createTranslationObject(`${key}.${prop}`);
-          }
-          // Handle toString/valueOf for string conversion
-          if (prop === 'toString' || prop === 'valueOf') {
-            return () => defaultValue || key;
-          }
-          // Handle undefined properties gracefully
-          if (typeof prop === 'symbol' && prop === Symbol.toPrimitive) {
-            return () => defaultValue || key;
-          }
-          // Return undefined for unknown properties (but don't throw)
-          return undefined;
-        },
-        // Make it work with Object.keys and similar
-        ownKeys() {
-          return ['en', 'pl', 'scenarios', 'deepDive', 'recommended'];
-        },
-        has(target, prop) {
-          return (
-            ['en', 'pl', 'scenarios', 'deepDive', 'recommended', 'toString', 'valueOf'].includes(
-              prop as string
-            ) ||
-            (typeof prop === 'string' && /^[a-zA-Z0-9_-]+$/.test(prop))
-          );
-        },
-        getOwnPropertyDescriptor(target, prop) {
-          if (this.get) {
-            return {
-              enumerable: true,
-              configurable: true,
-              value: this.get(target, prop, target),
-            };
-          }
-          return undefined;
-        },
+  const returnObjectsProxy: any = new Proxy(Object.create(null), {
+    get(_target, prop: any) {
+      if (typeof prop === 'symbol') {
+        if (prop === Symbol.toPrimitive) return () => RETURN_OBJECTS_LEAF;
+        return undefined;
       }
-    );
-  };
+
+      if (prop === 'toString' || prop === 'valueOf') return () => RETURN_OBJECTS_LEAF;
+      if (LANGS.has(String(prop))) return RETURN_OBJECTS_LEAF;
+
+      // Allow deep chaining/indexing without allocating new proxies/objects.
+      return returnObjectsProxy;
+    },
+    ownKeys() {
+      return Array.from(LANGS);
+    },
+    has() {
+      return true;
+    },
+    getOwnPropertyDescriptor() {
+      return { enumerable: true, configurable: true };
+    },
+  });
 
   return {
     useTranslation: () => ({
@@ -95,7 +59,7 @@ vi.mock('react-i18next', () => {
         }
         // Handle returnObjects option
         if (options?.returnObjects) {
-          return createTranslationObject(key, options.defaultValue);
+          return returnObjectsProxy;
         }
         // Handle interpolation
         if (options && typeof options === 'object' && !options.returnObjects) {
@@ -410,6 +374,10 @@ vi.mock('../server/services/emailService.js', () => ({
     send: vi.fn().mockResolvedValue(true),
     sendEmail: vi.fn().mockResolvedValue(true),
   },
+  // Named exports used by some unit tests
+  send: vi.fn().mockResolvedValue(true),
+  sendEmail: vi.fn().mockResolvedValue(true),
+  setDependencies: vi.fn(),
 }));
 
 vi.mock('../server/services/notificationService.js', () => ({
@@ -581,6 +549,7 @@ vi.mock('@/services/api', () => ({
       .mockResolvedValue({ overview: {}, recentActivity: [], quickStats: {} }),
     getRecentActivity: vi.fn().mockResolvedValue([]),
     getQuickStats: vi.fn().mockResolvedValue({}),
+    getAnalysisBenefits: vi.fn().mockResolvedValue([]),
 
     // Tasks
     getTasks: vi.fn().mockResolvedValue([]),
@@ -662,6 +631,7 @@ vi.mock('../../src/services/api', () => ({
       .fn()
       .mockResolvedValue({ overview: {}, recentActivity: [], quickStats: {} }),
     getRecentActivity: vi.fn().mockResolvedValue([]),
+    getAnalysisBenefits: vi.fn().mockResolvedValue([]),
     getTasks: vi.fn().mockResolvedValue([]),
     getTask: vi.fn().mockResolvedValue(null),
     createTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
@@ -763,10 +733,6 @@ afterAll(async () => {
 beforeEach(() => {
   // Ensure call history is cleared
   vi.clearAllMocks();
-});
-
-afterEach(() => {
-  vi.resetModules();
 });
 
 // REMOVED: Schema Initialization. Integration tests must use TestDatabaseFactory.create()

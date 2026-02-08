@@ -5,11 +5,58 @@
  * insights, and recommendations as nodes on a React Flow canvas.
  */
 
-import { describe, it, expect, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { DiscoveryNode, DiscoveryEdge } from '../../../src/types/discovery';
+// Mock the store before importing the component
+const mockNodes = [
+  {
+    id: 'pain-1',
+    type: 'painPoint',
+    position: { x: 100, y: 100 },
+    data: {
+      text: 'Manual approval process takes 3 days',
+      severity: 4,
+      area: 'operations',
+      source: 'user',
+    },
+  },
+  {
+    id: 'insight-1',
+    type: 'insight',
+    position: { x: 300, y: 100 },
+    data: {
+      text: 'Automation could reduce time by 80%',
+      linkedPainIds: ['pain-1'],
+      source: 'ai',
+    },
+  },
+];
+
+const mockEdges = [
+  {
+    id: 'edge-1',
+    source: 'pain-1',
+    target: 'insight-1',
+    type: 'smoothstep',
+  },
+];
+
+const mockDiscoveryStore = {
+  nodes: mockNodes,
+  edges: mockEdges,
+  addEdge: vi.fn(),
+  removeNode: vi.fn(),
+  moveNode: vi.fn(),
+  autoLayout: vi.fn(),
+  saveVersion: vi.fn(() => 1),
+  getNodesInCategory: vi.fn(() => []),
+};
+
+vi.mock('../../../src/store/useDiscoveryStore', () => ({
+  useDiscoveryStore: () => mockDiscoveryStore,
+}));
 
 // Mock React Flow
 vi.mock('reactflow', () => ({
@@ -31,6 +78,13 @@ vi.mock('reactflow', () => ({
     getNodes: vi.fn(() => []),
   }),
   ReactFlowProvider: ({ children }: any) => <div>{children}</div>,
+  BackgroundVariant: {
+    Dots: 'dots',
+    Lines: 'lines',
+    Cross: 'cross',
+  },
+  applyNodeChanges: vi.fn(),
+  addEdge: vi.fn(),
 }));
 
 // Mock i18n
@@ -44,84 +98,43 @@ vi.mock('react-i18next', () => ({
 // Import after mocks
 import { DiscoveryCanvas } from '../../../src/components/Discovery/DiscoveryCanvas';
 
-const mockNodes: DiscoveryNode[] = [
-  {
-    id: 'pain-1',
-    type: 'painPoint',
-    position: { x: 100, y: 100 },
-    data: {
-      text: 'Manual approval process takes 3 days',
-      severity: 4,
-      area: 'operations',
-      source: 'user',
-    },
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 'insight-1',
-    type: 'insight',
-    position: { x: 300, y: 100 },
-    data: {
-      text: 'Automation could reduce time by 80%',
-      linkedPainIds: ['pain-1'],
-      source: 'ai',
-    },
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
-
-const mockEdges: DiscoveryEdge[] = [
-  {
-    id: 'edge-1',
-    source: 'pain-1',
-    target: 'insight-1',
-    type: 'smoothstep',
-  },
-];
-
 describe('DiscoveryCanvas', () => {
-  const defaultProps = {
-    nodes: mockNodes,
-    edges: mockEdges,
-    onNodesChange: jest.fn(),
-    onEdgesChange: jest.fn(),
-    onNodeClick: jest.fn(),
-    onSaveVersion: jest.fn(),
-  };
-
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
+    // Reset store mock
+    mockDiscoveryStore.nodes = mockNodes;
+    mockDiscoveryStore.edges = mockEdges;
   });
 
   it('renders without crashing', () => {
-    render(<DiscoveryCanvas {...defaultProps} />);
+    render(<DiscoveryCanvas />);
     expect(screen.getByTestId('react-flow')).toBeInTheDocument();
   });
 
   it('displays correct number of nodes', () => {
-    render(<DiscoveryCanvas {...defaultProps} />);
+    render(<DiscoveryCanvas />);
     expect(screen.getByTestId('nodes-count')).toHaveTextContent('2');
   });
 
   it('displays correct number of edges', () => {
-    render(<DiscoveryCanvas {...defaultProps} />);
+    render(<DiscoveryCanvas />);
     expect(screen.getByTestId('edges-count')).toHaveTextContent('1');
   });
 
   it('renders canvas controls', () => {
-    render(<DiscoveryCanvas {...defaultProps} />);
+    render(<DiscoveryCanvas />);
     expect(screen.getByTestId('controls')).toBeInTheDocument();
   });
 
   it('renders minimap', () => {
-    render(<DiscoveryCanvas {...defaultProps} />);
+    render(<DiscoveryCanvas />);
     expect(screen.getByTestId('minimap')).toBeInTheDocument();
   });
 
   it('renders with empty nodes array', () => {
-    render(<DiscoveryCanvas {...defaultProps} nodes={[]} edges={[]} />);
+    mockDiscoveryStore.nodes = [];
+    mockDiscoveryStore.edges = [];
+    render(<DiscoveryCanvas />);
     expect(screen.getByTestId('nodes-count')).toHaveTextContent('0');
   });
 });

@@ -17,13 +17,16 @@ import {
   Bell,
   Brain,
   Calendar,
+  Check,
+  ChevronDown,
   ChevronRight,
   ClipboardList,
+  Clock,
   Copy,
   Download,
   Edit3,
-  FileText,
   FilePlus,
+  FileText,
   Grid3X3,
   Inbox,
   Lightbulb,
@@ -36,6 +39,7 @@ import {
   Search,
   Send,
   Sparkles,
+  Target,
   Trash2,
   UserPlus,
   X,
@@ -49,10 +53,28 @@ import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
+// Helper function to safely display error messages
+const safeToastError = (error: any, defaultMessage: string, isPolish: boolean) => {
+  let errorMessage: string;
+  if (typeof error === 'string') {
+    errorMessage = error;
+  } else if (error?.response?.data?.error) {
+    const errData = error.response.data.error;
+    errorMessage = typeof errData === 'string' ? errData : JSON.stringify(errData);
+  } else if (error?.message) {
+    errorMessage =
+      typeof error.message === 'string' ? error.message : JSON.stringify(error.message);
+  } else if (error?.error) {
+    errorMessage = typeof error.error === 'string' ? error.error : JSON.stringify(error.error);
+  } else {
+    errorMessage = defaultMessage;
+  }
+  toast.error(errorMessage);
+};
+
 import { AssignInterviewModal } from './AssignInterviewModal';
 import { InsightCreatorModal } from './InsightCreatorModal';
 import { InsightViewer } from './InsightViewer';
-import { InsightDetailView } from '../Discovery/InsightDetailView';
 import { InterviewWorkspace } from './InterviewWorkspace';
 import { TemplateBuilder } from './TemplateBuilder';
 
@@ -110,7 +132,17 @@ interface InterviewTemplate {
 
 type ModuleTab = 'my-assignments' | 'sessions' | 'templates' | 'insights' | 'managed';
 type ViewMode = 'table' | 'grid';
-type ItemStatus = 'draft' | 'in_review' | 'approved' | 'completed' | 'active' | 'archived' | 'assigned' | 'in_progress' | 'submitted' | 'sent_back';
+type ItemStatus =
+  | 'draft'
+  | 'in_review'
+  | 'approved'
+  | 'completed'
+  | 'active'
+  | 'archived'
+  | 'assigned'
+  | 'in_progress'
+  | 'submitted'
+  | 'sent_back';
 
 // Assignment types
 interface InterviewAssignment {
@@ -120,7 +152,8 @@ interface InterviewAssignment {
   assigneeUserId: string;
   templateId: string;
   templateVersion: number;
-  status: 'assigned' | 'in_progress' | 'submitted' | 'sent_back' | 'completed';
+  // NOTE: 'completed' kept for legacy; canonical reviewer approval uses 'approved'
+  status: 'assigned' | 'in_progress' | 'submitted' | 'sent_back' | 'approved' | 'completed';
   sessionId?: string;
   dueAt?: string;
   startedAt?: string;
@@ -223,10 +256,15 @@ export const InterviewHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [searchParams] = useSearchParams();
-  const { currentProjectId, currentOrganization } = useAppStore();
-  
+  const { currentProjectId, setCurrentProjectId, currentOrganization } = useAppStore();
+
   // Permissions hook
-  const { canAssign, canViewManaged, canViewOverdue, isLoading: permissionsLoading } = useInterviewPermissions();
+  const {
+    canAssign,
+    canViewManaged,
+    canViewOverdue,
+    isLoading: permissionsLoading,
+  } = useInterviewPermissions();
 
   // Get session ID from URL if provided
   const sessionIdFromUrl = searchParams.get('sessionId');
@@ -237,18 +275,25 @@ export const InterviewHub: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
+  const [sessionStatusFilter, setSessionStatusFilter] = useState<string>('all');
+  const [templateCategoryFilter, setTemplateCategoryFilter] = useState<string>('all');
+  const [selectedTemplateForAssign, setSelectedTemplateForAssign] =
+    useState<InterviewTemplate | null>(null);
+  const [insightTypeFilter, setInsightTypeFilter] = useState<string>('all');
+  const [insightStatusFilter, setInsightStatusFilter] = useState<string>('all');
+  const [assignmentStatusFilter, setAssignmentStatusFilter] = useState<string>('all');
 
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
   const [insights, setInsights] = useState<InterviewInsight[]>([]);
   const [templates, setTemplates] = useState<InterviewTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Assignments state
   const [myAssignments, setMyAssignments] = useState<InterviewAssignment[]>([]);
   const [managedAssignments, setManagedAssignments] = useState<InterviewAssignment[]>([]);
   const [overdueAssignments, setOverdueAssignments] = useState<InterviewAssignment[]>([]);
   const [assignmentsLoading, setAssignmentsLoading] = useState(false);
-  
+
   // Modal state
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
@@ -260,11 +305,12 @@ export const InterviewHub: React.FC = () => {
   const [selectedAssignment, setSelectedAssignment] = useState<InterviewAssignment | null>(null);
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   const [selectedSessionsForInsight, setSelectedSessionsForInsight] = useState<string[]>([]);
-  const [viewingInsightId, setViewingInsightId] = useState<string | null>(null);
 
   // Template questions cache (for read-only preview)
   const [templateQuestionsById, setTemplateQuestionsById] = useState<Record<string, any[]>>({});
-  const [templateQuestionsLoading, setTemplateQuestionsLoading] = useState<Record<string, boolean>>({});
+  const [templateQuestionsLoading, setTemplateQuestionsLoading] = useState<Record<string, boolean>>(
+    {}
+  );
 
   // Dynamic documents state
   const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
@@ -280,7 +326,7 @@ export const InterviewHub: React.FC = () => {
           Api.get('/interview/insights').catch(() => []),
           Api.get('/interview/templates').catch(() => []),
         ]);
-        
+
         setSessions(Array.isArray(sessionsRes) ? sessionsRes : []);
         setInsights(Array.isArray(insightsRes) ? insightsRes : []);
         setTemplates(Array.isArray(templatesRes) ? templatesRes : []);
@@ -308,7 +354,7 @@ export const InterviewHub: React.FC = () => {
   useEffect(() => {
     const loadAssignments = async () => {
       if (permissionsLoading) return;
-      
+
       setAssignmentsLoading(true);
       try {
         // Always load my assignments
@@ -337,7 +383,7 @@ export const InterviewHub: React.FC = () => {
   // Open session from URL
   useEffect(() => {
     if (sessionIdFromUrl && sessions.length > 0) {
-      const session = sessions.find(s => s.id === sessionIdFromUrl);
+      const session = sessions.find((s) => s.id === sessionIdFromUrl);
       if (session) {
         handleOpenDocument({
           id: session.id,
@@ -378,6 +424,12 @@ export const InterviewHub: React.FC = () => {
   const filteredSessions = useMemo(() => {
     let result = sessions;
 
+    // Filter by status
+    if (sessionStatusFilter !== 'all') {
+      result = result.filter((s) => s.status === sessionStatusFilter);
+    }
+
+    // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
@@ -388,105 +440,264 @@ export const InterviewHub: React.FC = () => {
     }
 
     return result;
-  }, [sessions, searchQuery]);
+  }, [sessions, searchQuery, sessionStatusFilter]);
+
+  // Session status counts for filter badges
+  const sessionStatusCounts = useMemo(() => {
+    return {
+      all: sessions.length,
+      in_progress: sessions.filter((s) => s.status === 'in_progress').length,
+      submitted: sessions.filter((s) => s.status === 'submitted' || s.status === 'in_review')
+        .length,
+      completed: sessions.filter((s) => s.status === 'completed').length,
+      archived: sessions.filter((s) => s.status === 'archived').length,
+      paused: sessions.filter((s) => s.status === 'paused').length,
+    };
+  }, [sessions]);
+
+  const sessionStatusOptions = useMemo(() => {
+    const opts = [
+      {
+        id: 'all',
+        label: isPolish ? 'Wszystkie' : 'All',
+        count: sessionStatusCounts.all,
+      },
+      {
+        id: 'in_progress',
+        label: isPolish ? 'W trakcie' : 'In Progress',
+        count: sessionStatusCounts.in_progress,
+      },
+      {
+        id: 'submitted',
+        label: isPolish ? 'Do przeglądu' : 'To Review',
+        count: sessionStatusCounts.submitted,
+      },
+      {
+        id: 'completed',
+        label: isPolish ? 'Zakończone' : 'Completed',
+        count: sessionStatusCounts.completed,
+      },
+      {
+        id: 'archived',
+        label: isPolish ? 'Archiwum' : 'Archived',
+        count: sessionStatusCounts.archived,
+      },
+    ];
+
+    return opts.map((o) => ({
+      ...o,
+      display: `${o.label} (${o.count})`,
+    }));
+  }, [isPolish, sessionStatusCounts]);
 
   // Filter insights
   const filteredInsights = useMemo(() => {
-    if (!searchQuery) return insights;
-    const query = searchQuery.toLowerCase();
-    return insights.filter(
-      (i) => i.title.toLowerCase().includes(query) || (i.content || '').toLowerCase().includes(query)
-    );
-  }, [insights, searchQuery]);
+    let result = insights;
+
+    // Filter by analysis type (backend uses promptType; fallback to insightType)
+    if (insightTypeFilter !== 'all') {
+      result = result.filter((i) => {
+        const type = (i as any).promptType || (i as any).insightType || 'summary';
+        return type === insightTypeFilter;
+      });
+    }
+
+    // Filter by status (generating | completed | failed)
+    if (insightStatusFilter !== 'all') {
+      result = result.filter((i) => (i.status || 'completed') === insightStatusFilter);
+    }
+
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (i) =>
+          i.title.toLowerCase().includes(query) || (i.content || '').toLowerCase().includes(query)
+      );
+    }
+
+    return result;
+  }, [insights, searchQuery, insightTypeFilter, insightStatusFilter]);
+
+  // Get unique insight types
+  const insightTypes = useMemo(() => {
+    const types = new Set(insights.map((i: any) => i.promptType || i.insightType || 'summary'));
+    return Array.from(types).sort();
+  }, [insights]);
+
+  // Insight statistics
+  const insightStats = useMemo(() => {
+    return {
+      total: insights.length,
+      generating: insights.filter((i) => i.status === 'generating').length,
+      completed: insights.filter((i) => i.status === 'completed').length,
+      failed: insights.filter((i) => i.status === 'failed').length,
+      exportedToTools: insights.filter((i) => i.exportedToTools).length,
+      exportedToAssessment: insights.filter((i) => i.exportedToAssessment).length,
+    };
+  }, [insights]);
 
   // Filter templates
   const filteredTemplates = useMemo(() => {
-    if (!searchQuery) return templates;
-    const query = searchQuery.toLowerCase();
-    return templates.filter(
-      (t) => t.name.toLowerCase().includes(query) || t.description.toLowerCase().includes(query)
-    );
-  }, [templates, searchQuery]);
+    let result = templates;
 
+    // Filter by category
+    if (templateCategoryFilter !== 'all') {
+      result = result.filter((t) => t.category === templateCategoryFilter);
+    }
 
-  // Tab configuration - MINIMALIST (5 tabs max)
-  const tabs = useMemo(
-    () => {
-      const baseTabs = [
-        // 1. Inbox - przydzielone do mnie (do zrobienia)
-        {
-          id: 'my-assignments' as ModuleTab,
-          label: isPolish ? 'Inbox' : 'Inbox',
-          icon: <Inbox size={16} />,
-          count: myAssignments.filter(a => a.status !== 'completed').length,
-        },
-        // 2. Sessions - moje sesje wywiadów
-        {
-          id: 'sessions' as ModuleTab,
-          label: isPolish ? 'Sesje' : 'Sessions',
-          icon: <MessageSquare size={16} />,
-          count: sessions.length,
-        },
-        // 3. Templates - biblioteka szablonów
-        {
-          id: 'templates' as ModuleTab,
-          label: isPolish ? 'Szablony' : 'Templates',
-          icon: <FileText size={16} />,
-          count: templates.length,
-        },
-        // 4. Insights - wnioski AI
-        {
-          id: 'insights' as ModuleTab,
-          label: isPolish ? 'Wnioski' : 'Insights',
-          icon: <Lightbulb size={16} />,
-          count: insights.length,
-        },
-      ];
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (t) => t.name.toLowerCase().includes(query) || t.description.toLowerCase().includes(query)
+      );
+    }
 
-      // 5. Assigned - tylko dla PM/Admin (wywiady które przydzieliłem)
-      if (canViewManaged) {
-        const assignedCount = managedAssignments.length;
-        const overdueCount = overdueAssignments.length;
-        baseTabs.push({
-          id: 'managed' as ModuleTab,
-          label: isPolish ? 'Przydzielone' : 'Assigned',
-          icon: <ClipboardList size={16} />,
-          count: assignedCount,
-          // Show warning badge if there are overdue
-          hasWarning: overdueCount > 0,
-        } as any);
+    return result;
+  }, [templates, searchQuery, templateCategoryFilter]);
+
+  // Get unique template categories
+  const templateCategories = useMemo(() => {
+    const categories = new Set(templates.map((t) => t.category));
+    return Array.from(categories).sort();
+  }, [templates]);
+
+  // Template statistics
+  const templateStats = useMemo(() => {
+    return {
+      total: templates.length,
+      default: templates.filter((t) => t.isDefault).length,
+      active: templates.filter((t) => !t.isDefault).length,
+      totalQuestions: templates.reduce((sum, t) => sum + t.questionCount, 0),
+    };
+  }, [templates]);
+
+  // Tab configuration - role-based visibility
+  // Pracownik (TEAM_MEMBER/VIEWER): tylko Inbox
+  // Manager (PM/ADMIN): wszystkie zakładki
+  const tabs = useMemo(() => {
+    const baseTabs: Array<{
+      id: ModuleTab;
+      label: string;
+      icon: React.ReactNode;
+      count?: number;
+      hasWarning?: boolean;
+    }> = [
+      // 1. Inbox - przydzielone do mnie (widoczne dla wszystkich)
+      {
+        id: 'my-assignments' as ModuleTab,
+        label: isPolish ? 'Inbox' : 'Inbox',
+        icon: <Inbox size={16} />,
+        count: myAssignments.filter((a) => a.status !== 'approved' && a.status !== 'completed')
+          .length,
+      },
+    ];
+
+    // Dodatkowe zakładki tylko dla PM/Admin
+    if (canViewManaged) {
+      // 2. Sessions - sesje wywiadów (PM/Admin)
+      baseTabs.push({
+        id: 'sessions' as ModuleTab,
+        label: isPolish ? 'Sesje' : 'Sessions',
+        icon: <MessageSquare size={16} />,
+        count: sessions.length,
+      });
+
+      // 3. Templates - biblioteka szablonów (PM/Admin)
+      baseTabs.push({
+        id: 'templates' as ModuleTab,
+        label: isPolish ? 'Szablony' : 'Templates',
+        icon: <FileText size={16} />,
+        count: templates.length,
+      });
+
+      // 4. Insights - wnioski AI (PM/Admin)
+      baseTabs.push({
+        id: 'insights' as ModuleTab,
+        label: isPolish ? 'Wnioski' : 'Insights',
+        icon: <Lightbulb size={16} />,
+        count: insights.length,
+      });
+
+      // 5. Assigned - wywiady które przydzieliłem (PM/Admin)
+      const assignedCount = managedAssignments.length;
+      const overdueCount = overdueAssignments.length;
+      baseTabs.push({
+        id: 'managed' as ModuleTab,
+        label: isPolish ? 'Przydzielone' : 'Assigned',
+        icon: <ClipboardList size={16} />,
+        count: assignedCount,
+        hasWarning: overdueCount > 0,
+      });
+    }
+
+    return baseTabs;
+  }, [
+    isPolish,
+    sessions.length,
+    insights.length,
+    templates.length,
+    myAssignments,
+    managedAssignments,
+    overdueAssignments,
+    canViewManaged,
+  ]);
+
+  const ensureProjectId = useCallback(async (): Promise<string | null> => {
+    if (currentProjectId) return currentProjectId;
+    try {
+      const projects = await Api.get('/projects').catch(() => []);
+      const first = Array.isArray(projects) ? projects.find((p: any) => Boolean(p?.id)) : null;
+      if (first?.id) {
+        setCurrentProjectId(first.id);
+        return first.id as string;
       }
-
-      return baseTabs;
-    },
-    [isPolish, sessions.length, insights.length, templates.length, myAssignments, managedAssignments, overdueAssignments, canViewManaged]
-  );
+    } catch (e) {
+      // ignore, we'll handle via toast at call sites
+    }
+    return null;
+  }, [currentProjectId, setCurrentProjectId]);
 
   // Handlers
   const handleNewSession = useCallback(async () => {
     try {
+      const projectId = await ensureProjectId();
+      if (!projectId) {
+        toast.error(
+          isPolish
+            ? 'Wybierz projekt przed utworzeniem sesji'
+            : 'Select a project before creating a session'
+        );
+        return;
+      }
       const newSession = await Api.post('/interview/sessions', {
-        projectId: currentProjectId,
+        projectId,
         name: `Interview ${new Date().toLocaleDateString()}`,
       });
 
       setSessions((prev) => [newSession as InterviewSession, ...prev]);
-      
-      // Open the new session
-      handleOpenDocument({
+
+      // Open the new session (inline to avoid TDZ issues)
+      const doc: OpenDocument = {
         id: (newSession as InterviewSession).id,
         type: 'session',
         name: (newSession as InterviewSession).name || 'Interview Session',
-        status: 'active',
+        status: (newSession as any)?.status || 'in_progress',
         data: newSession as InterviewSession,
+      };
+      setOpenDocuments((prev) => {
+        if (prev.find((d) => d.id === doc.id)) return prev;
+        return [...prev, doc];
       });
-      
+      setActiveDocumentId(doc.id);
+
       toast.success(isPolish ? 'Nowa sesja wywiadu rozpoczęta!' : 'New interview session started!');
     } catch (error) {
       console.error('[InterviewHub] Failed to create session:', error);
       toast.error(isPolish ? 'Nie udało się utworzyć sesji' : 'Failed to create session');
     }
-  }, [currentProjectId, isPolish]);
+  }, [ensureProjectId, isPolish]);
 
   const handleOpenDocument = useCallback((doc: OpenDocument) => {
     setOpenDocuments((prev) => {
@@ -496,47 +707,59 @@ export const InterviewHub: React.FC = () => {
     setActiveDocumentId(doc.id);
   }, []);
 
-  const handleCloseDocument = useCallback((id: string) => {
-    setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
-    if (activeDocumentId === id) {
-      setActiveDocumentId(null);
-    }
-  }, [activeDocumentId]);
+  const handleCloseDocument = useCallback(
+    (id: string) => {
+      setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
+      if (activeDocumentId === id) {
+        setActiveDocumentId(null);
+      }
+    },
+    [activeDocumentId]
+  );
 
   const handleShowList = useCallback(() => {
     setActiveDocumentId(null);
   }, []);
 
-  const handleViewSession = useCallback((session: InterviewSession) => {
-    handleOpenDocument({
-      id: session.id,
-      type: 'session',
-      name: session.name || 'Interview Session',
-      status: session.status as ItemStatus,
-      data: session,
-    });
-  }, [handleOpenDocument]);
+  const handleViewSession = useCallback(
+    (session: InterviewSession) => {
+      handleOpenDocument({
+        id: session.id,
+        type: 'session',
+        name: session.name || 'Interview Session',
+        status: session.status as ItemStatus,
+        data: session,
+      });
+    },
+    [handleOpenDocument]
+  );
 
-  const handleViewInsight = useCallback((insight: InterviewInsight) => {
-    // Open as dynamic tab with full view (like sessions and templates)
-    handleOpenDocument({
-      id: insight.id,
-      type: 'insight',
-      name: insight.title,
-      status: (insight.status as ItemStatus) || 'approved',
-      data: insight,
-    });
-  }, [handleOpenDocument]);
+  const handleViewInsight = useCallback(
+    (insight: InterviewInsight) => {
+      // Open as dynamic tab with full view (like sessions and templates)
+      handleOpenDocument({
+        id: insight.id,
+        type: 'insight',
+        name: insight.title,
+        status: (insight.status as ItemStatus) || 'approved',
+        data: insight,
+      });
+    },
+    [handleOpenDocument]
+  );
 
-  const handleViewTemplate = useCallback((template: InterviewTemplate) => {
-    handleOpenDocument({
-      id: template.id,
-      type: 'template',
-      name: template.name,
-      status: 'approved',
-      data: template,
-    });
-  }, [handleOpenDocument]);
+  const handleViewTemplate = useCallback(
+    (template: InterviewTemplate) => {
+      handleOpenDocument({
+        id: template.id,
+        type: 'template',
+        name: template.name,
+        status: 'approved',
+        data: template,
+      });
+    },
+    [handleOpenDocument]
+  );
 
   const handleSessionComplete = useCallback(
     (sessionId: string) => {
@@ -580,46 +803,58 @@ export const InterviewHub: React.FC = () => {
     setShowTemplateBuilder(true);
   }, []);
 
-  const handleCloneTemplate = useCallback(async (template: InterviewTemplate) => {
-    try {
-      toast.loading(isPolish ? 'Klonowanie szablonu...' : 'Cloning template...');
-      const cloned = await Api.post(`/interview/templates/${template.id}/clone`, {
-        name: `${template.name} (${isPolish ? 'kopia' : 'copy'})`,
-      });
-      toast.dismiss();
-      toast.success(isPolish ? 'Szablon sklonowany!' : 'Template cloned!');
-      
-      // Refresh templates
-      const templatesRes = await Api.get('/interview/templates').catch(() => []);
-      setTemplates(Array.isArray(templatesRes) ? templatesRes : []);
-      
-      // Open the cloned template for editing
-      setEditingTemplateId((cloned as any).id);
-      setShowTemplateBuilder(true);
-    } catch (error) {
-      toast.dismiss();
-      toast.error(isPolish ? 'Nie udało się sklonować szablonu' : 'Failed to clone template');
-      console.error('[InterviewHub] Failed to clone template:', error);
-    }
-  }, [isPolish]);
+  const handleCloneTemplate = useCallback(
+    async (template: InterviewTemplate) => {
+      try {
+        toast.loading(isPolish ? 'Klonowanie szablonu...' : 'Cloning template...');
+        const cloned = await Api.post(`/interview/templates/${template.id}/clone`, {
+          name: `${template.name} (${isPolish ? 'kopia' : 'copy'})`,
+        });
+        toast.dismiss();
+        toast.success(isPolish ? 'Szablon sklonowany!' : 'Template cloned!');
 
-  const handleDeleteTemplate = useCallback(async (template: InterviewTemplate) => {
-    if (!confirm(isPolish ? `Czy na pewno chcesz usunąć szablon "${template.name}"?` : `Are you sure you want to delete template "${template.name}"?`)) {
-      return;
-    }
-    
-    try {
-      await Api.delete(`/interview/templates/${template.id}`);
-      toast.success(isPolish ? 'Szablon usunięty!' : 'Template deleted!');
-      
-      // Refresh templates
-      const templatesRes = await Api.get('/interview/templates').catch(() => []);
-      setTemplates(Array.isArray(templatesRes) ? templatesRes : []);
-    } catch (error) {
-      toast.error(isPolish ? 'Nie udało się usunąć szablonu' : 'Failed to delete template');
-      console.error('[InterviewHub] Failed to delete template:', error);
-    }
-  }, [isPolish]);
+        // Refresh templates
+        const templatesRes = await Api.get('/interview/templates').catch(() => []);
+        setTemplates(Array.isArray(templatesRes) ? templatesRes : []);
+
+        // Open the cloned template for editing
+        setEditingTemplateId((cloned as any).id);
+        setShowTemplateBuilder(true);
+      } catch (error) {
+        toast.dismiss();
+        toast.error(isPolish ? 'Nie udało się sklonować szablonu' : 'Failed to clone template');
+        console.error('[InterviewHub] Failed to clone template:', error);
+      }
+    },
+    [isPolish]
+  );
+
+  const handleDeleteTemplate = useCallback(
+    async (template: InterviewTemplate) => {
+      if (
+        !confirm(
+          isPolish
+            ? `Czy na pewno chcesz usunąć szablon "${template.name}"?`
+            : `Are you sure you want to delete template "${template.name}"?`
+        )
+      ) {
+        return;
+      }
+
+      try {
+        await Api.delete(`/interview/templates/${template.id}`);
+        toast.success(isPolish ? 'Szablon usunięty!' : 'Template deleted!');
+
+        // Refresh templates
+        const templatesRes = await Api.get('/interview/templates').catch(() => []);
+        setTemplates(Array.isArray(templatesRes) ? templatesRes : []);
+      } catch (error) {
+        toast.error(isPolish ? 'Nie udało się usunąć szablonu' : 'Failed to delete template');
+        console.error('[InterviewHub] Failed to delete template:', error);
+      }
+    },
+    [isPolish]
+  );
 
   // Assignment management actions
   const handleOpenReminderModal = useCallback((assignment: InterviewAssignment) => {
@@ -632,55 +867,103 @@ export const InterviewHub: React.FC = () => {
     setShowSendBackModal(true);
   }, []);
 
-  const handleSendBack = useCallback(async (reason: string) => {
-    if (!selectedAssignment) return;
-    
-    try {
-      await Api.post(`/interview/assignments/${selectedAssignment.id}/send-back`, { reason });
-      toast.success(isPolish ? 'Wywiad zwrócony do poprawy!' : 'Interview sent back!');
-      setShowSendBackModal(false);
-      setSelectedAssignment(null);
-      
-      // Refresh assignments
-      const [managedRes, overdueRes] = await Promise.all([
-        Api.get('/interview/assignments/managed').catch(() => []),
-        Api.get('/interview/assignments/overdue').catch(() => []),
-      ]);
-      setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
-      setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
-    } catch (error) {
-      toast.error(isPolish ? 'Nie udało się zwrócić wywiadu' : 'Failed to send back');
-      console.error('[InterviewHub] Failed to send back:', error);
-    }
-  }, [selectedAssignment, isPolish]);
+  const handleSendBack = useCallback(
+    async (reason: string) => {
+      if (!selectedAssignment) return;
+
+      try {
+        await Api.post(`/interview/assignments/${selectedAssignment.id}/send-back`, { reason });
+        toast.success(isPolish ? 'Wywiad zwrócony do poprawy!' : 'Interview sent back!');
+        setShowSendBackModal(false);
+        setSelectedAssignment(null);
+
+        // Refresh all assignments (both my and managed)
+        const [myRes, managedRes, overdueRes] = await Promise.all([
+          Api.get('/interview/assignments/my').catch(() => []),
+          Api.get('/interview/assignments/managed').catch(() => []),
+          Api.get('/interview/assignments/overdue').catch(() => []),
+        ]);
+        setMyAssignments(Array.isArray(myRes) ? myRes : []);
+        setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
+        setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
+      } catch (error: any) {
+        console.error('[InterviewHub] Failed to send back:', error);
+        safeToastError(
+          error,
+          isPolish ? 'Nie udało się zwrócić wywiadu' : 'Failed to send back',
+          isPolish
+        );
+      }
+    },
+    [selectedAssignment, isPolish]
+  );
+
+  const handleApproveAssignment = useCallback(
+    async (assignment: InterviewAssignment) => {
+      try {
+        await Api.post(`/interview/assignments/${assignment.id}/approve`, {});
+        toast.success(isPolish ? 'Wywiad zatwierdzony!' : 'Interview approved!');
+
+        // Refresh all assignments (both my and managed)
+        const [myRes, managedRes, overdueRes] = await Promise.all([
+          Api.get('/interview/assignments/my').catch(() => []),
+          Api.get('/interview/assignments/managed').catch(() => []),
+          Api.get('/interview/assignments/overdue').catch(() => []),
+        ]);
+        setMyAssignments(Array.isArray(myRes) ? myRes : []);
+        setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
+        setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
+      } catch (error: any) {
+        console.error('[InterviewHub] Failed to approve assignment:', error);
+        safeToastError(
+          error,
+          isPolish ? 'Nie udało się zatwierdzić wywiadu' : 'Failed to approve interview',
+          isPolish
+        );
+      }
+    },
+    [isPolish]
+  );
 
   // Export action
-  const handleExport = useCallback((format: 'pdf' | 'excel') => {
-    // TODO: Implement export functionality
-    toast.success(isPolish ? `Eksport do ${format.toUpperCase()} rozpoczęty` : `Export to ${format.toUpperCase()} started`);
-    setShowExportModal(false);
-  }, [isPolish]);
+  const handleExport = useCallback(
+    (format: 'pdf' | 'excel') => {
+      // TODO: Implement export functionality
+      toast.success(
+        isPolish
+          ? `Eksport do ${format.toUpperCase()} rozpoczęty`
+          : `Export to ${format.toUpperCase()} started`
+      );
+      setShowExportModal(false);
+    },
+    [isPolish]
+  );
 
   // Generate insight from session
-  const handleGenerateInsight = useCallback(async (session: InterviewSession) => {
-    try {
-      toast.loading(isPolish ? 'Generowanie wniosków AI...' : 'Generating AI insights...');
-      await Api.post('/interview/insights', { sessionId: session.id });
-      toast.dismiss();
-      toast.success(isPolish ? 'Wnioski wygenerowane!' : 'Insights generated!');
-      
-      // Refresh insights
-      const insightsRes = await Api.get('/interview/insights').catch(() => []);
-      setInsights(Array.isArray(insightsRes) ? insightsRes : []);
-      
-      // Switch to insights tab
-      setActiveTab('insights');
-    } catch (error) {
-      toast.dismiss();
-      toast.error(isPolish ? 'Nie udało się wygenerować wniosków' : 'Failed to generate insights');
-      console.error('[InterviewHub] Failed to generate insight:', error);
-    }
-  }, [isPolish]);
+  const handleGenerateInsight = useCallback(
+    async (session: InterviewSession) => {
+      try {
+        toast.loading(isPolish ? 'Generowanie wniosków AI...' : 'Generating AI insights...');
+        await Api.post('/interview/insights', { sessionId: session.id });
+        toast.dismiss();
+        toast.success(isPolish ? 'Wnioski wygenerowane!' : 'Insights generated!');
+
+        // Refresh insights
+        const insightsRes = await Api.get('/interview/insights').catch(() => []);
+        setInsights(Array.isArray(insightsRes) ? insightsRes : []);
+
+        // Switch to insights tab
+        setActiveTab('insights');
+      } catch (error) {
+        toast.dismiss();
+        toast.error(
+          isPolish ? 'Nie udało się wygenerować wniosków' : 'Failed to generate insights'
+        );
+        console.error('[InterviewHub] Failed to generate insight:', error);
+      }
+    },
+    [isPolish]
+  );
 
   // Render Dynamic Tabs
   const renderDynamicTabs = () => {
@@ -693,7 +976,11 @@ export const InterviewHub: React.FC = () => {
         {/* List button */}
         <button
           onClick={handleShowList}
-          className={isListActive ? TAB_ACTIVE.replace('border-l-2', '') : TAB_INACTIVE.replace('border-l-2', '')}
+          className={
+            isListActive
+              ? TAB_ACTIVE.replace('border-l-2', '')
+              : TAB_INACTIVE.replace('border-l-2', '')
+          }
         >
           <List size={14} />
           <span>List</span>
@@ -742,6 +1029,52 @@ export const InterviewHub: React.FC = () => {
     );
   };
 
+  // Session status configuration
+  const getSessionStatusConfig = (status: string) => {
+    const configs: Record<
+      string,
+      { label: { en: string; pl: string }; bgColor: string; textColor: string; dotColor: string }
+    > = {
+      in_progress: {
+        label: { en: 'In Progress', pl: 'W trakcie' },
+        bgColor: 'bg-purple-500/20',
+        textColor: 'text-purple-300',
+        dotColor: 'bg-purple-400',
+      },
+      submitted: {
+        label: { en: 'Submitted', pl: 'Wysłany' },
+        bgColor: 'bg-amber-500/20',
+        textColor: 'text-amber-300',
+        dotColor: 'bg-amber-400',
+      },
+      in_review: {
+        label: { en: 'In Review', pl: 'Do przeglądu' },
+        bgColor: 'bg-amber-500/20',
+        textColor: 'text-amber-300',
+        dotColor: 'bg-amber-400',
+      },
+      completed: {
+        label: { en: 'Completed', pl: 'Zakończony' },
+        bgColor: 'bg-emerald-500/20',
+        textColor: 'text-emerald-300',
+        dotColor: 'bg-emerald-400',
+      },
+      paused: {
+        label: { en: 'Paused', pl: 'Wstrzymany' },
+        bgColor: 'bg-slate-500/20',
+        textColor: 'text-slate-300',
+        dotColor: 'bg-slate-400',
+      },
+      archived: {
+        label: { en: 'Archived', pl: 'Zarchiwizowany' },
+        bgColor: 'bg-slate-500/20',
+        textColor: 'text-slate-300',
+        dotColor: 'bg-slate-400',
+      },
+    };
+    return configs[status] || configs.in_progress;
+  };
+
   // Render table view for sessions
   const renderSessionsTable = () => (
     <div className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden">
@@ -771,6 +1104,8 @@ export const InterviewHub: React.FC = () => {
               session.totalQuestions > 0
                 ? Math.round((session.answeredQuestions / session.totalQuestions) * 100)
                 : 0;
+            const statusConfig = getSessionStatusConfig(session.status);
+            const isCompleted = session.status === 'completed';
 
             return (
               <tr
@@ -781,65 +1116,29 @@ export const InterviewHub: React.FC = () => {
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                        session.status === 'completed'
-                          ? 'bg-emerald-500/20'
-                          : session.status === 'active'
-                            ? 'bg-purple-500/20'
-                            : 'bg-slate-500/20'
-                      }`}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center ${statusConfig.bgColor}`}
                     >
-                      <Brain
-                        size={16}
-                        className={
-                          session.status === 'completed'
-                            ? 'text-emerald-400'
-                            : session.status === 'active'
-                              ? 'text-purple-400'
-                              : 'text-slate-400'
-                        }
-                      />
+                      <Brain size={16} className={statusConfig.textColor} />
                     </div>
-                    <span className="text-sm text-white font-medium">{session.name || 'Discovery Interview'}</span>
+                    <div>
+                      <span className="text-sm text-white font-medium block">
+                        {session.name || 'Discovery Interview'}
+                      </span>
+                      {session.ownerId && (
+                        <span className="text-xs text-slate-500">
+                          ID: {session.id.slice(0, 8)}...
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </td>
                 <td className="px-4 py-3">
                   <div
-                    className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full ${
-                      session.status === 'completed'
-                        ? 'bg-emerald-500/20'
-                        : session.status === 'active'
-                          ? 'bg-purple-500/20'
-                          : 'bg-slate-500/20'
-                    }`}
+                    className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full ${statusConfig.bgColor}`}
                   >
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        session.status === 'completed'
-                          ? 'bg-emerald-400'
-                          : session.status === 'active'
-                            ? 'bg-purple-400'
-                            : 'bg-slate-400'
-                      }`}
-                    />
-                    <span
-                      className={`text-xs font-medium ${
-                        session.status === 'completed'
-                          ? 'text-emerald-300'
-                          : session.status === 'active'
-                            ? 'text-purple-300'
-                            : 'text-slate-300'
-                      }`}
-                    >
-                      {session.status === 'completed'
-                        ? isPolish
-                          ? 'Zakończony'
-                          : 'Completed'
-                        : session.status === 'active'
-                          ? isPolish
-                            ? 'W trakcie'
-                            : 'In Progress'
-                          : session.status}
+                    <span className={`w-2 h-2 rounded-full ${statusConfig.dotColor}`} />
+                    <span className={`text-xs font-medium ${statusConfig.textColor}`}>
+                      {isPolish ? statusConfig.label.pl : statusConfig.label.en}
                     </span>
                   </div>
                 </td>
@@ -863,9 +1162,9 @@ export const InterviewHub: React.FC = () => {
                   </div>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center justify-end gap-1">
                     {/* Generate Insights - only for completed sessions */}
-                    {session.status === 'completed' && (
+                    {isCompleted && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -942,9 +1241,11 @@ export const InterviewHub: React.FC = () => {
         const typeColor =
           session.status === 'completed'
             ? 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/30'
-            : session.status === 'active'
+            : session.status === 'in_progress'
               ? 'from-purple-500/20 to-purple-600/10 border-purple-500/30'
-              : 'from-slate-500/20 to-slate-600/10 border-slate-500/30';
+              : session.status === 'submitted'
+                ? 'from-amber-500/15 to-amber-600/10 border-amber-500/30'
+                : 'from-slate-500/20 to-slate-600/10 border-slate-500/30';
 
         return (
           <div
@@ -961,13 +1262,21 @@ export const InterviewHub: React.FC = () => {
                     className={
                       session.status === 'completed'
                         ? 'text-emerald-400'
-                        : session.status === 'active'
+                        : session.status === 'in_progress'
                           ? 'text-purple-400'
-                          : 'text-slate-400'
+                          : session.status === 'submitted'
+                            ? 'text-amber-400'
+                            : 'text-slate-400'
                     }
                   />
                   <span className="font-mono text-xs font-bold text-slate-300">
-                    {session.status === 'completed' ? 'DONE' : session.status === 'active' ? 'LIVE' : 'ARCH'}
+                    {session.status === 'completed'
+                      ? 'DONE'
+                      : session.status === 'in_progress'
+                        ? 'LIVE'
+                        : session.status === 'submitted'
+                          ? 'SUB'
+                          : 'ARCH'}
                   </span>
                 </div>
               </div>
@@ -1001,47 +1310,172 @@ export const InterviewHub: React.FC = () => {
                 className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full ${
                   session.status === 'completed'
                     ? 'bg-emerald-500/20'
-                    : session.status === 'active'
+                    : session.status === 'in_progress'
                       ? 'bg-purple-500/20'
-                      : 'bg-slate-500/20'
+                      : session.status === 'submitted'
+                        ? 'bg-amber-500/20'
+                        : 'bg-slate-500/20'
                 }`}
               >
                 <span
                   className={`w-2 h-2 rounded-full ${
                     session.status === 'completed'
                       ? 'bg-emerald-400'
-                      : session.status === 'active'
+                      : session.status === 'in_progress'
                         ? 'bg-purple-400'
-                        : 'bg-slate-400'
+                        : session.status === 'submitted'
+                          ? 'bg-amber-400'
+                          : 'bg-slate-400'
                   }`}
                 />
                 <span
                   className={`text-xs font-medium ${
                     session.status === 'completed'
                       ? 'text-emerald-300'
-                      : session.status === 'active'
+                      : session.status === 'in_progress'
                         ? 'text-purple-300'
-                        : 'text-slate-300'
+                        : session.status === 'submitted'
+                          ? 'text-amber-300'
+                          : 'text-slate-300'
                   }`}
                 >
                   {session.status === 'completed'
                     ? isPolish
                       ? 'Zakończony'
                       : 'Completed'
-                    : session.status === 'active'
+                    : session.status === 'in_progress'
                       ? isPolish
                         ? 'W trakcie'
-                        : 'Active'
-                      : session.status}
+                        : 'In Progress'
+                      : session.status === 'submitted'
+                        ? isPolish
+                          ? 'Wysłany'
+                          : 'Submitted'
+                        : session.status}
                 </span>
               </div>
-              <span className="text-xs text-slate-500">{new Date(session.startedAt).toLocaleDateString()}</span>
+              <span className="text-xs text-slate-500">
+                {new Date(session.startedAt).toLocaleDateString()}
+              </span>
             </div>
           </div>
         );
       })}
     </div>
   );
+
+  // Insight promptType config (backend uses promptType)
+  const getInsightTypeConfig = (type?: string) => {
+    const configs: Record<
+      string,
+      { label: { en: string; pl: string }; bgColor: string; textColor: string }
+    > = {
+      summary: {
+        label: { en: 'Executive Summary', pl: 'Executive Summary' },
+        bgColor: 'bg-amber-500/20',
+        textColor: 'text-amber-400',
+      },
+      trends: {
+        label: { en: 'Trend Analysis', pl: 'Analiza trendów' },
+        bgColor: 'bg-blue-500/20',
+        textColor: 'text-blue-400',
+      },
+      problems: {
+        label: { en: 'Problem Discovery', pl: 'Problemy' },
+        bgColor: 'bg-red-500/20',
+        textColor: 'text-red-400',
+      },
+      recommendations: {
+        label: { en: 'Recommendations', pl: 'Rekomendacje' },
+        bgColor: 'bg-emerald-500/20',
+        textColor: 'text-emerald-400',
+      },
+      comparison: {
+        label: { en: 'Comparison', pl: 'Porównanie' },
+        bgColor: 'bg-purple-500/20',
+        textColor: 'text-purple-400',
+      },
+      gaps: {
+        label: { en: 'Gap Analysis', pl: 'Luki' },
+        bgColor: 'bg-orange-500/20',
+        textColor: 'text-orange-400',
+      },
+      risk_assessment: {
+        label: { en: 'Risk Assessment', pl: 'Ryzyka' },
+        bgColor: 'bg-red-500/20',
+        textColor: 'text-red-400',
+      },
+      opportunity_scan: {
+        label: { en: 'Opportunity Scan', pl: 'Szanse' },
+        bgColor: 'bg-emerald-500/20',
+        textColor: 'text-emerald-400',
+      },
+      maturity: {
+        label: { en: 'Maturity', pl: 'Dojrzałość' },
+        bgColor: 'bg-indigo-500/20',
+        textColor: 'text-indigo-400',
+      },
+      stakeholder_map: {
+        label: { en: 'Stakeholder Map', pl: 'Interesariusze' },
+        bgColor: 'bg-slate-500/20',
+        textColor: 'text-slate-400',
+      },
+      general: {
+        label: { en: 'General', pl: 'Ogólny' },
+        bgColor: 'bg-slate-500/20',
+        textColor: 'text-slate-400',
+      },
+    };
+    return configs[type || 'summary'] || configs.summary;
+  };
+
+  // Handle export insight to tools
+  const handleExportInsightToTools = async (insightId: string) => {
+    try {
+      // Backend contract: POST /interview/insights/:id/export { target: 'tools' | 'assessment' }
+      await Api.post(`/interview/insights/${insightId}/export`, { target: 'tools' });
+      toast.success(isPolish ? 'Wyeksportowano do narzędzi' : 'Exported to tools');
+      // Refresh insights
+      const insightsRes = await Api.get('/interview/insights').catch(() => []);
+      setInsights(Array.isArray(insightsRes) ? insightsRes : []);
+    } catch (error) {
+      toast.error(isPolish ? 'Nie udało się wyeksportować' : 'Failed to export');
+      console.error('[InterviewHub] Failed to export insight:', error);
+    }
+  };
+
+  const handleExportInsightToAssessment = async (insightId: string) => {
+    try {
+      await Api.post(`/interview/insights/${insightId}/export`, { target: 'assessment' });
+      toast.success(isPolish ? 'Wyeksportowano do Assessment' : 'Exported to Assessment');
+      const insightsRes = await Api.get('/interview/insights').catch(() => []);
+      setInsights(Array.isArray(insightsRes) ? insightsRes : []);
+    } catch (error) {
+      toast.error(isPolish ? 'Nie udało się wyeksportować' : 'Failed to export');
+      console.error('[InterviewHub] Failed to export insight to assessment:', error);
+    }
+  };
+
+  // Handle delete insight
+  const handleDeleteInsight = async (insightId: string) => {
+    if (
+      !confirm(
+        isPolish
+          ? 'Czy na pewno chcesz usunąć ten wniosek?'
+          : 'Are you sure you want to delete this insight?'
+      )
+    ) {
+      return;
+    }
+    try {
+      await Api.delete(`/interview/insights/${insightId}`);
+      toast.success(isPolish ? 'Wniosek usunięty' : 'Insight deleted');
+      setInsights((prev) => prev.filter((i) => i.id !== insightId));
+    } catch (error) {
+      toast.error(isPolish ? 'Nie udało się usunąć' : 'Failed to delete');
+      console.error('[InterviewHub] Failed to delete insight:', error);
+    }
+  };
 
   // Render insights table
   const renderInsightsTable = () => (
@@ -1056,50 +1490,209 @@ export const InterviewHub: React.FC = () => {
               {isPolish ? 'Typ' : 'Type'}
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-              {isPolish ? 'Priorytet' : 'Priority'}
+              {isPolish ? 'Status' : 'Status'}
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              {isPolish ? 'Źródło' : 'Source'}
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Data' : 'Date'}
             </th>
+            <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
+              {isPolish ? 'Akcje' : 'Actions'}
+            </th>
           </tr>
         </thead>
         <tbody>
-          {filteredInsights.map((insight) => (
-            <tr
-              key={insight.id}
-              onClick={() => handleViewInsight(insight)}
-              className="group hover:bg-navy-800/50 cursor-pointer transition-colors border-b border-navy-700/50 last:border-0"
-            >
-              <td className="px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <Lightbulb size={16} className="text-amber-400" />
-                  <span className="text-sm text-white font-medium">{insight.title}</span>
-                </div>
-              </td>
-              <td className="px-4 py-3">
-                <span className="text-xs text-slate-400 capitalize">{(insight.type || 'general').replace('_', ' ')}</span>
-              </td>
-              <td className="px-4 py-3">
-                <span className={`text-xs font-medium ${
-                  insight.priority === 'high' ? 'text-red-400' :
-                  insight.priority === 'medium' ? 'text-amber-400' : 'text-slate-400'
-                }`}>
-                  {insight.priority || 'medium'}
-                </span>
-              </td>
-              <td className="px-4 py-3 text-xs text-slate-400">
-                {insight.createdAt ? new Date(insight.createdAt).toLocaleDateString() : '-'}
-              </td>
-            </tr>
-          ))}
+          {filteredInsights.map((insight) => {
+            const promptType =
+              (insight as any).promptType || (insight as any).insightType || 'summary';
+            const typeConfig = getInsightTypeConfig(promptType);
+            const status = (insight.status || 'completed') as 'generating' | 'completed' | 'failed';
+            const statusConfig: Record<
+              typeof status,
+              { label: { en: string; pl: string }; bg: string; text: string }
+            > = {
+              generating: {
+                label: { en: 'Generating', pl: 'Generowanie' },
+                bg: 'bg-amber-500/20',
+                text: 'text-amber-400',
+              },
+              completed: {
+                label: { en: 'Completed', pl: 'Gotowe' },
+                bg: 'bg-emerald-500/20',
+                text: 'text-emerald-400',
+              },
+              failed: {
+                label: { en: 'Failed', pl: 'Błąd' },
+                bg: 'bg-red-500/20',
+                text: 'text-red-400',
+              },
+            };
+            const sc = statusConfig[status] || statusConfig.completed;
+
+            return (
+              <tr
+                key={insight.id}
+                onClick={() => handleViewInsight(insight)}
+                className="group hover:bg-navy-800/50 cursor-pointer transition-colors border-b border-navy-700/50 last:border-0"
+              >
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center ${typeConfig.bgColor}`}
+                    >
+                      <Lightbulb size={16} className={typeConfig.textColor} />
+                    </div>
+                    <div>
+                      <span className="text-sm text-white font-medium block">{insight.title}</span>
+                      {insight.createdBy && (
+                        <span className="text-xs text-slate-500">
+                          {isPolish ? 'Autor:' : 'Author:'} {insight.createdBy}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${typeConfig.bgColor} ${typeConfig.textColor}`}
+                  >
+                    {isPolish ? typeConfig.label.pl : typeConfig.label.en}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${sc.bg} ${sc.text}`}
+                  >
+                    {isPolish ? sc.label.pl : sc.label.en}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span className="text-xs text-slate-400">
+                    {insight.sourceSessionCount
+                      ? `${insight.sourceSessionCount} ${isPolish ? 'sesji' : 'sessions'}`
+                      : '-'}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-xs text-slate-400">
+                  {insight.createdAt ? new Date(insight.createdAt).toLocaleDateString() : '-'}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    {/* Export to Tools */}
+                    {!insight.exportedToTools ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleExportInsightToTools(insight.id);
+                        }}
+                        className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-emerald-400 transition-colors"
+                        title={isPolish ? 'Eksportuj do Tools' : 'Export to Tools'}
+                      >
+                        <Send size={14} />
+                      </button>
+                    ) : (
+                      <span
+                        className="p-1.5 text-emerald-400"
+                        title={isPolish ? 'Wyeksportowano do Tools' : 'Exported to Tools'}
+                      >
+                        <Check size={14} />
+                      </span>
+                    )}
+
+                    {/* Export to Assessment */}
+                    {!insight.exportedToAssessment ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleExportInsightToAssessment(insight.id);
+                        }}
+                        className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-blue-400 transition-colors"
+                        title={isPolish ? 'Eksportuj do Assessment' : 'Export to Assessment'}
+                      >
+                        <FileText size={14} />
+                      </button>
+                    ) : (
+                      <span
+                        className="p-1.5 text-blue-400"
+                        title={isPolish ? 'Wyeksportowano do Assessment' : 'Exported to Assessment'}
+                      >
+                        <Check size={14} />
+                      </span>
+                    )}
+
+                    {/* More actions on hover */}
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* Download */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Download insight as markdown
+                          const promptType =
+                            (insight as any).promptType ||
+                            (insight as any).insightType ||
+                            'summary';
+                          const content = `# ${insight.title}\n\n**Type:** ${promptType}\n**Status:** ${insight.status || 'completed'}\n\n${insight.content || ''}\n`;
+                          const blob = new Blob([content], { type: 'text/markdown' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `insight-${insight.id.slice(0, 8)}.md`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }}
+                        className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-blue-400 transition-colors"
+                        title={isPolish ? 'Pobierz' : 'Download'}
+                      >
+                        <Download size={14} />
+                      </button>
+
+                      {/* Delete */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteInsight(insight.id);
+                        }}
+                        className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-red-400 transition-colors"
+                        title={isPolish ? 'Usuń' : 'Delete'}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+
+                      {/* Open */}
+                      <button className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-white">
+                        <ChevronRight size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
           {filteredInsights.length === 0 && (
             <tr>
-              <td colSpan={4} className="px-4 py-12 text-center">
+              <td colSpan={6} className="px-4 py-12 text-center">
                 <div className="flex flex-col items-center">
                   <Lightbulb className="w-12 h-12 text-slate-600 mb-3" />
-                  <p className="text-slate-400 text-sm">
+                  <p className="text-slate-400 text-sm mb-4">
                     {isPolish ? 'Brak wniosków' : 'No insights yet'}
                   </p>
+                  <p className="text-xs text-slate-500 mb-4 max-w-md">
+                    {isPolish
+                      ? 'Wnioski są generowane automatycznie przez AI na podstawie zakończonych wywiadów. Kliknij "Nowy Insight" aby wygenerować wnioski z wybranych sesji.'
+                      : 'Insights are generated automatically by AI based on completed interviews. Click "New Insight" to generate insights from selected sessions.'}
+                  </p>
+                  <button
+                    onClick={() => {
+                      setSelectedSessionsForInsight([]);
+                      setShowInsightModal(true);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    <Sparkles size={16} />
+                    {isPolish ? 'Generuj wnioski AI' : 'Generate AI Insights'}
+                  </button>
                 </div>
               </td>
             </tr>
@@ -1146,7 +1739,9 @@ export const InterviewHub: React.FC = () => {
                   </div>
                   <div>
                     <span className="text-sm text-white font-medium block">{template.name}</span>
-                    <span className="text-xs text-slate-500 line-clamp-1">{template.description}</span>
+                    <span className="text-xs text-slate-500 line-clamp-1">
+                      {template.description}
+                    </span>
                   </div>
                 </div>
               </td>
@@ -1168,75 +1763,107 @@ export const InterviewHub: React.FC = () => {
                 )}
               </td>
               <td className="px-4 py-3 text-right">
-                <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {/* Use Template */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Use template logic - same as in template view
-                      Api.post(`/interview/templates/${template.id}/use`, {
-                        projectId: currentProjectId,
-                        name: `${template.name} ${new Date().toLocaleDateString()}`,
-                      }).then((created) => {
-                        const newSession = created as InterviewSession;
-                        setSessions((prev) => [newSession, ...prev]);
-                        handleOpenDocument({
-                          id: newSession.id,
-                          type: 'session',
-                          name: newSession.name || 'Interview Session',
-                          status: 'active',
-                          data: newSession,
-                        });
-                        toast.success(isPolish ? 'Sesja utworzona' : 'Session created');
-                      }).catch(() => {
-                        toast.error(isPolish ? 'Nie udało się utworzyć sesji' : 'Failed to create session');
-                      });
-                    }}
-                    className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-emerald-400 transition-colors"
-                    title={isPolish ? 'Użyj szablonu' : 'Use template'}
-                  >
-                    <Sparkles size={14} />
-                  </button>
-                  
-                  {/* Clone Template */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCloneTemplate(template);
-                    }}
-                    className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-blue-400 transition-colors"
-                    title={isPolish ? 'Klonuj szablon' : 'Clone template'}
-                  >
-                    <Copy size={14} />
-                  </button>
-                  
-                  {/* Edit Template - only for PM/Admin */}
+                <div className="flex items-center justify-end gap-1">
+                  {/* Assign Template - primary action for PM/Admin */}
                   {canAssign && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleEditTemplate(template.id);
+                        setSelectedTemplateForAssign(template);
+                        setShowAssignModal(true);
                       }}
-                      className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-amber-400 transition-colors"
-                      title={isPolish ? 'Edytuj szablon' : 'Edit template'}
+                      className="flex items-center gap-1 px-2 py-1 rounded bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 text-xs font-medium transition-colors"
+                      title={isPolish ? 'Przydziel szablon' : 'Assign template'}
                     >
-                      <Edit3 size={14} />
+                      <UserPlus size={12} />
+                      {isPolish ? 'Przydziel' : 'Assign'}
                     </button>
                   )}
-                  
-                  {/* Delete Template - only for PM/Admin and non-default */}
-                  {canAssign && !template.isDefault && (
+
+                  {/* More actions - visible on hover */}
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {/* Use Template */}
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        const projectId = await ensureProjectId();
+                        if (!projectId) {
+                          toast.error(
+                            isPolish
+                              ? 'Wybierz projekt przed utworzeniem sesji'
+                              : 'Select a project before creating a session'
+                          );
+                          return;
+                        }
+                        // Use template logic - same as in template view
+                        Api.post(`/interview/templates/${template.id}/use`, {
+                          projectId,
+                          name: `${template.name} ${new Date().toLocaleDateString()}`,
+                        })
+                          .then((created) => {
+                            const newSession = created as InterviewSession;
+                            setSessions((prev) => [newSession, ...prev]);
+                            handleOpenDocument({
+                              id: newSession.id,
+                              type: 'session',
+                              name: newSession.name || 'Interview Session',
+                              status: (newSession as any)?.status || 'in_progress',
+                              data: newSession,
+                            });
+                            toast.success(isPolish ? 'Sesja utworzona' : 'Session created');
+                          })
+                          .catch(() => {
+                            toast.error(
+                              isPolish ? 'Nie udało się utworzyć sesji' : 'Failed to create session'
+                            );
+                          });
+                      }}
+                      className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-emerald-400 transition-colors"
+                      title={isPolish ? 'Użyj szablonu' : 'Use template'}
+                    >
+                      <Sparkles size={14} />
+                    </button>
+
+                    {/* Clone Template */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDeleteTemplate(template);
+                        handleCloneTemplate(template);
                       }}
-                      className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-red-400 transition-colors"
-                      title={isPolish ? 'Usuń szablon' : 'Delete template'}
+                      className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-blue-400 transition-colors"
+                      title={isPolish ? 'Klonuj szablon' : 'Clone template'}
                     >
-                      <Trash2 size={14} />
+                      <Copy size={14} />
                     </button>
-                  )}
+
+                    {/* Edit Template - only for PM/Admin */}
+                    {canAssign && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditTemplate(template.id);
+                        }}
+                        className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-amber-400 transition-colors"
+                        title={isPolish ? 'Edytuj szablon' : 'Edit template'}
+                      >
+                        <Edit3 size={14} />
+                      </button>
+                    )}
+
+                    {/* Delete Template - only for PM/Admin and non-default */}
+                    {canAssign && !template.isDefault && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTemplate(template);
+                        }}
+                        className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-red-400 transition-colors"
+                        title={isPolish ? 'Usuń szablon' : 'Delete template'}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </td>
             </tr>
@@ -1287,25 +1914,17 @@ export const InterviewHub: React.FC = () => {
     if (doc.type === 'insight') {
       const insight = doc.data as InterviewInsight;
       return (
-        <InsightDetailView
+        <InsightViewer
           insightId={insight.id}
-          insight={{
-            id: insight.id,
-            title: insight.title,
-            description: insight.content,
-            content: insight.content,
-            category: insight.category,
-            insightType: insight.type,
-            promptType: insight.type,
-            impactLevel: insight.priority === 'high' ? 'high' : insight.priority === 'medium' ? 'medium' : 'low',
-            confidence: 'high',
-            status: insight.status || 'approved',
-            sourceQuote: insight.sourceQuote,
-            actionable: true,
-            createdAt: insight.createdAt,
-            updatedAt: insight.updatedAt,
+          onClose={() => handleCloseDocument(insight.id)}
+          onRegenerate={async () => {
+            const insightsRes = await Api.get('/interview/insights').catch(() => []);
+            setInsights(Array.isArray(insightsRes) ? insightsRes : []);
           }}
-          onRefresh={loadInsights}
+          onSaved={(data) => {
+            // Update local insight data
+            setInsights((prev) => prev.map((i) => (i.id === data.id ? { ...i, ...data } : i)));
+          }}
         />
       );
     }
@@ -1371,7 +1990,10 @@ export const InterviewHub: React.FC = () => {
                       const items = templateQuestions.filter((q: any) => q.category === cat);
                       if (items.length === 0) return null;
                       return (
-                        <div key={cat} className="bg-navy-950/40 border border-navy-700 rounded-lg p-4">
+                        <div
+                          key={cat}
+                          className="bg-navy-950/40 border border-navy-700 rounded-lg p-4"
+                        >
                           <div className="flex items-center justify-between mb-3">
                             <span className="text-xs font-semibold text-slate-200">
                               {(categoryLabels as any)[cat]}
@@ -1399,11 +2021,22 @@ export const InterviewHub: React.FC = () => {
               <button
                 onClick={async () => {
                   try {
+                    const projectId = await ensureProjectId();
+                    if (!projectId) {
+                      toast.error(
+                        isPolish
+                          ? 'Wybierz projekt przed utworzeniem sesji'
+                          : 'Select a project before creating a session'
+                      );
+                      return;
+                    }
                     toast.loading(
-                      isPolish ? 'Tworzenie sesji z szablonu...' : 'Creating session from template...'
+                      isPolish
+                        ? 'Tworzenie sesji z szablonu...'
+                        : 'Creating session from template...'
                     );
                     const created = await Api.post(`/interview/templates/${template.id}/use`, {
-                      projectId: currentProjectId,
+                      projectId,
                       name: `${template.name} ${new Date().toLocaleDateString()}`,
                     });
 
@@ -1414,7 +2047,7 @@ export const InterviewHub: React.FC = () => {
                       id: newSession.id,
                       type: 'session',
                       name: newSession.name || 'Interview Session',
-                      status: 'active',
+                      status: (newSession as any)?.status || 'in_progress',
                       data: newSession,
                     });
 
@@ -1423,7 +2056,9 @@ export const InterviewHub: React.FC = () => {
                   } catch (error) {
                     console.error('[InterviewHub] Failed to create session from template:', error);
                     toast.dismiss();
-                    toast.error(isPolish ? 'Nie udało się utworzyć sesji' : 'Failed to create session');
+                    toast.error(
+                      isPolish ? 'Nie udało się utworzyć sesji' : 'Failed to create session'
+                    );
                   }
                 }}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
@@ -1441,15 +2076,26 @@ export const InterviewHub: React.FC = () => {
   };
 
   // Render assignments table (reusable for my/managed/overdue)
-  const renderAssignmentsTable = (assignments: InterviewAssignment[], showAssignee: boolean = false) => {
+  const renderAssignmentsTable = (
+    assignments: InterviewAssignment[],
+    showAssignee: boolean = false
+  ) => {
     const getStatusColor = (status: string) => {
       switch (status) {
-        case 'assigned': return 'bg-blue-500/20 text-blue-400';
-        case 'in_progress': return 'bg-purple-500/20 text-purple-400';
-        case 'submitted': return 'bg-amber-500/20 text-amber-400';
-        case 'sent_back': return 'bg-red-500/20 text-red-400';
-        case 'completed': return 'bg-emerald-500/20 text-emerald-400';
-        default: return 'bg-slate-500/20 text-slate-400';
+        case 'assigned':
+          return 'bg-blue-500/20 text-blue-400';
+        case 'in_progress':
+          return 'bg-purple-500/20 text-purple-400';
+        case 'submitted':
+          return 'bg-amber-500/20 text-amber-400';
+        case 'sent_back':
+          return 'bg-red-500/20 text-red-400';
+        case 'approved':
+          return 'bg-emerald-500/20 text-emerald-400';
+        case 'completed':
+          return 'bg-emerald-500/20 text-emerald-400';
+        default:
+          return 'bg-slate-500/20 text-slate-400';
       }
     };
 
@@ -1459,6 +2105,7 @@ export const InterviewHub: React.FC = () => {
         in_progress: { pl: 'W trakcie', en: 'In Progress' },
         submitted: { pl: 'Wysłany', en: 'Submitted' },
         sent_back: { pl: 'Do poprawy', en: 'Sent Back' },
+        approved: { pl: 'Zatwierdzony', en: 'Approved' },
         completed: { pl: 'Zakończony', en: 'Completed' },
       };
       return labels[status]?.[isPolish ? 'pl' : 'en'] || status;
@@ -1466,11 +2113,16 @@ export const InterviewHub: React.FC = () => {
 
     const getPriorityColor = (priority: string) => {
       switch (priority) {
-        case 'urgent': return 'text-red-400';
-        case 'high': return 'text-orange-400';
-        case 'medium': return 'text-amber-400';
-        case 'low': return 'text-slate-400';
-        default: return 'text-slate-400';
+        case 'urgent':
+          return 'text-red-400';
+        case 'high':
+          return 'text-orange-400';
+        case 'medium':
+          return 'text-amber-400';
+        case 'low':
+          return 'text-slate-400';
+        default:
+          return 'text-slate-400';
       }
     };
 
@@ -1481,30 +2133,60 @@ export const InterviewHub: React.FC = () => {
 
     const handleStartAssignment = async (assignment: InterviewAssignment) => {
       try {
+        const projectId = await ensureProjectId();
+        if (!projectId) {
+          toast.error(
+            isPolish
+              ? 'Wybierz projekt przed rozpoczęciem wywiadu'
+              : 'Select a project before starting'
+          );
+          return;
+        }
         toast.loading(isPolish ? 'Rozpoczynanie wywiadu...' : 'Starting interview...');
-        const result = await Api.post(`/interview/assignments/${assignment.id}/start`, {});
+        const result = (await Api.post(`/interview/assignments/${assignment.id}/start`, {
+          projectId,
+        })) as any;
         toast.dismiss();
-        toast.success(isPolish ? 'Wywiad rozpoczęty!' : 'Interview started!');
-        
-        // Open the session
-        if ((result as any).sessionId) {
-          const session = await Api.get(`/interview/sessions/${(result as any).sessionId}`);
+
+        console.log('[InterviewHub] Start assignment result:', result);
+
+        // Open the session - backend returns { assignmentId, session }
+        const session = result?.session;
+        if (session?.id) {
+          toast.success(isPolish ? 'Wywiad rozpoczęty!' : 'Interview started!');
           handleOpenDocument({
-            id: (session as InterviewSession).id,
+            id: session.id,
             type: 'session',
-            name: (session as InterviewSession).name || 'Interview Session',
-            status: 'active',
+            name: session.name || 'Interview Session',
+            status: (session.status || 'in_progress') as any,
             data: session as InterviewSession,
           });
+        } else {
+          console.warn('[InterviewHub] No session in result:', result);
+          toast.error(
+            isPolish ? 'Brak sesji w odpowiedzi serwera' : 'No session in server response'
+          );
         }
-        
-        // Refresh assignments
-        const myRes = await Api.get('/interview/assignments/my').catch(() => []);
+
+        // Refresh all assignments
+        const [myRes, managedRes] = await Promise.all([
+          Api.get('/interview/assignments/my').catch(() => []),
+          canViewManaged
+            ? Api.get('/interview/assignments/managed').catch(() => [])
+            : Promise.resolve([]),
+        ]);
         setMyAssignments(Array.isArray(myRes) ? myRes : []);
-      } catch (error) {
+        if (canViewManaged) {
+          setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
+        }
+      } catch (error: any) {
         toast.dismiss();
-        toast.error(isPolish ? 'Nie udało się rozpocząć' : 'Failed to start');
         console.error('[InterviewHub] Failed to start assignment:', error);
+        safeToastError(
+          error,
+          isPolish ? 'Nie udało się rozpocząć wywiadu' : 'Failed to start interview',
+          isPolish
+        );
       }
     };
 
@@ -1512,9 +2194,70 @@ export const InterviewHub: React.FC = () => {
       try {
         await Api.post(`/interview/assignments/${assignment.id}/remind`, {});
         toast.success(isPolish ? 'Przypomnienie wysłane!' : 'Reminder sent!');
-      } catch (error) {
-        toast.error(isPolish ? 'Nie udało się wysłać przypomnienia' : 'Failed to send reminder');
+      } catch (error: any) {
         console.error('[InterviewHub] Failed to send reminder:', error);
+        safeToastError(
+          error,
+          isPolish ? 'Nie udało się wysłać przypomnienia' : 'Failed to send reminder',
+          isPolish
+        );
+      }
+    };
+
+    const handleOpenAssignmentRow = async (assignment: InterviewAssignment) => {
+      try {
+        console.log('[InterviewHub] Opening assignment:', {
+          id: assignment.id,
+          status: assignment.status,
+          sessionId: assignment.sessionId,
+          showAssignee,
+        });
+
+        // If assignment has a session, open it (read-only will be handled by workspace based on assignment status)
+        const sid = assignment.sessionId || assignment.session?.id;
+        if (sid) {
+          console.log('[InterviewHub] Loading session:', sid);
+          const session = await Api.get(`/interview/sessions/${sid}`);
+          console.log('[InterviewHub] Session loaded:', session);
+          handleOpenDocument({
+            id: (session as InterviewSession).id,
+            type: 'session',
+            name: (session as InterviewSession).name || 'Interview Session',
+            status: ((session as any)?.status || 'in_progress') as any,
+            data: session as InterviewSession,
+          });
+          return;
+        }
+
+        // If user is assignee and the assignment hasn't started, start it.
+        if (!showAssignee && assignment.status === 'assigned') {
+          console.log('[InterviewHub] Starting assignment as assignee');
+          await handleStartAssignment(assignment);
+          return;
+        }
+
+        // If manager view and assignment hasn't started yet, show info message
+        if (showAssignee && !assignment.sessionId) {
+          console.log('[InterviewHub] Assignment not started yet (manager view)');
+          const message = isPolish
+            ? 'Wywiad nie został jeszcze rozpoczęty przez przypisanego użytkownika'
+            : 'Interview has not been started by the assignee yet';
+          toast(message, {
+            icon: 'ℹ️',
+            duration: 4000,
+          });
+          return;
+        }
+
+        // Fallback - should not reach here, but log if it does
+        console.warn('[InterviewHub] No action taken for assignment:', assignment);
+      } catch (error: any) {
+        console.error('[InterviewHub] Failed to open assignment row:', error);
+        safeToastError(
+          error,
+          isPolish ? 'Nie udało się otworzyć assignmentu' : 'Failed to open assignment',
+          isPolish
+        );
       }
     };
 
@@ -1553,11 +2296,29 @@ export const InterviewHub: React.FC = () => {
               return (
                 <tr
                   key={assignment.id}
-                  className="group hover:bg-navy-800/50 transition-colors border-b border-navy-700/50 last:border-0"
+                  onClick={(e) => {
+                    // Only handle click if not clicking on a button or interactive element
+                    const target = e.target as HTMLElement;
+                    if (target.tagName === 'BUTTON' || target.closest('button')) {
+                      return; // Let button handle its own click
+                    }
+                    handleOpenAssignmentRow(assignment);
+                  }}
+                  className="group hover:bg-navy-800/50 active:bg-navy-700/50 transition-colors border-b border-navy-700/50 last:border-0 cursor-pointer"
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleOpenAssignmentRow(assignment);
+                    }
+                  }}
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-blue-500/20`}>
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center bg-blue-500/20`}
+                      >
                         <ClipboardList size={16} className="text-blue-400" />
                       </div>
                       <div>
@@ -1565,7 +2326,9 @@ export const InterviewHub: React.FC = () => {
                           {assignment.template?.name || 'Interview'}
                         </span>
                         {assignment.template?.category && (
-                          <span className="text-xs text-slate-500">{assignment.template.category}</span>
+                          <span className="text-xs text-slate-500">
+                            {assignment.template.category}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -1583,7 +2346,9 @@ export const InterviewHub: React.FC = () => {
                     </td>
                   )}
                   <td className="px-4 py-3">
-                    <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(assignment.status)}`}>
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(assignment.status)}`}
+                    >
                       <span className="w-1.5 h-1.5 rounded-full bg-current" />
                       {getStatusLabel(assignment.status)}
                     </span>
@@ -1601,7 +2366,9 @@ export const InterviewHub: React.FC = () => {
                   </td>
                   <td className="px-4 py-3">
                     {assignment.dueAt ? (
-                      <div className={`flex items-center gap-1 text-xs ${overdue ? 'text-red-400' : 'text-slate-400'}`}>
+                      <div
+                        className={`flex items-center gap-1 text-xs ${overdue ? 'text-red-400' : 'text-slate-400'}`}
+                      >
                         <Calendar size={12} />
                         {new Date(assignment.dueAt).toLocaleDateString()}
                         {overdue && <AlertTriangle size={12} className="ml-1" />}
@@ -1613,56 +2380,138 @@ export const InterviewHub: React.FC = () => {
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
                       {/* Actions based on status and permissions */}
-                      {assignment.status === 'assigned' && !showAssignee && (
-                        <button
-                          onClick={() => handleStartAssignment(assignment)}
-                          className="flex items-center gap-1 px-2 py-1 rounded bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 text-xs font-medium transition-colors"
-                        >
-                          <Sparkles size={12} />
-                          {isPolish ? 'Rozpocznij' : 'Start'}
-                        </button>
-                      )}
-                      {assignment.status === 'in_progress' && assignment.sessionId && !showAssignee && (
-                        <button
-                          onClick={async () => {
-                            const session = await Api.get(`/interview/sessions/${assignment.sessionId}`);
-                            handleOpenDocument({
-                              id: (session as InterviewSession).id,
-                              type: 'session',
-                              name: (session as InterviewSession).name || 'Interview Session',
-                              status: 'active',
-                              data: session as InterviewSession,
-                            });
-                          }}
-                          className="flex items-center gap-1 px-2 py-1 rounded bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 text-xs font-medium transition-colors"
-                        >
-                          <ChevronRight size={12} />
-                          {isPolish ? 'Kontynuuj' : 'Continue'}
-                        </button>
-                      )}
-                      {showAssignee && canAssign && assignment.status !== 'completed' && (
+
+                      {/* User actions (not manager view) */}
+                      {!showAssignee && (
                         <>
-                          {/* Send Reminder */}
-                          <button
-                            onClick={() => handleOpenReminderModal(assignment)}
-                            className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-amber-400 transition-colors"
-                            title={isPolish ? 'Wyślij przypomnienie' : 'Send reminder'}
-                          >
-                            <Bell size={14} />
-                          </button>
-                          
-                          {/* Send Back - only for submitted assignments */}
-                          {assignment.status === 'submitted' && (
+                          {/* Start - for assigned status */}
+                          {assignment.status === 'assigned' && (
                             <button
-                              onClick={() => handleOpenSendBackModal(assignment)}
-                              className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-red-400 transition-colors"
-                              title={isPolish ? 'Zwróć do poprawy' : 'Send back'}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStartAssignment(assignment);
+                              }}
+                              className="flex items-center gap-1 px-2 py-1 rounded bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 text-xs font-medium transition-colors"
                             >
-                              <RotateCcw size={14} />
+                              <Sparkles size={12} />
+                              {isPolish ? 'Rozpocznij' : 'Start'}
                             </button>
+                          )}
+
+                          {/* Continue - for in_progress status */}
+                          {assignment.status === 'in_progress' && assignment.sessionId && (
+                            <button
+                              onClick={async (e) => {
+                                // prevent row click
+                                e.stopPropagation();
+                                const session = await Api.get(
+                                  `/interview/sessions/${assignment.sessionId}`
+                                );
+                                handleOpenDocument({
+                                  id: (session as InterviewSession).id,
+                                  type: 'session',
+                                  name: (session as InterviewSession).name || 'Interview Session',
+                                  status: ((session as any)?.status || 'in_progress') as any,
+                                  data: session as InterviewSession,
+                                });
+                              }}
+                              className="flex items-center gap-1 px-2 py-1 rounded bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 text-xs font-medium transition-colors"
+                            >
+                              <ChevronRight size={12} />
+                              {isPolish ? 'Kontynuuj' : 'Continue'}
+                            </button>
+                          )}
+
+                          {/* Resume - for sent_back status (user needs to fix and resubmit) */}
+                          {assignment.status === 'sent_back' && assignment.sessionId && (
+                            <button
+                              onClick={async (e) => {
+                                // prevent row click
+                                e.stopPropagation();
+                                const session = await Api.get(
+                                  `/interview/sessions/${assignment.sessionId}`
+                                );
+                                handleOpenDocument({
+                                  id: (session as InterviewSession).id,
+                                  type: 'session',
+                                  name: (session as InterviewSession).name || 'Interview Session',
+                                  status: ((session as any)?.status || 'in_progress') as any,
+                                  data: session as InterviewSession,
+                                });
+                              }}
+                              className="flex items-center gap-1 px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs font-medium transition-colors"
+                            >
+                              <RotateCcw size={12} />
+                              {isPolish ? 'Popraw' : 'Fix & Resubmit'}
+                            </button>
+                          )}
+
+                          {/* Submitted - waiting for review */}
+                          {assignment.status === 'submitted' && (
+                            <span className="flex items-center gap-1 px-2 py-1 rounded bg-amber-500/20 text-amber-400 text-xs font-medium">
+                              <Clock size={12} />
+                              {isPolish ? 'Oczekuje na przegląd' : 'Awaiting Review'}
+                            </span>
+                          )}
+
+                          {/* Completed/Approved - show checkmark */}
+                          {(assignment.status === 'completed' ||
+                            assignment.status === 'approved') && (
+                            <span className="flex items-center gap-1 px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 text-xs font-medium">
+                              <Check size={12} />
+                              {isPolish ? 'Zakończone' : 'Completed'}
+                            </span>
                           )}
                         </>
                       )}
+
+                      {/* Manager actions */}
+                      {showAssignee &&
+                        canAssign &&
+                        assignment.status !== 'completed' &&
+                        assignment.status !== 'approved' && (
+                          <>
+                            {/* Send Reminder - for all non-completed statuses */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenReminderModal(assignment);
+                              }}
+                              className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-amber-400 transition-colors"
+                              title={isPolish ? 'Wyślij przypomnienie' : 'Send reminder'}
+                            >
+                              <Bell size={14} />
+                            </button>
+
+                            {/* Review actions - only for submitted assignments */}
+                            {assignment.status === 'submitted' && (
+                              <>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleApproveAssignment(assignment);
+                                  }}
+                                  className="flex items-center gap-1 px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-xs font-medium transition-colors"
+                                  title={isPolish ? 'Zatwierdź' : 'Approve'}
+                                >
+                                  <Check size={12} />
+                                  {isPolish ? 'Zatwierdź' : 'Approve'}
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenSendBackModal(assignment);
+                                  }}
+                                  className="flex items-center gap-1 px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs font-medium transition-colors"
+                                  title={isPolish ? 'Zwróć do poprawy' : 'Send back'}
+                                >
+                                  <RotateCcw size={12} />
+                                  {isPolish ? 'Odeślij' : 'Send Back'}
+                                </button>
+                              </>
+                            )}
+                          </>
+                        )}
                     </div>
                   </td>
                 </tr>
@@ -1717,9 +2566,31 @@ export const InterviewHub: React.FC = () => {
     }
 
     if (activeTab === 'managed') {
-      return <div className="p-4">{renderAssignmentsTable(managedAssignments, true)}</div>;
-    }
+      return (
+        <div className="p-4 space-y-4">
+          {/* Overdue Warning */}
+          {overdueAssignments.length > 0 && (
+            <div className="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
+              <AlertTriangle size={20} className="text-red-400" />
+              <div>
+                <span className="text-sm font-medium text-red-400">
+                  {overdueAssignments.length}{' '}
+                  {isPolish ? 'zaległych przydziałów' : 'overdue assignments'}
+                </span>
+                <p className="text-xs text-red-400/70">
+                  {isPolish
+                    ? 'Wyślij przypomnienia lub sprawdź status'
+                    : 'Send reminders or check status'}
+                </p>
+              </div>
+            </div>
+          )}
 
+          {/* Assignments Table */}
+          {renderAssignmentsTable(managedAssignments, true)}
+        </div>
+      );
+    }
 
     return null;
   };
@@ -1774,10 +2645,10 @@ export const InterviewHub: React.FC = () => {
                     {tab.count !== undefined && tab.count > 0 && (
                       <span
                         className={`px-1.5 py-0.5 text-xs rounded-full ${
-                          tab.hasWarning 
-                            ? 'bg-red-500/30 text-red-300' 
-                            : isActive 
-                              ? 'bg-primary-500/30 text-primary-300' 
+                          tab.hasWarning
+                            ? 'bg-red-500/30 text-red-300'
+                            : isActive
+                              ? 'bg-primary-500/30 text-primary-300'
                               : 'bg-navy-700 text-slate-400'
                         }`}
                       >
@@ -1791,20 +2662,39 @@ export const InterviewHub: React.FC = () => {
                 );
               })}
             </div>
-
           </div>
 
           {/* Right: MINIMAL Action Buttons - kontekstowe per tab */}
           <div className="flex items-center gap-2">
             {/* Sessions tab: tylko + Nowa sesja */}
             {activeTab === 'sessions' && !activeDocumentId && (
-              <button
-                onClick={handleNewSession}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-primary-500 to-primary-600 text-white border border-primary-400/30 hover:from-primary-400 hover:to-primary-500 shadow-lg shadow-primary-500/25 transition-all duration-200"
-              >
-                <Plus size={16} />
-                <span>{isPolish ? 'Nowa sesja' : 'New Session'}</span>
-              </button>
+              <>
+                <div className="relative">
+                  <select
+                    value={sessionStatusFilter}
+                    onChange={(e) => setSessionStatusFilter(e.target.value)}
+                    className="appearance-none pr-9 pl-3 py-2 rounded-lg text-sm font-medium border bg-navy-800 border-navy-600 text-slate-200 hover:bg-navy-700 hover:border-slate-500 transition-all duration-200"
+                    title={isPolish ? 'Filtr statusu' : 'Status filter'}
+                  >
+                    {sessionStatusOptions.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.display}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={16}
+                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  />
+                </div>
+                <button
+                  onClick={handleNewSession}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-primary-500 to-primary-600 text-white border border-primary-400/30 hover:from-primary-400 hover:to-primary-500 shadow-lg shadow-primary-500/25 transition-all duration-200"
+                >
+                  <Plus size={16} />
+                  <span>{isPolish ? 'Nowa sesja' : 'New Session'}</span>
+                </button>
+              </>
             )}
 
             {/* Templates tab: + Nowy szablon (PM/Admin) + Przydziel (PM/Admin) */}
@@ -1867,17 +2757,26 @@ export const InterviewHub: React.FC = () => {
         {showSearch && (
           <div className="px-4 pb-3">
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={handleSearchChange}
                 placeholder={
                   activeTab === 'sessions'
-                    ? isPolish ? 'Szukaj sesji...' : 'Search sessions...'
+                    ? isPolish
+                      ? 'Szukaj sesji...'
+                      : 'Search sessions...'
                     : activeTab === 'insights'
-                      ? isPolish ? 'Szukaj wniosków...' : 'Search insights...'
-                      : isPolish ? 'Szukaj szablonów...' : 'Search templates...'
+                      ? isPolish
+                        ? 'Szukaj wniosków...'
+                        : 'Search insights...'
+                      : isPolish
+                        ? 'Szukaj szablonów...'
+                        : 'Search templates...'
                 }
                 autoFocus
                 className="w-full pl-10 pr-10 py-2 rounded-lg bg-navy-800 border border-navy-600 text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
@@ -1904,22 +2803,31 @@ export const InterviewHub: React.FC = () => {
       {/* Assign Interview Modal */}
       <AssignInterviewModal
         isOpen={showAssignModal}
-        onClose={() => setShowAssignModal(false)}
+        onClose={() => {
+          setShowAssignModal(false);
+          setSelectedTemplateForAssign(null);
+        }}
         onSuccess={async () => {
           // Refresh assignments after successful creation
           try {
             const [myRes, managedRes, overdueRes] = await Promise.all([
               Api.get('/interview/assignments/my').catch(() => []),
-              canViewManaged ? Api.get('/interview/assignments/managed').catch(() => []) : Promise.resolve([]),
-              canViewOverdue ? Api.get('/interview/assignments/overdue').catch(() => []) : Promise.resolve([]),
+              canViewManaged
+                ? Api.get('/interview/assignments/managed').catch(() => [])
+                : Promise.resolve([]),
+              canViewOverdue
+                ? Api.get('/interview/assignments/overdue').catch(() => [])
+                : Promise.resolve([]),
             ]);
             setMyAssignments(Array.isArray(myRes) ? myRes : []);
             setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
             setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
+            setSelectedTemplateForAssign(null);
           } catch (error) {
             console.error('[InterviewHub] Failed to refresh assignments:', error);
           }
         }}
+        preselectedTemplateId={selectedTemplateForAssign?.id}
       />
 
       {/* Export Modal */}
@@ -1950,7 +2858,9 @@ export const InterviewHub: React.FC = () => {
                 </div>
                 <div className="text-left">
                   <span className="text-sm font-medium text-white block">PDF</span>
-                  <span className="text-xs text-slate-500">{isPolish ? 'Raport profesjonalny' : 'Professional report'}</span>
+                  <span className="text-xs text-slate-500">
+                    {isPolish ? 'Raport profesjonalny' : 'Professional report'}
+                  </span>
                 </div>
               </button>
               <button
@@ -1962,7 +2872,9 @@ export const InterviewHub: React.FC = () => {
                 </div>
                 <div className="text-left">
                   <span className="text-sm font-medium text-white block">Excel</span>
-                  <span className="text-xs text-slate-500">{isPolish ? 'Dane do analizy' : 'Data for analysis'}</span>
+                  <span className="text-xs text-slate-500">
+                    {isPolish ? 'Dane do analizy' : 'Data for analysis'}
+                  </span>
                 </div>
               </button>
             </div>
@@ -1990,18 +2902,20 @@ export const InterviewHub: React.FC = () => {
             </div>
             <div className="p-4">
               <p className="text-sm text-slate-400 mb-4">
-                {isPolish 
+                {isPolish
                   ? `Czy na pewno chcesz wysłać przypomnienie do ${selectedAssignment.assignee?.name || 'użytkownika'}?`
-                  : `Are you sure you want to send a reminder to ${selectedAssignment.assignee?.name || 'the user'}?`
-                }
+                  : `Are you sure you want to send a reminder to ${selectedAssignment.assignee?.name || 'the user'}?`}
               </p>
               <div className="bg-navy-800 rounded-lg p-3 mb-4">
-                <div className="text-sm text-white font-medium">{selectedAssignment.template?.name}</div>
+                <div className="text-sm text-white font-medium">
+                  {selectedAssignment.template?.name}
+                </div>
                 <div className="text-xs text-slate-500 mt-1">
-                  {selectedAssignment.dueAt 
+                  {selectedAssignment.dueAt
                     ? `${isPolish ? 'Termin:' : 'Due:'} ${new Date(selectedAssignment.dueAt).toLocaleDateString()}`
-                    : isPolish ? 'Brak terminu' : 'No due date'
-                  }
+                    : isPolish
+                      ? 'Brak terminu'
+                      : 'No due date'}
                 </div>
               </div>
               <div className="flex gap-3">
@@ -2021,8 +2935,13 @@ export const InterviewHub: React.FC = () => {
                       toast.success(isPolish ? 'Przypomnienie wysłane!' : 'Reminder sent!');
                       setShowReminderModal(false);
                       setSelectedAssignment(null);
-                    } catch (error) {
-                      toast.error(isPolish ? 'Nie udało się wysłać przypomnienia' : 'Failed to send reminder');
+                    } catch (error: any) {
+                      console.error('[InterviewHub] Failed to send reminder from modal:', error);
+                      safeToastError(
+                        error,
+                        isPolish ? 'Nie udało się wysłać przypomnienia' : 'Failed to send reminder',
+                        isPolish
+                      );
                     }
                   }}
                   className="flex-1 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-medium transition-colors"
@@ -2064,16 +2983,17 @@ export const InterviewHub: React.FC = () => {
               className="p-4"
             >
               <p className="text-sm text-slate-400 mb-4">
-                {isPolish 
+                {isPolish
                   ? 'Podaj powód zwrotu wywiadu do poprawy:'
-                  : 'Provide a reason for sending the interview back:'
-                }
+                  : 'Provide a reason for sending the interview back:'}
               </p>
               <textarea
                 name="reason"
                 required
                 rows={4}
-                placeholder={isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs to be improved...'}
+                placeholder={
+                  isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs to be improved...'
+                }
                 className="w-full px-3 py-2 rounded-lg bg-navy-800 border border-navy-600 text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all resize-none"
               />
               <div className="flex gap-3 mt-4">
@@ -2121,23 +3041,31 @@ export const InterviewHub: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div className="bg-navy-800 border border-navy-700 rounded-xl p-4">
                   <div className="text-2xl font-bold text-white">{sessions.length}</div>
-                  <div className="text-sm text-slate-400">{isPolish ? 'Wszystkie sesje' : 'Total Sessions'}</div>
+                  <div className="text-sm text-slate-400">
+                    {isPolish ? 'Wszystkie sesje' : 'Total Sessions'}
+                  </div>
                 </div>
                 <div className="bg-navy-800 border border-navy-700 rounded-xl p-4">
                   <div className="text-2xl font-bold text-emerald-400">
-                    {sessions.filter(s => s.status === 'completed').length}
+                    {sessions.filter((s) => s.status === 'completed').length}
                   </div>
-                  <div className="text-sm text-slate-400">{isPolish ? 'Zakończone' : 'Completed'}</div>
+                  <div className="text-sm text-slate-400">
+                    {isPolish ? 'Zakończone' : 'Completed'}
+                  </div>
                 </div>
                 <div className="bg-navy-800 border border-navy-700 rounded-xl p-4">
                   <div className="text-2xl font-bold text-purple-400">
-                    {sessions.filter(s => s.status === 'active').length}
+                    {sessions.filter((s) => s.status === 'active').length}
                   </div>
-                  <div className="text-sm text-slate-400">{isPolish ? 'W trakcie' : 'In Progress'}</div>
+                  <div className="text-sm text-slate-400">
+                    {isPolish ? 'W trakcie' : 'In Progress'}
+                  </div>
                 </div>
                 <div className="bg-navy-800 border border-navy-700 rounded-xl p-4">
                   <div className="text-2xl font-bold text-amber-400">{insights.length}</div>
-                  <div className="text-sm text-slate-400">{isPolish ? 'Wnioski AI' : 'AI Insights'}</div>
+                  <div className="text-sm text-slate-400">
+                    {isPolish ? 'Wnioski AI' : 'AI Insights'}
+                  </div>
                 </div>
               </div>
 
@@ -2148,24 +3076,36 @@ export const InterviewHub: React.FC = () => {
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
-                    <div className="text-xl font-bold text-blue-400">{managedAssignments.length}</div>
-                    <div className="text-xs text-slate-500">{isPolish ? 'Zarządzane' : 'Managed'}</div>
+                    <div className="text-xl font-bold text-blue-400">
+                      {managedAssignments.length}
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      {isPolish ? 'Zarządzane' : 'Managed'}
+                    </div>
                   </div>
                   <div>
-                    <div className="text-xl font-bold text-red-400">{overdueAssignments.length}</div>
-                    <div className="text-xs text-slate-500">{isPolish ? 'Przeterminowane' : 'Overdue'}</div>
+                    <div className="text-xl font-bold text-red-400">
+                      {overdueAssignments.length}
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      {isPolish ? 'Przeterminowane' : 'Overdue'}
+                    </div>
                   </div>
                   <div>
                     <div className="text-xl font-bold text-emerald-400">
-                      {managedAssignments.filter(a => a.status === 'completed').length}
+                      {managedAssignments.filter((a) => a.status === 'completed').length}
                     </div>
-                    <div className="text-xs text-slate-500">{isPolish ? 'Ukończone' : 'Completed'}</div>
+                    <div className="text-xs text-slate-500">
+                      {isPolish ? 'Ukończone' : 'Completed'}
+                    </div>
                   </div>
                   <div>
                     <div className="text-xl font-bold text-amber-400">
-                      {managedAssignments.filter(a => a.status === 'submitted').length}
+                      {managedAssignments.filter((a) => a.status === 'submitted').length}
                     </div>
-                    <div className="text-xs text-slate-500">{isPolish ? 'Do przeglądu' : 'Pending Review'}</div>
+                    <div className="text-xs text-slate-500">
+                      {isPolish ? 'Do przeglądu' : 'Pending Review'}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2182,14 +3122,18 @@ export const InterviewHub: React.FC = () => {
                         <FileText size={14} className="text-blue-400" />
                         <span className="text-sm text-slate-300">{template.name}</span>
                       </div>
-                      <span className="text-xs text-slate-500">{template.questionCount} {isPolish ? 'pytań' : 'questions'}</span>
+                      <span className="text-xs text-slate-500">
+                        {template.questionCount} {isPolish ? 'pytań' : 'questions'}
+                      </span>
                     </div>
                   ))}
                 </div>
               </div>
 
               <p className="text-center text-slate-500 text-sm mt-6">
-                {isPolish ? 'Pełny dashboard analityczny w przygotowaniu...' : 'Full analytics dashboard coming soon...'}
+                {isPolish
+                  ? 'Pełny dashboard analityczny w przygotowaniu...'
+                  : 'Full analytics dashboard coming soon...'}
               </p>
             </div>
           </div>
@@ -2224,19 +3168,6 @@ export const InterviewHub: React.FC = () => {
           setInsights(Array.isArray(insightsRes) ? insightsRes : []);
         }}
       />
-
-      {/* Insight Viewer Modal */}
-      {viewingInsightId && (
-        <InsightViewer
-          insightId={viewingInsightId}
-          onClose={() => setViewingInsightId(null)}
-          onRegenerate={async () => {
-            // Refresh insights after regeneration
-            const insightsRes = await Api.get('/interview/insights').catch(() => []);
-            setInsights(Array.isArray(insightsRes) ? insightsRes : []);
-          }}
-        />
-      )}
     </div>
   );
 };

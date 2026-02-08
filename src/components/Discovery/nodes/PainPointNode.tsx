@@ -51,11 +51,10 @@ const AreaBadge: React.FC<{ area: PainArea }> = ({ area }) => {
     },
   };
 
-  const config =
-    areaConfig[area] || {
-      color: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
-      icon: '⚠️',
-    };
+  const config = areaConfig[area] || {
+    color: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+    icon: '⚠️',
+  };
 
   return (
     <span

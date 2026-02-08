@@ -1,868 +1,1415 @@
 /**
  * Report Generation Service
- * FLOW-REPORT-001: Generate, export, and share reports
+ *
+ * AI-powered content generation for reports.
+ * Uses assessment data, company context, and methodology to generate professional reports.
  */
 
-import crypto from 'crypto';
-import fs from 'fs';
-import path from 'path';
-import PDFDocument from 'pdfkit';
-import PptxGenJS from 'pptxgenjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
+import { getDatabase } from '../database/index.js';
 import logger from '../utils/Logger.js';
+import ReportBuilderService, {
+  ReportRecord,
+  SectionLanguage,
+  SectionLength,
+  SectionRecord,
+  SectionType,
+} from './reportBuilderService.js';
 
 // ==========================================
 // TYPES
 // ==========================================
 
-export interface ReportGenerationParams {
-  reportType: 'assessment' | 'project' | 'portfolio' | 'initiative';
-  sourceId: string; // assessmentId, projectId, etc.
-  language?: string;
-  templateId?: string;
-  includeAppendix?: boolean;
+interface GenerationContext {
+  report: ReportRecord;
+  section: SectionRecord;
+  companyContext: Record<string, unknown>;
+  sourceData: {
+    assessment?: {
+      type: string;
+      name: string;
+      scores: Record<string, unknown>;
+      answers: Record<string, unknown>;
+    };
+    axisData?: Record<string, unknown>;
+  };
+  previousSections?: Array<{ key: string; content: string }>;
 }
 
-export interface GeneratedReport {
-  id: string;
-  type: string;
-  title: string;
-  executiveSummary: string;
-  sections: ReportSection[];
-  generatedAt: string;
-  language: string;
-}
-
-export interface ReportSection {
-  id: string;
-  title: string;
+interface GenerationResult {
   content: string;
-  charts?: ChartDefinition[];
-  tables?: TableDefinition[];
-}
-
-export interface ChartDefinition {
-  type: 'radar' | 'bar' | 'line' | 'pie';
-  title: string;
-  data: Record<string, unknown>;
-}
-
-export interface TableDefinition {
-  title: string;
-  headers: string[];
-  rows: string[][];
-}
-
-export interface PublicLinkParams {
-  reportId: string;
-  reportType: string;
-  organizationId: string;
-  userId: string;
-  password?: string;
-  expiresInDays?: number;
-  showCompanyLogo?: boolean;
-  showConsultinityBranding?: boolean;
-  customMessage?: string;
+  tokensUsed: number;
+  model: string;
 }
 
 // ==========================================
-// SERVICE
+// DATABASE HELPERS
 // ==========================================
 
-class ReportGenerationService {
-  private db: IDatabase | null = null;
+const db: IDatabase = getDatabase();
 
-  private async getDb(): Promise<IDatabase> {
-    if (!this.db) {
-      this.db = await getDatabase();
-    }
-    return this.db;
-  }
-
-  private async ensureExportDir(): Promise<string> {
-    const exportDir = path.resolve(process.cwd(), 'exports', 'reports');
-    await fs.promises.mkdir(exportDir, { recursive: true });
-    return exportDir;
-  }
-
-  private formatDecisions(
-    decisions: { title?: string; deadline?: string; status?: string }[]
-  ): string {
-    if (!decisions || decisions.length === 0) {
-      return 'No pending decisions.';
-    }
-    return decisions
-      .slice(0, 10)
-      .map((d, index) => {
-        const due = d.deadline ? ` (due ${d.deadline})` : '';
-        const status = d.status ? ` [${String(d.status).toUpperCase()}]` : '';
-        return `${index + 1}. ${d.title || 'Decision'}${status}${due}`;
-      })
-      .join('\n');
-  }
-
-  private formatEscalations(
-    decisions: { title?: string; deadline?: string; status?: string }[]
-  ): string {
-    const escalated = decisions.filter((d) => String(d.status || '').toLowerCase() === 'escalated');
-    if (!escalated.length) {
-      return 'No escalations.';
-    }
-    return escalated
-      .slice(0, 10)
-      .map((d, index) => {
-        const due = d.deadline ? ` (due ${d.deadline})` : '';
-        return `${index + 1}. ${d.title || 'Decision'}${due}`;
-      })
-      .join('\n');
-  }
-
-  /**
-   * Generate a report
-   */
-  async generateReport(params: ReportGenerationParams, orgId: string): Promise<GeneratedReport> {
-    const db = await this.getDb();
-    const now = new Date().toISOString();
-    const language = params.language || 'en';
-
-    let report: GeneratedReport;
-
-    switch (params.reportType) {
-      case 'assessment':
-        report = await this.generateAssessmentReport(params.sourceId, language, orgId);
-        break;
-      case 'project':
-        report = await this.generateProjectReport(params.sourceId, language, orgId);
-        break;
-      case 'portfolio':
-        report = await this.generatePortfolioReport(orgId, language);
-        break;
-      case 'initiative':
-        report = await this.generateInitiativeReport(params.sourceId, language, orgId);
-        break;
-      default:
-        throw new Error(`Unknown report type: ${params.reportType}`);
-    }
-
-    logger.info(`[ReportGenerationService] Generated ${params.reportType} report: ${report.id}`);
-    return report;
-  }
-
-  /**
-   * Generate assessment report
-   */
-  private async generateAssessmentReport(
-    assessmentId: string,
-    language: string,
-    orgId: string
-  ): Promise<GeneratedReport> {
-    const db = await this.getDb();
-
-    // Get assessment data
-    const assessment = await db.get<{
-      id: string;
-      name: string;
-      framework: string;
-      overall_score: number;
-      maturity_level: number;
-      completed_at: string;
-    }>('SELECT * FROM assessments WHERE id = ? AND organization_id = ?', [assessmentId, orgId]);
-
-    if (!assessment) {
-      throw new Error('Assessment not found');
-    }
-
-    // Get dimension scores
-    const dimensionScores = await db.all<{
-      dimension_id: string;
-      dimension_name: string;
-      score: number;
-      max_score: number;
-    }>('SELECT * FROM assessment_dimension_scores WHERE assessment_id = ?', [assessmentId]);
-
-    // Build report
-    const reportId = `report-${uuidv4()}`;
-    const maturityLabels: Record<number, string> = {
-      1: 'Initial',
-      2: 'Developing',
-      3: 'Defined',
-      4: 'Managed',
-      5: 'Optimizing',
-    };
-
-    const report: GeneratedReport = {
-      id: reportId,
-      type: 'assessment',
-      title: `${assessment.framework} Assessment Report: ${assessment.name}`,
-      executiveSummary: this.generateExecutiveSummary(assessment, dimensionScores || [], language),
-      sections: this.generateAssessmentSections(assessment, dimensionScores || [], language),
-      generatedAt: new Date().toISOString(),
-      language,
-    };
-
-    // Update assessment report record
-    await db.run(
-      `UPDATE assessment_reports SET 
-                executive_summary = ?,
-                detailed_analysis = ?,
-                updated_at = datetime('now')
-             WHERE assessment_id = ?`,
-      [report.executiveSummary, JSON.stringify(report.sections), assessmentId]
-    );
-
-    return report;
-  }
-
-  /**
-   * Generate executive summary
-   */
-  private generateExecutiveSummary(
-    assessment: { name: string; framework: string; overall_score: number; maturity_level: number },
-    dimensionScores: { dimension_name: string; score: number }[],
-    language: string
-  ): string {
-    const maturityLabels: Record<number, string> = {
-      1: 'Initial',
-      2: 'Developing',
-      3: 'Defined',
-      4: 'Managed',
-      5: 'Optimizing',
-    };
-
-    const topStrengths = dimensionScores
-      .filter((d) => d.score >= 3.5)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 2)
-      .map((d) => d.dimension_name);
-
-    const topGaps = dimensionScores
-      .filter((d) => d.score < 3)
-      .sort((a, b) => a.score - b.score)
-      .slice(0, 2)
-      .map((d) => d.dimension_name);
-
-    // Generate in requested language (simplified - should use i18n)
-    if (language === 'pl') {
-      return (
-        `Ocena ${assessment.framework} "${assessment.name}" została zakończona z wynikiem ${assessment.overall_score?.toFixed(1) || 'N/A'} / 5.0 ` +
-        `(Poziom dojrzałości: ${maturityLabels[assessment.maturity_level] || 'N/A'}). ` +
-        (topStrengths.length > 0 ? `Mocne strony: ${topStrengths.join(', ')}. ` : '') +
-        (topGaps.length > 0 ? `Obszary do poprawy: ${topGaps.join(', ')}.` : '')
-      );
-    }
-
-    return (
-      `The ${assessment.framework} assessment "${assessment.name}" has been completed with an overall score of ${assessment.overall_score?.toFixed(1) || 'N/A'} / 5.0 ` +
-      `(Maturity Level: ${maturityLabels[assessment.maturity_level] || 'N/A'}). ` +
-      (topStrengths.length > 0 ? `Key strengths: ${topStrengths.join(', ')}. ` : '') +
-      (topGaps.length > 0 ? `Areas for improvement: ${topGaps.join(', ')}.` : '')
-    );
-  }
-
-  /**
-   * Generate assessment sections
-   */
-  private generateAssessmentSections(
-    assessment: { framework: string; overall_score: number },
-    dimensionScores: {
-      dimension_id: string;
-      dimension_name: string;
-      score: number;
-      max_score: number;
-    }[],
-    language: string
-  ): ReportSection[] {
-    const sections: ReportSection[] = [];
-
-    // Results by Dimension section
-    const dimensionSection: ReportSection = {
-      id: 'results-by-dimension',
-      title: language === 'pl' ? 'Wyniki według wymiarów' : 'Results by Dimension',
-      content: '',
-      charts: [
-        {
-          type: 'radar',
-          title: 'Dimension Scores',
-          data: {
-            labels: dimensionScores.map((d) => d.dimension_name),
-            values: dimensionScores.map((d) => d.score),
-            maxValue: 5,
-          },
-        },
-      ],
-      tables: [
-        {
-          title: 'Dimension Breakdown',
-          headers: ['Dimension', 'Score', 'Max', 'Gap'],
-          rows: dimensionScores.map((d) => [
-            d.dimension_name,
-            d.score.toFixed(1),
-            d.max_score.toFixed(1),
-            (d.max_score - d.score).toFixed(1),
-          ]),
-        },
-      ],
-    };
-    sections.push(dimensionSection);
-
-    // Recommendations section
-    const recommendations: ReportSection = {
-      id: 'recommendations',
-      title: language === 'pl' ? 'Rekomendacje' : 'Recommendations',
-      content: this.generateRecommendations(dimensionScores, language),
-    };
-    sections.push(recommendations);
-
-    return sections;
-  }
-
-  /**
-   * Generate recommendations based on gaps
-   */
-  private generateRecommendations(
-    dimensionScores: { dimension_name: string; score: number }[],
-    language: string
-  ): string {
-    const gaps = dimensionScores.filter((d) => d.score < 3.5).sort((a, b) => a.score - b.score);
-
-    if (gaps.length === 0) {
-      return language === 'pl'
-        ? 'Organizacja wykazuje silną dojrzałość we wszystkich wymiarach. Kontynuuj doskonalenie.'
-        : 'The organization shows strong maturity across all dimensions. Continue optimization efforts.';
-    }
-
-    const recs = gaps.slice(0, 3).map((g, i) => {
-      if (language === 'pl') {
-        return `${i + 1}. Priorytet: Poprawa wymiaru "${g.dimension_name}" (obecny wynik: ${g.score.toFixed(1)}/5.0)`;
-      }
-      return `${i + 1}. Priority: Improve "${g.dimension_name}" dimension (current score: ${g.score.toFixed(1)}/5.0)`;
+function queryRun(sql: string, params: unknown[] = []): Promise<{ changes: number }> {
+  return new Promise((resolve, reject) => {
+    db.run(sql, params, function (this: { changes: number }, err: Error | null) {
+      if (err) reject(err);
+      else resolve({ changes: this.changes });
     });
+  });
+}
 
-    return recs.join('\n\n');
+function queryOne<T>(sql: string, params: unknown[] = []): Promise<T | null> {
+  return new Promise((resolve, reject) => {
+    db.get(sql, params, (err: Error | null, row: T | null) => {
+      if (err) reject(err);
+      else resolve(row || null);
+    });
+  });
+}
+
+// ==========================================
+// PROMPT TEMPLATES
+// ==========================================
+
+const LENGTH_GUIDANCE: Record<SectionLength, string> = {
+  short: '200-400 words. Focus only on key points.',
+  medium: '500-800 words. Balanced detail with clear structure.',
+  long: '1000-1500 words. Comprehensive analysis with examples.',
+};
+
+const LANGUAGE_GUIDANCE: Record<SectionLanguage, string> = {
+  technical:
+    'Use technical terminology. Include specific metrics, systems, and implementation details. Target audience: IT/Engineering teams.',
+  business:
+    'Use executive-friendly language. Focus on strategic impact, ROI, and business outcomes. Target audience: C-level, management.',
+  general: 'Use clear, accessible language. Avoid jargon. Target audience: All stakeholders.',
+};
+
+// Verbosity levels control the richness and detail of generated content
+type VerbosityLevel = 'concise' | 'standard' | 'detailed' | 'comprehensive';
+
+const VERBOSITY_GUIDANCE: Record<VerbosityLevel, string> = {
+  concise:
+    'Be concise and to the point. Every sentence should add value. Avoid repetition and filler words.',
+  standard:
+    'Use a balanced approach. Include necessary context and explanations without excessive detail.',
+  detailed:
+    'Provide thorough explanations with supporting details. Use multiple paragraphs to explore different aspects. Include context and background information.',
+  comprehensive:
+    'Maximize detail and depth. Use extensive explanations, multiple examples for each point, and thorough analysis. Include industry context, best practices references, and actionable insights. Each section should be exhaustive.',
+};
+
+// Writing style options
+type WritingStyle = 'formal' | 'professional' | 'consultative' | 'persuasive';
+
+const WRITING_STYLE_GUIDANCE: Record<WritingStyle, string> = {
+  formal:
+    'Use formal academic tone. Avoid contractions. Use passive voice where appropriate. Maintain objectivity.',
+  professional: 'Use professional business tone. Clear and direct. Active voice. Results-focused.',
+  consultative:
+    'Use advisory tone. Frame content as expert recommendations. Include "we recommend", "consider", "based on our analysis".',
+  persuasive:
+    'Use persuasive tone to drive action. Emphasize benefits, urgency, and competitive advantage. Include strong calls to action.',
+};
+
+// Illustration preferences
+type IllustrationLevel = 'minimal' | 'moderate' | 'extensive';
+
+const ILLUSTRATION_GUIDANCE: Record<IllustrationLevel, string> = {
+  minimal: 'Include examples only when essential for understanding. Focus on concepts.',
+  moderate: 'Include relevant examples to illustrate key points. Balance theory with practice.',
+  extensive:
+    'Include multiple examples, case studies, and real-world scenarios for every major point. Use analogies and comparisons to make concepts relatable.',
+};
+
+/**
+ * Build style guidance from report config
+ * These settings control the overall "voice" and detail level of the generated content
+ */
+function buildStyleGuidance(config?: Record<string, unknown>): string {
+  if (!config) return '';
+
+  const guidance: string[] = [];
+
+  // Verbosity level
+  const verbosity = (config.verbosity as VerbosityLevel) || 'standard';
+  if (VERBOSITY_GUIDANCE[verbosity]) {
+    guidance.push(`VERBOSITY: ${VERBOSITY_GUIDANCE[verbosity]}`);
   }
 
-  /**
-   * Generate project report
-   */
-  private async generateProjectReport(
-    projectId: string,
-    language: string,
-    orgId: string
-  ): Promise<GeneratedReport> {
-    const db = await this.getDb();
+  // Writing style
+  const style = (config.writingStyle as WritingStyle) || 'professional';
+  if (WRITING_STYLE_GUIDANCE[style]) {
+    guidance.push(`STYLE: ${WRITING_STYLE_GUIDANCE[style]}`);
+  }
 
-    const project = await db.get<{
-      id: string;
-      name: string;
-      description?: string | null;
-      status?: string | null;
-      start_date?: string | null;
-      end_date?: string | null;
-    }>('SELECT * FROM projects WHERE id = ? AND organization_id = ?', [projectId, orgId]);
+  // Illustration level
+  const illustration = (config.illustrationLevel as IllustrationLevel) || 'moderate';
+  if (ILLUSTRATION_GUIDANCE[illustration]) {
+    guidance.push(`EXAMPLES: ${ILLUSTRATION_GUIDANCE[illustration]}`);
+  }
 
-    if (!project) {
-      throw new Error('Project not found');
+  // Custom focus areas
+  if (config.focusAreas && typeof config.focusAreas === 'string') {
+    guidance.push(`FOCUS: Pay special attention to: ${config.focusAreas}`);
+  }
+
+  // Custom tone/voice
+  if (config.customTone && typeof config.customTone === 'string') {
+    guidance.push(`TONE: ${config.customTone}`);
+  }
+
+  // Key messages to emphasize
+  if (config.keyMessages && typeof config.keyMessages === 'string') {
+    guidance.push(`KEY MESSAGES: Ensure these points are emphasized: ${config.keyMessages}`);
+  }
+
+  // Word usage preferences
+  if (config.preferTechnicalTerms === true) {
+    guidance.push('Use precise technical terminology where appropriate.');
+  }
+  if (config.useMetrics === true) {
+    guidance.push(
+      'Include specific metrics, percentages, and quantitative data wherever possible.'
+    );
+  }
+  if (config.includeReferences === true) {
+    guidance.push('Include references to industry standards, best practices, and methodologies.');
+  }
+
+  return guidance.length > 0 ? '\n\nSTYLE REQUIREMENTS:\n' + guidance.join('\n') : '';
+}
+
+/**
+ * Build guidance string from block-specific settings
+ * Translates frontend settings into AI-understandable instructions
+ */
+function buildSettingsGuidance(sectionType: string, settings: Record<string, unknown>): string {
+  if (!settings || Object.keys(settings).length === 0) return '';
+
+  const guidance: string[] = [];
+
+  // Content settings
+  if (settings.maxRecommendations !== undefined) {
+    guidance.push(`- Include maximum ${settings.maxRecommendations} recommendations`);
+  }
+  if (settings.maxFindings !== undefined) {
+    guidance.push(`- Include maximum ${settings.maxFindings} findings`);
+  }
+  if (settings.maxItems !== undefined) {
+    guidance.push(`- Include maximum ${settings.maxItems} items`);
+  }
+  if (settings.maxItemsPerQuadrant !== undefined) {
+    guidance.push(`- Include maximum ${settings.maxItemsPerQuadrant} items per quadrant`);
+  }
+  if (settings.maxLevels !== undefined) {
+    guidance.push(`- Use maximum ${settings.maxLevels} levels of depth`);
+  }
+  if (settings.maxSteps !== undefined) {
+    guidance.push(`- Include maximum ${settings.maxSteps} steps`);
+  }
+  if (settings.maxScenarios !== undefined) {
+    guidance.push(`- Include maximum ${settings.maxScenarios} scenarios`);
+  }
+  if (settings.maxFactors !== undefined) {
+    guidance.push(`- Include maximum ${settings.maxFactors} factors`);
+  }
+  if (settings.maxSubjects !== undefined) {
+    guidance.push(`- Compare maximum ${settings.maxSubjects} subjects`);
+  }
+  if (settings.maxDimensions !== undefined) {
+    guidance.push(`- Use maximum ${settings.maxDimensions} dimensions`);
+  }
+  if (settings.maxRows !== undefined) {
+    guidance.push(`- Include maximum ${settings.maxRows} rows`);
+  }
+
+  // Prioritization
+  if (settings.prioritization) {
+    const priorityMap: Record<string, string> = {
+      impact: 'Prioritize by business impact (highest impact first)',
+      effort: 'Prioritize by effort required (lowest effort first)',
+      quick_wins: 'Prioritize quick wins (high impact, low effort first)',
+    };
+    if (priorityMap[settings.prioritization as string]) {
+      guidance.push(`- ${priorityMap[settings.prioritization as string]}`);
     }
-
-    const decisions = await db.all<{
-      title: string;
-      deadline: string | null;
-      status: string;
-    }>(
-      `SELECT title, deadline, status FROM decisions 
-       WHERE project_id = ? AND organization_id = ? AND status IN ('pending', 'escalated')`,
-      [projectId, orgId]
-    );
-
-    const initiativeCounts = await db.all<{ status: string; count: number }>(
-      `SELECT UPPER(status) as status, COUNT(*) as count
-       FROM initiatives
-       WHERE project_id = ? AND organization_id = ?
-       GROUP BY UPPER(status)`,
-      [projectId, orgId]
-    );
-    const initiativeSummary = initiativeCounts.length
-      ? initiativeCounts.map((row) => `${row.status}: ${row.count}`).join(', ')
-      : 'No initiatives.';
-
-    return {
-      id: `report-${uuidv4()}`,
-      type: 'project',
-      title: `Project Report: ${project.name}`,
-      executiveSummary:
-        language === 'pl'
-          ? `Raport statusu dla projektu ${project.name}.`
-          : `Status report for project ${project.name}.`,
-      sections: [
-        {
-          id: 'overview',
-          title: language === 'pl' ? 'Podsumowanie projektu' : 'Project Overview',
-          content:
-            [
-              project.description ? `Description: ${project.description}` : null,
-              project.status ? `Status: ${String(project.status).toUpperCase()}` : null,
-              project.start_date ? `Start: ${project.start_date}` : null,
-              project.end_date ? `End: ${project.end_date}` : null,
-            ]
-              .filter(Boolean)
-              .join('\n') || `Project ${project.name}.`,
-        },
-        {
-          id: 'initiative-status',
-          title: language === 'pl' ? 'Status inicjatyw' : 'Initiatives Status',
-          content: initiativeSummary,
-        },
-        {
-          id: 'decisions-required',
-          title: language === 'pl' ? 'Decyzje wymagane' : 'Decisions Required',
-          content: this.formatDecisions((decisions || []).map(d => ({ ...d, deadline: d.deadline ?? undefined }))),
-        },
-        {
-          id: 'escalations',
-          title: language === 'pl' ? 'Eskalacje' : 'Escalations',
-          content: this.formatEscalations((decisions || []).map(d => ({ ...d, deadline: d.deadline ?? undefined }))),
-        },
-      ],
-      generatedAt: new Date().toISOString(),
-      language,
-    };
   }
 
-  /**
-   * Generate portfolio report
-   */
-  private async generatePortfolioReport(orgId: string, language: string): Promise<GeneratedReport> {
-    const db = await this.getDb();
-    const projectCountRow = await db.get<{ count: number }>(
-      `SELECT COUNT(*) as count FROM projects WHERE organization_id = ?`,
-      [orgId]
-    );
-    const initiativeCountRow = await db.get<{ count: number }>(
-      `SELECT COUNT(*) as count FROM initiatives WHERE organization_id = ?`,
-      [orgId]
-    );
-    const initiativeStatusRows = await db.all<{ status: string; count: number }>(
-      `SELECT UPPER(status) as status, COUNT(*) as count
-       FROM initiatives
-       WHERE organization_id = ?
-       GROUP BY UPPER(status)`,
-      [orgId]
-    );
-    const decisionCountRow = await db.get<{ count: number }>(
-      `SELECT COUNT(*) as count FROM decisions WHERE organization_id = ? AND status IN ('pending', 'escalated')`,
-      [orgId]
-    );
-    const escalatedCountRow = await db.get<{ count: number }>(
-      `SELECT COUNT(*) as count FROM decisions WHERE organization_id = ? AND status = 'escalated'`,
-      [orgId]
-    );
-
-    return {
-      id: `report-${uuidv4()}`,
-      type: 'portfolio',
-      title: 'Portfolio Overview Report',
-      executiveSummary:
-        language === 'pl'
-          ? 'Status portfela w skali organizacji.'
-          : 'Organization-wide portfolio status.',
-      sections: [
-        {
-          id: 'portfolio-summary',
-          title: language === 'pl' ? 'Podsumowanie portfela' : 'Portfolio Summary',
-          content: `Projects: ${projectCountRow?.count || 0}, Initiatives: ${
-            initiativeCountRow?.count || 0
-          }, Pending decisions: ${decisionCountRow?.count || 0}, Escalated: ${
-            escalatedCountRow?.count || 0
-          }.`,
-        },
-        {
-          id: 'initiative-status',
-          title: language === 'pl' ? 'Status inicjatyw' : 'Initiatives Status',
-          content: initiativeStatusRows.length
-            ? initiativeStatusRows.map((row) => `${row.status}: ${row.count}`).join(', ')
-            : 'No initiatives.',
-        },
-      ],
-      generatedAt: new Date().toISOString(),
-      language,
+  // Analysis depth
+  if (settings.analysisDepth) {
+    const depthMap: Record<string, string> = {
+      overview: 'Provide a high-level overview only',
+      detailed: 'Provide detailed analysis with supporting evidence',
+      comprehensive: 'Provide comprehensive analysis with all available details',
     };
-  }
-
-  /**
-   * Generate initiative report
-   */
-  private async generateInitiativeReport(
-    initiativeId: string,
-    language: string,
-    orgId: string
-  ): Promise<GeneratedReport> {
-    const db = await this.getDb();
-    const initiative = await db.get<{
-      id: string;
-      title?: string | null;
-      name?: string | null;
-      summary?: string | null;
-      status?: string | null;
-      progress?: number | null;
-      project_id?: string | null;
-      planned_start_date?: string | null;
-      planned_end_date?: string | null;
-    }>(`SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`, [initiativeId, orgId]);
-    if (!initiative) {
-      throw new Error('Initiative not found');
+    if (depthMap[settings.analysisDepth as string]) {
+      guidance.push(`- ${depthMap[settings.analysisDepth as string]}`);
     }
-
-    const decisions = await db.all<{
-      title: string;
-      deadline: string | null;
-      status: string;
-    }>(
-      `SELECT title, deadline, status FROM decisions 
-       WHERE initiative_id = ? AND organization_id = ? AND status IN ('pending', 'escalated')`,
-      [initiativeId, orgId]
-    );
-
-    const taskCounts = await db.all<{ status: string; count: number }>(
-      `SELECT UPPER(status) as status, COUNT(*) as count
-       FROM tasks
-       WHERE initiative_id = ? AND organization_id = ?
-       GROUP BY UPPER(status)`,
-      [initiativeId, orgId]
-    );
-
-    const initiativeName = initiative.title || initiative.name || 'Initiative';
-    const taskSummary = taskCounts.length
-      ? taskCounts.map((row) => `${row.status}: ${row.count}`).join(', ')
-      : 'No tasks.';
-
-    return {
-      id: `report-${uuidv4()}`,
-      type: 'initiative',
-      title: `Initiative Report: ${initiativeName}`,
-      executiveSummary:
-        language === 'pl'
-          ? `Raport dla inicjatywy ${initiativeName}.`
-          : `Report for initiative ${initiativeName}.`,
-      sections: [
-        {
-          id: 'initiative-summary',
-          title: language === 'pl' ? 'Podsumowanie inicjatywy' : 'Initiative Summary',
-          content:
-            [
-              initiative.summary ? `Summary: ${initiative.summary}` : null,
-              initiative.status ? `Status: ${String(initiative.status).toUpperCase()}` : null,
-              initiative.progress !== null && initiative.progress !== undefined
-                ? `Progress: ${initiative.progress}%`
-                : null,
-              initiative.planned_start_date ? `Start: ${initiative.planned_start_date}` : null,
-              initiative.planned_end_date ? `End: ${initiative.planned_end_date}` : null,
-            ]
-              .filter(Boolean)
-              .join('\n') || `Initiative ${initiativeName} overview.`,
-        },
-        {
-          id: 'task-status',
-          title: language === 'pl' ? 'Status zadań' : 'Task Status',
-          content: taskSummary,
-        },
-        {
-          id: 'decisions-required',
-          title: language === 'pl' ? 'Decyzje wymagane' : 'Decisions Required',
-          content: this.formatDecisions((decisions || []).map(d => ({ ...d, deadline: d.deadline ?? undefined }))),
-        },
-        {
-          id: 'escalations',
-          title: language === 'pl' ? 'Eskalacje' : 'Escalations',
-          content: this.formatEscalations((decisions || []).map(d => ({ ...d, deadline: d.deadline ?? undefined }))),
-        },
-      ],
-      generatedAt: new Date().toISOString(),
-      language,
-    };
   }
 
-  /**
-   * Create public link for report
-   */
-  async createPublicLink(params: PublicLinkParams): Promise<{
-    linkId: string;
-    linkUrl: string;
-    expiresAt: string | null;
-  }> {
-    const db = await this.getDb();
-    const linkId = uuidv4();
-    const linkToken = crypto.randomBytes(32).toString('hex');
+  // Time horizon
+  if (settings.timeHorizon) {
+    const horizonMap: Record<string, string> = {
+      short: 'Focus on short-term actions (0-3 months)',
+      medium: 'Focus on medium-term actions (3-12 months)',
+      long: 'Focus on long-term strategic initiatives (12+ months)',
+    };
+    if (horizonMap[settings.timeHorizon as string]) {
+      guidance.push(`- ${horizonMap[settings.timeHorizon as string]}`);
+    }
+  }
 
-    const expiresAt = params.expiresInDays
-      ? new Date(Date.now() + params.expiresInDays * 24 * 60 * 60 * 1000).toISOString()
-      : null;
+  // Grouping
+  if (settings.groupBy) {
+    guidance.push(`- Group items by ${settings.groupBy}`);
+  }
+  if (settings.sortBy) {
+    guidance.push(`- Sort items by ${settings.sortBy}`);
+  }
 
-    const passwordHash = params.password
-      ? crypto.createHash('sha256').update(params.password).digest('hex')
-      : null;
+  // Boolean flags for content inclusion
+  if (settings.includeKeyMetrics === true) {
+    guidance.push('- Include key metrics and KPIs');
+  }
+  if (settings.includeComparisons === true) {
+    guidance.push('- Include benchmark comparisons');
+  }
+  if (settings.highlightGaps === true) {
+    guidance.push('- Highlight gaps between current and target state');
+  }
+  if (settings.includeTimeline === true) {
+    guidance.push('- Include implementation timeline');
+  }
+  if (settings.includeOwners === true) {
+    guidance.push('- Suggest responsible owners for each item');
+  }
+  if (settings.includeResources === true) {
+    guidance.push('- Include resource requirements');
+  }
+  if (settings.includeMilestones === true) {
+    guidance.push('- Include key milestones');
+  }
+  if (settings.includeRisks === true) {
+    guidance.push('- Include associated risks');
+  }
+  if (settings.includeEvidence === true) {
+    guidance.push('- Include supporting evidence for each finding');
+  }
+  if (settings.includeFramework === true) {
+    guidance.push('- Describe the assessment framework used');
+  }
+  if (settings.includeDataSources === true) {
+    guidance.push('- Describe data sources and collection methods');
+  }
+  if (settings.showCorrelations === true) {
+    guidance.push('- Include strategic correlations (SO/WO/ST/WT)');
+  }
+  if (settings.showStrategies === true) {
+    guidance.push('- Include strategic recommendations for each correlation');
+  }
+  if (settings.showTrends === true) {
+    guidance.push('- Include trend indicators (increasing/stable/decreasing)');
+  }
+  if (settings.showDrivers === true) {
+    guidance.push('- Include key drivers for each force/factor');
+  }
+  if (settings.showAttractiveness === true) {
+    guidance.push('- Include overall industry attractiveness assessment');
+  }
+  if (settings.showImpact === true) {
+    guidance.push('- Include impact assessment for each item');
+  }
+  if (settings.showRootCause === true) {
+    guidance.push('- Clearly identify and highlight the root cause');
+  }
+  if (settings.showKaizen === true) {
+    guidance.push('- Mark improvement opportunities (Kaizen points)');
+  }
+  if (settings.showEscalation === true) {
+    guidance.push('- Include escalation matrix with thresholds');
+  }
+  if (settings.highlightCritical === true) {
+    guidance.push('- Highlight critical items requiring immediate attention');
+  }
+  if (settings.highlightQuickWins === true) {
+    guidance.push('- Highlight quick wins (high impact, low effort)');
+  }
+  if (settings.highlightOutOfControl === true) {
+    guidance.push('- Highlight out-of-control data points');
+  }
 
-    await db.run(
-      `INSERT INTO report_public_links (
-                id, report_id, report_type, organization_id, link_token,
-                password_hash, expires_at, show_company_logo, show_consultinity_branding,
-                custom_message, created_by
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  // Style preferences
+  if (settings.executiveStyle === true) {
+    guidance.push('- Use executive summary style (concise, action-oriented)');
+  }
+  if (settings.compactMode === true) {
+    guidance.push('- Use compact format with minimal descriptions');
+  }
+
+  // Output format
+  if (settings.outputFormat) {
+    const formatMap: Record<string, string> = {
+      prose: 'Write in prose/paragraph format',
+      bullets: 'Use bullet points throughout',
+      mixed: 'Mix prose with bullet points as appropriate',
+    };
+    if (formatMap[settings.outputFormat as string]) {
+      guidance.push(`- ${formatMap[settings.outputFormat as string]}`);
+    }
+  }
+
+  // Layout preferences (for visual blocks)
+  if (settings.orientation) {
+    guidance.push(`- Use ${settings.orientation} orientation`);
+  }
+  if (settings.layout) {
+    guidance.push(`- Use ${settings.layout} layout`);
+  }
+  if (settings.columns) {
+    guidance.push(`- Organize into ${settings.columns} columns`);
+  }
+  if (settings.variant) {
+    guidance.push(`- Use ${settings.variant} variant style`);
+  }
+
+  // Threshold settings
+  if (settings.threshold !== undefined) {
+    guidance.push(`- Use ${settings.threshold}% as the threshold`);
+  }
+  if (settings.gridSize) {
+    guidance.push(`- Use ${settings.gridSize}x${settings.gridSize} grid`);
+  }
+  if (settings.levels) {
+    guidance.push(`- Use ${settings.levels} maturity levels`);
+  }
+
+  // Axis labels for matrices
+  if (settings.xAxisLabel) {
+    guidance.push(`- X-axis represents: ${settings.xAxisLabel}`);
+  }
+  if (settings.yAxisLabel) {
+    guidance.push(`- Y-axis represents: ${settings.yAxisLabel}`);
+  }
+
+  // Categories for fishbone
+  if (settings.categories && typeof settings.categories === 'string') {
+    guidance.push(`- Use these categories: ${settings.categories}`);
+  }
+
+  // Focus areas
+  if (
+    settings.focusAreas &&
+    typeof settings.focusAreas === 'string' &&
+    settings.focusAreas.trim()
+  ) {
+    guidance.push(`- Focus on these areas: ${settings.focusAreas}`);
+  }
+
+  return guidance.join('\n');
+}
+
+function getSectionPrompt(
+  sectionType: SectionType,
+  context: GenerationContext
+): { system: string; user: string } {
+  const { report, section, companyContext, sourceData } = context;
+  const lengthGuidance = LENGTH_GUIDANCE[section.length];
+  const languageGuidance = LANGUAGE_GUIDANCE[section.language];
+
+  const companyName = (companyContext as any)?.organizationName || 'the organization';
+  const assessmentType = sourceData.assessment?.type || 'DRD';
+  const scores = sourceData.assessment?.scores || {};
+  const answers = sourceData.assessment?.answers || {};
+
+  // Block-specific settings from frontend
+  const blockSettings = section.blockConfig || {};
+
+  // Build settings guidance string from blockSettings
+  const settingsGuidance = buildSettingsGuidance(sectionType, blockSettings);
+
+  // Get report-level style settings from config
+  const reportConfig = report.config || {};
+  const styleGuidance = buildStyleGuidance(reportConfig);
+
+  const baseSystem = `You are a senior management consultant creating a professional assessment report.
+Write in ${section.language} style. ${languageGuidance}
+Target length: ${lengthGuidance}
+${section.customPrompt ? `\nAdditional guidance: ${section.customPrompt}` : ''}
+${settingsGuidance ? `\nBlock-specific settings:\n${settingsGuidance}` : ''}
+${styleGuidance}`;
+
+  switch (sectionType) {
+    case 'cover':
+      return {
+        system: baseSystem,
+        user: `Generate cover page content for ${companyName}'s ${assessmentType} Assessment Report.
+Include:
+- Report title
+- Company name: ${companyName}
+- Assessment type: ${assessmentType}
+- Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+
+Format as structured JSON with fields: title, subtitle, companyName, date, assessmentType.`,
+      };
+
+    case 'summary':
+      return {
+        system: baseSystem,
+        user: `Create an Executive Summary for ${companyName}'s ${assessmentType} digital maturity assessment.
+
+Assessment Data:
+${JSON.stringify(scores, null, 2)}
+
+Company Context:
+${JSON.stringify(companyContext, null, 2)}
+
+The Executive Summary should:
+1. Open with a clear statement of assessment purpose and scope
+2. Highlight 3-5 key findings from the assessment
+3. Summarize the overall maturity level and what it means
+4. Present top strategic recommendations
+5. Close with recommended next steps
+
+Be specific with numbers and percentages. Reference actual scores.`,
+      };
+
+    case 'methodology':
+      return {
+        system: baseSystem,
+        user: `Describe the ${assessmentType} assessment methodology used for ${companyName}.
+
+${
+  assessmentType === 'DRD'
+    ? `
+The Digital Readiness Diagnosis (DRD) framework consists of 7 axes:
+1. Digital Processes - Process digitization and automation maturity
+2. Digital Products - Digital product and service offerings
+3. Digital Business Models - Revenue models and digital transformation
+4. Data & Analytics - Data management and analytics capabilities
+5. Organizational Culture - Digital culture and change readiness
+6. Cybersecurity - Security posture and risk management
+7. AI Maturity - AI adoption and capabilities
+
+Each axis is scored on a scale of 1-7, where:
+- Level 1-2: Initial/Basic - Manual, ad-hoc processes
+- Level 3-4: Developing - Some standardization and digitization
+- Level 5-6: Advanced - Integrated, data-driven operations
+- Level 7: Optimized - Industry-leading, continuous innovation
+
+The assessment evaluates ${companyName}'s current state (Actual) against target state (Target) to identify gaps.
+`
+    : `
+The assessment framework evaluates digital maturity across multiple dimensions.
+`
+}
+
+Explain the methodology, scoring approach, and how results should be interpreted.`,
+      };
+
+    case 'matrix':
+      return {
+        system: baseSystem,
+        user: `Interpret the maturity matrix results for ${companyName}.
+
+Assessment Scores:
+${JSON.stringify(scores, null, 2)}
+
+Provide:
+1. Overall maturity level interpretation
+2. Highest performing areas and why they matter
+3. Lowest performing areas and their business impact
+4. Key patterns or observations from the matrix
+5. What the gap between current and target means strategically
+
+Include specific numbers and comparisons. This section should help executives quickly understand where they stand.`,
+      };
+
+    case 'axis_analysis':
+      const axisKey = section.repeatKey || '1';
+      const axisData = (sourceData.axisData as any)?.[axisKey] || {};
+      const axisName = section.title || `Axis ${axisKey}`;
+
+      return {
+        system: baseSystem,
+        user: `Analyze the "${axisName}" axis of ${companyName}'s assessment in detail.
+
+Axis Data:
+${JSON.stringify(axisData, null, 2)}
+
+For each area in this axis, provide:
+1. **Current State**: What was observed/assessed
+2. **Key Finding**: The main insight from this area
+3. **Gap Analysis**: Difference between current and target (if applicable)
+4. **Recommendation**: Specific action to improve
+
+Structure the analysis by area. Be specific and actionable.
+Include any evidence or justifications provided in the assessment.`,
+      };
+
+    case 'list':
+      const isStrengths = section.sectionKey.includes('strength');
+
+      return {
+        system: baseSystem,
+        user: `${isStrengths ? 'Identify the key STRENGTHS' : 'Identify the key AREAS FOR IMPROVEMENT'} for ${companyName} based on the assessment.
+
+Assessment Data:
+${JSON.stringify(scores, null, 2)}
+
+${
+  isStrengths
+    ? `
+List 5-8 strengths, focusing on:
+- Areas with highest scores
+- Competitive advantages
+- Strong foundations for growth
+- Quick wins and capabilities
+
+For each strength, explain:
+1. What it is
+2. Why it matters strategically
+3. How to leverage it further
+`
+    : `
+List 5-8 areas for improvement, focusing on:
+- Areas with lowest scores or biggest gaps
+- Critical capabilities that are missing
+- Blockers to transformation
+- Urgent priorities
+
+For each area, explain:
+1. What the gap or issue is
+2. Business impact of not addressing it
+3. Initial steps to improve
+`
+}
+
+Be constructive and specific. Reference actual assessment data.`,
+      };
+
+    case 'recommendations':
+      return {
+        system: baseSystem,
+        user: `Generate strategic recommendations for ${companyName} based on the ${assessmentType} assessment.
+
+Assessment Data:
+${JSON.stringify(scores, null, 2)}
+
+Company Context:
+${JSON.stringify(companyContext, null, 2)}
+
+Provide 5-10 strategic recommendations that:
+1. Address the biggest gaps identified
+2. Build on existing strengths
+3. Are realistic given the company context
+4. Have clear business value
+
+For each recommendation, include:
+- **Title**: Clear, action-oriented name
+- **Priority**: High / Medium / Low
+- **Description**: What needs to be done and why
+- **Expected Outcome**: What success looks like
+- **Timeline**: Immediate (0-3mo) / Short-term (3-6mo) / Long-term (6-12mo)
+- **Dependencies**: What's needed to execute
+
+Order by strategic importance.`,
+      };
+
+    case 'action_plan':
+      return {
+        system: baseSystem,
+        user: `Create a concrete action plan / next steps for ${companyName} following the ${assessmentType} assessment.
+
+Assessment Summary:
+${JSON.stringify(scores, null, 2)}
+
+Organize next steps by timeframe:
+
+## Immediate Actions (Next 30 Days)
+- Quick wins that build momentum
+- Critical issues to address now
+- Stakeholder alignment activities
+
+## Short-Term Initiatives (1-3 Months)
+- Foundation-building activities
+- Key capability development
+- Initial transformation projects
+
+## Long-Term Roadmap (3-12 Months)
+- Strategic transformation initiatives
+- Major capability investments
+- Organizational change programs
+
+For each action, specify:
+- What to do (specific and actionable)
+- Who should own it
+- What success looks like
+
+Be practical and realistic.`,
+      };
+
+    case 'appendix':
+      return {
+        system: baseSystem,
+        user: `Create appendix content for ${companyName}'s assessment report.
+
+Include:
+1. Detailed scoring table by axis and area
+2. Methodology reference (brief)
+3. Glossary of key terms
+4. Data sources and evidence summary
+
+Assessment Data:
+${JSON.stringify(answers, null, 2)}
+
+Format as structured sections with clear headers.`,
+      };
+
+    default:
+      return {
+        system: baseSystem,
+        user: `Generate content for the "${section.title}" section of ${companyName}'s assessment report.
+
+Assessment Data:
+${JSON.stringify(scores, null, 2)}
+
+Company Context:
+${JSON.stringify(companyContext, null, 2)}
+
+Create professional, insightful content appropriate for this section.`,
+      };
+  }
+}
+
+function interpolateTemplate(template: string, vars: Record<string, unknown>): string {
+  const safe = (v: unknown) => {
+    if (v === null || v === undefined) return '';
+    if (typeof v === 'string') return v;
+    try {
+      return JSON.stringify(v, null, 2);
+    } catch {
+      return String(v);
+    }
+  };
+  return template.replace(/\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/g, (_m, key) =>
+    safe((vars as any)[key])
+  );
+}
+
+// ==========================================
+// AI GENERATION via LLM Service
+// ==========================================
+
+let _llmServiceInstance: any = null;
+
+async function getLLMServiceInstance(): Promise<any> {
+  if (_llmServiceInstance) return _llmServiceInstance;
+  try {
+    const mod = await import('./ai/llmService.js');
+    _llmServiceInstance = mod.llmService || mod.default;
+    return _llmServiceInstance;
+  } catch (err) {
+    logger.warn('[ReportGeneration] LLM Service not available, falling back to placeholder', err);
+    return null;
+  }
+}
+
+async function callAI(
+  systemPrompt: string,
+  userPrompt: string,
+  maxTokens: number
+): Promise<GenerationResult> {
+  logger.info('[ReportGeneration] Generating content with AI...', {
+    systemPromptLength: systemPrompt.length,
+    userPromptLength: userPrompt.length,
+    maxTokens,
+  });
+
+  const llm = await getLLMServiceInstance();
+
+  if (llm) {
+    try {
+      const result = await llm.call({
+        type: 'text',
+        modelConfig: { id: 'standard' },
+        systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+        maxTokens: maxTokens || 4096,
+        temperature: 0.7,
+        cache: true,
+        cacheTtl: 7200,
+      });
+
+      const content = String(result?.content || '');
+      const usage = (result?.usage || {}) as Record<string, number>;
+      const tokensUsed =
+        usage.totalTokens || usage.completionTokens || Math.floor(content.length / 4);
+      const model = String(result?.model || result?.modelId || 'llm-standard');
+
+      if (!content || content.length < 50) {
+        logger.warn(
+          '[ReportGeneration] LLM returned empty/short content, falling back to placeholder'
+        );
+        return {
+          content: generatePlaceholderContent(userPrompt),
+          tokensUsed: 0,
+          model: 'placeholder-fallback',
+        };
+      }
+
+      logger.info('[ReportGeneration] AI generation successful', {
+        contentLength: content.length,
+        tokensUsed,
+        model,
+      });
+
+      return { content, tokensUsed, model };
+    } catch (err: any) {
+      logger.error(
+        '[ReportGeneration] LLM call failed, falling back to placeholder:',
+        err?.message || err
+      );
+      return {
+        content: generatePlaceholderContent(userPrompt),
+        tokensUsed: 0,
+        model: 'placeholder-fallback',
+      };
+    }
+  }
+
+  // Fallback: generate placeholder content when LLM is not available
+  logger.info('[ReportGeneration] Using placeholder content (no LLM available)');
+  const content = generatePlaceholderContent(userPrompt);
+  return {
+    content,
+    tokensUsed: 0,
+    model: 'placeholder-v1',
+  };
+}
+
+function generatePlaceholderContent(prompt: string): string {
+  // Extract section type from prompt for context-aware placeholders
+  const isExecutiveSummary = prompt.toLowerCase().includes('executive summary');
+  const isMethodology = prompt.toLowerCase().includes('methodology');
+  const isStrengths = prompt.toLowerCase().includes('strengths');
+  const isWeaknesses =
+    prompt.toLowerCase().includes('improvement') || prompt.toLowerCase().includes('weaknesses');
+  const isRecommendations = prompt.toLowerCase().includes('recommendations');
+  const isActionPlan =
+    prompt.toLowerCase().includes('action plan') || prompt.toLowerCase().includes('next steps');
+  const isAxisAnalysis =
+    prompt.toLowerCase().includes('axis') && prompt.toLowerCase().includes('analyze');
+  const isMatrix = prompt.toLowerCase().includes('matrix');
+
+  if (isExecutiveSummary) {
+    return `## Executive Summary
+
+This assessment provides a comprehensive evaluation of the organization's digital maturity across key transformation dimensions.
+
+### Key Findings
+
+1. **Overall Maturity**: The organization demonstrates a developing level of digital maturity, with notable strengths in operational processes and clear opportunities in data analytics capabilities.
+
+2. **Strengths Identified**: Strong foundation in process standardization and emerging capabilities in automation provide a solid base for digital transformation.
+
+3. **Critical Gaps**: Data management and AI adoption represent the most significant gaps requiring strategic attention.
+
+### Strategic Priorities
+
+The assessment identifies three priority areas for immediate focus:
+- Strengthening data infrastructure and governance
+- Accelerating automation of key business processes
+- Building AI/ML capabilities starting with high-value use cases
+
+### Recommended Approach
+
+A phased transformation approach is recommended, beginning with quick wins in process automation while laying the groundwork for more advanced analytics and AI capabilities.
+
+---
+*This content will be replaced with AI-generated analysis based on actual assessment data.*`;
+  }
+
+  if (isMethodology) {
+    return `## Assessment Methodology
+
+### Framework Overview
+
+The Digital Readiness Diagnosis (DRD) is a comprehensive framework designed to evaluate an organization's digital maturity across seven critical dimensions of transformation.
+
+### Evaluation Dimensions
+
+1. **Digital Processes** - Automation, standardization, and optimization of business processes
+2. **Digital Products** - Digital service offerings and product innovation capabilities
+3. **Digital Business Models** - Revenue models and market positioning in digital economy
+4. **Data & Analytics** - Data management, analytics maturity, and data-driven decision making
+5. **Organizational Culture** - Change readiness, digital skills, and innovation culture
+6. **Cybersecurity** - Security posture, risk management, and compliance
+7. **AI Maturity** - AI/ML adoption, capabilities, and strategic use
+
+### Scoring Approach
+
+Each dimension is evaluated on a 1-7 scale:
+- **Levels 1-2**: Initial - Manual, ad-hoc approaches
+- **Levels 3-4**: Developing - Standardization emerging
+- **Levels 5-6**: Advanced - Integrated, data-driven
+- **Level 7**: Optimized - Industry-leading practices
+
+### Gap Analysis
+
+The assessment identifies gaps between current state (Actual) and desired future state (Target), enabling prioritized transformation planning.
+
+---
+*This methodology section will be customized based on the specific assessment framework used.*`;
+  }
+
+  if (isAxisAnalysis) {
+    return `## Detailed Analysis
+
+### Current State Assessment
+
+The organization demonstrates varying levels of maturity across the assessed areas within this dimension.
+
+### Area-by-Area Findings
+
+#### Area 1: Foundation Capabilities
+- **Current Level**: 3/7 (Developing)
+- **Finding**: Basic capabilities are in place with room for standardization
+- **Recommendation**: Implement standardized frameworks and governance
+
+#### Area 2: Advanced Capabilities  
+- **Current Level**: 2/7 (Initial)
+- **Finding**: Limited adoption of advanced capabilities
+- **Recommendation**: Develop pilot programs to build experience
+
+#### Area 3: Integration & Optimization
+- **Current Level**: 4/7 (Developing+)
+- **Finding**: Good progress on integration, optimization opportunities remain
+- **Recommendation**: Focus on end-to-end process optimization
+
+### Key Observations
+
+1. Strong foundation exists for further development
+2. Quick wins available in standardization
+3. Strategic investment needed for advanced capabilities
+
+### Recommended Actions
+
+1. Prioritize foundational improvements before advanced initiatives
+2. Build internal capabilities through training and hiring
+3. Consider strategic partnerships for accelerated transformation
+
+---
+*This analysis will be generated based on actual axis data from the assessment.*`;
+  }
+
+  if (isStrengths) {
+    return `## Organizational Strengths
+
+Based on the assessment results, the following strengths have been identified:
+
+### 1. Process Foundation
+Strong foundation in core process documentation and standardization provides a solid base for digital transformation.
+
+### 2. Leadership Commitment
+Clear executive sponsorship and commitment to digital transformation initiatives.
+
+### 3. Technical Infrastructure
+Modern technical infrastructure capable of supporting digital initiatives.
+
+### 4. Operational Excellence
+Demonstrated capability in operational efficiency and continuous improvement.
+
+### 5. Customer Focus
+Strong customer-centric culture with established feedback mechanisms.
+
+### Leveraging Strengths
+
+These strengths should be leveraged as:
+- **Accelerators** for transformation initiatives
+- **Proof points** for building organizational confidence
+- **Foundations** for more advanced capabilities
+
+---
+*This section will highlight actual strengths identified in the assessment data.*`;
+  }
+
+  if (isWeaknesses) {
+    return `## Areas for Improvement
+
+The assessment identified the following areas requiring attention:
+
+### 1. Data Management
+**Gap**: Limited data governance and quality management practices
+**Impact**: Constrains analytics capabilities and decision-making
+**Priority**: High
+
+### 2. Advanced Analytics
+**Gap**: Basic reporting without predictive capabilities
+**Impact**: Missed opportunities for proactive optimization
+**Priority**: High
+
+### 3. AI/ML Adoption
+**Gap**: Minimal AI/ML implementation across operations
+**Impact**: Competitive disadvantage in automation
+**Priority**: Medium
+
+### 4. Change Management
+**Gap**: Informal change management practices
+**Impact**: Slower adoption of new technologies
+**Priority**: Medium
+
+### 5. Integration Maturity
+**Gap**: Siloed systems with manual data transfers
+**Impact**: Inefficiency and data quality issues
+**Priority**: High
+
+### Addressing These Gaps
+
+A structured approach to addressing these gaps should include:
+1. Prioritization based on business impact
+2. Phased implementation with quick wins
+3. Capability building alongside technology investment
+
+---
+*This section will detail actual improvement areas from the assessment.*`;
+  }
+
+  if (isRecommendations) {
+    return `## Strategic Recommendations
+
+### 1. Data Foundation Program
+**Priority**: High | **Timeline**: 0-6 months
+
+Establish enterprise data governance and quality management to enable advanced analytics.
+
+**Expected Outcome**: Trusted data foundation for decision-making
+**Dependencies**: Executive sponsorship, dedicated resources
+
+### 2. Process Automation Initiative
+**Priority**: High | **Timeline**: 3-9 months
+
+Implement RPA and workflow automation for high-volume, manual processes.
+
+**Expected Outcome**: 30-40% efficiency gains in targeted processes
+**Dependencies**: Process documentation, technology selection
+
+### 3. Analytics Capability Development
+**Priority**: Medium | **Timeline**: 6-12 months
+
+Build internal analytics capabilities with focus on business-relevant use cases.
+
+**Expected Outcome**: Data-driven decision making culture
+**Dependencies**: Data foundation, skill development
+
+### 4. AI/ML Pilot Program
+**Priority**: Medium | **Timeline**: 6-12 months
+
+Launch targeted AI pilots in high-value areas (e.g., predictive maintenance, demand forecasting).
+
+**Expected Outcome**: Validated AI use cases for scaling
+**Dependencies**: Data foundation, analytics capabilities
+
+### 5. Digital Culture Transformation
+**Priority**: Medium | **Timeline**: Ongoing
+
+Foster digital-first mindset through training, change management, and incentive alignment.
+
+**Expected Outcome**: Organization-wide digital adoption
+**Dependencies**: Leadership commitment, HR partnership
+
+---
+*Recommendations will be tailored to actual assessment results and company context.*`;
+  }
+
+  if (isActionPlan) {
+    return `## Next Steps & Action Plan
+
+### Immediate Actions (Next 30 Days)
+
+1. **Form Transformation Steering Committee**
+   - Owner: CEO/CTO
+   - Success: Committee established with clear mandate
+
+2. **Quick Win: Process Documentation**
+   - Owner: Operations Lead
+   - Success: Top 10 processes documented
+
+3. **Stakeholder Communication**
+   - Owner: Change Management
+   - Success: All stakeholders informed of transformation vision
+
+### Short-Term Initiatives (1-3 Months)
+
+1. **Data Governance Framework**
+   - Define data ownership and quality standards
+   - Establish data stewardship roles
+
+2. **Automation Pilot Selection**
+   - Identify 3-5 high-impact automation candidates
+   - Develop business cases
+
+3. **Skills Assessment & Training Plan**
+   - Assess current digital skills
+   - Develop training roadmap
+
+### Long-Term Roadmap (3-12 Months)
+
+1. **Enterprise Data Platform** (Q2-Q3)
+   - Implement modern data infrastructure
+   - Migrate priority data sources
+
+2. **Automation Scaling** (Q3-Q4)
+   - Scale successful pilots
+   - Build automation CoE
+
+3. **AI/ML Foundation** (Q4+)
+   - Launch AI pilots
+   - Build ML capabilities
+
+### Success Metrics
+
+- Process automation coverage: 50% of target processes
+- Data quality score: >90%
+- Employee digital skills: 80% trained
+
+---
+*Action plan will be customized based on assessment priorities and organizational context.*`;
+  }
+
+  if (isMatrix) {
+    return `## Maturity Matrix Analysis
+
+### Overall Assessment
+
+The organization's digital maturity assessment reveals a mixed picture across the evaluated dimensions, with overall maturity at a **Developing** level.
+
+### Dimension Scores Overview
+
+| Dimension | Current | Target | Gap |
+|-----------|---------|--------|-----|
+| Digital Processes | 3.5 | 5.0 | 1.5 |
+| Digital Products | 3.0 | 4.5 | 1.5 |
+| Business Models | 2.5 | 4.0 | 1.5 |
+| Data & Analytics | 2.0 | 5.0 | 3.0 |
+| Culture | 3.5 | 5.0 | 1.5 |
+| Cybersecurity | 4.0 | 5.0 | 1.0 |
+| AI Maturity | 1.5 | 4.0 | 2.5 |
+
+### Key Observations
+
+1. **Highest Maturity**: Cybersecurity (4.0) - Strong security foundation
+2. **Lowest Maturity**: AI Maturity (1.5) - Significant opportunity
+3. **Largest Gap**: Data & Analytics (3.0) - Critical priority
+
+### Strategic Implications
+
+The maturity profile suggests a **foundation-first** approach:
+1. Address data gaps before AI initiatives
+2. Leverage strong security posture
+3. Build on process strengths for automation
+
+---
+*Matrix visualization and detailed scores will be generated from actual assessment data.*`;
+  }
+
+  // Default content
+  return `## ${prompt.includes('cover') ? 'Report Cover' : 'Section Content'}
+
+This section will contain professionally written content based on the assessment data and company context.
+
+### Key Points
+
+- Comprehensive analysis based on assessment results
+- Strategic insights tailored to organization
+- Actionable recommendations
+
+---
+*This placeholder will be replaced with AI-generated content specific to this section.*`;
+}
+
+// ==========================================
+// GENERATION SERVICE
+// ==========================================
+
+/**
+ * Generate content for a single section
+ */
+export async function generateSectionContent(
+  reportId: string,
+  sectionKey: string,
+  organizationId: string,
+  userId: string
+): Promise<{ content: string; tokensUsed: number }> {
+  // Get report and section
+  const reportData = await ReportBuilderService.getReport(reportId, organizationId);
+  if (!reportData) throw new Error('Report not found');
+
+  const section = reportData.sections.find((s) => s.sectionKey === sectionKey);
+  if (!section) throw new Error('Section not found');
+
+  // Get source data
+  const sourceData = await ReportBuilderService.getSourceDataForReport(reportId, organizationId);
+  if (!sourceData) throw new Error('Source data not found');
+
+  // Build generation context
+  const context: GenerationContext = {
+    report: reportData.report,
+    section,
+    companyContext: reportData.report.companyContext || {},
+    sourceData: {
+      assessment: sourceData.assessment
+        ? {
+            type: sourceData.assessment.assessmentType,
+            name: sourceData.assessment.name,
+            scores: sourceData.assessment.scores,
+            answers: sourceData.assessment.answers,
+          }
+        : undefined,
+      axisData: sourceData.axesData,
+    },
+  };
+
+  // Get prompts for this section type
+  const prompts = getSectionPrompt(section.sectionType as SectionType, context);
+
+  // If this is a user-defined block type (custom section with block_type_id),
+  // prefer the block type prompt template over the generic "custom" prompt.
+  if ((section as any).blockTypeId) {
+    const bt = await queryOne<any>(
+      `
+      SELECT * FROM report_builder_block_types
+      WHERE id = ? AND is_active = 1 AND (organization_id IS NULL OR organization_id = ?)
+      LIMIT 1
+    `,
+      [(section as any).blockTypeId, organizationId]
+    );
+
+    const promptTemplate: string | null | undefined = bt?.prompt_template || null;
+    if (promptTemplate) {
+      const vars = {
+        report: context.report,
+        section: context.section,
+        companyContext: context.companyContext,
+        assessment: context.sourceData.assessment,
+        axisData: context.sourceData.axisData,
+        blockConfig: (section as any).blockConfig || null,
+        facts: {
+          company: context.companyContext,
+          assessment: context.sourceData.assessment,
+        },
+      };
+      prompts.user = interpolateTemplate(promptTemplate, vars);
+    }
+  }
+
+  // Calculate max tokens based on length setting
+  const maxTokens =
+    {
+      short: 500,
+      medium: 1200,
+      long: 2500,
+    }[section.length] || 1200;
+
+  // Special-case: matrix sections are deterministic visualizations derived from scores.
+  if (section.sectionType === 'matrix') {
+    const scores: any = (context.sourceData as any)?.assessment?.scores || {};
+    const axes: any[] = Array.isArray(scores?.axes) ? scores.axes : [];
+    const scaleMax =
+      axes.length > 0
+        ? Math.max(
+            1,
+            ...axes.map((a) => Number(a?.maxScore || a?.fullMark || a?.scaleMax || 7) || 7),
+            7
+          )
+        : 7;
+
+    const matrixData = {
+      type: 'assessment_matrix',
+      scaleMax,
+      axes: axes.map((a) => ({
+        axisId: String(a?.axisId || a?.id || ''),
+        axisName: String(a?.axisName || a?.name || ''),
+        score: Number(a?.score || 0),
+        maxScore: Number(a?.maxScore || scaleMax),
+        gap: a?.gap !== undefined ? Number(a.gap) : undefined,
+      })),
+    };
+
+    const now = new Date().toISOString();
+    const content = JSON.stringify(matrixData);
+
+    await queryRun(
+      `
+      UPDATE report_builder_sections
+      SET generated_content = ?, generated_at = ?, tokens_used = ?, generation_model = ?,
+          source_data_snapshot = ?, content_format = ?, render_kind = ?, updated_at = ?
+      WHERE report_id = ? AND section_key = ?
+    `,
       [
-        linkId,
-        params.reportId,
-        params.reportType,
-        params.organizationId,
-        linkToken,
-        passwordHash,
-        expiresAt,
-        params.showCompanyLogo !== false ? 1 : 0,
-        params.showConsultinityBranding !== false ? 1 : 0,
-        params.customMessage || null,
-        params.userId,
+        content,
+        now,
+        0,
+        'deterministic-matrix-v1',
+        JSON.stringify({ ...context.sourceData, matrixData }),
+        'json',
+        'matrix',
+        now,
+        reportId,
+        sectionKey,
       ]
     );
 
-    // Base URL would come from config
-    const linkUrl = `/reports/public/${linkToken}`;
-
-    logger.info(`[ReportGenerationService] Created public link: ${linkId}`);
-
-    return {
-      linkId,
-      linkUrl,
-      expiresAt,
-    };
+    return { content, tokensUsed: 0 };
   }
 
-  /**
-   * Get report by public link token
-   */
-  async getPublicReport(
-    linkToken: string,
-    password?: string
-  ): Promise<{
-    report: GeneratedReport | null;
-    error?: string;
-  }> {
-    const db = await this.getDb();
+  // Call AI
+  const result = await callAI(prompts.system, prompts.user, maxTokens);
 
-    const link = await db.get<{
-      id: string;
-      report_id: string;
-      report_type: string;
-      organization_id: string;
-      password_hash: string | null;
-      expires_at: string | null;
-      revoked_at: string | null;
-    }>('SELECT * FROM report_public_links WHERE link_token = ?', [linkToken]);
+  // Save generated content
+  const now = new Date().toISOString();
+  await queryRun(
+    `
+    UPDATE report_builder_sections
+    SET generated_content = ?, generated_at = ?, tokens_used = ?, generation_model = ?,
+        source_data_snapshot = ?, updated_at = ?
+    WHERE report_id = ? AND section_key = ?
+  `,
+    [
+      result.content,
+      now,
+      result.tokensUsed,
+      result.model,
+      JSON.stringify(context.sourceData),
+      now,
+      reportId,
+      sectionKey,
+    ]
+  );
 
-    if (!link) {
-      return { report: null, error: 'Link not found' };
-    }
+  logger.info(`[ReportGeneration] Generated section ${sectionKey}`, {
+    reportId,
+    sectionKey,
+    tokensUsed: result.tokensUsed,
+  });
 
-    if (link.revoked_at) {
-      return { report: null, error: 'Link has been revoked' };
-    }
-
-    if (link.expires_at && new Date(link.expires_at) < new Date()) {
-      return { report: null, error: 'Link has expired' };
-    }
-
-    if (link.password_hash) {
-      if (!password) {
-        return { report: null, error: 'Password required' };
-      }
-      const providedHash = crypto.createHash('sha256').update(password).digest('hex');
-      if (providedHash !== link.password_hash) {
-        return { report: null, error: 'Invalid password' };
-      }
-    }
-
-    // Increment view count
-    await db.run(
-      `UPDATE report_public_links SET view_count = view_count + 1, last_viewed_at = datetime('now') WHERE id = ?`,
-      [link.id]
-    );
-
-    // Generate and return report
-    const report = await this.generateReport(
-      {
-        reportType: link.report_type as any,
-        sourceId: link.report_id,
-      },
-      link.organization_id
-    );
-
-    return { report };
-  }
-
-  /**
-   * Export report to format
-   */
-  async exportReport(
-    reportId: string,
-    format: 'pdf' | 'pptx' | 'docx' | 'xlsx',
-    userId: string
-  ): Promise<{ exportId: string; filePath: string }> {
-    const db = await this.getDb();
-    const exportId = uuidv4();
-
-    const userRow = await db.get<{ organization_id: string }>(
-      `SELECT organization_id FROM users WHERE id = ?`,
-      [userId]
-    );
-    if (!userRow?.organization_id) {
-      throw new Error('User organization not found');
-    }
-
-    const orgId = userRow.organization_id;
-    const assessment = await db.get<{ id: string }>(
-      `SELECT id FROM assessments WHERE id = ? AND organization_id = ?`,
-      [reportId, orgId]
-    );
-    const project = await db.get<{ id: string }>(
-      `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
-      [reportId, orgId]
-    );
-    const initiative = await db.get<{ id: string }>(
-      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
-      [reportId, orgId]
-    );
-
-    const reportType: ReportGenerationParams['reportType'] = assessment
-      ? 'assessment'
-      : project
-        ? 'project'
-        : initiative
-          ? 'initiative'
-          : 'portfolio';
-
-    const report = await this.generateReport(
-      {
-        reportType,
-        sourceId: reportType === 'portfolio' ? orgId : reportId,
-      },
-      orgId
-    );
-
-    const exportDir = await this.ensureExportDir();
-    const fileName = `${exportId}.${format}`;
-    const absolutePath = path.join(exportDir, fileName);
-    const publicPath = `/exports/reports/${fileName}`;
-
-    if (format === 'pdf') {
-      await this.writePdfReport(report, absolutePath);
-    } else if (format === 'pptx') {
-      await this.writePptxReport(report, absolutePath);
-    } else {
-      throw new Error(`Unsupported export format: ${format}`);
-    }
-
-    await db.run(
-      `INSERT INTO report_exports (id, report_id, report_type, format, file_path, exported_by)
-             VALUES (?, ?, ?, ?, ?, ?)`,
-      [exportId, reportId, reportType, format, publicPath, userId]
-    );
-
-    logger.info(`[ReportGenerationService] Export queued: ${exportId} (${format})`);
-
-    return { exportId, filePath: publicPath };
-  }
-
-  private async writePdfReport(report: GeneratedReport, filePath: string): Promise<void> {
-    const doc = new PDFDocument({ margin: 48 });
-    const stream = fs.createWriteStream(filePath);
-    doc.pipe(stream);
-
-    doc.fontSize(18).text(report.title || 'Report');
-    doc.moveDown(0.5);
-    doc.fontSize(11).fillColor('#555555');
-    doc.text(`Generated: ${report.generatedAt}`);
-    doc.text(`Language: ${report.language}`);
-    doc.moveDown();
-
-    doc.fillColor('#000000').fontSize(13).text('Executive Summary');
-    doc.fontSize(11).text(report.executiveSummary || 'No summary available.');
-    doc.moveDown();
-
-    report.sections.forEach((section) => {
-      doc.fontSize(13).fillColor('#000000').text(section.title);
-      doc
-        .fontSize(11)
-        .fillColor('#333333')
-        .text(section.content || 'No content.');
-      doc.moveDown();
-    });
-
-    doc.end();
-    await new Promise<void>((resolve, reject) => {
-      stream.on('finish', resolve);
-      stream.on('error', reject);
-    });
-  }
-
-  private async writePptxReport(report: GeneratedReport, filePath: string): Promise<void> {
-    const pptx = new (PptxGenJS as any)();
-    pptx.layout = 'LAYOUT_WIDE';
-
-    const titleSlide = pptx.addSlide();
-    titleSlide.addText(report.title || 'Report', {
-      x: 0.5,
-      y: 0.6,
-      w: 12.3,
-      h: 1,
-      fontSize: 32,
-      bold: true,
-    });
-    titleSlide.addText(report.executiveSummary || 'Executive summary', {
-      x: 0.5,
-      y: 1.8,
-      w: 12.3,
-      h: 3.5,
-      fontSize: 16,
-      color: '666666',
-    });
-
-    report.sections.forEach((section) => {
-      const slide = pptx.addSlide();
-      slide.addText(section.title, {
-        x: 0.5,
-        y: 0.4,
-        w: 12.3,
-        h: 0.6,
-        fontSize: 22,
-        bold: true,
-      });
-      slide.addText(section.content || 'No content.', {
-        x: 0.5,
-        y: 1.2,
-        w: 12.3,
-        h: 5.0,
-        fontSize: 14,
-        color: '444444',
-      });
-    });
-
-    await pptx.writeFile({ fileName: filePath });
-  }
+  return {
+    content: result.content,
+    tokensUsed: result.tokensUsed,
+  };
 }
 
-// Export singleton
-const reportGenerationService = new ReportGenerationService();
-export default reportGenerationService;
-
-// Named exports
-export const generateReport = (params: ReportGenerationParams, orgId: string) =>
-  reportGenerationService.generateReport(params, orgId);
-export const createPublicLink = (params: PublicLinkParams) =>
-  reportGenerationService.createPublicLink(params);
-export const getPublicReport = (linkToken: string, password?: string) =>
-  reportGenerationService.getPublicReport(linkToken, password);
-export const exportReport = (
+/**
+ * Generate all enabled sections for a report
+ */
+export async function generateFullReport(
   reportId: string,
-  format: 'pdf' | 'pptx' | 'docx' | 'xlsx',
-  userId: string
-) => reportGenerationService.exportReport(reportId, format, userId);
+  organizationId: string,
+  userId: string,
+  options?: { regenerateAll?: boolean; onProgress?: (progress: number, sectionKey: string) => void }
+): Promise<{ totalTokens: number; generatedSections: string[] }> {
+  // Get report
+  const reportData = await ReportBuilderService.getReport(reportId, organizationId);
+  if (!reportData) throw new Error('Report not found');
+
+  // Update status to GENERATING
+  await ReportBuilderService.updateReportStatus(reportId, 'GENERATING', userId);
+
+  const enabledSections = reportData.sections
+    .filter((s) => s.enabled)
+    .sort((a, b) => a.orderIndex - b.orderIndex);
+
+  const sectionsToGenerate = options?.regenerateAll
+    ? enabledSections
+    : enabledSections.filter((s) => !s.generatedContent);
+
+  let totalTokens = 0;
+  const generatedSections: string[] = [];
+
+  for (let i = 0; i < sectionsToGenerate.length; i++) {
+    const section = sectionsToGenerate[i];
+
+    try {
+      const result = await generateSectionContent(
+        reportId,
+        section.sectionKey,
+        organizationId,
+        userId
+      );
+      totalTokens += result.tokensUsed;
+      generatedSections.push(section.sectionKey);
+
+      // Report progress
+      const progress = Math.round(((i + 1) / sectionsToGenerate.length) * 100);
+      options?.onProgress?.(progress, section.sectionKey);
+    } catch (err) {
+      logger.error(`[ReportGeneration] Failed to generate section ${section.sectionKey}`, err);
+      // Continue with other sections
+    }
+  }
+
+  // Update status to GENERATED
+  await ReportBuilderService.updateReportStatus(reportId, 'GENERATED', userId);
+
+  // Save generation metadata
+  await queryRun(
+    `
+    UPDATE report_builder_reports
+    SET generation_metadata = ?, updated_at = ?
+    WHERE id = ?
+  `,
+    [
+      JSON.stringify({
+        totalTokens,
+        generatedSections,
+        generatedAt: new Date().toISOString(),
+      }),
+      new Date().toISOString(),
+      reportId,
+    ]
+  );
+
+  logger.info(`[ReportGeneration] Full report generated`, {
+    reportId,
+    totalTokens,
+    sectionsGenerated: generatedSections.length,
+  });
+
+  return { totalTokens, generatedSections };
+}
+
+/**
+ * Regenerate a specific section
+ */
+export async function regenerateSection(
+  reportId: string,
+  sectionKey: string,
+  organizationId: string,
+  userId: string,
+  customPrompt?: string
+): Promise<{ content: string; tokensUsed: number }> {
+  // Update custom prompt if provided
+  if (customPrompt !== undefined) {
+    await ReportBuilderService.updateSectionConfig(reportId, [
+      {
+        sectionKey,
+        customPrompt,
+      },
+    ]);
+  }
+
+  return generateSectionContent(reportId, sectionKey, organizationId, userId);
+}
+
+// ==========================================
+// EXPORTS
+// ==========================================
+
+const ReportGenerationService = {
+  generateSectionContent,
+  generateFullReport,
+  regenerateSection,
+};
+
+export default ReportGenerationService;

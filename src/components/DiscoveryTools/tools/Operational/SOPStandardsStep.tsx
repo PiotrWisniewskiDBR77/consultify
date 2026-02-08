@@ -4,7 +4,12 @@
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { OperationalItem, OperationalToolData, ToolSession, useToolStore } from '@/store/useToolStore';
+import {
+  OperationalItem,
+  OperationalToolData,
+  ToolSession,
+  useToolStore,
+} from '@/store/useToolStore';
 
 import { InlineAssist } from '../../InlineAssist';
 

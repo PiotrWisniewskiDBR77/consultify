@@ -23,6 +23,7 @@ import type {
 } from '../../types/ai.types.js';
 import logger from '../../utils/Logger.js';
 import { llmService } from './llmService.js';
+import modelRouter from './modelRouter.js';
 
 // Lazy load AIContextBuilder to avoid circular dependencies
 let _AIContextBuilder: any = null;
@@ -217,6 +218,7 @@ export class AIPipeline {
             provider: modelConfig.provider,
             id: modelConfig.model,
             endpoint: (modelConfig as any).endpoint,
+            apiKey: (modelConfig as any).apiKey,
           },
           systemPrompt: prompt.find((m) => m.role === 'system')?.content || '',
           messages: prompt
@@ -358,9 +360,41 @@ export class AIPipeline {
     return CAPABILITY_REGISTRY[name];
   }
 
-  private async checkQuota(_userId: string, _organizationId?: string): Promise<void> {
-    // TODO: Implement quota checking
-    // This will be migrated from quotaService.js
+  private async checkQuota(userId: string, organizationId?: string): Promise<void> {
+    if (!organizationId) return; // Skip for requests without org context
+
+    try {
+      const budgetMod = await import('../budgetManagementService.js');
+      const BudgetService = budgetMod.default || budgetMod;
+      if (!BudgetService?.checkBudgetLimit) return;
+
+      // Check token budget (estimate ~500 tokens per request)
+      const result = await BudgetService.checkBudgetLimit(
+        organizationId,
+        userId,
+        null, // projectId — checked separately if needed
+        'tokens',
+        500 // estimated token cost
+      );
+
+      if (result && !result.allowed) {
+        const error = new Error(
+          result.reason || 'AI token budget exceeded. Please contact your administrator.'
+        );
+        (error as any).code = 'AI_BUDGET_EXHAUSTED';
+        (error as any).budgetStatus = {
+          currentUsage: result.currentUsage,
+          budgetLimit: result.budgetLimit,
+          usagePercent: result.usagePercent,
+          scope: 'Organization',
+        };
+        throw error;
+      }
+    } catch (err: any) {
+      // Re-throw budget errors, swallow everything else (fail-open)
+      if (err?.code === 'AI_BUDGET_EXHAUSTED') throw err;
+      logger.debug(`[AIPipeline] Quota check skipped: ${err?.message}`);
+    }
   }
 
   private async buildContext(request: AIPipelineRequest): Promise<{
@@ -369,6 +403,22 @@ export class AIPipeline {
     memoryUsed?: boolean;
   }> {
     try {
+      // Deep Thinking autonomy: do NOT pull external/internal context (org/project/memory/RAG).
+      // Use ONLY the conversation-provided context (request.context) when deepThinking is enabled.
+      const aiModes =
+        (request.options as any)?.aiModes ||
+        ((request.context as any)?.aiModes as any) ||
+        ((request as any)?.context?.aiModes as any);
+      const isDeepThinking = aiModes?.deepResearch === true;
+      if (isDeepThinking) {
+        logger.info('[AIPipeline] Deep Thinking autonomy: skipping AIContextBuilder');
+        return {
+          context: (request.context || {}) as any,
+          ragResults: 0,
+          memoryUsed: false,
+        };
+      }
+
       const AIContextBuilder = await getAIContextBuilder();
 
       // Extract IDs from request
@@ -391,16 +441,62 @@ export class AIPipeline {
           selectedObjectType: screenContext?.selectedObjectType || null,
         });
 
+        // Enrich with user memory (preferences, expertise, communication style)
+        let userMemory = null;
+        try {
+          const aiMemoryMod = await import('./aiMemoryService.js');
+          const aiMemoryService = (aiMemoryMod as any).default || aiMemoryMod;
+          if (aiMemoryService?.getUserMemory) {
+            userMemory = await aiMemoryService.getUserMemory(userId);
+          }
+        } catch (memErr: any) {
+          logger.debug(`[AIPipeline] User memory not available: ${memErr?.message}`);
+        }
+
+        // Enrich with org memory (terminology, decision patterns)
+        let orgMemory = null;
+        try {
+          const aiMemoryMod = await import('./aiMemoryService.js');
+          const aiMemoryService = (aiMemoryMod as any).default || aiMemoryMod;
+          if (aiMemoryService?.getOrgMemory) {
+            orgMemory = await aiMemoryService.getOrgMemory(organizationId);
+          }
+        } catch (memErr: any) {
+          logger.debug(`[AIPipeline] Org memory not available: ${memErr?.message}`);
+        }
+
+        // Merge memory into context
+        const contextWithMemory = {
+          ...fullContext,
+          userMemory: userMemory
+            ? {
+                preferences: userMemory.preferences,
+                expertise: userMemory.expertise?.slice(0, 10),
+                recentTopics: userMemory.recentTopics?.slice(0, 5),
+                interactionCount: userMemory.interactionCount,
+              }
+            : null,
+          orgMemory: orgMemory
+            ? {
+                terminology: orgMemory.terminology,
+                decisionPatterns: orgMemory.decisionPatterns?.slice(0, 5),
+                aiMaturityStage: orgMemory.aiMaturityStage,
+              }
+            : null,
+        };
+
         logger.info(`[AIPipeline] Context built successfully`, {
           hasExecution: !!fullContext?.execution,
           taskCount: fullContext?.execution?.userTasks?.length || 0,
           initiativeCount: fullContext?.execution?.userInitiatives?.length || 0,
+          hasUserMemory: !!userMemory,
+          hasOrgMemory: !!orgMemory,
         });
 
         return {
-          context: fullContext,
+          context: contextWithMemory,
           ragResults: fullContext?.knowledge?.projectDocuments?.length || 0,
-          memoryUsed: !!fullContext?.execution,
+          memoryUsed: !!fullContext?.execution || !!userMemory || !!orgMemory,
         };
       }
 
@@ -439,22 +535,26 @@ export class AIPipeline {
     }
 
     // Integrate adaptive style preferences (v2.0)
-    try {
-      const adaptiveModule = await import('./adaptiveResponseService.js');
-      const adaptiveService = adaptiveModule.adaptiveResponseService || adaptiveModule.default;
+    // Deep Thinking autonomy: skip (pulls user/system preferences outside the conversation).
+    const aiModes = (request.options as any)?.aiModes || (ctx as any)?.aiModes;
+    if (!aiModes?.deepResearch) {
+      try {
+        const adaptiveModule = await import('./adaptiveResponseService.js');
+        const adaptiveService = adaptiveModule.adaptiveResponseService || adaptiveModule.default;
 
-      if (adaptiveService?.buildAdaptiveSystemPrompt && request.userId) {
-        const screenContext = (request as any).screenContext || ctx?.currentScreen;
-        systemPrompt = await adaptiveService.buildAdaptiveSystemPrompt(
-          request.userId,
-          systemPrompt,
-          screenContext ? { screenId: screenContext, screenType: screenContext } : undefined
-        );
-        logger.info('[AIPipeline] Applied adaptive style preferences for user');
+        if (adaptiveService?.buildAdaptiveSystemPrompt && request.userId) {
+          const screenContext = (request as any).screenContext || ctx?.currentScreen;
+          systemPrompt = await adaptiveService.buildAdaptiveSystemPrompt(
+            request.userId,
+            systemPrompt,
+            screenContext ? { screenId: screenContext, screenType: screenContext } : undefined
+          );
+          logger.info('[AIPipeline] Applied adaptive style preferences for user');
+        }
+      } catch (err) {
+        // Adaptive service not available, continue with base prompt
+        logger.debug('[AIPipeline] Adaptive style service not available, using base prompt');
       }
-    } catch (err) {
-      // Adaptive service not available, continue with base prompt
-      logger.debug('[AIPipeline] Adaptive style service not available, using base prompt');
     }
 
     messages.push({
@@ -510,6 +610,46 @@ export class AIPipeline {
       parts.push(this.buildExecutionSection(ctx.execution));
     }
 
+    // 4.5. User memory (preferences, expertise, communication style)
+    if (ctx?.userMemory) {
+      const um = ctx.userMemory;
+      const memParts: string[] = ['## PREFERENCJE UŻYTKOWNIKA'];
+      if (um.preferences?.communicationStyle)
+        memParts.push(`- Styl komunikacji: ${um.preferences.communicationStyle}`);
+      if (um.preferences?.detailLevel)
+        memParts.push(`- Poziom szczegółowości: ${um.preferences.detailLevel}`);
+      if (um.preferences?.language)
+        memParts.push(`- Preferowany język: ${um.preferences.language}`);
+      if (um.expertise?.length > 0) memParts.push(`- Ekspertyza: ${um.expertise.join(', ')}`);
+      if (um.recentTopics?.length > 0)
+        memParts.push(`- Ostatnie tematy: ${um.recentTopics.join(', ')}`);
+      if (um.interactionCount)
+        memParts.push(`- Liczba dotychczasowych interakcji: ${um.interactionCount}`);
+      if (memParts.length > 1) parts.push(memParts.join('\n'));
+    }
+
+    // 4.6. Organization memory (terminology, patterns)
+    if (ctx?.orgMemory) {
+      const om = ctx.orgMemory;
+      const omParts: string[] = ['## PAMIĘĆ ORGANIZACJI'];
+      if (om.aiMaturityStage) omParts.push(`- Etap dojrzałości AI: ${om.aiMaturityStage}`);
+      if (om.terminology && Object.keys(om.terminology).length > 0) {
+        const termEntries = Object.entries(om.terminology)
+          .slice(0, 10)
+          .map(([k, v]) => `  - "${k}" → "${v}"`)
+          .join('\n');
+        omParts.push(`- Terminologia organizacji:\n${termEntries}`);
+      }
+      if (om.decisionPatterns?.length > 0) {
+        const pats = om.decisionPatterns
+          .slice(0, 3)
+          .map((p: any) => `  - ${p.type}: typowy wynik "${p.commonOutcome}" (${p.frequency}×)`)
+          .join('\n');
+        omParts.push(`- Wzorce decyzji:\n${pats}`);
+      }
+      if (omParts.length > 1) parts.push(omParts.join('\n'));
+    }
+
     // 5. Pending approvals
     if (ctx?.pendingApprovals?.count > 0) {
       parts.push(this.buildPendingApprovalsSection(ctx.pendingApprovals));
@@ -526,7 +666,7 @@ export class AIPipeline {
     }
 
     // 8. Behavioral instructions
-    parts.push(this.buildBehavioralInstructions(capability, ctx));
+    parts.push(this.buildBehavioralInstructions(capability, ctx, request));
 
     return parts.filter(Boolean).join('\n\n');
   }
@@ -715,14 +855,79 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
     return `## WIEDZA KONTEKSTOWA\n${sections.join('\n')}`;
   }
 
-  private buildBehavioralInstructions(capability: AICapability, ctx: any): string {
+  private buildBehavioralInstructions(
+    capability: AICapability,
+    ctx: any,
+    request: AIPipelineRequest
+  ): string {
     const instructions: string[] = [
       '## INSTRUKCJE',
       '1. Odpowiadaj konkretnie i pomocnie, wykorzystując powyższy kontekst.',
       '2. Jeśli użytkownik pyta o swoje zadania lub inicjatywy, odwołuj się do danych z sekcji KONTEKST UŻYTKOWNIKA.',
       '3. Proponuj konkretne działania bazując na aktualnym stanie pracy użytkownika.',
       '4. Jeśli są blokery lub problemy, proaktywnie oferuj pomoc w ich rozwiązaniu.',
+      '5. MULTI-LANGUAGE SUPPORT: Twoją natywną funkcją jest obsługa 6 języków: polski (pl), angielski (en), niemiecki (de), hiszpański (es), arabski (ar), japoński (ja).',
+      '6. Zawsze odpowiadaj w tym samym języku, w którym zwrócił się do Ciebie użytkownik. Jeśli użytkownik mówi po polsku, odpowiadaj po polsku. Jeśli po japońsku - po japońsku, itd.',
+      '7. Dbaj o naturalność i poprawność językową w każdym z tych języków.',
     ];
+
+    // Chat runtime modes (ToolsMenu)
+    const aiModes = request.options?.aiModes || (ctx as any)?.aiModes;
+    // Deep Thinking autonomy: never reference internal knowledge sources / system modules.
+    const knowledgeSources =
+      aiModes?.deepResearch === true
+        ? undefined
+        : request.options?.knowledgeSources || (ctx as any)?.knowledgeSources;
+    const responseStyle = request.options?.responseStyle || (ctx as any)?.responseStyle;
+
+    if (aiModes?.deepResearch) {
+      instructions.push(
+        '8. TRYB: Deep Research — zanim odpowiesz, doprecyzuj brakujące informacje i przedstaw uporządkowaną analizę, założenia oraz rekomendacje.'
+      );
+    }
+
+    if (aiModes?.webSearch) {
+      instructions.push(
+        '9. TRYB: Web Search — możesz otrzymać od systemu wyniki researchu i listę źródeł. Jeśli nie masz dostępu do web lub nie masz dostarczonych źródeł, powiedz to wprost. Nie udawaj, że wykonałeś wyszukiwanie.'
+      );
+    }
+
+    if (aiModes?.showReasoning) {
+      if (aiModes?.deepResearch) {
+        instructions.push(
+          '10. TRYB: Reasoning ON (Deep Thinking) — dodaj sekcję "Reasoning highlights" (3–6 punktów) z wysokopoziomowymi obserwacjami: kluczowe założenia, trade-offy, dlaczego rekomendacja ma sens. NIE używaj tagów <thinking> i NIE ujawniaj chain-of-thought.'
+        );
+      } else {
+        instructions.push(
+          '10. TRYB: Reasoning ON — dodaj krótki, wysokopoziomowy opis toku rozumowania w tagach <thinking>...</thinking>. Nie ujawniaj danych wrażliwych ani długich rozważań.'
+        );
+      }
+    } else {
+      instructions.push('10. TRYB: Reasoning OFF — nie używaj tagów <thinking>...</thinking>.');
+    }
+
+    if (responseStyle) {
+      const styleMap: Record<string, string> = {
+        normal: 'Standardowy styl odpowiedzi (zbalansowany).',
+        learning: 'Styl edukacyjny: tłumacz krok po kroku, dodawaj krótkie przykłady.',
+        concise: 'Styl zwięzły: tylko najważniejsze punkty, bez dygresji.',
+        explanatory: 'Styl wyjaśniający: więcej kontekstu i uzasadnienia, ale bez lania wody.',
+        formal: 'Styl formalny: język urzędowy/biznesowy, precyzyjny i neutralny.',
+      };
+      instructions.push(`11. Styl odpowiedzi: ${styleMap[responseStyle] || responseStyle}`);
+    }
+
+    if (knowledgeSources) {
+      const enabled: string[] = [];
+      if (knowledgeSources.pmoDocuments) enabled.push('pmoDocuments');
+      if (knowledgeSources.projectData) enabled.push('projectData');
+      if (knowledgeSources.organizationData) enabled.push('organizationData');
+      if (enabled.length) {
+        instructions.push(
+          `12. Źródła wiedzy (preferowane): ${enabled.join(', ')}. Jeśli w kontekście brakuje danych, dopytaj użytkownika zamiast halucynować.`
+        );
+      }
+    }
 
     // Add context-specific instructions
     if (ctx?.execution?.capacityStatus === 'OVERLOADED') {
@@ -752,29 +957,69 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
   private async selectModel(
     request: AIPipelineRequest,
     capability: AICapability
-  ): Promise<{ provider: string; model: string; maxTokens: number; endpoint?: string }> {
-    // Use Ollama as default local provider if available
-    const provider = request.options?.provider || 'ollama';
-    const model = request.options?.model || 'gemma3:27b';
+  ): Promise<{
+    provider: string;
+    model: string;
+    maxTokens: number;
+    endpoint?: string | null;
+    apiKey?: string | null;
+  }> {
+    // 1) Explicit overrides from request options (user-selected model or direct provider/model)
+    const selectedTier = request.options?.selectedTier;
+    const explicitModel = request.options?.selectedModelId || request.options?.model;
+    const explicitProvider = request.options?.provider;
 
-    // For Ollama, use local endpoint
-    const endpoint = provider === 'ollama' ? 'http://localhost:11434/v1' : undefined;
+    if (explicitModel) {
+      // If provider not provided, let ModelRouter infer provider & resolve endpoint/apiKey.
+      const tierForConfig = (selectedTier || 'STANDARD') as any;
+      const cfg = await modelRouter.getProviderConfig(explicitModel, tierForConfig);
+      const provider = explicitProvider || cfg.provider;
+      const endpoint =
+        explicitProvider && explicitProvider === 'ollama'
+          ? 'http://localhost:11434/v1'
+          : cfg.endpoint;
+
+      logger.info(`[AIPipeline] Selected explicit model: ${provider}/${cfg.id}`);
+      return {
+        provider,
+        model: cfg.id,
+        maxTokens: request.options?.maxTokens || capability.maxTokens,
+        endpoint,
+        apiKey: cfg.apiKey,
+      };
+    }
+
+    // 2) Dynamic routing by tier/capability
+    const routingCapability = request.capability === 'chatStream' ? 'chat' : request.capability;
+    const routed = await modelRouter.select({
+      capability: routingCapability,
+      organizationId: request.organizationId,
+      options: { tier: selectedTier },
+      tier: selectedTier,
+    } as any);
 
     logger.info(
-      `[AIPipeline] Selected model: ${provider}/${model}, endpoint: ${endpoint || 'default'}`
+      `[AIPipeline] Routed model: ${routed.provider}/${routed.id} (tier: ${routed.tier})`
     );
 
     return {
-      provider,
-      model,
+      provider: routed.provider,
+      model: routed.id,
       maxTokens: request.options?.maxTokens || capability.maxTokens,
-      endpoint,
+      endpoint: routed.endpoint,
+      apiKey: routed.apiKey,
     };
   }
 
   private async executeWithProvider(
     messages: ChatMessage[],
-    modelConfig: { provider: string; model: string; maxTokens: number },
+    modelConfig: {
+      provider: string;
+      model: string;
+      maxTokens: number;
+      endpoint?: string | null;
+      apiKey?: string | null;
+    },
     options?: AIOptions
   ): Promise<{
     content: string;
@@ -791,6 +1036,8 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
         modelConfig: {
           provider: modelConfig.provider,
           id: modelConfig.model,
+          endpoint: modelConfig.endpoint || undefined,
+          apiKey: modelConfig.apiKey || undefined,
         },
         systemPrompt: systemMessage?.content || '',
         messages: nonSystemMessages.map((m) => ({
@@ -819,7 +1066,13 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
 
   private async executeStreamingWithProvider(
     messages: ChatMessage[],
-    modelConfig: { provider: string; model: string; maxTokens: number },
+    modelConfig: {
+      provider: string;
+      model: string;
+      maxTokens: number;
+      endpoint?: string | null;
+      apiKey?: string | null;
+    },
     options: AIOptions | undefined,
     onChunk: StreamCallback
   ): Promise<void> {
@@ -832,6 +1085,8 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
         modelConfig: {
           provider: modelConfig.provider,
           id: modelConfig.model,
+          endpoint: modelConfig.endpoint || undefined,
+          apiKey: modelConfig.apiKey || undefined,
         },
         systemPrompt: systemMessage?.content || '',
         messages: nonSystemMessages.map((m) => ({

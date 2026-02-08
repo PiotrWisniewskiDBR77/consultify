@@ -99,11 +99,11 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
 
     try {
       const executionStatuses = getStatusesForModule('execution');
-      const statusParam =
-        (executionStatuses.length
+      const statusParam = (
+        executionStatuses.length
           ? executionStatuses
           : [InitiativeStatus.EXECUTING, InitiativeStatus.BLOCKED]
-        ).join(',');
+      ).join(',');
 
       // Fetch all data in parallel
       const [initiativesRes, decisionsRes, raidRes, budgetRes] = await Promise.all([

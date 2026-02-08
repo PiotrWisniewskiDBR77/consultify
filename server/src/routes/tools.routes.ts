@@ -12,12 +12,12 @@ import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import {
+  ApproveToolSchema,
   CreateToolSessionSchema,
-  UpdateToolSessionSchema,
   GenerateInitiativesSchema,
   RequestReviewSchema,
-  ApproveToolSchema,
   SendBackSchema,
+  UpdateToolSessionSchema,
 } from '../validators/tool.validators.js';
 
 const router = Router();
@@ -30,7 +30,11 @@ router.post('/', validateBody(CreateToolSessionSchema), ToolController.createToo
 router.get('/', ToolController.listToolSessions);
 router.get('/:toolId', ToolController.getToolSession);
 router.put('/:toolId', validateBody(UpdateToolSessionSchema), ToolController.updateToolSession);
-router.post('/:toolId/request-review', validateBody(RequestReviewSchema), ToolController.requestReview);
+router.post(
+  '/:toolId/request-review',
+  validateBody(RequestReviewSchema),
+  ToolController.requestReview
+);
 router.post('/:toolId/approve', validateBody(ApproveToolSchema), ToolController.approveTool);
 router.post('/:toolId/send-back', validateBody(SendBackSchema), ToolController.sendBackToDraft);
 router.post(

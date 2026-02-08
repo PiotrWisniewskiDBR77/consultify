@@ -71,10 +71,10 @@ import { WorkPreferencesSettings } from '../components/settings/WorkPreferencesS
 import { Button } from '../components/ui/primitives/Button';
 import { ScrollArea } from '../components/ui/scroll-area';
 import { cn } from '../lib/utils';
+import { ROUTES } from '../routes/routeConfig';
 // Store and types
 import { useAppStore } from '../store/useAppStore';
 import { AppView, User } from '../types';
-import { ROUTES } from '../routes/routeConfig';
 
 interface SettingsViewProps {
   currentUser: User;
@@ -189,7 +189,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const activeSection = useMemo(() => {
     const pathSection =
       location.pathname.replace('/settings/', '').replace(/^\/+|\/+$/g, '') || 'profile';
-    return (Object.keys(sectionMeta).includes(pathSection) ? pathSection : 'profile') as SettingsSection;
+    return (
+      Object.keys(sectionMeta).includes(pathSection) ? pathSection : 'profile'
+    ) as SettingsSection;
   }, [location.pathname]);
 
   // Handle section change - update URL

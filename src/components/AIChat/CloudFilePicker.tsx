@@ -97,7 +97,8 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPath, setCurrentPath] = useState<{ id: string; name: string }[]>([
-    { id: 'root', name: 'Root' },
+    // Keep a stable internal marker; display label is translated at render time.
+    { id: 'root', name: 'root' },
   ]);
   const [selectedFile, setSelectedFile] = useState<CloudFile | null>(null);
 
@@ -190,7 +191,9 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
   const handleSelect = () => {
     if (selectedFile && !selectedFile.isFolder) {
       onFileSelect(selectedFile);
-      toast.success(`Pobieranie: ${selectedFile.name}`, { duration: 2000 });
+      toast.success(t('aiChat.cloudPicker.downloading', { name: selectedFile.name }), {
+        duration: 2000,
+      });
       onClose();
     }
   };
@@ -212,6 +215,10 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
             <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
               {ProviderNames[provider]}
             </h2>
+            {/* Demo Mode Badge */}
+            <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full border border-amber-200 dark:border-amber-800">
+              Demo
+            </span>
           </div>
           <button
             onClick={onClose}
@@ -219,6 +226,26 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
           >
             <X size={20} className="text-slate-500" />
           </button>
+        </div>
+
+        {/* Demo Mode Warning Banner */}
+        <div className="mx-4 mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+          <div className="flex items-start gap-2">
+            <div className="shrink-0 w-5 h-5 rounded-full bg-amber-200 dark:bg-amber-800 flex items-center justify-center">
+              <span className="text-amber-700 dark:text-amber-300 text-xs">⚠</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-xs font-medium text-amber-800 dark:text-amber-300">
+                {t('aiChat.cloudPicker.demoMode', 'Tryb demonstracyjny')}
+              </p>
+              <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-0.5">
+                {t(
+                  'aiChat.cloudPicker.demoModeDesc',
+                  'Wyświetlane są przykładowe pliki. Integracja z chmurą zostanie dodana wkrótce.'
+                )}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Breadcrumb */}
@@ -234,7 +261,7 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
                     : 'text-slate-600 dark:text-slate-400'
                 }`}
               >
-                {item.name}
+                {item.id === 'root' ? t('common.root', 'Root') : item.name}
               </button>
             </React.Fragment>
           ))}

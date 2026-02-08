@@ -36,17 +36,42 @@ export class HealthCheckController {
       environment: process.env.NODE_ENV || 'development',
     };
 
-    // Check Redis connectivity (non-blocking, timeout after 50ms)
-    // Use Promise.race to avoid blocking the healthcheck
+    // Check Redis connectivity (non-blocking, timeout after 150ms)
+    // We support two Redis client implementations in this codebase:
+    // - `services/redis/RedisClient` (ioredis) via `services/ai/redisClient` bridge
+    // - `utils/RedisClient` (node-redis)
+    // For health reporting, treat Redis as connected if *either* is ready.
     try {
-      const redisCheck = import('../services/ai/redisClient.js')
-        .then(({ isRedisConnected }) => (isRedisConnected() ? 'connected' : 'disconnected'))
-        .catch(() => 'error');
+      if (process.env.MOCK_REDIS === 'true') {
+        // Local/dev mode: mocked Redis should be reported as available
+        health.redis = 'mock';
+      } else {
+        const redisCheck = (async () => {
+          let connected = false;
 
-      const timeout = new Promise<string>((resolve) => setTimeout(() => resolve('timeout'), 50));
+          try {
+            const { isRedisConnected } = await import('../services/ai/redisClient.js');
+            connected = connected || isRedisConnected();
+          } catch {
+            // ignore
+          }
 
-      health.redis = await Promise.race([redisCheck, timeout]);
-    } catch (error) {
+          try {
+            const redis = (await import('../utils/RedisClient.js')).default as any;
+            const isReady = typeof redis?.isReady === 'boolean' ? redis.isReady : undefined;
+            const isOpen = typeof redis?.isOpen === 'boolean' ? redis.isOpen : undefined;
+            connected = connected || Boolean(isReady ?? isOpen);
+          } catch {
+            // ignore
+          }
+
+          return connected ? 'connected' : 'disconnected';
+        })();
+
+        const timeout = new Promise<string>((resolve) => setTimeout(() => resolve('timeout'), 150));
+        health.redis = await Promise.race([redisCheck, timeout]);
+      }
+    } catch {
       health.redis = 'error';
     }
 
@@ -80,9 +105,32 @@ export class HealthCheckController {
 
     // Check Redis
     try {
-      const { isRedisConnected } = await import('../services/ai/redisClient.js');
-      checks.redis = isRedisConnected();
-    } catch (error) {
+      // In local dev we often run without Redis (MOCK_REDIS=true).
+      // Treat mocked Redis as "ready" so the app can start cleanly.
+      if (process.env.MOCK_REDIS === 'true') {
+        checks.redis = true;
+      } else {
+        let connected = false;
+
+        try {
+          const { isRedisConnected } = await import('../services/ai/redisClient.js');
+          connected = connected || isRedisConnected();
+        } catch {
+          // ignore
+        }
+
+        try {
+          const redis = (await import('../utils/RedisClient.js')).default as any;
+          const isReady = typeof redis?.isReady === 'boolean' ? redis.isReady : undefined;
+          const isOpen = typeof redis?.isOpen === 'boolean' ? redis.isOpen : undefined;
+          connected = connected || Boolean(isReady ?? isOpen);
+        } catch {
+          // ignore
+        }
+
+        checks.redis = connected;
+      }
+    } catch {
       checks.redis = false;
     }
 

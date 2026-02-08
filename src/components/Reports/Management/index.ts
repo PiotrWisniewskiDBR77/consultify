@@ -3,14 +3,14 @@
 
 export { ExportControls } from './ExportControls';
 export { ManagementReportsView } from './ManagementReportsView';
-export { ReportsHub } from './ReportsHub';
-export { ReportGeneratorDrawer } from './ReportGeneratorDrawer';
-export { ReportHistoryTable } from './ReportHistoryTable';
-export { ReportTypeSelector } from './ReportTypeSelector';
-export { ReportTemplatesView } from './ReportTemplatesView';
-export { ReportScheduleView } from './ReportScheduleView';
 export { PortfolioHealthReport } from './PortfolioHealthReport';
 export { RaidReport } from './RaidReport';
+export { ReportGeneratorDrawer } from './ReportGeneratorDrawer';
+export { ReportHistoryTable } from './ReportHistoryTable';
+export { ReportScheduleView } from './ReportScheduleView';
+export { ReportsHub } from './ReportsHub';
+export { ReportTemplatesView } from './ReportTemplatesView';
+export { ReportTypeSelector } from './ReportTypeSelector';
 export { SteeringCommitteeReport } from './SteeringCommitteeReport';
 export { TeamMeetingReport } from './TeamMeetingReport';
 
@@ -19,6 +19,7 @@ export { ApprovalWorkflow } from './ApprovalWorkflow';
 export { VersionHistory } from './VersionHistory';
 
 // Shared Components
+export { DecisionsRequiredSection } from './shared/DecisionsRequiredSection';
 export { MetricCard } from './shared/MetricCard';
 export { RAGIndicator } from './shared/RAGIndicator';
 export { ReportFooter } from './shared/ReportFooter';
@@ -29,4 +30,3 @@ export {
   ReportSkeletonCompact,
 } from './shared/ReportSkeleton';
 export { TaskListSection } from './shared/TaskListSection';
-export { DecisionsRequiredSection } from './shared/DecisionsRequiredSection';

@@ -23,6 +23,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 export type InitiativeStatus =
   | 'DRAFT'
+  | 'PENDING_REVIEW'
   | 'REVIEW'
   | 'PROMOTED'
   | 'PLANNING'
@@ -32,7 +33,8 @@ export type InitiativeStatus =
   | 'BLOCKED'
   | 'DONE'
   | 'TRACKING'
-  | 'CANCELLED';
+  | 'CANCELLED'
+  | 'ARCHIVED';
 
 export interface StatusOption {
   id: string;
@@ -43,7 +45,13 @@ export interface StatusOption {
   order: number;
 }
 
-export type ModuleContext = 'tools' | 'assessment' | 'initiatives' | 'execution' | 'benefits' | 'reporting';
+export type ModuleContext =
+  | 'tools'
+  | 'assessment'
+  | 'initiatives'
+  | 'execution'
+  | 'benefits'
+  | 'reporting';
 
 // ============================================
 // STATUS CONFIGURATIONS (Canonical)
@@ -58,13 +66,21 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     bgColor: 'bg-slate-500',
     order: 1,
   },
+  PENDING_REVIEW: {
+    id: 'PENDING_REVIEW',
+    label: 'Pending Review',
+    labelPL: 'Oczekuje na przegląd',
+    color: 'text-orange-400',
+    bgColor: 'bg-orange-500',
+    order: 2,
+  },
   REVIEW: {
     id: 'REVIEW',
     label: 'In Review',
     labelPL: 'W przeglądzie',
     color: 'text-amber-400',
     bgColor: 'bg-amber-500',
-    order: 2,
+    order: 3,
   },
   PROMOTED: {
     id: 'PROMOTED',
@@ -72,7 +88,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     labelPL: 'Promowana',
     color: 'text-blue-400',
     bgColor: 'bg-blue-500',
-    order: 3,
+    order: 4,
   },
   PLANNING: {
     id: 'PLANNING',
@@ -80,7 +96,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     labelPL: 'Planowanie',
     color: 'text-indigo-400',
     bgColor: 'bg-indigo-500',
-    order: 4,
+    order: 5,
   },
   APPROVED: {
     id: 'APPROVED',
@@ -88,7 +104,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     labelPL: 'Zatwierdzona',
     color: 'text-emerald-400',
     bgColor: 'bg-emerald-500',
-    order: 5,
+    order: 6,
   },
   SCHEDULED: {
     id: 'SCHEDULED',
@@ -96,7 +112,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     labelPL: 'Zaplanowana',
     color: 'text-purple-400',
     bgColor: 'bg-purple-500',
-    order: 6,
+    order: 7,
   },
   EXECUTING: {
     id: 'EXECUTING',
@@ -104,7 +120,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     labelPL: 'W realizacji',
     color: 'text-cyan-400',
     bgColor: 'bg-cyan-500',
-    order: 7,
+    order: 8,
   },
   BLOCKED: {
     id: 'BLOCKED',
@@ -112,7 +128,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     labelPL: 'Zablokowana',
     color: 'text-red-400',
     bgColor: 'bg-red-500',
-    order: 8,
+    order: 9,
   },
   DONE: {
     id: 'DONE',
@@ -120,7 +136,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     labelPL: 'Ukończona',
     color: 'text-green-400',
     bgColor: 'bg-green-500',
-    order: 9,
+    order: 10,
   },
   TRACKING: {
     id: 'TRACKING',
@@ -128,7 +144,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     labelPL: 'Śledzenie',
     color: 'text-teal-400',
     bgColor: 'bg-teal-500',
-    order: 10,
+    order: 11,
   },
   CANCELLED: {
     id: 'CANCELLED',
@@ -136,7 +152,15 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     labelPL: 'Anulowana',
     color: 'text-gray-400',
     bgColor: 'bg-gray-500',
-    order: 11,
+    order: 12,
+  },
+  ARCHIVED: {
+    id: 'ARCHIVED',
+    label: 'Archived',
+    labelPL: 'Zarchiwizowana',
+    color: 'text-slate-300',
+    bgColor: 'bg-slate-600',
+    order: 13,
   },
 };
 
@@ -163,13 +187,21 @@ function getStatusesForModule(module: ModuleContext): StatusOption[] {
   switch (module) {
     case 'tools':
     case 'assessment':
-      // Only DRAFT for source modules
-      statuses.push('DRAFT');
+      // Source modules
+      statuses.push('DRAFT', 'PENDING_REVIEW');
       break;
 
     case 'initiatives':
       // Full planning lifecycle
-      statuses.push('REVIEW', 'PROMOTED', 'PLANNING', 'APPROVED', 'SCHEDULED', 'CANCELLED');
+      statuses.push(
+        'REVIEW',
+        'PROMOTED',
+        'PLANNING',
+        'APPROVED',
+        'SCHEDULED',
+        'CANCELLED',
+        'ARCHIVED'
+      );
       break;
 
     case 'execution':
@@ -340,6 +372,6 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
 // EXPORTS
 // ============================================
 
-export { getStatusesForModule, ALL_STATUSES, ALL_OPTION };
+export { ALL_OPTION, ALL_STATUSES, getStatusesForModule };
 
 export default StatusDropdown;

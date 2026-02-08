@@ -25,10 +25,30 @@ import { useTranslation } from 'react-i18next';
 
 // Priority configuration
 const PRIORITIES = [
-  { value: 'low', label: { en: 'Low', pl: 'Niski' }, color: 'bg-slate-400', textColor: 'text-slate-500' },
-  { value: 'medium', label: { en: 'Medium', pl: 'Średni' }, color: 'bg-blue-400', textColor: 'text-blue-500' },
-  { value: 'high', label: { en: 'High', pl: 'Wysoki' }, color: 'bg-orange-400', textColor: 'text-orange-500' },
-  { value: 'critical', label: { en: 'Critical', pl: 'Krytyczny' }, color: 'bg-red-500', textColor: 'text-red-500' },
+  {
+    value: 'low',
+    label: { en: 'Low', pl: 'Niski' },
+    color: 'bg-slate-400',
+    textColor: 'text-slate-500',
+  },
+  {
+    value: 'medium',
+    label: { en: 'Medium', pl: 'Średni' },
+    color: 'bg-blue-400',
+    textColor: 'text-blue-500',
+  },
+  {
+    value: 'high',
+    label: { en: 'High', pl: 'Wysoki' },
+    color: 'bg-orange-400',
+    textColor: 'text-orange-500',
+  },
+  {
+    value: 'critical',
+    label: { en: 'Critical', pl: 'Krytyczny' },
+    color: 'bg-red-500',
+    textColor: 'text-red-500',
+  },
 ];
 
 // Status configuration
@@ -46,10 +66,10 @@ interface QuickActionsProps {
   priority?: string;
   assigneeId?: string;
   dueDate?: string;
-  
+
   // Available options
   users?: { id: string; name: string; avatar?: string }[];
-  
+
   // Callbacks
   onStatusChange?: (status: string) => void;
   onPriorityChange?: (priority: string) => void;
@@ -60,7 +80,7 @@ interface QuickActionsProps {
   onDelete?: () => void;
   onStartTimer?: () => void;
   onMarkComplete?: () => void;
-  
+
   // Display options
   compact?: boolean;
   showTimer?: boolean;
@@ -90,7 +110,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  
+
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -139,7 +159,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
         {!compact && label && <span className="hidden sm:inline">{label}</span>}
         <ChevronDown size={12} className="opacity-50" />
       </button>
-      
+
       <AnimatePresence>
         {openDropdown === id && (
           <motion.div
@@ -169,12 +189,21 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
           onClick={onMarkComplete}
           className={`
             p-1.5 rounded-lg transition-all
-            ${isComplete
-              ? 'bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30'
-              : 'text-slate-400 hover:text-emerald-500 hover:bg-emerald-500/10'
+            ${
+              isComplete
+                ? 'bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30'
+                : 'text-slate-400 hover:text-emerald-500 hover:bg-emerald-500/10'
             }
           `}
-          title={isPolish ? (isComplete ? 'Oznacz jako nieukończone' : 'Oznacz jako ukończone') : (isComplete ? 'Mark incomplete' : 'Mark complete')}
+          title={
+            isPolish
+              ? isComplete
+                ? 'Oznacz jako nieukończone'
+                : 'Oznacz jako ukończone'
+              : isComplete
+                ? 'Mark incomplete'
+                : 'Mark complete'
+          }
         >
           {isComplete ? <CheckCircle2 size={16} /> : <Check size={16} />}
         </button>
@@ -349,7 +378,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
         >
           <MoreHorizontal size={16} />
         </button>
-        
+
         <AnimatePresence>
           {showMoreMenu && (
             <motion.div

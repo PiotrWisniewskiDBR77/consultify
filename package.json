@@ -14,7 +14,7 @@
     "dev:frontend": "vite --port 3000 --strictPort",
     "lint": "eslint . --report-unused-disable-directives",
     "type-check": "tsc --noEmit",
-    "dev:backend": "cd server && PORT=3001 DB_TYPE=sqlite SQLITE_PATH=../data/dev/consultinity.db npm run dev",
+    "dev:backend": "DB_TYPE=sqlite SQLITE_PATH=./data/dev/consultinity.db npm run db:migrate:safe && cd server && DB_TYPE=sqlite SQLITE_PATH=../data/dev/consultinity.db npx tsx scripts/seed-dbr77-fill-all-tables.ts && PORT=3001 DB_TYPE=sqlite SQLITE_PATH=../data/dev/consultinity.db npm run dev",
     "fix:credentials": "./server/scripts/fix-dbr77-credentials.sh",
     "seed:notifications": "./server/scripts/seed-notifications.sh",
     "build:backend": "cd server && npm run build",
@@ -26,7 +26,7 @@
     "test": "npm run test:all",
     "test:unit": "vitest run tests/unit",
     "test:unit:critical": "vitest run tests/unit/backend/permissionService.test.ts tests/unit/backend/tokenBillingService.test.ts tests/unit/backend/regulatoryModeGuard.test.ts tests/unit/backend/accessPolicyService.test.js tests/unit/backend/services/billingService.test.ts tests/unit/backend/middleware/authMiddleware.test tests/unit/backend/middleware/permissionMiddleware.test.js --reporter=verbose",
-    "test:component": "vitest run tests/components",
+    "test:component": "VITEST_HEAP_MB=16384 vitest run tests/components --maxWorkers=1 --maxConcurrency=2 --shard 1/8 && VITEST_HEAP_MB=16384 vitest run tests/components --maxWorkers=1 --maxConcurrency=2 --shard 2/8 && VITEST_HEAP_MB=16384 vitest run tests/components --maxWorkers=1 --maxConcurrency=2 --shard 3/8 && VITEST_HEAP_MB=16384 vitest run tests/components --maxWorkers=1 --maxConcurrency=2 --shard 4/8 && VITEST_HEAP_MB=16384 vitest run tests/components --maxWorkers=1 --maxConcurrency=2 --shard 5/8 && VITEST_HEAP_MB=16384 vitest run tests/components --maxWorkers=1 --maxConcurrency=2 --shard 6/8 && VITEST_HEAP_MB=16384 vitest run tests/components --maxWorkers=1 --maxConcurrency=2 --shard 7/8 && VITEST_HEAP_MB=16384 vitest run tests/components --maxWorkers=1 --maxConcurrency=2 --shard 8/8",
     "test:integration": "vitest run tests/integration --no-file-parallelism",
     "test:backend": "vitest run tests/unit/backend --environment node",
     "test:e2e": "playwright test",
@@ -58,6 +58,7 @@
     "nx:serve:consultinity": "nx serve consultinity",
     "nx:serve:new-app": "nx serve new-app",
     "db:migrate": "tsx server/scripts/migrate.ts",
+    "db:migrate:safe": "DB_TYPE=sqlite SQLITE_PATH=./data/dev/consultinity.db MIGRATE_MODE=safe tsx server/scripts/migrate.ts",
     "db:migrate:backfill": "tsx server/scripts/migrate.ts backfill",
     "db:backup": "bash server/scripts/backup-database.sh",
     "db:restore": "bash server/scripts/restore-database.sh",
@@ -85,7 +86,8 @@
     "validate": "npm run lint && npm run type-check && npm run test:unit && npm run test:security",
     "i18n:check": "npx ts-node scripts/i18n/translate-help.ts --check",
     "i18n:translate": "npx ts-node scripts/i18n/translate-help.ts --translate",
-    "i18n:validate": "npx ts-node scripts/i18n/translate-help.ts --validate"
+    "i18n:validate": "npx ts-node scripts/i18n/translate-help.ts --validate",
+    "branding:generate": "npx tsx scripts/branding/generate-consultinity-assets.ts"
   },
   "overrides": {
     "react-is": "^19.0.0"
@@ -143,6 +145,7 @@
     "exceljs": "^4.4.0",
     "express-rate-limit": "^8.2.1",
     "express-validator": "^7.3.1",
+    "fdir": "^6.5.0",
     "framer-motion": "^12.23.25",
     "handlebars": "^4.7.8",
     "helmet": "^8.1.0",
@@ -185,7 +188,11 @@
     "react-syntax-highlighter": "^16.1.0",
     "react-virtuoso": "^4.18.1",
     "reactflow": "^11.11.4",
+<<<<<<< HEAD
     "recharts": "^2.15.4",
+=======
+    "recharts": "file:recharts-2.15.4.tgz",
+>>>>>>> origin/londyn
     "redis": "^5.10.0",
     "remark-gfm": "^4.0.1",
     "speakeasy": "^2.0.0",
@@ -232,6 +239,7 @@
     "@vitest/coverage-v8": "^4.0.15",
     "autocannon": "^8.0.0",
     "autoprefixer": "^10.4.22",
+    "commander": "^8.3.0",
     "concurrently": "^9.2.1",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
@@ -249,6 +257,7 @@
     "playwright": "^1.57.0",
     "postcss": "^8.5.6",
     "prettier": "^3.7.4",
+    "sharp": "^0.34.5",
     "supertest": "^7.1.4",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.8.2",

@@ -34,7 +34,7 @@ export interface TaskTemplate {
   name: string;
   description?: string;
   category?: string;
-  
+
   // Task fields
   title: string;
   taskDescription?: string;
@@ -42,11 +42,11 @@ export interface TaskTemplate {
   estimatedHours?: number;
   tags?: string[];
   checklist?: { id: string; text: string; completed: boolean }[];
-  
+
   // Recurring settings
   isRecurring: boolean;
   recurringPattern?: RecurringPattern;
-  
+
   // Metadata
   usageCount: number;
   isFavorite: boolean;
@@ -66,7 +66,9 @@ export interface RecurringPattern {
 interface TaskTemplatesProps {
   templates: TaskTemplate[];
   onCreateFromTemplate: (template: TaskTemplate) => void;
-  onSaveTemplate: (template: Omit<TaskTemplate, 'id' | 'usageCount' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  onSaveTemplate: (
+    template: Omit<TaskTemplate, 'id' | 'usageCount' | 'createdAt' | 'updatedAt'>
+  ) => Promise<void>;
   onUpdateTemplate: (id: string, updates: Partial<TaskTemplate>) => Promise<void>;
   onDeleteTemplate: (id: string) => Promise<void>;
   onToggleFavorite: (id: string) => Promise<void>;
@@ -123,13 +125,13 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  
+
   // View mode: 'list' | 'create' | 'edit'
   const [viewMode, setViewMode] = useState<'list' | 'create' | 'edit'>('list');
   const [editingTemplate, setEditingTemplate] = useState<TaskTemplate | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [saving, setSaving] = useState(false);
-  
+
   // Form state
   const [formData, setFormData] = useState<Partial<TaskTemplate>>({
     name: '',
@@ -209,7 +211,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
 
     try {
       setSaving(true);
-      
+
       if (viewMode === 'edit' && editingTemplate) {
         await onUpdateTemplate(editingTemplate.id, formData);
         toast.success(isPolish ? 'Szablon zaktualizowany' : 'Template updated');
@@ -230,7 +232,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
         });
         toast.success(isPolish ? 'Szablon zapisany' : 'Template saved');
       }
-      
+
       resetForm();
       setViewMode('list');
     } catch (error) {
@@ -260,7 +262,13 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(isPolish ? 'Czy na pewno chcesz usunąć ten szablon?' : 'Are you sure you want to delete this template?')) {
+    if (
+      !confirm(
+        isPolish
+          ? 'Czy na pewno chcesz usunąć ten szablon?'
+          : 'Are you sure you want to delete this template?'
+      )
+    ) {
       return;
     }
     try {
@@ -316,15 +324,25 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
               <div>
                 <h2 className="text-lg font-bold text-slate-800 dark:text-white">
                   {viewMode === 'list'
-                    ? isPolish ? 'Szablony zadań' : 'Task Templates'
+                    ? isPolish
+                      ? 'Szablony zadań'
+                      : 'Task Templates'
                     : viewMode === 'create'
-                    ? isPolish ? 'Nowy szablon' : 'New Template'
-                    : isPolish ? 'Edytuj szablon' : 'Edit Template'}
+                      ? isPolish
+                        ? 'Nowy szablon'
+                        : 'New Template'
+                      : isPolish
+                        ? 'Edytuj szablon'
+                        : 'Edit Template'}
                 </h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   {viewMode === 'list'
-                    ? isPolish ? 'Szybkie tworzenie zadań z szablonów' : 'Quickly create tasks from templates'
-                    : isPolish ? 'Zdefiniuj szczegóły szablonu' : 'Define template details'}
+                    ? isPolish
+                      ? 'Szybkie tworzenie zadań z szablonów'
+                      : 'Quickly create tasks from templates'
+                    : isPolish
+                      ? 'Zdefiniuj szczegóły szablonu'
+                      : 'Define template details'}
                 </p>
               </div>
             </div>
@@ -356,7 +374,10 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                 {/* Search & Create */}
                 <div className="flex items-center gap-3 mb-4">
                   <div className="flex-1 relative">
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Search
+                      size={16}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
                     <input
                       type="text"
                       value={searchQuery}
@@ -383,8 +404,12 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                     <Layers size={48} className="mx-auto mb-4 text-slate-300 dark:text-navy-600" />
                     <p className="text-slate-500 dark:text-slate-400">
                       {searchQuery
-                        ? isPolish ? 'Nie znaleziono szablonów' : 'No templates found'
-                        : isPolish ? 'Brak szablonów' : 'No templates yet'}
+                        ? isPolish
+                          ? 'Nie znaleziono szablonów'
+                          : 'No templates found'
+                        : isPolish
+                          ? 'Brak szablonów'
+                          : 'No templates yet'}
                     </p>
                   </div>
                 ) : (
@@ -433,7 +458,9 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                               </>
                             )}
                             <span>•</span>
-                            <span>{template.usageCount}x {isPolish ? 'użyto' : 'used'}</span>
+                            <span>
+                              {template.usageCount}x {isPolish ? 'użyto' : 'used'}
+                            </span>
                           </div>
                         </div>
 
@@ -687,15 +714,15 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                   disabled={saving}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 disabled:opacity-50 transition-colors"
                 >
-                  {saving ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <Save size={16} />
-                  )}
+                  {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                   <span>
                     {viewMode === 'edit'
-                      ? isPolish ? 'Aktualizuj' : 'Update'
-                      : isPolish ? 'Zapisz szablon' : 'Save Template'}
+                      ? isPolish
+                        ? 'Aktualizuj'
+                        : 'Update'
+                      : isPolish
+                        ? 'Zapisz szablon'
+                        : 'Save Template'}
                   </span>
                 </button>
               </div>

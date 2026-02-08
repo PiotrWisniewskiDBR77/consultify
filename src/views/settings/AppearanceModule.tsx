@@ -204,7 +204,7 @@ const LanguageSettings: React.FC<{
     de: '🇩🇪',
     es: '🇪🇸',
     ar: '🇸🇦',
-    ja: '🇯🇵',
+    jp: '🇯🇵',
   };
   const allLanguages = SUPPORTED_LANGUAGES.map((code) => ({
     code: code.toUpperCase() as Language,

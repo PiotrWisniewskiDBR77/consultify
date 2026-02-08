@@ -32,7 +32,16 @@ export const TEST_SCHEMA = [
         trial_warning_sent_at DATETIME,
         trial_tokens_used INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        valid_until DATETIME
+        valid_until DATETIME,
+        monthly_budget_usd REAL,
+        budget_alert_threshold REAL,
+        budget_period_start DATETIME,
+        budget_spent_current_period REAL DEFAULT 0,
+        memory_usage_mb_current REAL DEFAULT 0,
+        cpu_usage_percent_current REAL DEFAULT 0,
+        cpu_usage_percent_avg REAL DEFAULT 0,
+        concurrent_ai_jobs_current INTEGER DEFAULT 0,
+        concurrent_ai_jobs_count INTEGER DEFAULT 0
     )`,
   `CREATE TABLE IF NOT EXISTS project_memory (
         id TEXT PRIMARY KEY,
@@ -664,6 +673,9 @@ export const TEST_SCHEMA = [
         max_seats INTEGER DEFAULT 0,
         features TEXT DEFAULT '[]',
         is_active INTEGER DEFAULT 1,
+        memory_limit_mb REAL DEFAULT 0,
+        cpu_quota_percent REAL DEFAULT 100,
+        max_concurrent_ai_jobs INTEGER DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
   `CREATE TABLE IF NOT EXISTS organization_seats (
@@ -1011,25 +1023,47 @@ export const TEST_SCHEMA = [
         id TEXT PRIMARY KEY,
         organization_id TEXT,
         project_id TEXT,
-        initiative_id TEXT,
-        task_id TEXT,
         title TEXT NOT NULL,
         description TEXT,
+        -- Newer schema (DecisionController) fields
+        initiative_id TEXT,
+        task_id TEXT,
         type TEXT DEFAULT 'APPROVAL',
         decision_maker_id TEXT,
-        options TEXT,
-        criteria TEXT,
         deadline DATETIME,
         escalation_deadline DATETIME,
+        created_by TEXT,
+        priority TEXT DEFAULT 'MEDIUM',
+        impact TEXT DEFAULT 'MEDIUM',
+        escalation_level TEXT DEFAULT 'none',
+        pmo_domain TEXT,
+        required INTEGER DEFAULT 0,
+        -- Legacy-compatible fields still used in some code paths
+        decision_owner_id TEXT,
+        related_object_type TEXT,
+        related_object_id TEXT,
+        due_date DATETIME,
+        options TEXT,
+        criteria TEXT,
         status TEXT DEFAULT 'pending',
         selected_option TEXT,
         decision_rationale TEXT,
         decided_at DATETIME,
-        created_by TEXT,
+        audit_trail TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
         FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS decision_impacts (
+        id TEXT PRIMARY KEY,
+        decision_id TEXT NOT NULL,
+        impacted_type TEXT NOT NULL,
+        impacted_id TEXT NOT NULL,
+        impact_description TEXT,
+        is_blocker INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(decision_id) REFERENCES decisions(id) ON DELETE CASCADE
     )`,
   `CREATE TABLE IF NOT EXISTS decision_history (
         id TEXT PRIMARY KEY,
@@ -1039,6 +1073,7 @@ export const TEST_SCHEMA = [
         new_status TEXT,
         changed_by TEXT,
         details TEXT,
+        changed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(decision_id) REFERENCES decisions(id) ON DELETE CASCADE
     )`,
@@ -1858,4 +1893,24 @@ export const TEST_SCHEMA = [
     VALUES ('demo-user', 'demo-org', 'piotr.wisniewski@demo.com', '123456', 'Demo', 'User', 'user', 'active')`,
   `INSERT OR IGNORE INTO users (id, organization_id, email, password, first_name, last_name, role, status)
     VALUES ('e2e-user', 'demo-org', 'e2e-test@consultinity.dev', '$2b$10$xKTb1.5vZT.2ThRs/iRCLuHni43AUHaG7Hf9STKRQCudtsY1ZXxTe', 'E2E', 'User', 'user', 'active')`,
+  `CREATE TABLE IF NOT EXISTS budget_expenses (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        amount REAL NOT NULL,
+        category TEXT NOT NULL CHECK (category IN ('TOKENS', 'STORAGE', 'COMPUTE', 'API', 'OTHER')),
+        description TEXT,
+        metadata TEXT DEFAULT '{}',
+        recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS user_quotas (
+        user_id TEXT PRIMARY KEY,
+        storage_quota_mb INTEGER,
+        api_rate_limit_per_hour INTEGER,
+        ai_requests_per_day INTEGER,
+        max_concurrent_jobs INTEGER,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`,
 ];

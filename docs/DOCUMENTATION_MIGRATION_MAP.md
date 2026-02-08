@@ -6,7 +6,10 @@ This document maps old documentation locations to their new organized structure,
 
 ### Deleted (Duplicates)
 
-All files with "2" suffix were duplicates and have been removed:
+Many files with " 2" suffix were duplicates and were removed during cleanup.
+
+**Important:** the canonical rule across this repo is: **prefer the version without a “ 2” suffix**.  
+Some “ 2” files may still exist (historical leftovers or parallel drafts) and should be treated as **non-canonical** unless explicitly referenced by a newer SSOT doc.
 
 - `AGENTS_100_PERCENT 2.md` ❌ (duplicate removed)
 - `AGENT_INSTRUCTIONS 2.md` ❌ (duplicate removed)
@@ -54,14 +57,14 @@ All files with "2" suffix were duplicates and have been removed:
 
 ### Security Documentation
 
-| Old Path                                | New Path                                         |
-| --------------------------------------- | ------------------------------------------------ |
-| `docs/ENCRYPTION_CONFIGURATION.md`      | `docs/security/ENCRYPTION_CONFIGURATION.md`      |
-| `docs/SECURITY_RUNBOOKS.md`             | `docs/security/SECURITY_RUNBOOKS.md`             |
-| `docs/SECURITY_MOCK_ENDPOINTS.md`       | `docs/security/SECURITY_MOCK_ENDPOINTS.md`       |
-| `docs/RBAC_AUDIT_REPORT.md`             | `docs/security/RBAC_AUDIT_REPORT.md`             |
-| `docs/SECURITY_MODULE_AUDIT.md`         | `docs/security/SECURITY_MODULE_AUDIT.md`         |
-| `docs/SECURITY_VERIFICATION_REQUEST.md` | `docs/security/SECURITY_VERIFICATION_REQUEST.md` |
+| Old Path                                | New Path                                                    |
+| --------------------------------------- | ----------------------------------------------------------- |
+| `docs/ENCRYPTION_CONFIGURATION.md`      | `docs/security-compliance/ENCRYPTION_CONFIGURATION.md`      |
+| `docs/SECURITY_RUNBOOKS.md`             | `docs/security-compliance/SECURITY_RUNBOOKS.md`             |
+| `docs/SECURITY_MOCK_ENDPOINTS.md`       | `docs/security-compliance/SECURITY_MOCK_ENDPOINTS.md`       |
+| `docs/RBAC_AUDIT_REPORT.md`             | `docs/security-compliance/RBAC_AUDIT_REPORT.md`             |
+| `docs/SECURITY_MODULE_AUDIT.md`         | `docs/security-compliance/SECURITY_MODULE_AUDIT.md`         |
+| `docs/SECURITY_VERIFICATION_REQUEST.md` | `docs/security-compliance/SECURITY_VERIFICATION_REQUEST.md` |
 
 ### Module Documentation
 

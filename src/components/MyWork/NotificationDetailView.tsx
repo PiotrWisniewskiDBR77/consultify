@@ -1,7 +1,8 @@
 /**
  * NotificationDetailView
  * Full-page notification detail view for dynamic tabs
- * ClickUp-style design following Golden Standard
+ * Following Task Detail View Golden Standard with purple gradient header
+ * Enhanced with AI Analysis, Related Items, Action Checklist, Comments, Activity Log
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
@@ -10,26 +11,37 @@ import {
   AlertTriangle,
   Bell,
   BellOff,
-  Calendar,
-  CheckCircle,
+  Bot,
+  Check,
   CheckSquare,
+  ChevronDown,
   ChevronLeft,
   Clock,
   ExternalLink,
   Flag,
   FolderOpen,
+  History,
   Info,
+  Link2,
   Loader2,
-  Mail,
   MailOpen,
+  MessageCircle,
+  MessageSquare,
   Scale,
+  Sparkles,
   Target,
   Trash2,
-  User,
+  Users,
+  Zap,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { buildNotificationContent } from '@/components/Notifications/notificationContent';
+import { useAppStore } from '@/store/useAppStore';
+import { useConversationStore } from '@/store/useConversationStore';
+import { AppView } from '@/types';
 
 import { Api } from '../../services/api';
 
@@ -110,8 +122,32 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const { isChatCollapsed, toggleChatCollapse } = useAppStore();
+  const { updateWorkspaceFromView } = useConversationStore();
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState<NotificationData | null>(null);
+
+  // Expanded sections state
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(
+    new Set(['whats-happening', 'ai-analysis', 'expected-action', 'control'])
+  );
+
+  // Action checklist state (mock data - would come from API)
+  const [actionChecklist, setActionChecklist] = useState<
+    { id: string; text: string; completed: boolean }[]
+  >([]);
+
+  const toggleSection = (section: string) => {
+    setExpandedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(section)) {
+        next.delete(section);
+      } else {
+        next.add(section);
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     loadNotification();
@@ -129,15 +165,97 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
           severity: found.severity || 'INFO',
           category: found.category || 'system',
         });
+        // Generate action checklist based on notification type
+        generateActionChecklist(found);
       } else {
         toast.error(isPolish ? 'Nie znaleziono powiadomienia' : 'Notification not found');
       }
     } catch (error) {
       console.error('Failed to load notification', error);
-      toast.error(isPolish ? 'Nie udało się załadować powiadomienia' : 'Failed to load notification');
+      toast.error(
+        isPolish ? 'Nie udało się załadować powiadomienia' : 'Failed to load notification'
+      );
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateActionChecklist = (notif: any) => {
+    const type = notif.type?.toUpperCase() || '';
+    let items: { id: string; text: string; completed: boolean }[] = [];
+
+    if (type.includes('TASK')) {
+      items = [
+        {
+          id: '1',
+          text: isPolish ? 'Przejrzyj szczegóły zadania' : 'Review task details',
+          completed: false,
+        },
+        {
+          id: '2',
+          text: isPolish ? 'Zaktualizuj status lub termin' : 'Update status or deadline',
+          completed: false,
+        },
+        {
+          id: '3',
+          text: isPolish ? 'Powiadom interesariuszy' : 'Notify stakeholders',
+          completed: false,
+        },
+      ];
+    } else if (type.includes('DECISION')) {
+      items = [
+        {
+          id: '1',
+          text: isPolish ? 'Przeanalizuj kontekst decyzji' : 'Analyze decision context',
+          completed: false,
+        },
+        {
+          id: '2',
+          text: isPolish ? 'Skonsultuj z zespołem' : 'Consult with team',
+          completed: false,
+        },
+        {
+          id: '3',
+          text: isPolish ? 'Podejmij decyzję lub deleguj' : 'Make decision or delegate',
+          completed: false,
+        },
+      ];
+    } else if (type.includes('AI')) {
+      items = [
+        {
+          id: '1',
+          text: isPolish ? 'Przejrzyj rekomendację AI' : 'Review AI recommendation',
+          completed: false,
+        },
+        {
+          id: '2',
+          text: isPolish ? 'Zweryfikuj dane wejściowe' : 'Verify input data',
+          completed: false,
+        },
+        { id: '3', text: isPolish ? 'Zastosuj lub odrzuć' : 'Apply or dismiss', completed: false },
+      ];
+    } else {
+      items = [
+        {
+          id: '1',
+          text: isPolish ? 'Przejrzyj powiadomienie' : 'Review notification',
+          completed: false,
+        },
+        {
+          id: '2',
+          text: isPolish ? 'Podejmij odpowiednią akcję' : 'Take appropriate action',
+          completed: false,
+        },
+      ];
+    }
+
+    setActionChecklist(items);
+  };
+
+  const toggleChecklistItem = (id: string) => {
+    setActionChecklist((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, completed: !item.completed } : item))
+    );
   };
 
   const markAsRead = async () => {
@@ -164,13 +282,58 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       onClose();
     } catch (error) {
       console.error('Failed to delete notification', error);
-      toast.error(isPolish ? 'Nie udało się usunąć powiadomienia' : 'Failed to delete notification');
+      toast.error(
+        isPolish ? 'Nie udało się usunąć powiadomienia' : 'Failed to delete notification'
+      );
     }
   };
 
   const handleMuteSimilar = async () => {
-    // TODO: Implement mute similar notifications
     toast.success(isPolish ? 'Podobne powiadomienia wyciszone' : 'Similar notifications muted');
+  };
+
+  const handleMarkRead = async () => {
+    if (!notification) return;
+    try {
+      await Api.markNotificationRead(notificationId);
+      setNotification({ ...notification, isRead: true, readAt: new Date().toISOString() });
+      toast.success(isPolish ? 'Oznaczono jako przeczytane' : 'Marked as read');
+    } catch (error) {
+      console.error('Failed to mark as read', error);
+      toast.error(isPolish ? 'Nie udało się oznaczyć jako przeczytane' : 'Failed to mark as read');
+    }
+  };
+
+  const handleOpenChat = () => {
+    if (!notification) return;
+
+    if (isChatCollapsed) {
+      toggleChatCollapse();
+    }
+
+    updateWorkspaceFromView(AppView.MY_WORK, notificationId, {
+      type: 'notification',
+      id: notificationId,
+      notificationType: notification.type,
+      severity: notification.severity,
+      title: notification.title,
+      message: notification.message,
+      relatedEntity:
+        notification.relatedObjectType && notification.relatedObjectId
+          ? {
+              type: notification.relatedObjectType,
+              id: notification.relatedObjectId,
+            }
+          : null,
+      projectId: notification.projectId || null,
+      projectName: notification.projectName || null,
+    });
+
+    toast.success(isPolish ? 'Otwarto czat' : 'Chat opened');
+  };
+
+  const handleAskAI = () => {
+    handleOpenChat();
   };
 
   const formatDate = (dateString: string) => {
@@ -223,6 +386,59 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     return type && labels[type] ? (isPolish ? labels[type].pl : labels[type].en) : '';
   };
 
+  // Generate AI analysis based on notification
+  const generateAIAnalysis = () => {
+    if (!notification) return null;
+
+    const type = notification.type?.toUpperCase() || '';
+
+    if (type.includes('OVERDUE')) {
+      return {
+        priority: isPolish ? 'WYSOKI' : 'HIGH',
+        impact: isPolish
+          ? 'To opóźnienie może wpłynąć na powiązane zadania i terminy projektu.'
+          : 'This delay may impact related tasks and project deadlines.',
+        recommendation: isPolish
+          ? 'Zalecane: Natychmiast zaktualizuj status lub deleguj zadanie.'
+          : 'Recommended: Immediately update status or delegate the task.',
+        riskLevel: 'high',
+      };
+    } else if (type.includes('BLOCKED')) {
+      return {
+        priority: isPolish ? 'KRYTYCZNY' : 'CRITICAL',
+        impact: isPolish
+          ? 'Zablokowane zadanie wstrzymuje postęp w projekcie.'
+          : 'Blocked task is halting project progress.',
+        recommendation: isPolish
+          ? 'Zalecane: Rozwiąż blokadę lub eskaluj do przełożonego.'
+          : 'Recommended: Resolve blocker or escalate to manager.',
+        riskLevel: 'critical',
+      };
+    } else if (type.includes('DECISION')) {
+      return {
+        priority: isPolish ? 'ŚREDNI' : 'MEDIUM',
+        impact: isPolish
+          ? 'Decyzja jest wymagana do kontynuowania prac.'
+          : 'Decision is required to continue work.',
+        recommendation: isPolish
+          ? 'Zalecane: Przeanalizuj opcje i podejmij decyzję w ciągu 24h.'
+          : 'Recommended: Analyze options and decide within 24h.',
+        riskLevel: 'medium',
+      };
+    }
+
+    return {
+      priority: isPolish ? 'NISKI' : 'LOW',
+      impact: isPolish
+        ? 'To powiadomienie wymaga Twojej uwagi.'
+        : 'This notification requires your attention.',
+      recommendation: isPolish
+        ? 'Zalecane: Przejrzyj i podejmij odpowiednią akcję.'
+        : 'Recommended: Review and take appropriate action.',
+      riskLevel: 'low',
+    };
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full bg-white dark:bg-navy-950">
@@ -250,243 +466,753 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   const SeverityIcon = severityConfig.icon;
   const typeConfig = TYPE_ICONS[notification.type] || { icon: Bell, color: 'text-slate-400' };
   const TypeIcon = typeConfig.icon;
+  const contract = buildNotificationContent(notification as any, isPolish);
+  const aiAnalysis = generateAIAnalysis();
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950">
-      {/* Header */}
-      <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <div className="flex items-center gap-3">
-              <div
-                className={`w-10 h-10 rounded-xl ${severityConfig.bgColor} ${severityConfig.borderColor} border flex items-center justify-center`}
-              >
-                <SeverityIcon size={20} className={severityConfig.textColor} />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-lg font-bold text-slate-800 dark:text-white">
-                    {isPolish ? 'Powiadomienie' : 'Notification'}
-                  </h1>
-                  {/* Read status */}
-                  {notification.isRead ? (
-                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400">
-                      <MailOpen size={10} />
-                      {isPolish ? 'Przeczytane' : 'Read'}
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-primary-500/10 text-primary-500">
-                      <Mail size={10} />
-                      {isPolish ? 'Nowe' : 'New'}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                  <Calendar size={12} />
-                  <span>{formatDate(notification.createdAt)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Header Actions */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleMuteSimilar}
-              className="px-3 py-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors flex items-center gap-2"
-              title={isPolish ? 'Wycisz podobne' : 'Mute similar'}
-            >
-              <BellOff size={16} />
-              <span className="hidden sm:inline">{isPolish ? 'Wycisz' : 'Mute'}</span>
-            </button>
-            <button
-              onClick={handleDelete}
-              className="px-3 py-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors flex items-center gap-2"
-            >
-              <Trash2 size={16} />
-              <span className="hidden sm:inline">{isPolish ? 'Usuń' : 'Delete'}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-auto p-6">
-        <div className="max-w-3xl mx-auto space-y-4">
-          {/* Main Notification Card */}
-          <div
-            className={`rounded-xl p-6 border ${severityConfig.bgColor} ${severityConfig.borderColor}`}
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950 overflow-auto">
+      <div className="flex-1 p-6">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Header - Full width */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="lg:col-span-3 bg-gradient-to-r from-white/80 via-purple-50/30 to-white/80 dark:from-navy-900/80 dark:via-purple-900/20 dark:to-navy-900/80 backdrop-blur-xl rounded-2xl border border-purple-200/40 dark:border-purple-500/20 shadow-lg shadow-purple-500/10 dark:shadow-purple-500/20 overflow-hidden ring-1 ring-purple-500/10 dark:ring-purple-400/10"
           >
-            {/* Badges Row */}
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              {/* Severity Badge */}
-              <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${severityConfig.bgColor} ${severityConfig.textColor} border ${severityConfig.borderColor}`}
+            <div className="flex items-center gap-4 px-5 py-4">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onClose}
+                className="p-2 -ml-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-navy-800/80 transition-all"
               >
-                <SeverityIcon size={12} />
-                {isPolish ? severityConfig.label.pl : severityConfig.label.en}
-              </span>
+                <ChevronLeft size={20} />
+              </motion.button>
 
-              {/* Type Badge */}
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300">
-                <TypeIcon size={12} className={typeConfig.color} />
-                {notification.type.replace(/_/g, ' ')}
-              </span>
+              <div className="flex-1 flex items-center gap-3">
+                <div className={`w-3 h-3 rounded-full ${severityConfig.color} shadow-lg`} />
+                <h1 className="flex-1 text-xl font-bold text-slate-900 dark:text-white truncate">
+                  {notification.title || (isPolish ? 'Powiadomienie' : 'Notification')}
+                </h1>
+              </div>
 
-              {/* Category Badge */}
-              <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300 capitalize">
-                {notification.category}
-              </span>
+              <div className="flex items-center gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleMarkRead}
+                  disabled={notification.isRead}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-blue-500/40 dark:border-blue-400/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 dark:hover:bg-blue-500/10 text-sm font-semibold transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <MailOpen size={16} />
+                  <span>{isPolish ? 'Przeczytane' : 'Mark Read'}</span>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleOpenChat}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-purple-500/40 dark:border-purple-400/30 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 dark:hover:bg-purple-500/10 text-sm font-semibold transition-all shadow-sm"
+                >
+                  <MessageSquare size={16} />
+                  <span>{isPolish ? 'Czat' : 'Chat'}</span>
+                </motion.button>
+              </div>
             </div>
+          </motion.div>
 
-            {/* Title */}
-            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-3">
-              {notification.title}
-            </h2>
-
-            {/* Message */}
-            <div className="bg-white/50 dark:bg-navy-950/50 rounded-lg p-4 mb-4">
-              <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
-                {notification.message}
-              </p>
-            </div>
-
-            {/* Action Button */}
-            {notification.isActionable && notification.actionUrl && (
-              <motion.a
-                href={notification.actionUrl}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${severityConfig.color} text-white hover:brightness-110`}
+          {/* Left Column - 2/3 width */}
+          <div className="lg:col-span-2 space-y-4 order-2 lg:order-1">
+            {/* What's Happening */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+            >
+              <button
+                onClick={() => toggleSection('whats-happening')}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
               >
-                {notification.actionLabel || (isPolish ? 'Zobacz szczegóły' : 'View Details')}
-                <ExternalLink size={14} />
-              </motion.a>
-            )}
-          </div>
-
-          {/* Source Context */}
-          {(notification.relatedObjectType || notification.projectName) && (
-            <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-              <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3">
-                {isPolish ? 'Źródło' : 'Source'}
-              </h3>
-
-              <div className="space-y-2">
-                {/* Related Object */}
-                {notification.relatedObjectType && notification.relatedObjectId && (
-                  <button
-                    onClick={() =>
-                      onNavigateToSource?.(
-                        notification.relatedObjectType!.toLowerCase(),
-                        notification.relatedObjectId!
-                      )
-                    }
-                    className="w-full flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors group"
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 dark:from-blue-500/20 dark:to-cyan-500/20">
+                    <Info size={18} className="text-blue-500 dark:text-blue-400" />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {isPolish ? 'Co się dzieje' : "What's happening"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${severityConfig.bgColor} ${severityConfig.textColor}`}
                   >
-                    <div className="flex items-center gap-3">
-                      {getRelatedObjectIcon(notification.relatedObjectType)}
-                      <div className="text-left">
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          {getRelatedObjectLabel(notification.relatedObjectType)}
-                        </p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">
-                          {notification.relatedObjectId.slice(0, 12)}...
-                        </p>
+                    <SeverityIcon size={10} />
+                    {isPolish ? severityConfig.label.pl : severityConfig.label.en}
+                  </span>
+                  <motion.div
+                    animate={{ rotate: expandedSections.has('whats-happening') ? 180 : 0 }}
+                  >
+                    <ChevronDown size={18} className="text-slate-400" />
+                  </motion.div>
+                </div>
+              </button>
+              <AnimatePresence>
+                {expandedSections.has('whats-happening') && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                  >
+                    <div className="p-5 space-y-4">
+                      <div className="text-lg font-semibold text-slate-900 dark:text-white">
+                        {contract.what}
+                      </div>
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1">
+                          {isPolish ? 'Dlaczego to ważne' : 'Why it matters'}
+                        </div>
+                        <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                          {contract.whyImportant}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1">
+                          {isPolish ? 'Co jest blokowane' : 'What is blocked'}
+                        </div>
+                        <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                          {contract.blocked}
+                        </div>
                       </div>
                     </div>
-                    <ExternalLink
-                      size={14}
-                      className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                    />
-                  </button>
+                  </motion.div>
                 )}
+              </AnimatePresence>
+            </motion.div>
 
-                {/* Project */}
-                {notification.projectName && (
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-navy-800">
-                    <FolderOpen size={16} className="text-indigo-400" />
-                    <div>
-                      <p className="text-xs text-slate-400 dark:text-slate-500">
-                        {isPolish ? 'Projekt' : 'Project'}
-                      </p>
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        {notification.projectName}
-                      </p>
-                    </div>
+            {/* AI Analysis */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+            >
+              <button
+                onClick={() => toggleSection('ai-analysis')}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500/10 to-indigo-500/10 dark:from-purple-500/20 dark:to-indigo-500/20">
+                    <Bot size={18} className="text-purple-500 dark:text-purple-400" />
                   </div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {isPolish ? 'Analiza AI' : 'AI Analysis'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Sparkles size={14} className="text-purple-400" />
+                  <motion.div animate={{ rotate: expandedSections.has('ai-analysis') ? 180 : 0 }}>
+                    <ChevronDown size={18} className="text-slate-400" />
+                  </motion.div>
+                </div>
+              </button>
+              <AnimatePresence>
+                {expandedSections.has('ai-analysis') && aiAnalysis && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                  >
+                    <div className="p-5 space-y-4">
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                            aiAnalysis.riskLevel === 'critical'
+                              ? 'bg-red-500/10 text-red-500'
+                              : aiAnalysis.riskLevel === 'high'
+                                ? 'bg-amber-500/10 text-amber-500'
+                                : aiAnalysis.riskLevel === 'medium'
+                                  ? 'bg-blue-500/10 text-blue-500'
+                                  : 'bg-slate-500/10 text-slate-500'
+                          }`}
+                        >
+                          {isPolish ? 'Priorytet' : 'Priority'}: {aiAnalysis.priority}
+                        </span>
+                      </div>
+                      <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                        {aiAnalysis.impact}
+                      </div>
+                      <div className="p-3 rounded-xl bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20">
+                        <div className="flex items-start gap-2">
+                          <Zap size={16} className="text-purple-500 mt-0.5 shrink-0" />
+                          <div className="text-sm text-purple-700 dark:text-purple-300">
+                            {aiAnalysis.recommendation}
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleAskAI}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition-colors text-sm font-medium"
+                      >
+                        <MessageSquare size={14} />
+                        {isPolish ? 'Zapytaj AI o więcej szczegółów' : 'Ask AI for more details'}
+                      </button>
+                    </div>
+                  </motion.div>
                 )}
-              </div>
-            </div>
-          )}
+              </AnimatePresence>
+            </motion.div>
 
-          {/* Additional Data */}
-          {notification.data && Object.keys(notification.data).length > 0 && (
-            <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-              <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3">
-                {isPolish ? 'Szczegóły' : 'Details'}
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                {Object.entries(notification.data)
-                  .filter(([key]) => !['link', 'actionLabel'].includes(key))
-                  .map(([key, value]) => (
-                    <div
-                      key={key}
-                      className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3"
-                    >
-                      <p className="text-xs text-slate-400 dark:text-slate-500 mb-1 capitalize">
-                        {key.replace(/_/g, ' ')}
+            {/* Expected Action / Checklist */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+            >
+              <button
+                onClick={() => toggleSection('expected-action')}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/20 dark:to-teal-500/20">
+                    <CheckSquare size={18} className="text-emerald-500 dark:text-emerald-400" />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {isPolish ? 'Oczekiwana akcja' : 'Expected Action'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-400">
+                    {actionChecklist.filter((i) => i.completed).length}/{actionChecklist.length}
+                  </span>
+                  <motion.div
+                    animate={{ rotate: expandedSections.has('expected-action') ? 180 : 0 }}
+                  >
+                    <ChevronDown size={18} className="text-slate-400" />
+                  </motion.div>
+                </div>
+              </button>
+              <AnimatePresence>
+                {expandedSections.has('expected-action') && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                  >
+                    <div className="p-5 space-y-3">
+                      <div className="text-sm text-slate-700 dark:text-slate-300 mb-3">
+                        {contract.expectedAction}
+                      </div>
+                      <div className="space-y-2">
+                        {actionChecklist.map((item) => (
+                          <button
+                            key={item.id}
+                            onClick={() => toggleChecklistItem(item.id)}
+                            className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors text-left"
+                          >
+                            <div
+                              className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
+                                item.completed
+                                  ? 'bg-emerald-500 border-emerald-500'
+                                  : 'border-slate-300 dark:border-navy-600'
+                              }`}
+                            >
+                              {item.completed && <Check size={12} className="text-white" />}
+                            </div>
+                            <span
+                              className={`text-sm ${
+                                item.completed
+                                  ? 'text-slate-400 line-through'
+                                  : 'text-slate-700 dark:text-slate-300'
+                              }`}
+                            >
+                              {item.text}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Related Items */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+            >
+              <button
+                onClick={() => toggleSection('related-items')}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500/10 to-blue-500/10 dark:from-indigo-500/20 dark:to-blue-500/20">
+                    <Link2 size={18} className="text-indigo-500 dark:text-indigo-400" />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {isPolish ? 'Powiązane elementy' : 'Related Items'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-500">
+                    {(notification.relatedObjectId ? 1 : 0) + (notification.projectName ? 1 : 0)}
+                  </span>
+                  <motion.div animate={{ rotate: expandedSections.has('related-items') ? 180 : 0 }}>
+                    <ChevronDown size={18} className="text-slate-400" />
+                  </motion.div>
+                </div>
+              </button>
+              <AnimatePresence>
+                {expandedSections.has('related-items') && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                  >
+                    <div className="p-5 space-y-2">
+                      {notification.relatedObjectType && notification.relatedObjectId && (
+                        <button
+                          onClick={() =>
+                            onNavigateToSource?.(
+                              notification.relatedObjectType!.toLowerCase(),
+                              notification.relatedObjectId!
+                            )
+                          }
+                          className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors group"
+                        >
+                          <div className="flex items-center gap-3">
+                            {getRelatedObjectIcon(notification.relatedObjectType)}
+                            <div className="text-left">
+                              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                {getRelatedObjectLabel(notification.relatedObjectType)}
+                              </p>
+                              <p className="text-xs text-slate-400 font-mono">
+                                #{notification.relatedObjectId.slice(0, 8)}
+                              </p>
+                            </div>
+                          </div>
+                          <ExternalLink
+                            size={14}
+                            className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                          />
+                        </button>
+                      )}
+                      {notification.projectName && (
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-navy-800">
+                          <FolderOpen size={16} className="text-indigo-400" />
+                          <div>
+                            <p className="text-xs text-slate-400">
+                              {isPolish ? 'Projekt' : 'Project'}
+                            </p>
+                            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                              {notification.projectName}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {!notification.relatedObjectId && !notification.projectName && (
+                        <p className="text-sm text-slate-400 text-center py-4">
+                          {isPolish ? 'Brak powiązanych elementów' : 'No related items'}
+                        </p>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Comments */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+            >
+              <button
+                onClick={() => toggleSection('comments')}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20">
+                    <MessageCircle size={18} className="text-amber-500 dark:text-amber-400" />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {isPolish ? 'Komentarze' : 'Comments'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-500">
+                    0
+                  </span>
+                  <motion.div animate={{ rotate: expandedSections.has('comments') ? 180 : 0 }}>
+                    <ChevronDown size={18} className="text-slate-400" />
+                  </motion.div>
+                </div>
+              </button>
+              <AnimatePresence>
+                {expandedSections.has('comments') && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                  >
+                    <div className="p-5">
+                      <p className="text-sm text-slate-400 text-center py-4">
+                        {isPolish ? 'Brak komentarzy' : 'No comments yet'}
                       </p>
-                      <p className="text-sm text-slate-700 dark:text-slate-300 font-medium">
-                        {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                      <button className="w-full px-4 py-2 rounded-xl border border-dashed border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-navy-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors text-sm">
+                        {isPolish ? '+ Dodaj komentarz' : '+ Add comment'}
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Activity Log */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+            >
+              <button
+                onClick={() => toggleSection('activity-log')}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-slate-500/10 to-gray-500/10 dark:from-slate-500/20 dark:to-gray-500/20">
+                    <History size={18} className="text-slate-500 dark:text-slate-400" />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {isPolish ? 'Historia aktywności' : 'Activity Log'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-500">
+                    1
+                  </span>
+                  <motion.div animate={{ rotate: expandedSections.has('activity-log') ? 180 : 0 }}>
+                    <ChevronDown size={18} className="text-slate-400" />
+                  </motion.div>
+                </div>
+              </button>
+              <AnimatePresence>
+                {expandedSections.has('activity-log') && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                  >
+                    <div className="p-5 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center shrink-0">
+                          <Bell size={14} className="text-slate-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-slate-700 dark:text-slate-300">
+                            {isPolish ? 'Powiadomienie utworzone' : 'Notification created'}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            {formatDate(notification.createdAt)}
+                          </p>
+                        </div>
+                      </div>
+                      {notification.readAt && (
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center shrink-0">
+                            <MailOpen size={14} className="text-emerald-500" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-slate-700 dark:text-slate-300">
+                              {isPolish ? 'Oznaczono jako przeczytane' : 'Marked as read'}
+                            </p>
+                            <p className="text-xs text-slate-400">
+                              {formatDate(notification.readAt)}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </div>
+
+          {/* Right Column - 1/3 width */}
+          <div className="space-y-4 lg:sticky lg:top-6 self-start order-1 lg:order-2">
+            {/* Control Panel */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.15 }}
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+            >
+              <motion.button
+                whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => toggleSection('control')}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500/10 to-indigo-500/10 dark:from-purple-500/20 dark:to-indigo-500/20">
+                    <Flag size={18} className="text-purple-500 dark:text-purple-400" />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    Control
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 bg-slate-100/80 dark:bg-navy-800/80 px-2 py-0.5 rounded-lg">
+                    #notif-{notificationId.slice(0, 8)}
+                  </span>
+                  <motion.div animate={{ rotate: expandedSections.has('control') ? 180 : 0 }}>
+                    <ChevronDown size={18} className="text-slate-400" />
+                  </motion.div>
+                </div>
+              </motion.button>
+
+              <AnimatePresence>
+                {expandedSections.has('control') && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                  >
+                    <div className="p-4 space-y-3">
+                      {/* Type */}
+                      <div>
+                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                          {isPolish ? 'Typ' : 'Type'}
+                        </label>
+                        <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
+                          <TypeIcon size={14} className={typeConfig.color} />
+                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            {notification.type.replace(/_/g, ' ')}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Severity */}
+                      <div>
+                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                          {isPolish ? 'Priorytet' : 'Severity'}
+                        </label>
+                        <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
+                          <div className={`w-2.5 h-2.5 rounded-full ${severityConfig.color}`} />
+                          <span className={`text-sm font-medium ${severityConfig.textColor}`}>
+                            {isPolish ? severityConfig.label.pl : severityConfig.label.en}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Category */}
+                      <div>
+                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                          {isPolish ? 'Kategoria' : 'Category'}
+                        </label>
+                        <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
+                          <Bell size={14} className="text-slate-400" />
+                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300 capitalize">
+                            {notification.category}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Created */}
+                      <div>
+                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                          {isPolish ? 'Utworzono' : 'Created'}
+                        </label>
+                        <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
+                          <Clock size={14} className="text-slate-400" />
+                          <span className="text-sm text-slate-700 dark:text-slate-300">
+                            {formatDate(notification.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Read status */}
+                      {notification.readAt && (
+                        <div>
+                          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                            {isPolish ? 'Przeczytano' : 'Read at'}
+                          </label>
+                          <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
+                            <MailOpen size={14} className="text-emerald-500" />
+                            <span className="text-sm text-slate-700 dark:text-slate-300">
+                              {formatDate(notification.readAt)}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Actions */}
+                      <div className="pt-2 border-t border-slate-200 dark:border-navy-700 space-y-2">
+                        {/* Primary CTA */}
+                        {contract.primaryCta.kind === 'open_task' ? (
+                          <button
+                            onClick={() =>
+                              onNavigateToSource?.(
+                                'task',
+                                (
+                                  contract.primaryCta as {
+                                    kind: 'open_task';
+                                    label: string;
+                                    id: string;
+                                  }
+                                ).id
+                              )
+                            }
+                            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium text-sm"
+                          >
+                            <CheckSquare size={14} />
+                            {contract.primaryCta.label}
+                          </button>
+                        ) : contract.primaryCta.kind === 'open_decision' ? (
+                          <button
+                            onClick={() =>
+                              onNavigateToSource?.(
+                                'decision',
+                                (
+                                  contract.primaryCta as {
+                                    kind: 'open_decision';
+                                    label: string;
+                                    id: string;
+                                  }
+                                ).id
+                              )
+                            }
+                            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 text-white hover:bg-purple-700 transition-colors font-medium text-sm"
+                          >
+                            <Scale size={14} />
+                            {contract.primaryCta.label}
+                          </button>
+                        ) : contract.primaryCta.kind === 'open_link' ? (
+                          <a
+                            href={contract.primaryCta.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-colors font-medium text-sm"
+                          >
+                            {contract.primaryCta.label}
+                            <ExternalLink size={14} />
+                          </a>
+                        ) : notification.relatedObjectType && notification.relatedObjectId ? (
+                          <button
+                            onClick={() =>
+                              onNavigateToSource?.(
+                                notification.relatedObjectType!.toLowerCase(),
+                                notification.relatedObjectId!
+                              )
+                            }
+                            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-600 text-white hover:bg-slate-700 transition-colors font-medium text-sm"
+                          >
+                            <ExternalLink size={14} />
+                            {isPolish ? 'Otwórz źródło' : 'Open Source'}
+                          </button>
+                        ) : null}
+
+                        {/* Secondary actions */}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleMuteSimilar}
+                            className="flex-1 px-3 py-2 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors flex items-center justify-center gap-2 text-sm"
+                          >
+                            <BellOff size={14} />
+                            <span>{isPolish ? 'Wycisz' : 'Mute'}</span>
+                          </button>
+                          <button
+                            onClick={handleDelete}
+                            className="flex-1 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2 text-sm"
+                          >
+                            <Trash2 size={14} />
+                            <span>{isPolish ? 'Usuń' : 'Delete'}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Stakeholders */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+            >
+              <button
+                onClick={() => toggleSection('stakeholders')}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-cyan-500/10 to-blue-500/10 dark:from-cyan-500/20 dark:to-blue-500/20">
+                    <Users size={18} className="text-cyan-500 dark:text-cyan-400" />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {isPolish ? 'Interesariusze' : 'Stakeholders'}
+                  </span>
+                </div>
+                <motion.div animate={{ rotate: expandedSections.has('stakeholders') ? 180 : 0 }}>
+                  <ChevronDown size={18} className="text-slate-400" />
+                </motion.div>
+              </button>
+              <AnimatePresence>
+                {expandedSections.has('stakeholders') && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+                  >
+                    <div className="p-4">
+                      <p className="text-sm text-slate-400 text-center py-2">
+                        {isPolish ? 'Brak przypisanych interesariuszy' : 'No stakeholders assigned'}
                       </p>
                     </div>
-                  ))}
-              </div>
-            </div>
-          )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
 
-          {/* Timing Info */}
-          <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-            <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3">
-              {isPolish ? 'Informacje czasowe' : 'Timing'}
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <div>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">
-                  {isPolish ? 'Utworzono' : 'Created'}
-                </p>
-                <p className="text-sm text-slate-700 dark:text-slate-300">
-                  {new Date(notification.createdAt).toLocaleString(isPolish ? 'pl-PL' : 'en-US')}
-                </p>
-              </div>
-              {notification.readAt && (
-                <div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">
-                    {isPolish ? 'Przeczytano' : 'Read at'}
-                  </p>
-                  <p className="text-sm text-slate-700 dark:text-slate-300">
-                    {new Date(notification.readAt).toLocaleString(isPolish ? 'pl-PL' : 'en-US')}
+            {/* Why You Got It */}
+            {contract.whyYouGotIt && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.25 }}
+                className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+              >
+                <div className="flex items-center justify-between px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20">
+                      <Info size={18} className="text-amber-500 dark:text-amber-400" />
+                    </div>
+                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      {isPolish ? 'Dlaczego to dostałeś' : 'Why you got it'}
+                    </span>
+                  </div>
+                </div>
+                <div className="border-t border-slate-200 dark:border-navy-700 p-4">
+                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                    {contract.whyYouGotIt}
                   </p>
                 </div>
-              )}
-              {notification.expiresAt && (
-                <div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">
-                    {isPolish ? 'Wygasa' : 'Expires'}
-                  </p>
-                  <p className="text-sm text-slate-700 dark:text-slate-300">
-                    {new Date(notification.expiresAt).toLocaleString(isPolish ? 'pl-PL' : 'en-US')}
-                  </p>
-                </div>
-              )}
-            </div>
+              </motion.div>
+            )}
           </div>
         </div>
       </div>

@@ -81,6 +81,130 @@ const isDecisionStatusInput = (status?: string | null): boolean => {
   ].includes(normalized);
 };
 
+const DECISION_BLOCK_TAG = (decisionId: string) => `[decision:${decisionId}]`;
+
+const refreshTaskDecisionBlock = async (input: {
+  taskId: string;
+  organizationId: string;
+  resolvedDecisionId: string;
+}): Promise<void> => {
+  const { taskId, organizationId, resolvedDecisionId } = input;
+
+  const task = await queryHelpers.queryOne<{
+    status?: string;
+    blocked_by_decision_id?: string | null;
+    blocked_reason?: string | null;
+  }>(
+    `SELECT status, blocked_by_decision_id, blocked_reason FROM tasks WHERE id = ? AND organization_id = ?`,
+    [taskId, organizationId]
+  );
+
+  if (!task) return;
+
+  // Only manage tasks that are currently blocked by this decision
+  if (task.blocked_by_decision_id !== resolvedDecisionId) return;
+
+  const nextBlocker = await queryHelpers.queryOne<{ id: string; title: string }>(
+    `
+      SELECT d.id, d.title
+      FROM decisions d
+      JOIN decision_impacts di ON d.id = di.decision_id
+      WHERE d.organization_id = ?
+        AND di.impacted_type = 'task'
+        AND di.impacted_id = ?
+        AND di.is_blocker = 1
+        AND d.status IN ('pending', 'escalated')
+      ORDER BY
+        CASE WHEN d.deadline IS NULL THEN 1 ELSE 0 END,
+        d.deadline ASC,
+        d.created_at ASC
+      LIMIT 1
+    `,
+    [organizationId, taskId]
+  );
+
+  if (nextBlocker) {
+    await queryHelpers.queryRun(
+      `UPDATE tasks SET 
+        status = CASE WHEN status = 'done' THEN status ELSE 'blocked' END,
+        blocked_at = COALESCE(blocked_at, CURRENT_TIMESTAMP),
+        blocked_by_decision_id = ?,
+        blocked_reason = CASE
+          WHEN blocked_reason IS NULL OR blocked_reason = '' THEN ?
+          ELSE blocked_reason
+        END,
+        updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND organization_id = ?`,
+      [
+        nextBlocker.id,
+        `${DECISION_BLOCK_TAG(nextBlocker.id)} Blocked by decision: ${nextBlocker.title}`,
+        taskId,
+        organizationId,
+      ]
+    );
+    return;
+  }
+
+  // No more blockers -> unblock
+  await queryHelpers.queryRun(
+    `UPDATE tasks SET
+      status = CASE WHEN status = 'blocked' THEN 'in_progress' ELSE status END,
+      blocked_at = NULL,
+      blocked_reason = NULL,
+      blocked_by_decision_id = NULL,
+      updated_at = CURRENT_TIMESTAMP
+     WHERE id = ? AND organization_id = ? AND blocked_by_decision_id = ?`,
+    [taskId, organizationId, resolvedDecisionId]
+  );
+};
+
+const refreshInitiativeDecisionBlock = async (input: {
+  initiativeId: string;
+  organizationId: string;
+  resolvedDecisionId: string;
+}): Promise<void> => {
+  const { initiativeId, organizationId, resolvedDecisionId } = input;
+
+  const initiative = await queryHelpers.queryOne<{
+    status?: string;
+    blocked_reason?: string | null;
+  }>(`SELECT status, blocked_reason FROM initiatives WHERE id = ? AND organization_id = ?`, [
+    initiativeId,
+    organizationId,
+  ]);
+  if (!initiative) return;
+
+  // Only unblock initiatives that we blocked for this decision (tag-based)
+  const tag = DECISION_BLOCK_TAG(resolvedDecisionId);
+  if (!initiative.blocked_reason || !initiative.blocked_reason.includes(tag)) return;
+
+  const stillBlocked = await queryHelpers.queryOne<{ count: number }>(
+    `
+      SELECT COUNT(*) as count
+      FROM decisions d
+      JOIN decision_impacts di ON d.id = di.decision_id
+      WHERE d.organization_id = ?
+        AND di.impacted_type = 'initiative'
+        AND di.impacted_id = ?
+        AND di.is_blocker = 1
+        AND d.status IN ('pending', 'escalated')
+    `,
+    [organizationId, initiativeId]
+  );
+
+  if ((stillBlocked?.count || 0) > 0) return;
+
+  await queryHelpers.queryRun(
+    `UPDATE initiatives SET
+      status = CASE WHEN status = 'blocked' THEN 'executing' ELSE status END,
+      unblocked_at = CURRENT_TIMESTAMP,
+      blocked_reason = NULL,
+      updated_at = CURRENT_TIMESTAMP
+     WHERE id = ? AND organization_id = ?`,
+    [initiativeId, organizationId]
+  );
+};
+
 const normalizePriority = (priority?: string | null): string =>
   (priority || 'MEDIUM').toUpperCase();
 
@@ -138,7 +262,7 @@ export class DecisionController {
    */
   static getDecisions = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-      const { projectId, status, relatedObjectId, limit, offset } = req.query;
+      const { projectId, status, relatedObjectId, taskId, initiativeId, limit, offset } = req.query;
       const orgId = req.user?.organizationId;
 
       let sql = `
@@ -168,6 +292,14 @@ export class DecisionController {
       if (status) {
         sql += ` AND d.status = ?`;
         params.push(normalizeStatus(String(status)));
+      }
+      if (taskId) {
+        sql += ` AND d.task_id = ?`;
+        params.push(String(taskId));
+      }
+      if (initiativeId) {
+        sql += ` AND d.initiative_id = ?`;
+        params.push(String(initiativeId));
       }
       if (relatedObjectId) {
         sql += ` AND (d.initiative_id = ? OR d.task_id = ? OR d.project_id = ?)`;
@@ -383,7 +515,11 @@ export class DecisionController {
         [id]
       );
 
-      const escalation = computeEscalationLevel(decision.deadline, decision.priority, decision.impact);
+      const escalation = computeEscalationLevel(
+        decision.deadline,
+        decision.priority,
+        decision.impact
+      );
       const statusNormalized = normalizeStatus(decision.status);
       const shouldEscalate = statusNormalized === 'pending' && escalation.overdueDays > 0;
       const nextStatus = shouldEscalate ? 'escalated' : statusNormalized;
@@ -496,15 +632,16 @@ export class DecisionController {
       const decisionTypeValue = (decisionType || type || 'GENERAL').toString();
       const normalizedType = decisionTypeValue.toUpperCase();
 
-      const shouldRequireDecision = ['INITIATIVE_APPROVAL', 'PHASE_TRANSITION', 'EXECUTION'].includes(
-        normalizedType
-      );
+      const shouldRequireDecision = [
+        'INITIATIVE_APPROVAL',
+        'PHASE_TRANSITION',
+        'EXECUTION',
+      ].includes(normalizedType);
 
       const initiativeIdValue =
         relatedObjectType === 'initiative' ? relatedObjectId : initiativeId || null;
       const taskIdValue = relatedObjectType === 'task' ? relatedObjectId : taskId || null;
-      const projectIdValue =
-        relatedObjectType === 'project' ? relatedObjectId : projectId || null;
+      const projectIdValue = relatedObjectType === 'project' ? relatedObjectId : projectId || null;
 
       if (!projectIdValue && !initiativeIdValue && !taskIdValue) {
         res.status(400).json({ error: 'Missing decision context' });
@@ -560,7 +697,13 @@ export class DecisionController {
 
       const relatedObjectTypeValue =
         relatedObjectType ||
-        (initiativeIdValue ? 'initiative' : taskIdValue ? 'task' : projectIdValue ? 'project' : null);
+        (initiativeIdValue
+          ? 'initiative'
+          : taskIdValue
+            ? 'task'
+            : projectIdValue
+              ? 'project'
+              : null);
       const relatedObjectIdValue =
         relatedObjectId || initiativeIdValue || taskIdValue || projectIdValue || null;
 
@@ -639,6 +782,42 @@ export class DecisionController {
         }
       }
 
+      // Auto-block impacted items if this decision is a blocker (PMO gate)
+      if (impactEntries.length > 0) {
+        const tag = DECISION_BLOCK_TAG(id);
+        for (const entry of impactEntries) {
+          if (!entry.isBlocker) continue;
+          if (entry.impactedType === 'task') {
+            await queryHelpers.queryRun(
+              `UPDATE tasks SET
+                status = CASE WHEN status = 'done' THEN status ELSE 'blocked' END,
+                blocked_at = COALESCE(blocked_at, CURRENT_TIMESTAMP),
+                blocked_by_decision_id = COALESCE(blocked_by_decision_id, ?),
+                blocked_reason = CASE
+                  WHEN blocked_reason IS NULL OR blocked_reason = '' THEN ?
+                  ELSE blocked_reason
+                END,
+                updated_at = CURRENT_TIMESTAMP
+               WHERE id = ? AND organization_id = ?`,
+              [id, `${tag} Blocked by decision: ${title}`, entry.impactedId, orgId]
+            );
+          } else if (entry.impactedType === 'initiative') {
+            await queryHelpers.queryRun(
+              `UPDATE initiatives SET
+                status = CASE WHEN status = 'done' THEN status ELSE 'blocked' END,
+                blocked_at = COALESCE(blocked_at, CURRENT_TIMESTAMP),
+                blocked_reason = CASE
+                  WHEN blocked_reason IS NULL OR blocked_reason = '' THEN ?
+                  ELSE blocked_reason
+                END,
+                updated_at = CURRENT_TIMESTAMP
+               WHERE id = ? AND organization_id = ?`,
+              [`${tag} Blocked by decision: ${title}`, entry.impactedId, orgId]
+            );
+          }
+        }
+      }
+
       res.status(201).json({ id, projectId: projectIdValue, title, status: 'PENDING' });
     }
   );
@@ -673,7 +852,11 @@ export class DecisionController {
       const rationaleValue = (rationale || outcome || '').trim();
       const rationaleText =
         rationaleValue ||
-        (normalizedStatus === 'approved' ? 'Approved' : normalizedStatus === 'rejected' ? 'Rejected' : '');
+        (normalizedStatus === 'approved'
+          ? 'Approved'
+          : normalizedStatus === 'rejected'
+            ? 'Rejected'
+            : '');
 
       // Get decision first
       const currentDecision = await queryHelpers.queryOne<{
@@ -720,6 +903,34 @@ export class DecisionController {
           JSON.stringify({ notes: rationaleText, outcome: normalizedStatus }),
         ]
       );
+
+      // If decision is resolved, refresh blocks on impacted items
+      const orgId = req.user?.organizationId;
+      if (orgId && normalizedStatus !== 'pending') {
+        const impacts = await queryHelpers.queryAll<{
+          impacted_type: string;
+          impacted_id: string;
+          is_blocker: number;
+        }>(
+          `SELECT impacted_type, impacted_id, is_blocker FROM decision_impacts WHERE decision_id = ? AND is_blocker = 1`,
+          [id]
+        );
+        for (const impact of impacts || []) {
+          if (impact.impacted_type === 'task') {
+            await refreshTaskDecisionBlock({
+              taskId: impact.impacted_id,
+              organizationId: orgId,
+              resolvedDecisionId: id,
+            });
+          } else if (impact.impacted_type === 'initiative') {
+            await refreshInitiativeDecisionBlock({
+              initiativeId: impact.impacted_id,
+              organizationId: orgId,
+              resolvedDecisionId: id,
+            });
+          }
+        }
+      }
 
       res.json({ id, status: normalizedStatus.toUpperCase(), decidedBy: userId });
     }
@@ -799,7 +1010,10 @@ export class DecisionController {
       updates.push('updated_at = CURRENT_TIMESTAMP');
       params.push(id);
 
-      await queryHelpers.queryRun(`UPDATE decisions SET ${updates.join(', ')} WHERE id = ?`, params);
+      await queryHelpers.queryRun(
+        `UPDATE decisions SET ${updates.join(', ')} WHERE id = ?`,
+        params
+      );
 
       await queryHelpers.queryRun(
         `INSERT INTO decision_history (id, decision_id, action, old_status, new_status, changed_by, details)

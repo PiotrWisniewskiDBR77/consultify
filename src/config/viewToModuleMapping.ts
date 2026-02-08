@@ -148,4 +148,3 @@ export function getHelpMapping(viewId: string): ViewHelpMapping {
       return { moduleId: 'welcome' };
   }
 }
-

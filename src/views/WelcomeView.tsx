@@ -61,10 +61,17 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStartSession, onLogi
       {/* GLOBAL HEADER (Only for Welcome View) */}
       <header className="h-20 border-b border-slate-200 dark:border-elegant flex items-center justify-between px-8 lg:px-12 bg-white dark:bg-navy-950 shrink-0 relative z-50 transition-colors duration-300">
         <div className="flex items-center gap-3 font-bold text-xl tracking-tight text-navy-950 dark:text-white">
-          <div className="h-8 px-2 rounded-sm bg-purple-600 flex items-center justify-center shadow-glow">
-            <span className="text-white font-bold text-xs tracking-tighter">DBR77</span>
-          </div>
-          <span className="tracking-widest text-sm">CONSULTINITY</span>
+          <img
+            src="/assets/logos/logo-dark.png"
+            alt="Consultinity"
+            className="h-7 w-auto dark:hidden"
+          />
+          <img
+            src="/assets/logos/logo-light.png"
+            alt="Consultinity"
+            className="hidden h-7 w-auto dark:block"
+          />
+          <span className="tracking-widest text-sm">Consultinity</span>
         </div>
 
         <div className="flex items-center gap-6">

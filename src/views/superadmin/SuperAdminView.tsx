@@ -305,7 +305,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
       </div>
 
       {/* Floating Action Buttons - Order: Help, Feedback, Docs */}
-      <div className="fixed right-0 top-[60%] z-50 flex flex-col gap-2 items-end pointer-events-none">
+      <div className="fixed right-0 top-[70%] z-50 flex flex-col gap-2 items-end pointer-events-none">
         <div className="pointer-events-auto">
           <HelpToggleButton />
         </div>

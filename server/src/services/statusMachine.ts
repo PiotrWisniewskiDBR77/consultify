@@ -4,11 +4,11 @@
 // Updated 2026-01-20: Imports from central constants file
 
 import {
+  getModuleForStatus as getModule,
+  getStatusLabel as getLabel,
   InitiativeStatus,
   VALID_TRANSITIONS,
-  getModuleForStatus as getModule,
   validateTransition as validateTx,
-  getStatusLabel as getLabel,
 } from '../constants/initiativeStatuses.js';
 
 // Re-export for backward compatibility
@@ -66,31 +66,9 @@ const EXECUTION_STAGE_TRANSITIONS: Record<ExecutionStage, ExecutionStage[]> = {
   [EXECUTION_STAGES.DELIVERY]: [EXECUTION_STAGES.REVIEW],
 };
 
-const INITIATIVE_TRANSITIONS: Record<InitiativeStatus, InitiativeStatus[]> = {
-  [INITIATIVE_STATUSES.DRAFT]: [INITIATIVE_STATUSES.PENDING_REVIEW, INITIATIVE_STATUSES.CANCELLED],
-  [INITIATIVE_STATUSES.PENDING_REVIEW]: [INITIATIVE_STATUSES.REVIEW, INITIATIVE_STATUSES.DRAFT, INITIATIVE_STATUSES.CANCELLED],
-  [INITIATIVE_STATUSES.REVIEW]: [INITIATIVE_STATUSES.PROMOTED, INITIATIVE_STATUSES.DRAFT, INITIATIVE_STATUSES.CANCELLED],
-  [INITIATIVE_STATUSES.PROMOTED]: [INITIATIVE_STATUSES.PLANNING, INITIATIVE_STATUSES.CANCELLED],
-  [INITIATIVE_STATUSES.PLANNING]: [
-    INITIATIVE_STATUSES.APPROVED,
-    INITIATIVE_STATUSES.CANCELLED,
-  ],
-  [INITIATIVE_STATUSES.APPROVED]: [
-    INITIATIVE_STATUSES.SCHEDULED,
-    INITIATIVE_STATUSES.CANCELLED,
-  ],
-  [INITIATIVE_STATUSES.SCHEDULED]: [INITIATIVE_STATUSES.EXECUTING, INITIATIVE_STATUSES.CANCELLED],
-  [INITIATIVE_STATUSES.EXECUTING]: [
-    INITIATIVE_STATUSES.BLOCKED,
-    INITIATIVE_STATUSES.DONE,
-    INITIATIVE_STATUSES.CANCELLED,
-  ],
-  [INITIATIVE_STATUSES.BLOCKED]: [INITIATIVE_STATUSES.EXECUTING, INITIATIVE_STATUSES.CANCELLED],
-  [INITIATIVE_STATUSES.DONE]: [INITIATIVE_STATUSES.TRACKING, INITIATIVE_STATUSES.ARCHIVED],
-  [INITIATIVE_STATUSES.TRACKING]: [],
-  [INITIATIVE_STATUSES.CANCELLED]: [INITIATIVE_STATUSES.ARCHIVED],
-  [INITIATIVE_STATUSES.ARCHIVED]: [],
-};
+// Use canonical transitions from constants (single source of truth).
+const INITIATIVE_TRANSITIONS: Record<InitiativeStatus, InitiativeStatus[]> =
+  VALID_TRANSITIONS as any;
 
 const TASK_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
   [TASK_STATUSES.TODO]: [TASK_STATUSES.IN_PROGRESS, TASK_STATUSES.BLOCKED],
@@ -140,7 +118,7 @@ const StatusMachine = {
       }
     }
 
-    if (from === INITIATIVE_STATUSES.PLANNING && to === INITIATIVE_STATUSES.REVIEW) {
+    if (from === INITIATIVE_STATUSES.REVIEW && to === INITIATIVE_STATUSES.PROMOTED) {
       if (context.charterCompleteness !== undefined && context.charterCompleteness < 60) {
         return {
           valid: false,
@@ -149,7 +127,7 @@ const StatusMachine = {
       }
     }
 
-    if (from === INITIATIVE_STATUSES.REVIEW && to === INITIATIVE_STATUSES.APPROVED) {
+    if (from === INITIATIVE_STATUSES.PLANNING && to === INITIATIVE_STATUSES.APPROVED) {
       if (context.requiresApproval && !context.isApproved) {
         return { valid: false, reason: 'Governance approval required for this transition' };
       }
@@ -161,9 +139,12 @@ const StatusMachine = {
       }
     }
 
-    if (from === INITIATIVE_STATUSES.APPROVED && to === INITIATIVE_STATUSES.EXECUTING) {
+    if (from === INITIATIVE_STATUSES.APPROVED && to === INITIATIVE_STATUSES.SCHEDULED) {
       if (context.requiresScheduling && !context.isScheduled) {
-        return { valid: false, reason: 'Initiative must be scheduled in roadmap before execution' };
+        return {
+          valid: false,
+          reason: 'Initiative must be scheduled in roadmap before scheduling',
+        };
       }
     }
 
@@ -242,19 +223,18 @@ const StatusMachine = {
   getInitiativeModule: (
     status: string
   ): 'ASSESSMENT' | 'INITIATIVE_MANAGEMENT' | 'EXECUTION' | 'BENEFITS' | 'UNKNOWN' => {
-    switch (status) {
-      case INITIATIVE_STATUSES.DRAFT:
+    // Map canonical module ids to legacy labels used by this service.
+    const moduleId = getModule(status as any);
+    switch (moduleId) {
+      case 'tools':
+      case 'assessment':
         return 'ASSESSMENT';
-      case INITIATIVE_STATUSES.PLANNING:
-      case INITIATIVE_STATUSES.REVIEW:
-      case INITIATIVE_STATUSES.APPROVED:
-      case INITIATIVE_STATUSES.CANCELLED:
-      case INITIATIVE_STATUSES.ARCHIVED:
+      case 'initiatives':
+      case 'reporting':
         return 'INITIATIVE_MANAGEMENT';
-      case INITIATIVE_STATUSES.EXECUTING:
-      case INITIATIVE_STATUSES.BLOCKED:
+      case 'execution':
         return 'EXECUTION';
-      case INITIATIVE_STATUSES.DONE:
+      case 'benefits':
         return 'BENEFITS';
       default:
         return 'UNKNOWN';
@@ -277,10 +257,8 @@ const StatusMachine = {
   getStatusLabel: (status: string): string => {
     const labels: Record<InitiativeStatus, string> = {
       [INITIATIVE_STATUSES.DRAFT]: 'Draft',
-      [INITIATIVE_STATUSES.PENDING_REVIEW]: 'Pending Review',
-      [INITIATIVE_STATUSES.REVIEW]: 'In Review',
-      [INITIATIVE_STATUSES.PROMOTED]: 'Promoted',
       [INITIATIVE_STATUSES.PLANNING]: 'Planning',
+      [INITIATIVE_STATUSES.REVIEW]: 'In Review',
       [INITIATIVE_STATUSES.APPROVED]: 'Approved',
       [INITIATIVE_STATUSES.SCHEDULED]: 'Scheduled',
       [INITIATIVE_STATUSES.EXECUTING]: 'Executing',

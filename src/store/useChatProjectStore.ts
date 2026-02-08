@@ -23,6 +23,15 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { Api } from '../services/api';
 import { Conversation, useConversationStore } from './useConversationStore';
 
+// ---------------------------------------------------------------------------
+// Fetch de-dupe / throttle
+// ---------------------------------------------------------------------------
+// Prevent request storms when components remount in dev (StrictMode / refresh),
+// which can otherwise cascade into "TypeError: Failed to fetch" and freeze the UI.
+const FETCH_DEDUPE_WINDOW_MS = 1500;
+let _inflightFetchProjects: Promise<void> | null = null;
+let _lastFetchProjectsAt = 0;
+
 // ==================== TYPES ====================
 
 /**
@@ -31,12 +40,16 @@ import { Conversation, useConversationStore } from './useConversationStore';
  * Organizational folder for grouping chat conversations.
  * NOT the same as PMO Project - this is just for user organization.
  */
+export type ChatProjectScope = 'personal' | 'team';
+
 export interface ChatProject {
   id: string;
   name: string;
   description?: string;
   color: string;
   icon: string;
+  /** 'personal' (default) or 'team' - team projects are shared with org members */
+  scope: ChatProjectScope;
   conversationCount: number;
   createdAt: Date;
   updatedAt: Date;
@@ -74,6 +87,7 @@ interface ChatProjectState {
     description?: string;
     color?: string;
     icon?: string;
+    scope?: ChatProjectScope;
   }) => Promise<ChatProject>;
   updateProject: (
     id: string,
@@ -93,6 +107,8 @@ interface ChatProjectState {
   // Helpers
   getProjectById: (id: string) => ChatProject | undefined;
   getConversationsByProjectId: (projectId: string) => Conversation[];
+  getPersonalProjects: () => ChatProject[];
+  getTeamProjects: () => ChatProject[];
 }
 
 // ==================== STORE IMPLEMENTATION ====================
@@ -110,15 +126,36 @@ export const useChatProjectStore = create<ChatProjectState>()(
       // ==================== FETCH ====================
 
       fetchProjects: async () => {
+        const now = Date.now();
+        if (_inflightFetchProjects) return _inflightFetchProjects;
+        if (now - _lastFetchProjectsAt < FETCH_DEDUPE_WINDOW_MS) return;
+        _lastFetchProjectsAt = now;
+
         set({ isLoading: true, error: null });
-        try {
-          const result = await Api.getChatProjects();
-          const projects = result.projects.map(mapApiProject);
-          set({ projects, isLoading: false });
-        } catch (err: any) {
-          console.error('[ChatProjectStore] Fetch error:', err);
-          set({ error: err.message || 'Failed to fetch projects', isLoading: false });
-        }
+        _inflightFetchProjects = (async () => {
+          try {
+            const result = await Api.getChatProjects();
+            // Backend may return either:
+            // - { projects: [...] }
+            // - { projects: { rows: [...] } } (SQLite shim)
+            const rawProjects = (result as any)?.projects;
+            const projectRows = Array.isArray(rawProjects)
+              ? rawProjects
+              : (rawProjects as any)?.rows && Array.isArray((rawProjects as any).rows)
+                ? (rawProjects as any).rows
+                : [];
+
+            const projects = projectRows.map(mapApiProject);
+            set({ projects, isLoading: false });
+          } catch (err: any) {
+            console.error('[ChatProjectStore] Fetch error:', err);
+            set({ error: err.message || 'Failed to fetch projects', isLoading: false });
+          }
+        })().finally(() => {
+          _inflightFetchProjects = null;
+        });
+
+        return _inflightFetchProjects;
       },
 
       fetchProjectWithConversations: async (id: string) => {
@@ -253,9 +290,16 @@ export const useChatProjectStore = create<ChatProjectState>()(
 
       getConversationsByProjectId: (projectId) => {
         // This requires the conversation store to have chat_project_id
-        // For now, we'll use the API call
         const conversations = useConversationStore.getState().conversations;
         return conversations.filter((c: any) => c.chatProjectId === projectId);
+      },
+
+      getPersonalProjects: () => {
+        return get().projects.filter((p) => p.scope === 'personal' || !p.scope);
+      },
+
+      getTeamProjects: () => {
+        return get().projects.filter((p) => p.scope === 'team');
       },
     }),
     {
@@ -278,6 +322,7 @@ function mapApiProject(api: any): ChatProject {
     description: api.description,
     color: api.color || '#6366f1',
     icon: api.icon || 'folder',
+    scope: api.scope || 'personal',
     conversationCount: api.conversation_count || api.conversationCount || 0,
     createdAt: new Date(api.created_at || api.createdAt),
     updatedAt: new Date(api.updated_at || api.updatedAt),

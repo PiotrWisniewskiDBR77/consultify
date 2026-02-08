@@ -114,15 +114,22 @@ export const OnboardingChecklist: React.FC = () => {
 
   // Determine which steps to show based on user role
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'OWNER';
-  const steps = isAdmin
-    ? [...ONBOARDING_STEPS.slice(0, 2), ...ADMIN_ONBOARDING_STEPS, ...ONBOARDING_STEPS.slice(2)]
-    : ONBOARDING_STEPS;
+  const steps = React.useMemo(() => {
+    return isAdmin
+      ? [...ONBOARDING_STEPS.slice(0, 2), ...ADMIN_ONBOARDING_STEPS, ...ONBOARDING_STEPS.slice(2)]
+      : ONBOARDING_STEPS;
+  }, [isAdmin]);
 
   // Check completion status
   useEffect(() => {
     const checkCompletion = () => {
       const completed = steps.filter((step) => step.checkFn()).map((step) => step.id);
-      setCompletedSteps(completed);
+      setCompletedSteps((prev) => {
+        if (prev.length === completed.length && prev.every((id, idx) => id === completed[idx])) {
+          return prev;
+        }
+        return completed;
+      });
     };
 
     checkCompletion();

@@ -7,14 +7,7 @@
  */
 
 import { motion } from 'framer-motion';
-import {
-    ArrowLeft,
-    Book,
-    ChevronRight,
-    Clock,
-    Eye,
-    Search,
-} from 'lucide-react';
+import { ArrowLeft, Book, ChevronRight, Clock, Eye, Search } from 'lucide-react';
 import React, { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
@@ -22,140 +15,136 @@ import { KbArticleListItem, KbCategory, useDocsArticles, useDocsCategories } fro
 import { cn } from '@/lib/utils';
 
 export const DocsCategoryView: React.FC = () => {
-    const { categorySlug } = useParams<{ categorySlug: string }>();
-    const [searchQuery, setSearchQuery] = useState('');
+  const { categorySlug } = useParams<{ categorySlug: string }>();
+  const [searchQuery, setSearchQuery] = useState('');
 
-    const { data: categories } = useDocsCategories();
-    const { data: articlesData, isLoading } = useDocsArticles({
-        categorySlug,
-        search: searchQuery || undefined,
-    });
+  const { data: categories } = useDocsCategories();
+  const { data: articlesData, isLoading } = useDocsArticles({
+    categorySlug,
+    search: searchQuery || undefined,
+  });
 
-    const currentCategory = (categories || []).find((c: KbCategory) => c.slug === categorySlug);
-    const articles = (articlesData?.articles || []) as KbArticleListItem[];
+  const currentCategory = (categories || []).find((c: KbCategory) => c.slug === categorySlug);
+  const articles = (articlesData?.articles || []) as KbArticleListItem[];
 
-    return (
-        <div className="max-w-4xl mx-auto px-4 py-8">
-            {/* Breadcrumb */}
-            <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-6">
-                <Link to="/docs" className="hover:text-purple-600 dark:hover:text-purple-400">
-                    Docs
-                </Link>
-                <ChevronRight size={14} />
-                <span className="text-slate-900 dark:text-white font-medium">
-                    {currentCategory?.name || categorySlug}
-                </span>
-            </nav>
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-6">
+        <Link to="/docs" className="hover:text-purple-600 dark:hover:text-purple-400">
+          Docs
+        </Link>
+        <ChevronRight size={14} />
+        <span className="text-slate-900 dark:text-white font-medium">
+          {currentCategory?.name || categorySlug}
+        </span>
+      </nav>
 
-            {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold mb-2">
-                    {currentCategory?.name || 'Category'}
-                </h1>
-                {currentCategory?.description && (
-                    <p className="text-lg text-slate-600 dark:text-slate-400">
-                        {currentCategory.description}
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">{currentCategory?.name || 'Category'}</h1>
+        {currentCategory?.description && (
+          <p className="text-lg text-slate-600 dark:text-slate-400">
+            {currentCategory.description}
+          </p>
+        )}
+      </div>
+
+      {/* Search */}
+      <div className="relative mb-6">
+        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search in this category..."
+          className="w-full pl-10 pr-4 py-3 rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+        />
+      </div>
+
+      {/* Articles List */}
+      <div className="space-y-4">
+        {isLoading ? (
+          // Loading skeleton
+          Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className="p-6 rounded-xl border border-slate-200 dark:border-navy-800 animate-pulse"
+            >
+              <div className="h-5 w-3/4 rounded bg-slate-200 dark:bg-navy-800 mb-2" />
+              <div className="h-4 w-full rounded bg-slate-200 dark:bg-navy-800 mb-4" />
+              <div className="h-3 w-32 rounded bg-slate-200 dark:bg-navy-800" />
+            </div>
+          ))
+        ) : articles.length === 0 ? (
+          <div className="text-center py-12">
+            <Book size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+            <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
+              No articles found
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-500">
+              {searchQuery ? 'Try adjusting your search query' : 'This category is empty'}
+            </p>
+          </div>
+        ) : (
+          articles.map((article: KbArticleListItem, index: number) => (
+            <motion.div
+              key={article.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+            >
+              <Link
+                to={`/docs/${categorySlug}/${article.slug}`}
+                className="block p-6 rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900/50 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md transition-all group"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-semibold mb-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                      {article.title}
+                    </h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 line-clamp-2">
+                      {article.summary}
                     </p>
-                )}
-            </div>
-
-            {/* Search */}
-            <div className="relative mb-6">
-                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search in this category..."
-                    className="w-full pl-10 pr-4 py-3 rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
-                />
-            </div>
-
-            {/* Articles List */}
-            <div className="space-y-4">
-                {isLoading ? (
-                    // Loading skeleton
-                    Array.from({ length: 5 }).map((_, i) => (
-                        <div
-                            key={i}
-                            className="p-6 rounded-xl border border-slate-200 dark:border-navy-800 animate-pulse"
-                        >
-                            <div className="h-5 w-3/4 rounded bg-slate-200 dark:bg-navy-800 mb-2" />
-                            <div className="h-4 w-full rounded bg-slate-200 dark:bg-navy-800 mb-4" />
-                            <div className="h-3 w-32 rounded bg-slate-200 dark:bg-navy-800" />
-                        </div>
-                    ))
-                ) : articles.length === 0 ? (
-                    <div className="text-center py-12">
-                        <Book size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
-                        <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
-                            No articles found
-                        </h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-500">
-                            {searchQuery
-                                ? 'Try adjusting your search query'
-                                : 'This category is empty'}
-                        </p>
+                    <div className="flex items-center gap-4 text-xs text-slate-500">
+                      <span className="flex items-center gap-1">
+                        <Clock size={12} />
+                        {article.reading_time_minutes} min read
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Eye size={12} />
+                        {article.view_count} views
+                      </span>
+                      {article.is_featured && (
+                        <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-medium">
+                          Featured
+                        </span>
+                      )}
                     </div>
-                ) : (
-                    articles.map((article: KbArticleListItem, index: number) => (
-                        <motion.div
-                            key={article.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                        >
-                            <Link
-                                to={`/docs/${categorySlug}/${article.slug}`}
-                                className="block p-6 rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900/50 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md transition-all group"
-                            >
-                                <div className="flex items-start justify-between gap-4">
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="text-lg font-semibold mb-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                                            {article.title}
-                                        </h3>
-                                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 line-clamp-2">
-                                            {article.summary}
-                                        </p>
-                                        <div className="flex items-center gap-4 text-xs text-slate-500">
-                                            <span className="flex items-center gap-1">
-                                                <Clock size={12} />
-                                                {article.reading_time_minutes} min read
-                                            </span>
-                                            <span className="flex items-center gap-1">
-                                                <Eye size={12} />
-                                                {article.view_count} views
-                                            </span>
-                                            {article.is_featured && (
-                                                <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-medium">
-                                                    Featured
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <ChevronRight
-                                        size={20}
-                                        className="text-slate-400 group-hover:text-purple-500 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1"
-                                    />
-                                </div>
-                            </Link>
-                        </motion.div>
-                    ))
-                )}
-            </div>
+                  </div>
+                  <ChevronRight
+                    size={20}
+                    className="text-slate-400 group-hover:text-purple-500 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1"
+                  />
+                </div>
+              </Link>
+            </motion.div>
+          ))
+        )}
+      </div>
 
-            {/* Back Link */}
-            <div className="mt-8">
-                <Link
-                    to="/docs"
-                    className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
-                >
-                    <ArrowLeft size={16} />
-                    Back to all categories
-                </Link>
-            </div>
-        </div>
-    );
+      {/* Back Link */}
+      <div className="mt-8">
+        <Link
+          to="/docs"
+          className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+        >
+          <ArrowLeft size={16} />
+          Back to all categories
+        </Link>
+      </div>
+    </div>
+  );
 };
 
 export default DocsCategoryView;

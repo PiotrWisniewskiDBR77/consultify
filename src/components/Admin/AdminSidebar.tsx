@@ -588,7 +588,17 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-white/5">
+      <div className="p-3 border-t border-white/5 space-y-1">
+        <a
+          href="/docs"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded-lg transition-colors"
+        >
+          <BookOpen className="w-4 h-4" />
+          {t('admin.sidebar.documentation', 'Documentation')}
+          <ExternalLink className="w-3 h-3 ml-auto opacity-50" />
+        </a>
         <button
           onClick={onBack || (() => window.history.back())}
           className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded-lg transition-colors"

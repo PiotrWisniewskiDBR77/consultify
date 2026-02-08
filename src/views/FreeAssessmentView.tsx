@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useAIContext } from '@/contexts/AIContext';
 import { AIMessageHistory, SYSTEM_PROMPTS } from '@/services/ai/gemini';
 
-import { ChatPanel } from '../components/layout/ChatPanel';
+import { UnifiedChatPanel } from '../components/AIChat/UnifiedChatPanel';
 import { Step1Workspace } from '../components/workspaces/Step1Workspace';
 import { Step2Workspace } from '../components/workspaces/Step2Workspace';
 import { Step3Workspace } from '../components/workspaces/Step3Workspace';
@@ -478,8 +478,8 @@ export const FreeAssessmentView: React.FC = () => {
     <div className="flex w-full h-full">
       <div className="flex-1 flex flex-col h-full min-w-[600px] border-r border-elegant">
         <StepIndicator activeIdx={getActiveStepIndex()} />
-        <ChatPanel
-          messages={
+        <UnifiedChatPanel
+          customMessages={
             isStreaming
               ? [
                   ...messages,
@@ -488,14 +488,15 @@ export const FreeAssessmentView: React.FC = () => {
                     role: 'ai',
                     content: streamedContent,
                     timestamp: new Date(),
-                  } as ChatMessage,
+                    isStreaming: true,
+                  },
                 ]
               : messages
           }
-          onSendMessage={handleSendMessage}
+          onMessageSent={handleSendMessage}
           onOptionSelect={handleOptionSelect}
           onMultiSelectSubmit={handleMultiSelectSubmit}
-          isTyping={isTyping}
+          disabled={isTyping}
         />
       </div>
       <div className="w-[50vw] shrink-0 bg-navy-900 flex flex-col border-l border-white/5">

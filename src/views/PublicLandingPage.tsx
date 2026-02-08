@@ -1,4 +1,13 @@
-import { ArrowRight, BookOpen, Handshake, Layers, Shield, Target, Zap } from 'lucide-react';
+import {
+  ArrowRight,
+  BookOpen,
+  Handshake,
+  Layers,
+  Shield,
+  Sparkles,
+  Target,
+  Zap,
+} from 'lucide-react';
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -35,12 +44,14 @@ export const PublicLandingPage: React.FC = () => {
       {/* HEADER — Minimalist */}
       <header className="fixed top-0 left-0 right-0 z-50 px-6 py-8">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-3 group cursor-default">
-            <div className="h-10 px-3 rounded bg-brand-600 flex items-center justify-center shadow-lg shadow-brand-600/20 group-hover:shadow-brand-600/40 transition-all duration-500">
-              <span className="text-white font-bold text-sm tracking-tight">TL</span>
-            </div>
+          <div className="flex items-center gap-3 group cursor-default select-none">
+            <img
+              src="/assets/logos/logo-light.png"
+              alt="Consultinity"
+              className="h-8 w-auto drop-shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
+            />
             <span className="text-xl font-bold tracking-[0.2em] text-white/90 group-hover:text-white transition-colors duration-500">
-              TECHNOLEX
+              CONSULTINITY
             </span>
           </div>
           {/* Navigation Links */}
@@ -129,19 +140,34 @@ export const PublicLandingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Card 4: Talk to Expert */}
+            {/* Card 4: Learn Our Tools - Education Hub */}
             <div
-              onClick={() => navigate('/contact')}
-              className="glass-card p-8 rounded-xl group hover:bg-emerald-600/5 transition-all duration-500 border-white/5 cursor-pointer relative overflow-hidden"
+              onClick={() => navigate('/tools')}
+              className="glass-card p-8 rounded-xl group hover:shadow-2xl shadow-cyan-500/20 hover:shadow-xl transition-all duration-500 cursor-pointer relative overflow-hidden"
             >
-              <div className="absolute top-4 left-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">
-                1-on-1 Consulting
+              {/* Background Image */}
+              <div className="absolute inset-0 ring-2 ring-cyan-500/40 group-hover:ring-cyan-400/60 ring-inset transition-all duration-500 pointer-events-none">
+                <img
+                  src="/assets/landing/cinematic/tools_education.png"
+                  alt="Education Hub"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03] opacity-60"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent group-hover:from-black/95 transition-colors" />
               </div>
-              <div className="mt-8">
-                <h3 className="text-2xl font-bold mb-3">Talk to Expert</h3>
-                <p className="text-white/50 leading-relaxed text-sm">
-                  Custom Enterprise transformation approach.
-                </p>
+
+              <div className="relative z-10">
+                <div className="absolute top-4 left-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">
+                  Education Hub
+                </div>
+                <div className="mt-8 flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-xl bg-cyan-600/20 flex items-center justify-center border border-cyan-500/30 group-hover:bg-cyan-600/30 transition-colors">
+                    <Sparkles size={32} className="text-cyan-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold mb-1 text-white">Learn Our Tools</h3>
+                    <p className="text-white/60 text-sm">Watch demos and masterclasses.</p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -164,7 +190,7 @@ export const PublicLandingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Card 6: AI Consulting Pitch */}
+            {/* Card 7: AI Consulting Pitch */}
             <div className="glass-card p-8 rounded-xl group hover:bg-gradient-to-br hover:from-brand-600/10 hover:to-purple-600/10 transition-all duration-500 border-white/5 relative overflow-hidden">
               <div className="flex flex-col h-full justify-center items-center text-center">
                 <h3 className="text-3xl font-bold mb-2">AI consulting.</h3>
@@ -239,14 +265,17 @@ export const PublicLandingPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-8 text-xs font-semibold text-white/30 tracking-widest uppercase">
+            <a href="/docs" className="hover:text-brand-400 transition-colors">
+              Documentation
+            </a>
             <a href="/privacy" className="hover:text-brand-400 transition-colors">
-              Prywatność
+              Privacy
             </a>
             <a href="/terms" className="hover:text-brand-400 transition-colors">
-              Regulamin
+              Terms
             </a>
-            <a href="/ethics" className="hover:text-brand-400 transition-colors">
-              Kodeks Etyczny
+            <a href="/docs/security" className="hover:text-brand-400 transition-colors">
+              Security
             </a>
           </div>
 

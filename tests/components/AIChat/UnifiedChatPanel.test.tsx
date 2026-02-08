@@ -5,8 +5,22 @@
  * Tests for the main AI chat panel component
  */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+// Fix JSDOM navigation error
+if (typeof window !== 'undefined') {
+  const noop = () => { };
+  Object.defineProperty(window, 'location', {
+    value: {
+      ...window.location,
+      assign: vi.fn(noop),
+      replace: vi.fn(noop),
+      reload: vi.fn(noop),
+    },
+    writable: true,
+  });
+}
 
 // Mock dependencies
 vi.mock('react-i18next', () => ({
@@ -14,6 +28,10 @@ vi.mock('react-i18next', () => ({
     t: (key: string, fallback?: string) => fallback || key,
     i18n: { language: 'en' },
   }),
+  initReactI18next: {
+    type: '3rdParty',
+    init: () => { },
+  },
 }));
 
 vi.mock('react-markdown', () => ({
@@ -21,7 +39,7 @@ vi.mock('react-markdown', () => ({
 }));
 
 vi.mock('remark-gfm', () => ({
-  default: () => {},
+  default: () => { },
 }));
 
 vi.mock('../../../src/store/useAppStore', () => ({
@@ -49,6 +67,8 @@ vi.mock('../../../src/store/useConversationStore', () => ({
     setDisplayMode: vi.fn(),
     expandToFullScreen: vi.fn(),
     collapseToSplit: vi.fn(),
+    draftChatLanguage: null,
+    chatLanguageByConversationId: {},
   }),
 }));
 
@@ -67,13 +87,26 @@ vi.mock('../../../src/hooks/useAIStream', () => ({
   }),
 }));
 
-vi.mock('../../../src/hooks/useVoiceChat', () => ({
-  useVoiceChat: () => ({
+vi.mock('../../../src/hooks/useUniversalVoice', () => ({
+  useUniversalVoice: () => ({
     speak: vi.fn(),
     stopSpeaking: vi.fn(),
-    isSpeaking: false,
-    voiceEnabled: false,
-    ttsSupported: true,
+    state: { isSpeaking: false, isListening: false },
+    startListening: vi.fn(),
+    stopListening: vi.fn(),
+    settings: {},
+    updateSettings: vi.fn(),
+    isSupported: true,
+  }),
+}));
+
+vi.mock('../../../src/hooks/useDemoSession', () => ({
+  useDemoSession: () => ({
+    isDemo: false,
+    timeRemainingMs: 1000000,
+    aiInteractionsRemaining: 100,
+    aiInteractionsLimit: 100,
+    consumeAIInteraction: vi.fn(),
   }),
 }));
 
@@ -112,15 +145,6 @@ vi.mock('../../../src/components/AIChat/EnhancedChatInput', () => ({
   ),
 }));
 
-vi.mock('../../../src/components/AIChat/Input/FocusModeSelector', () => ({
-  FocusModeSelector: ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
-    <div data-testid="focus-mode-selector">
-      <button onClick={() => onChange('all')}>All</button>
-      <button onClick={() => onChange('pmo')}>PMO</button>
-    </div>
-  ),
-}));
-
 vi.mock('../../../src/components/AIChat/CitationList', () => ({
   CitationList: () => <div data-testid="citation-list" />,
 }));
@@ -137,6 +161,10 @@ vi.mock('../../../src/components/AIChat/PendingActionsIndicator', () => ({
   PendingActionsIndicator: () => <div data-testid="pending-actions" />,
 }));
 
+vi.mock('../../../src/components/AIChat/ThinkingStatusLine', () => ({
+  ThinkingStatusLine: () => null,
+}));
+
 // Import component after mocks
 import { UnifiedChatPanel } from '../../../src/components/AIChat/UnifiedChatPanel';
 
@@ -146,41 +174,29 @@ describe('UnifiedChatPanel', () => {
   });
 
   describe('Rendering', () => {
-    it('should render in full mode by default', () => {
+    it('should render the chat panel', () => {
       render(<UnifiedChatPanel />);
 
-      expect(screen.getByText('AI Assistant')).toBeInTheDocument();
       expect(screen.getByTestId('enhanced-chat-input')).toBeInTheDocument();
     });
 
     it('should render in split mode when specified', () => {
       render(<UnifiedChatPanel mode="split" />);
 
-      expect(screen.getByText('AI Assistant')).toBeInTheDocument();
+      expect(screen.getByTestId('enhanced-chat-input')).toBeInTheDocument();
     });
 
-    it('should show focus mode selector', () => {
-      render(<UnifiedChatPanel showFocusMode={true} />);
-
-      expect(screen.getByTestId('focus-mode-selector')).toBeInTheDocument();
-    });
-
-    it('should hide focus mode selector when disabled', () => {
-      render(<UnifiedChatPanel showFocusMode={false} />);
-
-      expect(screen.queryByTestId('focus-mode-selector')).not.toBeInTheDocument();
-    });
-
-    it('should show history trigger button', () => {
+    it('should show history trigger button when enabled', () => {
       render(<UnifiedChatPanel showHistoryTrigger={true} />);
 
-      expect(screen.getByTitle('History')).toBeInTheDocument();
+      // History button exists with data-testid
+      expect(screen.getByTestId('chat-history-button')).toBeInTheDocument();
     });
 
-    it('should show mode toggle button', () => {
-      render(<UnifiedChatPanel showModeToggle={true} />);
+    it('should show new chat button', () => {
+      render(<UnifiedChatPanel />);
 
-      expect(screen.getByTitle('Collapse')).toBeInTheDocument();
+      expect(screen.getByTestId('chat-new-button')).toBeInTheDocument();
     });
   });
 
@@ -209,45 +225,13 @@ describe('UnifiedChatPanel', () => {
       const input = screen.getByTestId('chat-input');
       expect(input).toBeDisabled();
     });
-
-    it('should show custom title when provided', () => {
-      render(<UnifiedChatPanel title="Custom Chat Title" />);
-
-      expect(screen.getByText('Custom Chat Title')).toBeInTheDocument();
-    });
-
-    it('should show workspace context indicator when provided', () => {
-      render(
-        <UnifiedChatPanel
-          workspaceContext={{
-            type: 'assessment',
-            view: 'assessment' as any,
-            timestamp: new Date(),
-          }}
-        />
-      );
-
-      expect(screen.getByText(/Context-aware/)).toBeInTheDocument();
-    });
-  });
-
-  describe('Mode Toggle', () => {
-    it('should call onModeToggle when mode toggle is clicked', () => {
-      const onModeToggle = vi.fn();
-      render(<UnifiedChatPanel onModeToggle={onModeToggle} />);
-
-      const toggleButton = screen.getByTitle('Collapse');
-      fireEvent.click(toggleButton);
-
-      expect(onModeToggle).toHaveBeenCalled();
-    });
   });
 
   describe('History Panel', () => {
-    it('should toggle history panel on button click', () => {
-      render(<UnifiedChatPanel />);
+    it('should have clickable history button', () => {
+      render(<UnifiedChatPanel showHistoryTrigger={true} />);
 
-      const historyButton = screen.getByTitle('History');
+      const historyButton = screen.getByTestId('chat-history-button');
       fireEvent.click(historyButton);
 
       // The history button should be clickable
@@ -262,31 +246,26 @@ describe('UnifiedChatPanel', () => {
       const skipLink = screen.getByText('Skip to chat input');
       expect(skipLink).toHaveClass('sr-only');
     });
+  });
 
-    it('should have proper heading structure', () => {
+  describe('New Chat Button', () => {
+    it('should have new chat button', () => {
       render(<UnifiedChatPanel />);
 
-      const heading = screen.getByRole('heading', { level: 2 });
-      expect(heading).toHaveTextContent('AI Assistant');
+      const newChatButton = screen.getByTestId('chat-new-button');
+      expect(newChatButton).toBeInTheDocument();
+
+      fireEvent.click(newChatButton);
+      // Should not throw
     });
   });
 
-  describe('Back Button', () => {
-    it('should show back button in split mode with onBack callback', () => {
-      const onBack = vi.fn();
-      render(<UnifiedChatPanel mode="split" onBack={onBack} />);
+  describe('Autoread Toggle', () => {
+    it('should show autoread toggle when TTS is supported', () => {
+      render(<UnifiedChatPanel />);
 
-      const backButton = screen.getByTitle('Back');
-      expect(backButton).toBeInTheDocument();
-
-      fireEvent.click(backButton);
-      expect(onBack).toHaveBeenCalled();
-    });
-
-    it('should not show back button without onBack callback', () => {
-      render(<UnifiedChatPanel mode="split" />);
-
-      expect(screen.queryByTitle('Back')).not.toBeInTheDocument();
+      const autoreadButton = screen.getByTestId('chat-autoread-button');
+      expect(autoreadButton).toBeInTheDocument();
     });
   });
 });

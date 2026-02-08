@@ -1,6 +1,6 @@
 /**
  * TemplateBuilder - BCG Enterprise Level Template Editor
- * 
+ *
  * Features:
  * - Create and edit interview templates
  * - 5 Categories: Strategy, Operations, Digital, People, Finance
@@ -10,13 +10,10 @@
  * - Template metadata (name, description, category, visibility)
  * - Publish workflow (draft → approved)
  * - Clone from existing template
- * 
+ *
  * @see wdrozenia/modules/interview/
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import toast from 'react-hot-toast';
 import {
   AlertCircle,
   Check,
@@ -34,6 +31,9 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
@@ -70,10 +70,22 @@ interface Template {
 
 type QuestionCategory = 'strategy' | 'operations' | 'digital' | 'people' | 'finance';
 type AnswerType = 'open' | 'select' | 'scale' | 'boolean' | 'number';
-type TemplateCategory = 'DIGITAL' | 'OPERATIONAL' | 'COST' | 'DATA' | 'STANDARD' | 'QUICK' | 'CUSTOM';
+type TemplateCategory =
+  | 'DIGITAL'
+  | 'OPERATIONAL'
+  | 'COST'
+  | 'DATA'
+  | 'STANDARD'
+  | 'QUICK'
+  | 'CUSTOM';
 
 // Constants
-const QUESTION_CATEGORIES: { id: QuestionCategory; labelPl: string; labelEn: string; color: string }[] = [
+const QUESTION_CATEGORIES: {
+  id: QuestionCategory;
+  labelPl: string;
+  labelEn: string;
+  color: string;
+}[] = [
   { id: 'strategy', labelPl: 'Strategia', labelEn: 'Strategy', color: 'bg-blue-500' },
   { id: 'operations', labelPl: 'Operacje', labelEn: 'Operations', color: 'bg-emerald-500' },
   { id: 'digital', labelPl: 'Digital', labelEn: 'Digital', color: 'bg-purple-500' },
@@ -184,11 +196,12 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
           answerType: q.answerType || q.answer_type || 'open',
           isRequired: q.isRequired || q.is_required || false,
           helpHint: q.helpHint || q.help_hint || '',
-          answerOptions: q.answerOptions || q.answer_options 
-            ? (typeof (q.answerOptions || q.answer_options) === 'string' 
-                ? JSON.parse(q.answerOptions || q.answer_options) 
-                : (q.answerOptions || q.answer_options))
-            : [],
+          answerOptions:
+            q.answerOptions || q.answer_options
+              ? typeof (q.answerOptions || q.answer_options) === 'string'
+                ? JSON.parse(q.answerOptions || q.answer_options)
+                : q.answerOptions || q.answer_options
+              : [],
         }))
       );
     } catch (error) {
@@ -240,15 +253,21 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
     }
 
     if (questions.length === 0) {
-      newErrors.questions = isPolish ? 'Dodaj przynajmniej jedno pytanie' : 'Add at least one question';
+      newErrors.questions = isPolish
+        ? 'Dodaj przynajmniej jedno pytanie'
+        : 'Add at least one question';
     }
 
     questions.forEach((q, idx) => {
       if (!q.questionText?.trim()) {
-        newErrors[`question_${q.id}`] = isPolish ? 'Treść pytania jest wymagana' : 'Question text is required';
+        newErrors[`question_${q.id}`] = isPolish
+          ? 'Treść pytania jest wymagana'
+          : 'Question text is required';
       }
       if ((q.answerType === 'select' || q.answerType === 'scale') && q.answerOptions.length < 2) {
-        newErrors[`options_${q.id}`] = isPolish ? 'Dodaj przynajmniej 2 opcje' : 'Add at least 2 options';
+        newErrors[`options_${q.id}`] = isPolish
+          ? 'Dodaj przynajmniej 2 opcje'
+          : 'Add at least 2 options';
       }
     });
 
@@ -259,9 +278,8 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   // Add new question
   const handleAddQuestion = useCallback(() => {
     const categoryQuestions = questionsByCategory[activeCategory] || [];
-    const maxOrder = categoryQuestions.length > 0 
-      ? Math.max(...categoryQuestions.map(q => q.sortOrder)) 
-      : 0;
+    const maxOrder =
+      categoryQuestions.length > 0 ? Math.max(...categoryQuestions.map((q) => q.sortOrder)) : 0;
 
     const newQuestion: TemplateQuestion = {
       id: `new_${Date.now()}`,
@@ -282,9 +300,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
 
   // Update question
   const handleUpdateQuestion = useCallback((id: string, updates: Partial<TemplateQuestion>) => {
-    setQuestions((prev) =>
-      prev.map((q) => (q.id === id ? { ...q, ...updates } : q))
-    );
+    setQuestions((prev) => prev.map((q) => (q.id === id ? { ...q, ...updates } : q)));
   }, []);
 
   // Delete question
@@ -293,91 +309,107 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   }, []);
 
   // Move question up/down
-  const handleMoveQuestion = useCallback((id: string, direction: 'up' | 'down') => {
-    setQuestions((prev) => {
-      const categoryQuestions = prev.filter((q) => q.category === activeCategory);
-      const otherQuestions = prev.filter((q) => q.category !== activeCategory);
-      
-      const idx = categoryQuestions.findIndex((q) => q.id === id);
-      if (idx === -1) return prev;
+  const handleMoveQuestion = useCallback(
+    (id: string, direction: 'up' | 'down') => {
+      setQuestions((prev) => {
+        const categoryQuestions = prev.filter((q) => q.category === activeCategory);
+        const otherQuestions = prev.filter((q) => q.category !== activeCategory);
 
-      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-      if (swapIdx < 0 || swapIdx >= categoryQuestions.length) return prev;
+        const idx = categoryQuestions.findIndex((q) => q.id === id);
+        if (idx === -1) return prev;
 
-      // Swap sort orders
-      const temp = categoryQuestions[idx].sortOrder;
-      categoryQuestions[idx] = { ...categoryQuestions[idx], sortOrder: categoryQuestions[swapIdx].sortOrder };
-      categoryQuestions[swapIdx] = { ...categoryQuestions[swapIdx], sortOrder: temp };
+        const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+        if (swapIdx < 0 || swapIdx >= categoryQuestions.length) return prev;
 
-      return [...otherQuestions, ...categoryQuestions];
-    });
-  }, [activeCategory]);
+        // Swap sort orders
+        const temp = categoryQuestions[idx].sortOrder;
+        categoryQuestions[idx] = {
+          ...categoryQuestions[idx],
+          sortOrder: categoryQuestions[swapIdx].sortOrder,
+        };
+        categoryQuestions[swapIdx] = { ...categoryQuestions[swapIdx], sortOrder: temp };
+
+        return [...otherQuestions, ...categoryQuestions];
+      });
+    },
+    [activeCategory]
+  );
 
   // Save template
-  const handleSave = useCallback(async (publish: boolean = false) => {
-    if (!validate()) {
-      toast.error(isPolish ? 'Popraw błędy w formularzu' : 'Fix form errors');
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      let savedTemplateId = templateId;
-
-      // Save template metadata
-      const templateData = {
-        ...template,
-        status: publish ? 'approved' : 'draft',
-      };
-
-      if (templateId) {
-        await Api.patch(`/interview/templates/${templateId}`, templateData);
-      } else {
-        const created = await Api.post('/interview/templates', templateData);
-        savedTemplateId = (created as any).id;
+  const handleSave = useCallback(
+    async (publish: boolean = false) => {
+      if (!validate()) {
+        toast.error(isPolish ? 'Popraw błędy w formularzu' : 'Fix form errors');
+        return;
       }
 
-      // Save questions
-      if (savedTemplateId) {
-        // Delete removed questions
-        const existingIds = questions.filter((q) => !q.isNew).map((q) => q.id);
-        // Note: Backend should handle orphaned questions
+      setIsSaving(true);
+      try {
+        let savedTemplateId = templateId;
 
-        // Add/update questions
-        for (const question of questions) {
-          const questionData = {
-            category: question.category,
-            questionText: question.questionText,
-            sortOrder: question.sortOrder,
-            answerType: question.answerType,
-            isRequired: question.isRequired,
-            helpHint: question.helpHint || '',
-            answerOptions: JSON.stringify(question.answerOptions),
-          };
+        // Save template metadata
+        const templateData = {
+          ...template,
+          status: publish ? 'approved' : 'draft',
+        };
 
-          if (question.isNew) {
-            await Api.post(`/interview/templates/${savedTemplateId}/questions`, questionData);
-          } else {
-            await Api.patch(`/interview/templates/${savedTemplateId}/questions/${question.id}`, questionData);
+        if (templateId) {
+          await Api.patch(`/interview/templates/${templateId}`, templateData);
+        } else {
+          const created = await Api.post('/interview/templates', templateData);
+          savedTemplateId = (created as any).id;
+        }
+
+        // Save questions
+        if (savedTemplateId) {
+          // Delete removed questions
+          const existingIds = questions.filter((q) => !q.isNew).map((q) => q.id);
+          // Note: Backend should handle orphaned questions
+
+          // Add/update questions
+          for (const question of questions) {
+            const questionData = {
+              category: question.category,
+              questionText: question.questionText,
+              sortOrder: question.sortOrder,
+              answerType: question.answerType,
+              isRequired: question.isRequired,
+              helpHint: question.helpHint || '',
+              answerOptions: JSON.stringify(question.answerOptions),
+            };
+
+            if (question.isNew) {
+              await Api.post(`/interview/templates/${savedTemplateId}/questions`, questionData);
+            } else {
+              await Api.patch(
+                `/interview/templates/${savedTemplateId}/questions/${question.id}`,
+                questionData
+              );
+            }
           }
         }
+
+        toast.success(
+          publish
+            ? isPolish
+              ? 'Szablon opublikowany!'
+              : 'Template published!'
+            : isPolish
+              ? 'Szablon zapisany!'
+              : 'Template saved!'
+        );
+
+        onSuccess?.();
+        onClose();
+      } catch (error) {
+        console.error('[TemplateBuilder] Failed to save:', error);
+        toast.error(isPolish ? 'Nie udało się zapisać szablonu' : 'Failed to save template');
+      } finally {
+        setIsSaving(false);
       }
-
-      toast.success(
-        publish
-          ? (isPolish ? 'Szablon opublikowany!' : 'Template published!')
-          : (isPolish ? 'Szablon zapisany!' : 'Template saved!')
-      );
-
-      onSuccess?.();
-      onClose();
-    } catch (error) {
-      console.error('[TemplateBuilder] Failed to save:', error);
-      toast.error(isPolish ? 'Nie udało się zapisać szablonu' : 'Failed to save template');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [template, questions, templateId, validate, isPolish, onSuccess, onClose]);
+    },
+    [template, questions, templateId, validate, isPolish, onSuccess, onClose]
+  );
 
   if (!isOpen) return null;
 
@@ -393,15 +425,21 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
             <div>
               <h2 className="text-lg font-semibold text-white">
                 {templateId
-                  ? (isPolish ? 'Edytuj szablon' : 'Edit Template')
-                  : (isPolish ? 'Nowy szablon wywiadu' : 'New Interview Template')
-                }
+                  ? isPolish
+                    ? 'Edytuj szablon'
+                    : 'Edit Template'
+                  : isPolish
+                    ? 'Nowy szablon wywiadu'
+                    : 'New Interview Template'}
               </h2>
               <p className="text-xs text-slate-500">
-                {template.status === 'draft' 
-                  ? (isPolish ? 'Wersja robocza' : 'Draft')
-                  : (isPolish ? 'Opublikowany' : 'Published')
-                }
+                {template.status === 'draft'
+                  ? isPolish
+                    ? 'Wersja robocza'
+                    : 'Draft'
+                  : isPolish
+                    ? 'Opublikowany'
+                    : 'Published'}
               </p>
             </div>
           </div>
@@ -447,9 +485,13 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
                   type="text"
                   value={template.name || ''}
                   onChange={(e) => setTemplate((prev) => ({ ...prev, name: e.target.value }))}
-                  placeholder={isPolish ? 'np. Transformacja Cyfrowa' : 'e.g. Digital Transformation'}
+                  placeholder={
+                    isPolish ? 'np. Transformacja Cyfrowa' : 'e.g. Digital Transformation'
+                  }
                   className={`w-full px-3 py-2 rounded-lg bg-navy-800 border text-white placeholder-slate-500 focus:ring-1 transition-all ${
-                    errors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-500/50' : 'border-navy-600 focus:border-primary-500 focus:ring-primary-500/50'
+                    errors.name
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500/50'
+                      : 'border-navy-600 focus:border-primary-500 focus:ring-primary-500/50'
                   }`}
                 />
                 {errors.name && <p className="text-xs text-red-400 mt-1">{errors.name}</p>}
@@ -462,8 +504,12 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
                 </label>
                 <textarea
                   value={template.description || ''}
-                  onChange={(e) => setTemplate((prev) => ({ ...prev, description: e.target.value }))}
-                  placeholder={isPolish ? 'Krótki opis szablonu...' : 'Brief template description...'}
+                  onChange={(e) =>
+                    setTemplate((prev) => ({ ...prev, description: e.target.value }))
+                  }
+                  placeholder={
+                    isPolish ? 'Krótki opis szablonu...' : 'Brief template description...'
+                  }
                   rows={3}
                   className="w-full px-3 py-2 rounded-lg bg-navy-800 border border-navy-600 text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all resize-none"
                 />
@@ -476,7 +522,12 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
                 </label>
                 <select
                   value={template.category || 'CUSTOM'}
-                  onChange={(e) => setTemplate((prev) => ({ ...prev, category: e.target.value as TemplateCategory }))}
+                  onChange={(e) =>
+                    setTemplate((prev) => ({
+                      ...prev,
+                      category: e.target.value as TemplateCategory,
+                    }))
+                  }
                   className="w-full px-3 py-2 rounded-lg bg-navy-800 border border-navy-600 text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
                 >
                   {TEMPLATE_CATEGORIES.map((cat) => (
@@ -494,7 +545,9 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
                 </label>
                 <select
                   value={template.visibility || 'org'}
-                  onChange={(e) => setTemplate((prev) => ({ ...prev, visibility: e.target.value as any }))}
+                  onChange={(e) =>
+                    setTemplate((prev) => ({ ...prev, visibility: e.target.value as any }))
+                  }
                   className="w-full px-3 py-2 rounded-lg bg-navy-800 border border-navy-600 text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
                 >
                   {VISIBILITY_OPTIONS.map((opt) => (
@@ -525,7 +578,9 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
                         <span className={`w-2 h-2 rounded-full ${cat.color}`} />
                         <span className="text-sm">{isPolish ? cat.labelPl : cat.labelEn}</span>
                       </div>
-                      <span className="text-xs bg-navy-700 px-2 py-0.5 rounded-full">{cat.count}</span>
+                      <span className="text-xs bg-navy-700 px-2 py-0.5 rounded-full">
+                        {cat.count}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -546,15 +601,17 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
               {/* Category Header */}
               <div className="p-4 border-b border-navy-700 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3">
-                  <span className={`w-3 h-3 rounded-full ${QUESTION_CATEGORIES.find(c => c.id === activeCategory)?.color}`} />
+                  <span
+                    className={`w-3 h-3 rounded-full ${QUESTION_CATEGORIES.find((c) => c.id === activeCategory)?.color}`}
+                  />
                   <h3 className="text-sm font-semibold text-white">
-                    {isPolish 
-                      ? QUESTION_CATEGORIES.find(c => c.id === activeCategory)?.labelPl
-                      : QUESTION_CATEGORIES.find(c => c.id === activeCategory)?.labelEn
-                    }
+                    {isPolish
+                      ? QUESTION_CATEGORIES.find((c) => c.id === activeCategory)?.labelPl
+                      : QUESTION_CATEGORIES.find((c) => c.id === activeCategory)?.labelEn}
                   </h3>
                   <span className="text-xs text-slate-500">
-                    ({questionsByCategory[activeCategory]?.length || 0} {isPolish ? 'pytań' : 'questions'})
+                    ({questionsByCategory[activeCategory]?.length || 0}{' '}
+                    {isPolish ? 'pytań' : 'questions'})
                   </span>
                 </div>
                 <button
@@ -572,10 +629,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <HelpCircle size={48} className="text-slate-600 mb-4" />
                     <p className="text-slate-400 text-sm mb-4">
-                      {isPolish 
-                        ? 'Brak pytań w tej kategorii'
-                        : 'No questions in this category'
-                      }
+                      {isPolish ? 'Brak pytań w tej kategorii' : 'No questions in this category'}
                     </p>
                     <button
                       onClick={handleAddQuestion}
@@ -679,9 +733,11 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   };
 
   return (
-    <div className={`bg-navy-800 border rounded-xl overflow-hidden transition-all ${
-      error ? 'border-red-500/50' : 'border-navy-700'
-    }`}>
+    <div
+      className={`bg-navy-800 border rounded-xl overflow-hidden transition-all ${
+        error ? 'border-red-500/50' : 'border-navy-700'
+      }`}
+    >
       {/* Header */}
       <div
         className="flex items-center gap-3 p-3 cursor-pointer hover:bg-navy-700/50 transition-colors"
@@ -689,14 +745,20 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
       >
         <div className="flex items-center gap-1 text-slate-500">
           <button
-            onClick={(e) => { e.stopPropagation(); onMoveUp(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onMoveUp();
+            }}
             disabled={index === 0}
             className="p-1 rounded hover:bg-navy-600 disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <ChevronUp size={14} />
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); onMoveDown(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onMoveDown();
+            }}
             disabled={index === totalCount - 1}
             className="p-1 rounded hover:bg-navy-600 disabled:opacity-30 disabled:cursor-not-allowed"
           >
@@ -719,10 +781,17 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             </span>
           )}
           <span className="px-2 py-0.5 bg-navy-700 text-slate-400 text-xs rounded">
-            {ANSWER_TYPES.find(t => t.id === question.answerType)?.[isPolish ? 'labelPl' : 'labelEn']}
+            {
+              ANSWER_TYPES.find((t) => t.id === question.answerType)?.[
+                isPolish ? 'labelPl' : 'labelEn'
+              ]
+            }
           </span>
           <button
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             className="p-1.5 rounded hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors"
           >
             <Trash2 size={14} />
@@ -744,7 +813,9 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               placeholder={isPolish ? 'Wpisz treść pytania...' : 'Enter question text...'}
               rows={2}
               className={`w-full px-3 py-2 rounded-lg bg-navy-900 border text-white placeholder-slate-500 focus:ring-1 transition-all resize-none ${
-                error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/50' : 'border-navy-600 focus:border-primary-500 focus:ring-primary-500/50'
+                error
+                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500/50'
+                  : 'border-navy-600 focus:border-primary-500 focus:ring-primary-500/50'
               }`}
             />
           </div>
@@ -781,10 +852,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     : 'bg-navy-900 border-navy-600 text-slate-400 hover:border-slate-500'
                 }`}
               >
-                {question.isRequired 
-                  ? (isPolish ? 'Tak, wymagane' : 'Yes, required')
-                  : (isPolish ? 'Nie, opcjonalne' : 'No, optional')
-                }
+                {question.isRequired
+                  ? isPolish
+                    ? 'Tak, wymagane'
+                    : 'Yes, required'
+                  : isPolish
+                    ? 'Nie, opcjonalne'
+                    : 'No, optional'}
               </button>
             </div>
           </div>
@@ -850,7 +924,11 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               type="text"
               value={question.helpHint || ''}
               onChange={(e) => onUpdate({ helpHint: e.target.value })}
-              placeholder={isPolish ? 'Dodatkowe wskazówki dla respondenta...' : 'Additional guidance for respondent...'}
+              placeholder={
+                isPolish
+                  ? 'Dodatkowe wskazówki dla respondenta...'
+                  : 'Additional guidance for respondent...'
+              }
               className="w-full px-3 py-2 rounded-lg bg-navy-900 border border-navy-600 text-white placeholder-slate-500 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
             />
           </div>

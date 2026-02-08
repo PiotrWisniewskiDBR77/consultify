@@ -33,9 +33,7 @@ export const ReportScheduleView: React.FC = () => {
   const [reportType, setReportType] = useState<ManagementReportType>('TEAM_MEETING');
   const [scope, setScope] = useState<ManagementReportScope>('PORTFOLIO');
   const [projectId, setProjectId] = useState<string>('');
-  const [frequency, setFrequency] = useState<'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'>(
-    'WEEKLY'
-  );
+  const [frequency, setFrequency] = useState<'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'>('WEEKLY');
   const [dayOfWeek, setDayOfWeek] = useState(1);
   const [dayOfMonth, setDayOfMonth] = useState(1);
   const [timeOfDay, setTimeOfDay] = useState('09:00');

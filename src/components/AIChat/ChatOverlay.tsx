@@ -1,20 +1,22 @@
 import { Cpu, MapPin, Maximize2, MessageCircle, Shield, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useAIContext } from '../../contexts/AIContext';
 import { useAIStream } from '../../hooks/useAIStream';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, ChatMessage, ChatOption } from '../../types';
 import { AIUsageIndicator } from '../AIUsageIndicator';
-import { ChatPanel } from '../layout/ChatPanel';
 import { LLMSelector } from '../LLMSelector';
 import { AIRoleBadge } from './AIRoleBadge';
+import { UnifiedChatPanel } from './UnifiedChatPanel';
 
 interface ChatOverlayProps {
   hideTrigger?: boolean;
 }
 
 export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false }) => {
+  const { t } = useTranslation();
   const { isChatOpen, toggleChat, screenContext, pmoContext, globalContext } = useAIContext();
   const { activeChatMessages, addChatMessage, isBotTyping, setCurrentView } = useAppStore();
 
@@ -123,7 +125,7 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false })
   return (
     <div
       data-tour="ai-chat"
-      className="fixed bottom-6 right-6 w-[400px] h-[600px] bg-white dark:bg-navy-900 rounded-xl shadow-2xl border border-slate-200 dark:border-navy-700 flex flex-col z-50 overflow-hidden animate-in slide-in-from-bottom-10 fade-in zoom-in-95 duration-200"
+      className="fixed bottom-6 right-6 w-[400px] h-[900px] max-h-[calc(100vh-3rem)] bg-white dark:bg-navy-900 rounded-xl shadow-2xl border border-slate-200 dark:border-navy-700 flex flex-col z-50 overflow-hidden animate-in slide-in-from-bottom-10 fade-in zoom-in-95 duration-200"
     >
       {/* Header */}
       <div className="bg-navy-950 shrink-0 border-b border-white/5">
@@ -171,7 +173,7 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false })
                 setCurrentView(AppView.AI_ACTION_PROPOSALS); // Open fullscreen chat
               }}
               className="w-8 h-8 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-white transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-navy-800/40"
-              title="Rozwiń na pełny ekran"
+              title={t('aiChat.expandFullScreen', 'Expand to full screen')}
             >
               <Maximize2 size={16} />
             </button>
@@ -201,27 +203,24 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false })
         )}
       </div>
 
-      {/* Content using ChatPanel */}
+      {/* Content using UnifiedChatPanel */}
       <div className="flex-1 overflow-hidden relative flex flex-col">
-        <ChatPanel
-          messages={
-            isStreaming
-              ? [
-                  ...activeChatMessages,
-                  {
-                    id: 'stream',
-                    role: 'ai',
-                    content: streamedContent,
-                    timestamp: new Date(),
-                  } as ChatMessage,
-                ]
-              : activeChatMessages
+        <UnifiedChatPanel
+          mode="split" // Use split mode for compact overlay look
+          showModeToggle={true}
+          onModeToggle={() => {
+            toggleChat();
+            setCurrentView(AppView.AI_CHAT);
+          }}
+          showHistoryTrigger={true}
+          showFocusMode={false} // Keep it simple in overlay
+          workspaceContext={
+            {
+              type: 'project',
+              projectId: pmoContext.projectId || undefined,
+              entityName: pmoContext.currentScreen,
+            } as any
           }
-          isTyping={isBotTyping}
-          onSendMessage={handleSendMessage}
-          onOptionSelect={handleOptionSelect}
-          showThinking={showThinking}
-          {...({} as any)}
         />
       </div>
     </div>

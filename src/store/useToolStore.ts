@@ -775,6 +775,18 @@ interface ToolStoreState {
   prevStep: () => void;
   canAdvanceStep: () => boolean;
 
+  // API hydration
+  hydrateSessionFromApi: (payload: {
+    id: string;
+    toolType: ToolType;
+    name?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    status?: string;
+    answers?: Record<string, unknown>;
+    completionPercent?: number;
+  }) => void;
+
   // Data updates
   updateInputData: (
     data: Partial<
@@ -941,6 +953,89 @@ const TOOL_INITIAL_DATA: Record<
 
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+const computeStepStatusFromAnswers = (
+  toolType: ToolType,
+  stepId: string,
+  answers: any
+): StepStatus => {
+  try {
+    if (!answers) return 'pending';
+    // Context step (all tools)
+    if (stepId === 'context') {
+      if (toolType === 'market-forces') {
+        return answers?.context?.industry && answers?.context?.geographicScope
+          ? 'completed'
+          : 'pending';
+      }
+      return answers?.context?.goal && answers?.context?.scope ? 'completed' : 'pending';
+    }
+
+    // Summary step: treat as completed if key insights exist or initiatives exist
+    if (stepId === 'summary') {
+      const hasInsights = (answers?.summary?.keyInsights?.length || 0) > 0;
+      const hasDrafts = (answers?.initiatives?.length || 0) > 0;
+      return hasInsights || hasDrafts ? 'completed' : 'pending';
+    }
+
+    if (toolType === 'dynamic-swot') {
+      if (['strengths', 'weaknesses', 'opportunities', 'threats'].includes(stepId)) {
+        return answers?.items?.some((i: any) => i.quadrant === stepId) ? 'completed' : 'pending';
+      }
+      if (stepId === 'correlations') {
+        return (answers?.correlations?.length || 0) > 0 ? 'completed' : 'pending';
+      }
+    }
+
+    if (toolType === 'market-forces') {
+      const force = answers?.forces?.[stepId];
+      if (force) return (force?.drivers?.length || 0) > 0 ? 'completed' : 'pending';
+    }
+
+    if (toolType === 'growth-paths') {
+      const map: Record<string, keyof GrowthPathsData['quadrants']> = {
+        'market-penetration': 'marketPenetration',
+        'market-development': 'marketDevelopment',
+        'product-development': 'productDevelopment',
+        diversification: 'diversification',
+      };
+      const key = map[stepId];
+      if (key) return (answers?.quadrants?.[key]?.length || 0) > 0 ? 'completed' : 'pending';
+    }
+
+    if (toolType === 'portfolio-priority') {
+      if (stepId === 'portfolio-items')
+        return (answers?.initiatives?.length || 0) > 0 ? 'completed' : 'pending';
+      if (stepId === 'portfolio-matrix')
+        return answers?.initiatives?.some((i: any) => i.category) ? 'completed' : 'pending';
+    }
+
+    if (toolType === 'risk-uncertainty') {
+      if (stepId === 'assumptions')
+        return (answers?.assumptions?.length || 0) > 0 ? 'completed' : 'pending';
+      if (stepId === 'risks') return (answers?.risks?.length || 0) > 0 ? 'completed' : 'pending';
+      if (stepId === 'scenarios')
+        return (answers?.scenarios?.length || 0) > 0 ? 'completed' : 'pending';
+    }
+
+    // Operational tools: section arrays
+    if (
+      [
+        'sop-builder',
+        'a3-problem-solving',
+        'smed-planner',
+        'dms-builder',
+        'inventory-autopilot',
+      ].includes(toolType)
+    ) {
+      const len = answers?.sections?.[stepId]?.length || 0;
+      return len > 0 ? 'completed' : 'pending';
+    }
+  } catch {
+    // ignore
+  }
+  return 'pending';
+};
+
 // ==================== STORE ====================
 
 export const useToolStore = create<ToolStoreState>()(
@@ -1087,9 +1182,12 @@ export const useToolStore = create<ToolStoreState>()(
 
         // Growth Paths quadrants: require at least one item
         if (
-          ['market-penetration', 'market-development', 'product-development', 'diversification'].includes(
-            stepDef.id
-          )
+          [
+            'market-penetration',
+            'market-development',
+            'product-development',
+            'diversification',
+          ].includes(stepDef.id)
         ) {
           const growthData = currentSession.inputData as GrowthPathsData;
           const keyMap: Record<string, keyof GrowthPathsData['quadrants']> = {
@@ -1129,6 +1227,33 @@ export const useToolStore = create<ToolStoreState>()(
         }
 
         return true;
+      },
+
+      hydrateSessionFromApi: (payload) => {
+        const steps = TOOL_STEP_DEFINITIONS[payload.toolType] || PORTER_STEPS;
+        const answers = payload.answers || {};
+        const currentStepFromApi =
+          typeof (payload as any).currentStep === 'number' ? (payload as any).currentStep : 1;
+
+        const session: ToolSession = {
+          id: payload.id,
+          toolType: payload.toolType,
+          name: payload.name || `${payload.toolType} - ${new Date().toLocaleDateString()}`,
+          createdAt: payload.createdAt || new Date().toISOString(),
+          updatedAt: payload.updatedAt || new Date().toISOString(),
+          currentStep: currentStepFromApi,
+          steps: steps.map((step) => ({
+            stepId: step.id,
+            status: computeStepStatusFromAnswers(payload.toolType, step.id, answers),
+            data: {},
+          })),
+          inputData: answers as any,
+          chatHistory: [],
+          generatedInitiatives: [],
+          status: (payload.status || 'draft') as any,
+        };
+
+        set({ currentSession: session, currentStep: session.currentStep });
       },
 
       updateInputData: (data) => {

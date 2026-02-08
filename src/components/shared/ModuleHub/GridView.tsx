@@ -32,18 +32,68 @@ interface GridViewProps {
 const STATUS_CONFIG: Record<ItemStatus, { bg: string; text: string; dot: string; label: string }> =
   {
     DRAFT: { bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400', label: 'Draft' },
-    PENDING_REVIEW: { bg: 'bg-yellow-500/10', text: 'text-yellow-400', dot: 'bg-yellow-400', label: 'Pending Review' },
-    REVIEW: { bg: 'bg-amber-500/10', text: 'text-amber-400', dot: 'bg-amber-400', label: 'In Review' },
-    PROMOTED: { bg: 'bg-blue-500/10', text: 'text-blue-400', dot: 'bg-blue-400', label: 'Promoted' },
-    PLANNING: { bg: 'bg-indigo-500/10', text: 'text-indigo-400', dot: 'bg-indigo-400', label: 'Planning' },
-    APPROVED: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-400', label: 'Approved' },
-    SCHEDULED: { bg: 'bg-purple-500/10', text: 'text-purple-400', dot: 'bg-purple-400', label: 'Scheduled' },
-    EXECUTING: { bg: 'bg-cyan-500/10', text: 'text-cyan-400', dot: 'bg-cyan-400', label: 'Executing' },
+    PENDING_REVIEW: {
+      bg: 'bg-orange-500/10',
+      text: 'text-orange-400',
+      dot: 'bg-orange-400',
+      label: 'Pending Review',
+    },
+    REVIEW: {
+      bg: 'bg-amber-500/10',
+      text: 'text-amber-400',
+      dot: 'bg-amber-400',
+      label: 'In Review',
+    },
+    PROMOTED: {
+      bg: 'bg-blue-500/10',
+      text: 'text-blue-400',
+      dot: 'bg-blue-400',
+      label: 'Promoted',
+    },
+    PLANNING: {
+      bg: 'bg-indigo-500/10',
+      text: 'text-indigo-400',
+      dot: 'bg-indigo-400',
+      label: 'Planning',
+    },
+    APPROVED: {
+      bg: 'bg-emerald-500/10',
+      text: 'text-emerald-400',
+      dot: 'bg-emerald-400',
+      label: 'Approved',
+    },
+    SCHEDULED: {
+      bg: 'bg-purple-500/10',
+      text: 'text-purple-400',
+      dot: 'bg-purple-400',
+      label: 'Scheduled',
+    },
+    EXECUTING: {
+      bg: 'bg-cyan-500/10',
+      text: 'text-cyan-400',
+      dot: 'bg-cyan-400',
+      label: 'Executing',
+    },
     BLOCKED: { bg: 'bg-red-500/10', text: 'text-red-400', dot: 'bg-red-400', label: 'Blocked' },
     DONE: { bg: 'bg-green-500/10', text: 'text-green-400', dot: 'bg-green-400', label: 'Done' },
-    TRACKING: { bg: 'bg-teal-500/10', text: 'text-teal-400', dot: 'bg-teal-400', label: 'Tracking' },
-    CANCELLED: { bg: 'bg-gray-500/10', text: 'text-gray-400', dot: 'bg-gray-400', label: 'Cancelled' },
-    ARCHIVED: { bg: 'bg-slate-500/10', text: 'text-slate-500', dot: 'bg-slate-500', label: 'Archived' },
+    TRACKING: {
+      bg: 'bg-teal-500/10',
+      text: 'text-teal-400',
+      dot: 'bg-teal-400',
+      label: 'Tracking',
+    },
+    CANCELLED: {
+      bg: 'bg-gray-500/10',
+      text: 'text-gray-400',
+      dot: 'bg-gray-400',
+      label: 'Cancelled',
+    },
+    ARCHIVED: {
+      bg: 'bg-slate-500/10',
+      text: 'text-slate-400',
+      dot: 'bg-slate-500',
+      label: 'Archived',
+    },
   };
 
 // Type colors map

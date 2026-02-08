@@ -47,16 +47,6 @@ interface ChatMenuProps {
   className?: string;
 }
 
-// Group labels for conversation history
-const GROUP_LABELS: Record<string, { en: string; pl: string }> = {
-  pinned: { en: 'Pinned', pl: 'Przypięte' },
-  today: { en: 'Today', pl: 'Dzisiaj' },
-  yesterday: { en: 'Yesterday', pl: 'Wczoraj' },
-  thisWeek: { en: 'This week', pl: 'Ten tydzień' },
-  lastMonth: { en: 'Last month', pl: 'Ostatni miesiąc' },
-  older: { en: 'Older', pl: 'Starsze' },
-};
-
 export const ChatMenu: React.FC<ChatMenuProps> = ({
   projectId,
   onNewChat,
@@ -65,7 +55,7 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
   onPromptSelect,
   className = '',
 }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Menu state
@@ -87,12 +77,14 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
   } = useConversationStore();
 
   // Fetch conversations and pinned prompts when menu opens
+  // Note: fetchConversations is a stable Zustand action - we exclude it from deps to prevent infinite loops
   useEffect(() => {
     if (isOpen) {
       fetchConversations({ projectId });
       fetchPinnedPrompts();
     }
-  }, [isOpen, projectId, fetchConversations]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, projectId]);
 
   const fetchPinnedPrompts = async () => {
     setPinnedLoading(true);
@@ -179,8 +171,6 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
     .filter(([key, items]) => items.length > 0 && key !== 'archived')
     .slice(0, 5); // Limit to 5 groups
 
-  const isPolish = i18n.language === 'pl';
-
   return (
     <div ref={menuRef} className={`relative ${className}`}>
       {/* Toggle Button */}
@@ -195,7 +185,7 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
                     }
                     hover:shadow-lg
                 `}
-        title={t('aiChat.menu', 'Menu')}
+        title={t('aiChat.chatMenuTitle', 'Menu')}
       >
         {isOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
@@ -279,7 +269,7 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
                     {visibleGroups.map(([groupKey, items]) => (
                       <div key={groupKey} className="mb-2">
                         <p className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 px-3 py-1">
-                          {isPolish ? GROUP_LABELS[groupKey]?.pl : GROUP_LABELS[groupKey]?.en}
+                          {t(`aiChat.groups.${groupKey}`, groupKey)}
                         </p>
                         {(items as Conversation[]).slice(0, 5).map((conv) => (
                           <button

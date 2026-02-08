@@ -1,14 +1,14 @@
 /**
  * EscalationService - Unit Tests (L1)
  * Tests for escalation logic and decision escalation
- * 
+ *
  * Coverage target: 95%+
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 
 // Mock queryHelpers
-vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
+vi.mock('../../../server/src/utils/queryHelpers.js', () => ({
   queryRun: vi.fn(),
   queryOne: vi.fn(),
   queryAll: vi.fn(),
@@ -20,7 +20,7 @@ vi.mock('uuid', () => ({
 }));
 
 // Mock logger
-vi.mock('../../../../server/src/utils/Logger.js', () => ({
+vi.mock('../../../server/src/utils/Logger.js', () => ({
   default: {
     info: vi.fn(),
     error: vi.fn(),
@@ -33,8 +33,8 @@ import {
   getEscalationRules,
   getDefaultThresholds,
   EscalationService,
-} from '../../../../server/src/services/escalationService';
-import * as queryHelpers from '../../../../server/src/utils/queryHelpers.js';
+} from '../../../server/src/services/escalationService';
+import * as queryHelpers from '../../../server/src/utils/queryHelpers.js';
 
 describe('EscalationService', () => {
   beforeEach(() => {

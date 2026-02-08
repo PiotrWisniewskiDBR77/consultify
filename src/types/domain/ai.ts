@@ -1,3 +1,5 @@
+import { AppView } from '../core';
+
 /**
  * AI Domain Types
  * Enterprise SaaS Architecture - AI/LLM Types
@@ -7,13 +9,23 @@
 // LLM PROVIDER TYPES
 // ==========================================
 
-export type LLMProvider =
+export type LLMProviderId =
   | 'openai'
   | 'anthropic'
   | 'google'
   | 'mistral'
-  | 'azure'
+  | 'groq'
+  | 'together'
+  | 'nvidia'
+  | 'deepseek'
+  | 'qwen'
+  | 'ernie'
+  | 'z_ai'
   | 'ollama'
+  | 'tavily'
+  | 'google_search'
+  | 'cohere'
+  | 'azure'
   | 'custom';
 
 export type LLMTier = 'free' | 'standard' | 'premium' | 'enterprise' | 'budget';
@@ -24,43 +36,68 @@ export type LLMCapability =
   | 'vision'
   | 'function_calling'
   | 'streaming'
-  | 'embedding';
+  | 'embedding'
+  | 'reasoning';
 
 /**
  * LLM Provider configuration
+ * Standardized from core.ts and domain/ai.ts
  */
 export interface LLMProviderConfig {
   id: string;
-  provider: LLMProvider;
   name: string;
-  model: string;
-  model_id?: string; // For compatibility with LLMProvider
-  modelId?: string; // Alias for model_id
+  provider: LLMProviderId;
+  api_key: string;
+  apiKey?: string; // Alias
+  endpoint?: string;
+  baseUrl?: string; // Alias
+  model_id: string;
+  modelId?: string; // Alias
+  model?: string; // Alias
   displayName?: string;
-  apiKey?: string;
-  api_key?: string; // For compatibility with LLMProvider
-  baseUrl?: string;
-  endpoint?: string; // For compatibility with LLMProvider
-  isEnabled: boolean;
-  isDefault: boolean;
-  is_active?: boolean; // For compatibility with LLMProvider
-  is_enabled_for_org?: boolean; // Organization context
-  tier: LLMTier | string; // Relaxed type for compatibility with string inputs
-  maxTokens: number;
-  contextWindow: number;
-  capabilities: LLMCapability[];
-  costPerInputToken?: number;
-  costPerOutputToken?: number;
-  cost_per_1k?: number; // For compatibility with LLMProvider
+
+  // Costs
+  cost_per_1k: number;
   input_cost_per_1k?: number;
   output_cost_per_1k?: number;
-  rateLimit?: LLMRateLimit;
-  healthStatus?: 'healthy' | 'degraded' | 'unhealthy' | 'unknown' | LLMHealthStatus;
-  visibility?: 'admin' | 'public' | 'beta'; // For compatibility with LLMProvider
-  recommendation?: string; // For LLMSelector compatibility
+  costPerInputToken?: number;
+  costPerOutputToken?: number;
+  markup_multiplier?: number;
+
+  // Status
+  is_active: boolean;
+  isEnabled?: boolean; // Alias
+  is_default?: boolean;
+  isDefault?: boolean; // Alias
+  visibility: 'admin' | 'public' | 'beta';
+  priority?: number;
+
+  // Organization Context
+  is_enabled_for_org?: boolean;
+
+  // Technical Conditions
+  context_window?: number;
+  contextWindow?: number; // Alias
+  maxTokens?: number; // legacy
+  max_outputs?: number; // Max output tokens
+  description?: string;
+  capabilities: LLMCapability[] | string[];
+
+  // Runtime status
+  healthStatus?: 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
+  lastHealthCheck?: string;
+  supportsVision?: boolean;
+  supportsTools?: boolean;
+  supportsStreaming?: boolean;
+  tier: LLMTier | string;
+  isConfigured?: boolean;
+
   createdAt: string;
   updatedAt: string;
 }
+
+// Rename the legacy type to avoid collision if it's still used as just the provider string
+export type LLMProvider = LLMProviderId;
 
 /**
  * LLM Rate limit configuration
@@ -120,28 +157,207 @@ export interface ConversationContext {
   assessmentId?: string;
   screenId?: string;
   persona?: AIPersona;
-  focusMode?: AIFocusMode;
+  focusMode?: FocusMode | AIFocusMode | string;
   systemPrompt?: string;
   customInstructions?: string;
+  aiContext?: AIContext; // Full contextual 6-layer snapshot
 }
 
 /**
- * AI Message
+ * Interactive option for chat responses
  */
-export interface AIMessage {
+export interface ChatOption {
   id: string;
-  conversationId: string;
-  role: MessageRole;
-  content: string;
-  model?: string;
-  provider?: LLMProvider;
-  tokensUsed?: TokenUsage;
-  artifacts?: AIArtifact[];
-  toolCalls?: AIToolCall[];
-  feedback?: MessageFeedback;
-  metadata?: MessageMetadata;
-  createdAt: string;
+  label: string;
+  value: string;
 }
+
+/**
+ * Tool call information for AI-assisted operations
+ */
+export interface ToolCallInfo {
+  name: string;
+  args: Record<string, unknown>;
+  result?: unknown;
+  status?: 'pending' | 'approved' | 'rejected' | 'executed';
+}
+
+/**
+ * Citation from PMO data or external sources
+ */
+export interface ChatCitation {
+  id: string;
+  type: 'assessment' | 'initiative' | 'report' | 'roadmap' | 'external';
+  title: string;
+  reference: string;
+  link?: string;
+  excerpt?: string;
+  entityId?: string;
+}
+
+/**
+ * Action button in AI response
+ */
+export interface ChatResponseAction {
+  id: string;
+  type: 'navigate' | 'execute' | 'expand' | 'copy';
+  label: string;
+  icon?: string;
+  payload: {
+    view?: AppView | string;
+    apiCall?: string;
+    data?: Record<string, unknown>;
+    copyText?: string;
+  };
+}
+
+/**
+ * Focus Mode for AI context filtering
+ */
+export type FocusMode = 'all' | 'pmo-docs' | 'project-data' | 'research' | 'web';
+
+/**
+ * AI Artifact types
+ *
+ * Notes:
+ * - We keep this as a superset for backward compatibility across the codebase.
+ * - Prefer kebab-case going forward (e.g. `pmo-document`), but accept legacy variants.
+ */
+export type AIArtifactType =
+  | 'markdown'
+  | 'code'
+  | 'html'
+  | 'diagram'
+  | 'table'
+  | 'pmo-document'
+  | 'pmo_document'
+  | 'pmo-document' // keep explicit for readability
+  | 'document'
+  | 'chart'
+  | 'json'
+  | 'mermaid'
+  | 'latex';
+
+export interface AIArtifactMetadata {
+  filename?: string;
+  lineCount?: number;
+  wordCount?: number;
+  isExecutable?: boolean;
+  dependencies?: string[];
+  framework?: string;
+  templateType?: string;
+  exportFormats?: string[];
+}
+
+/**
+ * Artifact - Generated structured content from AI
+ *
+ * Single canonical definition (prevents TS declaration merging collisions).
+ */
+export interface AIArtifact {
+  id: string;
+  type: AIArtifactType;
+  content: string;
+
+  // Optional / legacy fields
+  title?: string;
+  messageId?: string;
+  language?: string;
+  format?: string;
+  editable?: boolean;
+  version?: number;
+  createdAt: string | Date;
+  updatedAt?: string | Date;
+  metadata?: AIArtifactMetadata;
+
+  /** Diagram-specific data */
+  diagramData?: {
+    diagramType: 'process_flow' | 'decision_tree' | 'mind_map' | 'org_chart';
+    nodes: Array<{
+      id: string;
+      type: string;
+      position: { x: number; y: number };
+      data: Record<string, unknown>;
+    }>;
+    edges?: Array<{
+      id: string;
+      source: string;
+      target: string;
+      type?: string;
+      data?: Record<string, unknown>;
+    }>;
+  };
+}
+
+/**
+ * Thinking Step for Chain of Thought reasoning
+ */
+export interface ThinkingStep {
+  id: string;
+  label: string;
+  title?: string; // compatibility
+  content: string;
+  status: 'pending' | 'in_progress' | 'done' | 'processing' | 'completed' | 'failed';
+  timestamp: Date | string;
+  durationMs?: number;
+  duration?: number; // compatibility
+  category?: 'analysis' | 'research' | 'synthesis' | 'validation';
+}
+
+/**
+ * AI Message / Chat Message
+ * Consolidated definition for v2.0
+ */
+export interface ChatMessage {
+  id: string;
+  role: 'ai' | 'user' | 'assistant' | 'system' | 'function' | 'tool';
+  content: string;
+  timestamp: Date | string;
+  type?: 'text' | 'action_request' | 'summary' | 'file' | 'tool_call';
+
+  // Interactive Elements
+  options?: ChatOption[];
+  multiSelect?: boolean;
+  actions?: ChatResponseAction[];
+
+  // Logic & reasoning
+  isThinking?: boolean;
+  thinkingSteps?: ThinkingStep[];
+  toolCalls?: ToolCallInfo[];
+
+  // Content & Context
+  artifacts?: AIArtifact[];
+  citations?: ChatCitation[];
+  focusMode?: FocusMode | string;
+
+  // Metadata & Status
+  feedback?: MessageFeedback | ResponseFeedback;
+  metadata?: {
+    responseMode?: string;
+    processingTime?: number;
+    retryCount?: number;
+    source?: 'chat' | 'api' | 'automation' | 'agent';
+    parentMessageId?: string;
+    editedFrom?: string;
+    [key: string]: any;
+  };
+  parentMessageId?: string;
+  isStreaming?: boolean;
+  streamProgress?: number;
+  canEdit?: boolean;
+  regenerateCount?: number;
+
+  createdAt?: string | Date;
+
+  // Team conversation extensions
+  authorUserId?: string | null;
+  authorName?: string | null;
+}
+
+/**
+ * AI Message (Alias for backward compatibility)
+ */
+export type AIMessage = ChatMessage;
 
 /**
  * Token usage breakdown
@@ -154,40 +370,9 @@ export interface TokenUsage {
   cost?: number;
 }
 
-/**
- * AI Artifact (code, documents, diagrams, etc.)
- */
-export interface AIArtifact {
-  id: string;
-  messageId: string;
-  type: ArtifactType;
-  title?: string;
-  content: string;
-  language?: string;
-  format?: string;
-  metadata?: ArtifactMetadata;
-  createdAt: string;
-}
-
-export type ArtifactType =
-  | 'code'
-  | 'document'
-  | 'diagram'
-  | 'table'
-  | 'chart'
-  | 'pmo_document'
-  | 'markdown'
-  | 'json'
-  | 'mermaid'
-  | 'latex';
-
-export interface ArtifactMetadata {
-  filename?: string;
-  lineCount?: number;
-  wordCount?: number;
-  isExecutable?: boolean;
-  dependencies?: string[];
-}
+// Backward compatibility aliases (avoid breaking imports)
+export type ArtifactType = AIArtifactType;
+export type ArtifactMetadata = AIArtifactMetadata;
 
 /**
  * AI Tool call
@@ -214,24 +399,139 @@ export interface MessageFeedback {
 }
 
 /**
- * Detailed Response feedback
- * Extended in v2.0 with adaptive style fields
+ * Detailed/**
+ * Response feedback from user
+ * Consolidated v2.0 adaptive feedback schema
  */
 export interface ResponseFeedback {
-  rating: 'positive' | 'negative';
-  comment?: string;
-  timestamp: string | Date;
-  metadata?: Record<string, unknown>;
-  wantedMode?: string;
-  lengthFeedback?: 'too-short' | 'just-right' | 'too-long';
-  detailFeedback?: 'too-little' | 'just-right' | 'too-much';
+  rating: 'positive' | 'negative' | 'neutral';
+  lengthFeedback?: 'too-short' | 'just-right' | 'too-long' | string;
+  detailFeedback?: 'too-little' | 'just-right' | 'too-much' | string;
+  formatFeedback?: 'needs_structure' | 'good_format' | 'too_complex' | string;
   customFeedback?: string;
+  wantedMode?: 'quick' | 'standard' | 'deepStudy' | string;
+  timestamp?: Date | string;
 
   // Adaptive style fields (v2.0)
-  actionability?: number; // 1-5
-  accuracy?: number; // 1-5
-  expectedFormat?: 'bullets' | 'paragraphs' | 'structured' | 'conversational';
-  missingInfo?: string;
+  actionability?: number; // 1-5 - How useful/actionable was the response
+  accuracy?: number; // 1-5 - How accurate/correct was the information
+  expectedFormat?: 'bullets' | 'paragraphs' | 'structured' | 'conversational' | string;
+  missingInfo?: string; // What was missing from the response
+}
+
+export type AIPolicyLevel = 'ADVISORY' | 'ASSISTED' | 'PROACTIVE' | 'AUTOPILOT';
+
+export type AIRole = 'ADVISOR' | 'PMO_MANAGER' | 'EXECUTOR' | 'EDUCATOR';
+
+/** AI Project Role - Hierarchical governance level (ADVISOR < MANAGER < OPERATOR) */
+export enum AIProjectRole {
+  ADVISOR = 'ADVISOR', // Explains, suggests, warns - cannot modify data
+  MANAGER = 'MANAGER', // Prepares drafts - requires explicit approval
+  OPERATOR = 'OPERATOR', // Executes approved actions within governance
+}
+
+/** AI Role Capabilities - What each role can do */
+export interface AIRoleCapabilities {
+  canExplain: boolean;
+  canSuggest: boolean;
+  canAnalyze: boolean;
+  canCreateDrafts: boolean;
+  canExecuteActions: boolean;
+  canModifyEntities: boolean;
+  requiresApproval: boolean;
+}
+
+/** AI Role Configuration for Projects */
+export interface AIRoleConfig {
+  activeRole: AIProjectRole;
+  capabilities: AIRoleCapabilities;
+  roleDescription: string;
+}
+
+/** AI Chat Mode - User-selectable intent */
+export type AIChatMode = 'EXPLAIN' | 'GUIDE' | 'ANALYZE' | 'DO' | 'TEACH';
+
+/** Platform Context Layer */
+export interface AIPlatformContext {
+  role: 'SUPERADMIN' | 'ADMIN' | 'USER';
+  tenantId: string;
+  userId: string;
+  policyLevel: AIPolicyLevel;
+  globalPolicies: {
+    internetEnabled: boolean;
+    maxPolicyLevel: AIPolicyLevel;
+    auditRequired: boolean;
+  };
+}
+
+/** Organization Context Layer */
+export interface AIOrganizationContext {
+  organizationId: string;
+  organizationName: string;
+  locations: string[];
+  activeProjectIds: string[];
+  activeProjectCount: number;
+  pmoMaturityLevel?: 'BASIC' | 'INTERMEDIATE' | 'ADVANCED';
+}
+
+/** Project Context Layer */
+export interface AIProjectContext {
+  projectId: string;
+  projectName: string;
+  currentPhase: string;
+  phaseNumber: number;
+  governanceRules: {
+    requireApprovalForPhaseTransition: boolean;
+    stageGatesEnabled: boolean;
+    aiPolicyOverride?: AIPolicyLevel;
+  };
+  sponsorId?: string;
+  projectManagerId?: string;
+  roadmapStatus?: string;
+  initiativeCount: number;
+  completedInitiatives: number;
+}
+
+/** Execution Context Layer */
+export interface AIExecutionContext {
+  userId: string;
+  userTasks: { id: string; title: string; status: string; dueDate?: string }[];
+  userInitiatives: { id: string; name: string; status: string }[];
+  pendingDecisions: { id: string; title: string; createdAt: string }[];
+  blockers: { id: string; type: string; description: string }[];
+  capacityStatus: 'HEALTHY' | 'WARNING' | 'OVERLOADED';
+}
+
+/** Knowledge Context Layer */
+export interface AIKnowledgeContext {
+  projectDocuments: { id: string; name: string; type: string }[];
+  previousDecisions: { id: string; title: string; outcome: string }[];
+  changeRequests: { id: string; title: string; status: string }[];
+  lessonsLearned: string[];
+  phaseHistory: { phase: string; enteredAt: string }[];
+}
+
+/** External Context Layer */
+export interface AIExternalContext {
+  internetEnabled: boolean;
+  externalSourcesUsed: string[];
+}
+
+/** Complete 6-Layer AI Context */
+export interface AIContext {
+  platform: AIPlatformContext;
+  organization: AIOrganizationContext;
+  project?: AIProjectContext;
+  execution: AIExecutionContext;
+  knowledge: AIKnowledgeContext;
+  external: AIExternalContext;
+
+  // Meta
+  builtAt: string;
+  contextHash: string;
+  currentScreen?: string;
+  selectedObjectId?: string;
+  selectedObjectType?: string;
 }
 
 /**
@@ -267,6 +567,9 @@ export type AIFocusMode =
   | 'analysis'
   | 'code'
   | 'documentation';
+
+// Backward compatibility alias
+export type Artifact = AIArtifact;
 
 export interface AIPersonaConfig {
   id: AIPersona;
@@ -354,7 +657,7 @@ export interface RAGSearchResult {
 }
 
 // ==========================================
-// AI MEMORY TYPES
+// AI MEMORY & SETTINGS Hierarchy
 // ==========================================
 
 export type MemoryType = 'fact' | 'preference' | 'context' | 'instruction' | 'correction';
@@ -380,9 +683,397 @@ export interface AIMemory {
   updatedAt: string;
 }
 
+/** AI Memory - Session Layer */
+export interface AISessionMemory {
+  conversationId: string;
+  messages: { role: 'user' | 'ai'; content: string; timestamp: string }[];
+  currentScreen: string;
+  startedAt: string;
+}
+
+/** AI Memory - Project Layer */
+export interface AIProjectMemory {
+  projectId: string;
+
+  // Decisions & Rationale
+  majorDecisions: {
+    decisionId: string;
+    title: string;
+    outcome: string;
+    rationale: string;
+    recordedAt: string;
+  }[];
+
+  // Phase Transitions
+  phaseTransitions: {
+    from: string;
+    to: string;
+    reason: string;
+    transitionedAt: string;
+  }[];
+
+  // AI Recommendations
+  aiRecommendations: {
+    recommendation: string;
+    accepted: boolean;
+    userFeedback?: string;
+    recordedAt: string;
+  }[];
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** AI Memory - Organization Layer */
+export interface AIOrganizationMemory {
+  organizationId: string;
+
+  governanceStyle: 'STRICT' | 'BALANCED' | 'FLEXIBLE';
+  aiStrictnessPreference: 'MINIMAL' | 'STANDARD' | 'AGGRESSIVE';
+  recurringPatterns: string[];
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** AI User Preferences (v1 legacy alias) */
+export interface AIUserPreferences {
+  userId: string;
+
+  preferredTone: 'BUDDY' | 'EXPERT' | 'MANAGER';
+  educationModeEnabled: boolean;
+  proactiveNotifications: boolean;
+  preferredLanguage: string;
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** AI Proactivity Mode - How proactive the AI should be */
+export type AIProactivityMode = 'REACTIVE' | 'BALANCED' | 'PROACTIVE';
+
+/** Proactivity behavior flags for runtime */
+export interface ProactivityBehavior {
+  autoSuggest: boolean;
+  nudges: boolean;
+  contextualHints: boolean;
+  initiateConversation: boolean;
+}
+
+/** SuperAdmin AI Settings - Platform-wide configuration */
+export interface SuperAdminAISettings {
+  id: string; // 'global'
+
+  // Provider Management
+  defaultProvider: string | null;
+  fallbackChain: string[];
+  circuitBreakerConfig: {
+    failureThreshold: number;
+    cooldownSeconds: number;
+  };
+
+  // Global Limits
+  globalTokenLimit: number;
+  globalRateLimit: {
+    requestsPerMinute: number;
+    requestsPerHour: number;
+  };
+  maxContextWindowSize: number;
+  maxTokensPerRequest: number;
+
+  // Security & PII
+  piiDetectionSensitivity: 'low' | 'medium' | 'high';
+  requireEncryption: boolean;
+  dataResidency: string | null;
+
+  // Timestamps
+  createdAt: string;
+  updatedAt: string;
+  updatedBy: string | null;
+}
+
+/** Organization AI Settings - Per-org configuration */
+export interface OrgAISettings {
+  organizationId: string;
+
+  // Policy Configuration
+  policyLevel: AIPolicyLevel;
+  maxPolicyLevel: AIPolicyLevel;
+  defaultProactivityMode: AIProactivityMode;
+
+  // AI Roles Configuration
+  activeRoles: AIRole[];
+  defaultRole: AIRole;
+
+  // Model Selection (subset of SuperAdmin providers)
+  enabledModelIds: string[];
+
+  // Limits & Budget
+  maxAICallsPerDay: number;
+  maxTokensPerMonth: number;
+  monthlyBudgetUSD: number;
+  hardLimitUSD: number;
+  freezeOnLimit: boolean;
+
+  // Feature Toggles
+  webSearchEnabled: boolean;
+  artifactsEnabled: boolean;
+  thinkingStepsEnabled: boolean;
+  focusModesEnabled: boolean;
+  voiceEnabled: boolean;
+
+  // Auto-Tier Configuration
+  autoTierEnabled?: boolean;
+  autoTierDirection?: 'up' | 'down' | 'both';
+  autoTierThreshold?: number;
+
+  // System Prompts
+  systemPrompts?: SystemPromptConfig[];
+  defaultSystemPromptId?: string;
+
+  // Audit Configuration
+  auditAllRequests: boolean;
+  auditPolicyChanges: boolean;
+
+  // Timestamps
+  createdAt: string;
+  updatedAt: string;
+  updatedBy: string | null;
+}
+
+/** System Prompt Configuration (v2 style) */
+export interface SystemPromptConfig {
+  id: string;
+  name: string;
+  content: string;
+  category: 'default' | 'persona' | 'focus_mode' | 'custom';
+  isActive: boolean;
+  version: number;
+  context_config?: {
+    include_project_context?: boolean;
+    include_user_context?: boolean;
+    include_org_context?: boolean;
+    max_context_tokens?: number;
+  };
+  variables?: SystemPromptVariable[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** System Prompt Variable */
+export interface SystemPromptVariable {
+  name: string;
+  description?: string;
+  defaultValue?: string;
+  required: boolean;
+}
+
+/** User AI Settings - Per-user preferences */
+export interface UserAISettings {
+  userId: string;
+
+  // Response Behavior
+  responseStyle: 'concise' | 'balanced' | 'detailed';
+  writingTone: 'professional' | 'casual' | 'technical' | 'friendly';
+  preferredLanguage: string;
+  codeExplanations: boolean;
+  showSources: boolean;
+
+  // Proactivity Mode
+  proactivityMode: AIProactivityMode;
+
+  // Model Parameters
+  modelTemperature: number;
+  maxTokens: number;
+  topP: number;
+  frequencyPenalty: number;
+  presencePenalty: number;
+  systemInstructions: string;
+
+  // Model Selection (from org-enabled models)
+  visibleModelIds: string[];
+  preferredModelId: string | null;
+
+  // Privacy Settings
+  enablePiiRedaction: boolean;
+  dataRetentionPolicy: 'minimal' | 'standard' | 'extended';
+  shareUsageAnalytics: boolean;
+
+  // Context Settings
+  contextRetention: 'session' | 'day' | 'week' | 'month' | 'permanent';
+  autoSuggestions: boolean;
+
+  // Timestamps
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** AI Settings Audit Entry - Tracks all setting changes */
+export interface AISettingsAuditEntry {
+  id: string;
+  timestamp: string;
+
+  // Level & Actor
+  level: 'superadmin' | 'admin' | 'user';
+  actorId: string;
+  actorRole: string;
+
+  // Target & Change
+  targetId: string; // orgId or userId or 'global'
+  settingKey: string;
+  oldValue: unknown;
+  newValue: unknown;
+
+  // Request Metadata
+  ipAddress: string | null;
+  userAgent: string | null;
+}
+
+/** Effective AI Settings - Merged settings for runtime */
+export interface EffectiveAISettings {
+  // Merged from all levels
+  policyLevel: AIPolicyLevel;
+  proactivityMode: AIProactivityMode;
+  proactivityBehavior: ProactivityBehavior;
+
+  // Response settings
+  responseStyle: 'concise' | 'balanced' | 'detailed';
+  writingTone: 'professional' | 'casual' | 'technical' | 'friendly';
+  preferredLanguage: string;
+
+  // Model settings
+  modelTemperature: number;
+  maxTokens: number;
+  topP: number;
+}
+
 // ==========================================
-// AI ACTIONS & PROPOSALS
+// AI PREFERENCES & CHARTER
 // ==========================================
+
+export interface ResponseLengthSettings {
+  quick: 'ultra_short' | 'short' | 'medium';
+  standard: 'short' | 'medium' | 'long';
+  deepStudy: 'medium' | 'long' | 'comprehensive';
+}
+
+export interface ContextualBehaviorSettings {
+  chatMode: 'quick' | 'standard' | 'deepStudy';
+  autoDetectIntent: boolean;
+  confirmLongResponses: boolean;
+  rememberModePerTopic: boolean;
+}
+
+export interface FormattingPreferences {
+  preferBulletPoints: boolean;
+  preferTables: boolean;
+  preferCodeBlocks: boolean;
+  includeExamples: 'none' | 'minimal' | 'detailed';
+  includeSources: boolean;
+  includeActionItems: boolean;
+}
+
+export interface FeedbackSettings {
+  autoPromptAfterResponse: boolean;
+  feedbackFrequency: 'always' | 'sometimes' | 'rarely';
+  trackSatisfaction: boolean;
+}
+
+export interface AIPreferences {
+  responseStyle: 'concise' | 'balanced' | 'detailed';
+  writingTone: 'professional' | 'casual' | 'technical';
+  autoSuggestions: boolean;
+  contextRetention: 'session' | 'persistent' | 'minimal';
+  preferredLanguage: 'auto' | 'en' | 'pl' | string;
+  codeExplanations: boolean;
+  showSources: boolean;
+  userRole?: string;
+  supportLevel?: string;
+  autonomyLevel?: string;
+
+  // Granular Model Controls
+  modelTemperature?: number;
+  maxTokens?: number;
+  topP?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
+  systemInstructions?: string;
+
+  // Feature Toggles
+  enableWebSearch?: boolean;
+  enablePiiRedaction?: boolean;
+
+  // Governance
+  dataRetentionPolicy?: 'none' | '30days' | 'standard';
+  contextWindowStrategy?: 'auto' | 'limit_8k' | 'limit_16k' | 'full';
+
+  // v2.0 Extensions
+  responseLength?: ResponseLengthSettings;
+  contextualBehavior?: ContextualBehaviorSettings;
+  formatting?: FormattingPreferences;
+  feedbackSettings?: FeedbackSettings;
+}
+
+/** AI Charter Generation Request */
+export interface AICharterRequest {
+  sourceType: 'GAP' | 'REPORT' | 'MANUAL';
+  gaps?: any[]; // GapForGeneration from core
+  reportId?: string;
+  templateId?: string;
+  constraints: any; // InitiativeGeneratorConstraints from core
+  organizationContext?: {
+    industry: string;
+    size: string;
+    strategicGoals: string[];
+  };
+}
+
+/** AI Generated Charter */
+export interface AIGeneratedCharter {
+  id?: string;
+  /** Optional display name used in UI previews */
+  name?: string;
+  summary?: string;
+  applicantOneLiner?: string;
+  strategicIntent?: 'Grow' | 'Fix' | 'Stabilize' | 'De-risk' | 'Build Capability';
+  hypothesis?: string;
+  /** Optional timeline summary used by UI */
+  timeline?: string;
+  /** Optional priority label used by UI */
+  priority?: 'High' | 'Medium' | 'Low' | string;
+  /** Optional derived ROI estimate used by UI */
+  estimatedROI?: number;
+
+  // Structured sections
+  problemStructured: any; // ProblemStructured from core
+  targetState: any; // TargetState from core
+  killCriteria: string[];
+  suggestedTasks: any[];
+  suggestedTeam: any[];
+  keyRisks: { risk: string; mitigation: string; metric: 'Low' | 'Medium' | 'High' }[];
+  deliverables: string[];
+  milestones: { name: string; targetDate: string }[];
+
+  // Financials
+  capex?: number;
+  firstYearOpex?: number;
+  annualBenefit?: number;
+
+  // Meta
+  templateId?: string;
+  generationConfidence: 'HIGH' | 'MEDIUM' | 'LOW';
+}
+
+/** Legacy Provider Reference (stored locally) */
+export interface UserAIProvider {
+  id: string; // uuid
+  name: string;
+  provider: 'openai' | 'anthropic' | 'google' | 'ollama' | 'deepseek' | string;
+  apiKey?: string;
+  endpoint?: string;
+  isEnabled: boolean;
+  isLocal: boolean;
+}
 
 export type AIActionType =
   | 'create_task'
@@ -390,10 +1081,17 @@ export type AIActionType =
   | 'create_initiative'
   | 'update_initiative'
   | 'create_decision'
-  | 'add_risk'
+  | 'schedule_meeting'
   | 'generate_report'
   | 'send_notification'
-  | 'schedule_meeting'
+  | 'update_assessment'
+  | 'create_milestone'
+  | 'assign_resource'
+  | 'navigate'
+  | 'suggest_roadmap_change'
+  | 'prepare_decision_summary'
+  | 'explain_context'
+  | 'analyze_risks'
   | 'custom';
 
 export type AIActionStatus = 'pending' | 'approved' | 'rejected' | 'executed' | 'failed';

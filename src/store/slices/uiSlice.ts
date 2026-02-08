@@ -27,6 +27,7 @@ export interface UISlice {
 
   // React Router navigation function
   navigateFn?: (path: string) => void;
+  pendingNavigation: { view: AppView; route: string } | null;
   setNavigateFn: (fn: (path: string) => void) => void;
 
   // Actions
@@ -46,6 +47,19 @@ export interface UISlice {
   navigateWithChatContext: (view: AppView, options?: NavigationOptions) => void;
   returnToFullChat: () => void;
   setPreviousView: (view: AppView | null) => void;
+
+  // Cross-module deep links (e.g., header → My Work)
+  myWorkIntent: {
+    tab?: 'executive' | 'inbox' | 'focus' | 'tasks' | 'decisions' | 'notifications';
+    open?: {
+      type: 'notification' | 'task' | 'decision';
+      id: string;
+      name?: string;
+      data?: unknown;
+    };
+  } | null;
+  setMyWorkIntent: (intent: UISlice['myWorkIntent']) => void;
+  clearMyWorkIntent: () => void;
 }
 
 export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get) => ({
@@ -55,7 +69,9 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
   isSidebarOpen: false,
   isSidebarCollapsed: true,
 
-  isChatCollapsed: false,
+  // Perf default: keep AI panel closed unless user explicitly opens it.
+  // UnifiedChatPanel is heavy (animations, rich UI) and can degrade responsiveness across the app.
+  isChatCollapsed: true,
   chatPanelWidth: 380,
   isChatSlidingPanelOpen: false,
 
@@ -63,8 +79,26 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
   previousView: null,
 
   navigateFn: undefined,
+  pendingNavigation: null,
+  myWorkIntent: null,
 
-  setNavigateFn: (fn) => set({ navigateFn: fn }),
+  setNavigateFn: (fn) => {
+    const pending = get().pendingNavigation;
+    set({ navigateFn: fn, pendingNavigation: null });
+
+    if (pending?.route) {
+      try {
+        fn(pending.route);
+      } catch (error) {
+        console.error('[UISlice] ERROR applying pending navigation:', {
+          pending,
+          error,
+        });
+      }
+    }
+  },
+  setMyWorkIntent: (intent) => set({ myWorkIntent: intent }),
+  clearMyWorkIntent: () => set({ myWorkIntent: null }),
 
   setCurrentView: (view) => {
     const previousView = get().currentView;
@@ -117,24 +151,15 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
         navigationMonitor.recordNavigation(previousView, view, false, errorMsg);
       }
     } else {
-      console.warn('[UISlice] WARNING: navigateFn not available, using fallback');
-      // Fallback to window.location
-      try {
-        const route = getRouteFromAppView(view);
-        console.log('[UISlice] Fallback route:', {
-          view,
-          resolvedRoute: route,
-          method: 'window.location.href',
-        });
-        window.location.href = route;
-        navigationMonitor.recordNavigation(previousView, view, true);
-      } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        console.error('[UISlice] Fallback navigation FAILED:', {
-          view,
-          error,
-        });
-        navigationMonitor.recordNavigation(previousView, view, false, errorMsg);
+      const route = getRouteFromAppView(view);
+      console.warn('[UISlice] WARNING: navigateFn not available, queuing navigation', {
+        view,
+        resolvedRoute: route,
+      });
+      if (route) {
+        set({ pendingNavigation: { view, route } });
+      } else {
+        navigationMonitor.recordNavigation(previousView, view, false, 'No route found');
       }
     }
 
@@ -210,7 +235,14 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
         });
       }
     } else {
-      console.warn('[UISlice] WARNING: navigateFn not available for chat context navigation');
+      const route = getRouteFromAppView(view);
+      console.warn('[UISlice] WARNING: navigateFn not available, queuing chat context navigation', {
+        view,
+        resolvedRoute: route,
+      });
+      if (route) {
+        set({ pendingNavigation: { view, route } });
+      }
     }
 
     console.log('[UISlice] ====== navigateWithChatContext END ======');
@@ -231,6 +263,11 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
         navigateFn(route);
       } catch (error) {
         console.error('[UISlice] Error returning to full chat:', error);
+      }
+    } else {
+      const route = getRouteFromAppView(AppView.AI_CHAT);
+      if (route) {
+        set({ pendingNavigation: { view: AppView.AI_CHAT, route } });
       }
     }
   },

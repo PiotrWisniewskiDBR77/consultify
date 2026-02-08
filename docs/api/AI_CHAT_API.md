@@ -320,20 +320,42 @@ POST /ai/chat/stream
   "conversationId": "conv_123",
   "history": [
     { "role": "user", "content": "Previous message" },
-    { "role": "ai", "content": "Previous response" }
+    { "role": "assistant", "content": "Previous response" }
   ],
+  "systemInstruction": "Optional system instruction override",
+  "roleName": "CONSULTANT",
+  "language": "pl",
+
+  "projectId": "00000000-0000-0000-0000-000000000000",
+  "screenContext": {
+    "currentScreen": "initiatives",
+    "selectedObjectType": "initiative",
+    "selectedObjectId": "init_456"
+  },
+  "focusMode": "all",
+
   "context": {
-    "focusMode": "project",
     "workspaceContext": {
-      "type": "initiative",
-      "entityId": "init_456",
-      "pmoProjectId": "proj_789"
+      "projectId": "00000000-0000-0000-0000-000000000000"
     }
   },
-  "options": {
-    "showThinking": true,
-    "language": "pl"
-  }
+
+  "aiModes": {
+    "deepResearch": false,
+    "webSearch": false,
+    "showReasoning": true
+  },
+  "knowledgeSources": {
+    "pmoDocuments": true,
+    "projectData": true,
+    "organizationData": false
+  },
+  "responseStyle": "concise",
+
+  "selectedTier": "BUDGET",
+  "selectedModelId": null,
+
+  "resumeFromPartial": false
 }
 ```
 
@@ -342,15 +364,13 @@ POST /ai/chat/stream
 ```
 Content-Type: text/event-stream
 
-data: {"type": "thought", "content": "Analyzing project context..."}
+data: {"type": "thought", "step": "Analyzing project context..."}
 
-data: {"type": "thought", "content": "Reviewing initiative details..."}
+data: {"type": "thought", "step": "Reviewing initiative details..."}
 
-data: {"type": "text", "content": "Based on "}
+data: {"text": "Based on "}
 
-data: {"type": "text", "content": "your initiative..."}
-
-data: {"type": "action", "action": {"type": "create_task", "title": "Create task", ...}}
+data: {"text": "your initiative..."}
 
 data: [DONE]
 ```
@@ -359,10 +379,7 @@ data: [DONE]
 | Type | Description |
 |------|-------------|
 | `thought` | AI thinking/reasoning step |
-| `text` | Response text chunk |
-| `action` | Proposed AI action |
-| `artifact` | Generated artifact |
-| `citation` | Source citation |
+| `text` | Response text chunk (sent as `{"text": "..."}`) |
 | `error` | Error message |
 
 ---
@@ -778,18 +795,35 @@ POST /ai/context/build
 }
 ```
 
+### AI budget enforcement (legacy envelope)
+
+Some AI endpoints (notably budget enforcement) use a legacy envelope aligned with the frontend client checks:
+
+```json
+{
+  "error": "AI token budget exceeded. Please contact your administrator.",
+  "code": "AI_BUDGET_EXHAUSTED",
+  "budgetStatus": {
+    "currentUsage": 12345,
+    "budgetLimit": 10000,
+    "usagePercent": 123.45,
+    "scope": "Organization"
+  }
+}
+```
+
 ### Error Codes
 
-| Code                  | HTTP Status | Description              |
-| --------------------- | ----------- | ------------------------ |
-| `UNAUTHORIZED`        | 401         | Invalid or missing token |
-| `FORBIDDEN`           | 403         | Insufficient permissions |
-| `NOT_FOUND`           | 404         | Resource not found       |
-| `VALIDATION_ERROR`    | 400         | Invalid request data     |
-| `CONFLICT`            | 409         | Resource conflict        |
-| `AI_BUDGET_EXHAUSTED` | 429         | AI token budget exceeded |
-| `AI_PROVIDER_ERROR`   | 502         | LLM provider error       |
-| `INTERNAL_ERROR`      | 500         | Server error             |
+| Code                  | HTTP Status | Description                              |
+| --------------------- | ----------- | ---------------------------------------- |
+| `UNAUTHORIZED`        | 401         | Invalid or missing token                 |
+| `FORBIDDEN`           | 403         | Insufficient permissions                 |
+| `NOT_FOUND`           | 404         | Resource not found                       |
+| `VALIDATION_ERROR`    | 400         | Invalid request data                     |
+| `CONFLICT`            | 409         | Resource conflict                        |
+| `AI_BUDGET_EXHAUSTED` | 403         | AI token budget exceeded / budget freeze |
+| `AI_PROVIDER_ERROR`   | 502         | LLM provider error                       |
+| `INTERNAL_ERROR`      | 500         | Server error                             |
 
 ---
 

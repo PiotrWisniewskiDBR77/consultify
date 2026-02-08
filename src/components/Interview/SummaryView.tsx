@@ -1,8 +1,8 @@
 /**
  * SummaryView - Summary tab for Interview
- * 
+ *
  * IMPORTANT: Only facts as-is, NO recommendations
- * 
+ *
  * Sections:
  * - Key Facts (as-is)
  * - Information Gaps
@@ -114,9 +114,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
           {/* Progress indicator */}
           <div className="p-4 bg-slate-50 dark:bg-navy-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-slate-600 dark:text-slate-400">
-                Interview Progress
-              </span>
+              <span className="text-sm text-slate-600 dark:text-slate-400">Interview Progress</span>
               <span className="text-sm font-medium text-navy-900 dark:text-white">
                 {session.answeredQuestions} / {session.totalQuestions} questions answered
               </span>
@@ -124,7 +122,11 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
             <div className="w-full h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all ${
-                  progress >= 80 ? 'bg-emerald-500' : progress >= 50 ? 'bg-amber-500' : 'bg-purple-500'
+                  progress >= 80
+                    ? 'bg-emerald-500'
+                    : progress >= 50
+                      ? 'bg-amber-500'
+                      : 'bg-purple-500'
                 }`}
                 style={{ width: `${progress}%` }}
               />
@@ -136,9 +138,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
             <div className="flex items-start gap-2">
               <AlertCircle size={16} className="text-amber-500 mt-0.5" />
               <div className="text-sm text-amber-800 dark:text-amber-300">
-                <strong>Note:</strong> This summary contains only facts and observations (as-is state).
-                It does not include recommendations, action plans, or next steps.
-                Those will be generated in the Tools and Assessment modules.
+                <strong>Note:</strong> This summary contains only facts and observations (as-is
+                state). It does not include recommendations, action plans, or next steps. Those will
+                be generated in the Tools and Assessment modules.
               </div>
             </div>
           </div>
@@ -148,7 +150,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
           <div className="text-center py-12 text-slate-400 dark:text-slate-500">
             <FileText size={48} className="mx-auto mb-4 opacity-50" />
             <p className="text-lg mb-2">No summary generated yet</p>
-            <p className="text-sm">Click "Generate Summary" to create a summary from your answers.</p>
+            <p className="text-sm">
+              Click "Generate Summary" to create a summary from your answers.
+            </p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -159,7 +163,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                 Key Facts (As-Is)
               </h3>
               {session.summaryFacts.length === 0 ? (
-                <p className="text-sm text-slate-400 dark:text-slate-500 italic">No facts extracted yet.</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+                  No facts extracted yet.
+                </p>
               ) : (
                 <div className="space-y-2">
                   {session.summaryFacts.map((item, idx) => (
@@ -185,7 +191,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                 Information Gaps
               </h3>
               {session.summaryGaps.length === 0 ? (
-                <p className="text-sm text-slate-400 dark:text-slate-500 italic">No gaps identified.</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+                  No gaps identified.
+                </p>
               ) : (
                 <div className="space-y-2">
                   {session.summaryGaps.map((item, idx) => (
@@ -211,7 +219,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                 Constraints & Limitations
               </h3>
               {session.summaryConstraints.length === 0 ? (
-                <p className="text-sm text-slate-400 dark:text-slate-500 italic">No constraints identified.</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+                  No constraints identified.
+                </p>
               ) : (
                 <div className="space-y-2">
                   {session.summaryConstraints.map((item, idx) => (
@@ -222,7 +232,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                       <div className="mt-0.5">{getCategoryIcon(item.category)}</div>
                       <div className="flex-1">
                         <span className="text-xs text-slate-400 uppercase">{item.category}</span>
-                        <p className="text-sm text-slate-700 dark:text-slate-300">{item.constraint}</p>
+                        <p className="text-sm text-slate-700 dark:text-slate-300">
+                          {item.constraint}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -237,7 +249,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                 Current Pain Points
               </h3>
               {session.summaryPainPoints.length === 0 ? (
-                <p className="text-sm text-slate-400 dark:text-slate-500 italic">No pain points identified.</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+                  No pain points identified.
+                </p>
               ) : (
                 <div className="space-y-2">
                   {session.summaryPainPoints.map((item, idx) => (
@@ -248,7 +262,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                       <div className="mt-0.5">{getCategoryIcon(item.category)}</div>
                       <div className="flex-1">
                         <span className="text-xs text-slate-400 uppercase">{item.category}</span>
-                        <p className="text-sm text-slate-700 dark:text-slate-300">{item.painPoint}</p>
+                        <p className="text-sm text-slate-700 dark:text-slate-300">
+                          {item.painPoint}
+                        </p>
                       </div>
                     </div>
                   ))}

@@ -10,8 +10,6 @@
  * and automation technology recommendations.
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   AlertTriangle,
   ArrowRight,
@@ -30,14 +28,16 @@ import {
   Truck,
   XCircle,
 } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
+  DBR77_LEAN_MATURITY_LEVELS,
   DBR77_PHASES,
   DBR77_WASTES,
-  DBR77_LEAN_MATURITY_LEVELS,
   DBR77Phase,
-  WasteType,
   DBR77PhaseConfig,
+  WasteType,
 } from '../../../services/dbr77LeanStructure';
 
 // Simplified types for the form

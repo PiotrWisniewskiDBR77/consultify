@@ -71,18 +71,18 @@ export class AssessmentAuditLogger {
       const auditId = uuid();
 
       const sql = `
-                INSERT INTO audit_logs (
-                    id, user_id, organization_id,
-                    action, resource_type, resource_id,
-                    details, ip_address, user_agent,
+                INSERT INTO activity_logs (
+                    id, organization_id, user_id,
+                    action, entity_type, entity_id,
+                    new_value, ip_address, user_agent,
                     created_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
             `;
 
       const runResult = await run(sql, [
         auditId,
-        params.userId,
         params.organizationId,
+        params.userId,
         params.action,
         params.resourceType,
         params.resourceId,
@@ -185,6 +185,215 @@ export class AssessmentAuditLogger {
       resourceType: assessmentType,
       resourceId: assessmentId,
       details: { assessmentType },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') || undefined,
+    });
+  }
+
+  /**
+   * Log assessment update/save
+   */
+  async logUpdate(
+    req: AuthRequest,
+    assessmentId: string,
+    details?: Record<string, unknown>
+  ): Promise<string | undefined> {
+    return this.log({
+      userId: req.user?.id || '',
+      organizationId: req.user?.organizationId || '',
+      action: 'ASSESSMENT_UPDATED',
+      resourceType: 'ASSESSMENT',
+      resourceId: assessmentId,
+      details: details || {},
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') || undefined,
+    });
+  }
+
+  /**
+   * Log level achieved
+   */
+  async logLevelAchieved(
+    req: AuthRequest,
+    assessmentId: string,
+    areaId: string,
+    level: number
+  ): Promise<string | undefined> {
+    return this.log({
+      userId: req.user?.id || '',
+      organizationId: req.user?.organizationId || '',
+      action: 'LEVEL_ACHIEVED',
+      resourceType: 'ASSESSMENT',
+      resourceId: assessmentId,
+      details: { areaId, level },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') || undefined,
+    });
+  }
+
+  /**
+   * Log target level set
+   */
+  async logTargetSet(
+    req: AuthRequest,
+    assessmentId: string,
+    areaId: string,
+    level: number
+  ): Promise<string | undefined> {
+    return this.log({
+      userId: req.user?.id || '',
+      organizationId: req.user?.organizationId || '',
+      action: 'LEVEL_TARGET_SET',
+      resourceType: 'ASSESSMENT',
+      resourceId: assessmentId,
+      details: { areaId, level },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') || undefined,
+    });
+  }
+
+  /**
+   * Log level skipped
+   */
+  async logLevelSkipped(
+    req: AuthRequest,
+    assessmentId: string,
+    areaId: string,
+    level: number
+  ): Promise<string | undefined> {
+    return this.log({
+      userId: req.user?.id || '',
+      organizationId: req.user?.organizationId || '',
+      action: 'LEVEL_SKIPPED',
+      resourceType: 'ASSESSMENT',
+      resourceId: assessmentId,
+      details: { areaId, level },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') || undefined,
+    });
+  }
+
+  /**
+   * Log comment added
+   */
+  async logCommentAdded(
+    req: AuthRequest,
+    assessmentId: string,
+    areaId: string,
+    level: number,
+    comment?: string
+  ): Promise<string | undefined> {
+    return this.log({
+      userId: req.user?.id || '',
+      organizationId: req.user?.organizationId || '',
+      action: 'COMMENT_ADDED',
+      resourceType: 'ASSESSMENT',
+      resourceId: assessmentId,
+      details: { areaId, level, comment: comment?.slice(0, 100) },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') || undefined,
+    });
+  }
+
+  /**
+   * Log link added
+   */
+  async logLinkAdded(
+    req: AuthRequest,
+    assessmentId: string,
+    areaId: string,
+    level: number,
+    url: string
+  ): Promise<string | undefined> {
+    return this.log({
+      userId: req.user?.id || '',
+      organizationId: req.user?.organizationId || '',
+      action: 'LINK_ADDED',
+      resourceType: 'ASSESSMENT',
+      resourceId: assessmentId,
+      details: { areaId, level, url },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') || undefined,
+    });
+  }
+
+  /**
+   * Log status change
+   */
+  async logStatusChange(
+    req: AuthRequest,
+    assessmentId: string,
+    fromStatus: string,
+    toStatus: string
+  ): Promise<string | undefined> {
+    return this.log({
+      userId: req.user?.id || '',
+      organizationId: req.user?.organizationId || '',
+      action: 'STATUS_CHANGED',
+      resourceType: 'ASSESSMENT',
+      resourceId: assessmentId,
+      details: { from: fromStatus, to: toStatus },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') || undefined,
+    });
+  }
+
+  /**
+   * Log report generated
+   */
+  async logReportGenerated(
+    req: AuthRequest,
+    assessmentId: string,
+    reportId?: string
+  ): Promise<string | undefined> {
+    return this.log({
+      userId: req.user?.id || '',
+      organizationId: req.user?.organizationId || '',
+      action: 'REPORT_GENERATED',
+      resourceType: 'ASSESSMENT',
+      resourceId: assessmentId,
+      details: { reportId },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') || undefined,
+    });
+  }
+
+  /**
+   * Log initiatives generated
+   */
+  async logInitiativesGenerated(
+    req: AuthRequest,
+    assessmentId: string,
+    count: number
+  ): Promise<string | undefined> {
+    return this.log({
+      userId: req.user?.id || '',
+      organizationId: req.user?.organizationId || '',
+      action: 'INITIATIVES_GENERATED',
+      resourceType: 'ASSESSMENT',
+      resourceId: assessmentId,
+      details: { count },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') || undefined,
+    });
+  }
+
+  /**
+   * Log chat context attached
+   */
+  async logChatContextAttached(
+    req: AuthRequest,
+    assessmentId: string,
+    conversationId: string,
+    messageCount: number
+  ): Promise<string | undefined> {
+    return this.log({
+      userId: req.user?.id || '',
+      organizationId: req.user?.organizationId || '',
+      action: 'CHAT_CONTEXT_ATTACHED',
+      resourceType: 'ASSESSMENT',
+      resourceId: assessmentId,
+      details: { conversationId, messageCount },
       ipAddress: req.ip,
       userAgent: req.get('user-agent') || undefined,
     });

@@ -97,7 +97,7 @@ This guide helps external auditors efficiently review the Consultify platform co
 ### Operations
 
 9. **[SLA/SLO](operations/SLA_SLO.md)** - 99.9% uptime target, service levels
-10. **[Incident Management](operations/INCIDENT_MANAGEMENT.md)** - Response procedures
+10. **[Incident Response Playbook](operations/INCIDENT_RESPONSE_PLAYBOOK.md)** - Response procedures
 
 ### Architecture
 
@@ -201,7 +201,7 @@ This guide helps external auditors efficiently review the Consultify platform co
 
 ### Frontend
 
-- **Framework**: React 18
+- **Framework**: React 19
 - **Language**: TypeScript
 - **Build**: Vite
 - **Styling**: TailwindCSS
@@ -211,7 +211,7 @@ This guide helps external auditors efficiently review the Consultify platform co
 
 - **Runtime**: Node.js
 - **Language**: TypeScript (ES Modules)
-- **Framework**: Express.js
+- **Framework**: Express 5
 - **Database**: SQLite (dev), PostgreSQL (prod-ready)
 - **Caching**: Redis
 

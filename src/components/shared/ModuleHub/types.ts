@@ -11,8 +11,8 @@ export type ModuleTab = 'list' | 'reports' | 'initiatives' | 'raid' | 'decisions
 export type ViewMode = 'table' | 'grid' | 'kanban' | 'timeline' | 'calendar' | 'matrix';
 
 /**
- * Canonical Initiative Status (13 statuses)
- * Lifecycle: DRAFT → PENDING_REVIEW → REVIEW → PROMOTED → PLANNING → APPROVED → SCHEDULED → EXECUTING → DONE → TRACKING
+ * Canonical Initiative Status (11 statuses)
+ * Lifecycle: DRAFT → REVIEW → PROMOTED → PLANNING → APPROVED → SCHEDULED → EXECUTING → DONE → TRACKING
  */
 export type ItemStatus =
   | 'DRAFT'
@@ -32,12 +32,10 @@ export type ItemStatus =
 export interface OpenDocument {
   id: string;
   type: 'assessment' | 'tool' | 'report' | 'initiative';
-  subType?: string; // DRD, SWOT, VSM, etc.
+  subType: string; // DRD, SWOT, VSM, etc.
   name: string;
-  status?: ItemStatus | string;
+  status: ItemStatus;
   hasUnsavedChanges?: boolean;
-  progress?: number;
-  isDirty?: boolean;
 }
 
 export interface ColumnFilter {

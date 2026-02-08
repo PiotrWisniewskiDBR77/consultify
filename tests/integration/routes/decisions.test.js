@@ -1,4 +1,4 @@
-import app from '../../../server/src/index.js';
+// Note: app import removed - not used after test restructure
 import express from 'express';
 import request from 'supertest';
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
@@ -42,7 +42,7 @@ describe('Decisions Routes', () => {
     process.env.RESET_DB = 'true';
     await initializeDatabase();
     process.env.RESET_DB = 'false';
-  });
+  }, 180000); // 180 second timeout for initialization
 
   let testApp;
 

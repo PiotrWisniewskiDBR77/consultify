@@ -10,6 +10,7 @@
 - **Tracker postępu**: `wdrozenia/01-PROGRESS-TRACKER.md`
 - **Master plan (E2E)**: `wdrozenia/plan-rollout-master.md`
 - **Pakiet wdrożeniowy**: `wdrozenia/pakiet-wdrozeniowy.md`
+- **Plan implementacji workflow (E2E)**: `wdrozenia/plan-workflow-implementation.md`
 - **Prompty dla agentów**: `wdrozenia/PROMPTY_DLA_AGENTOW.md`
 - **Golden Standard UI/UX**: `wdrozenia/UI_UX_GOLDEN_STANDARD.md`
 
@@ -21,6 +22,13 @@
 - **Dokumentacja modułów**: `wdrozenia/modules/`
 - **Workflowy przekrojowe**: `wdrozenia/workflows/`
 - **Integracje przekrojowe**: `wdrozenia/integrations/`
+
+## Nowe kanoniczne standardy (artefakty Discovery)
+- **Tool Report (Tools)**: `wdrozenia/standards/entities/04-TOOL-REPORT.md`
+- **Assessment Report**: `wdrozenia/standards/entities/05-ASSESSMENT-REPORT.md`
+
+## Kanon ról i delegacji (workflow)
+- **Jedno rozumienie ról + delegacje**: `wdrozenia/workflows/01-ROLES-AND-ASSUMPTIONS.md`
 
 ## Konwencje
 ### Statusy w dokumentacji

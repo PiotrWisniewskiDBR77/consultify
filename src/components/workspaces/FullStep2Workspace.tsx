@@ -1,11 +1,13 @@
 import { ArrowRight, Layers, Plus, Search } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+
+import { ROUTES } from '@/routes/routeConfig';
 
 import { useAppStore } from '../../store/useAppStore';
 import { AxisId, FullInitiative, FullSession, InitiativeStatus, StrategicGoal } from '../../types';
 import { InitiativeCard } from '../InitiativeCard';
-import { InitiativeDetailModal } from '../InitiativeDetailModal';
 import { Select } from '../ui/select';
 
 interface FullStep2WorkspaceProps {
@@ -34,12 +36,13 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
   const ts = translate('sidebar', { returnObjects: true }) as any;
   const initiatives = useMemo(() => fullSession.initiatives || [], [fullSession.initiatives]);
   const { currentUser: storeUser } = useAppStore();
+  const navigate = useNavigate();
   // Use passed currentUser or storeUser
   // const effectiveUser = currentUser || storeUser;
   // Actually we passed currentUser from props so use that
   // const users = currentUser ? [currentUser] : []; // REMOVED THIS LINE
 
-  const [modalData, setModalData] = useState<FullInitiative | null>(null);
+  // Legacy modal removed: use canonical InitiativeDocumentView in Initiatives module
 
   // Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -50,7 +53,8 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
   );
 
   const handleEditClick = (init: FullInitiative) => {
-    setModalData({ ...init });
+    if (!init.id) return;
+    navigate(`${ROUTES.INITIATIVES}?open=${init.id}&mode=doc`);
   };
 
   const handleCreateClick = () => {
@@ -68,7 +72,8 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
       expectedRoi: 0,
       progress: 0,
     };
-    setModalData(newInit);
+    // Legacy workspace: redirect creation to canonical Initiatives module
+    navigate(`${ROUTES.INITIATIVES}?new=1`);
   };
 
   const getAxisLabel = React.useCallback(
@@ -286,26 +291,6 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
           <ArrowRight size={16} />
         </button>
       </div>
-
-      {/* Modal */}
-      {modalData && (
-        <InitiativeDetailModal
-          initiative={modalData}
-          isOpen={true}
-          onClose={() => setModalData(null)}
-          onSave={(updated: FullInitiative) => {
-            if (!updated.id || updated.id === '') {
-              onCreateInitiative(updated);
-            } else {
-              onUpdateInitiative(updated);
-            }
-            setModalData(null);
-          }}
-          users={users}
-          currentUser={currentUser}
-          strategicGoals={strategicGoals}
-        />
-      )}
     </div>
   );
 };

@@ -83,6 +83,10 @@ export const QuickUpdateInitiativeSchema = z.object({
   priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).optional(),
 });
 
+export const UpdateInitiativeTemplateSchema = z.object({
+  templateId: z.string().min(1).nullable(),
+});
+
 export const BulkStatusUpdateSchema = z.object({
   initiativeIds: z.array(z.string()),
   status: InitiativeStatusEnum,
@@ -129,6 +133,7 @@ export type UpdateInitiativeRequest = z.infer<typeof UpdateInitiativeSchema>;
 export type UpdateInitiativeStatusRequest = z.infer<typeof UpdateInitiativeStatusSchema>;
 export type TransferToRoadmapRequest = z.infer<typeof TransferToRoadmapSchema>;
 export type QuickUpdateInitiativeRequest = z.infer<typeof QuickUpdateInitiativeSchema>;
+export type UpdateInitiativeTemplateRequest = z.infer<typeof UpdateInitiativeTemplateSchema>;
 export type BulkStatusUpdateRequest = z.infer<typeof BulkStatusUpdateSchema>;
 export type ReorderInitiativesRequest = z.infer<typeof ReorderInitiativesSchema>;
 export type CreateKPIRequest = z.infer<typeof CreateKPISchema>;

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 
+import { useConversationStore } from '../../store/useConversationStore';
 import { ChatHistorySidebar } from './ChatHistorySidebar';
 
 interface ChatSlidingPanelProps {
@@ -7,19 +8,43 @@ interface ChatSlidingPanelProps {
   onNewChat?: () => void;
   onSelectConversation?: (id: string) => void;
   activeConversationId?: string | null;
+  projectId?: string;
 }
 
-export const ChatSlidingPanel: React.FC<ChatSlidingPanelProps> = ({ trigger }) => {
-  const [isOpen, setIsOpen] = useState(false);
+export const ChatSlidingPanel: React.FC<ChatSlidingPanelProps> = ({
+  trigger,
+  onNewChat,
+  projectId,
+}) => {
+  const { toggleSidebar, isSidebarOpen } = useConversationStore();
 
   return (
     <>
-      {trigger && <div onClick={() => setIsOpen(true)}>{trigger}</div>}
-      {/* The ChatHistorySidebar itself handles its open/close state via useConversationStore, 
-                but this component can act as a wrapper or provide additional sliding logic if needed.
-                In this codebase, it seems ChatHistorySidebar is already a floating overlay controlled by store.
-            */}
-      <ChatHistorySidebar onNewChat={() => setIsOpen(false)} />
+      {trigger && (
+        <div
+          onClick={() => toggleSidebar()}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              toggleSidebar();
+            }
+          }}
+        >
+          {trigger}
+        </div>
+      )}
+
+      {/* ChatHistorySidebar handles open/close state via useConversationStore. */}
+      <ChatHistorySidebar
+        projectId={projectId}
+        onNewChat={() => {
+          onNewChat?.();
+          // Close sidebar after starting a new chat (especially helpful on mobile).
+          if (isSidebarOpen) toggleSidebar();
+        }}
+      />
     </>
   );
 };

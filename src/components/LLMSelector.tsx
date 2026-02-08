@@ -105,8 +105,10 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
 
         // Get what model the backend would pick for this tier
         const result = await Api.getRecommendedProvider(activeTier.id);
-        if (result && result.recommendation && typeof result.recommendation === 'object') {
-          setActiveModelName((result.recommendation as any).model_id);
+        if (result && result.recommendation) {
+          const rec = result.recommendation as any;
+          // backend returns { provider, model, reason }
+          setActiveModelName(rec.model || rec.model_id || rec.recommendation || '');
         }
       } catch (err) {
         console.error('Failed to get recommendation:', err);
@@ -122,6 +124,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
     <div className="relative z-50" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
+        data-testid="llm-tier-selector"
         className={`flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-lg border transition-all duration-200 ${isOpen ? 'bg-slate-100 dark:bg-white/10 border-brand/50' : 'bg-transparent border-slate-200 dark:border-navy-700 hover:border-brand/50 hover:bg-slate-50 dark:hover:bg-white/5'} text-xs font-medium text-navy-900 dark:text-white`}
       >
         {/* Status Dot / Icon */}

@@ -1,0 +1,35 @@
+---
+description: Block types dual-prompt system — markdown for PDF/DOCX, structured JSON for PPTX v2
+globs: server/migrations/**block_types**.sql, server/src/services/reportBuilderService.ts, server/src/services/reportGenerationService.ts
+alwaysApply: false
+---
+
+# Block Types — Dual Prompt System
+
+## DB columns per block type
+
+| Column | Purpose |
+|--------|---------|
+| `prompt_template` | Generates markdown (for PDF, DOCX, editor) |
+| `pptx_prompt_template` | Generates structured JSON (for PPTX v2 pipeline) |
+| `pptx_output_schema` | JSON Schema validating PPTX output |
+| `slide_intent` | Explicit intent mapping (e.g. `recommendation_portfolio`) |
+
+## PPTX prompt template rules
+
+- Must start with "Generate a JSON object for..."
+- Must contain "Return ONLY valid JSON:" + example structure
+- Must match one of the `SlideContent` types from `pptx/types.ts`
+- The `type` field in JSON must match the `slide_intent` value
+- Use `{{variable}}` for template interpolation (report, assessment, axisData, companyContext)
+
+## Adding a new block type
+
+1. Add `INSERT` to migration SQL with all columns including `slide_intent` + `pptx_prompt_template`
+2. Add mapping in `IntentResolver.ts` SECTION_TYPE_MAP
+3. Ensure matching layout exists in `layouts/`
+4. Update `BlockTypeRecord` interface if schema changes
+
+## Intent selection priority
+
+`DB slide_intent` > `IntentResolver block mapping` > `IntentResolver section mapping` > `appendix`

@@ -1,7 +1,7 @@
 /**
  * CSRF Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * CSRF protection middleware (no-op fallback for tests)
  */
 
@@ -10,11 +10,7 @@ import type { NextFunction, Request, Response } from 'express';
 /**
  * CSRF token middleware
  */
-export const csrfTokenMiddleware = (
-  _req: Request,
-  _res: Response,
-  next: NextFunction
-): void => {
+export const csrfTokenMiddleware = (_req: Request, _res: Response, next: NextFunction): void => {
   next();
 };
 

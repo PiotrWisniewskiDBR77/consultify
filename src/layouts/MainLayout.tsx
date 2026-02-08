@@ -2,9 +2,9 @@ import { ChevronRight, Menu, MessageSquare, Sparkles, X } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { AccessBlockedModal } from '../components/access/AccessBlockedModal';
 import { UnifiedChatPanel } from '../components/AIChat/UnifiedChatPanel';
 import { AIFreezeBanner } from '../components/AIFreezeBanner';
-import { AccessBlockedModal } from '../components/access/AccessBlockedModal';
 import { DemoSessionManager } from '../components/demo/DemoSessionManager';
 import { DocumentSidePanel } from '../components/documents/DocumentSidePanel';
 import { DocumentToggleButton } from '../components/documents/DocumentToggleButton';
@@ -36,17 +36,18 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   breadcrumbs,
   noPadding = false,
 }) => {
-  const {
-    isSidebarCollapsed,
-    setIsSidebarOpen,
-    isChatCollapsed,
-    toggleChatCollapse,
-    currentUser,
-    currentView,
-    currentProjectId,
-    chatPanelWidth,
-    setChatPanelWidth,
-  } = useAppStore();
+  // NOTE (React 19 + useSyncExternalStore):
+  // Avoid selectors returning new objects/arrays each call (even with shallow),
+  // because it can trigger "getSnapshot should be cached" warnings/loops.
+  const isSidebarCollapsed = useAppStore((s) => s.isSidebarCollapsed);
+  const setIsSidebarOpen = useAppStore((s) => s.setIsSidebarOpen);
+  const isChatCollapsed = useAppStore((s) => s.isChatCollapsed);
+  const toggleChatCollapse = useAppStore((s) => s.toggleChatCollapse);
+  const currentUser = useAppStore((s) => s.currentUser);
+  const currentView = useAppStore((s) => s.currentView);
+  const currentProjectId = useAppStore((s) => s.currentProjectId);
+  const chatPanelWidth = useAppStore((s) => s.chatPanelWidth);
+  const setChatPanelWidth = useAppStore((s) => s.setChatPanelWidth);
 
   const { setDisplayMode, setWorkspaceContext, expandToFullScreen } = useConversationStore();
 
@@ -104,11 +105,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   // Update conversation store with workspace context
   React.useEffect(() => {
-    if (workspaceContext && shouldShowChatPanel) {
+    // Only keep chat workspace context updated when the split chat panel is actually visible.
+    // This avoids extra store updates/renders when user keeps AI collapsed.
+    if (workspaceContext && shouldShowChatPanel && !isChatCollapsed) {
       setWorkspaceContext(workspaceContext);
       setDisplayMode('split');
     }
-  }, [workspaceContext, shouldShowChatPanel, setWorkspaceContext, setDisplayMode]);
+  }, [workspaceContext, shouldShowChatPanel, isChatCollapsed, setWorkspaceContext, setDisplayMode]);
 
   // Resizer state
   const [isResizing, setIsResizing] = React.useState(false);
@@ -147,7 +150,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   return (
     <div className="flex h-screen w-full bg-slate-100 dark:bg-navy-950 text-navy-900 dark:text-white font-sans overflow-hidden">
       {/* Global Floating Action Buttons - Order: Help, Feedback, Docs */}
-      <div className="fixed right-0 top-[60%] z-50 flex flex-col gap-2 items-end pointer-events-none">
+      <div className="fixed right-0 top-[70%] z-50 flex flex-col gap-2 items-end pointer-events-none">
         <div className="pointer-events-auto">
           <HelpToggleButton />
         </div>
@@ -187,7 +190,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       <main
         className={`
                     flex-1 flex flex-col overflow-hidden relative w-full h-full min-h-0 transition-all duration-300
-                    ${isSidebarCollapsed ? 'lg:ltr:pl-16 lg:rtl:pr-16' : 'lg:ltr:pl-64 lg:rtl:pr-64'}
+                    ${isSidebarCollapsed ? 'md:ltr:pl-16 md:rtl:pr-16' : 'md:ltr:pl-64 md:rtl:pr-64'}
                     ${currentUser?.isDemo ? 'mt-10' : ''}
                     pb-16 md:pb-0
                 `}
@@ -272,7 +275,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             )}
 
             {/* Main Content */}
-            <div className="flex-1 overflow-hidden flex flex-col min-h-0 min-w-0">{children}</div>
+            <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-y-auto">{children}</div>
           </div>
         </TrialExpiredGate>
       </main>

@@ -1,7 +1,7 @@
 /**
  * AIPolicyEngine - Unit Tests (L1)
  * Tests for AI policy evaluation and enforcement
- * 
+ *
  * Coverage target: 95%+
  */
 
@@ -11,13 +11,13 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 const mockDbGet = vi.fn();
 const mockDbRun = vi.fn();
 
-vi.mock('../../../../server/src/utils/DbPromise.js', () => ({
+vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   get: (...args: any[]) => mockDbGet(...args),
   run: (...args: any[]) => mockDbRun(...args),
 }));
 
 // Mock logger
-vi.mock('../../../../server/src/utils/Logger.js', () => ({
+vi.mock('../../../server/src/utils/Logger.js', () => ({
   default: {
     info: vi.fn(),
     error: vi.fn(),
@@ -26,7 +26,7 @@ vi.mock('../../../../server/src/utils/Logger.js', () => ({
 }));
 
 // Mock aiRoleGuard
-vi.mock('../../../../server/src/services/aiRoleGuard.js', () => ({
+vi.mock('../../../server/src/services/aiRoleGuard.js', () => ({
   default: {
     getRoleCapabilities: vi.fn().mockResolvedValue({}),
     getProjectRole: vi.fn().mockResolvedValue('ADVISOR'),
@@ -35,10 +35,10 @@ vi.mock('../../../../server/src/services/aiRoleGuard.js', () => ({
 }));
 
 // Mock regulatoryModeGuard
-vi.mock('../../../../server/src/services/regulatoryModeGuard.js', () => ({
+vi.mock('../../../server/src/services/regulatoryModeGuard.js', () => ({
   default: {
-    isRegulatoryModeEnabled: vi.fn().mockResolvedValue(false),
-    getRegulatoryPrompt: vi.fn().mockResolvedValue(null),
+    isEnabled: vi.fn().mockResolvedValue(false),
+    getRegulatoryPrompt: vi.fn().mockResolvedValue(''),
   },
 }));
 
@@ -46,11 +46,26 @@ import AIPolicyEngine, {
   POLICY_LEVELS,
   POLICY_HIERARCHY,
   ACTION_POLICY_REQUIREMENTS,
-} from '../../../../server/src/services/aiPolicyEngine';
+} from '../../../server/src/services/aiPolicyEngine';
 
 describe('AIPolicyEngine', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Default DB behavior for org policy lookups
+    mockDbGet.mockImplementation(async (sql: string) => {
+      if (String(sql).includes('FROM ai_policies')) {
+        return {
+          policy_level: 'ADVISORY',
+          max_policy_level: 'ASSISTED',
+          internet_enabled: 0,
+          audit_required: 0,
+          default_role: 'ADVISOR',
+          active_roles: JSON.stringify(['ADVISOR']),
+        };
+      }
+      return null;
+    });
   });
 
   afterEach(() => {
@@ -59,7 +74,12 @@ describe('AIPolicyEngine', () => {
 
   describe('getPolicySummary', () => {
     it('should return policy summary for ADVISORY level', async () => {
-      mockDbGet.mockResolvedValue({ value: 'ADVISORY' });
+      mockDbGet.mockImplementation(async (sql: string) => {
+        if (String(sql).includes('FROM ai_policies')) {
+          return { policy_level: 'ADVISORY', max_policy_level: 'ASSISTED' };
+        }
+        return null;
+      });
 
       const summary = await AIPolicyEngine.getPolicySummary('org-1');
 
@@ -70,7 +90,12 @@ describe('AIPolicyEngine', () => {
     });
 
     it('should return policy summary for AUTOPILOT level', async () => {
-      mockDbGet.mockResolvedValue({ value: 'AUTOPILOT' });
+      mockDbGet.mockImplementation(async (sql: string) => {
+        if (String(sql).includes('FROM ai_policies')) {
+          return { policy_level: 'AUTOPILOT', max_policy_level: 'AUTOPILOT' };
+        }
+        return null;
+      });
 
       const summary = await AIPolicyEngine.getPolicySummary('org-1');
 
@@ -92,21 +117,31 @@ describe('AIPolicyEngine', () => {
 
   describe('getEffectivePolicy', () => {
     it('should return effective policy for organization', async () => {
-      mockDbGet.mockResolvedValue({ value: 'ASSISTED' });
+      mockDbGet.mockImplementation(async (sql: string) => {
+        if (String(sql).includes('FROM ai_policies')) {
+          return { policy_level: 'ASSISTED', max_policy_level: 'ASSISTED' };
+        }
+        return null;
+      });
 
-      const policy = await AIPolicyEngine.getEffectivePolicy('org-1', 'user-1', 'project-1');
+      const policy = await AIPolicyEngine.getEffectivePolicy('org-1');
 
       expect(policy).toBeDefined();
       expect(policy.policyLevel).toBe('ASSISTED');
     });
 
     it('should include regulatory mode if enabled', async () => {
-      mockDbGet.mockResolvedValue({ value: 'ASSISTED' });
-      const regulatoryGuard = await import('../../../../server/src/services/regulatoryModeGuard.js');
-      vi.mocked(regulatoryGuard.default.isRegulatoryModeEnabled).mockResolvedValue(true);
+      mockDbGet.mockImplementation(async (sql: string) => {
+        if (String(sql).includes('FROM ai_policies')) {
+          return { policy_level: 'ASSISTED', max_policy_level: 'ASSISTED' };
+        }
+        return null;
+      });
+      const regulatoryGuard = await import('../../../server/src/services/regulatoryModeGuard.js');
+      vi.mocked(regulatoryGuard.default.isEnabled).mockResolvedValue(true);
       vi.mocked(regulatoryGuard.default.getRegulatoryPrompt).mockResolvedValue('Regulatory prompt');
 
-      const policy = await AIPolicyEngine.getEffectivePolicy('org-1', 'user-1', 'project-1');
+      const policy = await AIPolicyEngine.getEffectivePolicy('org-1', 'project-1', 'user-1');
 
       expect(policy.regulatoryModeEnabled).toBe(true);
     });
@@ -114,7 +149,12 @@ describe('AIPolicyEngine', () => {
 
   describe('canPerformAction', () => {
     it('should allow ADVISORY actions at ADVISORY level', async () => {
-      mockDbGet.mockResolvedValue({ value: 'ADVISORY' });
+      mockDbGet.mockImplementation(async (sql: string) => {
+        if (String(sql).includes('FROM ai_policies')) {
+          return { policy_level: 'ADVISORY', max_policy_level: 'ADVISORY' };
+        }
+        return null;
+      });
 
       const result = await AIPolicyEngine.canPerformAction('EXPLAIN_CONTEXT', 'org-1');
       const canDo = result.allowed;
@@ -123,7 +163,12 @@ describe('AIPolicyEngine', () => {
     });
 
     it('should allow ASSISTED actions at ASSISTED level', async () => {
-      mockDbGet.mockResolvedValue({ value: 'ASSISTED' });
+      mockDbGet.mockImplementation(async (sql: string) => {
+        if (String(sql).includes('FROM ai_policies')) {
+          return { policy_level: 'ASSISTED', max_policy_level: 'ASSISTED' };
+        }
+        return null;
+      });
 
       const result = await AIPolicyEngine.canPerformAction('CREATE_DRAFT_TASK', 'org-1');
       const canDo = result.allowed;
@@ -132,7 +177,12 @@ describe('AIPolicyEngine', () => {
     });
 
     it('should deny ASSISTED actions at ADVISORY level', async () => {
-      mockDbGet.mockResolvedValue({ value: 'ADVISORY' });
+      mockDbGet.mockImplementation(async (sql: string) => {
+        if (String(sql).includes('FROM ai_policies')) {
+          return { policy_level: 'ADVISORY', max_policy_level: 'ADVISORY' };
+        }
+        return null;
+      });
 
       const result = await AIPolicyEngine.canPerformAction('CREATE_DRAFT_TASK', 'org-1');
       const canDo = result.allowed;
@@ -141,7 +191,12 @@ describe('AIPolicyEngine', () => {
     });
 
     it('should allow all actions at AUTOPILOT level', async () => {
-      mockDbGet.mockResolvedValue({ value: 'AUTOPILOT' });
+      mockDbGet.mockImplementation(async (sql: string) => {
+        if (String(sql).includes('FROM ai_policies')) {
+          return { policy_level: 'AUTOPILOT', max_policy_level: 'AUTOPILOT' };
+        }
+        return null;
+      });
 
       const result = await AIPolicyEngine.canPerformAction('CREATE_DRAFT_TASK', 'org-1');
       const canDo = result.allowed;
@@ -150,12 +205,15 @@ describe('AIPolicyEngine', () => {
     });
 
     it('should handle unknown action', async () => {
-      mockDbGet.mockResolvedValue({ value: 'ASSISTED' });
+      mockDbGet.mockImplementation(async (sql: string) => {
+        if (String(sql).includes('FROM ai_policies')) {
+          return { policy_level: 'ASSISTED', max_policy_level: 'ASSISTED' };
+        }
+        return null;
+      });
 
-      const canDo = await canPerformAction('org-1', 'UNKNOWN_ACTION');
-
-      // Unknown actions should default to requiring ADVISORY
-      expect(typeof canDo).toBe('boolean');
+      const result = await AIPolicyEngine.canPerformAction('UNKNOWN_ACTION', 'org-1');
+      expect(typeof result.allowed).toBe('boolean');
     });
   });
 

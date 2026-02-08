@@ -42,13 +42,16 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
     },
   };
 
-  const groupedShortcuts = SHORTCUTS_HELP.reduce((acc, shortcut) => {
-    if (!acc[shortcut.category]) {
-      acc[shortcut.category] = [];
-    }
-    acc[shortcut.category].push(shortcut);
-    return acc;
-  }, {} as Record<string, typeof SHORTCUTS_HELP>);
+  const groupedShortcuts = SHORTCUTS_HELP.reduce(
+    (acc, shortcut) => {
+      if (!acc[shortcut.category]) {
+        acc[shortcut.category] = [];
+      }
+      acc[shortcut.category].push(shortcut);
+      return acc;
+    },
+    {} as Record<string, typeof SHORTCUTS_HELP>
+  );
 
   return (
     <AnimatePresence>

@@ -23,25 +23,25 @@ const WORKFLOW_STAGES: WorkflowStage[] = [
     id: 'DRAFT',
     label: 'Draft',
     icon: <FileEdit size={16} />,
-    description: 'Ocena w trakcie edycji',
+    description: 'Assessment in editing',
   },
   {
     id: 'IN_REVIEW',
-    label: 'W recenzji',
+    label: 'In Review',
     icon: <Users size={16} />,
-    description: 'Recenzenci weryfikują ocenę',
+    description: 'Reviewers verifying assessment',
   },
   {
     id: 'AWAITING_APPROVAL',
-    label: 'Oczekuje na zatwierdzenie',
+    label: 'Awaiting Approval',
     icon: <Clock size={16} />,
-    description: 'Wszystkie recenzje zakończone',
+    description: 'All reviews completed',
   },
   {
     id: 'APPROVED',
-    label: 'Zatwierdzony',
+    label: 'Approved',
     icon: <CheckCircle2 size={16} />,
-    description: 'Ocena zatwierdzona',
+    description: 'Assessment approved',
   },
 ];
 

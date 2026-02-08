@@ -7,19 +7,19 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createMockDb } from '../helpers/dependencyInjector.js';
-import UsageService from '../../server/services/usageService.js';
-import PermissionService from '../../server/services/permissionService.js';
-import TokenBillingService from '../../server/services/tokenBillingService.js';
+import UsageService from '../../server/src/services/usageService.js';
+import PermissionService from '../../server/src/services/permissionService.js';
+import TokenBillingService from '../../server/src/services/tokenBillingService.js';
 
 // Mock database at module level before any imports
 const mockDb = createMockDb();
-vi.mock('../../server/database.js', () => ({
+vi.mock('../../server/src/database/index.js', () => ({
   default: mockDb,
   getDatabase: () => mockDb,
 }));
 
 // Mock module dependencies to prevent real DB/Redis connections during import/executions
-vi.mock('../../server/services/usageService.js', () => {
+vi.mock('../../server/src/services/usageService.js', () => {
   return {
     default: {
       recordTokenUsage: vi.fn().mockResolvedValue({ id: 'mock-usage-id', tokens: 100 }),
@@ -30,7 +30,7 @@ vi.mock('../../server/services/usageService.js', () => {
   };
 });
 
-vi.mock('../../server/services/permissionService.js', () => {
+vi.mock('../../server/src/services/permissionService.js', () => {
   return {
     default: {
       hasPermission: vi.fn().mockResolvedValue(true),
@@ -66,7 +66,7 @@ mockTokenBilling.deductTokens.mockImplementation(async (orgId, amount) => {
 mockTokenBilling.getBalance.mockImplementation(async () => mockTokenBilling.balance);
 mockTokenBilling.checkBalance.mockResolvedValue(true);
 
-vi.mock('../../server/services/tokenBillingService.js', () => {
+vi.mock('../../server/src/services/tokenBillingService.js', () => {
   return {
     default: mockTokenBilling,
   };

@@ -279,16 +279,66 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
   // Color classes helper
   const getColorClasses = (color: string, variant: 'bg' | 'border' | 'text' | 'ring') => {
     const colors: Record<string, Record<string, string>> = {
-      blue: { bg: 'bg-blue-500/20', border: 'border-blue-500', text: 'text-blue-400', ring: 'ring-blue-500/30' },
-      purple: { bg: 'bg-purple-500/20', border: 'border-purple-500', text: 'text-purple-400', ring: 'ring-purple-500/30' },
-      red: { bg: 'bg-red-500/20', border: 'border-red-500', text: 'text-red-400', ring: 'ring-red-500/30' },
-      amber: { bg: 'bg-amber-500/20', border: 'border-amber-500', text: 'text-amber-400', ring: 'ring-amber-500/30' },
-      cyan: { bg: 'bg-cyan-500/20', border: 'border-cyan-500', text: 'text-cyan-400', ring: 'ring-cyan-500/30' },
-      orange: { bg: 'bg-orange-500/20', border: 'border-orange-500', text: 'text-orange-400', ring: 'ring-orange-500/30' },
-      rose: { bg: 'bg-rose-500/20', border: 'border-rose-500', text: 'text-rose-400', ring: 'ring-rose-500/30' },
-      emerald: { bg: 'bg-emerald-500/20', border: 'border-emerald-500', text: 'text-emerald-400', ring: 'ring-emerald-500/30' },
-      indigo: { bg: 'bg-indigo-500/20', border: 'border-indigo-500', text: 'text-indigo-400', ring: 'ring-indigo-500/30' },
-      violet: { bg: 'bg-violet-500/20', border: 'border-violet-500', text: 'text-violet-400', ring: 'ring-violet-500/30' },
+      blue: {
+        bg: 'bg-blue-500/20',
+        border: 'border-blue-500',
+        text: 'text-blue-400',
+        ring: 'ring-blue-500/30',
+      },
+      purple: {
+        bg: 'bg-purple-500/20',
+        border: 'border-purple-500',
+        text: 'text-purple-400',
+        ring: 'ring-purple-500/30',
+      },
+      red: {
+        bg: 'bg-red-500/20',
+        border: 'border-red-500',
+        text: 'text-red-400',
+        ring: 'ring-red-500/30',
+      },
+      amber: {
+        bg: 'bg-amber-500/20',
+        border: 'border-amber-500',
+        text: 'text-amber-400',
+        ring: 'ring-amber-500/30',
+      },
+      cyan: {
+        bg: 'bg-cyan-500/20',
+        border: 'border-cyan-500',
+        text: 'text-cyan-400',
+        ring: 'ring-cyan-500/30',
+      },
+      orange: {
+        bg: 'bg-orange-500/20',
+        border: 'border-orange-500',
+        text: 'text-orange-400',
+        ring: 'ring-orange-500/30',
+      },
+      rose: {
+        bg: 'bg-rose-500/20',
+        border: 'border-rose-500',
+        text: 'text-rose-400',
+        ring: 'ring-rose-500/30',
+      },
+      emerald: {
+        bg: 'bg-emerald-500/20',
+        border: 'border-emerald-500',
+        text: 'text-emerald-400',
+        ring: 'ring-emerald-500/30',
+      },
+      indigo: {
+        bg: 'bg-indigo-500/20',
+        border: 'border-indigo-500',
+        text: 'text-indigo-400',
+        ring: 'ring-indigo-500/30',
+      },
+      violet: {
+        bg: 'bg-violet-500/20',
+        border: 'border-violet-500',
+        text: 'text-violet-400',
+        ring: 'ring-violet-500/30',
+      },
     };
     return colors[color]?.[variant] || '';
   };
@@ -308,7 +358,9 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
     }
 
     setIsGenerating(true);
-    const toastId = toast.loading(isPolish ? 'Generowanie wniosków AI...' : 'Generating AI insights...');
+    const toastId = toast.loading(
+      isPolish ? 'Generowanie wniosków AI...' : 'Generating AI insights...'
+    );
 
     try {
       await Api.post('/interview/insights', {
@@ -401,7 +453,9 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
                 type="button"
                 onClick={() => setShowTypeDropdown(!showTypeDropdown)}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-navy-800 border text-left transition-all ${
-                  showTypeDropdown ? 'border-primary-500 ring-1 ring-primary-500/30' : 'border-navy-600'
+                  showTypeDropdown
+                    ? 'border-primary-500 ring-1 ring-primary-500/30'
+                    : 'border-navy-600'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -420,7 +474,9 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
                           {isPolish ? selectedAnalysisType.namePl : selectedAnalysisType.name}
                         </div>
                         <div className="text-xs text-slate-500">
-                          {isPolish ? selectedAnalysisType.descriptionPl : selectedAnalysisType.description}
+                          {isPolish
+                            ? selectedAnalysisType.descriptionPl
+                            : selectedAnalysisType.description}
                         </div>
                       </div>
                     </>
@@ -634,8 +690,8 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
                       ? 'Odznacz wszystkie'
                       : 'Deselect all'
                     : isPolish
-                    ? 'Zaznacz wszystkie'
-                    : 'Select all'}
+                      ? 'Zaznacz wszystkie'
+                      : 'Select all'}
                 </button>
               )}
             </div>
@@ -722,7 +778,9 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
           {/* Custom Prompt */}
           <div>
             <label className="block text-sm font-medium text-slate-400 mb-1.5">
-              {isPolish ? 'Dodatkowe instrukcje (opcjonalnie)' : 'Additional instructions (optional)'}
+              {isPolish
+                ? 'Dodatkowe instrukcje (opcjonalnie)'
+                : 'Additional instructions (optional)'}
             </label>
             <textarea
               value={customPrompt}

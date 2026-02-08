@@ -5,14 +5,7 @@
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
-import {
-  Clock,
-  Pause,
-  Play,
-  RotateCcw,
-  Square,
-  Timer,
-} from 'lucide-react';
+import { Clock, Pause, Play, RotateCcw, Square, Timer } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -48,13 +41,13 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  
+
   const [isRunning, setIsRunning] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(initialTime);
   const [sessionTime, setSessionTime] = useState(0);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [showEntries, setShowEntries] = useState(false);
-  
+
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<Date | null>(null);
 
@@ -63,7 +56,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    
+
     if (hrs > 0) {
       return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
@@ -71,29 +64,30 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
   }, []);
 
   // Format duration for display
-  const formatDuration = useCallback((seconds: number) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    
-    if (hrs > 0) {
-      return isPolish
-        ? `${hrs}h ${mins}min`
-        : `${hrs}h ${mins}m`;
-    }
-    if (mins > 0) {
-      return isPolish ? `${mins}min` : `${mins}m`;
-    }
-    return isPolish ? `<1min` : `<1m`;
-  }, [isPolish]);
+  const formatDuration = useCallback(
+    (seconds: number) => {
+      const hrs = Math.floor(seconds / 3600);
+      const mins = Math.floor((seconds % 3600) / 60);
+
+      if (hrs > 0) {
+        return isPolish ? `${hrs}h ${mins}min` : `${hrs}h ${mins}m`;
+      }
+      if (mins > 0) {
+        return isPolish ? `${mins}min` : `${mins}m`;
+      }
+      return isPolish ? `<1min` : `<1m`;
+    },
+    [isPolish]
+  );
 
   // Start timer
   const startTimer = useCallback(() => {
     if (isRunning) return;
-    
+
     setIsRunning(true);
     startTimeRef.current = new Date();
     onTimerStart?.();
-    
+
     intervalRef.current = setInterval(() => {
       setSessionTime((prev) => prev + 1);
       setElapsedTime((prev) => {
@@ -102,39 +96,33 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
         return newTime;
       });
     }, 1000);
-    
-    toast.success(
-      isPolish ? '⏱️ Timer uruchomiony' : '⏱️ Timer started',
-      { duration: 2000 }
-    );
+
+    toast.success(isPolish ? '⏱️ Timer uruchomiony' : '⏱️ Timer started', { duration: 2000 });
   }, [isRunning, isPolish, onTimerStart, onTimeUpdate]);
 
   // Pause timer
   const pauseTimer = useCallback(() => {
     if (!isRunning) return;
-    
+
     setIsRunning(false);
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-    
-    toast.success(
-      isPolish ? '⏸️ Timer wstrzymany' : '⏸️ Timer paused',
-      { duration: 2000 }
-    );
+
+    toast.success(isPolish ? '⏸️ Timer wstrzymany' : '⏸️ Timer paused', { duration: 2000 });
   }, [isRunning, isPolish]);
 
   // Stop timer and save entry
   const stopTimer = useCallback(() => {
     if (!startTimeRef.current) return;
-    
+
     setIsRunning(false);
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-    
+
     const endTime = new Date();
     const entry: TimeEntry = {
       id: Math.random().toString(36).substr(2, 9),
@@ -142,17 +130,17 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
       endTime,
       duration: sessionTime,
     };
-    
+
     setEntries((prev) => [entry, ...prev]);
     onTimerStop?.(sessionTime);
-    
+
     toast.success(
       isPolish
         ? `⏱️ Zapisano ${formatDuration(sessionTime)}`
         : `⏱️ Logged ${formatDuration(sessionTime)}`,
       { duration: 3000 }
     );
-    
+
     setSessionTime(0);
     startTimeRef.current = null;
   }, [sessionTime, formatDuration, isPolish, onTimerStop]);
@@ -164,11 +152,8 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
     }
     setSessionTime(0);
     startTimeRef.current = null;
-    
-    toast.success(
-      isPolish ? '🔄 Timer zresetowany' : '🔄 Timer reset',
-      { duration: 2000 }
-    );
+
+    toast.success(isPolish ? '🔄 Timer zresetowany' : '🔄 Timer reset', { duration: 2000 });
   }, [isRunning, pauseTimer, isPolish]);
 
   // Cleanup on unmount
@@ -188,16 +173,17 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
           onClick={isRunning ? pauseTimer : startTimer}
           className={`
             p-1.5 rounded-lg transition-all
-            ${isRunning
-              ? 'bg-primary-500/20 text-primary-500 hover:bg-primary-500/30'
-              : 'text-slate-400 hover:text-primary-500 hover:bg-primary-500/10'
+            ${
+              isRunning
+                ? 'bg-primary-500/20 text-primary-500 hover:bg-primary-500/30'
+                : 'text-slate-400 hover:text-primary-500 hover:bg-primary-500/10'
             }
           `}
-          title={isRunning ? (isPolish ? 'Pauza' : 'Pause') : (isPolish ? 'Start' : 'Start')}
+          title={isRunning ? (isPolish ? 'Pauza' : 'Pause') : isPolish ? 'Start' : 'Start'}
         >
           {isRunning ? <Pause size={14} /> : <Play size={14} />}
         </button>
-        
+
         {(isRunning || sessionTime > 0) && (
           <motion.span
             initial={{ opacity: 0, scale: 0.9 }}
@@ -210,7 +196,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
             {formatTime(sessionTime)}
           </motion.span>
         )}
-        
+
         {sessionTime > 0 && (
           <button
             onClick={stopTimer}
@@ -254,7 +240,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
         >
           {formatTime(sessionTime)}
         </motion.div>
-        
+
         {taskTitle && (
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 text-center truncate max-w-full">
             {taskTitle}
@@ -273,7 +259,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
             <span>{isPolish ? 'Start' : 'Start'}</span>
           </button>
         )}
-        
+
         {isRunning && (
           <>
             <button
@@ -292,7 +278,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
             </button>
           </>
         )}
-        
+
         {!isRunning && sessionTime > 0 && (
           <>
             <button
@@ -331,14 +317,11 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
               <Clock size={14} />
               {isPolish ? 'Historia' : 'History'} ({entries.length})
             </span>
-            <motion.span
-              animate={{ rotate: showEntries ? 180 : 0 }}
-              className="text-slate-400"
-            >
+            <motion.span animate={{ rotate: showEntries ? 180 : 0 }} className="text-slate-400">
               ▼
             </motion.span>
           </button>
-          
+
           <AnimatePresence>
             {showEntries && (
               <motion.div

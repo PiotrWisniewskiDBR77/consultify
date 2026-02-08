@@ -1,6 +1,6 @@
 /**
  * CompanyFactsPanel - Right sidebar for Interview
- * 
+ *
  * Shows:
  * - Company Facts (name, industry, size, location)
  * - Key Metrics extracted from interview
@@ -8,8 +8,6 @@
  * - Open Gaps that need follow-up
  */
 
-import React, { useCallback, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   AlertTriangle,
   Building2,
@@ -22,6 +20,8 @@ import {
   Users,
   X,
 } from 'lucide-react';
+import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // Types
 export interface CompanyProfile {
@@ -184,7 +184,9 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                     <input
                       type="text"
                       value={editedProfile.industry || ''}
-                      onChange={(e) => setEditedProfile({ ...editedProfile, industry: e.target.value })}
+                      onChange={(e) =>
+                        setEditedProfile({ ...editedProfile, industry: e.target.value })
+                      }
                       className="w-full px-2 py-1.5 text-sm border border-slate-200 dark:border-navy-700 rounded bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white"
                     />
                   </div>
@@ -212,7 +214,9 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                     <input
                       type="text"
                       value={editedProfile.location || ''}
-                      onChange={(e) => setEditedProfile({ ...editedProfile, location: e.target.value })}
+                      onChange={(e) =>
+                        setEditedProfile({ ...editedProfile, location: e.target.value })
+                      }
                       className="w-full px-2 py-1.5 text-sm border border-slate-200 dark:border-navy-700 rounded bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white"
                     />
                   </div>
@@ -243,7 +247,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                         </span>
                       </div>
                     ) : null}
-                    
+
                     {companyProfile.industry && (
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -254,7 +258,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                         </span>
                       </div>
                     )}
-                    
+
                     {companyProfile.size && (
                       <div className="flex items-center gap-2">
                         <Users size={14} className="text-slate-400 shrink-0" />
@@ -263,7 +267,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                         </span>
                       </div>
                     )}
-                    
+
                     {companyProfile.location && (
                       <div className="flex items-center gap-2">
                         <MapPin size={14} className="text-slate-400 shrink-0" />
@@ -286,10 +290,9 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
 
                   {!companyProfile.name && !companyProfile.industry && !companyProfile.size && (
                     <p className="text-xs text-slate-400 dark:text-slate-500 italic">
-                      {isPolish 
+                      {isPolish
                         ? 'Brak danych o firmie. Kliknij Edytuj, aby dodać.'
-                        : 'No company data. Click Edit to add.'
-                      }
+                        : 'No company data. Click Edit to add.'}
                     </p>
                   )}
                 </>
@@ -321,13 +324,8 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
               {keyMetrics.length > 0 ? (
                 <div className="space-y-2">
                   {keyMetrics.map((metric) => (
-                    <div
-                      key={metric.id}
-                      className="p-2 bg-slate-50 dark:bg-navy-950 rounded-lg"
-                    >
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {metric.name}
-                      </p>
+                    <div key={metric.id} className="p-2 bg-slate-50 dark:bg-navy-950 rounded-lg">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{metric.name}</p>
                       <p className="text-sm font-medium text-navy-900 dark:text-white">
                         {metric.value}
                       </p>
@@ -336,10 +334,9 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                 </div>
               ) : (
                 <p className="text-xs text-slate-400 dark:text-slate-500 italic">
-                  {isPolish 
+                  {isPolish
                     ? 'Metryki będą wyodrębnione z wywiadów'
-                    : 'Metrics will be extracted from interviews'
-                  }
+                    : 'Metrics will be extracted from interviews'}
                 </p>
               )}
             </div>
@@ -387,13 +384,15 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                         </p>
                       </div>
                       {person.influence && (
-                        <span className={`px-1.5 py-0.5 text-xs rounded ${
-                          person.influence === 'high'
-                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                            : person.influence === 'medium'
-                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
-                        }`}>
+                        <span
+                          className={`px-1.5 py-0.5 text-xs rounded ${
+                            person.influence === 'high'
+                              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                              : person.influence === 'medium'
+                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                          }`}
+                        >
                           {person.influence}
                         </span>
                       )}
@@ -402,10 +401,9 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                 </div>
               ) : (
                 <p className="text-xs text-slate-400 dark:text-slate-500 italic">
-                  {isPolish 
+                  {isPolish
                     ? 'Interesariusze zostaną zidentyfikowani z wywiadów'
-                    : 'Stakeholders will be identified from interviews'
-                  }
+                    : 'Stakeholders will be identified from interviews'}
                 </p>
               )}
             </div>
@@ -449,18 +447,15 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                       <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
                         {gap.category}
                       </p>
-                      <p className="text-sm text-navy-900 dark:text-white">
-                        {gap.description}
-                      </p>
+                      <p className="text-sm text-navy-900 dark:text-white">{gap.description}</p>
                     </div>
                   ))}
                 </div>
               ) : (
                 <p className="text-xs text-slate-400 dark:text-slate-500 italic">
-                  {isPolish 
+                  {isPolish
                     ? 'Brak zidentyfikowanych luk informacyjnych'
-                    : 'No information gaps identified'
-                  }
+                    : 'No information gaps identified'}
                 </p>
               )}
             </div>
@@ -471,10 +466,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
       {/* Footer */}
       <div className="p-3 border-t border-slate-200 dark:border-navy-700">
         <p className="text-xs text-slate-400 dark:text-slate-500 text-center">
-          {isPolish 
-            ? 'Dane aktualizowane automatycznie' 
-            : 'Data updated automatically'
-          }
+          {isPolish ? 'Dane aktualizowane automatycznie' : 'Data updated automatically'}
         </p>
       </div>
     </div>

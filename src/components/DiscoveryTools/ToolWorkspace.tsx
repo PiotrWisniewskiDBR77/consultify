@@ -6,20 +6,20 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
+import { useToolAI } from '@/hooks/discovery/useToolAI';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
-import { useToolAI } from '@/hooks/discovery/useToolAI';
 import { ToolType, useToolStore } from '@/store/useToolStore';
 import { AppView } from '@/types';
 
+import { GenerateInitiativesModal } from './GenerateInitiativesModal';
 import { ToolActionBar } from './ToolActionBar';
 import { ToolCanvas } from './ToolCanvas';
 import { ToolHeader } from './ToolHeader';
 import { ToolReviewPanel } from './ToolReviewPanel';
-import { GenerateInitiativesModal } from './GenerateInitiativesModal';
 
 // ==================== TYPES ====================
 
@@ -172,6 +172,8 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   const [reviewPriority, setReviewPriority] = useState<'low' | 'medium' | 'high' | 'critical'>(
     'medium'
   );
+  const [reviewDecisionOwnerId, setReviewDecisionOwnerId] = useState<string>('');
+  const [users, setUsers] = useState<any[]>([]);
   const [generationDefaults, setGenerationDefaults] = useState<{
     methodologyId: string;
     count: number;
@@ -250,6 +252,19 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       createSession(toolType);
     }
   }, [sessionId, toolType, currentSession, loadSession, createSession]);
+
+  // Load users for decision owner selection
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const fetchedUsers = await Api.getUsers();
+        setUsers(fetchedUsers || []);
+      } catch (err) {
+        console.error('Failed to load users', err);
+      }
+    };
+    loadUsers();
+  }, []);
 
   // Create backend tool session on mount
   useEffect(() => {
@@ -402,6 +417,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     if (!toolSessionId) return;
     try {
       const result = await Api.requestToolReview(toolSessionId, {
+        decisionOwnerId: reviewDecisionOwnerId || undefined,
         dueDate: reviewDueDate || undefined,
         priority: reviewPriority,
       });
@@ -409,6 +425,10 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       toast.success(isPolish ? 'Review requested' : 'Review requested');
       await refreshToolSession();
       setShowRequestReviewModal(false);
+      // Reset form
+      setReviewDecisionOwnerId('');
+      setReviewDueDate('');
+      setReviewPriority('medium');
     } catch (err: any) {
       toast.error(err?.message || 'Failed to request review');
     }
@@ -443,6 +463,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     methodologyId: string;
     count: number;
     includeChatContext: boolean;
+    decisionOwnerId?: string;
   }) => {
     if (!toolSessionId) return;
     if (toolPermissions.canGenerate === false) {
@@ -579,6 +600,24 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                     ? 'Brak braków w DoD.'
                     : 'No DoD gaps.'
                   : `${isPolish ? 'Braki' : 'Gaps'}: ${reviewGaps.join(', ')}`}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {isPolish ? 'Decision Owner' : 'Decision Owner'}{' '}
+                  {isPolish ? '(opcjonalnie)' : '(optional)'}
+                </label>
+                <select
+                  value={reviewDecisionOwnerId}
+                  onChange={(e) => setReviewDecisionOwnerId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                >
+                  <option value="">{isPolish ? '-- Wybierz --' : '-- Select --'}</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.name || user.email || user.id}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">

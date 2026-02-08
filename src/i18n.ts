@@ -4,7 +4,7 @@ import HttpBackend from 'i18next-http-backend';
 import { initReactI18next } from 'react-i18next';
 
 // Supported languages in the application
-export const SUPPORTED_LANGUAGES = ['en', 'pl', 'de', 'ar', 'ja', 'es'] as const;
+export const SUPPORTED_LANGUAGES = ['en', 'pl', 'de', 'ar', 'jp', 'es'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
 // Available namespaces for translations
@@ -17,7 +17,7 @@ export const LANGUAGE_NAMES: Record<SupportedLanguage, string> = {
   pl: 'Polski',
   de: 'Deutsch',
   ar: 'العربية',
-  ja: '日本語',
+  jp: '日本語',
   es: 'Español',
 };
 
@@ -27,7 +27,7 @@ export const LANGUAGE_DISPLAY_CODES: Record<SupportedLanguage, string> = {
   pl: 'PL',
   de: 'DE',
   ar: 'AR',
-  ja: 'JP',
+  jp: 'JP',
   es: 'ES',
 };
 
@@ -37,7 +37,7 @@ export const LANGUAGE_DIRECTION: Record<SupportedLanguage, 'ltr' | 'rtl'> = {
   pl: 'ltr',
   de: 'ltr',
   ar: 'rtl',
-  ja: 'ltr',
+  jp: 'ltr',
   es: 'ltr',
 };
 
@@ -54,8 +54,9 @@ i18n
     defaultNS: 'translation',
     ns: NAMESPACES,
 
-    // Debug only in development
-    debug: process.env.NODE_ENV === 'development',
+    // IMPORTANT: i18next debug logs (especially missingKey) can significantly slow down the app.
+    // Keep it OFF by default. Enable explicitly via: VITE_I18N_DEBUG=true
+    debug: import.meta.env.VITE_I18N_DEBUG === 'true',
 
     interpolation: {
       escapeValue: false, // React already escapes values

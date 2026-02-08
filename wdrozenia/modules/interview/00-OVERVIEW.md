@@ -136,6 +136,7 @@ server/migrations/
 ## 📚 Powiązane Dokumenty
 
 - `wdrozenia/plan-interview-context.md` - oryginalny plan
+- `wdrozenia/modules/interview/features/01-assignments.md` - workflow odbioru i rework (submit / send-back / approve)
 - `wdrozenia/UI_UX_GOLDEN_STANDARD.md` - standardy UI
 - `.cursor/rules/04-module-hub-pattern.mdc` - wzorzec ModuleHub
 - `.cursor/rules/01-no-mock-data.mdc` - zakaz mock data

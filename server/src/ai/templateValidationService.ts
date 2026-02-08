@@ -149,7 +149,10 @@ function validateGraph(graph: {
   });
 
   // Rule 1: Must have exactly 1 START node
-  const startNodes = nodes.filter((n: { id: string; type: string; [key: string]: unknown }) => n.type === templateGraphService.NODE_TYPES.START);
+  const startNodes = nodes.filter(
+    (n: { id: string; type: string; [key: string]: unknown }) =>
+      n.type === templateGraphService.NODE_TYPES.START
+  );
   if (startNodes.length === 0) {
     errors.push({
       code: ERROR_CODES.NO_START_NODE,
@@ -167,7 +170,10 @@ function validateGraph(graph: {
   }
 
   // Must have at least 1 END node
-  const endNodes = nodes.filter((n: { id: string; type: string; [key: string]: unknown }) => n.type === templateGraphService.NODE_TYPES.END);
+  const endNodes = nodes.filter(
+    (n: { id: string; type: string; [key: string]: unknown }) =>
+      n.type === templateGraphService.NODE_TYPES.END
+  );
   if (endNodes.length === 0) {
     errors.push({
       code: ERROR_CODES.NO_END_NODE,
@@ -191,7 +197,9 @@ function validateGraph(graph: {
   // Rule 3: Every node (except END) must have outgoing edge
   const deadEnds = templateGraphService.findDeadEnds(graph);
   deadEnds.forEach((nodeId: string) => {
-    const node = nodes.find((n: { id: string; type: string; title?: string; [key: string]: unknown }) => n.id === nodeId);
+    const node = nodes.find(
+      (n: { id: string; type: string; title?: string; [key: string]: unknown }) => n.id === nodeId
+    );
     errors.push({
       code: ERROR_CODES.DEAD_END_NODE,
       message: `Node "${node?.title || nodeId}" has no outgoing connection`,
@@ -202,7 +210,9 @@ function validateGraph(graph: {
   // Rule 4: BRANCH nodes must have else path
   const branchesWithoutElse = templateGraphService.findBranchesWithoutElse(graph);
   branchesWithoutElse.forEach((nodeId: string) => {
-    const node = nodes.find((n: { id: string; type: string; title?: string; [key: string]: unknown }) => n.id === nodeId);
+    const node = nodes.find(
+      (n: { id: string; type: string; title?: string; [key: string]: unknown }) => n.id === nodeId
+    );
     errors.push({
       code: ERROR_CODES.BRANCH_MISSING_ELSE,
       message: `Branch node "${node?.title || nodeId}" must have an 'else' path`,
@@ -229,18 +239,26 @@ function validateGraph(graph: {
   });
 
   // Validate ACTION nodes have actionType
-  nodes.forEach((node: { id: string; type: string; title?: string; data?: { actionType?: string; [key: string]: unknown }; [key: string]: unknown }) => {
-    if (node.type === templateGraphService.NODE_TYPES.ACTION) {
-      const nodeData = node.data as { actionType?: string; [key: string]: unknown } | undefined;
-      if (!nodeData?.actionType) {
-        errors.push({
-          code: ERROR_CODES.MISSING_ACTION_TYPE,
-          message: `Action node "${node.title || node.id}" must have an action type`,
-          nodeId: node.id,
-        });
+  nodes.forEach(
+    (node: {
+      id: string;
+      type: string;
+      title?: string;
+      data?: { actionType?: string; [key: string]: unknown };
+      [key: string]: unknown;
+    }) => {
+      if (node.type === templateGraphService.NODE_TYPES.ACTION) {
+        const nodeData = node.data as { actionType?: string; [key: string]: unknown } | undefined;
+        if (!nodeData?.actionType) {
+          errors.push({
+            code: ERROR_CODES.MISSING_ACTION_TYPE,
+            message: `Action node "${node.title || node.id}" must have an action type`,
+            nodeId: node.id,
+          });
+        }
       }
     }
-  });
+  );
 
   // Check for unreachable nodes
   const reachableNodes = findReachableNodes(graph);
@@ -272,7 +290,9 @@ function findReachableNodes(graph: {
 
   // Build adjacency list
   const adjacency = new Map<string, string[]>();
-  nodes.forEach((node: { id: string; type: string; [key: string]: unknown }) => adjacency.set(node.id, []));
+  nodes.forEach((node: { id: string; type: string; [key: string]: unknown }) =>
+    adjacency.set(node.id, [])
+  );
   edges.forEach((edge: { from: string; to: string; [key: string]: unknown }) => {
     const neighbors = adjacency.get(edge.from);
     if (neighbors) {
@@ -281,7 +301,10 @@ function findReachableNodes(graph: {
   });
 
   // Find START node
-  const startNode = nodes.find((n: { id: string; type: string; [key: string]: unknown }) => n.type === templateGraphService.NODE_TYPES.START);
+  const startNode = nodes.find(
+    (n: { id: string; type: string; [key: string]: unknown }) =>
+      n.type === templateGraphService.NODE_TYPES.START
+  );
   if (!startNode) {
     return reachable;
   }

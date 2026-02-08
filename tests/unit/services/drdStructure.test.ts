@@ -8,6 +8,10 @@ import {
 } from '@/services/drdStructure';
 
 describe('DRD Structure Service', () => {
+  console.log(
+    'DRD_STRUCTURE IDs:',
+    DRD_STRUCTURE.map((a) => a.id)
+  );
   describe('Data Structure Integrity', () => {
     it('should have at least 1 axis defined', () => {
       expect(DRD_STRUCTURE.length).toBeGreaterThanOrEqual(1);
@@ -65,11 +69,11 @@ describe('DRD Structure Service', () => {
 
     it('should have correctly named areas', () => {
       const expectedAreaNames = [
-        'Dane i Fundamenty AI',
-        'Procesy Wspierane przez AI',
-        'AI w Produktach i Usługach',
-        'Governance, Bezpieczeństwo i Etyka',
-        'Kompetencje i Kultura AI',
+        'Data and AI Foundations',
+        'AI-Supported Processes',
+        'AI in Products and Services',
+        'Governance, Security and Ethics',
+        'AI Competencies and Culture',
       ];
 
       const actualAreaNames = axis7?.areas.map((area) => area.name) || [];
@@ -122,9 +126,9 @@ describe('DRD Structure Service', () => {
         expect(level5?.title).toBe('Autonomous Data Intelligence');
       });
 
-      it('should have Polish language descriptions', () => {
+      it('should have valid descriptions', () => {
         const level1 = area7A?.levels.find((l) => l.level === 1);
-        expect(level1?.description).toContain('Dane są rozproszone');
+        expect(level1?.description).toContain('Data is scattered');
       });
     });
 
@@ -151,10 +155,10 @@ describe('DRD Structure Service', () => {
 
       it('should describe AI integration progression', () => {
         const level2 = area7B?.levels.find((l) => l.level === 2);
-        expect(level2?.description).toContain('automatyzacje');
+        expect(level2?.description).toContain('automation');
 
         const level4 = area7B?.levels.find((l) => l.level === 4);
-        expect(level4?.description).toContain('samodzielnie');
+        expect(level4?.description).toContain('supervisor');
       });
     });
 
@@ -182,7 +186,7 @@ describe('DRD Structure Service', () => {
       it('should describe product AI integration levels', () => {
         const level3 = area7C?.levels.find((l) => l.level === 3);
         expect(level3?.title).toBe('AI as a Core Product Component');
-        expect(level3?.description).toContain('kluczowym elementem');
+        expect(level3?.description).toContain('key part');
       });
     });
 
@@ -209,8 +213,8 @@ describe('DRD Structure Service', () => {
 
       it('should describe governance maturity progression', () => {
         const level3 = area7D?.levels.find((l) => l.level === 3);
-        expect(level3?.description).toContain('formalizuje');
-        expect(level3?.description).toContain('audytowane');
+        expect(level3?.description).toContain('formalizes');
+        expect(level3?.description).toContain('audited');
       });
     });
 
@@ -225,20 +229,20 @@ describe('DRD Structure Service', () => {
         expect(area7E?.levels).toHaveLength(5);
       });
 
-      it('should have level 1 titled "Brak Kompetencji"', () => {
+      it('should have level 1 titled "No Competencies"', () => {
         const level1 = area7E?.levels.find((l) => l.level === 1);
-        expect(level1?.title).toBe('Brak Kompetencji');
+        expect(level1?.title).toBe('No Competencies');
       });
 
-      it('should have level 5 titled "Kadra AI-Native"', () => {
+      it('should have level 5 titled "AI-Native Workforce"', () => {
         const level5 = area7E?.levels.find((l) => l.level === 5);
-        expect(level5?.title).toBe('Kadra AI-Native');
+        expect(level5?.title).toBe('AI-Native Workforce');
       });
 
       it('should describe competency progression', () => {
         const level4 = area7E?.levels.find((l) => l.level === 4);
-        expect(level4?.title).toBe('Płynność AI (AI Fluency)');
-        expect(level4?.description).toContain('automatyzacje');
+        expect(level4?.title).toBe('AI Fluency');
+        expect(level4?.description).toContain('upskilling');
       });
     });
 
@@ -376,10 +380,10 @@ describe('DRD Structure Service', () => {
       const level5Desc = area7A?.levels[4].description || '';
 
       // Level 1 should describe fragmented/basic state
-      expect(level1Desc).toContain('rozproszone');
+      expect(level1Desc).toContain('scattered');
 
       // Level 5 should describe autonomous/advanced state
-      expect(level5Desc).toContain('automatycznie');
+      expect(level5Desc).toContain('automatically');
     });
 
     it('should have increasing sophistication across levels', () => {
@@ -392,13 +396,13 @@ describe('DRD Structure Service', () => {
       const level5 = area7B?.levels[4].description || '';
 
       // Level 1: Isolated experiments
-      expect(level1.toLowerCase()).toMatch(/izolowa|obok|eksperyment/);
+      expect(level1.toLowerCase()).toMatch(/isolated|experiments/);
 
       // Level 3: Integrated decision support
-      expect(level3.toLowerCase()).toMatch(/zintegrowa|częścią|proces/);
+      expect(level3.toLowerCase()).toMatch(/integrated|recommendations|part of the process/);
 
       // Level 5: Fully autonomous
-      expect(level5.toLowerCase()).toMatch(/autonomi|bez udziału|wykonują się/);
+      expect(level5.toLowerCase()).toMatch(/fully autonomous|without human involvement/);
     });
   });
 });

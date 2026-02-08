@@ -9,7 +9,6 @@ import {
   Archive,
   Ban,
   BarChart3,
-  Calendar,
   CheckCircle2,
   FileText,
   Loader2,
@@ -26,6 +25,7 @@ import { Api } from '@/services/api';
 import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
 
 import { InitiativeKPI, InitiativeStatus } from '../../types';
+import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import {
   FilterableTable,
   FilterChip,
@@ -66,6 +66,16 @@ const STATUS_META: Record<
   InitiativeStatus,
   { label: string; dotColor: string; icon: React.ReactNode }
 > = {
+  [InitiativeStatus.PENDING_REVIEW]: {
+    label: STATUS_METADATA[InitiativeStatus.PENDING_REVIEW].label,
+    dotColor: STATUS_METADATA[InitiativeStatus.PENDING_REVIEW].dotColor,
+    icon: <FileText size={14} />,
+  },
+  [InitiativeStatus.PROMOTED]: {
+    label: STATUS_METADATA[InitiativeStatus.PROMOTED].label,
+    dotColor: STATUS_METADATA[InitiativeStatus.PROMOTED].dotColor,
+    icon: <TrendingUp size={14} />,
+  },
   [InitiativeStatus.DONE]: {
     label: STATUS_METADATA[InitiativeStatus.DONE].label,
     dotColor: STATUS_METADATA[InitiativeStatus.DONE].dotColor,
@@ -101,35 +111,25 @@ const STATUS_META: Record<
     dotColor: STATUS_METADATA[InitiativeStatus.APPROVED].dotColor,
     icon: <CheckCircle2 size={14} />,
   },
+  [InitiativeStatus.SCHEDULED]: {
+    label: STATUS_METADATA[InitiativeStatus.SCHEDULED].label,
+    dotColor: STATUS_METADATA[InitiativeStatus.SCHEDULED].dotColor,
+    icon: <Target size={14} />,
+  },
   [InitiativeStatus.EXECUTING]: {
     label: STATUS_METADATA[InitiativeStatus.EXECUTING].label,
     dotColor: STATUS_METADATA[InitiativeStatus.EXECUTING].dotColor,
     icon: <Target size={14} />,
   },
+  [InitiativeStatus.TRACKING]: {
+    label: STATUS_METADATA[InitiativeStatus.TRACKING].label,
+    dotColor: STATUS_METADATA[InitiativeStatus.TRACKING].dotColor,
+    icon: <BarChart3 size={14} />,
+  },
   [InitiativeStatus.DRAFT]: {
     label: STATUS_METADATA[InitiativeStatus.DRAFT].label,
     dotColor: STATUS_METADATA[InitiativeStatus.DRAFT].dotColor,
     icon: <FileText size={14} />,
-  },
-  [InitiativeStatus.PENDING_REVIEW]: {
-    label: STATUS_METADATA[InitiativeStatus.PENDING_REVIEW]?.label || 'Pending Review',
-    dotColor: STATUS_METADATA[InitiativeStatus.PENDING_REVIEW]?.dotColor || 'bg-yellow-400',
-    icon: <FileText size={14} />,
-  },
-  [InitiativeStatus.PROMOTED]: {
-    label: STATUS_METADATA[InitiativeStatus.PROMOTED]?.label || 'Promoted',
-    dotColor: STATUS_METADATA[InitiativeStatus.PROMOTED]?.dotColor || 'bg-blue-400',
-    icon: <Target size={14} />,
-  },
-  [InitiativeStatus.SCHEDULED]: {
-    label: STATUS_METADATA[InitiativeStatus.SCHEDULED]?.label || 'Scheduled',
-    dotColor: STATUS_METADATA[InitiativeStatus.SCHEDULED]?.dotColor || 'bg-purple-400',
-    icon: <Calendar size={14} />,
-  },
-  [InitiativeStatus.TRACKING]: {
-    label: STATUS_METADATA[InitiativeStatus.TRACKING]?.label || 'Tracking',
-    dotColor: STATUS_METADATA[InitiativeStatus.TRACKING]?.dotColor || 'bg-teal-400',
-    icon: <CheckCircle2 size={14} />,
   },
 };
 
@@ -361,9 +361,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
           ? 'DONE'
           : row.status === InitiativeStatus.BLOCKED
             ? 'BLOCKED'
-            : row.status === InitiativeStatus.TRACKING
-              ? 'TRACKING'
-              : 'DRAFT',
+            : 'DRAFT',
     };
 
     setOpenDocuments((prev) => {
@@ -420,10 +418,10 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
       progress: item.progress || 100,
       updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
       status: (item.status === InitiativeStatus.DONE
-        ? 'completed'
+        ? 'DONE'
         : item.status === InitiativeStatus.BLOCKED
-          ? 'in_review'
-          : 'draft') as ItemStatus,
+          ? 'BLOCKED'
+          : 'DRAFT') as ItemStatus,
     }));
   }, [filteredInitiatives]);
 
@@ -567,19 +565,13 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
     }
 
     if (activeDocumentId) {
-      const doc = openDocuments.find((d) => d.id === activeDocumentId);
-      const initiative = initiatives.find((i) => i.id === activeDocumentId);
       return (
-        <div className="flex items-center justify-center h-full text-slate-500">
-          <div className="text-center">
-            <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-green-400/50" />
-            <p className="text-lg text-white">Benefits Details: {doc?.name}</p>
-            <p className="text-sm text-slate-400">
-              ({doc?.subType} - {STATUS_META[initiative?.status || InitiativeStatus.DONE]?.label})
-            </p>
-            <p className="mt-4 text-xs">Connect to existing benefits workspace</p>
-          </div>
-        </div>
+        <InitiativeDocumentView
+          initiativeId={activeDocumentId}
+          onBack={handleShowList}
+          onStatusChange={() => {}}
+          sourceModule="benefits"
+        />
       );
     }
 

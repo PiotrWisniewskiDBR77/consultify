@@ -46,12 +46,13 @@ export const useActionHandler = () => {
     }
   }, []);
 
-  const confirmAction = useCallback(async (actionId: string, confirmed: boolean): Promise<ActionResult> => {
-    setPendingActions((prev) => prev.filter((action) => action.id !== actionId));
-    return confirmed
-      ? { status: 'success', actionId }
-      : { status: 'cancelled', actionId };
-  }, []);
+  const confirmAction = useCallback(
+    async (actionId: string, confirmed: boolean): Promise<ActionResult> => {
+      setPendingActions((prev) => prev.filter((action) => action.id !== actionId));
+      return confirmed ? { status: 'success', actionId } : { status: 'cancelled', actionId };
+    },
+    []
+  );
 
   return {
     executeAction,

@@ -12,8 +12,6 @@
  * Each pillar has 2-3 dimensions with 5-level maturity scale (1-5).
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   AlertCircle,
   ArrowRight,
@@ -29,15 +27,17 @@ import {
   Target,
   Truck,
 } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
-  ADMA_PILLARS,
   ADMA_DIMENSIONS,
   ADMA_MATURITY_LEVELS,
-  ADMAPillarId,
+  ADMA_PILLARS,
   ADMADimension,
-  calculatePillarScore,
+  ADMAPillarId,
   calculateOverallADMAScore,
+  calculatePillarScore,
 } from '../../../services/admaStructure';
 
 // Types
@@ -136,7 +136,7 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
   // Calculate progress
   const progress = useMemo(() => {
     let filledDimensions = 0;
-    let totalDimensions = ADMA_DIMENSIONS.length;
+    const totalDimensions = ADMA_DIMENSIONS.length;
     let totalScore = 0;
     let count = 0;
 
@@ -303,7 +303,9 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
               </span>
             </div>
             <div className="text-left">
-              <h4 className="text-white font-medium">{isPolish ? dimension.namePL : dimension.name}</h4>
+              <h4 className="text-white font-medium">
+                {isPolish ? dimension.namePL : dimension.name}
+              </h4>
               <p className="text-xs text-slate-400 mt-0.5">{dimension.description}</p>
             </div>
           </div>

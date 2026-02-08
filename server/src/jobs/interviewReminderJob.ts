@@ -54,7 +54,10 @@ async function runJob(): Promise<{
   escalations: { escalated: number; errors: number };
 }> {
   logger.info('[InterviewReminderJob] ========================================');
-  logger.info('[InterviewReminderJob] Starting interview reminder job at', new Date().toISOString());
+  logger.info(
+    '[InterviewReminderJob] Starting interview reminder job at',
+    new Date().toISOString()
+  );
   logger.info('[InterviewReminderJob] ========================================');
 
   try {
@@ -93,7 +96,7 @@ async function runJob(): Promise<{
 }
 
 // Export for programmatic use
-export { runJob, runReminderCheck, runEscalationCheck };
+export { runEscalationCheck, runJob, runReminderCheck };
 
 export default {
   runJob,

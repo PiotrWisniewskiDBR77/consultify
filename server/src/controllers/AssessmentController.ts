@@ -18,6 +18,7 @@ import { v4 as uuidv4 } from 'uuid';
 import AssessmentInitiativeService from '../services/assessmentInitiativeService.js';
 import { hasPermission } from '../services/permissionService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
+import { assessmentAuditLogger } from '../utils/AssessmentAuditLogger.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
@@ -45,10 +46,12 @@ interface AssessmentRow {
   context_snapshot?: string | null;
   score_summary?: string | null;
   current_section_id?: string | null;
+  navigation_json?: string | null;
   review_requested_at?: string | null;
   report_approved_at?: string | null;
   approved_at?: string | null;
   created_by: string;
+  updated_by?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -254,6 +257,56 @@ const logAudit = async (
 // Schema initialization
 const ensureAssessmentSchema = async (): Promise<void> => {
   try {
+    const isSQLite = String(process.env.DB_TYPE || '').toLowerCase() === 'sqlite';
+    const tableColumnsCache = new Map<string, Set<string>>();
+
+    const getTableColumns = async (table: string): Promise<Set<string>> => {
+      const cached = tableColumnsCache.get(table);
+      if (cached) return cached;
+      const cols = new Set<string>();
+      if (isSQLite) {
+        try {
+          const rows = (await queryHelpers.queryAll(`PRAGMA table_info(${table})`)) as Array<{
+            name?: string;
+          }>;
+          for (const r of rows || []) {
+            if (r?.name) cols.add(String(r.name));
+          }
+        } catch {
+          // ignore
+        }
+      }
+      tableColumnsCache.set(table, cols);
+      return cols;
+    };
+
+    const tryAddColumn = async (
+      table: string,
+      columnName: string,
+      columnDefSql: string
+    ): Promise<void> => {
+      // Prefer a schema check in SQLite to avoid noisy "duplicate column" errors.
+      if (isSQLite) {
+        const cols = await getTableColumns(table);
+        if (cols.has(columnName)) return;
+      }
+      try {
+        await queryHelpers.queryRun(`ALTER TABLE ${table} ADD COLUMN ${columnDefSql}`);
+        if (isSQLite) {
+          const cols = await getTableColumns(table);
+          cols.add(columnName);
+        }
+      } catch (e: any) {
+        const msg = String(e?.message || e || '');
+        // SQLite: "duplicate column name: foo"
+        // Postgres: 'column "foo" of relation "table" already exists'
+        if (msg.includes('duplicate column name') || msg.includes('already exists')) return;
+        // If table doesn't exist (shouldn't happen after CREATE TABLE), ignore to keep init resilient
+        if (msg.includes('no such table') || msg.includes('does not exist')) return;
+        throw e;
+      }
+    };
+
     // Assessments table
     await queryHelpers.queryRun(
       `CREATE TABLE IF NOT EXISTS assessments (
@@ -278,6 +331,27 @@ const ensureAssessmentSchema = async (): Promise<void> => {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`
     );
+
+    // If the table already existed (older DB), ensure required columns exist.
+    // NOTE: SQLite won't add columns via CREATE TABLE IF NOT EXISTS, so we must ALTER.
+    await tryAddColumn('assessments', 'project_id', 'project_id TEXT');
+    await tryAddColumn('assessments', 'assessment_type', "assessment_type TEXT DEFAULT 'DRD'");
+    await tryAddColumn('assessments', 'name', "name TEXT DEFAULT 'New Assessment'");
+    await tryAddColumn('assessments', 'status', "status TEXT DEFAULT 'DRAFT'");
+    await tryAddColumn('assessments', 'completion_percent', 'completion_percent INTEGER DEFAULT 0');
+    await tryAddColumn('assessments', 'confidence_avg', 'confidence_avg REAL DEFAULT 0');
+    await tryAddColumn('assessments', 'answers_json', "answers_json TEXT DEFAULT '{}'");
+    await tryAddColumn('assessments', 'context_snapshot', "context_snapshot TEXT DEFAULT '{}'");
+    await tryAddColumn('assessments', 'score_summary', "score_summary TEXT DEFAULT '{}'");
+    await tryAddColumn('assessments', 'current_section_id', 'current_section_id TEXT');
+    await tryAddColumn('assessments', 'navigation_json', "navigation_json TEXT DEFAULT '{}'");
+    await tryAddColumn('assessments', 'review_requested_at', 'review_requested_at TIMESTAMP');
+    await tryAddColumn('assessments', 'report_approved_at', 'report_approved_at TIMESTAMP');
+    await tryAddColumn('assessments', 'approved_at', 'approved_at TIMESTAMP');
+    await tryAddColumn('assessments', 'created_by', 'created_by TEXT');
+    await tryAddColumn('assessments', 'updated_by', 'updated_by TEXT');
+    await tryAddColumn('assessments', 'created_at', 'created_at TIMESTAMP');
+    await tryAddColumn('assessments', 'updated_at', 'updated_at TIMESTAMP');
 
     // Assessment reports table
     await queryHelpers.queryRun(
@@ -352,6 +426,34 @@ const ensureAssessmentSchema = async (): Promise<void> => {
       )`
     );
 
+    // Per-user state (enterprise): last position, last opened, etc.
+    await queryHelpers.queryRun(
+      `CREATE TABLE IF NOT EXISTS assessment_user_state (
+        assessment_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        navigation_json TEXT DEFAULT '{}',
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (assessment_id, user_id),
+        FOREIGN KEY (assessment_id) REFERENCES assessments(id) ON DELETE CASCADE
+      )`
+    );
+
+    // Area assignments (enterprise): who is responsible for which area
+    await queryHelpers.queryRun(
+      `CREATE TABLE IF NOT EXISTS assessment_area_assignments (
+        id TEXT PRIMARY KEY,
+        assessment_id TEXT NOT NULL,
+        area_id TEXT NOT NULL,
+        assigned_user_id TEXT NOT NULL,
+        assigned_by TEXT NOT NULL,
+        assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        due_at TIMESTAMP,
+        status TEXT DEFAULT 'ACTIVE',
+        UNIQUE (assessment_id, area_id),
+        FOREIGN KEY (assessment_id) REFERENCES assessments(id) ON DELETE CASCADE
+      )`
+    );
+
     // Indexes
     await queryHelpers.queryRun(
       `CREATE INDEX IF NOT EXISTS idx_assessments_org ON assessments(organization_id)`
@@ -371,6 +473,12 @@ const ensureAssessmentSchema = async (): Promise<void> => {
     await queryHelpers.queryRun(
       `CREATE INDEX IF NOT EXISTS idx_assessment_sessions_user ON assessment_sessions(user_id)`
     );
+    await queryHelpers.queryRun(
+      `CREATE INDEX IF NOT EXISTS idx_assessment_user_state_user ON assessment_user_state(user_id)`
+    );
+    await queryHelpers.queryRun(
+      `CREATE INDEX IF NOT EXISTS idx_assessment_assignments_assessment ON assessment_area_assignments(assessment_id)`
+    );
 
     // Permissions
     const permissionInsertSql = `INSERT OR IGNORE INTO permissions (key, name, description, category, icon) VALUES
@@ -382,14 +490,18 @@ const ensureAssessmentSchema = async (): Promise<void> => {
       await queryHelpers.queryRun(permissionInsertSql);
     } catch {
       // Try with ON CONFLICT
-      await queryHelpers.queryRun(
-        `INSERT INTO permissions (key, name, description, category, icon) VALUES
-          ('ASSESSMENT_REQUEST_REVIEW', 'Assessment: Request Review', 'Request review for assessment', 'ASSESSMENT', 'fact_check'),
-          ('ASSESSMENT_APPROVE_REPORT', 'Assessment: Approve Report', 'Approve assessment report', 'ASSESSMENT', 'description'),
-          ('ASSESSMENT_APPROVE', 'Assessment: Approve Assessment', 'Approve assessment', 'ASSESSMENT', 'check_circle'),
-          ('ASSESSMENT_GENERATE_INITIATIVES', 'Assessment: Generate Initiatives', 'Generate initiatives from assessment', 'ASSESSMENT', 'lightbulb')
-        ON CONFLICT (key) DO NOTHING`
-      );
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO permissions (key, name, description, category, icon) VALUES
+            ('ASSESSMENT_REQUEST_REVIEW', 'Assessment: Request Review', 'Request review for assessment', 'ASSESSMENT', 'fact_check'),
+            ('ASSESSMENT_APPROVE_REPORT', 'Assessment: Approve Report', 'Approve assessment report', 'ASSESSMENT', 'description'),
+            ('ASSESSMENT_APPROVE', 'Assessment: Approve Assessment', 'Approve assessment', 'ASSESSMENT', 'check_circle'),
+            ('ASSESSMENT_GENERATE_INITIATIVES', 'Assessment: Generate Initiatives', 'Generate initiatives from assessment', 'ASSESSMENT', 'lightbulb')
+          ON CONFLICT (key) DO NOTHING`
+        );
+      } catch {
+        // permissions table may not exist in all environments
+      }
     }
 
     // Role permissions
@@ -408,20 +520,24 @@ const ensureAssessmentSchema = async (): Promise<void> => {
       await queryHelpers.queryRun(roleInsertSql);
     } catch {
       // Try with ON CONFLICT
-      await queryHelpers.queryRun(
-        `INSERT INTO role_permissions (id, role, permission_key, description) VALUES
-          ('rp_assessment_request_review_admin', 'ADMIN', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
-          ('rp_assessment_request_review_pm', 'PROJECT_MANAGER', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
-          ('rp_assessment_request_review_super', 'SUPERADMIN', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
-          ('rp_assessment_approve_report_admin', 'ADMIN', 'ASSESSMENT_APPROVE_REPORT', 'Approve assessment reports'),
-          ('rp_assessment_approve_report_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE_REPORT', 'Approve assessment reports'),
-          ('rp_assessment_approve_admin', 'ADMIN', 'ASSESSMENT_APPROVE', 'Approve assessments'),
-          ('rp_assessment_approve_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE', 'Approve assessments'),
-          ('rp_assessment_generate_admin', 'ADMIN', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments'),
-          ('rp_assessment_generate_pm', 'PROJECT_MANAGER', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments'),
-          ('rp_assessment_generate_super', 'SUPERADMIN', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments')
-        ON CONFLICT (id) DO NOTHING`
-      );
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO role_permissions (id, role, permission_key, description) VALUES
+            ('rp_assessment_request_review_admin', 'ADMIN', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
+            ('rp_assessment_request_review_pm', 'PROJECT_MANAGER', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
+            ('rp_assessment_request_review_super', 'SUPERADMIN', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
+            ('rp_assessment_approve_report_admin', 'ADMIN', 'ASSESSMENT_APPROVE_REPORT', 'Approve assessment reports'),
+            ('rp_assessment_approve_report_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE_REPORT', 'Approve assessment reports'),
+            ('rp_assessment_approve_admin', 'ADMIN', 'ASSESSMENT_APPROVE', 'Approve assessments'),
+            ('rp_assessment_approve_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE', 'Approve assessments'),
+            ('rp_assessment_generate_admin', 'ADMIN', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments'),
+            ('rp_assessment_generate_pm', 'PROJECT_MANAGER', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments'),
+            ('rp_assessment_generate_super', 'SUPERADMIN', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments')
+          ON CONFLICT (id) DO NOTHING`
+        );
+      } catch {
+        // role_permissions table may not exist in all environments
+      }
     }
   } catch {
     // Schema might be managed elsewhere
@@ -541,29 +657,61 @@ export class AssessmentController {
       const id = uuidv4();
       const now = new Date().toISOString();
 
-      await queryHelpers.queryRun(
-        `INSERT INTO assessments (
-          id, organization_id, project_id, assessment_type, name, status,
-          completion_percent, confidence_avg, answers_json, context_snapshot,
-          created_by, updated_by, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          id,
-          user.organizationId,
-          projectId || null,
-          assessmentType,
-          name,
-          'DRAFT',
-          0,
-          0,
-          '{}',
-          '{}',
-          user.id,
-          user.id,
-          now,
-          now,
-        ]
-      );
+      // Backward compatibility: some older SQLite DBs may not have `project_id` column.
+      // We try the full insert first, and if it fails with "no such column", retry without project_id.
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO assessments (
+            id, organization_id, project_id, assessment_type, name, status,
+            completion_percent, confidence_avg, answers_json, context_snapshot,
+            created_by, updated_by, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            id,
+            user.organizationId,
+            projectId || null,
+            assessmentType,
+            name,
+            'DRAFT',
+            0,
+            0,
+            '{}',
+            '{}',
+            user.id,
+            user.id,
+            now,
+            now,
+          ]
+        );
+      } catch (e: any) {
+        const msg = String(e?.message || e || '');
+        if (msg.includes('no such column') && msg.includes('project_id')) {
+          await queryHelpers.queryRun(
+            `INSERT INTO assessments (
+              id, organization_id, assessment_type, name, status,
+              completion_percent, confidence_avg, answers_json, context_snapshot,
+              created_by, updated_by, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              id,
+              user.organizationId,
+              assessmentType,
+              name,
+              'DRAFT',
+              0,
+              0,
+              '{}',
+              '{}',
+              user.id,
+              user.id,
+              now,
+              now,
+            ]
+          );
+        } else {
+          throw e;
+        }
+      }
 
       // Create initial session for submenu
       await queryHelpers.queryRun(
@@ -571,6 +719,9 @@ export class AssessmentController {
          VALUES (?, ?, ?, ?)`,
         [uuidv4(), id, user.id, now]
       );
+
+      // Log activity (non-blocking)
+      assessmentAuditLogger.logCreation(req, id, assessmentType).catch(() => {});
 
       res.json({ id, status: 'DRAFT' });
     }
@@ -588,66 +739,124 @@ export class AssessmentController {
         return;
       }
 
-      const assessment = (await queryHelpers.queryOne(
-        `SELECT * FROM assessments WHERE id = ? AND organization_id = ?`,
-        [assessmentId, user.organizationId]
-      )) as AssessmentRow | null;
+      try {
+        // Ensure workflow schema exists even for older DBs (so reads don't fail on missing tables).
+        await ensureAssessmentSchema();
 
-      if (!assessment) {
-        res.status(404).json({ error: 'Assessment not found' });
-        return;
+        const assessment = (await queryHelpers.queryOne(
+          `SELECT * FROM assessments WHERE id = ? AND organization_id = ?`,
+          [assessmentId, user.organizationId]
+        )) as AssessmentRow | null;
+
+        if (!assessment) {
+          res.status(404).json({ error: 'Assessment not found' });
+          return;
+        }
+
+        // Get initiatives
+        const initiatives = await queryHelpers
+          .queryAll(
+            `SELECT i.id, i.name as title, i.status, l.batch_id
+           FROM assessment_initiative_links l
+           LEFT JOIN initiatives i ON l.initiative_id = i.id
+           WHERE l.assessment_id = ?
+           ORDER BY l.created_at DESC`,
+            [assessmentId]
+          )
+          .catch((err) => {
+            console.warn('[AssessmentController] Failed to load initiatives:', err);
+            return [];
+          });
+
+        // Get decisions
+        const decisions = await queryHelpers
+          .queryAll(
+            `SELECT ad.decision_type, ad.status, ad.decision_id, d.status as decision_status
+           FROM assessment_decisions ad
+           LEFT JOIN decisions d ON ad.decision_id = d.id
+           WHERE ad.assessment_id = ?`,
+            [assessmentId]
+          )
+          .catch((err) => {
+            console.warn('[AssessmentController] Failed to load decisions:', err);
+            return [];
+          });
+
+        // Get latest report
+        const report = await queryHelpers
+          .queryOne<AssessmentReportRow>(
+            // NOTE: DBs created before workflow v2 may not have `version` column on assessment_reports.
+            // Use timestamps to pick the latest row in a backwards-compatible way.
+            `SELECT * FROM assessment_reports WHERE assessment_id = ? ORDER BY COALESCE(updated_at, created_at) DESC LIMIT 1`,
+            [assessmentId]
+          )
+          .catch((err) => {
+            console.warn('[AssessmentController] Failed to load report:', err);
+            return null;
+          });
+
+        // Get permissions
+        const permissions = {
+          canRequestReview: await ensurePermission(req, 'ASSESSMENT_REQUEST_REVIEW').catch(
+            () => false
+          ),
+          canApproveReport: await ensurePermission(req, 'ASSESSMENT_APPROVE_REPORT').catch(
+            () => false
+          ),
+          canApproveAssessment: await ensurePermission(req, 'ASSESSMENT_APPROVE').catch(
+            () => false
+          ),
+          canGenerate: await ensurePermission(req, 'ASSESSMENT_GENERATE_INITIATIVES').catch(
+            () => false
+          ),
+        };
+
+        // Safe JSON parsing with fallback
+        const parseJsonSafely = (
+          jsonString: string | null | undefined,
+          fallback: any = {}
+        ): any => {
+          if (!jsonString) return fallback;
+          try {
+            return JSON.parse(jsonString);
+          } catch (e) {
+            console.error(
+              '[AssessmentController] Failed to parse JSON:',
+              e,
+              'Raw:',
+              jsonString?.substring(0, 100)
+            );
+            return fallback;
+          }
+        };
+
+        res.json({
+          ...assessment,
+          status: normalizeStatus(assessment.status),
+          backendStatus: assessment.status,
+          answers: parseJsonSafely(assessment.answers_json, {}),
+          contextSnapshot: parseJsonSafely(assessment.context_snapshot, {}),
+          scoreSummary: parseJsonSafely(assessment.score_summary, {}),
+          navigation: parseJsonSafely((assessment as any).navigation_json, null),
+          generatedInitiatives: initiatives,
+          decisions,
+          report: report
+            ? {
+                ...report,
+                content: parseJsonSafely(report.content_json, {}),
+              }
+            : null,
+          permissions,
+        });
+      } catch (error: any) {
+        console.error('[AssessmentController] Error in getAssessment:', {
+          assessmentId,
+          organizationId: user.organizationId,
+          error: error?.message,
+          stack: error?.stack,
+        });
+        throw error; // Re-throw to be handled by asyncHandler
       }
-
-      // Get initiatives
-      const initiatives = await queryHelpers.queryAll(
-        `SELECT i.id, i.name as title, i.status, l.batch_id
-         FROM assessment_initiative_links l
-         LEFT JOIN initiatives i ON l.initiative_id = i.id
-         WHERE l.assessment_id = ?
-         ORDER BY l.created_at DESC`,
-        [assessmentId]
-      );
-
-      // Get decisions
-      const decisions = await queryHelpers.queryAll(
-        `SELECT ad.decision_type, ad.status, ad.decision_id, d.status as decision_status
-         FROM assessment_decisions ad
-         LEFT JOIN decisions d ON ad.decision_id = d.id
-         WHERE ad.assessment_id = ?`,
-        [assessmentId]
-      );
-
-      // Get latest report
-      const report = await queryHelpers.queryOne<AssessmentReportRow>(
-        `SELECT * FROM assessment_reports WHERE assessment_id = ? ORDER BY version DESC LIMIT 1`,
-        [assessmentId]
-      );
-
-      // Get permissions
-      const permissions = {
-        canRequestReview: await ensurePermission(req, 'ASSESSMENT_REQUEST_REVIEW'),
-        canApproveReport: await ensurePermission(req, 'ASSESSMENT_APPROVE_REPORT'),
-        canApproveAssessment: await ensurePermission(req, 'ASSESSMENT_APPROVE'),
-        canGenerate: await ensurePermission(req, 'ASSESSMENT_GENERATE_INITIATIVES'),
-      };
-
-      res.json({
-        ...assessment,
-        status: normalizeStatus(assessment.status),
-        backendStatus: assessment.status,
-        answers: assessment.answers_json ? JSON.parse(assessment.answers_json) : {},
-        contextSnapshot: assessment.context_snapshot ? JSON.parse(assessment.context_snapshot) : {},
-        scoreSummary: assessment.score_summary ? JSON.parse(assessment.score_summary) : {},
-        generatedInitiatives: initiatives,
-        decisions,
-        report: report
-          ? {
-              ...report,
-              content: report.content_json ? JSON.parse(report.content_json) : {},
-            }
-          : null,
-        permissions,
-      });
     }
   );
 
@@ -663,34 +872,105 @@ export class AssessmentController {
         return;
       }
 
+      // Ensure schema exists (older DBs may miss columns used here)
+      await ensureAssessmentSchema();
+
       const {
+        name,
         answers,
         completionPercent,
         confidenceAvg,
         contextSnapshot,
         scoreSummary,
         currentSectionId,
+        navigation,
       } = req.body;
 
       const now = new Date().toISOString();
+
+      // IMPORTANT:
+      // Clients often send partial updates (e.g. autosave answers without contextSnapshot/scoreSummary).
+      // Preserve existing fields when omitted to avoid accidental data loss.
+      const existing = await queryHelpers.queryOne<{
+        answers_json?: string | null;
+        context_snapshot?: string | null;
+        score_summary?: string | null;
+        completion_percent?: number | null;
+        confidence_avg?: number | null;
+        current_section_id?: string | null;
+        navigation_json?: string | null;
+      }>(
+        `SELECT answers_json, context_snapshot, score_summary, completion_percent, confidence_avg, current_section_id, navigation_json
+         FROM assessments
+         WHERE id = ? AND organization_id = ?`,
+        [assessmentId, user.organizationId]
+      );
+
+      if (!existing) {
+        res.status(404).json({ error: 'Assessment not found' });
+        return;
+      }
+
+      const parseJsonSafely = (jsonString: string | null | undefined, fallback: any = {}): any => {
+        if (!jsonString) return fallback;
+        try {
+          return JSON.parse(jsonString);
+        } catch {
+          return fallback;
+        }
+      };
+
+      const nextAnswers =
+        answers !== undefined ? answers : parseJsonSafely(existing.answers_json, {});
+      const nextContextSnapshot =
+        contextSnapshot !== undefined
+          ? contextSnapshot
+          : parseJsonSafely(existing.context_snapshot, {});
+      const nextScoreSummary =
+        scoreSummary !== undefined ? scoreSummary : parseJsonSafely(existing.score_summary, {});
+      const nextCompletionPercent =
+        completionPercent !== undefined
+          ? completionPercent
+          : Number(existing.completion_percent || 0);
+      const nextConfidenceAvg =
+        confidenceAvg !== undefined ? confidenceAvg : Number(existing.confidence_avg || 0);
+      const nextCurrentSectionId =
+        currentSectionId !== undefined
+          ? currentSectionId || null
+          : existing.current_section_id || null;
+      const nextNavigation =
+        navigation !== undefined ? navigation : parseJsonSafely(existing.navigation_json, {});
+
       await queryHelpers.queryRun(
         `UPDATE assessments
-         SET answers_json = ?, context_snapshot = ?, completion_percent = ?, confidence_avg = ?,
-             score_summary = ?, current_section_id = ?, updated_by = ?, updated_at = ?
+         SET name = COALESCE(?, name),
+             answers_json = ?, context_snapshot = ?, completion_percent = ?, confidence_avg = ?,
+             score_summary = ?, current_section_id = ?, navigation_json = ?, updated_by = ?, updated_at = ?
          WHERE id = ? AND organization_id = ?`,
         [
-          JSON.stringify(answers || {}),
-          JSON.stringify(contextSnapshot || {}),
-          completionPercent ?? 0,
-          confidenceAvg ?? 0,
-          JSON.stringify(scoreSummary || {}),
-          currentSectionId || null,
+          name ?? null,
+          JSON.stringify(nextAnswers || {}),
+          JSON.stringify(nextContextSnapshot || {}),
+          nextCompletionPercent,
+          nextConfidenceAvg,
+          JSON.stringify(nextScoreSummary || {}),
+          nextCurrentSectionId,
+          JSON.stringify(nextNavigation || {}),
           user.id,
           now,
           assessmentId,
           user.organizationId,
         ]
       );
+
+      // Log activity (non-blocking)
+      assessmentAuditLogger
+        .logUpdate(req, assessmentId, {
+          completionPercent: nextCompletionPercent,
+          hasAnswers: !!answers,
+          hasContextSnapshot: !!contextSnapshot,
+        })
+        .catch(() => {});
 
       res.json({ id: assessmentId, updatedAt: now });
     }
@@ -807,7 +1087,9 @@ export class AssessmentController {
 
       // Get latest report
       const report = await queryHelpers.queryOne<AssessmentReportRow>(
-        `SELECT * FROM assessment_reports WHERE assessment_id = ? ORDER BY version DESC LIMIT 1`,
+        // NOTE: DBs created before workflow v2 may not have `version` column on assessment_reports.
+        // Use timestamps to pick the latest row in a backwards-compatible way.
+        `SELECT * FROM assessment_reports WHERE assessment_id = ? ORDER BY COALESCE(updated_at, created_at) DESC LIMIT 1`,
         [assessmentId]
       );
 
@@ -1051,8 +1333,15 @@ export class AssessmentController {
         return;
       }
 
-      const { methodologyId, count, includeChatContext, decisionOwnerId, dueDate, priority } =
-        req.body;
+      const {
+        methodologyId,
+        count,
+        includeChatContext,
+        decisionOwnerId,
+        dueDate,
+        priority,
+        reportId,
+      } = req.body;
       if (!methodologyId || !count) {
         res.status(400).json({ error: 'methodologyId and count are required' });
         return;
@@ -1096,11 +1385,44 @@ export class AssessmentController {
       const batchId = uuidv4();
       const now = new Date().toISOString();
 
+      // Some deployments may not yet have report_id on batches.
+      // Detect columns to keep compatibility.
+      const batchCols = await (async (): Promise<Set<string> | null> => {
+        try {
+          const rows = (await queryHelpers.queryAll(
+            `PRAGMA table_info(assessment_initiative_batches)`
+          )) as Array<{
+            name?: string;
+          }>;
+          return new Set((rows || []).map((r) => r.name).filter(Boolean) as string[]);
+        } catch {
+          // Unknown schema: avoid inserting optional columns like report_id.
+          return null;
+        }
+      })();
+
+      const insertBatchCols: string[] = [];
+      const insertBatchValues: unknown[] = [];
+      const pushBatch = (col: string, value: unknown) => {
+        if (batchCols === null && col === 'report_id') return;
+        if (batchCols && !batchCols.has(col)) return;
+        insertBatchCols.push(col);
+        insertBatchValues.push(value);
+      };
+      pushBatch('id', batchId);
+      pushBatch('assessment_id', assessmentId);
+      pushBatch('methodology_id', methodologyId);
+      pushBatch('initiatives_count', count);
+      pushBatch('include_chat_context', includeChatContext ? 1 : 0);
+      pushBatch('generated_by', user.id);
+      pushBatch('created_at', now);
+      // Optional: link batch to a report (when provided)
+      pushBatch('report_id', reportId ? String(reportId) : null);
+
+      const batchPlaceholders = insertBatchCols.map(() => '?').join(', ');
       await queryHelpers.queryRun(
-        `INSERT INTO assessment_initiative_batches (
-          id, assessment_id, methodology_id, initiatives_count, include_chat_context, generated_by, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [batchId, assessmentId, methodologyId, count, includeChatContext ? 1 : 0, user.id, now]
+        `INSERT INTO assessment_initiative_batches (${insertBatchCols.join(', ')}) VALUES (${batchPlaceholders})`,
+        insertBatchValues
       );
 
       const decisionId = await createDecisionRecord({
@@ -1124,19 +1446,167 @@ export class AssessmentController {
       });
 
       // Generate initiatives
+      // Enrich context snapshot with report context + existing initiatives (dedup),
+      // so generation leverages BOTH:
+      // - detailed assessment answers (assessment)
+      // - synthesized narrative (report)
+      const parseJsonSafely = (jsonString: string | null | undefined, fallback: any = {}): any => {
+        if (!jsonString) return fallback;
+        try {
+          return JSON.parse(jsonString);
+        } catch {
+          return fallback;
+        }
+      };
+
+      // Fetch report context:
+      // - if reportId is provided, use it (and ensure it belongs to this assessment)
+      // - else fallback to latest report by updated/created
+      const reportColumns = await (async () => {
+        try {
+          const rows = (await queryHelpers.queryAll(
+            `PRAGMA table_info(assessment_reports)`
+          )) as Array<{
+            name?: string;
+          }>;
+          return new Set((rows || []).map((r) => r.name).filter(Boolean) as string[]);
+        } catch {
+          return new Set<string>();
+        }
+      })();
+
+      const fetchReportRow = async (): Promise<any | null> => {
+        try {
+          if (reportId) {
+            return await queryHelpers.queryOne<any>(
+              `SELECT * FROM assessment_reports WHERE id = ? AND assessment_id = ? LIMIT 1`,
+              [String(reportId), assessmentId]
+            );
+          }
+          return await queryHelpers.queryOne<any>(
+            `SELECT * FROM assessment_reports WHERE assessment_id = ? ORDER BY COALESCE(updated_at, created_at) DESC LIMIT 1`,
+            [assessmentId]
+          );
+        } catch {
+          return null;
+        }
+      };
+
+      const reportRow = await fetchReportRow();
+      if (reportId && !reportRow) {
+        res.status(404).json({ error: 'Report not found for this assessment' });
+        return;
+      }
+
+      const reportContext = (() => {
+        if (!reportRow) return null;
+        // Prefer canonical v2 schema: content_json (JSON)
+        if (reportColumns.has('content_json')) {
+          const content = reportRow.content_json ? parseJsonSafely(reportRow.content_json, {}) : {};
+          return {
+            id: reportRow.id,
+            assessmentId: reportRow.assessment_id || assessmentId,
+            version: reportRow.version,
+            status: reportRow.status,
+            content,
+            updatedAt: reportRow.updated_at || reportRow.created_at,
+          };
+        }
+        // Legacy schema variant used by /api/assessment-reports routes (executive_summary, detailed_analysis, recommendations)
+        const detailed = reportRow.detailed_analysis
+          ? parseJsonSafely(reportRow.detailed_analysis, {})
+          : {};
+        const recommendations = reportRow.recommendations
+          ? parseJsonSafely(reportRow.recommendations, [])
+          : [];
+        return {
+          id: reportRow.id,
+          assessmentId: reportRow.assessment_id || assessmentId,
+          status: reportRow.status || (reportRow.executive_summary ? 'FINAL' : 'DRAFT'),
+          content: {
+            executiveSummary: reportRow.executive_summary || '',
+            keyFindings: detailed?.keyFindings || [],
+            notes: detailed?.notes || '',
+            recommendations,
+          },
+          updatedAt: reportRow.updated_at || reportRow.created_at,
+        };
+      })();
+
+      // Existing initiatives for dedup guidance (assessment + report)
+      const existingByAssessment = await queryHelpers
+        .queryAll<any>(
+          `SELECT i.id,
+                  COALESCE(i.title, i.name) as title,
+                  i.status,
+                  i.report_id as reportId
+           FROM assessment_initiative_links l
+           LEFT JOIN initiatives i ON l.initiative_id = i.id
+           WHERE l.assessment_id = ?
+           ORDER BY l.created_at DESC
+           LIMIT 200`,
+          [assessmentId]
+        )
+        .catch(() => []);
+
+      const existingByReport = reportContext?.id
+        ? await queryHelpers
+            .queryAll<any>(
+              `SELECT id,
+                      COALESCE(title, name) as title,
+                      status,
+                      report_id as reportId
+               FROM initiatives
+               WHERE report_id = ?
+                  OR (source_type = 'assessment_report' AND source_id = ?)
+               ORDER BY updated_at DESC
+               LIMIT 200`,
+              [String(reportContext.id), String(reportContext.id)]
+            )
+            .catch(() => [])
+        : [];
+
+      const existingInitiatives = (() => {
+        const map = new Map<string, any>();
+        for (const r of [...(existingByReport || []), ...(existingByAssessment || [])]) {
+          if (!r?.id) continue;
+          map.set(String(r.id), {
+            id: String(r.id),
+            title: String(r.title || ''),
+            status: r.status ? String(r.status) : undefined,
+            reportId: r.reportId ? String(r.reportId) : undefined,
+          });
+        }
+        return Array.from(map.values());
+      })();
+
+      const baseContext = parseJsonSafely(assessment.context_snapshot, {});
+
+      const enrichedAssessment: AssessmentRow = {
+        ...(assessment as any),
+        context_snapshot: JSON.stringify({
+          ...baseContext,
+          ...(reportContext ? { report: reportContext } : {}),
+          ...(existingInitiatives.length ? { existingInitiatives } : {}),
+        }),
+      };
+
       const initiatives = await AssessmentInitiativeService.generateFromAssessment({
-        assessment,
+        assessment: enrichedAssessment,
         methodologyId,
         count,
         includeChatContext: Boolean(includeChatContext),
+        reportContext: reportContext || null,
+        existingInitiatives,
         userId: user.id,
       });
 
       // Persist initiatives
       const created = await AssessmentInitiativeService.persistInitiatives({
-        assessment,
+        assessment: enrichedAssessment,
         batchId,
         initiatives,
+        reportId: reportContext?.id ? String(reportContext.id) : reportId ? String(reportId) : null,
         userId: user.id,
       });
 
@@ -1151,6 +1621,11 @@ export class AssessmentController {
           decisionId,
         }
       );
+
+      // Log activity for timeline (non-blocking)
+      assessmentAuditLogger
+        .logInitiativesGenerated(req, assessmentId, initiatives.length)
+        .catch(() => {});
 
       res.json({ batchId, initiatives: created });
     }
@@ -1322,6 +1797,160 @@ export class AssessmentController {
       );
 
       res.json({ success: true });
+    }
+  );
+
+  /**
+   * Get per-user state for an assessment (enterprise resume)
+   */
+  static getUserState = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { assessmentId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      await ensureAssessmentSchema();
+
+      const row = (await queryHelpers.queryOne(
+        `SELECT navigation_json, updated_at
+         FROM assessment_user_state
+         WHERE assessment_id = ? AND user_id = ?`,
+        [assessmentId, user.id]
+      )) as { navigation_json?: string | null; updated_at?: string | null } | null;
+
+      const parseJsonSafely = (
+        jsonString: string | null | undefined,
+        fallback: any = null
+      ): any => {
+        if (!jsonString) return fallback;
+        try {
+          return JSON.parse(jsonString);
+        } catch {
+          return fallback;
+        }
+      };
+
+      res.json({
+        assessmentId,
+        userId: user.id,
+        navigation: parseJsonSafely(row?.navigation_json, null),
+        updatedAt: row?.updated_at || null,
+      });
+    }
+  );
+
+  /**
+   * Update per-user state for an assessment (enterprise resume)
+   */
+  static updateUserState = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { assessmentId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      await ensureAssessmentSchema();
+
+      const { navigation } = req.body || {};
+      const now = new Date().toISOString();
+
+      await queryHelpers.queryRun(
+        `INSERT INTO assessment_user_state (assessment_id, user_id, navigation_json, updated_at)
+         VALUES (?, ?, ?, ?)
+         ON CONFLICT (assessment_id, user_id) DO UPDATE SET
+           navigation_json = excluded.navigation_json,
+           updated_at = excluded.updated_at`,
+        [assessmentId, user.id, JSON.stringify(navigation || {}), now]
+      );
+
+      res.json({ assessmentId, userId: user.id, updatedAt: now });
+    }
+  );
+
+  /**
+   * List assignments for an assessment (enterprise)
+   */
+  static listAssignments = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { assessmentId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      await ensureAssessmentSchema();
+
+      const rows = await queryHelpers.queryAll(
+        `SELECT id, assessment_id, area_id, assigned_user_id, assigned_by, assigned_at, due_at, status
+         FROM assessment_area_assignments
+         WHERE assessment_id = ?
+         ORDER BY area_id ASC`,
+        [assessmentId]
+      );
+
+      res.json({ assessmentId, assignments: rows || [] });
+    }
+  );
+
+  /**
+   * Upsert assignment for an area (enterprise)
+   */
+  static upsertAssignment = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { assessmentId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      await ensureAssessmentSchema();
+
+      const { areaId, assignedUserId, dueAt, status } = req.body || {};
+      if (!areaId || !assignedUserId) {
+        res.status(400).json({ error: 'areaId and assignedUserId are required' });
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const id = uuidv4();
+      const nextStatus = status || 'ACTIVE';
+
+      await queryHelpers.queryRun(
+        `INSERT INTO assessment_area_assignments (id, assessment_id, area_id, assigned_user_id, assigned_by, assigned_at, due_at, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT (assessment_id, area_id) DO UPDATE SET
+           assigned_user_id = excluded.assigned_user_id,
+           assigned_by = excluded.assigned_by,
+           assigned_at = excluded.assigned_at,
+           due_at = excluded.due_at,
+           status = excluded.status`,
+        [
+          id,
+          assessmentId,
+          String(areaId),
+          String(assignedUserId),
+          user.id,
+          now,
+          dueAt || null,
+          nextStatus,
+        ]
+      );
+
+      res.json({
+        assessmentId,
+        areaId: String(areaId),
+        assignedUserId: String(assignedUserId),
+        dueAt: dueAt || null,
+        status: nextStatus,
+        updatedAt: now,
+      });
     }
   );
 

@@ -1,6 +1,6 @@
 /**
  * InterviewSummary
- * 
+ *
  * Displays a summary of the interview session with all collected context.
  * Allows export to Tools/Assessment.
  */
@@ -59,12 +59,15 @@ interface InterviewSummaryProps {
   onViewDetails?: (category: string) => void;
 }
 
-const CATEGORY_CONFIG: Record<InsightCategory, {
-  label: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-  color: string;
-  bgColor: string;
-}> = {
+const CATEGORY_CONFIG: Record<
+  InsightCategory,
+  {
+    label: string;
+    icon: React.ComponentType<{ size?: number; className?: string }>;
+    color: string;
+    bgColor: string;
+  }
+> = {
   objective: {
     label: 'Objectives',
     icon: Target,
@@ -125,12 +128,15 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
   onViewDetails,
 }) => {
   // Group insights by category
-  const insightsByCategory = insights.reduce((acc, insight) => {
-    const cat = insight.category as InsightCategory;
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(insight);
-    return acc;
-  }, {} as Record<InsightCategory, InterviewInsight[]>);
+  const insightsByCategory = insights.reduce(
+    (acc, insight) => {
+      const cat = insight.category as InsightCategory;
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(insight);
+      return acc;
+    },
+    {} as Record<InsightCategory, InterviewInsight[]>
+  );
 
   // Calculate stats
   const totalInsights = insights.length;
@@ -181,13 +187,16 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
               onClick={() => onViewDetails?.(category)}
               className={`
                 flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all
-                ${isCompleted
-                  ? 'bg-slate-50 dark:bg-navy-800/50 hover:bg-slate-100 dark:hover:bg-navy-800'
-                  : 'bg-slate-50/50 dark:bg-navy-950/50 opacity-60'
+                ${
+                  isCompleted
+                    ? 'bg-slate-50 dark:bg-navy-800/50 hover:bg-slate-100 dark:hover:bg-navy-800'
+                    : 'bg-slate-50/50 dark:bg-navy-950/50 opacity-60'
                 }
               `}
             >
-              <div className={`w-8 h-8 rounded-lg ${config.bgColor} flex items-center justify-center`}>
+              <div
+                className={`w-8 h-8 rounded-lg ${config.bgColor} flex items-center justify-center`}
+              >
                 <CategoryIcon size={16} className={config.color} />
               </div>
               <div className="flex-1 min-w-0">
@@ -195,9 +204,7 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
                   <span className="font-medium text-sm text-navy-900 dark:text-white">
                     {config.label}
                   </span>
-                  {isCompleted && (
-                    <CheckCircle size={14} className="text-emerald-500" />
-                  )}
+                  {isCompleted && <CheckCircle size={14} className="text-emerald-500" />}
                 </div>
                 <span className="text-xs text-slate-500 dark:text-slate-400">
                   {categoryInsights.length} insights
@@ -233,7 +240,8 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
                 <span className="text-slate-500 dark:text-slate-400">Goals:</span>
                 <span className="ml-1 text-slate-700 dark:text-slate-300">
                   {context.transformationGoals.slice(0, 2).join(', ')}
-                  {context.transformationGoals.length > 2 && ` +${context.transformationGoals.length - 2} more`}
+                  {context.transformationGoals.length > 2 &&
+                    ` +${context.transformationGoals.length - 2} more`}
                 </span>
               </div>
             )}
@@ -242,7 +250,8 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
                 <span className="text-slate-500 dark:text-slate-400">Challenges:</span>
                 <span className="ml-1 text-slate-700 dark:text-slate-300">
                   {context.currentChallenges.slice(0, 2).join(', ')}
-                  {context.currentChallenges.length > 2 && ` +${context.currentChallenges.length - 2} more`}
+                  {context.currentChallenges.length > 2 &&
+                    ` +${context.currentChallenges.length - 2} more`}
                 </span>
               </div>
             )}

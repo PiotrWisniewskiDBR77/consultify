@@ -9,14 +9,50 @@
 // CRITICAL: Load environment variables FIRST, before any other imports
 // This ensures DATABASE_URL and other env vars are available when DatabaseConfig loads
 import dotenv from 'dotenv';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load .env from project root (parent directory) BEFORE other imports
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+// Load .env from *repo root* BEFORE other imports.
+// Note: this file lives in `server/src`, so:
+// - `../../.env` points to `server/.env` (NOT repo root)
+// - `../../../.env` points to `<repo>/.env`
+//
+// In local dev we want `.env` to win even if the shell already has stale values exported.
+// In production (e.g. Railway) we want real environment variables to win.
+//
+// In tests (Vitest), we want the *test runner* to be able to set per-worker env vars
+// like SQLITE_PATH without being overwritten by `.env`.
+const isProductionEnv = process.env.NODE_ENV === 'production';
+const isTestEnv = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
+const repoRootEnvPath = path.resolve(__dirname, '../../../.env');
+const serverEnvPath = path.resolve(__dirname, '../../.env');
+
+// Prefer repo-root `.env` (workspace-level config), fallback to `server/.env` for legacy setups.
+const envPathToUse = fs.existsSync(repoRootEnvPath) ? repoRootEnvPath : serverEnvPath;
+
+dotenv.config({
+  path: envPathToUse,
+  override: !isProductionEnv && !isTestEnv,
+});
+
+// Dev-only visibility: confirm which .env was loaded (helps debug "keys pasted but not used").
+if (!isProductionEnv) {
+  // eslint-disable-next-line no-console
+  console.log('[Env] Loaded from:', envPathToUse);
+  // eslint-disable-next-line no-console
+  console.log('[Env] JWT_SECRET length:', process.env.JWT_SECRET?.length || 0);
+  // eslint-disable-next-line no-console
+  console.log('[Env] OPENAI_API_KEY set:', !!process.env.OPENAI_API_KEY);
+  // eslint-disable-next-line no-console
+  console.log(
+    '[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:',
+    !!process.env.GEMINI_API_KEY || !!process.env.GOOGLE_AI_API_KEY
+  );
+}
 
 // Now import other modules (they can use environment variables)
 import compression from 'compression';
@@ -24,7 +60,6 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
-import fs from 'fs';
 import helmet from 'helmet';
 import http from 'http';
 
@@ -50,7 +85,7 @@ const app: Express = express();
 
 const PORT = Number(process.env.PORT) || 3005;
 const isProduction = process.env.NODE_ENV === 'production';
-const isTest = process.env.NODE_ENV === 'test';
+const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
 
 // Validate environment variables on startup (skip in test mode)
 if (!isTest && !process.env.SKIP_ENV_VALIDATION) {
@@ -131,73 +166,99 @@ const sentryHandlers = initSentry(app);
 // DATABASE INITIALIZATION
 // ============================================================
 
-// Initialize database asynchronously and verify schema
-if (!isTest || process.env.E2E_MODE === 'true') {
-  (async () => {
-    try {
-      logger.info('[Server] Initializing database...');
-      const db = await getDatabaseAsync();
-      logger.info('[Server] Database instance created:', db ? 'OK' : 'MOCK');
+// IMPORTANT: do not accept requests before DB is ready.
+// Many routes use synchronous DB access and will throw if initialization is still in progress.
+let dbReady = false;
+let dbInitError: string | null = null;
 
-      // Initialize and verify schema
-      const { initializeDatabase } = await import('./database/DatabaseInitializer.js');
-      const initResult = await initializeDatabase();
+// Readiness probe for load balancers / orchestration.
+// Returns 503 until DB init + schema verification finishes successfully.
+app.get('/api/ready', (_req: Request, res: Response) => {
+  if (dbReady) {
+    return res.status(200).json({
+      status: 'ready',
+      database: 'ready',
+      timestamp: new Date().toISOString(),
+    });
+  }
+  return res.status(503).json({
+    status: 'not_ready',
+    database: 'initializing',
+    error: dbInitError,
+    timestamp: new Date().toISOString(),
+  });
+});
 
-      if (!initResult.success) {
-        logger.error(`[Server] Database initialization failed: ${initResult.message}`);
-        if (isProduction) {
-          logger.error(
-            '[Server] CRITICAL: Database schema incomplete. Application may not function correctly.'
-          );
-          // In production, we might want to exit, but for now we'll continue with warnings
-        }
-      } else {
-        logger.info(`[Server] Database initialized successfully: ${initResult.message}`);
-      }
-
-      // Initialize connection pool
-      if (process.env.DISABLE_CONNECTION_POOL !== 'true') {
+const databaseInitPromise: Promise<void> =
+  !isTest || process.env.E2E_MODE === 'true'
+    ? (async () => {
         try {
-          await initializeConnectionPool();
-          logger.info('[Server] ✅ Connection pool initialized');
-        } catch (poolError) {
-          logger.error('[Server] Connection pool initialization failed:', poolError);
-          logger.warn('[Server] Continuing with singleton database connection');
-        }
-      } else {
-        logger.info('[Server] Connection pooling disabled (DISABLE_CONNECTION_POOL=true)');
-      }
+          logger.info('[Server] Initializing database...');
+          const db = await getDatabaseAsync();
+          logger.info('[Server] Database instance created:', db ? 'OK' : 'MOCK');
 
-      // Schedule periodic schema verification (every 5 minutes)
-      // Store interval reference for cleanup on shutdown
-      const healthCheckInterval = setInterval(
-        async () => {
-          try {
-            const { verifyDatabaseHealth } = await import('./database/DatabaseInitializer.js');
-            const healthy = await verifyDatabaseHealth();
-            if (!healthy) {
-              logger.warn('[Server] Database health check failed - schema may be incomplete');
+          // Initialize and verify schema
+          const { initializeDatabase } = await import('./database/DatabaseInitializer.js');
+          const initResult = await initializeDatabase();
+
+          if (!initResult.success) {
+            logger.error(`[Server] Database initialization failed: ${initResult.message}`);
+            dbReady = false;
+            dbInitError = initResult.message || 'Database initialization failed';
+            if (isProduction) {
+              logger.error(
+                '[Server] CRITICAL: Database schema incomplete. Application may not function correctly.'
+              );
             }
-          } catch (err: any) {
-            const error = err as Error;
-            logger.error(`[Server] Database health check error: ${error.message}`);
+          } else {
+            logger.info(`[Server] Database initialized successfully: ${initResult.message}`);
+            dbReady = true;
+            dbInitError = null;
           }
-        },
-        5 * 60 * 1000
-      ) as NodeJS.Timeout; // Every 5 minutes
-      
-      // Store interval in global scope for cleanup
-      (global as any).__HEALTH_CHECK_INTERVAL__ = healthCheckInterval;
-    } catch (err: any) {
-      const error = err as Error;
-      logger.error(`[Server] Database initialization failed: ${error.message}`);
-      if (isProduction) {
-        logger.error('[Server] CRITICAL: Cannot proceed without database. Exiting...');
-        process.exit(1);
-      }
-    }
-  })();
-}
+
+          // Initialize connection pool
+          if (process.env.DISABLE_CONNECTION_POOL !== 'true') {
+            try {
+              await initializeConnectionPool();
+              logger.info('[Server] ✅ Connection pool initialized');
+            } catch (poolError) {
+              logger.error('[Server] Connection pool initialization failed:', poolError);
+              logger.warn('[Server] Continuing with singleton database connection');
+            }
+          } else {
+            logger.info('[Server] Connection pooling disabled (DISABLE_CONNECTION_POOL=true)');
+          }
+
+          // Schedule periodic schema verification (every 5 minutes)
+          const healthCheckInterval = setInterval(
+            async () => {
+              try {
+                const { verifyDatabaseHealth } = await import('./database/DatabaseInitializer.js');
+                const healthy = await verifyDatabaseHealth();
+                if (!healthy) {
+                  logger.warn('[Server] Database health check failed - schema may be incomplete');
+                }
+              } catch (err: any) {
+                const error = err as Error;
+                logger.error(`[Server] Database health check error: ${error.message}`);
+              }
+            },
+            5 * 60 * 1000
+          ) as NodeJS.Timeout;
+
+          (global as any).__HEALTH_CHECK_INTERVAL__ = healthCheckInterval;
+        } catch (err: any) {
+          const error = err as Error;
+          logger.error(`[Server] Database initialization failed: ${error.message}`);
+          dbReady = false;
+          dbInitError = error.message || 'Database initialization failed';
+          if (isProduction) {
+            logger.error('[Server] CRITICAL: Cannot proceed without database. Exiting...');
+            process.exit(1);
+          }
+        }
+      })()
+    : Promise.resolve();
 
 // ============================================================
 // SERVER STARTUP (moved to end of file after all routes registered)
@@ -853,90 +914,97 @@ if (!isTest) {
 const startServer = true; // Always start server when running via tsx
 
 if (startServer && (!isTest || process.env.E2E_MODE === 'true')) {
-  logger.info('[Server] Starting HTTP server after route registration...');
-  logger.info('[Server] Starting HTTP server after route registration...');
-  const server = http.createServer(app);
-  // ShutdownManager will be used in graceful shutdown handler
-  // const shutdownManager = getShutdownManager(30000); // 30 second timeout
+  (async () => {
+    logger.info('[Server] Starting HTTP server after route registration...');
+    const server = http.createServer(app);
+    // ShutdownManager will be used in graceful shutdown handler
+    // const shutdownManager = getShutdownManager(30000); // 30 second timeout
 
-  // Handle server errors
-  server.on('error', (err: NodeJS.ErrnoException) => {
-    logger.error('[Server] HTTP Server Error:', err);
-    if (err.code === 'EADDRINUSE') {
-      logger.error(`Port ${PORT} is already in use`);
-      process.exit(1);
-    }
-  });
-
-  // Interval reference is stored in global scope during database initialization
-
-  // Register shutdown handlers
-  const gracefulShutdown = async (signal: string) => {
-    logger.info(`[Shutdown] Received ${signal}, initiating graceful shutdown...`);
-    
-    // Stop accepting new connections
-    server.close(async () => {
-      logger.info('[Shutdown] HTTP server closed');
-      
-      try {
-        // Clear health check interval (stored in global scope)
-        const healthCheckInterval = (global as any).__HEALTH_CHECK_INTERVAL__;
-        if (healthCheckInterval) {
-          clearInterval(healthCheckInterval);
-          (global as any).__HEALTH_CHECK_INTERVAL__ = null;
-          logger.info('[Shutdown] Health check interval cleared');
+    // Handle server errors
+    server.on('error', (err: NodeJS.ErrnoException) => {
+      logger.error('[Server] HTTP Server Error:', err);
+      if (err.code === 'EADDRINUSE') {
+        logger.error(`Port ${PORT} is already in use`);
+        // Don't exit in test mode - let the test framework handle it
+        if (!isTest) {
+          process.exit(1);
         }
-
-        // Close BullMQ queue
-        try {
-          const aiQueueModule = await import('./queues/aiQueue.js');
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-          const aiQueue: any = aiQueueModule.default;
-          if (aiQueue && typeof aiQueue.close === 'function') {
-            await aiQueue.close();
-            logger.info('[Shutdown] BullMQ queue closed');
-          }
-        } catch (err: any) {
-          logger.warn('[Shutdown] Error closing queue:', err.message);
-        }
-
-        // Shutdown database connection pool
-        try {
-          await shutdownConnectionPool();
-          logger.info('[Shutdown] Database connection pool closed');
-        } catch (err: any) {
-          logger.warn('[Shutdown] Error closing database pool:', err.message);
-        }
-
-        // Use ShutdownManager for any registered cleanups
-        const shutdownManager = getShutdownManager(10000); // 10 second timeout
-        await shutdownManager.shutdown(signal);
-
-        logger.info('[Shutdown] Graceful shutdown complete');
-        process.exit(0);
-      } catch (err: any) {
-        logger.error('[Shutdown] Error during cleanup:', err);
-        process.exit(1);
       }
     });
 
-    // Force exit after timeout
-    setTimeout(() => {
-      logger.error('[Shutdown] Forced shutdown after timeout');
-      process.exit(1);
-    }, 15000); // 15 second timeout
-  };
+    // Interval reference is stored in global scope during database initialization
 
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+    // Register shutdown handlers
+    const gracefulShutdown = async (signal: string) => {
+      logger.info(`[Shutdown] Received ${signal}, initiating graceful shutdown...`);
 
-  // Start listening after all routes are registered
-  server.listen(PORT, '0.0.0.0', () => {
-    logger.info('✅ Server running on http://0.0.0.0:' + PORT);
-    logger.info('✅ WebSocket available at ws://0.0.0.0:' + PORT + '/ws');
-    logger.info(`[Server] ✅ Server started on port ${PORT}`);
-    logger.info(`[Server] Frontend will be served from: ${frontendDistPath}`);
-  });
+      // Stop accepting new connections
+      server.close(async () => {
+        logger.info('[Shutdown] HTTP server closed');
+
+        try {
+          // Clear health check interval (stored in global scope)
+          const healthCheckInterval = (global as any).__HEALTH_CHECK_INTERVAL__;
+          if (healthCheckInterval) {
+            clearInterval(healthCheckInterval);
+            (global as any).__HEALTH_CHECK_INTERVAL__ = null;
+            logger.info('[Shutdown] Health check interval cleared');
+          }
+
+          // Close BullMQ queue
+          try {
+            const aiQueueModule = await import('./queues/aiQueue.js');
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const aiQueue: any = aiQueueModule.default;
+            if (aiQueue && typeof aiQueue.close === 'function') {
+              await aiQueue.close();
+              logger.info('[Shutdown] BullMQ queue closed');
+            }
+          } catch (err: any) {
+            logger.warn('[Shutdown] Error closing queue:', err.message);
+          }
+
+          // Shutdown database connection pool
+          try {
+            await shutdownConnectionPool();
+            logger.info('[Shutdown] Database connection pool closed');
+          } catch (err: any) {
+            logger.warn('[Shutdown] Error closing database pool:', err.message);
+          }
+
+          // Use ShutdownManager for any registered cleanups
+          const shutdownManager = getShutdownManager(10000); // 10 second timeout
+          await shutdownManager.shutdown(signal);
+
+          logger.info('[Shutdown] Graceful shutdown complete');
+          process.exit(0);
+        } catch (err: any) {
+          logger.error('[Shutdown] Error during cleanup:', err);
+          process.exit(1);
+        }
+      });
+
+      // Force exit after timeout
+      setTimeout(() => {
+        logger.error('[Shutdown] Forced shutdown after timeout');
+        process.exit(1);
+      }, 15000); // 15 second timeout
+    };
+
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+    // Wait for DB initialization before accepting requests.
+    await databaseInitPromise;
+
+    // Start listening after all routes are registered and DB is ready
+    server.listen(PORT, '0.0.0.0', () => {
+      logger.info('✅ Server running on http://0.0.0.0:' + PORT);
+      logger.info('✅ WebSocket available at ws://0.0.0.0:' + PORT + '/ws');
+      logger.info(`[Server] ✅ Server started on port ${PORT}`);
+      logger.info(`[Server] Frontend will be served from: ${frontendDistPath}`);
+    });
+  })();
 }
 
 export default app;

@@ -6,6 +6,8 @@
 import { X } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { Api } from '@/services/api';
+
 const METHODOLOGIES = [
   { id: 'impact-feasibility', label: 'Impact x Feasibility' },
   { id: 'value-effort', label: 'Value x Effort' },
@@ -14,10 +16,7 @@ const METHODOLOGIES = [
   { id: 'operational-efficiency', label: 'Operational Efficiency' },
 ];
 
-const METHODOLOGY_PREVIEW: Record<
-  string,
-  { category: string; priority: string; risk: string }
-> = {
+const METHODOLOGY_PREVIEW: Record<string, { category: string; priority: string; risk: string }> = {
   'impact-feasibility': { category: 'Strategy', priority: 'P1', risk: 'Medium' },
   'value-effort': { category: 'Operations', priority: 'P2', risk: 'Low' },
   'risk-compliance': { category: 'Process Auto', priority: 'P1', risk: 'High' },
@@ -33,6 +32,7 @@ interface GenerateInitiativesModalProps {
     methodologyId: string;
     count: number;
     includeChatContext: boolean;
+    decisionOwnerId?: string;
   }) => void;
 }
 
@@ -46,6 +46,20 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
   const [customCount, setCustomCount] = useState('');
   const [methodologyId, setMethodologyId] = useState(defaults.methodologyId);
   const [includeChatContext, setIncludeChatContext] = useState(defaults.includeChatContext);
+  const [decisionOwnerId, setDecisionOwnerId] = useState<string>('');
+  const [users, setUsers] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const fetchedUsers = await Api.getUsers();
+        setUsers(fetchedUsers || []);
+      } catch (err) {
+        console.error('Failed to load users', err);
+      }
+    };
+    loadUsers();
+  }, []);
   const previewMeta = METHODOLOGY_PREVIEW[methodologyId] || {
     category: 'Operations',
     priority: 'P3',
@@ -58,7 +72,12 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
       : count;
 
   const handleGenerate = () => {
-    onGenerate({ methodologyId, count: finalCount, includeChatContext });
+    onGenerate({
+      methodologyId,
+      count: finalCount,
+      includeChatContext,
+      decisionOwnerId: decisionOwnerId || undefined,
+    });
   };
 
   return (
@@ -68,7 +87,10 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
             {isPolish ? 'Generate initiatives' : 'Generate initiatives'}
           </h3>
-          <button onClick={onClose} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800">
+          <button
+            onClick={onClose}
+            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+          >
             <X className="w-4 h-4 text-slate-500" />
           </button>
         </div>
@@ -124,6 +146,25 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                 </label>
               ))}
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              {isPolish ? 'Decision Owner' : 'Decision Owner'}{' '}
+              {isPolish ? '(opcjonalnie)' : '(optional)'}
+            </label>
+            <select
+              value={decisionOwnerId}
+              onChange={(e) => setDecisionOwnerId(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 text-sm bg-white dark:bg-navy-900"
+            >
+              <option value="">{isPolish ? '-- Wybierz --' : '-- Select --'}</option>
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name || user.email || user.id}
+                </option>
+              ))}
+            </select>
           </div>
 
           <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">

@@ -514,39 +514,28 @@ async function seedKeyDbr77Data(
   }
 
   // Assessments: ensure multiple framework types & statuses exist for the DBR77 org.
-  try {
-    const aCount = await db.get(`SELECT COUNT(*) as c FROM assessments WHERE organization_id = ?`, [
-      anchors.orgId,
-    ]);
-    const c = Number(aCount?.c || 0);
-    if (c < 8) {
-      const frameworks = ['DRD', 'ADMA', 'CMMI', 'LEAN', 'SIRI'];
-      const statuses = ['DRAFT', 'IN_REVIEW', 'APPROVED', 'COMPLETED'];
-      for (let i = 0; i < 10; i += 1) {
-        const framework_type = faker.helpers.arrayElement(frameworks);
-        const status = faker.helpers.arrayElement(statuses);
-        const progress = status === 'COMPLETED' ? 100 : faker.number.int({ min: 5, max: 95 });
-        const overallScore = Number(faker.number.float({ min: 1.8, max: 4.6, fractionDigits: 1 }));
-        await db.run(
-          `INSERT INTO assessments (id, organization_id, name, description, status, created_at, updated_at, framework_type, framework_data)
-           VALUES (?, ?, ?, ?, ?, datetime('now', ?), datetime('now', ?), ?, ?)`,
-          [
-            uuidv4(),
-            anchors.orgId,
-            `${framework_type} • ${faker.company.buzzPhrase()}`,
-            faker.lorem.paragraph(),
-            status,
-            `-${faker.number.int({ min: 20, max: 400 })} days`,
-            `-${faker.number.int({ min: 0, max: 30 })} days`,
-            framework_type,
-            JSON.stringify({ progress, overallScore, seeded: true }),
-          ]
+  // IMPORTANT (2026-02):
+  // This seeder is run automatically by `npm run dev:backend` to ensure "all tables have rows".
+  // The app's current "assessment workflow v2" expects `assessments.completion_percent` to be consistent
+  // with status. The older diversity seeding inserted rows without `completion_percent`, producing junk:
+  // status APPROVED/COMPLETED while progress stayed 0%.
+  //
+  // To prevent recurring UI clutter, assessment diversity seeding is now **opt-in**.
+  // If you really want extra fake assessments, set SEED_EXTRA_ASSESSMENTS=true.
+  if (process.env.SEED_EXTRA_ASSESSMENTS === 'true') {
+    try {
+      const aCount = await db.get(`SELECT COUNT(*) as c FROM assessments WHERE organization_id = ?`, [
+        anchors.orgId,
+      ]);
+      const c = Number(aCount?.c || 0);
+      if (c < 8) {
+        log.warn(
+          'SEED_EXTRA_ASSESSMENTS=true: legacy assessment diversity seeding is intentionally disabled by default.'
         );
       }
-      log.step('Added DBR77 assessments diversity');
+    } catch {
+      // ignore
     }
-  } catch {
-    // ignore if schema differs
   }
 }
 
@@ -564,6 +553,80 @@ async function main() {
     await db.run('PRAGMA foreign_keys = ON');
   } catch {
     // ignore
+  }
+
+  // ------------------------------------------------------------------
+  // Compatibility anchors (dev): some UI/test tokens use org/user IDs
+  // that may not exist in the seeded dataset. If missing, create them.
+  // This prevents /api/auth/me = 404 (User not found) and ORG_NOT_FOUND
+  // gating that blocks AI chat entirely.
+  // ------------------------------------------------------------------
+  try {
+    const existingOrgTest = await db.get(`SELECT id FROM organizations WHERE id = ? LIMIT 1`, [
+      'org-dbr77-test',
+    ]);
+    if (!existingOrgTest) {
+      await db.run(
+        `INSERT INTO organizations (id, name, status, plan, organization_type, is_active, default_locale, enabled_locales, created_at)
+         VALUES (?, ?, 'active', 'free', 'TRIAL', 1, 'en', '["en","pl"]', datetime('now', '-60 days'))`,
+        ['org-dbr77-test', 'DBR77 (Test)']
+      );
+      log.step('Created compatibility organization org-dbr77-test');
+    }
+
+    const existingUserAdmin = await db.get(`SELECT id FROM users WHERE id = ? LIMIT 1`, [
+      'user-dbr77-admin',
+    ]);
+    if (!existingUserAdmin) {
+      // Ensure email is unique (do not collide with admin@dbr77.com used elsewhere)
+      const email = 'user.dbr77.admin@local.dev';
+      await db.run(
+        `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status, created_at, locale)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'active', datetime('now', '-60 days'), 'en')`,
+        [
+          'user-dbr77-admin',
+          'org-dbr77-test',
+          email,
+          '!', // not used in dev for this compatibility user (token-based)
+          'Piotr',
+          'Wiśniewski',
+          'ADMIN',
+        ]
+      );
+      log.step('Created compatibility user user-dbr77-admin');
+    }
+
+    // Ensure organization_limits exist for key orgs (AccessPolicy depends on them).
+    const ensureLimits = async (org: string) => {
+      const row = await db.get(
+        `SELECT id FROM organization_limits WHERE organization_id = ? LIMIT 1`,
+        [org]
+      );
+      if (!row) {
+        await db.run(
+          `INSERT INTO organization_limits (
+             id, organization_id, max_projects, max_users, max_ai_calls_per_day, max_initiatives,
+             max_storage_mb, max_total_tokens, ai_roles_enabled_json, created_at, updated_at
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '-60 days'), datetime('now'))`,
+          [
+            uuidv4(),
+            org,
+            50,
+            200,
+            500,
+            500,
+            10_000,
+            2_000_000,
+            '["ADVISOR","EXECUTOR"]',
+          ]
+        );
+        log.step(`Created organization_limits for ${org}`);
+      }
+    };
+    await ensureLimits('org-dbr77-system');
+    await ensureLimits('org-dbr77-test');
+  } catch (e: any) {
+    log.warn(`Compatibility anchors skipped: ${e?.message || String(e)}`);
   }
 
   // Determine DBR77 anchors

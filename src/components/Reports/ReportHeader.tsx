@@ -33,7 +33,7 @@ import { useTranslation } from 'react-i18next';
 
 interface ReportHeaderProps {
   name: string;
-  status: 'DRAFT' | 'FINAL' | 'ARCHIVED';
+  status: 'DRAFT' | 'FINAL' | 'APPROVED' | 'ARCHIVED';
   organizationName?: string;
   assessmentName?: string;
   progress: number;
@@ -46,6 +46,7 @@ interface ReportHeaderProps {
   onBack: () => void;
   onSave: () => void;
   onFinalize: () => void;
+  onApprove?: () => void;
   onRegenerate: () => void;
   onExportPdf: () => void;
   onExportExcel: () => void;
@@ -76,6 +77,13 @@ const STATUS_CONFIG: Record<
       'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/30',
     icon: CheckCircle,
   },
+  APPROVED: {
+    label: 'Approved',
+    labelPl: 'Zatwierdzony',
+    color:
+      'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-500/30',
+    icon: Lock,
+  },
   ARCHIVED: {
     label: 'Archived',
     labelPl: 'Zarchiwizowany',
@@ -100,6 +108,7 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
   onBack,
   onSave,
   onFinalize,
+  onApprove,
   onRegenerate,
   onExportPdf,
   onExportExcel,
@@ -112,7 +121,9 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
 
   const statusConfig = STATUS_CONFIG[status] || STATUS_CONFIG['DRAFT'];
   const StatusIcon = statusConfig.icon;
-  const isEditable = status === 'DRAFT';
+  const isEditable = status !== 'APPROVED' && status !== 'ARCHIVED';
+  const canSubmit = status === 'DRAFT';
+  const canApprove = status === 'FINAL' && Boolean(onApprove);
 
   // Format date
   const formatDate = (dateString?: string) => {
@@ -263,7 +274,7 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
               )}
             </div>
 
-            {/* Save button (only for DRAFT) */}
+            {/* Save button (until approved) */}
             {isEditable && (
               <button
                 onClick={onSave}
@@ -286,15 +297,27 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
               </button>
             )}
 
-            {/* Finalize button (only for DRAFT) */}
-            {isEditable && (
+            {/* Submit button (DRAFT -> FINAL) */}
+            {canSubmit && (
               <button
                 onClick={onFinalize}
                 disabled={hasUnsavedChanges || isLoading}
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <CheckCircle className="w-4 h-4" />
-                <span className="hidden sm:inline">{t('reports.finalize', 'Finalize')}</span>
+                <span className="hidden sm:inline">{t('reports.finalize', 'Submit')}</span>
+              </button>
+            )}
+
+            {/* Approve button (FINAL -> APPROVED) */}
+            {canApprove && (
+              <button
+                onClick={onApprove}
+                disabled={isLoading}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Lock className="w-4 h-4" />
+                <span className="hidden sm:inline">{isPolish ? 'Zatwierdź' : 'Approve'}</span>
               </button>
             )}
 

@@ -78,6 +78,9 @@ coverage_*.txt
 unit_tests_report.txt
 verification_results.txt
 lint_report.txt
+unit-results.json
+component-results.json
+*_keys.txt
 
 # Auto-fix marker
 .auto-fix-applied
@@ -125,12 +128,29 @@ server_stdout.log
 test_results*.log
 tests_*.log
 integration-results.json
-e2e-results.xml# Debug screenshots
-debug-*.png# Test result files
-test-results-*.txt# Coverage directories
-coverage-*/# Additional ignores
-*.bak
+e2e-results.xml
+
+# Debug screenshots
+debug-*.png
+
+# Test result files
+test-results-*.txt
+
+# Coverage directories
+coverage-*/
 coverage/.tmp
+
+# Additional ignores
 .nx/
-junit.xml# Quarantine folder for duplicate files
+
+# Export artifacts
+server/exports/
+
+# Local backups
+_backup/
+
+# Personal tooling
+Piotr_Tools/
+
+# Quarantine folder for duplicate files
 _quarantine/

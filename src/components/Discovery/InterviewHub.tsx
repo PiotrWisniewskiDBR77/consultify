@@ -1,7 +1,7 @@
 /**
  * InterviewHub
  * Interview module with ModuleHub pattern - Golden Standard compliant
- * 
+ *
  * Tabs: Sessions (completed), Assignments (management), Templates, Insights (AI)
  * Context-sensitive action buttons per tab
  */
@@ -10,8 +10,8 @@ import {
   AlertTriangle,
   BookOpen,
   Calendar,
-  Clock,
   ClipboardList,
+  Clock,
   FileText,
   Lightbulb,
   MessageSquare,
@@ -22,12 +22,13 @@ import {
   Users,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
+import { InterviewWorkspace } from '../Interview/InterviewWorkspace';
 import {
   FilterableTable,
   FilterChip,
@@ -39,7 +40,6 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
-import { InterviewWorkspace } from '../Interview/InterviewWorkspace';
 import { InsightDetailView } from './InsightDetailView';
 
 // Types
@@ -82,12 +82,31 @@ interface CompletedSession {
 }
 
 // Status metadata
-const ASSIGNMENT_STATUS_META: Record<AssignmentStatus, { label: string; color: string; dotColor: string }> = {
-  assigned: { label: 'Assigned', color: 'bg-slate-500/20 text-slate-300', dotColor: 'bg-slate-400' },
-  in_progress: { label: 'In Progress', color: 'bg-cyan-500/20 text-cyan-300', dotColor: 'bg-cyan-400' },
-  submitted: { label: 'Submitted', color: 'bg-amber-500/20 text-amber-300', dotColor: 'bg-amber-400' },
+const ASSIGNMENT_STATUS_META: Record<
+  AssignmentStatus,
+  { label: string; color: string; dotColor: string }
+> = {
+  assigned: {
+    label: 'Assigned',
+    color: 'bg-slate-500/20 text-slate-300',
+    dotColor: 'bg-slate-400',
+  },
+  in_progress: {
+    label: 'In Progress',
+    color: 'bg-cyan-500/20 text-cyan-300',
+    dotColor: 'bg-cyan-400',
+  },
+  submitted: {
+    label: 'Submitted',
+    color: 'bg-amber-500/20 text-amber-300',
+    dotColor: 'bg-amber-400',
+  },
   sent_back: { label: 'Returned', color: 'bg-red-500/20 text-red-300', dotColor: 'bg-red-400' },
-  completed: { label: 'Completed', color: 'bg-emerald-500/20 text-emerald-300', dotColor: 'bg-emerald-400' },
+  completed: {
+    label: 'Completed',
+    color: 'bg-emerald-500/20 text-emerald-300',
+    dotColor: 'bg-emerald-400',
+  },
 };
 
 const PRIORITY_META: Record<string, { label: string; color: string }> = {
@@ -126,10 +145,14 @@ export const InterviewHub: React.FC<InterviewHubProps> = ({ initialTab = 'list' 
 
   // Template editing state (existing functionality)
   const [templateQuestionsById, setTemplateQuestionsById] = useState<Record<string, any[]>>({});
-  const [templateQuestionsLoading, setTemplateQuestionsLoading] = useState<Record<string, boolean>>({});
+  const [templateQuestionsLoading, setTemplateQuestionsLoading] = useState<Record<string, boolean>>(
+    {}
+  );
   const [templateEditMode, setTemplateEditMode] = useState<Record<string, boolean>>({});
   const [templateEditDraft, setTemplateEditDraft] = useState<Record<string, any>>({});
-  const [templateQuestionDrafts, setTemplateQuestionDrafts] = useState<Record<string, Record<string, any>>>({});
+  const [templateQuestionDrafts, setTemplateQuestionDrafts] = useState<
+    Record<string, Record<string, any>>
+  >({});
 
   // ==========================================
   // DATA LOADING
@@ -225,32 +248,35 @@ export const InterviewHub: React.FC<InterviewHubProps> = ({ initialTab = 'list' 
   // TAB CONFIGURATION
   // ==========================================
 
-  const tabs = useMemo(() => [
-    {
-      id: 'list' as ModuleTab,
-      label: t('interview.tabs.sessions', 'Sessions'),
-      icon: <MessageSquare size={16} />,
-      count: completedSessions.length,
-    },
-    {
-      id: 'assignments' as ModuleTab,
-      label: t('interview.tabs.assignments', 'Assignments'),
-      icon: <ClipboardList size={16} />,
-      count: assignments.length,
-    },
-    {
-      id: 'initiatives' as ModuleTab,
-      label: t('interview.tabs.templates', 'Templates'),
-      icon: <BookOpen size={16} />,
-      count: templates.length,
-    },
-    {
-      id: 'reports' as ModuleTab,
-      label: t('interview.tabs.insights', 'Insights'),
-      icon: <Lightbulb size={16} />,
-      count: insights.length,
-    },
-  ], [t, completedSessions.length, assignments.length, templates.length, insights.length]);
+  const tabs = useMemo(
+    () => [
+      {
+        id: 'list' as ModuleTab,
+        label: t('interview.tabs.sessions', 'Sessions'),
+        icon: <MessageSquare size={16} />,
+        count: completedSessions.length,
+      },
+      {
+        id: 'assignments' as ModuleTab,
+        label: t('interview.tabs.assignments', 'Assignments'),
+        icon: <ClipboardList size={16} />,
+        count: assignments.length,
+      },
+      {
+        id: 'initiatives' as ModuleTab,
+        label: t('interview.tabs.templates', 'Templates'),
+        icon: <BookOpen size={16} />,
+        count: templates.length,
+      },
+      {
+        id: 'reports' as ModuleTab,
+        label: t('interview.tabs.insights', 'Insights'),
+        icon: <Lightbulb size={16} />,
+        count: insights.length,
+      },
+    ],
+    [t, completedSessions.length, assignments.length, templates.length, insights.length]
+  );
 
   // ==========================================
   // CONTEXT-SENSITIVE ACTION BUTTON
@@ -291,294 +317,335 @@ export const InterviewHub: React.FC<InterviewHubProps> = ({ initialTab = 'list' 
   // ==========================================
 
   // Sessions columns (completed interviews)
-  const sessionsColumns: TableColumn[] = useMemo(() => [
-    {
-      id: 'name',
-      label: t('interview.columns.interview', 'Interview'),
-      render: (row: any) => (
-        <div>
-          <span className="text-sm text-white font-medium">{row.name || row.templateName}</span>
-          <div className="flex items-center gap-2 mt-0.5">
-            <FileText size={12} className="text-slate-500" />
-            <span className="text-xs text-slate-400">{row.category?.toUpperCase?.() || ''}</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: 'respondent',
-      label: t('interview.columns.respondent', 'Respondent'),
-      width: '180px',
-      render: (row: any) => (
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-navy-700 flex items-center justify-center">
-            <User size={14} className="text-slate-400" />
-          </div>
-          <span className="text-sm text-slate-300">{row.respondentName || 'Unknown'}</span>
-        </div>
-      ),
-    },
-    {
-      id: 'completedAt',
-      label: t('interview.columns.completed', 'Completed'),
-      width: '140px',
-      sortable: true,
-      render: (row: any) => (
-        <span className="text-sm text-slate-400">
-          {row.completedAt ? new Date(row.completedAt).toLocaleDateString() : '-'}
-        </span>
-      ),
-    },
-    {
-      id: 'status',
-      label: t('interview.columns.status', 'Status'),
-      width: '120px',
-      render: () => (
-        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-300">
-          <span className="w-2 h-2 rounded-full bg-emerald-400" />
-          <span className="text-xs font-medium">Completed</span>
-        </div>
-      ),
-    },
-  ], [t]);
-
-  // Assignments columns
-  const assignmentsColumns: TableColumn[] = useMemo(() => [
-    {
-      id: 'template',
-      label: t('interview.columns.template', 'Template'),
-      render: (row: any) => (
-        <div>
-          <span className="text-sm text-white font-medium">{row.template?.name || row.templateName}</span>
-          {row.isTeamAssignment && (
-            <span className="ml-2 text-xs text-blue-400">
-              <Users size={12} className="inline" /> Team
-            </span>
-          )}
-        </div>
-      ),
-    },
-    {
-      id: 'assignee',
-      label: t('interview.columns.assignee', 'Assignee'),
-      width: '180px',
-      render: (row: any) => (
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-navy-700 flex items-center justify-center">
-            <User size={14} className="text-slate-400" />
-          </div>
-          <span className="text-sm text-slate-300">
-            {row.assignee?.name || row.assigneeName || 'Unknown'}
-          </span>
-        </div>
-      ),
-    },
-    {
-      id: 'status',
-      label: t('interview.columns.status', 'Status'),
-      width: '140px',
-      filterable: true,
-      filterOptions: Object.entries(ASSIGNMENT_STATUS_META).map(([key, meta]) => ({
-        value: key,
-        label: meta.label,
-        color: meta.dotColor,
-      })),
-      render: (row: any) => {
-        const meta = ASSIGNMENT_STATUS_META[row.status as AssignmentStatus] || ASSIGNMENT_STATUS_META.assigned;
-        return (
-          <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full ${meta.color}`}>
-            <span className={`w-2 h-2 rounded-full ${meta.dotColor}`} />
-            <span className="text-xs font-medium">{meta.label}</span>
-          </div>
-        );
-      },
-    },
-    {
-      id: 'progress',
-      label: t('interview.columns.progress', 'Progress'),
-      width: '120px',
-      render: (row: any) => {
-        const progress = row.session?.completenessPercent ?? row.progress ?? 0;
-        return (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 w-8">{progress}%</span>
-            <div className="flex-1 h-1.5 bg-navy-700 rounded-full overflow-hidden">
-              <div className="h-full bg-blue-500 rounded-full" style={{ width: `${progress}%` }} />
+  const sessionsColumns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'name',
+        label: t('interview.columns.interview', 'Interview'),
+        render: (row: any) => (
+          <div>
+            <span className="text-sm text-white font-medium">{row.name || row.templateName}</span>
+            <div className="flex items-center gap-2 mt-0.5">
+              <FileText size={12} className="text-slate-500" />
+              <span className="text-xs text-slate-400">{row.category?.toUpperCase?.() || ''}</span>
             </div>
           </div>
-        );
+        ),
       },
-    },
-    {
-      id: 'dueAt',
-      label: t('interview.columns.due', 'Due'),
-      width: '120px',
-      render: (row: any) => {
-        if (!row.dueAt) return <span className="text-xs text-slate-500">-</span>;
-        const isOverdue = new Date(row.dueAt) < new Date() && !['completed', 'submitted'].includes(row.status);
-        return (
-          <span className={`text-xs ${isOverdue ? 'text-red-400' : 'text-slate-400'}`}>
-            {isOverdue && <AlertTriangle size={10} className="inline mr-1" />}
-            {new Date(row.dueAt).toLocaleDateString()}
+      {
+        id: 'respondent',
+        label: t('interview.columns.respondent', 'Respondent'),
+        width: '180px',
+        render: (row: any) => (
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-navy-700 flex items-center justify-center">
+              <User size={14} className="text-slate-400" />
+            </div>
+            <span className="text-sm text-slate-300">{row.respondentName || 'Unknown'}</span>
+          </div>
+        ),
+      },
+      {
+        id: 'completedAt',
+        label: t('interview.columns.completed', 'Completed'),
+        width: '140px',
+        sortable: true,
+        render: (row: any) => (
+          <span className="text-sm text-slate-400">
+            {row.completedAt ? new Date(row.completedAt).toLocaleDateString() : '-'}
           </span>
-        );
+        ),
       },
-    },
-    {
-      id: 'priority',
-      label: t('interview.columns.priority', 'Priority'),
-      width: '100px',
-      render: (row: any) => {
-        const priority = row.priority || 'medium';
-        const meta = PRIORITY_META[priority] || PRIORITY_META.medium;
-        return (
-          <span className={`text-xs px-2 py-0.5 rounded-full ${meta.color}`}>
-            {meta.label}
-          </span>
-        );
+      {
+        id: 'status',
+        label: t('interview.columns.status', 'Status'),
+        width: '120px',
+        render: () => (
+          <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-300">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span className="text-xs font-medium">Completed</span>
+          </div>
+        ),
       },
-    },
-  ], [t]);
+    ],
+    [t]
+  );
+
+  // Assignments columns
+  const assignmentsColumns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'template',
+        label: t('interview.columns.template', 'Template'),
+        render: (row: any) => (
+          <div>
+            <span className="text-sm text-white font-medium">
+              {row.template?.name || row.templateName}
+            </span>
+            {row.isTeamAssignment && (
+              <span className="ml-2 text-xs text-blue-400">
+                <Users size={12} className="inline" /> Team
+              </span>
+            )}
+          </div>
+        ),
+      },
+      {
+        id: 'assignee',
+        label: t('interview.columns.assignee', 'Assignee'),
+        width: '180px',
+        render: (row: any) => (
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-navy-700 flex items-center justify-center">
+              <User size={14} className="text-slate-400" />
+            </div>
+            <span className="text-sm text-slate-300">
+              {row.assignee?.name || row.assigneeName || 'Unknown'}
+            </span>
+          </div>
+        ),
+      },
+      {
+        id: 'status',
+        label: t('interview.columns.status', 'Status'),
+        width: '140px',
+        filterable: true,
+        filterOptions: Object.entries(ASSIGNMENT_STATUS_META).map(([key, meta]) => ({
+          value: key,
+          label: meta.label,
+          color: meta.dotColor,
+        })),
+        render: (row: any) => {
+          const meta =
+            ASSIGNMENT_STATUS_META[row.status as AssignmentStatus] ||
+            ASSIGNMENT_STATUS_META.assigned;
+          return (
+            <div
+              className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full ${meta.color}`}
+            >
+              <span className={`w-2 h-2 rounded-full ${meta.dotColor}`} />
+              <span className="text-xs font-medium">{meta.label}</span>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'progress',
+        label: t('interview.columns.progress', 'Progress'),
+        width: '120px',
+        render: (row: any) => {
+          const progress = row.session?.completenessPercent ?? row.progress ?? 0;
+          return (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400 w-8">{progress}%</span>
+              <div className="flex-1 h-1.5 bg-navy-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-blue-500 rounded-full"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'dueAt',
+        label: t('interview.columns.due', 'Due'),
+        width: '120px',
+        render: (row: any) => {
+          if (!row.dueAt) return <span className="text-xs text-slate-500">-</span>;
+          const isOverdue =
+            new Date(row.dueAt) < new Date() && !['completed', 'submitted'].includes(row.status);
+          return (
+            <span className={`text-xs ${isOverdue ? 'text-red-400' : 'text-slate-400'}`}>
+              {isOverdue && <AlertTriangle size={10} className="inline mr-1" />}
+              {new Date(row.dueAt).toLocaleDateString()}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'priority',
+        label: t('interview.columns.priority', 'Priority'),
+        width: '100px',
+        render: (row: any) => {
+          const priority = row.priority || 'medium';
+          const meta = PRIORITY_META[priority] || PRIORITY_META.medium;
+          return (
+            <span className={`text-xs px-2 py-0.5 rounded-full ${meta.color}`}>{meta.label}</span>
+          );
+        },
+      },
+    ],
+    [t]
+  );
 
   // Templates columns
-  const templatesColumns: TableColumn[] = useMemo(() => [
-    {
-      id: 'category',
-      label: t('interview.columns.type', 'Type'),
-      width: '120px',
-      render: (row: any) => (
-        <span className="font-mono text-xs font-bold text-slate-300 uppercase">
-          {row.category}
-        </span>
-      ),
-    },
-    {
-      id: 'name',
-      label: t('interview.columns.template', 'Template'),
-      render: (row: any) => (
-        <div>
-          <span className="text-sm text-white font-medium">{row.name}</span>
-          <div className="text-xs text-slate-500 mt-0.5">{row.description}</div>
-        </div>
-      ),
-    },
-    {
-      id: 'questionCount',
-      label: t('interview.columns.questions', 'Questions'),
-      width: '100px',
-      render: (row: any) => (
-        <span className="text-sm text-slate-300">{row.questionCount || 0}</span>
-      ),
-    },
-    {
-      id: 'sessions',
-      label: t('interview.columns.used', 'Used'),
-      width: '100px',
-      render: (row: any) => (
-        <span className="text-sm text-slate-300">{row.sessions || 0} times</span>
-      ),
-    },
-    {
-      id: 'status',
-      label: t('interview.columns.status', 'Status'),
-      width: '120px',
-      render: (row: any) => {
-        const isApproved = row.status === 'approved';
-        return (
-          <span className={`text-xs px-2 py-1 rounded-full ${
-            isApproved ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-500/20 text-slate-300'
-          }`}>
-            {isApproved ? 'Approved' : 'Draft'}
+  const templatesColumns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'category',
+        label: t('interview.columns.type', 'Type'),
+        width: '120px',
+        render: (row: any) => (
+          <span className="font-mono text-xs font-bold text-slate-300 uppercase">
+            {row.category}
           </span>
-        );
+        ),
       },
-    },
-  ], [t]);
+      {
+        id: 'name',
+        label: t('interview.columns.template', 'Template'),
+        render: (row: any) => (
+          <div>
+            <span className="text-sm text-white font-medium">{row.name}</span>
+            <div className="text-xs text-slate-500 mt-0.5">{row.description}</div>
+          </div>
+        ),
+      },
+      {
+        id: 'questionCount',
+        label: t('interview.columns.questions', 'Questions'),
+        width: '100px',
+        render: (row: any) => (
+          <span className="text-sm text-slate-300">{row.questionCount || 0}</span>
+        ),
+      },
+      {
+        id: 'sessions',
+        label: t('interview.columns.used', 'Used'),
+        width: '100px',
+        render: (row: any) => (
+          <span className="text-sm text-slate-300">{row.sessions || 0} times</span>
+        ),
+      },
+      {
+        id: 'status',
+        label: t('interview.columns.status', 'Status'),
+        width: '120px',
+        render: (row: any) => {
+          const isApproved = row.status === 'approved';
+          return (
+            <span
+              className={`text-xs px-2 py-1 rounded-full ${
+                isApproved ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-500/20 text-slate-300'
+              }`}
+            >
+              {isApproved ? 'Approved' : 'Draft'}
+            </span>
+          );
+        },
+      },
+    ],
+    [t]
+  );
 
   // Insights columns
-  const insightsColumns: TableColumn[] = useMemo(() => [
-    {
-      id: 'promptType',
-      label: t('interview.columns.type', 'Type'),
-      width: '140px',
-      render: (row: any) => {
-        const typeConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-          summary: { label: 'Summary', color: 'text-blue-400', icon: <FileText size={14} /> },
-          trends: { label: 'Trends', color: 'text-amber-400', icon: <Target size={14} /> },
-          problems: { label: 'Problems', color: 'text-rose-400', icon: <AlertTriangle size={14} /> },
-          recommendations: { label: 'Recommendations', color: 'text-emerald-400', icon: <Sparkles size={14} /> },
-        };
-        const config = typeConfig[row.promptType] || typeConfig.summary;
-        return (
-          <div className={`flex items-center gap-2 ${config.color}`}>
-            {config.icon}
-            <span className="text-xs font-medium">{config.label}</span>
-          </div>
-        );
+  const insightsColumns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'promptType',
+        label: t('interview.columns.type', 'Type'),
+        width: '140px',
+        render: (row: any) => {
+          const typeConfig: Record<
+            string,
+            { label: string; color: string; icon: React.ReactNode }
+          > = {
+            summary: { label: 'Summary', color: 'text-blue-400', icon: <FileText size={14} /> },
+            trends: { label: 'Trends', color: 'text-amber-400', icon: <Target size={14} /> },
+            problems: {
+              label: 'Problems',
+              color: 'text-rose-400',
+              icon: <AlertTriangle size={14} />,
+            },
+            recommendations: {
+              label: 'Recommendations',
+              color: 'text-emerald-400',
+              icon: <Sparkles size={14} />,
+            },
+          };
+          const config = typeConfig[row.promptType] || typeConfig.summary;
+          return (
+            <div className={`flex items-center gap-2 ${config.color}`}>
+              {config.icon}
+              <span className="text-xs font-medium">{config.label}</span>
+            </div>
+          );
+        },
       },
-    },
-    {
-      id: 'title',
-      label: t('interview.columns.title', 'Title'),
-      render: (row: any) => (
-        <div>
-          <span className="text-sm text-white font-medium">{row.title}</span>
-          <div className="text-xs text-slate-500 mt-0.5">
-            {row.sourceSessionCount || 0} sessions analyzed
+      {
+        id: 'title',
+        label: t('interview.columns.title', 'Title'),
+        render: (row: any) => (
+          <div>
+            <span className="text-sm text-white font-medium">{row.title}</span>
+            <div className="text-xs text-slate-500 mt-0.5">
+              {row.sourceSessionCount || 0} sessions analyzed
+            </div>
           </div>
-        </div>
-      ),
-    },
-    {
-      id: 'createdAt',
-      label: t('interview.columns.generated', 'Generated'),
-      width: '140px',
-      sortable: true,
-      render: (row: any) => (
-        <span className="text-sm text-slate-400">
-          {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '-'}
-        </span>
-      ),
-    },
-    {
-      id: 'status',
-      label: t('interview.columns.status', 'Status'),
-      width: '120px',
-      render: (row: any) => {
-        const statusConfig: Record<string, { label: string; color: string }> = {
-          generating: { label: 'Generating...', color: 'bg-amber-500/20 text-amber-300' },
-          completed: { label: 'Ready', color: 'bg-emerald-500/20 text-emerald-300' },
-          failed: { label: 'Failed', color: 'bg-red-500/20 text-red-300' },
-        };
-        const config = statusConfig[row.status] || statusConfig.completed;
-        return (
-          <span className={`text-xs px-2 py-1 rounded-full ${config.color}`}>
-            {config.label}
+        ),
+      },
+      {
+        id: 'createdAt',
+        label: t('interview.columns.generated', 'Generated'),
+        width: '140px',
+        sortable: true,
+        render: (row: any) => (
+          <span className="text-sm text-slate-400">
+            {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '-'}
           </span>
-        );
+        ),
       },
-    },
-  ], [t]);
+      {
+        id: 'status',
+        label: t('interview.columns.status', 'Status'),
+        width: '120px',
+        render: (row: any) => {
+          const statusConfig: Record<string, { label: string; color: string }> = {
+            generating: { label: 'Generating...', color: 'bg-amber-500/20 text-amber-300' },
+            completed: { label: 'Ready', color: 'bg-emerald-500/20 text-emerald-300' },
+            failed: { label: 'Failed', color: 'bg-red-500/20 text-red-300' },
+          };
+          const config = statusConfig[row.status] || statusConfig.completed;
+          return (
+            <span className={`text-xs px-2 py-1 rounded-full ${config.color}`}>{config.label}</span>
+          );
+        },
+      },
+    ],
+    [t]
+  );
 
   // Get current columns based on tab
   const currentColumns = useMemo(() => {
     switch (activeTab) {
-      case 'list': return sessionsColumns;
-      case 'assignments': return assignmentsColumns;
-      case 'initiatives': return templatesColumns;
-      case 'reports': return insightsColumns;
-      default: return sessionsColumns;
+      case 'list':
+        return sessionsColumns;
+      case 'assignments':
+        return assignmentsColumns;
+      case 'initiatives':
+        return templatesColumns;
+      case 'reports':
+        return insightsColumns;
+      default:
+        return sessionsColumns;
     }
   }, [activeTab, sessionsColumns, assignmentsColumns, templatesColumns, insightsColumns]);
 
   // Get current data based on tab
   const currentData = useMemo(() => {
     switch (activeTab) {
-      case 'list': return completedSessions;
-      case 'assignments': return assignments;
-      case 'initiatives': return templates;
-      case 'reports': return insights;
-      default: return [];
+      case 'list':
+        return completedSessions;
+      case 'assignments':
+        return assignments;
+      case 'initiatives':
+        return templates;
+      case 'reports':
+        return insights;
+      default:
+        return [];
     }
   }, [activeTab, completedSessions, assignments, templates, insights]);
 
@@ -595,65 +662,71 @@ export const InterviewHub: React.FC<InterviewHubProps> = ({ initialTab = 'list' 
   // HANDLERS
   // ==========================================
 
-  const handleOpenDocument = useCallback((row: any) => {
-    // Handle opening based on tab type
-    if (activeTab === 'list') {
-      // Open completed session for viewing
-      const doc: OpenDocument = {
-        id: row.id,
-        type: 'assessment',
-        subType: 'INTERVIEW_SESSION',
-        name: row.name || row.templateName || 'Interview Session',
-        status: 'completed' as any,
-      };
-      setOpenDocuments((prev) => {
-        if (prev.find((d) => d.id === doc.id)) return prev;
-        return [...prev, doc];
-      });
-      setActiveDocumentId(row.id);
-      return;
-    }
+  const handleOpenDocument = useCallback(
+    (row: any) => {
+      // Handle opening based on tab type
+      if (activeTab === 'list') {
+        // Open completed session for viewing
+        const doc: OpenDocument = {
+          id: row.id,
+          type: 'assessment',
+          subType: 'INTERVIEW_SESSION',
+          name: row.name || row.templateName || 'Interview Session',
+          status: 'completed' as any,
+        };
+        setOpenDocuments((prev) => {
+          if (prev.find((d) => d.id === doc.id)) return prev;
+          return [...prev, doc];
+        });
+        setActiveDocumentId(row.id);
+        return;
+      }
 
-    if (activeTab === 'initiatives') {
-      // Open template detail
-      const doc: OpenDocument = {
-        id: row.id,
-        type: 'assessment',
-        subType: 'TEMPLATE',
-        name: row.name,
-        status: row.status as any,
-      };
-      setOpenDocuments((prev) => {
-        if (prev.find((d) => d.id === doc.id)) return prev;
-        return [...prev, doc];
-      });
-      setActiveDocumentId(row.id);
-      return;
-    }
+      if (activeTab === 'initiatives') {
+        // Open template detail
+        const doc: OpenDocument = {
+          id: row.id,
+          type: 'assessment',
+          subType: 'TEMPLATE',
+          name: row.name,
+          status: row.status as any,
+        };
+        setOpenDocuments((prev) => {
+          if (prev.find((d) => d.id === doc.id)) return prev;
+          return [...prev, doc];
+        });
+        setActiveDocumentId(row.id);
+        return;
+      }
 
-    if (activeTab === 'reports') {
-      // Open insight detail
-      const doc: OpenDocument = {
-        id: row.id,
-        type: 'assessment',
-        subType: 'INSIGHT',
-        name: row.title,
-        status: row.status as any,
-      };
-      setOpenDocuments((prev) => {
-        if (prev.find((d) => d.id === doc.id)) return prev;
-        return [...prev, doc];
-      });
-      setActiveDocumentId(row.id);
-    }
-  }, [activeTab]);
+      if (activeTab === 'reports') {
+        // Open insight detail
+        const doc: OpenDocument = {
+          id: row.id,
+          type: 'assessment',
+          subType: 'INSIGHT',
+          name: row.title,
+          status: row.status as any,
+        };
+        setOpenDocuments((prev) => {
+          if (prev.find((d) => d.id === doc.id)) return prev;
+          return [...prev, doc];
+        });
+        setActiveDocumentId(row.id);
+      }
+    },
+    [activeTab]
+  );
 
-  const handleCloseDocument = useCallback((id: string) => {
-    setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
-    if (activeDocumentId === id) {
-      setActiveDocumentId(null);
-    }
-  }, [activeDocumentId]);
+  const handleCloseDocument = useCallback(
+    (id: string) => {
+      setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
+      if (activeDocumentId === id) {
+        setActiveDocumentId(null);
+      }
+    },
+    [activeDocumentId]
+  );
 
   const handleShowList = useCallback(() => {
     setActiveDocumentId(null);
@@ -667,33 +740,39 @@ export const InterviewHub: React.FC<InterviewHubProps> = ({ initialTab = 'list' 
     setActiveFilters([]);
   }, []);
 
-  const handleRowAction = useCallback((action: string, row: any) => {
-    if (action === 'view' || action === 'edit') {
-      handleOpenDocument(row);
-    }
-    if (action === 'remind' && activeTab === 'assignments') {
-      Api.post(`/interview/assignments/${row.id}/remind`, {})
-        .then(() => toast.success('Reminder sent'))
-        .catch(() => toast.error('Failed to send reminder'));
-    }
-  }, [activeTab, handleOpenDocument]);
+  const handleRowAction = useCallback(
+    (action: string, row: any) => {
+      if (action === 'view' || action === 'edit') {
+        handleOpenDocument(row);
+      }
+      if (action === 'remind' && activeTab === 'assignments') {
+        Api.post(`/interview/assignments/${row.id}/remind`, {})
+          .then(() => toast.success('Reminder sent'))
+          .catch(() => toast.error('Failed to send reminder'));
+      }
+    },
+    [activeTab, handleOpenDocument]
+  );
 
   // Template editing helpers
-  const enterTemplateEditMode = useCallback((templateId: string) => {
-    setTemplateEditMode((prev) => ({ ...prev, [templateId]: true }));
-    const template = templates.find((x: any) => x.id === templateId);
-    if (template) {
-      setTemplateEditDraft((prev) => ({
-        ...prev,
-        [templateId]: {
-          name: template.name,
-          description: template.description,
-          category: String(template.category || '').toUpperCase(),
-          status: template.status || 'approved',
-        },
-      }));
-    }
-  }, [templates]);
+  const enterTemplateEditMode = useCallback(
+    (templateId: string) => {
+      setTemplateEditMode((prev) => ({ ...prev, [templateId]: true }));
+      const template = templates.find((x: any) => x.id === templateId);
+      if (template) {
+        setTemplateEditDraft((prev) => ({
+          ...prev,
+          [templateId]: {
+            name: template.name,
+            description: template.description,
+            category: String(template.category || '').toUpperCase(),
+            status: template.status || 'approved',
+          },
+        }));
+      }
+    },
+    [templates]
+  );
 
   const exitTemplateEditMode = useCallback((templateId: string) => {
     setTemplateEditMode((prev) => ({ ...prev, [templateId]: false }));
@@ -707,7 +786,7 @@ export const InterviewHub: React.FC<InterviewHubProps> = ({ initialTab = 'list' 
     // Document view
     if (activeDocumentId) {
       const doc = openDocuments.find((d) => d.id === activeDocumentId);
-      
+
       if (doc?.subType === 'INTERVIEW_SESSION') {
         return (
           <div className="h-full">
@@ -729,7 +808,10 @@ export const InterviewHub: React.FC<InterviewHubProps> = ({ initialTab = 'list' 
           setTemplateQuestionsLoading((prev) => ({ ...prev, [doc.id]: true }));
           Api.get(`/interview/templates/${doc.id}/questions`)
             .then((res) => {
-              setTemplateQuestionsById((prev) => ({ ...prev, [doc.id]: Array.isArray(res) ? res : [] }));
+              setTemplateQuestionsById((prev) => ({
+                ...prev,
+                [doc.id]: Array.isArray(res) ? res : [],
+              }));
             })
             .catch(() => {})
             .finally(() => {
@@ -745,15 +827,21 @@ export const InterviewHub: React.FC<InterviewHubProps> = ({ initialTab = 'list' 
                   <FileText size={24} className="text-blue-400" />
                 </div>
                 <div className="flex-1">
-                  <h1 className="text-xl font-semibold text-white mb-2">{template?.name || doc.name}</h1>
+                  <h1 className="text-xl font-semibold text-white mb-2">
+                    {template?.name || doc.name}
+                  </h1>
                   <p className="text-slate-400 text-sm mb-3">{template?.description || ''}</p>
                   <div className="flex items-center gap-3">
                     <span className="px-2 py-1 bg-navy-700 text-slate-300 text-xs rounded-full">
                       {questions.length || template?.questionCount || 0} questions
                     </span>
-                    <span className="text-xs text-slate-500">{String(template?.category || '').toUpperCase()}</span>
+                    <span className="text-xs text-slate-500">
+                      {String(template?.category || '').toUpperCase()}
+                    </span>
                     <button
-                      onClick={() => isEditing ? exitTemplateEditMode(doc.id) : enterTemplateEditMode(doc.id)}
+                      onClick={() =>
+                        isEditing ? exitTemplateEditMode(doc.id) : enterTemplateEditMode(doc.id)
+                      }
                       className="ml-auto px-3 py-1.5 bg-navy-800 hover:bg-navy-700 border border-navy-600 text-white rounded-lg text-xs font-medium"
                     >
                       {isEditing ? 'Stop editing' : 'Edit template'}
@@ -772,7 +860,10 @@ export const InterviewHub: React.FC<InterviewHubProps> = ({ initialTab = 'list' 
                 ) : questions.length > 0 ? (
                   <ul className="space-y-2">
                     {questions.map((q: any, i: number) => (
-                      <li key={q.id} className="flex items-start gap-3 p-3 bg-navy-950/40 rounded-lg">
+                      <li
+                        key={q.id}
+                        className="flex items-start gap-3 p-3 bg-navy-950/40 rounded-lg"
+                      >
                         <span className="text-xs text-slate-500 w-6">{i + 1}.</span>
                         <span className="text-sm text-slate-300 flex-1">{q.questionText}</span>
                         <span className="text-xs text-slate-500">{q.category}</span>
@@ -790,13 +881,7 @@ export const InterviewHub: React.FC<InterviewHubProps> = ({ initialTab = 'list' 
 
       if (doc?.subType === 'INSIGHT') {
         const insight = insights.find((x: any) => x.id === doc.id);
-        return (
-          <InsightDetailView
-            insightId={doc.id}
-            insight={insight}
-            onRefresh={loadInsights}
-          />
-        );
+        return <InsightDetailView insightId={doc.id} insight={insight} onRefresh={loadInsights} />;
       }
 
       return (
@@ -837,7 +922,10 @@ export const InterviewHub: React.FC<InterviewHubProps> = ({ initialTab = 'list' 
             activeTab === 'list'
               ? t('interview.empty.sessions', 'No completed interviews yet.')
               : activeTab === 'assignments'
-                ? t('interview.empty.assignments', 'No assignments found. Create one to get started.')
+                ? t(
+                    'interview.empty.assignments',
+                    'No assignments found. Create one to get started.'
+                  )
                 : activeTab === 'initiatives'
                   ? t('interview.empty.templates', 'No templates available.')
                   : t('interview.empty.insights', 'No insights generated yet.')
@@ -922,7 +1010,7 @@ const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
 }) => {
   const { t } = useTranslation('discovery');
   const { currentUser } = useAppStore();
-  
+
   const [users, setUsers] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     templateId: '',
@@ -988,9 +1076,7 @@ const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             {/* Template */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Template *
-              </label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Template *</label>
               <select
                 value={formData.templateId}
                 onChange={(e) => setFormData({ ...formData, templateId: e.target.value })}
@@ -998,22 +1084,24 @@ const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
                 required
               >
                 <option value="">Select template...</option>
-                {templates.filter(t => t.status === 'approved').map((tpl) => (
-                  <option key={tpl.id} value={tpl.id}>{tpl.name}</option>
-                ))}
+                {templates
+                  .filter((t) => t.status === 'approved')
+                  .map((tpl) => (
+                    <option key={tpl.id} value={tpl.id}>
+                      {tpl.name}
+                    </option>
+                  ))}
               </select>
             </div>
 
             {/* Assignees */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Assignee(s) *
-              </label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Assignee(s) *</label>
               <select
                 multiple
                 value={formData.assigneeIds}
                 onChange={(e) => {
-                  const selected = Array.from(e.target.selectedOptions, o => o.value);
+                  const selected = Array.from(e.target.selectedOptions, (o) => o.value);
                   setFormData({ ...formData, assigneeIds: selected });
                 }}
                 className="w-full px-3 py-2 bg-navy-800 border border-navy-600 rounded-lg text-white text-sm min-h-[100px]"
@@ -1030,9 +1118,7 @@ const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
 
             {/* Due Date */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Due Date *
-              </label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Due Date *</label>
               <input
                 type="date"
                 value={formData.dueAt}
@@ -1044,9 +1130,7 @@ const AddAssignmentModal: React.FC<AddAssignmentModalProps> = ({
 
             {/* Priority */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Priority
-              </label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Priority</label>
               <select
                 value={formData.priority}
                 onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
@@ -1134,7 +1218,7 @@ const AddInsightModal: React.FC<AddInsightModalProps> = ({
   completedSessions,
 }) => {
   const { t } = useTranslation('discovery');
-  
+
   const [formData, setFormData] = useState({
     title: '',
     sessionIds: [] as string[],
@@ -1184,9 +1268,7 @@ const AddInsightModal: React.FC<AddInsightModalProps> = ({
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             {/* Title */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Title *
-              </label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Title *</label>
               <input
                 type="text"
                 value={formData.title}
@@ -1206,7 +1288,7 @@ const AddInsightModal: React.FC<AddInsightModalProps> = ({
                 multiple
                 value={formData.sessionIds}
                 onChange={(e) => {
-                  const selected = Array.from(e.target.selectedOptions, o => o.value);
+                  const selected = Array.from(e.target.selectedOptions, (o) => o.value);
                   setFormData({ ...formData, sessionIds: selected });
                 }}
                 className="w-full px-3 py-2 bg-navy-800 border border-navy-600 rounded-lg text-white text-sm min-h-[150px]"
@@ -1223,9 +1305,7 @@ const AddInsightModal: React.FC<AddInsightModalProps> = ({
 
             {/* Prompt Type */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Analysis Type
-              </label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Analysis Type</label>
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { value: 'summary', label: 'Summary', desc: 'General overview' },

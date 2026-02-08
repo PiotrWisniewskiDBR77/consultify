@@ -269,50 +269,50 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
       <div className="shrink-0 px-4 py-2 border-b border-slate-100 dark:border-navy-700">
         <div className="flex items-center gap-2">
           <div className="flex-1 flex items-center gap-1 p-1 bg-slate-100 dark:bg-navy-800 rounded-lg">
-          <button
-            onClick={() => {
-              /* Parent controls this via activeGroup */
-            }}
-            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-              activeGroup === 'my' || activeGroup === 'all'
-                ? 'bg-white dark:bg-navy-700 text-slate-800 dark:text-white shadow-sm'
-                : 'text-slate-500 dark:text-slate-400'
-            }`}
-          >
-            <User size={12} />
-            {t('decisions.myDecisions', 'My Decisions')}
-            <span
-              className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+            <button
+              onClick={() => {
+                /* Parent controls this via activeGroup */
+              }}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                 activeGroup === 'my' || activeGroup === 'all'
-                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
-                  : 'bg-slate-200 dark:bg-white/10'
+                  ? 'bg-white dark:bg-navy-700 text-slate-800 dark:text-white shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400'
               }`}
             >
-              {myDecisions.length}
-            </span>
-          </button>
-          <button
-            onClick={() => {
-              /* Parent controls this via activeGroup */
-            }}
-            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-              activeGroup === 'awaiting'
-                ? 'bg-white dark:bg-navy-700 text-slate-800 dark:text-white shadow-sm'
-                : 'text-slate-500 dark:text-slate-400'
-            }`}
-          >
-            <Hourglass size={12} />
-            {t('decisions.awaiting', 'Awaiting Others')}
-            <span
-              className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+              <User size={12} />
+              {t('decisions.myDecisions', 'My Decisions')}
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                  activeGroup === 'my' || activeGroup === 'all'
+                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                    : 'bg-slate-200 dark:bg-white/10'
+                }`}
+              >
+                {myDecisions.length}
+              </span>
+            </button>
+            <button
+              onClick={() => {
+                /* Parent controls this via activeGroup */
+              }}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                 activeGroup === 'awaiting'
-                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
-                  : 'bg-slate-200 dark:bg-white/10'
+                  ? 'bg-white dark:bg-navy-700 text-slate-800 dark:text-white shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400'
               }`}
             >
-              {awaitingDecisions.length}
-            </span>
-          </button>
+              <Hourglass size={12} />
+              {t('decisions.awaiting', 'Awaiting Others')}
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                  activeGroup === 'awaiting'
+                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                    : 'bg-slate-200 dark:bg-white/10'
+                }`}
+              >
+                {awaitingDecisions.length}
+              </span>
+            </button>
           </div>
           {onCreateDecision && (
             <button

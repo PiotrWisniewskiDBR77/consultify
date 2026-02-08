@@ -13,14 +13,21 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
-import notificationService from './notificationService.js';
 import emailService from './emailService.js';
+import notificationService from './notificationService.js';
 
 // ==========================================
 // TYPES
 // ==========================================
 
-export type AssignmentStatus = 'assigned' | 'in_progress' | 'submitted' | 'sent_back' | 'completed';
+// NOTE: 'completed' is kept for backward compatibility (legacy). Canon uses 'approved' as final reviewed state.
+export type AssignmentStatus =
+  | 'assigned'
+  | 'in_progress'
+  | 'submitted'
+  | 'sent_back'
+  | 'approved'
+  | 'completed';
 export type AssignmentPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type TeamMemberRole = 'lead' | 'member';
 
@@ -29,11 +36,11 @@ export interface CreateAssignmentInput {
   projectId?: string;
   templateId: string;
   templateVersion?: number;
-  assigneeUserIds: string[];  // Can be single or multiple for team
-  teamLeadId?: string;        // If team assignment, who is lead
-  dueAt: string;              // ISO date string
+  assigneeUserIds: string[]; // Can be single or multiple for team
+  teamLeadId?: string; // If team assignment, who is lead
+  dueAt: string; // ISO date string
   priority?: AssignmentPriority;
-  escalateTo?: string;        // User ID for escalation (defaults to createdBy)
+  escalateTo?: string; // User ID for escalation (defaults to createdBy)
   notes?: string;
   createdBy: string;
   processRef?: string;
@@ -43,7 +50,7 @@ export interface Assignment {
   id: string;
   organizationId: string;
   projectId?: string;
-  assigneeUserId: string;     // Primary assignee (or lead for team)
+  assigneeUserId: string; // Primary assignee (or lead for team)
   templateId: string;
   templateVersion: number;
   processRef?: string;
@@ -61,7 +68,7 @@ export interface Assignment {
   lastReminderType?: string;
   escalatedAt?: string;
   escalationCount: number;
-  escalateTo?: string;        // User ID for escalation target
+  escalateTo?: string; // User ID for escalation target
   isTeamAssignment: boolean;
   notes?: string;
   createdBy: string;
@@ -196,7 +203,9 @@ class InterviewAssignmentService {
     // Send notification to all assignees
     await this.sendAssignmentNotification(id, input.assigneeUserIds, input.organizationId);
 
-    logger.info(`[InterviewAssignmentService] Created assignment ${id} for ${input.assigneeUserIds.length} user(s)`);
+    logger.info(
+      `[InterviewAssignmentService] Created assignment ${id} for ${input.assigneeUserIds.length} user(s)`
+    );
 
     return this.getById(id) as Promise<Assignment>;
   }
@@ -333,10 +342,7 @@ class InterviewAssignmentService {
 
     values.push(id);
 
-    await db.run(
-      `UPDATE interview_assignments SET ${fields.join(', ')} WHERE id = ?`,
-      values
-    );
+    await db.run(`UPDATE interview_assignments SET ${fields.join(', ')} WHERE id = ?`, values);
 
     return this.getById(id);
   }
@@ -375,7 +381,11 @@ class InterviewAssignmentService {
   /**
    * Add team member to assignment
    */
-  async addTeamMember(assignmentId: string, userId: string, role: TeamMemberRole = 'member'): Promise<AssignmentMember> {
+  async addTeamMember(
+    assignmentId: string,
+    userId: string,
+    role: TeamMemberRole = 'member'
+  ): Promise<AssignmentMember> {
     const db = await this.getDb();
     const now = new Date().toISOString();
     const id = `iam_${uuidv4()}`;
@@ -399,7 +409,9 @@ class InterviewAssignmentService {
       await this.sendAssignmentNotification(assignmentId, [userId], assignment.organizationId);
     }
 
-    logger.info(`[InterviewAssignmentService] Added member ${userId} to assignment ${assignmentId}`);
+    logger.info(
+      `[InterviewAssignmentService] Added member ${userId} to assignment ${assignmentId}`
+    );
 
     return { id, assignmentId, userId, role, progressPercent: 0, joinedAt: now };
   }
@@ -435,7 +447,9 @@ class InterviewAssignmentService {
       );
     }
 
-    logger.info(`[InterviewAssignmentService] Removed member ${userId} from assignment ${assignmentId}`);
+    logger.info(
+      `[InterviewAssignmentService] Removed member ${userId} from assignment ${assignmentId}`
+    );
     return true;
   }
 
@@ -461,13 +475,17 @@ class InterviewAssignmentService {
   /**
    * Get assignments for a user (their tasks to do)
    */
-  async getMyAssignments(userId: string, organizationId: string, options?: {
-    status?: AssignmentStatus;
-    includeCompleted?: boolean;
-  }): Promise<AssignmentWithDetails[]> {
+  async getMyAssignments(
+    userId: string,
+    organizationId: string,
+    options?: {
+      status?: AssignmentStatus;
+      includeCompleted?: boolean;
+    }
+  ): Promise<AssignmentWithDetails[]> {
     const db = await this.getDb();
     const params: any[] = [organizationId, userId, userId];
-    
+
     let where = `WHERE a.organization_id = ? AND (a.assignee_user_id = ? OR m.user_id = ?)`;
 
     if (options?.status) {
@@ -503,13 +521,17 @@ class InterviewAssignmentService {
   /**
    * Get assignments created by a manager
    */
-  async getManagedAssignments(managerId: string, organizationId: string, options?: {
-    projectId?: string;
-    status?: AssignmentStatus;
-  }): Promise<AssignmentWithDetails[]> {
+  async getManagedAssignments(
+    managerId: string,
+    organizationId: string,
+    options?: {
+      projectId?: string;
+      status?: AssignmentStatus;
+    }
+  ): Promise<AssignmentWithDetails[]> {
     const db = await this.getDb();
     const params: any[] = [organizationId, managerId];
-    
+
     let where = `WHERE a.organization_id = ? AND a.created_by = ?`;
 
     if (options?.projectId) {
@@ -552,7 +574,7 @@ class InterviewAssignmentService {
     const db = await this.getDb();
     const now = new Date().toISOString();
     const params: any[] = [now];
-    
+
     let where = `WHERE a.due_at < ? AND a.status NOT IN ('completed', 'submitted')`;
 
     if (organizationId) {
@@ -619,13 +641,16 @@ class InterviewAssignmentService {
       throw new Error('Assignment not found');
     }
 
-    const recipients = assignment.isTeamAssignment && assignment.members
-      ? assignment.members.map(m => m.userId)
-      : [assignment.assigneeUserId];
+    const recipients =
+      assignment.isTeamAssignment && assignment.members
+        ? assignment.members.map((m) => m.userId)
+        : [assignment.assigneeUserId];
 
     await this.dispatchReminder(assignment, recipients, 'manual', senderId);
 
-    logger.info(`[InterviewAssignmentService] Manual reminder sent for ${assignmentId} by ${senderId}`);
+    logger.info(
+      `[InterviewAssignmentService] Manual reminder sent for ${assignmentId} by ${senderId}`
+    );
     return true;
   }
 
@@ -660,9 +685,18 @@ class InterviewAssignmentService {
         // Determine which reminder to send based on time window
         if (hoursUntilDue <= REMINDER_WINDOWS.REMINDER_2H && lastReminderType !== 'reminder_2h') {
           reminderType = 'reminder_2h';
-        } else if (hoursUntilDue <= REMINDER_WINDOWS.REMINDER_24H && hoursUntilDue > REMINDER_WINDOWS.REMINDER_2H && lastReminderType !== 'reminder_24h' && lastReminderType !== 'reminder_2h') {
+        } else if (
+          hoursUntilDue <= REMINDER_WINDOWS.REMINDER_24H &&
+          hoursUntilDue > REMINDER_WINDOWS.REMINDER_2H &&
+          lastReminderType !== 'reminder_24h' &&
+          lastReminderType !== 'reminder_2h'
+        ) {
           reminderType = 'reminder_24h';
-        } else if (hoursUntilDue <= REMINDER_WINDOWS.REMINDER_48H && hoursUntilDue > REMINDER_WINDOWS.REMINDER_24H && !lastReminderType) {
+        } else if (
+          hoursUntilDue <= REMINDER_WINDOWS.REMINDER_48H &&
+          hoursUntilDue > REMINDER_WINDOWS.REMINDER_24H &&
+          !lastReminderType
+        ) {
           reminderType = 'reminder_48h';
         }
 
@@ -674,7 +708,7 @@ class InterviewAssignmentService {
           let recipients = [assignment.assigneeUserId];
           if (assignment.isTeamAssignment) {
             const members = await this.getTeamMembers(assignment.id);
-            recipients = members.map(m => m.userId);
+            recipients = members.map((m) => m.userId);
           }
 
           await this.dispatchReminder(assignment, recipients, reminderType);
@@ -695,7 +729,9 @@ class InterviewAssignmentService {
       }
     }
 
-    logger.info(`[InterviewAssignmentService] Reminder check complete: ${sent} sent, ${errors} errors`);
+    logger.info(
+      `[InterviewAssignmentService] Reminder check complete: ${sent} sent, ${errors} errors`
+    );
     return { sent, errors };
   }
 
@@ -785,7 +821,9 @@ class InterviewAssignmentService {
       }
     }
 
-    logger.info(`[InterviewAssignmentService] Escalation check complete: ${escalated} escalated, ${errors} errors`);
+    logger.info(
+      `[InterviewAssignmentService] Escalation check complete: ${escalated} escalated, ${errors} errors`
+    );
     return { escalated, errors };
   }
 
@@ -793,7 +831,11 @@ class InterviewAssignmentService {
   // NOTIFICATION HELPERS
   // ==========================================
 
-  private async sendAssignmentNotification(assignmentId: string, userIds: string[], organizationId: string): Promise<void> {
+  private async sendAssignmentNotification(
+    assignmentId: string,
+    userIds: string[],
+    organizationId: string
+  ): Promise<void> {
     const assignment = await this.getByIdWithDetails(assignmentId);
     if (!assignment || !assignment.template) return;
 
@@ -811,7 +853,10 @@ class InterviewAssignmentService {
           priority: assignment.priority === 'urgent' ? 'urgent' : 'normal',
         });
       } catch (err) {
-        logger.error(`[InterviewAssignmentService] Failed to send assignment notification to ${userId}:`, err);
+        logger.error(
+          `[InterviewAssignmentService] Failed to send assignment notification to ${userId}:`,
+          err
+        );
       }
     }
   }
@@ -910,13 +955,16 @@ class InterviewAssignmentService {
     }
   }
 
-  private async sendReminderEmail(to: string, data: {
-    userName: string;
-    templateName: string;
-    reminderType: string;
-    dueAt?: string;
-    assignmentId: string;
-  }): Promise<void> {
+  private async sendReminderEmail(
+    to: string,
+    data: {
+      userName: string;
+      templateName: string;
+      reminderType: string;
+      dueAt?: string;
+      assignmentId: string;
+    }
+  ): Promise<void> {
     const dueDate = data.dueAt ? new Date(data.dueAt).toLocaleDateString() : 'soon';
 
     await emailService.send({
@@ -933,12 +981,15 @@ class InterviewAssignmentService {
     });
   }
 
-  private async sendEscalationEmail(to: string, data: {
-    templateName: string;
-    assigneeName: string;
-    overdueDays: number;
-    assignmentId: string;
-  }): Promise<void> {
+  private async sendEscalationEmail(
+    to: string,
+    data: {
+      templateName: string;
+      assigneeName: string;
+      overdueDays: number;
+      assignmentId: string;
+    }
+  ): Promise<void> {
     await emailService.send({
       to,
       subject: `[Action Required] Interview Overdue: ${data.templateName}`,
@@ -956,16 +1007,19 @@ class InterviewAssignmentService {
   // HELPER: Create mirror task in MyWork
   // ==========================================
 
-  private async createMirrorTask(db: IDatabase, data: {
-    assignmentId: string;
-    organizationId: string;
-    projectId?: string;
-    templateId: string;
-    assigneeId: string;
-    reporterId: string;
-    dueAt: string;
-    priority: string;
-  }): Promise<void> {
+  private async createMirrorTask(
+    db: IDatabase,
+    data: {
+      assignmentId: string;
+      organizationId: string;
+      projectId?: string;
+      templateId: string;
+      assigneeId: string;
+      reporterId: string;
+      dueAt: string;
+      priority: string;
+    }
+  ): Promise<void> {
     const taskId = `t_interview_${uuidv4()}`;
     const now = new Date().toISOString();
 
@@ -1001,10 +1055,10 @@ class InterviewAssignmentService {
     );
 
     // Link task to assignment
-    await db.run(
-      `UPDATE interview_assignments SET task_id = ? WHERE id = ?`,
-      [taskId, data.assignmentId]
-    );
+    await db.run(`UPDATE interview_assignments SET task_id = ? WHERE id = ?`, [
+      taskId,
+      data.assignmentId,
+    ]);
   }
 
   // ==========================================
@@ -1099,13 +1153,15 @@ export default interviewAssignmentService;
 export const create = (input: CreateAssignmentInput) => interviewAssignmentService.create(input);
 export const getById = (id: string) => interviewAssignmentService.getById(id);
 export const getByIdWithDetails = (id: string) => interviewAssignmentService.getByIdWithDetails(id);
-export const update = (id: string, updates: Partial<Assignment>) => interviewAssignmentService.update(id, updates);
+export const update = (id: string, updates: Partial<Assignment>) =>
+  interviewAssignmentService.update(id, updates);
 export const deleteAssignment = (id: string) => interviewAssignmentService.delete(id);
 export const addTeamMember = (assignmentId: string, userId: string, role?: TeamMemberRole) =>
   interviewAssignmentService.addTeamMember(assignmentId, userId, role);
 export const removeTeamMember = (assignmentId: string, userId: string) =>
   interviewAssignmentService.removeTeamMember(assignmentId, userId);
-export const getTeamMembers = (assignmentId: string) => interviewAssignmentService.getTeamMembers(assignmentId);
+export const getTeamMembers = (assignmentId: string) =>
+  interviewAssignmentService.getTeamMembers(assignmentId);
 export const getMyAssignments = (userId: string, organizationId: string, options?: any) =>
   interviewAssignmentService.getMyAssignments(userId, organizationId, options);
 export const getManagedAssignments = (managerId: string, organizationId: string, options?: any) =>

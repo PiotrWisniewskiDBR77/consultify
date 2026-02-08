@@ -1,7 +1,7 @@
 import './services/tokenService'; // Initialize token service
 
 import { Loader2 } from 'lucide-react';
-import React, { useEffect } from 'react';
+import React, { useEffect, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, Routes, useNavigate, useParams } from 'react-router-dom';
 
@@ -11,6 +11,7 @@ import { usePageTracking } from '@/hooks/usePageTracking';
 import { Api } from '@/services/api';
 
 import { RouterSync } from './components/RouterSync';
+import { LoadingScreen } from './components/ui/LoadingScreen';
 import { AppProviders } from './providers/AppProviders';
 import { AppRoutes } from './routes/AppRoutes';
 import { useAppStore } from './store/useAppStore';
@@ -19,6 +20,7 @@ import { User } from './types';
 // Lazy load views for public routes that might be outside main app logic if needed
 const AcceptInvitationView = React.lazy(() => import('./views/AcceptInvitationView'));
 const PublicReportView = React.lazy(() => import('./views/reports/PublicReportView'));
+const PublicReportBuilderView = React.lazy(() => import('./views/reports/PublicReportBuilderView'));
 
 const InviteRouteWrapper = () => {
   const { token } = useParams<{ token: string }>();
@@ -59,23 +61,37 @@ function AppContent() {
     theme,
     currentUser,
     setAuthInitializing,
+    isAuthInitializing,
   } = useAppStore();
 
   const { i18n } = useTranslation();
+
+  // Handle Dark/Light Theme class - use useLayoutEffect to prevent flicker
+  // This runs synchronously before browser paint, preventing visual flicker
+  useLayoutEffect(() => {
+    // Sync theme immediately on mount to prevent flicker
+    const root = document.documentElement;
+    if (theme === 'dark' || theme === 'system') {
+      // For 'system', check if user prefers dark mode
+      if (theme === 'system') {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (prefersDark) {
+          root.classList.add('dark');
+        } else {
+          root.classList.remove('dark');
+        }
+      } else {
+        root.classList.add('dark');
+      }
+    } else {
+      root.classList.remove('dark');
+    }
+  }, [theme]);
 
   // Handle RTL
   useEffect(() => {
     document.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
   }, [i18n.language]);
-
-  // Handle Dark/Light Theme class
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [theme]);
 
   // Analytics tracking
   usePageTracking();
@@ -102,36 +118,52 @@ function AppContent() {
     return () => window.removeEventListener('auth:token-expired', handleTokenExpired);
   }, [logout]);
 
-  // Auth Verification Logic
+  // Auth Verification Logic - optimized to prevent double rendering
   useEffect(() => {
+    let isMounted = true;
+
     const verifyAuth = async () => {
       const token = localStorage.getItem('token');
       if (!token) {
-        if (currentUser) setCurrentUser(null);
-        setAuthInitializing(false); // Done initializing - no token
+        if (currentUser && isMounted) setCurrentUser(null);
+        if (isMounted) setAuthInitializing(false); // Done initializing - no token
         return;
       }
 
-      // 1. Immediate restore from localStorage
+      // 1. Immediate restore from localStorage (synchronous, no re-render needed)
       const storedUser = localStorage.getItem('user');
+      let restoredUser: User | null = null;
       if (storedUser) {
         try {
           const userData = JSON.parse(storedUser);
-          setCurrentUser({ ...userData, isAuthenticated: true });
+          restoredUser = { ...userData, isAuthenticated: true };
+          if (isMounted) setCurrentUser(restoredUser);
         } catch {
           console.warn('[Auth] Stale user data');
         }
       }
 
-      // 2. Background sync
+      // 2. Background sync (only update if different from restored user)
       try {
         const user = await Api.getMe();
+        if (!isMounted) return; // Component unmounted, don't update state
+
         if (user) {
           const authenticatedUser: User = { ...user, isAuthenticated: true };
-          setCurrentUser(authenticatedUser);
-          localStorage.setItem('user', JSON.stringify(user));
 
-          if (user.organizationId) {
+          // Only update if user data actually changed to prevent unnecessary re-renders
+          if (!restoredUser || restoredUser.id !== user.id || restoredUser.email !== user.email) {
+            setCurrentUser(authenticatedUser);
+            localStorage.setItem('user', JSON.stringify(user));
+
+            if (user.organizationId) {
+              setCurrentOrganization({
+                id: user.organizationId,
+                name: user.organizationName || 'Organization',
+              });
+            }
+          } else if (user.organizationId) {
+            // Still update organization if needed
             setCurrentOrganization({
               id: user.organizationId,
               name: user.organizationName || 'Organization',
@@ -140,13 +172,27 @@ function AppContent() {
         }
       } catch (error) {
         console.error('[Auth] Profile sync failed:', error);
+        // If API fails but we have stored user, keep it
+        if (!restoredUser && isMounted) {
+          setCurrentUser(null);
+        }
       } finally {
-        setAuthInitializing(false); // Done initializing - auth check complete
+        if (isMounted) setAuthInitializing(false); // Done initializing - auth check complete
       }
     };
 
     verifyAuth();
-  }, []);
+
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - only run once on mount
+
+  // Show loading screen during auth initialization to prevent flicker
+  if (isAuthInitializing) {
+    return <LoadingScreen />;
+  }
 
   return (
     <>
@@ -165,6 +211,20 @@ function AppContent() {
               }
             >
               <PublicReportView />
+            </React.Suspense>
+          }
+        />
+        <Route
+          path="/shared/report/:token"
+          element={
+            <React.Suspense
+              fallback={
+                <div className="flex h-screen items-center justify-center">
+                  <Loader2 className="animate-spin text-primary" />
+                </div>
+              }
+            >
+              <PublicReportBuilderView />
             </React.Suspense>
           }
         />

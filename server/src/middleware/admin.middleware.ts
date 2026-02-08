@@ -1,7 +1,7 @@
 /**
  * Admin Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Admin access control middleware
  */
 

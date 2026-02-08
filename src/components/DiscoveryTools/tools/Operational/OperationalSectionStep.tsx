@@ -4,7 +4,12 @@
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { OperationalItem, OperationalToolData, ToolSession, useToolStore } from '@/store/useToolStore';
+import {
+  OperationalItem,
+  OperationalToolData,
+  ToolSession,
+  useToolStore,
+} from '@/store/useToolStore';
 
 import { InlineAssist } from '../../InlineAssist';
 
@@ -125,9 +130,7 @@ export const OperationalSectionStep: React.FC<OperationalSectionStepProps> = ({
         </div>
         <InlineAssist
           hint={
-            isPolish
-              ? 'Dodaj konkretne elementy operacyjne.'
-              : 'Add concrete operational items.'
+            isPolish ? 'Dodaj konkretne elementy operacyjne.' : 'Add concrete operational items.'
           }
         />
       </div>

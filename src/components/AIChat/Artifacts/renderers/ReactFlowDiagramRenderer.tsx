@@ -31,12 +31,13 @@ interface DiagramData {
     position: { x: number; y: number };
     data: Record<string, unknown>;
   }>;
-  edges: Array<{
+  edges?: Array<{
     id: string;
     source: string;
     target: string;
     type?: string;
     label?: string;
+    data?: Record<string, unknown>;
   }>;
 }
 
@@ -194,7 +195,7 @@ export const ReactFlowDiagramRenderer: React.FC<ReactFlowDiagramRendererProps> =
 
   const edges: Edge[] = useMemo(
     () =>
-      diagramData.edges.map((e) => ({
+      (diagramData.edges || []).map((e) => ({
         id: e.id,
         source: e.source,
         target: e.target,

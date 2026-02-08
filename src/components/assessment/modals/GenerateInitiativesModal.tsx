@@ -109,8 +109,8 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
       try {
         const token = localStorage.getItem('token');
         const url = projectId
-          ? `/api/assessment-reports?status=FINAL&projectId=${projectId}`
-          : '/api/assessment-reports?status=FINAL';
+          ? `/api/assessment-reports?status=APPROVED&projectId=${projectId}`
+          : '/api/assessment-reports?status=APPROVED';
 
         const response = await fetch(url, {
           headers: { Authorization: `Bearer ${token}` },

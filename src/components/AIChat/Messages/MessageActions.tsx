@@ -236,8 +236,19 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
                   <DropdownItem
                     icon={<Share size={14} />}
                     label={t('chat.actions.share', 'Share')}
-                    onClick={() => {
-                      // Share functionality
+                    onClick={async () => {
+                      try {
+                        if (navigator.share) {
+                          await navigator.share({
+                            title: 'AI Chat Message',
+                            text: message.content,
+                          });
+                        } else {
+                          await navigator.clipboard.writeText(message.content);
+                        }
+                      } catch {
+                        // User cancelled share
+                      }
                       setShowMore(false);
                     }}
                   />
@@ -245,7 +256,19 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
                     icon={<Bookmark size={14} />}
                     label={t('chat.actions.bookmark', 'Bookmark')}
                     onClick={() => {
-                      // Bookmark functionality
+                      // Save to localStorage bookmarks
+                      const bookmarks = JSON.parse(localStorage.getItem('chat_bookmarks') || '[]');
+                      const exists = bookmarks.some((b: any) => b.id === message.id);
+                      if (!exists) {
+                        bookmarks.push({
+                          id: message.id,
+                          content: message.content.slice(0, 200),
+                          role: message.role,
+                          timestamp: message.timestamp,
+                          savedAt: new Date().toISOString(),
+                        });
+                        localStorage.setItem('chat_bookmarks', JSON.stringify(bookmarks));
+                      }
                       setShowMore(false);
                     }}
                   />

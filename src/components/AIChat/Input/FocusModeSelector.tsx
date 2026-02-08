@@ -19,6 +19,8 @@ interface FocusModeSelectorProps {
   disabled?: boolean;
   compact?: boolean;
   className?: string;
+  /** Number of active knowledge sources (shown as badge on compact mode) */
+  activeSourceCount?: number;
 }
 
 interface FocusModeOption {
@@ -36,6 +38,7 @@ export const FocusModeSelector: React.FC<FocusModeSelectorProps> = ({
   disabled = false,
   compact = false,
   className = '',
+  activeSourceCount,
 }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
@@ -113,9 +116,14 @@ export const FocusModeSelector: React.FC<FocusModeSelectorProps> = ({
                         ${selectedMode.bgColor} border-transparent
                         ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-sm cursor-pointer'}
                     `}
-          title={`${t('focusMode.label', 'Tryb')}: ${selectedMode.label}`}
+          title={`${t('focusMode.label', 'Tryb')}: ${selectedMode.label}${activeSourceCount ? ` (${activeSourceCount} sources)` : ''}`}
         >
           <Icon size={14} className={selectedMode.color} />
+          {activeSourceCount != null && activeSourceCount > 0 && value !== 'all' && (
+            <span className="text-[10px] font-bold text-primary-600 dark:text-primary-400">
+              {activeSourceCount}
+            </span>
+          )}
           <ChevronDown size={12} className="text-slate-400 dark:text-slate-500" />
         </button>
 

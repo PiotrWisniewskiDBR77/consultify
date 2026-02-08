@@ -17,6 +17,41 @@ System przydzielania wywiadów do członków zespołu z:
 
 ---
 
+## ✅ Kanon docelowy: odbiór jakości + rework
+Assignments są formalnym mechanizmem „odbioru” wywiadu:
+- assignee wypełnia wywiad,
+- reviewer ocenia jakość i kompletność,
+- jeśli odpowiedzi są niewystarczające → `sent_back` + lista braków,
+- dopiero `approved` oznacza, że kontekst może być używany jako wiarygodne wejście do Tools/Assessment i dalej do inicjatyw.
+
+### Poziomy jakości (2‑warstwowo)
+1) **Poziom pytania (Question)** – granularnie oznaczamy jakość odpowiedzi:
+   - statusy pytań: `not_started`, `in_progress`, `answered`, `needs_follow_up`
+   - reviewer powinien móc wskazać konkretne pytania do doprecyzowania.
+2) **Poziom całości (Assignment)** – formalny odbiór:
+   - statusy assignment: `pending`, `in_progress`, `submitted`, `sent_back`, `approved`.
+
+### Kryteria „Submit” (assignee → review)
+Minimalny warunek jakości (kanon, do dopięcia per template):
+- wszystkie **required** pytania ≠ `not_started`,
+- brak pustych/„placeholder” odpowiedzi w kluczowych sekcjach,
+- jeśli w template istnieją „kategorie krytyczne”, to brak `needs_follow_up` w tych kategoriach,
+- evidence / notatki są dołączone tam gdzie template tego wymaga.
+
+### Kryteria „Approve” (reviewer – odbiór)
+Reviewer zatwierdza tylko jeśli:
+- required pytania są merytorycznie odpowiedziane,
+- lista braków („gaps”) jest pusta (lub jawnie zaakceptowana jako wyjątek),
+- istnieje podsumowanie facts‑only albo reviewer świadomie akceptuje jego brak.
+
+### Kryteria „Send back” (reviewer – rework)
+Send-back musi zawierać:
+- `reason` (tekst),
+- checklistę braków (najlepiej per kategoria/pytanie),
+- (opcjonalnie) sugerowany termin i priorytet poprawy.
+
+---
+
 ## 🔄 Workflow Statusów
 
 ```
@@ -51,6 +86,17 @@ System przydzielania wywiadów do członków zespołu z:
 | `sent_back` | Zwrócone do poprawy | Re-submit |
 
 ---
+
+## Gate actions (kanon)
+Przejścia assignment traktujemy jako „mini‑gates” (z audytem i notyfikacjami):
+- `SUBMIT_INTERVIEW` (assignee): `in_progress → submitted`
+- `SEND_BACK_INTERVIEW` (reviewer): `submitted → sent_back`
+- `APPROVE_INTERVIEW` (reviewer): `submitted → approved`
+
+Każda akcja:
+- zapisuje audit trail (kto/kiedy/komentarz),
+- wysyła powiadomienia do właściwych osób (assignee/reviewer/PM),
+- może podbijać eskalację przy overdue (zgodnie z polityką projektu).
 
 ## 🎨 UI - AssignInterviewModal
 

@@ -212,7 +212,11 @@ class NavigationMonitor {
 export const navigationMonitor = new NavigationMonitor();
 
 // Expose to window for debugging in development
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+if (
+  typeof window !== 'undefined' &&
+  import.meta.env.DEV &&
+  import.meta.env.VITE_NAV_DEBUG === 'true'
+) {
   (window as any).__navigationMonitor = navigationMonitor;
   (window as any).__validateNavigation = validateNavigation;
   (window as any).__logNavigationDiagnostics = logNavigationDiagnostics;

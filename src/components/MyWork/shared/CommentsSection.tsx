@@ -13,6 +13,7 @@ import {
   MessageCircle,
   MoreVertical,
   Send,
+  Sparkles,
   ThumbsUp,
   Trash2,
   User,
@@ -30,9 +31,10 @@ export interface Comment {
   createdAt: string;
   updatedAt?: string;
   likes: number;
-  likedByMe: boolean;
+  likedByMe?: boolean;
   parentId?: string;
   replies?: Comment[];
+  isAIGenerated?: boolean;
 }
 
 interface CommentsSectionProps {
@@ -40,8 +42,12 @@ interface CommentsSectionProps {
   onAddComment: (content: string, parentId?: string) => Promise<void>;
   onDeleteComment: (commentId: string) => Promise<void>;
   onLikeComment: (commentId: string) => Promise<void>;
+  onGenerateAIComment?: () => Promise<void>;
+  isGeneratingAI?: boolean;
   currentUserId?: string;
   readOnly?: boolean;
+  expanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 export const CommentsSection: React.FC<CommentsSectionProps> = ({
@@ -49,8 +55,12 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
   onAddComment,
   onDeleteComment,
   onLikeComment,
+  onGenerateAIComment,
+  isGeneratingAI = false,
   currentUserId,
   readOnly = false,
+  expanded = false,
+  onToggleExpand,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -263,8 +273,8 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                         ? 'odpowiedź'
                         : 'odpowiedzi'
                       : comment.replies?.length === 1
-                      ? 'reply'
-                      : 'replies'}
+                        ? 'reply'
+                        : 'replies'}
                   </span>
                 </button>
               )}
@@ -343,77 +353,152 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-4 text-slate-700 dark:text-slate-300">
-        <MessageCircle size={16} />
-        <span className="text-sm font-medium">
-          {isPolish ? 'Komentarze' : 'Comments'}
-        </span>
-        {comments.length > 0 && (
-          <span className="px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400">
-            {comments.length}
-          </span>
-        )}
-      </div>
-
-      {/* Comments List */}
-      {topLevelComments.length === 0 ? (
-        <div className="text-center py-6 text-slate-400 dark:text-slate-500">
-          <MessageCircle size={32} className="mx-auto mb-2 opacity-50" />
-          <p className="text-sm">{isPolish ? 'Brak komentarzy' : 'No comments yet'}</p>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-navy-700/50 shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
+    >
+      {/* Collapsible Header */}
+      <motion.button
+        whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
+        whileTap={{ scale: 0.98 }}
+        onClick={onToggleExpand}
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors duration-200"
+      >
+        <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
+          <div className="p-2 rounded-xl bg-purple-500/10 dark:bg-purple-500/20">
+            <MessageCircle size={18} className="text-purple-500 dark:text-purple-400" />
+          </div>
+          <span className="text-sm font-semibold">{isPolish ? 'Komentarze' : 'Comments'}</span>
         </div>
-      ) : (
-        <div className="space-y-4 mb-4">
+        <div className="flex items-center gap-2">
+          {comments.length > 0 && (
+            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+              {comments.length}
+            </span>
+          )}
+          {/* AI Button - visible only when expanded */}
           <AnimatePresence>
-            {topLevelComments.map((comment) => renderComment(comment))}
+            {expanded && onGenerateAIComment && !readOnly && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onGenerateAIComment();
+                }}
+                disabled={isGeneratingAI}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 dark:hover:bg-violet-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                title={isPolish ? 'Wygeneruj komentarz AI' : 'Generate AI comment'}
+              >
+                {isGeneratingAI ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Sparkles size={14} />
+                )}
+                <span>AI</span>
+              </motion.button>
+            )}
           </AnimatePresence>
+          <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+            <ChevronDown size={18} className="text-slate-400" />
+          </motion.div>
         </div>
-      )}
+      </motion.button>
 
-      {/* New Comment Input */}
-      {!readOnly && (
-        <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-navy-700">
-          <div className="flex-shrink-0">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
-              <User size={16} className="text-white" />
-            </div>
-          </div>
-          <div className="flex-1 flex gap-2">
-            <textarea
-              ref={textareaRef}
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder={isPolish ? 'Napisz komentarz...' : 'Write a comment...'}
-              rows={1}
-              className="flex-1 px-4 py-2 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 outline-none transition-all resize-none"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmit();
-                }
-              }}
-            />
-            <button
-              onClick={handleSubmit}
-              disabled={submitting || !newComment.trim()}
-              className="px-4 py-2 rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 transition-colors flex items-center gap-2"
-            >
-              {submitting ? (
-                <Loader2 size={16} className="animate-spin" />
+      {/* Collapsible Content */}
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0 }}
+            animate={{ height: 'auto' }}
+            exit={{ height: 0 }}
+            className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+          >
+            <div className="p-4">
+              {/* Comments List */}
+              {topLevelComments.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-center py-10 text-slate-400 dark:text-slate-500"
+                >
+                  <motion.div
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+                    className="inline-block mb-3 p-4 rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 dark:from-purple-500/20 dark:to-pink-500/20"
+                  >
+                    <MessageCircle
+                      size={40}
+                      className="text-purple-500 dark:text-purple-400 opacity-60"
+                    />
+                  </motion.div>
+                  <p className="text-sm font-medium">
+                    {isPolish ? 'Brak komentarzy' : 'No comments yet'}
+                  </p>
+                  <p className="text-xs mt-1 text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Rozpocznij dyskusję...' : 'Start the conversation...'}
+                  </p>
+                </motion.div>
               ) : (
-                <>
-                  <Send size={16} />
-                  <span className="hidden sm:inline">
-                    {isPolish ? 'Wyślij' : 'Send'}
-                  </span>
-                </>
+                <div className="space-y-4 mb-4">
+                  <AnimatePresence>
+                    {topLevelComments.map((comment) => renderComment(comment))}
+                  </AnimatePresence>
+                </div>
               )}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+
+              {/* New Comment Input */}
+              {!readOnly && (
+                <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-navy-700">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
+                      <User size={16} className="text-white" />
+                    </div>
+                  </div>
+                  <div className="flex-1 flex gap-2">
+                    <textarea
+                      ref={textareaRef}
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder={isPolish ? 'Napisz komentarz...' : 'Write a comment...'}
+                      rows={1}
+                      className="flex-1 px-4 py-2 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 outline-none transition-all resize-none"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSubmit();
+                        }
+                      }}
+                    />
+                    {/* Send Button */}
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleSubmit}
+                      disabled={submitting || !newComment.trim()}
+                      className="px-5 py-2.5 rounded-xl bg-purple-500 text-white font-semibold hover:bg-purple-600 disabled:opacity-50 transition-all duration-200 flex items-center gap-2 disabled:cursor-not-allowed"
+                    >
+                      {submitting ? (
+                        <Loader2 size={18} className="animate-spin" />
+                      ) : (
+                        <>
+                          <Send size={18} />
+                          <span className="hidden sm:inline">{isPolish ? 'Wyślij' : 'Send'}</span>
+                        </>
+                      )}
+                    </motion.button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

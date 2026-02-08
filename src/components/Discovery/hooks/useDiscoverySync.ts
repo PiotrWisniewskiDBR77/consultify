@@ -52,7 +52,7 @@ export const useDiscoverySync = () => {
     if (!activeSessionId) return;
 
     // Find the latest AI message
-    const aiMessages = activeChatMessages.filter((m) => m.role === 'ai');
+    const aiMessages = (activeChatMessages || []).filter((m) => m.role === 'ai');
     if (aiMessages.length === 0) return;
 
     const lastAIMessage = aiMessages[aiMessages.length - 1];

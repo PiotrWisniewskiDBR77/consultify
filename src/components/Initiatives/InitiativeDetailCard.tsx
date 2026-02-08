@@ -1,7 +1,12 @@
 /**
+ * @deprecated This component is LEGACY and will be removed.
+ * Use InitiativeDocumentView instead for the canonical full initiative view.
+ *
  * InitiativeDetailCard
  * Full initiative detail view as a dynamic card (not modal)
  * Can be rendered directly in ModuleHub content area
+ *
+ * MIGRATION NOTE: Replace usages with InitiativeDocumentView from './InitiativeDocumentView'
  */
 
 import {
@@ -38,6 +43,7 @@ import { InitiativeIntelligenceTab } from '../InitiativeIntelligenceTab';
 import { InitiativeTasksTab } from '../InitiativeTasksTab';
 import { Button } from '../ui/primitives/Button';
 import { Select } from '../ui/select';
+import { InitiativeSourceLink } from './InitiativeSourceLink';
 
 interface InitiativeDetailCardProps {
   initiativeId: string;
@@ -66,7 +72,8 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
   currentUser,
   strategicGoals = [],
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = i18n.language === 'pl';
   const users = Array.isArray(rawUsers) ? rawUsers : [];
 
   // State
@@ -587,20 +594,11 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
                 </div>
               </div>
             </div>
-
-            {initiative.sourceType === 'tool' && (
-              <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles size={16} className="text-amber-400" />
-                  <span className="text-xs font-semibold text-slate-400 uppercase">
-                    Source tool
-                  </span>
-                </div>
-                <div className="text-sm text-slate-300">
-                  Tool session: {initiative.sourceId}
-                </div>
-              </div>
-            )}
+            <InitiativeSourceLink
+              sourceType={initiative.sourceType}
+              sourceId={initiative.sourceId}
+              isPolish={isPolish}
+            />
 
             {/* Summary */}
             <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">

@@ -39,10 +39,11 @@ import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { ToolType as StoreToolType } from '@/store/useToolStore';
+import { listStrategyToolSlugs } from '@/toolCatalog/strategy/catalog';
 
-import { ToolWorkspace } from '../DiscoveryTools';
-import { InitiativeFullView } from '../Initiatives/InitiativeFullView';
-
+import { ToolDocumentView, ToolWorkspace } from '../DiscoveryTools';
+import { GenericToolDocumentView } from '../DiscoveryTools/GenericToolDocumentView';
+import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import {
   CategoryButton,
   FilterableTable,
@@ -59,7 +60,27 @@ import {
 
 // Tool category types
 type ToolCategory = 'strategic' | 'operational' | 'digital' | 'automation';
-// Use canonical ItemStatus from ModuleHub/types.ts instead of local type
+// Using ItemStatus from ModuleHub types (uppercase): DRAFT, REVIEW, APPROVED, DONE, etc.
+// Helper to map lowercase statuses from API to uppercase for GridItem
+const mapStatusToUppercase = (status: string): import('../shared/ModuleHub').ItemStatus => {
+  const mapping: Record<string, import('../shared/ModuleHub').ItemStatus> = {
+    draft: 'DRAFT',
+    in_review: 'PENDING_REVIEW',
+    pending_review: 'PENDING_REVIEW',
+    approved: 'APPROVED',
+    completed: 'DONE',
+    done: 'DONE',
+    blocked: 'BLOCKED',
+    cancelled: 'CANCELLED',
+    archived: 'ARCHIVED',
+    proposed: 'REVIEW',
+    planned: 'PLANNING',
+    in_progress: 'EXECUTING',
+    executing: 'EXECUTING',
+    review: 'REVIEW',
+  };
+  return mapping[status.toLowerCase()] || 'DRAFT';
+};
 
 // Status filter options per tab context
 interface StatusFilterOption {
@@ -73,7 +94,12 @@ interface StatusFilterOption {
 const DISCOVERY_STATUSES: StatusFilterOption[] = [
   { id: 'all', label: 'All', color: 'text-slate-400', bgColor: 'bg-slate-500' },
   { id: 'draft', label: 'Draft', color: 'text-slate-400', bgColor: 'bg-slate-500' },
-  { id: 'pending_review', label: 'Pending Review', color: 'text-orange-400', bgColor: 'bg-orange-500' },
+  {
+    id: 'pending_review',
+    label: 'Pending Review',
+    color: 'text-orange-400',
+    bgColor: 'bg-orange-500',
+  },
 ];
 
 // Reports tab: APPROVED, COMPLETED (finished analyses)
@@ -490,6 +516,15 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const statusDropdownRef = React.useRef<HTMLDivElement>(null);
 
+  // Docs-driven strategy catalog (wdrozenia/modules/tools/catalog/strategy/*.md)
+  const strategyCatalogSlugs = useMemo(() => listStrategyToolSlugs(), []);
+  const titleFromSlug = (slug: string) =>
+    String(slug || '')
+      .split('-')
+      .filter(Boolean)
+      .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+      .join(' ');
+
   // Data State
   const [discoveries, setDiscoveries] = useState<DisplayItem[]>([]);
   const [reports, setReports] = useState<DisplayItem[]>([]);
@@ -504,14 +539,16 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
 
   // Transform API data to display format
   const transformToolSession = useCallback((session: ToolSessionData): DisplayItem => {
-    const mapping = TOOL_TYPE_TO_SHORT[session.toolType] || { short: 'SWT' as ToolType, category: 'strategic' as ToolCategory };
+    const mapping = TOOL_TYPE_TO_SHORT[session.toolType] || {
+      short: 'SWT' as ToolType,
+      category: 'strategic' as ToolCategory,
+    };
     const statusMap: Record<string, ItemStatus> = {
-      'DRAFT': 'DRAFT',
-      'REVIEW': 'REVIEW',
-      'PENDING_REVIEW': 'PENDING_REVIEW',
-      'APPROVED': 'APPROVED',
-      'COMPLETED': 'DONE',
-      'DONE': 'DONE',
+      DRAFT: 'DRAFT',
+      REVIEW: 'PENDING_REVIEW',
+      APPROVED: 'APPROVED',
+      GENERATED: 'DONE',
+      COMPLETED: 'DONE',
     };
     return {
       id: session.id,
@@ -526,68 +563,76 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
   }, []);
 
   // Fetch data from API
-  const fetchData = useCallback(async (showRefreshIndicator = false) => {
-    if (showRefreshIndicator) {
-      setIsRefreshing(true);
-    } else {
-      setIsLoading(true);
-    }
+  const fetchData = useCallback(
+    async (showRefreshIndicator = false) => {
+      if (showRefreshIndicator) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
 
-    try {
-      // Fetch all tool sessions
-      const response = await Api.listToolSessions({
-        projectId: currentProjectId || undefined,
-      });
-
-      const allSessions = (response.items || []).map(transformToolSession);
-
-      // Split by status for different tabs
-      // Discovery: DRAFT, REVIEW (work in progress)
-      const discoveryItems = allSessions.filter(
-        (s) => s.status === 'DRAFT' || s.status === 'REVIEW' || s.status === 'PENDING_REVIEW'
-      );
-      setDiscoveries(discoveryItems);
-
-      // Reports: APPROVED, DONE (finished analyses)
-      const reportItems = allSessions.filter(
-        (s) => s.status === 'APPROVED' || s.status === 'DONE'
-      );
-      setReports(reportItems);
-
-      // Initiatives: Fetch DRAFT initiatives (generated from tools/assessment)
       try {
-        const initiativesList = await Api.getInitiativesByStatus('DRAFT', currentProjectId || undefined);
+        // Fetch all tool sessions
+        const response = await Api.listToolSessions({
+          projectId: currentProjectId || undefined,
+        });
 
-        // Map initiatives to display format
-        const draftInitiatives = initiativesList
-          .slice(0, 100)
-          .map((i: any) => ({
+        const allSessions = (response.items || []).map(transformToolSession);
+
+        // Split by status for different tabs
+        // Discovery: DRAFT, REVIEW (work in progress)
+        const discoveryItems = allSessions.filter(
+          (s) => s.status === 'DRAFT' || s.status === 'PENDING_REVIEW'
+        );
+        setDiscoveries(discoveryItems);
+
+        // Reports: APPROVED, COMPLETED (finished analyses)
+        const reportItems = allSessions.filter(
+          (s) => s.status === 'APPROVED' || s.status === 'DONE'
+        );
+        setReports(reportItems);
+
+        // Initiatives: Fetch DRAFT initiatives (generated from tools/assessment)
+        try {
+          const initiativesList = await Api.getInitiativesByStatus(
+            'DRAFT',
+            currentProjectId || undefined
+          );
+
+          // Map initiatives to display format
+          const draftInitiatives = initiativesList.slice(0, 100).map((i: any) => ({
             id: i.id,
             name: i.title || i.name || 'Untitled Initiative',
             toolType: 'SWT' as ToolType,
-            category: (i.axis === 'strategic' ? 'strategic' : 
-                      i.axis === 'operational' ? 'operational' : 
-                      i.axis === 'digital' ? 'digital' : 'strategic') as ToolCategory,
-            status: 'DRAFT' as ItemStatus,
+            category: (i.axis === 'strategic'
+              ? 'strategic'
+              : i.axis === 'operational'
+                ? 'operational'
+                : i.axis === 'digital'
+                  ? 'digital'
+                  : 'strategic') as ToolCategory,
+            status: 'draft' as ItemStatus,
             progress: i.progress || 0,
             updatedAt: i.updatedAt ? new Date(i.updatedAt) : new Date(),
             apiToolType: 'initiative',
             // Keep full initiative data for detail view
             _fullData: i,
           }));
-        setInitiatives(draftInitiatives);
-      } catch (err) {
-        console.warn('[DiscoveryToolsHub] Failed to fetch initiatives:', err);
-        setInitiatives([]);
+          setInitiatives(draftInitiatives);
+        } catch (err) {
+          console.warn('[DiscoveryToolsHub] Failed to fetch initiatives:', err);
+          setInitiatives([]);
+        }
+      } catch (error: any) {
+        console.error('[DiscoveryToolsHub] Fetch error:', error);
+        toast.error('Failed to load tool sessions');
+      } finally {
+        setIsLoading(false);
+        setIsRefreshing(false);
       }
-    } catch (error: any) {
-      console.error('[DiscoveryToolsHub] Fetch error:', error);
-      toast.error('Failed to load tool sessions');
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [currentProjectId, transformToolSession]);
+    },
+    [currentProjectId, transformToolSession]
+  );
 
   // Fetch data on mount and when projectId changes
   useEffect(() => {
@@ -626,7 +671,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
 
   // Get selected status option
   const selectedStatusOption = useMemo(() => {
-    return currentStatusOptions.find(opt => opt.id === statusFilter) || currentStatusOptions[0];
+    return currentStatusOptions.find((opt) => opt.id === statusFilter) || currentStatusOptions[0];
   }, [currentStatusOptions, statusFilter]);
 
   // Tab configuration with dynamic counts
@@ -777,7 +822,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
             digital: 'text-purple-400',
           };
           return (
-            <span className={`text-xs font-medium capitalize ${axisColors[row.category] || 'text-slate-400'}`}>
+            <span
+              className={`text-xs font-medium capitalize ${axisColors[row.category] || 'text-slate-400'}`}
+            >
               {row.category}
             </span>
           );
@@ -796,7 +843,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
             LOW: 'bg-slate-500/20 text-slate-400',
           };
           return (
-            <span className={`px-2 py-0.5 text-xs font-medium rounded ${priorityColors[priority] || priorityColors.MEDIUM}`}>
+            <span
+              className={`px-2 py-0.5 text-xs font-medium rounded ${priorityColors[priority] || priorityColors.MEDIUM}`}
+            >
               {priority}
             </span>
           );
@@ -881,18 +930,20 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       // Fetch tasks for this initiative
       try {
         const tasks = await Api.getInitiativeTasks(initiativeId);
-        setInitiativeTasks(tasks.map((t: any) => ({
-          id: t.id,
-          title: t.title || t.name,
-          status: t.status || 'TODO',
-          priority: t.priority || 'MEDIUM',
-          assigneeId: t.assigneeId || t.assignee_id,
-          assigneeName: t.assignee?.firstName 
-            ? `${t.assignee.firstName} ${t.assignee.lastName}` 
-            : undefined,
-          dueDate: t.dueDate || t.due_date,
-          estimatedHours: t.estimatedHours || t.estimated_hours,
-        })));
+        setInitiativeTasks(
+          tasks.map((t: any) => ({
+            id: t.id,
+            title: t.title || t.name,
+            status: t.status || 'TODO',
+            priority: t.priority || 'MEDIUM',
+            assigneeId: t.assigneeId || t.assignee_id,
+            assigneeName: t.assignee?.firstName
+              ? `${t.assignee.firstName} ${t.assignee.lastName}`
+              : undefined,
+            dueDate: t.dueDate || t.due_date,
+            estimatedHours: t.estimatedHours || t.estimated_hours,
+          }))
+        );
       } catch {
         setInitiativeTasks([]);
       }
@@ -905,29 +956,32 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
   }, []);
 
   // Handlers
-  const handleOpenDocument = useCallback((row: DisplayItem | any) => {
-    // Check if this is an initiative
-    const isInitiative = row.apiToolType === 'initiative';
-    
-    const doc: OpenDocument = {
-      id: row.id,
-      type: isInitiative ? 'initiative' : 'tool',
-      subType: row.apiToolType || row.toolType,
-      name: row.name,
-      status: row.status,
-    };
+  const handleOpenDocument = useCallback(
+    (row: DisplayItem | any) => {
+      // Check if this is an initiative
+      const isInitiative = row.apiToolType === 'initiative';
 
-    setOpenDocuments((prev) => {
-      if (prev.find((d) => d.id === doc.id)) return prev;
-      return [...prev, doc];
-    });
-    setActiveDocumentId(row.id);
+      const doc: OpenDocument = {
+        id: row.id,
+        type: isInitiative ? 'initiative' : 'tool',
+        subType: row.apiToolType || row.toolType,
+        name: row.name,
+        status: row.status,
+      };
 
-    // If it's an initiative, fetch full details with tasks
-    if (isInitiative) {
-      fetchInitiativeDetails(row.id);
-    }
-  }, [fetchInitiativeDetails]);
+      setOpenDocuments((prev) => {
+        if (prev.find((d) => d.id === doc.id)) return prev;
+        return [...prev, doc];
+      });
+      setActiveDocumentId(row.id);
+
+      // If it's an initiative, fetch full details with tasks
+      if (isInitiative) {
+        fetchInitiativeDetails(row.id);
+      }
+    },
+    [fetchInitiativeDetails]
+  );
 
   const handleCloseDocument = useCallback(
     (id: string) => {
@@ -987,11 +1041,15 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       data = data.filter((item) => {
         // For initiatives tab, also check _fullData.status
         if (activeTab === 'initiatives' && item._fullData?.status) {
-          return item._fullData.status.toLowerCase() === statusFilter.toLowerCase() ||
-                 item._fullData.status.toLowerCase().replace('_', '') === statusFilter.replace('_', '');
+          return (
+            item._fullData.status.toLowerCase() === statusFilter.toLowerCase() ||
+            item._fullData.status.toLowerCase().replace('_', '') === statusFilter.replace('_', '')
+          );
         }
-        return item.status === statusFilter || 
-               item.status.replace('_', '') === statusFilter.replace('_', '');
+        return (
+          item.status === statusFilter ||
+          item.status.replace('_', '') === statusFilter.replace('_', '')
+        );
       });
     }
 
@@ -1018,6 +1076,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
         ...item,
         type: item.toolType,
         typeColor: categoryMeta?.color || 'slate',
+        status: mapStatusToUppercase(item.status),
       };
     });
   }, [currentData]);
@@ -1041,19 +1100,27 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
 
   const getTaskStatusColor = (status: string) => {
     switch (status) {
-      case 'DONE': return 'bg-green-500/20 text-green-400';
-      case 'IN_PROGRESS': return 'bg-blue-500/20 text-blue-400';
-      case 'BLOCKED': return 'bg-red-500/20 text-red-400';
-      default: return 'bg-slate-500/20 text-slate-400';
+      case 'DONE':
+        return 'bg-green-500/20 text-green-400';
+      case 'IN_PROGRESS':
+        return 'bg-blue-500/20 text-blue-400';
+      case 'BLOCKED':
+        return 'bg-red-500/20 text-red-400';
+      default:
+        return 'bg-slate-500/20 text-slate-400';
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'CRITICAL': return 'text-red-400';
-      case 'HIGH': return 'text-orange-400';
-      case 'MEDIUM': return 'text-amber-400';
-      default: return 'text-slate-400';
+      case 'CRITICAL':
+        return 'text-red-400';
+      case 'HIGH':
+        return 'text-orange-400';
+      case 'MEDIUM':
+        return 'text-amber-400';
+      default:
+        return 'text-slate-400';
     }
   };
 
@@ -1102,13 +1169,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
 
     const taskStats = {
       total: initiativeTasks.length,
-      done: initiativeTasks.filter(t => t.status === 'DONE').length,
-      inProgress: initiativeTasks.filter(t => t.status === 'IN_PROGRESS').length,
-      blocked: initiativeTasks.filter(t => t.status === 'BLOCKED').length,
+      done: initiativeTasks.filter((t) => t.status === 'DONE').length,
+      inProgress: initiativeTasks.filter((t) => t.status === 'IN_PROGRESS').length,
+      blocked: initiativeTasks.filter((t) => t.status === 'BLOCKED').length,
     };
-    const completionPercent = taskStats.total > 0 
-      ? Math.round((taskStats.done / taskStats.total) * 100) 
-      : 0;
+    const completionPercent =
+      taskStats.total > 0 ? Math.round((taskStats.done / taskStats.total) * 100) : 0;
 
     return (
       <div className="h-full flex flex-col overflow-hidden bg-navy-950">
@@ -1132,14 +1198,14 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                   </span>
                 )}
                 {selectedInitiative.priority && (
-                  <span className={`px-2 py-0.5 text-xs font-medium rounded ${getPriorityColor(selectedInitiative.priority)}`}>
+                  <span
+                    className={`px-2 py-0.5 text-xs font-medium rounded ${getPriorityColor(selectedInitiative.priority)}`}
+                  >
                     {selectedInitiative.priority}
                   </span>
                 )}
               </div>
-              <h1 className="text-xl font-bold text-white">
-                {selectedInitiative.name}
-              </h1>
+              <h1 className="text-xl font-bold text-white">{selectedInitiative.name}</h1>
               {selectedInitiative.description && (
                 <p className="text-sm text-slate-400 mt-1 line-clamp-2">
                   {selectedInitiative.description}
@@ -1230,17 +1296,25 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                         key={task.id}
                         className="flex items-center gap-3 p-3 bg-navy-800 rounded-lg border border-navy-700 hover:border-purple-500/30 transition-colors"
                       >
-                        <div className={`w-2 h-2 rounded-full ${
-                          task.status === 'DONE' ? 'bg-green-400' :
-                          task.status === 'IN_PROGRESS' ? 'bg-blue-400' :
-                          task.status === 'BLOCKED' ? 'bg-red-400' : 'bg-slate-400'
-                        }`} />
+                        <div
+                          className={`w-2 h-2 rounded-full ${
+                            task.status === 'DONE'
+                              ? 'bg-green-400'
+                              : task.status === 'IN_PROGRESS'
+                                ? 'bg-blue-400'
+                                : task.status === 'BLOCKED'
+                                  ? 'bg-red-400'
+                                  : 'bg-slate-400'
+                          }`}
+                        />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="text-sm text-white font-medium truncate">
                               {task.title}
                             </span>
-                            <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${getTaskStatusColor(task.status)}`}>
+                            <span
+                              className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${getTaskStatusColor(task.status)}`}
+                            >
                               {task.status.replace('_', ' ')}
                             </span>
                           </div>
@@ -1277,9 +1351,14 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                 <div className="bg-navy-900/50 rounded-xl border border-navy-700 p-4">
                   <div className="flex items-center gap-2 text-xs text-slate-400">
                     <Zap size={12} className="text-amber-400" />
-                    <span>Generated from: <span className="text-white capitalize">{selectedInitiative.sourceType}</span></span>
+                    <span>
+                      Generated from:{' '}
+                      <span className="text-white capitalize">{selectedInitiative.sourceType}</span>
+                    </span>
                     {selectedInitiative.sourceId && (
-                      <span className="text-slate-500">({selectedInitiative.sourceId.slice(0, 8)}...)</span>
+                      <span className="text-slate-500">
+                        ({selectedInitiative.sourceId.slice(0, 8)}...)
+                      </span>
                     )}
                   </div>
                 </div>
@@ -1290,9 +1369,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
             <div className="space-y-4">
               {/* Key Metrics */}
               <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
-                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-4">
-                  Key Metrics
-                </h3>
+                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-4">Key Metrics</h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-400 flex items-center gap-2">
@@ -1318,8 +1395,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                       Expected ROI
                     </span>
                     <span className="text-sm font-semibold text-green-400">
-                      {selectedInitiative.expectedRoi 
-                        ? `${selectedInitiative.expectedRoi.toFixed(1)}x` 
+                      {selectedInitiative.expectedRoi
+                        ? `${selectedInitiative.expectedRoi.toFixed(1)}x`
                         : '-'}
                     </span>
                   </div>
@@ -1358,17 +1435,21 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                   <div>
                     <span className="text-xs text-slate-500">Business Owner</span>
                     <div className="text-sm text-white">
-                      {selectedInitiative.ownerBusiness 
-                        ? `${selectedInitiative.ownerBusiness.firstName} ${selectedInitiative.ownerBusiness.lastName}`
-                        : <span className="text-slate-500">Not assigned</span>}
+                      {selectedInitiative.ownerBusiness ? (
+                        `${selectedInitiative.ownerBusiness.firstName} ${selectedInitiative.ownerBusiness.lastName}`
+                      ) : (
+                        <span className="text-slate-500">Not assigned</span>
+                      )}
                     </div>
                   </div>
                   <div>
                     <span className="text-xs text-slate-500">Execution Owner</span>
                     <div className="text-sm text-white">
-                      {selectedInitiative.ownerExecution 
-                        ? `${selectedInitiative.ownerExecution.firstName} ${selectedInitiative.ownerExecution.lastName}`
-                        : <span className="text-slate-500">Not assigned</span>}
+                      {selectedInitiative.ownerExecution ? (
+                        `${selectedInitiative.ownerExecution.firstName} ${selectedInitiative.ownerExecution.lastName}`
+                      ) : (
+                        <span className="text-slate-500">Not assigned</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1376,9 +1457,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
 
               {/* Next Steps */}
               <div className="bg-purple-500/10 rounded-xl border border-purple-500/20 p-5">
-                <h3 className="text-xs font-semibold text-purple-400 uppercase mb-3">
-                  Next Steps
-                </h3>
+                <h3 className="text-xs font-semibold text-purple-400 uppercase mb-3">Next Steps</h3>
                 <ul className="space-y-2 text-sm text-slate-300">
                   <li className="flex items-start gap-2">
                     <CheckCircle2 size={14} className="mt-0.5 text-purple-400" />
@@ -1418,11 +1497,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     // Show ToolWorkspace when a document is active
     if (activeDocumentId) {
       const doc = openDocuments.find((d) => d.id === activeDocumentId);
-      
-      // Show Initiative Full View (new component with full lifecycle support)
+
+      // Show Initiative Document View (canonical full lifecycle view)
       if (doc && doc.type === 'initiative') {
         return (
-          <InitiativeFullView
+          <InitiativeDocumentView
             initiativeId={doc.id}
             onBack={handleShowList}
             onStatusChange={() => fetchData(true)}
@@ -1430,10 +1509,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
           />
         );
       }
-      
+
       // Check if this is a tool session (not an initiative)
       if (doc && doc.type === 'tool' && doc.subType !== 'initiative') {
-        // Check if the tool type is supported by ToolWorkspace
+        // Check if the tool type is supported
         const supportedTools = [
           'dynamic-swot',
           'market-forces',
@@ -1446,20 +1525,35 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
           'dms-builder',
           'inventory-autopilot',
         ];
-        
+
         const toolType = doc.subType as StoreToolType;
-        
+
         if (supportedTools.includes(toolType)) {
+          // Use new ToolDocumentView - canonical two-column layout
           return (
-            <ToolWorkspace
+            <ToolDocumentView
               toolType={toolType}
-              // Note: sessionId is intentionally not passed here because ToolWorkspace
-              // expects local session IDs from useToolStore, not backend session IDs.
-              // The workspace will create a new local session and sync with backend.
+              sessionId={doc.id}
               onBack={handleShowList}
-              onCreateInitiative={() => {
-                setActiveTab('initiatives' as ModuleTab);
-                fetchData(true);
+              onOpenInitiative={(initiativeId) => {
+                // Open initiative in the same hub
+                setOpenDocuments((prev) => {
+                  const exists = prev.find((d) => d.id === initiativeId);
+                  if (!exists) {
+                    return [
+                      ...prev,
+                      {
+                        id: initiativeId,
+                        name: 'Initiative',
+                        type: 'initiative' as const,
+                        subType: 'initiative',
+                        status: 'DRAFT' as const,
+                      },
+                    ];
+                  }
+                  return prev;
+                });
+                setActiveDocumentId(initiativeId);
               }}
             />
           );
@@ -1469,23 +1563,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       // Fallback for unsupported tools
       const toolMeta = TOOL_META[doc?.subType as ToolType];
       return (
-        <div className="flex items-center justify-center h-full text-slate-500">
-          <div className="text-center">
-            <p className="text-lg">Working on: {doc?.name}</p>
-            <p className="text-sm">
-              ({toolMeta?.name || doc?.subType} - {doc?.status})
-            </p>
-            <p className="mt-4 text-xs text-slate-400">
-              This tool type is not yet fully implemented.
-            </p>
-            <button
-              onClick={handleShowList}
-              className="mt-4 px-4 py-2 bg-navy-700 hover:bg-navy-600 text-white rounded-lg text-sm transition-colors"
-            >
-              Back to List
-            </button>
-          </div>
-        </div>
+        <GenericToolDocumentView
+          sessionId={doc?.id || ''}
+          title={doc?.name}
+          toolTypeLabel={toolMeta?.name || doc?.subType}
+          statusLabel={doc?.status || undefined}
+          onBack={handleShowList}
+        />
       );
     }
 
@@ -1505,9 +1589,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     // Use different columns and empty messages based on active tab
     const isInitiativesTab = activeTab === 'initiatives';
     const columns = isInitiativesTab ? initiativeColumns : discoveryColumns;
-    const emptyMessage = isInitiativesTab 
-      ? "No draft initiatives yet. Run a tool or assessment to generate initiatives."
-      : "No discoveries yet. Select a tool category to start.";
+    const emptyMessage = isInitiativesTab
+      ? 'No draft initiatives yet. Run a tool or assessment to generate initiatives.'
+      : 'No discoveries yet. Select a tool category to start.';
 
     return (
       <FilterableTable
@@ -1530,9 +1614,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
         className={`
           flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
           border transition-all duration-200
-          ${isStatusDropdownOpen 
-            ? 'bg-primary-500/15 border-primary-500 text-primary-400' 
-            : 'bg-navy-800 border-navy-600 text-slate-300 hover:bg-navy-700 hover:border-slate-500 hover:text-white'
+          ${
+            isStatusDropdownOpen
+              ? 'bg-primary-500/15 border-primary-500 text-primary-400'
+              : 'bg-navy-800 border-navy-600 text-slate-300 hover:bg-navy-700 hover:border-slate-500 hover:text-white'
           }
         `}
       >
@@ -1559,17 +1644,28 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                 className={`
                   w-full flex items-center gap-3 px-3 py-2 text-left
                   transition-colors duration-150
-                  ${isSelected 
-                    ? 'bg-primary-500/15 text-white' 
-                    : 'text-slate-300 hover:bg-navy-700 hover:text-white'
+                  ${
+                    isSelected
+                      ? 'bg-primary-500/15 text-white'
+                      : 'text-slate-300 hover:bg-navy-700 hover:text-white'
                   }
                 `}
               >
                 <span className={`w-2.5 h-2.5 rounded-full ${option.bgColor}`} />
                 <span className="flex-1 text-sm">{option.label}</span>
                 {isSelected && (
-                  <svg className="w-4 h-4 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <svg
+                    className="w-4 h-4 text-primary-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 )}
               </button>
@@ -1663,6 +1759,56 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                     </div>
                   </button>
                 ))}
+
+              {/* Docs-driven frameworks catalog (Strategy only) */}
+              {selectedCategory === 'strategic' && strategyCatalogSlugs.length > 0 && (
+                <>
+                  <div className="my-4 border-t border-navy-700" />
+                  <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide px-1">
+                    Framework catalog (docs-driven)
+                  </div>
+                  <div className="text-xs text-slate-500 px-1 -mt-1">
+                    Starts a tool session with type = catalog slug, then opens a generic view with
+                    the full documentation.
+                  </div>
+                  {strategyCatalogSlugs.map((slug) => (
+                    <button
+                      key={slug}
+                      onClick={async () => {
+                        const name = titleFromSlug(slug);
+                        setSelectedCategory(null);
+                        try {
+                          const created = await Api.createToolSession({
+                            toolType: slug,
+                            name,
+                            projectId: currentProjectId ?? null,
+                          });
+                          handleOpenDocument({
+                            id: created.id,
+                            name,
+                            status: created.status || 'DRAFT',
+                            apiToolType: slug,
+                            toolType: slug,
+                          });
+                        } catch (e) {
+                          toast.error('Failed to create tool session');
+                        }
+                      }}
+                      className="flex items-center gap-3 w-full p-3 rounded-lg bg-navy-800 border border-navy-600 hover:bg-navy-700 transition-all text-left"
+                    >
+                      <span className="font-mono text-xs font-bold text-slate-400 w-12 truncate">
+                        {slug}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-white font-medium truncate">{titleFromSlug(slug)}</div>
+                        <div className="text-xs text-slate-400 truncate">
+                          Catalog tool · `wdrozenia/.../strategy/{slug}.md`
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </>
+              )}
             </div>
             <button
               onClick={() => setSelectedCategory(null)}

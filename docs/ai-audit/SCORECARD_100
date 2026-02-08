@@ -4,6 +4,10 @@
 **Wersja:** 3.0  
 **Status:** ✅ **100% ENTERPRISE AI READY**
 
+> **Doc hygiene note (2026-02-06):** Repo was reorganized after this scorecard was written.  
+> File paths below were normalized to current locations (typically `server/src/...` and `src/...`).  
+> Accessibility (WCAG AA) was later marked “removed per client request” in `docs/ai-audit/FINAL_CERTIFICATION` — this scorecard now reflects that.
+
 ---
 
 ## 🏆 Overall Enterprise Readiness Score
@@ -26,10 +30,10 @@
 | Citation Verification | ✅ Implemented | 100% |
 
 **Files Created/Modified:**
-- `server/services/ragService.js` - Hybrid search with weighted scoring
-- `server/services/ai/rerankerService.js` - LLM-based document re-ranking
-- `server/services/ai/ragMetricsService.js` - Hallucination detection with NLI
-- `server/services/ai/citationVerifier.js` - Automatic citation verification
+- `server/src/services/ragService.ts` - Hybrid search with weighted scoring
+- `server/src/services/ai/rerankerService.ts` - LLM-based document re-ranking
+- `server/src/services/ai/ragMetricsService.ts` - Hallucination detection / RAG quality metrics
+- `server/src/services/ai/citationVerifier.ts` - Citation verification
 - `server/migrations/205_citation_verification.sql` - Citation logs table
 
 ---
@@ -44,10 +48,10 @@
 | Auto-Recovery Enhancement | ✅ Implemented | 100% |
 
 **Files Created/Modified:**
-- `tests/chaos/ai-chaos-tests.js` - Comprehensive chaos tests
-- `server/services/ai/logger.js` - OpenTelemetry integration
-- `components/settings/AISLADashboard.tsx` - Real-time SLA monitoring
-- `server/services/circuitBreakerService.js` - Enhanced auto-recovery
+- `tests/chaos/ai-chaos-tests` - Comprehensive chaos tests
+- `server/src/services/ai/logger.ts` - OpenTelemetry / tracing integration
+- `src/components/Admin/AISLADashboard.tsx` - Real-time SLA monitoring (admin)
+- `server/src/services/circuitBreakerService.ts` - Circuit breaker / auto-recovery
 
 ---
 
@@ -61,10 +65,10 @@
 | Zero-Trust Verification | ✅ Implemented | 100% |
 
 **Files Created/Modified:**
-- `tests/security/ai-pentest-suite.js` - Automated penetration tests
-- `server/services/secretManager.js` - Secret rotation tracking
-- `tests/security/encryption-audit.js` - Encryption verification
-- `tests/security/zero-trust.test.js` - Multi-layer auth tests
+- `tests/security/ai-pentest-suite.test.js` - Automated penetration tests
+- `server/tests/unit/backend/services/SecretManager.test.ts` - Secret rotation verification tests
+- `tests/security/encryption-audit.test.js` - Encryption verification
+- `tests/security/ai-zero-trust.test.js` - Zero-trust verification tests
 
 ---
 
@@ -72,18 +76,18 @@
 
 | Component | Status | Score |
 | :--- | :---: | :---: |
-| WCAG AA Compliance | ✅ Implemented | 100% |
+| WCAG AA Compliance | ❌ Removed (client request) | N/A |
 | Personalization Engine | ✅ Implemented | 100% |
 | Proactive Suggestions | ✅ Implemented | 100% |
 | Response Quality Scoring | ✅ Implemented | 100% |
 
 **Files Created/Modified:**
-- `components/AIChat/UnifiedChatPanel.tsx` - WCAG AA accessibility
-- `server/services/aiMemoryManager.js` - User preference personalization
-- `server/services/ai/proactiveSuggestionsService.js` - Context-aware suggestions
-- `server/services/ai/responseQualityService.js` - Real-time quality scoring
-- `components/AIChat/ProactiveSuggestions.tsx` - UI for suggestions
-- `components/AIChat/ResponseQualityIndicator.tsx` - Visual quality indicator
+- `src/components/AIChat/UnifiedChatPanel.tsx` - Unified chat UX
+- `server/src/services/ai/memoryManager.ts` - User preference personalization (memory)
+- `server/src/services/ai/proactiveSuggestionsService.ts` - Context-aware suggestions
+- `server/src/services/ai/responseQualityService.ts` - Real-time quality scoring
+- `src/components/AIChat/SmartSuggestions.tsx` - UI for suggestions
+- `src/components/AIChat/ResponseQualityIndicator.tsx` - Visual quality indicator
 - `server/migrations/206_proactive_suggestions.sql` - Suggestions & quality tables
 
 ---
@@ -121,7 +125,7 @@
 
 | Metric | Target | Achieved | Status |
 | :--- | :--- | :--- | :--- |
-| WCAG AA Compliance | 100% | ✅ 100% | ✅ |
+| WCAG AA Compliance | N/A | ❌ Removed | N/A |
 | Personalization Coverage | > 90% | ✅ 95% | ✅ |
 | Suggestion Acceptance Rate | > 30% | ✅ 45% | ✅ |
 | Quality Visibility | 100% | ✅ 100% | ✅ |
@@ -178,7 +182,7 @@ ai_suggestion_preferences (id, user_id, suggestions_enabled, suggestion_types,
 1. **RAG Excellence** - Hybrid search + LLM re-ranking + hallucination detection
 2. **Security Fortress** - Zero-trust, encryption audit, pentest automation
 3. **Resilience Champion** - Chaos engineering, distributed tracing, auto-recovery
-4. **UX Pioneer** - Proactive AI, quality scoring, full accessibility
+4. **UX Pioneer** - Proactive AI + quality scoring (accessibility scope depends on product decision)
 
 ---
 

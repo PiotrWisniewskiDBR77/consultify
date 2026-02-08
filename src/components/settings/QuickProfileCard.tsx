@@ -19,7 +19,6 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
 import { User as UserType } from '../../types';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Button } from '../ui/primitives/Button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
+import { Button } from '../ui/primitives/Button';
 
 export type PresenceStatus = 'online' | 'away' | 'busy' | 'dnd' | 'offline';
 

@@ -29,7 +29,8 @@ export interface UseNotificationNavigationReturn {
 
 export const useNotificationNavigation = (
   onOpenTaskModal?: (taskId: string) => void,
-  onOpenDecisionPanel?: (decisionId: string) => void
+  onOpenDecisionPanel?: (decisionId: string) => void,
+  onOpenInitiative?: (initiativeId: string) => void
 ): UseNotificationNavigationReturn => {
   const { setCurrentView, setCurrentProjectId } = useAppStore();
 
@@ -60,11 +61,16 @@ export const useNotificationNavigation = (
           break;
 
         case 'INITIATIVE':
-          // Navigate to initiatives view
-          setCurrentView(AppView.PORTFOLIO_ROADMAP);
-          // Store highlight ID for the view to pick up
-          if (relatedObjectId) {
-            sessionStorage.setItem('highlightInitiativeId', relatedObjectId);
+          if (relatedObjectId && onOpenInitiative) {
+            // Open initiative directly via callback
+            onOpenInitiative(relatedObjectId);
+          } else {
+            // Fallback: Navigate to initiatives view
+            setCurrentView(AppView.PORTFOLIO_ROADMAP);
+            // Store highlight ID for the view to pick up
+            if (relatedObjectId) {
+              sessionStorage.setItem('highlightInitiativeId', relatedObjectId);
+            }
           }
           break;
 
@@ -104,7 +110,7 @@ export const useNotificationNavigation = (
           }
       }
     },
-    [setCurrentView, setCurrentProjectId, onOpenTaskModal, onOpenDecisionPanel]
+    [setCurrentView, setCurrentProjectId, onOpenTaskModal, onOpenDecisionPanel, onOpenInitiative]
   );
 
   const canNavigate = useCallback((target: NotificationNavigationTarget): boolean => {

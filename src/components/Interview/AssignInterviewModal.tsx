@@ -1,6 +1,6 @@
 /**
  * AssignInterviewModal
- * 
+ *
  * Modal do przydzielania wywiadów użytkownikom.
  * Obsługuje:
  * - Wybór szablonu wywiadu
@@ -92,33 +92,136 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
 
     const loadData = async () => {
       setIsLoading(true);
+      console.log('[AssignInterviewModal] Starting to load data...');
+
       try {
-        const [templatesRes, usersRes] = await Promise.all([
-          Api.get('/interview/templates'),
-          Api.get('/organization/users'),
-        ]);
+        console.log('[AssignInterviewModal] Loading templates and users...');
 
-        setTemplates(Array.isArray(templatesRes) ? templatesRes : []);
-        
+        // Load templates separately to see which one fails
+        let templatesRes: any[] = [];
+        let usersRes: any[] = [];
+
+        try {
+          console.log('[AssignInterviewModal] Fetching templates from /interview/templates...');
+          const templatesData = await Api.get('/interview/templates');
+          console.log('[AssignInterviewModal] Templates raw response:', templatesData);
+          templatesRes = Array.isArray(templatesData) ? templatesData : [];
+          console.log('[AssignInterviewModal] Templates parsed:', templatesRes);
+        } catch (err: any) {
+          console.error('[AssignInterviewModal] Failed to load templates:', err);
+          console.error('[AssignInterviewModal] Error details:', {
+            status: err?.response?.status,
+            statusText: err?.response?.statusText,
+            data: err?.response?.data,
+            message: err?.message,
+            stack: err?.stack,
+          });
+          const errorMsg = err?.response?.data?.error || err?.message || 'Failed to load templates';
+          if (err?.response?.status === 403) {
+            toast.error(
+              isPolish
+                ? 'Brak uprawnień do przeglądania szablonów'
+                : 'No permission to view templates'
+            );
+          } else {
+            const msg = typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg);
+            toast.error(
+              isPolish
+                ? `Nie udało się załadować szablonów: ${msg}`
+                : `Failed to load templates: ${msg}`
+            );
+          }
+          templatesRes = [];
+        }
+
+        try {
+          console.log('[AssignInterviewModal] Fetching users from /users...');
+          const usersData = await Api.get('/users');
+          console.log('[AssignInterviewModal] Users raw response:', usersData);
+          // API returns { users, total }, extract users array
+          usersRes = Array.isArray(usersData?.users)
+            ? usersData.users
+            : Array.isArray(usersData)
+              ? usersData
+              : [];
+          console.log('[AssignInterviewModal] Users parsed:', usersRes);
+        } catch (err: any) {
+          console.error('[AssignInterviewModal] Failed to load users:', err);
+          console.error('[AssignInterviewModal] Error details:', {
+            status: err?.response?.status,
+            statusText: err?.response?.statusText,
+            data: err?.response?.data,
+            message: err?.message,
+            stack: err?.stack,
+          });
+          const errorMsg = err?.response?.data?.error || err?.message || 'Failed to load users';
+          if (err?.response?.status === 403) {
+            toast.error(
+              isPolish
+                ? 'Brak uprawnień do przeglądania użytkowników'
+                : 'No permission to view users'
+            );
+          } else {
+            const msg = typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg);
+            toast.error(
+              isPolish
+                ? `Nie udało się załadować użytkowników: ${msg}`
+                : `Failed to load users: ${msg}`
+            );
+          }
+          usersRes = [];
+        }
+
+        console.log('[AssignInterviewModal] Final data:', {
+          templatesCount: templatesRes.length,
+          usersCount: usersRes.length,
+        });
+
+        setTemplates(templatesRes);
+
         // Map users and filter based on assignment scope
-        const allUsers = Array.isArray(usersRes) 
-          ? usersRes.map((u: any) => ({
-              id: u.id,
-              name: u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email,
-              email: u.email,
-              avatarUrl: u.avatarUrl || u.avatar_url,
-              projectRole: u.projectRole || u.project_role,
-            }))
-          : [];
+        const allUsers = usersRes.map((u: any) => ({
+          id: u.id,
+          name: u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || 'Unknown',
+          email: u.email || '',
+          avatarUrl: u.avatarUrl || u.avatar_url,
+          projectRole: u.projectRole || u.project_role,
+        }));
 
-        // Filter users based on scope
-        // For now, show all users - backend will validate
+        console.log('[AssignInterviewModal] Mapped users:', allUsers);
         setUsers(allUsers);
-      } catch (error) {
-        console.error('[AssignInterviewModal] Failed to load data:', error);
-        toast.error(isPolish ? 'Nie udało się załadować danych' : 'Failed to load data');
+
+        if (templatesRes.length === 0) {
+          console.warn(
+            '[AssignInterviewModal] ⚠️ No templates found - check permissions or backend'
+          );
+          toast.error(
+            isPolish
+              ? 'Brak dostępnych szablonów. Sprawdź uprawnienia.'
+              : 'No templates available. Check permissions.'
+          );
+        }
+        if (allUsers.length === 0) {
+          console.warn('[AssignInterviewModal] ⚠️ No users found - check permissions or backend');
+          toast.error(
+            isPolish
+              ? 'Brak dostępnych użytkowników. Sprawdź uprawnienia.'
+              : 'No users available. Check permissions.'
+          );
+        }
+      } catch (error: any) {
+        console.error('[AssignInterviewModal] Unexpected error in loadData:', error);
+        const errorMessage =
+          typeof error === 'string'
+            ? error
+            : error?.response?.data?.error ||
+              error?.message ||
+              (isPolish ? 'Nie udało się załadować danych' : 'Failed to load data');
+        const msg = typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage);
+        toast.error(msg);
       } finally {
         setIsLoading(false);
+        console.log('[AssignInterviewModal] Loading completed');
       }
     };
 
@@ -157,9 +260,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
     if (!userSearchQuery) return users;
     const query = userSearchQuery.toLowerCase();
     return users.filter(
-      (u) =>
-        u.name.toLowerCase().includes(query) ||
-        u.email.toLowerCase().includes(query)
+      (u) => u.name.toLowerCase().includes(query) || u.email.toLowerCase().includes(query)
     );
   }, [users, userSearchQuery]);
 
@@ -174,25 +275,28 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
   }, [users, selectedUserIds]);
 
   // Toggle user selection
-  const toggleUserSelection = useCallback((userId: string) => {
-    setSelectedUserIds((prev) => {
-      if (prev.includes(userId)) {
-        // Remove user
-        const newIds = prev.filter((id) => id !== userId);
-        // If team lead was removed, clear team lead
-        if (userId === teamLeadId) {
-          setTeamLeadId('');
+  const toggleUserSelection = useCallback(
+    (userId: string) => {
+      setSelectedUserIds((prev) => {
+        if (prev.includes(userId)) {
+          // Remove user
+          const newIds = prev.filter((id) => id !== userId);
+          // If team lead was removed, clear team lead
+          if (userId === teamLeadId) {
+            setTeamLeadId('');
+          }
+          // If less than 2 users, disable team assignment
+          if (newIds.length < 2) {
+            setIsTeamAssignment(false);
+          }
+          return newIds;
+        } else {
+          return [...prev, userId];
         }
-        // If less than 2 users, disable team assignment
-        if (newIds.length < 2) {
-          setIsTeamAssignment(false);
-        }
-        return newIds;
-      } else {
-        return [...prev, userId];
-      }
-    });
-  }, [teamLeadId]);
+      });
+    },
+    [teamLeadId]
+  );
 
   // Handle submit
   const handleSubmit = async () => {
@@ -202,7 +306,9 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
       return;
     }
     if (selectedUserIds.length === 0) {
-      toast.error(isPolish ? 'Wybierz co najmniej jednego użytkownika' : 'Select at least one user');
+      toast.error(
+        isPolish ? 'Wybierz co najmniej jednego użytkownika' : 'Select at least one user'
+      );
       return;
     }
     if (!dueDate) {
@@ -236,24 +342,44 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
       onClose();
     } catch (error: any) {
       console.error('[AssignInterviewModal] Failed to create assignment:', error);
-      toast.error(
-        error?.message ||
-          (isPolish ? 'Nie udało się przydzielić wywiadu' : 'Failed to assign interview')
-      );
+      let errorMessage: string;
+      if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error?.response?.data?.error) {
+        const errData = error.response.data.error;
+        errorMessage = typeof errData === 'string' ? errData : JSON.stringify(errData);
+      } else if (error?.message) {
+        errorMessage =
+          typeof error.message === 'string' ? error.message : JSON.stringify(error.message);
+      } else {
+        errorMessage = isPolish
+          ? 'Nie udało się przydzielić wywiadu'
+          : 'Failed to assign interview';
+      }
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Debug: log when modal should be visible
+  useEffect(() => {
+    console.log('[AssignInterviewModal] Modal state:', {
+      isOpen,
+      templatesCount: templates.length,
+      usersCount: users.length,
+      isLoading,
+    });
+  }, [isOpen, templates.length, users.length, isLoading]);
+
   if (!isOpen) return null;
+
+  console.log('[AssignInterviewModal] Rendering modal...');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
       <div className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden bg-navy-900 border border-navy-700 rounded-2xl shadow-2xl">
@@ -344,36 +470,53 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                         </div>
                       </div>
                       <div className="max-h-48 overflow-y-auto">
-                        {filteredTemplates.map((template) => (
-                          <button
-                            key={template.id}
-                            onClick={() => {
-                              setSelectedTemplateId(template.id);
-                              setShowTemplateDropdown(false);
-                            }}
-                            className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-navy-700 transition-colors ${
-                              template.id === selectedTemplateId ? 'bg-blue-500/10' : ''
-                            }`}
-                          >
-                            <FileText size={16} className="text-blue-400 flex-shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <span className="text-sm text-white block truncate">
-                                {template.name}
-                              </span>
-                              {template.description && (
-                                <span className="text-xs text-slate-500 block truncate">
-                                  {template.description}
+                        {filteredTemplates.length > 0 ? (
+                          filteredTemplates.map((template) => (
+                            <button
+                              key={template.id}
+                              onClick={() => {
+                                setSelectedTemplateId(template.id);
+                                setShowTemplateDropdown(false);
+                              }}
+                              className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-navy-700 transition-colors ${
+                                template.id === selectedTemplateId ? 'bg-blue-500/10' : ''
+                              }`}
+                            >
+                              <FileText size={16} className="text-blue-400 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <span className="text-sm text-white block truncate">
+                                  {template.name}
                                 </span>
+                                {template.description && (
+                                  <span className="text-xs text-slate-500 block truncate">
+                                    {template.description}
+                                  </span>
+                                )}
+                              </div>
+                              {template.id === selectedTemplateId && (
+                                <Check size={16} className="text-blue-400 flex-shrink-0" />
                               )}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-6 text-center">
+                            <div className="text-sm text-slate-400 mb-2">
+                              {isPolish ? 'Brak szablonów' : 'No templates found'}
                             </div>
-                            {template.id === selectedTemplateId && (
-                              <Check size={16} className="text-blue-400 flex-shrink-0" />
+                            {templates.length === 0 && !isLoading && (
+                              <div className="text-xs text-slate-500 mt-2">
+                                {isPolish
+                                  ? 'Sprawdź konsolę przeglądarki (F12) dla szczegółów'
+                                  : 'Check browser console (F12) for details'}
+                              </div>
                             )}
-                          </button>
-                        ))}
-                        {filteredTemplates.length === 0 && (
-                          <div className="px-4 py-6 text-center text-sm text-slate-500">
-                            {isPolish ? 'Brak szablonów' : 'No templates found'}
+                            {templateSearchQuery && templates.length > 0 && (
+                              <div className="text-xs text-slate-500 mt-2">
+                                {isPolish
+                                  ? 'Spróbuj innej frazy wyszukiwania'
+                                  : 'Try a different search term'}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -440,42 +583,59 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                         </div>
                       </div>
                       <div className="max-h-48 overflow-y-auto">
-                        {filteredUsers.map((user) => {
-                          const isSelected = selectedUserIds.includes(user.id);
-                          return (
-                            <button
-                              key={user.id}
-                              onClick={() => toggleUserSelection(user.id)}
-                              className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-navy-700 transition-colors ${
-                                isSelected ? 'bg-blue-500/10' : ''
-                              }`}
-                            >
-                              <div
-                                className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                                  isSelected
-                                    ? 'bg-blue-500 border-blue-500'
-                                    : 'border-navy-500 bg-navy-900'
+                        {filteredUsers.length > 0 ? (
+                          filteredUsers.map((user) => {
+                            const isSelected = selectedUserIds.includes(user.id);
+                            return (
+                              <button
+                                key={user.id}
+                                onClick={() => toggleUserSelection(user.id)}
+                                className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-navy-700 transition-colors ${
+                                  isSelected ? 'bg-blue-500/10' : ''
                                 }`}
                               >
-                                {isSelected && <Check size={12} className="text-white" />}
+                                <div
+                                  className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                                    isSelected
+                                      ? 'bg-blue-500 border-blue-500'
+                                      : 'border-navy-500 bg-navy-900'
+                                  }`}
+                                >
+                                  {isSelected && <Check size={12} className="text-white" />}
+                                </div>
+                                <div className="w-8 h-8 rounded-full bg-navy-700 flex items-center justify-center text-xs text-slate-300">
+                                  {user.name.charAt(0)}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-sm text-white block truncate">
+                                    {user.name}
+                                  </span>
+                                  <span className="text-xs text-slate-500 block truncate">
+                                    {user.email}
+                                  </span>
+                                </div>
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <div className="px-4 py-6 text-center">
+                            <div className="text-sm text-slate-400 mb-2">
+                              {isPolish ? 'Brak użytkowników' : 'No users found'}
+                            </div>
+                            {users.length === 0 && !isLoading && (
+                              <div className="text-xs text-slate-500 mt-2">
+                                {isPolish
+                                  ? 'Sprawdź konsolę przeglądarki (F12) dla szczegółów'
+                                  : 'Check browser console (F12) for details'}
                               </div>
-                              <div className="w-8 h-8 rounded-full bg-navy-700 flex items-center justify-center text-xs text-slate-300">
-                                {user.name.charAt(0)}
+                            )}
+                            {userSearchQuery && users.length > 0 && (
+                              <div className="text-xs text-slate-500 mt-2">
+                                {isPolish
+                                  ? 'Spróbuj innej frazy wyszukiwania'
+                                  : 'Try a different search term'}
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <span className="text-sm text-white block truncate">
-                                  {user.name}
-                                </span>
-                                <span className="text-xs text-slate-500 block truncate">
-                                  {user.email}
-                                </span>
-                              </div>
-                            </button>
-                          );
-                        })}
-                        {filteredUsers.length === 0 && (
-                          <div className="px-4 py-6 text-center text-sm text-slate-500">
-                            {isPolish ? 'Brak użytkowników' : 'No users found'}
+                            )}
                           </div>
                         )}
                       </div>

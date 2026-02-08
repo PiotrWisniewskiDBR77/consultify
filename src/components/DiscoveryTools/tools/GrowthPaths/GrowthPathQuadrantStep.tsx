@@ -4,21 +4,12 @@
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import {
-  GrowthPathsData,
-  GrowthPathItem,
-  ToolSession,
-  useToolStore,
-} from '@/store/useToolStore';
+import { GrowthPathItem, GrowthPathsData, ToolSession, useToolStore } from '@/store/useToolStore';
 
 import { InlineAssist } from '../../InlineAssist';
 
 interface GrowthPathQuadrantStepProps {
-  quadrant:
-    | 'market-penetration'
-    | 'market-development'
-    | 'product-development'
-    | 'diversification';
+  quadrant: 'market-penetration' | 'market-development' | 'product-development' | 'diversification';
   session: ToolSession;
   isPolish: boolean;
 }
@@ -57,7 +48,10 @@ const QUADRANT_LABELS: Record<
   },
 };
 
-const QUADRANT_KEY_MAP: Record<GrowthPathQuadrantStepProps['quadrant'], keyof GrowthPathsData['quadrants']> = {
+const QUADRANT_KEY_MAP: Record<
+  GrowthPathQuadrantStepProps['quadrant'],
+  keyof GrowthPathsData['quadrants']
+> = {
   'market-penetration': 'marketPenetration',
   'market-development': 'marketDevelopment',
   'product-development': 'productDevelopment',

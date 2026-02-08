@@ -7,9 +7,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
+import * as sqliteAsync from '../database/sqliteAsync.js';
 import logger from '../utils/Logger.js';
 import aiService from './aiService.js';
-import * as sqliteAsync from '../database/sqliteAsync.js';
 
 // ==========================================
 // TYPES
@@ -88,9 +88,9 @@ class OnboardingService {
     }
     const db = await this.getDb();
     return new Promise<{ lastID?: number; changes?: number }>((resolve, reject) => {
-      db.run(sql, params, function (this: { lastID?: number; changes?: number }, err: Error | null) {
+      db.run(sql, params, function (this: { lastID: number; changes: number }, err: Error | null) {
         if (err) reject(err);
-        else resolve({ lastID: this.lastID, changes: this.changes });
+        else resolve({ lastID: this?.lastID, changes: this?.changes });
       });
     });
   }
@@ -357,7 +357,7 @@ class OnboardingService {
    */
   async saveContext(
     organizationId: string,
-    context: { role?: string; problems?: string; industry?: string; [key: string]: any }
+    context: { role?: string; problems?: string; industry?: string;[key: string]: any }
   ): Promise<{ success: boolean; status: string }> {
     const required = ['role', 'problems', 'industry'];
     for (const field of required) {

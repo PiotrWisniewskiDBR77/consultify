@@ -1,14 +1,19 @@
 /**
+ * @deprecated This component is LEGACY and will be removed.
+ * Use InitiativeDocumentView instead for the canonical full initiative view.
+ *
  * InitiativeFullView
  * Full initiative view component designed to be opened as a dynamic tab
  * in ModuleHub (Tools, Assessment, Initiatives modules)
- * 
+ *
  * Features:
  * - Complete initiative lifecycle visualization
  * - Status-aware action buttons (Submit for Review, Approve, etc.)
  * - Tabbed interface: Overview, Tasks, Definition, Economics, Team, History
  * - Real-time data from API
  * - Integration with gate decisions workflow
+ *
+ * MIGRATION NOTE: Replace usages with InitiativeDocumentView from './InitiativeDocumentView'
  */
 
 import {
@@ -45,27 +50,100 @@ import toast from 'react-hot-toast';
 import { Api } from '@/services/api';
 
 // Status metadata for UI
-const STATUS_META: Record<string, { label: string; color: string; bgColor: string; icon: React.ReactNode }> = {
-  DRAFT: { label: 'Draft', color: 'text-slate-400', bgColor: 'bg-slate-500/20', icon: <FileText size={14} /> },
-  PENDING_REVIEW: { label: 'Pending Review', color: 'text-orange-400', bgColor: 'bg-orange-500/20', icon: <Clock size={14} /> },
-  REVIEW: { label: 'In Review', color: 'text-amber-400', bgColor: 'bg-amber-500/20', icon: <Eye size={14} /> },
-  PROMOTED: { label: 'Promoted', color: 'text-blue-400', bgColor: 'bg-blue-500/20', icon: <TrendingUp size={14} /> },
-  PLANNING: { label: 'Planning', color: 'text-indigo-400', bgColor: 'bg-indigo-500/20', icon: <ListTodo size={14} /> },
-  APPROVED: { label: 'Approved', color: 'text-emerald-400', bgColor: 'bg-emerald-500/20', icon: <CheckCircle size={14} /> },
-  SCHEDULED: { label: 'Scheduled', color: 'text-purple-400', bgColor: 'bg-purple-500/20', icon: <Calendar size={14} /> },
-  EXECUTING: { label: 'Executing', color: 'text-cyan-400', bgColor: 'bg-cyan-500/20', icon: <Play size={14} /> },
-  BLOCKED: { label: 'Blocked', color: 'text-red-400', bgColor: 'bg-red-500/20', icon: <AlertTriangle size={14} /> },
-  DONE: { label: 'Done', color: 'text-green-400', bgColor: 'bg-green-500/20', icon: <CheckCircle2 size={14} /> },
-  TRACKING: { label: 'Tracking', color: 'text-teal-400', bgColor: 'bg-teal-500/20', icon: <BarChart size={14} /> },
-  CANCELLED: { label: 'Cancelled', color: 'text-gray-400', bgColor: 'bg-gray-500/20', icon: <XCircle size={14} /> },
+const STATUS_META: Record<
+  string,
+  { label: string; color: string; bgColor: string; icon: React.ReactNode }
+> = {
+  DRAFT: {
+    label: 'Draft',
+    color: 'text-slate-400',
+    bgColor: 'bg-slate-500/20',
+    icon: <FileText size={14} />,
+  },
+  PENDING_REVIEW: {
+    label: 'Pending Review',
+    color: 'text-orange-400',
+    bgColor: 'bg-orange-500/20',
+    icon: <Clock size={14} />,
+  },
+  REVIEW: {
+    label: 'In Review',
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-500/20',
+    icon: <Eye size={14} />,
+  },
+  PROMOTED: {
+    label: 'Promoted',
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-500/20',
+    icon: <TrendingUp size={14} />,
+  },
+  PLANNING: {
+    label: 'Planning',
+    color: 'text-indigo-400',
+    bgColor: 'bg-indigo-500/20',
+    icon: <ListTodo size={14} />,
+  },
+  APPROVED: {
+    label: 'Approved',
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-500/20',
+    icon: <CheckCircle size={14} />,
+  },
+  SCHEDULED: {
+    label: 'Scheduled',
+    color: 'text-purple-400',
+    bgColor: 'bg-purple-500/20',
+    icon: <Calendar size={14} />,
+  },
+  EXECUTING: {
+    label: 'Executing',
+    color: 'text-cyan-400',
+    bgColor: 'bg-cyan-500/20',
+    icon: <Play size={14} />,
+  },
+  BLOCKED: {
+    label: 'Blocked',
+    color: 'text-red-400',
+    bgColor: 'bg-red-500/20',
+    icon: <AlertTriangle size={14} />,
+  },
+  DONE: {
+    label: 'Done',
+    color: 'text-green-400',
+    bgColor: 'bg-green-500/20',
+    icon: <CheckCircle2 size={14} />,
+  },
+  TRACKING: {
+    label: 'Tracking',
+    color: 'text-teal-400',
+    bgColor: 'bg-teal-500/20',
+    icon: <BarChart size={14} />,
+  },
+  CANCELLED: {
+    label: 'Cancelled',
+    color: 'text-gray-400',
+    bgColor: 'bg-gray-500/20',
+    icon: <XCircle size={14} />,
+  },
 };
 
 // Lifecycle phases for progress indicator
 const LIFECYCLE_PHASES = [
   { id: 'source', label: 'Source', statuses: ['DRAFT', 'PENDING_REVIEW'], color: 'slate' },
   { id: 'review', label: 'Review', statuses: ['REVIEW', 'PROMOTED'], color: 'amber' },
-  { id: 'planning', label: 'Planning', statuses: ['PLANNING', 'APPROVED', 'SCHEDULED'], color: 'blue' },
-  { id: 'execution', label: 'Execution', statuses: ['EXECUTING', 'BLOCKED', 'DONE'], color: 'cyan' },
+  {
+    id: 'planning',
+    label: 'Planning',
+    statuses: ['PLANNING', 'APPROVED', 'SCHEDULED'],
+    color: 'blue',
+  },
+  {
+    id: 'execution',
+    label: 'Execution',
+    statuses: ['EXECUTING', 'BLOCKED', 'DONE'],
+    color: 'cyan',
+  },
   { id: 'benefits', label: 'Benefits', statuses: ['TRACKING'], color: 'teal' },
 ];
 
@@ -186,18 +264,20 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
       // Fetch tasks
       try {
         const tasksData = await Api.getInitiativeTasks(initiativeId);
-        setTasks(tasksData.map((t: any) => ({
-          id: t.id,
-          title: t.title || t.name,
-          status: t.status || 'TODO',
-          priority: t.priority || 'MEDIUM',
-          assigneeId: t.assigneeId || t.assignee_id,
-          assigneeName: t.assignee?.firstName 
-            ? `${t.assignee.firstName} ${t.assignee.lastName}` 
-            : undefined,
-          dueDate: t.dueDate || t.due_date,
-          estimatedHours: t.estimatedHours || t.estimated_hours,
-        })));
+        setTasks(
+          tasksData.map((t: any) => ({
+            id: t.id,
+            title: t.title || t.name,
+            status: t.status || 'TODO',
+            priority: t.priority || 'MEDIUM',
+            assigneeId: t.assigneeId || t.assignee_id,
+            assigneeName: t.assignee?.firstName
+              ? `${t.assignee.firstName} ${t.assignee.lastName}`
+              : undefined,
+            dueDate: t.dueDate || t.due_date,
+            estimatedHours: t.estimatedHours || t.estimated_hours,
+          }))
+        );
       } catch {
         setTasks([]);
       }
@@ -218,16 +298,20 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
   // Get current phase index
   const currentPhaseIndex = useMemo(() => {
     if (!initiative) return 0;
-    return LIFECYCLE_PHASES.findIndex(phase => 
-      phase.statuses.includes(initiative.status)
-    );
+    return LIFECYCLE_PHASES.findIndex((phase) => phase.statuses.includes(initiative.status));
   }, [initiative]);
 
   // Get available actions based on status
   const availableActions = useMemo(() => {
     if (!initiative) return [];
     const status = initiative.status;
-    const actions: { id: string; label: string; gate: string; color: string; icon: React.ReactNode }[] = [];
+    const actions: {
+      id: string;
+      label: string;
+      gate: string;
+      color: string;
+      icon: React.ReactNode;
+    }[] = [];
 
     switch (status) {
       case 'DRAFT':
@@ -358,21 +442,24 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
   }, [initiative]);
 
   // Handle gate action
-  const handleGateAction = useCallback(async (gate: string) => {
-    if (!initiative) return;
-    setIsTransitioning(true);
-    try {
-      await Api.patch(`/initiatives/${initiative.id}/gate`, { gate });
-      toast.success(`Action "${gate}" completed successfully`);
-      await fetchInitiative();
-      onStatusChange?.();
-    } catch (err: any) {
-      console.error('[InitiativeFullView] Gate action error:', err);
-      toast.error(err?.response?.data?.error || `Failed to execute ${gate}`);
-    } finally {
-      setIsTransitioning(false);
-    }
-  }, [initiative, fetchInitiative, onStatusChange]);
+  const handleGateAction = useCallback(
+    async (gate: string) => {
+      if (!initiative) return;
+      setIsTransitioning(true);
+      try {
+        await Api.patch(`/initiatives/${initiative.id}/gate`, { gate });
+        toast.success(`Action "${gate}" completed successfully`);
+        await fetchInitiative();
+        onStatusChange?.();
+      } catch (err: any) {
+        console.error('[InitiativeFullView] Gate action error:', err);
+        toast.error(err?.response?.data?.error || `Failed to execute ${gate}`);
+      } finally {
+        setIsTransitioning(false);
+      }
+    },
+    [initiative, fetchInitiative, onStatusChange]
+  );
 
   // Helper functions
   const formatCurrency = (amount?: number) => {
@@ -393,33 +480,43 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
 
   const getTaskStatusColor = (status: string) => {
     switch (status) {
-      case 'DONE': return 'bg-green-500/20 text-green-400';
-      case 'IN_PROGRESS': return 'bg-blue-500/20 text-blue-400';
-      case 'BLOCKED': return 'bg-red-500/20 text-red-400';
-      default: return 'bg-slate-500/20 text-slate-400';
+      case 'DONE':
+        return 'bg-green-500/20 text-green-400';
+      case 'IN_PROGRESS':
+        return 'bg-blue-500/20 text-blue-400';
+      case 'BLOCKED':
+        return 'bg-red-500/20 text-red-400';
+      default:
+        return 'bg-slate-500/20 text-slate-400';
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'CRITICAL': return 'text-red-400';
-      case 'HIGH': return 'text-orange-400';
-      case 'MEDIUM': return 'text-amber-400';
-      default: return 'text-slate-400';
+      case 'CRITICAL':
+        return 'text-red-400';
+      case 'HIGH':
+        return 'text-orange-400';
+      case 'MEDIUM':
+        return 'text-amber-400';
+      default:
+        return 'text-slate-400';
     }
   };
 
   // Task stats
-  const taskStats = useMemo(() => ({
-    total: tasks.length,
-    done: tasks.filter(t => t.status === 'DONE').length,
-    inProgress: tasks.filter(t => t.status === 'IN_PROGRESS').length,
-    blocked: tasks.filter(t => t.status === 'BLOCKED').length,
-  }), [tasks]);
+  const taskStats = useMemo(
+    () => ({
+      total: tasks.length,
+      done: tasks.filter((t) => t.status === 'DONE').length,
+      inProgress: tasks.filter((t) => t.status === 'IN_PROGRESS').length,
+      blocked: tasks.filter((t) => t.status === 'BLOCKED').length,
+    }),
+    [tasks]
+  );
 
-  const completionPercent = taskStats.total > 0 
-    ? Math.round((taskStats.done / taskStats.total) * 100) 
-    : 0;
+  const completionPercent =
+    taskStats.total > 0 ? Math.round((taskStats.done / taskStats.total) * 100) : 0;
 
   // Tabs
   const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
@@ -508,7 +605,9 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
             );
           })}
           <div className="flex-1" />
-          <span className={`text-xs font-medium px-2 py-1 rounded flex items-center gap-1.5 ${statusMeta.bgColor} ${statusMeta.color}`}>
+          <span
+            className={`text-xs font-medium px-2 py-1 rounded flex items-center gap-1.5 ${statusMeta.bgColor} ${statusMeta.color}`}
+          >
             {statusMeta.icon}
             {statusMeta.label}
           </span>
@@ -534,7 +633,9 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                     </span>
                   )}
                   {initiative.priority && (
-                    <span className={`px-2 py-0.5 text-xs font-medium rounded ${getPriorityColor(initiative.priority)}`}>
+                    <span
+                      className={`px-2 py-0.5 text-xs font-medium rounded ${getPriorityColor(initiative.priority)}`}
+                    >
                       {initiative.priority}
                     </span>
                   )}
@@ -629,9 +730,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                     <FileText size={14} />
                     Summary
                   </h3>
-                  <p className="text-sm text-slate-300 leading-relaxed">
-                    {initiative.summary}
-                  </p>
+                  <p className="text-sm text-slate-300 leading-relaxed">{initiative.summary}</p>
                 </div>
               )}
 
@@ -678,13 +777,21 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                         key={task.id}
                         className="flex items-center gap-3 p-3 bg-navy-800 rounded-lg border border-navy-700"
                       >
-                        <div className={`w-2 h-2 rounded-full ${
-                          task.status === 'DONE' ? 'bg-green-400' :
-                          task.status === 'IN_PROGRESS' ? 'bg-blue-400' :
-                          task.status === 'BLOCKED' ? 'bg-red-400' : 'bg-slate-400'
-                        }`} />
+                        <div
+                          className={`w-2 h-2 rounded-full ${
+                            task.status === 'DONE'
+                              ? 'bg-green-400'
+                              : task.status === 'IN_PROGRESS'
+                                ? 'bg-blue-400'
+                                : task.status === 'BLOCKED'
+                                  ? 'bg-red-400'
+                                  : 'bg-slate-400'
+                          }`}
+                        />
                         <span className="flex-1 text-sm text-white truncate">{task.title}</span>
-                        <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${getTaskStatusColor(task.status)}`}>
+                        <span
+                          className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${getTaskStatusColor(task.status)}`}
+                        >
                           {task.status.replace('_', ' ')}
                         </span>
                       </div>
@@ -706,7 +813,10 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                 <div className="bg-navy-900/50 rounded-xl border border-navy-700 p-4">
                   <div className="flex items-center gap-2 text-xs text-slate-400">
                     <Zap size={12} className="text-amber-400" />
-                    <span>Generated from: <span className="text-white capitalize">{initiative.sourceType}</span></span>
+                    <span>
+                      Generated from:{' '}
+                      <span className="text-white capitalize">{initiative.sourceType}</span>
+                    </span>
                     {initiative.sourceId && (
                       <span className="text-slate-500">({initiative.sourceId.slice(0, 8)}...)</span>
                     )}
@@ -719,9 +829,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
             <div className="space-y-4">
               {/* Key Metrics */}
               <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
-                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-4">
-                  Key Metrics
-                </h3>
+                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-4">Key Metrics</h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-400 flex items-center gap-2">
@@ -747,9 +855,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                       Expected ROI
                     </span>
                     <span className="text-sm font-semibold text-green-400">
-                      {initiative.expectedRoi 
-                        ? `${initiative.expectedRoi.toFixed(1)}x` 
-                        : '-'}
+                      {initiative.expectedRoi ? `${initiative.expectedRoi.toFixed(1)}x` : '-'}
                     </span>
                   </div>
                 </div>
@@ -787,17 +893,21 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                   <div>
                     <span className="text-xs text-slate-500">Business Owner</span>
                     <div className="text-sm text-white">
-                      {initiative.ownerBusiness 
-                        ? `${initiative.ownerBusiness.firstName} ${initiative.ownerBusiness.lastName}`
-                        : <span className="text-slate-500">Not assigned</span>}
+                      {initiative.ownerBusiness ? (
+                        `${initiative.ownerBusiness.firstName} ${initiative.ownerBusiness.lastName}`
+                      ) : (
+                        <span className="text-slate-500">Not assigned</span>
+                      )}
                     </div>
                   </div>
                   <div>
                     <span className="text-xs text-slate-500">Execution Owner</span>
                     <div className="text-sm text-white">
-                      {initiative.ownerExecution 
-                        ? `${initiative.ownerExecution.firstName} ${initiative.ownerExecution.lastName}`
-                        : <span className="text-slate-500">Not assigned</span>}
+                      {initiative.ownerExecution ? (
+                        `${initiative.ownerExecution.firstName} ${initiative.ownerExecution.lastName}`
+                      ) : (
+                        <span className="text-slate-500">Not assigned</span>
+                      )}
                     </div>
                   </div>
                   {initiative.sponsor && (
@@ -843,17 +953,23 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                   key={task.id}
                   className="flex items-center gap-4 p-4 bg-navy-900 rounded-xl border border-navy-700 hover:border-purple-500/30 transition-colors"
                 >
-                  <div className={`w-3 h-3 rounded-full ${
-                    task.status === 'DONE' ? 'bg-green-400' :
-                    task.status === 'IN_PROGRESS' ? 'bg-blue-400' :
-                    task.status === 'BLOCKED' ? 'bg-red-400' : 'bg-slate-400'
-                  }`} />
+                  <div
+                    className={`w-3 h-3 rounded-full ${
+                      task.status === 'DONE'
+                        ? 'bg-green-400'
+                        : task.status === 'IN_PROGRESS'
+                          ? 'bg-blue-400'
+                          : task.status === 'BLOCKED'
+                            ? 'bg-red-400'
+                            : 'bg-slate-400'
+                    }`}
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-white font-medium truncate">
-                        {task.title}
-                      </span>
-                      <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${getTaskStatusColor(task.status)}`}>
+                      <span className="text-sm text-white font-medium truncate">{task.title}</span>
+                      <span
+                        className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${getTaskStatusColor(task.status)}`}
+                      >
                         {task.status.replace('_', ' ')}
                       </span>
                     </div>
@@ -890,25 +1006,33 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
           <div className="space-y-6">
             {initiative.strategicIntent && (
               <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
-                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-3">Strategic Intent</h3>
+                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-3">
+                  Strategic Intent
+                </h3>
                 <p className="text-sm text-slate-300">{initiative.strategicIntent}</p>
               </div>
             )}
             {initiative.businessValue && (
               <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
-                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-3">Business Value</h3>
+                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-3">
+                  Business Value
+                </h3>
                 <p className="text-sm text-slate-300">{initiative.businessValue}</p>
               </div>
             )}
             {initiative.problemStatement && (
               <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
-                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-3">Problem Statement</h3>
+                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-3">
+                  Problem Statement
+                </h3>
                 <p className="text-sm text-slate-300">{initiative.problemStatement}</p>
               </div>
             )}
             {initiative.deliverables && initiative.deliverables.length > 0 && (
               <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
-                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-3">Deliverables</h3>
+                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-3">
+                  Deliverables
+                </h3>
                 <ul className="space-y-2">
                   {initiative.deliverables.map((d, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
@@ -932,13 +1056,17 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                 </ul>
               </div>
             )}
-            {!initiative.strategicIntent && !initiative.businessValue && !initiative.problemStatement && (
-              <div className="text-center py-12 text-slate-500">
-                <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg text-white mb-2">No definition details yet</p>
-                <p className="text-sm">Add strategic intent, business value, and problem statement</p>
-              </div>
-            )}
+            {!initiative.strategicIntent &&
+              !initiative.businessValue &&
+              !initiative.problemStatement && (
+                <div className="text-center py-12 text-slate-500">
+                  <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg text-white mb-2">No definition details yet</p>
+                  <p className="text-sm">
+                    Add strategic intent, business value, and problem statement
+                  </p>
+                </div>
+              )}
           </div>
         )}
 
@@ -952,7 +1080,9 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                 </div>
                 <div>
                   <div className="text-xs text-slate-400 uppercase">CAPEX</div>
-                  <div className="text-2xl font-bold text-white">{formatCurrency(initiative.costCapex)}</div>
+                  <div className="text-2xl font-bold text-white">
+                    {formatCurrency(initiative.costCapex)}
+                  </div>
                 </div>
               </div>
               <p className="text-xs text-slate-500">Capital expenditure</p>
@@ -964,7 +1094,9 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                 </div>
                 <div>
                   <div className="text-xs text-slate-400 uppercase">OPEX</div>
-                  <div className="text-2xl font-bold text-white">{formatCurrency(initiative.costOpex)}</div>
+                  <div className="text-2xl font-bold text-white">
+                    {formatCurrency(initiative.costOpex)}
+                  </div>
                 </div>
               </div>
               <p className="text-xs text-slate-500">Operational expenditure (annual)</p>
@@ -997,7 +1129,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                 <div>
                   <div className="text-xs text-slate-400 uppercase">Business Owner</div>
                   <div className="text-sm font-medium text-white">
-                    {initiative.ownerBusiness 
+                    {initiative.ownerBusiness
                       ? `${initiative.ownerBusiness.firstName} ${initiative.ownerBusiness.lastName}`
                       : 'Not assigned'}
                   </div>
@@ -1013,7 +1145,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                 <div>
                   <div className="text-xs text-slate-400 uppercase">Execution Owner</div>
                   <div className="text-sm font-medium text-white">
-                    {initiative.ownerExecution 
+                    {initiative.ownerExecution
                       ? `${initiative.ownerExecution.firstName} ${initiative.ownerExecution.lastName}`
                       : 'Not assigned'}
                   </div>

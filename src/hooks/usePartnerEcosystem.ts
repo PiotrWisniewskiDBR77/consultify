@@ -2,12 +2,12 @@ import { useCallback, useMemo, useState } from 'react';
 
 import {
   CommissionStatement,
+  PARTNER_PMO_MAPPING,
   PARTNER_TRUST_PHASES,
   PartnerDeal,
   PartnerEcosystemMetrics,
   PartnerTrustPhase,
   PartnerTrustProgression,
-  PARTNER_PMO_MAPPING,
 } from '../views/partner/types';
 
 export const usePartnerEcosystem = () => {

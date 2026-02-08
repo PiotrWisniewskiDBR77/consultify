@@ -4,7 +4,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { changeLanguage, LANGUAGE_DISPLAY_CODES, LANGUAGE_NAMES, SUPPORTED_LANGUAGES } from '../../i18n';
+import {
+  changeLanguage,
+  LANGUAGE_DISPLAY_CODES,
+  LANGUAGE_NAMES,
+  SUPPORTED_LANGUAGES,
+} from '../../i18n';
 import { useAppStore } from '../../store/useAppStore';
 
 interface EntryTopBarProps {
@@ -76,17 +81,11 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
         {/* Logo + Brand Name */}
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
-            {/* DBR77 Logo - links to company website */}
-            <a
-              href="https://dbr77.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group"
-              title="DBR77 Robotics - Company Website"
-            >
+            {/* Consultinity Logo */}
+            <a href="/" className="group" title="Consultinity">
               <img
                 src="/assets/logos/logo-dark.png"
-                alt="DBR77"
+                alt="Consultinity"
                 className="h-8 transition-transform duration-300 group-hover:scale-110 group-hover:brightness-110"
               />
             </a>

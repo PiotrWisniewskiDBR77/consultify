@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { Api } from '../../services/api';
-import { AppView, Task, TaskStatus, User } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
+import { AppView, Task, TaskStatus, User } from '../../types';
 import { TaskDetailModal } from '../TaskDetailModal';
 
 interface UserTaskListProps {
@@ -10,10 +10,10 @@ interface UserTaskListProps {
 }
 
 export const UserTaskList: React.FC<UserTaskListProps> = ({ onNavigate }) => {
-  const { currentUser, currentProjectId } = useAppStore((state) => ({
-    currentUser: state.currentUser,
-    currentProjectId: state.currentProjectId,
-  }));
+  // NOTE (React 19 + useSyncExternalStore):
+  // Avoid selectors returning new objects/arrays each call (can cause update loops).
+  const currentUser = useAppStore((state) => state.currentUser);
+  const currentProjectId = useAppStore((state) => state.currentProjectId);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);

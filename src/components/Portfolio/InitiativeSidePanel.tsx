@@ -827,7 +827,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
           </div>
         ) : (
           <div className="space-y-2">
-            {decisions.map((decision) => (
+            {decisions.map((decision) =>
               (() => {
                 const isOverdue =
                   String(decision.status).toUpperCase() === 'PENDING' &&
@@ -840,62 +840,62 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                   'PHASE_TRANSITION',
                 ].includes(decision.decisionType);
                 return (
-              <div
-                key={decision.id}
-                onClick={() => setSelectedDecisionId(decision.id)}
-                className={`p-3 bg-slate-50 dark:bg-navy-950 rounded-lg border-l-4 border border-slate-100 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-500/30 cursor-pointer transition-all group ${getDecisionPriorityColor(decision.priority)} ${
-                  isOverdue ? 'ring-1 ring-rose-400/50' : ''
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase">
-                        {getDecisionTypeLabel(decision.decisionType)}
-                      </span>
-                      {isGateDecision && (
-                        <span className="text-[10px] font-medium text-amber-500 uppercase">
-                          Gate
-                        </span>
-                      )}
-                      {isOverdue && (
-                        <span className="text-[10px] font-medium text-rose-500 uppercase">
-                          Overdue
-                        </span>
-                      )}
-                    </div>
-                    <h4 className="text-sm font-medium text-navy-900 dark:text-white line-clamp-2 group-hover:text-purple-600 dark:group-hover:text-purple-400">
-                      {decision.title}
-                    </h4>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span
-                        className={`px-2 py-0.5 text-[10px] font-medium rounded ${getDecisionStatusColor(decision.status)}`}
-                      >
-                        {decision.status}
-                      </span>
-                      {decision.ownerName && (
-                        <span className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
-                          <User size={10} />
-                          {decision.ownerName}
-                        </span>
-                      )}
-                      {decision.dueDate && (
-                        <span className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
-                          <Clock size={10} />
-                          {new Date(decision.dueDate).toLocaleDateString()}
-                        </span>
-                      )}
+                  <div
+                    key={decision.id}
+                    onClick={() => setSelectedDecisionId(decision.id)}
+                    className={`p-3 bg-slate-50 dark:bg-navy-950 rounded-lg border-l-4 border border-slate-100 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-500/30 cursor-pointer transition-all group ${getDecisionPriorityColor(decision.priority)} ${
+                      isOverdue ? 'ring-1 ring-rose-400/50' : ''
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase">
+                            {getDecisionTypeLabel(decision.decisionType)}
+                          </span>
+                          {isGateDecision && (
+                            <span className="text-[10px] font-medium text-amber-500 uppercase">
+                              Gate
+                            </span>
+                          )}
+                          {isOverdue && (
+                            <span className="text-[10px] font-medium text-rose-500 uppercase">
+                              Overdue
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="text-sm font-medium text-navy-900 dark:text-white line-clamp-2 group-hover:text-purple-600 dark:group-hover:text-purple-400">
+                          {decision.title}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span
+                            className={`px-2 py-0.5 text-[10px] font-medium rounded ${getDecisionStatusColor(decision.status)}`}
+                          >
+                            {decision.status}
+                          </span>
+                          {decision.ownerName && (
+                            <span className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
+                              <User size={10} />
+                              {decision.ownerName}
+                            </span>
+                          )}
+                          {decision.dueDate && (
+                            <span className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
+                              <Clock size={10} />
+                              {new Date(decision.dueDate).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <ChevronRight
+                        size={16}
+                        className="text-slate-400 dark:text-slate-500 group-hover:text-purple-500 shrink-0 mt-1"
+                      />
                     </div>
                   </div>
-                  <ChevronRight
-                    size={16}
-                    className="text-slate-400 dark:text-slate-500 group-hover:text-purple-500 shrink-0 mt-1"
-                  />
-                </div>
-              </div>
                 );
               })()
-            ))}
+            )}
           </div>
         )}
 

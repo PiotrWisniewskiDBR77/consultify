@@ -31,6 +31,7 @@ interface AddFilesMenuProps {
   onCloudFileSelect?: (provider: CloudProviderId, fileId: string, fileName: string) => void;
   onConnectCloud?: (provider: CloudProviderId) => void;
   connectedProviders?: CloudProviderId[];
+  isCloudImplemented?: boolean;
   disabled?: boolean;
 }
 
@@ -86,6 +87,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
   onCloudFileSelect,
   onConnectCloud,
   connectedProviders = [],
+  isCloudImplemented = false,
   disabled = false,
 }) => {
   const { t } = useTranslation();
@@ -119,21 +121,42 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
       onFileSelect(files);
       setIsOpen(false);
       toast.success(
-        files.length === 1 ? `Dodano: ${files[0].name}` : `Dodano ${files.length} plików`,
+        files.length === 1
+          ? t('aiChat.menu.toast.filesAddedOne', { name: files[0].name })
+          : t('aiChat.menu.toast.filesAddedMany', { count: files.length }),
         { duration: 2000 }
       );
     }
   };
 
   const handleCloudClick = (provider: CloudProvider) => {
+    if (!isCloudImplemented) {
+      toast(t('aiChat.menu.toast.cloudComingSoon', 'Cloud integrations will be added soon'), {
+        icon: '⏳',
+        duration: 3000,
+        style: {
+          borderRadius: '10px',
+          background: '#334155',
+          color: '#fff',
+        },
+      });
+      setIsOpen(false);
+      return;
+    }
+
     if (provider.connected) {
       // Open file picker for this provider
       onCloudFileSelect?.(provider.id, '', '');
-      toast.success(`Otwieranie ${provider.name}...`, { duration: 1500 });
+      toast.success(t('aiChat.menu.toast.openingProvider', { provider: provider.name }), {
+        duration: 1500,
+      });
     } else {
       // Prompt to connect
       onConnectCloud?.(provider.id);
-      toast(`Przekierowanie do ustawień integracji`, { icon: '🔗', duration: 2000 });
+      toast(t('aiChat.menu.toast.redirectIntegrations', 'Redirecting…'), {
+        icon: '🔗',
+        duration: 2000,
+      });
     }
     setIsOpen(false);
   };
@@ -216,12 +239,17 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
                 >
                   {provider.name}
                 </div>
+                {!isCloudImplemented && (
+                  <div className="text-[10px] text-slate-400 dark:text-slate-500 leading-tight">
+                    {t('common.comingSoon', 'Już wkrótce')}
+                  </div>
+                )}
               </div>
               {provider.connected ? (
                 <Cloud size={14} className="text-green-500" />
-              ) : (
+              ) : isCloudImplemented ? (
                 <Link2 size={14} className="text-slate-400 dark:text-slate-500" />
-              )}
+              ) : null}
             </button>
           ))}
 

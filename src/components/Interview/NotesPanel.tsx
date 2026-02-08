@@ -1,20 +1,13 @@
 /**
  * NotesPanel - Free-form notes for Interview
- * 
+ *
  * Allows adding notes per category or general session notes.
  * Notes are organized by category with rich text support.
  */
 
+import { Edit3, FileText, MoreVertical, Plus, Trash2, X } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Edit3,
-  FileText,
-  MoreVertical,
-  Plus,
-  Trash2,
-  X,
-} from 'lucide-react';
 
 import type { InterviewCategory } from './CategorySidebar';
 import { CATEGORY_CONFIG } from './CategorySidebar';
@@ -63,9 +56,10 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
   const [filter, setFilter] = useState<'all' | 'category'>('all');
 
   // Filter notes
-  const filteredNotes = filter === 'category' && activeCategory
-    ? notes.filter(n => n.category === activeCategory)
-    : notes;
+  const filteredNotes =
+    filter === 'category' && activeCategory
+      ? notes.filter((n) => n.category === activeCategory)
+      : notes;
 
   // Create note
   const handleCreateNote = useCallback(async () => {
@@ -85,22 +79,28 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
   }, []);
 
   // Save edit
-  const handleSaveEdit = useCallback(async (noteId: string) => {
-    if (!editTitle.trim()) return;
-    await onUpdateNote(noteId, {
-      title: editTitle.trim(),
-      content: editContent.trim(),
-    });
-    setEditingId(null);
-    setEditTitle('');
-    setEditContent('');
-  }, [editTitle, editContent, onUpdateNote]);
+  const handleSaveEdit = useCallback(
+    async (noteId: string) => {
+      if (!editTitle.trim()) return;
+      await onUpdateNote(noteId, {
+        title: editTitle.trim(),
+        content: editContent.trim(),
+      });
+      setEditingId(null);
+      setEditTitle('');
+      setEditContent('');
+    },
+    [editTitle, editContent, onUpdateNote]
+  );
 
   // Delete note
-  const handleDeleteNote = useCallback(async (noteId: string) => {
-    await onDeleteNote(noteId);
-    setShowMenuId(null);
-  }, [onDeleteNote]);
+  const handleDeleteNote = useCallback(
+    async (noteId: string) => {
+      await onDeleteNote(noteId);
+      setShowMenuId(null);
+    },
+    [onDeleteNote]
+  );
 
   if (isLoading) {
     return (
@@ -122,7 +122,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
             {filteredNotes.length}
           </span>
         </div>
-        
+
         <div className="flex items-center gap-2">
           {/* Filter */}
           <div className="flex items-center bg-slate-100 dark:bg-navy-800 rounded-lg p-0.5">
@@ -185,10 +185,9 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
                 <>
                   {isPolish ? 'Kategoria:' : 'Category:'}{' '}
                   <span className="font-medium">
-                    {isPolish 
-                      ? CATEGORY_CONFIG[activeCategory].labelPl 
-                      : CATEGORY_CONFIG[activeCategory].labelEn
-                    }
+                    {isPolish
+                      ? CATEGORY_CONFIG[activeCategory].labelPl
+                      : CATEGORY_CONFIG[activeCategory].labelEn}
                   </span>
                 </>
               )}
@@ -220,9 +219,8 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
       <div className="space-y-2">
         {filteredNotes.map((note) => {
           const isEditing = editingId === note.id;
-          const categoryConfig = note.category && note.category !== 'general' 
-            ? CATEGORY_CONFIG[note.category] 
-            : null;
+          const categoryConfig =
+            note.category && note.category !== 'general' ? CATEGORY_CONFIG[note.category] : null;
 
           return (
             <div
@@ -274,7 +272,9 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
                           {note.title}
                         </h4>
                         {categoryConfig && (
-                          <span className={`px-1.5 py-0.5 text-xs rounded ${categoryConfig.bgColor} ${categoryConfig.color}`}>
+                          <span
+                            className={`px-1.5 py-0.5 text-xs rounded ${categoryConfig.bgColor} ${categoryConfig.color}`}
+                          >
                             {isPolish ? categoryConfig.labelPl : categoryConfig.labelEn}
                           </span>
                         )}

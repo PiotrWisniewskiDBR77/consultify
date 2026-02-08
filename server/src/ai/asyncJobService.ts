@@ -1,8 +1,8 @@
 /**
  * Async Job Service
  */
-import { getDatabase } from '../database/index.js';
 import type { IDatabase } from '../database/IDatabase.js';
+import { getDatabase } from '../database/index.js';
 const db: IDatabase = getDatabase() as IDatabase;
 import { v4 as uuidv4 } from 'uuid';
 
@@ -16,12 +16,11 @@ type QueueType = {
 };
 
 // Import with type assertion (aiQueue.ts has @ts-nocheck)
-// @ts-ignore - aiQueue.ts has @ts-nocheck, module type cannot be determined (needed in Docker/Linux)
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+// @ts-expect-error - aiQueue.ts has @ts-nocheck, so we need to assert type
+
 import aiQueueModule from '../queues/aiQueue.js';
-// @ts-ignore - aiQueueModule from @ts-nocheck file, type cannot be determined (needed in Docker/Linux)
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
-const aiQueue: QueueType = (aiQueueModule as unknown as QueueType);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const aiQueue: QueueType = aiQueueModule as any as QueueType;
 
 import * as auditLogger from '../utils/auditLogger.js';
 import { ACTION_ERROR_CODES } from './actionErrors.js';

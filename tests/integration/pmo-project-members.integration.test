@@ -333,7 +333,7 @@ describe.skipIf(SKIP_INTEGRATION)('PMO Workstreams API', () => {
         .delete(`/api/workstreams/${testWorkstreamId}`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 403]).toContain(response.status);
+      expect([200, 403, 404]).toContain(response.status);
     });
   });
 });

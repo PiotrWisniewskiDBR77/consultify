@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { useAppStore } from '../store/useAppStore';
 
@@ -43,16 +43,15 @@ const TrialContext = createContext<TrialState>(defaultState);
 export const useTrial = () => useContext(TrialContext);
 
 export const TrialProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentUser: user } = useAppStore();
-  const token = localStorage.getItem('token'); // Fallback or from store if available (store doesn't expose it directly usually?)
-  // Actually we should use Api class or similar, but for now lets try getting token from localStorage as useAppStore doesn't seem to have it?
-  // checking useAppStore again.. it persists but doesn't explicitly type token.
-  // However, the fetch call needs it.
+  // NOTE (React 19 + useSyncExternalStore):
+  // Avoid selectors that return a new object each call (even with shallow),
+  // because it can trigger "getSnapshot should be cached" warnings/loops.
+  const user = useAppStore((s) => s.currentUser);
 
   const [state, setState] = useState<TrialState>(defaultState);
 
-  const refreshTrialStatus = async () => {
-    if (!user) return;
+  const refreshTrialStatus = useCallback(async () => {
+    if (!user?.isAuthenticated) return;
     const storedToken = localStorage.getItem('token');
     if (!storedToken) return;
 
@@ -62,9 +61,16 @@ export const TrialProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         headers: { Authorization: `Bearer ${storedToken}` },
       });
 
+      if (response.status === 404) {
+        // Endpoint may not exist in some dev/stub setups.
+        setState((prev) => ({ ...prev, loading: false }));
+        return;
+      }
+
       if (response.ok) {
         const policy = await response.json();
-        setState({
+        setState((prev) => ({
+          ...prev,
           isTrial: policy.isTrial ?? false,
           isExpired: policy.isTrialExpired ?? false,
           daysRemaining: policy.trialDaysLeft ?? 0,
@@ -78,26 +84,32 @@ export const TrialProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           },
           blockedActions: Array.isArray(policy.blockedActions) ? policy.blockedActions : [],
           loading: false,
-          refreshTrialStatus,
-        });
+        }));
       } else {
         // API returned non-200 - set safe defaults
         console.warn('[TrialContext] Policy snapshot returned:', response.status);
-        setState((prev: any) => ({ ...prev, loading: false }));
+        setState((prev) => ({ ...prev, loading: false }));
       }
     } catch (err) {
       console.error('Failed to fetch trial status', err);
-      setState((prev: any) => ({ ...prev, loading: false }));
+      setState((prev) => ({ ...prev, loading: false }));
     }
-  };
+  }, [user?.isAuthenticated]);
 
   useEffect(() => {
-    if (user) {
+    if (user?.isAuthenticated) {
       refreshTrialStatus();
     } else {
       queueMicrotask(() => setState({ ...defaultState, loading: false }));
     }
-  }, [user]);
+  }, [user?.isAuthenticated, refreshTrialStatus]);
 
-  return <TrialContext.Provider value={state}>{children}</TrialContext.Provider>;
+  const value = useMemo<TrialState>(() => {
+    return {
+      ...state,
+      refreshTrialStatus,
+    };
+  }, [state, refreshTrialStatus]);
+
+  return <TrialContext.Provider value={value}>{children}</TrialContext.Provider>;
 };

@@ -1,7 +1,7 @@
 /**
  * Permission Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Database-backed permission checking middleware.
  * Uses PBAC (Permission-Based Access Control) with org-user overrides.
  */
@@ -14,7 +14,6 @@ import GovernanceAuditService, {
 } from '../services/governanceAuditService.js';
 import PermissionService, { type Role, ROLES } from '../services/permissionService.js';
 import logger from '../utils/Logger.js';
-
 import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
@@ -67,7 +66,7 @@ export const requirePermission = (permissionKey: string) => {
 
       // Normalize role to Role type
       const normalizedRole: Role = (userRole as Role) || ROLES.VIEWER;
-      
+
       const hasPermission = await deps.PermissionService.hasPermission(
         userId,
         orgId || '',
@@ -119,7 +118,7 @@ export const requireAnyPermission = (permissionKeys: string[]) => {
       // Normalize role to Role type
       const normalizedRole: Role = (userRole as Role) || ROLES.VIEWER;
       const normalizedOrgId = orgId || '';
-      
+
       for (const permissionKey of permissionKeys) {
         const hasPermission = await deps.PermissionService.hasPermission(
           userId,
@@ -176,7 +175,7 @@ export const requireAllPermissions = (permissionKeys: string[]) => {
       // Normalize role to Role type
       const normalizedRole: Role = (userRole as Role) || ROLES.VIEWER;
       const normalizedOrgId = orgId || '';
-      
+
       for (const permissionKey of permissionKeys) {
         const hasPermission = await deps.PermissionService.hasPermission(
           userId,

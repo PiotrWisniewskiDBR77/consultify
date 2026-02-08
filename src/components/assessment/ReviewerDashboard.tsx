@@ -170,10 +170,10 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
     const now = new Date();
     const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
 
-    if (diffHours < 1) return 'przed chwilą';
-    if (diffHours < 24) return `${diffHours}h temu`;
+    if (diffHours < 1) return 'just now';
+    if (diffHours < 24) return `${diffHours}h ago`;
     const days = Math.floor(diffHours / 24);
-    return `${days} dni temu`;
+    return `${days} days ago`;
   };
 
   const filteredReviews = reviews.filter((review) => {
@@ -206,10 +206,8 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
             <ClipboardCheck className="w-8 h-8 text-purple-600 dark:text-purple-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-navy-900 dark:text-white">Panel Recenzenta</h1>
-            <p className="text-slate-500 dark:text-slate-400">
-              Zarządzaj przypisanymi recenzjami ocen
-            </p>
+            <h1 className="text-2xl font-bold text-navy-900 dark:text-white">Reviewer Panel</h1>
+            <p className="text-slate-500 dark:text-slate-400">Manage assigned assessment reviews</p>
           </div>
         </div>
 
@@ -219,7 +217,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
           className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          Odśwież
+          Refresh
         </button>
       </div>
 
@@ -233,7 +231,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
               </div>
               <div>
                 <p className="text-2xl font-bold text-navy-900 dark:text-white">{stats.total}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Wszystkie</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Total</p>
               </div>
             </div>
           </div>
@@ -245,7 +243,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
               </div>
               <div>
                 <p className="text-2xl font-bold text-navy-900 dark:text-white">{stats.pending}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Oczekujące</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Pending</p>
               </div>
             </div>
           </div>
@@ -259,7 +257,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
                 <p className="text-2xl font-bold text-navy-900 dark:text-white">
                   {stats.inProgress}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">W trakcie</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">In Progress</p>
               </div>
             </div>
           </div>
@@ -273,7 +271,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
                 <p className="text-2xl font-bold text-navy-900 dark:text-white">
                   {stats.completed}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Ukończone</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Completed</p>
               </div>
             </div>
           </div>
@@ -285,7 +283,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
               </div>
               <div>
                 <p className="text-2xl font-bold text-navy-900 dark:text-white">{stats.overdue}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Przeterminowane</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Overdue</p>
               </div>
             </div>
           </div>
@@ -295,16 +293,16 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-navy-700">
         {[
-          { id: 'pending' as TabType, label: 'Oczekujące', icon: Clock, count: stats?.pending },
+          { id: 'pending' as TabType, label: 'Pending', icon: Clock, count: stats?.pending },
           {
             id: 'in_progress' as TabType,
-            label: 'W trakcie',
+            label: 'In Progress',
             icon: Timer,
             count: stats?.inProgress,
           },
           {
             id: 'completed' as TabType,
-            label: 'Ukończone',
+            label: 'Completed',
             icon: CheckCircle2,
             count: stats?.completed,
           },
@@ -348,9 +346,9 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
           <div className="text-center py-12">
             <ClipboardCheck className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
             <p className="text-slate-500 dark:text-slate-400">
-              {activeTab === 'pending' && 'Brak oczekujących recenzji'}
-              {activeTab === 'in_progress' && 'Brak recenzji w trakcie'}
-              {activeTab === 'completed' && 'Brak ukończonych recenzji'}
+              {activeTab === 'pending' && 'No pending reviews'}
+              {activeTab === 'in_progress' && 'No reviews in progress'}
+              {activeTab === 'completed' && 'No completed reviews'}
             </p>
           </div>
         ) : (
@@ -448,7 +446,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
                       </div>
                       {review.completedAt && (
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                          Ukończono: {formatDate(review.completedAt)}
+                          Completed: {formatDate(review.completedAt)}
                         </p>
                       )}
                     </div>
@@ -462,7 +460,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
                       onClick={() => handleStartReview(review)}
                       className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors"
                     >
-                      {review.status === 'PENDING' ? 'Podgląd' : 'Kontynuuj'}
+                      {review.status === 'PENDING' ? 'Preview' : 'Continue'}
                       <ChevronRight className="w-4 h-4" />
                     </button>
                     <button
@@ -470,7 +468,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
                       className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors"
                     >
                       <FileEdit className="w-4 h-4" />
-                      Wystaw recenzję
+                      Submit Review
                     </button>
                   </div>
                 )}

@@ -136,7 +136,7 @@ export const VelocityChart: React.FC<Partial<VelocityChartProps> & { className?:
 
         {/* X-axis labels */}
         <div className="flex justify-between mt-2">
-                {metrics.data.map((d: VelocityMetrics['data'][number], idx: number) => (
+          {metrics.data.map((d: VelocityMetrics['data'][number], idx: number) => (
             <div key={idx} className="flex-1 text-center">
               <span className="text-[10px] text-slate-400 dark:text-slate-500">
                 {new Date(d.date).toLocaleDateString('pl-PL', {

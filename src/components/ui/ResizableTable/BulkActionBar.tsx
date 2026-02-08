@@ -4,15 +4,7 @@
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
-import {
-  Archive,
-  Calendar,
-  CheckCircle,
-  Flag,
-  MoreHorizontal,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { Archive, Calendar, CheckCircle, Flag, MoreHorizontal, Trash2, X } from 'lucide-react';
 import React, { useState } from 'react';
 
 export interface BulkAction {
@@ -65,9 +57,7 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
             <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-500 text-white text-xs font-medium">
               {selectedCount}
             </span>
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              selected
-            </span>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">selected</span>
             <button
               onClick={onClearSelection}
               className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"

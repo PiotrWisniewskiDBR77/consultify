@@ -12,7 +12,7 @@ export interface KeyboardShortcutsConfig {
   onNavigateDown?: () => void;
   onNavigateFirst?: () => void;
   onNavigateLast?: () => void;
-  
+
   // Actions
   onNew?: () => void;
   onEdit?: () => void;
@@ -21,19 +21,19 @@ export interface KeyboardShortcutsConfig {
   onSave?: () => void;
   onCancel?: () => void;
   onOpen?: () => void;
-  
+
   // Status changes
   onSetPriority?: (priority: 'low' | 'medium' | 'high' | 'critical') => void;
   onToggleComplete?: () => void;
-  
+
   // Selection
   onSelectAll?: () => void;
   onClearSelection?: () => void;
   onToggleSelection?: () => void;
-  
+
   // Search
   onSearch?: () => void;
-  
+
   // Enabled state
   enabled?: boolean;
 }
@@ -52,7 +52,7 @@ export const SHORTCUTS_HELP: ShortcutHelp[] = [
   { key: 'End', description: 'Go to last item', category: 'navigation' },
   { key: 'Enter', description: 'Open selected item', category: 'navigation' },
   { key: 'Escape', description: 'Close / Cancel', category: 'navigation' },
-  
+
   // Actions
   { key: 'n', description: 'New task/decision', category: 'actions' },
   { key: 'e', description: 'Edit selected', category: 'actions' },
@@ -60,14 +60,14 @@ export const SHORTCUTS_HELP: ShortcutHelp[] = [
   { key: 'Delete', description: 'Delete selected', category: 'actions' },
   { key: 'Ctrl+S', description: 'Save changes', category: 'actions' },
   { key: '/', description: 'Focus search', category: 'actions' },
-  
+
   // Status
   { key: '1', description: 'Set priority: Low', category: 'status' },
   { key: '2', description: 'Set priority: Medium', category: 'status' },
   { key: '3', description: 'Set priority: High', category: 'status' },
   { key: '4', description: 'Set priority: Critical', category: 'status' },
   { key: 'x', description: 'Toggle complete', category: 'status' },
-  
+
   // Selection
   { key: 'Ctrl+A', description: 'Select all', category: 'selection' },
   { key: 'Space', description: 'Toggle selection', category: 'selection' },
@@ -76,7 +76,7 @@ export const SHORTCUTS_HELP: ShortcutHelp[] = [
 
 export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
   const [showHelp, setShowHelp] = useState(false);
-  
+
   const {
     onNavigateUp,
     onNavigateDown,
@@ -101,12 +101,12 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (!enabled) return;
-      
+
       // Don't trigger shortcuts when typing in inputs
       const target = event.target as HTMLElement;
       const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
       const isEditable = target.isContentEditable;
-      
+
       if (isInput || isEditable) {
         // Only allow Escape and Ctrl+S in inputs
         if (event.key === 'Escape' && onCancel) {
@@ -135,31 +135,31 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
         onNavigateUp?.();
         return;
       }
-      
+
       if (event.key === 'ArrowDown' || event.key === 'j') {
         event.preventDefault();
         onNavigateDown?.();
         return;
       }
-      
+
       if (event.key === 'Home') {
         event.preventDefault();
         onNavigateFirst?.();
         return;
       }
-      
+
       if (event.key === 'End') {
         event.preventDefault();
         onNavigateLast?.();
         return;
       }
-      
+
       if (event.key === 'Enter' && !event.ctrlKey && !event.metaKey) {
         event.preventDefault();
         onOpen?.();
         return;
       }
-      
+
       if (event.key === 'Escape') {
         event.preventDefault();
         onCancel?.();
@@ -173,31 +173,31 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
         onNew?.();
         return;
       }
-      
+
       if (event.key === 'e' && !event.ctrlKey && !event.metaKey) {
         event.preventDefault();
         onEdit?.();
         return;
       }
-      
+
       if (event.key === 'd' && !event.ctrlKey && !event.metaKey) {
         event.preventDefault();
         onDuplicate?.();
         return;
       }
-      
+
       if (event.key === 'Delete' || event.key === 'Backspace') {
         event.preventDefault();
         onDelete?.();
         return;
       }
-      
+
       if (event.key === 's' && (event.ctrlKey || event.metaKey)) {
         event.preventDefault();
         onSave?.();
         return;
       }
-      
+
       if (event.key === '/') {
         event.preventDefault();
         onSearch?.();
@@ -210,25 +210,25 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
         onSetPriority?.('low');
         return;
       }
-      
+
       if (event.key === '2' && !event.ctrlKey && !event.metaKey) {
         event.preventDefault();
         onSetPriority?.('medium');
         return;
       }
-      
+
       if (event.key === '3' && !event.ctrlKey && !event.metaKey) {
         event.preventDefault();
         onSetPriority?.('high');
         return;
       }
-      
+
       if (event.key === '4' && !event.ctrlKey && !event.metaKey) {
         event.preventDefault();
         onSetPriority?.('critical');
         return;
       }
-      
+
       if (event.key === 'x' && !event.ctrlKey && !event.metaKey) {
         event.preventDefault();
         onToggleComplete?.();
@@ -241,13 +241,13 @@ export const useKeyboardShortcuts = (config: KeyboardShortcutsConfig) => {
         onSelectAll?.();
         return;
       }
-      
+
       if (event.key === 'd' && (event.ctrlKey || event.metaKey)) {
         event.preventDefault();
         onClearSelection?.();
         return;
       }
-      
+
       if (event.key === ' ') {
         event.preventDefault();
         onToggleSelection?.();

@@ -9,6 +9,8 @@ import { z } from 'zod';
 
 import type { AuthRequest } from '../middleware/auth.middleware.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import DecisionDelegationService from '../services/decisionDelegationService.js';
+import DecisionEscalationChainService from '../services/decisionEscalationChainService.js';
 import decisionService from '../services/decisionService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -135,8 +137,6 @@ router.get(
     });
   })
 );
-
-
 
 /**
  * GET /api/decisions/pending
@@ -392,6 +392,445 @@ router.get(
       success: true,
       decisions,
       count: decisions.length,
+    });
+  })
+);
+
+// ==========================================
+// ESCALATION CHAIN ROUTES
+// ==========================================
+
+/**
+ * GET /api/decisions/:id/escalation-chain
+ * Get escalation chain for a decision
+ */
+router.get(
+  '/:id/escalation-chain',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    const decisionId = req.params.id;
+
+    if (!orgId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const chain = await DecisionEscalationChainService.getEscalationChain(decisionId);
+
+    return res.json({
+      success: true,
+      chain,
+    });
+  })
+);
+
+/**
+ * PUT /api/decisions/:id/escalation-chain
+ * Set escalation chain for a decision
+ */
+router.put(
+  '/:id/escalation-chain',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    const userId = req.userId;
+    const decisionId = req.params.id;
+
+    if (!orgId || !userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { chain } = req.body;
+
+    if (!Array.isArray(chain)) {
+      return res.status(400).json({ error: 'Chain must be an array' });
+    }
+
+    const result = await DecisionEscalationChainService.setEscalationChain(
+      decisionId,
+      chain,
+      userId
+    );
+
+    return res.json({
+      success: true,
+      chain: result,
+    });
+  })
+);
+
+/**
+ * GET /api/decisions/:id/escalation-log
+ * Get escalation history for a decision
+ */
+router.get(
+  '/:id/escalation-log',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    const decisionId = req.params.id;
+
+    if (!orgId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const log = await DecisionEscalationChainService.getEscalationLog(decisionId);
+
+    return res.json({
+      success: true,
+      log,
+    });
+  })
+);
+
+/**
+ * POST /api/decisions/:id/manual-escalate
+ * Manually escalate a decision
+ */
+router.post(
+  '/:id/manual-escalate',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    const userId = req.userId;
+    const decisionId = req.params.id;
+
+    if (!orgId || !userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { reason, escalateToUserId } = req.body;
+
+    await DecisionEscalationChainService.manualEscalate(
+      decisionId,
+      userId,
+      reason || 'Manual escalation',
+      escalateToUserId
+    );
+
+    return res.json({
+      success: true,
+      message: 'Decision escalated',
+    });
+  })
+);
+
+// ==========================================
+// DELEGATION ROUTES
+// ==========================================
+
+/**
+ * POST /api/decisions/:id/delegate
+ * Delegate a decision to another user
+ */
+router.post(
+  '/:id/delegate',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    const userId = req.userId;
+    const decisionId = req.params.id;
+
+    if (!orgId || !userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { toUserId, delegationType, reason, comment, expiresAt } = req.body;
+
+    if (!toUserId) {
+      return res.status(400).json({ error: 'toUserId is required' });
+    }
+
+    const delegation = await DecisionDelegationService.delegate(
+      decisionId,
+      userId,
+      toUserId,
+      delegationType || 'full',
+      { reason, comment, expiresAt }
+    );
+
+    return res.status(201).json({
+      success: true,
+      delegation,
+    });
+  })
+);
+
+/**
+ * POST /api/decisions/:id/request-input
+ * Request input from multiple users
+ */
+router.post(
+  '/:id/request-input',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    const userId = req.userId;
+    const decisionId = req.params.id;
+
+    if (!orgId || !userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { userIds, comment } = req.body;
+
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).json({ error: 'userIds must be a non-empty array' });
+    }
+
+    const delegations = await DecisionDelegationService.requestInput(
+      decisionId,
+      userId,
+      userIds,
+      comment
+    );
+
+    return res.status(201).json({
+      success: true,
+      delegations,
+      count: delegations.length,
+    });
+  })
+);
+
+/**
+ * GET /api/decisions/:id/delegations
+ * Get delegation history for a decision
+ */
+router.get(
+  '/:id/delegations',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    const decisionId = req.params.id;
+
+    if (!orgId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const delegations = await DecisionDelegationService.getDelegationHistory(decisionId);
+
+    return res.json({
+      success: true,
+      delegations,
+    });
+  })
+);
+
+/**
+ * GET /api/decisions/:id/opinions
+ * Get consulted opinions for a decision
+ */
+router.get(
+  '/:id/opinions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    const decisionId = req.params.id;
+
+    if (!orgId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const opinions = await DecisionDelegationService.getConsultedOpinions(decisionId);
+
+    return res.json({
+      success: true,
+      opinions,
+    });
+  })
+);
+
+/**
+ * GET /api/decisions/:id/stakeholders
+ * Get stakeholders for a decision
+ */
+router.get(
+  '/:id/stakeholders',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    const decisionId = req.params.id;
+
+    if (!orgId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const stakeholders = await DecisionDelegationService.getStakeholders(decisionId);
+
+    return res.json({
+      success: true,
+      stakeholders,
+    });
+  })
+);
+
+/**
+ * POST /api/decisions/:id/stakeholders
+ * Add stakeholder to a decision
+ */
+router.post(
+  '/:id/stakeholders',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    const userId = req.userId;
+    const decisionId = req.params.id;
+
+    if (!orgId || !userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { stakeholderUserId, role } = req.body;
+
+    if (!stakeholderUserId || !role) {
+      return res.status(400).json({ error: 'stakeholderUserId and role are required' });
+    }
+
+    const stakeholder = await DecisionDelegationService.addStakeholder(
+      decisionId,
+      stakeholderUserId,
+      role,
+      userId
+    );
+
+    return res.status(201).json({
+      success: true,
+      stakeholder,
+    });
+  })
+);
+
+/**
+ * DELETE /api/decisions/:id/stakeholders/:userId
+ * Remove stakeholder from a decision
+ */
+router.delete(
+  '/:id/stakeholders/:stakeholderUserId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    const decisionId = req.params.id;
+    const stakeholderUserId = req.params.stakeholderUserId;
+
+    if (!orgId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    await DecisionDelegationService.removeStakeholder(decisionId, stakeholderUserId);
+
+    return res.json({
+      success: true,
+      message: 'Stakeholder removed',
+    });
+  })
+);
+
+// ==========================================
+// DELEGATION ACTION ROUTES
+// ==========================================
+
+/**
+ * POST /api/delegations/:id/accept
+ * Accept a delegation
+ */
+router.post(
+  '/delegations/:delegationId/accept',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId;
+    const delegationId = req.params.delegationId;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { responseComment } = req.body;
+
+    const delegation = await DecisionDelegationService.acceptDelegation(
+      delegationId,
+      userId,
+      responseComment
+    );
+
+    return res.json({
+      success: true,
+      delegation,
+      message: 'Delegation accepted',
+    });
+  })
+);
+
+/**
+ * POST /api/delegations/:id/reject
+ * Reject a delegation
+ */
+router.post(
+  '/delegations/:delegationId/reject',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId;
+    const delegationId = req.params.delegationId;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { rejectionReason } = req.body;
+
+    const delegation = await DecisionDelegationService.rejectDelegation(
+      delegationId,
+      userId,
+      rejectionReason
+    );
+
+    return res.json({
+      success: true,
+      delegation,
+      message: 'Delegation rejected',
+    });
+  })
+);
+
+/**
+ * POST /api/delegations/:id/submit-input
+ * Submit input for a delegation
+ */
+router.post(
+  '/delegations/:delegationId/submit-input',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId;
+    const delegationId = req.params.delegationId;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { opinion, recommendation, confidenceLevel } = req.body;
+
+    if (!opinion) {
+      return res.status(400).json({ error: 'Opinion is required' });
+    }
+
+    const result = await DecisionDelegationService.submitInput(delegationId, userId, opinion, {
+      recommendation,
+      confidenceLevel,
+    });
+
+    return res.json({
+      success: true,
+      opinion: result,
+      message: 'Input submitted',
+    });
+  })
+);
+
+/**
+ * GET /api/delegations/pending
+ * Get pending delegations for current user
+ */
+router.get(
+  '/delegations/pending',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const delegations = await DecisionDelegationService.getPendingDelegations(userId);
+
+    return res.json({
+      success: true,
+      delegations,
+      count: delegations.length,
     });
   })
 );

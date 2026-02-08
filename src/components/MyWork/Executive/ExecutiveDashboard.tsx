@@ -179,17 +179,22 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           const criticalCount = pendingDecisions.filter(
             (d: any) => d.priority === 'CRITICAL'
           ).length;
-          
+
           // Calculate real average wait days
-          const avgWaitDays = pendingDecisions.length > 0
-            ? Math.round(
-                pendingDecisions.reduce((sum: number, d: any) => {
-                  const days = Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24));
-                  return sum + days;
-                }, 0) / pendingDecisions.length * 10
-              ) / 10
-            : 0;
-          
+          const avgWaitDays =
+            pendingDecisions.length > 0
+              ? Math.round(
+                  (pendingDecisions.reduce((sum: number, d: any) => {
+                    const days = Math.floor(
+                      (Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+                    );
+                    return sum + days;
+                  }, 0) /
+                    pendingDecisions.length) *
+                    10
+                ) / 10
+              : 0;
+
           setKpiData((prev) => ({
             ...prev,
             decisions: {
@@ -223,7 +228,11 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
 
         // Process team data
         console.log('[ExecutiveDashboard] teamRes:', teamRes);
-        if (teamRes.status === 'fulfilled' && Array.isArray(teamRes.value) && teamRes.value.length > 0) {
+        if (
+          teamRes.status === 'fulfilled' &&
+          Array.isArray(teamRes.value) &&
+          teamRes.value.length > 0
+        ) {
           console.log('[ExecutiveDashboard] Setting teamMembers:', teamRes.value);
           setTeamMembers(
             teamRes.value.map((m: any) => ({
@@ -279,23 +288,23 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               trend: 'stable',
             },
           }));
-          
+
           // Add overdue tasks to action items
-          const overdueTaskItems = overdueTasks
-            .slice(0, 3)
-            .map((t: any) => {
-              const daysOverdue = Math.floor((Date.now() - new Date(t.dueDate).getTime()) / (1000 * 60 * 60 * 24));
-              return {
-                id: t.id,
-                type: 'task' as const,
-                title: t.title,
-                urgency: daysOverdue > 7 ? 'critical' : daysOverdue > 3 ? 'high' : 'medium',
-                projectName: t.projectName || t.initiativeName,
-                owner: t.assigneeName,
-                daysOverdue,
-              };
-            });
-          
+          const overdueTaskItems = overdueTasks.slice(0, 3).map((t: any) => {
+            const daysOverdue = Math.floor(
+              (Date.now() - new Date(t.dueDate).getTime()) / (1000 * 60 * 60 * 24)
+            );
+            return {
+              id: t.id,
+              type: 'task' as const,
+              title: t.title,
+              urgency: daysOverdue > 7 ? 'critical' : daysOverdue > 3 ? 'high' : 'medium',
+              projectName: t.projectName || t.initiativeName,
+              owner: t.assigneeName,
+              daysOverdue,
+            };
+          });
+
           // Merge with decision action items
           setActionItems((prev) => {
             const decisionItems = prev.filter((i) => i.type === 'decision');

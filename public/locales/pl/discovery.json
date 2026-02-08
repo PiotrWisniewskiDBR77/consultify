@@ -4,7 +4,6 @@
     "subtitle": "AI-powered rozmowa z konsultantem",
     "chatTitle": "Konsultant AI",
     "chatSubtitle": "Twój wirtualny partner transformacyjny",
-
     "phases": {
       "welcome": "Powitanie",
       "ice_breaking": "Poznanie kontekstu",
@@ -14,7 +13,6 @@
       "decision": "Decyzja",
       "completed": "Zakończone"
     },
-
     "phaseDescriptions": {
       "welcome": "Wprowadzenie do sesji discovery",
       "ice_breaking": "Zrozumienie firmy i roli",
@@ -24,7 +22,6 @@
       "decision": "Następne kroki i konwersja",
       "completed": "Sesja zakończona"
     },
-
     "canvas": {
       "title": "Discovery Canvas",
       "categories": {
@@ -40,7 +37,6 @@
       "zoomOut": "Oddal",
       "fitView": "Dopasuj widok"
     },
-
     "nodes": {
       "painPoint": {
         "title": "Problem",
@@ -80,7 +76,6 @@
         "quickWin": "Quick Win"
       }
     },
-
     "severity": {
       "1": "Drobny",
       "2": "Zauważalny",
@@ -88,20 +83,17 @@
       "4": "Krytyczny",
       "5": "Blokujący"
     },
-
     "areas": {
       "process": "Procesy",
       "technology": "Technologia",
       "people": "Ludzie",
       "data": "Dane"
     },
-
     "transformationType": {
       "strategic": "Transformacja strategiczna",
       "operational": "Transformacja operacyjna",
       "digital": "Transformacja cyfrowa"
     },
-
     "recommendations": {
       "title": "Rekomendacje",
       "matchScore": "Dopasowanie",
@@ -110,7 +102,6 @@
       "initiativeIdeas": "Pomysły na inicjatywy",
       "noRecommendations": "Kontynuuj rozmowę, aby otrzymać rekomendacje"
     },
-
     "actions": {
       "startProject": "Rozpocznij projekt",
       "startProjectDesc": "Utwórz projekt transformacyjny z tymi danymi",
@@ -122,7 +113,6 @@
       "continueChatDesc": "Chcę dowiedzieć się więcej",
       "exportPdf": "Eksportuj PDF"
     },
-
     "conversion": {
       "title": "Utwórz projekt z Discovery",
       "projectName": "Nazwa projektu",
@@ -138,7 +128,6 @@
       "success": "Projekt utworzony!",
       "error": "Nie udało się utworzyć projektu"
     },
-
     "version": {
       "title": "Wersje",
       "current": "Aktualna",
@@ -147,7 +136,6 @@
       "saved": "Wersja zapisana",
       "noVersions": "Brak zapisanych wersji"
     },
-
     "header": {
       "newSession": "Nowa sesja",
       "client": "Klient",
@@ -155,7 +143,6 @@
       "size": "Wielkość",
       "phase": "Faza"
     },
-
     "prompts": {
       "welcome": "Witaj! Jestem Twoim wirtualnym konsultantem transformacyjnym. Pomogę Ci zrozumieć, gdzie leżą największe szanse na usprawnienie w Twojej organizacji.\n\nZanim zaczniemy - opowiedz mi o sobie i firmie. Jaka jest Twoja rola?",
       "askIndustry": "W jakiej branży działa Twoja firma i jakiej jest wielkości?",
@@ -165,14 +152,12 @@
       "askImpact": "Ile to kosztuje firmę miesięcznie/rocznie? (nawet przybliżona estymata pomoże)",
       "recommendationIntro": "Na podstawie naszej rozmowy, widzę że Wasza sytuacja wskazuje na potrzebę"
     },
-
     "errors": {
       "loadFailed": "Nie udało się wczytać sesji",
       "saveFailed": "Nie udało się zapisać sesji",
       "conversionFailed": "Nie udało się utworzyć projektu",
       "extractionFailed": "Nie udało się przetworzyć odpowiedzi"
     },
-
     "tooltips": {
       "addNode": "Dodaj element",
       "deleteNode": "Usuń element",

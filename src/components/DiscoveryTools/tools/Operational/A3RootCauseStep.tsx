@@ -4,7 +4,12 @@
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { OperationalItem, OperationalToolData, ToolSession, useToolStore } from '@/store/useToolStore';
+import {
+  OperationalItem,
+  OperationalToolData,
+  ToolSession,
+  useToolStore,
+} from '@/store/useToolStore';
 
 import { InlineAssist } from '../../InlineAssist';
 
@@ -56,9 +61,7 @@ export const A3RootCauseStep: React.FC<A3RootCauseStepProps> = ({ session, isPol
           {isPolish ? 'Przyczyna źródłowa (5 Why)' : 'Root cause (5 Why)'}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isPolish
-            ? 'Wypisz główne przyczyny problemu.'
-            : 'List the main root causes.'}
+          {isPolish ? 'Wypisz główne przyczyny problemu.' : 'List the main root causes.'}
         </p>
       </div>
 

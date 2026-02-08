@@ -25,6 +25,7 @@ export const CreateConversationSchema = z.object({
   projectId: z.string().uuid().optional(),
   chatProjectId: z.string().uuid().optional(),
   pmoContext: z.record(z.unknown()).optional(),
+  language: z.enum(['en', 'pl', 'de', 'ar', 'jp', 'es']).optional(),
 });
 
 export const UpdateConversationSchema = z.object({
@@ -34,6 +35,7 @@ export const UpdateConversationSchema = z.object({
   tags: z.array(z.string()).optional(),
   pmoContext: z.record(z.unknown()).optional(),
   chatProjectId: z.string().uuid().nullable().optional(),
+  language: z.enum(['en', 'pl', 'de', 'ar', 'jp', 'es']).optional(),
 });
 
 export const AddMessageSchema = z.object({

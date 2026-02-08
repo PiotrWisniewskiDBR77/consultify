@@ -4,14 +4,20 @@ import StatusMachine from '../../../server/src/services/statusMachine.js';
 describe('StatusMachine', () => {
   describe('canTransitionInitiative', () => {
     it('should allow valid transition', () => {
-      // DRAFT -> PLANNING is the correct transition now
-      const result = StatusMachine.canTransitionInitiative('DRAFT', 'PLANNING');
+      // DRAFT -> PENDING_REVIEW is the correct first transition now
+      const result = StatusMachine.canTransitionInitiative(
+        StatusMachine.INITIATIVE_STATUSES.DRAFT,
+        StatusMachine.INITIATIVE_STATUSES.PENDING_REVIEW
+      );
       expect(result).toBe(true);
     });
 
     it('should block invalid transition', () => {
       // DRAFT -> EXECUTING is not allowed directly
-      const result = StatusMachine.canTransitionInitiative('DRAFT', 'EXECUTING');
+      const result = StatusMachine.canTransitionInitiative(
+        StatusMachine.INITIATIVE_STATUSES.DRAFT,
+        StatusMachine.INITIATIVE_STATUSES.EXECUTING
+      );
       expect(result).toBe(false);
     });
   });
@@ -30,8 +36,8 @@ describe('StatusMachine', () => {
 
   describe('validateInitiativeTransition', () => {
     it('should return valid for simple allowed transition', () => {
-      // Updated to new status names
-      const result = StatusMachine.validateInitiativeTransition('DRAFT', 'PLANNING');
+      // Updated to valid canonical transition
+      const result = StatusMachine.validateInitiativeTransition('DRAFT', 'PENDING_REVIEW');
       expect(result.valid).toBe(true);
     });
 
@@ -59,8 +65,8 @@ describe('StatusMachine', () => {
     });
 
     it('should prevent approved state if governance failed', () => {
-      // Updated: REVIEW -> APPROVED needs approval
-      const result = StatusMachine.validateInitiativeTransition('REVIEW', 'APPROVED', {
+      // Canonical transition: PLANNING -> APPROVED requires governance approval
+      const result = StatusMachine.validateInitiativeTransition('PLANNING', 'APPROVED', {
         requiresApproval: true,
         isApproved: false,
       });

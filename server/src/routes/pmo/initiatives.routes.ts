@@ -13,11 +13,14 @@ import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
+import initiativeTemplateService from '../../services/initiativeTemplateService.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 import {
   CreateInitiativeSchema,
+  QuickUpdateInitiativeSchema,
   UpdateInitiativeSchema,
   UpdateInitiativeStatusSchema,
-  QuickUpdateInitiativeSchema,
+  UpdateInitiativeTemplateSchema,
 } from '../../validators/initiative.validators.js';
 
 const router = Router();
@@ -64,6 +67,92 @@ router.delete('/portfolio/dependencies/:id', InitiativeController.deletePortfoli
  * Get all initiatives for organization
  */
 router.get('/', InitiativeController.getInitiatives);
+
+/**
+ * GET /api/initiatives/templates
+ * List initiative templates (public + org-scoped)
+ */
+router.get('/templates', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const category = req.query?.category ? String(req.query.category) : null;
+    const templates = await initiativeTemplateService.getTemplates({
+      category,
+      organizationId: String(orgId),
+      includePublic: true,
+    });
+    return res.json({ templates });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to fetch templates', message: err.message });
+  }
+});
+
+/**
+ * GET /api/initiatives/templates/:templateId
+ * Fetch template details (incl. cardScope)
+ */
+router.get('/templates/:templateId', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { templateId } = req.params;
+    const tpl = await initiativeTemplateService.getTemplateById(String(templateId));
+    if (!tpl) return res.status(404).json({ error: 'Template not found' });
+    if (!tpl.isPublic && tpl.organizationId !== String(orgId)) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+    return res.json({ template: tpl });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to fetch template', message: err.message });
+  }
+});
+
+/**
+ * PATCH /api/initiatives/:id/template
+ * Change initiative template (card scope).
+ */
+router.patch(
+  '/:id/template',
+  validateBody(UpdateInitiativeTemplateSchema),
+  async (req: any, res: any) => {
+    try {
+      const orgId = req.user?.organizationId;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const { id } = req.params;
+      const templateId = req.body?.templateId ?? null;
+
+      // Validate template visibility if provided
+      if (templateId) {
+        const tpl = await initiativeTemplateService.getTemplateById(String(templateId));
+        if (!tpl) return res.status(400).json({ error: 'Invalid templateId' });
+        if (!tpl.isPublic && tpl.organizationId !== String(orgId)) {
+          return res.status(403).json({ error: 'Template not available for this organization' });
+        }
+      }
+
+      const existing = await queryHelpers.queryOne<any>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ? LIMIT 1`,
+        [String(id), String(orgId)]
+      );
+      if (!existing) return res.status(404).json({ error: 'Initiative not found' });
+
+      await queryHelpers.queryRun(
+        `UPDATE initiatives SET initiative_template_id = ? WHERE id = ? AND organization_id = ?`,
+        [templateId ? String(templateId) : null, String(id), String(orgId)]
+      );
+      return res.json({
+        id: String(id),
+        initiativeTemplateId: templateId ? String(templateId) : null,
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: 'Failed to update template', message: err.message });
+    }
+  }
+);
 
 /**
  * POST /api/initiatives
@@ -233,5 +322,24 @@ router.get('/:id/resources', InitiativeController.getResources);
  * Add a resource to an initiative
  */
 router.post('/:id/resources', InitiativeController.addResource);
+
+// ==========================================
+// P0: RAID / Stakeholders / Watchers / History
+// ==========================================
+
+router.get('/:id/stakeholders', InitiativeController.getStakeholders);
+router.post('/:id/stakeholders', InitiativeController.addStakeholder);
+router.delete('/:id/stakeholders/:stakeholderId', InitiativeController.deleteStakeholder);
+
+router.get('/:id/watchers', InitiativeController.getWatchers);
+router.post('/:id/watchers', InitiativeController.addWatcher);
+router.delete('/:id/watchers/:watcherId', InitiativeController.deleteWatcher);
+
+router.get('/:id/raid', InitiativeController.getRaid);
+router.post('/:id/raid', InitiativeController.createRaidItem);
+router.patch('/:id/raid/:raidId', InitiativeController.updateRaidItem);
+router.delete('/:id/raid/:raidId', InitiativeController.deleteRaidItem);
+
+router.get('/:id/history', InitiativeController.getHistory);
 
 export default router;

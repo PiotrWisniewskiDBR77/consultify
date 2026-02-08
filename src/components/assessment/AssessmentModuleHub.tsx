@@ -29,11 +29,12 @@ import {
   Map,
   Plus,
   Save,
-  X,
   Workflow,
+  X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { useDeviceType } from '../../hooks/useDeviceType';
 import { useAppStore } from '../../store/useAppStore';
@@ -43,11 +44,11 @@ import { AppView } from '../../types';
 import { DRDAxis } from '../../types';
 import { SplitLayout } from '../layout/SplitLayout';
 import { AssessmentAxisWorkspace } from './AssessmentAxisWorkspace';
+import { AssessmentInitiativesDrawer } from './AssessmentInitiativesDrawer';
 import { AssessmentSummaryWorkspace } from './AssessmentSummaryWorkspace';
 // Sub-components
 // Sub-components
 import { AssessmentTable } from './AssessmentTable';
-import { AssessmentInitiativesDrawer } from './AssessmentInitiativesDrawer';
 import { DocumentTabsBar, DocumentType, OpenDocument } from './DocumentTabsBar';
 // Multi-framework assessment maps
 import { InitiativeDetailsModal } from './modals/InitiativeDetailsModal';
@@ -174,6 +175,8 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
   initialAssessmentId,
   onNavigate,
 }) => {
+  const { i18n } = useTranslation();
+  const isPolish = i18n.language === 'pl';
   const { currentProjectId, setCurrentView } = useAppStore();
   const { isTablet, isMobile, isTouchDevice } = useDeviceType();
   const isCompact = isTablet || isMobile;
@@ -470,13 +473,13 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
         }
       } else {
         const errorData = await response.json();
-        setSaveError(errorData.error || 'Nie udało się zapisać');
-        toast.error('Nie udało się zapisać assessment');
+        setSaveError(errorData.error || (isPolish ? 'Nie udało się zapisać' : 'Failed to save'));
+        toast.error(isPolish ? 'Nie udało się zapisać assessment' : 'Failed to save assessment');
       }
     } catch (error) {
       console.error('[AssessmentModuleHub] Save error:', error);
-      setSaveError('Błąd połączenia');
-      toast.error('Błąd połączenia');
+      setSaveError(isPolish ? 'Błąd połączenia' : 'Connection error');
+      toast.error(isPolish ? 'Błąd połączenia' : 'Connection error');
     } finally {
       setIsSaving(false);
     }
@@ -681,7 +684,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
               <div className="text-center">
                 <Loader2 className="w-8 h-8 text-purple-500 animate-spin mx-auto mb-3" />
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Ładowanie danych assessmentu...
+                  {isPolish ? 'Ładowanie danych assessmentu...' : 'Loading assessment data...'}
                 </p>
               </div>
             </div>
@@ -1176,7 +1179,9 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
             <div className="flex items-center justify-between">
               {/* Progress Indicator */}
               <div className="flex items-center gap-3">
-                <span className="text-sm text-slate-500 dark:text-slate-400">Postęp:</span>
+                <span className="text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Postęp:' : 'Progress:'}
+                </span>
                 <div className="w-32 h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-purple-500 rounded-full transition-all duration-300"
@@ -1189,9 +1194,9 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                 {hasUnsavedChanges && (
                   <span className="text-xs text-amber-500 dark:text-amber-400 flex items-center gap-1">
                     <AlertCircle size={12} />
-                    Niezapisane zmiany
+                    Unsaved changes
                     <span className="text-slate-400 dark:text-slate-500 ml-1">
-                      (auto-save za 30s)
+                      (auto-save in 30s)
                     </span>
                   </span>
                 )}
@@ -1199,7 +1204,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                   <span className="text-xs text-green-500 dark:text-green-400 flex items-center gap-1">
                     <Check size={12} />
                     Auto-saved{' '}
-                    {lastSaved.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
+                    {lastSaved.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 )}
               </div>
@@ -1211,8 +1216,8 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                 )}
                 {lastSaved && !saveError && (
                   <span className="text-xs text-slate-400 dark:text-slate-500">
-                    Zapisano:{' '}
-                    {lastSaved.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
+                    Saved:{' '}
+                    {lastSaved.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 )}
                 {/* Version History Button */}
@@ -1220,10 +1225,10 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                   <button
                     onClick={() => setShowVersionHistory(true)}
                     className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700 rounded-lg font-medium text-sm transition-colors"
-                    title="Historia wersji"
+                    title="Version history"
                   >
                     <History size={16} />
-                    Historia
+                    History
                   </button>
                 )}
                 <button
@@ -1243,17 +1248,17 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                   {isSaving ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
-                      Zapisuję...
+                      {isPolish ? 'Zapisuję...' : 'Saving...'}
                     </>
                   ) : lastSaved && !hasUnsavedChanges ? (
                     <>
                       <Check size={16} />
-                      Zapisano
+                      Saved
                     </>
                   ) : (
                     <>
                       <Save size={16} />
-                      Zapisz
+                      Save
                     </>
                   )}
                 </button>

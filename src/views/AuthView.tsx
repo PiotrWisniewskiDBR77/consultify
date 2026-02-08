@@ -760,12 +760,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
             <img
               src="/assets/logos/logo-dark.png"
               className="h-10 w-auto object-contain hidden dark:block"
-              alt="TechnoLex"
+              alt="Consultinity"
             />
             <img
               src="/assets/logos/logo-light.png"
               className="h-10 w-auto object-contain block dark:hidden"
-              alt="TechnoLex"
+              alt="Consultinity"
             />
           </div>
 

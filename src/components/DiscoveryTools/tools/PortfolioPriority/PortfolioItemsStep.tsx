@@ -205,9 +205,7 @@ export const PortfolioItemsStep: React.FC<PortfolioItemsStepProps> = ({ session,
                   </select>
                   <select
                     value={item.marketShare}
-                    onChange={(e) =>
-                      handleUpdate(item.id, { marketShare: Number(e.target.value) })
-                    }
+                    onChange={(e) => handleUpdate(item.id, { marketShare: Number(e.target.value) })}
                     className="px-2 py-1 text-xs rounded border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-300"
                   >
                     {[1, 2, 3, 4, 5].map((v) => (

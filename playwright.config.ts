@@ -48,7 +48,9 @@ export default defineConfig({
   webServer: useWebServer
     ? [
         {
-          command: `PORT=${backendPort} npm run dev:backend`,
+          // Start backend directly (skip migrations) for deterministic CI/E2E.
+          // The server's DatabaseInitializer will bootstrap a minimal schema from TEST_SCHEMA in test mode.
+          command: `cd server && PORT=${backendPort} NODE_ENV=test E2E_MODE=${process.env.E2E_MODE || 'false'} DB_TYPE=sqlite SQLITE_PATH=../data/dev/consultinity-e2e.db MOCK_DB=false npx tsx src/index.ts`,
           url: `${backendUrl.replace(/\/$/, '')}/api/health`,
           reuseExistingServer: true,
           timeout: 120000,

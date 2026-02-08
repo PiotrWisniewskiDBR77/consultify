@@ -31,8 +31,8 @@ import {
   KbCategory,
   useKnowledgeArticles,
   useKnowledgeCategories,
-  useKnowledgeSearch,
   useKnowledgeContextual,
+  useKnowledgeSearch,
 } from '../../hooks/useKnowledge';
 
 // ============================================
@@ -132,9 +132,10 @@ const CategoryChip: React.FC<CategoryChipProps> = ({ category, isActive, onClick
     className={`
       inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium
       transition-all whitespace-nowrap
-      ${isActive
-        ? 'bg-purple-600 text-white shadow-md'
-        : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-purple-100 dark:hover:bg-purple-900/30'
+      ${
+        isActive
+          ? 'bg-purple-600 text-white shadow-md'
+          : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-purple-100 dark:hover:bg-purple-900/30'
       }
     `}
   >
@@ -155,10 +156,7 @@ interface KnowledgeLibraryProps {
   moduleId?: string;
 }
 
-export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({
-  onArticleClick,
-  moduleId,
-}) => {
+export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleClick, moduleId }) => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -236,9 +234,10 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({
             className={`
               inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium
               transition-all whitespace-nowrap
-              ${!activeCategory
-                ? 'bg-purple-600 text-white shadow-md'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-purple-100'
+              ${
+                !activeCategory
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-purple-100'
               }
             `}
           >

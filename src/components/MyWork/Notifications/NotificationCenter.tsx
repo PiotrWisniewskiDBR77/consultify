@@ -43,6 +43,7 @@ interface NotificationCenterProps {
   onNotificationClick?: (notification: Notification) => void;
   onOpenTaskModal?: (taskId: string) => void;
   onOpenDecisionPanel?: (decisionId: string) => void;
+  onOpenInitiative?: (initiativeId: string) => void;
   maxHeight?: string;
 }
 
@@ -298,6 +299,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   onNotificationClick,
   onOpenTaskModal,
   onOpenDecisionPanel,
+  onOpenInitiative,
   maxHeight = '100%',
 }) => {
   const { t } = useTranslation();
@@ -310,7 +312,8 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   // Navigation hook
   const { navigateToObject, canNavigate, getNavigationLabel } = useNotificationNavigation(
     onOpenTaskModal,
-    onOpenDecisionPanel
+    onOpenDecisionPanel,
+    onOpenInitiative
   );
 
   // Load notifications

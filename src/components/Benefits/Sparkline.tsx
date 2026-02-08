@@ -67,17 +67,6 @@ export const Sparkline: React.FC<SparklineProps> = ({
     return { path, targetY, minVal, maxVal, points };
   }, [data, width, height, targetValue, showTarget]);
 
-  if (data.length === 0) {
-    return (
-      <div
-        className={`flex items-center justify-center text-slate-600 text-xs ${className}`}
-        style={{ width, height }}
-      >
-        No data
-      </div>
-    );
-  }
-
   const lineColor = isOnTarget ? 'stroke-green-500' : 'stroke-red-500';
   const dotColor = isOnTarget ? 'fill-green-500' : 'fill-red-500';
   const areaColor = isOnTarget ? 'fill-green-500/10' : 'fill-red-500/10';
@@ -102,6 +91,17 @@ export const Sparkline: React.FC<SparklineProps> = ({
     area += ` L ${lastPoint.x} ${height - 2} Z`;
     return area;
   }, [points, height]);
+
+  if (data.length === 0) {
+    return (
+      <div
+        className={`flex items-center justify-center text-slate-600 text-xs ${className}`}
+        style={{ width, height }}
+      >
+        No data
+      </div>
+    );
+  }
 
   return (
     <svg width={width} height={height} className={className} viewBox={`0 0 ${width} ${height}`}>

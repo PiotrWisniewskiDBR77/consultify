@@ -17,20 +17,31 @@ describe('Resource Management Integration Tests', () => {
   let dbAvailable = false;
 
   beforeAll(async () => {
+    process.env.MOCK_DB = 'true';
+    process.env.SQLITE_PATH = '';
     try {
-      // Initialize test database
+      const { TestDatabaseFactory } = await import('../utils/TestDatabaseFactory.js');
+      const testDb = await TestDatabaseFactory.create();
+
+      // Pass the real SQLite DB to the global mock holder and canonical keys
+      (global as any).__TEST_DB_MOCK__ = testDb;
+      (global as any).__CONSULTINITY_GLOBAL_DB_INSTANCE__ = testDb;
+      (global as any).__CONSULTINITY_SQLITE_INSTANCE__ = testDb;
+      (globalThis as any).__CONSULTINITY_GLOBAL_DB_INSTANCE__ = testDb;
+      (globalThis as any).__CONSULTINITY_SQLITE_INSTANCE__ = testDb;
+
       const { getDatabase } = await import('../../server/src/database/Database');
       db = getDatabase();
-
-      // Test database availability
       await db.initPromise;
 
-      // Create test organization
-      const org = await db.get(
-        `INSERT INTO organizations (id, name) VALUES (?, ?) RETURNING id`,
-        ['test-org-integration', 'Test Organization']
-      );
-      orgId = org?.id || 'test-org-integration';
+      // Initialize base data needed for tests
+      await db.run(`INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`, [
+        'test-org-integration',
+        'Test Organization',
+        'premium',
+        'active',
+      ]);
+      orgId = 'test-org-integration';
       dbAvailable = true;
 
       // Create test users and get auth tokens
@@ -48,7 +59,7 @@ describe('Resource Management Integration Tests', () => {
       try {
         // Cleanup test data
         await db.run('DELETE FROM organizations WHERE id = ?', [orgId]);
-      } catch (e) { }
+      } catch (e) {}
     }
   });
 
@@ -64,7 +75,7 @@ describe('Resource Management Integration Tests', () => {
                    WHERE id = ?`,
           [orgId]
         );
-      } catch (e) { }
+      } catch (e) {}
     });
 
     it('should complete budget setup → expense recording → alert workflow', async () => {
@@ -175,18 +186,18 @@ describe('Resource Management Integration Tests', () => {
 
     beforeEach(async () => {
       // Create test subscription plan
-      const plan = await db.get<{ id: string }>(
-        `INSERT INTO subscription_plans (id, name, memory_limit_mb, cpu_quota_percent, max_concurrent_ai_jobs)
-                 VALUES (?, ?, ?, ?, ?) RETURNING id`,
+      await db.run(
+        `INSERT OR IGNORE INTO subscription_plans (id, name, memory_limit_mb, cpu_quota_percent, max_concurrent_ai_jobs)
+                 VALUES (?, ?, ?, ?, ?)`,
         ['plan-test', 'Test Plan', 2048, 75, 10]
       );
-      planId = plan!.id;
+      planId = 'plan-test';
     });
 
     afterEach(async () => {
       // Cleanup
-      await db.run('DELETE FROM subscription_plans WHERE id = ?', [planId]);
       await db.run('DELETE FROM organization_billing WHERE organization_id = ?', [orgId]);
+      await db.run('DELETE FROM subscription_plans WHERE id = ?', [planId]);
     });
 
     it('should assign plan → apply resource limits → enforce quotas', async () => {
@@ -401,16 +412,17 @@ describe('Resource Management Integration Tests', () => {
       );
 
       // Create and assign plan
-      const plan = await db.get<{ id: string }>(
-        `INSERT INTO subscription_plans (id, name, memory_limit_mb)
-                 VALUES (?, ?, ?) RETURNING id`,
+      await db.run(
+        `INSERT OR IGNORE INTO subscription_plans (id, name, memory_limit_mb)
+                 VALUES (?, ?, ?)`,
         ['plan-integrated', 'Integrated Plan', 1024]
       );
+      const planIdLocal = 'plan-integrated';
 
       await db.run(
-        `INSERT INTO organization_billing (organization_id, subscription_plan_id)
+        `INSERT OR REPLACE INTO organization_billing (organization_id, subscription_plan_id)
                  VALUES (?, ?)`,
-        [orgId, plan!.id]
+        [orgId, planIdLocal]
       );
 
       // Scenario 1: Within budget and quota - should pass
@@ -451,8 +463,8 @@ describe('Resource Management Integration Tests', () => {
       expect(budgetOk).toBe(false); // Would be blocked by middleware
 
       // Cleanup
-      await db.run('DELETE FROM subscription_plans WHERE id = ?', [plan!.id]);
       await db.run('DELETE FROM organization_billing WHERE organization_id = ?', [orgId]);
+      await db.run('DELETE FROM subscription_plans WHERE id = ?', [planIdLocal]);
     });
   });
 });

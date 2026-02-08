@@ -26,7 +26,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
-
 import {
   ManagementReport,
   ManagementReportScope,
@@ -42,9 +41,9 @@ import {
   TableColumn,
   ViewMode,
 } from '../../shared/ModuleHub';
-import { ReportGeneratorDrawer } from './ReportGeneratorDrawer';
 import { PortfolioHealthReport } from './PortfolioHealthReport';
 import { RaidReport } from './RaidReport';
+import { ReportGeneratorDrawer } from './ReportGeneratorDrawer';
 import { SteeringCommitteeReport } from './SteeringCommitteeReport';
 import { TeamMeetingReport } from './TeamMeetingReport';
 
@@ -93,6 +92,7 @@ const SCOPE_META: Record<ManagementReportScope, { label: string; color: string }
 const STATUS_META: Record<ManagementReportStatus, { label: string; dotColor: string }> = {
   DRAFT: { label: 'Draft', dotColor: 'bg-amber-400' },
   FINAL: { label: 'Final', dotColor: 'bg-emerald-400' },
+  APPROVED: { label: 'Approved', dotColor: 'bg-purple-400' },
   ARCHIVED: { label: 'Archived', dotColor: 'bg-slate-400' },
 };
 
@@ -275,9 +275,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         render: (row: ReportHistoryItem) => (
           <div>
             <span className="text-sm text-white font-medium">{row.title}</span>
-            {row.projectName && (
-              <p className="text-xs text-slate-400 mt-0.5">{row.projectName}</p>
-            )}
+            {row.projectName && <p className="text-xs text-slate-400 mt-0.5">{row.projectName}</p>}
           </div>
         ),
       },

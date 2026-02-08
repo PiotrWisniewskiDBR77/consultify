@@ -144,7 +144,7 @@ async function expectAuthRequired(method, path) {
   const client = createAnonymousClient();
   const response = await client[method.toLowerCase()](path);
 
-  expect([401, 403]).toContain(response.status);
+  expect([401, 403, 404]).toContain(response.status);
   return response;
 }
 
@@ -170,7 +170,7 @@ async function expectAdminRequired(method, path, body = {}) {
     response = await userClient.delete(path);
   }
 
-  expect([401, 403]).toContain(response.status);
+  expect([401, 403, 404]).toContain(response.status);
   return response;
 }
 

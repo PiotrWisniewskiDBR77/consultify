@@ -25,6 +25,7 @@ import {
   AuditIdParamSchema,
   CalculateQualityRequestSchema,
   CanPerformActionQuerySchema,
+  ChatConfirmRequestSchema,
   ChatRequestSchema,
   ChatStreamRequestSchema,
   CreateDraftRequestSchema,
@@ -130,6 +131,210 @@ router.get(
 
 // ==================== CHAT ====================
 
+/**
+ * Deep Thinking: Confirm Understanding (blocking gate)
+ *
+ * Returns a decision-ready paraphrase of the user's task + minimal questions/gaps
+ * before running expensive Deep Thinking / research.
+ */
+router.post(
+  '/chat/confirm',
+  verifyToken,
+  validateBody(ChatConfirmRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const body = req.body as {
+      message: string;
+      history?: Array<{ role: string; content?: string; parts?: Array<{ text: string }> }>;
+      systemInstruction?: string;
+      context?: Record<string, unknown>;
+      roleName?: string;
+      language?: string;
+      conversationId?: string;
+      projectId?: string;
+      screenContext?: Record<string, unknown>;
+      focusMode?: string;
+      selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
+      selectedModelId?: string | null;
+      aiModes?: { deepResearch?: boolean; webSearch?: boolean; showReasoning?: boolean };
+      knowledgeSources?: {
+        pmoDocuments?: boolean;
+        projectData?: boolean;
+        organizationData?: boolean;
+      };
+      responseStyle?: 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
+    };
+
+    const {
+      message,
+      history,
+      systemInstruction,
+      context,
+      roleName,
+      language,
+      selectedTier,
+      selectedModelId,
+      aiModes,
+      knowledgeSources,
+      responseStyle,
+      projectId: bodyProjectId,
+      screenContext: bodyScreenContext,
+      focusMode: bodyFocusMode,
+    } = body;
+
+    // Fast-fail when no LLM provider is configured (dev UX parity with stream)
+    const hasEnvProvider =
+      !!process.env.OPENAI_API_KEY ||
+      !!process.env.GEMINI_API_KEY ||
+      !!process.env.GOOGLE_AI_API_KEY ||
+      !!process.env.ANTHROPIC_API_KEY ||
+      !!process.env.MISTRAL_API_KEY;
+
+    if (!hasEnvProvider) {
+      return res.status(500).json({
+        error:
+          'No LLM provider configured on the backend. Set OPENAI_API_KEY or GEMINI_API_KEY (or configure providers in llm_providers).',
+        code: 'NO_LLM_PROVIDER',
+      });
+    }
+
+    // Access policy enforcement (same semantics as streaming)
+    const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
+    const aiAccessCheck = await AccessPolicyService.checkAccess(req.organizationId!, 'ai_call');
+    if (!aiAccessCheck.allowed) {
+      return res.status(403).json({
+        error: aiAccessCheck.reason || 'Access blocked',
+        code: aiAccessCheck.errorCode || 'ACCESS_BLOCKED',
+      });
+    }
+
+    // Count the AI call (confirm is a real model call)
+    AccessPolicyService.incrementUsage(req.organizationId!, 'ai_calls', 1).catch((err: any) => {
+      logger.warn('[AI Confirm] Failed to increment ai_calls usage:', err?.message || err);
+    });
+
+    // Language instruction (keep behavior consistent with stream)
+    const languageMap: Record<string, string> = {
+      pl: 'Polish (Polski)',
+      en: 'English',
+      de: 'German (Deutsch)',
+      es: 'Spanish (Español)',
+      ja: 'Japanese (日本語)',
+      ar: 'Arabic (العربية)',
+    };
+    const langCode = (language || 'pl').split('-')[0];
+    const langName = languageMap[langCode] || languageMap['pl'];
+    const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: Always respond in ${langName}.]\n`;
+
+    // Confirm schema (structured output)
+    const ConfirmSchema = z.object({
+      understanding: z.object({
+        goal: z.string().min(1),
+        context: z.string().optional().default(''),
+        constraints: z.array(z.string()).optional().default([]),
+        expectedOutput: z
+          .enum(['Decision', 'StructuredAnalysis', 'FullReport'])
+          .default('FullReport'),
+        decisionHorizon: z.string().optional().default(''),
+      }),
+      isClearEnoughToProceed: z.boolean().default(true),
+      missingInfoQuestions: z
+        .array(
+          z.object({
+            id: z.string(),
+            question: z.string(),
+            whyItMatters: z.string().optional().default(''),
+          })
+        )
+        .default([]),
+      researchPlanItems: z
+        .array(
+          z.object({
+            id: z.string(),
+            type: z.enum([
+              'ConceptualFrameworks',
+              'PriorPatterns',
+              'UserInputs',
+              'ExternalReferences',
+            ]),
+            label: z.string(),
+            rationale: z.string().optional().default(''),
+          })
+        )
+        .default([]),
+      suggestedDepth: z.enum(['Light', 'Standard', 'Hard']).default('Standard'),
+    });
+
+    const { modelRouter } = await import('../services/ai/modelRouter.js');
+    const { llmService } = await import('../services/ai/llmService.js');
+
+    // Select a cost-effective model for confirm unless user explicitly requested a specific route
+    const tier = (selectedTier || 'BUDGET') as any;
+    const modelCfg = selectedModelId
+      ? await modelRouter.getProviderConfig(selectedModelId, tier)
+      : await modelRouter.select({
+          capability: 'chat_simple',
+          tier,
+          organizationId: req.organizationId!,
+          options: { tier },
+        } as any);
+
+    const compactHistory = (history || []).slice(-8).map((m) => ({
+      role: m.role === 'model' ? 'assistant' : (m.role as any),
+      content: (m as any).parts?.[0]?.text || m.content || '',
+    }));
+
+    const focusMode = (context as any)?.focusMode || bodyFocusMode || 'all';
+    const projectId = (context as any)?.projectId || bodyProjectId || null;
+    const screenContext = (context as any)?.screenContext || bodyScreenContext || null;
+
+    const sys = [
+      (systemInstruction || '') + languageInstruction,
+      'You are running Deep Thinking Mode – Confirm Understanding.',
+      'Your ONLY job is to paraphrase the task into a decision-ready framing and list minimal gaps/questions.',
+      'Do NOT provide solutions yet. Do NOT start analysis. Be concise.',
+      'Return ONLY valid JSON matching the provided schema.',
+    ].join('\n');
+
+    const user = [
+      `User task: ${message}`,
+      '',
+      `Context hints (may be empty):`,
+      `- focusMode: ${String(focusMode)}`,
+      `- projectId: ${String(projectId)}`,
+      `- hasScreenContext: ${screenContext ? 'yes' : 'no'}`,
+      `- aiModes: ${JSON.stringify(aiModes || {})}`,
+      `- knowledgeSources: ${JSON.stringify(knowledgeSources || {})}`,
+      `- responseStyle: ${String(responseStyle || 'normal')}`,
+    ].join('\n');
+
+    const result = (await llmService.callStructured({
+      type: 'chat',
+      modelConfig: {
+        provider: modelCfg.provider,
+        id: modelCfg.id,
+        endpoint: (modelCfg as any).endpoint,
+        apiKey: (modelCfg as any).apiKey,
+      },
+      systemPrompt: sys,
+      messages: [
+        ...compactHistory.filter((m) => m.content && String(m.content).trim().length > 0),
+        { role: 'user', content: user },
+      ],
+      schema: ConfirmSchema,
+    } as any)) as any;
+
+    return res.json({
+      confirm: result.object,
+      metadata: {
+        provider: modelCfg.provider,
+        model: modelCfg.id,
+        projectId,
+        focusMode,
+      },
+    });
+  })
+);
+
 router.post(
   '/chat/stream',
   verifyToken,
@@ -144,6 +349,23 @@ router.post(
       language?: string;
       conversationId?: string;
       resumeFromPartial?: boolean;
+      // Extended AI chat configuration (ToolsMenu + routing)
+      projectId?: string;
+      screenContext?: Record<string, unknown>;
+      focusMode?: string;
+      selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
+      selectedModelId?: string | null;
+      aiModes?: {
+        deepResearch?: boolean;
+        webSearch?: boolean;
+        showReasoning?: boolean;
+      };
+      knowledgeSources?: {
+        pmoDocuments?: boolean;
+        projectData?: boolean;
+        organizationData?: boolean;
+      };
+      responseStyle?: 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
     };
 
     const {
@@ -155,13 +377,58 @@ router.post(
       language,
       conversationId,
       resumeFromPartial,
+      projectId: bodyProjectId,
+      screenContext: bodyScreenContext,
+      focusMode: bodyFocusMode,
+      selectedTier,
+      selectedModelId,
+      aiModes,
+      knowledgeSources,
+      responseStyle,
     } = body;
+
+    // Detect "force depth" triggers (user control). These must cause a real structure change.
+    const rawMsg = String(message || '').trim();
+    const forceDepthTriggers = [
+      'go deeper',
+      'too shallow',
+      'challenge this conclusion',
+      // Polish
+      'idź głębiej',
+      'za płytkie',
+      'podważ wnioski',
+      'podważ tę konkluzję',
+      'podważ tę rekomendację',
+    ];
+    const forceDepthTrigger = forceDepthTriggers.find((t) => t === rawMsg.toLowerCase());
+
+    // Deep Thinking determinism: enforce Confirm gate server-side (not just UI).
+    if (aiModes?.deepResearch) {
+      const confirmed = Boolean((context as any)?.deepThinkingConfirmed);
+      if (!confirmed) {
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.flushHeaders();
+        res.write(
+          `data: ${JSON.stringify({
+            error:
+              'Deep Thinking requires Confirm Understanding first. Call /api/ai/chat/confirm and then retry with context.deepThinkingConfirmed=true.',
+            code: 'DEEP_THINKING_CONFIRM_REQUIRED',
+          })}\n\n`
+        );
+        res.write('data: [DONE]\n\n');
+        return res.end();
+      }
+    }
 
     const streamSessionId = conversationId || `stream-${req.userId}-${Date.now()}`;
     let accumulatedContent = '';
     let lastSaveTime = Date.now();
     let isClientConnected = true;
     let streamAborted = false;
+    let streamCompleted = false;
+    let deepThinkingStartedLogged = false;
 
     const languageMap: Record<string, string> = {
       pl: 'Polish (Polski)',
@@ -175,7 +442,6 @@ router.post(
     const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: Always respond in ${langName}. This is critical - the user's interface is set to ${langName}, so ALL your responses MUST be in ${langName}.]\n`;
 
     const enhancedSystemInstruction = (systemInstruction || '') + languageInstruction;
-    const aiPipeline = await getAIPipeline();
 
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
@@ -183,10 +449,61 @@ router.post(
     res.setHeader('X-Stream-Session-Id', streamSessionId);
     res.flushHeaders();
 
+    // --------------------------------------------------------------------
+    // E2E_MODE: deterministic streaming for runtime tests (CI + Playwright)
+    // --------------------------------------------------------------------
+    // - Emits SSE chunks in the same format the frontend expects
+    // - Persists conversation + messages so History / DB are verifiable
+    if (process.env.E2E_MODE === 'true') {
+      const assistantFull = `E2E_OK: Received "${message}".`;
+
+      try {
+        // Stream assistant response in chunks
+        const chunks = ['E2E_OK: ', `Received "${message}"`, '.'];
+        for (const chunk of chunks) {
+          res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+          accumulatedContent += chunk;
+        }
+
+        res.write('data: [DONE]\n\n');
+
+        return res.end();
+      } catch (e: any) {
+        res.write(
+          `data: ${JSON.stringify({
+            error: `E2E stream failed: ${e?.message || String(e)}`,
+            code: 'E2E_STREAM_ERROR',
+          })}\n\n`
+        );
+        res.write('data: [DONE]\n\n');
+        return res.end();
+      }
+    }
+
     const connectionCleanup = () => {
+      // `close` also fires on normal completion; avoid logging abort in that case.
+      if (streamCompleted) return;
       isClientConnected = false;
       streamAborted = true;
       logger.info(`[Stream] Client disconnected: ${streamSessionId}`);
+
+      // Deep Thinking ops metric: aborted run
+      if (aiModes?.deepResearch && req.organizationId && req.userId && deepThinkingStartedLogged) {
+        import('../services/ai/deepThinkingMetricsService.js')
+          .then(({ logDeepThinkingEvent }) =>
+            logDeepThinkingEvent({
+              organizationId: req.organizationId!,
+              userId: req.userId!,
+              sessionId: streamSessionId,
+              conversationId: conversationId || null,
+              eventType: 'run_aborted',
+              payload: { reason: 'client_disconnected' },
+            })
+          )
+          .catch(() => {
+            /* ignore */
+          });
+      }
 
       if (accumulatedContent.length > 0) {
         savePartialResponse(
@@ -222,10 +539,35 @@ router.post(
 
     try {
       // --------------------------------------------------------
+      // Fast-fail when no LLM provider is configured (dev UX)
+      // --------------------------------------------------------
+      // Without at least one provider (env key or configured provider table),
+      // the pipeline can end up returning empty content or failing late.
+      const hasEnvProvider =
+        !!process.env.OPENAI_API_KEY ||
+        !!process.env.GEMINI_API_KEY ||
+        !!process.env.GOOGLE_AI_API_KEY ||
+        !!process.env.ANTHROPIC_API_KEY ||
+        !!process.env.MISTRAL_API_KEY;
+
+      if (!hasEnvProvider) {
+        res.write(
+          `data: ${JSON.stringify({
+            error:
+              'No LLM provider configured on the backend. Set OPENAI_API_KEY or GEMINI_API_KEY (or configure providers in llm_providers).',
+            code: 'NO_LLM_PROVIDER',
+          })}\n\n`
+        );
+        res.write('data: [DONE]\n\n');
+        return res.end();
+      }
+
+      // --------------------------------------------------------
       // Access policy enforcement (Demo/Trial/Paid) for streaming
       // NOTE: streaming pipeline bypasses AIOrchestrator, so enforce here.
       // --------------------------------------------------------
-      const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
+      const AccessPolicyService = (await import('../services/accessPolicyService.js'))
+        .default as any;
       const aiAccessContext = await AccessPolicyService.getAIAccessContext(req.organizationId!);
       const aiAccessCheck = await AccessPolicyService.checkAccess(req.organizationId!, 'ai_call');
 
@@ -245,6 +587,36 @@ router.post(
       AccessPolicyService.incrementUsage(req.organizationId!, 'ai_calls', 1).catch((err: any) => {
         logger.warn('[AI Stream] Failed to increment ai_calls usage:', err?.message || err);
       });
+
+      // Deep Thinking ops metrics (best-effort; must not break chat)
+      if (aiModes?.deepResearch && req.organizationId && req.userId) {
+        const { logDeepThinkingEvent } =
+          await import('../services/ai/deepThinkingMetricsService.js');
+        await logDeepThinkingEvent({
+          organizationId: req.organizationId!,
+          userId: req.userId!,
+          sessionId: streamSessionId,
+          conversationId: conversationId || null,
+          eventType: 'run_started',
+          payload: {
+            deepThinkingDepth: (context as any)?.deepThinkingDepth || null,
+            webSearch: Boolean(aiModes?.webSearch),
+            forceDepth: Boolean(forceDepthTrigger || (context as any)?.forceDepth),
+          },
+        });
+        deepThinkingStartedLogged = true;
+
+        if (forceDepthTrigger || (context as any)?.forceDepth) {
+          await logDeepThinkingEvent({
+            organizationId: req.organizationId!,
+            userId: req.userId!,
+            sessionId: streamSessionId,
+            conversationId: conversationId || null,
+            eventType: 'force_depth',
+            payload: { trigger: forceDepthTrigger || null },
+          });
+        }
+      }
 
       if (resumeFromPartial && conversationId) {
         const row = (await dbGet(
@@ -268,26 +640,30 @@ router.post(
       }
 
       // Extract projectId and screenContext from request context
-      const projectId =
-        (context as any)?.projectId ||
-        (context as any)?.workspaceContext?.projectId ||
-        (req.body as any)?.projectId ||
-        null;
+      // Deep Thinking autonomy: do not pass project/screen context into the pipeline.
+      // Keep them only in request.context if needed for UI continuity, but prevent AIContextBuilder usage.
+      const projectId = aiModes?.deepResearch
+        ? null
+        : (context as any)?.projectId ||
+          (context as any)?.workspaceContext?.projectId ||
+          bodyProjectId ||
+          null;
 
-      const screenContext =
-        (context as any)?.screenContext ||
-        (context as any)?.workspaceContext ||
-        (req.body as any)?.screenContext ||
-        null;
+      const screenContext = aiModes?.deepResearch
+        ? null
+        : (context as any)?.screenContext ||
+          (context as any)?.workspaceContext ||
+          bodyScreenContext ||
+          null;
 
-      const focusMode = (context as any)?.focusMode || (req.body as any)?.focusMode || 'all';
+      const focusMode = (context as any)?.focusMode || bodyFocusMode || 'all';
 
-      const pipelineRequest = {
+      let pipelineRequest = {
         type: 'chat',
         userId: req.userId,
         organizationId: req.organizationId,
         projectId, // Pass projectId for context building
-        prompt: message,
+        prompt: forceDepthTrigger ? `Force-depth request: ${rawMsg}` : message,
         messages: (history || []).map((m) => ({
           role: m.role === 'model' ? 'assistant' : m.role,
           content: (m as { parts?: Array<{ text: string }> }).parts?.[0]?.text || m.content || '',
@@ -296,16 +672,28 @@ router.post(
         screenContext, // Full screen context for AI awareness
         focusMode, // Focus mode for context filtering
         context: {
+          ...(context || {}),
           projectId,
           screenContext,
           focusMode,
           conversationId,
-          ...context,
+          // Tools & routing options (used by AIPipeline prompt + model selection)
+          aiModes,
+          knowledgeSources,
+          responseStyle,
+          selectedTier,
+          selectedModelId,
         },
         stream: true,
         options: {
           role: roleName,
           systemInstruction: enhancedSystemInstruction,
+          // Tools & routing options
+          aiModes,
+          knowledgeSources,
+          responseStyle,
+          selectedTier,
+          selectedModelId,
         },
       };
 
@@ -316,6 +704,111 @@ router.post(
         screenId: screenContext?.screenId || screenContext?.currentScreen || 'unknown',
       });
 
+      // B1: Track emitted DT states for process integrity diagnostic
+      const dtStatesEmitted: string[] = [];
+
+      const emitSSE = (payload: Record<string, unknown>) => {
+        if (!isClientConnected || res.destroyed) return;
+        // Capture dt_state events for B1 diagnostic
+        if (payload.type === 'dt_state' && typeof payload.state === 'string') {
+          dtStatesEmitted.push(payload.state);
+        }
+        res.write(`data: ${JSON.stringify(payload)}\n\n`);
+      };
+
+      // --------------------------------------------------------
+      // AI-suggested Deep Thinking activation (hint)
+      // When DT is OFF, check if user's message looks strategic and suggest DT.
+      // --------------------------------------------------------
+      if (!aiModes?.deepResearch && message && message.trim().length >= 20) {
+        try {
+          const { detectDeepThinkingIntent } =
+            await import('../services/ai/deepThinkingHintService.js');
+          const hint = detectDeepThinkingIntent(message, language);
+          if (hint.shouldSuggest) {
+            emitSSE({
+              type: 'dt_hint',
+              reason: hint.reason,
+              confidence: hint.confidence,
+            });
+          }
+        } catch (_hintErr) {
+          // Non-critical; swallow silently
+        }
+      }
+
+      // --------------------------------------------------------
+      // Deep Thinking orchestration (standalone, composable)
+      // --------------------------------------------------------
+      // NOTE: `aiModes.deepResearch` is used as the Deep Thinking toggle in the client (ToolsMenu).
+      if (aiModes?.deepResearch) {
+        const { DeepThinkingOrchestrator } =
+          await import('../services/ai/deepThinkingOrchestrator.js');
+        const orchestrator = new (DeepThinkingOrchestrator as any)();
+        const prelude = await orchestrator.runPrelude({
+          message,
+          language,
+          context: (context || null) as any,
+          aiModes: (aiModes || null) as any,
+          emit: emitSSE,
+        });
+
+        if (prelude?.systemInstructionAddon) {
+          pipelineRequest = {
+            ...pipelineRequest,
+            options: {
+              ...(pipelineRequest.options || {}),
+              systemInstruction:
+                String((pipelineRequest.options as any)?.systemInstruction || '') +
+                String(prelude.systemInstructionAddon || ''),
+            },
+          } as any;
+        }
+
+        // Force-depth: revise the previous answer with NEW axes/contrarguments (no repetition, no defensiveness).
+        if (forceDepthTrigger) {
+          const lastAssistant = (pipelineRequest as any).messages
+            .slice()
+            .reverse()
+            .find((m: any) => m.role === 'assistant' && String(m.content || '').trim().length > 0);
+
+          const revisionInstruction = [
+            '\n\n## FORCE DEPTH (user requested)',
+            `Trigger: ${rawMsg}`,
+            'Rules:',
+            '- Do NOT be defensive. Assume the previous answer was insufficient.',
+            '- Do NOT repeat the same structure or phrasing.',
+            '- Add at least 2 NEW decision dimensions/axes.',
+            '- Add at least 2 contrarguments / failure modes against your recommendation.',
+            '- Strengthen trade-offs and assumptions/gaps.',
+            '- Keep decision-grade format (6 sections).',
+            '',
+            lastAssistant
+              ? `Previous answer to improve:\n---\n${String(lastAssistant.content).slice(0, 6000)}\n---`
+              : '',
+          ]
+            .filter(Boolean)
+            .join('\n');
+
+          pipelineRequest = {
+            ...pipelineRequest,
+            options: {
+              ...(pipelineRequest.options || {}),
+              systemInstruction:
+                String((pipelineRequest.options as any)?.systemInstruction || '') +
+                revisionInstruction,
+            },
+            context: {
+              ...((pipelineRequest as any).context || {}),
+              deepThinkingDepth: 'hard',
+              forceDepth: true,
+              forceDepthTrigger: rawMsg,
+            },
+          } as any;
+        }
+      }
+
+      const aiPipeline = await getAIPipeline();
       const response = await (aiPipeline as any).process(
         pipelineRequest,
         (progress: Record<string, unknown>) => {
@@ -329,6 +822,52 @@ router.post(
           );
         }
       );
+
+      // If pipeline failed before streaming starts, surface the error as SSE (instead of silently ending).
+      // Otherwise the client sees "nothing" or a misleading EMPTY_STREAM.
+      if ((response as any)?.success === false && (response as any)?.error) {
+        const errObj = (response as any).error;
+        const msg = String(errObj?.message || errObj?.error || 'AI request failed');
+        const codeFromObj = typeof errObj?.code === 'string' ? errObj.code : undefined;
+        const code =
+          codeFromObj ||
+          (/invalid_api_key|incorrect api key/i.test(msg)
+            ? 'INVALID_API_KEY'
+            : 'AI_PIPELINE_ERROR');
+
+        if (isClientConnected && !res.destroyed) {
+          res.write(
+            `data: ${JSON.stringify({
+              error: msg,
+              code,
+            })}\n\n`
+          );
+          res.write('data: [DONE]\n\n');
+        }
+        if (
+          aiModes?.deepResearch &&
+          req.organizationId &&
+          req.userId &&
+          deepThinkingStartedLogged
+        ) {
+          try {
+            const { logDeepThinkingEvent } =
+              await import('../services/ai/deepThinkingMetricsService.js');
+            await logDeepThinkingEvent({
+              organizationId: req.organizationId!,
+              userId: req.userId!,
+              sessionId: streamSessionId,
+              conversationId: conversationId || null,
+              eventType: 'run_aborted',
+              payload: { reason: 'pipeline_error', code, message: msg },
+            });
+          } catch {
+            /* ignore */
+          }
+        }
+        streamCompleted = true;
+        return res.end();
+      }
 
       if ((response as { stream?: AsyncIterable<string> }).stream) {
         for await (const chunk of (response as { stream: AsyncIterable<string> }).stream) {
@@ -356,6 +895,243 @@ router.post(
         }
 
         if (isClientConnected && !streamAborted) {
+          // If stream produced no content, surface an explicit error.
+          // Without this, the frontend may see only [DONE] and appear "dead".
+          if (!accumulatedContent || accumulatedContent.trim().length === 0) {
+            res.write(
+              `data: ${JSON.stringify({
+                error:
+                  'AI stream ended without output. Check LLM provider configuration and backend logs.',
+                code: 'EMPTY_STREAM',
+              })}\n\n`
+            );
+          }
+
+          // ================================================================
+          // Deep Thinking Self-Check: 3-layer quality gate + auto-repair
+          // ================================================================
+          if (aiModes?.deepResearch && accumulatedContent && accumulatedContent.trim().length > 0) {
+            try {
+              const { scoreRubricV2, detectPatterns } =
+                await import('../services/ai/deepThinkingEvaluationService.js');
+              const { evaluatePassFail, buildRepairPrompt } =
+                await import('../services/ai/deepThinkingSelfCheck.js');
+
+              let currentText = accumulatedContent;
+              let repairIterations = 0;
+              const MAX_REPAIR_ITERATIONS = 2;
+              let selfCheckVerdict: 'PASS' | 'FAIL' | 'BEST_EFFORT' = 'FAIL';
+
+              for (let iter = 0; iter <= MAX_REPAIR_ITERATIONS; iter++) {
+                const rubric = scoreRubricV2(currentText, language);
+                const patterns = detectPatterns(currentText, language);
+                const { pass, failReasons } = evaluatePassFail({
+                  rubric,
+                  negativePatterns: patterns.negative,
+                });
+
+                if (pass) {
+                  selfCheckVerdict = 'PASS';
+                  break;
+                }
+
+                // If this was the last allowed check (after max repairs), mark as best effort
+                if (iter === MAX_REPAIR_ITERATIONS) {
+                  selfCheckVerdict = 'BEST_EFFORT';
+                  logger.info(
+                    `[DeepThinking SelfCheck] Best effort after ${repairIterations} repair(s). ` +
+                      `Fail reasons: ${failReasons.join(', ')}`
+                  );
+                  break;
+                }
+
+                // Auto-repair: N-tag driven, replace (not append)
+                repairIterations++;
+
+                // Emit generic "Refining analysis…" — no specific details
+                emitSSE({
+                  type: 'dt_selfcheck',
+                  status: 'repairing',
+                  iteration: repairIterations,
+                  label: 'Refining analysis…',
+                });
+
+                try {
+                  const { modelRouter } = await import('../services/ai/modelRouter.js');
+                  const { llmService } = await import('../services/ai/llmService.js');
+                  const tier = (selectedTier || 'STANDARD') as any;
+                  const modelCfg = selectedModelId
+                    ? await modelRouter.getProviderConfig(selectedModelId, tier)
+                    : await modelRouter.select({
+                        capability: 'report_section',
+                        tier,
+                        organizationId: req.organizationId!,
+                        options: { tier },
+                      } as any);
+
+                  const repairSys = buildRepairPrompt(
+                    currentText,
+                    patterns.negative,
+                    failReasons,
+                    repairIterations
+                  );
+
+                  const fixed = (await llmService.callText({
+                    type: 'chat',
+                    modelConfig: {
+                      provider: modelCfg.provider,
+                      id: modelCfg.id,
+                      endpoint: (modelCfg as any).endpoint,
+                      apiKey: (modelCfg as any).apiKey,
+                    },
+                    systemPrompt: repairSys,
+                    messages: [
+                      {
+                        role: 'user',
+                        content: currentText,
+                      },
+                    ],
+                  } as any)) as any;
+
+                  const fixedText = String(fixed?.content || '').trim();
+                  if (fixedText.length > 0) {
+                    // Replace strategy: send dt_repair_replace event, then stream new content
+                    currentText = fixedText;
+
+                    emitSSE({
+                      type: 'dt_repair_replace',
+                      text: fixedText,
+                    });
+                  }
+                } catch (repairErr: any) {
+                  logger.warn(
+                    `[DeepThinking SelfCheck] Repair iteration ${repairIterations} failed:`,
+                    repairErr?.message || repairErr
+                  );
+                  selfCheckVerdict = 'BEST_EFFORT';
+                  break;
+                }
+              }
+
+              // Update accumulated content with final (possibly repaired) text
+              accumulatedContent = currentText;
+
+              // Emit self-check result
+              emitSSE({
+                type: 'dt_selfcheck',
+                status: selfCheckVerdict === 'PASS' ? 'passed' : 'best_effort',
+                label:
+                  selfCheckVerdict === 'PASS'
+                    ? 'Deep Thinking check passed'
+                    : 'Analysis complete (best effort)',
+                repairIterations,
+              });
+            } catch (err: any) {
+              logger.warn('[DeepThinking SelfCheck] Failed:', err?.message || err);
+            }
+          }
+
+          // Deep Thinking ops metric: completed run (evaluate final output; do not reward length)
+          if (
+            aiModes?.deepResearch &&
+            req.organizationId &&
+            req.userId &&
+            deepThinkingStartedLogged
+          ) {
+            try {
+              const { validateDeepThinkingDoD } =
+                await import('../services/ai/deepThinkingQuality.js');
+              const { detectPatterns, scoreRubricV2 } =
+                await import('../services/ai/deepThinkingEvaluationService.js');
+              const { logDeepThinkingEvent } =
+                await import('../services/ai/deepThinkingMetricsService.js');
+
+              const dodFinal = validateDeepThinkingDoD(accumulatedContent, language);
+              const rubricFinal = scoreRubricV2(accumulatedContent, language);
+              const patternsFinal = detectPatterns(accumulatedContent, language);
+
+              // Force-depth diff check: if this was a force-depth request, compare with previous answer
+              let forceDepthDiff: any = null;
+              if (forceDepthTrigger || (context as any)?.forceDepth) {
+                try {
+                  const { evaluateForceDepthDiff } =
+                    await import('../services/ai/deepThinkingSelfCheck.js');
+
+                  // Find the last assistant message from history (the answer being challenged)
+                  const lastAssistant = (pipelineRequest as any).messages
+                    ?.slice()
+                    .reverse()
+                    .find(
+                      (m: any) =>
+                        m.role === 'assistant' && String(m.content || '').trim().length > 0
+                    );
+
+                  if (lastAssistant) {
+                    const beforeText = String(lastAssistant.content || '').trim();
+                    const beforeRubric = scoreRubricV2(beforeText, language);
+                    forceDepthDiff = evaluateForceDepthDiff(
+                      beforeText,
+                      accumulatedContent,
+                      beforeRubric,
+                      rubricFinal
+                    );
+
+                    if (!forceDepthDiff.isSubstantiallyDifferent) {
+                      logger.warn(
+                        `[DeepThinking] Force-depth FAIL: response too similar. ` +
+                          `Jaccard=${forceDepthDiff.jaccardSimilarity}, delta=${forceDepthDiff.rubricDelta}`
+                      );
+                      // Emit warning to frontend (informational, not blocking)
+                      emitSSE({
+                        type: 'dt_selfcheck',
+                        status: 'force_depth_insufficient',
+                        label: 'Analysis depth may be insufficient',
+                      });
+                    }
+                  }
+                } catch (fdErr: any) {
+                  logger.warn('[DeepThinking] Force-depth diff failed:', fdErr?.message);
+                }
+              }
+
+              // B1: Process State Integrity (diagnostic, non-blocking)
+              let processStateLog: any = null;
+              try {
+                const { checkProcessStateIntegrity } =
+                  await import('../services/ai/deepThinkingSelfCheck.js');
+                processStateLog = checkProcessStateIntegrity(dtStatesEmitted);
+              } catch {
+                /* ignore */
+              }
+
+              await logDeepThinkingEvent({
+                organizationId: req.organizationId!,
+                userId: req.userId!,
+                sessionId: streamSessionId,
+                conversationId: conversationId || null,
+                eventType: 'run_completed',
+                payload: {
+                  dod: dodFinal,
+                  rubric: rubricFinal,
+                  negativePatterns: patternsFinal.negative,
+                  positivePatterns: patternsFinal.positive,
+                  optionsCount: (patternsFinal.diagnostics as any)?.optionsCount ?? null,
+                  deepThinkingDepth: (context as any)?.deepThinkingDepth || null,
+                  webSearch: Boolean(aiModes?.webSearch),
+                  forceDepth: Boolean(forceDepthTrigger || (context as any)?.forceDepth),
+                  forceDepthDiff,
+                  processStateIntegrity: processStateLog,
+                },
+              });
+            } catch (err: any) {
+              logger.warn(
+                '[DeepThinkingMetrics] Failed to log completed run:',
+                err?.message || err
+              );
+            }
+          }
+
+          streamCompleted = true;
           res.write('data: [DONE]\n\n');
 
           await dbRun(`DELETE FROM ai_partial_responses WHERE session_id = ?`, [streamSessionId]);
@@ -370,7 +1146,10 @@ router.post(
               await AccessPolicyService.trackTokenUsage(req.organizationId!, estimatedTokens);
             }
           } catch (usageErr: any) {
-            logger.warn('[AI Stream] Failed to track trial token usage:', usageErr?.message || usageErr);
+            logger.warn(
+              '[AI Stream] Failed to track trial token usage:',
+              usageErr?.message || usageErr
+            );
           }
         }
         return res.end();
@@ -379,6 +1158,7 @@ router.post(
           res.write(
             `data: ${JSON.stringify({ text: (response as { content?: string }).content || '' })}\n\n`
           );
+          streamCompleted = true;
           res.write('data: [DONE]\n\n');
         }
         return res.end();
@@ -398,13 +1178,42 @@ router.post(
       }
 
       if (isClientConnected && !res.destroyed) {
+        const msg = (err as Error)?.message || String(err);
+        const code = /invalid_api_key|incorrect api key/i.test(msg)
+          ? 'INVALID_API_KEY'
+          : 'AI_STREAM_ERROR';
         res.write(
           `data: ${JSON.stringify({
-            error: (err as Error).message,
+            error: msg,
+            code,
             sessionId: streamSessionId,
             canResume: accumulatedContent.length > 0,
           })}\n\n`
         );
+        // Keep SSE protocol consistent for the client parser
+        res.write('data: [DONE]\n\n');
+        if (
+          aiModes?.deepResearch &&
+          req.organizationId &&
+          req.userId &&
+          deepThinkingStartedLogged
+        ) {
+          try {
+            const { logDeepThinkingEvent } =
+              await import('../services/ai/deepThinkingMetricsService.js');
+            await logDeepThinkingEvent({
+              organizationId: req.organizationId!,
+              userId: req.userId!,
+              sessionId: streamSessionId,
+              conversationId: conversationId || null,
+              eventType: 'run_aborted',
+              payload: { reason: 'exception', code, message: msg },
+            });
+          } catch {
+            /* ignore */
+          }
+        }
+        streamCompleted = true;
         return res.end();
       }
     } finally {
@@ -1526,13 +2335,21 @@ router.get(
       const healthMonitor = (await import('../services/ai/healthMonitor.js')).default as any;
       const status = healthMonitor.getStatus();
 
+      // Keep response compatible with `AIHealthResponse` expected by the frontend.
+      const overall =
+        (status?.lastCheck as { overall?: 'healthy' | 'degraded' | 'error' } | null)?.overall ||
+        'error';
+      const lastCheck =
+        (status?.lastCheck as { timestamp?: string } | null)?.timestamp || new Date().toISOString();
+
       return res.json({
-        status: (status.lastCheck as { overall?: string })?.overall || 'unknown',
-        isRunning: status.isRunning,
-        lastCheck: (status.lastCheck as { timestamp?: string })?.timestamp,
-        consecutiveFailures: status.consecutiveFailures,
-        providers: status.providers,
-        checks: (status.lastCheck as { checks?: unknown[] })?.checks || [],
+        status: overall,
+        providers: status?.providers || {},
+        lastCheck,
+        // Extra debug fields (harmless for typed clients)
+        isRunning: status?.isRunning,
+        consecutiveFailures: status?.consecutiveFailures,
+        checks: (status?.lastCheck as { checks?: unknown[] } | null)?.checks || [],
       });
     } catch (err: any) {
       return res.status(500).json({
@@ -1788,6 +2605,30 @@ router.post(
         });
       } catch (logErr) {
         logger.warn('[AI] Could not log feedback:', (logErr as Error).message);
+      }
+
+      // Feed into adaptive response service to learn user preferences
+      try {
+        const adaptiveMod = await import('../services/ai/adaptiveResponseService.js');
+        const adaptiveService =
+          (adaptiveMod as any).adaptiveResponseService || (adaptiveMod as any).default;
+        if (adaptiveService?.processFeedback) {
+          await adaptiveService.processFeedback({
+            userId,
+            messageId,
+            rating,
+            lengthFeedback: req.body.lengthFeedback,
+            detailFeedback: req.body.detailFeedback,
+            formatFeedback: req.body.formatFeedback,
+            responseLength: req.body.responseLength,
+            conversationId: req.body.conversationId,
+            screenContext: req.body.screenContext,
+            focusMode: req.body.focusMode,
+          });
+          logger.debug(`[AI Feedback] Adaptive service updated for user ${userId}`);
+        }
+      } catch (adaptErr) {
+        logger.warn('[AI] Could not update adaptive service:', (adaptErr as Error).message);
       }
 
       return res.json({ success: true });

@@ -20,18 +20,11 @@ export const DraggableTaskRow: React.FC<DraggableTaskRowProps> = ({
   children,
   disabled = false,
 }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-    isOver,
-  } = useSortable({
-    id,
-    disabled,
-  });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } =
+    useSortable({
+      id,
+      disabled,
+    });
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),

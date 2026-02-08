@@ -32,19 +32,19 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { Api } from '@/services/api';
-import { useAppStore } from '@/store/useAppStore';
 import {
   BulkActionBar,
-  ColumnResizer,
-  createDecisionBulkActions,
   type ColumnDef,
+  ColumnResizer,
   type ColumnWidths,
-  type TableFilters,
-  PRIORITY_FILTER_OPTIONS,
+  createDecisionBulkActions,
   DECISION_STATUS_FILTER_OPTIONS,
+  PRIORITY_FILTER_OPTIONS,
+  type TableFilters,
 } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
+import { Api } from '@/services/api';
+import { useAppStore } from '@/store/useAppStore';
 
 type ViewMode = 'my' | 'awaiting';
 
@@ -191,15 +191,15 @@ const formatDate = (dateStr?: string): string => {
   today.setHours(0, 0, 0, 0);
   const dateOnly = new Date(date);
   dateOnly.setHours(0, 0, 0, 0);
-  
+
   const diffDays = Math.ceil((dateOnly.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  
+
   if (diffDays === 0) return 'Today';
   if (diffDays === 1) return 'Tomorrow';
   if (diffDays === -1) return 'Yesterday';
   if (diffDays < -1) return `${Math.abs(diffDays)}d overdue`;
   if (diffDays <= 7) return `${diffDays}d left`;
-  
+
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
@@ -223,10 +223,10 @@ const rowVariants = {
   initial: { opacity: 0, y: 4 },
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, x: -10 },
-  hover: { 
-    y: -2, 
+  hover: {
+    y: -2,
     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-    transition: { duration: 0.2 }
+    transition: { duration: 0.2 },
   },
 };
 
@@ -320,7 +320,7 @@ const DECISION_COLUMNS: ColumnDef[] = [
 ];
 
 // Default column widths
-const getDefaultColumnWidths = (): ColumnWidths => 
+const getDefaultColumnWidths = (): ColumnWidths =>
   DECISION_COLUMNS.reduce((acc, col) => ({ ...acc, [col.id]: col.width }), {});
 
 // Decision Row Component
@@ -335,7 +335,7 @@ const DecisionTableRow: React.FC<{
 }> = ({ decision, isSelected, onSelect, onApprove, onReject, onClick, columnWidths }) => {
   const [showMenu, setShowMenu] = useState(false);
   const { t } = useTranslation();
-  
+
   const priorityConfig = getPriorityConfig(decision.priority);
   const statusConfig = getStatusConfig(decision.status);
   const dueDate = decision.dueDate || decision.deadline;
@@ -368,9 +368,10 @@ const DecisionTableRow: React.FC<{
           }}
           className={`
             w-5 h-5 rounded border flex items-center justify-center transition-all
-            ${isSelected
-              ? 'bg-primary-500 border-primary-500 text-white'
-              : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
+            ${
+              isSelected
+                ? 'bg-primary-500 border-primary-500 text-white'
+                : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
             }
           `}
         >
@@ -388,7 +389,7 @@ const DecisionTableRow: React.FC<{
 
       {/* Priority Dot */}
       <td className="w-8 px-1 py-2.5" style={{ width: columnWidths.indicator }}>
-        <div 
+        <div
           className={`w-2.5 h-2.5 rounded-full ${priorityConfig.dot} ${overdue ? 'animate-pulse' : ''}`}
           title={priorityConfig.label}
         />
@@ -397,9 +398,13 @@ const DecisionTableRow: React.FC<{
       {/* Decision Title */}
       <td className="px-3 py-2.5" style={{ minWidth: 200 }}>
         <div className="flex flex-col">
-          <span className="text-sm font-medium text-slate-900 dark:text-white">{decision.title}</span>
+          <span className="text-sm font-medium text-slate-900 dark:text-white">
+            {decision.title}
+          </span>
           {decision.description && (
-            <span className="text-xs text-slate-500 mt-0.5 line-clamp-1">{decision.description}</span>
+            <span className="text-xs text-slate-500 mt-0.5 line-clamp-1">
+              {decision.description}
+            </span>
           )}
         </div>
       </td>
@@ -428,7 +433,9 @@ const DecisionTableRow: React.FC<{
 
       {/* Priority */}
       <td className="px-3 py-2.5" style={{ width: columnWidths.priority }}>
-        <span className={`inline-flex items-center gap-1 text-xs font-medium ${priorityConfig.color}`}>
+        <span
+          className={`inline-flex items-center gap-1 text-xs font-medium ${priorityConfig.color}`}
+        >
           <PriorityIcon size={12} />
           {priorityConfig.label}
         </span>
@@ -484,9 +491,11 @@ const DecisionTableRow: React.FC<{
               </button>
             </>
           )}
-          
+
           {/* View/Edit/Menu */}
-          <div className={`flex items-center gap-1 ${isPending ? 'ml-1' : ''} opacity-0 group-hover:opacity-100 transition-opacity`}>
+          <div
+            className={`flex items-center gap-1 ${isPending ? 'ml-1' : ''} opacity-0 group-hover:opacity-100 transition-opacity`}
+          >
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -592,21 +601,28 @@ const AwaitingDecisionTableRow: React.FC<{
 }> = ({ decision, isSelected, onSelect, onRemind, onEscalate, onClick, columnWidths }) => {
   const [showMenu, setShowMenu] = useState(false);
   const { t } = useTranslation();
-  
+
   const priorityConfig = getPriorityConfig(decision.priority);
   const statusConfig = getStatusConfig(decision.status);
   const dueDate = decision.dueDate || decision.deadline;
   const overdue = isOverdue(dueDate) && decision.status?.toUpperCase() === 'PENDING';
   const daysWaiting = getDaysWaiting(decision.createdAt);
   const isPending = decision.status?.toUpperCase() === 'PENDING';
-  const isDecided = ['APPROVED', 'REJECTED', 'DEFERRED'].includes(decision.status?.toUpperCase() || '');
+  const isDecided = ['APPROVED', 'REJECTED', 'DEFERRED'].includes(
+    decision.status?.toUpperCase() || ''
+  );
   const isEscalated = decision.status?.toUpperCase() === 'ESCALATED';
   const PriorityIcon = priorityConfig.icon;
 
   // Get owner initials for avatar
   const getInitials = (name?: string) => {
     if (!name) return '?';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   // Get response badge config
@@ -665,9 +681,10 @@ const AwaitingDecisionTableRow: React.FC<{
           }}
           className={`
             w-5 h-5 rounded border flex items-center justify-center transition-all
-            ${isSelected
-              ? 'bg-primary-500 border-primary-500 text-white'
-              : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
+            ${
+              isSelected
+                ? 'bg-primary-500 border-primary-500 text-white'
+                : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
             }
           `}
         >
@@ -685,7 +702,7 @@ const AwaitingDecisionTableRow: React.FC<{
 
       {/* Priority/Overdue Indicator */}
       <td className="w-8 px-1 py-2.5" style={{ width: columnWidths.indicator }}>
-        <div 
+        <div
           className={`w-2.5 h-2.5 rounded-full ${overdue ? 'bg-red-500 animate-pulse' : priorityConfig.dot}`}
           title={overdue ? 'Overdue!' : priorityConfig.label}
         />
@@ -694,9 +711,13 @@ const AwaitingDecisionTableRow: React.FC<{
       {/* Decision Title */}
       <td className="px-3 py-2.5" style={{ minWidth: 180 }}>
         <div className="flex flex-col">
-          <span className="text-sm font-medium text-slate-900 dark:text-white">{decision.title}</span>
+          <span className="text-sm font-medium text-slate-900 dark:text-white">
+            {decision.title}
+          </span>
           {decision.description && (
-            <span className="text-xs text-slate-500 mt-0.5 line-clamp-1">{decision.description}</span>
+            <span className="text-xs text-slate-500 mt-0.5 line-clamp-1">
+              {decision.description}
+            </span>
           )}
         </div>
       </td>
@@ -723,14 +744,18 @@ const AwaitingDecisionTableRow: React.FC<{
         <span
           className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap leading-none ${statusConfig.bg} ${statusConfig.color}`}
         >
-          <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.dot} ${isEscalated ? 'animate-pulse' : ''}`} />
+          <span
+            className={`w-1.5 h-1.5 rounded-full ${statusConfig.dot} ${isEscalated ? 'animate-pulse' : ''}`}
+          />
           {statusConfig.label}
         </span>
       </td>
 
       {/* Priority */}
       <td className="px-3 py-2.5" style={{ width: columnWidths.priority }}>
-        <span className={`inline-flex items-center gap-1 text-xs font-medium ${priorityConfig.color}`}>
+        <span
+          className={`inline-flex items-center gap-1 text-xs font-medium ${priorityConfig.color}`}
+        >
           <PriorityIcon size={12} />
           {priorityConfig.label}
         </span>
@@ -746,7 +771,9 @@ const AwaitingDecisionTableRow: React.FC<{
                 : 'text-slate-500 dark:text-slate-400'
             }`}
           >
-            {overdue && <AlertTriangle size={12} className="animate-pulse text-red-600 dark:text-red-400" />}
+            {overdue && (
+              <AlertTriangle size={12} className="animate-pulse text-red-600 dark:text-red-400" />
+            )}
             <Calendar size={12} />
             <span>{formatDate(dueDate)}</span>
           </div>
@@ -763,7 +790,9 @@ const AwaitingDecisionTableRow: React.FC<{
         {isDecided && responseConfig ? (
           // Show response for decided items
           <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${responseConfig.bg} ${responseConfig.color}`}>
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${responseConfig.bg} ${responseConfig.color}`}
+            >
               <responseConfig.icon size={12} />
               {responseConfig.label}
             </span>
@@ -792,7 +821,7 @@ const AwaitingDecisionTableRow: React.FC<{
             >
               <Bell size={14} />
             </button>
-            
+
             {/* Escalate Button - more prominent when overdue */}
             <button
               onClick={(e) => {
@@ -800,15 +829,15 @@ const AwaitingDecisionTableRow: React.FC<{
                 onEscalate(decision.id);
               }}
               className={`p-1.5 rounded transition-colors ${
-                overdue 
-                  ? 'bg-red-500/30 text-red-400 hover:bg-red-500/40' 
+                overdue
+                  ? 'bg-red-500/30 text-red-400 hover:bg-red-500/40'
                   : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'
               }`}
               title={overdue ? 'Escalate (overdue!)' : 'Escalate'}
             >
               <TrendingUp size={14} />
             </button>
-            
+
             {/* Menu */}
             <div className="relative ml-1">
               <button
@@ -854,7 +883,9 @@ const AwaitingDecisionTableRow: React.FC<{
                         setShowMenu(false);
                       }}
                       className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 ${
-                        overdue ? 'text-red-700 dark:text-red-400' : 'text-amber-700 dark:text-amber-400'
+                        overdue
+                          ? 'text-red-700 dark:text-red-400'
+                          : 'text-amber-700 dark:text-amber-400'
                       }`}
                     >
                       <TrendingUp size={14} />
@@ -864,7 +895,8 @@ const AwaitingDecisionTableRow: React.FC<{
                       <>
                         <div className="border-t border-slate-200 dark:border-navy-600" />
                         <div className="px-3 py-2 text-xs text-slate-500 dark:text-slate-500">
-                          {decision.reminderCount} reminder{decision.reminderCount > 1 ? 's' : ''} sent
+                          {decision.reminderCount} reminder{decision.reminderCount > 1 ? 's' : ''}{' '}
+                          sent
                         </div>
                       </>
                     )}
@@ -889,16 +921,16 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   const { currentUser } = useAppStore();
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  
+
   // Column widths state (for resizable columns)
   const [columnWidths, setColumnWidths] = useState<ColumnWidths>(getDefaultColumnWidths());
-  
+
   // Filter state (session only)
   const [tableFilters, setTableFilters] = useState<TableFilters>({});
-  
+
   // Open filter dropdown state
   const [openFilterId, setOpenFilterId] = useState<string | null>(null);
 
@@ -929,8 +961,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
       const query = searchQuery.toLowerCase();
       result = result.filter(
         (d) =>
-          d.title?.toLowerCase().includes(query) ||
-          d.description?.toLowerCase().includes(query)
+          d.title?.toLowerCase().includes(query) || d.description?.toLowerCase().includes(query)
       );
     }
 
@@ -979,9 +1010,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   const handleApprove = async (id: string) => {
     try {
       await Api.updateDecision(id, { status: 'APPROVED' });
-      setDecisions((prev) =>
-        prev.map((d) => (d.id === id ? { ...d, status: 'APPROVED' } : d))
-      );
+      setDecisions((prev) => prev.map((d) => (d.id === id ? { ...d, status: 'APPROVED' } : d)));
       toast.success('Decision approved');
     } catch (error) {
       toast.error('Failed to approve decision');
@@ -991,9 +1020,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   const handleReject = async (id: string) => {
     try {
       await Api.updateDecision(id, { status: 'REJECTED' });
-      setDecisions((prev) =>
-        prev.map((d) => (d.id === id ? { ...d, status: 'REJECTED' } : d))
-      );
+      setDecisions((prev) => prev.map((d) => (d.id === id ? { ...d, status: 'REJECTED' } : d)));
       toast.success('Decision rejected');
     } catch (error) {
       toast.error('Failed to reject decision');
@@ -1002,7 +1029,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
   // Handler for sending reminder (Awaiting Others view)
   const handleRemind = async (id: string) => {
-    const decision = decisions.find(d => d.id === id);
+    const decision = decisions.find((d) => d.id === id);
     if (!decision) return;
 
     try {
@@ -1010,8 +1037,9 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
       await Api.post('/api/notifications', {
         type: 'DECISION_REMINDER',
         title: `Reminder: Decision needed - ${decision.title}`,
-        message: `${currentUser?.firstName && currentUser?.lastName ? `${currentUser.firstName} ${currentUser.lastName}` : 'Someone'} is waiting for your decision on "${decision.title}"`,
-        severity: decision.priority === 'HIGH' || decision.priority === 'CRITICAL' ? 'WARNING' : 'INFO',
+        message: `${currentUser?.displayName || currentUser?.firstName || 'Someone'} is waiting for your decision on "${decision.title}"`,
+        severity:
+          decision.priority === 'HIGH' || decision.priority === 'CRITICAL' ? 'WARNING' : 'INFO',
         userId: decision.decisionOwnerId,
         relatedObjectType: 'DECISION',
         relatedObjectId: id,
@@ -1019,11 +1047,15 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
       // Update reminder count locally
       setDecisions((prev) =>
-        prev.map((d) => (d.id === id ? { 
-          ...d, 
-          reminderCount: (d.reminderCount || 0) + 1,
-          lastReminderAt: new Date().toISOString()
-        } : d))
+        prev.map((d) =>
+          d.id === id
+            ? {
+                ...d,
+                reminderCount: (d.reminderCount || 0) + 1,
+                lastReminderAt: new Date().toISOString(),
+              }
+            : d
+        )
       );
 
       toast.success(`Reminder sent to ${decision.ownerName || 'decision owner'}`);
@@ -1035,21 +1067,21 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
   // Handler for escalating decision (Awaiting Others view)
   const handleEscalate = async (id: string) => {
-    const decision = decisions.find(d => d.id === id);
+    const decision = decisions.find((d) => d.id === id);
     if (!decision) return;
 
     try {
       // Update decision status to ESCALATED
-      await Api.updateDecision(id, { 
+      await Api.updateDecision(id, {
         status: 'ESCALATED',
-        escalatedAt: new Date().toISOString()
+        escalatedAt: new Date().toISOString(),
       });
 
-      // Create an escalation notification  
+      // Create an escalation notification
       await Api.post('/api/notifications', {
         type: 'DECISION_ESCALATION',
         title: `Escalation: ${decision.title}`,
-        message: `Decision "${decision.title}" has been escalated by ${currentUser?.firstName && currentUser?.lastName ? `${currentUser.firstName} ${currentUser.lastName}` : 'a team member'}. Immediate attention required.`,
+        message: `Decision "${decision.title}" has been escalated by ${currentUser?.displayName || currentUser?.firstName || 'a team member'}. Immediate attention required.`,
         severity: 'CRITICAL',
         userId: decision.decisionOwnerId,
         relatedObjectType: 'DECISION',
@@ -1058,11 +1090,15 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
       // Update local state
       setDecisions((prev) =>
-        prev.map((d) => (d.id === id ? { 
-          ...d, 
-          status: 'ESCALATED',
-          escalatedAt: new Date().toISOString()
-        } : d))
+        prev.map((d) =>
+          d.id === id
+            ? {
+                ...d,
+                status: 'ESCALATED',
+                escalatedAt: new Date().toISOString(),
+              }
+            : d
+        )
       );
 
       toast.success(`Decision escalated - ${decision.ownerName || 'owner'} has been notified`);
@@ -1074,7 +1110,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
   // Selection helpers
   const allVisibleDecisionIds = useMemo(() => {
-    return new Set(filteredDecisions.map(d => d.id));
+    return new Set(filteredDecisions.map((d) => d.id));
   }, [filteredDecisions]);
 
   const allSelected = selectedIds.size > 0 && selectedIds.size === allVisibleDecisionIds.size;
@@ -1125,14 +1161,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   const handleBulkApprove = async () => {
     try {
       await Promise.all(
-        Array.from(selectedIds).map((id) =>
-          Api.updateDecision(id, { status: 'APPROVED' })
-        )
+        Array.from(selectedIds).map((id) => Api.updateDecision(id, { status: 'APPROVED' }))
       );
       setDecisions((prev) =>
-        prev.map((d) =>
-          selectedIds.has(d.id) ? { ...d, status: 'APPROVED' } : d
-        )
+        prev.map((d) => (selectedIds.has(d.id) ? { ...d, status: 'APPROVED' } : d))
       );
       toast.success(`${selectedIds.size} decisions approved`);
       setSelectedIds(new Set());
@@ -1143,7 +1175,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
   const handleBulkDelete = async () => {
     try {
-      await Promise.all(Array.from(selectedIds).map((id) => Api.deleteDecision(id)));
+      await Promise.all(Array.from(selectedIds).map((id) => Api.delete(`/decisions/${id}`)));
       setDecisions((prev) => prev.filter((d) => !selectedIds.has(d.id)));
       toast.success(`${selectedIds.size} decisions deleted`);
       setSelectedIds(new Set());
@@ -1162,17 +1194,17 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   // Apply table filters to decisions
   const displayedDecisions = useMemo(() => {
     let result = filteredDecisions;
-    
+
     const statusFilter = tableFilters.status as string[] | undefined;
     const priorityFilter = tableFilters.priority as string[] | undefined;
-    
+
     if (statusFilter?.length) {
-      result = result.filter(d => statusFilter.includes(d.status?.toLowerCase() || ''));
+      result = result.filter((d) => statusFilter.includes(d.status?.toLowerCase() || ''));
     }
     if (priorityFilter?.length) {
-      result = result.filter(d => priorityFilter.includes(d.priority?.toLowerCase() || ''));
+      result = result.filter((d) => priorityFilter.includes(d.priority?.toLowerCase() || ''));
     }
-    
+
     return result;
   }, [filteredDecisions, tableFilters]);
 
@@ -1227,7 +1259,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                     )}
                   </button>
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.type }}>
+                <th
+                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                  style={{ width: columnWidths.type }}
+                >
                   <span>Type</span>
                   <ColumnResizer
                     columnId="type"
@@ -1238,9 +1273,14 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                   />
                 </th>
                 <th className="w-8 px-1 py-2"></th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Decision</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  Decision
+                </th>
                 {/* Show Owner column for awaiting mode, Project for my decisions */}
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.project }}>
+                <th
+                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                  style={{ width: columnWidths.project }}
+                >
                   <span>{viewMode === 'awaiting' ? 'Owner' : 'Project'}</span>
                   <ColumnResizer
                     columnId="project"
@@ -1250,13 +1290,22 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                     onResize={handleColumnResize}
                   />
                 </th>
-                
+
                 {/* Status with Filter */}
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.status }}>
+                <th
+                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                  style={{ width: columnWidths.status }}
+                >
                   <div className="flex items-center gap-1">
-                    <span className={(tableFilters.status as string[])?.length ? 'text-primary-500' : ''}>Status</span>
+                    <span
+                      className={
+                        (tableFilters.status as string[])?.length ? 'text-primary-500' : ''
+                      }
+                    >
+                      Status
+                    </span>
                     <FilterDropdown
-                      column={DECISION_COLUMNS.find(c => c.id === 'status')!}
+                      column={DECISION_COLUMNS.find((c) => c.id === 'status')!}
                       value={tableFilters.status as string[]}
                       onChange={(val) => handleFilterChange('status', val as string[])}
                       isOpen={openFilterId === 'status'}
@@ -1272,17 +1321,28 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                     onResize={handleColumnResize}
                   />
                 </th>
-                
+
                 {/* Priority with Filter */}
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.priority }}>
+                <th
+                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                  style={{ width: columnWidths.priority }}
+                >
                   <div className="flex items-center gap-1">
-                    <span className={(tableFilters.priority as string[])?.length ? 'text-primary-500' : ''}>Priority</span>
+                    <span
+                      className={
+                        (tableFilters.priority as string[])?.length ? 'text-primary-500' : ''
+                      }
+                    >
+                      Priority
+                    </span>
                     <FilterDropdown
-                      column={DECISION_COLUMNS.find(c => c.id === 'priority')!}
+                      column={DECISION_COLUMNS.find((c) => c.id === 'priority')!}
                       value={tableFilters.priority as string[]}
                       onChange={(val) => handleFilterChange('priority', val as string[])}
                       isOpen={openFilterId === 'priority'}
-                      onToggle={() => setOpenFilterId(openFilterId === 'priority' ? null : 'priority')}
+                      onToggle={() =>
+                        setOpenFilterId(openFilterId === 'priority' ? null : 'priority')
+                      }
                       onClose={() => setOpenFilterId(null)}
                     />
                   </div>
@@ -1294,8 +1354,11 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                     onResize={handleColumnResize}
                   />
                 </th>
-                
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.date }}>
+
+                <th
+                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                  style={{ width: columnWidths.date }}
+                >
                   <span>Due Date</span>
                   <ColumnResizer
                     columnId="date"
@@ -1305,14 +1368,17 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                     onResize={handleColumnResize}
                   />
                 </th>
-                <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: columnWidths.actions }}>
+                <th
+                  className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
+                  style={{ width: columnWidths.actions }}
+                >
                   {viewMode === 'awaiting' ? 'Response / Actions' : 'Actions'}
                 </th>
               </tr>
             </thead>
             <tbody>
               <AnimatePresence>
-                {displayedDecisions.map((decision) => (
+                {displayedDecisions.map((decision) =>
                   viewMode === 'awaiting' ? (
                     <AwaitingDecisionTableRow
                       key={decision.id}
@@ -1336,13 +1402,13 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                       columnWidths={columnWidths}
                     />
                   )
-                ))}
+                )}
               </AnimatePresence>
             </tbody>
           </table>
         </div>
       </div>
-      
+
       {/* Bulk Action Bar */}
       <BulkActionBar
         selectedCount={selectedIds.size}

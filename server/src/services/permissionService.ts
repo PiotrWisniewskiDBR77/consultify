@@ -328,6 +328,37 @@ export async function hasPermission(
   // SUPERADMIN bypass
   if (userRole === ROLES.SUPERADMIN) return true;
 
+  // Fallback role-permission mapping for environments where DB role_permissions
+  // aren't migrated/seeded yet. Keep this intentionally narrow (Interview module).
+  const FALLBACK_INTERVIEW_PERMISSIONS: Record<Role, string[]> = {
+    [ROLES.SUPERADMIN]: ['*'],
+    [ROLES.ADMIN]: [
+      'INTERVIEW_TEMPLATE_VIEW',
+      'INTERVIEW_TEMPLATE_USE',
+      'INTERVIEW_TEMPLATE_MANAGE',
+      'INTERVIEW_ASSIGN_VIEW',
+      'INTERVIEW_ASSIGN_MANAGE',
+      'INTERVIEW_REMIND',
+    ],
+    [ROLES.PROJECT_MANAGER]: [
+      'INTERVIEW_TEMPLATE_VIEW',
+      'INTERVIEW_TEMPLATE_USE',
+      'INTERVIEW_ASSIGN_VIEW',
+      'INTERVIEW_ASSIGN_MANAGE',
+      'INTERVIEW_REMIND',
+    ],
+    [ROLES.TEAM_MEMBER]: [
+      'INTERVIEW_TEMPLATE_VIEW',
+      'INTERVIEW_TEMPLATE_USE',
+      'INTERVIEW_ASSIGN_VIEW',
+    ],
+    [ROLES.VIEWER]: ['INTERVIEW_TEMPLATE_VIEW', 'INTERVIEW_ASSIGN_VIEW'],
+  };
+  const allowFallbackInterview = (key: string): boolean => {
+    const allowed = FALLBACK_INTERVIEW_PERMISSIONS[userRole] || [];
+    return allowed.includes('*') || allowed.includes(key);
+  };
+
   try {
     // First check for explicit org-user override
     const override = await DbPromise.get<OverrideRow>(
@@ -350,9 +381,35 @@ export async function hasPermission(
       [userRole, permissionKey]
     );
 
-    return !!rolePermission;
+    if (rolePermission) return true;
+
+    // If the role has no permissions seeded at all, use narrow fallback mapping.
+    let hasAnyRolePerm: { '1'?: number } | null = null;
+    try {
+      hasAnyRolePerm = await DbPromise.get<{ '1'?: number }>(
+        db,
+        `SELECT 1 FROM role_permissions WHERE role = ? LIMIT 1`,
+        [userRole]
+      );
+    } catch {
+      hasAnyRolePerm = null;
+    }
+    if (!hasAnyRolePerm) {
+      return allowFallbackInterview(permissionKey);
+    }
+
+    return false;
   } catch (err: any) {
     logger.error('[PermissionService] Permission query error:', err as Error);
+    // If permissions tables are missing (migration not applied), use narrow fallback.
+    const msg = String(err?.message || err);
+    const looksLikeMissingTable =
+      msg.toLowerCase().includes('no such table') ||
+      msg.toLowerCase().includes('does not exist') ||
+      (msg.toLowerCase().includes('relation') && msg.toLowerCase().includes('does not exist'));
+    if (looksLikeMissingTable) {
+      return allowFallbackInterview(permissionKey);
+    }
     return false;
   }
 }

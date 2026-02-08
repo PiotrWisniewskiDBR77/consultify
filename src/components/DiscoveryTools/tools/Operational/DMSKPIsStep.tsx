@@ -4,7 +4,12 @@
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { OperationalItem, OperationalToolData, ToolSession, useToolStore } from '@/store/useToolStore';
+import {
+  OperationalItem,
+  OperationalToolData,
+  ToolSession,
+  useToolStore,
+} from '@/store/useToolStore';
 
 import { InlineAssist } from '../../InlineAssist';
 
@@ -133,7 +138,8 @@ export const DMSKPIsStep: React.FC<DMSKPIsStepProps> = ({ session, isPolish }) =
                   <h4 className="font-medium text-slate-900 dark:text-white">{item.title}</h4>
                   <div className="text-xs text-slate-500 mt-2">
                     {item.target && `${isPolish ? 'Target' : 'Target'}: ${item.target}`}
-                    {item.frequency && ` • ${isPolish ? 'Częstotliwość' : 'Frequency'}: ${item.frequency}`}
+                    {item.frequency &&
+                      ` • ${isPolish ? 'Częstotliwość' : 'Frequency'}: ${item.frequency}`}
                     {item.owner && ` • ${isPolish ? 'Owner' : 'Owner'}: ${item.owner}`}
                   </div>
                 </div>

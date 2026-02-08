@@ -32,7 +32,6 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
 import { User } from '../../types';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { Button } from '../ui/primitives/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Checkbox } from '../ui/checkbox';
 import {
@@ -44,6 +43,7 @@ import {
   DialogTitle,
 } from '../ui/dialog';
 import { Label } from '../ui/label';
+import { Button } from '../ui/primitives/Button';
 import { Progress } from '../ui/progress';
 import { Select } from '../ui/select';
 import { Separator } from '../ui/separator';

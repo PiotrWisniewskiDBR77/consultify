@@ -1,0 +1,1592 @@
+/**
+ * InitiativesManagementPanel - Professional initiatives management for assessments
+ * Displays initiatives table with status, priority, and actions
+ * Design follows TeamManagementPanel patterns (ClickUp-style)
+ */
+
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  AlertCircle,
+  Archive,
+  ArrowRight,
+  Calendar,
+  CheckCircle2,
+  ChevronDown,
+  Clock,
+  Copy,
+  Edit3,
+  ExternalLink,
+  Eye,
+  Filter,
+  Flag,
+  Lightbulb,
+  Loader2,
+  MoreHorizontal,
+  Play,
+  Plus,
+  RefreshCw,
+  Search,
+  Sparkles,
+  Target,
+  Trash2,
+  TrendingUp,
+  X,
+  Zap,
+} from 'lucide-react';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
+
+import { InitiativesGenerationWizardModal } from '@/components/assessment/InitiativesGenerationWizardModal';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { Api } from '@/services/api';
+import { getStatusActions, InitiativeStatus } from '@/types/initiative';
+import { cn } from '@/utils/cn';
+
+// ============================================
+// Types
+// ============================================
+
+export type InitiativePriority = 'low' | 'medium' | 'high' | 'critical';
+export type InitiativeRisk = 'low' | 'medium' | 'high';
+
+export interface Initiative {
+  id: string;
+  title: string;
+  description?: string;
+  status: InitiativeStatus;
+  priority: InitiativePriority;
+  risk?: InitiativeRisk;
+  category?: string;
+  assessmentId?: string;
+  batchId?: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string;
+  createdByName?: string;
+  dueDate?: string;
+  owner?: string;
+  ownerName?: string;
+  impact?: number;
+  effort?: number;
+}
+
+export interface InitiativeBatch {
+  id: string;
+  methodologyId: string;
+  initiativesCount: number;
+  includeChatContext: boolean;
+  generatedBy: string;
+  generatedByName: string;
+  createdAt: string;
+}
+
+export interface InitiativesManagementPanelProps {
+  assessmentId: string;
+  assessmentName?: string;
+  workflowStatus: string;
+  canManage: boolean;
+  canGenerateInitiatives: boolean;
+  onRefresh: () => Promise<void>;
+  onGenerateInitiatives?: (config: {
+    methodologyId: string;
+    count: number;
+    includeChatContext: boolean;
+  }) => Promise<void>;
+}
+
+// ============================================
+// Constants
+// ============================================
+
+const STATUS_CONFIG: Partial<
+  Record<
+    InitiativeStatus,
+    {
+      label: string;
+      color: string;
+      bgColor: string;
+      borderColor: string;
+      icon: FC<{ size?: number; className?: string }>;
+    }
+  >
+> = {
+  [InitiativeStatus.DRAFT]: {
+    label: 'Draft',
+    color: 'text-slate-600 dark:text-slate-400',
+    bgColor: 'bg-slate-50 dark:bg-slate-500/10',
+    borderColor: 'border-slate-200 dark:border-slate-500/30',
+    icon: Edit3,
+  },
+  [InitiativeStatus.PENDING_REVIEW]: {
+    label: 'Pending Review',
+    color: 'text-purple-600 dark:text-purple-400',
+    bgColor: 'bg-purple-50 dark:bg-purple-500/10',
+    borderColor: 'border-purple-200 dark:border-purple-500/30',
+    icon: Clock,
+  },
+  [InitiativeStatus.REVIEW]: {
+    label: 'Review',
+    color: 'text-indigo-600 dark:text-indigo-400',
+    bgColor: 'bg-indigo-50 dark:bg-indigo-500/10',
+    borderColor: 'border-indigo-200 dark:border-indigo-500/30',
+    icon: Eye,
+  },
+  [InitiativeStatus.PROMOTED]: {
+    label: 'Promoted',
+    color: 'text-blue-600 dark:text-blue-400',
+    bgColor: 'bg-blue-50 dark:bg-blue-500/10',
+    borderColor: 'border-blue-200 dark:border-blue-500/30',
+    icon: TrendingUp,
+  },
+  [InitiativeStatus.PLANNING]: {
+    label: 'Planning',
+    color: 'text-cyan-600 dark:text-cyan-400',
+    bgColor: 'bg-cyan-50 dark:bg-cyan-500/10',
+    borderColor: 'border-cyan-200 dark:border-cyan-500/30',
+    icon: Calendar,
+  },
+  [InitiativeStatus.APPROVED]: {
+    label: 'Approved',
+    color: 'text-emerald-600 dark:text-emerald-400',
+    bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
+    borderColor: 'border-emerald-200 dark:border-emerald-500/30',
+    icon: CheckCircle2,
+  },
+  [InitiativeStatus.SCHEDULED]: {
+    label: 'Scheduled',
+    color: 'text-teal-600 dark:text-teal-400',
+    bgColor: 'bg-teal-50 dark:bg-teal-500/10',
+    borderColor: 'border-teal-200 dark:border-teal-500/30',
+    icon: Calendar,
+  },
+  [InitiativeStatus.EXECUTING]: {
+    label: 'Executing',
+    color: 'text-amber-600 dark:text-amber-400',
+    bgColor: 'bg-amber-50 dark:bg-amber-500/10',
+    borderColor: 'border-amber-200 dark:border-amber-500/30',
+    icon: Play,
+  },
+  [InitiativeStatus.BLOCKED]: {
+    label: 'Blocked',
+    color: 'text-rose-600 dark:text-rose-400',
+    bgColor: 'bg-rose-50 dark:bg-rose-500/10',
+    borderColor: 'border-rose-200 dark:border-rose-500/30',
+    icon: AlertCircle,
+  },
+  [InitiativeStatus.DONE]: {
+    label: 'Done',
+    color: 'text-emerald-600 dark:text-emerald-400',
+    bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
+    borderColor: 'border-emerald-200 dark:border-emerald-500/30',
+    icon: CheckCircle2,
+  },
+  [InitiativeStatus.TRACKING]: {
+    label: 'Tracking',
+    color: 'text-indigo-600 dark:text-indigo-400',
+    bgColor: 'bg-indigo-50 dark:bg-indigo-500/10',
+    borderColor: 'border-indigo-200 dark:border-indigo-500/30',
+    icon: Target,
+  },
+  [InitiativeStatus.CANCELLED]: {
+    label: 'Cancelled',
+    color: 'text-red-600 dark:text-red-400',
+    bgColor: 'bg-red-50 dark:bg-red-500/10',
+    borderColor: 'border-red-200 dark:border-red-500/30',
+    icon: X,
+  },
+  [InitiativeStatus.ARCHIVED]: {
+    label: 'Archived',
+    color: 'text-slate-500 dark:text-slate-400',
+    bgColor: 'bg-slate-50 dark:bg-slate-500/10',
+    borderColor: 'border-slate-200 dark:border-slate-500/30',
+    icon: Archive,
+  },
+};
+
+const PRIORITY_CONFIG: Record<
+  InitiativePriority,
+  {
+    label: string;
+    color: string;
+    bgColor: string;
+  }
+> = {
+  low: {
+    label: 'Low',
+    color: 'text-slate-600 dark:text-slate-400',
+    bgColor: 'bg-slate-100 dark:bg-slate-500/20',
+  },
+  medium: {
+    label: 'Medium',
+    color: 'text-blue-600 dark:text-blue-400',
+    bgColor: 'bg-blue-100 dark:bg-blue-500/20',
+  },
+  high: {
+    label: 'High',
+    color: 'text-amber-600 dark:text-amber-400',
+    bgColor: 'bg-amber-100 dark:bg-amber-500/20',
+  },
+  critical: {
+    label: 'Critical',
+    color: 'text-red-600 dark:text-red-400',
+    bgColor: 'bg-red-100 dark:bg-red-500/20',
+  },
+};
+
+const METHODOLOGY_OPTIONS = [
+  { value: 'impact-feasibility', label: 'Impact x Feasibility' },
+  { value: 'moscow', label: 'MoSCoW' },
+  { value: 'rice', label: 'RICE' },
+  { value: 'value-effort', label: 'Value x Effort' },
+  { value: 'strategic-fit', label: 'Strategic Fit' },
+];
+
+const STATUS_FILTER_OPTIONS: InitiativeStatus[] = [
+  InitiativeStatus.DRAFT,
+  InitiativeStatus.PENDING_REVIEW,
+  InitiativeStatus.REVIEW,
+  InitiativeStatus.PROMOTED,
+  InitiativeStatus.PLANNING,
+  InitiativeStatus.APPROVED,
+  InitiativeStatus.SCHEDULED,
+  InitiativeStatus.EXECUTING,
+  InitiativeStatus.BLOCKED,
+  InitiativeStatus.TRACKING,
+  InitiativeStatus.DONE,
+  InitiativeStatus.ARCHIVED,
+];
+
+// ============================================
+// Generate Modal Component
+// ============================================
+
+const GenerateInitiativesModal: FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onGenerate: (config: {
+    methodologyId: string;
+    count: number;
+    includeChatContext: boolean;
+  }) => Promise<void>;
+}> = ({ isOpen, onClose, onGenerate }) => {
+  const [methodologyId, setMethodologyId] = useState('impact-feasibility');
+  const [count, setCount] = useState(5);
+  const [includeChatContext, setIncludeChatContext] = useState(true);
+  const [generating, setGenerating] = useState(false);
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      await onGenerate({ methodologyId, count, includeChatContext });
+      onClose();
+    } catch (err) {
+      toast.error('Failed to generate initiatives');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="relative w-full max-w-md mx-4 bg-white dark:bg-navy-900 rounded-2xl shadow-2xl overflow-hidden"
+      >
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-purple-500/10 to-amber-500/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-500 text-white rounded-lg">
+                <Sparkles size={18} />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  Generate Initiatives
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  AI-powered initiative generation
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            >
+              <X size={18} className="text-slate-500" />
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Prioritization Methodology
+            </label>
+            <select
+              value={methodologyId}
+              onChange={(e) => setMethodologyId(e.target.value)}
+              className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white"
+            >
+              {METHODOLOGY_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Number of Initiatives
+            </label>
+            <select
+              value={count}
+              onChange={(e) => setCount(Number(e.target.value))}
+              className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white"
+            >
+              {[3, 4, 5, 6, 7].map((n) => (
+                <option key={n} value={n}>
+                  {n} initiatives
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-800/50 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={includeChatContext}
+              onChange={(e) => setIncludeChatContext(e.target.checked)}
+              className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+            />
+            <div>
+              <div className="text-sm font-medium text-slate-900 dark:text-white">
+                Include chat context
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                Use conversation history for better suggestions
+              </div>
+            </div>
+          </label>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50 flex items-center justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleGenerate}
+            disabled={generating}
+            className="px-5 py-2.5 rounded-xl bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-sm font-semibold transition-colors flex items-center gap-2"
+          >
+            {generating ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Sparkles size={16} />
+                Generate
+              </>
+            )}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// ============================================
+// Initiative Row Component
+// ============================================
+
+const InitiativeRow: FC<{
+  initiative: Initiative;
+  canManage: boolean;
+  onOpen: (initiativeId: string) => void;
+  onEdit: (initiative: Initiative) => void;
+  onUpdateStatus: (initiativeId: string, status: InitiativeStatus) => Promise<void>;
+  onDelete: (initiativeId: string) => Promise<void>;
+  onDuplicate: (initiative: Initiative) => Promise<void>;
+}> = ({ initiative, canManage, onOpen, onEdit, onUpdateStatus, onDelete, onDuplicate }) => {
+  const [busy, setBusy] = useState(false);
+  const [showActions, setShowActions] = useState(false);
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+
+  const statusConfig = STATUS_CONFIG[initiative.status] || STATUS_CONFIG[InitiativeStatus.DRAFT]!;
+  const priorityConfig = PRIORITY_CONFIG[initiative.priority] || PRIORITY_CONFIG.medium;
+  const StatusIcon = statusConfig.icon;
+
+  const handleStatusChange = async (newStatus: InitiativeStatus) => {
+    setBusy(true);
+    setShowStatusDropdown(false);
+    try {
+      await onUpdateStatus(initiative.id, newStatus);
+    } catch (err) {
+      toast.error('Failed to update status');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm(`Delete initiative "${initiative.title}"?`)) return;
+    setBusy(true);
+    try {
+      await onDelete(initiative.id);
+      toast.success('Initiative deleted');
+    } catch (err) {
+      toast.error('Failed to delete initiative');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleDuplicate = async () => {
+    setBusy(true);
+    try {
+      await onDuplicate(initiative);
+      toast.success('Initiative duplicated');
+    } catch (err) {
+      toast.error('Failed to duplicate initiative');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('pl-PL', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  };
+
+  return (
+    <motion.tr
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="group border-b border-slate-200 dark:border-navy-700/50 hover:bg-slate-50/50 dark:hover:bg-navy-800/30 transition-colors"
+    >
+      {/* Title */}
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+            <Lightbulb className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div className="min-w-0">
+            <button
+              onClick={() => onOpen(initiative.id)}
+              className="text-sm font-medium text-slate-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors text-left truncate block max-w-[200px]"
+            >
+              {initiative.title}
+            </button>
+            {initiative.category && (
+              <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                {initiative.category}
+              </div>
+            )}
+          </div>
+        </div>
+      </td>
+
+      {/* Priority */}
+      <td className="px-4 py-3">
+        <span
+          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${priorityConfig.bgColor} ${priorityConfig.color}`}
+        >
+          <Flag size={10} />
+          {priorityConfig.label}
+        </span>
+      </td>
+
+      {/* Status */}
+      <td className="px-4 py-3">
+        <div className="relative">
+          <button
+            onClick={() => canManage && setShowStatusDropdown(!showStatusDropdown)}
+            disabled={!canManage || busy}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${statusConfig.bgColor} ${statusConfig.color} ${statusConfig.borderColor} border ${canManage ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+          >
+            {busy ? <Loader2 size={12} className="animate-spin" /> : <StatusIcon size={12} />}
+            {statusConfig.label}
+            {canManage && <ChevronDown size={10} />}
+          </button>
+
+          {showStatusDropdown && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setShowStatusDropdown(false)} />
+              <div className="absolute left-0 top-full mt-1 z-50 w-40 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
+                {getStatusActions(initiative.status).length === 0 ? (
+                  <div className="px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
+                    No actions
+                  </div>
+                ) : (
+                  getStatusActions(initiative.status).map((action) => (
+                    <button
+                      key={action.targetStatus}
+                      onClick={() => handleStatusChange(action.targetStatus)}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 ${
+                        action.variant === 'danger'
+                          ? 'text-red-600 dark:text-red-400'
+                          : action.variant === 'primary'
+                            ? 'text-purple-700 dark:text-purple-300'
+                            : 'text-slate-700 dark:text-slate-200'
+                      }`}
+                    >
+                      <ArrowRight size={14} />
+                      {action.label}
+                    </button>
+                  ))
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </td>
+
+      {/* Impact/Effort */}
+      <td className="px-4 py-3">
+        {initiative.impact !== undefined && initiative.effort !== undefined ? (
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 text-xs">
+              <TrendingUp size={12} className="text-emerald-500" />
+              <span className="text-slate-600 dark:text-slate-400">{initiative.impact}</span>
+            </div>
+            <span className="text-slate-300 dark:text-slate-600">/</span>
+            <div className="flex items-center gap-1 text-xs">
+              <Target size={12} className="text-blue-500" />
+              <span className="text-slate-600 dark:text-slate-400">{initiative.effort}</span>
+            </div>
+          </div>
+        ) : (
+          <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+        )}
+      </td>
+
+      {/* Owner */}
+      <td className="px-4 py-3">
+        {initiative.ownerName || initiative.owner ? (
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-[10px] font-medium text-white">
+              {(initiative.ownerName || initiative.owner || '?').charAt(0).toUpperCase()}
+            </div>
+            <span className="text-xs text-slate-600 dark:text-slate-400 truncate max-w-[60px]">
+              {(initiative.ownerName || initiative.owner || '').split(' ')[0]}
+            </span>
+          </div>
+        ) : (
+          <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+        )}
+      </td>
+
+      {/* Created */}
+      <td className="px-4 py-3">
+        <span className="text-xs text-slate-500 dark:text-slate-400">
+          {formatDate(initiative.createdAt)}
+        </span>
+      </td>
+
+      {/* Actions */}
+      <td className="px-4 py-3">
+        <div className="flex items-center justify-end gap-1">
+          <button
+            onClick={() => onOpen(initiative.id)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+          >
+            <Eye size={12} />
+            View
+          </button>
+
+          {/* More Actions */}
+          <div className="relative">
+            <button
+              onClick={() => setShowActions(!showActions)}
+              className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 rounded transition-colors"
+            >
+              <MoreHorizontal size={14} />
+            </button>
+
+            {showActions && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowActions(false)} />
+                <div className="absolute right-0 top-full mt-1 z-50 w-40 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
+                  <button
+                    onClick={() => {
+                      onOpen(initiative.id);
+                      setShowActions(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+                  >
+                    <Eye size={14} />
+                    View Details
+                  </button>
+                  {canManage && (
+                    <button
+                      onClick={() => {
+                        onEdit(initiative);
+                        setShowActions(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+                    >
+                      <Edit3 size={14} />
+                      Edit
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      window.location.href = '/initiatives';
+                      setShowActions(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+                  >
+                    <ExternalLink size={14} />
+                    Open in Initiatives
+                  </button>
+                  {canManage && (
+                    <>
+                      <div className="border-t border-slate-200 dark:border-navy-600 my-1" />
+                      <button
+                        onClick={() => {
+                          handleDuplicate();
+                          setShowActions(false);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+                      >
+                        <Copy size={14} />
+                        Duplicate
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleDelete();
+                          setShowActions(false);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10"
+                      >
+                        <Trash2 size={14} />
+                        Delete
+                      </button>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </td>
+    </motion.tr>
+  );
+};
+
+// ============================================
+// Main Component
+// ============================================
+
+export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = ({
+  assessmentId,
+  assessmentName,
+  workflowStatus,
+  canManage,
+  canGenerateInitiatives,
+  onRefresh,
+  onGenerateInitiatives,
+}) => {
+  const navigate = useNavigate();
+  const { isEnabled } = useFeatureFlags();
+  const wizardEnabled = isEnabled('assessmentInitiativesWizard');
+  const [initiatives, setInitiatives] = useState<Initiative[]>([]);
+  const [batches, setBatches] = useState<InitiativeBatch[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [showWizardModal, setShowWizardModal] = useState(false);
+  const [showManualModal, setShowManualModal] = useState(false);
+  const [manualTitle, setManualTitle] = useState('');
+  const [manualDescription, setManualDescription] = useState('');
+  const [manualPriority, setManualPriority] = useState<'low' | 'medium' | 'high' | 'critical'>(
+    'medium'
+  );
+  const [manualRisk, setManualRisk] = useState<'low' | 'medium' | 'high'>('medium');
+  const [manualCategory, setManualCategory] = useState('');
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editInitiativeId, setEditInitiativeId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editPriority, setEditPriority] = useState<'low' | 'medium' | 'high' | 'critical'>(
+    'medium'
+  );
+  const [editRisk, setEditRisk] = useState<'low' | 'medium' | 'high'>('medium');
+  const [editCategory, setEditCategory] = useState('');
+  // Multi-select status filter; empty array means "all"
+  const [statusFilter, setStatusFilter] = useState<InitiativeStatus[]>([]);
+  const [statusFilterOpen, setStatusFilterOpen] = useState(false);
+  const statusFilterRef = useRef<HTMLDivElement | null>(null);
+
+  const isApproved = workflowStatus === 'APPROVED';
+
+  // Fetch initiatives for this assessment
+  const fetchInitiatives = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const [initiativesResp, batchesResp] = await Promise.all([
+        fetch(`/api/assessment-workflow-v2/${assessmentId}/generated-initiatives`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => null),
+        fetch(`/api/assessment-workflow-v2/${assessmentId}/initiative-batches`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => null),
+      ]);
+
+      if (initiativesResp?.ok) {
+        const data = await initiativesResp.json();
+        setInitiatives(data.initiatives || []);
+      }
+      if (batchesResp?.ok) {
+        const data = await batchesResp.json();
+        setBatches(data.batches || []);
+      }
+    } catch (err) {
+      console.error('[InitiativesManagementPanel] Error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [assessmentId]);
+
+  useEffect(() => {
+    fetchInitiatives();
+  }, [fetchInitiatives]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchInitiatives();
+      await onRefresh();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const handleGenerate = async (config: {
+    methodologyId: string;
+    count: number;
+    includeChatContext: boolean;
+  }) => {
+    if (onGenerateInitiatives) {
+      await onGenerateInitiatives(config);
+      await fetchInitiatives();
+    }
+  };
+
+  const handleCreateManualInitiative = async (payload: {
+    title: string;
+    description?: string;
+    category?: string;
+    priority: 'low' | 'medium' | 'high' | 'critical';
+    risk: 'low' | 'medium' | 'high';
+  }) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`/api/assessment-workflow-v2/${assessmentId}/initiatives`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error || err?.message || 'Failed to create initiative');
+    }
+    await fetchInitiatives();
+  };
+
+  const handleDuplicateInitiative = async (initiative: Initiative) => {
+    const title = `${initiative.title} (copy)`;
+    await handleCreateManualInitiative({
+      title,
+      description: initiative.description || '',
+      category: initiative.category || '',
+      priority: initiative.priority || 'medium',
+      risk: (initiative.risk as any) || 'medium',
+    });
+  };
+
+  const openEditModal = (initiative: Initiative) => {
+    setEditInitiativeId(initiative.id);
+    setEditTitle(initiative.title || '');
+    setEditDescription(initiative.description || '');
+    setEditPriority((initiative.priority as any) || 'medium');
+    setEditRisk((initiative.risk as any) || 'medium');
+    setEditCategory(initiative.category || '');
+    setEditModalOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editInitiativeId) return;
+    const title = editTitle.trim();
+    if (title.length < 3) {
+      toast.error('Title is too short');
+      return;
+    }
+    try {
+      await Api.updateInitiative(editInitiativeId, {
+        title,
+        name: title,
+        description: editDescription.trim() || undefined,
+        priority: editPriority,
+        riskLevel: editRisk,
+        category: editCategory.trim() || undefined,
+      });
+      toast.success('Initiative updated');
+      setEditModalOpen(false);
+      await fetchInitiatives();
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to update initiative');
+    }
+  };
+
+  const handleUpdateStatus = async (initiativeId: string, status: InitiativeStatus) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`/api/initiatives/${initiativeId}/status`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error || err?.message || 'Failed to update status');
+    }
+    await fetchInitiatives();
+  };
+
+  const handleDelete = async (initiativeId: string) => {
+    const token = localStorage.getItem('token');
+    await fetch(`/api/initiatives/${initiativeId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    await fetchInitiatives();
+  };
+
+  const handleOpenInitiative = (initiativeId: string) => {
+    navigate(`/initiatives?id=${initiativeId}`);
+  };
+
+  // Close status filter popover on outside click / ESC
+  useEffect(() => {
+    if (!statusFilterOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setStatusFilterOpen(false);
+    };
+    const onMouseDown = (e: MouseEvent) => {
+      const el = statusFilterRef.current;
+      if (!el) return;
+      if (e.target && el.contains(e.target as Node)) return;
+      setStatusFilterOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('mousedown', onMouseDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('mousedown', onMouseDown);
+    };
+  }, [statusFilterOpen]);
+
+  // Filter initiatives
+  const filteredInitiatives = useMemo(() => {
+    let result = initiatives;
+
+    if (statusFilter.length > 0) {
+      const selected = new Set(statusFilter);
+      result = result.filter((i) => selected.has(i.status));
+    }
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (i) =>
+          i.title.toLowerCase().includes(query) ||
+          (i.description && i.description.toLowerCase().includes(query)) ||
+          (i.category && i.category.toLowerCase().includes(query))
+      );
+    }
+
+    return result;
+  }, [initiatives, searchQuery, statusFilter]);
+
+  // Stats
+  const stats = useMemo(
+    () => ({
+      total: initiatives.length,
+      draft: initiatives.filter((i) => i.status === InitiativeStatus.DRAFT).length,
+      pendingReview: initiatives.filter((i) => i.status === InitiativeStatus.PENDING_REVIEW).length,
+      review: initiatives.filter((i) => i.status === InitiativeStatus.REVIEW).length,
+      executing: initiatives.filter((i) => i.status === InitiativeStatus.EXECUTING).length,
+      done: initiatives.filter((i) => i.status === InitiativeStatus.DONE).length,
+    }),
+    [initiatives]
+  );
+
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const s of STATUS_FILTER_OPTIONS) {
+      counts[s] = initiatives.filter((i) => i.status === s).length;
+    }
+    return counts as Record<InitiativeStatus, number>;
+  }, [initiatives]);
+
+  const statusFilterLabel = useMemo(() => {
+    if (statusFilter.length === 0) return 'All statuses';
+    if (statusFilter.length === 1) {
+      const cfg = STATUS_CONFIG[statusFilter[0]];
+      return cfg?.label || String(statusFilter[0]);
+    }
+    return `${statusFilter.length} selected`;
+  }, [statusFilter]);
+
+  return (
+    <div className="space-y-4">
+      {/* Header Card */}
+      <div className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900 overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800 bg-slate-50/50 dark:bg-navy-900/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-lg">
+                <Lightbulb size={18} />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Initiatives
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {stats.total} initiative{stats.total !== 1 ? 's' : ''} • {batches.length} batch
+                  {batches.length !== 1 ? 'es' : ''}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 dark:text-slate-400 transition-colors"
+              >
+                <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+              </button>
+              {canManage && (
+                <button
+                  onClick={() => setShowManualModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-purple-500 hover:bg-purple-600 text-white transition-colors"
+                >
+                  <Plus size={16} />
+                  New
+                </button>
+              )}
+              {canManage && canGenerateInitiatives && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowGenerateModal(true)}
+                    disabled={!isApproved}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                      isApproved
+                        ? 'bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700'
+                        : 'bg-slate-200 dark:bg-navy-700 text-slate-400 cursor-not-allowed'
+                    }`}
+                    title={
+                      !isApproved
+                        ? 'Assessment must be approved to generate initiatives'
+                        : undefined
+                    }
+                  >
+                    <Sparkles size={16} />
+                    Quick
+                  </button>
+                  {wizardEnabled && (
+                    <button
+                      onClick={() => setShowWizardModal(true)}
+                      disabled={!isApproved}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                        isApproved
+                          ? 'bg-purple-500 hover:bg-purple-600 text-white'
+                          : 'bg-slate-200 dark:bg-navy-700 text-slate-400 cursor-not-allowed'
+                      }`}
+                      title={
+                        !isApproved
+                          ? 'Assessment must be approved to generate initiatives'
+                          : undefined
+                      }
+                    >
+                      <Sparkles size={16} />
+                      Wizard (50+)
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Status Warning */}
+        {!isApproved && (
+          <div className="px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <div className="font-medium text-amber-800 dark:text-amber-200 text-sm">
+                  Assessment not approved
+                </div>
+                <div className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                  Initiatives can only be generated from approved assessments. Current status:{' '}
+                  <strong>{workflowStatus}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Filters Row (dropdown, multi-select) */}
+        <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900">
+          <div className="flex items-center justify-between gap-3">
+            <div ref={statusFilterRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setStatusFilterOpen((v) => !v)}
+                className={cn(
+                  'h-10 inline-flex items-center gap-2 px-3 rounded-lg border text-sm font-medium transition-colors',
+                  'border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700',
+                  statusFilter.length > 0 &&
+                    'border-purple-200 dark:border-purple-500/30 bg-purple-50/60 dark:bg-purple-500/10'
+                )}
+              >
+                <Filter
+                  size={14}
+                  className={statusFilter.length > 0 ? 'text-purple-600' : 'text-slate-500'}
+                />
+                <span className="text-slate-700 dark:text-slate-200">Status</span>
+                <span className="text-slate-500 dark:text-slate-400">{statusFilterLabel}</span>
+                <ChevronDown size={14} className="text-slate-400" />
+              </button>
+
+              <AnimatePresence>
+                {statusFilterOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute left-0 mt-2 w-[320px] rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden z-20"
+                  >
+                    <div className="px-3 py-2 border-b border-slate-100 dark:border-navy-800 flex items-center justify-between">
+                      <div className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                        Filter by status
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setStatusFilter([])}
+                          className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                        >
+                          All
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setStatusFilter([])}
+                          className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                          title="Clear selection"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="max-h-[280px] overflow-auto py-1">
+                      {STATUS_FILTER_OPTIONS.map((s) => {
+                        const cfg = STATUS_CONFIG[s];
+                        if (!cfg) return null;
+                        const Icon = cfg.icon;
+                        const checked = statusFilter.includes(s);
+                        const count = statusCounts[s] || 0;
+                        return (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => {
+                              setStatusFilter((prev) =>
+                                prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
+                              );
+                            }}
+                            className="w-full px-3 py-2 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-navy-900/60 transition-colors"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                readOnly
+                                className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+                              />
+                              <Icon size={14} className={checked ? cfg.color : 'text-slate-400'} />
+                              <span
+                                className={cn(
+                                  'text-sm truncate',
+                                  checked
+                                    ? 'text-slate-900 dark:text-white'
+                                    : 'text-slate-700 dark:text-slate-200'
+                                )}
+                              >
+                                {cfg.label}
+                              </span>
+                            </div>
+                            <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+                              {count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              Showing{' '}
+              <span className="font-medium text-slate-700 dark:text-slate-200">
+                {filteredInitiatives.length}
+              </span>{' '}
+              of{' '}
+              <span className="font-medium text-slate-700 dark:text-slate-200">{stats.total}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Search */}
+        <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800">
+          <div className="relative max-w-md">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search initiatives..."
+              className="w-full h-10 pl-10 pr-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors"
+            />
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="overflow-x-auto">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+            </div>
+          ) : filteredInitiatives.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="p-4 rounded-full bg-slate-100 dark:bg-navy-800 mb-3">
+                <Lightbulb size={24} className="text-slate-400" />
+              </div>
+              <p className="text-sm font-medium text-slate-900 dark:text-white">
+                {searchQuery ? 'No initiatives match your search' : 'No initiatives yet'}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                {isApproved
+                  ? 'Generate initiatives from the assessment data'
+                  : 'Approve the assessment to generate initiatives'}
+              </p>
+              {isApproved && canManage && canGenerateInitiatives && (
+                <button
+                  onClick={() => setShowGenerateModal(true)}
+                  className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold transition-colors"
+                >
+                  <Sparkles size={16} />
+                  Generate Initiatives
+                </button>
+              )}
+            </div>
+          ) : (
+            <table className="w-full" style={{ minWidth: 800 }}>
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50">
+                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[200px]">
+                    Initiative
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[80px]">
+                    Priority
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[120px]">
+                    Status
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[100px]">
+                    Impact/Effort
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[100px]">
+                    Owner
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[100px]">
+                    Created
+                  </th>
+                  <th className="px-4 py-2.5 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[120px]">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <AnimatePresence>
+                  {filteredInitiatives.map((initiative) => (
+                    <InitiativeRow
+                      key={initiative.id}
+                      initiative={initiative}
+                      canManage={canManage}
+                      onOpen={handleOpenInitiative}
+                      onEdit={openEditModal}
+                      onUpdateStatus={handleUpdateStatus}
+                      onDelete={handleDelete}
+                      onDuplicate={handleDuplicateInitiative}
+                    />
+                  ))}
+                </AnimatePresence>
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* Batches Section */}
+        {batches.length > 0 && (
+          <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-800 bg-slate-50/50 dark:bg-navy-900/50">
+            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+              Generation Batches
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {batches.map((batch) => (
+                <div
+                  key={batch.id}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs"
+                >
+                  <Zap size={12} className="text-purple-500" />
+                  <span className="text-slate-700 dark:text-slate-300">
+                    {batch.methodologyId} • {batch.initiativesCount} items
+                  </span>
+                  <span className="text-slate-400 dark:text-slate-500">
+                    {new Date(batch.createdAt).toLocaleDateString('pl-PL')}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-800 bg-slate-50/50 dark:bg-navy-900/50">
+          <div className="flex items-center gap-6 text-[11px] text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-1.5">
+              <Calendar size={12} className="text-blue-500" />
+              <span>Planned</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Play size={12} className="text-amber-500" />
+              <span>In Progress</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <CheckCircle2 size={12} className="text-emerald-500" />
+              <span>Completed</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Flag size={12} className="text-red-500" />
+              <span>Critical Priority</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Manual Create Modal */}
+      <AnimatePresence>
+        {showManualModal && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div
+              className="absolute inset-0 bg-black/50"
+              onClick={() => setShowManualModal(false)}
+            />
+            <motion.div
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 10, opacity: 0 }}
+              className="relative w-full max-w-lg rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl overflow-hidden"
+            >
+              <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
+                <div className="text-base font-semibold text-navy-900 dark:text-white">
+                  New initiative (draft)
+                </div>
+                <button
+                  onClick={() => setShowManualModal(false)}
+                  className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="p-5 space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                    Title
+                  </label>
+                  <input
+                    value={manualTitle}
+                    onChange={(e) => setManualTitle(e.target.value)}
+                    className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                    placeholder="Initiative title…"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                    Description (optional)
+                  </label>
+                  <textarea
+                    value={manualDescription}
+                    onChange={(e) => setManualDescription(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                    rows={4}
+                    placeholder="Short description…"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                      Priority
+                    </label>
+                    <select
+                      value={manualPriority}
+                      onChange={(e) => setManualPriority(e.target.value as any)}
+                      className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="critical">Critical</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                      Risk
+                    </label>
+                    <select
+                      value={manualRisk}
+                      onChange={(e) => setManualRisk(e.target.value as any)}
+                      className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                    Category (optional)
+                  </label>
+                  <input
+                    value={manualCategory}
+                    onChange={(e) => setManualCategory(e.target.value)}
+                    className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                    placeholder="e.g. Cybersecurity"
+                  />
+                </div>
+              </div>
+              <div className="px-5 py-4 border-t border-slate-200 dark:border-navy-700 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setShowManualModal(false)}
+                  className="h-10 px-4 rounded-lg border border-slate-200 dark:border-navy-700 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    const title = manualTitle.trim();
+                    if (title.length < 3) {
+                      toast.error('Title is too short');
+                      return;
+                    }
+                    try {
+                      await handleCreateManualInitiative({
+                        title,
+                        description: manualDescription.trim() || undefined,
+                        category: manualCategory.trim() || undefined,
+                        priority: manualPriority,
+                        risk: manualRisk,
+                      });
+                      setShowManualModal(false);
+                      setManualTitle('');
+                      setManualDescription('');
+                      setManualCategory('');
+                      setManualPriority('medium');
+                      setManualRisk('medium');
+                      toast.success('Initiative created');
+                    } catch (e: any) {
+                      toast.error(e?.message || 'Failed to create initiative');
+                    }
+                  }}
+                  className="h-10 px-4 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold"
+                >
+                  Create
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Modal */}
+      <AnimatePresence>
+        {editModalOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="absolute inset-0 bg-black/50" onClick={() => setEditModalOpen(false)} />
+            <motion.div
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 10, opacity: 0 }}
+              className="relative w-full max-w-lg rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl overflow-hidden"
+            >
+              <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
+                <div className="text-base font-semibold text-navy-900 dark:text-white">
+                  Edit initiative
+                </div>
+                <button
+                  onClick={() => setEditModalOpen(false)}
+                  className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="p-5 space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                    Title
+                  </label>
+                  <input
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                    Description (optional)
+                  </label>
+                  <textarea
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                    rows={4}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                      Priority
+                    </label>
+                    <select
+                      value={editPriority}
+                      onChange={(e) => setEditPriority(e.target.value as any)}
+                      className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="critical">Critical</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                      Risk
+                    </label>
+                    <select
+                      value={editRisk}
+                      onChange={(e) => setEditRisk(e.target.value as any)}
+                      className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                    Category (optional)
+                  </label>
+                  <input
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value)}
+                    className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                  />
+                </div>
+              </div>
+              <div className="px-5 py-4 border-t border-slate-200 dark:border-navy-700 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setEditModalOpen(false)}
+                  className="h-10 px-4 rounded-lg border border-slate-200 dark:border-navy-700 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  className="h-10 px-4 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold"
+                >
+                  Save
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Generate Modal */}
+      <AnimatePresence>
+        {showGenerateModal && (
+          <GenerateInitiativesModal
+            isOpen={showGenerateModal}
+            onClose={() => setShowGenerateModal(false)}
+            onGenerate={handleGenerate}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Wizard Modal */}
+      <AnimatePresence>
+        {showWizardModal && (
+          <InitiativesGenerationWizardModal
+            isOpen={showWizardModal}
+            onClose={() => setShowWizardModal(false)}
+            initialAssessmentId={assessmentId}
+            onCompleted={() => handleRefresh()}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export default InitiativesManagementPanel;

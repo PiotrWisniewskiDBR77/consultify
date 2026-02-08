@@ -29,7 +29,6 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
 import { User } from '../../types';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { Button } from '../ui/primitives/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import {
   Dialog,
@@ -41,6 +40,7 @@ import {
 } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { Button } from '../ui/primitives/Button';
 import { Skeleton } from '../ui/skeleton';
 import { useToast } from '../ui/use-toast';
 

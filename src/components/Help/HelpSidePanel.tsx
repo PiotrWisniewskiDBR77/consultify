@@ -288,13 +288,13 @@ export const HelpSidePanel: React.FC = () => {
   // Filter FAQs by search
   const filteredFAQs = searchQuery
     ? faqs.filter((faq) => {
-      const question = lang === 'pl' ? faq.questionPl : faq.question;
-      const answer = lang === 'pl' ? faq.answerPl : faq.answer;
-      const q = searchQuery.toLowerCase();
-      return (
-        (question || '').toLowerCase().includes(q) || (answer || '').toLowerCase().includes(q)
-      );
-    })
+        const question = lang === 'pl' ? faq.questionPl : faq.question;
+        const answer = lang === 'pl' ? faq.answerPl : faq.answer;
+        const q = searchQuery.toLowerCase();
+        return (
+          (question || '').toLowerCase().includes(q) || (answer || '').toLowerCase().includes(q)
+        );
+      })
     : faqs;
 
   return (
@@ -327,10 +327,11 @@ export const HelpSidePanel: React.FC = () => {
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2 ${activeTab === id
-                ? 'border-purple-500 text-purple-600 dark:text-purple-400'
-                : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-                }`}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2 ${
+                activeTab === id
+                  ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+              }`}
             >
               <Icon size={14} />
               {t(labelKey, label)}

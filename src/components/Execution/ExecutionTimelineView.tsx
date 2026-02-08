@@ -24,11 +24,29 @@ const STATUS_COLORS: Record<
   InitiativeStatus,
   { bg: string; border: string; text: string; progress: string }
 > = {
+  [InitiativeStatus.PENDING_REVIEW]: {
+    bg: 'bg-orange-500/20',
+    border: 'border-orange-500/50',
+    text: 'text-orange-400',
+    progress: 'bg-orange-500',
+  },
+  [InitiativeStatus.PROMOTED]: {
+    bg: 'bg-blue-500/20',
+    border: 'border-blue-500/50',
+    text: 'text-blue-400',
+    progress: 'bg-blue-500',
+  },
   [InitiativeStatus.APPROVED]: {
     bg: 'bg-emerald-500/20',
     border: 'border-emerald-500/50',
     text: 'text-emerald-400',
     progress: 'bg-emerald-500',
+  },
+  [InitiativeStatus.SCHEDULED]: {
+    bg: 'bg-purple-500/20',
+    border: 'border-purple-500/50',
+    text: 'text-purple-400',
+    progress: 'bg-purple-500',
   },
   [InitiativeStatus.EXECUTING]: {
     bg: 'bg-cyan-500/20',
@@ -47,6 +65,12 @@ const STATUS_COLORS: Record<
     border: 'border-green-500/50',
     text: 'text-green-400',
     progress: 'bg-green-500',
+  },
+  [InitiativeStatus.TRACKING]: {
+    bg: 'bg-teal-500/20',
+    border: 'border-teal-500/50',
+    text: 'text-teal-400',
+    progress: 'bg-teal-500',
   },
   [InitiativeStatus.DRAFT]: {
     bg: 'bg-slate-500/20',

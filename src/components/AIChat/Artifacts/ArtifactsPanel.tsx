@@ -45,6 +45,12 @@ const ARTIFACT_ICONS: Record<Artifact['type'], React.ReactNode> = {
   diagram: <BarChart3 size={16} />,
   table: <Table size={16} />,
   'pmo-document': <Folder size={16} />,
+  pmo_document: <Folder size={16} />,
+  document: <FileText size={16} />,
+  json: <FileCode size={16} />,
+  chart: <BarChart3 size={16} />,
+  mermaid: <BarChart3 size={16} />,
+  latex: <FileText size={16} />,
 };
 
 export const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({

@@ -74,6 +74,11 @@ const ProcessAutomationView = React.lazy(() =>
 const AssessmentHub = React.lazy(() =>
   import('@/components/assessment/AssessmentHub').then((m) => ({ default: m.AssessmentHub }))
 );
+const AssessmentSessionEditorView = React.lazy(() =>
+  import('@/views/AssessmentSessionEditorView').then((m) => ({
+    default: m.AssessmentSessionEditorView,
+  }))
+);
 
 // Transformation Modules - New Hubs (ModuleHub pattern)
 const InitiativesHub = React.lazy(() =>
@@ -111,6 +116,14 @@ const FullRolloutView = React.lazy(() =>
 );
 const FullReportsView = React.lazy(() =>
   import('@/views/FullReportsView').then((m) => ({ default: m.FullReportsView }))
+);
+const ReportBuilderView = React.lazy(() =>
+  import('@/views/ReportBuilderView').then((m) => ({ default: m.ReportBuilderView }))
+);
+const AssessmentReportBuilderView = React.lazy(() =>
+  import('@/views/AssessmentReportBuilderView').then((m) => ({
+    default: m.AssessmentReportBuilderView,
+  }))
 );
 const KpiOkrView = React.lazy(() =>
   import('@/views/KpiOkrView').then((m) => ({ default: m.KpiOkrView }))
@@ -278,6 +291,23 @@ const DocsArticleView = React.lazy(() =>
 );
 const DocsSearchView = React.lazy(() =>
   import('@/views/docs/DocsSearchView').then((m) => ({ default: m.DocsSearchView }))
+);
+const DocsApiReferenceView = React.lazy(() =>
+  import('@/views/docs/DocsApiReferenceView').then((m) => ({ default: m.DocsApiReferenceView }))
+);
+const DocsChangelogView = React.lazy(() =>
+  import('@/views/docs/DocsChangelogView').then((m) => ({ default: m.DocsChangelogView }))
+);
+const DocsSecurityView = React.lazy(() =>
+  import('@/views/docs/DocsSecurityView').then((m) => ({ default: m.DocsSecurityView }))
+);
+
+// Education Hub (Public)
+const ToolsShowcasePage = React.lazy(() =>
+  import('@/views/ToolsShowcasePage').then((m) => ({ default: m.ToolsShowcasePage }))
+);
+const AuditsShowcasePage = React.lazy(() =>
+  import('@/views/AuditsShowcasePage').then((m) => ({ default: m.AuditsShowcasePage }))
 );
 
 export const AppRoutes: React.FC = () => {
@@ -481,9 +511,36 @@ export const AppRoutes: React.FC = () => {
         <Route path="/docs" element={<DocsLayout />}>
           <Route index element={<DocsHomeView />} />
           <Route path="search" element={<DocsSearchView />} />
+          <Route path="api" element={<DocsApiReferenceView />} />
+          <Route path="changelog" element={<DocsChangelogView />} />
+          <Route path="security" element={<DocsSecurityView />} />
           <Route path=":categorySlug" element={<DocsCategoryView />} />
           <Route path=":categorySlug/:articleSlug" element={<DocsArticleView />} />
         </Route>
+
+        {/* Tools Showcase - Education Hub (Public) */}
+        <Route
+          path="/tools"
+          element={
+            <AuthLayout>
+              <Suspense fallback={<LoadingScreen message="Loading tools..." />}>
+                <ToolsShowcasePage />
+              </Suspense>
+            </AuthLayout>
+          }
+        />
+
+        {/* Audits Showcase - Industrial Excellence (Public) */}
+        <Route
+          path="/audits"
+          element={
+            <AuthLayout>
+              <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
+                <AuditsShowcasePage />
+              </Suspense>
+            </AuthLayout>
+          }
+        />
 
         {/* Login - stable key prevents remount during auth initialization */}
         <Route
@@ -789,22 +846,29 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={`${ROUTES.ASSESSMENT.ROOT}/*`}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Assessment']} noPadding>
-              <RouteErrorBoundary>
-                <Routes>
-                  {/* Main Assessment Hub - unified view */}
-                  <Route index element={<AssessmentHub />} />
-                  <Route path="overview" element={<AssessmentHub />} />
-                  <Route path="summary" element={<AssessmentHub />} />
-                  {/* Framework-specific routes (backward compatibility) */}
-                  <Route path="drd" element={<AssessmentHub />} />
-                  <Route path="siri" element={<AssessmentHub />} />
-                  <Route path="adma" element={<AssessmentHub />} />
-                  <Route path="cmmi" element={<AssessmentHub />} />
-                  <Route path="lean" element={<AssessmentHub />} />
-                </Routes>
-              </RouteErrorBoundary>
-            </MainLayout>
+            <ProtectedRoute requireAuth={true}>
+              <MainLayout breadcrumbs={breadcrumbs || ['Assessment']} noPadding>
+                <RouteErrorBoundary>
+                  <Routes>
+                    {/* Assessment Session Editor (Workflow v2) */}
+                    <Route
+                      path=":framework/:assessmentId"
+                      element={<AssessmentSessionEditorView />}
+                    />
+                    {/* Main Assessment Hub - unified view */}
+                    <Route index element={<AssessmentHub />} />
+                    <Route path="overview" element={<AssessmentHub />} />
+                    <Route path="summary" element={<AssessmentHub />} />
+                    {/* Framework-specific routes (backward compatibility) */}
+                    <Route path="drd" element={<AssessmentHub />} />
+                    <Route path="siri" element={<AssessmentHub />} />
+                    <Route path="adma" element={<AssessmentHub />} />
+                    <Route path="cmmi" element={<AssessmentHub />} />
+                    <Route path="lean" element={<AssessmentHub />} />
+                  </Routes>
+                </RouteErrorBoundary>
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
 
@@ -906,6 +970,43 @@ export const AppRoutes: React.FC = () => {
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
                   <FullReportsView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+        {/* Report Builder Module */}
+        <Route
+          path="/assessment-reports/:reportId"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Assessment', 'Reports', 'Builder']} noPadding>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <AssessmentReportBuilderView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/reports/builder"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Reports', 'Builder']}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <ReportBuilderView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/reports/builder/:reportId"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Reports', 'Builder', 'Edit']}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <ReportBuilderView />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>

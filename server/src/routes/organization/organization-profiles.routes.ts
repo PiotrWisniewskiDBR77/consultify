@@ -307,7 +307,7 @@ router.post(
       // 3. Update domain verification status
 
       // For now, simulate verification (always succeeds for demo)
-      const isValidDomain = /^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,}$/i.test(domain);
+      const isValidDomain = /^[a-z0-9]+([.-][a-z0-9]+)*\.[a-z]{2,}$/i.test(domain);
 
       if (!isValidDomain) {
         return res.json({

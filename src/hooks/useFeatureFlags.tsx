@@ -146,6 +146,14 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     category: 'experimental',
     allowLocalOverride: true,
   },
+  {
+    id: 'assessmentInitiativesWizard',
+    name: 'Assessment → Initiatives Wizard',
+    description: 'Enterprise wizard for generating 50+ initiatives with runs',
+    defaultValue: true,
+    category: 'beta',
+    allowLocalOverride: true,
+  },
 ];
 
 // ============================================

@@ -125,7 +125,8 @@ const UploadStep: React.FC<{
   onFileRemove: () => void;
   isDragging: boolean;
   setIsDragging: (v: boolean) => void;
-}> = ({ file, onFileSelect, onFileRemove, isDragging, setIsDragging }) => {
+  isPolish: boolean;
+}> = ({ file, onFileSelect, onFileRemove, isDragging, setIsDragging, isPolish }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleDrop = useCallback(
@@ -154,9 +155,13 @@ const UploadStep: React.FC<{
   return (
     <div className="space-y-4">
       <div className="text-center mb-4">
-        <h3 className="text-lg font-bold text-navy-900 dark:text-white">Wgraj raport PDF</h3>
+        <h3 className="text-lg font-bold text-navy-900 dark:text-white">
+          {isPolish ? 'Wgraj raport PDF' : 'Upload PDF Report'}
+        </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Obsługiwane formaty: SIRI, ADMA, CMMI
+          {isPolish
+            ? 'Obsługiwane formaty: SIRI, ADMA, CMMI'
+            : 'Supported formats: SIRI, ADMA, CMMI'}
         </p>
       </div>
 
@@ -179,8 +184,17 @@ const UploadStep: React.FC<{
             className={`w-12 h-12 mx-auto mb-4 ${isDragging ? 'text-blue-500' : 'text-slate-400 dark:text-slate-500'}`}
           />
           <p className="text-slate-600 dark:text-slate-400">
-            Przeciągnij plik PDF tutaj lub{' '}
-            <span className="text-blue-500 font-medium">kliknij aby wybrać</span>
+            {isPolish ? (
+              <>
+                Przeciągnij plik PDF tutaj lub{' '}
+                <span className="text-blue-500 font-medium">kliknij aby wybrać</span>
+              </>
+            ) : (
+              <>
+                Drag PDF file here or{' '}
+                <span className="text-blue-500 font-medium">click to select</span>
+              </>
+            )}
           </p>
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
             Maksymalny rozmiar: 10MB
@@ -230,14 +244,24 @@ const DetectionStep: React.FC<{
   isAnalyzing: boolean;
   onFrameworkSelect: (fw: AssessmentFrameworkId) => void;
   allowedFrameworks: AssessmentFrameworkId[];
-}> = ({ detectedFramework, confidence, isAnalyzing, onFrameworkSelect, allowedFrameworks }) => {
+  isPolish: boolean;
+}> = ({
+  detectedFramework,
+  confidence,
+  isAnalyzing,
+  onFrameworkSelect,
+  allowedFrameworks,
+  isPolish,
+}) => {
   if (isAnalyzing) {
     return (
       <div className="text-center py-12">
         <Loader2 className="w-12 h-12 mx-auto mb-4 text-blue-500 animate-spin" />
-        <p className="text-slate-600 dark:text-slate-400">Analizuję dokument...</p>
+        <p className="text-slate-600 dark:text-slate-400">
+          {isPolish ? 'Analizuję dokument...' : 'Analyzing document...'}
+        </p>
         <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
-          AI identyfikuje typ raportu
+          {isPolish ? 'AI identyfikuje typ raportu' : 'AI is identifying report type'}
         </p>
       </div>
     );
@@ -246,7 +270,9 @@ const DetectionStep: React.FC<{
   return (
     <div className="space-y-4">
       <div className="text-center mb-4">
-        <h3 className="text-lg font-bold text-navy-900 dark:text-white">Wykryty framework</h3>
+        <h3 className="text-lg font-bold text-navy-900 dark:text-white">
+          {isPolish ? 'Wykryty framework' : 'Detected Framework'}
+        </h3>
       </div>
 
       {detectedFramework && (
@@ -255,10 +281,10 @@ const DetectionStep: React.FC<{
             <CheckCircle className="w-8 h-8 text-green-500" />
             <div>
               <p className="font-bold text-green-700 dark:text-green-400">
-                Wykryto: {FRAMEWORK_CONFIGS[detectedFramework].fullName}
+                {isPolish ? 'Wykryto' : 'Detected'}: {FRAMEWORK_CONFIGS[detectedFramework].fullName}
               </p>
               <p className="text-sm text-green-600 dark:text-green-500">
-                Pewność: {(confidence * 100).toFixed(0)}%
+                {isPolish ? 'Pewność' : 'Confidence'}: {(confidence * 100).toFixed(0)}%
               </p>
             </div>
           </div>
@@ -266,7 +292,7 @@ const DetectionStep: React.FC<{
       )}
 
       <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-        Wybierz lub potwierdź framework:
+        {isPolish ? 'Wybierz lub potwierdź framework:' : 'Select or confirm framework:'}
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -304,7 +330,8 @@ const ExtractionStep: React.FC<{
   extractedScores: ExtractedScore[];
   isExtracting: boolean;
   onScoreEdit: (dimensionId: string, newScore: number) => void;
-}> = ({ framework, extractedScores, isExtracting, onScoreEdit }) => {
+  isPolish: boolean;
+}> = ({ framework, extractedScores, isExtracting, onScoreEdit, isPolish }) => {
   const config = FRAMEWORK_CONFIGS[framework];
 
   if (isExtracting) {
@@ -314,9 +341,11 @@ const ExtractionStep: React.FC<{
           <Loader2 className="w-16 h-16 text-blue-500 animate-spin" />
           <Sparkles className="w-6 h-6 text-yellow-500 absolute top-0 right-0 animate-pulse" />
         </div>
-        <p className="text-slate-600 dark:text-slate-400">AI analizuje raport...</p>
+        <p className="text-slate-600 dark:text-slate-400">
+          {isPolish ? 'AI analizuje raport...' : 'AI is analyzing report...'}
+        </p>
         <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
-          Ekstraktuję oceny z dokumentu
+          {isPolish ? 'Ekstraktuję oceny z dokumentu' : 'Extracting scores from document'}
         </p>
       </div>
     );
@@ -335,8 +364,9 @@ const ExtractionStep: React.FC<{
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/30 rounded-lg p-3 flex items-start gap-2">
         <Sparkles className="w-5 h-5 text-blue-500 shrink-0" />
         <p className="text-sm text-blue-700 dark:text-blue-300">
-          Oceny zostały automatycznie wyekstrahowane przez AI. Wartości z niskim poziomem pewności
-          są oznaczone.
+          {isPolish
+            ? 'Oceny zostały automatycznie wyekstrahowane przez AI. Wartości z niskim poziomem pewności są oznaczone.'
+            : 'Scores were automatically extracted by AI. Values with low confidence are marked.'}
         </p>
       </div>
 
@@ -346,16 +376,16 @@ const ExtractionStep: React.FC<{
           <thead>
             <tr className="bg-slate-50 dark:bg-navy-800">
               <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400">
-                Wymiar
+                {isPolish ? 'Wymiar' : 'Dimension'}
               </th>
               <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400">
-                Ocena
+                {isPolish ? 'Ocena' : 'Score'}
               </th>
               <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400">
-                Pewność
+                {isPolish ? 'Pewność' : 'Confidence'}
               </th>
               <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400">
-                Akcja
+                {isPolish ? 'Akcja' : 'Action'}
               </th>
             </tr>
           </thead>
@@ -413,7 +443,9 @@ const ExtractionStep: React.FC<{
           <div className="text-2xl font-bold text-navy-900 dark:text-white">
             {extractedScores.length}
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">Wymiarów</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Wymiarów' : 'Dimensions'}
+          </div>
         </div>
         <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 text-center">
           <div className="text-2xl font-bold text-navy-900 dark:text-white">
@@ -421,7 +453,9 @@ const ExtractionStep: React.FC<{
               extractedScores.reduce((sum, s) => sum + s.score, 0) / extractedScores.length
             ).toFixed(1)}
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">Średnia</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Średnia' : 'Average'}
+          </div>
         </div>
         <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 text-center">
           <div className="text-2xl font-bold text-navy-900 dark:text-white">
@@ -431,7 +465,9 @@ const ExtractionStep: React.FC<{
             ).toFixed(0)}
             %
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">Śr. Pewność</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Śr. Pewność' : 'Avg. Confidence'}
+          </div>
         </div>
       </div>
     </div>
@@ -448,16 +484,21 @@ const ConfirmStep: React.FC<{
   averageScore: number;
   mapToDRD: boolean;
   onMapToDRDChange: (v: boolean) => void;
-}> = ({ framework, fileName, scoreCount, averageScore, mapToDRD, onMapToDRDChange }) => {
+  isPolish: boolean;
+}> = ({ framework, fileName, scoreCount, averageScore, mapToDRD, onMapToDRDChange, isPolish }) => {
   const config = FRAMEWORK_CONFIGS[framework];
 
   return (
     <div className="space-y-4">
       <div className="text-center mb-4">
         <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-500" />
-        <h3 className="text-lg font-bold text-navy-900 dark:text-white">Gotowe do zapisania</h3>
+        <h3 className="text-lg font-bold text-navy-900 dark:text-white">
+          {isPolish ? 'Gotowe do zapisania' : 'Ready to save'}
+        </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Sprawdź podsumowanie i potwierdź import
+          {isPolish
+            ? 'Sprawdź podsumowanie i potwierdź import'
+            : 'Review summary and confirm import'}
         </p>
       </div>
 
@@ -468,15 +509,21 @@ const ConfirmStep: React.FC<{
           <span className="font-bold text-navy-900 dark:text-white">{config.fullName}</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-slate-500 dark:text-slate-400">Plik źródłowy:</span>
+          <span className="text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Plik źródłowy:' : 'Source file:'}
+          </span>
           <span className="font-medium text-navy-900 dark:text-white">{fileName}</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-slate-500 dark:text-slate-400">Wymiarów:</span>
+          <span className="text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Wymiarów:' : 'Dimensions:'}
+          </span>
           <span className="font-bold text-navy-900 dark:text-white">{scoreCount}</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-slate-500 dark:text-slate-400">Średnia ocena:</span>
+          <span className="text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Średnia ocena:' : 'Average score:'}
+          </span>
           <span className={`font-bold text-${config.color}-600 dark:text-${config.color}-400`}>
             {averageScore.toFixed(1)} / {config.scaleMax}
           </span>
@@ -493,10 +540,13 @@ const ConfirmStep: React.FC<{
             className="mt-1 w-5 h-5 rounded border-slate-300 dark:border-navy-700"
           />
           <div>
-            <div className="font-medium text-navy-900 dark:text-white">Mapuj do osi DRD</div>
+            <div className="font-medium text-navy-900 dark:text-white">
+              {isPolish ? 'Mapuj do osi DRD' : 'Map to DRD axes'}
+            </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Automatycznie przelicz oceny na skalę DRD (1-7) w celu generowania inicjatyw
-              transformacyjnych.
+              {isPolish
+                ? 'Automatycznie przelicz oceny na skalę DRD (1-7) w celu generowania inicjatyw transformacyjnych.'
+                : 'Automatically convert scores to DRD scale (1-7) for generating transformation initiatives.'}
             </p>
           </div>
         </label>
@@ -522,7 +572,8 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
   onImportComplete,
   allowedFrameworks = ['SIRI', 'ADMA', 'CMMI', 'DRD', 'LEAN'],
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = i18n.language === 'pl';
 
   // State
   const [currentStep, setCurrentStep] = useState<WizardStep>('upload');
@@ -537,10 +588,10 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const steps: { id: WizardStep; label: string }[] = [
-    { id: 'upload', label: 'Wgraj' },
-    { id: 'detect', label: 'Wykryj' },
-    { id: 'extract', label: 'Ekstrahuj' },
-    { id: 'confirm', label: 'Potwierdź' },
+    { id: 'upload', label: isPolish ? 'Wgraj' : 'Upload' },
+    { id: 'detect', label: isPolish ? 'Wykryj' : 'Detect' },
+    { id: 'extract', label: isPolish ? 'Ekstrahuj' : 'Extract' },
+    { id: 'confirm', label: isPolish ? 'Potwierdź' : 'Confirm' },
   ];
 
   // Handlers
@@ -583,7 +634,7 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
       });
 
       if (!response.ok) {
-        throw new Error('Błąd podczas analizy dokumentu');
+        throw new Error(isPolish ? 'Błąd podczas analizy dokumentu' : 'Error analyzing document');
       }
 
       const result = await response.json();
@@ -593,7 +644,11 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
       console.error('[PDFImportWizard] Detect framework error:', err);
       setDetectedFramework(null);
       setConfidence(0);
-      setError('Nie udało się wykryć frameworka. Sprawdź czy backend /api/pdf-import działa.');
+      setError(
+        isPolish
+          ? 'Nie udało się wykryć frameworka. Sprawdź czy backend /api/pdf-import działa.'
+          : 'Failed to detect framework. Check if backend /api/pdf-import is running.'
+      );
     } finally {
       setIsAnalyzing(false);
     }
@@ -616,7 +671,7 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
       });
 
       if (!response.ok) {
-        throw new Error('Błąd podczas ekstrakcji ocen');
+        throw new Error(isPolish ? 'Błąd podczas ekstrakcji ocen' : 'Error extracting scores');
       }
 
       const result = await response.json();
@@ -624,7 +679,11 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
     } catch (err) {
       console.error('[PDFImportWizard] Extract scores error:', err);
       setExtractedScores([]);
-      setError('Nie udało się wyekstrahować ocen. Sprawdź czy backend /api/pdf-import działa.');
+      setError(
+        isPolish
+          ? 'Nie udało się wyekstrahować ocen. Sprawdź czy backend /api/pdf-import działa.'
+          : 'Failed to extract scores. Check if backend /api/pdf-import is running.'
+      );
     } finally {
       setIsExtracting(false);
     }
@@ -805,6 +864,7 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
               onFileRemove={handleFileRemove}
               isDragging={isDragging}
               setIsDragging={setIsDragging}
+              isPolish={isPolish}
             />
           )}
 
@@ -815,6 +875,7 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
               isAnalyzing={isAnalyzing}
               onFrameworkSelect={handleFrameworkSelect}
               allowedFrameworks={allowedFrameworks}
+              isPolish={isPolish}
             />
           )}
 
@@ -824,6 +885,7 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
               extractedScores={extractedScores}
               isExtracting={isExtracting}
               onScoreEdit={handleScoreEdit}
+              isPolish={isPolish}
             />
           )}
 
@@ -835,6 +897,7 @@ export const PDFImportWizard: React.FC<PDFImportWizardProps> = ({
               averageScore={averageScore}
               mapToDRD={mapToDRD}
               onMapToDRDChange={setMapToDRD}
+              isPolish={isPolish}
             />
           )}
         </div>

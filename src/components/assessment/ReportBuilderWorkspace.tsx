@@ -19,6 +19,7 @@ import {
   FileWarning,
   Loader2,
   Maximize2,
+  MessageCircle,
   MessageSquare,
   Minimize2,
   RefreshCw,
@@ -31,9 +32,10 @@ import { useTranslation } from 'react-i18next';
 
 import { type AIAction, useReportSections } from '../../hooks/useReportSections';
 import { useAppStore } from '../../store/useAppStore';
-import { ChatPanel } from '../layout/ChatPanel';
+import { UnifiedChatPanel } from '../AIChat/UnifiedChatPanel';
 import { SplitLayout } from '../layout/SplitLayout';
 import { ReportBuilder } from '../Reports/ReportBuilder';
+import { ReportCommentPanel } from '../Reports/ReportCommentPanel';
 import { ReportHeader } from '../Reports/ReportHeader';
 import { StickyNavigation } from '../Reports/StickyNavigation';
 import { TableOfContents } from '../Reports/TableOfContents';
@@ -70,6 +72,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
     aiAction,
     regenerateReport,
     finalizeReport,
+    approveReport,
     exportPdf,
     exportExcel,
     setActiveSection,
@@ -84,6 +87,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
   const [isReadingMode, setIsReadingMode] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showChat, setShowChat] = useState(true);
+  const [showComments, setShowComments] = useState(false);
 
   // Memoize section info for StickyNavigation
   const sectionInfos = useMemo(() => {
@@ -180,8 +184,8 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
   const handleFinalize = useCallback(async () => {
     const confirmed = window.confirm(
       isPolish
-        ? 'Czy na pewno chcesz sfinalizować raport? Po finalizacji nie będzie można go edytować.'
-        : 'Are you sure you want to finalize this report? It cannot be edited after finalization.'
+        ? 'Wysłać raport do zatwierdzenia (status FINAL)? Nadal będzie można go edytować do momentu zatwierdzenia.'
+        : 'Submit the report for approval (set status FINAL)? You can still edit it until it is approved.'
     );
 
     if (!confirmed) return;
@@ -196,6 +200,25 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
       toast.error(isPolish ? 'Błąd finalizacji raportu' : 'Failed to finalize report');
     }
   }, [finalizeReport, isPolish]);
+
+  const handleApprove = useCallback(async () => {
+    const confirmed = window.confirm(
+      isPolish
+        ? 'Zatwierdzić raport? Po zatwierdzeniu będzie widoczny globalnie i zablokowany do edycji.'
+        : 'Approve the report? It will become globally visible and locked for editing.'
+    );
+    if (!confirmed) return;
+
+    setIsFinalizing(true);
+    const success = await approveReport();
+    setIsFinalizing(false);
+
+    if (success) {
+      toast.success(isPolish ? 'Raport zatwierdzony' : 'Report approved');
+    } else {
+      toast.error(isPolish ? 'Błąd zatwierdzenia' : 'Failed to approve report');
+    }
+  }, [approveReport, isPolish]);
 
   // Handle regenerate
   const handleRegenerate = useCallback(async () => {
@@ -318,12 +341,15 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
         // Add bot response
         setIsBotTyping(true);
         setTimeout(() => {
+          // Use addMessage from useConversationStore if possible, but for now addChatMessage is fine
           addChatMessage({
+            id: `ai-edit-${Date.now()}`,
             role: 'ai',
             content: isPolish
               ? `Wykonuję akcję "${action}" na wybranej sekcji...`
               : `Executing "${action}" on the selected section...`,
-          } as any);
+            timestamp: new Date(),
+          });
           setIsBotTyping(false);
         }, 500);
       }
@@ -432,7 +458,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
   // Main workspace
   if (!report) return null;
 
-  const readOnly = report.status !== 'DRAFT';
+  const readOnly = report.status === 'APPROVED' || report.status === 'ARCHIVED';
 
   // Build the report content for SplitLayout
   const reportContent = (
@@ -463,6 +489,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
         onBack={isFullscreen ? () => setIsFullscreen(false) : onClose}
         onSave={handleSave}
         onFinalize={handleFinalize}
+        onApprove={handleApprove}
         onRegenerate={handleRegenerate}
         onExportPdf={handleExportPdf}
         onExportExcel={handleExportExcel}
@@ -494,7 +521,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
             report={{
               id: report.id,
               name: report.name,
-              status: report.status as 'DRAFT' | 'FINAL',
+              status: (report.status === 'APPROVED' ? 'FINAL' : report.status) as 'DRAFT' | 'FINAL',
               assessmentId: report.assessmentId,
               assessmentName: report.assessmentName,
               projectName: report.projectName,
@@ -530,6 +557,41 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
           />
         </div>
       </div>
+
+      {/* Comments toggle button */}
+      {!showComments && (
+        <button
+          onClick={() => setShowComments(true)}
+          className="fixed bottom-6 right-6 z-30 flex items-center gap-2 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all"
+          title={isPolish ? 'Pokaż komentarze' : 'Show comments'}
+        >
+          <MessageCircle className="w-5 h-5" />
+          <span className="text-sm font-medium">{isPolish ? 'Komentarze' : 'Comments'}</span>
+        </button>
+      )}
+
+      {/* Comments panel (slide-in from right) */}
+      {showComments && (
+        <div className="fixed top-0 right-0 bottom-0 w-[400px] z-40 bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 shadow-2xl flex flex-col">
+          <ReportCommentPanel
+            reportId={reportId}
+            sectionId={activeSection || undefined}
+            sectionName={
+              activeSection
+                ? sections?.find((s) => s.id === activeSection)?.title || undefined
+                : undefined
+            }
+            onClose={() => setShowComments(false)}
+            onRegenerateSection={
+              activeSection
+                ? (sectionId, feedback) => {
+                    handleAIAction(sectionId, 'regenerate');
+                  }
+                : undefined
+            }
+          />
+        </div>
+      )}
 
       {/* Error banner */}
       {error && (
@@ -572,15 +634,21 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
               </button>
             </div>
             <div className="flex-1 overflow-hidden">
-              <ChatPanel
-                messages={activeChatMessages}
-                onSendMessage={(text: any) => {
-                  addChatMessage({ role: 'user', content: text } as any);
+              <UnifiedChatPanel
+                mode="split"
+                customMessages={activeChatMessages}
+                onMessageSent={(text: string) => {
+                  addChatMessage({
+                    id: `user-${Date.now()}`,
+                    role: 'user',
+                    content: text,
+                    timestamp: new Date(),
+                  });
                 }}
-                onOptionSelect={() => {}}
-                isTyping={isBotTyping}
+                showModeToggle={false}
+                showHistoryTrigger={false}
+                showFocusMode={false}
                 title={isPolish ? 'Czat AI' : 'AI Chat'}
-                subtitle={isPolish ? 'Edytuj raport przez czat' : 'Edit report via chat'}
               />
             </div>
           </div>

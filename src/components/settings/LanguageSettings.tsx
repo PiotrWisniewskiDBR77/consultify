@@ -27,7 +27,7 @@ const LANGUAGE_FLAGS: Record<SupportedLanguage, string> = {
   de: '🇩🇪',
   es: '🇪🇸',
   ar: '🇸🇦',
-  ja: '🇯🇵',
+  jp: '🇯🇵',
 };
 
 // Build language list from centralized configuration

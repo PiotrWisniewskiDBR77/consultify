@@ -7,6 +7,18 @@
 
 import { vi, beforeEach, afterEach } from 'vitest';
 
+let rtlCleanup: null | (() => void) = null;
+
+async function ensureRtlCleanupLoaded(): Promise<void> {
+  if (rtlCleanup) return;
+  try {
+    const mod = await import('@testing-library/react');
+    rtlCleanup = typeof mod.cleanup === 'function' ? mod.cleanup : null;
+  } catch {
+    rtlCleanup = null;
+  }
+}
+
 /**
  * Global cleanup registry
  * Tracks cleanup functions that need to be called
@@ -54,6 +66,12 @@ export function setupAutoCleanup(): void {
   });
 
   afterEach(async () => {
+    // Ensure DOM from React Testing Library doesn't accumulate across tests (memory leak / OOM)
+    if (typeof window !== 'undefined') {
+      await ensureRtlCleanupLoaded();
+      rtlCleanup?.();
+    }
+
     // Run cleanup after each test
     await runCleanup();
 
@@ -67,10 +85,24 @@ export function setupAutoCleanup(): void {
     // Clear any pending timeouts/intervals
     // This prevents test pollution from timers
     if (typeof global !== 'undefined') {
-      // Clear any pending timers
-      const highestTimeoutId = setTimeout(() => {}, 0);
-      for (let i = 0; i < highestTimeoutId; i++) {
-        clearTimeout(i);
+      // IMPORTANT:
+      // Avoid an unbounded O(n) loop here (which becomes O(n^2) across a large suite).
+      // In JSDOM, timer IDs are numeric and monotonically increasing; iterating from 0
+      // to the highest seen ID can balloon to millions and contribute to OOM/timeouts.
+      //
+      // Instead, clear only a bounded "tail window" of recent IDs (the ones most likely
+      // to still be pending due to test leaks). This keeps cleanup cost bounded.
+      const highestTimeoutId = setTimeout(() => {}, 0) as unknown;
+      clearTimeout(highestTimeoutId as any);
+
+      if (typeof highestTimeoutId === 'number') {
+        const MAX_IDS_TO_CLEAR = 5_000;
+        const start = Math.max(0, highestTimeoutId - MAX_IDS_TO_CLEAR);
+        for (let i = start; i <= highestTimeoutId; i++) {
+          clearTimeout(i);
+          // Intervals share the same id space in JSDOM, so clear both.
+          clearInterval(i);
+        }
       }
     }
   });

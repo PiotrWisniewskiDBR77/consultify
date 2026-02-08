@@ -86,7 +86,11 @@ export const DemoLoadingOverlay: React.FC<DemoLoadingOverlayProps> = ({
               className="mb-12"
             >
               <div className="w-20 h-20 mx-auto bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-2xl shadow-purple-500/30 mb-6">
-                <span className="text-white font-black text-3xl">C</span>
+                <img
+                  src="/assets/logos/logo-icon.png"
+                  alt="Consultinity"
+                  className="w-12 h-12 object-contain"
+                />
               </div>
               <h1 className="text-2xl font-bold text-white mb-2">
                 {t('demo.loading.title', 'Preparing Your Experience')}

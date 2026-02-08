@@ -1,6 +1,6 @@
 /**
  * CategoryChat
- * 
+ *
  * Standalone chat component for a single interview category.
  * Can be used in modal or inline context.
  */
@@ -104,9 +104,10 @@ ${conversationHistory}
 
 User's response: ${userMessage}
 
-${questionIndex < initialPrompts.length
-  ? `Ask this follow-up question naturally: "${initialPrompts[questionIndex]}"`
-  : 'Provide a brief summary of what you learned and thank the user.'
+${
+  questionIndex < initialPrompts.length
+    ? `Ask this follow-up question naturally: "${initialPrompts[questionIndex]}"`
+    : 'Provide a brief summary of what you learned and thank the user.'
 }
 
 Be professional and concise.
@@ -141,7 +142,18 @@ Be professional and concise.
     } finally {
       setIsLoading(false);
     }
-  }, [inputValue, isLoading, messages, questionIndex, initialPrompts, categoryLabel, categoryDescription, language, onAnswerSaved, onComplete]);
+  }, [
+    inputValue,
+    isLoading,
+    messages,
+    questionIndex,
+    initialPrompts,
+    categoryLabel,
+    categoryDescription,
+    language,
+    onAnswerSaved,
+    onComplete,
+  ]);
 
   return (
     <div className="flex flex-col h-full">
@@ -155,10 +167,7 @@ Be professional and concise.
             <div
               className={`
                 w-7 h-7 rounded-full flex items-center justify-center shrink-0
-                ${message.role === 'user'
-                  ? 'bg-slate-200 dark:bg-slate-700'
-                  : 'bg-purple-500'
-                }
+                ${message.role === 'user' ? 'bg-slate-200 dark:bg-slate-700' : 'bg-purple-500'}
               `}
             >
               {message.role === 'user' ? (
@@ -170,9 +179,10 @@ Be professional and concise.
             <div
               className={`
                 max-w-[85%] px-3 py-2 rounded-lg text-sm
-                ${message.role === 'user'
-                  ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200'
-                  : 'bg-purple-50 dark:bg-purple-900/20 text-slate-800 dark:text-slate-200'
+                ${
+                  message.role === 'user'
+                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200'
+                    : 'bg-purple-50 dark:bg-purple-900/20 text-slate-800 dark:text-slate-200'
                 }
               `}
             >

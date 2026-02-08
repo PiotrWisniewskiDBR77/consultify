@@ -157,8 +157,8 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
           {/* Info */}
           <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl p-4">
             <p className="text-sm text-emerald-700 dark:text-emerald-400">
-              After creating analysis you will go to the appropriate workspace: maturity assessment or
-              analysis ekonomicznej.
+              After creating analysis you will go to the appropriate workspace: maturity assessment
+              or analysis ekonomicznej.
             </p>
           </div>
 

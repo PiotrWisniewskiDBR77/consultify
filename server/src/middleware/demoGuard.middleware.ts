@@ -1,7 +1,7 @@
 /**
  * Demo Guard Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Provides demo mode protection and context
  */
 
@@ -42,11 +42,7 @@ export interface DemoStats {
 /**
  * Demo context middleware - attaches demo context to request
  */
-export const demoContextMiddleware = (
-  _req: Request,
-  _res: Response,
-  next: NextFunction
-): void => {
+export const demoContextMiddleware = (_req: Request, _res: Response, next: NextFunction): void => {
   next();
 };
 
@@ -78,10 +74,7 @@ export const checkUserDemoPreference = async (_userId: string): Promise<boolean>
 /**
  * Set user demo preference
  */
-export const setUserDemoPreference = async (
-  _userId: string,
-  _enabled: boolean
-): Promise<void> => {
+export const setUserDemoPreference = async (_userId: string, _enabled: boolean): Promise<void> => {
   // No-op
 };
 

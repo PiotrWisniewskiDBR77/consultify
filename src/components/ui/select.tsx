@@ -116,7 +116,13 @@ const SelectValue = ({ placeholder }: { placeholder?: string }) => (
   <span className="text-slate-500 dark:text-slate-400">{placeholder}</span>
 );
 
-const SelectContent = ({ children, className }: { children: React.ReactNode; className?: string }) => (
+const SelectContent = ({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => (
   <div
     className={cn(
       'relative z-50 min-w-[8rem] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md',

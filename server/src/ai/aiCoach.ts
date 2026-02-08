@@ -101,7 +101,9 @@ const AICoach: {
     });
 
     // Penalties for blocked initiatives
-    const blockedCount = context.data.initiative_status.filter((i: { is_blocked: boolean }) => i.is_blocked).length;
+    const blockedCount = context.data.initiative_status.filter(
+      (i: { is_blocked: boolean }) => i.is_blocked
+    ).length;
     score -= blockedCount * 5;
 
     return Math.max(0, score);

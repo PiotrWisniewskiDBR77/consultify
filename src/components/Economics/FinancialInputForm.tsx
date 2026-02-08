@@ -292,11 +292,7 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
                 field="annualOperatingCost"
                 hint="Utrzymanie, wsparcie, licencje"
               />
-              <InputField
-                label="Training Costs"
-                field="trainingCost"
-                hint="User training"
-              />
+              <InputField label="Training Costs" field="trainingCost" hint="User training" />
             </div>
             <InputField
               label="Rezerwa na nieprzewidziane wydatki"

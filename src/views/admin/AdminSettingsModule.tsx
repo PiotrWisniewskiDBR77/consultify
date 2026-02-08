@@ -9,12 +9,16 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { AdminSettingsSidebar, AdminSettingsSection } from '../../components/Admin/AdminSettingsSidebar';
+import { AdminInitiativeCreatorPanel } from '../../components/Admin/AdminInitiativeCreatorPanel';
+import {
+  AdminSettingsSection,
+  AdminSettingsSidebar,
+} from '../../components/Admin/AdminSettingsSidebar';
 import { AuditExportPanel } from '../../components/Admin/AuditExportPanel';
 import { BrandingSettingsPanel } from '../../components/Admin/BrandingSettingsPanel';
 import { DataGovernancePanel } from '../../components/Admin/DataGovernancePanel';
 import { IntegrationsManagementPanel } from '../../components/Admin/IntegrationsManagementPanel';
-import { InterviewAssignmentsPanel } from '../../components/Admin/InterviewAssignmentsPanel';
+import { ReportsTable } from '../../components/assessment/ReportsTable';
 import { PaymentMethodsPanel } from '../../components/billing/PaymentMethodsPanel';
 import { SubscriptionManager } from '../../components/billing/SubscriptionManager';
 import { TaxSettingsForm } from '../../components/billing/TaxSettingsForm';
@@ -24,8 +28,8 @@ import { SecuritySettings } from '../../components/settings/SecuritySettings';
 import { Button } from '../../components/ui/primitives/Button';
 import { ScrollArea } from '../../components/ui/scroll-area';
 import { cn } from '../../lib/utils';
-import { Api } from '../../services/api';
 import { ROUTES } from '../../routes/routeConfig';
+import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, User } from '../../types';
 import { ApiKeysManagementView } from './ApiKeysManagementView';
@@ -37,8 +41,11 @@ interface AdminSettingsModuleProps {
 
 // Section metadata for headers
 const sectionMeta: Record<AdminSettingsSection, { title: string; subtitle: string }> = {
-  organization: { title: 'Strategic Profile', subtitle: 'Define your organization context for AI-powered strategic insights' },
-  branding: { title: 'Branding', subtitle: 'Customize your organization\'s visual identity' },
+  organization: {
+    title: 'Strategic Profile',
+    subtitle: 'Define your organization context for AI-powered strategic insights',
+  },
+  branding: { title: 'Branding', subtitle: "Customize your organization's visual identity" },
   billing: { title: 'Plans', subtitle: 'Manage your subscription and plan details' },
   payment: { title: 'Payment', subtitle: 'Manage payment methods and billing information' },
   tax: { title: 'Tax', subtitle: 'Configure tax settings and VAT information' },
@@ -46,7 +53,14 @@ const sectionMeta: Record<AdminSettingsSection, { title: string; subtitle: strin
   security: { title: 'Security', subtitle: 'Manage security settings and access controls' },
   governance: { title: 'Governance', subtitle: 'Configure data governance policies' },
   audit: { title: 'Audit', subtitle: 'View and export audit logs' },
-  interviews: { title: 'Interview Assignments', subtitle: 'Assign interview templates to users and manage send-back workflow' },
+  'report-creator': {
+    title: 'Kreator raportów',
+    subtitle: 'Twórz raporty z różnych źródeł danych',
+  },
+  'initiative-creator': {
+    title: 'Kreator inicjatyw',
+    subtitle: 'Generuj inicjatywy na podstawie analiz',
+  },
   integrations: { title: 'Integrations', subtitle: 'Manage third-party integrations' },
   api: { title: 'API', subtitle: 'Manage API keys and access' },
   feedback: { title: 'Feedback', subtitle: 'View and manage user feedback' },
@@ -139,6 +153,46 @@ const AdminFeedbackView: React.FC = () => {
   );
 };
 
+// Admin Reports Panel - Wrapper for ReportsTable
+const AdminReportsPanel: React.FC = () => {
+  const { currentProjectId } = useAppStore();
+  const navigate = useNavigate();
+
+  const handleCreateInitiatives = useCallback(
+    (reportId: string) => {
+      // Navigate to initiatives generator with the report
+      navigate(`/assessment/initiatives?reportId=${reportId}`);
+    },
+    [navigate]
+  );
+
+  const handleOpenReport = useCallback(
+    (reportId: string, reportName: string, status?: string) => {
+      // Navigate to report builder workspace
+      navigate(`/reports/builder?reportId=${reportId}`);
+    },
+    [navigate]
+  );
+
+  // Use organizationId as fallback if no project selected
+  const projectId = currentProjectId || 'global';
+
+  return (
+    <div className="space-y-4">
+      <ReportsTable
+        projectId={projectId}
+        onCreateInitiatives={handleCreateInitiatives}
+        onOpenReport={handleOpenReport}
+      />
+    </div>
+  );
+};
+
+// Admin Initiatives Panel - Uses the custom AdminInitiativeCreatorPanel
+const AdminInitiativesPanel: React.FC = () => {
+  return <AdminInitiativeCreatorPanel />;
+};
+
 export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
   initialTab,
   currentUser,
@@ -154,7 +208,9 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
     const params = new URLSearchParams(location.search);
     const section = params.get('tab');
     const fallback = initialTab || 'organization';
-    return (section && Object.keys(sectionMeta).includes(section) ? section : fallback) as AdminSettingsSection;
+    return (
+      section && Object.keys(sectionMeta).includes(section) ? section : fallback
+    ) as AdminSettingsSection;
   }, [initialTab, location.search]);
 
   // Fetch pending feedback count
@@ -174,12 +230,15 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
   }, [activeSection]);
 
   // Handle section change
-  const handleSectionChange = useCallback((section: AdminSettingsSection) => {
-    const params = new URLSearchParams(location.search);
-    params.set('tab', section);
-    navigate({ pathname: location.pathname, search: params.toString() });
-    setSidebarOpen(false);
-  }, [location.pathname, location.search, navigate]);
+  const handleSectionChange = useCallback(
+    (section: AdminSettingsSection) => {
+      const params = new URLSearchParams(location.search);
+      params.set('tab', section);
+      navigate({ pathname: location.pathname, search: params.toString() });
+      setSidebarOpen(false);
+    },
+    [location.pathname, location.search, navigate]
+  );
 
   // Handle back to dashboard
   const handleBackToDashboard = useCallback(() => {
@@ -217,8 +276,10 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
         return <DataGovernancePanel />;
       case 'audit':
         return <AuditExportPanel />;
-      case 'interviews':
-        return <InterviewAssignmentsPanel />;
+      case 'report-creator':
+        return <AdminReportsPanel />;
+      case 'initiative-creator':
+        return <AdminInitiativesPanel />;
       case 'integrations':
         return <IntegrationsManagementPanel />;
       case 'api':

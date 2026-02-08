@@ -11,8 +11,8 @@ import React from 'react';
 import {
   GrowthPathsData,
   OperationalToolData,
-  PortfolioPriorityData,
   PorterData,
+  PortfolioPriorityData,
   RiskUncertaintyData,
   SWOTData,
   ToolSession,

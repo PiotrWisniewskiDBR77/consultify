@@ -15,17 +15,16 @@ export { DBR77ReportTemplate } from './DBR77ReportTemplate';
 export { SIRIReportTemplate } from './SIRIReportTemplate';
 
 // Visualization components
-export {
-  AssessmentVisualizationDashboard,
-  AssessmentRadarChart,
-  GapHeatmap,
-  DimensionBars,
-  ScoreCardsGrid,
-  ScoreCard,
-} from '../AssessmentReportVisualizations';
-
 export type {
+  AssessmentFramework,
   AssessmentVisualizationData,
   DimensionScore,
-  AssessmentFramework,
+} from '../AssessmentReportVisualizations';
+export {
+  AssessmentRadarChart,
+  AssessmentVisualizationDashboard,
+  DimensionBars,
+  GapHeatmap,
+  ScoreCard,
+  ScoreCardsGrid,
 } from '../AssessmentReportVisualizations';

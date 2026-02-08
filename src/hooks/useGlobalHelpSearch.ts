@@ -45,9 +45,7 @@ export const useGlobalHelpSearch = ({ language = 'en', onSelect }: UseGlobalHelp
     setIsLoading(true);
     const timeout = setTimeout(() => {
       const types = activeFilter === 'all' ? undefined : [activeFilter];
-      const nextResults = query.trim()
-        ? searchHelp(query, { language, types })
-        : [];
+      const nextResults = query.trim() ? searchHelp(query, { language, types }) : [];
       setResults(nextResults);
       setSuggestions(getSearchSuggestions(query, language));
       setSelectedIndex(0);

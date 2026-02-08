@@ -1,3 +1,15 @@
+import type {
+  AIPreferences,
+  AIProjectRole,
+  ChatCitation,
+  ChatOption,
+  ChatResponseAction,
+  OrgAISettings,
+  SuperAdminAISettings,
+  ToolCallInfo,
+  UserAISettings,
+} from './domain/ai';
+
 export interface Invoice {
   id: string;
   created_at: string;
@@ -695,7 +707,7 @@ export interface GovernancePolicy {
 export enum InitiativeStatus {
   // Source modules (Tools/Assessment) - Draft phase
   DRAFT = 'DRAFT',
-  PENDING_REVIEW = 'PENDING_REVIEW', // Intermediate state between DRAFT and REVIEW
+  PENDING_REVIEW = 'PENDING_REVIEW',
 
   // Initiative Management Module - Review & Planning phase
   REVIEW = 'REVIEW',
@@ -712,9 +724,9 @@ export enum InitiativeStatus {
   // Benefits Module - Tracking phase
   TRACKING = 'TRACKING',
 
-  // Terminal States
+  // Terminal State
   CANCELLED = 'CANCELLED',
-  ARCHIVED = 'ARCHIVED', // Archived state for completed/cancelled initiatives
+  ARCHIVED = 'ARCHIVED',
 }
 
 /** Task Status Lifecycle (ENFORCED) */
@@ -1528,6 +1540,7 @@ export interface Notification {
   userId: string;
   organizationId: string;
   projectId?: string;
+  projectName?: string;
 
   // Type & Severity
   type: NotificationType;
@@ -1942,467 +1955,7 @@ export interface ProjectClosure {
 // AI CORE LAYER — ENTERPRISE PMO BRAIN
 // ==========================================
 
-/** AI Policy Levels - Control what AI can do */
-export type AIPolicyLevel = 'ADVISORY' | 'ASSISTED' | 'PROACTIVE' | 'AUTOPILOT';
-
-/** AI Role - Runtime behavior mode */
-export type AIRole = 'ADVISOR' | 'PMO_MANAGER' | 'EXECUTOR' | 'EDUCATOR';
-
-// ==========================================
-// AI ROLES MODEL — PROJECT-LEVEL GOVERNANCE
-// ==========================================
-
-/** AI Project Role - Hierarchical governance level (ADVISOR < MANAGER < OPERATOR) */
-export enum AIProjectRole {
-  ADVISOR = 'ADVISOR', // Explains, suggests, warns - cannot modify data
-  MANAGER = 'MANAGER', // Prepares drafts - requires explicit approval
-  OPERATOR = 'OPERATOR', // Executes approved actions within governance
-}
-
-/** AI Role Capabilities - What each role can do */
-export interface AIRoleCapabilities {
-  canExplain: boolean;
-  canSuggest: boolean;
-  canAnalyze: boolean;
-  canCreateDrafts: boolean;
-  canExecuteActions: boolean;
-  canModifyEntities: boolean;
-  requiresApproval: boolean;
-}
-
-/** AI Role Configuration for Projects */
-export interface AIRoleConfig {
-  activeRole: AIProjectRole;
-  capabilities: AIRoleCapabilities;
-  roleDescription: string;
-}
-
-/** AI Chat Mode - User-selectable intent */
-export type AIChatMode = 'EXPLAIN' | 'GUIDE' | 'ANALYZE' | 'DO' | 'TEACH';
-
-/** AI Action Type */
-export type AIActionType =
-  | 'CREATE_DRAFT_TASK'
-  | 'CREATE_DRAFT_INITIATIVE'
-  | 'SUGGEST_ROADMAP_CHANGE'
-  | 'GENERATE_REPORT'
-  | 'PREPARE_DECISION_SUMMARY'
-  | 'EXPLAIN_CONTEXT'
-  | 'ANALYZE_RISKS';
-
-/** Platform Context Layer */
-export interface AIPlatformContext {
-  role: 'SUPERADMIN' | 'ADMIN' | 'USER';
-  tenantId: string;
-  userId: string;
-  policyLevel: AIPolicyLevel;
-  globalPolicies: {
-    internetEnabled: boolean;
-    maxPolicyLevel: AIPolicyLevel;
-    auditRequired: boolean;
-  };
-}
-
-/** Organization Context Layer */
-export interface AIOrganizationContext {
-  organizationId: string;
-  organizationName: string;
-  locations: string[];
-  activeProjectIds: string[];
-  activeProjectCount: number;
-  pmoMaturityLevel?: 'BASIC' | 'INTERMEDIATE' | 'ADVANCED';
-}
-
-/** Project Context Layer */
-export interface AIProjectContext {
-  projectId: string;
-  projectName: string;
-  currentPhase: string;
-  phaseNumber: number;
-  governanceRules: {
-    requireApprovalForPhaseTransition: boolean;
-    stageGatesEnabled: boolean;
-    aiPolicyOverride?: AIPolicyLevel;
-  };
-  sponsorId?: string;
-  projectManagerId?: string;
-  roadmapStatus?: string;
-  initiativeCount: number;
-  completedInitiatives: number;
-}
-
-/** Execution Context Layer */
-export interface AIExecutionContext {
-  userId: string;
-  userTasks: { id: string; title: string; status: string; dueDate?: string }[];
-  userInitiatives: { id: string; name: string; status: string }[];
-  pendingDecisions: { id: string; title: string; createdAt: string }[];
-  blockers: { id: string; type: string; description: string }[];
-  capacityStatus: 'HEALTHY' | 'WARNING' | 'OVERLOADED';
-}
-
-/** Knowledge Context Layer */
-export interface AIKnowledgeContext {
-  projectDocuments: { id: string; name: string; type: string }[];
-  previousDecisions: { id: string; title: string; outcome: string }[];
-  changeRequests: { id: string; title: string; status: string }[];
-  lessonsLearned: string[];
-  phaseHistory: { phase: string; enteredAt: string }[];
-}
-
-/** External Context Layer */
-export interface AIExternalContext {
-  internetEnabled: boolean;
-  externalSourcesUsed: string[];
-}
-
-/** Complete 6-Layer AI Context */
-export interface AIContext {
-  platform: AIPlatformContext;
-  organization: AIOrganizationContext;
-  project?: AIProjectContext;
-  execution: AIExecutionContext;
-  knowledge: AIKnowledgeContext;
-  external: AIExternalContext;
-
-  // Meta
-  builtAt: string;
-  contextHash: string;
-  currentScreen?: string;
-  selectedObjectId?: string;
-  selectedObjectType?: string;
-}
-
-/** AI Memory - Session Layer */
-export interface AISessionMemory {
-  conversationId: string;
-  messages: { role: 'user' | 'ai'; content: string; timestamp: string }[];
-  currentScreen: string;
-  startedAt: string;
-}
-
-/** AI Memory - Project Layer */
-export interface AIProjectMemory {
-  projectId: string;
-
-  // Decisions & Rationale
-  majorDecisions: {
-    decisionId: string;
-    title: string;
-    outcome: string;
-    rationale: string;
-    recordedAt: string;
-  }[];
-
-  // Phase Transitions
-  phaseTransitions: {
-    from: string;
-    to: string;
-    reason: string;
-    transitionedAt: string;
-  }[];
-
-  // AI Recommendations
-  aiRecommendations: {
-    recommendation: string;
-    accepted: boolean;
-    userFeedback?: string;
-    recordedAt: string;
-  }[];
-
-  createdAt: string;
-  updatedAt: string;
-}
-
-/** AI Memory - Organization Layer */
-export interface AIOrganizationMemory {
-  organizationId: string;
-
-  governanceStyle: 'STRICT' | 'BALANCED' | 'FLEXIBLE';
-  aiStrictnessPreference: 'MINIMAL' | 'STANDARD' | 'AGGRESSIVE';
-  recurringPatterns: string[];
-
-  createdAt: string;
-  updatedAt: string;
-}
-
-/** AI User Preferences */
-export interface AIUserPreferences {
-  userId: string;
-
-  preferredTone: 'BUDDY' | 'EXPERT' | 'MANAGER';
-  educationModeEnabled: boolean;
-  proactiveNotifications: boolean;
-  preferredLanguage: string;
-
-  createdAt: string;
-  updatedAt: string;
-}
-
-/** AI Action Request */
-export interface AIAction {
-  id: string;
-  type: AIActionType;
-
-  // Context
-  contextSnapshot: AIContext;
-  projectId?: string;
-
-  // Action Details
-  payload: Record<string, unknown>;
-  draftContent?: string;
-
-  // Policy
-  requiredPolicyLevel: AIPolicyLevel;
-  currentPolicyLevel: AIPolicyLevel;
-  requiresApproval: boolean;
-
-  // Status
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'EXECUTED';
-
-  // Audit
-  createdAt: string;
-  approvedAt?: string;
-  approvedBy?: string;
-  executedAt?: string;
-}
-
-/** AI Audit Entry */
-export interface AIAuditEntry {
-  id: string;
-  userId: string;
-  organizationId: string;
-  projectId?: string;
-
-  // Action
-  actionType: string;
-  actionDescription: string;
-
-  // Context
-  contextSnapshot: string; // JSON
-  dataSourcesUsed: string[];
-
-  // AI Details
-  aiRole: AIRole;
-  policyLevel: AIPolicyLevel;
-  confidenceLevel?: number;
-
-  // Result
-  aiSuggestion: string;
-  userDecision: 'ACCEPTED' | 'REJECTED' | 'MODIFIED' | 'IGNORED';
-  userFeedback?: string;
-
-  // Timestamp
-  createdAt: string;
-}
-
-// ==========================================
-// AI SETTINGS 3-TIER SYSTEM
-// SuperAdmin → Admin/Org → User hierarchy
-// ==========================================
-
-/** AI Proactivity Mode - How proactive the AI should be */
-export type AIProactivityMode = 'REACTIVE' | 'BALANCED' | 'PROACTIVE';
-
-/** Proactivity behavior flags for runtime */
-export interface ProactivityBehavior {
-  autoSuggest: boolean;
-  nudges: boolean;
-  contextualHints: boolean;
-  initiateConversation: boolean;
-}
-
-/** SuperAdmin AI Settings - Platform-wide configuration */
-export interface SuperAdminAISettings {
-  id: string; // 'global'
-
-  // Provider Management
-  defaultProvider: string | null;
-  fallbackChain: string[];
-  circuitBreakerConfig: {
-    failureThreshold: number;
-    cooldownSeconds: number;
-  };
-
-  // Global Limits
-  globalTokenLimit: number;
-  globalRateLimit: {
-    requestsPerMinute: number;
-    requestsPerHour: number;
-  };
-  maxContextWindowSize: number;
-  maxTokensPerRequest: number;
-
-  // Security & PII
-  piiDetectionSensitivity: 'low' | 'medium' | 'high';
-  requireEncryption: boolean;
-  dataResidency: string | null;
-
-  // Timestamps
-  createdAt: string;
-  updatedAt: string;
-  updatedBy: string | null;
-}
-
-/** Organization AI Settings - Per-org configuration */
-export interface OrgAISettings {
-  organizationId: string;
-
-  // Policy Configuration
-  policyLevel: AIPolicyLevel;
-  maxPolicyLevel: AIPolicyLevel;
-  defaultProactivityMode: AIProactivityMode;
-
-  // AI Roles Configuration
-  activeRoles: AIRole[];
-  defaultRole: AIRole;
-
-  // Model Selection (subset of SuperAdmin providers)
-  enabledModelIds: string[];
-
-  // Limits & Budget
-  maxAICallsPerDay: number;
-  maxTokensPerMonth: number;
-  monthlyBudgetUSD: number;
-  hardLimitUSD: number;
-  freezeOnLimit: boolean;
-
-  // Feature Toggles
-  webSearchEnabled: boolean;
-  artifactsEnabled: boolean;
-  thinkingStepsEnabled: boolean;
-  focusModesEnabled: boolean;
-  voiceEnabled: boolean;
-
-  // Auto-Tier Configuration
-  autoTierEnabled?: boolean;
-  autoTierDirection?: 'up' | 'down' | 'both';
-  autoTierThreshold?: number;
-
-  // System Prompts
-  systemPrompts?: SystemPromptConfig[];
-  defaultSystemPromptId?: string;
-
-  // Audit Configuration
-  auditAllRequests: boolean;
-  auditPolicyChanges: boolean;
-
-  // Timestamps
-  createdAt: string;
-  updatedAt: string;
-  updatedBy: string | null;
-}
-
-/** System Prompt Configuration */
-export interface SystemPromptConfig {
-  id: string;
-  name: string;
-  content: string;
-  category: 'default' | 'persona' | 'focus_mode' | 'custom';
-  isActive: boolean;
-  version: number;
-  context_config?: {
-    include_project_context?: boolean;
-    include_user_context?: boolean;
-    include_org_context?: boolean;
-    max_context_tokens?: number;
-  };
-  variables?: SystemPromptVariable[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-/** System Prompt Variable */
-export interface SystemPromptVariable {
-  name: string;
-  description?: string;
-  defaultValue?: string;
-  required: boolean;
-}
-
-/** User AI Settings - Per-user preferences */
-export interface UserAISettings {
-  userId: string;
-
-  // Response Behavior
-  responseStyle: 'concise' | 'balanced' | 'detailed';
-  writingTone: 'professional' | 'casual' | 'technical' | 'friendly';
-  preferredLanguage: string;
-  codeExplanations: boolean;
-  showSources: boolean;
-
-  // Proactivity Mode
-  proactivityMode: AIProactivityMode;
-
-  // Model Parameters
-  modelTemperature: number;
-  maxTokens: number;
-  topP: number;
-  frequencyPenalty: number;
-  presencePenalty: number;
-  systemInstructions: string;
-
-  // Model Selection (from org-enabled models)
-  visibleModelIds: string[];
-  preferredModelId: string | null;
-
-  // Privacy Settings
-  enablePiiRedaction: boolean;
-  dataRetentionPolicy: 'minimal' | 'standard' | 'extended';
-  shareUsageAnalytics: boolean;
-
-  // Context Settings
-  contextRetention: 'session' | 'day' | 'week' | 'month' | 'permanent';
-  autoSuggestions: boolean;
-
-  // Timestamps
-  createdAt: string;
-  updatedAt: string;
-}
-
-/** AI Settings Audit Entry - Tracks all setting changes */
-export interface AISettingsAuditEntry {
-  id: string;
-  timestamp: string;
-
-  // Level & Actor
-  level: 'superadmin' | 'admin' | 'user';
-  actorId: string;
-  actorRole: string;
-
-  // Target & Change
-  targetId: string; // orgId or userId or 'global'
-  settingKey: string;
-  oldValue: unknown;
-  newValue: unknown;
-
-  // Request Metadata
-  ipAddress: string | null;
-  userAgent: string | null;
-}
-
-/** Effective AI Settings - Merged settings for runtime */
-export interface EffectiveAISettings {
-  // Merged from all levels
-  policyLevel: AIPolicyLevel;
-  proactivityMode: AIProactivityMode;
-  proactivityBehavior: ProactivityBehavior;
-
-  // Response settings
-  responseStyle: 'concise' | 'balanced' | 'detailed';
-  writingTone: 'professional' | 'casual' | 'technical' | 'friendly';
-  preferredLanguage: string;
-
-  // Model settings
-  modelTemperature: number;
-  maxTokens: number;
-  topP: number;
-  frequencyPenalty: number;
-  presencePenalty: number;
-  systemInstructions: string;
-  preferredModelId: string | null;
-  availableModelIds: string[];
-
+export interface MergedAISettings {
   // Feature flags (from org)
   webSearchEnabled: boolean;
   artifactsEnabled: boolean;
@@ -2573,44 +2126,6 @@ export enum AssessmentStep {
 
 export type Language = 'EN' | 'PL' | 'DE' | 'AR';
 
-export interface ChatOption {
-  id: string;
-  label: string;
-  value: string;
-}
-
-export interface ToolCallInfo {
-  name: string;
-  args: Record<string, unknown>;
-  result?: unknown;
-  status?: 'pending' | 'approved' | 'rejected' | 'executed';
-}
-
-// Citation from PMO data or external sources
-export interface ChatCitation {
-  id: string;
-  type: 'assessment' | 'initiative' | 'report' | 'roadmap' | 'external';
-  title: string;
-  reference: string; // e.g., "DRD Assessment Q4 2024"
-  link?: string; // Deep link to source
-  excerpt?: string; // Relevant excerpt
-  entityId?: string; // ID of the referenced entity
-}
-
-// Action button in AI response
-export interface ChatResponseAction {
-  id: string;
-  type: 'navigate' | 'execute' | 'expand' | 'copy';
-  label: string;
-  icon?: string;
-  payload: {
-    view?: string; // AppView to navigate to
-    apiCall?: string; // API endpoint to call
-    data?: Record<string, unknown>;
-    copyText?: string; // Text to copy for 'copy' type
-  };
-}
-
 // ==================== WORLD-CLASS CHAT 2025 TYPES ====================
 
 /**
@@ -2708,6 +2223,10 @@ export interface ChatMessage {
   parentMessageId?: string; // For branching conversations (edit history)
   isStreaming?: boolean; // Currently being streamed
   streamProgress?: number; // 0-100 for progress indicator
+
+  // Team conversation extensions
+  authorUserId?: string | null; // User who sent this message (null for AI)
+  authorName?: string | null; // Display name of author
 }
 
 export interface AIMessageHistory {
@@ -3684,47 +3203,7 @@ export interface InitiativeTemplate {
   updatedAt?: string;
 }
 
-/** AI Charter Generation Request */
-export interface AICharterRequest {
-  sourceType: 'GAP' | 'REPORT' | 'MANUAL';
-  gaps?: GapForGeneration[];
-  reportId?: string;
-  templateId?: string;
-  constraints: InitiativeGeneratorConstraints;
-  organizationContext?: {
-    industry: string;
-    size: string;
-    strategicGoals: string[];
-  };
-}
-
-/** AI Generated Charter (extends GeneratedInitiative with full charter data) */
-export interface AIGeneratedCharter extends GeneratedInitiative {
-  // Basic info
-  summary?: string;
-  applicantOneLiner?: string;
-  strategicIntent?: 'Grow' | 'Fix' | 'Stabilize' | 'De-risk' | 'Build Capability';
-  hypothesis?: string;
-
-  // Structured sections
-  problemStructured: ProblemStructured;
-  targetState: TargetState;
-  killCriteria: string[];
-  suggestedTasks: Partial<Task>[];
-  suggestedTeam: InitiativeTeamMember[];
-  keyRisks: { risk: string; mitigation: string; metric: 'Low' | 'Medium' | 'High' }[];
-  deliverables: string[];
-  milestones: { name: string; targetDate: string }[];
-
-  // Financials
-  capex?: number;
-  firstYearOpex?: number;
-  annualBenefit?: number;
-
-  // Meta
-  templateId?: string;
-  generationConfidence: 'HIGH' | 'MEDIUM' | 'LOW';
-}
+// Migrated to domain/ai.ts
 
 /** Assessment tab types */
 export type AssessmentTab = 'dashboard' | 'assessments' | 'reviews' | 'gap-map' | 'reports';
@@ -3973,6 +3452,7 @@ export interface TaskAttachment {
 export interface Task {
   id: string;
   projectId: string; // Keep for legacy, but might be empty if initiativeId is used
+  projectName?: string;
   organizationId: string;
   title: string;
   description?: string;
@@ -3981,10 +3461,12 @@ export interface Task {
   blockedReason?: string;
   priority: TaskPriority;
   assigneeId?: string;
+  backupAssigneeId?: string;
   assignee?: Pick<User, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>;
   reporterId?: string;
   reporter?: Pick<User, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>;
   dueDate?: string;
+  startedAt?: string;
   estimatedHours?: number;
   checklist?: ChecklistItem[];
   attachments?: TaskAttachment[];
@@ -3993,6 +3475,12 @@ export interface Task {
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
+
+  // PMO governance additions
+  ownerId?: string;
+  requiresAcceptance?: boolean;
+  acceptanceType?: 'manual' | 'automatic' | null;
+  acceptorId?: string | null;
 
   // Strategic Execution Fields (Upgrade)
   taskType: TaskType;
@@ -4747,106 +4235,7 @@ export interface PermissionRequest {
   reviewer?: User;
 }
 
-export interface AIPreferences {
-  responseStyle: 'concise' | 'balanced' | 'detailed';
-  writingTone: 'professional' | 'casual' | 'technical';
-  autoSuggestions: boolean;
-  contextRetention: 'session' | 'persistent' | 'minimal';
-  preferredLanguage: 'auto' | 'en' | 'pl';
-  codeExplanations: boolean;
-  showSources: boolean;
-  userRole?: string;
-  supportLevel?: string;
-  autonomyLevel?: string;
-
-  // Granular Model Controls
-  modelTemperature?: number;
-  maxTokens?: number;
-  topP?: number;
-  frequencyPenalty?: number;
-  presencePenalty?: number;
-  systemInstructions?: string;
-
-  // Feature Toggles
-  enableWebSearch?: boolean;
-  enablePiiRedaction?: boolean;
-
-  // Governance
-  dataRetentionPolicy?: 'none' | '30days' | 'standard';
-  contextWindowStrategy?: 'auto' | 'limit_8k' | 'limit_16k' | 'full';
-
-  // Response Length Settings (NEW)
-  responseLength?: ResponseLengthSettings;
-
-  // Contextual Behavior (NEW)
-  contextualBehavior?: ContextualBehaviorSettings;
-
-  // Formatting Preferences (NEW)
-  formatting?: FormattingPreferences;
-
-  // Feedback Settings (NEW)
-  feedbackSettings?: FeedbackSettings;
-}
-
-// Response length configuration per mode
-export interface ResponseLengthSettings {
-  quick: 'ultra_short' | 'short' | 'medium'; // 50-150 | 150-300 | 300-500 tokens
-  standard: 'short' | 'medium' | 'long'; // 200-400 | 400-800 | 800-1500 tokens
-  deepStudy: 'medium' | 'long' | 'comprehensive'; // 500-1000 | 1000-2000 | 2000-4000 tokens
-}
-
-// Contextual behavior settings
-export interface ContextualBehaviorSettings {
-  chatMode: 'quick' | 'standard' | 'deepStudy'; // Default response mode
-  autoDetectIntent: boolean; // Auto-detect user intent for mode
-  confirmLongResponses: boolean; // Ask before long responses
-  rememberModePerTopic: boolean; // Remember mode per topic
-}
-
-// Formatting preferences
-export interface FormattingPreferences {
-  preferBulletPoints: boolean;
-  preferTables: boolean;
-  preferCodeBlocks: boolean;
-  includeExamples: 'none' | 'minimal' | 'detailed';
-  includeSources: boolean;
-  includeActionItems: boolean;
-}
-
-// Feedback collection settings
-export interface FeedbackSettings {
-  autoPromptAfterResponse: boolean; // Prompt for feedback after responses
-  feedbackFrequency: 'always' | 'sometimes' | 'rarely';
-  trackSatisfaction: boolean;
-}
-
-// Response feedback from user
-// Extended in v2.0 with adaptive style fields
-export interface ResponseFeedback {
-  rating: 'positive' | 'negative' | 'neutral';
-  lengthFeedback?: 'too-short' | 'just-right' | 'too-long';
-  detailFeedback?: 'too-little' | 'just-right' | 'too-much';
-  formatFeedback?: 'needs_structure' | 'good_format' | 'too_complex';
-  customFeedback?: string;
-  wantedMode?: 'quick' | 'standard' | 'deepStudy';
-  timestamp?: Date;
-
-  // Adaptive style fields (v2.0)
-  actionability?: number; // 1-5 - How useful/actionable was the response
-  accuracy?: number; // 1-5 - How accurate/correct was the information
-  expectedFormat?: 'bullets' | 'paragraphs' | 'structured' | 'conversational';
-  missingInfo?: string; // What was missing from the response
-}
-
-export interface UserAIProvider {
-  id: string; // uuid
-  name: string;
-  provider: 'openai' | 'anthropic' | 'google' | 'ollama' | 'deepseek';
-  apiKey?: string; // Stored locally only
-  endpoint?: string; // For Ollama/Local
-  isEnabled: boolean;
-  isLocal: boolean;
-}
+// Migrated to domain/ai.ts
 
 // Organization with extended fields
 export interface Organization {
@@ -6147,7 +5536,7 @@ export type ManagementReportType =
   | 'PORTFOLIO_HEALTH'
   | 'RAID';
 export type ManagementReportScope = 'PORTFOLIO' | 'PROJECT';
-export type ManagementReportStatus = 'DRAFT' | 'FINAL' | 'ARCHIVED';
+export type ManagementReportStatus = 'DRAFT' | 'FINAL' | 'APPROVED' | 'ARCHIVED';
 
 /**
  * RAG Status (Red/Amber/Green) - PRINCE2 Traffic Light Reporting

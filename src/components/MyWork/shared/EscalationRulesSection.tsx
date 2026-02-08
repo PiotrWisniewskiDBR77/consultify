@@ -1,50 +1,46 @@
 /**
  * EscalationRulesSection
- * Component for configuring escalation rules and reminders for decisions
- * ClickUp-style design following Golden Standard
+ * Clean, structured reminder and escalation configuration
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  AlertTriangle,
+  AlertCircle,
   ArrowUpCircle,
   Bell,
-  Calendar,
+  BellRing,
   ChevronDown,
-  Clock,
-  Loader2,
+  Mail,
+  MessageSquare,
   Plus,
-  Save,
   Trash2,
-  User,
-  Users,
 } from 'lucide-react';
 import React, { useState } from 'react';
-import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 export interface ReminderRule {
   id: string;
-  type: 'before_due' | 'overdue';
-  daysOffset: number;
-  recipients: 'requester' | 'decider' | 'both' | 'custom';
-  customRecipients?: string[];
+  type: 'before_due' | 'after_due';
+  days: number;
+  recipients: 'requester' | 'decider' | 'both' | 'stakeholders';
+  inAppNotification: boolean;
+  emailNotification: boolean;
+  message?: string;
   enabled: boolean;
 }
 
 export interface EscalationRule {
   id: string;
-  escalateTo: string; // User ID
-  escalateToName?: string;
-  afterDaysOverdue: number;
-  notifyUsers: ('requester' | 'decider' | 'escalateTo')[];
-  reason?: string;
   enabled: boolean;
+  escalateTo: string;
+  escalateToName?: string;
+  afterDays: number;
+  message?: string;
 }
 
 export interface WarningThresholds {
-  warningDays: number; // Days before due to show warning
-  criticalDays: number; // Days before due to show critical
+  warningDays: number;
+  criticalDays: number;
   showOverdueAlert: boolean;
 }
 
@@ -52,239 +48,134 @@ interface EscalationRulesSectionProps {
   reminders: ReminderRule[];
   escalation: EscalationRule | null;
   thresholds: WarningThresholds;
-  availableUsers: { id: string; name: string; avatar?: string }[];
-  onSave: (data: {
-    reminders: ReminderRule[];
-    escalation: EscalationRule | null;
-    thresholds: WarningThresholds;
-  }) => Promise<void>;
+  availableUsers: { id: string; name: string }[];
+  onRemindersChange: (reminders: ReminderRule[]) => void;
+  onEscalationChange: (escalation: EscalationRule | null) => void;
+  onThresholdsChange: (thresholds: WarningThresholds) => void;
   readOnly?: boolean;
   dueDate?: string;
 }
 
+const RECIPIENT_OPTIONS = [
+  { value: 'decider', label: { en: 'Decider', pl: 'Decydent' } },
+  { value: 'requester', label: { en: 'Requester', pl: 'Zgłaszający' } },
+  { value: 'both', label: { en: 'Both', pl: 'Obaj' } },
+  { value: 'stakeholders', label: { en: 'All Stakeholders', pl: 'Wszyscy interesariusze' } },
+];
+
+// Consistent input styles
+const INPUT_CLASS =
+  'w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400';
+const SELECT_CLASS =
+  'w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400 cursor-pointer';
+const LABEL_CLASS = 'text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5 block';
+
 export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
-  reminders: initialReminders,
-  escalation: initialEscalation,
-  thresholds: initialThresholds,
+  reminders,
+  escalation,
+  thresholds,
   availableUsers,
-  onSave,
+  onRemindersChange,
+  onEscalationChange,
+  onThresholdsChange,
   readOnly = false,
   dueDate,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
-
-  const [reminders, setReminders] = useState<ReminderRule[]>(initialReminders);
-  const [escalation, setEscalation] = useState<EscalationRule | null>(initialEscalation);
-  const [thresholds, setThresholds] = useState<WarningThresholds>(initialThresholds);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
 
-  const handleSave = async () => {
-    try {
-      setSaving(true);
-      await onSave({ reminders, escalation, thresholds });
-      setHasChanges(false);
-      toast.success(isPolish ? 'Zasady zapisane' : 'Rules saved');
-    } catch (error) {
-      toast.error(isPolish ? 'Nie udało się zapisać' : 'Failed to save');
-    } finally {
-      setSaving(false);
-    }
+  const getDaysUntilDue = () => {
+    if (!dueDate) return null;
+    const due = new Date(dueDate);
+    const now = new Date();
+    return Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   };
+
+  const daysUntilDue = getDaysUntilDue();
 
   const addReminder = () => {
     const newReminder: ReminderRule = {
       id: Math.random().toString(36).substr(2, 9),
       type: 'before_due',
-      daysOffset: 3,
+      days: 3,
       recipients: 'decider',
+      inAppNotification: true,
+      emailNotification: true,
+      message: '',
       enabled: true,
     };
-    setReminders([...reminders, newReminder]);
-    setHasChanges(true);
+    onRemindersChange([...reminders, newReminder]);
   };
 
   const updateReminder = (id: string, updates: Partial<ReminderRule>) => {
-    setReminders(reminders.map((r) => (r.id === id ? { ...r, ...updates } : r)));
-    setHasChanges(true);
+    onRemindersChange(reminders.map((r) => (r.id === id ? { ...r, ...updates } : r)));
   };
 
   const removeReminder = (id: string) => {
-    setReminders(reminders.filter((r) => r.id !== id));
-    setHasChanges(true);
+    onRemindersChange(reminders.filter((r) => r.id !== id));
   };
 
-  const toggleEscalation = () => {
-    if (escalation) {
-      setEscalation(null);
-    } else {
-      setEscalation({
-        id: Math.random().toString(36).substr(2, 9),
-        escalateTo: '',
-        afterDaysOverdue: 7,
-        notifyUsers: ['requester', 'decider', 'escalateTo'],
-        enabled: true,
-      });
-    }
-    setHasChanges(true);
+  const enableEscalation = () => {
+    onEscalationChange({
+      id: Math.random().toString(36).substr(2, 9),
+      enabled: true,
+      escalateTo: '',
+      afterDays: 3,
+    });
   };
 
-  const updateEscalation = (updates: Partial<EscalationRule>) => {
-    if (escalation) {
-      setEscalation({ ...escalation, ...updates });
-      setHasChanges(true);
-    }
+  const disableEscalation = () => {
+    onEscalationChange(null);
   };
 
-  const updateThresholds = (updates: Partial<WarningThresholds>) => {
-    setThresholds({ ...thresholds, ...updates });
-    setHasChanges(true);
-  };
-
-  // Calculate current status based on due date
-  const getDueDateStatus = () => {
-    if (!dueDate) return null;
-    const due = new Date(dueDate);
-    const now = new Date();
-    const diffDays = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) return { type: 'overdue', days: Math.abs(diffDays) };
-    if (diffDays <= thresholds.criticalDays) return { type: 'critical', days: diffDays };
-    if (diffDays <= thresholds.warningDays) return { type: 'warning', days: diffDays };
-    return { type: 'normal', days: diffDays };
-  };
-
-  const dueDateStatus = getDueDateStatus();
+  const activeRemindersCount = reminders.filter((r) => r.enabled).length;
 
   return (
-    <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-      {/* Header - Always Visible */}
-      <button
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-navy-700/50 shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
+    >
+      {/* Header */}
+      <motion.button
+        whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
+        whileTap={{ scale: 0.98 }}
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors duration-200"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-amber-500/10">
-            <Clock size={16} className="text-amber-500" />
+          <div className="p-2 rounded-xl bg-amber-500/10 dark:bg-amber-500/20">
+            <BellRing size={18} className="text-amber-500 dark:text-amber-400" />
           </div>
-          <div className="text-left">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              {isPolish ? 'Przypomnienia i eskalacja' : 'Reminders & Escalation'}
-            </span>
-            <div className="flex items-center gap-2 mt-0.5">
-              {reminders.filter((r) => r.enabled).length > 0 && (
-                <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {reminders.filter((r) => r.enabled).length}{' '}
-                  {isPolish ? 'przypomnień' : 'reminders'}
-                </span>
-              )}
-              {escalation?.enabled && (
-                <span className="text-xs text-amber-500">
-                  • {isPolish ? 'Eskalacja aktywna' : 'Escalation active'}
-                </span>
-              )}
-            </div>
-          </div>
+          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            {isPolish ? 'Przypomnienia i eskalacja' : 'Reminders & Escalation'}
+          </span>
         </div>
         <div className="flex items-center gap-2">
-          {/* Current Status Badge */}
-          {dueDateStatus && (
-            <span
-              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                dueDateStatus.type === 'overdue'
-                  ? 'bg-red-500/20 text-red-500'
-                  : dueDateStatus.type === 'critical'
-                  ? 'bg-orange-500/20 text-orange-500'
-                  : dueDateStatus.type === 'warning'
-                  ? 'bg-amber-500/20 text-amber-500'
-                  : 'bg-emerald-500/20 text-emerald-500'
-              }`}
-            >
-              {dueDateStatus.type === 'overdue'
-                ? `${dueDateStatus.days}d ${isPolish ? 'po terminie' : 'overdue'}`
-                : `${dueDateStatus.days}d ${isPolish ? 'pozostało' : 'left'}`}
+          {activeRemindersCount > 0 && (
+            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+              {activeRemindersCount}
             </span>
           )}
-          <ChevronDown
-            size={16}
-            className={`text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-          />
+          <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+            <ChevronDown size={18} className="text-slate-400" />
+          </motion.div>
         </div>
-      </button>
+      </motion.button>
 
-      {/* Expandable Content */}
+      {/* Content */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
+            initial={{ height: 0 }}
+            animate={{ height: 'auto' }}
+            exit={{ height: 0 }}
+            className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
           >
-            <div className="px-4 pb-4 space-y-4 border-t border-slate-200 dark:border-navy-700 pt-4">
-              {/* Warning Thresholds */}
-              <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <AlertTriangle size={16} className="text-amber-500" />
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    {isPolish ? 'Progi ostrzeżeń' : 'Warning Thresholds'}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                      {isPolish ? '🟡 Ostrzeżenie (dni przed)' : '🟡 Warning (days before)'}
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="30"
-                      value={thresholds.warningDays}
-                      onChange={(e) =>
-                        updateThresholds({ warningDays: parseInt(e.target.value) || 3 })
-                      }
-                      disabled={readOnly}
-                      className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white disabled:opacity-50"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                      {isPolish ? '🟠 Krytyczne (dni przed)' : '🟠 Critical (days before)'}
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="30"
-                      value={thresholds.criticalDays}
-                      onChange={(e) =>
-                        updateThresholds({ criticalDays: parseInt(e.target.value) || 1 })
-                      }
-                      disabled={readOnly}
-                      className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white disabled:opacity-50"
-                    />
-                  </div>
-                </div>
-
-                <label className="flex items-center gap-2 mt-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={thresholds.showOverdueAlert}
-                    onChange={(e) => updateThresholds({ showOverdueAlert: e.target.checked })}
-                    disabled={readOnly}
-                    className="rounded border-slate-300 dark:border-navy-600 text-primary-500"
-                  />
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
-                    {isPolish ? '🔴 Pokaż alert po terminie' : '🔴 Show overdue alert'}
-                  </span>
-                </label>
-              </div>
-
-              {/* Reminders */}
-              <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-4">
+            <div className="p-4 space-y-4">
+              {/* Reminders Section */}
+              <div>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <Bell size={16} className="text-blue-500" />
@@ -295,7 +186,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                   {!readOnly && (
                     <button
                       onClick={addReminder}
-                      className="flex items-center gap-1 text-xs text-primary-500 hover:text-primary-600"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30 transition-colors"
                     >
                       <Plus size={14} />
                       {isPolish ? 'Dodaj' : 'Add'}
@@ -304,98 +195,241 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                 </div>
 
                 {reminders.length === 0 ? (
-                  <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-3">
-                    {isPolish ? 'Brak skonfigurowanych przypomnień' : 'No reminders configured'}
-                  </p>
+                  <div className="text-center py-8 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
+                    <Bell size={24} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
+                    <p className="text-sm text-slate-400 dark:text-slate-500">
+                      {isPolish ? 'Brak przypomnień' : 'No reminders'}
+                    </p>
+                    {!readOnly && (
+                      <button
+                        onClick={addReminder}
+                        className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30 transition-colors"
+                      >
+                        <Plus size={14} />
+                        {isPolish ? 'Dodaj przypomnienie' : 'Add reminder'}
+                      </button>
+                    )}
+                  </div>
                 ) : (
-                  <div className="space-y-2">
-                    {reminders.map((reminder) => (
-                      <div
+                  <div className="space-y-3">
+                    {reminders.map((reminder, index) => (
+                      <motion.div
                         key={reminder.id}
-                        className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className={`rounded-xl border p-4 transition-all ${
                           reminder.enabled
-                            ? 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-600'
-                            : 'bg-slate-100 dark:bg-navy-800/50 border-slate-200/50 dark:border-navy-700/50 opacity-60'
+                            ? 'border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-800/50'
+                            : 'border-slate-200/50 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/30 opacity-60'
                         }`}
                       >
-                        <input
-                          type="checkbox"
-                          checked={reminder.enabled}
-                          onChange={(e) =>
-                            updateReminder(reminder.id, { enabled: e.target.checked })
-                          }
-                          disabled={readOnly}
-                          className="rounded border-slate-300 dark:border-navy-600 text-primary-500"
-                        />
+                        {/* Header */}
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() =>
+                                updateReminder(reminder.id, { enabled: !reminder.enabled })
+                              }
+                              disabled={readOnly}
+                              className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
+                                reminder.enabled
+                                  ? 'bg-purple-500 border-purple-500 text-white'
+                                  : 'border-slate-300 dark:border-navy-600'
+                              }`}
+                            >
+                              {reminder.enabled && <span className="text-xs">✓</span>}
+                            </button>
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                              {isPolish ? `Przypomnienie ${index + 1}` : `Reminder ${index + 1}`}
+                            </span>
+                          </div>
+                          {!readOnly && (
+                            <button
+                              onClick={() => removeReminder(reminder.id)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/20 transition-colors"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
 
-                        <select
-                          value={reminder.type}
-                          onChange={(e) =>
-                            updateReminder(reminder.id, {
-                              type: e.target.value as ReminderRule['type'],
-                            })
-                          }
-                          disabled={readOnly || !reminder.enabled}
-                          className="px-2 py-1 rounded text-xs bg-transparent border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300"
-                        >
-                          <option value="before_due">
-                            {isPolish ? 'Przed terminem' : 'Before due'}
-                          </option>
-                          <option value="overdue">{isPolish ? 'Po terminie' : 'Overdue'}</option>
-                        </select>
+                        {/* Form Grid */}
+                        <div className="grid grid-cols-2 gap-3">
+                          {/* When - Type */}
+                          <div>
+                            <label className={LABEL_CLASS}>{isPolish ? 'Kiedy' : 'When'}</label>
+                            <select
+                              value={reminder.type}
+                              onChange={(e) =>
+                                updateReminder(reminder.id, {
+                                  type: e.target.value as ReminderRule['type'],
+                                })
+                              }
+                              disabled={readOnly || !reminder.enabled}
+                              className={SELECT_CLASS}
+                            >
+                              <option value="before_due">
+                                {isPolish ? 'Przed terminem' : 'Before due'}
+                              </option>
+                              <option value="after_due">
+                                {isPolish ? 'Po terminie' : 'After due'}
+                              </option>
+                            </select>
+                          </div>
 
-                        <input
-                          type="number"
-                          min="1"
-                          max="30"
-                          value={reminder.daysOffset}
-                          onChange={(e) =>
-                            updateReminder(reminder.id, {
-                              daysOffset: parseInt(e.target.value) || 1,
-                            })
-                          }
-                          disabled={readOnly || !reminder.enabled}
-                          className="w-16 px-2 py-1 rounded text-xs bg-transparent border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300"
-                        />
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
-                          {isPolish ? 'dni' : 'days'}
-                        </span>
+                          {/* Days */}
+                          <div>
+                            <label className={LABEL_CLASS}>{isPolish ? 'Dni' : 'Days'}</label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="30"
+                              value={reminder.days}
+                              onChange={(e) =>
+                                updateReminder(reminder.id, { days: parseInt(e.target.value) || 1 })
+                              }
+                              disabled={readOnly || !reminder.enabled}
+                              className={INPUT_CLASS}
+                            />
+                          </div>
 
-                        <select
-                          value={reminder.recipients}
-                          onChange={(e) =>
-                            updateReminder(reminder.id, {
-                              recipients: e.target.value as ReminderRule['recipients'],
-                            })
-                          }
-                          disabled={readOnly || !reminder.enabled}
-                          className="px-2 py-1 rounded text-xs bg-transparent border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300"
-                        >
-                          <option value="decider">
-                            {isPolish ? 'Decydent' : 'Decider'}
-                          </option>
-                          <option value="requester">
-                            {isPolish ? 'Zgłaszający' : 'Requester'}
-                          </option>
-                          <option value="both">{isPolish ? 'Obaj' : 'Both'}</option>
-                        </select>
+                          {/* To whom */}
+                          <div className="col-span-2">
+                            <label className={LABEL_CLASS}>
+                              {isPolish ? 'Do kogo' : 'To whom'}
+                            </label>
+                            <select
+                              value={reminder.recipients}
+                              onChange={(e) =>
+                                updateReminder(reminder.id, {
+                                  recipients: e.target.value as ReminderRule['recipients'],
+                                })
+                              }
+                              disabled={readOnly || !reminder.enabled}
+                              className={SELECT_CLASS}
+                            >
+                              {RECIPIENT_OPTIONS.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                  {isPolish ? opt.label.pl : opt.label.en}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
 
-                        {!readOnly && (
-                          <button
-                            onClick={() => removeReminder(reminder.id)}
-                            className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        )}
-                      </div>
+                          {/* Notification toggles */}
+                          <div>
+                            <label className={LABEL_CLASS}>
+                              {isPolish ? 'Powiadomienie' : 'Notification'}
+                            </label>
+                            <button
+                              onClick={() =>
+                                updateReminder(reminder.id, {
+                                  inAppNotification: !reminder.inAppNotification,
+                                })
+                              }
+                              disabled={readOnly || !reminder.enabled}
+                              className={`${INPUT_CLASS} flex items-center justify-between cursor-pointer`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <Bell
+                                  size={14}
+                                  className={
+                                    reminder.inAppNotification
+                                      ? 'text-purple-500'
+                                      : 'text-slate-400'
+                                  }
+                                />
+                                <span>{isPolish ? 'W aplikacji' : 'In-app'}</span>
+                              </div>
+                              <div
+                                className={`w-8 h-5 rounded-full transition-colors relative ${
+                                  reminder.inAppNotification
+                                    ? 'bg-purple-500'
+                                    : 'bg-slate-300 dark:bg-navy-600'
+                                }`}
+                              >
+                                <div
+                                  className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                                    reminder.inAppNotification
+                                      ? 'translate-x-3.5'
+                                      : 'translate-x-0.5'
+                                  }`}
+                                />
+                              </div>
+                            </button>
+                          </div>
+
+                          <div>
+                            <label className={LABEL_CLASS}>Email</label>
+                            <button
+                              onClick={() =>
+                                updateReminder(reminder.id, {
+                                  emailNotification: !reminder.emailNotification,
+                                })
+                              }
+                              disabled={readOnly || !reminder.enabled}
+                              className={`${INPUT_CLASS} flex items-center justify-between cursor-pointer`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <Mail
+                                  size={14}
+                                  className={
+                                    reminder.emailNotification ? 'text-blue-500' : 'text-slate-400'
+                                  }
+                                />
+                                <span>{isPolish ? 'Wyślij email' : 'Send email'}</span>
+                              </div>
+                              <div
+                                className={`w-8 h-5 rounded-full transition-colors relative ${
+                                  reminder.emailNotification
+                                    ? 'bg-blue-500'
+                                    : 'bg-slate-300 dark:bg-navy-600'
+                                }`}
+                              >
+                                <div
+                                  className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                                    reminder.emailNotification
+                                      ? 'translate-x-3.5'
+                                      : 'translate-x-0.5'
+                                  }`}
+                                />
+                              </div>
+                            </button>
+                          </div>
+
+                          {/* Message */}
+                          <div className="col-span-2">
+                            <label className={LABEL_CLASS}>
+                              <div className="flex items-center gap-1.5">
+                                <MessageSquare size={12} />
+                                {isPolish ? 'Treść (opcjonalnie)' : 'Message (optional)'}
+                              </div>
+                            </label>
+                            <input
+                              type="text"
+                              value={reminder.message || ''}
+                              onChange={(e) =>
+                                updateReminder(reminder.id, { message: e.target.value })
+                              }
+                              placeholder={
+                                isPolish
+                                  ? 'Opcjonalna treść przypomnienia...'
+                                  : 'Optional reminder message...'
+                              }
+                              disabled={readOnly || !reminder.enabled}
+                              className={INPUT_CLASS}
+                            />
+                          </div>
+                        </div>
+                      </motion.div>
                     ))}
                   </div>
                 )}
               </div>
 
-              {/* Auto-Escalation */}
-              <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-4">
+              {/* Escalation Section */}
+              <div className="pt-3 border-t border-slate-200 dark:border-navy-700">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <ArrowUpCircle size={16} className="text-orange-500" />
@@ -405,11 +439,11 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                   </div>
                   {!readOnly && (
                     <button
-                      onClick={toggleEscalation}
-                      className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                        escalation
-                          ? 'bg-orange-500/20 text-orange-500'
-                          : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
+                      onClick={escalation ? disableEscalation : enableEscalation}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                        escalation?.enabled
+                          ? 'bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/30'
+                          : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-navy-600 hover:bg-slate-200 dark:hover:bg-navy-600'
                       }`}
                     >
                       {escalation
@@ -417,32 +451,61 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                           ? 'Wyłącz'
                           : 'Disable'
                         : isPolish
-                        ? 'Włącz'
-                        : 'Enable'}
+                          ? 'Włącz'
+                          : 'Enable'}
                     </button>
                   )}
                 </div>
 
                 {escalation ? (
-                  <div className="space-y-3">
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 rounded-xl bg-orange-50/50 dark:bg-orange-500/5 border border-orange-200/50 dark:border-orange-500/20"
+                  >
                     <div className="grid grid-cols-2 gap-3">
+                      {/* After days */}
                       <div>
-                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                        <label className={LABEL_CLASS}>
+                          {isPolish ? 'Po dniach spóźnienia' : 'After days overdue'}
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="30"
+                          value={escalation.afterDays}
+                          onChange={(e) =>
+                            onEscalationChange({
+                              ...escalation,
+                              afterDays: parseInt(e.target.value) || 1,
+                            })
+                          }
+                          disabled={readOnly}
+                          className={INPUT_CLASS}
+                        />
+                      </div>
+
+                      {/* Escalate to */}
+                      <div>
+                        <label className={LABEL_CLASS}>
                           {isPolish ? 'Eskaluj do' : 'Escalate to'}
                         </label>
                         <select
                           value={escalation.escalateTo}
                           onChange={(e) => {
                             const user = availableUsers.find((u) => u.id === e.target.value);
-                            updateEscalation({
+                            onEscalationChange({
+                              ...escalation,
                               escalateTo: e.target.value,
                               escalateToName: user?.name,
                             });
                           }}
                           disabled={readOnly}
-                          className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white"
+                          className={SELECT_CLASS}
                         >
-                          <option value="">{isPolish ? 'Wybierz osobę' : 'Select person'}</option>
+                          <option value="">
+                            {isPolish ? 'Wybierz osobę...' : 'Select person...'}
+                          </option>
                           {availableUsers.map((user) => (
                             <option key={user.id} value={user.id}>
                               {user.name}
@@ -450,115 +513,56 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                           ))}
                         </select>
                       </div>
-                      <div>
-                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                          {isPolish ? 'Po dniach spóźnienia' : 'After days overdue'}
+
+                      {/* Message */}
+                      <div className="col-span-2">
+                        <label className={LABEL_CLASS}>
+                          {isPolish ? 'Wiadomość (opcjonalnie)' : 'Message (optional)'}
                         </label>
                         <input
-                          type="number"
-                          min="1"
-                          max="30"
-                          value={escalation.afterDaysOverdue}
+                          type="text"
+                          value={escalation.message || ''}
                           onChange={(e) =>
-                            updateEscalation({
-                              afterDaysOverdue: parseInt(e.target.value) || 7,
-                            })
+                            onEscalationChange({ ...escalation, message: e.target.value })
                           }
+                          placeholder={isPolish ? 'Powód eskalacji...' : 'Escalation reason...'}
                           disabled={readOnly}
-                          className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white"
+                          className={INPUT_CLASS}
                         />
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-xs text-slate-500 dark:text-slate-400 mb-2">
-                        {isPolish ? 'Powiadom' : 'Notify'}
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {(['requester', 'decider', 'escalateTo'] as const).map((recipient) => (
-                          <label
-                            key={recipient}
-                            className="flex items-center gap-1.5 cursor-pointer"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={escalation.notifyUsers.includes(recipient)}
-                              onChange={(e) => {
-                                const newNotify = e.target.checked
-                                  ? [...escalation.notifyUsers, recipient]
-                                  : escalation.notifyUsers.filter((r) => r !== recipient);
-                                updateEscalation({ notifyUsers: newNotify });
-                              }}
-                              disabled={readOnly}
-                              className="rounded border-slate-300 dark:border-navy-600 text-primary-500"
-                            />
-                            <span className="text-xs text-slate-600 dark:text-slate-400">
-                              {recipient === 'requester'
-                                ? isPolish
-                                  ? 'Zgłaszający'
-                                  : 'Requester'
-                                : recipient === 'decider'
-                                ? isPolish
-                                  ? 'Decydent'
-                                  : 'Decider'
-                                : isPolish
-                                ? 'Osoba eskalacji'
-                                : 'Escalation target'}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
+                    {/* Preview */}
+                    <div className="flex items-start gap-2 mt-3 pt-3 border-t border-orange-200/50 dark:border-orange-500/20">
+                      <AlertCircle size={14} className="text-orange-500 mt-0.5 flex-shrink-0" />
+                      <p className="text-xs text-orange-600 dark:text-orange-400">
+                        {isPolish
+                          ? `Jeśli decyzja nie zostanie podjęta ${escalation.afterDays} dni po terminie, zostanie eskalowana do: `
+                          : `If decision is not made ${escalation.afterDays} days after due, it will be escalated to: `}
+                        <span className="font-medium">
+                          {escalation.escalateToName ||
+                            (isPolish ? '(wybierz osobę)' : '(select person)')}
+                        </span>
+                      </p>
                     </div>
-
-                    <div>
-                      <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                        {isPolish ? 'Powód eskalacji (opcjonalnie)' : 'Escalation reason (optional)'}
-                      </label>
-                      <input
-                        type="text"
-                        value={escalation.reason || ''}
-                        onChange={(e) => updateEscalation({ reason: e.target.value })}
-                        placeholder={
-                          isPolish
-                            ? 'np. Wymaga uwagi kierownictwa'
-                            : 'e.g., Requires management attention'
-                        }
-                        disabled={readOnly}
-                        className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-800 dark:text-white placeholder-slate-400"
-                      />
-                    </div>
-                  </div>
+                  </motion.div>
                 ) : (
-                  <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-3">
-                    {isPolish
-                      ? 'Auto-eskalacja jest wyłączona'
-                      : 'Auto-escalation is disabled'}
-                  </p>
+                  <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
+                    <ArrowUpCircle
+                      size={24}
+                      className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                    />
+                    <p className="text-sm text-slate-400 dark:text-slate-500">
+                      {isPolish ? 'Eskalacja wyłączona' : 'Escalation disabled'}
+                    </p>
+                  </div>
                 )}
               </div>
-
-              {/* Save Button */}
-              {!readOnly && hasChanges && (
-                <div className="flex justify-end pt-2">
-                  <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 transition-colors"
-                  >
-                    {saving ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <Save size={16} />
-                    )}
-                    <span>{isPolish ? 'Zapisz zmiany' : 'Save changes'}</span>
-                  </button>
-                </div>
-              )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 };
 

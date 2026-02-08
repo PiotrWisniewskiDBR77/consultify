@@ -16,12 +16,20 @@ export const CreateTaskSchema = z.object({
   status: z.enum(['todo', 'in_progress', 'review', 'done', 'blocked']).optional().default('todo'),
   priority: z.enum(['low', 'medium', 'high', 'critical']).optional().default('medium'),
   assigneeId: z.string().uuid().optional().nullable(),
+  backupAssigneeId: z.string().uuid().optional().nullable(),
   dueDate: z.string().datetime().optional().nullable(),
+  startedAt: z.string().datetime().optional().nullable(),
   estimatedHours: z.number().min(0).max(10000).optional().nullable(),
   tags: z.array(z.string().max(50)).max(20).optional(),
   taskType: z.string().max(50).optional(),
   initiativeId: z.string().uuid().optional().nullable(),
   parentTaskId: z.string().uuid().optional().nullable(),
+  ownerId: z.string().uuid().optional().nullable(),
+  requiresAcceptance: z.boolean().optional(),
+  acceptanceType: z.enum(['manual', 'automatic']).optional().nullable(),
+  acceptorId: z.string().uuid().optional().nullable(),
+  weight: z.number().min(0.1).max(100).optional(),
+  weightReason: z.string().max(500).optional(),
 
   // Checklist items
   checklist: z

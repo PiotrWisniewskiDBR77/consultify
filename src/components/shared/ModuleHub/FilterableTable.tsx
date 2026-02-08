@@ -40,18 +40,68 @@ interface FilterableTableProps {
 const StatusBadge: React.FC<{ status: ItemStatus }> = ({ status }) => {
   const config: Record<ItemStatus, { bg: string; text: string; dot: string; label: string }> = {
     DRAFT: { bg: 'bg-slate-500/20', text: 'text-slate-300', dot: 'bg-slate-400', label: 'Draft' },
-    PENDING_REVIEW: { bg: 'bg-yellow-500/20', text: 'text-yellow-300', dot: 'bg-yellow-400', label: 'Pending Review' },
-    REVIEW: { bg: 'bg-amber-500/20', text: 'text-amber-300', dot: 'bg-amber-400', label: 'In Review' },
-    PROMOTED: { bg: 'bg-blue-500/20', text: 'text-blue-300', dot: 'bg-blue-400', label: 'Promoted' },
-    PLANNING: { bg: 'bg-indigo-500/20', text: 'text-indigo-300', dot: 'bg-indigo-400', label: 'Planning' },
-    APPROVED: { bg: 'bg-emerald-500/20', text: 'text-emerald-300', dot: 'bg-emerald-400', label: 'Approved' },
-    SCHEDULED: { bg: 'bg-purple-500/20', text: 'text-purple-300', dot: 'bg-purple-400', label: 'Scheduled' },
-    EXECUTING: { bg: 'bg-cyan-500/20', text: 'text-cyan-300', dot: 'bg-cyan-400', label: 'Executing' },
+    PENDING_REVIEW: {
+      bg: 'bg-orange-500/20',
+      text: 'text-orange-300',
+      dot: 'bg-orange-400',
+      label: 'Pending Review',
+    },
+    REVIEW: {
+      bg: 'bg-amber-500/20',
+      text: 'text-amber-300',
+      dot: 'bg-amber-400',
+      label: 'In Review',
+    },
+    PROMOTED: {
+      bg: 'bg-blue-500/20',
+      text: 'text-blue-300',
+      dot: 'bg-blue-400',
+      label: 'Promoted',
+    },
+    PLANNING: {
+      bg: 'bg-indigo-500/20',
+      text: 'text-indigo-300',
+      dot: 'bg-indigo-400',
+      label: 'Planning',
+    },
+    APPROVED: {
+      bg: 'bg-emerald-500/20',
+      text: 'text-emerald-300',
+      dot: 'bg-emerald-400',
+      label: 'Approved',
+    },
+    SCHEDULED: {
+      bg: 'bg-purple-500/20',
+      text: 'text-purple-300',
+      dot: 'bg-purple-400',
+      label: 'Scheduled',
+    },
+    EXECUTING: {
+      bg: 'bg-cyan-500/20',
+      text: 'text-cyan-300',
+      dot: 'bg-cyan-400',
+      label: 'Executing',
+    },
     BLOCKED: { bg: 'bg-red-500/20', text: 'text-red-300', dot: 'bg-red-400', label: 'Blocked' },
     DONE: { bg: 'bg-green-500/20', text: 'text-green-300', dot: 'bg-green-400', label: 'Done' },
-    TRACKING: { bg: 'bg-teal-500/20', text: 'text-teal-300', dot: 'bg-teal-400', label: 'Tracking' },
-    CANCELLED: { bg: 'bg-gray-500/20', text: 'text-gray-300', dot: 'bg-gray-400', label: 'Cancelled' },
-    ARCHIVED: { bg: 'bg-slate-500/20', text: 'text-slate-500', dot: 'bg-slate-500', label: 'Archived' },
+    TRACKING: {
+      bg: 'bg-teal-500/20',
+      text: 'text-teal-300',
+      dot: 'bg-teal-400',
+      label: 'Tracking',
+    },
+    CANCELLED: {
+      bg: 'bg-gray-500/20',
+      text: 'text-gray-300',
+      dot: 'bg-gray-400',
+      label: 'Cancelled',
+    },
+    ARCHIVED: {
+      bg: 'bg-slate-500/20',
+      text: 'text-slate-300',
+      dot: 'bg-slate-500',
+      label: 'Archived',
+    },
   };
 
   const { bg, text, dot, label } = config[status] || config.DRAFT;
@@ -248,160 +298,160 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   return (
     <div className="p-4">
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-      <table className="w-full">
-        <thead>
-          <tr className="bg-slate-50 dark:bg-navy-900/50">
-            {columns.map((column) => (
-              <th
-                key={column.id}
-                className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider"
-                style={{ width: column.width }}
-              >
-                <div className="flex items-center gap-1">
-                  <span>{column.label}</span>
-                  {column.filterable && (
-                    <FilterDropdown
-                      column={column}
-                      activeValues={getActiveFilterValues(column.id)}
-                      onApply={(values) => handleColumnFilter(column, values)}
-                    />
-                  )}
-                </div>
-              </th>
-            ))}
-            <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider w-20">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-200 dark:divide-navy-700/50">
-          {filteredData.length === 0 ? (
-            <tr>
-              <td colSpan={columns.length + 1} className="px-4 py-12 text-center text-slate-500">
-                {emptyMessage}
-              </td>
-            </tr>
-          ) : (
-            filteredData.map((row) => (
-              <tr
-                key={row.id}
-                onClick={() => onRowClick?.(row)}
-                className="group hover:bg-navy-800/50 cursor-pointer transition-colors"
-              >
-                {columns.map((column) => (
-                  <td key={column.id} className="px-4 py-3">
-                    {column.render ? (
-                      column.render(row)
-                    ) : column.id === 'status' ? (
-                      <StatusBadge status={row.status} />
-                    ) : column.id === 'progress' ? (
-                      <ProgressBar progress={row.progress} />
-                    ) : column.id === 'updatedAt' ? (
-                      <span className="text-sm text-slate-400">
-                        {formatRelativeTime(row.updatedAt)}
-                      </span>
-                    ) : (
-                      <span className="text-sm text-slate-300">{row[column.id]}</span>
-                    )}
-                  </td>
-                ))}
-                <td className="px-4 py-3 text-right">
-                  <div className="relative">
-                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onRowAction?.('view', row);
-                        }}
-                        className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-white transition-colors"
-                        title="View"
-                      >
-                        <Eye size={14} />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onRowAction?.('edit', row);
-                        }}
-                        className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-white transition-colors"
-                        title="Edit"
-                      >
-                        <Edit size={14} />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActionMenuRow(actionMenuRow === row.id ? null : row.id);
-                        }}
-                        className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-white transition-colors"
-                      >
-                        <MoreVertical size={14} />
-                      </button>
-                    </div>
-
-                    {/* Action Menu */}
-                    {actionMenuRow === row.id && (
-                      <>
-                        <div
-                          className="fixed inset-0 z-40"
-                          onClick={() => setActionMenuRow(null)}
-                        />
-                        <div className="absolute right-0 top-full mt-1 z-50 w-40 bg-navy-800 border border-navy-600 rounded-lg shadow-xl overflow-hidden">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onRowAction?.('view', row);
-                              setActionMenuRow(null);
-                            }}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700 transition-colors"
-                          >
-                            <Eye size={14} />
-                            <span>View</span>
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onRowAction?.('edit', row);
-                              setActionMenuRow(null);
-                            }}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700 transition-colors"
-                          >
-                            <Edit size={14} />
-                            <span>Edit</span>
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onRowAction?.('report', row);
-                              setActionMenuRow(null);
-                            }}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700 transition-colors"
-                          >
-                            <FileText size={14} />
-                            <span>Create Report</span>
-                          </button>
-                          <div className="border-t border-navy-600" />
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onRowAction?.('delete', row);
-                              setActionMenuRow(null);
-                            }}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-rose-400 hover:bg-navy-700 transition-colors"
-                          >
-                            <Trash2 size={14} />
-                            <span>Delete</span>
-                          </button>
-                        </div>
-                      </>
+        <table className="w-full">
+          <thead>
+            <tr className="bg-slate-50 dark:bg-navy-900/50">
+              {columns.map((column) => (
+                <th
+                  key={column.id}
+                  className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider"
+                  style={{ width: column.width }}
+                >
+                  <div className="flex items-center gap-1">
+                    <span>{column.label}</span>
+                    {column.filterable && (
+                      <FilterDropdown
+                        column={column}
+                        activeValues={getActiveFilterValues(column.id)}
+                        onApply={(values) => handleColumnFilter(column, values)}
+                      />
                     )}
                   </div>
+                </th>
+              ))}
+              <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider w-20">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200 dark:divide-navy-700/50">
+            {filteredData.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length + 1} className="px-4 py-12 text-center text-slate-500">
+                  {emptyMessage}
                 </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : (
+              filteredData.map((row) => (
+                <tr
+                  key={row.id}
+                  onClick={() => onRowClick?.(row)}
+                  className="group hover:bg-navy-800/50 cursor-pointer transition-colors"
+                >
+                  {columns.map((column) => (
+                    <td key={column.id} className="px-4 py-3">
+                      {column.render ? (
+                        column.render(row)
+                      ) : column.id === 'status' ? (
+                        <StatusBadge status={row.status} />
+                      ) : column.id === 'progress' ? (
+                        <ProgressBar progress={row.progress} />
+                      ) : column.id === 'updatedAt' ? (
+                        <span className="text-sm text-slate-400">
+                          {formatRelativeTime(row.updatedAt)}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-slate-300">{row[column.id]}</span>
+                      )}
+                    </td>
+                  ))}
+                  <td className="px-4 py-3 text-right">
+                    <div className="relative">
+                      <div className="flex items-center justify-end gap-1 opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRowAction?.('view', row);
+                          }}
+                          className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-white transition-colors"
+                          title="View"
+                        >
+                          <Eye size={14} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRowAction?.('edit', row);
+                          }}
+                          className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-white transition-colors"
+                          title="Edit"
+                        >
+                          <Edit size={14} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActionMenuRow(actionMenuRow === row.id ? null : row.id);
+                          }}
+                          className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-white transition-colors"
+                        >
+                          <MoreVertical size={14} />
+                        </button>
+                      </div>
+
+                      {/* Action Menu */}
+                      {actionMenuRow === row.id && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setActionMenuRow(null)}
+                          />
+                          <div className="absolute right-0 top-full mt-1 z-50 w-40 bg-navy-800 border border-navy-600 rounded-lg shadow-xl overflow-hidden">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onRowAction?.('view', row);
+                                setActionMenuRow(null);
+                              }}
+                              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700 transition-colors"
+                            >
+                              <Eye size={14} />
+                              <span>View</span>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onRowAction?.('edit', row);
+                                setActionMenuRow(null);
+                              }}
+                              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700 transition-colors"
+                            >
+                              <Edit size={14} />
+                              <span>Edit</span>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onRowAction?.('report', row);
+                                setActionMenuRow(null);
+                              }}
+                              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700 transition-colors"
+                            >
+                              <FileText size={14} />
+                              <span>Create Report</span>
+                            </button>
+                            <div className="border-t border-navy-600" />
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onRowAction?.('delete', row);
+                                setActionMenuRow(null);
+                              }}
+                              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-rose-400 hover:bg-navy-700 transition-colors"
+                            >
+                              <Trash2 size={14} />
+                              <span>Delete</span>
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

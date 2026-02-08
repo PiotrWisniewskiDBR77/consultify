@@ -20,7 +20,13 @@ export interface JourneyProgressState {
 export const useJourneyProgress = () => {
   const progress = useMemo<JourneyProgressState>(() => {
     const phases: Record<string, PhaseProgress> = {
-      A: { phase: 'A', phaseName: 'Discovery', progress: 100, isActivated: true, isCompleted: true },
+      A: {
+        phase: 'A',
+        phaseName: 'Discovery',
+        progress: 100,
+        isActivated: true,
+        isCompleted: true,
+      },
       B: { phase: 'B', phaseName: 'Assessment', progress: 80, isActivated: true },
       C: { phase: 'C', phaseName: 'Initiatives', progress: 45, isActivated: false },
       D: { phase: 'D', phaseName: 'Roadmap', progress: 0, isActivated: false },

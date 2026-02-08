@@ -65,6 +65,40 @@ router.post(
     const { refreshToken } = req.body;
 
     try {
+      // ------------------------------------------------------------
+      // E2E_MODE: deterministic token refresh (no DB / sessions needed)
+      // ------------------------------------------------------------
+      if (process.env.E2E_MODE === 'true') {
+        const base64Url = (obj: unknown) =>
+          Buffer.from(JSON.stringify(obj), 'utf8')
+            .toString('base64')
+            .replace(/=/g, '')
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_');
+
+        const now = Math.floor(Date.now() / 1000);
+        const header = base64Url({ alg: 'none', typ: 'JWT' });
+        const payload = base64Url({
+          e2e: true,
+          id: 'e2e-user-id',
+          email: 'e2e@local.test',
+          name: 'E2E User',
+          role: 'ADMIN',
+          userRole: 'ADMIN',
+          organizationId: 'e2e-org-id',
+          isSuperAdmin: true,
+          iat: now,
+          exp: now + 60 * 60 * 24 * 7,
+        });
+        const token = `${header}.${payload}.e2e`;
+
+        return res.json({
+          token,
+          refreshToken: refreshToken || 'e2e-refresh',
+          expiresIn: 60 * 60 * 24 * 7,
+        });
+      }
+
       const result = await refreshTokenService.refreshAccessToken(refreshToken, {
         ip: req.ip,
         userAgent: req.get('user-agent') || null,
@@ -126,6 +160,31 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
+      // ------------------------------------------------------------
+      // E2E_MODE: deterministic "who am I" without DB dependency
+      // ------------------------------------------------------------
+      // Playwright runtime smoke tests use an unsigned JWT-like token
+      // accepted by auth middleware only when E2E_MODE=true. In that mode
+      // we return a valid user payload directly from the decoded token.
+      if (process.env.E2E_MODE === 'true' && req.user && (req.user as any).id) {
+        return res.json({
+          user: {
+            id: req.user.id,
+            email: req.user.email || 'e2e@local.test',
+            role: (req.user as any).role || 'ADMIN',
+            organizationId: req.organizationId || (req.user as any).organizationId || 'e2e-org-id',
+            organizationName: 'E2E Organization',
+            firstName: (req.user as any).name?.split?.(' ')?.[0] || 'E2E',
+            lastName: (req.user as any).name?.split?.(' ')?.slice?.(1)?.join?.(' ') || 'User',
+            avatarUrl: null,
+            impersonatorId: null,
+            companyName: 'E2E Organization',
+            isAuthenticated: true,
+            accessLevel: 'full',
+          },
+        });
+      }
+
       // Try query with impersonator_id first, fallback if column doesn't exist
       let user: {
         id: string;

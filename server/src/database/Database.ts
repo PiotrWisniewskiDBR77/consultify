@@ -68,13 +68,10 @@ export async function createDatabase(): Promise<IDatabase> {
     return existing;
   }
 
-  console.log('[Database] createDatabase() called. MOCK_DB:', process.env.MOCK_DB);
-
   if (
     process.env.MOCK_DB === 'true' ||
     (process.env.NODE_ENV === 'test' && process.env.MOCK_DB !== 'false' && !process.env.SQLITE_PATH)
   ) {
-    console.log('[Database] Using MOCK database.');
     const mockDb = (global as any).__TEST_DB_MOCK__ || createMockDatabase();
     setToGlobal(mockDb);
     return mockDb;
@@ -86,14 +83,21 @@ export async function createDatabase(): Promise<IDatabase> {
     return db;
   }
 
-  // Default to SQLite
-  console.log('[Database] Loading SQLite legacy module...');
-  const sqliteModule = await import('../../legacy_archive/database.sqlite.js').then(
-    (m) => m.default || m
-  );
-  const db = (
-    sqliteModule.getDatabaseInstance ? sqliteModule.getDatabaseInstance() : sqliteModule
-  ) as IDatabase;
+  // Default to SQLite (direct sqlite3 connection)
+  const sqlite3Module: any = await import('sqlite3').then((m) => (m as any).default || m);
+  const sqlite3 = sqlite3Module?.verbose ? sqlite3Module.verbose() : sqlite3Module;
+  const sqlitePath = databaseConfig.sqlite?.path || process.env.SQLITE_PATH;
+  if (!sqlitePath) {
+    throw new Error('SQLITE_PATH is not set');
+  }
+
+  const db = (await new Promise((resolve, reject) => {
+    const handle = new sqlite3.Database(sqlitePath, (err: any) => {
+      if (err) reject(err);
+      else resolve(handle);
+    });
+  })) as IDatabase;
+
   shimQuery(db);
   setToGlobal(db);
   return db;
@@ -114,12 +118,14 @@ export async function getDatabaseAsync(): Promise<IDatabase> {
  * Get internal database singleton instance (synchronous)
  */
 export function getDatabaseInstance(): IDatabase {
-  const existing = getFromGlobal();
-  if (existing && !(existing as any).__CLOSED__) {
-    return existing;
+  const globalDb = getFromGlobal();
+  if (globalDb && !(globalDb as any).__CLOSED__) {
+    return globalDb;
   }
 
-  console.log('[Database] getDatabaseInstance() (SYNC) needs initialization.');
+  if (dbInstance && !(dbInstance as any).__CLOSED__) {
+    return dbInstance;
+  }
 
   if (
     process.env.NODE_ENV === 'test' &&
@@ -131,12 +137,19 @@ export function getDatabaseInstance(): IDatabase {
     return mockDb;
   }
 
-  // SQLite Sync Fallback
+  // SQLite Sync Fallback (direct sqlite3 connection)
   try {
-    const sqliteModule = require('../../legacy_archive/database.sqlite.js');
-    const db = (
-      sqliteModule.getDatabaseInstance ? sqliteModule.getDatabaseInstance() : sqliteModule
-    ) as IDatabase;
+    const sqlite3Module: any = require('sqlite3');
+    const sqlite3 = sqlite3Module?.verbose ? sqlite3Module.verbose() : sqlite3Module;
+    const sqlitePath = (databaseConfig as any).sqlite?.path || process.env.SQLITE_PATH;
+    if (!sqlitePath) {
+      throw new Error('SQLITE_PATH is not set');
+    }
+    const db = new sqlite3.Database(sqlitePath, (err: any) => {
+      if (err) {
+        console.error('[Database] SQLite sync open error:', err);
+      }
+    }) as unknown as IDatabase;
     shimQuery(db);
     setToGlobal(db);
     return db;
@@ -155,26 +168,42 @@ export interface MockDatabase extends IDatabase {
 }
 
 function createMockDatabase(): MockDatabase {
-  return {
+  const mock: MockDatabase = {
     isMock: true,
     get: (_sql, _params, callback) => {
+      // sqlite3 compatibility: support (sql, cb) and (sql, params, cb)
+      if (typeof _params === 'function') {
+        // @ts-ignore
+        _params(null, null);
+        return mock;
+      }
       if (callback) callback(null, null);
-      return Promise.resolve(null);
+      return mock;
     },
     all: (_sql, _params, callback) => {
+      if (typeof _params === 'function') {
+        // @ts-ignore
+        _params(null, []);
+        return mock;
+      }
       if (callback) callback(null, []);
-      return Promise.resolve([]);
+      return mock;
     },
     run(_sql, _params, callback) {
+      if (typeof _params === 'function') {
+        // @ts-ignore
+        _params.call({ lastID: 0, changes: 0 }, null);
+        return mock;
+      }
       if (callback) {
         // @ts-ignore
         callback.call({ lastID: 0, changes: 0 }, null);
       }
-      return Promise.resolve({ lastID: 0, changes: 0 });
+      return mock;
     },
     exec(_sql, callback) {
       if (callback) callback(null);
-      return Promise.resolve();
+      return mock;
     },
     serialize: (cb) => cb(),
     close: (callback) => {
@@ -185,6 +214,8 @@ function createMockDatabase(): MockDatabase {
       return { rows: [], rowCount: 0 };
     },
   };
+
+  return mock;
 }
 
 /**
@@ -207,12 +238,7 @@ function createProxyMethod(prop: string) {
         const originalCallback = lastArg;
         const wrappedArgs = [...args];
         wrappedArgs[lastArgIndex] = function (this: any, err: any, ...results: any[]) {
-          if (
-            err &&
-            err.message &&
-            err.message.includes('Database is closed') &&
-            retryCount < 1
-          ) {
+          if (err && err.message && err.message.includes('Database is closed') && retryCount < 1) {
             resetConnectionLocally();
             return callWithRetry(retryCount + 1);
           }

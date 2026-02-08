@@ -34,7 +34,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
-import { ToolWorkspace } from '@/components/DiscoveryTools';
+import { ToolDocumentView } from '@/components/DiscoveryTools';
 import { useAppStore } from '@/store/useAppStore';
 import { ToolType } from '@/store/useToolStore';
 import { AppView } from '@/types';
@@ -249,14 +249,15 @@ export const StrategicToolsView: React.FC = () => {
     }
   };
 
-  // If a tool is active, show the workspace
+  // If a tool is active, show the document view (canonical two-column layout)
   if (activeTool) {
     return (
-      <ToolWorkspace
+      <ToolDocumentView
         toolType={activeTool}
         onBack={handleBack}
-        onCreateInitiative={() => {
-          console.log('Create initiative clicked');
+        onOpenInitiative={(initiativeId) => {
+          console.log('Open initiative:', initiativeId);
+          // Could navigate to initiative detail view
         }}
       />
     );

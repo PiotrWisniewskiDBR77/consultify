@@ -61,8 +61,7 @@ export const InsightNode: React.FC<NodeProps<InsightNodeData>> = memo(({ data, s
         <div className="mt-2 pt-2 border-t border-amber-200 dark:border-amber-800 flex items-center gap-1">
           <Link2 size={12} className="text-amber-500" />
           <span className="text-[10px] text-amber-600 dark:text-amber-400">
-            {t('discovery.nodes.insight.linkedTo', 'Linked to')}{' '}
-            <span>{linkedPainIds.length}</span>{' '}
+            {t('discovery.nodes.insight.linkedTo', 'Linked to')} <span>{linkedPainIds.length}</span>{' '}
             {linkedPainIds.length === 1 ? 'pain point' : 'pain points'}
           </span>
         </div>

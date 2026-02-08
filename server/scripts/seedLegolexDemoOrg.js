@@ -329,27 +329,60 @@ async function ensureSchema() {
 async function seedOrganization() {
   console.log('\n🏢 Phase 1: Creating Organization...');
 
+  // Organizations schema differs slightly between environments/migration states.
+  // Build an INSERT that only uses columns that actually exist.
+  const orgColsQuery = isPg
+    ? `SELECT column_name as name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'organizations'`
+    : `PRAGMA table_info(organizations)`;
+  const orgCols = await dbAll(orgColsQuery);
+  const hasCreatedByUserId = orgCols.some((c) => c.name === 'created_by_user_id');
+  const hasOwnerId = orgCols.some((c) => c.name === 'owner_id');
+  const hasTrialExtensionCount = orgCols.some((c) => c.name === 'trial_extension_count');
+
+  const columns = [
+    'id',
+    'name',
+    'plan',
+    'status',
+    'industry',
+    'organization_type',
+    'trial_started_at',
+    'trial_expires_at',
+    'is_active',
+  ];
+  const values = [
+    IDS.ORG,
+    'Legolex',
+    'enterprise', // License: ENTERPRISE
+    'active',
+    'Legal Technology',
+    'PAID',
+    T1.toISOString(),
+    TRIAL_EXPIRES.toISOString(),
+    1,
+  ];
+
+  // Prefer legacy created_by_user_id if present; otherwise use owner_id (newer schema)
+  if (hasCreatedByUserId) {
+    columns.push('created_by_user_id');
+    values.push(IDS.USER_ADMIN);
+  } else if (hasOwnerId) {
+    columns.push('owner_id');
+    values.push(IDS.USER_ADMIN);
+  }
+
+  if (hasTrialExtensionCount) {
+    columns.push('trial_extension_count');
+    values.push(1);
+  }
+
+  const placeholders = columns.map(() => '?').join(', ');
   await dbRun(
     `
-        INSERT INTO organizations (
-            id, name, plan, status, industry,
-            organization_type, trial_started_at, trial_expires_at,
-            is_active, created_by_user_id, trial_extension_count
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO organizations (${columns.join(', ')})
+        VALUES (${placeholders})
     `,
-    [
-      IDS.ORG,
-      'Legolex',
-      'enterprise', // License: ENTERPRISE
-      'active',
-      'Legal Technology',
-      'PAID',
-      T1.toISOString(),
-      TRIAL_EXPIRES.toISOString(),
-      1,
-      IDS.USER_ADMIN,
-      1,
-    ]
+    values
   );
 
   console.log('   ✓ Organization: Legolex (PAID/ENTERPRISE)');

@@ -196,6 +196,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
         const response = await Api.createAssessmentSession({
           assessmentType: selectedFramework,
           name: assessmentName.trim(),
+          description: assessmentDescription.trim() || undefined,
           projectId: currentProjectId || null,
         });
 

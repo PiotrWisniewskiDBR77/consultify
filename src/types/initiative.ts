@@ -28,28 +28,28 @@ export { InitiativeStatus } from './core';
 
 // Re-export lifecycle utilities
 export {
-  VALID_TRANSITIONS,
-  MODULES,
-  STATUS_METADATA,
-  getModuleForStatus,
-  getModuleConfigForStatus,
-  isValidTransition,
-  getValidNextStatuses,
-  willChangeModule,
-  getTargetModule,
-  getStatusMeta,
-  getStatusesForModule,
-  isStatusInModule,
-  getLifecycleProgress,
   getLifecycleOrder,
-  isTerminalStatus,
-  isActiveStatus,
-  needsAttention,
+  getLifecycleProgress,
+  getModuleConfigForStatus,
+  getModuleForStatus,
   getStatusActions,
+  getStatusesForModule,
+  getStatusMeta,
+  getTargetModule,
+  getValidNextStatuses,
+  isActiveStatus,
+  isStatusInModule,
+  isTerminalStatus,
+  isValidTransition,
+  MODULES,
+  needsAttention,
+  STATUS_METADATA,
+  VALID_TRANSITIONS,
+  willChangeModule,
 } from '../services/initiativeLifecycle';
 
 // Re-export types from core
-export type { PortfolioInitiative, PortfolioFilters, PortfolioStats } from './core';
+export type { PortfolioFilters, PortfolioInitiative, PortfolioStats } from './core';
 
 // ============================================
 // ROLE DEFINITIONS
@@ -62,6 +62,8 @@ export type { PortfolioInitiative, PortfolioFilters, PortfolioStats } from './co
 export enum Role {
   ADMIN = 'ADMIN',
   CONSULTANT = 'CONSULTANT',
+  PROJECT_MANAGER = 'PROJECT_MANAGER',
+  PROJECT_LEAD = 'PROJECT_LEAD',
   INITIATIVE_OWNER = 'INITIATIVE_OWNER',
   PROJECT_SPONSOR = 'PROJECT_SPONSOR',
   PMO = 'PMO',
@@ -78,6 +80,11 @@ export enum Role {
  * Gate decision types for status transitions
  */
 export enum GateType {
+  // Phase 1: Tools/Assessment gates
+  SUBMIT_FOR_REVIEW = 'SUBMIT_FOR_REVIEW',
+  SEND_BACK = 'SEND_BACK',
+  APPROVE_TO_INITIATIVE = 'APPROVE_TO_INITIATIVE',
+
   PROMOTE = 'PROMOTE',
   ACCEPT = 'ACCEPT',
   REJECT = 'REJECT',
@@ -96,6 +103,10 @@ export enum GateType {
  * Gate permissions - which roles can execute which gates
  */
 export const GATE_PERMISSIONS: Record<GateType, Role[]> = {
+  [GateType.SUBMIT_FOR_REVIEW]: [Role.CONSULTANT, Role.INITIATIVE_OWNER],
+  [GateType.SEND_BACK]: [Role.PROJECT_MANAGER, Role.PROJECT_LEAD, Role.PMO],
+  [GateType.APPROVE_TO_INITIATIVE]: [Role.PROJECT_MANAGER, Role.PROJECT_LEAD, Role.PMO],
+
   [GateType.PROMOTE]: [Role.PROJECT_SPONSOR],
   [GateType.ACCEPT]: [Role.PROJECT_SPONSOR, Role.STEERING_COMMITTEE],
   [GateType.REJECT]: [Role.PROJECT_SPONSOR, Role.STEERING_COMMITTEE],
@@ -131,20 +142,26 @@ export function canExecuteGate(role: Role, gate: GateType): boolean {
 
 import { InitiativeStatus } from './core';
 
-export type ModuleId = 'tools' | 'assessment' | 'initiatives' | 'execution' | 'benefits' | 'reporting';
+export type ModuleId =
+  | 'tools'
+  | 'assessment'
+  | 'initiatives'
+  | 'execution'
+  | 'benefits'
+  | 'reporting';
 
 /**
  * Get statuses visible in Tools module
  */
 export function getToolsVisibleStatuses(): InitiativeStatus[] {
-  return [InitiativeStatus.DRAFT];
+  return [InitiativeStatus.DRAFT, InitiativeStatus.PENDING_REVIEW];
 }
 
 /**
  * Get statuses visible in Assessment module
  */
 export function getAssessmentVisibleStatuses(): InitiativeStatus[] {
-  return [InitiativeStatus.DRAFT];
+  return [InitiativeStatus.DRAFT, InitiativeStatus.PENDING_REVIEW];
 }
 
 /**
@@ -158,6 +175,7 @@ export function getInitiativesVisibleStatuses(): InitiativeStatus[] {
     InitiativeStatus.APPROVED,
     InitiativeStatus.SCHEDULED,
     InitiativeStatus.CANCELLED,
+    InitiativeStatus.ARCHIVED,
   ];
 }
 
@@ -208,6 +226,7 @@ export function isStatusVisibleInModule(status: InitiativeStatus, module: Module
 export function getDisplayModule(status: InitiativeStatus): ModuleId {
   switch (status) {
     case InitiativeStatus.DRAFT:
+    case InitiativeStatus.PENDING_REVIEW:
       return 'assessment'; // or 'tools' depending on source
     case InitiativeStatus.REVIEW:
     case InitiativeStatus.PROMOTED:
@@ -277,6 +296,17 @@ export const INITIATIVE_STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = 
     icon: 'FileText',
     order: 1,
   },
+  [InitiativeStatus.PENDING_REVIEW]: {
+    label: 'Pending Review',
+    labelPL: 'Oczekuje na przegląd',
+    color: 'text-orange-500',
+    bgColor: 'bg-orange-500/10',
+    dotColor: 'bg-orange-400',
+    description: 'Awaiting PM/Lead review',
+    descriptionPL: 'Oczekuje na przegląd PM/Lead',
+    icon: 'Clock',
+    order: 2,
+  },
   [InitiativeStatus.REVIEW]: {
     label: 'In Review',
     labelPL: 'W przeglądzie',
@@ -286,7 +316,7 @@ export const INITIATIVE_STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = 
     description: 'Under business review',
     descriptionPL: 'W przeglądzie biznesowym',
     icon: 'Eye',
-    order: 2,
+    order: 3,
   },
   [InitiativeStatus.PROMOTED]: {
     label: 'Promoted',
@@ -297,7 +327,7 @@ export const INITIATIVE_STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = 
     description: 'Accepted for planning',
     descriptionPL: 'Zaakceptowana do planowania',
     icon: 'TrendingUp',
-    order: 3,
+    order: 4,
   },
   [InitiativeStatus.PLANNING]: {
     label: 'Planning',
@@ -308,7 +338,7 @@ export const INITIATIVE_STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = 
     description: 'Being planned and scoped',
     descriptionPL: 'W trakcie planowania',
     icon: 'ClipboardList',
-    order: 4,
+    order: 5,
   },
   [InitiativeStatus.APPROVED]: {
     label: 'Approved',
@@ -319,7 +349,7 @@ export const INITIATIVE_STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = 
     description: 'Approved, ready for scheduling',
     descriptionPL: 'Zatwierdzona, gotowa do zaplanowania',
     icon: 'CheckCircle',
-    order: 5,
+    order: 6,
   },
   [InitiativeStatus.SCHEDULED]: {
     label: 'Scheduled',
@@ -330,7 +360,7 @@ export const INITIATIVE_STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = 
     description: 'Scheduled in roadmap',
     descriptionPL: 'Zaplanowana w roadmapie',
     icon: 'Calendar',
-    order: 6,
+    order: 7,
   },
   [InitiativeStatus.EXECUTING]: {
     label: 'Executing',
@@ -341,7 +371,7 @@ export const INITIATIVE_STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = 
     description: 'Currently being implemented',
     descriptionPL: 'W trakcie realizacji',
     icon: 'Play',
-    order: 7,
+    order: 8,
   },
   [InitiativeStatus.BLOCKED]: {
     label: 'Blocked',
@@ -352,7 +382,7 @@ export const INITIATIVE_STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = 
     description: 'Blocked, requires decision',
     descriptionPL: 'Zablokowana, wymaga decyzji',
     icon: 'AlertTriangle',
-    order: 8,
+    order: 9,
   },
   [InitiativeStatus.DONE]: {
     label: 'Done',
@@ -363,7 +393,7 @@ export const INITIATIVE_STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = 
     description: 'Delivery completed',
     descriptionPL: 'Realizacja zakończona',
     icon: 'CheckCircle2',
-    order: 9,
+    order: 10,
   },
   [InitiativeStatus.TRACKING]: {
     label: 'Tracking',
@@ -374,7 +404,7 @@ export const INITIATIVE_STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = 
     description: 'Benefits tracking in progress',
     descriptionPL: 'Śledzenie korzyści w toku',
     icon: 'BarChart',
-    order: 10,
+    order: 11,
   },
   [InitiativeStatus.CANCELLED]: {
     label: 'Cancelled',
@@ -385,18 +415,7 @@ export const INITIATIVE_STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = 
     description: 'Initiative was cancelled',
     descriptionPL: 'Inicjatywa została anulowana',
     icon: 'XCircle',
-    order: 11,
-  },
-  [InitiativeStatus.PENDING_REVIEW]: {
-    label: 'Pending Review',
-    labelPL: 'Oczekuje na przegląd',
-    color: 'text-yellow-500',
-    bgColor: 'bg-yellow-500/10',
-    dotColor: 'bg-yellow-400',
-    description: 'Submitted for review',
-    descriptionPL: 'Złożona do przeglądu',
-    icon: 'Clock',
-    order: 1.5,
+    order: 12,
   },
   [InitiativeStatus.ARCHIVED]: {
     label: 'Archived',
@@ -407,14 +426,17 @@ export const INITIATIVE_STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = 
     description: 'Archived for reference',
     descriptionPL: 'Zarchiwizowana do celów referencyjnych',
     icon: 'Archive',
-    order: 12,
+    order: 13,
   },
 };
 
 /**
  * Get status label for display
  */
-export function getInitiativeStatusLabel(status: InitiativeStatus, lang: 'en' | 'pl' = 'en'): string {
+export function getInitiativeStatusLabel(
+  status: InitiativeStatus,
+  lang: 'en' | 'pl' = 'en'
+): string {
   const meta = INITIATIVE_STATUS_METADATA[status];
   return lang === 'pl' ? meta?.labelPL : meta?.label || status;
 }

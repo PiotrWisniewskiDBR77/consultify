@@ -21,9 +21,12 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Clock, GripVertical } from 'lucide-react';
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import { ROUTES } from '@/routes/routeConfig';
 
 import { FullInitiative, InitiativeStatus, Quarter, User } from '../types';
-import { InitiativeDetailModal } from './InitiativeDetailModal';
+import { InitiativeDrawer } from './Initiatives/InitiativeDrawer';
 
 interface Props {
   initiatives: FullInitiative[];
@@ -191,8 +194,10 @@ export const RoadmapKanban: React.FC<Props> = ({
   users,
   currentUser,
 }) => {
+  const navigate = useNavigate();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedInitiative, setSelectedInitiative] = useState<FullInitiative | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -282,7 +287,10 @@ export const RoadmapKanban: React.FC<Props> = ({
                         key={id}
                         id={id}
                         initiative={init}
-                        onClick={() => setSelectedInitiative(init)}
+                        onClick={() => {
+                          setSelectedInitiative(init);
+                          setIsDrawerOpen(true);
+                        }}
                       />
                     ) : null;
                   })}
@@ -315,22 +323,22 @@ export const RoadmapKanban: React.FC<Props> = ({
         </DragOverlay>
       </DndContext>
 
-      {/* Modal */}
-      {selectedInitiative && (
-        <InitiativeDetailModal
-          initiative={selectedInitiative}
-          isOpen={!!selectedInitiative}
-          onClose={() => setSelectedInitiative(null)}
-          onSave={(updated) => {
-            onUpdateInitiative(updated);
-            // Also update local selected state if still open?
-            // Actually modal closes on save, but if we wanted to keep it open we'd update.
-            // Here we just close it.
-          }}
-          users={users}
-          currentUser={currentUser}
-        />
-      )}
+      <InitiativeDrawer
+        initiative={selectedInitiative as any}
+        isOpen={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setTimeout(() => setSelectedInitiative(null), 200);
+        }}
+        onUpdate={(updated) => {
+          onUpdateInitiative(updated as any);
+          setSelectedInitiative(updated as any);
+        }}
+        onOpenWider={(initiative) => {
+          navigate(`${ROUTES.INITIATIVES}?open=${initiative.id}&mode=doc`);
+        }}
+        users={users as any}
+      />
     </>
   );
 };

@@ -1,94 +1,97 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  QuickActions,
-  QuickActionButton,
-  MoreActionsButton,
-} from '@/components/MyWork/shared/QuickActions';
+import QuickActions from '@/components/MyWork/shared/QuickActions';
 
 // Mock i18next
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, defaultValue: string) => defaultValue,
+    i18n: { language: 'en' },
+    t: (key: string) => key,
   }),
 }));
 
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    div: ({ children, className, ...props }: any) => (
+      <div className={className} {...props}>
+        {children}
+      </div>
+    ),
   },
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
 
 describe('QuickActions', () => {
-  const mockOnAction = vi.fn();
+  const mockOnStatusChange = vi.fn();
+  const mockOnPriorityChange = vi.fn();
+  const mockOnMarkComplete = vi.fn();
+  const mockOnDelete = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('renders all provided actions', () => {
-    render(<QuickActions onAction={mockOnAction} actions={['complete', 'schedule']} />);
+  it('renders status and priority labels', () => {
+    render(
+      <QuickActions
+        status="todo"
+        priority="medium"
+        onStatusChange={mockOnStatusChange}
+        onPriorityChange={mockOnPriorityChange}
+      />
+    );
 
-    expect(screen.getByTitle('Complete')).toBeTruthy();
-    expect(screen.getByTitle('Schedule')).toBeTruthy();
+    expect(screen.getByText('To Do')).toBeTruthy();
+    expect(screen.getByText('Medium')).toBeTruthy();
   });
 
-  it('handles action click', () => {
-    render(<QuickActions onAction={mockOnAction} actions={['complete']} />);
+  it('handles mark complete click', () => {
+    render(<QuickActions status="todo" onMarkComplete={mockOnMarkComplete} />);
 
-    fireEvent.click(screen.getByTitle('Complete'));
-    expect(mockOnAction).toHaveBeenCalledWith('complete');
+    const completeBtn = screen.getByTitle('Mark complete');
+    fireEvent.click(completeBtn);
+
+    expect(mockOnMarkComplete).toHaveBeenCalled();
   });
 
-  it('requires confirmation for delete action', () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
-    render(<QuickActions onAction={mockOnAction} actions={['delete']} />);
+  it('opens status dropdown and changes status', () => {
+    render(<QuickActions status="todo" onStatusChange={mockOnStatusChange} />);
 
-    fireEvent.click(screen.getByTitle('Delete'));
-    expect(confirmSpy).toHaveBeenCalled();
-    expect(mockOnAction).toHaveBeenCalledWith('delete');
-    confirmSpy.mockRestore();
+    // Click status button to open dropdown
+    fireEvent.click(screen.getByText('To Do'));
+
+    // Find and click "Done" in the list
+    const doneOption = screen.getByText('Done');
+    fireEvent.click(doneOption);
+
+    expect(mockOnStatusChange).toHaveBeenCalledWith('done');
   });
 
-  it('does not call onAction if delete confirmation is cancelled', () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
-    render(<QuickActions onAction={mockOnAction} actions={['delete']} />);
+  it('opens priority dropdown and changes priority', () => {
+    render(<QuickActions priority="medium" onPriorityChange={mockOnPriorityChange} />);
 
-    fireEvent.click(screen.getByTitle('Delete'));
-    expect(mockOnAction).not.toHaveBeenCalled();
-    confirmSpy.mockRestore();
+    // Click priority button
+    fireEvent.click(screen.getByText('Medium'));
+
+    // Click "High"
+    const highOption = screen.getByText('High');
+    fireEvent.click(highOption);
+
+    expect(mockOnPriorityChange).toHaveBeenCalledWith('high');
   });
 
-  it('hides actions when visible is false', () => {
-    const { container } = render(<QuickActions onAction={mockOnAction} visible={false} />);
-    expect(container.firstChild).toBeNull();
-  });
-});
+  it('shows more actions menu and triggers delete', () => {
+    render(<QuickActions onDelete={mockOnDelete} />);
 
-describe('QuickActionButton', () => {
-  it('renders with label when showLabel is true', () => {
-    render(<QuickActionButton action="complete" onClick={vi.fn()} showLabel={true} />);
-    expect(screen.getByText('Complete')).toBeTruthy();
-  });
-
-  it('calls onClick when clicked', () => {
-    const mockOnClick = vi.fn();
-    render(<QuickActionButton action="complete" onClick={mockOnClick} />);
-
-    fireEvent.click(screen.getByTitle('Complete'));
-    expect(mockOnClick).toHaveBeenCalled();
-  });
-});
-
-describe('MoreActionsButton', () => {
-  it('calls onClick when clicked', () => {
-    const mockOnClick = vi.fn();
-    render(<MoreActionsButton onClick={mockOnClick} />);
-
+    // Open more menu
     fireEvent.click(screen.getByTitle('More actions'));
-    expect(mockOnClick).toHaveBeenCalled();
+
+    // Click delete
+    const deleteBtn = screen.getByText('Delete');
+    fireEvent.click(deleteBtn);
+
+    expect(mockOnDelete).toHaveBeenCalled();
   });
 });

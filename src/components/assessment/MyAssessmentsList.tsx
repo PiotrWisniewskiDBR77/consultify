@@ -62,42 +62,42 @@ const STATUS_CONFIG: Record<
   { label: string; color: string; icon: React.ReactNode }
 > = {
   DRAFT: {
-    label: 'Szkic',
+    label: 'Draft',
     color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
     icon: <Edit className="w-3.5 h-3.5" />,
   },
   IN_REVIEW: {
-    label: 'W recenzji',
+    label: 'In Review',
     color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
     icon: <Clock className="w-3.5 h-3.5" />,
   },
   AWAITING_APPROVAL: {
-    label: 'Oczekuje na zatwierdzenie',
+    label: 'Awaiting Approval',
     color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
     icon: <FileCheck className="w-3.5 h-3.5" />,
   },
   APPROVED: {
-    label: 'Zatwierdzony',
+    label: 'Approved',
     color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
     icon: <CheckCircle2 className="w-3.5 h-3.5" />,
   },
   REJECTED: {
-    label: 'Odrzucony',
+    label: 'Rejected',
     color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
     icon: <AlertCircle className="w-3.5 h-3.5" />,
   },
   ARCHIVED: {
-    label: 'Zarchiwizowany',
+    label: 'Archived',
     color: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500',
     icon: <FileText className="w-3.5 h-3.5" />,
   },
   COMPLETED: {
-    label: 'Ukończony',
+    label: 'Completed',
     color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
     icon: <CheckCircle2 className="w-3.5 h-3.5" />,
   },
   IN_PROGRESS: {
-    label: 'W trakcie',
+    label: 'In Progress',
     color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
     icon: <Clock className="w-3.5 h-3.5" />,
   },
@@ -139,7 +139,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
       });
 
       if (!response.ok) {
-        throw new Error('Nie udało się pobrać ocen');
+        throw new Error('Failed to load assessments');
       }
 
       const data = await response.json();
@@ -251,8 +251,10 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
             <FileText className="w-8 h-8 text-purple-600 dark:text-purple-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-navy-900 dark:text-white">Moje Oceny</h1>
-            <p className="text-slate-500 dark:text-slate-400">{assessments.length} ocen łącznie</p>
+            <h1 className="text-2xl font-bold text-navy-900 dark:text-white">My Assessments</h1>
+            <p className="text-slate-500 dark:text-slate-400">
+              {assessments.length} assessments total
+            </p>
           </div>
         </div>
 
@@ -269,7 +271,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
               className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors"
             >
               <Plus className="w-4 h-4" />
-              Nowa ocena
+              New Assessment
             </button>
           )}
         </div>
@@ -284,7 +286,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Szukaj ocen..."
+            placeholder="Search assessments..."
             className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
         </div>
@@ -299,7 +301,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
           }`}
         >
           <Filter className="w-4 h-4" />
-          Filtry
+          Filters
           <ChevronDown
             className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`}
           />
@@ -320,27 +322,27 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                 onChange={(e) => setStatusFilter(e.target.value as WorkflowState | 'ALL')}
                 className="px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
-                <option value="ALL">Wszystkie</option>
-                <option value="DRAFT">Szkic</option>
-                <option value="IN_REVIEW">W recenzji</option>
-                <option value="AWAITING_APPROVAL">Oczekuje</option>
-                <option value="APPROVED">Zatwierdzony</option>
-                <option value="REJECTED">Odrzucony</option>
-                <option value="ARCHIVED">Zarchiwizowany</option>
+                <option value="ALL">All</option>
+                <option value="DRAFT">Draft</option>
+                <option value="IN_REVIEW">In Review</option>
+                <option value="AWAITING_APPROVAL">Awaiting</option>
+                <option value="APPROVED">Approved</option>
+                <option value="REJECTED">Rejected</option>
+                <option value="ARCHIVED">Archived</option>
               </select>
             </div>
 
             {/* Type Filter */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Typ
+                Type
               </label>
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
                 className="px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
-                <option value="ALL">Wszystkie</option>
+                <option value="ALL">All</option>
                 <option value="DRD">DRD</option>
                 <option value="LEAN">RapidLean</option>
                 <option value="SIRI">SIRI</option>
@@ -358,7 +360,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                 }}
                 className="self-end px-4 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-lg transition-colors"
               >
-                Wyczyść filtry
+                Clear filters
               </button>
             )}
           </div>
@@ -379,8 +381,8 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
           <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
           <p className="text-slate-500 dark:text-slate-400">
             {searchQuery || statusFilter !== 'ALL' || typeFilter !== 'ALL'
-              ? 'Brak ocen spełniających kryteria'
-              : 'Nie masz jeszcze żadnych ocen'}
+              ? 'No assessments match your criteria'
+              : "You don't have any assessments yet"}
           </p>
           {onCreateNew && !searchQuery && statusFilter === 'ALL' && typeFilter === 'ALL' && (
             <button
@@ -388,7 +390,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
               className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors"
             >
               <Plus className="w-4 h-4" />
-              Utwórz pierwszą ocenę
+              Create first assessment
             </button>
           )}
         </div>
@@ -400,7 +402,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
               className="col-span-4 flex items-center gap-1 cursor-pointer hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-200"
               onClick={() => handleSort('name')}
             >
-              Nazwa
+              Name
               <ArrowUpDown className="w-4 h-4" />
             </div>
             <div
@@ -410,15 +412,15 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
               Status
               <ArrowUpDown className="w-4 h-4" />
             </div>
-            <div className="col-span-2">Postęp</div>
+            <div className="col-span-2">Progress</div>
             <div
               className="col-span-2 flex items-center gap-1 cursor-pointer hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-200"
               onClick={() => handleSort('updatedAt')}
             >
-              Aktualizacja
+              Updated
               <ArrowUpDown className="w-4 h-4" />
             </div>
-            <div className="col-span-2 text-right">Akcje</div>
+            <div className="col-span-2 text-right">Actions</div>
           </div>
 
           {/* Table Body */}
@@ -464,7 +466,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                       </span>
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      {assessment.completedAxes}/{assessment.totalAxes} osi
+                      {assessment.completedAxes}/{assessment.totalAxes} axes
                     </p>
                   </div>
 
@@ -483,7 +485,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                     <button
                       onClick={() => onViewAssessment?.(assessment.id, assessment.projectId)}
                       className="p-2 text-slate-500 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-                      title="Podgląd"
+                      title="Preview"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
@@ -539,7 +541,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                             className="w-full px-4 py-2 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 flex items-center gap-2"
                           >
                             <Copy className="w-4 h-4" />
-                            Duplikuj
+                            Duplicate
                           </button>
                           <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
                           <button
@@ -550,7 +552,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                             className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
                           >
                             <Trash2 className="w-4 h-4" />
-                            Usuń
+                            Delete
                           </button>
                         </div>
                       )}
@@ -571,25 +573,23 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
               <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
                 <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
               </div>
-              <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                Potwierdź usunięcie
-              </h3>
+              <h3 className="text-lg font-bold text-navy-900 dark:text-white">Confirm Deletion</h3>
             </div>
             <p className="text-slate-600 dark:text-slate-300 mb-6">
-              Czy na pewno chcesz usunąć tę ocenę? Ta operacja jest nieodwracalna.
+              Are you sure you want to delete this assessment? This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setDeleteConfirmId(null)}
                 className="flex-1 py-2.5 bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors"
               >
-                Anuluj
+                Cancel
               </button>
               <button
                 onClick={() => handleDelete(deleteConfirmId)}
                 className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 text-white font-medium rounded-lg transition-colors"
               >
-                Usuń
+                Delete
               </button>
             </div>
           </div>

@@ -128,60 +128,47 @@ export const AIContextBuilder = {
     options: ContextOptions = {}
   ): Promise<AIContext> => {
     const focusMode = options.focusMode || 'all';
-    console.log(
-      `[AIContextBuilder] buildContext started for user: ${userId}, org: ${organizationId}, project: ${projectId}`
+    const t0 = Date.now();
+    logger.debug(
+      `[AIContextBuilder] buildContext user=${userId} org=${organizationId} proj=${projectId} focus=${focusMode}`
     );
 
     const PMOHealthService = await getPMOHealthService();
     const AISettingsService = await getAISettingsService();
-    console.log('[AIContextBuilder] Services loaded');
 
-    // Build all context layers
-    console.log('[AIContextBuilder] Building platform context...');
-    const platform = await AIContextBuilder._buildPlatformContext(userId, organizationId);
-    console.log('[AIContextBuilder] Building organization context...');
-    const organization = await AIContextBuilder._buildOrganizationContext(organizationId);
-    console.log('[AIContextBuilder] Building project context...');
-    const project = projectId ? await AIContextBuilder._buildProjectContext(projectId) : null;
-    console.log('[AIContextBuilder] Building execution context...');
-    const execution = await AIContextBuilder._buildExecutionContext(userId, projectId);
-    console.log('[AIContextBuilder] Building knowledge context...');
-    const knowledge = await AIContextBuilder._buildKnowledgeContext(projectId, focusMode);
-    console.log('[AIContextBuilder] Building external context...');
-    const external = await AIContextBuilder._buildExternalContext(organizationId, focusMode);
+    // Build all context layers in parallel where possible
+    const [platform, organization, project, execution, knowledge, external] = await Promise.all([
+      AIContextBuilder._buildPlatformContext(userId, organizationId),
+      AIContextBuilder._buildOrganizationContext(organizationId),
+      projectId ? AIContextBuilder._buildProjectContext(projectId) : Promise.resolve(null),
+      AIContextBuilder._buildExecutionContext(userId, projectId),
+      AIContextBuilder._buildKnowledgeContext(projectId, focusMode),
+      AIContextBuilder._buildExternalContext(organizationId, focusMode),
+    ]);
 
     // Fetch PMOHealthSnapshot
     const pmo = { healthSnapshot: null };
     if (projectId && PMOHealthService && ['all', 'pmo-docs', 'project-data'].includes(focusMode)) {
       try {
-        console.log('[AIContextBuilder] Fetching PMO health snapshot...');
         pmo.healthSnapshot = await PMOHealthService.getHealthSnapshot(projectId);
       } catch (err: any) {
-        logger.warn(
-          '[AIContextBuilder] Failed to get PMO health snapshot:',
-          (err as Error).message
-        );
+        logger.warn('[AIContextBuilder] PMO health snapshot failed:', (err as Error).message);
       }
     }
 
-    // Fetch pending approvals for HITL context
-    console.log('[AIContextBuilder] Fetching pending approvals...');
-    const pendingApprovals = await AIContextBuilder._buildPendingApprovalsContext(
-      userId,
-      organizationId,
-      projectId
-    );
-
-    // Fetch effective AI settings
-    let aiSettings = null;
-    if (AISettingsService) {
-      try {
-        console.log('[AIContextBuilder] Fetching AI settings...');
-        aiSettings = await AISettingsService.getEffectiveSettings(userId, organizationId);
-      } catch (err: any) {
-        logger.warn('[AIContextBuilder] Failed to get AI settings:', (err as Error).message);
-      }
-    }
+    // Fetch pending approvals and AI settings in parallel
+    const [pendingApprovals, aiSettings] = await Promise.all([
+      AIContextBuilder._buildPendingApprovalsContext(userId, organizationId, projectId),
+      (async () => {
+        if (!AISettingsService) return null;
+        try {
+          return await AISettingsService.getEffectiveSettings(userId, organizationId);
+        } catch (err: any) {
+          logger.warn('[AIContextBuilder] AI settings failed:', (err as Error).message);
+          return null;
+        }
+      })(),
+    ]);
 
     const fullContext = {
       platform,
@@ -195,10 +182,38 @@ export const AIContextBuilder = {
       aiSettings,
     };
 
-    console.log('[AIContextBuilder] Filtering context...');
     const filteredContext = AIContextBuilder._applyFocusModeFilter(fullContext, focusMode);
 
-    console.log('[AIContextBuilder] Context built successfully');
+    // Cap context size to avoid sending excessive tokens to LLM
+    const contextSizeEstimate = JSON.stringify(filteredContext).length;
+    if (contextSizeEstimate > 12000) {
+      logger.warn(
+        `[AIContextBuilder] Context is large (${contextSizeEstimate} chars), trimming execution layer`
+      );
+      // Trim execution layer first — it's the largest and least critical for general queries
+      if (filteredContext.execution) {
+        const exec = filteredContext.execution as any;
+        if (exec.userTasks?.length > 5) exec.userTasks = exec.userTasks.slice(0, 5);
+        if (exec.userInitiatives?.length > 3)
+          exec.userInitiatives = exec.userInitiatives.slice(0, 3);
+        if (exec.pendingDecisions?.length > 3)
+          exec.pendingDecisions = exec.pendingDecisions.slice(0, 3);
+        if (exec.blockers?.length > 3) exec.blockers = exec.blockers.slice(0, 3);
+      }
+      // Trim knowledge layer
+      if ((filteredContext as any).knowledge) {
+        const kn = (filteredContext as any).knowledge;
+        if (kn.projectDocuments?.length > 5) kn.projectDocuments = kn.projectDocuments.slice(0, 5);
+        if (kn.previousDecisions?.length > 5)
+          kn.previousDecisions = kn.previousDecisions.slice(0, 5);
+        if (kn.strategicDirections?.length > 3)
+          kn.strategicDirections = kn.strategicDirections.slice(0, 3);
+      }
+    }
+
+    logger.debug(
+      `[AIContextBuilder] Context built in ${Date.now() - t0}ms (${contextSizeEstimate} chars)`
+    );
     return {
       ...filteredContext,
       focusMode,

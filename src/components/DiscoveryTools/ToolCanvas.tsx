@@ -8,18 +8,13 @@ import React from 'react';
 
 import { StepDefinition, ToolSession, ToolType } from '@/store/useToolStore';
 
-import { ToolContextPanel } from './ToolContextPanel';
 import { ContextStep } from './steps/ContextStep';
 import { SummaryStep } from './steps/SummaryStep';
+import { ToolContextPanel } from './ToolContextPanel';
 import { SWOTCorrelationsStep } from './tools/DynamicSWOT/SWOTCorrelationsStep';
 import { SWOTQuadrantStep } from './tools/DynamicSWOT/SWOTQuadrantStep';
 import { GrowthPathQuadrantStep } from './tools/GrowthPaths/GrowthPathQuadrantStep';
 import { ForceStep } from './tools/MarketForces/ForceStep';
-import { PortfolioItemsStep } from './tools/PortfolioPriority/PortfolioItemsStep';
-import { PortfolioMatrixStep } from './tools/PortfolioPriority/PortfolioMatrixStep';
-import { AssumptionsStep } from './tools/RiskUncertainty/AssumptionsStep';
-import { RisksStep } from './tools/RiskUncertainty/RisksStep';
-import { ScenariosStep } from './tools/RiskUncertainty/ScenariosStep';
 import {
   A3CountermeasuresStep,
   A3ProblemStep,
@@ -29,11 +24,16 @@ import {
   InventoryClassificationStep,
   InventoryReplenishmentStep,
   OperationalSectionStep,
-  SOPChecklistsStep,
-  SOPStandardsStep,
   SMEDImprovementsStep,
   SMEDStepsStep,
+  SOPChecklistsStep,
+  SOPStandardsStep,
 } from './tools/Operational';
+import { PortfolioItemsStep } from './tools/PortfolioPriority/PortfolioItemsStep';
+import { PortfolioMatrixStep } from './tools/PortfolioPriority/PortfolioMatrixStep';
+import { AssumptionsStep } from './tools/RiskUncertainty/AssumptionsStep';
+import { RisksStep } from './tools/RiskUncertainty/RisksStep';
+import { ScenariosStep } from './tools/RiskUncertainty/ScenariosStep';
 
 // ==================== TYPES ====================
 
@@ -51,6 +51,11 @@ interface ToolCanvasProps {
   generatedInitiatives?: { id: string; title: string; status?: string }[];
   recentInitiatives?: { id: string; title: string; status?: string }[];
   chatSnippets?: { role: string; content: string }[];
+  /**
+   * When false, ToolCanvas renders ONLY the step content (no context side panel).
+   * Useful for embedding inside canonical two-column document views.
+   */
+  showContextPanel?: boolean;
 }
 
 // ==================== COMPONENT ====================
@@ -69,6 +74,7 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
   generatedInitiatives,
   recentInitiatives,
   chatSnippets,
+  showContextPanel = true,
 }) => {
   // Render step-specific content
   const renderStepContent = () => {
@@ -135,9 +141,12 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
 
     if (toolType === 'growth-paths') {
       if (
-        ['market-penetration', 'market-development', 'product-development', 'diversification'].includes(
-          stepDefinition.id
-        )
+        [
+          'market-penetration',
+          'market-development',
+          'product-development',
+          'diversification',
+        ].includes(stepDefinition.id)
       ) {
         return (
           <GrowthPathQuadrantStep
@@ -225,9 +234,13 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
     }
 
     if (
-      ['sop-builder', 'a3-problem-solving', 'smed-planner', 'dms-builder', 'inventory-autopilot'].includes(
-        toolType
-      )
+      [
+        'sop-builder',
+        'a3-problem-solving',
+        'smed-planner',
+        'dms-builder',
+        'inventory-autopilot',
+      ].includes(toolType)
     ) {
       if (stepDefinition.id !== 'context' && stepDefinition.id !== 'summary') {
         return (
@@ -255,18 +268,20 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
       {/* Main content area */}
       <div className="flex-1 overflow-y-auto p-6">{renderStepContent()}</div>
 
-      <ToolContextPanel
-        toolType={toolType}
-        session={session}
-        isPolish={isPolish}
-        orgName={orgName}
-        aiContent={isStreaming ? streamedContent : undefined}
-        onOpenChat={onOpenChat}
-        onOpenInitiatives={onOpenInitiatives}
-        generatedInitiatives={generatedInitiatives}
-        recentInitiatives={recentInitiatives}
-        chatSnippets={chatSnippets}
-      />
+      {showContextPanel && (
+        <ToolContextPanel
+          toolType={toolType}
+          session={session}
+          isPolish={isPolish}
+          orgName={orgName}
+          aiContent={isStreaming ? streamedContent : undefined}
+          onOpenChat={onOpenChat}
+          onOpenInitiatives={onOpenInitiatives}
+          generatedInitiatives={generatedInitiatives}
+          recentInitiatives={recentInitiatives}
+          chatSnippets={chatSnippets}
+        />
+      )}
     </div>
   );
 };

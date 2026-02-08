@@ -6,11 +6,18 @@ Definicja ról operacyjnych w systemie, ich odpowiedzialności i uprawnień do p
 
 ## Źródła
 
-- Backend: `server/src/constants/roles.ts`
-- Frontend: `src/types/user.ts`
+- Kanon ról (Account Type + Project Role): `src/types/core.ts`
 - Statusy: `wdrozenia/standards/03-STATUS-WORKFLOW.md`
+- Jedno rozumienie + delegacje: `wdrozenia/workflows/01-ROLES-AND-ASSUMPTIONS.md`
 
 ---
+
+## Uwaga: 2 poziomy ról (żeby nie mieszać pojęć)
+W systemie rozróżniamy:
+- **Account Type (organizacja)**: Owner/Admin/User — zarządzanie tenantem i ustawieniami.
+- **Project Role (projekt)**: role procesowe w obrębie projektu (PM, Sponsor, Initiative Owner itd.).
+
+W tym dokumencie opisujemy **role operacyjne procesu** (workflow), które mogą być mapowane na `ProjectRole` w kodzie.
 
 ## Role operacyjne (8 ról)
 
@@ -198,6 +205,16 @@ permissions: [
 Legenda: ✅ = pełny dostęp, 👁️ = tylko odczyt, ❌ = brak dostępu
 
 ---
+
+## Delegacje ról (gdy projekt jest „mniejszy”)
+Nie wszystkie projekty mają wszystkie role. Żeby workflow zawsze działał (zawsze jest decydent), obowiązuje kanon delegacji:
+
+- jeśli brak **PMO** → obowiązki przejmuje **Project Manager**
+- jeśli brak **Steering Committee** → strategiczne `APPROVE/CANCEL` przejmuje **Sponsor / Project Executive**
+- jeśli brak **Business Owner** → tracking korzyści robi **Sponsor** (albo PMO/PM), ale musi być wskazany owner KPI
+- jeśli brak **Reviewer** → review artefaktów robi **Project Manager**
+
+Szczegóły i mapowanie terminologii: `wdrozenia/workflows/01-ROLES-AND-ASSUMPTIONS.md`
 
 ## Kluczowe zasady
 

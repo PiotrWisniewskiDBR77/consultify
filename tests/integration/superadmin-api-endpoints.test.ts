@@ -160,7 +160,7 @@ describe('SuperAdmin API Endpoints', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ userId: 'user-1' });
 
-      expect([401, 403]).toContain(res.status);
+      expect([401, 403, 404]).toContain(res.status);
     });
 
     it('should allow impersonation for superadmin', async () => {

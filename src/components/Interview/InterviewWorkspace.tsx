@@ -1,40 +1,79 @@
 /**
- * InterviewWorkspace - v2.0 ClickUp-like Redesign
- * 
- * Main workspace for Interview module with:
+ * InterviewWorkspace - v3.0 Golden Standard Redesign
+ *
+ * Two-column layout matching InsightViewer:
+ * - Full-width header with session title, status, actions
+ * - Left column (2/3): Categories as collapsible sections
+ * - Right column (1/3, sticky): Control, Export, Progress, Company Facts
+ *
+ * Features:
  * - 5 Categories: Strategy, Operations, Digital, People, Finance
- * - 4 Tabs: Questions, Notes, Evidence, Summary
- * - Task-list style questions with inline edit, status, confidence
- * - Company Facts panel (right sidebar)
+ * - Collapsible sections with glassmorphism styling
+ * - Framer Motion animations
  * - ONLY facts - NO recommendations
- * 
- * @see PROMPT 8 in wdrozenia/PROMPTY_DLA_AGENTOW.md
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import toast from 'react-hot-toast';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
+  AlertTriangle,
+  ArrowRight,
+  BarChart3,
+  Building2,
+  Calendar,
   Check,
+  ChevronDown,
+  ChevronLeft,
   ChevronRight,
-  ClipboardList,
+  Clock,
+  Copy,
+  DollarSign,
+  Download,
+  Edit3,
   FileText,
+  Link2,
   Loader2,
   MessageSquare,
+  Monitor,
   Paperclip,
+  Plus,
+  RefreshCw,
+  Save,
+  Send,
+  Settings,
   Sparkles,
+  Target,
+  Users,
+  X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
+import { useConversationStore } from '@/store/useConversationStore';
 
-import { CategorySidebar, InterviewCategory, CategoryProgress, CATEGORY_ORDER, CATEGORY_CONFIG } from './CategorySidebar';
-import { QuestionsList, InterviewQuestion } from './QuestionsList';
-import { NotesPanel, InterviewNote } from './NotesPanel';
+import {
+  type Attachment,
+  AttachmentsSection,
+  type LinkedItem,
+  LinkedItemsSection,
+} from '../MyWork/shared';
+import {
+  CATEGORY_CONFIG,
+  CATEGORY_ORDER,
+  CategoryProgress,
+  InterviewCategory,
+} from './CategorySidebar';
+import { CompanyProfile, KeyMetric, OpenGap, Stakeholder } from './CompanyFactsPanel';
 import { EvidencePanel, InterviewEvidence } from './EvidencePanel';
-import { CompanyFactsPanel, CompanyProfile, KeyMetric, Stakeholder, OpenGap } from './CompanyFactsPanel';
+import { InterviewNote, NotesPanel } from './NotesPanel';
+import { InterviewQuestion, QuestionsList } from './QuestionsList';
 
-// Types
+// ==========================================
+// TYPES
+// ==========================================
+
 interface InterviewSession {
   id: string;
   organizationId: string;
@@ -62,29 +101,35 @@ interface SummaryData {
   painPoints: string[];
 }
 
-type TabType = 'questions' | 'notes' | 'evidence' | 'summary';
-
 interface InterviewWorkspaceProps {
   sessionId?: string;
   projectId?: string;
   onComplete?: (sessionId: string) => void;
   onSessionChange?: (session: InterviewSession) => void;
+  onClose?: () => void;
 }
+
+// ==========================================
+// COMPONENT
+// ==========================================
 
 export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   sessionId: initialSessionId,
   projectId,
   onComplete,
   onSessionChange,
+  onClose,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const { currentUser } = useAppStore();
+  const { setActiveConversation } = useConversationStore();
 
-  // State
+  // ==========================================
+  // STATE
+  // ==========================================
+
   const [session, setSession] = useState<InterviewSession | null>(null);
-  const [activeCategory, setActiveCategory] = useState<InterviewCategory>('strategy');
-  const [activeTab, setActiveTab] = useState<TabType>('questions');
   const [questions, setQuestions] = useState<InterviewQuestion[]>([]);
   const [notes, setNotes] = useState<InterviewNote[]>([]);
   const [evidence, setEvidence] = useState<InterviewEvidence[]>([]);
@@ -98,11 +143,53 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     constraints: [],
     painPoints: [],
   });
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [linkedItems, setLinkedItems] = useState<LinkedItem[]>([]);
+  const [assignmentStatus, setAssignmentStatus] = useState<string | null>(null);
+  const [assignmentInfo, setAssignmentInfo] = useState<any>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [sessionName, setSessionName] = useState('');
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editedProfile, setEditedProfile] = useState<CompanyProfile>({});
 
-  const isLocked = (session?.status || '').toLowerCase() === 'submitted' || (session?.status || '').toLowerCase() === 'completed';
+  // Expanded sections state - wszystkie sekcje domyślnie zamknięte dla czytelności
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set([]));
+
+  // Locking rules:
+  // - For assignments: lock on assignment status (submitted/approved/completed)
+  // - For ad-hoc sessions: lock on session completion
+  const isLocked = useMemo(() => {
+    const sessionStatus = (session?.status || '').toLowerCase();
+    const asgStatus = (assignmentStatus || '').toLowerCase();
+    const assignmentLocked =
+      Boolean(session?.assignmentId) && ['submitted', 'approved', 'completed'].includes(asgStatus);
+    return assignmentLocked || sessionStatus === 'completed';
+  }, [assignmentStatus, session?.assignmentId, session?.status]);
+
+  const isAssignmentMode = Boolean(session?.assignmentId);
+
+  // Domyślnie nie wybieramy żadnej kategorii - użytkownik sam zdecyduje
+  const [activeCategory, setActiveCategory] = useState<InterviewCategory | undefined>(undefined);
+  const questionsTopRef = useRef<HTMLDivElement | null>(null);
+
+  // Nie auto-wybieraj kategorii - użytkownik sam zdecyduje, co otworzyć
+  // useEffect(() => {
+  //   if (questions.length > 0) {
+  //     const firstCategoryWithUnanswered = CATEGORY_ORDER.find((cat) => {
+  //       const catQuestions = questions.filter((q) => q.category === cat);
+  //       return catQuestions.some((q) => q.status !== 'answered');
+  //     });
+  //     if (firstCategoryWithUnanswered) {
+  //       setActiveCategory(firstCategoryWithUnanswered);
+  //     }
+  //   }
+  // }, [questions]);
+
+  // ==========================================
+  // COMPUTED VALUES
+  // ==========================================
 
   // Calculate progress per category
   const categoryProgress: CategoryProgress[] = CATEGORY_ORDER.map((category) => {
@@ -116,6 +203,54 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     };
   });
 
+  // Overall progress
+  const totalQuestions = categoryProgress.reduce((sum, p) => sum + p.totalQuestions, 0);
+  const answeredQuestions = categoryProgress.reduce((sum, p) => sum + p.answeredQuestions, 0);
+  const overallPercent =
+    totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
+  const completedCategories = categoryProgress.filter((p) => p.isComplete).length;
+
+  const activeCategoryConfig = activeCategory ? CATEGORY_CONFIG[activeCategory] : undefined;
+  const ActiveCategoryIcon = activeCategoryConfig?.icon || FileText;
+  const activeCategoryProgress = activeCategory
+    ? categoryProgress.find((p) => p.category === activeCategory)
+    : undefined;
+  const activeCategoryPercent =
+    activeCategoryProgress && (activeCategoryProgress.totalQuestions || 0) > 0
+      ? Math.round(
+          ((activeCategoryProgress?.answeredQuestions || 0) /
+            (activeCategoryProgress?.totalQuestions || 1)) *
+            100
+        )
+      : 0;
+
+  // Status config (backend uses: in_progress | submitted | completed)
+  const statusConfig = {
+    in_progress: {
+      label: { en: 'In Progress', pl: 'W trakcie' },
+      color: 'bg-blue-500',
+      textColor: 'text-blue-600 dark:text-blue-400',
+    },
+    submitted: {
+      label: { en: 'Submitted', pl: 'Wysłany' },
+      color: 'bg-amber-500',
+      textColor: 'text-amber-600 dark:text-amber-400',
+    },
+    completed: {
+      label: { en: 'Completed', pl: 'Zakończony' },
+      color: 'bg-emerald-500',
+      textColor: 'text-emerald-600 dark:text-emerald-400',
+    },
+  }[(session?.status || 'in_progress').toLowerCase()] || {
+    label: { en: 'Draft', pl: 'Szkic' },
+    color: 'bg-slate-400',
+    textColor: 'text-slate-600',
+  };
+
+  // ==========================================
+  // EFFECTS
+  // ==========================================
+
   // Load session data
   useEffect(() => {
     const loadSession = async () => {
@@ -124,18 +259,15 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         let currentSession: InterviewSession | null = null;
 
         if (initialSessionId) {
-          // Load specific session
           const sessionRes = await Api.get(`/interview/sessions/${initialSessionId}`);
           currentSession = sessionRes as InterviewSession;
         } else {
-          // Check for active session or create new
           const sessionsRes = await Api.get('/interview/sessions?status=active');
           const sessions = Array.isArray(sessionsRes) ? sessionsRes : [];
-          
+
           if (sessions.length > 0) {
             currentSession = sessions[0] as InterviewSession;
           } else {
-            // Create new session
             const newSession = await Api.post('/interview/sessions', { projectId });
             currentSession = newSession as InterviewSession;
           }
@@ -143,28 +275,41 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
         if (currentSession) {
           setSession(currentSession);
+          setSessionName(currentSession.name || 'Discovery Interview');
+          setAssignmentStatus(null);
+          setAssignmentInfo(null);
           onSessionChange?.(currentSession);
 
-          // Load related data in parallel
-          const [questionsRes, notesRes, evidenceRes, contextRes, summaryRes] = await Promise.all([
-            Api.get(`/interview/sessions/${currentSession.id}/questions`),
-            Api.get(`/interview/sessions/${currentSession.id}/notes`),
-            Api.get(`/interview/sessions/${currentSession.id}/evidence`),
-            Api.get('/interview/context'),
-            Api.get(`/interview/sessions/${currentSession.id}/summary`).catch(() => null),
-          ]);
+          const [questionsRes, notesRes, evidenceRes, contextRes, summaryRes, myAssignmentsRes] =
+            await Promise.all([
+              Api.get(`/interview/sessions/${currentSession.id}/questions`),
+              Api.get(`/interview/sessions/${currentSession.id}/notes`),
+              Api.get(`/interview/sessions/${currentSession.id}/evidence`),
+              Api.get('/interview/context'),
+              Api.get(`/interview/sessions/${currentSession.id}/summary`).catch(() => null),
+              currentSession.assignmentId
+                ? Api.get(`/interview/assignments/my?includeCompleted=true`).catch(() => [])
+                : Promise.resolve([]),
+            ]);
 
           setQuestions(Array.isArray(questionsRes) ? questionsRes : []);
           setNotes(Array.isArray(notesRes) ? notesRes : []);
           setEvidence(Array.isArray(evidenceRes) ? evidenceRes : []);
 
-          // Set company profile from context
-          if (contextRes && typeof contextRes === 'object') {
-            const ctx = contextRes as Record<string, unknown>;
-            setCompanyProfile((ctx.companyProfile as CompanyProfile) || {});
+          if (currentSession.assignmentId) {
+            const list = Array.isArray(myAssignmentsRes) ? myAssignmentsRes : [];
+            const found = list.find((a: any) => a?.id === currentSession?.assignmentId);
+            setAssignmentStatus(found?.status || null);
+            setAssignmentInfo(found || null);
           }
 
-          // Set summary data
+          if (contextRes && typeof contextRes === 'object') {
+            const ctx = contextRes as Record<string, unknown>;
+            const profile = (ctx.companyProfile as CompanyProfile) || {};
+            setCompanyProfile(profile);
+            setEditedProfile(profile);
+          }
+
           if (summaryRes && typeof summaryRes === 'object') {
             const summary = summaryRes as SummaryData;
             setSummaryData({
@@ -186,192 +331,260 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     loadSession();
   }, [initialSessionId, projectId, isPolish, onSessionChange]);
 
-  // Update question
-  const handleUpdateQuestion = useCallback(async (questionId: string, updates: Partial<InterviewQuestion>) => {
-    if (!session) return;
-    setIsSaving(true);
+  // ==========================================
+  // HANDLERS
+  // ==========================================
 
-    try {
-      const updated = await Api.patch(`/interview/questions/${questionId}`, updates);
-      setQuestions((prev) =>
-        prev.map((q) => (q.id === questionId ? { ...q, ...updated } : q))
-      );
-    } catch (error) {
-      console.error('[InterviewWorkspace] Failed to update question:', error);
-      toast.error(isPolish ? 'Nie udało się zapisać' : 'Failed to save');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [session, isPolish]);
+  const toggleSection = (id: string) => {
+    setExpandedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  // Update question
+  const handleUpdateQuestion = useCallback(
+    async (questionId: string, updates: Partial<InterviewQuestion>) => {
+      if (!session) return;
+      setIsSaving(true);
+
+      try {
+        const updated = await Api.patch(`/interview/questions/${questionId}`, updates);
+        setQuestions((prev) => prev.map((q) => (q.id === questionId ? { ...q, ...updated } : q)));
+      } catch (error) {
+        console.error('[InterviewWorkspace] Failed to update question:', error);
+        toast.error(isPolish ? 'Nie udało się zapisać' : 'Failed to save');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [session, isPolish]
+  );
 
   // Add question
-  const handleAddQuestion = useCallback(async (category: InterviewCategory, questionText: string) => {
-    if (!session) return;
-    setIsSaving(true);
+  const handleAddQuestion = useCallback(
+    async (category: InterviewCategory, questionText: string) => {
+      if (!session) return;
+      setIsSaving(true);
 
-    try {
-      const created = await Api.post(`/interview/sessions/${session.id}/questions`, {
-        category,
-        questionText,
-      });
-      setQuestions((prev) => [...prev, created as InterviewQuestion]);
-    } catch (error) {
-      console.error('[InterviewWorkspace] Failed to add question:', error);
-      toast.error(isPolish ? 'Nie udało się dodać pytania' : 'Failed to add question');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [session, isPolish]);
+      try {
+        const created = await Api.post(`/interview/sessions/${session.id}/questions`, {
+          category,
+          questionText,
+        });
+        setQuestions((prev) => [...prev, created as InterviewQuestion]);
+      } catch (error) {
+        console.error('[InterviewWorkspace] Failed to add question:', error);
+        toast.error(isPolish ? 'Nie udało się dodać pytania' : 'Failed to add question');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [session, isPolish]
+  );
 
   // Create note
-  const handleCreateNote = useCallback(async (title: string, content: string, category?: InterviewCategory) => {
-    if (!session) return;
-    setIsSaving(true);
+  const handleCreateNote = useCallback(
+    async (title: string, content: string, category?: InterviewCategory) => {
+      if (!session) return;
+      setIsSaving(true);
 
-    try {
-      const created = await Api.post(`/interview/sessions/${session.id}/notes`, {
-        title,
-        content,
-        category,
-      });
-      setNotes((prev) => [...prev, created as InterviewNote]);
-    } catch (error) {
-      console.error('[InterviewWorkspace] Failed to create note:', error);
-      toast.error(isPolish ? 'Nie udało się utworzyć notatki' : 'Failed to create note');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [session, isPolish]);
+      try {
+        const created = await Api.post(`/interview/sessions/${session.id}/notes`, {
+          title,
+          content,
+          category,
+        });
+        setNotes((prev) => [...prev, created as InterviewNote]);
+      } catch (error) {
+        console.error('[InterviewWorkspace] Failed to create note:', error);
+        toast.error(isPolish ? 'Nie udało się utworzyć notatki' : 'Failed to create note');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [session, isPolish]
+  );
 
   // Update note
-  const handleUpdateNote = useCallback(async (noteId: string, updates: Partial<InterviewNote>) => {
-    if (!session) return;
-    setIsSaving(true);
+  const handleUpdateNote = useCallback(
+    async (noteId: string, updates: Partial<InterviewNote>) => {
+      if (!session) return;
+      setIsSaving(true);
 
-    try {
-      const updated = await Api.patch(`/interview/notes/${noteId}`, updates);
-      setNotes((prev) =>
-        prev.map((n) => (n.id === noteId ? { ...n, ...updated } : n))
-      );
-    } catch (error) {
-      console.error('[InterviewWorkspace] Failed to update note:', error);
-      toast.error(isPolish ? 'Nie udało się zapisać notatki' : 'Failed to save note');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [session, isPolish]);
+      try {
+        const updated = await Api.patch(`/interview/notes/${noteId}`, updates);
+        setNotes((prev) => prev.map((n) => (n.id === noteId ? { ...n, ...updated } : n)));
+      } catch (error) {
+        console.error('[InterviewWorkspace] Failed to update note:', error);
+        toast.error(isPolish ? 'Nie udało się zapisać notatki' : 'Failed to save note');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [session, isPolish]
+  );
 
   // Delete note
-  const handleDeleteNote = useCallback(async (noteId: string) => {
-    if (!session) return;
+  const handleDeleteNote = useCallback(
+    async (noteId: string) => {
+      if (!session) return;
 
-    try {
-      await Api.delete(`/interview/notes/${noteId}`);
-      setNotes((prev) => prev.filter((n) => n.id !== noteId));
-    } catch (error) {
-      console.error('[InterviewWorkspace] Failed to delete note:', error);
-      toast.error(isPolish ? 'Nie udało się usunąć notatki' : 'Failed to delete note');
-    }
-  }, [session, isPolish]);
+      try {
+        await Api.delete(`/interview/notes/${noteId}`);
+        setNotes((prev) => prev.filter((n) => n.id !== noteId));
+      } catch (error) {
+        console.error('[InterviewWorkspace] Failed to delete note:', error);
+        toast.error(isPolish ? 'Nie udało się usunąć notatki' : 'Failed to delete note');
+      }
+    },
+    [session, isPolish]
+  );
 
   // Upload file
-  const handleUploadFile = useCallback(async (file: File, category?: InterviewCategory) => {
-    if (!session) return;
-    setIsSaving(true);
+  const handleUploadFile = useCallback(
+    async (file: File, category?: InterviewCategory) => {
+      if (!session) return;
+      setIsSaving(true);
 
-    try {
-      // For now, we'll create a placeholder - actual file upload would need FormData
-      const created = await Api.post(`/interview/sessions/${session.id}/evidence`, {
-        evidenceType: 'file',
-        name: file.name,
-        fileSize: file.size,
-        mimeType: file.type,
-        category,
-      });
-      setEvidence((prev) => [...prev, created as InterviewEvidence]);
-      toast.success(isPolish ? 'Plik dodany' : 'File added');
-    } catch (error) {
-      console.error('[InterviewWorkspace] Failed to upload file:', error);
-      toast.error(isPolish ? 'Nie udało się dodać pliku' : 'Failed to upload file');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [session, isPolish]);
+      try {
+        const created = await Api.post(`/interview/sessions/${session.id}/evidence`, {
+          evidenceType: 'file',
+          name: file.name,
+          fileSize: file.size,
+          mimeType: file.type,
+          category,
+        });
+        setEvidence((prev) => [...prev, created as InterviewEvidence]);
+        toast.success(isPolish ? 'Plik dodany' : 'File added');
+      } catch (error) {
+        console.error('[InterviewWorkspace] Failed to upload file:', error);
+        toast.error(isPolish ? 'Nie udało się dodać pliku' : 'Failed to upload file');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [session, isPolish]
+  );
 
   // Add link
-  const handleAddLink = useCallback(async (name: string, url: string, description?: string, category?: InterviewCategory) => {
-    if (!session) return;
-    setIsSaving(true);
+  const handleAddLink = useCallback(
+    async (name: string, url: string, description?: string, category?: InterviewCategory) => {
+      if (!session) return;
+      setIsSaving(true);
 
-    try {
-      const created = await Api.post(`/interview/sessions/${session.id}/evidence`, {
-        evidenceType: 'link',
-        name,
-        url,
-        description,
-        category,
-      });
-      setEvidence((prev) => [...prev, created as InterviewEvidence]);
-    } catch (error) {
-      console.error('[InterviewWorkspace] Failed to add link:', error);
-      toast.error(isPolish ? 'Nie udało się dodać linku' : 'Failed to add link');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [session, isPolish]);
+      try {
+        const created = await Api.post(`/interview/sessions/${session.id}/evidence`, {
+          evidenceType: 'link',
+          name,
+          url,
+          description,
+          category,
+        });
+        setEvidence((prev) => [...prev, created as InterviewEvidence]);
+      } catch (error) {
+        console.error('[InterviewWorkspace] Failed to add link:', error);
+        toast.error(isPolish ? 'Nie udało się dodać linku' : 'Failed to add link');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [session, isPolish]
+  );
 
   // Delete evidence
-  const handleDeleteEvidence = useCallback(async (evidenceId: string) => {
-    if (!session) return;
+  const handleDeleteEvidence = useCallback(
+    async (evidenceId: string) => {
+      if (!session) return;
 
-    try {
-      await Api.delete(`/interview/evidence/${evidenceId}`);
-      setEvidence((prev) => prev.filter((e) => e.id !== evidenceId));
-    } catch (error) {
-      console.error('[InterviewWorkspace] Failed to delete evidence:', error);
-      toast.error(isPolish ? 'Nie udało się usunąć' : 'Failed to delete');
-    }
-  }, [session, isPolish]);
+      try {
+        await Api.delete(`/interview/evidence/${evidenceId}`);
+        setEvidence((prev) => prev.filter((e) => e.id !== evidenceId));
+      } catch (error) {
+        console.error('[InterviewWorkspace] Failed to delete evidence:', error);
+        toast.error(isPolish ? 'Nie udało się usunąć' : 'Failed to delete');
+      }
+    },
+    [session, isPolish]
+  );
 
   // Update company profile
-  const handleUpdateProfile = useCallback(async (profile: CompanyProfile) => {
+  const handleUpdateProfile = useCallback(async () => {
     setIsSaving(true);
 
     try {
-      await Api.put('/interview/context', { companyProfile: profile });
-      setCompanyProfile(profile);
+      await Api.put('/interview/context', { companyProfile: editedProfile });
+      setCompanyProfile(editedProfile);
+      setIsEditingProfile(false);
+      toast.success(isPolish ? 'Profil zapisany' : 'Profile saved');
     } catch (error) {
       console.error('[InterviewWorkspace] Failed to update profile:', error);
       toast.error(isPolish ? 'Nie udało się zapisać profilu' : 'Failed to save profile');
     } finally {
       setIsSaving(false);
     }
-  }, [isPolish]);
+  }, [editedProfile, isPolish]);
 
-  // Submit session (assignment workflow)
+  // Save session
+  const handleSave = useCallback(async () => {
+    if (!session) return;
+    setIsSaving(true);
+
+    try {
+      await Api.patch(`/interview/sessions/${session.id}`, { name: sessionName });
+      toast.success(isPolish ? 'Zapisano' : 'Saved');
+    } catch (error) {
+      console.error('[InterviewWorkspace] Failed to save:', error);
+      toast.error(isPolish ? 'Nie udało się zapisać' : 'Failed to save');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [session, sessionName, isPolish]);
+
+  // Submit session
   const handleSubmitSession = useCallback(async () => {
     if (!session) return;
     if (isLocked) return;
 
     try {
       if (session.assignmentId) {
+        // Validate completion before submit (basic rule: all questions answered)
+        const missing = questions.filter((q) => q.status !== 'answered');
+        if (missing.length > 0) {
+          const first = missing[0];
+          if (first?.category) {
+            setActiveCategory(first.category as InterviewCategory);
+            requestAnimationFrame(() => {
+              questionsTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+          }
+          toast.error(
+            isPolish
+              ? `Uzupełnij brakujące odpowiedzi (${missing.length}).`
+              : `Please fill missing answers (${missing.length}).`
+          );
+          return;
+        }
+
         const result = await Api.post(`/interview/assignments/${session.assignmentId}/submit`, {});
         const updatedSession = (result as any)?.session;
-        const entersContext = (result as any)?.entersContext === true;
+        const updatedAssignment = (result as any)?.assignment;
         const completeness = (result as any)?.completenessPercent;
         if (updatedSession) setSession(updatedSession);
+        if (updatedAssignment?.status) setAssignmentStatus(String(updatedAssignment.status));
         toast.success(
-          entersContext
-            ? (isPolish ? 'Wywiad zatwierdzony!' : 'Interview submitted!')
-            : (isPolish
-                ? `Wywiad wysłany (poniżej 50%: ${completeness ?? 0}%). Admin może odesłać.`
-                : `Submitted (<50%: ${completeness ?? 0}%). Admin may send back.`)
+          isPolish
+            ? `Wywiad wysłany do review (${completeness ?? 0}%).`
+            : `Submitted for review (${completeness ?? 0}%).`
         );
-        if (entersContext) onComplete?.(session.id);
         return;
       }
 
-      // Fallback (legacy): mark session completed
       await Api.patch(`/interview/sessions/${session.id}`, { status: 'completed' });
       toast.success(isPolish ? 'Wywiad zakończony!' : 'Interview completed!');
       onComplete?.(session.id);
@@ -379,12 +592,186 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       console.error('[InterviewWorkspace] Failed to submit session:', error);
       toast.error(isPolish ? 'Nie udało się zatwierdzić' : 'Failed to submit');
     }
-  }, [session, isLocked, isPolish, onComplete]);
+  }, [session, isLocked, isPolish, onComplete, questions]);
 
-  // Render loading
+  // Open chat
+  const handleOpenChat = useCallback(() => {
+    if (!session) return;
+    setActiveConversation(`interview-${session.id}`);
+  }, [session, setActiveConversation]);
+
+  // Attachments handlers
+  const handleUploadAttachment = async (files: FileList) => {
+    const newAttachments: Attachment[] = Array.from(files).map((file) => ({
+      id: Math.random().toString(36).substr(2, 9),
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      url: URL.createObjectURL(file),
+      uploadedAt: new Date().toISOString(),
+      uploadedBy: currentUser?.displayName || currentUser?.firstName || 'User',
+    }));
+    setAttachments([...attachments, ...newAttachments]);
+    toast.success(isPolish ? 'Załączniki dodane' : 'Attachments added');
+  };
+
+  const handleDeleteAttachment = async (id: string) => {
+    setAttachments(attachments.filter((a) => a.id !== id));
+    toast.success(isPolish ? 'Załącznik usunięty' : 'Attachment deleted');
+  };
+
+  // Linked items handlers
+  const handleAddLinkedItem = async (item: LinkedItem) => {
+    setLinkedItems([...linkedItems, item]);
+  };
+
+  const handleRemoveLinkedItem = async (id: string) => {
+    setLinkedItems(linkedItems.filter((i) => i.id !== id));
+  };
+
+  const searchLinkedItems = async (_query: string) => {
+    return [];
+  };
+
+  // Export handlers
+  const handleExportMarkdown = () => {
+    const content = `# ${sessionName}\n\n## Progress: ${overallPercent}%\n\n${summaryData.facts.map((f) => `- ${f}`).join('\n')}`;
+    const blob = new Blob([content], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${sessionName.replace(/\s+/g, '_')}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(isPolish ? 'Pobrano' : 'Downloaded');
+  };
+
+  const handleCopy = () => {
+    const content = `${sessionName}\n\nProgress: ${overallPercent}%\n\nFacts:\n${summaryData.facts.map((f) => `- ${f}`).join('\n')}`;
+    navigator.clipboard.writeText(content);
+    toast.success(isPolish ? 'Skopiowano' : 'Copied');
+  };
+
+  // ==========================================
+  // RENDER HELPERS
+  // ==========================================
+
+  const renderCollapsibleSection = (
+    id: string,
+    icon: React.ReactNode,
+    title: string,
+    iconBgClass: string,
+    badge?: React.ReactNode,
+    headerActions?: React.ReactNode,
+    children?: React.ReactNode
+  ) => (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+    >
+      <motion.button
+        whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
+        whileTap={{ scale: 0.99 }}
+        onClick={() => toggleSection(id)}
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-xl ${iconBgClass}`}>{icon}</div>
+          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{title}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {headerActions}
+          {badge}
+          <motion.div
+            animate={{ rotate: expandedSections.has(id) ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ChevronDown size={18} className="text-slate-400" />
+          </motion.div>
+        </div>
+      </motion.button>
+
+      <AnimatePresence>
+        {expandedSections.has(id) && (
+          <motion.div
+            initial={{ height: 0 }}
+            animate={{ height: 'auto' }}
+            exit={{ height: 0 }}
+            className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+          >
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+
+  // Render category section with questions
+  const renderCategorySection = (category: InterviewCategory) => {
+    const config = CATEGORY_CONFIG[category];
+    const Icon = config.icon;
+    const progress = categoryProgress.find((p) => p.category === category);
+    const categoryQuestions = questions.filter((q) => q.category === category);
+    const hasQuestions = categoryQuestions.length > 0;
+
+    return renderCollapsibleSection(
+      category,
+      <Icon size={18} className={config.color} />,
+      isPolish ? config.labelPl : config.labelEn,
+      config.bgColor,
+      <div className="flex items-center gap-2">
+        {progress?.isComplete && (
+          <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+            <Check size={10} />
+            {isPolish ? 'Gotowe' : 'Done'}
+          </span>
+        )}
+        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+          {progress?.answeredQuestions || 0}/{progress?.totalQuestions || 0}
+        </span>
+      </div>,
+      undefined,
+      <div className="p-4">
+        {/* Progress bar */}
+        {hasQuestions && (
+          <div className="mb-4">
+            <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+              <span>{isPolish ? 'Postęp' : 'Progress'}</span>
+              <span>
+                {progress?.answeredQuestions || 0}/{progress?.totalQuestions || 0}
+              </span>
+            </div>
+            <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${progress?.isComplete ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                style={{
+                  width: `${(progress?.totalQuestions || 0) > 0 ? ((progress?.answeredQuestions || 0) / (progress?.totalQuestions || 1)) * 100 : 0}%`,
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Questions list */}
+        <QuestionsList
+          questions={questions}
+          category={category}
+          onUpdateQuestion={handleUpdateQuestion}
+          onAddQuestion={handleAddQuestion}
+          readOnly={isLocked}
+        />
+      </div>
+    );
+  };
+
+  // ==========================================
+  // LOADING STATE
+  // ==========================================
+
   if (isLoading) {
     return (
-      <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
         <div className="text-center">
           <Loader2 className="w-10 h-10 text-blue-500 animate-spin mx-auto mb-4" />
           <p className="text-slate-500 dark:text-slate-400">
@@ -395,277 +782,896 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     );
   }
 
-  // Tab config
-  const tabs: { id: TabType; labelEn: string; labelPl: string; icon: React.ReactNode; count?: number }[] = [
-    {
-      id: 'questions',
-      labelEn: 'Questions',
-      labelPl: 'Pytania',
-      icon: <MessageSquare size={16} />,
-      count: questions.filter((q) => q.category === activeCategory).length,
-    },
-    {
-      id: 'notes',
-      labelEn: 'Notes',
-      labelPl: 'Notatki',
-      icon: <FileText size={16} />,
-      count: notes.length,
-    },
-    {
-      id: 'evidence',
-      labelEn: 'Evidence',
-      labelPl: 'Dowody',
-      icon: <Paperclip size={16} />,
-      count: evidence.length,
-    },
-    {
-      id: 'summary',
-      labelEn: 'Summary',
-      labelPl: 'Podsumowanie',
-      icon: <ClipboardList size={16} />,
-    },
-  ];
-
-  const categoryConfig = CATEGORY_CONFIG[activeCategory];
+  // ==========================================
+  // MAIN RENDER
+  // ==========================================
 
   return (
-    <div className="h-full flex bg-slate-50 dark:bg-navy-950">
-      {/* Left Sidebar - Categories */}
-      <CategorySidebar
-        activeCategory={activeCategory}
-        onCategoryChange={setActiveCategory}
-        progress={categoryProgress}
-        sessionName={session?.name}
-        sessionStatus={session?.status}
-        lastUpdated={session?.lastActivityAt}
-      />
-
-      {/* Main Workspace */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Bar */}
-        <div className="shrink-0 bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl ${categoryConfig.bgColor} flex items-center justify-center`}>
-                  <categoryConfig.icon size={20} className={categoryConfig.color} />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-navy-900 dark:text-white">
-                    {isPolish ? categoryConfig.labelPl : categoryConfig.labelEn}
-                  </h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {isPolish ? categoryConfig.descriptionPl : categoryConfig.descriptionEn}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {isSaving && (
-                  <span className="text-xs text-slate-400 flex items-center gap-1">
-                    <Loader2 size={12} className="animate-spin" />
-                    {isPolish ? 'Zapisywanie...' : 'Saving...'}
-                  </span>
-                )}
-                <button
-                  onClick={handleSubmitSession}
-                  disabled={isLocked}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isLocked
-                      ? 'bg-slate-400/20 text-slate-300 cursor-not-allowed'
-                      : 'bg-emerald-500 hover:bg-emerald-600 text-white'
-                  }`}
-                >
-                  <Check size={16} />
-                  {isPolish ? 'Zatwierdź wywiad' : 'Submit Interview'}
-                </button>
-              </div>
-            </div>
-
-            {isLocked && (
-              <div className="mt-3 px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-200 text-sm">
-                {(session?.status || '').toLowerCase() === 'submitted'
-                  ? (isPolish
-                      ? 'Wywiad jest wysłany i zablokowany do edycji. Admin może odesłać do uzupełnienia.'
-                      : 'Interview is submitted and locked. Admin may send back for completion.')
-                  : (isPolish
-                      ? 'Wywiad jest ukończony i zablokowany do edycji.'
-                      : 'Interview is completed and locked.')}
-              </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
+      {/* ==========================================
+          FULL-WIDTH HEADER
+          ========================================== */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="sticky top-0 z-30 bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-navy-700/60 px-6 py-4"
+      >
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            {onClose && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onClose}
+                className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+              >
+                <ChevronLeft size={20} className="text-slate-500" />
+              </motion.button>
             )}
 
-            {/* Tabs */}
-            <div className="flex items-center gap-1 mt-4 bg-slate-100 dark:bg-navy-800/40 rounded-lg p-1 w-fit">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    activeTab === tab.id
-                      ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  {tab.icon}
-                  {isPolish ? tab.labelPl : tab.labelEn}
-                  {tab.count !== undefined && (
-                    <span className="px-1.5 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 rounded-full">
-                      {tab.count}
-                    </span>
-                  )}
-                </button>
-              ))}
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 dark:from-blue-500/30 dark:to-indigo-500/30">
+                <MessageSquare size={20} className="text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={sessionName}
+                  onChange={(e) => setSessionName(e.target.value)}
+                  className="w-full text-xl font-bold bg-transparent text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
+                  placeholder={isPolish ? 'Nazwa sesji...' : 'Session name...'}
+                />
+                <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                  <span className={`flex items-center gap-1 ${statusConfig.textColor}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.color}`} />
+                    {isPolish ? statusConfig.label.pl : statusConfig.label.en}
+                  </span>
+                  <span>•</span>
+                  <span>
+                    {overallPercent}% {isPolish ? 'ukończone' : 'complete'}
+                  </span>
+                </div>
+              </div>
             </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {isSaving && (
+              <span className="text-xs text-slate-400 flex items-center gap-1 mr-2">
+                <Loader2 size={12} className="animate-spin" />
+                {isPolish ? 'Zapisywanie...' : 'Saving...'}
+              </span>
+            )}
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleSave}
+              disabled={isSaving}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-blue-500/40 dark:border-blue-400/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 dark:hover:bg-blue-500/10 text-sm font-semibold transition-all shadow-sm disabled:opacity-60"
+            >
+              <Save size={16} />
+              <span>{isPolish ? 'Zapisz' : 'Save'}</span>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleSubmitSession}
+              disabled={isLocked || isSaving}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm disabled:opacity-60 ${
+                isLocked
+                  ? 'bg-slate-200/60 dark:bg-navy-800/60 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-700'
+                  : 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white border border-emerald-400/30 hover:from-emerald-400 hover:to-teal-500 shadow-lg shadow-emerald-500/20'
+              }`}
+              title={
+                isAssignmentMode
+                  ? isPolish
+                    ? 'Wyślij do przeglądu'
+                    : 'Submit for review'
+                  : isPolish
+                    ? 'Zakończ'
+                    : 'Complete'
+              }
+            >
+              <Send size={16} />
+              <span>
+                {isAssignmentMode
+                  ? isPolish
+                    ? 'Wyślij'
+                    : 'Submit'
+                  : isPolish
+                    ? 'Zakończ'
+                    : 'Complete'}
+              </span>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleOpenChat}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-purple-500/40 dark:border-purple-400/30 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 dark:hover:bg-purple-500/10 text-sm font-semibold transition-all shadow-sm"
+            >
+              <MessageSquare size={16} />
+              <span>{isPolish ? 'Czat' : 'Chat'}</span>
+            </motion.button>
           </div>
         </div>
 
-        {/* Tab Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {activeTab === 'questions' && (
-            <QuestionsList
-              questions={questions}
-              category={activeCategory}
-              onUpdateQuestion={handleUpdateQuestion}
-              onAddQuestion={handleAddQuestion}
-              readOnly={isLocked}
-            />
-          )}
+        {isAssignmentMode && assignmentInfo?.dueAt && (
+          <div className="max-w-7xl mx-auto mt-3">
+            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+              <span className="flex items-center gap-1">
+                <Calendar size={12} />
+                {isPolish ? 'Termin:' : 'Due:'}{' '}
+                <span className="font-medium text-slate-700 dark:text-slate-300">
+                  {new Date(assignmentInfo.dueAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US')}
+                </span>
+              </span>
+              {String(assignmentStatus || '').toLowerCase() === 'sent_back' &&
+                assignmentInfo?.sentBackReason && (
+                  <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-300">
+                    <AlertTriangle size={12} />
+                    {isPolish ? 'Do poprawy:' : 'Fix:'} {String(assignmentInfo.sentBackReason)}
+                  </span>
+                )}
+            </div>
+          </div>
+        )}
 
-          {activeTab === 'notes' && (
-            <NotesPanel
-              notes={notes}
-              activeCategory={activeCategory}
-              onCreateNote={handleCreateNote}
-              onUpdateNote={handleUpdateNote}
-              onDeleteNote={handleDeleteNote}
-              readOnly={isLocked}
-            />
-          )}
+        {isLocked && (
+          <div className="max-w-7xl mx-auto mt-3">
+            <div className="px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-sm">
+              {(session?.status || '').toLowerCase() === 'submitted'
+                ? isPolish
+                  ? 'Wywiad jest wysłany i zablokowany do edycji.'
+                  : 'Interview is submitted and locked.'
+                : isPolish
+                  ? 'Wywiad jest ukończony i zablokowany do edycji.'
+                  : 'Interview is completed and locked.'}
+            </div>
+          </div>
+        )}
+      </motion.div>
 
-          {activeTab === 'evidence' && (
-            <EvidencePanel
-              evidence={evidence}
-              activeCategory={activeCategory}
-              onUploadFile={handleUploadFile}
-              onAddLink={handleAddLink}
-              onDeleteEvidence={handleDeleteEvidence}
-              readOnly={isLocked}
-            />
-          )}
-
-          {activeTab === 'summary' && (
-            <div className="space-y-6">
-              <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Sparkles className="text-purple-500" size={20} />
-                  <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                    {isPolish ? 'Podsumowanie wywiadu' : 'Interview Summary'}
-                  </h3>
-                </div>
-                <p className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg mb-4">
-                  ⚠️ {isPolish 
-                    ? 'Tylko fakty - bez rekomendacji i planów działań'
-                    : 'Facts only - no recommendations or action plans'
-                  }
-                </p>
-
-                {/* Facts */}
-                <div className="mb-6">
-                  <h4 className="text-sm font-semibold text-navy-900 dark:text-white mb-2">
-                    {isPolish ? 'Najważniejsze fakty (as-is)' : 'Key Facts (as-is)'}
-                  </h4>
-                  {summaryData.facts.length > 0 ? (
-                    <ul className="space-y-2">
-                      {summaryData.facts.map((fact, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
-                          <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
-                          {fact}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-slate-400 italic">
-                      {isPolish ? 'Fakty zostaną wygenerowane automatycznie' : 'Facts will be generated automatically'}
-                    </p>
-                  )}
+      {/* ==========================================
+          TWO-COLUMN GRID
+          ========================================== */}
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* ==========================================
+              LEFT COLUMN - Category Navigation
+              ========================================== */}
+          <div className="lg:col-span-3 order-1">
+            <div className="lg:sticky lg:top-24 space-y-4">
+              <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Nawigacja' : 'Navigation'}
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    {isPolish ? 'Sekcje pytań' : 'Question sections'}
+                  </div>
                 </div>
 
-                {/* Gaps */}
-                <div className="mb-6">
-                  <h4 className="text-sm font-semibold text-navy-900 dark:text-white mb-2">
-                    {isPolish ? 'Główne luki informacyjne' : 'Information Gaps'}
-                  </h4>
-                  {summaryData.gaps.length > 0 ? (
-                    <ul className="space-y-2">
-                      {summaryData.gaps.map((gap, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
-                          <ChevronRight size={14} className="text-amber-500 mt-0.5 shrink-0" />
-                          {gap}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-slate-400 italic">
-                      {isPolish ? 'Brak zidentyfikowanych luk' : 'No gaps identified'}
-                    </p>
-                  )}
+                <div className="p-3 space-y-1">
+                  {CATEGORY_ORDER.map((cat) => {
+                    const cfg = CATEGORY_CONFIG[cat];
+                    const Icon = cfg.icon;
+                    const p = categoryProgress.find((x) => x.category === cat);
+                    const isActive = cat === activeCategory;
+                    const answered = p?.answeredQuestions || 0;
+                    const total = p?.totalQuestions || 0;
+                    const isComplete = Boolean(p?.isComplete);
+
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => {
+                          setActiveCategory(cat);
+                          requestAnimationFrame(() => {
+                            questionsTopRef.current?.scrollIntoView({
+                              behavior: 'smooth',
+                              block: 'start',
+                            });
+                          });
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all border ${
+                          isActive
+                            ? 'bg-primary-500/10 border-primary-500/30'
+                            : 'bg-transparent border-transparent hover:bg-slate-50/80 dark:hover:bg-navy-800/50'
+                        }`}
+                      >
+                        <div
+                          className={`w-9 h-9 rounded-xl flex items-center justify-center ${cfg.bgColor}`}
+                        >
+                          {isComplete ? (
+                            <Check size={16} className="text-emerald-600 dark:text-emerald-400" />
+                          ) : (
+                            <Icon size={16} className={cfg.color} />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
+                            {isPolish ? cfg.labelPl : cfg.labelEn}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            {answered}/{total} {isPolish ? 'odp.' : 'ans.'}
+                          </div>
+                        </div>
+                        <ChevronRight
+                          size={16}
+                          className={`shrink-0 ${isActive ? 'text-primary-400' : 'text-slate-300 dark:text-slate-600'}`}
+                        />
+                      </button>
+                    );
+                  })}
                 </div>
 
-                {/* Constraints */}
-                <div className="mb-6">
-                  <h4 className="text-sm font-semibold text-navy-900 dark:text-white mb-2">
-                    {isPolish ? 'Ryzyka i ograniczenia' : 'Risks & Constraints'}
-                  </h4>
-                  {summaryData.constraints.length > 0 ? (
-                    <ul className="space-y-2">
-                      {summaryData.constraints.map((constraint, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
-                          <ChevronRight size={14} className="text-red-500 mt-0.5 shrink-0" />
-                          {constraint}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-slate-400 italic">
-                      {isPolish ? 'Brak zidentyfikowanych ograniczeń' : 'No constraints identified'}
-                    </p>
-                  )}
-                </div>
-
-                {/* Pain Points */}
-                <div>
-                  <h4 className="text-sm font-semibold text-navy-900 dark:text-white mb-2">
-                    {isPolish ? 'Aktualne problemy (pain points)' : 'Current Pain Points'}
-                  </h4>
-                  {summaryData.painPoints.length > 0 ? (
-                    <ul className="space-y-2">
-                      {summaryData.painPoints.map((pain, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
-                          <ChevronRight size={14} className="text-purple-500 mt-0.5 shrink-0" />
-                          {pain}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-slate-400 italic">
-                      {isPolish ? 'Brak zidentyfikowanych problemów' : 'No pain points identified'}
-                    </p>
-                  )}
+                <div className="p-3 border-t border-slate-200/60 dark:border-navy-700/60">
+                  <button
+                    onClick={() => {
+                      const first = questions.find((q) => q.status !== 'answered');
+                      if (first?.category) {
+                        setActiveCategory(first.category as InterviewCategory);
+                        requestAnimationFrame(() => {
+                          questionsTopRef.current?.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start',
+                          });
+                        });
+                      }
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-all"
+                  >
+                    <ArrowRight size={16} />
+                    {isPolish ? 'Następne brakujące' : 'Next missing'}
+                  </button>
                 </div>
               </div>
             </div>
-          )}
+          </div>
+
+          {/* ==========================================
+              MIDDLE COLUMN - Questions (Form)
+              ========================================== */}
+          <div className="lg:col-span-6 space-y-5 order-2">
+            <div ref={questionsTopRef} />
+
+            {activeCategory && activeCategoryConfig ? (
+              <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2.5 rounded-xl ${activeCategoryConfig.bgColor}`}>
+                      <ActiveCategoryIcon size={18} className={activeCategoryConfig.color} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                        {isPolish ? activeCategoryConfig.labelPl : activeCategoryConfig.labelEn}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        {isPolish
+                          ? activeCategoryConfig.descriptionPl
+                          : activeCategoryConfig.descriptionEn}
+                      </div>
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      {activeCategoryProgress?.answeredQuestions || 0}/
+                      {activeCategoryProgress?.totalQuestions || 0}
+                    </div>
+                  </div>
+                  <div className="mt-3 h-2 bg-slate-200/70 dark:bg-navy-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-primary-500 to-emerald-500 transition-all"
+                      style={{ width: `${activeCategoryPercent}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="p-4">
+                  <QuestionsList
+                    questions={questions}
+                    category={activeCategory}
+                    onUpdateQuestion={handleUpdateQuestion}
+                    onAddQuestion={handleAddQuestion}
+                    readOnly={isLocked}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden p-8 text-center">
+                <FileText size={48} className="text-slate-400 mx-auto mb-4" />
+                <p className="text-slate-500 dark:text-slate-400">
+                  {isPolish
+                    ? 'Wybierz sekcję pytań z lewej strony, aby rozpocząć'
+                    : 'Select a question section from the left to begin'}
+                </p>
+              </div>
+            )}
+
+            {/* Notes Section */}
+            {renderCollapsibleSection(
+              'notes',
+              <FileText size={18} className="text-amber-500 dark:text-amber-400" />,
+              isPolish ? 'Notatki' : 'Notes',
+              'bg-gradient-to-br from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20',
+              <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                {notes.length}
+              </span>,
+              undefined,
+              <div className="p-4">
+                <NotesPanel
+                  notes={notes}
+                  activeCategory={activeCategory}
+                  onCreateNote={handleCreateNote}
+                  onUpdateNote={handleUpdateNote}
+                  onDeleteNote={handleDeleteNote}
+                  readOnly={isLocked}
+                />
+              </div>
+            )}
+
+            {/* Evidence Section */}
+            {renderCollapsibleSection(
+              'evidence',
+              <Paperclip size={18} className="text-violet-500 dark:text-violet-400" />,
+              isPolish ? 'Dowody' : 'Evidence',
+              'bg-gradient-to-br from-violet-500/10 to-purple-500/10 dark:from-violet-500/20 dark:to-purple-500/20',
+              <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                {evidence.length}
+              </span>,
+              undefined,
+              <div className="p-4">
+                <EvidencePanel
+                  evidence={evidence}
+                  activeCategory={activeCategory}
+                  onUploadFile={handleUploadFile}
+                  onAddLink={handleAddLink}
+                  onDeleteEvidence={handleDeleteEvidence}
+                  readOnly={isLocked}
+                />
+              </div>
+            )}
+
+            {/* Summary Section (hide in assignment-fill mode to keep the form focused) */}
+            {!isAssignmentMode &&
+              renderCollapsibleSection(
+                'summary',
+                <Sparkles size={18} className="text-purple-500 dark:text-purple-400" />,
+                isPolish ? 'Podsumowanie' : 'Summary',
+                'bg-gradient-to-br from-purple-500/10 to-pink-500/10 dark:from-purple-500/20 dark:to-pink-500/20',
+                undefined,
+                undefined,
+                <div className="p-5 space-y-6">
+                  <p className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
+                    ⚠️{' '}
+                    {isPolish
+                      ? 'Tylko fakty - bez rekomendacji i planów działań'
+                      : 'Facts only - no recommendations or action plans'}
+                  </p>
+
+                  {/* Facts */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                      {isPolish ? 'Najważniejsze fakty (as-is)' : 'Key Facts (as-is)'}
+                    </h4>
+                    {summaryData.facts.length > 0 ? (
+                      <ul className="space-y-2">
+                        {summaryData.facts.map((fact, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
+                          >
+                            <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                            {fact}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-slate-400 italic">
+                        {isPolish
+                          ? 'Fakty zostaną wygenerowane automatycznie'
+                          : 'Facts will be generated automatically'}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Gaps */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                      {isPolish ? 'Główne luki informacyjne' : 'Information Gaps'}
+                    </h4>
+                    {summaryData.gaps.length > 0 ? (
+                      <ul className="space-y-2">
+                        {summaryData.gaps.map((gap, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
+                          >
+                            <ChevronRight size={14} className="text-amber-500 mt-0.5 shrink-0" />
+                            {gap}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-slate-400 italic">
+                        {isPolish ? 'Brak zidentyfikowanych luk' : 'No gaps identified'}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Constraints */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                      {isPolish ? 'Ryzyka i ograniczenia' : 'Risks & Constraints'}
+                    </h4>
+                    {summaryData.constraints.length > 0 ? (
+                      <ul className="space-y-2">
+                        {summaryData.constraints.map((constraint, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
+                          >
+                            <AlertTriangle size={14} className="text-red-500 mt-0.5 shrink-0" />
+                            {constraint}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-slate-400 italic">
+                        {isPolish
+                          ? 'Brak zidentyfikowanych ograniczeń'
+                          : 'No constraints identified'}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Pain Points */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                      {isPolish ? 'Aktualne problemy (pain points)' : 'Current Pain Points'}
+                    </h4>
+                    {summaryData.painPoints.length > 0 ? (
+                      <ul className="space-y-2">
+                        {summaryData.painPoints.map((pain, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
+                          >
+                            <ChevronRight size={14} className="text-purple-500 mt-0.5 shrink-0" />
+                            {pain}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-slate-400 italic">
+                        {isPolish
+                          ? 'Brak zidentyfikowanych problemów'
+                          : 'No pain points identified'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+          </div>
+
+          {/* ==========================================
+              RIGHT COLUMN - Context/Actions (sticky)
+              ========================================== */}
+          <div className="lg:col-span-3 space-y-4 lg:sticky lg:top-24 self-start order-3">
+            {/* 1. Control Panel */}
+            {renderCollapsibleSection(
+              'control',
+              <BarChart3 size={18} className="text-purple-500 dark:text-purple-400" />,
+              isPolish ? 'Sterowanie' : 'Control',
+              'bg-gradient-to-br from-purple-500/10 to-pink-500/10 dark:from-purple-500/20 dark:to-pink-500/20',
+              session?.id && (
+                <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 bg-slate-100/80 dark:bg-navy-800/80 px-2 py-0.5 rounded-lg">
+                  #{session.id.slice(0, 8)}
+                </span>
+              ),
+              undefined,
+              <div className="p-4 space-y-4">
+                {/* Status */}
+                <div>
+                  <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5">
+                    Status
+                  </label>
+                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
+                    <span className={`w-2.5 h-2.5 rounded-full ${statusConfig.color}`} />
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      {isPolish ? statusConfig.label.pl : statusConfig.label.en}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Started */}
+                <div>
+                  <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5">
+                    {isPolish ? 'Rozpoczęto' : 'Started'}
+                  </label>
+                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
+                    <Calendar size={14} className="text-slate-400" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">
+                      {session?.startedAt
+                        ? new Date(session.startedAt).toLocaleDateString(
+                            isPolish ? 'pl-PL' : 'en-US'
+                          )
+                        : '-'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Last Activity */}
+                {session?.lastActivityAt && (
+                  <div>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5">
+                      {isPolish ? 'Ostatnia aktywność' : 'Last Activity'}
+                    </label>
+                    <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
+                      <Clock size={14} className="text-slate-400" />
+                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                        {new Date(session.lastActivityAt).toLocaleDateString(
+                          isPolish ? 'pl-PL' : 'en-US'
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 2. Export & Actions */}
+            {renderCollapsibleSection(
+              'export',
+              <Send size={18} className="text-emerald-500 dark:text-emerald-400" />,
+              isPolish ? 'Eksport i Akcje' : 'Export & Actions',
+              'bg-gradient-to-br from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/20 dark:to-teal-500/20',
+              undefined,
+              undefined,
+              <div className="p-4 space-y-2">
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  onClick={handleSubmitSession}
+                  disabled={isLocked}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 dark:hover:bg-emerald-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Check size={16} />
+                  <span className="text-sm font-medium">
+                    {isPolish ? 'Zatwierdź wywiad' : 'Submit Interview'}
+                  </span>
+                  <ArrowRight size={14} className="ml-auto" />
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  onClick={handleExportMarkdown}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700 transition-all"
+                >
+                  <Download size={16} />
+                  <span className="text-sm font-medium">
+                    {isPolish ? 'Pobierz Markdown' : 'Download Markdown'}
+                  </span>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  onClick={handleCopy}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700 transition-all"
+                >
+                  <Copy size={16} />
+                  <span className="text-sm font-medium">
+                    {isPolish ? 'Kopiuj do schowka' : 'Copy to Clipboard'}
+                  </span>
+                </motion.button>
+              </div>
+            )}
+
+            {/* 3. Attachments */}
+            <AttachmentsSection
+              attachments={attachments}
+              onUpload={handleUploadAttachment}
+              onDelete={handleDeleteAttachment}
+              expanded={expandedSections.has('attachments')}
+              onToggleExpand={() => toggleSection('attachments')}
+            />
+
+            {/* 4. Progress Overview */}
+            {renderCollapsibleSection(
+              'progress',
+              <Target size={18} className="text-blue-500 dark:text-blue-400" />,
+              isPolish ? 'Postęp' : 'Progress',
+              'bg-gradient-to-br from-blue-500/10 to-indigo-500/10 dark:from-blue-500/20 dark:to-indigo-500/20',
+              <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                {overallPercent}%
+              </span>,
+              undefined,
+              <div className="p-4 space-y-4">
+                {/* Overall Progress */}
+                <div>
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="text-slate-500">{isPolish ? 'Ogólnie' : 'Overall'}</span>
+                    <span className="font-medium text-slate-700 dark:text-slate-300">
+                      {answeredQuestions}/{totalQuestions}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full transition-all"
+                      style={{ width: `${overallPercent}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Categories Progress */}
+                <div className="space-y-3">
+                  {categoryProgress.map((cp) => {
+                    const config = CATEGORY_CONFIG[cp.category];
+                    const percent =
+                      cp.totalQuestions > 0
+                        ? Math.round((cp.answeredQuestions / cp.totalQuestions) * 100)
+                        : 0;
+                    return (
+                      <div key={cp.category} className="flex items-center gap-3">
+                        <div className={`p-1.5 rounded-lg ${config.bgColor}`}>
+                          <config.icon size={12} className={config.color} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between text-xs mb-0.5">
+                            <span className="text-slate-600 dark:text-slate-400">
+                              {isPolish ? config.labelPl : config.labelEn}
+                            </span>
+                            <span className="text-slate-500">{percent}%</span>
+                          </div>
+                          <div className="h-1 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${cp.isComplete ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                              style={{ width: `${percent}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* 5. Company Facts */}
+            {renderCollapsibleSection(
+              'companyFacts',
+              <Building2 size={18} className="text-indigo-500 dark:text-indigo-400" />,
+              isPolish ? 'Fakty o firmie' : 'Company Facts',
+              'bg-gradient-to-br from-indigo-500/10 to-violet-500/10 dark:from-indigo-500/20 dark:to-violet-500/20',
+              undefined,
+              !isLocked && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditingProfile(!isEditingProfile);
+                  }}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                >
+                  <Edit3 size={14} className="text-slate-400" />
+                </motion.button>
+              ),
+              <div className="p-4 space-y-3">
+                {isEditingProfile ? (
+                  <>
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">
+                        {isPolish ? 'Nazwa' : 'Name'}
+                      </label>
+                      <input
+                        type="text"
+                        value={editedProfile.name || ''}
+                        onChange={(e) =>
+                          setEditedProfile({ ...editedProfile, name: e.target.value })
+                        }
+                        className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">
+                        {isPolish ? 'Branża' : 'Industry'}
+                      </label>
+                      <input
+                        type="text"
+                        value={editedProfile.industry || ''}
+                        onChange={(e) =>
+                          setEditedProfile({ ...editedProfile, industry: e.target.value })
+                        }
+                        className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-500 mb-1">
+                        {isPolish ? 'Lokalizacja' : 'Location'}
+                      </label>
+                      <input
+                        type="text"
+                        value={editedProfile.location || ''}
+                        onChange={(e) =>
+                          setEditedProfile({ ...editedProfile, location: e.target.value })
+                        }
+                        className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300"
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleUpdateProfile}
+                        disabled={isSaving}
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 transition-colors disabled:opacity-50"
+                      >
+                        {isSaving ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Save size={14} />
+                        )}
+                        {isPolish ? 'Zapisz' : 'Save'}
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          setEditedProfile(companyProfile);
+                          setIsEditingProfile(false);
+                        }}
+                        className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400 text-sm font-medium hover:bg-slate-200 dark:hover:bg-navy-600 transition-colors"
+                      >
+                        <X size={14} />
+                      </motion.button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {companyProfile.name || companyProfile.industry || companyProfile.location ? (
+                      <div className="space-y-2">
+                        {companyProfile.name && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Building2 size={14} className="text-slate-400" />
+                            <span className="text-slate-700 dark:text-slate-300">
+                              {companyProfile.name}
+                            </span>
+                          </div>
+                        )}
+                        {companyProfile.industry && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Target size={14} className="text-slate-400" />
+                            <span className="text-slate-700 dark:text-slate-300">
+                              {companyProfile.industry}
+                            </span>
+                          </div>
+                        )}
+                        {companyProfile.location && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Building2 size={14} className="text-slate-400" />
+                            <span className="text-slate-700 dark:text-slate-300">
+                              {companyProfile.location}
+                            </span>
+                          </div>
+                        )}
+                        {companyProfile.size && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Users size={14} className="text-slate-400" />
+                            <span className="text-slate-700 dark:text-slate-300">
+                              {companyProfile.size} {isPolish ? 'pracowników' : 'employees'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-400 italic">
+                        {isPolish
+                          ? 'Kliknij edytuj aby dodać dane firmy'
+                          : 'Click edit to add company data'}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* 6. Stakeholders */}
+            {renderCollapsibleSection(
+              'stakeholders',
+              <Users size={18} className="text-cyan-500 dark:text-cyan-400" />,
+              isPolish ? 'Interesariusze' : 'Stakeholders',
+              'bg-gradient-to-br from-cyan-500/10 to-blue-500/10 dark:from-cyan-500/20 dark:to-blue-500/20',
+              stakeholders.length > 0 && (
+                <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                  {stakeholders.length}
+                </span>
+              ),
+              undefined,
+              <div className="p-4">
+                {stakeholders.length > 0 ? (
+                  <div className="space-y-2">
+                    {stakeholders.map((s) => (
+                      <div
+                        key={s.id}
+                        className="flex items-center gap-3 p-2 rounded-lg bg-slate-50 dark:bg-navy-800"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center">
+                          <Users size={14} className="text-cyan-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
+                            {s.name}
+                          </p>
+                          <p className="text-xs text-slate-500 truncate">{s.role}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-400 italic text-center py-2">
+                    {isPolish ? 'Brak interesariuszy' : 'No stakeholders'}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* 7. Open Gaps */}
+            {renderCollapsibleSection(
+              'gaps',
+              <AlertTriangle size={18} className="text-amber-500 dark:text-amber-400" />,
+              isPolish ? 'Luki informacyjne' : 'Open Gaps',
+              'bg-gradient-to-br from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20',
+              openGaps.length > 0 && (
+                <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                  {openGaps.length}
+                </span>
+              ),
+              undefined,
+              <div className="p-4">
+                {openGaps.length > 0 ? (
+                  <div className="space-y-2">
+                    {openGaps.map((gap) => (
+                      <div
+                        key={gap.id}
+                        className={`p-3 rounded-xl border-l-4 ${
+                          gap.priority === 'high'
+                            ? 'border-l-red-500 bg-red-500/5 dark:bg-red-500/10'
+                            : gap.priority === 'medium'
+                              ? 'border-l-amber-500 bg-amber-500/5 dark:bg-amber-500/10'
+                              : 'border-l-slate-400 bg-slate-50 dark:bg-navy-800'
+                        }`}
+                      >
+                        <p className="text-sm text-slate-700 dark:text-slate-300">
+                          {gap.description}
+                        </p>
+                        <span className="text-xs text-slate-500 mt-1 block">{gap.category}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-400 italic text-center py-2">
+                    {isPolish ? 'Brak zidentyfikowanych luk' : 'No gaps identified'}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* 8. Linked Items */}
+            <LinkedItemsSection
+              items={linkedItems}
+              onAdd={handleAddLinkedItem}
+              onRemove={handleRemoveLinkedItem}
+              searchItems={searchLinkedItems}
+              allowedTypes={['task', 'initiative', 'decision', 'risk', 'project', 'external']}
+              expanded={expandedSections.has('linkedItems')}
+              onToggleExpand={() => toggleSection('linkedItems')}
+            />
+          </div>
         </div>
       </div>
-
-      {/* Right Sidebar - Company Facts */}
-      <CompanyFactsPanel
-        companyProfile={companyProfile}
-        keyMetrics={keyMetrics}
-        stakeholders={stakeholders}
-        openGaps={openGaps}
-        onUpdateProfile={handleUpdateProfile}
-      />
     </div>
   );
 };

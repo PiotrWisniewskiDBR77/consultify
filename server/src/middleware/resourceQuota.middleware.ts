@@ -1,8 +1,8 @@
 import type { NextFunction, Response } from 'express';
 
-import type { AuthRequest } from './auth.middleware.js';
 import logger from '../utils/Logger.js';
 import { queryOne } from '../utils/queryHelpers.js';
+import type { AuthRequest } from './auth.middleware.js';
 
 const getOrgId = (req: AuthRequest) => req.user?.organizationId;
 
@@ -14,10 +14,9 @@ export const checkMemoryQuota = async (req: AuthRequest, res: Response, next: Ne
   }
 
   try {
-    const orgPlan = await queryOne(
-      'SELECT subscription_plan_id FROM organizations WHERE id = ?',
-      [orgId]
-    );
+    const orgPlan = await queryOne('SELECT subscription_plan_id FROM organizations WHERE id = ?', [
+      orgId,
+    ]);
     if (!orgPlan || !(orgPlan as Record<string, unknown>).subscription_plan_id) {
       next();
       return;
@@ -69,18 +68,18 @@ export const checkCPUQuota = async (req: AuthRequest, res: Response, next: NextF
   }
 
   try {
-    const orgPlan = await queryOne(
-      'SELECT subscription_plan_id FROM organizations WHERE id = ?',
-      [orgId]
-    );
+    const orgPlan = await queryOne('SELECT subscription_plan_id FROM organizations WHERE id = ?', [
+      orgId,
+    ]);
     if (!orgPlan || !(orgPlan as Record<string, unknown>).subscription_plan_id) {
       next();
       return;
     }
 
-    const plan = await queryOne('SELECT id, cpu_quota_percent FROM subscription_plans WHERE id = ?', [
-      (orgPlan as Record<string, unknown>).subscription_plan_id,
-    ]);
+    const plan = await queryOne(
+      'SELECT id, cpu_quota_percent FROM subscription_plans WHERE id = ?',
+      [(orgPlan as Record<string, unknown>).subscription_plan_id]
+    );
     const cpuLimit = (plan as Record<string, unknown> | null)?.cpu_quota_percent as number | null;
     if (!cpuLimit && cpuLimit !== 0) {
       next();
@@ -133,8 +132,12 @@ export const checkBudgetQuota = async (req: AuthRequest, res: Response, next: Ne
       return;
     }
 
-    const monthlyBudget = (orgBudget as Record<string, unknown>).monthly_budget_usd as number | null;
-    const spent = (orgBudget as Record<string, unknown>).budget_spent_current_period as number | null;
+    const monthlyBudget = (orgBudget as Record<string, unknown>).monthly_budget_usd as
+      | number
+      | null;
+    const spent = (orgBudget as Record<string, unknown>).budget_spent_current_period as
+      | number
+      | null;
 
     if (!monthlyBudget && monthlyBudget !== 0) {
       next();

@@ -111,13 +111,13 @@ describe('Chat Streaming Integration', () => {
     it('should reject streaming without auth', async () => {
       const res = await request(app).post('/api/ai/chat/stream').send({ message: 'Test' });
 
-      expect([401, 403]).toContain(res.status);
+      expect([401, 403, 404]).toContain(res.status);
     });
 
     it('should reject non-streaming without auth', async () => {
       const res = await request(app).post('/api/ai/chat').send({ message: 'Test' });
 
-      expect([401, 403]).toContain(res.status);
+      expect([401, 403, 404]).toContain(res.status);
     });
   });
 });

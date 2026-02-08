@@ -17,23 +17,50 @@ describe('StatusMachine', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    StatusMachine = (await import('../../../server/src/services/statusMachine.js')).default;
+    const mod = await import('../../../server/src/services/statusMachine.js');
+    StatusMachine = mod.default;
+    const { InitiativeStatus } =
+      await import('../../../server/src/constants/initiativeStatuses.js');
+
+    // Add to scope for tests
+    global.IS = InitiativeStatus;
   });
 
   describe('Initiative Status Transitions', () => {
-    it('should allow DRAFT to PLANNING transition', () => {
-      // Updated from PLANNED to PLANNING
-      expect(StatusMachine.canTransitionInitiative('DRAFT', 'PLANNING')).toBe(true);
+    it('should allow DRAFT to PENDING_REVIEW transition', () => {
+      expect(StatusMachine.canTransitionInitiative(global.IS.DRAFT, global.IS.PENDING_REVIEW)).toBe(
+        true
+      );
     });
 
-    it('should allow REVIEW to APPROVED transition', () => {
-      // Updated: REVIEW -> APPROVED is the correct transition
-      expect(StatusMachine.canTransitionInitiative('REVIEW', 'APPROVED')).toBe(true);
+    it('should allow PENDING_REVIEW to REVIEW transition', () => {
+      expect(
+        StatusMachine.canTransitionInitiative(global.IS.PENDING_REVIEW, global.IS.REVIEW)
+      ).toBe(true);
     });
 
-    it('should allow APPROVED to EXECUTING transition', () => {
-      // Updated from IN_EXECUTION to EXECUTING
-      expect(StatusMachine.canTransitionInitiative('APPROVED', 'EXECUTING')).toBe(true);
+    it('should allow REVIEW to PROMOTED transition', () => {
+      expect(StatusMachine.canTransitionInitiative(global.IS.REVIEW, global.IS.PROMOTED)).toBe(
+        true
+      );
+    });
+
+    it('should allow PROMOTED to PLANNING transition', () => {
+      expect(StatusMachine.canTransitionInitiative(global.IS.PROMOTED, global.IS.PLANNING)).toBe(
+        true
+      );
+    });
+
+    it('should allow PLANNING to APPROVED transition', () => {
+      expect(StatusMachine.canTransitionInitiative(global.IS.PLANNING, global.IS.APPROVED)).toBe(
+        true
+      );
+    });
+
+    it('should allow APPROVED to SCHEDULED transition', () => {
+      expect(StatusMachine.canTransitionInitiative(global.IS.APPROVED, global.IS.SCHEDULED)).toBe(
+        true
+      );
     });
 
     it('should allow EXECUTING to BLOCKED transition', () => {

@@ -114,6 +114,7 @@ export type TaskStatus =
   | 'in_progress'
   | 'review'
   | 'done'
+  | 'completed'
   | 'blocked'
   | 'cancelled'
   | 'TODO'
@@ -146,6 +147,7 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   assigneeId?: string;
+  backupAssigneeId?: string;
   assignee?: any; // Full assignee object
   assigneeName?: string;
   assigneeAvatar?: string;
@@ -157,6 +159,11 @@ export interface Task {
   dueDate?: string;
   startDate?: string;
   completedAt?: string;
+  startedAt?: string;
+  ownerId?: string;
+  requiresAcceptance?: boolean;
+  acceptanceType?: 'manual' | 'automatic' | null;
+  acceptorId?: string | null;
   estimatedHours?: number;
   actualHours?: number;
   remainingHours?: number;
@@ -188,6 +195,8 @@ export interface Task {
   stakeholders?: any[];
   why?: string;
   progress?: number;
+  progressNote?: string;
+  projectName?: string; // Computed field for UI
   changeLog?: any[];
   acceptanceCriteria?: string[] | boolean;
   createdAt: string;

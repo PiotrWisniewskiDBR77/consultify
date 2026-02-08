@@ -166,7 +166,20 @@ router.get(
       })
     );
 
-    let allRoles = [...systemRolesWithCounts];
+    let allRoles: Array<{
+      id: string;
+      name: string;
+      description: string | null;
+      level: number;
+      levelLabel: string;
+      permissions: string[];
+      isSystem: boolean;
+      color: string;
+      userCount: number;
+      organizationId?: string;
+      createdAt?: string;
+      updatedAt?: string;
+    }> = [...systemRolesWithCounts];
 
     // Include custom roles if requested and organization is provided
     if (includeCustom && orgId) {
@@ -192,7 +205,7 @@ router.get(
         description: r.description,
         level: r.level,
         levelLabel: r.level_label,
-        permissions: JSON.parse(r.permissions || '[]'),
+        permissions: JSON.parse(r.permissions || '[]') as string[],
         color: r.color,
         isSystem: false,
         userCount: r.user_count,

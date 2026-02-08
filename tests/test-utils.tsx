@@ -15,10 +15,12 @@ vi.mock('../store/useAppStore', () => ({
     sessionMode: 'free',
     language: 'en',
     isSidebarOpen: false,
+    isSidebarCollapsed: false,
     setCurrentView: vi.fn(),
     setSessionMode: vi.fn(),
     setLanguage: vi.fn(),
     toggleSidebar: vi.fn(),
+    toggleSidebarCollapse: vi.fn(),
   })),
 }));
 
