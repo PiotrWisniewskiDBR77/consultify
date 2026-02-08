@@ -190,10 +190,27 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({
       {tasks.length > 0 && (
         <div className="flex items-center gap-1 mb-3 p-1 bg-slate-100/50 dark:bg-navy-800/50 rounded-lg">
           {[
-            { key: 'all', label: isPolish ? 'Wszystkie' : 'All', count: tasks.filter((t) => !t.isMilestone).length },
-            { key: 'open', label: isPolish ? 'Otwarte' : 'Open', count: tasks.filter((t) => !t.isMilestone && !['done', 'DONE'].includes(t.status)).length },
-            { key: 'blocked', label: isPolish ? 'Zablokowane' : 'Blocked', count: tasks.filter((t) => ['blocked', 'BLOCKED'].includes(t.status)).length },
-            { key: 'done', label: isPolish ? 'Ukończone' : 'Done', count: tasks.filter((t) => ['done', 'DONE'].includes(t.status)).length },
+            {
+              key: 'all',
+              label: isPolish ? 'Wszystkie' : 'All',
+              count: tasks.filter((t) => !t.isMilestone).length,
+            },
+            {
+              key: 'open',
+              label: isPolish ? 'Otwarte' : 'Open',
+              count: tasks.filter((t) => !t.isMilestone && !['done', 'DONE'].includes(t.status))
+                .length,
+            },
+            {
+              key: 'blocked',
+              label: isPolish ? 'Zablokowane' : 'Blocked',
+              count: tasks.filter((t) => ['blocked', 'BLOCKED'].includes(t.status)).length,
+            },
+            {
+              key: 'done',
+              label: isPolish ? 'Ukończone' : 'Done',
+              count: tasks.filter((t) => ['done', 'DONE'].includes(t.status)).length,
+            },
           ].map((tab) => (
             <button
               key={tab.key}

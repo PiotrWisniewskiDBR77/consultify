@@ -262,18 +262,35 @@ const rowVariants = {
 
 const getTypeBadgeConfig = (isSystem: boolean) => {
   if (isSystem) {
-    return { color: 'text-cyan-400', bg: 'bg-cyan-500/20', label: 'APP', icon: Package, dot: 'bg-cyan-500' };
+    return {
+      color: 'text-cyan-400',
+      bg: 'bg-cyan-500/20',
+      label: 'APP',
+      icon: Package,
+      dot: 'bg-cyan-500',
+    };
   }
-  return { color: 'text-purple-400', bg: 'bg-purple-500/20', label: 'ORG', icon: Building2, dot: 'bg-purple-500' };
+  return {
+    color: 'text-purple-400',
+    bg: 'bg-purple-500/20',
+    label: 'ORG',
+    icon: Building2,
+    dot: 'bg-purple-500',
+  };
 };
 
 const getSourceBadgeConfig = (source: string) => {
   switch (source?.toLowerCase()) {
-    case 'assessment': return { color: 'text-blue-400', bg: 'bg-blue-500/15' };
-    case 'tool': return { color: 'text-amber-400', bg: 'bg-amber-500/15' };
-    case 'manual': return { color: 'text-slate-400', bg: 'bg-slate-500/15' };
-    case 'ai': return { color: 'text-emerald-400', bg: 'bg-emerald-500/15' };
-    default: return { color: 'text-slate-400', bg: 'bg-slate-500/15' };
+    case 'assessment':
+      return { color: 'text-blue-400', bg: 'bg-blue-500/15' };
+    case 'tool':
+      return { color: 'text-amber-400', bg: 'bg-amber-500/15' };
+    case 'manual':
+      return { color: 'text-slate-400', bg: 'bg-slate-500/15' };
+    case 'ai':
+      return { color: 'text-emerald-400', bg: 'bg-emerald-500/15' };
+    default:
+      return { color: 'text-slate-400', bg: 'bg-slate-500/15' };
   }
 };
 
@@ -294,7 +311,11 @@ const formatDate = (dateStr?: string): string => {
 const safeParseJson = (val: any, fallback: any = []) => {
   if (Array.isArray(val) || (typeof val === 'object' && val !== null)) return val;
   if (typeof val === 'string' && val.trim()) {
-    try { return JSON.parse(val); } catch { return fallback; }
+    try {
+      return JSON.parse(val);
+    } catch {
+      return fallback;
+    }
   }
   return fallback;
 };
@@ -308,7 +329,11 @@ const parseTemplate = (raw: any): InitiativeTemplate => {
     level: raw.level || 'standard',
     isSystem: Boolean(raw.is_system ?? raw.isSystem),
     isPublic: Boolean(raw.is_public ?? raw.isPublic),
-    sourceTypes: safeParseJson(raw.sourceTypes || raw.source_types, ['assessment', 'tool', 'manual']),
+    sourceTypes: safeParseJson(raw.sourceTypes || raw.source_types, [
+      'assessment',
+      'tool',
+      'manual',
+    ]),
     visibleSections: safeParseJson(raw.visibleSections || raw.visible_sections, {}),
     requiredFields: safeParseJson(raw.requiredFields || raw.required_fields, []),
     workflowConfig: safeParseJson(raw.workflowConfig || raw.workflow_config, {}),
@@ -353,7 +378,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
     setIsLoading(true);
     try {
       const response = await Api.get('/initiatives/templates');
-      const list = Array.isArray(response) ? response : (response?.templates || []);
+      const list = Array.isArray(response) ? response : response?.templates || [];
       setTemplates(list.map(parseTemplate));
     } catch (err) {
       console.error('[InitiativeTemplates] Error fetching:', err);
@@ -402,9 +427,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
 
     const sourceFilter = tableFilters.source as string[] | undefined;
     if (sourceFilter?.length) {
-      result = result.filter((t) =>
-        t.sourceTypes.some((s) => sourceFilter.includes(s))
-      );
+      result = result.filter((t) => t.sourceTypes.some((s) => sourceFilter.includes(s)));
     }
 
     return result;
@@ -481,8 +504,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
     Object.values(vs).filter(Boolean).length;
 
   // Count gate milestones
-  const countGates = (milestones: any[]) =>
-    milestones.filter((m) => m.isGate).length;
+  const countGates = (milestones: any[]) => milestones.filter((m) => m.isGate).length;
 
   if (isLoading) {
     return (
@@ -523,11 +545,13 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
             >
               <Lightbulb size={14} />
               <span>All</span>
-              <span className={`px-1.5 text-xs rounded-full ${
-                filter === 'all'
-                  ? 'bg-purple-500/30 text-purple-300'
-                  : 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'
-              }`}>
+              <span
+                className={`px-1.5 text-xs rounded-full ${
+                  filter === 'all'
+                    ? 'bg-purple-500/30 text-purple-300'
+                    : 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'
+                }`}
+              >
                 {templates.length}
               </span>
             </button>
@@ -543,11 +567,13 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
             >
               <Package size={14} />
               <span>App</span>
-              <span className={`px-1.5 text-xs rounded-full ${
-                filter === 'app'
-                  ? 'bg-cyan-500/30 text-cyan-300'
-                  : 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'
-              }`}>
+              <span
+                className={`px-1.5 text-xs rounded-full ${
+                  filter === 'app'
+                    ? 'bg-cyan-500/30 text-cyan-300'
+                    : 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'
+                }`}
+              >
                 {appCount}
               </span>
             </button>
@@ -563,11 +589,13 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
             >
               <Building2 size={14} />
               <span>Org</span>
-              <span className={`px-1.5 text-xs rounded-full ${
-                filter === 'org'
-                  ? 'bg-purple-500/30 text-purple-300'
-                  : 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'
-              }`}>
+              <span
+                className={`px-1.5 text-xs rounded-full ${
+                  filter === 'org'
+                    ? 'bg-purple-500/30 text-purple-300'
+                    : 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'
+                }`}
+              >
                 {orgCount}
               </span>
             </button>
@@ -589,7 +617,10 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
         {showSearch && (
           <div className="px-4 pb-3">
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+              />
               <input
                 type="text"
                 value={searchQuery}
@@ -600,7 +631,10 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
               />
               {searchQuery && (
                 <button
-                  onClick={() => { setSearchQuery(''); setShowSearch(false); }}
+                  onClick={() => {
+                    setSearchQuery('');
+                    setShowSearch(false);
+                  }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
                 >
                   <X size={16} />
@@ -622,7 +656,9 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
               {searchQuery ? 'No templates match your search' : 'No initiative templates found'}
             </p>
             <p className="text-xs text-slate-500">
-              {searchQuery ? 'Try adjusting your search terms' : 'Templates define the process blueprint for initiatives'}
+              {searchQuery
+                ? 'Try adjusting your search terms'
+                : 'Templates define the process blueprint for initiatives'}
             </p>
           </div>
         ) : (
@@ -642,14 +678,27 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                             : 'border-slate-300 dark:border-navy-500 hover:border-purple-400 text-transparent hover:text-slate-500 dark:hover:text-slate-400'
                       }`}
                     >
-                      {allSelected ? <CheckSquare size={14} /> : someSelected ? <Minus size={14} /> : <Square size={14} />}
+                      {allSelected ? (
+                        <CheckSquare size={14} />
+                      ) : someSelected ? (
+                        <Minus size={14} />
+                      ) : (
+                        <Square size={14} />
+                      )}
                     </button>
                   </th>
 
                   {/* Type */}
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.type }}>
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.type }}
+                  >
                     <div className="flex items-center gap-1">
-                      <span className={(tableFilters.type as string[])?.length ? 'text-purple-500' : ''}>Type</span>
+                      <span
+                        className={(tableFilters.type as string[])?.length ? 'text-purple-500' : ''}
+                      >
+                        Type
+                      </span>
                       <FilterDropdown
                         column={TEMPLATE_COLUMNS.find((c) => c.id === 'type')!}
                         value={tableFilters.type as string[]}
@@ -659,19 +708,36 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                         onClose={() => setOpenFilterId(null)}
                       />
                     </div>
-                    <ColumnResizer columnId="type" currentWidth={columnWidths.type} minWidth={80} maxWidth={140} onResize={handleColumnResize} />
+                    <ColumnResizer
+                      columnId="type"
+                      currentWidth={columnWidths.type}
+                      minWidth={80}
+                      maxWidth={140}
+                      onResize={handleColumnResize}
+                    />
                   </th>
 
                   {/* Indicator */}
                   <th className="w-8 px-1 py-2"></th>
 
                   {/* Template Name */}
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Template</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    Template
+                  </th>
 
                   {/* Level */}
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.level }}>
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.level }}
+                  >
                     <div className="flex items-center gap-1">
-                      <span className={(tableFilters.level as string[])?.length ? 'text-purple-500' : ''}>Level</span>
+                      <span
+                        className={
+                          (tableFilters.level as string[])?.length ? 'text-purple-500' : ''
+                        }
+                      >
+                        Level
+                      </span>
                       <FilterDropdown
                         column={TEMPLATE_COLUMNS.find((c) => c.id === 'level')!}
                         value={tableFilters.level as string[]}
@@ -681,47 +747,85 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                         onClose={() => setOpenFilterId(null)}
                       />
                     </div>
-                    <ColumnResizer columnId="level" currentWidth={columnWidths.level} minWidth={100} maxWidth={160} onResize={handleColumnResize} />
+                    <ColumnResizer
+                      columnId="level"
+                      currentWidth={columnWidths.level}
+                      minWidth={100}
+                      maxWidth={160}
+                      onResize={handleColumnResize}
+                    />
                   </th>
 
                   {/* Sources */}
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header" style={{ width: columnWidths.source }}>
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.source }}
+                  >
                     <div className="flex items-center gap-1">
-                      <span className={(tableFilters.source as string[])?.length ? 'text-purple-500' : ''}>Sources</span>
+                      <span
+                        className={
+                          (tableFilters.source as string[])?.length ? 'text-purple-500' : ''
+                        }
+                      >
+                        Sources
+                      </span>
                       <FilterDropdown
                         column={TEMPLATE_COLUMNS.find((c) => c.id === 'source')!}
                         value={tableFilters.source as string[]}
                         onChange={(val) => handleFilterChange('source', val as string[])}
                         isOpen={openFilterId === 'source'}
-                        onToggle={() => setOpenFilterId(openFilterId === 'source' ? null : 'source')}
+                        onToggle={() =>
+                          setOpenFilterId(openFilterId === 'source' ? null : 'source')
+                        }
                         onClose={() => setOpenFilterId(null)}
                       />
                     </div>
-                    <ColumnResizer columnId="source" currentWidth={columnWidths.source} minWidth={100} maxWidth={180} onResize={handleColumnResize} />
+                    <ColumnResizer
+                      columnId="source"
+                      currentWidth={columnWidths.source}
+                      minWidth={100}
+                      maxWidth={180}
+                      onResize={handleColumnResize}
+                    />
                   </th>
 
                   {/* Sections */}
-                  <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: columnWidths.sections }}>
+                  <th
+                    className="px-3 py-2 text-center text-xs font-medium text-slate-500 uppercase tracking-wider"
+                    style={{ width: columnWidths.sections }}
+                  >
                     Sections
                   </th>
 
                   {/* Tasks */}
-                  <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: columnWidths.tasks }}>
+                  <th
+                    className="px-3 py-2 text-center text-xs font-medium text-slate-500 uppercase tracking-wider"
+                    style={{ width: columnWidths.tasks }}
+                  >
                     Tasks
                   </th>
 
                   {/* Gates */}
-                  <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: columnWidths.gates }}>
+                  <th
+                    className="px-3 py-2 text-center text-xs font-medium text-slate-500 uppercase tracking-wider"
+                    style={{ width: columnWidths.gates }}
+                  >
                     Gates
                   </th>
 
                   {/* Updated */}
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: columnWidths.updatedAt }}>
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+                    style={{ width: columnWidths.updatedAt }}
+                  >
                     Updated
                   </th>
 
                   {/* Actions */}
-                  <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider" style={{ width: columnWidths.actions }}></th>
+                  <th
+                    className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
+                    style={{ width: columnWidths.actions }}
+                  ></th>
                 </tr>
               </thead>
               <tbody>
@@ -753,7 +857,10 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                           {/* Checkbox */}
                           <td className="w-10 px-2 py-2.5">
                             <button
-                              onClick={(e) => { e.stopPropagation(); toggleSelect(template.id); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleSelect(template.id);
+                              }}
                               className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
                                 selectedIds.has(template.id)
                                   ? 'bg-purple-500 border-purple-500 text-white'
@@ -766,7 +873,9 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
 
                           {/* Type */}
                           <td className="px-3 py-2.5" style={{ width: columnWidths.type }}>
-                            <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-semibold uppercase ${typeConfig.bg} ${typeConfig.color}`}>
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-semibold uppercase ${typeConfig.bg} ${typeConfig.color}`}
+                            >
                               <TypeIcon size={11} />
                               {typeConfig.label}
                             </span>
@@ -780,16 +889,22 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                           {/* Template Name */}
                           <td className="px-3 py-2.5" style={{ minWidth: 200 }}>
                             <div className="flex flex-col">
-                              <span className="text-sm font-medium text-slate-900 dark:text-white">{template.name}</span>
+                              <span className="text-sm font-medium text-slate-900 dark:text-white">
+                                {template.name}
+                              </span>
                               {template.description && (
-                                <span className="text-xs text-slate-500 mt-0.5 line-clamp-1">{template.description}</span>
+                                <span className="text-xs text-slate-500 mt-0.5 line-clamp-1">
+                                  {template.description}
+                                </span>
                               )}
                             </div>
                           </td>
 
                           {/* Level */}
                           <td className="px-3 py-2.5" style={{ width: columnWidths.level }}>
-                            <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium ${levelConfig.bg} ${levelConfig.color}`}>
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium ${levelConfig.bg} ${levelConfig.color}`}
+                            >
                               <LevelIcon size={12} />
                               {levelConfig.label}
                             </span>
@@ -801,7 +916,10 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                               {template.sourceTypes.slice(0, 3).map((s) => {
                                 const sc = getSourceBadgeConfig(s);
                                 return (
-                                  <span key={s} className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${sc.bg} ${sc.color}`}>
+                                  <span
+                                    key={s}
+                                    className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${sc.bg} ${sc.color}`}
+                                  >
                                     {s}
                                   </span>
                                 );
@@ -815,21 +933,30 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                           </td>
 
                           {/* Sections */}
-                          <td className="px-3 py-2.5 text-center" style={{ width: columnWidths.sections }}>
+                          <td
+                            className="px-3 py-2.5 text-center"
+                            style={{ width: columnWidths.sections }}
+                          >
                             <span className="text-sm text-slate-700 dark:text-slate-400">
                               {countVisibleSections(template.visibleSections)}
                             </span>
                           </td>
 
                           {/* Tasks */}
-                          <td className="px-3 py-2.5 text-center" style={{ width: columnWidths.tasks }}>
+                          <td
+                            className="px-3 py-2.5 text-center"
+                            style={{ width: columnWidths.tasks }}
+                          >
                             <span className="text-sm text-slate-700 dark:text-slate-400">
                               {template.suggestedTasks.length}
                             </span>
                           </td>
 
                           {/* Gates */}
-                          <td className="px-3 py-2.5 text-center" style={{ width: columnWidths.gates }}>
+                          <td
+                            className="px-3 py-2.5 text-center"
+                            style={{ width: columnWidths.gates }}
+                          >
                             <span className="text-sm text-slate-700 dark:text-slate-400">
                               {countGates(template.suggestedMilestones)}
                             </span>
@@ -847,7 +974,10 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                           <td className="px-3 py-2.5" style={{ width: columnWidths.actions }}>
                             <div className="flex items-center justify-end gap-1">
                               <button
-                                onClick={(e) => { e.stopPropagation(); setExpandedId(isExpanded ? null : template.id); }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedId(isExpanded ? null : template.id);
+                                }}
                                 className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                                 title="Preview"
                               >
@@ -855,7 +985,10 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                               </button>
                               {template.isSystem ? (
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); handleDuplicate(template); }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDuplicate(template);
+                                  }}
                                   className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
                                   title="Duplicate to organization"
                                 >
@@ -864,14 +997,20 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                               ) : (
                                 <>
                                   <button
-                                    onClick={(e) => { e.stopPropagation(); handleOpenEditor(template.id); }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleOpenEditor(template.id);
+                                    }}
                                     className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                                     title="Edit"
                                   >
                                     <Edit3 size={15} />
                                   </button>
                                   <button
-                                    onClick={(e) => { e.stopPropagation(); handleDelete(template.id); }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDelete(template.id);
+                                    }}
                                     className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                                     title="Delete"
                                   >
@@ -895,16 +1034,26 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                               <div className="grid grid-cols-4 gap-6">
                                 {/* Visible Sections */}
                                 <div>
-                                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Visible Sections</h4>
+                                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+                                    Visible Sections
+                                  </h4>
                                   <div className="space-y-1.5">
-                                    {Object.entries(template.visibleSections).map(([key, visible]) => (
-                                      <div key={key} className="flex items-center gap-2">
-                                        <div className={`w-2 h-2 rounded-full ${visible ? 'bg-emerald-400' : 'bg-slate-600'}`} />
-                                        <span className={`text-xs ${visible ? 'text-slate-300' : 'text-slate-600'}`}>
-                                          {key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())}
-                                        </span>
-                                      </div>
-                                    ))}
+                                    {Object.entries(template.visibleSections).map(
+                                      ([key, visible]) => (
+                                        <div key={key} className="flex items-center gap-2">
+                                          <div
+                                            className={`w-2 h-2 rounded-full ${visible ? 'bg-emerald-400' : 'bg-slate-600'}`}
+                                          />
+                                          <span
+                                            className={`text-xs ${visible ? 'text-slate-300' : 'text-slate-600'}`}
+                                          >
+                                            {key
+                                              .replace(/([A-Z])/g, ' $1')
+                                              .replace(/^./, (s) => s.toUpperCase())}
+                                          </span>
+                                        </div>
+                                      )
+                                    )}
                                   </div>
                                 </div>
 
@@ -917,11 +1066,15 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                                     {template.suggestedTasks.map((task: any, i: number) => (
                                       <div key={i} className="flex items-start gap-2">
                                         <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 flex-shrink-0" />
-                                        <span className="text-xs text-slate-400 line-clamp-1">{task.title}</span>
+                                        <span className="text-xs text-slate-400 line-clamp-1">
+                                          {task.title}
+                                        </span>
                                       </div>
                                     ))}
                                     {template.suggestedTasks.length === 0 && (
-                                      <span className="text-xs text-slate-600 italic">None defined</span>
+                                      <span className="text-xs text-slate-600 italic">
+                                        None defined
+                                      </span>
                                     )}
                                   </div>
                                 </div>
@@ -934,42 +1087,63 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                                   <div className="space-y-1.5 max-h-48 overflow-y-auto">
                                     {template.suggestedMilestones.map((m: any, i: number) => (
                                       <div key={i} className="flex items-start gap-2">
-                                        <div className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${m.isGate ? 'bg-amber-400' : 'bg-slate-500'}`} />
-                                        <span className={`text-xs ${m.isGate ? 'text-amber-300 font-medium' : 'text-slate-400'}`}>
+                                        <div
+                                          className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${m.isGate ? 'bg-amber-400' : 'bg-slate-500'}`}
+                                        />
+                                        <span
+                                          className={`text-xs ${m.isGate ? 'text-amber-300 font-medium' : 'text-slate-400'}`}
+                                        >
                                           {m.name} {m.isGate && '⦿'}
                                         </span>
                                       </div>
                                     ))}
                                     {template.suggestedMilestones.length === 0 && (
-                                      <span className="text-xs text-slate-600 italic">None defined</span>
+                                      <span className="text-xs text-slate-600 italic">
+                                        None defined
+                                      </span>
                                     )}
                                   </div>
                                 </div>
 
                                 {/* Workflow & Decisions */}
                                 <div>
-                                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Workflow Config</h4>
+                                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+                                    Workflow Config
+                                  </h4>
                                   <div className="space-y-2">
                                     <div className="flex items-center gap-2">
                                       <span className="text-xs text-slate-500">Phases:</span>
                                       <div className="flex gap-1">
-                                        {(template.workflowConfig.phases || ['PLAN']).map((p: string) => (
-                                          <span key={p} className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-500/15 text-violet-400">
-                                            {p}
-                                          </span>
-                                        ))}
+                                        {(template.workflowConfig.phases || ['PLAN']).map(
+                                          (p: string) => (
+                                            <span
+                                              key={p}
+                                              className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-500/15 text-violet-400"
+                                            >
+                                              {p}
+                                            </span>
+                                          )
+                                        )}
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-2">
                                       <span className="text-xs text-slate-500">Approval:</span>
-                                      <span className={`text-xs ${template.workflowConfig.requireApproval ? 'text-emerald-400' : 'text-slate-600'}`}>
-                                        {template.workflowConfig.requireApproval ? 'Required' : 'Optional'}
+                                      <span
+                                        className={`text-xs ${template.workflowConfig.requireApproval ? 'text-emerald-400' : 'text-slate-600'}`}
+                                      >
+                                        {template.workflowConfig.requireApproval
+                                          ? 'Required'
+                                          : 'Optional'}
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                       <span className="text-xs text-slate-500">Steering:</span>
-                                      <span className={`text-xs ${template.workflowConfig.requireSteeringCommittee ? 'text-emerald-400' : 'text-slate-600'}`}>
-                                        {template.workflowConfig.requireSteeringCommittee ? 'Required' : 'Not needed'}
+                                      <span
+                                        className={`text-xs ${template.workflowConfig.requireSteeringCommittee ? 'text-emerald-400' : 'text-slate-600'}`}
+                                      >
+                                        {template.workflowConfig.requireSteeringCommittee
+                                          ? 'Required'
+                                          : 'Not needed'}
                                       </span>
                                     </div>
 

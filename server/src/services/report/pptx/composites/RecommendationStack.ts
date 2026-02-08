@@ -3,8 +3,8 @@
  * Portfolio of recommendations as a structured table.
  * Used when count >= 3 (per Rules Engine decision rules).
  */
-import type { DesignTokens, RenderedElement, ElementPosition } from '../types.js';
 import { severityColor } from '../designTokens.js';
+import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface RecommendationStackProps {
   recommendations: Array<{
@@ -25,19 +25,81 @@ export function RecommendationStack(
   const elements: RenderedElement[] = [];
 
   const headerRow = [
-    { text: '#', options: { bold: true, fill: { color: tokens.colors.primary }, color: 'FFFFFF', fontSize: 9, fontFace: tokens.fonts.body, align: 'center' as const } },
-    { text: 'Recommendation', options: { bold: true, fill: { color: tokens.colors.primary }, color: 'FFFFFF', fontSize: 10, fontFace: tokens.fonts.body } },
-    { text: 'Impact', options: { bold: true, fill: { color: tokens.colors.primary }, color: 'FFFFFF', fontSize: 10, fontFace: tokens.fonts.body } },
-    { text: 'Priority', options: { bold: true, fill: { color: tokens.colors.primary }, color: 'FFFFFF', fontSize: 10, fontFace: tokens.fonts.body, align: 'center' as const } },
+    {
+      text: '#',
+      options: {
+        bold: true,
+        fill: { color: tokens.colors.primary },
+        color: 'FFFFFF',
+        fontSize: 9,
+        fontFace: tokens.fonts.body,
+        align: 'center' as const,
+      },
+    },
+    {
+      text: 'Recommendation',
+      options: {
+        bold: true,
+        fill: { color: tokens.colors.primary },
+        color: 'FFFFFF',
+        fontSize: 10,
+        fontFace: tokens.fonts.body,
+      },
+    },
+    {
+      text: 'Impact',
+      options: {
+        bold: true,
+        fill: { color: tokens.colors.primary },
+        color: 'FFFFFF',
+        fontSize: 10,
+        fontFace: tokens.fonts.body,
+      },
+    },
+    {
+      text: 'Priority',
+      options: {
+        bold: true,
+        fill: { color: tokens.colors.primary },
+        color: 'FFFFFF',
+        fontSize: 10,
+        fontFace: tokens.fonts.body,
+        align: 'center' as const,
+      },
+    },
   ];
 
   const dataRows = props.recommendations.map((rec, i) => {
     const prioColor = severityColor(rec.priority, tokens);
     return [
-      { text: String(i + 1), options: { fontSize: 9, fontFace: tokens.fonts.body, color: tokens.colors.textSecondary, align: 'center' as const } },
-      { text: `${rec.title}\n${rec.description}`, options: { fontSize: 10, fontFace: tokens.fonts.body, color: tokens.colors.textPrimary } },
-      { text: rec.impact, options: { fontSize: 10, fontFace: tokens.fonts.body, color: tokens.colors.textPrimary } },
-      { text: rec.priority.toUpperCase(), options: { fontSize: 9, fontFace: tokens.fonts.body, color: 'FFFFFF', bold: true, fill: { color: prioColor }, align: 'center' as const } },
+      {
+        text: String(i + 1),
+        options: {
+          fontSize: 9,
+          fontFace: tokens.fonts.body,
+          color: tokens.colors.textSecondary,
+          align: 'center' as const,
+        },
+      },
+      {
+        text: `${rec.title}\n${rec.description}`,
+        options: { fontSize: 10, fontFace: tokens.fonts.body, color: tokens.colors.textPrimary },
+      },
+      {
+        text: rec.impact,
+        options: { fontSize: 10, fontFace: tokens.fonts.body, color: tokens.colors.textPrimary },
+      },
+      {
+        text: rec.priority.toUpperCase(),
+        options: {
+          fontSize: 9,
+          fontFace: tokens.fonts.body,
+          color: 'FFFFFF',
+          bold: true,
+          fill: { color: prioColor },
+          align: 'center' as const,
+        },
+      },
     ];
   });
 

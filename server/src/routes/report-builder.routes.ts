@@ -31,11 +31,11 @@ import {
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { default as defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { upsertAssessmentReportForBuilder } from '../services/assessmentReportBuilderLinkService.js';
 import notificationService from '../services/notificationService.js';
 import ReportBuilderCommentsService from '../services/reportBuilderCommentsService.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
 import ReportGenerationService from '../services/reportGenerationService.js';
-import { upsertAssessmentReportForBuilder } from '../services/assessmentReportBuilderLinkService.js';
 import logger from '../utils/Logger.js';
 
 // ==========================================
@@ -995,7 +995,9 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
           projectId: result.report.projectId ? String(result.report.projectId) : null,
           builderReportId: String(result.report.id),
           name: String(result.report.title || title || 'Report'),
-          templateId: result.report.templateId ? String(result.report.templateId) : templateId || null,
+          templateId: result.report.templateId
+            ? String(result.report.templateId)
+            : templateId || null,
           rbStatus: String(result.report.status || 'CONFIGURING'),
           userId,
         });
@@ -1519,7 +1521,11 @@ router.post('/:id/finalize', async (req: Request, res: Response, next: NextFunct
 
     // Auto-version: snapshot before review
     await createAutoVersionOnStatusChange(
-      id, organizationId, userId, previousStatus, 'IN_REVIEW',
+      id,
+      organizationId,
+      userId,
+      previousStatus,
+      'IN_REVIEW',
       `Sent for review${message ? `: ${message}` : ''}`
     );
 
@@ -1528,7 +1534,10 @@ router.post('/:id/finalize', async (req: Request, res: Response, next: NextFunct
     if (reviewerIds.length > 0) {
       const reportTitle = report.report.title || 'Report';
       await notifyOnStatusChange(
-        id, organizationId, userId, reviewerIds,
+        id,
+        organizationId,
+        userId,
+        reviewerIds,
         'report_review_requested',
         'Review requested',
         `You have been asked to review "${reportTitle}"${message ? `. Message: ${message}` : ''}`,
@@ -1583,7 +1592,11 @@ router.post('/:id/approve', async (req: Request, res: Response, next: NextFuncti
 
     // Auto-version: approved version snapshot (immutable reference)
     await createAutoVersionOnStatusChange(
-      id, organizationId, userId, previousStatus, 'APPROVED',
+      id,
+      organizationId,
+      userId,
+      previousStatus,
+      'APPROVED',
       'Report approved — approved version snapshot'
     );
 
@@ -1591,7 +1604,10 @@ router.post('/:id/approve', async (req: Request, res: Response, next: NextFuncti
     const authorId = report.report.createdBy || report.report.created_by;
     if (authorId) {
       await notifyOnStatusChange(
-        id, organizationId, userId, [authorId],
+        id,
+        organizationId,
+        userId,
+        [authorId],
         'report_approved',
         'Report approved',
         `Your report "${report.report.title || 'Report'}" has been approved.`,
@@ -1600,7 +1616,10 @@ router.post('/:id/approve', async (req: Request, res: Response, next: NextFuncti
     }
 
     // Auto-sync: mark APPROVE_REPORT gate as APPROVED in assessment workflow (when sourced from assessment)
-    if (String(report.report.sourceType || '').toUpperCase() === 'ASSESSMENT' && report.report.sourceId) {
+    if (
+      String(report.report.sourceType || '').toUpperCase() === 'ASSESSMENT' &&
+      report.report.sourceId
+    ) {
       const assessmentId = String(report.report.sourceId);
       try {
         const { getDatabase } = await import('../database/index.js');
@@ -1682,7 +1701,11 @@ router.post('/:id/send-back', async (req: Request, res: Response, next: NextFunc
 
     // Auto-version before reverting
     await createAutoVersionOnStatusChange(
-      id, organizationId, userId, previousStatus, 'DRAFT',
+      id,
+      organizationId,
+      userId,
+      previousStatus,
+      'DRAFT',
       'Sent back for revision'
     );
 
@@ -1690,7 +1713,10 @@ router.post('/:id/send-back', async (req: Request, res: Response, next: NextFunc
     const authorId = report.report.createdBy || report.report.created_by;
     if (authorId) {
       await notifyOnStatusChange(
-        id, organizationId, userId, [authorId],
+        id,
+        organizationId,
+        userId,
+        [authorId],
         'report_sent_back',
         'Report sent back',
         `Your report "${report.report.title || 'Report'}" was sent back for revision.`,
@@ -1731,7 +1757,11 @@ router.post('/:id/reject', async (req: Request, res: Response, next: NextFunctio
 
     // Auto-version before rejection
     await createAutoVersionOnStatusChange(
-      id, organizationId, userId, status, 'DRAFT',
+      id,
+      organizationId,
+      userId,
+      status,
+      'DRAFT',
       `Rejected${reason ? `: ${reason}` : ''}`
     );
 
@@ -1739,7 +1769,10 @@ router.post('/:id/reject', async (req: Request, res: Response, next: NextFunctio
     const authorId = report.report.createdBy || report.report.created_by;
     if (authorId) {
       await notifyOnStatusChange(
-        id, organizationId, userId, [authorId],
+        id,
+        organizationId,
+        userId,
+        [authorId],
         'report_rejected',
         'Report rejected',
         `Your report "${report.report.title || 'Report'}" was rejected.${reason ? ` Reason: ${reason}` : ''}`,
@@ -1783,7 +1816,11 @@ router.post('/:id/utilize', async (req: Request, res: Response, next: NextFuncti
     await ReportBuilderService.updateReportStatus(id, 'UTILIZED', userId);
 
     await createAutoVersionOnStatusChange(
-      id, organizationId, userId, status, 'UTILIZED',
+      id,
+      organizationId,
+      userId,
+      status,
+      'UTILIZED',
       `Report utilized${notes ? `: ${notes}` : ''}`
     );
 
@@ -1817,7 +1854,11 @@ router.post('/:id/mark-sent-internal', async (req: Request, res: Response, next:
     await ReportBuilderService.updateReportStatus(id, 'SENT_INTERNAL', userId);
 
     await createAutoVersionOnStatusChange(
-      id, organizationId, userId, 'APPROVED', 'SENT_INTERNAL',
+      id,
+      organizationId,
+      userId,
+      'APPROVED',
+      'SENT_INTERNAL',
       'Sent internally'
     );
 
@@ -1851,7 +1892,11 @@ router.post('/:id/mark-sent-external', async (req: Request, res: Response, next:
     await ReportBuilderService.updateReportStatus(id, 'SENT_EXTERNAL', userId);
 
     await createAutoVersionOnStatusChange(
-      id, organizationId, userId, 'SENT_INTERNAL', 'SENT_EXTERNAL',
+      id,
+      organizationId,
+      userId,
+      'SENT_INTERNAL',
+      'SENT_EXTERNAL',
       'Sent to client'
     );
 
@@ -2467,7 +2512,8 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
 
     if (useV2) {
       // ── V2: BCG-grade component pipeline ──
-      const { PptxPipelineService } = await import('../services/report/pptx/PptxPipelineService.js');
+      const { PptxPipelineService } =
+        await import('../services/report/pptx/PptxPipelineService.js');
       const pipeline = new PptxPipelineService();
 
       const rpt = reportData.report as any;
@@ -2476,18 +2522,28 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
       let scoreSummary: any = undefined;
       const rawScore = rpt.scoreSummary || rpt.score_summary;
       if (rawScore) {
-        try { scoreSummary = typeof rawScore === 'string' ? JSON.parse(rawScore) : rawScore; } catch { /* ignore */ }
+        try {
+          scoreSummary = typeof rawScore === 'string' ? JSON.parse(rawScore) : rawScore;
+        } catch {
+          /* ignore */
+        }
       }
 
       // Parse config if stored as JSON string
       let config: any = undefined;
       const rawConfig = rpt.config || rpt.config_json;
       if (rawConfig) {
-        try { config = typeof rawConfig === 'string' ? JSON.parse(rawConfig) : rawConfig; } catch { /* ignore */ }
+        try {
+          config = typeof rawConfig === 'string' ? JSON.parse(rawConfig) : rawConfig;
+        } catch {
+          /* ignore */
+        }
       }
 
       // Pre-load block types once for slide_intent resolution
-      const allBlockTypes = await ReportBuilderService.listBlockTypes(organizationId).catch(() => []);
+      const allBlockTypes = await ReportBuilderService.listBlockTypes(organizationId).catch(
+        () => []
+      );
       const btMap = new Map(allBlockTypes.map((bt: any) => [bt.id, bt]));
 
       const v2Sections = (reportData.sections || []).map((s: any) => {

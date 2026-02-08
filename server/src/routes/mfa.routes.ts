@@ -61,13 +61,18 @@ router.get('/status', verifyToken, isAuthenticated, async (req: Request, res: Re
   try {
     const userId = (req as any).user?.id;
 
-    const mfaConfig = await db.get(
+    const mfaConfig = (await db.get(
       `
       SELECT enabled, method, backup_codes_count, last_verified_at
       FROM user_mfa WHERE user_id = ?
     `,
       [userId]
-    ) as { enabled: boolean; method: string; backup_codes_count: number; last_verified_at: string } | null;
+    )) as {
+      enabled: boolean;
+      method: string;
+      backup_codes_count: number;
+      last_verified_at: string;
+    } | null;
 
     res.json({
       enabled: mfaConfig?.enabled || false,
@@ -88,7 +93,9 @@ router.get('/status', verifyToken, isAuthenticated, async (req: Request, res: Re
 router.post('/setup', verifyToken, isAuthenticated, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
-    const user = await db.get('SELECT email FROM users WHERE id = ?', [userId]) as { email: string } | null;
+    const user = (await db.get('SELECT email FROM users WHERE id = ?', [userId])) as {
+      email: string;
+    } | null;
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -135,7 +142,9 @@ router.post('/verify-setup', verifyToken, isAuthenticated, async (req: Request, 
       return res.status(400).json({ error: 'Invalid token format' });
     }
 
-    const mfaConfig = await db.get('SELECT secret FROM user_mfa WHERE user_id = ?', [userId]) as { secret: string } | null;
+    const mfaConfig = (await db.get('SELECT secret FROM user_mfa WHERE user_id = ?', [userId])) as {
+      secret: string;
+    } | null;
 
     if (!mfaConfig?.secret) {
       return res.status(400).json({ error: 'MFA not initialized. Please start setup first.' });
@@ -193,10 +202,10 @@ router.post('/verify', verifyToken, async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Token required' });
     }
 
-    const mfaConfig = await db.get(
+    const mfaConfig = (await db.get(
       'SELECT secret, backup_codes, enabled FROM user_mfa WHERE user_id = ?',
       [userId]
-    ) as { secret: string; backup_codes: string; enabled: boolean } | null;
+    )) as { secret: string; backup_codes: string; enabled: boolean } | null;
 
     if (!mfaConfig?.enabled) {
       return res.status(400).json({ error: 'MFA not enabled for this account' });
@@ -260,9 +269,9 @@ router.post('/disable', verifyToken, isAuthenticated, async (req: Request, res: 
       return res.status(400).json({ error: 'Password confirmation required' });
     }
 
-    const mfaConfig = await db.get('SELECT secret, enabled FROM user_mfa WHERE user_id = ?', [
+    const mfaConfig = (await db.get('SELECT secret, enabled FROM user_mfa WHERE user_id = ?', [
       userId,
-    ]) as { secret: string; enabled: boolean } | null;
+    ])) as { secret: string; enabled: boolean } | null;
 
     if (!mfaConfig?.enabled) {
       return res.status(400).json({ error: 'MFA is not enabled' });
@@ -304,9 +313,9 @@ router.post(
       const userId = (req as any).user?.id;
       const { token } = req.body;
 
-      const mfaConfig = await db.get('SELECT secret, enabled FROM user_mfa WHERE user_id = ?', [
+      const mfaConfig = (await db.get('SELECT secret, enabled FROM user_mfa WHERE user_id = ?', [
         userId,
-      ]) as { secret: string; enabled: boolean } | null;
+      ])) as { secret: string; enabled: boolean } | null;
 
       if (!mfaConfig?.enabled) {
         return res.status(400).json({ error: 'MFA is not enabled' });

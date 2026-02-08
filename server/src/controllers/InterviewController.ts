@@ -3425,9 +3425,9 @@ ${JSON.stringify(questions || [], null, 2)}
     }
 
     let normalizedTitle = typeof title === 'string' ? title.trim() : '';
-    const normalizedPromptType = (typeof promptType === 'string' && promptType.trim()
-      ? promptType.trim()
-      : 'summary') as any;
+    const normalizedPromptType = (
+      typeof promptType === 'string' && promptType.trim() ? promptType.trim() : 'summary'
+    ) as any;
 
     // If title is omitted (e.g. quick-generate from a session row), build a reasonable default.
     if (!normalizedTitle) {

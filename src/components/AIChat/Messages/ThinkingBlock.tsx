@@ -25,9 +25,7 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({
   const { t } = useTranslation();
 
   const lines = useMemo(() => {
-    const raw = (steps || [])
-      .map((s) => String((s as any)?.label || '').trim())
-      .filter(Boolean);
+    const raw = (steps || []).map((s) => String((s as any)?.label || '').trim()).filter(Boolean);
     if (raw.length === 0) return [t('thinking.processing', 'Rozważam Twoje zapytanie...')];
     // Deduplicate consecutive duplicates
     const out: string[] = [];

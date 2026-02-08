@@ -15,10 +15,10 @@ import {
   validateParams,
   validateQuery,
 } from '../middleware/validation.middleware.js';
+import { buildHelpDocsContext } from '../services/ai/helpDocsContext.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
-import { buildHelpDocsContext } from '../services/ai/helpDocsContext.js';
 import {
   ActionIdParamSchema,
   ActionTypeParamSchema,
@@ -128,9 +128,13 @@ router.post(
     );
     // Best-effort optional columns (do not fail request)
     try {
-      await dbRun(`UPDATE knowledge_docs SET category = ? WHERE id = ?`, ['chat_attachment', docId], {
-        fallback: true,
-      } as any);
+      await dbRun(
+        `UPDATE knowledge_docs SET category = ? WHERE id = ?`,
+        ['chat_attachment', docId],
+        {
+          fallback: true,
+        } as any
+      );
     } catch {
       /* ignore */
     }
@@ -143,7 +147,9 @@ router.post(
     }
 
     const makeChunks = (raw: string): Array<{ chunkIndex: number; content: string }> => {
-      const normalized = String(raw || '').replace(/\r\n/g, '\n').trim();
+      const normalized = String(raw || '')
+        .replace(/\r\n/g, '\n')
+        .trim();
       const MAX = 1200;
       const OVERLAP = 150;
       const out: Array<{ chunkIndex: number; content: string }> = [];
@@ -307,9 +313,8 @@ router.post(
     }
 
     try {
-      const { generateClarificationQuestions } = await import(
-        '../services/ai/deepResearchService.js'
-      );
+      const { generateClarificationQuestions } =
+        await import('../services/ai/deepResearchService.js');
 
       // Use a lightweight LLM client for clarification
       const { default: modelRouter } = await import('../services/ai/modelRouter.js');
@@ -378,16 +383,19 @@ router.post(
   '/engagement-summary',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { period = 'weekly', projectId, language } = req.body as {
+    const {
+      period = 'weekly',
+      projectId,
+      language,
+    } = req.body as {
       period?: 'weekly' | 'monthly';
       projectId?: string;
       language?: string;
     };
 
     try {
-      const { engagementSummaryService } = await import(
-        '../services/ai/engagementSummaryService.js'
-      );
+      const { engagementSummaryService } =
+        await import('../services/ai/engagementSummaryService.js');
 
       const summary = await engagementSummaryService.generateSummary({
         organizationId: req.organizationId || '',
@@ -426,9 +434,8 @@ router.post(
     };
 
     try {
-      const { industryBenchmarkService } = await import(
-        '../services/ai/industryBenchmarkService.js'
-      );
+      const { industryBenchmarkService } =
+        await import('../services/ai/industryBenchmarkService.js');
 
       if (scores && scores.length > 0) {
         const comparisons = industryBenchmarkService.compareToBenchmarks(industry, scores);
@@ -468,7 +475,12 @@ router.post(
       focusMode?: string;
       selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
       selectedModelId?: string | null;
-      aiModes?: { deepResearch?: boolean; webSearch?: boolean; showReasoning?: boolean; multiAgent?: boolean };
+      aiModes?: {
+        deepResearch?: boolean;
+        webSearch?: boolean;
+        showReasoning?: boolean;
+        multiAgent?: boolean;
+      };
       knowledgeSources?: {
         pmoDocuments?: boolean;
         projectData?: boolean;
@@ -798,7 +810,7 @@ router.post(
     // (Deep Thinking can run 30–90 seconds; default 2min timeout gives safety margin)
     if (req.socket) {
       req.socket.setTimeout(120_000); // 2 minutes
-      req.socket.setNoDelay(true);    // Disable Nagle for real-time streaming
+      req.socket.setNoDelay(true); // Disable Nagle for real-time streaming
     }
 
     res.setHeader('Content-Type', 'text/event-stream');
@@ -1042,16 +1054,16 @@ router.post(
       const projectId = aiModes?.deepResearch
         ? null
         : (context as any)?.projectId ||
-        (context as any)?.workspaceContext?.projectId ||
-        bodyProjectId ||
-        null;
+          (context as any)?.workspaceContext?.projectId ||
+          bodyProjectId ||
+          null;
 
       const screenContext = aiModes?.deepResearch
         ? null
         : (context as any)?.screenContext ||
-        (context as any)?.workspaceContext ||
-        bodyScreenContext ||
-        null;
+          (context as any)?.workspaceContext ||
+          bodyScreenContext ||
+          null;
 
       const focusMode = (context as any)?.focusMode || bodyFocusMode || 'all';
 
@@ -1136,18 +1148,18 @@ router.post(
         const [convSummary, ltmAddon] = await Promise.all([
           convIdForMemory
             ? import('../services/ai/conversationSummaryService.js')
-              .then((mod: any) => (mod.default || mod).get(convIdForMemory))
-              .catch(() => '')
+                .then((mod: any) => (mod.default || mod).get(convIdForMemory))
+                .catch(() => '')
             : Promise.resolve(''),
           req.userId && req.organizationId
             ? import('../services/ai/longTermMemoryService.js')
-              .then((mod: any) =>
-                (mod.default || mod).getPromptAddendum({
-                  userId: req.userId,
-                  organizationId: req.organizationId,
-                })
-              )
-              .catch(() => '')
+                .then((mod: any) =>
+                  (mod.default || mod).getPromptAddendum({
+                    userId: req.userId,
+                    organizationId: req.organizationId,
+                  })
+                )
+                .catch(() => '')
             : Promise.resolve(''),
         ]);
 
@@ -1225,14 +1237,15 @@ router.post(
       // Lightweight retrieval: inject only a few relevant KB articles as snippets.
       // Also stream KB citations so the UI can show them.
       try {
-        const kbModuleId = String(
-          (screenContext as any)?.moduleId ||
-            (screenContext as any)?.module ||
-            (screenContext as any)?.currentModule ||
-            (screenContext as any)?.screenId ||
-            (screenContext as any)?.currentScreen ||
-            ''
-        ).trim() || null;
+        const kbModuleId =
+          String(
+            (screenContext as any)?.moduleId ||
+              (screenContext as any)?.module ||
+              (screenContext as any)?.currentModule ||
+              (screenContext as any)?.screenId ||
+              (screenContext as any)?.currentScreen ||
+              ''
+          ).trim() || null;
 
         const kb = await buildHelpDocsContext({
           query: message,
@@ -1551,14 +1564,20 @@ router.post(
       if (aiModes?.multiAgent && message) {
         try {
           const { runDecisionRoom } = await import('../services/ai/advancedFeatures.js');
-          emitSSE({ type: 'status', message: 'Uruchamiam analizę wieloagentową (CFO, CTO, CHRO, COO)...' });
+          emitSSE({
+            type: 'status',
+            message: 'Uruchamiam analizę wieloagentową (CFO, CTO, CHRO, COO)...',
+          });
 
           const decisionResult = await runDecisionRoom(
             message,
             JSON.stringify({
               projectId,
               screenContext: screenContext?.currentScreen || screenContext?.screenId || null,
-              history: (history || []).slice(-4).map((m: any) => `${m.role}: ${m.content?.slice(0, 200)}`).join('\n'),
+              history: (history || [])
+                .slice(-4)
+                .map((m: any) => `${m.role}: ${m.content?.slice(0, 200)}`)
+                .join('\n'),
             }),
             ['Opcja A', 'Opcja B'], // Default options — the AI will refine these
             req.userId || 'anonymous',
@@ -1569,11 +1588,15 @@ router.post(
           const parts: string[] = [];
           if (decisionResult.perspectives && decisionResult.perspectives.length > 0) {
             for (const p of decisionResult.perspectives) {
-              parts.push(`### ${p.agentRole}\n${p.analysis}\n**Rekomendacja:** ${p.recommendation}\n**Pewność:** ${p.confidenceLevel || 0}%\n`);
+              parts.push(
+                `### ${p.agentRole}\n${p.analysis}\n**Rekomendacja:** ${p.recommendation}\n**Pewność:** ${p.confidenceLevel || 0}%\n`
+              );
             }
           }
           if (decisionResult.consensus) {
-            parts.push(`---\n## Konsensus\n**Rekomendacja:** ${decisionResult.consensus.recommendation}\n**Poziom pewności:** ${decisionResult.consensus.confidenceLevel || 0}%`);
+            parts.push(
+              `---\n## Konsensus\n**Rekomendacja:** ${decisionResult.consensus.recommendation}\n**Poziom pewności:** ${decisionResult.consensus.confidenceLevel || 0}%`
+            );
             if (decisionResult.consensus.keyAgreements?.length > 0) {
               parts.push(`**Zgodność:** ${decisionResult.consensus.keyAgreements.join(', ')}`);
             }
@@ -1588,12 +1611,20 @@ router.post(
             try {
               const svcMod = await import('../services/ai/chatTraceService.js');
               await (svcMod.default || svcMod).completeRun({ runId: chatRunId as string });
-            } catch { /* ignore */ }
+            } catch {
+              /* ignore */
+            }
           }
           return; // Skip standard pipeline
         } catch (err) {
-          logger.warn('[AI Stream] Multi-agent mode failed, falling back to standard pipeline', err);
-          emitSSE({ type: 'status', message: 'Tryb wieloagentowy niedostępny — przechodzę do standardowej analizy...' });
+          logger.warn(
+            '[AI Stream] Multi-agent mode failed, falling back to standard pipeline',
+            err
+          );
+          emitSSE({
+            type: 'status',
+            message: 'Tryb wieloagentowy niedostępny — przechodzę do standardowej analizy...',
+          });
           // Fall through to standard pipeline
         }
       }
@@ -1781,7 +1812,7 @@ router.post(
                   selfCheckVerdict = 'BEST_EFFORT';
                   logger.info(
                     `[DeepThinking SelfCheck] Best effort after ${repairIterations} repair(s). ` +
-                    `Fail reasons: ${failReasons.join(', ')}`
+                      `Fail reasons: ${failReasons.join(', ')}`
                   );
                   break;
                 }
@@ -1804,11 +1835,11 @@ router.post(
                   const modelCfg = selectedModelId
                     ? await modelRouter.getProviderConfig(selectedModelId, tier)
                     : await modelRouter.select({
-                      capability: 'report_section',
-                      tier,
-                      organizationId: req.organizationId!,
-                      options: { tier },
-                    } as any);
+                        capability: 'report_section',
+                        tier,
+                        organizationId: req.organizationId!,
+                        options: { tier },
+                      } as any);
 
                   const repairSys = buildRepairPrompt(
                     currentText,
@@ -1922,7 +1953,7 @@ router.post(
                     if (!forceDepthDiff.isSubstantiallyDifferent) {
                       logger.warn(
                         `[DeepThinking] Force-depth FAIL: response too similar. ` +
-                        `Jaccard=${forceDepthDiff.jaccardSimilarity}, delta=${forceDepthDiff.rubricDelta}`
+                          `Jaccard=${forceDepthDiff.jaccardSimilarity}, delta=${forceDepthDiff.rubricDelta}`
                       );
                       // Emit explicit quality FAIL signal to frontend (non-blocking, but must be visible).
                       emitSSE({
@@ -2099,7 +2130,9 @@ router.post(
                 const kgService = (kgMod as any).knowledgeGraphService || (kgMod as any).default;
                 if (kgService?.processConversation) {
                   // Fire and forget — don't block the stream
-                  kgService.processConversation(req.organizationId, message, accumulatedContent).catch(() => { });
+                  kgService
+                    .processConversation(req.organizationId, message, accumulatedContent)
+                    .catch(() => {});
                 }
               }
             } catch {
@@ -2145,7 +2178,10 @@ router.post(
               const costSvc = (costMod as any).aiCostMonitoring || (costMod as any).default;
               if (costSvc?.recordUsage) {
                 const estimatedInput = Math.max(10, Math.ceil((message?.length || 0) / 4));
-                const estimatedOutput = Math.max(10, Math.ceil((accumulatedContent?.length || 0) / 4));
+                const estimatedOutput = Math.max(
+                  10,
+                  Math.ceil((accumulatedContent?.length || 0) / 4)
+                );
                 // Use actual token counts from pipeline metadata when available
                 const inputTokens = (pipelineMeta as any)?.inputTokens || estimatedInput;
                 const outputTokens = (pipelineMeta as any)?.outputTokens || estimatedOutput;
@@ -2212,9 +2248,7 @@ router.post(
       } else {
         if (isClientConnected && !res.destroyed) {
           const nonStreamContent = String((response as { content?: string }).content || '');
-          res.write(
-            `data: ${JSON.stringify({ text: nonStreamContent })}\n\n`
-          );
+          res.write(`data: ${JSON.stringify({ text: nonStreamContent })}\n\n`);
 
           // Post-response: quality scoring + citations + cost monitoring (same as streaming branch)
           if (nonStreamContent.trim().length > 0) {
@@ -2223,13 +2257,17 @@ router.post(
               const qc = (qcMod as any).qualityChecker || (qcMod as any).default;
               if (qc?.check) {
                 const qs = await qc.check({
-                  question: message, response: nonStreamContent,
+                  question: message,
+                  response: nonStreamContent,
                   conversationId: conversationId || undefined,
-                  userId: req.userId, organizationId: req.organizationId,
+                  userId: req.userId,
+                  organizationId: req.organizationId,
                 });
                 if (qs && typeof qs.overall === 'number') emitSSE({ type: 'quality_score', ...qs });
               }
-            } catch { /* ignore */ }
+            } catch {
+              /* ignore */
+            }
 
             try {
               const ceMod = await import('../services/ai/citationExtractor.js');
@@ -2238,15 +2276,22 @@ router.post(
                 const cr = ce.extract(nonStreamContent, [], []);
                 if (cr?.citations?.length > 0) {
                   emitSSE({
-                    type: 'citations', citations: cr.citations.map((c: any) => ({
-                      id: c.id, type: c.sourceType || 'document', title: c.sourceTitle || '',
-                      reference: c.sourceUrl || c.sourceId || '', link: c.sourceUrl || '',
-                      excerpt: c.text || '', confidence: c.confidence,
-                    }))
+                    type: 'citations',
+                    citations: cr.citations.map((c: any) => ({
+                      id: c.id,
+                      type: c.sourceType || 'document',
+                      title: c.sourceTitle || '',
+                      reference: c.sourceUrl || c.sourceId || '',
+                      link: c.sourceUrl || '',
+                      excerpt: c.text || '',
+                      confidence: c.confidence,
+                    })),
                   });
                 }
               }
-            } catch { /* ignore */ }
+            } catch {
+              /* ignore */
+            }
 
             try {
               const costMod = await import('../services/ai/cost-monitoring.service.js');
@@ -2256,12 +2301,18 @@ router.post(
                 const eo = Math.max(10, Math.ceil((nonStreamContent?.length || 0) / 4));
                 const it = (pipelineMeta as any)?.inputTokens || ei;
                 const ot = (pipelineMeta as any)?.outputTokens || eo;
-                costSvc.recordUsage(req.userId!, req.organizationId!,
+                costSvc.recordUsage(
+                  req.userId!,
+                  req.organizationId!,
                   (selectedTier || 'STANDARD') as any,
-                  pipelineMeta?.provider || 'unknown', pipelineMeta?.model || 'unknown',
-                  { inputTokens: it, outputTokens: ot, totalTokens: it + ot });
+                  pipelineMeta?.provider || 'unknown',
+                  pipelineMeta?.model || 'unknown',
+                  { inputTokens: it, outputTokens: ot, totalTokens: it + ot }
+                );
               }
-            } catch { /* ignore */ }
+            } catch {
+              /* ignore */
+            }
           }
 
           streamCompleted = true;
@@ -2885,16 +2936,16 @@ router.post(
       const initiativesToGenerate =
         Object.keys(assessment).length > 0
           ? axes.filter((axis) => {
-            const axisData = assessment[axis] as
-              | { current?: number; target?: number }
-              | undefined;
-            return (
-              axisData &&
-              axisData.current !== undefined &&
-              axisData.target !== undefined &&
-              axisData.current < axisData.target
-            );
-          })
+              const axisData = assessment[axis] as
+                | { current?: number; target?: number }
+                | undefined;
+              return (
+                axisData &&
+                axisData.current !== undefined &&
+                axisData.target !== undefined &&
+                axisData.current < axisData.target
+              );
+            })
           : axes.slice(0, 5);
 
       return initiativesToGenerate.map((axis) => {
@@ -3197,11 +3248,11 @@ router.post(
 
       const depsSummary = Array.isArray(dependencies)
         ? dependencies
-          .map(
-            (dep: any) =>
-              `- ${dep.fromInitiativeId} -> ${dep.toInitiativeId} (${dep.type || 'FINISH_TO_START'})`
-          )
-          .join('\n')
+            .map(
+              (dep: any) =>
+                `- ${dep.fromInitiativeId} -> ${dep.toInitiativeId} (${dep.type || 'FINISH_TO_START'})`
+            )
+            .join('\n')
         : 'None';
 
       const conflictsPrompt = `Analyze the following initiative schedule and dependencies. Identify resource conflicts, timeline overlaps, and dependency risks.
@@ -3794,7 +3845,10 @@ router.post(
           logger.debug(`[AI Feedback] Learning system processed feedback for message ${messageId}`);
         }
       } catch (learnErr) {
-        logger.warn('[AI] Could not process feedback in learning system:', (learnErr as Error).message);
+        logger.warn(
+          '[AI] Could not process feedback in learning system:',
+          (learnErr as Error).message
+        );
       }
 
       return res.json({ success: true });
@@ -4205,7 +4259,8 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { chartType, chartData, userRole } = req.body;
-    if (!chartType || !chartData) return res.status(400).json({ error: 'Chart type and data required' });
+    if (!chartType || !chartData)
+      return res.status(400).json({ error: 'Chart type and data required' });
 
     try {
       const { narrateChartData } = await import('../services/ai/intelligentFeatures.js');

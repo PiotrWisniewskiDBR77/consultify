@@ -67,8 +67,10 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: <Minimize2 className="w-4 h-4" />,
     label: 'Make Shorter',
     labelPl: 'Skróć',
-    instruction: 'Make this section significantly shorter. Keep only the most critical points. Remove redundancy.',
-    instructionPl: 'Znacząco skróć tę sekcję. Zachowaj tylko najważniejsze punkty. Usuń powtórzenia.',
+    instruction:
+      'Make this section significantly shorter. Keep only the most critical points. Remove redundancy.',
+    instructionPl:
+      'Znacząco skróć tę sekcję. Zachowaj tylko najważniejsze punkty. Usuń powtórzenia.',
     category: 'length',
   },
   {
@@ -76,8 +78,10 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: <ArrowUpRight className="w-4 h-4" />,
     label: 'Expand & Detail',
     labelPl: 'Rozwiń i uszczegółów',
-    instruction: 'Expand this section with more detail, examples, and supporting evidence. Add depth to each point.',
-    instructionPl: 'Rozwiń tę sekcję z większą ilością szczegółów, przykładów i dowodów. Dodaj głębię do każdego punktu.',
+    instruction:
+      'Expand this section with more detail, examples, and supporting evidence. Add depth to each point.',
+    instructionPl:
+      'Rozwiń tę sekcję z większą ilością szczegółów, przykładów i dowodów. Dodaj głębię do każdego punktu.',
     category: 'length',
   },
 
@@ -87,8 +91,10 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: <Target className="w-4 h-4" />,
     label: 'Executive Tone',
     labelPl: 'Ton zarządczy',
-    instruction: 'Rewrite in executive summary style: concise, action-oriented, focused on business impact and strategic decisions.',
-    instructionPl: 'Przepisz w stylu podsumowania zarządczego: zwięźle, nastawione na działanie, fokus na wpływ biznesowy i decyzje strategiczne.',
+    instruction:
+      'Rewrite in executive summary style: concise, action-oriented, focused on business impact and strategic decisions.',
+    instructionPl:
+      'Przepisz w stylu podsumowania zarządczego: zwięźle, nastawione na działanie, fokus na wpływ biznesowy i decyzje strategiczne.',
     category: 'tone',
   },
   {
@@ -96,7 +102,8 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: <Type className="w-4 h-4" />,
     label: 'Simplify Language',
     labelPl: 'Uprość język',
-    instruction: 'Simplify the language. Remove jargon. Make it accessible to non-technical stakeholders.',
+    instruction:
+      'Simplify the language. Remove jargon. Make it accessible to non-technical stakeholders.',
     instructionPl: 'Uprość język. Usuń żargon. Zrób dostępnym dla nietechnicznych odbiorców.',
     category: 'tone',
   },
@@ -105,8 +112,10 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: <Zap className="w-4 h-4" />,
     label: 'More Persuasive',
     labelPl: 'Bardziej przekonujący',
-    instruction: 'Make the content more persuasive and action-driving. Emphasize urgency, benefits, and competitive advantage.',
-    instructionPl: 'Uczyń treść bardziej przekonującą. Podkreśl pilność, korzyści i przewagę konkurencyjną.',
+    instruction:
+      'Make the content more persuasive and action-driving. Emphasize urgency, benefits, and competitive advantage.',
+    instructionPl:
+      'Uczyń treść bardziej przekonującą. Podkreśl pilność, korzyści i przewagę konkurencyjną.',
     category: 'tone',
   },
 
@@ -116,8 +125,10 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: <BarChart3 className="w-4 h-4" />,
     label: 'Add More Data',
     labelPl: 'Dodaj więcej danych',
-    instruction: 'Include more specific data points, metrics, percentages, and quantitative evidence. Reference actual assessment scores.',
-    instructionPl: 'Dodaj więcej konkretnych danych, metryk, procentów i ilościowych dowodów. Odwołuj się do wyników oceny.',
+    instruction:
+      'Include more specific data points, metrics, percentages, and quantitative evidence. Reference actual assessment scores.',
+    instructionPl:
+      'Dodaj więcej konkretnych danych, metryk, procentów i ilościowych dowodów. Odwołuj się do wyników oceny.',
     category: 'content',
   },
   {
@@ -125,8 +136,10 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: <BookOpen className="w-4 h-4" />,
     label: 'Add Examples',
     labelPl: 'Dodaj przykłady',
-    instruction: 'Add practical examples and real-world scenarios to illustrate each key point. Make abstract concepts concrete.',
-    instructionPl: 'Dodaj praktyczne przykłady i scenariusze z życia, aby zilustrować każdy kluczowy punkt.',
+    instruction:
+      'Add practical examples and real-world scenarios to illustrate each key point. Make abstract concepts concrete.',
+    instructionPl:
+      'Dodaj praktyczne przykłady i scenariusze z życia, aby zilustrować każdy kluczowy punkt.',
     category: 'content',
   },
   {
@@ -134,8 +147,10 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: <ArrowDownRight className="w-4 h-4" />,
     label: 'Add Actions',
     labelPl: 'Dodaj działania',
-    instruction: 'Add concrete, actionable recommendations or next steps for each finding or observation.',
-    instructionPl: 'Dodaj konkretne, wykonalne rekomendacje lub następne kroki dla każdego wniosku.',
+    instruction:
+      'Add concrete, actionable recommendations or next steps for each finding or observation.',
+    instructionPl:
+      'Dodaj konkretne, wykonalne rekomendacje lub następne kroki dla każdego wniosku.',
     category: 'content',
   },
 
@@ -145,8 +160,10 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: <MoreHorizontal className="w-4 h-4" />,
     label: 'Convert to Bullets',
     labelPl: 'Zamień na punkty',
-    instruction: 'Restructure this content into clear bullet points. Each bullet should be self-contained and actionable.',
-    instructionPl: 'Zmień strukturę na przejrzyste punkty. Każdy punkt powinien być samodzielny i wykonalny.',
+    instruction:
+      'Restructure this content into clear bullet points. Each bullet should be self-contained and actionable.',
+    instructionPl:
+      'Zmień strukturę na przejrzyste punkty. Każdy punkt powinien być samodzielny i wykonalny.',
     category: 'format',
   },
   {
@@ -154,8 +171,10 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: <MessageCircle className="w-4 h-4" />,
     label: 'Convert to Prose',
     labelPl: 'Zamień na tekst ciągły',
-    instruction: 'Rewrite this content in flowing prose paragraphs. Create smooth transitions between ideas.',
-    instructionPl: 'Przepisz jako płynne akapity tekstu ciągłego. Twórz gładkie przejścia między myślami.',
+    instruction:
+      'Rewrite this content in flowing prose paragraphs. Create smooth transitions between ideas.',
+    instructionPl:
+      'Przepisz jako płynne akapity tekstu ciągłego. Twórz gładkie przejścia między myślami.',
     category: 'format',
   },
 ];
@@ -274,9 +293,11 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
                     disabled={isProcessing}
                     className={`
                       w-full flex items-center gap-2.5 px-3 py-2 text-left rounded-lg transition-all
-                      ${activeAction === action.id
-                        ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300'
-                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}
+                      ${
+                        activeAction === action.id
+                          ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300'
+                          : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                      }
                       ${isProcessing && activeAction !== action.id ? 'opacity-50' : ''}
                     `}
                   >
@@ -300,15 +321,19 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
         {/* Full Regenerate */}
         <div className="mt-1 pt-1 border-t border-slate-200 dark:border-slate-700">
           <button
-            onClick={() => handleQuickAction({
-              id: 'regenerate_full',
-              icon: <RefreshCw className="w-4 h-4" />,
-              label: 'Regenerate Completely',
-              labelPl: 'Wygeneruj od nowa',
-              instruction: 'Regenerate this section completely with fresh content. Keep the same structure and format but write entirely new text.',
-              instructionPl: 'Wygeneruj tę sekcję całkowicie od nowa. Zachowaj strukturę i format, ale napisz zupełnie nowy tekst.',
-              category: 'content',
-            })}
+            onClick={() =>
+              handleQuickAction({
+                id: 'regenerate_full',
+                icon: <RefreshCw className="w-4 h-4" />,
+                label: 'Regenerate Completely',
+                labelPl: 'Wygeneruj od nowa',
+                instruction:
+                  'Regenerate this section completely with fresh content. Keep the same structure and format but write entirely new text.',
+                instructionPl:
+                  'Wygeneruj tę sekcję całkowicie od nowa. Zachowaj strukturę i format, ale napisz zupełnie nowy tekst.',
+                category: 'content',
+              })
+            }
             disabled={isProcessing}
             className="w-full flex items-center gap-2.5 px-3 py-2 text-left rounded-lg text-slate-700 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 transition-all"
           >

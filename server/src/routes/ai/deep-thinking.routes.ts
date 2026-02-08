@@ -180,7 +180,11 @@ router.get(
 
     const safeParse = (val: any, fallback: any = null) => {
       if (!val) return fallback;
-      try { return JSON.parse(val); } catch { return fallback; }
+      try {
+        return JSON.parse(val);
+      } catch {
+        return fallback;
+      }
     };
 
     return res.json({

@@ -2,7 +2,7 @@
  * Atomic: Source Tag
  * Small "Source: ..." label — data provenance for charts and insights.
  */
-import type { DesignTokens, RenderedElement, ElementPosition } from '../types.js';
+import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface SourceTagProps {
   source: string;
@@ -12,7 +12,7 @@ export interface SourceTagProps {
 export function SourceTag(props: SourceTagProps, tokens: DesignTokens): RenderedElement {
   const pos: ElementPosition = {
     x: props.position?.x ?? tokens.grid.contentX,
-    y: props.position?.y ?? (tokens.grid.footerY - 0.3),
+    y: props.position?.y ?? tokens.grid.footerY - 0.3,
     w: props.position?.w ?? 5,
     h: props.position?.h ?? 0.25,
   };

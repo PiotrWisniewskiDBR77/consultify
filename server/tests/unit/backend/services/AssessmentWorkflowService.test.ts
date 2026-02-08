@@ -150,9 +150,7 @@ describe('AssessmentWorkflowService', () => {
 
   describe('Error Handling', () => {
     it('should handle database errors during transition', async () => {
-      (mockDb.get as ReturnType<typeof vi.fn>).mockRejectedValue(
-        new Error('Connection timeout')
-      );
+      (mockDb.get as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Connection timeout'));
 
       const svc = AssessmentWorkflowService as any;
       if (svc.requestReview) {

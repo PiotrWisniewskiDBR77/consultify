@@ -104,7 +104,12 @@ const DIST_STEPS: WStep[] = [
   { key: 'UTILIZED', en: 'Utilized', pl: 'Wykorzystany' },
 ];
 
-function stepState(stepKey: ReportStatus, current: ReportStatus, steps: WStep[], openComments: number): StepState {
+function stepState(
+  stepKey: ReportStatus,
+  current: ReportStatus,
+  steps: WStep[],
+  openComments: number
+): StepState {
   const si = steps.findIndex((s) => s.key === stepKey);
   const ci = steps.findIndex((s) => s.key === current);
   if (ci < 0) return 'done'; // current not in list = all done
@@ -150,17 +155,26 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
       const r = await Api.get(`/report-builder/${reportId}/comments`);
       setComments(r?.comments || []);
       setSummary(r?.summary || null);
-    } catch { /* */ } finally { setIsLoading(false); }
+    } catch {
+      /* */
+    } finally {
+      setIsLoading(false);
+    }
   }, [reportId]);
 
   const loadOrgUsers = useCallback(async () => {
     try {
       const r = await Api.get('/users');
       setOrgUsers(Array.isArray(r) ? r : r?.users || []);
-    } catch { /* */ }
+    } catch {
+      /* */
+    }
   }, []);
 
-  useEffect(() => { loadComments(); loadOrgUsers(); }, [loadComments, loadOrgUsers]);
+  useEffect(() => {
+    loadComments();
+    loadOrgUsers();
+  }, [loadComments, loadOrgUsers]);
 
   const openCount = summary?.open || 0;
   const canApprove = reportStatus === 'IN_REVIEW' && openCount === 0;
@@ -175,28 +189,39 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
     });
   }, [orgUsers, reviewerSearch]);
 
-  const userName = (u: OrgUser) => u.name || `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || u.id;
+  const userName = (u: OrgUser) =>
+    u.name || `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || u.id;
 
   // Actions
   const handleAddComment = async () => {
     if (!newCommentContent.trim()) return;
     setIsSubmitting(true);
     try {
-      const r = await Api.post(`/report-builder/${reportId}/comments`, { content: newCommentContent.trim(), commentType: newCommentType });
+      const r = await Api.post(`/report-builder/${reportId}/comments`, {
+        content: newCommentContent.trim(),
+        commentType: newCommentType,
+      });
       if (r?.comment) {
         setComments((p) => [r.comment, ...p]);
-        setSummary((p) => p ? { ...p, total: p.total + 1, open: p.open + 1 } : p);
-        setNewCommentContent(''); setShowAddComment(false);
+        setSummary((p) => (p ? { ...p, total: p.total + 1, open: p.open + 1 } : p));
+        setNewCommentContent('');
+        setShowAddComment(false);
       }
-    } catch (e: any) { toast.error(e?.message || 'Error'); } finally { setIsSubmitting(false); }
+    } catch (e: any) {
+      toast.error(e?.message || 'Error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const resolveComment = async (id: string) => {
     try {
       await Api.post(`/report-builder/${reportId}/comments/${id}/resolve`, {});
-      setComments((p) => p.map((c) => c.id === id ? { ...c, status: 'RESOLVED' } : c));
-      setSummary((p) => p ? { ...p, open: p.open - 1, resolved: p.resolved + 1 } : p);
-    } catch (e: any) { toast.error(e?.message || 'Error'); }
+      setComments((p) => p.map((c) => (c.id === id ? { ...c, status: 'RESOLVED' } : c)));
+      setSummary((p) => (p ? { ...p, open: p.open - 1, resolved: p.resolved + 1 } : p));
+    } catch (e: any) {
+      toast.error(e?.message || 'Error');
+    }
   };
 
   const deleteComment = async (id: string) => {
@@ -206,30 +231,119 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
       setComments((p) => p.filter((c) => c.id !== id));
       if (d && summary) {
         const s = { ...summary, total: summary.total - 1 };
-        if (d.status === 'OPEN') s.open--; else if (d.status === 'RESOLVED') s.resolved--; else if (d.status === 'DISMISSED') s.dismissed--;
+        if (d.status === 'OPEN') s.open--;
+        else if (d.status === 'RESOLVED') s.resolved--;
+        else if (d.status === 'DISMISSED') s.dismissed--;
         setSummary(s);
       }
-    } catch (e: any) { toast.error(e?.message || 'Error'); }
+    } catch (e: any) {
+      toast.error(e?.message || 'Error');
+    }
   };
 
   const doFinalize = async () => {
     setIsSubmitting(true);
     try {
-      await Api.post(`/report-builder/${reportId}/finalize`, { reviewers: selectedReviewers.length > 0 ? selectedReviewers : undefined, message: reviewMessage.trim() || undefined });
-      onStatusChange('IN_REVIEW'); setShowReviewerPicker(false); setSelectedReviewers([]); setReviewMessage('');
+      await Api.post(`/report-builder/${reportId}/finalize`, {
+        reviewers: selectedReviewers.length > 0 ? selectedReviewers : undefined,
+        message: reviewMessage.trim() || undefined,
+      });
+      onStatusChange('IN_REVIEW');
+      setShowReviewerPicker(false);
+      setSelectedReviewers([]);
+      setReviewMessage('');
       toast.success(isPolish ? 'Wysłano do recenzji' : 'Sent for review');
-    } catch (e: any) { toast.error(e?.error || e?.message || 'Error'); } finally { setIsSubmitting(false); }
+    } catch (e: any) {
+      toast.error(e?.error || e?.message || 'Error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const doApprove = async () => { setIsSubmitting(true); try { await Api.post(`/report-builder/${reportId}/approve`, {}); onStatusChange('APPROVED'); toast.success(isPolish ? 'Zatwierdzono' : 'Approved'); } catch (e: any) { toast.error(e?.error || e?.message || 'Error'); } finally { setIsSubmitting(false); } };
-  const doSendBack = async () => { setIsSubmitting(true); try { await Api.post(`/report-builder/${reportId}/send-back`, {}); onStatusChange('DRAFT'); toast.success(isPolish ? 'Odesłano' : 'Sent back'); } catch (e: any) { toast.error(e?.error || e?.message || 'Error'); } finally { setIsSubmitting(false); } };
-  const doReject = async () => { const r = prompt(isPolish ? 'Powód:' : 'Reason:'); if (r === null) return; setIsSubmitting(true); try { await Api.post(`/report-builder/${reportId}/reject`, { reason: r }); onStatusChange('DRAFT'); toast.success(isPolish ? 'Odrzucono' : 'Rejected'); } catch (e: any) { toast.error(e?.error || e?.message || 'Error'); } finally { setIsSubmitting(false); } };
-  const doSendInt = async () => { setIsSubmitting(true); try { await Api.post(`/report-builder/${reportId}/mark-sent-internal`, {}); onStatusChange('SENT_INTERNAL'); } catch (e: any) { toast.error(e?.error || 'Error'); } finally { setIsSubmitting(false); } };
-  const doSendExt = async () => { setIsSubmitting(true); try { await Api.post(`/report-builder/${reportId}/mark-sent-external`, {}); onStatusChange('SENT_EXTERNAL'); } catch (e: any) { toast.error(e?.error || 'Error'); } finally { setIsSubmitting(false); } };
-  const doUtilize = async () => { setIsSubmitting(true); try { await Api.post(`/report-builder/${reportId}/utilize`, {}); onStatusChange('UTILIZED'); } catch (e: any) { toast.error(e?.error || 'Error'); } finally { setIsSubmitting(false); } };
+  const doApprove = async () => {
+    setIsSubmitting(true);
+    try {
+      await Api.post(`/report-builder/${reportId}/approve`, {});
+      onStatusChange('APPROVED');
+      toast.success(isPolish ? 'Zatwierdzono' : 'Approved');
+    } catch (e: any) {
+      toast.error(e?.error || e?.message || 'Error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  const doSendBack = async () => {
+    setIsSubmitting(true);
+    try {
+      await Api.post(`/report-builder/${reportId}/send-back`, {});
+      onStatusChange('DRAFT');
+      toast.success(isPolish ? 'Odesłano' : 'Sent back');
+    } catch (e: any) {
+      toast.error(e?.error || e?.message || 'Error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  const doReject = async () => {
+    const r = prompt(isPolish ? 'Powód:' : 'Reason:');
+    if (r === null) return;
+    setIsSubmitting(true);
+    try {
+      await Api.post(`/report-builder/${reportId}/reject`, { reason: r });
+      onStatusChange('DRAFT');
+      toast.success(isPolish ? 'Odrzucono' : 'Rejected');
+    } catch (e: any) {
+      toast.error(e?.error || e?.message || 'Error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  const doSendInt = async () => {
+    setIsSubmitting(true);
+    try {
+      await Api.post(`/report-builder/${reportId}/mark-sent-internal`, {});
+      onStatusChange('SENT_INTERNAL');
+    } catch (e: any) {
+      toast.error(e?.error || 'Error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  const doSendExt = async () => {
+    setIsSubmitting(true);
+    try {
+      await Api.post(`/report-builder/${reportId}/mark-sent-external`, {});
+      onStatusChange('SENT_EXTERNAL');
+    } catch (e: any) {
+      toast.error(e?.error || 'Error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  const doUtilize = async () => {
+    setIsSubmitting(true);
+    try {
+      await Api.post(`/report-builder/${reportId}/utilize`, {});
+      onStatusChange('UTILIZED');
+    } catch (e: any) {
+      toast.error(e?.error || 'Error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-  const toggleReviewer = (uid: string) => setSelectedReviewers((p) => p.includes(uid) ? p.filter((i) => i !== uid) : [...p, uid]);
-  const toggleComment = (id: string) => setExpandedComments((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggleReviewer = (uid: string) =>
+    setSelectedReviewers((p) => (p.includes(uid) ? p.filter((i) => i !== uid) : [...p, uid]));
+  const toggleComment = (id: string) =>
+    setExpandedComments((p) => {
+      const n = new Set(p);
+      if (n.has(id)) {
+        n.delete(id);
+      } else {
+        n.add(id);
+      }
+      return n;
+    });
 
   // ==========================================
   // RENDER HELPERS
@@ -238,9 +352,30 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
   const Dot: React.FC<{ state: StepState; small?: boolean }> = ({ state, small }) => {
     const sz = small ? 'w-3 h-3' : 'w-[14px] h-[14px]';
     const icsz = small ? 'w-2 h-2' : 'w-2.5 h-2.5';
-    if (state === 'done') return <div className={`${sz} rounded-full bg-emerald-500/90 flex items-center justify-center flex-shrink-0`}><Check className={`${icsz} text-white`} strokeWidth={3} /></div>;
-    if (state === 'active') return <div className={`${sz} rounded-full bg-amber-400 flex items-center justify-center flex-shrink-0 shadow-[0_0_8px_rgba(251,191,36,0.4)]`}><div className="w-1.5 h-1.5 rounded-full bg-amber-800" /></div>;
-    if (state === 'blocked') return <div className={`${sz} rounded-full bg-red-500/80 flex items-center justify-center flex-shrink-0`}><Lock className="w-2 h-2 text-white" /></div>;
+    if (state === 'done')
+      return (
+        <div
+          className={`${sz} rounded-full bg-emerald-500/90 flex items-center justify-center flex-shrink-0`}
+        >
+          <Check className={`${icsz} text-white`} strokeWidth={3} />
+        </div>
+      );
+    if (state === 'active')
+      return (
+        <div
+          className={`${sz} rounded-full bg-amber-400 flex items-center justify-center flex-shrink-0 shadow-[0_0_8px_rgba(251,191,36,0.4)]`}
+        >
+          <div className="w-1.5 h-1.5 rounded-full bg-amber-800" />
+        </div>
+      );
+    if (state === 'blocked')
+      return (
+        <div
+          className={`${sz} rounded-full bg-red-500/80 flex items-center justify-center flex-shrink-0`}
+        >
+          <Lock className="w-2 h-2 text-white" />
+        </div>
+      );
     return <div className={`${sz} rounded-full border border-slate-600 flex-shrink-0`} />;
   };
 
@@ -251,7 +386,9 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
   const renderSteps = (steps: WStep[], overrideAllDone = false) => (
     <>
       {steps.map((step, idx) => {
-        const st = overrideAllDone ? 'done' as StepState : stepState(step.key, reportStatus, steps, openCount);
+        const st = overrideAllDone
+          ? ('done' as StepState)
+          : stepState(step.key, reportStatus, steps, openCount);
         const isCurrent = step.key === reportStatus;
         const isLast = idx === steps.length - 1;
 
@@ -259,42 +396,76 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
         let action: React.ReactNode = null;
         if (isCurrent && step.key === 'GENERATED' && !showReviewerPicker) {
           action = (
-            <button onClick={() => setShowReviewerPicker(true)}
-              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-1">
+            <button
+              onClick={() => setShowReviewerPicker(true)}
+              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-1"
+            >
               <Send className="w-2.5 h-2.5" /> {isPolish ? 'Do recenzji' : 'Review'}
             </button>
           );
         }
         if (isCurrent && step.key === 'IN_REVIEW' && canApprove) {
           action = (
-            <button onClick={doApprove} disabled={isSubmitting}
-              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-50 transition-colors flex items-center gap-1">
-              {isSubmitting ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <ThumbsUp className="w-2.5 h-2.5" />} {isPolish ? 'Zatwierdź' : 'Approve'}
+            <button
+              onClick={doApprove}
+              disabled={isSubmitting}
+              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-50 transition-colors flex items-center gap-1"
+            >
+              {isSubmitting ? (
+                <Loader2 className="w-2.5 h-2.5 animate-spin" />
+              ) : (
+                <ThumbsUp className="w-2.5 h-2.5" />
+              )}{' '}
+              {isPolish ? 'Zatwierdź' : 'Approve'}
             </button>
           );
         }
         // Distribution actions
         if (reportStatus === 'APPROVED' && step.key === 'SENT_INTERNAL') {
           action = (
-            <button onClick={doSendInt} disabled={isSubmitting}
-              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center gap-1">
-              {isSubmitting ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Building2 className="w-2.5 h-2.5" />} {isPolish ? 'Wyślij' : 'Send'}
+            <button
+              onClick={doSendInt}
+              disabled={isSubmitting}
+              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center gap-1"
+            >
+              {isSubmitting ? (
+                <Loader2 className="w-2.5 h-2.5 animate-spin" />
+              ) : (
+                <Building2 className="w-2.5 h-2.5" />
+              )}{' '}
+              {isPolish ? 'Wyślij' : 'Send'}
             </button>
           );
         }
         if (isCurrent && step.key === 'SENT_INTERNAL') {
           action = (
-            <button onClick={doSendExt} disabled={isSubmitting}
-              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-violet-600 text-white rounded hover:bg-violet-700 disabled:opacity-50 transition-colors flex items-center gap-1">
-              {isSubmitting ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Globe className="w-2.5 h-2.5" />} {isPolish ? 'Klient' : 'Client'}
+            <button
+              onClick={doSendExt}
+              disabled={isSubmitting}
+              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-violet-600 text-white rounded hover:bg-violet-700 disabled:opacity-50 transition-colors flex items-center gap-1"
+            >
+              {isSubmitting ? (
+                <Loader2 className="w-2.5 h-2.5 animate-spin" />
+              ) : (
+                <Globe className="w-2.5 h-2.5" />
+              )}{' '}
+              {isPolish ? 'Klient' : 'Client'}
             </button>
           );
         }
         if (reportStatus === 'SENT_EXTERNAL' && step.key === 'UTILIZED') {
           action = (
-            <button onClick={doUtilize} disabled={isSubmitting}
-              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-50 transition-colors flex items-center gap-1">
-              {isSubmitting ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <CheckCircle className="w-2.5 h-2.5" />} {isPolish ? 'Zamknij' : 'Close'}
+            <button
+              onClick={doUtilize}
+              disabled={isSubmitting}
+              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-50 transition-colors flex items-center gap-1"
+            >
+              {isSubmitting ? (
+                <Loader2 className="w-2.5 h-2.5 animate-spin" />
+              ) : (
+                <CheckCircle className="w-2.5 h-2.5" />
+              )}{' '}
+              {isPolish ? 'Zamknij' : 'Close'}
             </button>
           );
         }
@@ -303,17 +474,23 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
           <React.Fragment key={step.key}>
             <div className="flex items-center gap-2 min-h-[22px]">
               <Dot state={st} />
-              <span className={`text-[11px] font-medium leading-none ${
-                st === 'done' ? 'text-emerald-400/80' :
-                st === 'active' ? 'text-amber-300' :
-                st === 'blocked' ? 'text-red-400/80' :
-                'text-slate-500/70'
-              }`}>
+              <span
+                className={`text-[11px] font-medium leading-none ${
+                  st === 'done'
+                    ? 'text-emerald-400/80'
+                    : st === 'active'
+                      ? 'text-amber-300'
+                      : st === 'blocked'
+                        ? 'text-red-400/80'
+                        : 'text-slate-500/70'
+                }`}
+              >
                 {isPolish ? step.pl : step.en}
               </span>
               {st === 'blocked' && step.key === 'APPROVED' && (
                 <span className="text-[8px] text-red-400/70 flex items-center gap-0.5">
-                  <AlertTriangle className="w-2 h-2" />{openCount}
+                  <AlertTriangle className="w-2 h-2" />
+                  {openCount}
                 </span>
               )}
               {action}
@@ -331,7 +508,6 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
 
   return (
     <div className="space-y-3">
-
       {/* ===== WORKFLOW ===== */}
       <div className="p-3 bg-slate-800/40 rounded-lg border border-slate-700/50">
         <div className="text-[8px] font-bold text-slate-500 uppercase tracking-[0.15em] mb-2.5">
@@ -353,20 +529,29 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
       {/* ===== REVIEW ACTIONS ===== */}
       {reportStatus === 'IN_REVIEW' && (
         <div className="flex gap-1.5">
-          <button onClick={doSendBack} disabled={isSubmitting}
-            className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium text-slate-400 border border-slate-700/60 rounded-md hover:bg-slate-800 hover:text-slate-200 transition-all">
+          <button
+            onClick={doSendBack}
+            disabled={isSubmitting}
+            className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium text-slate-400 border border-slate-700/60 rounded-md hover:bg-slate-800 hover:text-slate-200 transition-all"
+          >
             <ArrowLeft className="w-3 h-3" /> {isPolish ? 'Popraw' : 'Revise'}
           </button>
-          <button onClick={doReject} disabled={isSubmitting}
-            className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium text-red-400/80 border border-red-800/40 rounded-md hover:bg-red-950/30 hover:text-red-300 transition-all">
+          <button
+            onClick={doReject}
+            disabled={isSubmitting}
+            className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium text-red-400/80 border border-red-800/40 rounded-md hover:bg-red-950/30 hover:text-red-300 transition-all"
+          >
             <XCircle className="w-3 h-3" /> {isPolish ? 'Odrzuć' : 'Reject'}
           </button>
         </div>
       )}
 
       {reportStatus === 'APPROVED' && (
-        <button onClick={doReject} disabled={isSubmitting}
-          className="w-full py-1.5 text-[10px] font-medium text-red-400/70 border border-red-800/30 rounded-md hover:bg-red-950/20 hover:text-red-300 transition-all flex items-center justify-center gap-1">
+        <button
+          onClick={doReject}
+          disabled={isSubmitting}
+          className="w-full py-1.5 text-[10px] font-medium text-red-400/70 border border-red-800/30 rounded-md hover:bg-red-950/20 hover:text-red-300 transition-all flex items-center justify-center gap-1"
+        >
           <XCircle className="w-3 h-3" /> {isPolish ? 'Cofnij' : 'Revoke'}
         </button>
       )}
@@ -374,7 +559,9 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
       {reportStatus === 'UTILIZED' && (
         <div className="py-2 text-center">
           <CheckCircle className="w-5 h-5 text-emerald-500/70 mx-auto mb-1" />
-          <p className="text-[10px] text-emerald-400/60 font-medium">{isPolish ? 'Cykl zakończony' : 'Complete'}</p>
+          <p className="text-[10px] text-emerald-400/60 font-medium">
+            {isPolish ? 'Cykl zakończony' : 'Complete'}
+          </p>
         </div>
       )}
 
@@ -385,21 +572,38 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
             <span className="text-[9px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1">
               <Send className="w-3 h-3" /> {isPolish ? 'Wyślij do recenzji' : 'Send for Review'}
             </span>
-            <button onClick={() => { setShowReviewerPicker(false); setSelectedReviewers([]); }} className="p-0.5 text-blue-400 hover:text-blue-300"><X className="w-3 h-3" /></button>
+            <button
+              onClick={() => {
+                setShowReviewerPicker(false);
+                setSelectedReviewers([]);
+              }}
+              className="p-0.5 text-blue-400 hover:text-blue-300"
+            >
+              <X className="w-3 h-3" />
+            </button>
           </div>
 
-          <input type="text" value={reviewerSearch} onChange={(e) => setReviewerSearch(e.target.value)}
+          <input
+            type="text"
+            value={reviewerSearch}
+            onChange={(e) => setReviewerSearch(e.target.value)}
             placeholder={isPolish ? 'Szukaj...' : 'Search...'}
-            className="w-full px-2 py-1 text-[11px] border border-blue-800/40 rounded bg-slate-900 text-white outline-none focus:ring-1 focus:ring-blue-500 placeholder-slate-600" />
+            className="w-full px-2 py-1 text-[11px] border border-blue-800/40 rounded bg-slate-900 text-white outline-none focus:ring-1 focus:ring-blue-500 placeholder-slate-600"
+          />
 
           {selectedReviewers.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {selectedReviewers.map((uid) => {
                 const u = orgUsers.find((x) => x.id === uid);
                 return (
-                  <span key={uid} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-900/40 text-blue-300 rounded text-[9px] font-medium">
+                  <span
+                    key={uid}
+                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-900/40 text-blue-300 rounded text-[9px] font-medium"
+                  >
                     {u ? userName(u) : uid}
-                    <button onClick={() => toggleReviewer(uid)} className="hover:text-white"><X className="w-2 h-2" /></button>
+                    <button onClick={() => toggleReviewer(uid)} className="hover:text-white">
+                      <X className="w-2 h-2" />
+                    </button>
                   </span>
                 );
               })}
@@ -410,8 +614,11 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
             {filteredUsers.slice(0, 6).map((u) => {
               const sel = selectedReviewers.includes(u.id);
               return (
-                <button key={u.id} onClick={() => toggleReviewer(u.id)}
-                  className={`w-full flex items-center gap-2 px-2 py-1 rounded text-[10px] transition-colors ${sel ? 'bg-blue-900/40 text-blue-300' : 'hover:bg-slate-800 text-slate-400'}`}>
+                <button
+                  key={u.id}
+                  onClick={() => toggleReviewer(u.id)}
+                  className={`w-full flex items-center gap-2 px-2 py-1 rounded text-[10px] transition-colors ${sel ? 'bg-blue-900/40 text-blue-300' : 'hover:bg-slate-800 text-slate-400'}`}
+                >
                   <div className="w-4 h-4 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-[7px] font-bold flex-shrink-0">
                     {userName(u).charAt(0).toUpperCase()}
                   </div>
@@ -422,39 +629,69 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
             })}
           </div>
 
-          <textarea value={reviewMessage} onChange={(e) => setReviewMessage(e.target.value)}
+          <textarea
+            value={reviewMessage}
+            onChange={(e) => setReviewMessage(e.target.value)}
             placeholder={isPolish ? 'Wiadomość...' : 'Message...'}
             rows={2}
-            className="w-full px-2 py-1 text-[10px] border border-blue-800/40 rounded bg-slate-900 text-white outline-none resize-none placeholder-slate-600" />
+            className="w-full px-2 py-1 text-[10px] border border-blue-800/40 rounded bg-slate-900 text-white outline-none resize-none placeholder-slate-600"
+          />
 
-          <button onClick={doFinalize} disabled={isSubmitting}
-            className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 text-[10px] font-semibold transition-colors">
-            {isSubmitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
-            {selectedReviewers.length > 0 ? `${isPolish ? 'Wyślij do' : 'Send to'} ${selectedReviewers.length}` : (isPolish ? 'Wyślij' : 'Send')}
+          <button
+            onClick={doFinalize}
+            disabled={isSubmitting}
+            className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 text-[10px] font-semibold transition-colors"
+          >
+            {isSubmitting ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <Send className="w-3 h-3" />
+            )}
+            {selectedReviewers.length > 0
+              ? `${isPolish ? 'Wyślij do' : 'Send to'} ${selectedReviewers.length}`
+              : isPolish
+                ? 'Wyślij'
+                : 'Send'}
           </button>
         </div>
       )}
 
       {/* ===== COMMENTS ===== */}
       <div>
-        <button onClick={() => setCommentsOpen((v) => !v)} className="w-full flex items-center justify-between py-1 group">
+        <button
+          onClick={() => setCommentsOpen((v) => !v)}
+          className="w-full flex items-center justify-between py-1 group"
+        >
           <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
             <MessageSquare className="w-3 h-3" />
             {isPolish ? 'Komentarze' : 'Comments'}
             {summary && (
-              <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${
-                openCount > 0 ? 'bg-amber-900/30 text-amber-400' : 'bg-slate-800/60 text-slate-500'
-              }`}>
+              <span
+                className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${
+                  openCount > 0
+                    ? 'bg-amber-900/30 text-amber-400'
+                    : 'bg-slate-800/60 text-slate-500'
+                }`}
+              >
                 {openCount > 0 ? openCount : summary.total}
               </span>
             )}
           </span>
           <div className="flex items-center gap-1">
-            <button onClick={(e) => { e.stopPropagation(); setShowAddComment(!showAddComment); }}
-              className="p-0.5 text-blue-500 hover:bg-blue-900/20 rounded">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowAddComment(!showAddComment);
+              }}
+              className="p-0.5 text-blue-500 hover:bg-blue-900/20 rounded"
+            >
               {showAddComment ? <X className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
             </button>
-            {commentsOpen ? <ChevronDown className="w-3 h-3 text-slate-600" /> : <ChevronRight className="w-3 h-3 text-slate-600" />}
+            {commentsOpen ? (
+              <ChevronDown className="w-3 h-3 text-slate-600" />
+            ) : (
+              <ChevronRight className="w-3 h-3 text-slate-600" />
+            )}
           </div>
         </button>
 
@@ -463,35 +700,51 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
             {showAddComment && (
               <div className="p-2 bg-slate-800/40 rounded border border-slate-700/40 space-y-1.5">
                 <div className="flex gap-1">
-                  {([
+                  {[
                     { v: 'GENERAL' as const, l: isPolish ? 'Ogólny' : 'General' },
                     { v: 'ISSUE' as const, l: isPolish ? 'Problem' : 'Issue' },
                     { v: 'QUESTION' as const, l: isPolish ? 'Pytanie' : 'Q' },
                     { v: 'SUGGESTION' as const, l: isPolish ? 'Sugestia' : 'Suggest' },
-                  ]).map((t) => (
-                    <button key={t.v} onClick={() => setNewCommentType(t.v)}
-                      className={`px-1.5 py-0.5 text-[8px] rounded font-semibold ${newCommentType === t.v ? 'bg-blue-600 text-white' : 'bg-slate-700/60 text-slate-500 hover:text-slate-300'}`}>
+                  ].map((t) => (
+                    <button
+                      key={t.v}
+                      onClick={() => setNewCommentType(t.v)}
+                      className={`px-1.5 py-0.5 text-[8px] rounded font-semibold ${newCommentType === t.v ? 'bg-blue-600 text-white' : 'bg-slate-700/60 text-slate-500 hover:text-slate-300'}`}
+                    >
                       {t.l}
                     </button>
                   ))}
                 </div>
-                <textarea value={newCommentContent} onChange={(e) => setNewCommentContent(e.target.value)}
-                  placeholder={isPolish ? 'Komentarz...' : 'Comment...'} rows={2}
+                <textarea
+                  value={newCommentContent}
+                  onChange={(e) => setNewCommentContent(e.target.value)}
+                  placeholder={isPolish ? 'Komentarz...' : 'Comment...'}
+                  rows={2}
                   className="w-full px-2 py-1 text-[10px] border border-slate-700/40 rounded bg-slate-900 text-white resize-none outline-none placeholder-slate-600"
-                  onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleAddComment(); }} />
-                <button onClick={handleAddComment} disabled={isSubmitting || !newCommentContent.trim()}
-                  className="w-full py-1 bg-blue-600 text-white rounded text-[9px] font-semibold disabled:opacity-40 hover:bg-blue-700">
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleAddComment();
+                  }}
+                />
+                <button
+                  onClick={handleAddComment}
+                  disabled={isSubmitting || !newCommentContent.trim()}
+                  className="w-full py-1 bg-blue-600 text-white rounded text-[9px] font-semibold disabled:opacity-40 hover:bg-blue-700"
+                >
                   {isPolish ? 'Dodaj' : 'Add'}
                 </button>
               </div>
             )}
 
             {isLoading ? (
-              <div className="flex justify-center py-3"><Loader2 className="w-4 h-4 animate-spin text-slate-600" /></div>
+              <div className="flex justify-center py-3">
+                <Loader2 className="w-4 h-4 animate-spin text-slate-600" />
+              </div>
             ) : comments.length === 0 ? (
               <div className="text-center py-3">
                 <MessageSquare className="w-5 h-5 text-slate-700/60 mx-auto mb-0.5" />
-                <p className="text-[9px] text-slate-600">{isPolish ? 'Brak komentarzy' : 'No comments yet'}</p>
+                <p className="text-[9px] text-slate-600">
+                  {isPolish ? 'Brak komentarzy' : 'No comments yet'}
+                </p>
               </div>
             ) : (
               <div className="space-y-1 max-h-52 overflow-y-auto">
@@ -499,25 +752,62 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                   const exp = expandedComments.has(c.id);
                   const open = c.status === 'OPEN';
                   const tc: Record<string, string> = {
-                    ISSUE: 'text-red-400 bg-red-900/20', QUESTION: 'text-blue-400 bg-blue-900/20',
-                    SUGGESTION: 'text-purple-400 bg-purple-900/20', GENERAL: 'text-slate-400 bg-slate-700/40', APPROVAL: 'text-emerald-400 bg-emerald-900/20',
+                    ISSUE: 'text-red-400 bg-red-900/20',
+                    QUESTION: 'text-blue-400 bg-blue-900/20',
+                    SUGGESTION: 'text-purple-400 bg-purple-900/20',
+                    GENERAL: 'text-slate-400 bg-slate-700/40',
+                    APPROVAL: 'text-emerald-400 bg-emerald-900/20',
                   };
                   return (
-                    <div key={c.id} className={`p-1.5 rounded border ${open ? 'bg-slate-800/50 border-slate-700/40' : 'bg-slate-800/20 border-slate-700/20 opacity-50'}`}>
+                    <div
+                      key={c.id}
+                      className={`p-1.5 rounded border ${open ? 'bg-slate-800/50 border-slate-700/40' : 'bg-slate-800/20 border-slate-700/20 opacity-50'}`}
+                    >
                       <div className="flex items-start gap-1">
-                        <button onClick={() => toggleComment(c.id)} className="flex-1 text-left min-w-0">
+                        <button
+                          onClick={() => toggleComment(c.id)}
+                          className="flex-1 text-left min-w-0"
+                        >
                           <div className="flex items-center gap-1">
-                            <span className={`text-[7px] font-bold px-1 py-0.5 rounded ${tc[c.commentType] || tc.GENERAL}`}>{c.commentType}</span>
-                            {open && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />}
+                            <span
+                              className={`text-[7px] font-bold px-1 py-0.5 rounded ${tc[c.commentType] || tc.GENERAL}`}
+                            >
+                              {c.commentType}
+                            </span>
+                            {open && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+                            )}
                           </div>
-                          <p className={`text-[10px] text-slate-300 mt-0.5 leading-snug ${!exp ? 'line-clamp-1' : ''}`}>{c.content}</p>
+                          <p
+                            className={`text-[10px] text-slate-300 mt-0.5 leading-snug ${!exp ? 'line-clamp-1' : ''}`}
+                          >
+                            {c.content}
+                          </p>
                         </button>
                         <div className="flex items-center gap-0.5 flex-shrink-0 mt-0.5">
-                          {open && <button onClick={() => resolveComment(c.id)} className="p-0.5 text-emerald-500 hover:bg-emerald-900/20 rounded"><Check className="w-2.5 h-2.5" /></button>}
-                          <button onClick={() => deleteComment(c.id)} className="p-0.5 text-slate-600 hover:text-red-400 rounded"><Trash2 className="w-2 h-2" /></button>
+                          {open && (
+                            <button
+                              onClick={() => resolveComment(c.id)}
+                              className="p-0.5 text-emerald-500 hover:bg-emerald-900/20 rounded"
+                            >
+                              <Check className="w-2.5 h-2.5" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => deleteComment(c.id)}
+                            className="p-0.5 text-slate-600 hover:text-red-400 rounded"
+                          >
+                            <Trash2 className="w-2 h-2" />
+                          </button>
                         </div>
                       </div>
-                      {exp && <div className="mt-1 text-[8px] text-slate-600 flex items-center gap-1"><Clock className="w-2 h-2" />{new Date(c.createdAt).toLocaleString()}{c.authorName && ` · ${c.authorName}`}</div>}
+                      {exp && (
+                        <div className="mt-1 text-[8px] text-slate-600 flex items-center gap-1">
+                          <Clock className="w-2 h-2" />
+                          {new Date(c.createdAt).toLocaleString()}
+                          {c.authorName && ` · ${c.authorName}`}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

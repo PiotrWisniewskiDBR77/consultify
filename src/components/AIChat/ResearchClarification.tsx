@@ -91,15 +91,12 @@ export const ResearchClarification: React.FC<ResearchClarificationProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [message]);
 
-  const handleOptionSelect = useCallback(
-    (questionId: string, option: string) => {
-      setAnswers((prev) => ({
-        ...prev,
-        [questionId]: option,
-      }));
-    },
-    []
-  );
+  const handleOptionSelect = useCallback((questionId: string, option: string) => {
+    setAnswers((prev) => ({
+      ...prev,
+      [questionId]: option,
+    }));
+  }, []);
 
   const handleSubmit = useCallback(() => {
     // Convert answers map to question:answer format
@@ -141,10 +138,7 @@ export const ResearchClarification: React.FC<ResearchClarificationProps> = ({
         className={`bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800/50 p-4 ${className}`}
       >
         <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        <button
-          onClick={handleSkip}
-          className="mt-2 text-xs text-red-500 hover:underline"
-        >
+        <button onClick={handleSkip} className="mt-2 text-xs text-red-500 hover:underline">
           {t('research.skipAndSearch', 'Skip and start research')}
         </button>
       </div>

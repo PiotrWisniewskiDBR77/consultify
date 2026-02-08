@@ -118,9 +118,7 @@ const ENTITY_PATTERNS: Array<{ type: EntityType; patterns: RegExp[] }> = [
   },
   {
     type: 'risk',
-    patterns: [
-      /(?:ryzyko|risk|zagrożenie|threat):\s*(.{10,80}?)(?:\.|$)/gim,
-    ],
+    patterns: [/(?:ryzyko|risk|zagrożenie|threat):\s*(.{10,80}?)(?:\.|$)/gim],
   },
 ];
 
@@ -132,7 +130,8 @@ const RELATION_PATTERNS: Array<{
 }> = [
   {
     type: 'responsible_for',
-    pattern: /([A-ZŁŚŻŹĆŃ][a-złśżźćńóęą]+(?:\s+[A-ZŁŚŻŹĆŃ][a-złśżźćńóęą]+)?)\s+(?:jest odpowiedzialny za|is responsible for|owns|zarządza)\s+(.{5,60})/gi,
+    pattern:
+      /([A-ZŁŚŻŹĆŃ][a-złśżźćńóęą]+(?:\s+[A-ZŁŚŻŹĆŃ][a-złśżźćńóęą]+)?)\s+(?:jest odpowiedzialny za|is responsible for|owns|zarządza)\s+(.{5,60})/gi,
     sourceGroup: 1,
     targetGroup: 2,
   },
@@ -229,11 +228,11 @@ class KnowledgeGraphService {
 
     for (const entity of extraction.entities) {
       try {
-        const existing = await db.get(
+        const existing = (await db.get(
           `SELECT id, mentions FROM knowledge_graph_entities
            WHERE organization_id = ? AND LOWER(name) = LOWER(?) AND type = ?`,
           [organizationId, entity.name, entity.type]
-        ) as any;
+        )) as any;
 
         if (existing) {
           await db.run(
@@ -245,7 +244,15 @@ class KnowledgeGraphService {
           await db.run(
             `INSERT INTO knowledge_graph_entities (id, organization_id, name, type, attributes, first_seen, last_seen, mentions)
              VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
-            [uuidv4(), organizationId, entity.name, entity.type, JSON.stringify(entity.attributes || {}), now, now]
+            [
+              uuidv4(),
+              organizationId,
+              entity.name,
+              entity.type,
+              JSON.stringify(entity.attributes || {}),
+              now,
+              now,
+            ]
           );
         }
         entitiesStored++;
@@ -257,23 +264,31 @@ class KnowledgeGraphService {
     for (const relation of extraction.relations) {
       try {
         // Find source and target entity IDs
-        const sourceEntity = await db.get(
+        const sourceEntity = (await db.get(
           `SELECT id FROM knowledge_graph_entities
            WHERE organization_id = ? AND LOWER(name) = LOWER(?)`,
           [organizationId, relation.source]
-        ) as any;
+        )) as any;
 
-        const targetEntity = await db.get(
+        const targetEntity = (await db.get(
           `SELECT id FROM knowledge_graph_entities
            WHERE organization_id = ? AND LOWER(name) = LOWER(?)`,
           [organizationId, relation.target]
-        ) as any;
+        )) as any;
 
         if (sourceEntity && targetEntity) {
           await db.run(
             `INSERT INTO knowledge_graph_relations (id, organization_id, source_entity_id, target_entity_id, relation_type, attributes, confidence, created_at)
              VALUES (?, ?, ?, ?, ?, '{}', ?, ?)`,
-            [uuidv4(), organizationId, sourceEntity.id, targetEntity.id, relation.type, relation.confidence || 0.7, now]
+            [
+              uuidv4(),
+              organizationId,
+              sourceEntity.id,
+              targetEntity.id,
+              relation.type,
+              relation.confidence || 0.7,
+              now,
+            ]
           );
           relationsStored++;
         }
@@ -282,7 +297,9 @@ class KnowledgeGraphService {
       }
     }
 
-    logger.info(`[KnowledgeGraph] Stored ${entitiesStored} entities, ${relationsStored} relations for org ${organizationId}`);
+    logger.info(
+      `[KnowledgeGraph] Stored ${entitiesStored} entities, ${relationsStored} relations for org ${organizationId}`
+    );
     return { entitiesStored, relationsStored };
   }
 
@@ -332,10 +349,7 @@ class KnowledgeGraphService {
   /**
    * Get relations for an entity.
    */
-  async getRelations(
-    organizationId: string,
-    entityId: string
-  ): Promise<KnowledgeRelation[]> {
+  async getRelations(organizationId: string, entityId: string): Promise<KnowledgeRelation[]> {
     const db = await this.getDb();
     await this.ensureTables(db);
 
@@ -437,8 +451,12 @@ class KnowledgeGraphService {
         created_at TEXT NOT NULL
       )`);
 
-      await db.run(`CREATE INDEX IF NOT EXISTS idx_kg_entities_org ON knowledge_graph_entities(organization_id)`);
-      await db.run(`CREATE INDEX IF NOT EXISTS idx_kg_relations_org ON knowledge_graph_relations(organization_id)`);
+      await db.run(
+        `CREATE INDEX IF NOT EXISTS idx_kg_entities_org ON knowledge_graph_entities(organization_id)`
+      );
+      await db.run(
+        `CREATE INDEX IF NOT EXISTS idx_kg_relations_org ON knowledge_graph_relations(organization_id)`
+      );
     } catch {
       // Tables may already exist
     }
@@ -447,7 +465,11 @@ class KnowledgeGraphService {
 
 function safeParseJson(val: any): Record<string, any> {
   if (!val) return {};
-  try { return typeof val === 'string' ? JSON.parse(val) : val; } catch { return {}; }
+  try {
+    return typeof val === 'string' ? JSON.parse(val) : val;
+  } catch {
+    return {};
+  }
 }
 
 const knowledgeGraphService = new KnowledgeGraphService();

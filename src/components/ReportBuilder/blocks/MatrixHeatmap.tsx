@@ -63,9 +63,12 @@ function getScoreTextColor(score: number, max: number): string {
 }
 
 function getGapSeverity(gap: number): { label: string; color: string } {
-  if (gap <= 0.5) return { label: 'Minimal', color: 'text-green-600 bg-green-50 dark:bg-green-900/30' };
-  if (gap <= 1.5) return { label: 'Moderate', color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30' };
-  if (gap <= 2.5) return { label: 'Significant', color: 'text-orange-600 bg-orange-50 dark:bg-orange-900/30' };
+  if (gap <= 0.5)
+    return { label: 'Minimal', color: 'text-green-600 bg-green-50 dark:bg-green-900/30' };
+  if (gap <= 1.5)
+    return { label: 'Moderate', color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30' };
+  if (gap <= 2.5)
+    return { label: 'Significant', color: 'text-orange-600 bg-orange-50 dark:bg-orange-900/30' };
   return { label: 'Critical', color: 'text-red-600 bg-red-50 dark:bg-red-900/30' };
 }
 
@@ -78,18 +81,14 @@ export const MatrixHeatmap: React.FC<MatrixHeatmapProps> = ({
   primaryColor = '#3b82f6',
   compact = false,
 }) => {
-  const sortedAxes = useMemo(
-    () => [...data.axes].sort((a, b) => b.score - a.score),
-    [data.axes]
-  );
+  const sortedAxes = useMemo(() => [...data.axes].sort((a, b) => b.score - a.score), [data.axes]);
 
-  const overallPct = data.overallScore && data.overallMax
-    ? Math.round((data.overallScore / data.overallMax) * 100)
-    : Math.round(
-        (sortedAxes.reduce((s, a) => s + a.score, 0) /
-          (sortedAxes.length * data.scaleMax)) *
-          100
-      );
+  const overallPct =
+    data.overallScore && data.overallMax
+      ? Math.round((data.overallScore / data.overallMax) * 100)
+      : Math.round(
+          (sortedAxes.reduce((s, a) => s + a.score, 0) / (sortedAxes.length * data.scaleMax)) * 100
+        );
 
   return (
     <div className="space-y-4">
@@ -98,14 +97,18 @@ export const MatrixHeatmap: React.FC<MatrixHeatmapProps> = ({
         <div className="relative w-16 h-16 flex-shrink-0">
           <svg viewBox="0 0 36 36" className="w-16 h-16 -rotate-90">
             <circle
-              cx="18" cy="18" r="15.5"
+              cx="18"
+              cy="18"
+              r="15.5"
               fill="none"
               stroke="currentColor"
               strokeWidth="3"
               className="text-slate-200 dark:text-slate-700"
             />
             <circle
-              cx="18" cy="18" r="15.5"
+              cx="18"
+              cy="18"
+              r="15.5"
               fill="none"
               stroke={primaryColor}
               strokeWidth="3"
@@ -153,7 +156,9 @@ export const MatrixHeatmap: React.FC<MatrixHeatmapProps> = ({
                       {axis.axisName}
                     </span>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className={`text-sm font-bold ${getScoreTextColor(axis.score, data.scaleMax)}`}>
+                      <span
+                        className={`text-sm font-bold ${getScoreTextColor(axis.score, data.scaleMax)}`}
+                      >
                         {axis.score.toFixed(1)}
                       </span>
                       <span className="text-xs text-slate-400">/ {data.scaleMax}</span>
@@ -179,7 +184,9 @@ export const MatrixHeatmap: React.FC<MatrixHeatmapProps> = ({
                   {/* Gap Badge */}
                   {gap > 0 && !compact && (
                     <div className="flex items-center justify-between mt-1.5">
-                      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${gapInfo.color}`}>
+                      <span
+                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${gapInfo.color}`}
+                      >
                         Gap: {gap.toFixed(1)} ({gapInfo.label})
                       </span>
                       {axis.targetScore && (
@@ -197,11 +204,15 @@ export const MatrixHeatmap: React.FC<MatrixHeatmapProps> = ({
                 <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700/50 hidden group-hover:block">
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                     {axis.areas.map((area, ai) => {
-                      const areaPct = Math.round((area.score / (area.maxScore || data.scaleMax)) * 100);
+                      const areaPct = Math.round(
+                        (area.score / (area.maxScore || data.scaleMax)) * 100
+                      );
                       return (
                         <div key={ai} className="flex items-center gap-2">
                           <div className="flex-1 min-w-0">
-                            <span className="text-[10px] text-slate-500 truncate block">{area.name}</span>
+                            <span className="text-[10px] text-slate-500 truncate block">
+                              {area.name}
+                            </span>
                           </div>
                           <div className="w-16 h-1 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden flex-shrink-0">
                             <div

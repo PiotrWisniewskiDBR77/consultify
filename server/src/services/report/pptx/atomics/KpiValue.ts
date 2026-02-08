@@ -2,7 +2,7 @@
  * Atomic: KPI Value
  * Large, bold numeric value — the hero number in a KPI tile.
  */
-import type { DesignTokens, RenderedElement, ElementPosition } from '../types.js';
+import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface KpiValueProps {
   value: number | string;
@@ -12,9 +12,7 @@ export interface KpiValueProps {
 }
 
 export function KpiValue(props: KpiValueProps, tokens: DesignTokens): RenderedElement {
-  const displayText = props.unit
-    ? `${props.value}${props.unit}`
-    : String(props.value);
+  const displayText = props.unit ? `${props.value}${props.unit}` : String(props.value);
 
   return {
     kind: 'text',

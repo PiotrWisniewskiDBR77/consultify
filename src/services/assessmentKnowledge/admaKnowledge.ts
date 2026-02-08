@@ -8,7 +8,12 @@
  *
  * Structure: 5 Pillars, 12 Dimensions, Scale 1-5
  */
-import { ADMA_DIMENSIONS, ADMA_MATURITY_LEVELS, ADMA_PILLARS, ADMADimension } from '@/services/admaStructure';
+import {
+  ADMA_DIMENSIONS,
+  ADMA_MATURITY_LEVELS,
+  ADMA_PILLARS,
+  ADMADimension,
+} from '@/services/admaStructure';
 
 export type ADMALevelKnowledge = {
   questions: [string, string, string];
@@ -28,14 +33,22 @@ const DIMENSION_TECH: Record<string, Record<number, string[]>> = {
     2: ['Digital Maturity Assessment', 'Roadmap Tools', 'Strategy Frameworks'],
     3: ['Digital Strategy Platform', 'OKR/KPI Tracking', 'Portfolio Management'],
     4: ['AI-powered Strategy Simulation', 'Scenario Planning', 'Strategic Analytics'],
-    5: ['Adaptive Strategy Engine', 'Real-time Market Intelligence', 'Digital Business Model Innovation'],
+    5: [
+      'Adaptive Strategy Engine',
+      'Real-time Market Intelligence',
+      'Digital Business Model Innovation',
+    ],
   },
   digital_investments: {
     1: ['Budget Spreadsheets', 'Basic Financial Reporting'],
     2: ['Investment Tracking', 'ROI Templates', 'Business Case Framework'],
     3: ['Portfolio Management', 'Financial Planning & Analysis', 'TCO Models'],
     4: ['AI ROI Prediction', 'Value Stream Analytics', 'Dynamic Resource Allocation'],
-    5: ['Autonomous Investment Optimization', 'Continuous Value Assessment', 'Real-time Portfolio Balancing'],
+    5: [
+      'Autonomous Investment Optimization',
+      'Continuous Value Assessment',
+      'Real-time Portfolio Balancing',
+    ],
   },
   digital_culture: {
     1: ['Internal Communication', 'Basic Intranet'],
@@ -105,7 +118,11 @@ const DIMENSION_TECH: Record<string, Record<number, string[]>> = {
     2: ['Data-enriched Products', 'Basic API Services', 'Customer Reports'],
     3: ['Data-as-a-Service', 'Analytics Platform', 'Industry Benchmarks'],
     4: ['AI-powered Data Products', 'Monetization Platform', 'Ecosystem Data Exchange'],
-    5: ['Autonomous Data Marketplace', 'AI-generated Insights-as-a-Service', 'Data Economy Leadership'],
+    5: [
+      'Autonomous Data Marketplace',
+      'AI-generated Insights-as-a-Service',
+      'Data Economy Leadership',
+    ],
   },
 };
 

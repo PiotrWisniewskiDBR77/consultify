@@ -380,11 +380,21 @@ export function InitiativesGenerationWizardModal(props: {
                   1. Źródło danych
                 </label>
                 <div className="grid grid-cols-3 gap-3">
-                  {([
-                    { value: 'ASSESSMENT_REPORT', label: 'Assessment + Report', desc: 'Pełna analiza z obu źródeł' },
-                    { value: 'ASSESSMENT_ONLY', label: 'Tylko Assessment', desc: 'Na podstawie samej oceny' },
-                    { value: 'REPORT_ONLY', label: 'Tylko Report', desc: 'Na podstawie raportu' },
-                  ] as const).map((opt) => (
+                  {(
+                    [
+                      {
+                        value: 'ASSESSMENT_REPORT',
+                        label: 'Assessment + Report',
+                        desc: 'Pełna analiza z obu źródeł',
+                      },
+                      {
+                        value: 'ASSESSMENT_ONLY',
+                        label: 'Tylko Assessment',
+                        desc: 'Na podstawie samej oceny',
+                      },
+                      { value: 'REPORT_ONLY', label: 'Tylko Report', desc: 'Na podstawie raportu' },
+                    ] as const
+                  ).map((opt) => (
                     <button
                       key={opt.value}
                       type="button"
@@ -396,10 +406,19 @@ export function InitiativesGenerationWizardModal(props: {
                           : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-slate-300 dark:hover:border-navy-600'
                       )}
                     >
-                      <div className={cn('text-sm font-medium', mode === opt.value ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-900 dark:text-white')}>
+                      <div
+                        className={cn(
+                          'text-sm font-medium',
+                          mode === opt.value
+                            ? 'text-emerald-700 dark:text-emerald-300'
+                            : 'text-slate-900 dark:text-white'
+                        )}
+                      >
                         {opt.label}
                       </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{opt.desc}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {opt.desc}
+                      </div>
                     </button>
                   ))}
                 </div>

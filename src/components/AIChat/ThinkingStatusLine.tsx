@@ -25,9 +25,7 @@ export function ThinkingStatusLine({
 
   const displayLines = useMemo(() => {
     const base = Array.isArray(lines) && lines.length ? lines : [label];
-    const cleaned = base
-      .map((x) => String(x || '').trim())
-      .filter(Boolean);
+    const cleaned = base.map((x) => String(x || '').trim()).filter(Boolean);
 
     // Dedupe consecutive duplicates
     const out: string[] = [];

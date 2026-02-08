@@ -4,12 +4,12 @@
  * Provides knowledge (questions, examples, technologies) for all frameworks.
  */
 
-export { getADMAKnowledge, getADMAPillarInfo } from './admaKnowledge';
 export type { ADMADimensionLevelKey, ADMALevelKnowledge } from './admaKnowledge';
-export { getDRDKnowledge } from './drdKnowledge';
+export { getADMAKnowledge, getADMAPillarInfo } from './admaKnowledge';
 export type { DRDAreaLevelKey, DRDLevelKnowledge } from './drdKnowledge';
-export { getSIRIBuildingBlockInfo, getSIRIKnowledge } from './siriKnowledge';
+export { getDRDKnowledge } from './drdKnowledge';
 export type { SIRIDimensionLevelKey, SIRILevelKnowledge } from './siriKnowledge';
+export { getSIRIBuildingBlockInfo, getSIRIKnowledge } from './siriKnowledge';
 
 /**
  * Universal knowledge getter for any framework

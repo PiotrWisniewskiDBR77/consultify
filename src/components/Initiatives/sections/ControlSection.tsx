@@ -15,7 +15,11 @@ import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
 import { getModuleFromStatus, MODULE_CONFIG, PRIORITY_CONFIG } from './types';
 
-export const ControlSection: React.FC<InitiativeSectionProps> = ({ sectionType, expanded, onToggle }) => {
+export const ControlSection: React.FC<InitiativeSectionProps> = ({
+  sectionType,
+  expanded,
+  onToggle,
+}) => {
   const {
     initiative,
     isPolish,
@@ -33,7 +37,8 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({ sectionType, 
   const statusMeta = getStatusMeta(status as any);
   const currentModule = getModuleFromStatus(status);
   const moduleConfig = MODULE_CONFIG[currentModule];
-  const priorityConfig = PRIORITY_CONFIG[priority as keyof typeof PRIORITY_CONFIG] || PRIORITY_CONFIG.medium;
+  const priorityConfig =
+    PRIORITY_CONFIG[priority as keyof typeof PRIORITY_CONFIG] || PRIORITY_CONFIG.medium;
 
   return (
     <CollapsibleSection
@@ -48,57 +53,91 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({ sectionType, 
         {/* Module & Status */}
         <div className="p-3 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100/50 dark:from-navy-800 dark:to-navy-900/50 border border-slate-200/80 dark:border-navy-700/80">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{isPolish ? 'Aktualny moduł' : 'Current Module'}</span>
-            <a href={moduleConfig.route} className="text-[10px] text-purple-500 hover:text-purple-600 font-medium">{isPolish ? 'Przejdź →' : 'Go to →'}</a>
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              {isPolish ? 'Aktualny moduł' : 'Current Module'}
+            </span>
+            <a
+              href={moduleConfig.route}
+              className="text-[10px] text-purple-500 hover:text-purple-600 font-medium"
+            >
+              {isPolish ? 'Przejdź →' : 'Go to →'}
+            </a>
           </div>
-          <div className={`flex items-center gap-3 p-3 rounded-lg ${moduleConfig.bgLight} border border-slate-200/50 dark:border-navy-600/50 mb-3`}>
-            <div className={`w-10 h-10 rounded-xl ${moduleConfig.bgLight} flex items-center justify-center`}>
+          <div
+            className={`flex items-center gap-3 p-3 rounded-lg ${moduleConfig.bgLight} border border-slate-200/50 dark:border-navy-600/50 mb-3`}
+          >
+            <div
+              className={`w-10 h-10 rounded-xl ${moduleConfig.bgLight} flex items-center justify-center`}
+            >
               <div className={`w-3 h-3 rounded-full ${moduleConfig.color}`} />
             </div>
             <div className="flex-1">
-              <p className={`text-sm font-semibold ${moduleConfig.textColor}`}>{isPolish ? moduleConfig.labelPl : moduleConfig.label}</p>
-              <p className="text-[10px] text-slate-400">{isPolish ? moduleConfig.descriptionPl : moduleConfig.description}</p>
+              <p className={`text-sm font-semibold ${moduleConfig.textColor}`}>
+                {isPolish ? moduleConfig.labelPl : moduleConfig.label}
+              </p>
+              <p className="text-[10px] text-slate-400">
+                {isPolish ? moduleConfig.descriptionPl : moduleConfig.description}
+              </p>
             </div>
           </div>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Status</span>
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              Status
+            </span>
           </div>
-          <div className={`flex items-center gap-3 p-3 rounded-lg ${statusMeta.bgColor} border border-slate-200/50 dark:border-navy-600/50`}>
-            <div className={`w-3 h-3 rounded-full ${statusMeta.dotColor || statusMeta.color || 'bg-slate-400'} animate-pulse`} />
+          <div
+            className={`flex items-center gap-3 p-3 rounded-lg ${statusMeta.bgColor} border border-slate-200/50 dark:border-navy-600/50`}
+          >
+            <div
+              className={`w-3 h-3 rounded-full ${statusMeta.dotColor || statusMeta.color || 'bg-slate-400'} animate-pulse`}
+            />
             <div className="flex-1">
               <p className={`text-sm font-semibold ${statusMeta.color}`}>{statusMeta.label}</p>
-              {statusMeta.description && <p className="text-[10px] text-slate-400">{statusMeta.description}</p>}
+              {statusMeta.description && (
+                <p className="text-[10px] text-slate-400">{statusMeta.description}</p>
+              )}
             </div>
           </div>
         </div>
 
         {/* Priority */}
         <div className="relative">
-          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{isPolish ? 'Priorytet' : 'Priority'}</label>
+          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+            {isPolish ? 'Priorytet' : 'Priority'}
+          </label>
           <button
             onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
             className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 hover:border-purple-300 dark:hover:border-purple-500/50 transition-colors"
           >
             <div className="flex items-center gap-2">
               <Flag size={14} className={priorityConfig.color} />
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{isPolish ? priorityConfig.labelPl : priorityConfig.label}</span>
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                {isPolish ? priorityConfig.labelPl : priorityConfig.label}
+              </span>
             </div>
             <ChevronDown size={14} className="text-slate-400" />
           </button>
           <AnimatePresence>
             {showPriorityDropdown && (
               <motion.div
-                initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }}
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
                 className="absolute z-20 mt-1 w-full bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-lg overflow-hidden"
               >
                 {Object.entries(PRIORITY_CONFIG).map(([key, config]) => (
                   <button
                     key={key}
-                    onClick={() => { setPriority(key as any); setShowPriorityDropdown(false); }}
+                    onClick={() => {
+                      setPriority(key as any);
+                      setShowPriorityDropdown(false);
+                    }}
                     className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 ${key === priority ? 'bg-purple-50 dark:bg-purple-500/10' : ''}`}
                   >
                     <Flag size={14} className={config.color} />
-                    <span className="text-slate-700 dark:text-slate-300">{isPolish ? config.labelPl : config.label}</span>
+                    <span className="text-slate-700 dark:text-slate-300">
+                      {isPolish ? config.labelPl : config.label}
+                    </span>
                   </button>
                 ))}
               </motion.div>

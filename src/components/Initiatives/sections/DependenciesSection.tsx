@@ -9,7 +9,11 @@ import { DependenciesSection as SharedDependenciesSection } from '../../MyWork/s
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
 
-export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ sectionType, expanded, onToggle }) => {
+export const DependenciesSection: React.FC<InitiativeSectionProps> = ({
+  sectionType,
+  expanded,
+  onToggle,
+}) => {
   const { dependencies, setDependencies, isPolish } = useInitiativeContext();
 
   return (

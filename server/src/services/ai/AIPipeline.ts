@@ -6,6 +6,7 @@
  * It serves as a pattern for migrating other backend services.
  */
 
+import { buildPersonaPrompt } from '../../ai/persona.js';
 import type {
   AIArtifact,
   AICapability,
@@ -22,7 +23,6 @@ import type {
   TokenUsage,
 } from '../../types/ai.types.js';
 import logger from '../../utils/Logger.js';
-import { buildPersonaPrompt } from '../../ai/persona.js';
 import { llmService } from './llmService.js';
 import modelRouter from './modelRouter.js';
 
@@ -501,7 +501,7 @@ export class AIPipeline {
         const userId = request.userId;
         const organizationId = request.organizationId || null;
 
-        let lightContext: any = { ...(request.context || {}) };
+        const lightContext: any = { ...(request.context || {}) };
 
         if (userId && organizationId) {
           try {
@@ -600,7 +600,9 @@ export class AIPipeline {
             [userId, 'custom_instructions']
           );
           if (ciRow && (ciRow as any).value) {
-            customInstructions = String((ciRow as any).value).trim().slice(0, 1000);
+            customInstructions = String((ciRow as any).value)
+              .trim()
+              .slice(0, 1000);
           }
         } catch {
           // ignore — custom instructions are non-critical
@@ -611,18 +613,18 @@ export class AIPipeline {
           ...fullContext,
           userMemory: userMemory
             ? {
-              preferences: userMemory.preferences,
-              expertise: userMemory.expertise?.slice(0, 10),
-              recentTopics: userMemory.recentTopics?.slice(0, 5),
-              interactionCount: userMemory.interactionCount,
-            }
+                preferences: userMemory.preferences,
+                expertise: userMemory.expertise?.slice(0, 10),
+                recentTopics: userMemory.recentTopics?.slice(0, 5),
+                interactionCount: userMemory.interactionCount,
+              }
             : null,
           orgMemory: orgMemory
             ? {
-              terminology: orgMemory.terminology,
-              decisionPatterns: orgMemory.decisionPatterns?.slice(0, 5),
-              aiMaturityStage: orgMemory.aiMaturityStage,
-            }
+                terminology: orgMemory.terminology,
+                decisionPatterns: orgMemory.decisionPatterns?.slice(0, 5),
+                aiMaturityStage: orgMemory.aiMaturityStage,
+              }
             : null,
           customInstructions,
         };
@@ -710,7 +712,9 @@ export class AIPipeline {
           if (enhanced?.enhancedPrompt) {
             systemPrompt = enhanced.enhancedPrompt;
             if (enhanced.appliedPatterns?.length > 0) {
-              logger.info(`[AIPipeline] Applied ${enhanced.appliedPatterns.length} learned instruction(s)`);
+              logger.info(
+                `[AIPipeline] Applied ${enhanced.appliedPatterns.length} learned instruction(s)`
+              );
             }
           }
         }
@@ -752,7 +756,9 @@ export class AIPipeline {
         }
         if (scanResult.piiResult?.hasPII) {
           sanitizedPrompt = scanResult.sanitizedText;
-          logger.info(`[AIPipeline] PII redacted from user prompt (${scanResult.piiResult.detections.length} items)`);
+          logger.info(
+            `[AIPipeline] PII redacted from user prompt (${scanResult.piiResult.detections.length} items)`
+          );
         }
       }
     } catch (secErr: any) {
@@ -780,7 +786,8 @@ export class AIPipeline {
     const parts: string[] = [];
 
     // 1. Role definition with screen-aware persona + language
-    const conversationLang = ctx?.conversationLanguage || ctx?.userMemory?.preferences?.language || null;
+    const conversationLang =
+      ctx?.conversationLanguage || ctx?.userMemory?.preferences?.language || null;
     parts.push(this.buildRoleSection(capability, ctx?.currentScreen, conversationLang));
 
     // 2. Organization context
@@ -911,7 +918,11 @@ export class AIPipeline {
     return parts.filter(Boolean).join('\n\n');
   }
 
-  private buildRoleSection(capability: AICapability, currentScreen?: string | null, language?: string | null): string {
+  private buildRoleSection(
+    capability: AICapability,
+    currentScreen?: string | null,
+    language?: string | null
+  ): string {
     // Use unified persona with screen-aware emphasis and language
     return buildPersonaPrompt(currentScreen, language);
   }
@@ -1117,16 +1128,21 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
       if (d.description) sections.push(`- Opis: ${d.description.slice(0, 300)}`);
       if (d.cost_capex) sections.push(`- CAPEX: ${d.cost_capex} | OPEX: ${d.cost_opex || 0}`);
       if (d.expected_roi) sections.push(`- Oczekiwany ROI: ${d.expected_roi}%`);
-      if (d.estimated_duration_weeks) sections.push(`- Szacowany czas: ${d.estimated_duration_weeks} tygodni`);
+      if (d.estimated_duration_weeks)
+        sections.push(`- Szacowany czas: ${d.estimated_duration_weeks} tygodni`);
       if (d.drd_axis) sections.push(`- Oś DRD: ${d.drd_axis} / ${d.drd_area || ''}`);
       if (d.kpis?.length > 0) {
         sections.push(`### KPI (${d.kpis.length}):`);
         d.kpis.slice(0, 5).forEach((k: any) => {
-          sections.push(`  - ${k.name}: ${k.current_value || '?'}/${k.target_value} ${k.unit || ''}`);
+          sections.push(
+            `  - ${k.name}: ${k.current_value || '?'}/${k.target_value} ${k.unit || ''}`
+          );
         });
       }
       if (d.dependencies?.length > 0) {
-        sections.push(`- Zależności: ${d.dependencies.length} (${d.dependencies.map((dep: any) => dep.depends_on_id).join(', ')})`);
+        sections.push(
+          `- Zależności: ${d.dependencies.length} (${d.dependencies.map((dep: any) => dep.depends_on_id).join(', ')})`
+        );
       }
     } else if (type === 'task') {
       sections.push(`- Tytuł: ${d.title}`);
@@ -1158,7 +1174,9 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
       if (d.options?.length > 0) {
         sections.push(`### Opcje (${d.options.length}):`);
         d.options.slice(0, 5).forEach((o: any) => {
-          sections.push(`  - ${o.label || o.name || 'Opcja'}: ${(o.description || '').slice(0, 100)}`);
+          sections.push(
+            `  - ${o.label || o.name || 'Opcja'}: ${(o.description || '').slice(0, 100)}`
+          );
         });
       }
     }
@@ -1179,7 +1197,9 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
       sections.push(`### Wyniki per oś:`);
       data.axisScores.forEach((a: any) => {
         const gapIndicator = a.gap > 1.5 ? ' ⚠️' : a.gap > 0.5 ? ' ↑' : '';
-        sections.push(`  - ${a.axis}: AS-IS ${a.asIs} → TO-BE ${a.toBe} (gap: ${a.gap})${gapIndicator}`);
+        sections.push(
+          `  - ${a.axis}: AS-IS ${a.asIs} → TO-BE ${a.toBe} (gap: ${a.gap})${gapIndicator}`
+        );
       });
     }
 
@@ -1202,7 +1222,8 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
       sections.push(`### Portfel inicjatyw (${p.initiativeCount}):`);
       if (p.totalCapex) sections.push(`- Łączny CAPEX: ${p.totalCapex.toLocaleString()}`);
       if (p.totalOpex) sections.push(`- Łączny OPEX: ${p.totalOpex.toLocaleString()}`);
-      if (p.avgExpectedRoi) sections.push(`- Średni oczekiwany ROI: ${Math.round(p.avgExpectedRoi)}%`);
+      if (p.avgExpectedRoi)
+        sections.push(`- Średni oczekiwany ROI: ${Math.round(p.avgExpectedRoi)}%`);
     }
 
     if (data.analysis) {
@@ -1231,9 +1252,12 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
     if (data.initiativePatterns) {
       const p = data.initiativePatterns;
       sections.push(`### Inicjatywy organizacji:`);
-      sections.push(`- Łącznie: ${p.total} | Ukończone: ${p.completed} | Anulowane: ${p.cancelled}`);
+      sections.push(
+        `- Łącznie: ${p.total} | Ukończone: ${p.completed} | Anulowane: ${p.cancelled}`
+      );
       sections.push(`- Success rate: ${p.successRate}%`);
-      if (p.avgDurationWeeks) sections.push(`- Średni czas realizacji: ${p.avgDurationWeeks} tygodni`);
+      if (p.avgDurationWeeks)
+        sections.push(`- Średni czas realizacji: ${p.avgDurationWeeks} tygodni`);
     }
 
     if (data.raidItems?.length > 0) {
@@ -1308,9 +1332,12 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
     if (responseStyle) {
       const styleMap: Record<string, string> = {
         normal: 'Standardowy styl odpowiedzi (zbalansowany).',
-        executive: 'Styl Executive: zwięzły, decyzyjny, max 3-5 bulletów, zawsze z konkretną rekomendacją. Unikaj dygresji. Format: problem → analiza → rekomendacja.',
-        analyst: 'Styl Analyst: dane, metryki, porównania, tabele. Precyzyjny i oparty na faktach. Podawaj liczby, procenty, benchmarki. Używaj tabel i wykresów tam gdzie to możliwe.',
-        coach: 'Styl Coach: zadawaj pytania naprowadzające, tłumacz krok po kroku, buduj zrozumienie. Zamiast dawać gotowe odpowiedzi — prowadź użytkownika do samodzielnych wniosków.',
+        executive:
+          'Styl Executive: zwięzły, decyzyjny, max 3-5 bulletów, zawsze z konkretną rekomendacją. Unikaj dygresji. Format: problem → analiza → rekomendacja.',
+        analyst:
+          'Styl Analyst: dane, metryki, porównania, tabele. Precyzyjny i oparty na faktach. Podawaj liczby, procenty, benchmarki. Używaj tabel i wykresów tam gdzie to możliwe.',
+        coach:
+          'Styl Coach: zadawaj pytania naprowadzające, tłumacz krok po kroku, buduj zrozumienie. Zamiast dawać gotowe odpowiedzi — prowadź użytkownika do samodzielnych wniosków.',
         concise: 'Styl zwięzły: tylko najważniejsze punkty, bez dygresji.',
         formal: 'Styl formalny: język urzędowy/biznesowy, precyzyjny i neutralny.',
       };

@@ -2,10 +2,10 @@
  * Atomic: Icon
  * Unicode icon/emoji rendered as text — lightweight, no image dependency.
  */
-import type { DesignTokens, RenderedElement, ElementPosition } from '../types.js';
+import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface IconProps {
-  icon: string;          // Unicode char, e.g. '✓', '⚠', '●'
+  icon: string; // Unicode char, e.g. '✓', '⚠', '●'
   position: ElementPosition;
   color?: string;
   fontSize?: number;
@@ -13,18 +13,18 @@ export interface IconProps {
 
 /** Common icon set for consulting slides */
 export const ICONS = {
-  check: '\u2713',       // ✓
-  cross: '\u2717',       // ✗
-  warning: '\u26A0',     // ⚠
+  check: '\u2713', // ✓
+  cross: '\u2717', // ✗
+  warning: '\u26A0', // ⚠
   arrow_right: '\u2192', // →
-  arrow_up: '\u2191',    // ↑
-  arrow_down: '\u2193',  // ↓
-  bullet: '\u25CF',      // ●
-  diamond: '\u25C6',     // ◆
-  star: '\u2605',        // ★
-  clock: '\u23F0',       // ⏰
-  target: '\u25CE',      // ◎
-  lock: '\u{1F512}',     // 🔒
+  arrow_up: '\u2191', // ↑
+  arrow_down: '\u2193', // ↓
+  bullet: '\u25CF', // ●
+  diamond: '\u25C6', // ◆
+  star: '\u2605', // ★
+  clock: '\u23F0', // ⏰
+  target: '\u25CE', // ◎
+  lock: '\u{1F512}', // 🔒
 } as const;
 
 export function Icon(props: IconProps, tokens: DesignTokens): RenderedElement {

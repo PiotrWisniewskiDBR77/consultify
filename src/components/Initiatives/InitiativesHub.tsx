@@ -31,9 +31,9 @@ import {
   StatusFilter,
   ViewMode,
 } from '../shared/ModuleHub';
-import { InitiativeDocumentView } from './InitiativeDocumentView';
 // Compact side panel (replaces old 50% drawer)
 import { InitiativeCompactPanel } from './InitiativeCompactPanel';
+import { InitiativeDocumentView } from './InitiativeDocumentView';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');

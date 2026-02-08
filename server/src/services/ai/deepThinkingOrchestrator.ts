@@ -147,10 +147,9 @@ async function extractOrgContext(
     const dbMod = await import('../../utils/DbPromise.js');
     const db = dbMod;
 
-    const org = (await db.get(
-      'SELECT name, industry, settings FROM organizations WHERE id = ?',
-      [organizationId]
-    )) as any;
+    const org = (await db.get('SELECT name, industry, settings FROM organizations WHERE id = ?', [
+      organizationId,
+    ])) as any;
 
     if (!org) return null;
 
@@ -432,7 +431,9 @@ export class DeepThinkingOrchestrator {
           language: (language || 'en').split('-')[0],
         });
         if (historicalContextAddon) {
-          logger.info(`[DeepThinking] Injected historical decision context for org ${organizationId}`);
+          logger.info(
+            `[DeepThinking] Injected historical decision context for org ${organizationId}`
+          );
         }
       }
     } catch (histErr: any) {

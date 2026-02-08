@@ -54,9 +54,9 @@ const SPACING = {
 
 export const corporateTokens: DesignTokens = {
   colors: {
-    primary: '003A70',      // Dark navy (BCG-like)
-    secondary: '2C5F8A',    // Mid blue
-    accent: '00AA55',       // Green for positive
+    primary: '003A70', // Dark navy (BCG-like)
+    secondary: '2C5F8A', // Mid blue
+    accent: '00AA55', // Green for positive
     background: 'FFFFFF',
     surface: 'F7F8FA',
     textPrimary: '1A1A2E',
@@ -81,9 +81,9 @@ export const corporateTokens: DesignTokens = {
 
 export const minimalTokens: DesignTokens = {
   colors: {
-    primary: '111827',      // Near black
+    primary: '111827', // Near black
     secondary: '374151',
-    accent: '6366F1',       // Indigo accent
+    accent: '6366F1', // Indigo accent
     background: 'FFFFFF',
     surface: 'F9FAFB',
     textPrimary: '111827',
@@ -108,9 +108,9 @@ export const minimalTokens: DesignTokens = {
 
 export const modernTokens: DesignTokens = {
   colors: {
-    primary: '0066CC',       // Bright blue
+    primary: '0066CC', // Bright blue
     secondary: '1E3A5F',
-    accent: '7C3AED',       // Purple accent
+    accent: '7C3AED', // Purple accent
     background: 'FFFFFF',
     surface: 'F0F4FF',
     textPrimary: '0F172A',
@@ -175,32 +175,36 @@ export function severityColor(
   tokens: DesignTokens
 ): string {
   switch (severity) {
-    case 'critical': return tokens.colors.danger;
-    case 'high': return tokens.colors.warning;
-    case 'medium': return tokens.colors.info;
-    case 'low': return tokens.colors.success;
+    case 'critical':
+      return tokens.colors.danger;
+    case 'high':
+      return tokens.colors.warning;
+    case 'medium':
+      return tokens.colors.info;
+    case 'low':
+      return tokens.colors.success;
   }
 }
 
-export function trendColor(
-  trend: 'up' | 'down' | 'flat',
-  tokens: DesignTokens
-): string {
+export function trendColor(trend: 'up' | 'down' | 'flat', tokens: DesignTokens): string {
   switch (trend) {
-    case 'up': return tokens.colors.success;
-    case 'down': return tokens.colors.danger;
-    case 'flat': return tokens.colors.muted;
+    case 'up':
+      return tokens.colors.success;
+    case 'down':
+      return tokens.colors.danger;
+    case 'flat':
+      return tokens.colors.muted;
   }
 }
 
-export function statusColor(
-  status: 'good' | 'warning' | 'critical',
-  tokens: DesignTokens
-): string {
+export function statusColor(status: 'good' | 'warning' | 'critical', tokens: DesignTokens): string {
   switch (status) {
-    case 'good': return tokens.colors.success;
-    case 'warning': return tokens.colors.warning;
-    case 'critical': return tokens.colors.danger;
+    case 'good':
+      return tokens.colors.success;
+    case 'warning':
+      return tokens.colors.warning;
+    case 'critical':
+      return tokens.colors.danger;
   }
 }
 
@@ -209,9 +213,12 @@ export function likelihoodImpactColor(
   tokens: DesignTokens
 ): string {
   switch (level) {
-    case 'high': return tokens.colors.danger;
-    case 'medium': return tokens.colors.warning;
-    case 'low': return tokens.colors.success;
+    case 'high':
+      return tokens.colors.danger;
+    case 'medium':
+      return tokens.colors.warning;
+    case 'low':
+      return tokens.colors.success;
   }
 }
 
@@ -222,33 +229,49 @@ export function likelihoodImpactColor(
 /** Strategic intent → hex color (without #) */
 export function strategicIntentColor(intent: string): string {
   switch (intent) {
-    case 'Grow': return '22C55E';       // green
-    case 'Fix': return 'EF4444';        // red
-    case 'Stabilize': return '3B82F6';  // blue
-    case 'De-risk': return 'F59E0B';    // amber
-    case 'Build Capability': return '6366F1'; // indigo
-    default: return '94A3B8';           // slate
+    case 'Grow':
+      return '22C55E'; // green
+    case 'Fix':
+      return 'EF4444'; // red
+    case 'Stabilize':
+      return '3B82F6'; // blue
+    case 'De-risk':
+      return 'F59E0B'; // amber
+    case 'Build Capability':
+      return '6366F1'; // indigo
+    default:
+      return '94A3B8'; // slate
   }
 }
 
 /** Strategic role → hex color (without #) */
 export function strategicRoleColor(role: string): string {
   switch (role) {
-    case 'Foundation': return '64748B';   // slate
-    case 'Enabler': return '3B82F6';      // blue
-    case 'Accelerator': return 'F59E0B';  // amber
-    case 'Scaling': return '8B5CF6';      // purple
-    default: return '94A3B8';
+    case 'Foundation':
+      return '64748B'; // slate
+    case 'Enabler':
+      return '3B82F6'; // blue
+    case 'Accelerator':
+      return 'F59E0B'; // amber
+    case 'Scaling':
+      return '8B5CF6'; // purple
+    default:
+      return '94A3B8';
   }
 }
 
 /** Priority → hex color (without #) */
 export function priorityColor(priority: string, tokens: DesignTokens): string {
   switch (priority) {
-    case 'critical': return tokens.colors.danger;
-    case 'high': return tokens.colors.warning;
-    case 'medium': return tokens.colors.info;
-    case 'low': return tokens.colors.success;
-    default: return tokens.colors.muted;
+    case 'critical':
+      return tokens.colors.danger;
+    case 'high':
+      return tokens.colors.warning;
+    case 'medium':
+      return tokens.colors.info;
+    case 'low':
+      return tokens.colors.success;
+    default:
+      return tokens.colors.muted;
   }
 }

@@ -462,11 +462,6 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
   onDimensionChange,
   currentDimensionId,
 }) => {
-  // Manage panel support (same pattern as DRD): allow parent to override the whole editor view.
-  if (leftOverride) {
-    return <div className="h-full bg-white dark:bg-navy-900">{leftOverride}</div>;
-  }
-
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
@@ -563,6 +558,11 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
   const currentDimensionState = activeDimensionId
     ? getDimensionState(value, activeDimensionId)
     : null;
+
+  // Manage panel support: allow parent to override the whole editor view.
+  if (leftOverride) {
+    return <div className="h-full bg-white dark:bg-navy-900">{leftOverride}</div>;
+  }
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-navy-900">

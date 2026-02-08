@@ -1548,10 +1548,7 @@ export async function getSourceDataForReport(
         areaCount,
         averageScore: areaCount > 0 ? Math.round((totalAchieved / areaCount) * 10) / 10 : 0,
         averageTarget: areaCount > 0 ? Math.round((totalTarget / areaCount) * 10) / 10 : 0,
-        gap:
-          areaCount > 0
-            ? Math.round(((totalTarget - totalAchieved) / areaCount) * 10) / 10
-            : 0,
+        gap: areaCount > 0 ? Math.round(((totalTarget - totalAchieved) / areaCount) * 10) / 10 : 0,
       };
     }
   }
@@ -1575,8 +1572,7 @@ export async function getSourceDataForReport(
       });
     }
     if (computedAxes.length > 0) {
-      const overallAvg =
-        computedAxes.reduce((s, a) => s + a.score, 0) / computedAxes.length;
+      const overallAvg = computedAxes.reduce((s, a) => s + a.score, 0) / computedAxes.length;
       assessment.scores = {
         axes: computedAxes,
         overallScore: Math.round(overallAvg * 10) / 10,

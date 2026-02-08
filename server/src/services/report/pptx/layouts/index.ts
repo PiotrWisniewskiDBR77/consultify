@@ -2,31 +2,40 @@
  * Layout Definitions — barrel export + registry
  * 15 immutable layouts, 1:1 mapped to intents.
  */
-import type { SlideIntent, LayoutResult, UnifiedSlide, UnifiedReportMeta, DesignTokens } from '../types.js';
-
+import type {
+  DesignTokens,
+  LayoutResult,
+  SlideIntent,
+  UnifiedReportMeta,
+  UnifiedSlide,
+} from '../types.js';
+import { AppendixLayout } from './AppendixLayout.js';
+import { ComparisonLayout } from './ComparisonLayout.js';
 import { CoverLayout } from './CoverLayout.js';
 import { ExecutiveSummaryLayout } from './ExecutiveSummaryLayout.js';
-import { SectionIntroLayout } from './SectionIntroLayout.js';
+import { HeatmapLayout } from './HeatmapLayout.js';
+import { InitiativePortfolioLayout } from './InitiativePortfolioLayout.js';
 import { KeyMessagesLayout } from './KeyMessagesLayout.js';
 import { KpiDashboardLayout } from './KpiDashboardLayout.js';
-import { SingleInsightLayout } from './SingleInsightLayout.js';
-import { ComparisonLayout } from './ComparisonLayout.js';
-import { HeatmapLayout } from './HeatmapLayout.js';
+import { NextStepsLayout } from './NextStepsLayout.js';
+import { PrioritizationMatrixLayout } from './PrioritizationMatrixLayout.js';
 import { ProblemCauseImpactLayout } from './ProblemCauseImpactLayout.js';
 import { RecommendationSingleLayout } from './RecommendationSingleLayout.js';
 import { RecommendationStackLayout } from './RecommendationStackLayout.js';
-import { RoadmapLayout } from './RoadmapLayout.js';
 import { RiskMitigationLayout } from './RiskMitigationLayout.js';
-import { NextStepsLayout } from './NextStepsLayout.js';
-import { AppendixLayout } from './AppendixLayout.js';
-import { InitiativePortfolioLayout } from './InitiativePortfolioLayout.js';
-import { PrioritizationMatrixLayout } from './PrioritizationMatrixLayout.js';
+import { RoadmapLayout } from './RoadmapLayout.js';
+import { SectionIntroLayout } from './SectionIntroLayout.js';
+import { SingleInsightLayout } from './SingleInsightLayout.js';
 
 // ================================================================
 // LAYOUT REGISTRY — intent → layout function (immutable mapping)
 // ================================================================
 
-type LayoutFn = (slide: UnifiedSlide, meta: UnifiedReportMeta, tokens: DesignTokens) => LayoutResult;
+type LayoutFn = (
+  slide: UnifiedSlide,
+  meta: UnifiedReportMeta,
+  tokens: DesignTokens
+) => LayoutResult;
 
 const LAYOUT_REGISTRY: Record<SlideIntent, LayoutFn> = {
   cover: CoverLayout,
@@ -63,20 +72,20 @@ export function resolveLayout(intent: SlideIntent): LayoutFn {
 export { LAYOUT_REGISTRY };
 
 // Re-export individual layouts
+export { AppendixLayout } from './AppendixLayout.js';
+export { ComparisonLayout } from './ComparisonLayout.js';
 export { CoverLayout } from './CoverLayout.js';
 export { ExecutiveSummaryLayout } from './ExecutiveSummaryLayout.js';
-export { SectionIntroLayout } from './SectionIntroLayout.js';
+export { HeatmapLayout } from './HeatmapLayout.js';
+export { InitiativePortfolioLayout } from './InitiativePortfolioLayout.js';
 export { KeyMessagesLayout } from './KeyMessagesLayout.js';
 export { KpiDashboardLayout } from './KpiDashboardLayout.js';
-export { SingleInsightLayout } from './SingleInsightLayout.js';
-export { ComparisonLayout } from './ComparisonLayout.js';
-export { HeatmapLayout } from './HeatmapLayout.js';
+export { NextStepsLayout } from './NextStepsLayout.js';
+export { PrioritizationMatrixLayout } from './PrioritizationMatrixLayout.js';
 export { ProblemCauseImpactLayout } from './ProblemCauseImpactLayout.js';
 export { RecommendationSingleLayout } from './RecommendationSingleLayout.js';
 export { RecommendationStackLayout } from './RecommendationStackLayout.js';
-export { RoadmapLayout } from './RoadmapLayout.js';
 export { RiskMitigationLayout } from './RiskMitigationLayout.js';
-export { NextStepsLayout } from './NextStepsLayout.js';
-export { AppendixLayout } from './AppendixLayout.js';
-export { InitiativePortfolioLayout } from './InitiativePortfolioLayout.js';
-export { PrioritizationMatrixLayout } from './PrioritizationMatrixLayout.js';
+export { RoadmapLayout } from './RoadmapLayout.js';
+export { SectionIntroLayout } from './SectionIntroLayout.js';
+export { SingleInsightLayout } from './SingleInsightLayout.js';

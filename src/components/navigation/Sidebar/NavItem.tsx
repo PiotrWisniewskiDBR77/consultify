@@ -74,7 +74,11 @@ export const NavItem: React.FC<NavItemProps> = ({
 
   const isHighlighted = isActive || (item.id === 'AI_CHAT' && isChatSlidingPanelOpen);
   const showRightSide =
-    showFull && (Boolean(item.badge) || (Boolean(isCompleted) && !isActive) || Boolean(isLocked) || hasSubItems);
+    showFull &&
+    (Boolean(item.badge) ||
+      (Boolean(isCompleted) && !isActive) ||
+      Boolean(isLocked) ||
+      hasSubItems);
 
   return (
     <div
@@ -104,7 +108,9 @@ export const NavItem: React.FC<NavItemProps> = ({
         title={getTooltip()}
       >
         {/* Left side: Icon and Label */}
-        <div className={`flex items-center gap-3 min-w-0 ${!showFull ? 'justify-center w-full' : 'flex-1'}`}>
+        <div
+          className={`flex items-center gap-3 min-w-0 ${!showFull ? 'justify-center w-full' : 'flex-1'}`}
+        >
           {item.icon && (
             <span
               className={`

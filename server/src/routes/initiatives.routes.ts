@@ -2,9 +2,10 @@
  * Initiatives Routes
  * CRUD for initiatives (assessment-sourced and others)
  */
-import { Router, Request, Response } from 'express';
-import { getDatabase } from '../database/index.js';
+import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+
+import { getDatabase } from '../database/index.js';
 
 const router = Router();
 
@@ -152,10 +153,20 @@ router.post('/', async (req: AuthRequest, res: Response) => {
     const now = new Date().toISOString();
 
     const {
-      name, title, description, status = 'DRAFT',
-      priority = 'medium', impact = 'medium', effort = 'medium',
-      category, sourceType = 'manual', sourceId, reportId, reportName,
-      estimatedBudget, estimatedTimeline,
+      name,
+      title,
+      description,
+      status = 'DRAFT',
+      priority = 'medium',
+      impact = 'medium',
+      effort = 'medium',
+      category,
+      sourceType = 'manual',
+      sourceId,
+      reportId,
+      reportName,
+      estimatedBudget,
+      estimatedTimeline,
     } = req.body;
 
     await dbRun(
@@ -167,11 +178,26 @@ router.post('/', async (req: AuthRequest, res: Response) => {
         created_by, updated_by, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id, organizationId, name || title || 'New Initiative', title || name, description || '',
-        status, priority, impact, effort, category || null,
-        sourceType, sourceId || null, reportId || null, reportName || null,
-        estimatedBudget || null, estimatedTimeline || null,
-        userId, userId, now, now,
+        id,
+        organizationId,
+        name || title || 'New Initiative',
+        title || name,
+        description || '',
+        status,
+        priority,
+        impact,
+        effort,
+        category || null,
+        sourceType,
+        sourceId || null,
+        reportId || null,
+        reportName || null,
+        estimatedBudget || null,
+        estimatedTimeline || null,
+        userId,
+        userId,
+        now,
+        now,
       ]
     );
 
@@ -192,18 +218,29 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id || 'system';
     const now = new Date().toISOString();
 
-    const existing = await dbGet('SELECT id FROM initiatives WHERE id = ? AND organization_id = ?', [
-      req.params.id,
-      organizationId,
-    ]);
+    const existing = await dbGet(
+      'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
+      [req.params.id, organizationId]
+    );
     if (!existing) return res.status(404).json({ error: 'Initiative not found' });
 
     const fields: string[] = [];
     const params: any[] = [];
     const allowedFields = [
-      'name', 'title', 'description', 'status', 'priority', 'impact', 'effort',
-      'category', 'source_type', 'source_id', 'report_id', 'report_name',
-      'estimated_budget', 'estimated_timeline',
+      'name',
+      'title',
+      'description',
+      'status',
+      'priority',
+      'impact',
+      'effort',
+      'category',
+      'source_type',
+      'source_id',
+      'report_id',
+      'report_name',
+      'estimated_budget',
+      'estimated_timeline',
     ];
 
     for (const key of allowedFields) {

@@ -12,17 +12,17 @@
 const PptxGenJS: any = require('pptxgenjs');
 
 import logger from '../../../utils/Logger.js';
-import type {
-  UnifiedReportJSON,
-  UnifiedReportMeta,
-  DesignTokens,
-  LayoutResult,
-  ValidationResult,
-} from './types.js';
 import { getDesignTokens } from './designTokens.js';
 import { resolveLayout } from './layouts/index.js';
 import { validateReport } from './RulesEngine.js';
-import { transformToUnifiedJson, type TransformOptions } from './UnifiedJsonTransformer.js';
+import type {
+  DesignTokens,
+  LayoutResult,
+  UnifiedReportJSON,
+  UnifiedReportMeta,
+  ValidationResult,
+} from './types.js';
+import { type TransformOptions, transformToUnifiedJson } from './UnifiedJsonTransformer.js';
 
 // ============================================================
 // MASTER SLIDE DEFINITIONS
@@ -91,7 +91,9 @@ export class PptxPipelineService {
     const startTime = Date.now();
     const warnings: string[] = [];
 
-    logger.info(`[PptxPipeline] Starting generation for "${report.meta.project}" (${report.slides.length} slides)`);
+    logger.info(
+      `[PptxPipeline] Starting generation for "${report.meta.project}" (${report.slides.length} slides)`
+    );
 
     // 1. Get design tokens
     const tokens = getDesignTokens(
@@ -153,14 +155,18 @@ export class PptxPipelineService {
           try {
             element.apply(slide);
           } catch (elemErr: any) {
-            logger.warn(`[PptxPipeline] Element render warning on slide ${i + 1}: ${elemErr.message}`);
+            logger.warn(
+              `[PptxPipeline] Element render warning on slide ${i + 1}: ${elemErr.message}`
+            );
             warnings.push(`Slide ${i + 1}: element render issue — ${elemErr.message}`);
           }
         }
 
         renderedCount++;
       } catch (err: any) {
-        logger.error(`[PptxPipeline] Failed to render slide ${i + 1} (intent: ${slideData.intent}): ${err.message}`);
+        logger.error(
+          `[PptxPipeline] Failed to render slide ${i + 1} (intent: ${slideData.intent}): ${err.message}`
+        );
         warnings.push(`Slide ${i + 1} (${slideData.intent}): render failed — ${err.message}`);
 
         // Add a fallback error slide
@@ -201,7 +207,9 @@ export class PptxPipelineService {
     },
     options: PipelineOptions = {}
   ): Promise<PipelineResult> {
-    logger.info(`[PptxPipeline] Transforming legacy report "${input.report.title}" to unified JSON`);
+    logger.info(
+      `[PptxPipeline] Transforming legacy report "${input.report.title}" to unified JSON`
+    );
 
     // Transform to Unified JSON
     const transformOptions: TransformOptions = {
@@ -214,7 +222,9 @@ export class PptxPipelineService {
 
     const unifiedJson = transformToUnifiedJson(input, transformOptions);
 
-    logger.info(`[PptxPipeline] Transformed to ${unifiedJson.slides.length} slides, proceeding to render`);
+    logger.info(
+      `[PptxPipeline] Transformed to ${unifiedJson.slides.length} slides, proceeding to render`
+    );
 
     // Generate PPTX from unified JSON
     return this.generateFromUnifiedJson(unifiedJson, options);
@@ -290,24 +300,36 @@ export class PptxPipelineService {
 
     // Header bar
     slide.addShape('rect', {
-      x: 0, y: 0, w: '100%', h: tokens.grid.headerH,
+      x: 0,
+      y: 0,
+      w: '100%',
+      h: tokens.grid.headerH,
       fill: { color: tokens.colors.danger },
     });
 
     slide.addText(`Slide ${slideNum} — Render Error`, {
-      x: 0.5, y: 0.15, w: 9, h: 0.5,
+      x: 0.5,
+      y: 0.15,
+      w: 9,
+      h: 0.5,
       fontSize: tokens.fontSizes.slideTitle,
       fontFace: tokens.fonts.title,
       color: tokens.colors.textInverse,
       bold: true,
     });
 
-    slide.addText(`Intent: ${intent}\n\nError: ${errorMsg}\n\nThis slide could not be rendered. Please check the data and try again.`, {
-      x: 0.5, y: 1.2, w: 9, h: 3.5,
-      fontSize: tokens.fontSizes.body,
-      fontFace: tokens.fonts.body,
-      color: tokens.colors.textPrimary,
-    });
+    slide.addText(
+      `Intent: ${intent}\n\nError: ${errorMsg}\n\nThis slide could not be rendered. Please check the data and try again.`,
+      {
+        x: 0.5,
+        y: 1.2,
+        w: 9,
+        h: 3.5,
+        fontSize: tokens.fontSizes.body,
+        fontFace: tokens.fonts.body,
+        color: tokens.colors.textPrimary,
+      }
+    );
   }
 }
 

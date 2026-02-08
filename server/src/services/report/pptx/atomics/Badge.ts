@@ -2,7 +2,7 @@
  * Atomic: Badge
  * Small rounded label — priority, status, category tags.
  */
-import type { DesignTokens, RenderedElement, ElementPosition } from '../types.js';
+import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface BadgeProps {
   text: string;

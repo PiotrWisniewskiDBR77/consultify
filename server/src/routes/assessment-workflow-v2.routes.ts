@@ -277,11 +277,21 @@ router.post('/:assessmentId/duplicate', async (req, res) => {
           created_by, updated_by, created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          newId, organizationId, original.project_id, original.assessment_type, newName,
-          original.completion_percent || 0, original.confidence_avg || 0,
-          original.answers_json || '{}', original.context_snapshot || '{}',
-          original.score_summary || '{}', original.navigation_json || '{}',
-          userId, userId, now, now,
+          newId,
+          organizationId,
+          original.project_id,
+          original.assessment_type,
+          newName,
+          original.completion_percent || 0,
+          original.confidence_avg || 0,
+          original.answers_json || '{}',
+          original.context_snapshot || '{}',
+          original.score_summary || '{}',
+          original.navigation_json || '{}',
+          userId,
+          userId,
+          now,
+          now,
         ],
         (err: Error | null) => (err ? reject(err) : resolve())
       );

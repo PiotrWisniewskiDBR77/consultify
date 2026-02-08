@@ -101,7 +101,8 @@ export function NewAssessmentReportModal(props: {
             </select>
             {approvedAssessments.length === 0 && (
               <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                Only approved assessments can be used to create reports. Approve an assessment first.
+                Only approved assessments can be used to create reports. Approve an assessment
+                first.
               </p>
             )}
           </div>
@@ -166,9 +167,14 @@ export function NewAssessmentReportModal(props: {
 
                   toast.loading('Generating report content with AI…', { id: toastId });
                   try {
-                    await Api.post(`/report-builder/${reportId}/generate`, { regenerateAll: false });
+                    await Api.post(`/report-builder/${reportId}/generate`, {
+                      regenerateAll: false,
+                    });
                   } catch (genErr: any) {
-                    console.warn('[NewAssessmentReportModal] Generation error (non-fatal):', genErr);
+                    console.warn(
+                      '[NewAssessmentReportModal] Generation error (non-fatal):',
+                      genErr
+                    );
                   }
 
                   toast.success('Report generated — opening editor', { id: toastId });

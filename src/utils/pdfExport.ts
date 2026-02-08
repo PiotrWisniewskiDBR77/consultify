@@ -159,8 +159,7 @@ export async function exportConversationToPDF(
     pdf.setFont('helvetica', 'bold');
     pdf.text(roleLabel, margin, y);
     if (msg.timestamp) {
-      const ts =
-        typeof msg.timestamp === 'string' ? new Date(msg.timestamp) : msg.timestamp;
+      const ts = typeof msg.timestamp === 'string' ? new Date(msg.timestamp) : msg.timestamp;
       pdf.setTextColor(160, 160, 160);
       pdf.setFont('helvetica', 'normal');
       pdf.text(ts.toLocaleString(), margin + 35, y);
@@ -174,11 +173,11 @@ export async function exportConversationToPDF(
 
     // Clean markdown formatting for PDF
     const cleanContent = msg.content
-      .replace(/\*\*(.*?)\*\*/g, '$1')   // bold
-      .replace(/\*(.*?)\*/g, '$1')       // italic
-      .replace(/#{1,6}\s/g, '')          // headers
+      .replace(/\*\*(.*?)\*\*/g, '$1') // bold
+      .replace(/\*(.*?)\*/g, '$1') // italic
+      .replace(/#{1,6}\s/g, '') // headers
       .replace(/```[\s\S]*?```/g, (m) => m.replace(/```\w*\n?/g, '').trim()) // code blocks
-      .replace(/`([^`]+)`/g, '$1')       // inline code
+      .replace(/`([^`]+)`/g, '$1') // inline code
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // links
       .trim();
 
@@ -203,12 +202,9 @@ export async function exportConversationToPDF(
     pdf.setPage(i);
     pdf.setFontSize(8);
     pdf.setTextColor(150, 150, 150);
-    pdf.text(
-      `Page ${i} of ${totalPages} • Consultinity AI`,
-      pageWidth - margin,
-      pageHeight - 5,
-      { align: 'right' }
-    );
+    pdf.text(`Page ${i} of ${totalPages} • Consultinity AI`, pageWidth - margin, pageHeight - 5, {
+      align: 'right',
+    });
   }
 
   pdf.save(filename);

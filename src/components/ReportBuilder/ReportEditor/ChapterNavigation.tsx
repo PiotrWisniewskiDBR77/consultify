@@ -124,26 +124,51 @@ export function hasChapters(blocks: BlockConfig[]): boolean {
 
 function getBlockTypeIcon(type: string): string {
   switch (type) {
-    case 'cover': return '📄';
-    case 'summary': return '📋';
-    case 'matrix': return '🔲';
-    case 'analysis': case 'axis_analysis': return '🔍';
-    case 'recommendations': return '💡';
-    case 'action_plan': return '🎯';
-    case 'methodology': return '📐';
-    case 'findings': return '🔎';
-    case 'table': case 'scorecard': return '📊';
-    case 'chart': case 'chart_pie': return '📈';
-    case 'dashboard': case 'kpis': return '📟';
-    case 'risk': return '⚠️';
-    case 'roadmap': return '🗺️';
-    case 'quote': return '💬';
-    case 'context': return '🏢';
-    case 'appendix': return '📎';
-    case 'gap_analysis': return '📉';
-    case 'prioritization': return '⚖️';
-    case 'initiatives': case 'initiative_cards': return '⚡';
-    default: return '📝';
+    case 'cover':
+      return '📄';
+    case 'summary':
+      return '📋';
+    case 'matrix':
+      return '🔲';
+    case 'analysis':
+    case 'axis_analysis':
+      return '🔍';
+    case 'recommendations':
+      return '💡';
+    case 'action_plan':
+      return '🎯';
+    case 'methodology':
+      return '📐';
+    case 'findings':
+      return '🔎';
+    case 'table':
+    case 'scorecard':
+      return '📊';
+    case 'chart':
+    case 'chart_pie':
+      return '📈';
+    case 'dashboard':
+    case 'kpis':
+      return '📟';
+    case 'risk':
+      return '⚠️';
+    case 'roadmap':
+      return '🗺️';
+    case 'quote':
+      return '💬';
+    case 'context':
+      return '🏢';
+    case 'appendix':
+      return '📎';
+    case 'gap_analysis':
+      return '📉';
+    case 'prioritization':
+      return '⚖️';
+    case 'initiatives':
+    case 'initiative_cards':
+      return '⚡';
+    default:
+      return '📝';
   }
 }
 
@@ -185,9 +210,11 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({ block, isSelected
         }}
         className={`
           flex-1 flex items-center gap-2 px-2 py-1.5 text-left rounded-md transition-colors min-w-0
-          ${isSelected
-            ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
-            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'}
+          ${
+            isSelected
+              ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+          }
           ${!block.enabled ? 'opacity-40' : ''}
         `}
       >
@@ -416,9 +443,11 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                     <div
                       className={`
                         flex items-center gap-1.5 px-2 py-1.5 rounded-lg group/chapter
-                        ${hasSelectedBlock && !isUngrouped
-                          ? 'bg-blue-50 dark:bg-blue-900/20'
-                          : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'}
+                        ${
+                          hasSelectedBlock && !isUngrouped
+                            ? 'bg-blue-50 dark:bg-blue-900/20'
+                            : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                        }
                         ${!isUngrouped ? 'cursor-pointer' : ''}
                       `}
                       onClick={() => !isUngrouped && toggleChapterCollapse(chapter.key)}
@@ -459,16 +488,16 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                       ) : (
                         <span
                           className={`flex-1 text-xs font-semibold truncate ${
-                            isUngrouped ? 'text-slate-400 italic' : 'text-slate-700 dark:text-slate-200'
+                            isUngrouped
+                              ? 'text-slate-400 italic'
+                              : 'text-slate-700 dark:text-slate-200'
                           }`}
                           onDoubleClick={(e) => {
                             e.stopPropagation();
                             if (!isUngrouped) startRename(chapter.key, chapter.title);
                           }}
                         >
-                          {isUngrouped
-                            ? isPl ? 'Bez rozdziału' : 'Ungrouped'
-                            : chapter.title}
+                          {isUngrouped ? (isPl ? 'Bez rozdziału' : 'Ungrouped') : chapter.title}
                         </span>
                       )}
 
@@ -490,7 +519,10 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                             <Pencil className="w-3 h-3" />
                           </button>
                           {isConfirmingDelete ? (
-                            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                            <div
+                              className="flex items-center gap-1"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <button
                                 onClick={() => handleDeleteChapter(chapter.key)}
                                 className="p-0.5 text-red-500 hover:text-red-700 rounded"
@@ -524,7 +556,9 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
 
                   {/* Block List */}
                   {(!isCollapsed || isUngrouped) && (
-                    <div className={`${!isUngrouped && hasAnyChapters ? 'ml-3 border-l border-slate-200 dark:border-slate-800' : ''}`}>
+                    <div
+                      className={`${!isUngrouped && hasAnyChapters ? 'ml-3 border-l border-slate-200 dark:border-slate-800' : ''}`}
+                    >
                       {chapter.blocks.map((block) => (
                         <SortableBlockItem
                           key={block.id}

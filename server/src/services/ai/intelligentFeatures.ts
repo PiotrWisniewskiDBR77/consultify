@@ -1,6 +1,6 @@
 /**
  * Intelligent AI Features — Phase 3 services
- * 
+ *
  * 3.1 NL → Initiative Generator
  * 3.2 AI Sense-Check on Forms
  * 3.3 Predictive Risk Scoring
@@ -481,14 +481,11 @@ export async function generateNudges(
 
   // Filter dismissed nudges (best-effort; table may not exist everywhere)
   try {
-    const dismissed = (await dbAll(
-      `SELECT nudge_id FROM ai_dismissed_nudges WHERE user_id = ?`,
-      [userId]
-    )) as Array<{ nudge_id?: string }>;
+    const dismissed = (await dbAll(`SELECT nudge_id FROM ai_dismissed_nudges WHERE user_id = ?`, [
+      userId,
+    ])) as Array<{ nudge_id?: string }>;
     const dismissedIds = new Set(
-      (dismissed || [])
-        .map((d) => String(d?.nudge_id || '').trim())
-        .filter(Boolean)
+      (dismissed || []).map((d) => String(d?.nudge_id || '').trim()).filter(Boolean)
     );
     if (dismissedIds.size > 0) {
       for (let i = nudges.length - 1; i >= 0; i--) {
@@ -512,7 +509,7 @@ For each alert, provide:
 - Priority: "critical" | "high" | "normal" | "low"
 
 Raw alerts:
-${JSON.stringify(nudgesToEnrich.map(n => ({ type: n.type, title: n.title, message: n.message })))}
+${JSON.stringify(nudgesToEnrich.map((n) => ({ type: n.type, title: n.title, message: n.message })))}
 
 Return a JSON array with enriched alerts. Each item should have: "title", "recommendation", "priority".
 Keep the same number of items and the same order. Return ONLY valid JSON array.`;
@@ -538,10 +535,13 @@ Keep the same number of items and the same order. Return ONLY valid JSON array.`
 
         for (let i = 0; i < Math.min(enriched.length, nudgesToEnrich.length); i++) {
           if (enriched[i].title) nudgesToEnrich[i].title = enriched[i].title!;
-          if (enriched[i].recommendation) nudgesToEnrich[i].recommendation = enriched[i].recommendation;
+          if (enriched[i].recommendation)
+            nudgesToEnrich[i].recommendation = enriched[i].recommendation;
           if (enriched[i].priority) nudgesToEnrich[i].priority = enriched[i].priority!;
         }
-        logger.debug(`[ProactiveNudges] LLM enrichment applied to ${nudgesToEnrich.length} nudge(s)`);
+        logger.debug(
+          `[ProactiveNudges] LLM enrichment applied to ${nudgesToEnrich.length} nudge(s)`
+        );
       }
     } catch (enrichErr: any) {
       // LLM enrichment failed — use raw nudges as-is (graceful fallback)

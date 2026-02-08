@@ -194,7 +194,12 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
           {/* Sort: critical/high severity first, then by type */}
           {raidItems
             .sort((a, b) => {
-              const severityOrder: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+              const severityOrder: Record<string, number> = {
+                CRITICAL: 0,
+                HIGH: 1,
+                MEDIUM: 2,
+                LOW: 3,
+              };
               const aSev = severityOrder[a.severity?.toUpperCase() || 'MEDIUM'] ?? 2;
               const bSev = severityOrder[b.severity?.toUpperCase() || 'MEDIUM'] ?? 2;
               return aSev - bSev;
@@ -202,7 +207,8 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
             .map((r) => {
               const isHighSeverity = ['HIGH', 'CRITICAL'].includes(r.severity?.toUpperCase() || '');
               const raidTypeConfig = RAID_TYPE_CONFIG[r.type] || RAID_TYPE_CONFIG.risk;
-              const sevConfig = SEVERITY_CONFIG[r.severity?.toUpperCase() || 'MEDIUM'] || SEVERITY_CONFIG.MEDIUM;
+              const sevConfig =
+                SEVERITY_CONFIG[r.severity?.toUpperCase() || 'MEDIUM'] || SEVERITY_CONFIG.MEDIUM;
 
               return (
                 <div

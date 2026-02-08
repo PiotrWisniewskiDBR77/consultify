@@ -59,8 +59,16 @@ interface ChartRendererProps {
 // ==========================================
 
 const DEFAULT_COLORS = [
-  '#3b82f6', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b',
-  '#ef4444', '#ec4899', '#6366f1', '#14b8a6', '#f97316',
+  '#3b82f6',
+  '#8b5cf6',
+  '#06b6d4',
+  '#10b981',
+  '#f59e0b',
+  '#ef4444',
+  '#ec4899',
+  '#6366f1',
+  '#14b8a6',
+  '#f97316',
 ];
 
 // ==========================================
@@ -176,7 +184,13 @@ export const ChartRenderer: React.FC<ChartRendererProps> = ({
             {hasTarget && <Legend />}
             <Bar dataKey="value" name="Current" fill={primaryColor} radius={[4, 4, 0, 0]} />
             {hasTarget && (
-              <Bar dataKey="target" name="Target" fill={accentColor} radius={[4, 4, 0, 0]} opacity={0.4} />
+              <Bar
+                dataKey="target"
+                name="Target"
+                fill={accentColor}
+                radius={[4, 4, 0, 0]}
+                opacity={0.4}
+              />
             )}
           </BarChart>
         </ResponsiveContainer>
@@ -194,7 +208,11 @@ export const ChartRenderer: React.FC<ChartRendererProps> = ({
           </h4>
         )}
         <ResponsiveContainer width="100%" height={Math.max(250, config.data.length * 40)}>
-          <BarChart data={config.data} layout="vertical" margin={{ top: 5, right: 30, left: 80, bottom: 5 }}>
+          <BarChart
+            data={config.data}
+            layout="vertical"
+            margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
+          >
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis type="number" tick={{ fontSize: 11, fill: '#64748b' }} />
             <YAxis

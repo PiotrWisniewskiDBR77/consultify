@@ -91,23 +91,21 @@ class ProactiveSuggestionsService {
       }
 
       // Always add evergreen suggestions
-      suggestions.push(
-        {
-          id: uuidv4(),
-          type: 'action',
-          title: 'Weekly Review',
-          description: "Get a summary of this week's progress",
-          priority: 50,
-          category: 'review',
-          actionable: true,
-          action: {
-            type: 'chat',
-            prompt:
-              "Give me a weekly review — what was accomplished, what's pending, and what needs attention.",
-          },
-          createdAt: now,
-        }
-      );
+      suggestions.push({
+        id: uuidv4(),
+        type: 'action',
+        title: 'Weekly Review',
+        description: "Get a summary of this week's progress",
+        priority: 50,
+        category: 'review',
+        actionable: true,
+        action: {
+          type: 'chat',
+          prompt:
+            "Give me a weekly review — what was accomplished, what's pending, and what needs attention.",
+        },
+        createdAt: now,
+      });
     } catch (err) {
       logger.warn('[ProactiveSuggestions] Error generating suggestions:', (err as Error).message);
     }
@@ -152,7 +150,9 @@ class ProactiveSuggestionsService {
           createdAt: now,
         });
       }
-    } catch { /* table may not exist */ }
+    } catch {
+      /* table may not exist */
+    }
     return suggestions;
   }
 
@@ -189,13 +189,16 @@ class ProactiveSuggestionsService {
           actionable: true,
           action: {
             type: 'chat',
-            prompt: 'Review my stale initiatives — identify blockers and recommend whether to accelerate, descope, or cancel each one.',
+            prompt:
+              'Review my stale initiatives — identify blockers and recommend whether to accelerate, descope, or cancel each one.',
           },
           metadata: { initiativeCount: staleInitiatives.length },
           createdAt: now,
         });
       }
-    } catch { /* table may not exist */ }
+    } catch {
+      /* table may not exist */
+    }
     return suggestions;
   }
 
@@ -236,13 +239,16 @@ class ProactiveSuggestionsService {
           actionable: true,
           action: {
             type: 'chat',
-            prompt: 'Analyze resource conflicts in my project. Who is overloaded? Recommend task redistribution or timeline adjustments.',
+            prompt:
+              'Analyze resource conflicts in my project. Who is overloaded? Recommend task redistribution or timeline adjustments.',
           },
           metadata: { overloadedCount: overloaded.length },
           createdAt: now,
         });
       }
-    } catch { /* table may not exist */ }
+    } catch {
+      /* table may not exist */
+    }
     return suggestions;
   }
 
@@ -259,7 +265,7 @@ class ProactiveSuggestionsService {
     if (!request.projectId) return suggestions;
 
     try {
-      const project = await db.get(
+      const project = (await db.get(
         `SELECT p.id, p.name, p.end_date,
                 SUM(i.cost_capex + COALESCE(i.cost_opex, 0)) as total_budget,
                 SUM(CASE WHEN i.status = 'completed' THEN i.cost_capex + COALESCE(i.cost_opex, 0) ELSE 0 END) as spent
@@ -268,7 +274,7 @@ class ProactiveSuggestionsService {
          WHERE p.id = ?
          GROUP BY p.id`,
         [request.projectId]
-      ) as any;
+      )) as any;
 
       if (project?.total_budget > 0 && project?.end_date) {
         const totalBudget = project.total_budget;
@@ -277,8 +283,12 @@ class ProactiveSuggestionsService {
 
         const endDate = new Date(project.end_date);
         const today = new Date();
-        const totalDays = (endDate.getTime() - new Date(project.start_date || today).getTime()) / (1000 * 60 * 60 * 24);
-        const elapsedDays = (today.getTime() - new Date(project.start_date || today).getTime()) / (1000 * 60 * 60 * 24);
+        const totalDays =
+          (endDate.getTime() - new Date(project.start_date || today).getTime()) /
+          (1000 * 60 * 60 * 24);
+        const elapsedDays =
+          (today.getTime() - new Date(project.start_date || today).getTime()) /
+          (1000 * 60 * 60 * 24);
         const timePercent = totalDays > 0 ? (elapsedDays / totalDays) * 100 : 50;
 
         // Warn if spending is 20%+ ahead of timeline
@@ -295,12 +305,17 @@ class ProactiveSuggestionsService {
               type: 'chat',
               prompt: `Analyze the budget burn rate for project "${project.name}". We've spent ${Math.round(spentPercent)}% of budget but only ${Math.round(timePercent)}% of time has passed. What cost optimization actions should we take?`,
             },
-            metadata: { spentPercent: Math.round(spentPercent), timePercent: Math.round(timePercent) },
+            metadata: {
+              spentPercent: Math.round(spentPercent),
+              timePercent: Math.round(timePercent),
+            },
             createdAt: now,
           });
         }
       }
-    } catch { /* table/column may not exist */ }
+    } catch {
+      /* table/column may not exist */
+    }
     return suggestions;
   }
 
@@ -319,28 +334,28 @@ class ProactiveSuggestionsService {
     try {
       // Check if organization context (goals) was updated recently
       // but initiatives haven't been re-evaluated
-      const contextUpdate = await db.get(
+      const contextUpdate = (await db.get(
         `SELECT updated_at FROM organization_context
          WHERE organization_id = ? AND updated_at > datetime('now', '-30 days')
          ORDER BY updated_at DESC LIMIT 1`,
         [request.organizationId]
-      ) as any;
+      )) as any;
 
       if (contextUpdate) {
         const lastContextUpdate = new Date(contextUpdate.updated_at);
-        
+
         // Check if any initiatives were reviewed after the context change
-        const reviewedAfter = await db.get(
+        const reviewedAfter = (await db.get(
           `SELECT COUNT(*) as count FROM initiatives
            WHERE project_id = ? AND updated_at > ?`,
           [request.projectId, contextUpdate.updated_at]
-        ) as any;
+        )) as any;
 
-        const totalActive = await db.get(
+        const totalActive = (await db.get(
           `SELECT COUNT(*) as count FROM initiatives
            WHERE project_id = ? AND status IN ('active', 'in_progress')`,
           [request.projectId]
-        ) as any;
+        )) as any;
 
         const reviewedCount = reviewedAfter?.count || 0;
         const totalCount = totalActive?.count || 0;
@@ -356,13 +371,16 @@ class ProactiveSuggestionsService {
             actionable: true,
             action: {
               type: 'chat',
-              prompt: 'Check if our active initiatives are still aligned with the updated strategic goals. Identify any that may need re-prioritization or adjustment.',
+              prompt:
+                'Check if our active initiatives are still aligned with the updated strategic goals. Identify any that may need re-prioritization or adjustment.',
             },
             createdAt: now,
           });
         }
       }
-    } catch { /* table may not exist */ }
+    } catch {
+      /* table may not exist */
+    }
     return suggestions;
   }
 
@@ -388,9 +406,9 @@ class ProactiveSuggestionsService {
 
       if (overdue && overdue.length > 0) {
         const oldestDue = (overdue[0] as any)?.due_date;
-        const daysSinceOldest = oldestDue ? Math.round(
-          (Date.now() - new Date(oldestDue).getTime()) / (1000 * 60 * 60 * 24)
-        ) : 0;
+        const daysSinceOldest = oldestDue
+          ? Math.round((Date.now() - new Date(oldestDue).getTime()) / (1000 * 60 * 60 * 24))
+          : 0;
 
         suggestions.push({
           id: uuidv4(),
@@ -408,7 +426,9 @@ class ProactiveSuggestionsService {
           createdAt: now,
         });
       }
-    } catch { /* table may not exist */ }
+    } catch {
+      /* table may not exist */
+    }
     return suggestions;
   }
 
@@ -453,7 +473,9 @@ class ProactiveSuggestionsService {
           createdAt: now,
         });
       }
-    } catch { /* table may not exist */ }
+    } catch {
+      /* table may not exist */
+    }
     return suggestions;
   }
 

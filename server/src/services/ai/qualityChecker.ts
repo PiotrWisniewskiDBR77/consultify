@@ -24,20 +24,47 @@ export interface QualityScore {
 }
 
 const W = {
-  relevance: 0.20,
-  groundedness: 0.20,
+  relevance: 0.2,
+  groundedness: 0.2,
   completeness: 0.15,
   coherence: 0.15,
   actionability: 0.15,
   meceQuality: 0.15,
 };
 
-const HALLUC = ['as everyone knows', 'it is well known', 'studies show', 'research proves',
-  'jak powszechnie wiadomo', 'badania dowodzą', 'jak wynika z badań'];
-const VAGUE_PHRASES = ['in general', 'usually', 'it depends', 'more or less', 'ogólnie rzecz biorąc',
-  'to zależy', 'mniej więcej', 'zasadniczo'];
-const ACTION_MARKERS = ['recommend', 'suggest', 'next step', 'action item', 'deadline', 'owner',
-  'rekomenduj', 'proponuj', 'następny krok', 'termin', 'właściciel', 'odpowiedzialny'];
+const HALLUC = [
+  'as everyone knows',
+  'it is well known',
+  'studies show',
+  'research proves',
+  'jak powszechnie wiadomo',
+  'badania dowodzą',
+  'jak wynika z badań',
+];
+const VAGUE_PHRASES = [
+  'in general',
+  'usually',
+  'it depends',
+  'more or less',
+  'ogólnie rzecz biorąc',
+  'to zależy',
+  'mniej więcej',
+  'zasadniczo',
+];
+const ACTION_MARKERS = [
+  'recommend',
+  'suggest',
+  'next step',
+  'action item',
+  'deadline',
+  'owner',
+  'rekomenduj',
+  'proponuj',
+  'następny krok',
+  'termin',
+  'właściciel',
+  'odpowiedzialny',
+];
 
 class QualityCheckerService {
   private llmClient: any = null;
@@ -67,9 +94,15 @@ class QualityCheckerService {
 
     if (!response?.trim()) {
       return {
-        relevance: 0, groundedness: 0, completeness: 0,
-        coherence: 0, actionability: 0, meceQuality: 0,
-        overall: 0, flags: ['empty_response'], llmJudged: false,
+        relevance: 0,
+        groundedness: 0,
+        completeness: 0,
+        coherence: 0,
+        actionability: 0,
+        meceQuality: 0,
+        overall: 0,
+        flags: ['empty_response'],
+        llmJudged: false,
       };
     }
 
@@ -90,11 +123,11 @@ class QualityCheckerService {
       meceQuality: rnd(meceQuality),
       overall: rnd(
         relevance * W.relevance +
-        groundedness * W.groundedness +
-        completeness * W.completeness +
-        coherence * W.coherence +
-        actionability * W.actionability +
-        meceQuality * W.meceQuality
+          groundedness * W.groundedness +
+          completeness * W.completeness +
+          coherence * W.coherence +
+          actionability * W.actionability +
+          meceQuality * W.meceQuality
       ),
       flags,
       llmJudged: false,
@@ -120,11 +153,11 @@ class QualityCheckerService {
           };
           score.overall = rnd(
             score.relevance * W.relevance +
-            score.groundedness * W.groundedness +
-            score.completeness * W.completeness +
-            score.coherence * W.coherence +
-            score.actionability * W.actionability +
-            score.meceQuality * W.meceQuality
+              score.groundedness * W.groundedness +
+              score.completeness * W.completeness +
+              score.coherence * W.coherence +
+              score.actionability * W.actionability +
+              score.meceQuality * W.meceQuality
           );
         }
       } catch (err: any) {
@@ -224,7 +257,10 @@ Respond ONLY with valid JSON:
 
       const parsed = JSON.parse(raw);
       const flags: string[] = parsed.flags
-        ? String(parsed.flags).split(',').map((f: string) => f.trim()).filter(Boolean)
+        ? String(parsed.flags)
+            .split(',')
+            .map((f: string) => f.trim())
+            .filter(Boolean)
         : [];
 
       return {
@@ -328,7 +364,7 @@ Respond ONLY with valid JSON:
     let s = 0.3; // base
 
     // Check for action markers
-    const actionHits = ACTION_MARKERS.filter(m => rl.includes(m)).length;
+    const actionHits = ACTION_MARKERS.filter((m) => rl.includes(m)).length;
     s += Math.min(0.3, actionHits * 0.06);
 
     // Check for specific elements: deadlines, owners, metrics
@@ -337,7 +373,7 @@ Respond ONLY with valid JSON:
     if (/\b(\d+%|\$\d|PLN|EUR|USD)\b/.test(resp)) s += 0.1; // metrics
 
     // Penalize vagueness
-    const vagueHits = VAGUE_PHRASES.filter(p => rl.includes(p)).length;
+    const vagueHits = VAGUE_PHRASES.filter((p) => rl.includes(p)).length;
     if (vagueHits > 2) {
       flags.push('vague_recommendations');
       s -= 0.15;
@@ -362,7 +398,8 @@ Respond ONLY with valid JSON:
     const bulletItems = (resp.match(/^[-*•]\s/gm) || []).length;
     const totalItems = numberedItems + bulletItems;
 
-    if (totalItems >= 3 && totalItems <= 7) s += 0.2; // sweet spot for MECE
+    if (totalItems >= 3 && totalItems <= 7)
+      s += 0.2; // sweet spot for MECE
     else if (totalItems >= 2) s += 0.1;
 
     // Reward headers (structured thinking)
@@ -370,11 +407,21 @@ Respond ONLY with valid JSON:
     if (headerCount >= 2 && headerCount <= 6) s += 0.15;
 
     // Reward MECE/framework markers
-    if (/\b(MECE|mutually exclusive|wzajemnie wykluczając|collectively exhaustive|wspólnie wyczerpując)\b/i.test(resp)) s += 0.15;
+    if (
+      /\b(MECE|mutually exclusive|wzajemnie wykluczając|collectively exhaustive|wspólnie wyczerpując)\b/i.test(
+        resp
+      )
+    )
+      s += 0.15;
     if (/\b(framework|Issue Tree|Pyramid|80\/20|Pareto|SWOT|Porter)\b/i.test(resp)) s += 0.1;
 
     // Penalize single-perspective / no alternatives
-    if (resp.length > 500 && !/\b(alternatively|however|on the other hand|z drugiej strony|natomiast|alternatywnie)\b/i.test(resp)) {
+    if (
+      resp.length > 500 &&
+      !/\b(alternatively|however|on the other hand|z drugiej strony|natomiast|alternatywnie)\b/i.test(
+        resp
+      )
+    ) {
       flags.push('single_perspective');
       s -= 0.1;
     }

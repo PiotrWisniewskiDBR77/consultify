@@ -5,19 +5,35 @@
 import React from 'react';
 import toast from 'react-hot-toast';
 
-import type { Stakeholder, StakeholderNotificationSettings, StakeholderRole } from '../../MyWork/shared';
+import type {
+  Stakeholder,
+  StakeholderNotificationSettings,
+  StakeholderRole,
+} from '../../MyWork/shared';
 import { StakeholdersSection as SharedStakeholdersSection } from '../../MyWork/shared';
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
 
-export const StakeholdersSection: React.FC<InitiativeSectionProps> = ({ sectionType, expanded, onToggle }) => {
+export const StakeholdersSection: React.FC<InitiativeSectionProps> = ({
+  sectionType,
+  expanded,
+  onToggle,
+}) => {
   const { stakeholders, setStakeholders, users, initiativeId, isPolish } = useInitiativeContext();
 
   return (
     <SharedStakeholdersSection
       stakeholders={stakeholders}
-      availableUsers={users.map((u) => ({ id: u.id, name: `${u.firstName} ${u.lastName}`, email: u.email }))}
-      onAdd={(userId: string, role: StakeholderRole, notificationSettings: StakeholderNotificationSettings) => {
+      availableUsers={users.map((u) => ({
+        id: u.id,
+        name: `${u.firstName} ${u.lastName}`,
+        email: u.email,
+      }))}
+      onAdd={(
+        userId: string,
+        role: StakeholderRole,
+        notificationSettings: StakeholderNotificationSettings
+      ) => {
         const user = users.find((u) => u.id === userId);
         const newStakeholder: Stakeholder = {
           id: Math.random().toString(36).substr(2, 9),

@@ -2,9 +2,9 @@
  * Composite: Roadmap Band
  * Timeline phases (Now / Next / Later) rendered as horizontal bands.
  */
-import type { DesignTokens, RenderedElement, ElementPosition } from '../types.js';
 import { BodyText } from '../atomics/BodyText.js';
 import { Bullet } from '../atomics/Bullet.js';
+import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface RoadmapBandProps {
   phases: Array<{
@@ -52,24 +52,35 @@ export function RoadmapBand(props: RoadmapBandProps, tokens: DesignTokens): Rend
 
     // Phase label + timeframe
     elements.push(
-      BodyText({
-        text: `${phase.label}\n${phase.timeframe}`,
-        position: { x: colX, y: p.y, w: colW, h: headerH },
-        bold: true,
-        color: tokens.colors.textInverse,
-        align: 'center',
-        valign: 'middle',
-        fontSize: 11,
-      }, tokens)
+      BodyText(
+        {
+          text: `${phase.label}\n${phase.timeframe}`,
+          position: { x: colX, y: p.y, w: colW, h: headerH },
+          bold: true,
+          color: tokens.colors.textInverse,
+          align: 'center',
+          valign: 'middle',
+          fontSize: 11,
+        },
+        tokens
+      )
     );
 
     // Phase items
     elements.push(
-      Bullet({
-        items: phase.items.slice(0, 5),
-        position: { x: colX + 0.05, y: p.y + headerH + 0.1, w: colW - 0.1, h: p.h - headerH - 0.2 },
-        fontSize: 10,
-      }, tokens)
+      Bullet(
+        {
+          items: phase.items.slice(0, 5),
+          position: {
+            x: colX + 0.05,
+            y: p.y + headerH + 0.1,
+            w: colW - 0.1,
+            h: p.h - headerH - 0.2,
+          },
+          fontSize: 10,
+        },
+        tokens
+      )
     );
   }
 

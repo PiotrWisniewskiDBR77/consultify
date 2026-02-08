@@ -2,13 +2,19 @@
  * Layout: Key Messages
  * Narrative framing — 3-4 key messages displayed as cards.
  */
-import type { DesignTokens, LayoutResult, UnifiedSlide, UnifiedReportMeta, KeyMessagesContent } from '../types.js';
-import { SlideTitle } from '../atomics/SlideTitle.js';
-import { HeaderBar } from '../atomics/HeaderBar.js';
-import { PageNumber } from '../atomics/PageNumber.js';
 import { BodyText } from '../atomics/BodyText.js';
-import { Icon, ICONS } from '../atomics/Icon.js';
 import { Footnote } from '../atomics/Footnote.js';
+import { HeaderBar } from '../atomics/HeaderBar.js';
+import { Icon, ICONS } from '../atomics/Icon.js';
+import { PageNumber } from '../atomics/PageNumber.js';
+import { SlideTitle } from '../atomics/SlideTitle.js';
+import type {
+  DesignTokens,
+  KeyMessagesContent,
+  LayoutResult,
+  UnifiedReportMeta,
+  UnifiedSlide,
+} from '../types.js';
 
 export function KeyMessagesLayout(
   slide: UnifiedSlide,
@@ -19,7 +25,15 @@ export function KeyMessagesLayout(
   const elements = [];
 
   elements.push(HeaderBar({}, tokens));
-  elements.push(SlideTitle({ text: slide.key_message || (meta.language === 'pl' ? 'Kluczowe Przesłania' : 'Key Messages') }, tokens));
+  elements.push(
+    SlideTitle(
+      {
+        text:
+          slide.key_message || (meta.language === 'pl' ? 'Kluczowe Przesłania' : 'Key Messages'),
+      },
+      tokens
+    )
+  );
   elements.push(PageNumber({}, tokens));
 
   const g = tokens.grid;
@@ -50,34 +64,43 @@ export function KeyMessagesLayout(
 
     // Icon
     elements.push(
-      Icon({
-        icon: msg.icon || ICONS.diamond,
-        position: { x: cardX, y: cardY + 0.15, w: cardW, h: 0.35 },
-        color: tokens.colors.primary,
-        fontSize: 20,
-      }, tokens)
+      Icon(
+        {
+          icon: msg.icon || ICONS.diamond,
+          position: { x: cardX, y: cardY + 0.15, w: cardW, h: 0.35 },
+          color: tokens.colors.primary,
+          fontSize: 20,
+        },
+        tokens
+      )
     );
 
     // Title
     elements.push(
-      BodyText({
-        text: msg.title,
-        position: { x: cardX + 0.1, y: cardY + 0.6, w: cardW - 0.2, h: 0.4 },
-        bold: true,
-        fontSize: 12,
-        align: 'center',
-      }, tokens)
+      BodyText(
+        {
+          text: msg.title,
+          position: { x: cardX + 0.1, y: cardY + 0.6, w: cardW - 0.2, h: 0.4 },
+          bold: true,
+          fontSize: 12,
+          align: 'center',
+        },
+        tokens
+      )
     );
 
     // Description
     elements.push(
-      BodyText({
-        text: msg.description,
-        position: { x: cardX + 0.1, y: cardY + 1.05, w: cardW - 0.2, h: cardH - 1.2 },
-        fontSize: 10,
-        color: tokens.colors.textSecondary,
-        align: 'center',
-      }, tokens)
+      BodyText(
+        {
+          text: msg.description,
+          position: { x: cardX + 0.1, y: cardY + 1.05, w: cardW - 0.2, h: cardH - 1.2 },
+          fontSize: 10,
+          color: tokens.colors.textSecondary,
+          align: 'center',
+        },
+        tokens
+      )
     );
   }
 

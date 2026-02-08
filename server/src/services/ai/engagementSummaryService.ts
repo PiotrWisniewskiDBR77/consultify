@@ -14,9 +14,9 @@
  * @version 1.0.0
  */
 
-import logger from '../../utils/Logger.js';
 import { getDatabase } from '../../database/Database.js';
 import type { IDatabase } from '../../database/IDatabase.js';
+import logger from '../../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -87,16 +87,12 @@ class EngagementSummaryService {
     const dateFrom = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000).toISOString();
     const dateTo = new Date().toISOString();
 
-    logger.info(`[EngagementSummary] Generating ${request.period} summary for org ${request.organizationId}`);
+    logger.info(
+      `[EngagementSummary] Generating ${request.period} summary for org ${request.organizationId}`
+    );
 
     // Run all data collection in parallel
-    const [
-      decisions,
-      initiativeStats,
-      riskUpdates,
-      taskMetrics,
-      aiMetrics,
-    ] = await Promise.all([
+    const [decisions, initiativeStats, riskUpdates, taskMetrics, aiMetrics] = await Promise.all([
       this.collectDecisions(db, request, dateFrom),
       this.collectInitiativeStats(db, request, dateFrom),
       this.collectRiskUpdates(db, request, dateFrom),
@@ -142,8 +138,12 @@ class EngagementSummaryService {
     const isPl = language === 'pl';
     const lines: string[] = [];
 
-    lines.push(`# ${isPl ? 'Raport Zaangażowania' : 'Engagement Report'} — ${summary.period === 'weekly' ? (isPl ? 'Tydzień' : 'Week') : (isPl ? 'Miesiąc' : 'Month')}`);
-    lines.push(`**${isPl ? 'Okres' : 'Period'}:** ${summary.dateRange.from} — ${summary.dateRange.to}\n`);
+    lines.push(
+      `# ${isPl ? 'Raport Zaangażowania' : 'Engagement Report'} — ${summary.period === 'weekly' ? (isPl ? 'Tydzień' : 'Week') : isPl ? 'Miesiąc' : 'Month'}`
+    );
+    lines.push(
+      `**${isPl ? 'Okres' : 'Period'}:** ${summary.dateRange.from} — ${summary.dateRange.to}\n`
+    );
 
     lines.push(`## ${isPl ? 'Przegląd Wykonawczy' : 'Executive Overview'}`);
     lines.push(summary.executiveOverview + '\n');
@@ -180,12 +180,18 @@ class EngagementSummaryService {
     lines.push(`- ${isPl ? 'Utworzone' : 'Created'}: ${summary.taskMetrics.created}\n`);
 
     lines.push(`## ${isPl ? 'Aktywność AI' : 'AI Activity'}`);
-    lines.push(`- ${isPl ? 'Konwersacje' : 'Conversations'}: ${summary.aiInteractions.totalConversations}`);
+    lines.push(
+      `- ${isPl ? 'Konwersacje' : 'Conversations'}: ${summary.aiInteractions.totalConversations}`
+    );
     lines.push(`- Deep Thinking: ${summary.aiInteractions.deepThinkingSessions}`);
-    lines.push(`- ${isPl ? 'Badania' : 'Research queries'}: ${summary.aiInteractions.researchQueries}\n`);
+    lines.push(
+      `- ${isPl ? 'Badania' : 'Research queries'}: ${summary.aiInteractions.researchQueries}\n`
+    );
 
     if (summary.recommendations.length > 0) {
-      lines.push(`## ${isPl ? 'Rekomendacje na Następny Okres' : 'Recommendations for Next Period'}`);
+      lines.push(
+        `## ${isPl ? 'Rekomendacje na Następny Okres' : 'Recommendations for Next Period'}`
+      );
       summary.recommendations.forEach((r, i) => {
         lines.push(`${i + 1}. ${r}`);
       });
@@ -198,7 +204,11 @@ class EngagementSummaryService {
   // DATA COLLECTION
   // ==========================================
 
-  private async collectDecisions(db: IDatabase, req: EngagementSummaryRequest, since: string): Promise<EngagementSummary['keyDecisions']> {
+  private async collectDecisions(
+    db: IDatabase,
+    req: EngagementSummaryRequest,
+    since: string
+  ): Promise<EngagementSummary['keyDecisions']> {
     try {
       const rows = await db.all(
         `SELECT title, chosen_option, outcome, created_at FROM deep_thinking_decisions
@@ -216,12 +226,18 @@ class EngagementSummaryService {
     }
   }
 
-  private async collectInitiativeStats(db: IDatabase, req: EngagementSummaryRequest, since: string): Promise<EngagementSummary['initiativeScorecard']> {
+  private async collectInitiativeStats(
+    db: IDatabase,
+    req: EngagementSummaryRequest,
+    since: string
+  ): Promise<EngagementSummary['initiativeScorecard']> {
     const projectFilter = req.projectId ? 'AND project_id = ?' : '';
-    const params: any[] = req.projectId ? [req.organizationId, req.projectId] : [req.organizationId];
+    const params: any[] = req.projectId
+      ? [req.organizationId, req.projectId]
+      : [req.organizationId];
 
     try {
-      const stats = await db.get(
+      const stats = (await db.get(
         `SELECT
            COUNT(*) as total,
            SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
@@ -232,7 +248,7 @@ class EngagementSummaryService {
          JOIN projects p ON i.project_id = p.id
          WHERE p.organization_id = ? ${projectFilter}`,
         [since, ...params]
-      ) as any;
+      )) as any;
 
       return {
         total: stats?.total || 0,
@@ -246,7 +262,11 @@ class EngagementSummaryService {
     }
   }
 
-  private async collectRiskUpdates(db: IDatabase, req: EngagementSummaryRequest, since: string): Promise<EngagementSummary['riskUpdates']> {
+  private async collectRiskUpdates(
+    db: IDatabase,
+    req: EngagementSummaryRequest,
+    since: string
+  ): Promise<EngagementSummary['riskUpdates']> {
     try {
       const rows = await db.all(
         `SELECT title, status, impact FROM raid_items
@@ -264,9 +284,13 @@ class EngagementSummaryService {
     }
   }
 
-  private async collectTaskMetrics(db: IDatabase, req: EngagementSummaryRequest, since: string): Promise<EngagementSummary['taskMetrics']> {
+  private async collectTaskMetrics(
+    db: IDatabase,
+    req: EngagementSummaryRequest,
+    since: string
+  ): Promise<EngagementSummary['taskMetrics']> {
     try {
-      const stats = await db.get(
+      const stats = (await db.get(
         `SELECT
            SUM(CASE WHEN status = 'completed' AND updated_at > ? THEN 1 ELSE 0 END) as completed,
            SUM(CASE WHEN due_date < datetime('now') AND status NOT IN ('completed', 'cancelled') THEN 1 ELSE 0 END) as overdue,
@@ -275,7 +299,7 @@ class EngagementSummaryService {
          JOIN projects p ON t.project_id = p.id
          WHERE p.organization_id = ?`,
         [since, since, req.organizationId]
-      ) as any;
+      )) as any;
 
       return {
         completed: stats?.completed || 0,
@@ -287,9 +311,13 @@ class EngagementSummaryService {
     }
   }
 
-  private async collectAIMetrics(db: IDatabase, req: EngagementSummaryRequest, since: string): Promise<EngagementSummary['aiInteractions']> {
+  private async collectAIMetrics(
+    db: IDatabase,
+    req: EngagementSummaryRequest,
+    since: string
+  ): Promise<EngagementSummary['aiInteractions']> {
     try {
-      const stats = await db.get(
+      const stats = (await db.get(
         `SELECT
            COUNT(DISTINCT c.id) as conversations,
            SUM(CASE WHEN c.metadata LIKE '%deepResearch%' THEN 1 ELSE 0 END) as deep_thinking,
@@ -297,7 +325,7 @@ class EngagementSummaryService {
          FROM conversations c
          WHERE c.organization_id = ? AND c.created_at > ?`,
         [req.organizationId, since]
-      ) as any;
+      )) as any;
 
       return {
         totalConversations: stats?.conversations || 0,
@@ -326,47 +354,59 @@ class EngagementSummaryService {
     const highlights: string[] = [];
 
     if (initiatives.completed > 0) {
-      highlights.push(isPl
-        ? `Ukończono ${initiatives.completed} inicjatyw${initiatives.completed > 1 ? '' : 'ę'}`
-        : `Completed ${initiatives.completed} initiative${initiatives.completed > 1 ? 's' : ''}`);
+      highlights.push(
+        isPl
+          ? `Ukończono ${initiatives.completed} inicjatyw${initiatives.completed > 1 ? '' : 'ę'}`
+          : `Completed ${initiatives.completed} initiative${initiatives.completed > 1 ? 's' : ''}`
+      );
     }
 
     if (initiatives.blocked > 0) {
-      highlights.push(isPl
-        ? `${initiatives.blocked} inicjatyw${initiatives.blocked > 1 ? '' : 'a'} zablokowanych`
-        : `${initiatives.blocked} initiative${initiatives.blocked > 1 ? 's' : ''} blocked`);
+      highlights.push(
+        isPl
+          ? `${initiatives.blocked} inicjatyw${initiatives.blocked > 1 ? '' : 'a'} zablokowanych`
+          : `${initiatives.blocked} initiative${initiatives.blocked > 1 ? 's' : ''} blocked`
+      );
     }
 
     if (tasks.completed > 0) {
-      highlights.push(isPl
-        ? `Zamknięto ${tasks.completed} zadań`
-        : `Closed ${tasks.completed} tasks`);
+      highlights.push(
+        isPl ? `Zamknięto ${tasks.completed} zadań` : `Closed ${tasks.completed} tasks`
+      );
     }
 
     if (tasks.overdue > 0) {
-      highlights.push(isPl
-        ? `${tasks.overdue} zadań przeterminowanych wymaga uwagi`
-        : `${tasks.overdue} overdue tasks need attention`);
+      highlights.push(
+        isPl
+          ? `${tasks.overdue} zadań przeterminowanych wymaga uwagi`
+          : `${tasks.overdue} overdue tasks need attention`
+      );
     }
 
     if (decisions.length > 0) {
-      highlights.push(isPl
-        ? `Podjęto ${decisions.length} kluczowych decyzji strategicznych`
-        : `Made ${decisions.length} key strategic decisions`);
+      highlights.push(
+        isPl
+          ? `Podjęto ${decisions.length} kluczowych decyzji strategicznych`
+          : `Made ${decisions.length} key strategic decisions`
+      );
     }
 
     if (risks.length > 0) {
-      const highRisks = risks.filter(r => r.impact === 'high' || r.impact === 'critical').length;
+      const highRisks = risks.filter((r) => r.impact === 'high' || r.impact === 'critical').length;
       if (highRisks > 0) {
-        highlights.push(isPl
-          ? `${highRisks} ryzyk o wysokim wpływie wymaga eskalacji`
-          : `${highRisks} high-impact risks require escalation`);
+        highlights.push(
+          isPl
+            ? `${highRisks} ryzyk o wysokim wpływie wymaga eskalacji`
+            : `${highRisks} high-impact risks require escalation`
+        );
       }
     }
 
     return highlights.length > 0
       ? highlights.join('. ') + '.'
-      : (isPl ? 'Brak istotnych zmian w tym okresie.' : 'No significant changes in this period.');
+      : isPl
+        ? 'Brak istotnych zmian w tym okresie.'
+        : 'No significant changes in this period.';
   }
 
   private generateRecommendations(
@@ -379,35 +419,45 @@ class EngagementSummaryService {
     const recs: string[] = [];
 
     if (initiatives.blocked > 0) {
-      recs.push(isPl
-        ? `Zaplanuj sesję deblokowania dla ${initiatives.blocked} zablokowanych inicjatyw — zidentyfikuj root cause i przypisz właścicieli rozwiązań`
-        : `Schedule an unblocking session for ${initiatives.blocked} blocked initiatives — identify root causes and assign resolution owners`);
+      recs.push(
+        isPl
+          ? `Zaplanuj sesję deblokowania dla ${initiatives.blocked} zablokowanych inicjatyw — zidentyfikuj root cause i przypisz właścicieli rozwiązań`
+          : `Schedule an unblocking session for ${initiatives.blocked} blocked initiatives — identify root causes and assign resolution owners`
+      );
     }
 
     if (tasks.overdue > tasks.completed * 0.3) {
-      recs.push(isPl
-        ? `Przeterminowania (${tasks.overdue}) przekraczają 30% ukończonych zadań — przeprowadź triaging z zespołem (deleguj, przesuń lub anuluj)`
-        : `Overdue tasks (${tasks.overdue}) exceed 30% of completed — run a triage session (delegate, reschedule, or cancel)`);
+      recs.push(
+        isPl
+          ? `Przeterminowania (${tasks.overdue}) przekraczają 30% ukończonych zadań — przeprowadź triaging z zespołem (deleguj, przesuń lub anuluj)`
+          : `Overdue tasks (${tasks.overdue}) exceed 30% of completed — run a triage session (delegate, reschedule, or cancel)`
+      );
     }
 
-    const highRisks = risks.filter(r => r.impact === 'high' || r.impact === 'critical');
+    const highRisks = risks.filter((r) => r.impact === 'high' || r.impact === 'critical');
     if (highRisks.length > 0) {
-      recs.push(isPl
-        ? `Eskaluj ${highRisks.length} ryzyk o wysokim wpływie do Steering Committee z proponowanymi mitigation actions`
-        : `Escalate ${highRisks.length} high-impact risks to Steering Committee with proposed mitigation actions`);
+      recs.push(
+        isPl
+          ? `Eskaluj ${highRisks.length} ryzyk o wysokim wpływie do Steering Committee z proponowanymi mitigation actions`
+          : `Escalate ${highRisks.length} high-impact risks to Steering Committee with proposed mitigation actions`
+      );
     }
 
     if (initiatives.total > 0 && initiatives.completed / initiatives.total < 0.1) {
-      recs.push(isPl
-        ? `Niska stopa ukończenia inicjatyw (<10%) — rozważ zmniejszenie scope lub zwiększenie zasobów`
-        : `Low initiative completion rate (<10%) — consider reducing scope or increasing resources`);
+      recs.push(
+        isPl
+          ? `Niska stopa ukończenia inicjatyw (<10%) — rozważ zmniejszenie scope lub zwiększenie zasobów`
+          : `Low initiative completion rate (<10%) — consider reducing scope or increasing resources`
+      );
     }
 
     // Always add a strategic recommendation
     if (recs.length === 0) {
-      recs.push(isPl
-        ? `Zaplanuj przegląd strategiczny — upewnij się, że bieżące inicjatywy są nadal aligned z celami organizacji`
-        : `Schedule a strategic review — ensure current initiatives remain aligned with organizational goals`);
+      recs.push(
+        isPl
+          ? `Zaplanuj przegląd strategiczny — upewnij się, że bieżące inicjatywy są nadal aligned z celami organizacji`
+          : `Schedule a strategic review — ensure current initiatives remain aligned with organizational goals`
+      );
     }
 
     return recs.slice(0, 3);

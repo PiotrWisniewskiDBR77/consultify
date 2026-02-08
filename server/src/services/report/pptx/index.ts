@@ -6,39 +6,42 @@
  */
 
 // Core service
-export { PptxPipelineService, default as PptxPipelineServiceDefault } from './PptxPipelineService.js';
 export type { PipelineOptions, PipelineResult } from './PptxPipelineService.js';
+export {
+  PptxPipelineService,
+  default as PptxPipelineServiceDefault,
+} from './PptxPipelineService.js';
 
 // Types
 export type {
+  AxisScore,
+  ChartDataSet,
+  DesignTokens,
+  KpiData,
+  LayoutResult,
+  RenderedElement,
+  RuleViolation,
+  SlideContent,
+  SlideIntent,
+  TableData,
   UnifiedReportJSON,
   UnifiedReportMeta,
   UnifiedSlide,
-  SlideIntent,
-  SlideContent,
-  DesignTokens,
-  RenderedElement,
-  LayoutResult,
   ValidationResult,
-  RuleViolation,
-  KpiData,
-  AxisScore,
-  ChartDataSet,
-  TableData,
 } from './types.js';
 
 // Design tokens
-export { getDesignTokens, corporateTokens, minimalTokens, modernTokens } from './designTokens.js';
+export { corporateTokens, getDesignTokens, minimalTokens, modernTokens } from './designTokens.js';
 
 // Transformer
-export { transformToUnifiedJson } from './UnifiedJsonTransformer.js';
 export type { TransformOptions } from './UnifiedJsonTransformer.js';
+export { transformToUnifiedJson } from './UnifiedJsonTransformer.js';
 
 // Rules engine
-export { validateReport, decideRecommendationIntent, decideKpiIntent } from './RulesEngine.js';
+export { decideKpiIntent, decideRecommendationIntent, validateReport } from './RulesEngine.js';
 
 // Intent resolver
-export { resolveIntent, inferIntentFromContent, getAllIntents } from './IntentResolver.js';
+export { getAllIntents, inferIntentFromContent, resolveIntent } from './IntentResolver.js';
 
 // Layout registry
-export { resolveLayout, LAYOUT_REGISTRY } from './layouts/index.js';
+export { LAYOUT_REGISTRY, resolveLayout } from './layouts/index.js';

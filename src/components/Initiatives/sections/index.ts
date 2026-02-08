@@ -4,43 +4,62 @@
 
 // Core infrastructure
 export { CollapsibleSection } from './CollapsibleSection';
-export { InitiativeContext, useInitiativeContext } from './InitiativeContext';
 export type { InitiativeContextValue } from './InitiativeContext';
-export { SECTION_REGISTRY, getSectionComponent, DEFAULT_SECTION_ORDER, DEFAULT_VISIBLE_SECTIONS } from './registry';
+export { InitiativeContext, useInitiativeContext } from './InitiativeContext';
+export {
+  DEFAULT_SECTION_ORDER,
+  DEFAULT_VISIBLE_SECTIONS,
+  getSectionComponent,
+  SECTION_REGISTRY,
+} from './registry';
 export type { InitiativeSectionProps, SectionTypeInfo } from './types';
 
 // Re-export types and constants
-export type { Decision, RaidItem, Watcher, HistoryEvent, TaskItem, UserInfo, PendingApproval } from './types';
+export type {
+  Decision,
+  HistoryEvent,
+  PendingApproval,
+  RaidItem,
+  TaskItem,
+  UserInfo,
+  Watcher,
+} from './types';
 export {
-  GATE_DEFINITIONS, GATE_CONFIG, MODULE_CONFIG, PRIORITY_CONFIG,
-  RAID_TYPE_CONFIG, SEVERITY_CONFIG,
-  getModuleFromStatus, getNextGateForStatus, getRoleLabel,
+  GATE_CONFIG,
+  GATE_DEFINITIONS,
+  getModuleFromStatus,
+  getNextGateForStatus,
+  getRoleLabel,
+  MODULE_CONFIG,
+  PRIORITY_CONFIG,
+  RAID_TYPE_CONFIG,
+  SEVERITY_CONFIG,
 } from './types';
 
 // Section components
-export { OverviewSection } from './OverviewSection';
+export { AttachmentsSection } from './AttachmentsSection';
 export { CommentsSection } from './CommentsSection';
-export { TasksMilestonesSection } from './TasksMilestonesSection';
+export { ControlSection } from './ControlSection';
 export { DecisionsSection } from './DecisionsSection';
-export { RaidSection } from './RaidSection';
-export { GateReadinessSection } from './GateReadinessSection';
+export { DependenciesSection } from './DependenciesSection';
 export { FinancialAnalysisSection } from './FinancialAnalysisSection';
 export { FinancialImpactSection } from './FinancialImpactSection';
+export { GateReadinessSection } from './GateReadinessSection';
 export { HistorySection } from './HistorySection';
-export { ControlSection } from './ControlSection';
+export { LinkedItemsSection } from './LinkedItemsSection';
+export { OverviewSection } from './OverviewSection';
+export { RaidSection } from './RaidSection';
+export { RemindersSection } from './RemindersSection';
+export { StakeholdersSection } from './StakeholdersSection';
+export { TagsSection } from './TagsSection';
+export { TasksMilestonesSection } from './TasksMilestonesSection';
 export { TeamSection } from './TeamSection';
 export { TimelineSection } from './TimelineSection';
-export { AttachmentsSection } from './AttachmentsSection';
-export { LinkedItemsSection } from './LinkedItemsSection';
-export { StakeholdersSection } from './StakeholdersSection';
-export { DependenciesSection } from './DependenciesSection';
-export { RemindersSection } from './RemindersSection';
-export { TagsSection } from './TagsSection';
 
 // Phase 2 - New structured sections
-export { ProblemDefinitionSection } from './ProblemDefinitionSection';
-export { TargetStateSection } from './TargetStateSection';
-export { ScopeSection } from './ScopeSection';
 export { KpisSection } from './KpisSection';
 export { PilotSection } from './PilotSection';
+export { ProblemDefinitionSection } from './ProblemDefinitionSection';
 export { ResourcesSection } from './ResourcesSection';
+export { ScopeSection } from './ScopeSection';
+export { TargetStateSection } from './TargetStateSection';

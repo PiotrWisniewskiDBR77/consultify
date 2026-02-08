@@ -24,9 +24,15 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
 
   // Local state for structured problem fields (stored in initiative.problemDefinition JSON)
   const problemData = initiative?.problemDefinition || initiative?.problem_definition || {};
-  const [symptom, setSymptom] = useState(typeof problemData === 'object' ? problemData.symptom || '' : '');
-  const [rootCause, setRootCause] = useState(typeof problemData === 'object' ? problemData.rootCause || '' : '');
-  const [costOfInaction, setCostOfInaction] = useState(typeof problemData === 'object' ? problemData.costOfInaction || '' : '');
+  const [symptom, setSymptom] = useState(
+    typeof problemData === 'object' ? problemData.symptom || '' : ''
+  );
+  const [rootCause, setRootCause] = useState(
+    typeof problemData === 'object' ? problemData.rootCause || '' : ''
+  );
+  const [costOfInaction, setCostOfInaction] = useState(
+    typeof problemData === 'object' ? problemData.costOfInaction || '' : ''
+  );
 
   const filledCount = [symptom, rootCause, costOfInaction].filter(Boolean).length;
 
@@ -75,7 +81,9 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
         {/* Symptom */}
         <div>
           <label className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 rounded-full bg-rose-500/20 flex items-center justify-center text-xs font-bold text-rose-500">1</div>
+            <div className="w-6 h-6 rounded-full bg-rose-500/20 flex items-center justify-center text-xs font-bold text-rose-500">
+              1
+            </div>
             <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               {isPolish ? 'Symptom / Co obserwujemy' : 'Symptom / What is observed'}
             </span>
@@ -90,14 +98,20 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
             onChange={(e) => setSymptom(e.target.value)}
             rows={3}
             className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-500/10 resize-none transition-all text-sm"
-            placeholder={isPolish ? 'Np. Czas odpowiedzi API wzrósł o 40% w ciągu ostatniego kwartału...' : 'E.g. API response time has increased by 40% over the last quarter...'}
+            placeholder={
+              isPolish
+                ? 'Np. Czas odpowiedzi API wzrósł o 40% w ciągu ostatniego kwartału...'
+                : 'E.g. API response time has increased by 40% over the last quarter...'
+            }
           />
         </div>
 
         {/* Root Cause */}
         <div>
           <label className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-xs font-bold text-orange-500">2</div>
+            <div className="w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-xs font-bold text-orange-500">
+              2
+            </div>
             <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               {isPolish ? 'Przyczyna źródłowa' : 'Root Cause'}
             </span>
@@ -112,14 +126,20 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
             onChange={(e) => setRootCause(e.target.value)}
             rows={3}
             className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-500/10 resize-none transition-all text-sm"
-            placeholder={isPolish ? 'Np. Baza danych nie jest zoptymalizowana pod kątem rosnącego wolumenu transakcji...' : 'E.g. Database is not optimized for growing transaction volume...'}
+            placeholder={
+              isPolish
+                ? 'Np. Baza danych nie jest zoptymalizowana pod kątem rosnącego wolumenu transakcji...'
+                : 'E.g. Database is not optimized for growing transaction volume...'
+            }
           />
         </div>
 
         {/* Cost of Inaction */}
         <div>
           <label className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center text-xs font-bold text-red-500">3</div>
+            <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center text-xs font-bold text-red-500">
+              3
+            </div>
             <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               {isPolish ? 'Koszt bezczynności' : 'Cost of Inaction'}
             </span>
@@ -134,15 +154,23 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
             onChange={(e) => setCostOfInaction(e.target.value)}
             rows={3}
             className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-500/10 resize-none transition-all text-sm"
-            placeholder={isPolish ? 'Np. Ryzyko utraty 15% klientów enterprise w ciągu 6 miesięcy...' : 'E.g. Risk of losing 15% of enterprise clients within 6 months...'}
+            placeholder={
+              isPolish
+                ? 'Np. Ryzyko utraty 15% klientów enterprise w ciągu 6 miesięcy...'
+                : 'E.g. Risk of losing 15% of enterprise clients within 6 months...'
+            }
           />
         </div>
 
         {/* Completeness indicator */}
         <div className="pt-3 border-t border-slate-200 dark:border-navy-700">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-500">{isPolish ? 'Kompletność definicji' : 'Definition Completeness'}</span>
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{Math.round((filledCount / 3) * 100)}%</span>
+            <span className="text-xs text-slate-500">
+              {isPolish ? 'Kompletność definicji' : 'Definition Completeness'}
+            </span>
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+              {Math.round((filledCount / 3) * 100)}%
+            </span>
           </div>
           <div className="h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
             <motion.div

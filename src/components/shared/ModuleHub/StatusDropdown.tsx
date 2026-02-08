@@ -515,6 +515,6 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
 // EXPORTS
 // ============================================
 
-export { ALL_OPTION, ALL_STATUSES, ASSESSMENT_STATUSES, REPORT_STATUSES, getStatusesForModule };
+export { ALL_OPTION, ALL_STATUSES, ASSESSMENT_STATUSES, getStatusesForModule, REPORT_STATUSES };
 
 export default StatusDropdown;

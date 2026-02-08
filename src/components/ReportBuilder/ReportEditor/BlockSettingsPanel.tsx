@@ -8,20 +8,14 @@
  * - Presets displayed as prominent quick-action chips
  */
 
-import {
-  ChevronDown,
-  ChevronRight,
-  Settings2,
-  Sparkles,
-  Zap,
-} from 'lucide-react';
+import { ChevronDown, ChevronRight, Settings2, Sparkles, Zap } from 'lucide-react';
 import React, { useState } from 'react';
 
 import {
   type BlockSettingsDefinition,
-  type SettingDefinition,
-  SETTING_GROUP_LABELS,
   getBlockSettings,
+  SETTING_GROUP_LABELS,
+  type SettingDefinition,
 } from './BlockSettingsRegistry';
 
 // ==========================================
@@ -63,7 +57,9 @@ const ToggleSetting: React.FC<{
       onChange(!value);
     }}
   >
-    <span className={`${compact ? 'text-[10px]' : 'text-[11px]'} font-medium text-slate-600 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate mr-2`}>
+    <span
+      className={`${compact ? 'text-[10px]' : 'text-[11px]'} font-medium text-slate-600 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate mr-2`}
+    >
       {isPl ? setting.labelPl : setting.label}
     </span>
     <div
@@ -77,10 +73,7 @@ const ToggleSetting: React.FC<{
         className={`
           absolute top-0.5 rounded-full bg-white shadow transition-transform
           ${compact ? 'w-3 h-3' : 'w-3.5 h-3.5'}
-          ${value
-            ? compact ? 'translate-x-3' : 'translate-x-3.5'
-            : 'translate-x-0.5'
-          }
+          ${value ? (compact ? 'translate-x-3' : 'translate-x-3.5') : 'translate-x-0.5'}
         `}
       />
     </div>
@@ -98,7 +91,9 @@ const NumberSetting: React.FC<{
       <span className="text-[11px] font-medium text-slate-600 dark:text-slate-400">
         {isPl ? setting.labelPl : setting.label}
       </span>
-      <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 tabular-nums">{value}</span>
+      <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 tabular-nums">
+        {value}
+      </span>
     </div>
     <input
       type="range"
@@ -173,7 +168,11 @@ const TextSetting: React.FC<{
       value={value}
       onChange={(e) => onChange(e.target.value)}
       onClick={(e) => e.stopPropagation()}
-      placeholder={isPl ? (setting.placeholderPl || setting.descriptionPl) : (setting.placeholder || setting.description)}
+      placeholder={
+        isPl
+          ? setting.placeholderPl || setting.descriptionPl
+          : setting.placeholder || setting.description
+      }
       className="w-full px-2 py-1.5 text-[11px] bg-white dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 placeholder:text-slate-400"
     />
   </div>
@@ -193,7 +192,11 @@ const TextareaSetting: React.FC<{
       value={value}
       onChange={(e) => onChange(e.target.value)}
       onClick={(e) => e.stopPropagation()}
-      placeholder={isPl ? (setting.placeholderPl || setting.descriptionPl) : (setting.placeholder || setting.description)}
+      placeholder={
+        isPl
+          ? setting.placeholderPl || setting.descriptionPl
+          : setting.placeholder || setting.description
+      }
       className="w-full px-2 py-1.5 text-[11px] bg-white dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none h-16 placeholder:text-slate-400"
     />
   </div>

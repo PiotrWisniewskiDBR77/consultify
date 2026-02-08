@@ -12,9 +12,8 @@
  * Delegates to aiAssessmentPartnerService for LLM calls (Gemini).
  */
 
-import { aiAssessmentPartner, DRD_AXES } from './aiAssessmentPartnerService.js';
-
 import logger from '../utils/Logger.js';
+import { aiAssessmentPartner, DRD_AXES } from './aiAssessmentPartnerService.js';
 
 // Field types for assessment forms
 export const FIELD_TYPES = {
@@ -336,7 +335,10 @@ export class AIAssessmentFormHelper {
     }
 
     // Action: Gap analysis
-    if (axes && Object.values(axes).some((a: any) => a?.target && a?.actual && a.target > a.actual)) {
+    if (
+      axes &&
+      Object.values(axes).some((a: any) => a?.target && a?.actual && a.target > a.actual)
+    ) {
       actions.push({
         id: 'gap-analysis',
         label: 'AI: Gap Analysis',
@@ -503,7 +505,8 @@ export class AIAssessmentFormHelper {
           quality: 'missing',
           score: 0,
           message: `Area ${areaId}: No justification notes provided for achieved level ${achievedLevel}.`,
-          suggestion: 'Add notes explaining why this level was selected and what evidence supports it.',
+          suggestion:
+            'Add notes explaining why this level was selected and what evidence supports it.',
         });
         continue;
       }

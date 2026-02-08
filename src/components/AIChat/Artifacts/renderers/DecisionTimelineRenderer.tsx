@@ -42,7 +42,16 @@
  * }
  */
 
-import { ArrowRight, Check, Clock, Copy, Download, Flag, TrendingUp, AlertTriangle } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  Check,
+  Clock,
+  Copy,
+  Download,
+  Flag,
+  TrendingUp,
+} from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -183,7 +192,10 @@ export const DecisionTimelineRenderer: React.FC<DecisionTimelineRendererProps> =
   const handleCopy = () => {
     if (!data) return;
     const text = data.events
-      .map((e) => `${e.date} | ${e.label} (${e.type}) — ${e.status}${e.description ? ': ' + e.description : ''}`)
+      .map(
+        (e) =>
+          `${e.date} | ${e.label} (${e.type}) — ${e.status}${e.description ? ': ' + e.description : ''}`
+      )
       .join('\n');
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
@@ -375,8 +387,8 @@ export const DecisionTimelineRenderer: React.FC<DecisionTimelineRendererProps> =
                         <ArrowRight size={10} />
                         <span>
                           {isPl ? 'Zależy od:' : 'Depends on:'}{' '}
-                          {event.dependsOn!
-                            .map((depId) => {
+                          {event
+                            .dependsOn!.map((depId) => {
                               const dep = data.events.find((e) => e.id === depId);
                               return dep?.label || depId;
                             })

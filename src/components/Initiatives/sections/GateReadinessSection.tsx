@@ -74,22 +74,45 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
   const checkRequirement = useCallback(
     (req: string) => {
       switch (req) {
-        case 'title': return !!initiative?.name;
-        case 'problem': return !!summary;
-        case 'owner': return !!ownerId;
-        case 'sponsor': return !!sponsorId;
-        case 'timeline': return !!targetDate;
-        case 'team': return stakeholders.length > 0;
-        case 'risks': return raidItems.some((r) => r.type === 'risk');
-        case 'objective': return !!summary;
-        case 'scope': return !!description;
-        case 'capacity': return true;
-        case 'dependencies': return true;
-        case 'all_tasks_done': return tasks.every((t) => t.status === 'DONE');
-        default: return false;
+        case 'title':
+          return !!initiative?.name;
+        case 'problem':
+          return !!summary;
+        case 'owner':
+          return !!ownerId;
+        case 'sponsor':
+          return !!sponsorId;
+        case 'timeline':
+          return !!targetDate;
+        case 'team':
+          return stakeholders.length > 0;
+        case 'risks':
+          return raidItems.some((r) => r.type === 'risk');
+        case 'objective':
+          return !!summary;
+        case 'scope':
+          return !!description;
+        case 'capacity':
+          return true;
+        case 'dependencies':
+          return true;
+        case 'all_tasks_done':
+          return tasks.every((t) => t.status === 'DONE');
+        default:
+          return false;
       }
     },
-    [initiative, summary, ownerId, sponsorId, targetDate, stakeholders, raidItems, description, tasks]
+    [
+      initiative,
+      summary,
+      ownerId,
+      sponsorId,
+      targetDate,
+      stakeholders,
+      raidItems,
+      description,
+      tasks,
+    ]
   );
 
   const readinessPercent = useMemo(() => {
@@ -137,7 +160,8 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
           )}
           {requiredGates.length > 0 && (
             <span className="text-xs px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400">
-              {requiredGates.filter((g) => getGateStatus(g.pmoDomain) === 'APPROVED').length}/{requiredGates.length}
+              {requiredGates.filter((g) => getGateStatus(g.pmoDomain) === 'APPROVED').length}/
+              {requiredGates.length}
             </span>
           )}
         </div>
@@ -176,7 +200,11 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
             disabled={isGeneratingAI === 'gates'}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-medium transition-all disabled:opacity-50"
           >
-            {isGeneratingAI === 'gates' ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+            {isGeneratingAI === 'gates' ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Sparkles size={14} />
+            )}
             <span>AI</span>
           </motion.button>
         </div>
@@ -211,7 +239,11 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                 const isCurrent = key === nextGate;
 
                 return (
-                  <div key={key} className="flex flex-col items-center" style={{ width: `${100 / arr.length}%` }}>
+                  <div
+                    key={key}
+                    className="flex flex-col items-center"
+                    style={{ width: `${100 / arr.length}%` }}
+                  >
                     <motion.div
                       initial={{ scale: 0.8 }}
                       animate={{ scale: isCurrent ? 1.2 : 1 }}
@@ -223,10 +255,18 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                             : 'bg-white dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-400'
                       }`}
                     >
-                      {isPast ? <Check size={14} /> : isCurrent ? <Flag size={14} /> : <span className="text-xs font-bold">{idx + 1}</span>}
+                      {isPast ? (
+                        <Check size={14} />
+                      ) : isCurrent ? (
+                        <Flag size={14} />
+                      ) : (
+                        <span className="text-xs font-bold">{idx + 1}</span>
+                      )}
                     </motion.div>
                     <div className={`mt-2 text-center ${isCurrent ? 'font-semibold' : ''}`}>
-                      <p className={`text-[10px] ${isPast ? 'text-emerald-500' : isCurrent ? 'text-purple-500' : 'text-slate-400'}`}>
+                      <p
+                        className={`text-[10px] ${isPast ? 'text-emerald-500' : isCurrent ? 'text-purple-500' : 'text-slate-400'}`}
+                      >
                         {isPolish ? config.namePl.split(' ')[0] : config.name.split(' ')[0]}
                       </p>
                     </div>
@@ -247,9 +287,12 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  {isPolish ? 'Aktualna bramka' : 'Current Gate'}: {isPolish ? nextGateConfig.namePl : nextGateConfig.name}
+                  {isPolish ? 'Aktualna bramka' : 'Current Gate'}:{' '}
+                  {isPolish ? nextGateConfig.namePl : nextGateConfig.name}
                 </h4>
-                <p className="text-xs text-slate-500">{isPolish ? nextGateConfig.descriptionPl : nextGateConfig.description}</p>
+                <p className="text-xs text-slate-500">
+                  {isPolish ? nextGateConfig.descriptionPl : nextGateConfig.description}
+                </p>
               </div>
             </div>
           </div>
@@ -266,13 +309,23 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                   <div
                     key={req}
                     className={`flex items-center gap-2 p-2 rounded-lg ${
-                      hasReq ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700'
+                      hasReq
+                        ? 'bg-emerald-500/10 border border-emerald-500/20'
+                        : 'bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700'
                     }`}
                   >
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center ${hasReq ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-navy-600'}`}>
-                      {hasReq ? <Check size={12} className="text-white" /> : <X size={12} className="text-white" />}
+                    <div
+                      className={`w-5 h-5 rounded-full flex items-center justify-center ${hasReq ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-navy-600'}`}
+                    >
+                      {hasReq ? (
+                        <Check size={12} className="text-white" />
+                      ) : (
+                        <X size={12} className="text-white" />
+                      )}
                     </div>
-                    <span className={`text-xs ${hasReq ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}>
+                    <span
+                      className={`text-xs ${hasReq ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}
+                    >
                       {isPolish ? reqLabels[req]?.pl : reqLabels[req]?.en || req}
                     </span>
                   </div>
@@ -301,8 +354,12 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
           <div className="flex items-center justify-between p-2 rounded-lg bg-white/50 dark:bg-navy-900/50 border border-slate-200/50 dark:border-navy-700/50">
             <div className="flex items-center gap-2">
               <User size={14} className="text-slate-400" />
-              <span className="text-xs text-slate-500">{isPolish ? 'Wymagana aprobata' : 'Required approval'}:</span>
-              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{getRoleLabel(nextGateConfig.requiredRole, isPolish)}</span>
+              <span className="text-xs text-slate-500">
+                {isPolish ? 'Wymagana aprobata' : 'Required approval'}:
+              </span>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                {getRoleLabel(nextGateConfig.requiredRole, isPolish)}
+              </span>
             </div>
             {nextGateConfig.requiredRole === 'sponsor' && sponsorId && (
               <span className="text-xs text-purple-500">{getUserDisplayName(sponsorId)}</span>
@@ -324,14 +381,27 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
             const gs = getGateStatus(g.pmoDomain);
             const ok = gs === 'APPROVED';
             return (
-              <div key={g.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50/50 dark:bg-navy-800/50 border border-slate-200/50 dark:border-navy-700/50">
+              <div
+                key={g.id}
+                className="flex items-center justify-between p-3 rounded-lg bg-slate-50/50 dark:bg-navy-800/50 border border-slate-200/50 dark:border-navy-700/50"
+              >
                 <div className="flex items-center gap-2">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${ok ? 'bg-emerald-500' : gs === 'PENDING' ? 'bg-amber-500' : 'bg-slate-300 dark:bg-navy-600'}`}>
-                    {ok ? <Check size={12} className="text-white" /> : gs === 'PENDING' ? <Clock size={12} className="text-white" /> : <X size={12} className="text-white" />}
+                  <div
+                    className={`w-6 h-6 rounded-full flex items-center justify-center ${ok ? 'bg-emerald-500' : gs === 'PENDING' ? 'bg-amber-500' : 'bg-slate-300 dark:bg-navy-600'}`}
+                  >
+                    {ok ? (
+                      <Check size={12} className="text-white" />
+                    ) : gs === 'PENDING' ? (
+                      <Clock size={12} className="text-white" />
+                    ) : (
+                      <X size={12} className="text-white" />
+                    )}
                   </div>
                   <span className="text-sm text-slate-700 dark:text-slate-300">{g.label}</span>
                 </div>
-                <span className={`px-2 py-0.5 text-[10px] font-medium rounded ${ok ? 'bg-emerald-500/20 text-emerald-400' : gs === 'PENDING' ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-500/20 text-slate-400'}`}>
+                <span
+                  className={`px-2 py-0.5 text-[10px] font-medium rounded ${ok ? 'bg-emerald-500/20 text-emerald-400' : gs === 'PENDING' ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-500/20 text-slate-400'}`}
+                >
                   {gs === 'MISSING' ? (isPolish ? 'Nie zgłoszono' : 'Not requested') : gs}
                 </span>
               </div>
@@ -343,7 +413,9 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
       {!nextGateConfig && requiredGates.length === 0 && (
         <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
           <CheckCircle2 size={24} className="mx-auto mb-2 text-emerald-500" />
-          <p className="text-sm text-slate-500">{isPolish ? 'Wszystkie bramki przejdzone!' : 'All gates passed!'}</p>
+          <p className="text-sm text-slate-500">
+            {isPolish ? 'Wszystkie bramki przejdzone!' : 'All gates passed!'}
+          </p>
         </div>
       )}
     </CollapsibleSection>

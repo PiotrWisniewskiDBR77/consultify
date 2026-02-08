@@ -32,13 +32,7 @@ import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { useArtifactsStore } from '../../store/useArtifactsStore';
 import { useConversationStore } from '../../store/useConversationStore';
-import {
-  Artifact,
-  ChatMessage,
-  FocusMode,
-  ResponseFeedback,
-  ThinkingStep,
-} from '../../types';
+import { Artifact, ChatMessage, FocusMode, ResponseFeedback, ThinkingStep } from '../../types';
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
 import { ContextBadge } from './ContextBadge';

@@ -156,7 +156,14 @@ export const AIContextBuilder = {
     }
 
     // Fetch enrichment layers in parallel
-    const [pendingApprovals, aiSettings, selectedEntity, assessmentData, financialData, historicalPatterns] = await Promise.all([
+    const [
+      pendingApprovals,
+      aiSettings,
+      selectedEntity,
+      assessmentData,
+      financialData,
+      historicalPatterns,
+    ] = await Promise.all([
       AIContextBuilder._buildPendingApprovalsContext(userId, organizationId, projectId),
       (async () => {
         if (!AISettingsService) return null;
@@ -167,7 +174,10 @@ export const AIContextBuilder = {
           return null;
         }
       })(),
-      AIContextBuilder._buildSelectedEntityContext(options.selectedObjectType, options.selectedObjectId),
+      AIContextBuilder._buildSelectedEntityContext(
+        options.selectedObjectType,
+        options.selectedObjectId
+      ),
       AIContextBuilder._buildAssessmentContext(projectId, organizationId),
       AIContextBuilder._buildFinancialContext(projectId, organizationId),
       AIContextBuilder._buildHistoricalPatternsContext(projectId, organizationId),
@@ -367,7 +377,7 @@ export const AIContextBuilder = {
     }
 
     // Fetch terminology from ai_organization_memory key-value store
-    let terminology: Record<string, string> = {};
+    const terminology: Record<string, string> = {};
     try {
       const termRows = (await all(
         `SELECT memory_key, memory_value FROM ai_organization_memory
@@ -540,7 +550,10 @@ export const AIContextBuilder = {
     let approvedIdeas = [];
     if (organizationId && KnowledgeService) {
       try {
-        approvedIdeas = await KnowledgeService.getApprovedIdeas({ organizationId, projectId: projectId || undefined });
+        approvedIdeas = await KnowledgeService.getApprovedIdeas({
+          organizationId,
+          projectId: projectId || undefined,
+        });
       } catch (err: any) {
         logger.warn('[AIContextBuilder] Failed to load approved ideas:', (err as Error).message);
       }
@@ -714,10 +727,7 @@ export const AIContextBuilder = {
    * Layer 4.5: Selected Entity Deep Loading
    * Fetches full data for the entity the user is currently viewing.
    */
-  _buildSelectedEntityContext: async (
-    objectType?: string | null,
-    objectId?: string | null
-  ) => {
+  _buildSelectedEntityContext: async (objectType?: string | null, objectId?: string | null) => {
     if (!objectType || !objectId) return null;
 
     try {
@@ -836,7 +846,10 @@ export const AIContextBuilder = {
           return null;
       }
     } catch (err: any) {
-      logger.warn(`[AIContextBuilder] Entity loading failed for ${objectType}/${objectId}:`, err?.message);
+      logger.warn(
+        `[AIContextBuilder] Entity loading failed for ${objectType}/${objectId}:`,
+        err?.message
+      );
       return null;
     }
   },
@@ -891,10 +904,13 @@ export const AIContextBuilder = {
           toBe: a.to_be_score,
           gap: a.gap,
         })),
-        topGaps: axisScores.filter((a: any) => a.gap > 0).slice(0, 5).map((a: any) => ({
-          axis: a.axis_name || a.axis_id,
-          gap: a.gap,
-        })),
+        topGaps: axisScores
+          .filter((a: any) => a.gap > 0)
+          .slice(0, 5)
+          .map((a: any) => ({
+            axis: a.axis_name || a.axis_id,
+            gap: a.gap,
+          })),
       };
     } catch (err: any) {
       logger.warn('[AIContextBuilder] Assessment context failed:', err?.message);
@@ -949,14 +965,16 @@ export const AIContextBuilder = {
           totalOpex: financials?.total_opex || 0,
           avgExpectedRoi: financials?.avg_roi || 0,
         },
-        analysis: analysis ? {
-          npv: analysis.npv,
-          irr: analysis.irr,
-          roiPercentage: analysis.roi_percentage,
-          paybackMonths: analysis.payback_months,
-          totalInvestment: analysis.total_investment,
-          totalBenefit: analysis.total_benefit,
-        } : null,
+        analysis: analysis
+          ? {
+              npv: analysis.npv,
+              irr: analysis.irr,
+              roiPercentage: analysis.roi_percentage,
+              paybackMonths: analysis.payback_months,
+              totalInvestment: analysis.total_investment,
+              totalBenefit: analysis.total_benefit,
+            }
+          : null,
         scenarios: scenarios.map((s: any) => ({
           type: s.scenario_type,
           npv: s.npv,
@@ -997,7 +1015,8 @@ export const AIContextBuilder = {
             total: stats.total,
             completed: stats.completed || 0,
             cancelled: stats.cancelled || 0,
-            successRate: stats.total > 0 ? Math.round(((stats.completed || 0) / stats.total) * 100) : 0,
+            successRate:
+              stats.total > 0 ? Math.round(((stats.completed || 0) / stats.total) * 100) : 0,
             avgDurationWeeks: Math.round(stats.avg_duration_weeks || 0),
           };
         }

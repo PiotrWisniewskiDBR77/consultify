@@ -8,8 +8,21 @@ import { EscalationRulesSection } from '../../MyWork/shared';
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
 
-export const RemindersSection: React.FC<InitiativeSectionProps> = ({ sectionType, expanded, onToggle }) => {
-  const { reminders, setReminders, escalation, setEscalation, thresholds, setThresholds, users, initiative } = useInitiativeContext();
+export const RemindersSection: React.FC<InitiativeSectionProps> = ({
+  sectionType,
+  expanded,
+  onToggle,
+}) => {
+  const {
+    reminders,
+    setReminders,
+    escalation,
+    setEscalation,
+    thresholds,
+    setThresholds,
+    users,
+    initiative,
+  } = useInitiativeContext();
 
   return (
     <EscalationRulesSection

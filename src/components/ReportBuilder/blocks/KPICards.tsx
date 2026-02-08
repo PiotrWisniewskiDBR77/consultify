@@ -123,9 +123,12 @@ function getTrendIcon(trend?: string) {
 
 function getTrendColor(trend?: string): string {
   switch (trend) {
-    case 'up': return 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30';
-    case 'down': return 'text-red-600 bg-red-50 dark:bg-red-900/30';
-    default: return 'text-slate-500 bg-slate-50 dark:bg-slate-800';
+    case 'up':
+      return 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30';
+    case 'down':
+      return 'text-red-600 bg-red-50 dark:bg-red-900/30';
+    default:
+      return 'text-slate-500 bg-slate-50 dark:bg-slate-800';
   }
 }
 
@@ -133,10 +136,7 @@ function getTrendColor(trend?: string): string {
 // COMPONENT
 // ==========================================
 
-export const KPICards: React.FC<KPICardsProps> = ({
-  content,
-  columns = 3,
-}) => {
+export const KPICards: React.FC<KPICardsProps> = ({ content, columns = 3 }) => {
   const data = useMemo(() => parseKPIData(content), [content]);
 
   if (!data || !data.items || data.items.length === 0) {
@@ -182,7 +182,9 @@ export const KPICards: React.FC<KPICardsProps> = ({
             {/* Trend */}
             {(item.trend || item.trendValue) && (
               <div className="flex items-center gap-1.5">
-                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium ${getTrendColor(item.trend)}`}>
+                <span
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium ${getTrendColor(item.trend)}`}
+                >
                   {getTrendIcon(item.trend)}
                   {item.trendValue || ''}
                 </span>

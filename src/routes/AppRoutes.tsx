@@ -3,6 +3,7 @@ import { Loader2 } from 'lucide-react';
 import React, { Suspense } from 'react';
 import { Navigate, Outlet, Route, Routes, useNavigate } from 'react-router-dom';
 
+import { ConversationRouteSync } from '@/components/AIChat/ConversationRouteSync';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { AnimationWrapper } from '@/components/shared/AnimationWrapper';
@@ -15,8 +16,6 @@ import { useAppStore } from '@/store/useAppStore';
 import { AppView, AuthStep, SessionMode, User } from '@/types';
 import { AuthView } from '@/views/AuthView';
 import { ProductEntryPage } from '@/views/ProductEntryPage';
-
-import { ConversationRouteSync } from '@/components/AIChat/ConversationRouteSync';
 
 import { LegacyAssessmentReportRedirect } from './LegacyAssessmentReportRedirect';
 import { ROUTES } from './routeConfig';

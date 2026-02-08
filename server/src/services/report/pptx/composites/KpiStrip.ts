@@ -3,7 +3,7 @@
  * Horizontal row of KPI tiles — max 6 per spec rules.
  * Auto-distributes tiles evenly across available width.
  */
-import type { DesignTokens, RenderedElement, ElementPosition, KpiData } from '../types.js';
+import type { DesignTokens, ElementPosition, KpiData, RenderedElement } from '../types.js';
 import { KpiTile } from './KpiTile.js';
 
 export interface KpiStripProps {
@@ -19,10 +19,13 @@ export function KpiStrip(props: KpiStripProps, tokens: DesignTokens): RenderedEl
 
   for (let i = 0; i < count; i++) {
     const tileX = p.x + i * (tileW + tokens.spacing.gutter);
-    const tileElements = KpiTile({
-      kpi: kpis[i],
-      position: { x: tileX, y: p.y, w: tileW, h: p.h },
-    }, tokens);
+    const tileElements = KpiTile(
+      {
+        kpi: kpis[i],
+        position: { x: tileX, y: p.y, w: tileW, h: p.h },
+      },
+      tokens
+    );
     elements.push(...tileElements);
   }
 

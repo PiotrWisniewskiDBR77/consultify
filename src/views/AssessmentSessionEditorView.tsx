@@ -27,8 +27,8 @@ import { RequestAccessModal, useAssessmentPermissions } from '@/components/asses
 import { SIRIAssessmentEditor } from '@/components/assessment/siri/SIRIAssessmentEditor';
 import { CMPracticeForm } from '@/components/assessment/tools/CMPracticeForm';
 import { LeanForm } from '@/components/assessment/tools/LeanForm';
-import { Api } from '@/services/api';
 import { ADMA_DIMENSIONS } from '@/services/admaStructure';
+import { Api } from '@/services/api';
 import { CMMI_PRACTICE_AREAS } from '@/services/cmmiStructure';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
 import { SIRI_DIMENSIONS } from '@/services/siriStructure';
@@ -924,7 +924,10 @@ export const AssessmentSessionEditorView: React.FC = () => {
           // Generation failed but report exists — show warning, still open the editor
           const genMsg = genErr?.error || genErr?.message || 'AI generation failed';
           console.error('[handleStartNewReportFromTemplate] Generation error:', genErr);
-          toast.error(`Generation issue: ${genMsg}. You can retry in the editor.`, { id: toastId, duration: 6000 });
+          toast.error(`Generation issue: ${genMsg}. You can retry in the editor.`, {
+            id: toastId,
+            duration: 6000,
+          });
           // Skip the success toast — navigate to editor below
           const returnUrl = encodeURIComponent(
             `/assessment/${framework}/${assessmentId}?${searchParams.toString()}`
@@ -1604,8 +1607,15 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
                     <div className="flex items-center gap-1.5">
-                      <span className={`w-1.5 h-1.5 rounded-full ${overallProgress >= 80 ? 'bg-emerald-400' : 'bg-slate-400'}`} />
-                      <span>Assessment {overallProgress >= 80 ? 'ready' : `${Math.round(overallProgress)}% complete`}</span>
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${overallProgress >= 80 ? 'bg-emerald-400' : 'bg-slate-400'}`}
+                      />
+                      <span>
+                        Assessment{' '}
+                        {overallProgress >= 80
+                          ? 'ready'
+                          : `${Math.round(overallProgress)}% complete`}
+                      </span>
                     </div>
                   </div>
                 </div>

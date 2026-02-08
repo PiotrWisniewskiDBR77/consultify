@@ -8,26 +8,26 @@
  * - bottom_left:  Low Impact / Low Effort     → "Fill-ins"
  * - bottom_right: Low Impact / High Effort    → "Reconsider"
  */
+import { Badge } from '../atomics/Badge.js';
+import { BodyText } from '../atomics/BodyText.js';
+import { Footnote } from '../atomics/Footnote.js';
+import { HeaderBar } from '../atomics/HeaderBar.js';
+import { PageNumber } from '../atomics/PageNumber.js';
+import { SlideTitle } from '../atomics/SlideTitle.js';
 import type {
   DesignTokens,
   LayoutResult,
-  UnifiedSlide,
-  UnifiedReportMeta,
   PrioritizationMatrixContent,
+  UnifiedReportMeta,
+  UnifiedSlide,
 } from '../types.js';
-import { SlideTitle } from '../atomics/SlideTitle.js';
-import { HeaderBar } from '../atomics/HeaderBar.js';
-import { PageNumber } from '../atomics/PageNumber.js';
-import { Footnote } from '../atomics/Footnote.js';
-import { BodyText } from '../atomics/BodyText.js';
-import { Badge } from '../atomics/Badge.js';
 
 // Quadrant colors
 const QUADRANT_COLORS: Record<string, string> = {
-  top_left: 'DCFCE7',      // green-100
-  top_right: 'FEF3C7',     // amber-100
-  bottom_left: 'DBEAFE',   // blue-100
-  bottom_right: 'FEE2E2',  // red-100
+  top_left: 'DCFCE7', // green-100
+  top_right: 'FEF3C7', // amber-100
+  bottom_left: 'DBEAFE', // blue-100
+  bottom_right: 'FEE2E2', // red-100
 };
 
 const QUADRANT_POSITIONS: Record<string, { col: number; row: number }> = {
@@ -49,9 +49,14 @@ export function PrioritizationMatrixLayout(
   // ── Chrome ──
   elements.push(HeaderBar({}, tokens));
   elements.push(
-    SlideTitle({
-      text: slide.key_message || (meta.language === 'pl' ? 'Matryca Priorytetów' : 'Prioritization Matrix'),
-    }, tokens)
+    SlideTitle(
+      {
+        text:
+          slide.key_message ||
+          (meta.language === 'pl' ? 'Matryca Priorytetów' : 'Prioritization Matrix'),
+      },
+      tokens
+    )
   );
   elements.push(PageNumber({}, tokens));
 
@@ -60,28 +65,34 @@ export function PrioritizationMatrixLayout(
   const matrixX = g.contentX + axisLabelGap;
   const matrixY = g.contentY;
   const matrixW = g.contentW - axisLabelGap;
-  const matrixH = g.contentH - 0.25;  // leave room for X-axis label
+  const matrixH = g.contentH - 0.25; // leave room for X-axis label
 
   // Y-axis label (rotated concept — just place vertically on the left)
   elements.push(
-    BodyText({
-      text: c.yAxisLabel || 'Impact',
-      position: { x: g.contentX, y: matrixY + matrixH / 2 - 0.2, w: axisLabelGap - 0.05, h: 0.4 },
-      bold: true,
-      fontSize: 10,
-      color: tokens.colors.textSecondary,
-    }, tokens)
+    BodyText(
+      {
+        text: c.yAxisLabel || 'Impact',
+        position: { x: g.contentX, y: matrixY + matrixH / 2 - 0.2, w: axisLabelGap - 0.05, h: 0.4 },
+        bold: true,
+        fontSize: 10,
+        color: tokens.colors.textSecondary,
+      },
+      tokens
+    )
   );
 
   // X-axis label (bottom center)
   elements.push(
-    BodyText({
-      text: c.xAxisLabel || 'Effort',
-      position: { x: matrixX + matrixW / 2 - 1, y: matrixY + matrixH + 0.05, w: 2, h: 0.2 },
-      bold: true,
-      fontSize: 10,
-      color: tokens.colors.textSecondary,
-    }, tokens)
+    BodyText(
+      {
+        text: c.xAxisLabel || 'Effort',
+        position: { x: matrixX + matrixW / 2 - 1, y: matrixY + matrixH + 0.05, w: 2, h: 0.2 },
+        bold: true,
+        fontSize: 10,
+        color: tokens.colors.textSecondary,
+      },
+      tokens
+    )
   );
 
   // ── Quadrant cells ──
@@ -115,13 +126,16 @@ export function PrioritizationMatrixLayout(
 
     // Quadrant label
     elements.push(
-      BodyText({
-        text: quad.label,
-        position: { x: cx + 0.1, y: cy + 0.06, w: cellW - 0.2, h: 0.22 },
-        bold: true,
-        fontSize: 11,
-        color: tokens.colors.textPrimary,
-      }, tokens)
+      BodyText(
+        {
+          text: quad.label,
+          position: { x: cx + 0.1, y: cy + 0.06, w: cellW - 0.2, h: 0.22 },
+          bold: true,
+          fontSize: 11,
+          color: tokens.colors.textPrimary,
+        },
+        tokens
+      )
     );
 
     // Items inside quadrant
@@ -130,24 +144,35 @@ export function PrioritizationMatrixLayout(
     for (let i = 0; i < maxItems; i++) {
       const itemY = cy + 0.32 + i * (itemH + 0.04);
       elements.push(
-        Badge({
-          text: quad.items[i].name,
-          position: { x: cx + 0.12, y: itemY, w: cellW - 0.24, h: itemH },
-          bgColor: tokens.colors.primary,
-          textColor: tokens.colors.textInverse,
-        }, tokens)
+        Badge(
+          {
+            text: quad.items[i].name,
+            position: { x: cx + 0.12, y: itemY, w: cellW - 0.24, h: itemH },
+            bgColor: tokens.colors.primary,
+            textColor: tokens.colors.textInverse,
+          },
+          tokens
+        )
       );
     }
 
     // Overflow indicator
     if (quad.items.length > maxItems) {
       elements.push(
-        BodyText({
-          text: `+${quad.items.length - maxItems} more`,
-          position: { x: cx + 0.12, y: cy + 0.32 + maxItems * (itemH + 0.04), w: cellW - 0.24, h: 0.15 },
-          color: tokens.colors.muted,
-          fontSize: 8,
-        }, tokens)
+        BodyText(
+          {
+            text: `+${quad.items.length - maxItems} more`,
+            position: {
+              x: cx + 0.12,
+              y: cy + 0.32 + maxItems * (itemH + 0.04),
+              w: cellW - 0.24,
+              h: 0.15,
+            },
+            color: tokens.colors.muted,
+            fontSize: 8,
+          },
+          tokens
+        )
       );
     }
   }

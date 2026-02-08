@@ -50,7 +50,11 @@ const DIMENSION_TECH: Record<string, Record<number, string[]>> = {
     2: ['PLM/PDM', 'CAD/CAM Integration', 'BOM Management'],
     3: ['Integrated PLM', 'Digital Mock-up', 'Simulation & Testing'],
     4: ['Digital Twin (Product)', 'Model-Based Systems Engineering', 'Generative Design'],
-    5: ['AI-driven Product Innovation', 'Autonomous Design Optimization', 'Smart Connected Products'],
+    5: [
+      'AI-driven Product Innovation',
+      'Autonomous Design Optimization',
+      'Smart Connected Products',
+    ],
   },
   automation: {
     0: ['Manual Operations', 'Hand Tools'],

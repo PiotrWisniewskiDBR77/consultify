@@ -2,12 +2,18 @@
  * Layout: Appendix
  * Deep dive / supplementary data — body text + optional tables.
  */
-import type { DesignTokens, LayoutResult, UnifiedSlide, UnifiedReportMeta, AppendixContent } from '../types.js';
-import { SlideTitle } from '../atomics/SlideTitle.js';
-import { HeaderBar } from '../atomics/HeaderBar.js';
-import { PageNumber } from '../atomics/PageNumber.js';
 import { BodyText } from '../atomics/BodyText.js';
 import { Footnote } from '../atomics/Footnote.js';
+import { HeaderBar } from '../atomics/HeaderBar.js';
+import { PageNumber } from '../atomics/PageNumber.js';
+import { SlideTitle } from '../atomics/SlideTitle.js';
+import type {
+  AppendixContent,
+  DesignTokens,
+  LayoutResult,
+  UnifiedReportMeta,
+  UnifiedSlide,
+} from '../types.js';
 
 export function AppendixLayout(
   slide: UnifiedSlide,
@@ -25,10 +31,13 @@ export function AppendixLayout(
   // Body text
   const bodyH = c.tables && c.tables.length > 0 ? g.contentH * 0.4 : g.contentH;
   elements.push(
-    BodyText({
-      text: c.body,
-      position: { x: g.contentX, y: g.contentY, w: g.contentW, h: bodyH },
-    }, tokens)
+    BodyText(
+      {
+        text: c.body,
+        position: { x: g.contentX, y: g.contentY, w: g.contentW, h: bodyH },
+      },
+      tokens
+    )
   );
 
   // Tables
@@ -36,7 +45,13 @@ export function AppendixLayout(
     const table = c.tables[0]; // First table only for slide
     const headerRow = table.headers.map((h) => ({
       text: h,
-      options: { bold: true, fill: { color: tokens.colors.primary }, color: 'FFFFFF', fontSize: 9, fontFace: tokens.fonts.body },
+      options: {
+        bold: true,
+        fill: { color: tokens.colors.primary },
+        color: 'FFFFFF',
+        fontSize: 9,
+        fontFace: tokens.fonts.body,
+      },
     }));
 
     const dataRows = table.rows.slice(0, 8).map((row) =>
@@ -66,9 +81,7 @@ export function AppendixLayout(
 
   // Footnotes
   if (c.footnotes && c.footnotes.length > 0) {
-    elements.push(
-      Footnote({ text: c.footnotes.join(' | ') }, tokens)
-    );
+    elements.push(Footnote({ text: c.footnotes.join(' | ') }, tokens));
   } else {
     elements.push(Footnote({ text: `${meta.client} — ${meta.project}` }, tokens));
   }

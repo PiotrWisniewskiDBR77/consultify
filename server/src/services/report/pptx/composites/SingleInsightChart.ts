@@ -3,9 +3,9 @@
  * One chart + one insight text — evidence-based storytelling.
  * Chart on the left (60%), insight text on the right (40%).
  */
-import type { DesignTokens, RenderedElement, ElementPosition, ChartDataSet } from '../types.js';
 import { BodyText } from '../atomics/BodyText.js';
 import { SourceTag } from '../atomics/SourceTag.js';
+import type { ChartDataSet, DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface SingleInsightChartProps {
   chartType: 'bar' | 'line' | 'pie' | 'radar' | 'gauge';
@@ -51,9 +51,7 @@ export function SingleInsightChart(
         h: p.h,
         showLegend: props.chartData.series.length > 1,
         legendPos: 'b',
-        chartColors: props.chartData.series.map(
-          (s) => s.color ?? tokens.colors.primary
-        ),
+        chartColors: props.chartData.series.map((s) => s.color ?? tokens.colors.primary),
         showValue: true,
         valueFontSize: 9,
       });
@@ -62,20 +60,26 @@ export function SingleInsightChart(
 
   // Insight text
   elements.push(
-    BodyText({
-      text: props.insightText,
-      position: { x: p.x + chartW + gutter, y: p.y, w: textW, h: p.h * 0.85 },
-      fontSize: tokens.fontSizes.body,
-    }, tokens)
+    BodyText(
+      {
+        text: props.insightText,
+        position: { x: p.x + chartW + gutter, y: p.y, w: textW, h: p.h * 0.85 },
+        fontSize: tokens.fontSizes.body,
+      },
+      tokens
+    )
   );
 
   // Source tag
   if (props.source) {
     elements.push(
-      SourceTag({
-        source: props.source,
-        position: { x: p.x, y: p.y + p.h - 0.2, w: chartW, h: 0.2 },
-      }, tokens)
+      SourceTag(
+        {
+          source: props.source,
+          position: { x: p.x, y: p.y + p.h - 0.2, w: chartW, h: 0.2 },
+        },
+        tokens
+      )
     );
   }
 

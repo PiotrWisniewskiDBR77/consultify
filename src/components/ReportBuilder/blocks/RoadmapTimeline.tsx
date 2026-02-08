@@ -69,7 +69,7 @@ function parseRoadmapData(content: string): RoadmapData | null {
           timeframe: item.timeframe || item.timeline || item.date || undefined,
           status: item.status || undefined,
           milestones: Array.isArray(item.milestones) ? item.milestones : undefined,
-          items: Array.isArray(item.items || item.actions) ? (item.items || item.actions) : undefined,
+          items: Array.isArray(item.items || item.actions) ? item.items || item.actions : undefined,
         })),
       };
     }
@@ -144,7 +144,9 @@ export const RoadmapTimeline: React.FC<RoadmapTimelineProps> = ({
             {data.phases.map((phase, i) => (
               <div key={i} className="relative flex flex-col items-center w-48">
                 {/* Node */}
-                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${getPhaseColor(i, phase.status)} flex items-center justify-center text-white font-bold text-lg shadow-lg z-10`}>
+                <div
+                  className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${getPhaseColor(i, phase.status)} flex items-center justify-center text-white font-bold text-lg shadow-lg z-10`}
+                >
                   {i + 1}
                 </div>
 
@@ -177,7 +179,9 @@ export const RoadmapTimeline: React.FC<RoadmapTimelineProps> = ({
                       </div>
                     ))}
                     {phase.items.length > 3 && (
-                      <span className="text-[10px] text-slate-400">+{phase.items.length - 3} more</span>
+                      <span className="text-[10px] text-slate-400">
+                        +{phase.items.length - 3} more
+                      </span>
                     )}
                   </div>
                 )}
@@ -205,7 +209,9 @@ export const RoadmapTimeline: React.FC<RoadmapTimelineProps> = ({
             <div key={i} className="relative flex gap-4">
               {/* Timeline Node */}
               <div className="flex-shrink-0 relative z-10">
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${getPhaseColor(i, phase.status)} flex items-center justify-center text-white font-bold shadow-md`}>
+                <div
+                  className={`w-12 h-12 rounded-xl bg-gradient-to-br ${getPhaseColor(i, phase.status)} flex items-center justify-center text-white font-bold shadow-md`}
+                >
                   {i + 1}
                 </div>
               </div>
@@ -236,7 +242,9 @@ export const RoadmapTimeline: React.FC<RoadmapTimelineProps> = ({
                     {phase.items.map((item, ii) => (
                       <div key={ii} className="flex items-start gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 mt-1 flex-shrink-0" />
-                        <span className="text-[11px] text-slate-600 dark:text-slate-400">{item}</span>
+                        <span className="text-[11px] text-slate-600 dark:text-slate-400">
+                          {item}
+                        </span>
                       </div>
                     ))}
                   </div>

@@ -105,10 +105,7 @@ export function formatExecutiveBrief(text: string, lang: 'en' | 'pl' = 'en'): st
 
   // If we got at least 2 sections, use them
   if (sections.length >= 2) {
-    const outro =
-      lang === 'pl'
-        ? 'Koniec podsumowania wykonawczego.'
-        : 'End of executive brief.';
+    const outro = lang === 'pl' ? 'Koniec podsumowania wykonawczego.' : 'End of executive brief.';
     return sections.join(' ... ') + ` ... ${outro}`;
   }
 

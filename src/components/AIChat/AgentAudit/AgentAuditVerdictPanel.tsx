@@ -195,9 +195,16 @@ function calculateConfidenceScore(verdict: OrchestratorVerdict, reviews: AgentRe
 
 /** Confidence level label */
 function getConfidenceLevel(score: number): { label: string; labelPl: string; color: string } {
-  if (score >= 85) return { label: 'High', labelPl: 'Wysoka', color: 'text-green-600 dark:text-green-400' };
-  if (score >= 65) return { label: 'Moderate', labelPl: 'Umiarkowana', color: 'text-amber-600 dark:text-amber-400' };
-  if (score >= 40) return { label: 'Low', labelPl: 'Niska', color: 'text-orange-600 dark:text-orange-400' };
+  if (score >= 85)
+    return { label: 'High', labelPl: 'Wysoka', color: 'text-green-600 dark:text-green-400' };
+  if (score >= 65)
+    return {
+      label: 'Moderate',
+      labelPl: 'Umiarkowana',
+      color: 'text-amber-600 dark:text-amber-400',
+    };
+  if (score >= 40)
+    return { label: 'Low', labelPl: 'Niska', color: 'text-orange-600 dark:text-orange-400' };
   return { label: 'Very Low', labelPl: 'Bardzo niska', color: 'text-red-600 dark:text-red-400' };
 }
 
@@ -209,7 +216,10 @@ const ConfidenceRing: React.FC<{ score: number; size?: number }> = ({ score, siz
   const level = getConfidenceLevel(score);
 
   return (
-    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+    <div
+      className="relative flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
       <svg width={size} height={size} className="-rotate-90">
         <circle
           cx={size / 2}
@@ -234,9 +244,7 @@ const ConfidenceRing: React.FC<{ score: number; size?: number }> = ({ score, siz
           style={{ transition: 'stroke-dashoffset 0.8s ease-out' }}
         />
       </svg>
-      <span className={`absolute text-sm font-bold tabular-nums ${level.color}`}>
-        {score}
-      </span>
+      <span className={`absolute text-sm font-bold tabular-nums ${level.color}`}>{score}</span>
     </div>
   );
 };
@@ -267,13 +275,14 @@ const StakeholderSummary: React.FC<{
             key={review.agentId}
             className={`
               flex items-center gap-2 px-2.5 py-2 rounded-lg border text-xs
-              ${review.overreach === 'hard'
-                ? 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-800/50 opacity-60 line-through'
-                : review.verdict === 'ok'
-                  ? 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-800/50'
-                  : review.verdict === 'risk'
-                    ? 'bg-amber-50/50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/50'
-                    : 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-800/50'
+              ${
+                review.overreach === 'hard'
+                  ? 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-800/50 opacity-60 line-through'
+                  : review.verdict === 'ok'
+                    ? 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-800/50'
+                    : review.verdict === 'risk'
+                      ? 'bg-amber-50/50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/50'
+                      : 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-800/50'
               }
             `}
           >
@@ -831,7 +840,11 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
                 {isPl ? 'Pewność' : 'Confidence'}: {confidenceScore}%
               </span>
               <span className="text-slate-300 dark:text-navy-600">|</span>
-              <span>{isPl ? 'Źródła' : 'Sources'}: {verdict.sourcesSummary.counts.dt_section} DT · {verdict.sourcesSummary.counts.kb_snippet} KB · {verdict.sourcesSummary.counts.web_source} Web</span>
+              <span>
+                {isPl ? 'Źródła' : 'Sources'}: {verdict.sourcesSummary.counts.dt_section} DT ·{' '}
+                {verdict.sourcesSummary.counts.kb_snippet} KB ·{' '}
+                {verdict.sourcesSummary.counts.web_source} Web
+              </span>
               <span className="ml-auto">Run: {orchestratorRunId.slice(0, 8)}...</span>
             </div>
           </div>

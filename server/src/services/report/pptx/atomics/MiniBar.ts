@@ -3,11 +3,11 @@
  * Thin horizontal bar with optional label.
  * Used for effort profiles, skill levels, small metrics.
  */
-import type { DesignTokens, RenderedElement, ElementPosition } from '../types.js';
+import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface MiniBarProps {
-  value: number;        // 0–maxValue
-  maxValue?: number;    // default 5
+  value: number; // 0–maxValue
+  maxValue?: number; // default 5
   position: ElementPosition;
   label?: string;
   fillColor?: string;

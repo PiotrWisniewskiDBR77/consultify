@@ -10,7 +10,11 @@ import { AttachmentsSection as SharedAttachmentsSection } from '../../MyWork/sha
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
 
-export const AttachmentsSection: React.FC<InitiativeSectionProps> = ({ sectionType, expanded, onToggle }) => {
+export const AttachmentsSection: React.FC<InitiativeSectionProps> = ({
+  sectionType,
+  expanded,
+  onToggle,
+}) => {
   const { attachments, setAttachments, isPolish } = useInitiativeContext();
 
   return (

@@ -3,11 +3,11 @@
  * Horizontal row of filled/empty dots (1–5 scale).
  * Used for impact, effort, confidence indicators.
  */
-import type { DesignTokens, RenderedElement, ElementPosition } from '../types.js';
+import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface DotScaleProps {
-  value: number;        // 1–5
-  maxValue?: number;    // default 5
+  value: number; // 1–5
+  maxValue?: number; // default 5
   position: ElementPosition;
   label?: string;
   fillColor?: string;
@@ -50,7 +50,11 @@ export function DotScale(props: DotScaleProps, tokens: DesignTokens): RenderedEl
           y: dotY,
           w: dotSize,
           h: dotSize,
-          fill: { color: filled ? (props.fillColor ?? tokens.colors.primary) : (props.emptyColor ?? tokens.colors.border) },
+          fill: {
+            color: filled
+              ? (props.fillColor ?? tokens.colors.primary)
+              : (props.emptyColor ?? tokens.colors.border),
+          },
         });
       }
     },

@@ -227,7 +227,9 @@ router.post(
     }
 
     // Check if user exists
-    const existingUser = await dbGet('SELECT id FROM users WHERE email = ?', [email]) as { id: string } | null;
+    const existingUser = (await dbGet('SELECT id FROM users WHERE email = ?', [email])) as {
+      id: string;
+    } | null;
 
     if (existingUser) {
       // Add directly if user exists

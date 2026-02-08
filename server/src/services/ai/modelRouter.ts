@@ -49,8 +49,8 @@ export const MODEL_PROVIDER_MAP: Record<string, string> = {
   'gemini-2.5-flash': 'google',
   'gemini-2.0-flash': 'google',
   'gemini-1.5-flash': 'google', // deprecated alias
-  'gemini-1.5-pro': 'google',   // deprecated alias
-  'gemini-pro': 'google',       // deprecated alias
+  'gemini-1.5-pro': 'google', // deprecated alias
+  'gemini-pro': 'google', // deprecated alias
   'deepseek-chat': 'deepseek',
   'deepseek-coder': 'deepseek',
   'qwen-max': 'qwen',

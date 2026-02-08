@@ -133,19 +133,21 @@ class ExpertPanelService {
     } catch (err: any) {
       logger.warn(`[ExpertPanel] Synthesis failed: ${err.message}`);
       // Fallback: combine expert outputs directly
-      synthesis = perspectives.map(p =>
-        `### ${p.role.replace(/_/g, ' ').toUpperCase()}\n${p.analysis}`
-      ).join('\n\n');
+      synthesis = perspectives
+        .map((p) => `### ${p.role.replace(/_/g, ' ').toUpperCase()}\n${p.analysis}`)
+        .join('\n\n');
     }
 
     const totalLatencyMs = Date.now() - startTime;
-    logger.info(`[ExpertPanel] Analysis complete in ${totalLatencyMs}ms, ${perspectives.length} perspectives`);
+    logger.info(
+      `[ExpertPanel] Analysis complete in ${totalLatencyMs}ms, ${perspectives.length} perspectives`
+    );
 
     return {
       perspectives,
       synthesis,
       totalLatencyMs,
-      modelsUsed: [...new Set(perspectives.map(p => p.model))],
+      modelsUsed: [...new Set(perspectives.map((p) => p.model))],
     };
   }
 
@@ -154,15 +156,34 @@ class ExpertPanelService {
    */
   isComplexStrategicQuestion(question: string): boolean {
     const complexMarkers = [
-      'strategic', 'strategiczn', 'compare', 'porównaj', 'evaluate', 'oceń',
-      'analyze impact', 'analiz', 'trade-off', 'decision', 'decyzj',
-      'invest', 'inwestycj', 'recommend', 'rekomend', 'risk assessment',
-      'portfolio', 'transformation', 'transformacj', 'roadmap',
-      'should we', 'czy powinniśmy', 'what approach', 'jakie podejście',
+      'strategic',
+      'strategiczn',
+      'compare',
+      'porównaj',
+      'evaluate',
+      'oceń',
+      'analyze impact',
+      'analiz',
+      'trade-off',
+      'decision',
+      'decyzj',
+      'invest',
+      'inwestycj',
+      'recommend',
+      'rekomend',
+      'risk assessment',
+      'portfolio',
+      'transformation',
+      'transformacj',
+      'roadmap',
+      'should we',
+      'czy powinniśmy',
+      'what approach',
+      'jakie podejście',
     ];
 
     const q = question.toLowerCase();
-    const hitCount = complexMarkers.filter(m => q.includes(m)).length;
+    const hitCount = complexMarkers.filter((m) => q.includes(m)).length;
     return hitCount >= 2 || question.length > 300;
   }
 
@@ -217,9 +238,9 @@ class ExpertPanelService {
   ): string {
     const lang = language === 'pl' ? 'pl' : 'en';
 
-    const expertSections = perspectives.map(p =>
-      `=== ${p.role.replace(/_/g, ' ').toUpperCase()} ===\n${p.analysis}`
-    ).join('\n\n');
+    const expertSections = perspectives
+      .map((p) => `=== ${p.role.replace(/_/g, ' ').toUpperCase()} ===\n${p.analysis}`)
+      .join('\n\n');
 
     if (lang === 'pl') {
       return `Jesteś senior partnerem BCG. Twój zespół ekspertów przeanalizował poniższe pytanie. \

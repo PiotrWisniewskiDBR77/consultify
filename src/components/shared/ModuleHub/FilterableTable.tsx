@@ -3,7 +3,16 @@
  * Table with filterable column headers and row actions
  */
 
-import { ChevronDown, Copy, Edit, Eye, FileText, Maximize2, MoreVertical, Trash2 } from 'lucide-react';
+import {
+  ChevronDown,
+  Copy,
+  Edit,
+  Eye,
+  FileText,
+  Maximize2,
+  MoreVertical,
+  Trash2,
+} from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { FilterChip } from './ActiveFilters';

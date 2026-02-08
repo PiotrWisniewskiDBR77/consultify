@@ -285,9 +285,9 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
   const [saveSummary, setSaveSummary] = useState('');
   const [showSaveForm, setShowSaveForm] = useState(false);
 
-  const manualCount = versions.filter(v => v.changeType === 'manual').length;
-  const autoCount = versions.filter(v => v.changeType === 'auto').length;
-  const rollbackCount = versions.filter(v => v.changeType === 'rollback').length;
+  const manualCount = versions.filter((v) => v.changeType === 'manual').length;
+  const autoCount = versions.filter((v) => v.changeType === 'auto').length;
+  const rollbackCount = versions.filter((v) => v.changeType === 'rollback').length;
 
   const handleSaveVersion = () => {
     onCreateVersion?.(saveSummary.trim() || undefined);
@@ -352,19 +352,30 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
               <textarea
                 value={saveSummary}
                 onChange={(e) => setSaveSummary(e.target.value)}
-                placeholder={isPl ? 'Co zmieniłeś w tej wersji...' : 'What changed in this version...'}
+                placeholder={
+                  isPl ? 'Co zmieniłeś w tej wersji...' : 'What changed in this version...'
+                }
                 className="w-full px-2.5 py-2 text-[11px] bg-slate-800/60 border border-slate-700/50 rounded-lg resize-none h-14 focus:ring-1 focus:ring-indigo-500 text-slate-300 placeholder:text-slate-600 leading-relaxed"
                 autoFocus
-                onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSaveVersion(); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSaveVersion();
+                }}
               />
               <div className="flex items-center gap-1.5">
-                <button onClick={handleSaveVersion}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[10px] font-semibold transition-colors">
+                <button
+                  onClick={handleSaveVersion}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[10px] font-semibold transition-colors"
+                >
                   <Save className="w-3 h-3" />
                   {isPl ? 'Zapisz' : 'Save'}
                 </button>
-                <button onClick={() => { setShowSaveForm(false); setSaveSummary(''); }}
-                  className="px-3 py-1.5 text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 rounded-lg text-[10px] font-medium transition-colors">
+                <button
+                  onClick={() => {
+                    setShowSaveForm(false);
+                    setSaveSummary('');
+                  }}
+                  className="px-3 py-1.5 text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 rounded-lg text-[10px] font-medium transition-colors"
+                >
                   {isPl ? 'Anuluj' : 'Cancel'}
                 </button>
               </div>
@@ -378,15 +389,21 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
         <div className="grid grid-cols-3 gap-1.5">
           <div className="text-center py-1.5 px-1 rounded-md bg-slate-800/40 border border-slate-700/30">
             <div className="text-[13px] font-bold text-blue-400 font-mono">{manualCount}</div>
-            <div className="text-[8px] text-slate-500 uppercase tracking-wider font-semibold">{isPl ? 'Ręcznych' : 'Manual'}</div>
+            <div className="text-[8px] text-slate-500 uppercase tracking-wider font-semibold">
+              {isPl ? 'Ręcznych' : 'Manual'}
+            </div>
           </div>
           <div className="text-center py-1.5 px-1 rounded-md bg-slate-800/40 border border-slate-700/30">
             <div className="text-[13px] font-bold text-slate-400 font-mono">{autoCount}</div>
-            <div className="text-[8px] text-slate-500 uppercase tracking-wider font-semibold">Auto</div>
+            <div className="text-[8px] text-slate-500 uppercase tracking-wider font-semibold">
+              Auto
+            </div>
           </div>
           <div className="text-center py-1.5 px-1 rounded-md bg-slate-800/40 border border-slate-700/30">
             <div className="text-[13px] font-bold text-amber-400 font-mono">{rollbackCount}</div>
-            <div className="text-[8px] text-slate-500 uppercase tracking-wider font-semibold">{isPl ? 'Cofnięć' : 'Rollback'}</div>
+            <div className="text-[8px] text-slate-500 uppercase tracking-wider font-semibold">
+              {isPl ? 'Cofnięć' : 'Rollback'}
+            </div>
           </div>
         </div>
       )}
@@ -418,30 +435,34 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
               <div key={v.id} className="flex gap-2.5 group/ver">
                 {/* Timeline line */}
                 <div className="flex flex-col items-center flex-shrink-0" style={{ width: '18px' }}>
-                  <div className={`w-2.5 h-2.5 rounded-full border-2 flex-shrink-0 ${
-                    isLatest
-                      ? 'border-indigo-400 bg-indigo-500 shadow-sm shadow-indigo-500/40'
-                      : v.changeType === 'manual'
-                        ? 'border-blue-500/60 bg-blue-500/30'
-                        : v.changeType === 'rollback'
-                          ? 'border-amber-500/60 bg-amber-500/30'
-                          : 'border-slate-600 bg-slate-700'
-                  }`} />
-                  {!isLast && (
-                    <div className="w-px flex-1 bg-slate-700/50 min-h-[24px]" />
-                  )}
+                  <div
+                    className={`w-2.5 h-2.5 rounded-full border-2 flex-shrink-0 ${
+                      isLatest
+                        ? 'border-indigo-400 bg-indigo-500 shadow-sm shadow-indigo-500/40'
+                        : v.changeType === 'manual'
+                          ? 'border-blue-500/60 bg-blue-500/30'
+                          : v.changeType === 'rollback'
+                            ? 'border-amber-500/60 bg-amber-500/30'
+                            : 'border-slate-600 bg-slate-700'
+                    }`}
+                  />
+                  {!isLast && <div className="w-px flex-1 bg-slate-700/50 min-h-[24px]" />}
                 </div>
 
                 {/* Version card */}
                 <div className={`flex-1 pb-3 ${isLast ? '' : ''}`}>
-                  <div className={`p-2 rounded-lg transition-all ${
-                    isLatest
-                      ? 'bg-indigo-900/15 border border-indigo-500/25'
-                      : 'hover:bg-slate-800/40'
-                  }`}>
+                  <div
+                    className={`p-2 rounded-lg transition-all ${
+                      isLatest
+                        ? 'bg-indigo-900/15 border border-indigo-500/25'
+                        : 'hover:bg-slate-800/40'
+                    }`}
+                  >
                     <div className="flex items-center justify-between mb-0.5">
                       <div className="flex items-center gap-1.5">
-                        <span className={`text-[11px] font-bold font-mono ${isLatest ? 'text-indigo-300' : 'text-slate-300'}`}>
+                        <span
+                          className={`text-[11px] font-bold font-mono ${isLatest ? 'text-indigo-300' : 'text-slate-300'}`}
+                        >
                           v{v.versionNumber}
                         </span>
                         {isLatest && (
@@ -449,17 +470,23 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
                             {isPl ? 'Aktualna' : 'Current'}
                           </span>
                         )}
-                        <span className={`text-[7px] px-1 py-0.5 rounded font-bold uppercase tracking-wider ${
-                          v.changeType === 'manual'
-                            ? 'bg-blue-900/40 text-blue-400'
-                            : v.changeType === 'rollback'
-                              ? 'bg-amber-900/40 text-amber-400'
-                              : 'bg-slate-700/60 text-slate-500'
-                        }`}>
+                        <span
+                          className={`text-[7px] px-1 py-0.5 rounded font-bold uppercase tracking-wider ${
+                            v.changeType === 'manual'
+                              ? 'bg-blue-900/40 text-blue-400'
+                              : v.changeType === 'rollback'
+                                ? 'bg-amber-900/40 text-amber-400'
+                                : 'bg-slate-700/60 text-slate-500'
+                          }`}
+                        >
                           {v.changeType === 'manual'
-                            ? (isPl ? 'Ręczny' : 'Manual')
+                            ? isPl
+                              ? 'Ręczny'
+                              : 'Manual'
                             : v.changeType === 'rollback'
-                              ? (isPl ? 'Cofnięcie' : 'Rollback')
+                              ? isPl
+                                ? 'Cofnięcie'
+                                : 'Rollback'
                               : 'Auto'}
                         </span>
                       </div>
@@ -467,11 +494,13 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
                       {!isLatest && onRollbackVersion && (
                         <button
                           onClick={() => {
-                            if (window.confirm(
-                              isPl
-                                ? `Przywrócić wersję v${v.versionNumber}?`
-                                : `Restore version v${v.versionNumber}?`
-                            )) {
+                            if (
+                              window.confirm(
+                                isPl
+                                  ? `Przywrócić wersję v${v.versionNumber}?`
+                                  : `Restore version v${v.versionNumber}?`
+                              )
+                            ) {
                               onRollbackVersion(v.id);
                             }
                           }}
@@ -485,15 +514,21 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
 
                     {/* Summary */}
                     {v.changeSummary && (
-                      <p className="text-[10px] text-slate-400 mb-1 line-clamp-2 leading-snug">{v.changeSummary}</p>
+                      <p className="text-[10px] text-slate-400 mb-1 line-clamp-2 leading-snug">
+                        {v.changeSummary}
+                      </p>
                     )}
 
                     {/* Status change */}
                     {v.previousStatus && v.newStatus && v.previousStatus !== v.newStatus && (
                       <div className="flex items-center gap-1 mb-1">
-                        <span className="text-[8px] px-1 py-0.5 bg-slate-700/50 text-slate-500 rounded">{v.previousStatus}</span>
+                        <span className="text-[8px] px-1 py-0.5 bg-slate-700/50 text-slate-500 rounded">
+                          {v.previousStatus}
+                        </span>
                         <span className="text-[8px] text-slate-600">&rarr;</span>
-                        <span className="text-[8px] px-1 py-0.5 bg-slate-700/50 text-slate-500 rounded">{v.newStatus}</span>
+                        <span className="text-[8px] px-1 py-0.5 bg-slate-700/50 text-slate-500 rounded">
+                          {v.newStatus}
+                        </span>
                       </div>
                     )}
 
@@ -504,7 +539,10 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
                       <span>·</span>
                       <span>
                         {new Date(v.createdAt).toLocaleString(isPl ? 'pl-PL' : 'en-US', {
-                          month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
                         })}
                       </span>
                     </div>
@@ -586,7 +624,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
   // Collapsed state
   if (isCollapsed) {
-    const SideIcon: React.FC<{ icon: React.ReactNode; active: boolean; label: string; onClick: () => void; badge?: string | number }> = ({ icon, active, label, onClick, badge }) => (
+    const SideIcon: React.FC<{
+      icon: React.ReactNode;
+      active: boolean;
+      label: string;
+      onClick: () => void;
+      badge?: string | number;
+    }> = ({ icon, active, label, onClick, badge }) => (
       <button
         onClick={onClick}
         title={label}
@@ -609,8 +653,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       <aside className="relative flex-shrink-0">
         <div className="w-11 h-full bg-slate-900/80 border-l border-slate-800/60 flex flex-col items-center py-3 gap-1">
           {/* Expand */}
-          <button onClick={onToggleCollapse}
-            className="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-slate-300 hover:bg-slate-800 rounded-md transition-colors mb-2">
+          <button
+            onClick={onToggleCollapse}
+            className="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-slate-300 hover:bg-slate-800 rounded-md transition-colors mb-2"
+          >
             <ChevronLeft className="w-4 h-4" />
           </button>
 
@@ -620,7 +666,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               icon={<History className="w-4 h-4" />}
               active={activeSection === 'versions'}
               label={isPl ? 'Wersje' : 'Versions'}
-              onClick={() => { onToggleCollapse?.(); onSectionChange('versions'); onLoadVersions?.(); }}
+              onClick={() => {
+                onToggleCollapse?.();
+                onSectionChange('versions');
+                onLoadVersions?.();
+              }}
               badge={currentVersion && currentVersion > 0 ? `v${currentVersion}` : undefined}
             />
           )}
@@ -633,7 +683,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             icon={<Target className="w-4 h-4" />}
             active={activeSection === 'intent'}
             label={isPl ? 'Treść' : 'Content'}
-            onClick={() => { onToggleCollapse?.(); onSectionChange('intent'); }}
+            onClick={() => {
+              onToggleCollapse?.();
+              onSectionChange('intent');
+            }}
           />
 
           {/* Design */}
@@ -641,7 +694,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             icon={<Palette className="w-4 h-4" />}
             active={activeSection === 'styling'}
             label={isPl ? 'Wygląd' : 'Design'}
-            onClick={() => { onToggleCollapse?.(); onSectionChange('styling'); }}
+            onClick={() => {
+              onToggleCollapse?.();
+              onSectionChange('styling');
+            }}
           />
 
           {/* Review */}
@@ -650,7 +706,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               icon={<ClipboardCheck className="w-4 h-4" />}
               active={activeSection === 'review'}
               label={isPl ? 'Recenzja' : 'Review'}
-              onClick={() => { onToggleCollapse?.(); onSectionChange('review'); }}
+              onClick={() => {
+                onToggleCollapse?.();
+                onSectionChange('review');
+              }}
             />
           )}
         </div>
@@ -666,7 +725,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <div className="flex items-center bg-slate-800/80 rounded-lg p-0.5 border border-slate-700/40">
           {/* Settings pill */}
           <button
-            onClick={() => { if (activeSection === 'versions') onSectionChange('intent'); }}
+            onClick={() => {
+              if (activeSection === 'versions') onSectionChange('intent');
+            }}
             className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all duration-200 ${
               activeSection !== 'versions'
                 ? 'bg-slate-700/80 text-slate-100 shadow-sm shadow-black/20'
@@ -680,7 +741,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           {/* Versions pill */}
           {!isTemplateMode && (
             <button
-              onClick={() => { onSectionChange('versions'); onLoadVersions?.(); }}
+              onClick={() => {
+                onSectionChange('versions');
+                onLoadVersions?.();
+              }}
               className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all duration-200 ${
                 activeSection === 'versions'
                   ? 'bg-indigo-600/80 text-white shadow-sm shadow-indigo-900/30'
@@ -709,24 +773,25 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
       {/* Tabs — hide on versions */}
       {activeSection !== 'versions' && (
-      <div className="flex border-b border-slate-200 dark:border-slate-800/60 bg-slate-800/20">
-        {([
-          { key: 'intent' as const, en: 'Content', pl: 'Treść' },
-          { key: 'styling' as const, en: 'Design', pl: 'Wygląd' },
-          ...(!isTemplateMode ? [{ key: 'review' as const, en: 'Review', pl: 'Recenzja' }] : []),
-        ]).map((tab) => (
-          <button key={tab.key}
-            onClick={() => onSectionChange(tab.key)}
-            className={`flex-1 py-2 text-[11px] font-semibold tracking-wide uppercase transition-all ${
-              activeSection === tab.key
-                ? 'text-blue-400 border-b-2 border-blue-500 bg-blue-950/20'
-                : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/40 border-b-2 border-transparent'
-            }`}
-          >
-            {isPl ? tab.pl : tab.en}
-          </button>
-        ))}
-      </div>
+        <div className="flex border-b border-slate-200 dark:border-slate-800/60 bg-slate-800/20">
+          {[
+            { key: 'intent' as const, en: 'Content', pl: 'Treść' },
+            { key: 'styling' as const, en: 'Design', pl: 'Wygląd' },
+            ...(!isTemplateMode ? [{ key: 'review' as const, en: 'Review', pl: 'Recenzja' }] : []),
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => onSectionChange(tab.key)}
+              className={`flex-1 py-2 text-[11px] font-semibold tracking-wide uppercase transition-all ${
+                activeSection === tab.key
+                  ? 'text-blue-400 border-b-2 border-blue-500 bg-blue-950/20'
+                  : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/40 border-b-2 border-transparent'
+              }`}
+            >
+              {isPl ? tab.pl : tab.en}
+            </button>
+          ))}
+        </div>
       )}
 
       {/* Content */}
@@ -914,7 +979,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </SectionCard>
 
             {/* Scope */}
-            <SectionCard title={isPl ? 'Zakres' : 'Scope'} icon={<Layers className="w-4 h-4" />} defaultOpen={false}>
+            <SectionCard
+              title={isPl ? 'Zakres' : 'Scope'}
+              icon={<Layers className="w-4 h-4" />}
+              defaultOpen={false}
+            >
               <div className="space-y-3">
                 <div className="flex gap-1">
                   {[
@@ -1144,7 +1213,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </SectionCard>
 
             {/* Theme & Font */}
-            <SectionCard title={isPl ? 'Styl' : 'Style'} icon={<Palette className="w-4 h-4" />} defaultOpen={false}>
+            <SectionCard
+              title={isPl ? 'Styl' : 'Style'}
+              icon={<Palette className="w-4 h-4" />}
+              defaultOpen={false}
+            >
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">
                   {[
@@ -1213,7 +1286,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </SectionCard>
 
             {/* Colors */}
-            <SectionCard title={isPl ? 'Kolory' : 'Colors'} icon={<Palette className="w-4 h-4" />} defaultOpen={false}>
+            <SectionCard
+              title={isPl ? 'Kolory' : 'Colors'}
+              icon={<Palette className="w-4 h-4" />}
+              defaultOpen={false}
+            >
               <div className="space-y-3">
                 {/* Primary & Accent in row */}
                 <div className="flex gap-4">

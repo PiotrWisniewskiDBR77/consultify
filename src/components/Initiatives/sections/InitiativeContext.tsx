@@ -10,18 +10,17 @@ import React, { createContext, useContext } from 'react';
 import type { StatusAction } from '@/services/initiativeLifecycle';
 
 import type {
-  Comment,
   Attachment,
-  LinkedItem,
-  Stakeholder,
-  StakeholderRole,
-  StakeholderNotificationSettings,
-  TaskDependency,
-  ReminderRule,
+  Comment,
   EscalationRule,
+  LinkedItem,
+  ReminderRule,
+  Stakeholder,
+  StakeholderNotificationSettings,
+  StakeholderRole,
+  TaskDependency,
   WarningThresholds,
 } from '../../MyWork/shared';
-
 import type {
   Decision,
   HistoryEvent,

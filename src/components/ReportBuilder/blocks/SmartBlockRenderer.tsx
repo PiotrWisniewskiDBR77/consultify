@@ -50,20 +50,39 @@ function detectContentType(content: string): {
     const parsed = JSON.parse(trimmed);
 
     // Detect type from JSON structure
-    if (parsed.type === 'assessment_matrix') return { isJson: true, jsonData: parsed, jsonType: 'matrix' };
-    if (parsed.type === 'kpi' || parsed.type === 'dashboard') return { isJson: true, jsonData: parsed, jsonType: 'kpi' };
-    if (parsed.type === 'roadmap' || parsed.type === 'timeline') return { isJson: true, jsonData: parsed, jsonType: 'roadmap' };
-    if (parsed.type === 'prioritization' || parsed.type === 'impact_effort') return { isJson: true, jsonData: parsed, jsonType: 'prioritization' };
-    if (parsed.type === 'chart' || parsed.type === 'bar' || parsed.type === 'pie' || parsed.type === 'radar') return { isJson: true, jsonData: parsed, jsonType: 'chart' };
-    if (parsed.type === 'initiatives' || parsed.type === 'initiative_cards') return { isJson: true, jsonData: parsed, jsonType: 'initiatives' };
+    if (parsed.type === 'assessment_matrix')
+      return { isJson: true, jsonData: parsed, jsonType: 'matrix' };
+    if (parsed.type === 'kpi' || parsed.type === 'dashboard')
+      return { isJson: true, jsonData: parsed, jsonType: 'kpi' };
+    if (parsed.type === 'roadmap' || parsed.type === 'timeline')
+      return { isJson: true, jsonData: parsed, jsonType: 'roadmap' };
+    if (parsed.type === 'prioritization' || parsed.type === 'impact_effort')
+      return { isJson: true, jsonData: parsed, jsonType: 'prioritization' };
+    if (
+      parsed.type === 'chart' ||
+      parsed.type === 'bar' ||
+      parsed.type === 'pie' ||
+      parsed.type === 'radar'
+    )
+      return { isJson: true, jsonData: parsed, jsonType: 'chart' };
+    if (parsed.type === 'initiatives' || parsed.type === 'initiative_cards')
+      return { isJson: true, jsonData: parsed, jsonType: 'initiatives' };
 
     // Detect from structure
-    if (parsed.axes && Array.isArray(parsed.axes)) return { isJson: true, jsonData: parsed, jsonType: 'matrix' };
-    if (parsed.phases && Array.isArray(parsed.phases)) return { isJson: true, jsonData: parsed, jsonType: 'roadmap' };
+    if (parsed.axes && Array.isArray(parsed.axes))
+      return { isJson: true, jsonData: parsed, jsonType: 'matrix' };
+    if (parsed.phases && Array.isArray(parsed.phases))
+      return { isJson: true, jsonData: parsed, jsonType: 'roadmap' };
     if (parsed.items && Array.isArray(parsed.items)) {
       const firstItem = parsed.items[0];
       // Initiatives: items with name + strategic properties
-      if (firstItem?.name && (firstItem?.strategicIntent || firstItem?.strategicRole || firstItem?.relatedGap || firstItem?.effortProfile)) {
+      if (
+        firstItem?.name &&
+        (firstItem?.strategicIntent ||
+          firstItem?.strategicRole ||
+          firstItem?.relatedGap ||
+          firstItem?.effortProfile)
+      ) {
         return { isJson: true, jsonData: parsed, jsonType: 'initiatives' };
       }
       if (firstItem?.impact !== undefined || firstItem?.effort !== undefined) {
@@ -77,7 +96,8 @@ function detectContentType(content: string): {
     if (parsed.initiatives && Array.isArray(parsed.initiatives)) {
       return { isJson: true, jsonData: parsed, jsonType: 'initiatives' };
     }
-    if (parsed.data && Array.isArray(parsed.data)) return { isJson: true, jsonData: parsed, jsonType: 'chart' };
+    if (parsed.data && Array.isArray(parsed.data))
+      return { isJson: true, jsonData: parsed, jsonType: 'chart' };
     if (Array.isArray(parsed)) {
       if (parsed[0]?.score !== undefined || parsed[0]?.value !== undefined) {
         return { isJson: true, jsonData: parsed, jsonType: 'chart' };
@@ -117,13 +137,14 @@ export const SmartBlockRenderer: React.FC<SmartBlockRendererProps> = ({
     }
   }
 
-  if (renderKind === 'chart' || blockType === 'chart' || blockType === 'chart_pie' || blockType === 'chart_bar') {
+  if (
+    renderKind === 'chart' ||
+    blockType === 'chart' ||
+    blockType === 'chart_pie' ||
+    blockType === 'chart_bar'
+  ) {
     return (
-      <ChartRenderer
-        content={content}
-        primaryColor={primaryColor}
-        accentColor={accentColor}
-      />
+      <ChartRenderer content={content} primaryColor={primaryColor} accentColor={accentColor} />
     );
   }
 
@@ -154,12 +175,7 @@ export const SmartBlockRenderer: React.FC<SmartBlockRendererProps> = ({
 
   if (blockType === 'prioritization') {
     if (detected.isJson) {
-      return (
-        <PrioritizationMatrix
-          content={content}
-          primaryColor={primaryColor}
-        />
-      );
+      return <PrioritizationMatrix content={content} primaryColor={primaryColor} />;
     }
   }
 
@@ -190,34 +206,14 @@ export const SmartBlockRenderer: React.FC<SmartBlockRendererProps> = ({
         );
       case 'chart':
         return (
-          <ChartRenderer
-            content={content}
-            primaryColor={primaryColor}
-            accentColor={accentColor}
-          />
+          <ChartRenderer content={content} primaryColor={primaryColor} accentColor={accentColor} />
         );
       case 'kpi':
-        return (
-          <KPICards
-            content={content}
-            columns={3}
-            primaryColor={primaryColor}
-          />
-        );
+        return <KPICards content={content} columns={3} primaryColor={primaryColor} />;
       case 'roadmap':
-        return (
-          <RoadmapTimeline
-            content={content}
-            primaryColor={primaryColor}
-          />
-        );
+        return <RoadmapTimeline content={content} primaryColor={primaryColor} />;
       case 'prioritization':
-        return (
-          <PrioritizationMatrix
-            content={content}
-            primaryColor={primaryColor}
-          />
-        );
+        return <PrioritizationMatrix content={content} primaryColor={primaryColor} />;
       case 'initiatives':
         return (
           <InitiativeCards

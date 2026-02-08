@@ -128,8 +128,10 @@ router.post('/:id/duplicate', async (req: any, res: any) => {
       else if (c === 'status') insertVals.push('DRAFT');
       else if (c === 'created_at') insertVals.push(now);
       else if (c === 'updated_at') insertVals.push(now);
-      else if (c === 'created_by') insertVals.push(String(userId || original.created_by || 'system'));
-      else if (c === 'updated_by') insertVals.push(String(userId || original.updated_by || 'system'));
+      else if (c === 'created_by')
+        insertVals.push(String(userId || original.created_by || 'system'));
+      else if (c === 'updated_by')
+        insertVals.push(String(userId || original.updated_by || 'system'));
       else insertVals.push(original[c] ?? null);
     }
 
@@ -411,7 +413,15 @@ router.post('/:id/apply-template', async (req: any, res: any) => {
           await queryHelpers.queryRun(
             `INSERT INTO tasks (id, organization_id, initiative_id, title, status, created_by, created_at, updated_at)
              VALUES (?, ?, ?, ?, 'TODO', ?, ?, ?)`,
-            [taskId, String(orgId), String(id), String(taskTitle), String(userId || 'system'), now, now]
+            [
+              taskId,
+              String(orgId),
+              String(id),
+              String(taskTitle),
+              String(userId || 'system'),
+              now,
+              now,
+            ]
           );
           created.tasks++;
         } catch {
@@ -643,7 +653,9 @@ router.post('/section-types/:id/duplicate', async (req: any, res: any) => {
     );
     return res.status(201).json(duplicated);
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to duplicate section type', message: err.message });
+    return res
+      .status(500)
+      .json({ error: 'Failed to duplicate section type', message: err.message });
   }
 });
 
@@ -715,7 +727,9 @@ router.post('/readiness-analysis', async (req: any, res: any) => {
       );
       taskCount = taskRows.length;
       taskDone = taskRows.filter((t: any) => ['done', 'DONE'].includes(t.status)).length;
-    } catch { /* tasks table may not exist */ }
+    } catch {
+      /* tasks table may not exist */
+    }
 
     try {
       const decRows = await queryHelpers.queryAll<any>(
@@ -723,30 +737,42 @@ router.post('/readiness-analysis', async (req: any, res: any) => {
         [String(initiativeId), String(orgId)]
       );
       decisionCount = decRows.length;
-      decisionApproved = decRows.filter((d: any) => ['approved', 'APPROVED'].includes(d.status)).length;
-    } catch { /* */ }
+      decisionApproved = decRows.filter((d: any) =>
+        ['approved', 'APPROVED'].includes(d.status)
+      ).length;
+    } catch {
+      /* */
+    }
 
     try {
       const raidRows = await queryHelpers.queryAll<any>(
         `SELECT severity FROM raid_items WHERE initiative_id = ? AND organization_id = ? AND status != 'RESOLVED'`,
         [String(initiativeId), String(orgId)]
       );
-      raidCritical = raidRows.filter((r: any) => ['HIGH', 'CRITICAL'].includes(String(r.severity || '').toUpperCase())).length;
-    } catch { /* */ }
+      raidCritical = raidRows.filter((r: any) =>
+        ['HIGH', 'CRITICAL'].includes(String(r.severity || '').toUpperCase())
+      ).length;
+    } catch {
+      /* */
+    }
 
     // Generate AI readiness analysis
-    const result = await initiativeGenerationService.generateSectionContent('gates', {
-      initiativeId: String(initiativeId),
-      initiativeName: initiative.name || initiative.title || 'Initiative',
-      summary: initiative.summary || '',
-      problemStatement: initiative.problem_statement || '',
-      status: initiative.status || 'DRAFT',
-      completedTasks: taskDone,
-      totalTasks: taskCount,
-      openRisks: raidCritical,
-      openDecisions: decisionCount - decisionApproved,
-      language: req.body.language || 'en',
-    }, String(orgId));
+    const result = await initiativeGenerationService.generateSectionContent(
+      'gates',
+      {
+        initiativeId: String(initiativeId),
+        initiativeName: initiative.name || initiative.title || 'Initiative',
+        summary: initiative.summary || '',
+        problemStatement: initiative.problem_statement || '',
+        status: initiative.status || 'DRAFT',
+        completedTasks: taskDone,
+        totalTasks: taskCount,
+        openRisks: raidCritical,
+        openDecisions: decisionCount - decisionApproved,
+        language: req.body.language || 'en',
+      },
+      String(orgId)
+    );
 
     return res.json({
       analysis: result.content,

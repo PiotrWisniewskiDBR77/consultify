@@ -1,18 +1,7 @@
-import {
-  CheckSquare,
-  ClipboardCheck,
-  Map,
-  MessageSquare,
-  Rocket,
-  Scale,
-  Star,
-} from 'lucide-react';
+import { CheckSquare, ClipboardCheck, Map, MessageSquare, Rocket, Scale, Star } from 'lucide-react';
 import React, { useMemo } from 'react';
 
-import {
-  Conversation,
-  getConversationEntityType,
-} from '../../store/useConversationStore';
+import { Conversation, getConversationEntityType } from '../../store/useConversationStore';
 import { ConversationActions } from './ConversationActions';
 
 interface ConversationItemProps {
@@ -74,10 +63,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
   onSelect,
   compact = false,
 }) => {
-  const entityType = useMemo(
-    () => getConversationEntityType(conversation),
-    [conversation]
-  );
+  const entityType = useMemo(() => getConversationEntityType(conversation), [conversation]);
 
   const config = entityType ? ENTITY_CONFIG[entityType] : null;
   const IconComponent = config?.icon || MessageSquare;
@@ -99,10 +85,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <IconComponent
-            size={compact ? 14 : 16}
-            className={`shrink-0 ${iconColor}`}
-          />
+          <IconComponent size={compact ? 14 : 16} className={`shrink-0 ${iconColor}`} />
           <h4
             className={`text-sm font-medium truncate ${isActive ? 'text-primary-900 dark:text-primary-100' : 'text-slate-700 dark:text-slate-300'}`}
           >

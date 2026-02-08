@@ -46,10 +46,10 @@ import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLife
 import { useAppStore } from '../../store/useAppStore';
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
 import { RAIDLog } from '../Implementation/RAIDLog';
+import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import { DecisionsPanel } from '../MyWork/DecisionsPanel';
 import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
-import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
 import {
   FilterableTable,
   FilterChip,

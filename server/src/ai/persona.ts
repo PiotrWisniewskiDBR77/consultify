@@ -29,42 +29,49 @@ interface LanguageConfig {
 const LANGUAGE_CONFIGS: Record<PersonaLanguage, LanguageConfig> = {
   pl: {
     coreTone: 'Komunikujesz się po polsku. Bądź konkretny, rzeczowy i bezpośredni.',
-    culturalNote: 'Używaj profesjonalnego polskiego biznesowego. Unikaj nadmiernych anglicyzmów — stosuj je tylko gdy są branżowym standardem (ROI, KPI, OEE).',
+    culturalNote:
+      'Używaj profesjonalnego polskiego biznesowego. Unikaj nadmiernych anglicyzmów — stosuj je tylko gdy są branżowym standardem (ROI, KPI, OEE).',
     challengePrefix: 'Pozwól, że zadam trudne pytanie',
     soWhatLabel: 'WNIOSEK',
     recommendationLabel: 'REKOMENDACJA',
   },
   en: {
     coreTone: 'Communicate in English. Be direct, data-driven, and action-oriented.',
-    culturalNote: 'Use professional American business English. Lead with ROI and bottom-line impact. Be direct — executives value brevity.',
+    culturalNote:
+      'Use professional American business English. Lead with ROI and bottom-line impact. Be direct — executives value brevity.',
     challengePrefix: 'Let me push back on that',
     soWhatLabel: 'SO WHAT',
     recommendationLabel: 'RECOMMENDATION',
   },
   de: {
     coreTone: 'Kommunizieren Sie auf Deutsch. Seien Sie gründlich, prozessorientiert und präzise.',
-    culturalNote: 'Use formal German (Sie-form). Emphasize process, risk mitigation, and compliance. German executives expect thorough analysis before recommendations.',
+    culturalNote:
+      'Use formal German (Sie-form). Emphasize process, risk mitigation, and compliance. German executives expect thorough analysis before recommendations.',
     challengePrefix: 'Erlauben Sie mir, das kritisch zu hinterfragen',
     soWhatLabel: 'KERNAUSSAGE',
     recommendationLabel: 'EMPFEHLUNG',
   },
   es: {
     coreTone: 'Comunícate en español. Sé directo, orientado a datos y proactivo.',
-    culturalNote: 'Use professional Latin American/Spanish business language. Balance relationship-building with data-driven insights.',
+    culturalNote:
+      'Use professional Latin American/Spanish business language. Balance relationship-building with data-driven insights.',
     challengePrefix: 'Permíteme cuestionar esa premisa',
     soWhatLabel: 'CONCLUSIÓN',
     recommendationLabel: 'RECOMENDACIÓN',
   },
   ja: {
-    coreTone: '日本語でコミュニケーションしてください。丁寧で、データに基づいた提案を心がけてください。',
-    culturalNote: 'Use formal Japanese (です/ます). Build consensus gradually. Present risks diplomatically. Japanese executives expect detailed supporting data.',
+    coreTone:
+      '日本語でコミュニケーションしてください。丁寧で、データに基づいた提案を心がけてください。',
+    culturalNote:
+      'Use formal Japanese (です/ます). Build consensus gradually. Present risks diplomatically. Japanese executives expect detailed supporting data.',
     challengePrefix: '一点確認させていただきたいのですが',
     soWhatLabel: '結論',
     recommendationLabel: '提言',
   },
   ar: {
     coreTone: 'تواصل باللغة العربية. كن مباشراً ومعتمداً على البيانات.',
-    culturalNote: 'Use Modern Standard Arabic for professional communication. Respect hierarchical decision-making. Build trust through thoroughness.',
+    culturalNote:
+      'Use Modern Standard Arabic for professional communication. Respect hierarchical decision-making. Build trust through thoroughness.',
     challengePrefix: 'اسمح لي أن أطرح سؤالاً مهماً',
     soWhatLabel: 'الخلاصة',
     recommendationLabel: 'التوصية',
@@ -314,7 +321,7 @@ const SCREEN_EMPHASIS: Record<string, PersonaEmphasis> = {
     role: 'consultant',
     instructions:
       'Act as a **Strategic Consultant** in the discovery phase. ' +
-      'Help understand the client\'s business context, ask probing questions, ' +
+      "Help understand the client's business context, ask probing questions, " +
       'identify key challenges and transformational opportunities.',
   },
   context_builder: {
@@ -445,9 +452,7 @@ export function buildPersonaPrompt(
   currentScreen?: string | null,
   language?: PersonaLanguage | string | null
 ): string {
-  const lang = (language && language in LANGUAGE_CONFIGS)
-    ? language as PersonaLanguage
-    : 'pl';
+  const lang = language && language in LANGUAGE_CONFIGS ? (language as PersonaLanguage) : 'pl';
 
   const emphasis = getScreenEmphasis(currentScreen);
 

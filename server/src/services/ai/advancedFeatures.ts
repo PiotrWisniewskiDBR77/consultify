@@ -64,7 +64,8 @@ const DECISION_AGENTS = [
   {
     role: 'COO',
     name: 'Dyrektor Operacyjny',
-    focus: 'Operational impact, production downtime, process changes, timeline realism, resource allocation',
+    focus:
+      'Operational impact, production downtime, process changes, timeline realism, resource allocation',
   },
 ];
 
@@ -155,7 +156,12 @@ Synthesize into a consensus. Return JSON:
 }
 Return ONLY valid JSON. Use Polish language.`;
 
-  let consensus = { recommendation: '', confidenceLevel: 50, keyAgreements: [] as string[], keyDisagreements: [] as string[] };
+  let consensus = {
+    recommendation: '',
+    confidenceLevel: 50,
+    keyAgreements: [] as string[],
+    keyDisagreements: [] as string[],
+  };
   let summary = '';
 
   try {
@@ -471,9 +477,23 @@ Return ONLY JSON.`;
   try {
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) return JSON.parse(jsonMatch[0]);
-    return { axis, area, suggestedAsIsScore: 2, suggestedToBeScore: 4, confidence: 30, evidence: userAnswer.slice(0, 100) };
+    return {
+      axis,
+      area,
+      suggestedAsIsScore: 2,
+      suggestedToBeScore: 4,
+      confidence: 30,
+      evidence: userAnswer.slice(0, 100),
+    };
   } catch {
-    return { axis, area, suggestedAsIsScore: 2, suggestedToBeScore: 4, confidence: 20, evidence: '' };
+    return {
+      axis,
+      area,
+      suggestedAsIsScore: 2,
+      suggestedToBeScore: 4,
+      confidence: 20,
+      evidence: '',
+    };
   }
 }
 

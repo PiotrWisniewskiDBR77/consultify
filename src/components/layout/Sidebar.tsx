@@ -673,7 +673,9 @@ export const Sidebar: React.FC = () => {
           `}
           title={getTooltip()}
         >
-          <div className={`flex items-center gap-3 min-w-0 ${!showFull ? 'justify-center w-full' : 'flex-1'} `}>
+          <div
+            className={`flex items-center gap-3 min-w-0 ${!showFull ? 'justify-center w-full' : 'flex-1'} `}
+          >
             {item.icon && (
               <span
                 className={`transition-colors ${isActive || isParentActive ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}

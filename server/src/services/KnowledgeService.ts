@@ -49,9 +49,10 @@ export const knowledgeService = {
       // Parse strategic goals
       if (ctx.strategic_goals) {
         try {
-          const goals = typeof ctx.strategic_goals === 'string'
-            ? JSON.parse(ctx.strategic_goals)
-            : ctx.strategic_goals;
+          const goals =
+            typeof ctx.strategic_goals === 'string'
+              ? JSON.parse(ctx.strategic_goals)
+              : ctx.strategic_goals;
           if (Array.isArray(goals)) {
             goals.forEach((g: any, i: number) => {
               strategies.push({
@@ -76,9 +77,8 @@ export const knowledgeService = {
       // Parse challenges
       if (ctx.challenges) {
         try {
-          const challenges = typeof ctx.challenges === 'string'
-            ? JSON.parse(ctx.challenges)
-            : ctx.challenges;
+          const challenges =
+            typeof ctx.challenges === 'string' ? JSON.parse(ctx.challenges) : ctx.challenges;
           if (Array.isArray(challenges)) {
             challenges.forEach((c: any, i: number) => {
               strategies.push({
@@ -109,7 +109,11 @@ export const knowledgeService = {
   /**
    * Get approved ideas / generated initiatives from assessment batches.
    */
-  async getApprovedIdeas(options: { organizationId?: string; projectId?: string; limit?: number }): Promise<any[]> {
+  async getApprovedIdeas(options: {
+    organizationId?: string;
+    projectId?: string;
+    limit?: number;
+  }): Promise<any[]> {
     const { organizationId, projectId, limit = 10 } = options;
 
     try {

@@ -12,21 +12,21 @@
  */
 
 import type {
+  AppendixContent,
+  ExecutiveSummaryContent,
+  InitiativePortfolioContent,
+  KeyMessagesContent,
+  NextStepsContent,
+  PerformanceOverviewContent,
+  PrioritizationMatrixContent,
+  RecommendationPortfolioContent,
+  RiskManagementContent,
+  RoadmapContent,
+  RootCauseContent,
+  RuleViolation,
   UnifiedReportJSON,
   UnifiedSlide,
   ValidationResult,
-  RuleViolation,
-  PerformanceOverviewContent,
-  KeyMessagesContent,
-  ExecutiveSummaryContent,
-  RecommendationPortfolioContent,
-  InitiativePortfolioContent,
-  PrioritizationMatrixContent,
-  RiskManagementContent,
-  NextStepsContent,
-  RoadmapContent,
-  RootCauseContent,
-  AppendixContent,
 } from './types.js';
 
 // ============================================================
@@ -262,7 +262,7 @@ const STRUCTURAL_RULES: Rule[] = [
     check(slide, index) {
       if (slide.intent !== 'prioritization_matrix') return null;
       const c = slide.content as PrioritizationMatrixContent;
-      for (const quad of (c.quadrants || [])) {
+      for (const quad of c.quadrants || []) {
         if (quad.items && quad.items.length > MAX_PRIORITIZATION_ITEMS) {
           return {
             rule: 'PRIORITIZATION_QUADRANT_LIMIT',
@@ -334,7 +334,9 @@ export function validateReport(report: UnifiedReportJSON): ValidationResult {
  * IF recommendations.count == 1 → recommendation_single
  * IF recommendations.count >= 3 → recommendation_portfolio
  */
-export function decideRecommendationIntent(count: number): 'recommendation_single' | 'recommendation_portfolio' {
+export function decideRecommendationIntent(
+  count: number
+): 'recommendation_single' | 'recommendation_portfolio' {
   return count >= 3 ? 'recommendation_portfolio' : 'recommendation_single';
 }
 

@@ -11,9 +11,8 @@
  * - initiativePlan: Initiative plan with timeline and budget
  */
 
-import { aiAssessmentPartner, DRD_AXES } from './aiAssessmentPartnerService.js';
-
 import logger from '../utils/Logger.js';
+import { aiAssessmentPartner, DRD_AXES } from './aiAssessmentPartnerService.js';
 
 // ==========================================
 // CONSTANTS
@@ -193,14 +192,10 @@ export const aiAssessmentReportGenerator = {
         };
       }
 
-      const stakeholderView = await aiAssessmentPartner.generateStakeholderView(
-        assessment,
-        role,
-        {
-          language: options.language || 'en',
-          organizationName: options.organizationName || assessment.name,
-        }
-      );
+      const stakeholderView = await aiAssessmentPartner.generateStakeholderView(assessment, role, {
+        language: options.language || 'en',
+        organizationName: options.organizationName || assessment.name,
+      });
 
       const avgActual = scores.reduce((sum, s) => sum + s.actual, 0) / scores.length;
 
@@ -273,11 +268,7 @@ export const aiAssessmentReportGenerator = {
    * Generate an initiative plan with timeline and budget estimates.
    * Combines gap analysis with initiative generation and prioritization.
    */
-  async generateInitiativePlan(
-    assessment: any,
-    constraints: any = {},
-    options: any = {}
-  ) {
+  async generateInitiativePlan(assessment: any, constraints: any = {}, options: any = {}) {
     try {
       logger.info('[AIReportGenerator] Generating initiative plan');
       const scores = extractScores(assessment);
@@ -303,15 +294,12 @@ export const aiAssessmentReportGenerator = {
         }));
 
       // Generate initiatives from gaps
-      const initiativeResult = await aiAssessmentPartner.generateInitiativesFromGaps(
-        gapAnalysis,
-        {
-          budget: constraints.budget,
-          timeline: constraints.timeline || '12 months',
-          resources: constraints.resources,
-          language: options.language || 'en',
-        }
-      );
+      const initiativeResult = await aiAssessmentPartner.generateInitiativesFromGaps(gapAnalysis, {
+        budget: constraints.budget,
+        timeline: constraints.timeline || '12 months',
+        resources: constraints.resources,
+        language: options.language || 'en',
+      });
 
       const initiatives = initiativeResult.initiatives || [];
 

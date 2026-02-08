@@ -135,7 +135,15 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({
         <div className="mb-3 grid grid-cols-3 gap-2">
           <div className="p-2 rounded-lg bg-amber-500/10 text-center">
             <div className="text-lg font-bold text-amber-500">
-              {decisions.filter((d) => d.status === 'pending' || d.status === 'PENDING' || d.status === 'escalated' || d.status === 'ESCALATED').length}
+              {
+                decisions.filter(
+                  (d) =>
+                    d.status === 'pending' ||
+                    d.status === 'PENDING' ||
+                    d.status === 'escalated' ||
+                    d.status === 'ESCALATED'
+                ).length
+              }
             </div>
             <div className="text-[10px] uppercase text-amber-500/70">
               {isPolish ? 'Oczekujące' : 'Pending'}
@@ -163,9 +171,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({
       {decisions.length === 0 && !showCreateDecision ? (
         <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
           <Scale size={24} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-          <p className="text-sm text-slate-400">
-            {isPolish ? 'Brak decyzji' : 'No decisions yet'}
-          </p>
+          <p className="text-sm text-slate-400">{isPolish ? 'Brak decyzji' : 'No decisions yet'}</p>
           <p className="text-xs text-slate-400 mt-1">
             {isPolish
               ? 'Dodaj decyzje bramkowe lub operacyjne'
@@ -178,19 +184,36 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({
           {decisions
             .sort((a, b) => {
               // Gate decisions on top
-              const aIsGate = ['GOVERNANCE_DECISION_MAKING', 'RESOURCE_RESPONSIBILITY', 'SCHEDULE_MILESTONES'].includes(a.type);
-              const bIsGate = ['GOVERNANCE_DECISION_MAKING', 'RESOURCE_RESPONSIBILITY', 'SCHEDULE_MILESTONES'].includes(b.type);
+              const aIsGate = [
+                'GOVERNANCE_DECISION_MAKING',
+                'RESOURCE_RESPONSIBILITY',
+                'SCHEDULE_MILESTONES',
+              ].includes(a.type);
+              const bIsGate = [
+                'GOVERNANCE_DECISION_MAKING',
+                'RESOURCE_RESPONSIBILITY',
+                'SCHEDULE_MILESTONES',
+              ].includes(b.type);
               if (aIsGate && !bIsGate) return -1;
               if (!aIsGate && bIsGate) return 1;
               // Then by status: pending first
-              const aIsPending = !['APPROVED', 'approved', 'REJECTED', 'rejected'].includes(a.status);
-              const bIsPending = !['APPROVED', 'approved', 'REJECTED', 'rejected'].includes(b.status);
+              const aIsPending = !['APPROVED', 'approved', 'REJECTED', 'rejected'].includes(
+                a.status
+              );
+              const bIsPending = !['APPROVED', 'approved', 'REJECTED', 'rejected'].includes(
+                b.status
+              );
               if (aIsPending && !bIsPending) return -1;
               if (!aIsPending && bIsPending) return 1;
               return 0;
             })
             .map((d) => {
-              const isGate = ['GOVERNANCE_DECISION_MAKING', 'RESOURCE_RESPONSIBILITY', 'SCHEDULE_MILESTONES', 'GO_NO_GO'].includes(d.type);
+              const isGate = [
+                'GOVERNANCE_DECISION_MAKING',
+                'RESOURCE_RESPONSIBILITY',
+                'SCHEDULE_MILESTONES',
+                'GO_NO_GO',
+              ].includes(d.type);
               const isApproved = d.status === 'APPROVED' || d.status === 'approved';
               const isRejected = d.status === 'REJECTED' || d.status === 'rejected';
               const isPending = !isApproved && !isRejected;

@@ -303,10 +303,7 @@ class LearningSystemService {
       const cutoff = new Date(Date.now() - maxAgeDays * 86400_000).toISOString();
 
       // Clean old feedback
-      const fbResult = await dbRun(
-        `DELETE FROM ai_feedback WHERE created_at < ?`,
-        [cutoff]
-      );
+      const fbResult = await dbRun(`DELETE FROM ai_feedback WHERE created_at < ?`, [cutoff]);
       deleted += fbResult.changes || 0;
 
       // Clean low-confidence patterns older than retention period

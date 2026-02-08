@@ -224,8 +224,8 @@ export interface InitiativePortfolioContent {
     strategicRole?: 'Foundation' | 'Enabler' | 'Accelerator' | 'Scaling' | string;
     priority?: 'critical' | 'high' | 'medium' | 'low';
     timeline?: string;
-    impact?: number;     // 1-5
-    effort?: number;     // 1-5
+    impact?: number; // 1-5
+    effort?: number; // 1-5
     effortProfile?: { analytical: number; operational: number; change: number };
     budget?: string;
     roi?: string;
@@ -372,20 +372,20 @@ export interface DesignTokens {
     kpiLabel: number;
   };
   spacing: {
-    margin: number;       // slide edge margin
-    gutter: number;       // gap between columns
+    margin: number; // slide edge margin
+    gutter: number; // gap between columns
     paragraphGap: number; // gap between paragraphs
-    elementGap: number;   // gap between elements
+    elementGap: number; // gap between elements
   };
   grid: {
-    slideW: number;       // 10 (inches, 16:9)
-    slideH: number;       // 5.625
-    contentX: number;     // left margin
-    contentY: number;     // below header
-    contentW: number;     // usable width
-    contentH: number;     // usable height
-    headerH: number;      // header bar height
-    footerY: number;      // footer y position
+    slideW: number; // 10 (inches, 16:9)
+    slideH: number; // 5.625
+    contentX: number; // left margin
+    contentY: number; // below header
+    contentW: number; // usable width
+    contentH: number; // usable height
+    headerH: number; // header bar height
+    footerY: number; // footer y position
   };
 }
 

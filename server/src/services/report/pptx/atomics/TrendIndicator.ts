@@ -2,8 +2,8 @@
  * Atomic: Trend Indicator
  * Up/down/flat arrow with optional delta text.
  */
-import type { DesignTokens, RenderedElement, ElementPosition } from '../types.js';
 import { trendColor } from '../designTokens.js';
+import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface TrendIndicatorProps {
   trend: 'up' | 'down' | 'flat';
@@ -12,9 +12,9 @@ export interface TrendIndicatorProps {
 }
 
 const ARROWS: Record<string, string> = {
-  up: '\u25B2',     // ▲
-  down: '\u25BC',   // ▼
-  flat: '\u25C6',   // ◆
+  up: '\u25B2', // ▲
+  down: '\u25BC', // ▼
+  flat: '\u25C6', // ◆
 };
 
 export function TrendIndicator(props: TrendIndicatorProps, tokens: DesignTokens): RenderedElement {

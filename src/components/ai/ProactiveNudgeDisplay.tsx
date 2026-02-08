@@ -169,10 +169,14 @@ export function ProactiveNudgeDisplay({
     setNudges((prev) => prev.filter((n) => n.id !== nudgeId));
 
     try {
-      await api.post(`/ai/nudges/${nudgeId}/dismiss`, {
-        feedback,
-        dismissedAt: new Date().toISOString(),
-      }).catch(() => { /* best-effort */ });
+      await api
+        .post(`/ai/nudges/${nudgeId}/dismiss`, {
+          feedback,
+          dismissedAt: new Date().toISOString(),
+        })
+        .catch(() => {
+          /* best-effort */
+        });
     } catch (err) {
       console.error('Failed to record dismissal:', err);
     }
@@ -186,10 +190,14 @@ export function ProactiveNudgeDisplay({
 
   const handleAction = async (nudge: Nudge) => {
     try {
-      await api.post(`/ai/nudges/${nudge.id}/action`, {
-        actionTaken: true,
-        actionAt: new Date().toISOString(),
-      }).catch(() => { /* best-effort */ });
+      await api
+        .post(`/ai/nudges/${nudge.id}/action`, {
+          actionTaken: true,
+          actionAt: new Date().toISOString(),
+        })
+        .catch(() => {
+          /* best-effort */
+        });
     } catch (err) {
       console.error('Failed to record action:', err);
     }
@@ -232,7 +240,8 @@ export function ProactiveNudgeDisplay({
       {!collapsed && (
         <>
           {visibleNudges.map((nudge, index) => {
-            const style = nudgeStyles[(nudge.type as any) as keyof typeof nudgeStyles] || nudgeStyles.SUGGESTION;
+            const style =
+              nudgeStyles[nudge.type as any as keyof typeof nudgeStyles] || nudgeStyles.SUGGESTION;
             const Icon = style.icon;
             const hasFeedback = feedbackGiven[nudge.id];
 

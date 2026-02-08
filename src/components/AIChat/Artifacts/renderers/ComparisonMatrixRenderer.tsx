@@ -30,14 +30,7 @@
  * }
  */
 
-import {
-  ArrowRight,
-  Award,
-  Check,
-  Copy,
-  Download,
-  Star,
-} from 'lucide-react';
+import { ArrowRight, Award, Check, Copy, Download, Star } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -197,11 +190,7 @@ export const ComparisonMatrixRenderer: React.FC<ComparisonMatrixRendererProps> =
         return s ? `${s.value}` : '';
       }),
     ]);
-    const totalRow = [
-      'WEIGHTED TOTAL',
-      '',
-      ...data.options.map((o) => `${weightedTotals[o.id]}`),
-    ];
+    const totalRow = ['WEIGHTED TOTAL', '', ...data.options.map((o) => `${weightedTotals[o.id]}`)];
     const csv = [headers, ...rows, totalRow]
       .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))
       .join('\n');
@@ -275,7 +264,9 @@ export const ComparisonMatrixRenderer: React.FC<ComparisonMatrixRendererProps> =
               )}
             </div>
             {option.description && (
-              <p className="text-slate-500 dark:text-slate-400 line-clamp-2">{option.description}</p>
+              <p className="text-slate-500 dark:text-slate-400 line-clamp-2">
+                {option.description}
+              </p>
             )}
           </div>
         ))}

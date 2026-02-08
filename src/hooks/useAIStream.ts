@@ -50,7 +50,10 @@ function mergeCitations(prev: any[], next: any[]): any[] {
  */
 type ThinkingComplexity = 'light' | 'medium' | 'deep';
 
-function buildDefaultThinkingSteps(language: string, complexity: ThinkingComplexity = 'medium'): ThinkingStep[] {
+function buildDefaultThinkingSteps(
+  language: string,
+  complexity: ThinkingComplexity = 'medium'
+): ThinkingStep[] {
   const lang = (language || 'en').split('-')[0];
 
   // Multiple phrase variants for more natural feel - randomly selected
@@ -168,16 +171,31 @@ function buildDefaultThinkingSteps(language: string, complexity: ThinkingComplex
       ],
     },
     ar: {
-      analyzing: ['أحلّل سؤالك وأبحث عن أفضل طريقة للإجابة…', 'أفكر في سياق سؤالك وأختار المنهج المناسب…'],
-      context: ['أجمع السياق من بيانات المشروع والمستندات ذات الصلة…', 'أبحث عن المعلومات والروابط في بيانات المنظمة…'],
+      analyzing: [
+        'أحلّل سؤالك وأبحث عن أفضل طريقة للإجابة…',
+        'أفكر في سياق سؤالك وأختار المنهج المناسب…',
+      ],
+      context: [
+        'أجمع السياق من بيانات المشروع والمستندات ذات الصلة…',
+        'أبحث عن المعلومات والروابط في بيانات المنظمة…',
+      ],
       planning: ['أخطط للإجابة — أختار أهم النقاط للتغطية…', 'أنظم المعلومات وأرتب الأولويات…'],
       validating: ['أتحقق من اتساق التحليل وأراجع التفاصيل…'],
       composing: ['أصوغ الإجابة بتوصيات محددة…', 'أجهّز الرد النهائي…'],
     },
     ja: {
-      analyzing: ['ご質問を分析し、最適な回答方法を検討しています…', 'ご質問の文脈を理解し、アプローチを選択中…'],
-      context: ['プロジェクトデータと関連ドキュメントからコンテキストを収集中…', '組織データと会話履歴から関連情報を検索中…'],
-      planning: ['回答を計画中 — 最も重要なポイントを選択しています…', '収集した情報を整理し、重要な発見を優先しています…'],
+      analyzing: [
+        'ご質問を分析し、最適な回答方法を検討しています…',
+        'ご質問の文脈を理解し、アプローチを選択中…',
+      ],
+      context: [
+        'プロジェクトデータと関連ドキュメントからコンテキストを収集中…',
+        '組織データと会話履歴から関連情報を検索中…',
+      ],
+      planning: [
+        '回答を計画中 — 最も重要なポイントを選択しています…',
+        '収集した情報を整理し、重要な発見を優先しています…',
+      ],
       validating: ['分析の整合性を確認し、詳細を検証中…'],
       composing: ['具体的な提案を含む回答を作成中…', '明確で役立つ回答にまとめています…'],
     },
@@ -293,7 +311,7 @@ function logarithmicProgress(elapsedMs: number): number {
   // Sigmoid squash so it never exceeds 97
   const progress = 97 * (1 - Math.exp(-raw / 97));
   // Add micro-jitter (±0.5%) to prevent visual freeze
-  const jitter = (Math.sin(t * 2.7) * 0.5);
+  const jitter = Math.sin(t * 2.7) * 0.5;
   return Math.min(97, Math.max(0, progress + jitter));
 }
 
@@ -432,7 +450,11 @@ export const useAIStream = (options: StreamOptions = {}) => {
   const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
   const [lastError, setLastError] = useState<Error | null>(null);
   const [citations, setCitations] = useState<any[]>([]);
-  const [retryInfo, setRetryInfo] = useState<{ attempt: number; maxRetries: number; backoffMs: number } | null>(null);
+  const [retryInfo, setRetryInfo] = useState<{
+    attempt: number;
+    maxRetries: number;
+    backoffMs: number;
+  } | null>(null);
   const [streamStartedAt, setStreamStartedAt] = useState<number | null>(null);
   const [streamCompletedSignal, setStreamCompletedSignal] = useState(false);
   const [deepThinkingState, setDeepThinkingState] = useState<DeepThinkingStateEvent | null>(null);
@@ -541,7 +563,10 @@ export const useAIStream = (options: StreamOptions = {}) => {
       const isDeepThinking = aiConfig?.deepResearch === true;
       // Adaptive complexity: start light for casual queries, escalate if response takes long
       const initialComplexity: ThinkingComplexity = isDeepThinking ? 'deep' : 'light';
-      let currentThinking: ThinkingStep[] = buildDefaultThinkingSteps(language || '', initialComplexity);
+      let currentThinking: ThinkingStep[] = buildDefaultThinkingSteps(
+        language || '',
+        initialComplexity
+      );
       let hasEscalatedComplexity = isDeepThinking; // deep starts fully expanded
       let step = 0;
       let hasReceivedContent = false;
@@ -584,7 +609,11 @@ export const useAIStream = (options: StreamOptions = {}) => {
         const isPl = (language || '').startsWith('pl');
         if (elapsed > 30000 && !isDeepThinking) {
           const escalationStep = currentThinking.find((s) => s.status === 'in_progress');
-          if (escalationStep && !escalationStep.label.includes('zaraz') && !escalationStep.label.includes('almost')) {
+          if (
+            escalationStep &&
+            !escalationStep.label.includes('zaraz') &&
+            !escalationStep.label.includes('almost')
+          ) {
             escalationStep.label = isPl
               ? 'Już prawie kończę — dopracowuję ostatnie szczegóły odpowiedzi…'
               : 'Almost done — polishing the final details of the response…';
@@ -593,7 +622,11 @@ export const useAIStream = (options: StreamOptions = {}) => {
           }
         } else if (elapsed > 10000 && !isDeepThinking) {
           const escalationStep = currentThinking.find((s) => s.status === 'in_progress');
-          if (escalationStep && !escalationStep.label.includes('chwilę') && !escalationStep.label.includes('moment')) {
+          if (
+            escalationStep &&
+            !escalationStep.label.includes('chwilę') &&
+            !escalationStep.label.includes('moment')
+          ) {
             escalationStep.label = isPl
               ? 'To zajmie jeszcze chwilę — analizuję bardziej złożone aspekty Twojego pytania…'
               : 'This is taking a moment — analyzing more complex aspects of your question…';

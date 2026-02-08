@@ -2,7 +2,7 @@
  * Atomic: Body Text
  * Standard paragraph text with optional bold/italic.
  */
-import type { DesignTokens, RenderedElement, ElementPosition } from '../types.js';
+import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface BodyTextProps {
   text: string;

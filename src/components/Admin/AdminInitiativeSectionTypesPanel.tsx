@@ -78,9 +78,23 @@ interface SectionType {
 // ==========================================
 
 const ICON_MAP: Record<string, React.ElementType> = {
-  FileText, AlertTriangle, Target, Scale, CheckSquare,
-  BarChart3, DollarSign, TrendingUp, Sparkles, MessageSquare,
-  History, Layers, Users, Calendar, Link2, Tag, Bell,
+  FileText,
+  AlertTriangle,
+  Target,
+  Scale,
+  CheckSquare,
+  BarChart3,
+  DollarSign,
+  TrendingUp,
+  Sparkles,
+  MessageSquare,
+  History,
+  Layers,
+  Users,
+  Calendar,
+  Link2,
+  Tag,
+  Bell,
 };
 
 const getIcon = (iconName: string | null): React.ElementType => {
@@ -94,15 +108,31 @@ const getIcon = (iconName: string | null): React.ElementType => {
 
 const getTypeBadge = (isSystem: boolean) =>
   isSystem
-    ? { color: 'text-cyan-400', bg: 'bg-cyan-500/20', label: 'APP', icon: Package, dot: 'bg-cyan-500' }
-    : { color: 'text-purple-400', bg: 'bg-purple-500/20', label: 'ORG', icon: Building2, dot: 'bg-purple-500' };
+    ? {
+        color: 'text-cyan-400',
+        bg: 'bg-cyan-500/20',
+        label: 'APP',
+        icon: Package,
+        dot: 'bg-cyan-500',
+      }
+    : {
+        color: 'text-purple-400',
+        bg: 'bg-purple-500/20',
+        label: 'ORG',
+        icon: Building2,
+        dot: 'bg-purple-500',
+      };
 
 const getCategoryBadge = (category: string) => {
   switch (category) {
-    case 'content': return { color: 'text-blue-400', bg: 'bg-blue-500/15', label: 'Content' };
-    case 'control': return { color: 'text-purple-400', bg: 'bg-purple-500/15', label: 'Control' };
-    case 'meta': return { color: 'text-slate-400', bg: 'bg-slate-500/15', label: 'Meta' };
-    default: return { color: 'text-slate-400', bg: 'bg-slate-500/15', label: category };
+    case 'content':
+      return { color: 'text-blue-400', bg: 'bg-blue-500/15', label: 'Content' };
+    case 'control':
+      return { color: 'text-purple-400', bg: 'bg-purple-500/15', label: 'Control' };
+    case 'meta':
+      return { color: 'text-slate-400', bg: 'bg-slate-500/15', label: 'Meta' };
+    default:
+      return { color: 'text-slate-400', bg: 'bg-slate-500/15', label: category };
   }
 };
 
@@ -128,7 +158,9 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
 
   // Filters
   const [filter, setFilter] = useState<'all' | 'app' | 'org'>('all');
-  const [filterCategory, setFilterCategory] = useState<'all' | 'content' | 'control' | 'meta'>('all');
+  const [filterCategory, setFilterCategory] = useState<'all' | 'content' | 'control' | 'meta'>(
+    'all'
+  );
   const [filterColumn, setFilterColumn] = useState<'all' | 'left' | 'right'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
@@ -155,7 +187,9 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
     }
   }, []);
 
-  useEffect(() => { fetchSectionTypes(); }, [fetchSectionTypes]);
+  useEffect(() => {
+    fetchSectionTypes();
+  }, [fetchSectionTypes]);
 
   // ==========================================
   // COMPUTED
@@ -169,11 +203,12 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
     if (filterColumn !== 'all') result = result.filter((s) => s.columnPosition === filterColumn);
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      result = result.filter((s) =>
-        s.name.toLowerCase().includes(q) ||
-        s.key.toLowerCase().includes(q) ||
-        s.namePl?.toLowerCase().includes(q) ||
-        s.description?.toLowerCase().includes(q)
+      result = result.filter(
+        (s) =>
+          s.name.toLowerCase().includes(q) ||
+          s.key.toLowerCase().includes(q) ||
+          s.namePl?.toLowerCase().includes(q) ||
+          s.description?.toLowerCase().includes(q)
       );
     }
     return result.sort((a, b) => {
@@ -195,8 +230,11 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
       await Api.post(`/initiatives/section-types/${id}/duplicate`);
       toast.success('Section duplicated to organization');
       fetchSectionTypes();
-    } catch (e: any) { toast.error(e?.message || 'Failed to duplicate'); }
-    finally { setIsMutating(false); }
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to duplicate');
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -206,13 +244,17 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
       await Api.delete(`/initiatives/section-types/${id}`);
       toast.success('Section type deactivated');
       fetchSectionTypes();
-    } catch (e: any) { toast.error(e?.message || 'Failed to deactivate'); }
-    finally { setIsMutating(false); }
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to deactivate');
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   const toggleSelect = (id: string) => {
     const next = new Set(selectedIds);
-    if (next.has(id)) next.delete(id); else next.add(id);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
     setSelectedIds(next);
   };
 
@@ -257,7 +299,9 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
             >
               <Layers size={14} />
               <span>All</span>
-              <span className={`px-1.5 text-xs rounded-full ${filter === 'all' ? 'bg-purple-500/30 text-purple-300' : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400'}`}>
+              <span
+                className={`px-1.5 text-xs rounded-full ${filter === 'all' ? 'bg-purple-500/30 text-purple-300' : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400'}`}
+              >
                 {sectionTypes.length}
               </span>
             </button>
@@ -273,7 +317,9 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
             >
               <Package size={14} />
               <span>App</span>
-              <span className={`px-1.5 text-xs rounded-full ${filter === 'app' ? 'bg-cyan-500/30 text-cyan-300' : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400'}`}>
+              <span
+                className={`px-1.5 text-xs rounded-full ${filter === 'app' ? 'bg-cyan-500/30 text-cyan-300' : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400'}`}
+              >
                 {appCount}
               </span>
             </button>
@@ -289,7 +335,9 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
             >
               <Building2 size={14} />
               <span>Org</span>
-              <span className={`px-1.5 text-xs rounded-full ${filter === 'org' ? 'bg-purple-500/30 text-purple-300' : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400'}`}>
+              <span
+                className={`px-1.5 text-xs rounded-full ${filter === 'org' ? 'bg-purple-500/30 text-purple-300' : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400'}`}
+              >
                 {orgCount}
               </span>
             </button>
@@ -302,10 +350,13 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                 onClick={() => setFilterCategory(c)}
                 className={`h-9 px-2.5 text-xs font-medium rounded-lg border transition-all ${
                   filterCategory === c
-                    ? c === 'all' ? 'bg-purple-500/15 border-purple-500 text-purple-300' :
-                      c === 'content' ? 'bg-blue-500/15 border-blue-500 text-blue-300' :
-                      c === 'control' ? 'bg-violet-500/15 border-violet-500 text-violet-300' :
-                      'bg-slate-500/15 border-slate-500 text-slate-300'
+                    ? c === 'all'
+                      ? 'bg-purple-500/15 border-purple-500 text-purple-300'
+                      : c === 'content'
+                        ? 'bg-blue-500/15 border-blue-500 text-blue-300'
+                        : c === 'control'
+                          ? 'bg-violet-500/15 border-violet-500 text-violet-300'
+                          : 'bg-slate-500/15 border-slate-500 text-slate-300'
                     : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-slate-300'
                 }`}
               >
@@ -321,9 +372,11 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                 onClick={() => setFilterColumn(col)}
                 className={`h-9 px-2.5 text-xs font-medium rounded-lg border transition-all ${
                   filterColumn === col
-                    ? col === 'all' ? 'bg-purple-500/15 border-purple-500 text-purple-300' :
-                      col === 'left' ? 'bg-emerald-500/15 border-emerald-500 text-emerald-300' :
-                      'bg-amber-500/15 border-amber-500 text-amber-300'
+                    ? col === 'all'
+                      ? 'bg-purple-500/15 border-purple-500 text-purple-300'
+                      : col === 'left'
+                        ? 'bg-emerald-500/15 border-emerald-500 text-emerald-300'
+                        : 'bg-amber-500/15 border-amber-500 text-amber-300'
                     : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-slate-300'
                 }`}
               >
@@ -343,7 +396,10 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
         {showSearch && (
           <div className="px-4 pb-3">
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+              />
               <input
                 type="text"
                 value={searchQuery}
@@ -354,7 +410,10 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
               />
               {searchQuery && (
                 <button
-                  onClick={() => { setSearchQuery(''); setShowSearch(false); }}
+                  onClick={() => {
+                    setSearchQuery('');
+                    setShowSearch(false);
+                  }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
                 >
                   <X size={16} />
@@ -376,7 +435,9 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
               {searchQuery ? 'No sections match your search' : 'No section types found'}
             </p>
             <p className="text-xs text-slate-500">
-              {searchQuery ? 'Try adjusting your search terms' : 'Section types define the available building blocks for initiative cards'}
+              {searchQuery
+                ? 'Try adjusting your search terms'
+                : 'Section types define the available building blocks for initiative cards'}
             </p>
           </div>
         ) : (
@@ -385,14 +446,28 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
               <thead>
                 <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
                   <th className="w-10 px-2 py-2" />
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[90px]">Type</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[90px]">
+                    Type
+                  </th>
                   <th className="w-8 px-1 py-2" />
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Section</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[90px]">Category</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[80px]">Column</th>
-                  <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 uppercase tracking-wider w-[60px]">Order</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[50px]">AI</th>
-                  <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-[100px]">Actions</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    Section
+                  </th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[90px]">
+                    Category
+                  </th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[80px]">
+                    Column
+                  </th>
+                  <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 uppercase tracking-wider w-[60px]">
+                    Order
+                  </th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[50px]">
+                    AI
+                  </th>
+                  <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-[100px]">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -426,7 +501,10 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                           {/* Checkbox */}
                           <td className="w-10 px-2 py-2.5">
                             <button
-                              onClick={(e) => { e.stopPropagation(); toggleSelect(st.id); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleSelect(st.id);
+                              }}
                               className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
                                 selectedIds.has(st.id)
                                   ? 'bg-purple-500 border-purple-500 text-white'
@@ -439,7 +517,9 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
 
                           {/* Type */}
                           <td className="px-3 py-2.5">
-                            <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-semibold uppercase ${typeBadge.bg} ${typeBadge.color}`}>
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-semibold uppercase ${typeBadge.bg} ${typeBadge.color}`}
+                            >
                               <TypeIcon size={11} />
                               {typeBadge.label}
                             </span>
@@ -453,13 +533,22 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                           {/* Section name + description */}
                           <td className="px-3 py-2.5" style={{ minWidth: 220 }}>
                             <div className="flex items-center gap-3">
-                              <div className={`p-1.5 rounded-lg bg-gradient-to-br ${st.iconBg || 'from-slate-500/10 to-gray-500/10'}`}>
-                                <SectionIcon size={16} className={st.iconColor || 'text-slate-500'} />
+                              <div
+                                className={`p-1.5 rounded-lg bg-gradient-to-br ${st.iconBg || 'from-slate-500/10 to-gray-500/10'}`}
+                              >
+                                <SectionIcon
+                                  size={16}
+                                  className={st.iconColor || 'text-slate-500'}
+                                />
                               </div>
                               <div>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium text-slate-900 dark:text-white">{st.name}</span>
-                                  <code className="text-[10px] px-1 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-400 font-mono">{st.key}</code>
+                                  <span className="text-sm font-medium text-slate-900 dark:text-white">
+                                    {st.name}
+                                  </span>
+                                  <code className="text-[10px] px-1 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-400 font-mono">
+                                    {st.key}
+                                  </code>
                                 </div>
                                 <span className="text-xs text-slate-500 line-clamp-1">
                                   {st.description || st.namePl || '—'}
@@ -470,31 +559,43 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
 
                           {/* Category */}
                           <td className="px-3 py-2.5">
-                            <span className={`px-2 py-0.5 rounded text-[11px] font-medium ${catBadge.bg} ${catBadge.color}`}>
+                            <span
+                              className={`px-2 py-0.5 rounded text-[11px] font-medium ${catBadge.bg} ${catBadge.color}`}
+                            >
                               {catBadge.label}
                             </span>
                           </td>
 
                           {/* Column */}
                           <td className="px-3 py-2.5">
-                            <span className={`px-2 py-0.5 rounded text-[11px] font-medium ${colBadge.bg} ${colBadge.color}`}>
+                            <span
+                              className={`px-2 py-0.5 rounded text-[11px] font-medium ${colBadge.bg} ${colBadge.color}`}
+                            >
                               {colBadge.label}
                             </span>
                           </td>
 
                           {/* Order */}
                           <td className="px-3 py-2.5 text-center">
-                            <span className="text-sm text-slate-600 dark:text-slate-400">{st.defaultOrder}</span>
+                            <span className="text-sm text-slate-600 dark:text-slate-400">
+                              {st.defaultOrder}
+                            </span>
                           </td>
 
                           {/* AI */}
                           <td className="px-3 py-2.5">
                             {hasAI ? (
-                              <div className="w-6 h-6 rounded-full bg-violet-500/15 flex items-center justify-center" title="AI prompt configured">
+                              <div
+                                className="w-6 h-6 rounded-full bg-violet-500/15 flex items-center justify-center"
+                                title="AI prompt configured"
+                              >
                                 <Sparkles size={12} className="text-violet-400" />
                               </div>
                             ) : (
-                              <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center" title="No AI prompt">
+                              <div
+                                className="w-6 h-6 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center"
+                                title="No AI prompt"
+                              >
                                 <span className="text-[10px] text-slate-400">—</span>
                               </div>
                             )}
@@ -504,7 +605,10 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                           <td className="px-3 py-2.5">
                             <div className="flex items-center justify-end gap-1">
                               <button
-                                onClick={(e) => { e.stopPropagation(); setExpandedId(isExpanded ? null : st.id); }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedId(isExpanded ? null : st.id);
+                                }}
                                 className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                                 title="Preview"
                               >
@@ -512,7 +616,10 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                               </button>
                               {st.isSystem ? (
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); handleDuplicate(st.id); }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDuplicate(st.id);
+                                  }}
                                   disabled={isMutating}
                                   className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors disabled:opacity-50"
                                   title="Duplicate to organization"
@@ -522,14 +629,19 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                               ) : (
                                 <>
                                   <button
-                                    onClick={(e) => { e.stopPropagation(); }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                    }}
                                     className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                                     title="Edit"
                                   >
                                     <Edit3 size={15} />
                                   </button>
                                   <button
-                                    onClick={(e) => { e.stopPropagation(); handleDelete(st.id); }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDelete(st.id);
+                                    }}
                                     disabled={isMutating}
                                     className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50"
                                     title="Deactivate"
@@ -554,43 +666,79 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                               <div className="grid grid-cols-3 gap-6">
                                 {/* Col 1: Details */}
                                 <div className="space-y-3">
-                                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Section Details</h4>
+                                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                    Section Details
+                                  </h4>
                                   <div className="space-y-2">
                                     <div className="flex items-center gap-3 p-2.5 rounded-lg bg-white/50 dark:bg-navy-900/50 border border-slate-200/50 dark:border-navy-700/50">
-                                      <div className={`p-2 rounded-lg bg-gradient-to-br ${st.iconBg || 'from-slate-500/10 to-gray-500/10'}`}>
-                                        <SectionIcon size={20} className={st.iconColor || 'text-slate-500'} />
+                                      <div
+                                        className={`p-2 rounded-lg bg-gradient-to-br ${st.iconBg || 'from-slate-500/10 to-gray-500/10'}`}
+                                      >
+                                        <SectionIcon
+                                          size={20}
+                                          className={st.iconColor || 'text-slate-500'}
+                                        />
                                       </div>
                                       <div>
-                                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{st.name}</p>
-                                        {st.namePl && <p className="text-xs text-slate-400">{st.namePl}</p>}
+                                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                          {st.name}
+                                        </p>
+                                        {st.namePl && (
+                                          <p className="text-xs text-slate-400">{st.namePl}</p>
+                                        )}
                                       </div>
                                     </div>
-                                    <p className="text-xs text-slate-500">{st.description || 'No description'}</p>
+                                    <p className="text-xs text-slate-500">
+                                      {st.description || 'No description'}
+                                    </p>
                                     {st.descriptionPl && (
-                                      <p className="text-xs text-slate-400 italic">{st.descriptionPl}</p>
+                                      <p className="text-xs text-slate-400 italic">
+                                        {st.descriptionPl}
+                                      </p>
                                     )}
                                   </div>
                                 </div>
 
                                 {/* Col 2: Technical */}
                                 <div className="space-y-3">
-                                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Technical</h4>
+                                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                    Technical
+                                  </h4>
                                   <div className="grid grid-cols-2 gap-2">
                                     <div className="p-2 rounded-lg bg-white/50 dark:bg-navy-900/50 border border-slate-200/50 dark:border-navy-700/50">
-                                      <span className="text-[10px] text-slate-400 uppercase">Key</span>
-                                      <p className="text-xs font-mono text-slate-600 dark:text-slate-400">{st.key}</p>
+                                      <span className="text-[10px] text-slate-400 uppercase">
+                                        Key
+                                      </span>
+                                      <p className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                                        {st.key}
+                                      </p>
                                     </div>
                                     <div className="p-2 rounded-lg bg-white/50 dark:bg-navy-900/50 border border-slate-200/50 dark:border-navy-700/50">
-                                      <span className="text-[10px] text-slate-400 uppercase">Component</span>
-                                      <p className="text-xs font-mono text-indigo-500">{st.componentKey}</p>
+                                      <span className="text-[10px] text-slate-400 uppercase">
+                                        Component
+                                      </span>
+                                      <p className="text-xs font-mono text-indigo-500">
+                                        {st.componentKey}
+                                      </p>
                                     </div>
                                     <div className="p-2 rounded-lg bg-white/50 dark:bg-navy-900/50 border border-slate-200/50 dark:border-navy-700/50">
-                                      <span className="text-[10px] text-slate-400 uppercase">Icon</span>
-                                      <p className="text-xs text-slate-600 dark:text-slate-400">{st.icon || '—'} <span className={st.iconColor || ''}>{st.iconColor || ''}</span></p>
+                                      <span className="text-[10px] text-slate-400 uppercase">
+                                        Icon
+                                      </span>
+                                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                                        {st.icon || '—'}{' '}
+                                        <span className={st.iconColor || ''}>
+                                          {st.iconColor || ''}
+                                        </span>
+                                      </p>
                                     </div>
                                     <div className="p-2 rounded-lg bg-white/50 dark:bg-navy-900/50 border border-slate-200/50 dark:border-navy-700/50">
-                                      <span className="text-[10px] text-slate-400 uppercase">ID</span>
-                                      <p className="text-xs font-mono text-slate-500 truncate">{st.id}</p>
+                                      <span className="text-[10px] text-slate-400 uppercase">
+                                        ID
+                                      </span>
+                                      <p className="text-xs font-mono text-slate-500 truncate">
+                                        {st.id}
+                                      </p>
                                     </div>
                                   </div>
                                 </div>
@@ -607,8 +755,13 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                                     </pre>
                                   ) : (
                                     <div className="flex flex-col items-center justify-center h-32 rounded-lg bg-slate-50 dark:bg-navy-900/50 border border-dashed border-slate-200 dark:border-navy-700">
-                                      <Sparkles size={20} className="text-slate-300 dark:text-slate-600 mb-2" />
-                                      <p className="text-xs text-slate-400">No AI prompt template configured</p>
+                                      <Sparkles
+                                        size={20}
+                                        className="text-slate-300 dark:text-slate-600 mb-2"
+                                      />
+                                      <p className="text-xs text-slate-400">
+                                        No AI prompt template configured
+                                      </p>
                                     </div>
                                   )}
                                 </div>

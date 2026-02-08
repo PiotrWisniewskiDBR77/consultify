@@ -261,9 +261,7 @@ const TableOfContents: React.FC<{
                     className="w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
                   >
                     <span className="text-xs text-gray-400 font-mono w-6 text-right">
-                      {gi > 0
-                        ? `${gi}.${si + 1}`
-                        : `${si + 1}`}
+                      {gi > 0 ? `${gi}.${si + 1}` : `${si + 1}`}
                     </span>
                     <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                       {section.title}
@@ -547,7 +545,9 @@ export const PublicReportBuilderView: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={isPl ? 'Hasło' : 'Password'}
                 className={`w-full px-4 py-3 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                  passwordError ? 'border-red-400 ring-2 ring-red-100' : 'border-gray-200 dark:border-gray-600'
+                  passwordError
+                    ? 'border-red-400 ring-2 ring-red-100'
+                    : 'border-gray-200 dark:border-gray-600'
                 }`}
                 autoFocus
               />
@@ -649,18 +649,10 @@ export const PublicReportBuilderView: React.FC = () => {
       {/* ── Content ── */}
       <main className="max-w-5xl mx-auto px-4 md:px-6 py-8">
         {/* Cover Page */}
-        <CoverPage
-          report={data.report}
-          branding={data.branding}
-          isPl={!!isPl}
-        />
+        <CoverPage report={data.report} branding={data.branding} isPl={!!isPl} />
 
         {/* Table of Contents */}
-        <TableOfContents
-          groups={chapterGroups}
-          onNavigate={navigateToSection}
-          isPl={!!isPl}
-        />
+        <TableOfContents groups={chapterGroups} onNavigate={navigateToSection} isPl={!!isPl} />
 
         {/* Auth info banner */}
         {authState.authenticated && (
@@ -703,7 +695,9 @@ export const PublicReportBuilderView: React.FC = () => {
                 return (
                   <div
                     key={section.sectionKey}
-                    ref={(el) => { sectionRefs.current[section.sectionKey] = el; }}
+                    ref={(el) => {
+                      sectionRefs.current[section.sectionKey] = el;
+                    }}
                     className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden mb-4 shadow-sm hover:shadow-md transition-shadow print:shadow-none print:border print:mb-2"
                     id={`section-${section.sectionKey}`}
                   >

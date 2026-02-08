@@ -42,6 +42,7 @@ import toast from 'react-hot-toast';
 
 import { Api } from '@/services/api';
 import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
+
 import { InitiativeStatus, PortfolioInitiative, User } from '../../types';
 
 // ==========================================
@@ -150,11 +151,18 @@ const formatDate = (d?: string) => {
   }
 };
 
-const ProgressBar: React.FC<{ value: number; max: number; color?: string }> = ({ value, max, color = 'bg-purple-500' }) => {
+const ProgressBar: React.FC<{ value: number; max: number; color?: string }> = ({
+  value,
+  max,
+  color = 'bg-purple-500',
+}) => {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   return (
     <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-      <div className={`h-full rounded-full ${color} transition-all duration-500`} style={{ width: `${pct}%` }} />
+      <div
+        className={`h-full rounded-full ${color} transition-all duration-500`}
+        style={{ width: `${pct}%` }}
+      />
     </div>
   );
 };
@@ -206,20 +214,31 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
 
       if (tasksRes.status === 'fulfilled') {
         const arr = Array.isArray(tasksRes.value) ? tasksRes.value : tasksRes.value?.tasks || [];
-        setTasks(arr.map((t: any) => ({
-          id: t.id, title: t.title, status: t.status, priority: t.priority,
-          dueDate: t.dueDate, assigneeName: t.assigneeName || t.assignee?.name,
-          isMilestone: t.isMilestone || false,
-        })));
+        setTasks(
+          arr.map((t: any) => ({
+            id: t.id,
+            title: t.title,
+            status: t.status,
+            priority: t.priority,
+            dueDate: t.dueDate,
+            assigneeName: t.assigneeName || t.assignee?.name,
+            isMilestone: t.isMilestone || false,
+          }))
+        );
       }
 
       if (decisionsRes.status === 'fulfilled') {
-        const arr = Array.isArray(decisionsRes.value) ? decisionsRes.value : decisionsRes.value?.decisions || [];
+        const arr = Array.isArray(decisionsRes.value)
+          ? decisionsRes.value
+          : decisionsRes.value?.decisions || [];
         setDecisions(arr);
       }
 
       if (raidRes.status === 'fulfilled') {
-        const arr = raidRes.value?.items || raidRes.value?.raid || (Array.isArray(raidRes.value) ? raidRes.value : []);
+        const arr =
+          raidRes.value?.items ||
+          raidRes.value?.raid ||
+          (Array.isArray(raidRes.value) ? raidRes.value : []);
         setRaidItems(arr);
       }
     } catch (e: any) {
@@ -249,13 +268,25 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
   const priority = (initiative?.priority || 'medium').toLowerCase();
   const priorityStyle = PRIORITY_COLORS[priority] || PRIORITY_COLORS.medium;
 
-  const tasksDone = useMemo(() => tasks.filter((t) => t.status === 'done' || t.status === 'DONE').length, [tasks]);
+  const tasksDone = useMemo(
+    () => tasks.filter((t) => t.status === 'done' || t.status === 'DONE').length,
+    [tasks]
+  );
   const tasksTotal = tasks.length;
   const taskProgress = tasksTotal > 0 ? Math.round((tasksDone / tasksTotal) * 100) : 0;
   const milestones = useMemo(() => tasks.filter((t) => t.isMilestone), [tasks]);
-  const pendingDecisions = useMemo(() => decisions.filter((d) => d.status === 'PENDING').length, [decisions]);
-  const riskCount = useMemo(() => raidItems.filter((r) => r.type === 'risk' || r.type === 'RISK').length, [raidItems]);
-  const issueCount = useMemo(() => raidItems.filter((r) => r.type === 'issue' || r.type === 'ISSUE').length, [raidItems]);
+  const pendingDecisions = useMemo(
+    () => decisions.filter((d) => d.status === 'PENDING').length,
+    [decisions]
+  );
+  const riskCount = useMemo(
+    () => raidItems.filter((r) => r.type === 'risk' || r.type === 'RISK').length,
+    [raidItems]
+  );
+  const issueCount = useMemo(
+    () => raidItems.filter((r) => r.type === 'issue' || r.type === 'ISSUE').length,
+    [raidItems]
+  );
 
   const handleStatusAction = async (action: StatusAction) => {
     if (!id) return;
@@ -314,33 +345,61 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
 
         {/* Status + Priority + Actions row */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${statusMeta.bgColor} ${statusMeta.color}`}>
+          <span
+            className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${statusMeta.bgColor} ${statusMeta.color}`}
+          >
             {statusMeta.label}
           </span>
-          <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${priorityStyle.bg} ${priorityStyle.text}`}>
+          <span
+            className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${priorityStyle.bg} ${priorityStyle.text}`}
+          >
             {priority}
           </span>
           {/* Quick status actions */}
-          {statusActions.filter((a) => a.variant === 'primary').slice(0, 2).map((action) => (
-            <button
-              key={action.targetStatus}
-              onClick={() => handleStatusAction(action)}
-              className="ml-auto flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 transition-colors"
-            >
-              <ArrowRight size={10} />
-              {action.label}
-            </button>
-          ))}
+          {statusActions
+            .filter((a) => a.variant === 'primary')
+            .slice(0, 2)
+            .map((action) => (
+              <button
+                key={action.targetStatus}
+                onClick={() => handleStatusAction(action)}
+                className="ml-auto flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 transition-colors"
+              >
+                <ArrowRight size={10} />
+                {action.label}
+              </button>
+            ))}
         </div>
       </div>
 
       {/* Metrics Dashboard */}
       <div className="flex-shrink-0 px-4 py-3 border-b border-slate-100 dark:border-navy-800">
         <div className="grid grid-cols-4 gap-3">
-          <MetricBox icon={CheckSquare} label="Tasks" value={`${tasksDone}/${tasksTotal}`} color="text-blue-500" progress={taskProgress} />
-          <MetricBox icon={Scale} label="Decisions" value={pendingDecisions > 0 ? `${pendingDecisions} pending` : `${decisions.length}`} color={pendingDecisions > 0 ? 'text-amber-500' : 'text-emerald-500'} />
-          <MetricBox icon={AlertTriangle} label="Risks" value={`${riskCount}`} color={riskCount > 0 ? 'text-red-500' : 'text-slate-400'} />
-          <MetricBox icon={Flag} label="Milestones" value={`${milestones.length}`} color="text-purple-500" />
+          <MetricBox
+            icon={CheckSquare}
+            label="Tasks"
+            value={`${tasksDone}/${tasksTotal}`}
+            color="text-blue-500"
+            progress={taskProgress}
+          />
+          <MetricBox
+            icon={Scale}
+            label="Decisions"
+            value={pendingDecisions > 0 ? `${pendingDecisions} pending` : `${decisions.length}`}
+            color={pendingDecisions > 0 ? 'text-amber-500' : 'text-emerald-500'}
+          />
+          <MetricBox
+            icon={AlertTriangle}
+            label="Risks"
+            value={`${riskCount}`}
+            color={riskCount > 0 ? 'text-red-500' : 'text-slate-400'}
+          />
+          <MetricBox
+            icon={Flag}
+            label="Milestones"
+            value={`${milestones.length}`}
+            color="text-purple-500"
+          />
         </div>
       </div>
 
@@ -348,7 +407,14 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
       <div className="flex-shrink-0 flex border-b border-slate-200 dark:border-navy-700 px-2 overflow-x-auto">
         {COMPACT_TABS.map((tab) => {
           const Icon = tab.icon;
-          const count = tab.id === 'tasks' ? tasksTotal : tab.id === 'decisions' ? decisions.length : tab.id === 'raid' ? raidItems.length : undefined;
+          const count =
+            tab.id === 'tasks'
+              ? tasksTotal
+              : tab.id === 'decisions'
+                ? decisions.length
+                : tab.id === 'raid'
+                  ? raidItems.length
+                  : undefined;
           return (
             <button
               key={tab.id}
@@ -362,7 +428,9 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
               <Icon size={12} />
               {tab.label}
               {count !== undefined && count > 0 && (
-                <span className={`ml-0.5 px-1 py-0 rounded text-[9px] font-bold ${activeTab === tab.id ? 'bg-purple-500/15 text-purple-500' : 'bg-slate-200 dark:bg-navy-700 text-slate-500'}`}>
+                <span
+                  className={`ml-0.5 px-1 py-0 rounded text-[9px] font-bold ${activeTab === tab.id ? 'bg-purple-500/15 text-purple-500' : 'bg-slate-200 dark:bg-navy-700 text-slate-500'}`}
+                >
                   {count}
                 </span>
               )}
@@ -428,14 +496,23 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
 // METRIC BOX
 // ==========================================
 
-const MetricBox: React.FC<{ icon: React.ElementType; label: string; value: string; color: string; progress?: number }> = ({ icon: Icon, label, value, color, progress }) => (
+const MetricBox: React.FC<{
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  color: string;
+  progress?: number;
+}> = ({ icon: Icon, label, value, color, progress }) => (
   <div className="text-center">
     <Icon size={14} className={`mx-auto mb-1 ${color}`} />
     <p className={`text-xs font-bold ${color}`}>{value}</p>
     <p className="text-[9px] text-slate-400">{label}</p>
     {progress !== undefined && (
       <div className="mt-1 w-full h-1 rounded-full bg-slate-200 dark:bg-navy-700">
-        <div className="h-full rounded-full bg-blue-500 transition-all" style={{ width: `${progress}%` }} />
+        <div
+          className="h-full rounded-full bg-blue-500 transition-all"
+          style={{ width: `${progress}%` }}
+        />
       </div>
     )}
   </div>
@@ -445,7 +522,10 @@ const MetricBox: React.FC<{ icon: React.ElementType; label: string; value: strin
 // TAB: SUMMARY
 // ==========================================
 
-const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User[] }> = ({ initiative, users }) => {
+const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User[] }> = ({
+  initiative,
+  users,
+}) => {
   if (!initiative) return null;
   const init = initiative as any;
 
@@ -454,7 +534,9 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
       {/* Description */}
       {(init.summary || init.description) && (
         <div>
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Description</p>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+            Description
+          </p>
           <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-6">
             {init.summary || init.description}
           </p>
@@ -466,17 +548,27 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
         {[
           { label: 'Owner', value: init.ownerName || init.owner?.name || '—', icon: Users },
           { label: 'Sponsor', value: init.sponsorName || init.sponsor?.name || '—', icon: Shield },
-          { label: 'Target Date', value: formatDate(init.plannedEndDate || init.targetDate), icon: Calendar },
+          {
+            label: 'Target Date',
+            value: formatDate(init.plannedEndDate || init.targetDate),
+            icon: Calendar,
+          },
           { label: 'Created', value: formatDate(init.createdAt || init.created_at), icon: Clock },
           { label: 'Strategic Axis', value: init.strategicAxis || init.axis || '—', icon: Target },
-          { label: 'Budget', value: init.estimatedBudget ? `${init.estimatedBudget.toLocaleString()} PLN` : '—', icon: DollarSign },
+          {
+            label: 'Budget',
+            value: init.estimatedBudget ? `${init.estimatedBudget.toLocaleString()} PLN` : '—',
+            icon: DollarSign,
+          },
         ].map((item) => (
           <div key={item.label} className="p-2 rounded-lg bg-slate-50 dark:bg-navy-800/50">
             <div className="flex items-center gap-1.5 mb-0.5">
               <item.icon size={10} className="text-slate-400" />
               <span className="text-[9px] text-slate-400 font-medium">{item.label}</span>
             </div>
-            <p className="text-xs text-slate-700 dark:text-slate-300 font-medium truncate">{item.value}</p>
+            <p className="text-xs text-slate-700 dark:text-slate-300 font-medium truncate">
+              {item.value}
+            </p>
           </div>
         ))}
       </div>
@@ -484,10 +576,17 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
       {/* Tags */}
       {init.tags?.length > 0 && (
         <div>
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Tags</p>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+            Tags
+          </p>
           <div className="flex flex-wrap gap-1">
             {init.tags.map((tag: string) => (
-              <span key={tag} className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400">{tag}</span>
+              <span
+                key={tag}
+                className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400"
+              >
+                {tag}
+              </span>
             ))}
           </div>
         </div>
@@ -496,7 +595,9 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
       {/* Kill Criteria / Scope */}
       {init.killCriteria?.length > 0 && (
         <div>
-          <p className="text-[10px] font-semibold text-red-400 uppercase tracking-wider mb-1.5">Kill Criteria</p>
+          <p className="text-[10px] font-semibold text-red-400 uppercase tracking-wider mb-1.5">
+            Kill Criteria
+          </p>
           <ul className="space-y-1">
             {init.killCriteria.map((kc: string, i: number) => (
               <li key={i} className="flex items-start gap-1.5 text-xs text-red-500/80">
@@ -515,7 +616,10 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
 // TAB: TASKS
 // ==========================================
 
-const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({ tasks, milestones }) => {
+const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
+  tasks,
+  milestones,
+}) => {
   if (tasks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-32 text-slate-400">
@@ -538,7 +642,8 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({ tas
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-[10px] font-medium text-slate-500">Progress</span>
           <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
-            {byStatus.done.length}/{tasks.length} ({tasks.length > 0 ? Math.round((byStatus.done.length / tasks.length) * 100) : 0}%)
+            {byStatus.done.length}/{tasks.length} (
+            {tasks.length > 0 ? Math.round((byStatus.done.length / tasks.length) * 100) : 0}%)
           </span>
         </div>
         <ProgressBar value={byStatus.done.length} max={tasks.length} color="bg-emerald-500" />
@@ -551,9 +656,14 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({ tas
             <Flag size={10} /> Milestones
           </p>
           {milestones.map((ms) => (
-            <div key={ms.id} className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors">
+            <div
+              key={ms.id}
+              className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors"
+            >
               <Flag size={11} className="text-purple-500 flex-shrink-0" />
-              <span className="text-xs text-slate-700 dark:text-slate-300 flex-1 truncate">{ms.title}</span>
+              <span className="text-xs text-slate-700 dark:text-slate-300 flex-1 truncate">
+                {ms.title}
+              </span>
               <span className="text-[10px] text-slate-400">{formatDate(ms.dueDate)}</span>
             </div>
           ))}
@@ -563,16 +673,24 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({ tas
       {/* Blocked first */}
       {byStatus.blocked.length > 0 && (
         <div>
-          <p className="text-[10px] font-semibold text-red-400 uppercase tracking-wider mb-1">Blocked ({byStatus.blocked.length})</p>
-          {byStatus.blocked.map((t) => <CompactTaskRow key={t.id} task={t} />)}
+          <p className="text-[10px] font-semibold text-red-400 uppercase tracking-wider mb-1">
+            Blocked ({byStatus.blocked.length})
+          </p>
+          {byStatus.blocked.map((t) => (
+            <CompactTaskRow key={t.id} task={t} />
+          ))}
         </div>
       )}
 
       {/* Active */}
       {byStatus.active.length > 0 && (
         <div>
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Active ({byStatus.active.length})</p>
-          {byStatus.active.map((t) => <CompactTaskRow key={t.id} task={t} />)}
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+            Active ({byStatus.active.length})
+          </p>
+          {byStatus.active.map((t) => (
+            <CompactTaskRow key={t.id} task={t} />
+          ))}
         </div>
       )}
 
@@ -583,7 +701,9 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({ tas
             Done ({byStatus.done.length})
           </summary>
           <div className="mt-1 opacity-60">
-            {byStatus.done.map((t) => <CompactTaskRow key={t.id} task={t} />)}
+            {byStatus.done.map((t) => (
+              <CompactTaskRow key={t.id} task={t} />
+            ))}
           </div>
         </details>
       )}
@@ -596,10 +716,16 @@ const CompactTaskRow: React.FC<{ task: TaskItem }> = ({ task }) => {
   const statusColor = TASK_STATUS_COLORS[task.status] || 'text-slate-400';
 
   return (
-    <div className={`flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors ${isDone ? 'line-through opacity-60' : ''}`}>
+    <div
+      className={`flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors ${isDone ? 'line-through opacity-60' : ''}`}
+    >
       <CheckCircle2 size={12} className={statusColor} />
-      <span className="text-xs text-slate-700 dark:text-slate-300 flex-1 truncate">{task.title}</span>
-      {task.dueDate && <span className="text-[9px] text-slate-400 flex-shrink-0">{formatDate(task.dueDate)}</span>}
+      <span className="text-xs text-slate-700 dark:text-slate-300 flex-1 truncate">
+        {task.title}
+      </span>
+      {task.dueDate && (
+        <span className="text-[9px] text-slate-400 flex-shrink-0">{formatDate(task.dueDate)}</span>
+      )}
     </div>
   );
 };
@@ -628,7 +754,9 @@ const DecisionsTab: React.FC<{ decisions: DecisionItem[] }> = ({ decisions }) =>
           <p className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider mb-1.5">
             Pending ({pending.length})
           </p>
-          {pending.map((d) => <CompactDecisionRow key={d.id} decision={d} />)}
+          {pending.map((d) => (
+            <CompactDecisionRow key={d.id} decision={d} />
+          ))}
         </div>
       )}
       {resolved.length > 0 && (
@@ -636,7 +764,9 @@ const DecisionsTab: React.FC<{ decisions: DecisionItem[] }> = ({ decisions }) =>
           <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
             Resolved ({resolved.length})
           </p>
-          {resolved.map((d) => <CompactDecisionRow key={d.id} decision={d} />)}
+          {resolved.map((d) => (
+            <CompactDecisionRow key={d.id} decision={d} />
+          ))}
         </div>
       )}
     </div>
@@ -650,9 +780,13 @@ const CompactDecisionRow: React.FC<{ decision: DecisionItem }> = ({ decision }) 
       <Scale size={12} className="text-amber-500 flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-xs text-slate-700 dark:text-slate-300 truncate">{decision.title}</p>
-        <p className="text-[9px] text-slate-400">{decision.type} {decision.dueDate ? `• Due ${formatDate(decision.dueDate)}` : ''}</p>
+        <p className="text-[9px] text-slate-400">
+          {decision.type} {decision.dueDate ? `• Due ${formatDate(decision.dueDate)}` : ''}
+        </p>
       </div>
-      <span className={`px-1.5 py-0.5 rounded text-[9px] font-semibold ${statusStyle.bg} ${statusStyle.text}`}>
+      <span
+        className={`px-1.5 py-0.5 rounded text-[9px] font-semibold ${statusStyle.bg} ${statusStyle.text}`}
+      >
         {decision.status}
       </span>
     </div>
@@ -689,9 +823,14 @@ const RaidTab: React.FC<{ items: RaidItem[] }> = ({ items }) => {
           const cfg = RAID_TYPE_CONFIG[type] || RAID_TYPE_CONFIG.risk;
           const Icon = cfg.icon;
           return (
-            <div key={type} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-50 dark:bg-navy-800/50">
+            <div
+              key={type}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-50 dark:bg-navy-800/50"
+            >
               <Icon size={11} className={cfg.color} />
-              <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">{arr.length} {type}</span>
+              <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">
+                {arr.length} {type}
+              </span>
             </div>
           );
         })}
@@ -702,14 +841,19 @@ const RaidTab: React.FC<{ items: RaidItem[] }> = ({ items }) => {
         const cfg = RAID_TYPE_CONFIG[item.type] || RAID_TYPE_CONFIG.risk;
         const Icon = cfg.icon;
         return (
-          <div key={item.id} className="flex items-start gap-2 p-2 rounded-lg bg-slate-50/50 dark:bg-navy-800/30">
+          <div
+            key={item.id}
+            className="flex items-start gap-2 p-2 rounded-lg bg-slate-50/50 dark:bg-navy-800/30"
+          >
             <Icon size={12} className={`${cfg.color} mt-0.5 flex-shrink-0`} />
             <div className="flex-1 min-w-0">
               <p className="text-xs text-slate-700 dark:text-slate-300">{item.title}</p>
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="text-[9px] text-slate-400 uppercase">{item.type}</span>
                 {item.severity && (
-                  <span className={`text-[9px] font-medium ${item.severity === 'CRITICAL' || item.severity === 'HIGH' ? 'text-red-500' : 'text-slate-400'}`}>
+                  <span
+                    className={`text-[9px] font-medium ${item.severity === 'CRITICAL' || item.severity === 'HIGH' ? 'text-red-500' : 'text-slate-400'}`}
+                  >
                     {item.severity}
                   </span>
                 )}
@@ -738,12 +882,35 @@ const FinanceTab: React.FC<{ initiative: PortfolioInitiative | null }> = ({ init
     <div className="p-4 space-y-4">
       <div className="grid grid-cols-2 gap-3">
         {[
-          { label: 'Budget', value: budget ? `${Number(budget).toLocaleString()} PLN` : '—', icon: DollarSign, color: 'text-blue-500' },
-          { label: 'Spent', value: spent ? `${Number(spent).toLocaleString()} PLN` : '—', icon: TrendingUp, color: 'text-amber-500' },
-          { label: 'ROI', value: roi ? `${roi}%` : '—', icon: BarChart3, color: 'text-emerald-500' },
-          { label: 'Impact', value: init.impact || init.strategicImpact || '—', icon: Target, color: 'text-purple-500' },
+          {
+            label: 'Budget',
+            value: budget ? `${Number(budget).toLocaleString()} PLN` : '—',
+            icon: DollarSign,
+            color: 'text-blue-500',
+          },
+          {
+            label: 'Spent',
+            value: spent ? `${Number(spent).toLocaleString()} PLN` : '—',
+            icon: TrendingUp,
+            color: 'text-amber-500',
+          },
+          {
+            label: 'ROI',
+            value: roi ? `${roi}%` : '—',
+            icon: BarChart3,
+            color: 'text-emerald-500',
+          },
+          {
+            label: 'Impact',
+            value: init.impact || init.strategicImpact || '—',
+            icon: Target,
+            color: 'text-purple-500',
+          },
         ].map((item) => (
-          <div key={item.label} className="p-3 rounded-xl bg-slate-50 dark:bg-navy-800/50 border border-slate-100 dark:border-navy-700/50 text-center">
+          <div
+            key={item.label}
+            className="p-3 rounded-xl bg-slate-50 dark:bg-navy-800/50 border border-slate-100 dark:border-navy-700/50 text-center"
+          >
             <item.icon size={16} className={`mx-auto mb-1 ${item.color}`} />
             <p className={`text-sm font-bold ${item.color}`}>{item.value}</p>
             <p className="text-[9px] text-slate-400 mt-0.5">{item.label}</p>
@@ -757,7 +924,11 @@ const FinanceTab: React.FC<{ initiative: PortfolioInitiative | null }> = ({ init
             <span>Budget utilization</span>
             <span>{Math.round((Number(spent) / Number(budget)) * 100)}%</span>
           </div>
-          <ProgressBar value={Number(spent)} max={Number(budget)} color={Number(spent) > Number(budget) ? 'bg-red-500' : 'bg-blue-500'} />
+          <ProgressBar
+            value={Number(spent)}
+            max={Number(budget)}
+            color={Number(spent) > Number(budget) ? 'bg-red-500' : 'bg-blue-500'}
+          />
         </div>
       )}
 

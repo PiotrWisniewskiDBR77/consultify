@@ -2,10 +2,10 @@
  * Atomic: Progress Bar
  * Horizontal bar showing percentage completion.
  */
-import type { DesignTokens, RenderedElement, ElementPosition } from '../types.js';
+import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface ProgressBarProps {
-  value: number;       // 0–100
+  value: number; // 0–100
   position: ElementPosition;
   fillColor?: string;
   bgColor?: string;

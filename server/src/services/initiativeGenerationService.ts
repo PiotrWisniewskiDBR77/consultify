@@ -97,7 +97,10 @@ export class InitiativeGenerationService {
     organizationId?: string
   ): Promise<GenerationResult> {
     // 1. Get section type definition (with prompt template)
-    const sectionType = await initiativeSectionTypeService.getSectionTypeByKey(sectionKey, organizationId || undefined);
+    const sectionType = await initiativeSectionTypeService.getSectionTypeByKey(
+      sectionKey,
+      organizationId || undefined
+    );
 
     if (!sectionType) {
       throw new Error(`Section type "${sectionKey}" not found`);
@@ -140,7 +143,8 @@ When asked to write in Polish, use professional business Polish.`;
 
       const content = String(result?.content || '');
       const usage = (result?.usage || {}) as Record<string, number>;
-      const tokensUsed = usage.totalTokens || usage.completionTokens || Math.floor(content.length / 4);
+      const tokensUsed =
+        usage.totalTokens || usage.completionTokens || Math.floor(content.length / 4);
       const model = String(result?.model || result?.modelId || 'llm-standard');
 
       // Try to parse as JSON if the prompt requests it
@@ -190,7 +194,9 @@ When asked to write in Polish, use professional business Polish.`;
     }
 
     // Get all available section types
-    const allSections = await initiativeSectionTypeService.getAllSectionTypes(organizationId || undefined);
+    const allSections = await initiativeSectionTypeService.getAllSectionTypes(
+      organizationId || undefined
+    );
 
     const prompt = `Given this initiative context, suggest which sections should be enabled and their priority.
 
@@ -212,7 +218,8 @@ Return valid JSON array only.`;
       const result = await llm.call({
         type: 'text',
         modelConfig: { id: 'standard' },
-        systemPrompt: 'You are an expert in initiative planning. Suggest relevant sections based on context.',
+        systemPrompt:
+          'You are an expert in initiative planning. Suggest relevant sections based on context.',
         messages: [{ role: 'user', content: prompt }],
         maxTokens: 2048,
         temperature: 0.5,
@@ -286,14 +293,20 @@ Return valid JSON array only.`;
       }),
     };
 
-    const content = placeholders[sectionKey] || (isPolish
-      ? `Generowanie AI nie jest dostępne dla tej sekcji. Uzupełnij ręcznie.`
-      : `AI generation is not available for this section. Please fill in manually.`);
+    const content =
+      placeholders[sectionKey] ||
+      (isPolish
+        ? `Generowanie AI nie jest dostępne dla tej sekcji. Uzupełnij ręcznie.`
+        : `AI generation is not available for this section. Please fill in manually.`);
 
     const isJson = content.startsWith('{') || content.startsWith('[');
     let parsedContent: any;
     if (isJson) {
-      try { parsedContent = JSON.parse(content); } catch { /* ignore */ }
+      try {
+        parsedContent = JSON.parse(content);
+      } catch {
+        /* ignore */
+      }
     }
 
     return {

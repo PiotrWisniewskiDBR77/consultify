@@ -2,7 +2,7 @@
  * Atomic: Highlight
  * A colored box with bold text — used for key stats, impact callouts.
  */
-import type { DesignTokens, RenderedElement, ElementPosition } from '../types.js';
+import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface HighlightProps {
   text: string;

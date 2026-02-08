@@ -12,34 +12,34 @@
  * 4. Decision rules (auto-splitting, intent upgrades)
  */
 
+import { inferIntentFromContent, resolveIntent } from './IntentResolver.js';
+import { decideKpiIntent, decideRecommendationIntent } from './RulesEngine.js';
 import type {
+  AppendixContent,
+  AssessmentContent,
+  AxisScore,
+  ComparisonContent,
+  CoverContent,
+  ExecutiveSummaryContent,
+  InitiativePortfolioContent,
+  KeyMessagesContent,
+  KpiData,
+  NextStepsContent,
+  PerformanceOverviewContent,
+  PrioritizationMatrixContent,
+  RecommendationPortfolioContent,
+  RecommendationSingleContent,
+  RiskManagementContent,
+  RoadmapContent,
+  RootCauseContent,
+  SectionIntroContent,
+  SingleInsightContent,
+  SlideContent,
+  SlideIntent,
   UnifiedReportJSON,
   UnifiedReportMeta,
   UnifiedSlide,
-  SlideIntent,
-  SlideContent,
-  CoverContent,
-  ExecutiveSummaryContent,
-  SectionIntroContent,
-  KeyMessagesContent,
-  PerformanceOverviewContent,
-  SingleInsightContent,
-  ComparisonContent,
-  AssessmentContent,
-  RootCauseContent,
-  RecommendationSingleContent,
-  RecommendationPortfolioContent,
-  InitiativePortfolioContent,
-  PrioritizationMatrixContent,
-  RoadmapContent,
-  RiskManagementContent,
-  NextStepsContent,
-  AppendixContent,
-  KpiData,
-  AxisScore,
 } from './types.js';
-import { resolveIntent, inferIntentFromContent } from './IntentResolver.js';
-import { decideRecommendationIntent, decideKpiIntent } from './RulesEngine.js';
 
 // ============================================================
 // MAIN TRANSFORMER
@@ -109,10 +109,11 @@ export function transformToUnifiedJson(
   const meta: UnifiedReportMeta = {
     client: input.organizationName || config.organizationName || 'Client',
     project: input.projectName || report.sourceName || report.title,
-    date: new Date(report.createdAt).toLocaleDateString(
-      lang === 'pl' ? 'pl-PL' : 'en-US',
-      { year: 'numeric', month: 'long', day: 'numeric' }
-    ),
+    date: new Date(report.createdAt).toLocaleDateString(lang === 'pl' ? 'pl-PL' : 'en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }),
     author: report.createdBy || 'Consultinity',
     confidentiality: options.confidentiality ?? 'confidential',
     framework: report.sourceFramework,
@@ -154,13 +155,8 @@ export function transformToUnifiedJson(
       // Not JSON — will be parsed from markdown below
     }
 
-    const slideContent = directContent || buildSlideContent(
-      intent,
-      section,
-      content,
-      scoreSummary,
-      meta
-    );
+    const slideContent =
+      directContent || buildSlideContent(intent, section, content, scoreSummary, meta);
 
     if (slideContent) {
       // Auto-paginate initiative_portfolio slides (max 6 per slide)
@@ -206,7 +202,11 @@ export function transformToUnifiedJson(
     if (assessmentSlide) {
       // Insert after executive summary or at position 2
       const insertIdx = slides.findIndex((s) => s.intent === 'executive_summary');
-      slides.splice(insertIdx >= 0 ? insertIdx + 1 : Math.min(2, slides.length), 0, assessmentSlide);
+      slides.splice(
+        insertIdx >= 0 ? insertIdx + 1 : Math.min(2, slides.length),
+        0,
+        assessmentSlide
+      );
     }
   }
 
@@ -217,10 +217,7 @@ export function transformToUnifiedJson(
 // SLIDE BUILDERS
 // ============================================================
 
-function buildCoverSlide(
-  report: ReportInput['report'],
-  meta: UnifiedReportMeta
-): UnifiedSlide {
+function buildCoverSlide(report: ReportInput['report'], meta: UnifiedReportMeta): UnifiedSlide {
   return {
     intent: 'cover',
     key_message: report.title,
@@ -244,7 +241,12 @@ function buildSlideContent(
 ): SlideContent | null {
   // Try to parse JSON content first
   let parsed: any = null;
-  if (section.contentFormat === 'json' || section.renderKind === 'json' || section.renderKind === 'matrix' || section.renderKind === 'initiatives') {
+  if (
+    section.contentFormat === 'json' ||
+    section.renderKind === 'json' ||
+    section.renderKind === 'matrix' ||
+    section.renderKind === 'initiatives'
+  ) {
     try {
       parsed = JSON.parse(rawContent);
     } catch {
@@ -570,7 +572,7 @@ function buildRecommendationPortfolio(
       title: b,
       description: '',
       impact: 'To be assessed',
-      priority: i < 3 ? 'high' as const : 'medium' as const,
+      priority: i < 3 ? ('high' as const) : ('medium' as const),
     })),
   };
 }
@@ -590,9 +592,24 @@ function buildRoadmap(
   return {
     type: 'roadmap',
     phases: [
-      { label: 'Now', timeframe: '0–3 months', items: bullets.slice(0, third), status: 'in_progress' as const },
-      { label: 'Next', timeframe: '3–6 months', items: bullets.slice(third, third * 2), status: 'planned' as const },
-      { label: 'Later', timeframe: '6–12 months', items: bullets.slice(third * 2), status: 'planned' as const },
+      {
+        label: 'Now',
+        timeframe: '0–3 months',
+        items: bullets.slice(0, third),
+        status: 'in_progress' as const,
+      },
+      {
+        label: 'Next',
+        timeframe: '3–6 months',
+        items: bullets.slice(third, third * 2),
+        status: 'planned' as const,
+      },
+      {
+        label: 'Later',
+        timeframe: '6–12 months',
+        items: bullets.slice(third * 2),
+        status: 'planned' as const,
+      },
     ],
   };
 }
@@ -646,7 +663,12 @@ function buildInitiativePortfolio(
   parsed: any
 ): InitiativePortfolioContent {
   // Direct structured JSON from AI
-  if (parsed && (parsed.type === 'initiatives' || parsed.type === 'initiative_cards' || parsed.type === 'initiative_portfolio')) {
+  if (
+    parsed &&
+    (parsed.type === 'initiatives' ||
+      parsed.type === 'initiative_cards' ||
+      parsed.type === 'initiative_portfolio')
+  ) {
     return {
       type: 'initiative_portfolio',
       initiatives: (parsed.items || parsed.initiatives || []).map((item: any) => ({
@@ -691,7 +713,7 @@ function buildInitiativePortfolio(
     type: 'initiative_portfolio',
     initiatives: bullets.slice(0, 8).map((b, i) => ({
       name: b,
-      priority: i < 3 ? 'high' as const : 'medium' as const,
+      priority: i < 3 ? ('high' as const) : ('medium' as const),
     })),
   };
 }
@@ -717,10 +739,26 @@ function buildPrioritizationMatrix(
   return {
     type: 'prioritization_matrix',
     quadrants: [
-      { label: 'Quick Wins', position: 'top_left' as const, items: bullets.slice(0, quarter).map(b => ({ name: b })) },
-      { label: 'Major Projects', position: 'top_right' as const, items: bullets.slice(quarter, quarter * 2).map(b => ({ name: b })) },
-      { label: 'Fill-ins', position: 'bottom_left' as const, items: bullets.slice(quarter * 2, quarter * 3).map(b => ({ name: b })) },
-      { label: 'Reconsider', position: 'bottom_right' as const, items: bullets.slice(quarter * 3).map(b => ({ name: b })) },
+      {
+        label: 'Quick Wins',
+        position: 'top_left' as const,
+        items: bullets.slice(0, quarter).map((b) => ({ name: b })),
+      },
+      {
+        label: 'Major Projects',
+        position: 'top_right' as const,
+        items: bullets.slice(quarter, quarter * 2).map((b) => ({ name: b })),
+      },
+      {
+        label: 'Fill-ins',
+        position: 'bottom_left' as const,
+        items: bullets.slice(quarter * 2, quarter * 3).map((b) => ({ name: b })),
+      },
+      {
+        label: 'Reconsider',
+        position: 'bottom_right' as const,
+        items: bullets.slice(quarter * 3).map((b) => ({ name: b })),
+      },
     ],
     xAxisLabel: 'Effort',
     yAxisLabel: 'Impact',
@@ -770,7 +808,12 @@ function extractBulletPoints(markdown: string): string[] {
     .split('\n')
     .map((l) => l.trim())
     .filter((l) => l.match(/^[-•*]\s/) || l.match(/^\d+\.\s/))
-    .map((l) => l.replace(/^[-•*]\s*/, '').replace(/^\d+\.\s*/, '').trim())
+    .map((l) =>
+      l
+        .replace(/^[-•*]\s*/, '')
+        .replace(/^\d+\.\s*/, '')
+        .trim()
+    )
     .filter((l) => l.length > 0);
 }
 

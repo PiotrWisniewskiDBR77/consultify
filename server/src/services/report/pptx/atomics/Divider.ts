@@ -2,7 +2,7 @@
  * Atomic: Divider
  * A thin horizontal line to separate sections within a slide.
  */
-import type { DesignTokens, RenderedElement, ElementPosition } from '../types.js';
+import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface DividerProps {
   position: ElementPosition;

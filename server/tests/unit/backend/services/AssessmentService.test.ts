@@ -116,7 +116,9 @@ describe('AssessmentService', () => {
 
   describe('Error Handling', () => {
     it('should propagate database errors', async () => {
-      (mockDb.get as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Database connection lost'));
+      (mockDb.get as ReturnType<typeof vi.fn>).mockRejectedValue(
+        new Error('Database connection lost')
+      );
 
       const svc = AssessmentService as any;
       if (svc.getAssessment) {

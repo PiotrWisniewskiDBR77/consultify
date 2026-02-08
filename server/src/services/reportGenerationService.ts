@@ -410,12 +410,20 @@ function buildSettingsGuidance(sectionType: string, settings: Record<string, unk
   // ── REQ-1: Block Blueprint Settings ──
 
   // Content Instructions (detailed instructions for what to include)
-  if (settings.contentInstructions && typeof settings.contentInstructions === 'string' && settings.contentInstructions.trim()) {
+  if (
+    settings.contentInstructions &&
+    typeof settings.contentInstructions === 'string' &&
+    settings.contentInstructions.trim()
+  ) {
     guidance.push(`\nCONTENT BLUEPRINT (follow strictly):\n${settings.contentInstructions.trim()}`);
   }
 
   // Required Sub-sections
-  if (settings.requiredSectionsList && typeof settings.requiredSectionsList === 'string' && settings.requiredSectionsList.trim()) {
+  if (
+    settings.requiredSectionsList &&
+    typeof settings.requiredSectionsList === 'string' &&
+    settings.requiredSectionsList.trim()
+  ) {
     const subSections = settings.requiredSectionsList.trim().split('\n').filter(Boolean);
     if (subSections.length > 0) {
       guidance.push(`\nREQUIRED SUB-SECTIONS (include all of these):`);
@@ -428,9 +436,12 @@ function buildSettingsGuidance(sectionType: string, settings: Record<string, unk
   // Output structure
   if (settings.outputStructure && settings.outputStructure !== 'auto') {
     const structureMap: Record<string, string> = {
-      narrative: 'Write in a flowing narrative style with natural transitions between points. Use paragraphs, not lists.',
-      structured: 'Use a clearly structured format with numbered sections, headers, and organized sub-points.',
-      data_driven: 'Lead with data and numbers. Every claim must reference a specific metric, score, or percentage. Use tables where appropriate.',
+      narrative:
+        'Write in a flowing narrative style with natural transitions between points. Use paragraphs, not lists.',
+      structured:
+        'Use a clearly structured format with numbered sections, headers, and organized sub-points.',
+      data_driven:
+        'Lead with data and numbers. Every claim must reference a specific metric, score, or percentage. Use tables where appropriate.',
     };
     if (structureMap[settings.outputStructure as string]) {
       guidance.push(`- OUTPUT STRUCTURE: ${structureMap[settings.outputStructure as string]}`);
@@ -447,16 +458,24 @@ function buildSettingsGuidance(sectionType: string, settings: Record<string, unk
 
   // Require data references
   if (settings.requireDataReferences === true) {
-    guidance.push('- MANDATORY: Every finding or recommendation MUST cite specific scores, percentages, or data points from the assessment. No unsupported claims.');
+    guidance.push(
+      '- MANDATORY: Every finding or recommendation MUST cite specific scores, percentages, or data points from the assessment. No unsupported claims.'
+    );
   }
 
   // Require actionable conclusions
   if (settings.requireActionable === true) {
-    guidance.push('- MANDATORY: Each section MUST end with concrete, actionable next steps. Avoid vague conclusions.');
+    guidance.push(
+      '- MANDATORY: Each section MUST end with concrete, actionable next steps. Avoid vague conclusions.'
+    );
   }
 
   // Forbidden topics
-  if (settings.forbiddenTopics && typeof settings.forbiddenTopics === 'string' && settings.forbiddenTopics.trim()) {
+  if (
+    settings.forbiddenTopics &&
+    typeof settings.forbiddenTopics === 'string' &&
+    settings.forbiddenTopics.trim()
+  ) {
     guidance.push(`- DO NOT discuss these topics: ${settings.forbiddenTopics.trim()}`);
   }
 
@@ -1500,10 +1519,16 @@ export async function generateFullReport(
   let reportOutline = '';
   if (sectionsToGenerate.length >= 3) {
     try {
-      const sourceData = await ReportBuilderService.getSourceDataForReport(reportId, organizationId);
-      const companyName = (reportData.report.companyContext as any)?.organizationName || 'the organization';
+      const sourceData = await ReportBuilderService.getSourceDataForReport(
+        reportId,
+        organizationId
+      );
+      const companyName =
+        (reportData.report.companyContext as any)?.organizationName || 'the organization';
       const assessmentType = sourceData?.assessment?.assessmentType || 'DRD';
-      const sectionList = sectionsToGenerate.map((s, i) => `${i + 1}. ${s.title || s.sectionKey} (${s.sectionType})`).join('\n');
+      const sectionList = sectionsToGenerate
+        .map((s, i) => `${i + 1}. ${s.title || s.sectionKey} (${s.sectionType})`)
+        .join('\n');
 
       const outlineResult = await callAI(
         `You are a senior report strategist. Generate a concise report outline that ensures coherence across all sections.`,
@@ -1523,7 +1548,10 @@ Keep the outline concise (max 400 words). Focus on narrative flow and avoiding r
 
       reportOutline = outlineResult.content;
       totalTokens += outlineResult.tokensUsed;
-      logger.info('[ReportGeneration] Generated coherence outline', { reportId, tokensUsed: outlineResult.tokensUsed });
+      logger.info('[ReportGeneration] Generated coherence outline', {
+        reportId,
+        tokensUsed: outlineResult.tokensUsed,
+      });
     } catch (err) {
       logger.warn('[ReportGeneration] Failed to generate outline, continuing without it', err);
     }
@@ -1537,13 +1565,12 @@ Keep the outline concise (max 400 words). Focus on narrative flow and avoiding r
   // Config structure: { intent: { narrativeThread, glossaryTerms, ... }, styling: {...} }
   const reportConfig = reportData.report.config || {};
   const intentConfig = (reportConfig as any)?.intent || {};
-  const narrativeThread = intentConfig?.narrativeThread
-    || (reportConfig as any)?.narrativeThread
-    || (reportConfig as any)?.keyMessages
-    || '';
-  const glossaryTerms = intentConfig?.glossaryTerms
-    || (reportConfig as any)?.glossaryTerms
-    || '';
+  const narrativeThread =
+    intentConfig?.narrativeThread ||
+    (reportConfig as any)?.narrativeThread ||
+    (reportConfig as any)?.keyMessages ||
+    '';
+  const glossaryTerms = intentConfig?.glossaryTerms || (reportConfig as any)?.glossaryTerms || '';
 
   for (let i = 0; i < sectionsToGenerate.length; i++) {
     const section = sectionsToGenerate[i];
@@ -1595,7 +1622,8 @@ Keep the outline concise (max 400 words). Focus on narrative flow and avoiding r
       previousSectionsSummaries.push({
         key: section.sectionKey,
         title: section.title || section.sectionKey,
-        summary: contentPreview.length > 300 ? contentPreview.slice(0, 300) + '...' : contentPreview,
+        summary:
+          contentPreview.length > 300 ? contentPreview.slice(0, 300) + '...' : contentPreview,
       });
 
       // Report progress

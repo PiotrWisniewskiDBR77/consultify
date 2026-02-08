@@ -1188,7 +1188,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
       {/* Keyboard Shortcuts Help Modal */}
       <KeyboardShortcutsHelp isOpen={showHelp} onClose={() => setShowHelp(false)} />
-
     </div>
   );
 };

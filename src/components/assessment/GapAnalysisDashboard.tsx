@@ -51,8 +51,7 @@ export const GapAnalysisDashboard: React.FC<GapAnalysisDashboardProps> = ({
     try {
       // Derive assessment IDs from the overview data fetched earlier
       const drdAssessmentId = overview?.drd?.assessmentId || overview?.drd?.id || null;
-      const leanAssessmentId =
-        overview?.rapidLean?.assessmentId || overview?.rapidLean?.id || null;
+      const leanAssessmentId = overview?.rapidLean?.assessmentId || overview?.rapidLean?.id || null;
       const externalIds: string[] = Array.isArray(overview?.externalDigital?.assessments)
         ? overview.externalDigital.assessments.map((a: any) => a.id).filter(Boolean)
         : [];

@@ -10,12 +10,20 @@ import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
 
-export const TimelineSection: React.FC<InitiativeSectionProps> = ({ sectionType, expanded, onToggle }) => {
-  const { initiative, isPolish, startDate, setStartDate, endDate, setEndDate } = useInitiativeContext();
+export const TimelineSection: React.FC<InitiativeSectionProps> = ({
+  sectionType,
+  expanded,
+  onToggle,
+}) => {
+  const { initiative, isPolish, startDate, setStartDate, endDate, setEndDate } =
+    useInitiativeContext();
 
   const plannedStart = startDate || initiative?.plannedStartDate || initiative?.planned_start_date;
   const plannedEnd = endDate || initiative?.plannedEndDate || initiative?.planned_end_date;
-  const actualStart = initiative?.actualStartDate || initiative?.actual_start_date || initiative?.execution_started_at;
+  const actualStart =
+    initiative?.actualStartDate ||
+    initiative?.actual_start_date ||
+    initiative?.execution_started_at;
 
   const duration = useMemo(() => {
     if (!plannedStart || !plannedEnd) return null;
@@ -55,10 +63,16 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({ sectionType,
       onToggle={onToggle}
       badge={
         daysRemaining !== null ? (
-          <span className={`text-xs px-1.5 py-0.5 rounded ${isOverdue ? 'bg-red-500/20 text-red-400' : daysRemaining <= 14 ? 'bg-amber-500/20 text-amber-400' : 'bg-cyan-500/20 text-cyan-400'}`}>
+          <span
+            className={`text-xs px-1.5 py-0.5 rounded ${isOverdue ? 'bg-red-500/20 text-red-400' : daysRemaining <= 14 ? 'bg-amber-500/20 text-amber-400' : 'bg-cyan-500/20 text-cyan-400'}`}
+          >
             {isOverdue
-              ? (isPolish ? `${Math.abs(daysRemaining)}d po terminie` : `${Math.abs(daysRemaining)}d overdue`)
-              : (isPolish ? `${daysRemaining}d do końca` : `${daysRemaining}d left`)}
+              ? isPolish
+                ? `${Math.abs(daysRemaining)}d po terminie`
+                : `${Math.abs(daysRemaining)}d overdue`
+              : isPolish
+                ? `${daysRemaining}d do końca`
+                : `${daysRemaining}d left`}
           </span>
         ) : undefined
       }
@@ -67,7 +81,9 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({ sectionType,
         {/* Editable Date Fields */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-slate-500 mb-1">{isPolish ? 'Data startu' : 'Start Date'}</label>
+            <label className="block text-xs text-slate-500 mb-1">
+              {isPolish ? 'Data startu' : 'Start Date'}
+            </label>
             <input
               type="date"
               value={plannedStart ? new Date(plannedStart).toISOString().split('T')[0] : ''}
@@ -76,7 +92,9 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({ sectionType,
             />
           </div>
           <div>
-            <label className="block text-xs text-slate-500 mb-1">{isPolish ? 'Data końca' : 'End Date'}</label>
+            <label className="block text-xs text-slate-500 mb-1">
+              {isPolish ? 'Data końca' : 'End Date'}
+            </label>
             <input
               type="date"
               value={plannedEnd ? new Date(plannedEnd).toISOString().split('T')[0] : ''}
@@ -91,7 +109,9 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({ sectionType,
           <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50/50 dark:bg-navy-800/50 border border-slate-200/50 dark:border-navy-700/50">
             <div className="flex items-center gap-2">
               <Clock size={14} className="text-slate-400" />
-              <span className="text-xs text-slate-500">{isPolish ? 'Czas trwania' : 'Duration'}</span>
+              <span className="text-xs text-slate-500">
+                {isPolish ? 'Czas trwania' : 'Duration'}
+              </span>
             </div>
             <span className="text-sm font-medium text-slate-700 dark:text-white">
               {duration ? `${duration} ${isPolish ? 'dni' : 'days'}` : '-'}
@@ -109,8 +129,12 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({ sectionType,
         {plannedStart && plannedEnd && (
           <div className="pt-2 border-t border-slate-200/50 dark:border-navy-700/50">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs text-slate-500">{isPolish ? 'Postęp czasu' : 'Time Progress'}</span>
-              <span className={`text-xs font-medium ${isOverdue ? 'text-red-500' : 'text-cyan-500'}`}>
+              <span className="text-xs text-slate-500">
+                {isPolish ? 'Postęp czasu' : 'Time Progress'}
+              </span>
+              <span
+                className={`text-xs font-medium ${isOverdue ? 'text-red-500' : 'text-cyan-500'}`}
+              >
                 {timelineProgress}%
               </span>
             </div>

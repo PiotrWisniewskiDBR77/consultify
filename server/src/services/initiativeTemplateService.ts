@@ -298,7 +298,9 @@ export class InitiativeTemplateService {
       JSON.stringify(templateData),
       updates.isPublic !== undefined ? (updates.isPublic ? 1 : 0) : existing.isPublic ? 1 : 0,
       updates.level ?? existing.level ?? 'standard',
-      JSON.stringify(updates.sourceTypes ?? existing.sourceTypes ?? ['assessment', 'tool', 'manual']),
+      JSON.stringify(
+        updates.sourceTypes ?? existing.sourceTypes ?? ['assessment', 'tool', 'manual']
+      ),
       JSON.stringify(visibleSections),
       JSON.stringify(updates.requiredFields ?? existing.requiredFields ?? []),
       JSON.stringify(updates.workflowConfig ?? existing.workflowConfig ?? {}),

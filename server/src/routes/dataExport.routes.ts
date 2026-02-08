@@ -127,14 +127,20 @@ router.get(
       const userId = (req as any).user?.id;
       const { requestId } = req.params;
 
-      const request = await db.get(
+      const request = (await db.get(
         `
       SELECT id, status, download_url, expires_at, format
       FROM gdpr_requests
       WHERE id = ? AND user_id = ? AND request_type = 'EXPORT'
     `,
         [requestId, userId]
-      ) as { id: string; status: string; download_url: string; expires_at: string; format: string } | null;
+      )) as {
+        id: string;
+        status: string;
+        download_url: string;
+        expires_at: string;
+        format: string;
+      } | null;
 
       if (!request) {
         return res.status(404).json({ error: 'Export request not found' });
@@ -181,7 +187,9 @@ router.post(
       const { reason, confirmationEmail } = req.body;
 
       // Verify email matches
-      const user = await db.get('SELECT email FROM users WHERE id = ?', [userId]) as { email: string } | null;
+      const user = (await db.get('SELECT email FROM users WHERE id = ?', [userId])) as {
+        email: string;
+      } | null;
       if (!user || user.email !== confirmationEmail) {
         return res.status(400).json({ error: 'Email confirmation does not match' });
       }

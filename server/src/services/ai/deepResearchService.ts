@@ -418,7 +418,10 @@ async function generateFollowUpQueries(
     const foundSummary = firstRoundResults
       .filter((q) => q.status === 'done' && q.results && q.results.length > 0)
       .map((q) => {
-        const titles = q.results!.slice(0, 3).map((r) => r.title).join('; ');
+        const titles = q
+          .results!.slice(0, 3)
+          .map((r) => r.title)
+          .join('; ');
         return `- Query: "${q.query}" → Found: ${titles}`;
       })
       .join('\n');
@@ -578,7 +581,10 @@ function aggregateSources(queries: ResearchQuery[], options: DeepResearchOptions
         }
         existing.relevanceScore = Math.max(existing.relevanceScore, result.relevanceScore);
         // Keep the longest content version
-        if (result.content && (!existing.fullContent || result.content.length > existing.fullContent.length)) {
+        if (
+          result.content &&
+          (!existing.fullContent || result.content.length > existing.fullContent.length)
+        ) {
           existing.fullContent = result.content;
         }
       } else {
@@ -984,10 +990,18 @@ async function synthesizeFindings(
     return response.choices[0]?.message?.content || '';
   } catch (error: any) {
     // Fallback to gpt-4o-mini if gpt-4o fails
-    logger.warn(`[DeepResearch] Synthesis with strong model failed, falling back: ${error.message}`);
+    logger.warn(
+      `[DeepResearch] Synthesis with strong model failed, falling back: ${error.message}`
+    );
     try {
       const sourceMaterial = buildSourceMaterial(sources);
-      const prompt = buildSynthesisPrompt(topic, researchType, sourceMaterial, options, tavilyAnswer);
+      const prompt = buildSynthesisPrompt(
+        topic,
+        researchType,
+        sourceMaterial,
+        options,
+        tavilyAnswer
+      );
 
       const response = await llmClient.chat.completions.create({
         model: 'gpt-4o-mini',

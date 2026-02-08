@@ -41,174 +41,270 @@ export interface BenchmarkComparison {
 // BENCHMARK DATA (Based on public industry reports)
 // ==========================================
 
-const INDUSTRY_BENCHMARKS: Record<string, Record<string, Omit<IndustryBenchmark, 'industry' | 'axis'>>> = {
+const INDUSTRY_BENCHMARKS: Record<
+  string,
+  Record<string, Omit<IndustryBenchmark, 'industry' | 'axis'>>
+> = {
   manufacturing: {
     digital_strategy: {
-      average: 2.8, topQuartile: 3.8, bottomQuartile: 1.9,
+      average: 2.8,
+      topQuartile: 3.8,
+      bottomQuartile: 1.9,
       description: 'Strategic alignment of digital initiatives with business goals',
-      source: 'McKinsey Digital Manufacturing Survey 2024', year: 2024,
+      source: 'McKinsey Digital Manufacturing Survey 2024',
+      year: 2024,
     },
     data_analytics: {
-      average: 2.5, topQuartile: 3.6, bottomQuartile: 1.6,
+      average: 2.5,
+      topQuartile: 3.6,
+      bottomQuartile: 1.6,
       description: 'Data collection, analysis, and AI/ML adoption',
-      source: 'Gartner Manufacturing Analytics Report 2024', year: 2024,
+      source: 'Gartner Manufacturing Analytics Report 2024',
+      year: 2024,
     },
     cybersecurity: {
-      average: 2.9, topQuartile: 4.0, bottomQuartile: 2.0,
+      average: 2.9,
+      topQuartile: 4.0,
+      bottomQuartile: 2.0,
       description: 'Security posture, OT/IT convergence security',
-      source: 'IDC Manufacturing Security Index 2024', year: 2024,
+      source: 'IDC Manufacturing Security Index 2024',
+      year: 2024,
     },
     automation: {
-      average: 3.1, topQuartile: 4.2, bottomQuartile: 2.1,
+      average: 3.1,
+      topQuartile: 4.2,
+      bottomQuartile: 2.1,
       description: 'Process automation, RPA, and smart manufacturing',
-      source: 'Industry 4.0 Readiness Survey 2024', year: 2024,
+      source: 'Industry 4.0 Readiness Survey 2024',
+      year: 2024,
     },
     digital_culture: {
-      average: 2.3, topQuartile: 3.4, bottomQuartile: 1.5,
+      average: 2.3,
+      topQuartile: 3.4,
+      bottomQuartile: 1.5,
       description: 'Digital mindset, training, change management',
-      source: 'McKinsey Organizational Transformation 2024', year: 2024,
+      source: 'McKinsey Organizational Transformation 2024',
+      year: 2024,
     },
     cloud_infrastructure: {
-      average: 2.7, topQuartile: 3.7, bottomQuartile: 1.8,
+      average: 2.7,
+      topQuartile: 3.7,
+      bottomQuartile: 1.8,
       description: 'Cloud adoption, hybrid infrastructure, edge computing',
-      source: 'Gartner Cloud Adoption in Manufacturing 2024', year: 2024,
+      source: 'Gartner Cloud Adoption in Manufacturing 2024',
+      year: 2024,
     },
     iot_connectivity: {
-      average: 2.6, topQuartile: 3.8, bottomQuartile: 1.4,
+      average: 2.6,
+      topQuartile: 3.8,
+      bottomQuartile: 1.4,
       description: 'IoT sensors, connectivity, digital twins',
-      source: 'IoT Analytics Industrial Survey 2024', year: 2024,
+      source: 'IoT Analytics Industrial Survey 2024',
+      year: 2024,
     },
     supply_chain: {
-      average: 2.8, topQuartile: 3.9, bottomQuartile: 1.9,
+      average: 2.8,
+      topQuartile: 3.9,
+      bottomQuartile: 1.9,
       description: 'Supply chain digitization, visibility, resilience',
-      source: 'Gartner Supply Chain Digital Maturity 2024', year: 2024,
+      source: 'Gartner Supply Chain Digital Maturity 2024',
+      year: 2024,
     },
   },
 
   financial_services: {
     digital_strategy: {
-      average: 3.5, topQuartile: 4.3, bottomQuartile: 2.6,
+      average: 3.5,
+      topQuartile: 4.3,
+      bottomQuartile: 2.6,
       description: 'Digital-first strategy, API-driven business models',
-      source: 'Deloitte Banking Digital Maturity 2024', year: 2024,
+      source: 'Deloitte Banking Digital Maturity 2024',
+      year: 2024,
     },
     data_analytics: {
-      average: 3.4, topQuartile: 4.4, bottomQuartile: 2.3,
+      average: 3.4,
+      topQuartile: 4.4,
+      bottomQuartile: 2.3,
       description: 'Data monetization, AI/ML for risk and compliance',
-      source: 'McKinsey AI in Banking Report 2024', year: 2024,
+      source: 'McKinsey AI in Banking Report 2024',
+      year: 2024,
     },
     cybersecurity: {
-      average: 3.8, topQuartile: 4.6, bottomQuartile: 2.9,
+      average: 3.8,
+      topQuartile: 4.6,
+      bottomQuartile: 2.9,
       description: 'Threat detection, compliance, zero trust',
-      source: 'Accenture Financial Services Security 2024', year: 2024,
+      source: 'Accenture Financial Services Security 2024',
+      year: 2024,
     },
     automation: {
-      average: 3.2, topQuartile: 4.1, bottomQuartile: 2.2,
+      average: 3.2,
+      topQuartile: 4.1,
+      bottomQuartile: 2.2,
       description: 'Process automation, intelligent workflows, RPA',
-      source: 'Forrester Automation in Financial Services 2024', year: 2024,
+      source: 'Forrester Automation in Financial Services 2024',
+      year: 2024,
     },
     digital_culture: {
-      average: 3.0, topQuartile: 3.9, bottomQuartile: 2.0,
+      average: 3.0,
+      topQuartile: 3.9,
+      bottomQuartile: 2.0,
       description: 'Fintech mindset, agile transformation',
-      source: 'BCG Digital Culture in Banking 2024', year: 2024,
+      source: 'BCG Digital Culture in Banking 2024',
+      year: 2024,
     },
     cloud_infrastructure: {
-      average: 3.3, topQuartile: 4.2, bottomQuartile: 2.4,
+      average: 3.3,
+      topQuartile: 4.2,
+      bottomQuartile: 2.4,
       description: 'Cloud-native, multi-cloud, regulatory cloud',
-      source: 'Gartner Cloud Adoption in Banking 2024', year: 2024,
+      source: 'Gartner Cloud Adoption in Banking 2024',
+      year: 2024,
     },
     customer_experience: {
-      average: 3.4, topQuartile: 4.4, bottomQuartile: 2.4,
+      average: 3.4,
+      topQuartile: 4.4,
+      bottomQuartile: 2.4,
       description: 'Omnichannel, personalization, digital onboarding',
-      source: 'Forrester CX in Banking 2024', year: 2024,
+      source: 'Forrester CX in Banking 2024',
+      year: 2024,
     },
   },
 
   retail: {
     digital_strategy: {
-      average: 3.1, topQuartile: 4.1, bottomQuartile: 2.1,
+      average: 3.1,
+      topQuartile: 4.1,
+      bottomQuartile: 2.1,
       description: 'Omnichannel strategy, D2C, marketplace integration',
-      source: 'McKinsey Retail Digital Index 2024', year: 2024,
+      source: 'McKinsey Retail Digital Index 2024',
+      year: 2024,
     },
     data_analytics: {
-      average: 3.0, topQuartile: 4.0, bottomQuartile: 2.0,
+      average: 3.0,
+      topQuartile: 4.0,
+      bottomQuartile: 2.0,
       description: 'Customer analytics, demand forecasting, personalization',
-      source: 'Gartner Retail Analytics Report 2024', year: 2024,
+      source: 'Gartner Retail Analytics Report 2024',
+      year: 2024,
     },
     cybersecurity: {
-      average: 2.6, topQuartile: 3.6, bottomQuartile: 1.7,
+      average: 2.6,
+      topQuartile: 3.6,
+      bottomQuartile: 1.7,
       description: 'PCI compliance, customer data protection',
-      source: 'Retail Cybersecurity Benchmark 2024', year: 2024,
+      source: 'Retail Cybersecurity Benchmark 2024',
+      year: 2024,
     },
     automation: {
-      average: 2.7, topQuartile: 3.7, bottomQuartile: 1.8,
+      average: 2.7,
+      topQuartile: 3.7,
+      bottomQuartile: 1.8,
       description: 'Store automation, inventory management, logistics',
-      source: 'Retail Automation Survey 2024', year: 2024,
+      source: 'Retail Automation Survey 2024',
+      year: 2024,
     },
     customer_experience: {
-      average: 3.3, topQuartile: 4.3, bottomQuartile: 2.3,
+      average: 3.3,
+      topQuartile: 4.3,
+      bottomQuartile: 2.3,
       description: 'CX, loyalty, personalization, seamless checkout',
-      source: 'Forrester CX Retail Report 2024', year: 2024,
+      source: 'Forrester CX Retail Report 2024',
+      year: 2024,
     },
     supply_chain: {
-      average: 3.0, topQuartile: 4.0, bottomQuartile: 2.0,
+      average: 3.0,
+      topQuartile: 4.0,
+      bottomQuartile: 2.0,
       description: 'Supply chain visibility, last-mile, sustainability',
-      source: 'Gartner Supply Chain for Retail 2024', year: 2024,
+      source: 'Gartner Supply Chain for Retail 2024',
+      year: 2024,
     },
   },
 
   healthcare: {
     digital_strategy: {
-      average: 2.5, topQuartile: 3.5, bottomQuartile: 1.6,
+      average: 2.5,
+      topQuartile: 3.5,
+      bottomQuartile: 1.6,
       description: 'Digital health strategy, telemedicine integration',
-      source: 'Deloitte Digital Health Survey 2024', year: 2024,
+      source: 'Deloitte Digital Health Survey 2024',
+      year: 2024,
     },
     data_analytics: {
-      average: 2.4, topQuartile: 3.5, bottomQuartile: 1.5,
+      average: 2.4,
+      topQuartile: 3.5,
+      bottomQuartile: 1.5,
       description: 'Clinical analytics, population health, AI diagnostics',
-      source: 'McKinsey Healthcare Analytics 2024', year: 2024,
+      source: 'McKinsey Healthcare Analytics 2024',
+      year: 2024,
     },
     cybersecurity: {
-      average: 2.7, topQuartile: 3.8, bottomQuartile: 1.8,
+      average: 2.7,
+      topQuartile: 3.8,
+      bottomQuartile: 1.8,
       description: 'HIPAA compliance, medical device security',
-      source: 'HIMSS Cybersecurity Survey 2024', year: 2024,
+      source: 'HIMSS Cybersecurity Survey 2024',
+      year: 2024,
     },
     automation: {
-      average: 2.2, topQuartile: 3.3, bottomQuartile: 1.3,
+      average: 2.2,
+      topQuartile: 3.3,
+      bottomQuartile: 1.3,
       description: 'Clinical workflow automation, scheduling, billing',
-      source: 'Healthcare Automation Benchmark 2024', year: 2024,
+      source: 'Healthcare Automation Benchmark 2024',
+      year: 2024,
     },
     digital_culture: {
-      average: 2.1, topQuartile: 3.2, bottomQuartile: 1.3,
+      average: 2.1,
+      topQuartile: 3.2,
+      bottomQuartile: 1.3,
       description: 'Digital adoption among clinicians, change management',
-      source: 'BCG Digital Health Culture 2024', year: 2024,
+      source: 'BCG Digital Health Culture 2024',
+      year: 2024,
     },
   },
 
   energy: {
     digital_strategy: {
-      average: 2.6, topQuartile: 3.6, bottomQuartile: 1.7,
+      average: 2.6,
+      topQuartile: 3.6,
+      bottomQuartile: 1.7,
       description: 'Energy transition, digital oilfield, smart grid',
-      source: 'McKinsey Energy Digital Transformation 2024', year: 2024,
+      source: 'McKinsey Energy Digital Transformation 2024',
+      year: 2024,
     },
     data_analytics: {
-      average: 2.7, topQuartile: 3.7, bottomQuartile: 1.7,
+      average: 2.7,
+      topQuartile: 3.7,
+      bottomQuartile: 1.7,
       description: 'Predictive analytics, asset optimization, trading',
-      source: 'Gartner Energy Analytics 2024', year: 2024,
+      source: 'Gartner Energy Analytics 2024',
+      year: 2024,
     },
     cybersecurity: {
-      average: 3.0, topQuartile: 4.0, bottomQuartile: 2.0,
+      average: 3.0,
+      topQuartile: 4.0,
+      bottomQuartile: 2.0,
       description: 'OT security, SCADA protection, NERC compliance',
-      source: 'Energy Cybersecurity Index 2024', year: 2024,
+      source: 'Energy Cybersecurity Index 2024',
+      year: 2024,
     },
     iot_connectivity: {
-      average: 3.0, topQuartile: 4.0, bottomQuartile: 2.0,
+      average: 3.0,
+      topQuartile: 4.0,
+      bottomQuartile: 2.0,
       description: 'Smart metering, sensor networks, remote monitoring',
-      source: 'IoT Analytics Energy Survey 2024', year: 2024,
+      source: 'IoT Analytics Energy Survey 2024',
+      year: 2024,
     },
     automation: {
-      average: 2.8, topQuartile: 3.8, bottomQuartile: 1.9,
+      average: 2.8,
+      topQuartile: 3.8,
+      bottomQuartile: 1.9,
       description: 'Process automation, autonomous operations',
-      source: 'Energy Automation Benchmark 2024', year: 2024,
+      source: 'Energy Automation Benchmark 2024',
+      year: 2024,
     },
   },
 };
@@ -221,14 +317,13 @@ class IndustryBenchmarkService {
   /**
    * Get benchmarks for a specific industry.
    */
-  getBenchmarks(
-    industry: string,
-    metricType?: string
-  ): IndustryBenchmark[] {
+  getBenchmarks(industry: string, metricType?: string): IndustryBenchmark[] {
     const normalizedIndustry = this.normalizeIndustry(industry);
     const data = INDUSTRY_BENCHMARKS[normalizedIndustry];
     if (!data) {
-      logger.info(`[Benchmarks] No benchmarks for industry: ${industry} (normalized: ${normalizedIndustry})`);
+      logger.info(
+        `[Benchmarks] No benchmarks for industry: ${industry} (normalized: ${normalizedIndustry})`
+      );
       return [];
     }
 
@@ -320,17 +415,28 @@ class IndustryBenchmarkService {
     const parts: string[] = [`## INDUSTRY BENCHMARKS (${this.normalizeIndustry(industry)})`];
 
     // Summary
-    const critical = comparisons.filter(c => c.status === 'critical').length;
-    const belowAvg = comparisons.filter(c => c.status === 'below_average').length;
-    const aboveAvg = comparisons.filter(c => c.status === 'above_average').length;
+    const critical = comparisons.filter((c) => c.status === 'critical').length;
+    const belowAvg = comparisons.filter((c) => c.status === 'below_average').length;
+    const aboveAvg = comparisons.filter((c) => c.status === 'above_average').length;
 
-    parts.push(`Summary: ${aboveAvg} above average, ${comparisons.length - critical - belowAvg - aboveAvg} at average, ${belowAvg} below average, ${critical} critical`);
+    parts.push(
+      `Summary: ${aboveAvg} above average, ${comparisons.length - critical - belowAvg - aboveAvg} at average, ${belowAvg} below average, ${critical} critical`
+    );
 
     // Details per axis
     for (const c of comparisons) {
       if (c.industryAverage === 0) continue;
-      const statusIcon = c.status === 'critical' ? '[CRITICAL]' : c.status === 'below_average' ? '[BELOW]' : c.status === 'above_average' ? '[TOP]' : '[OK]';
-      parts.push(`- ${statusIcon} ${c.axis}: org=${c.orgScore} vs avg=${c.industryAverage} (gap: ${c.gap > 0 ? '+' : ''}${c.gap})`);
+      const statusIcon =
+        c.status === 'critical'
+          ? '[CRITICAL]'
+          : c.status === 'below_average'
+            ? '[BELOW]'
+            : c.status === 'above_average'
+              ? '[TOP]'
+              : '[OK]';
+      parts.push(
+        `- ${statusIcon} ${c.axis}: org=${c.orgScore} vs avg=${c.industryAverage} (gap: ${c.gap > 0 ? '+' : ''}${c.gap})`
+      );
     }
 
     return parts.join('\n');
@@ -342,37 +448,40 @@ class IndustryBenchmarkService {
 
   private normalizeIndustry(industry: string): string {
     const map: Record<string, string> = {
-      'manufacturing': 'manufacturing',
-      'produkcja': 'manufacturing',
-      'przemysł': 'manufacturing',
-      'industrial': 'manufacturing',
-      'automotive': 'manufacturing',
-      'financial': 'financial_services',
-      'financial_services': 'financial_services',
-      'banking': 'financial_services',
-      'finanse': 'financial_services',
-      'bankowość': 'financial_services',
-      'insurance': 'financial_services',
-      'retail': 'retail',
-      'handel': 'retail',
-      'ecommerce': 'retail',
+      manufacturing: 'manufacturing',
+      produkcja: 'manufacturing',
+      przemysł: 'manufacturing',
+      industrial: 'manufacturing',
+      automotive: 'manufacturing',
+      financial: 'financial_services',
+      financial_services: 'financial_services',
+      banking: 'financial_services',
+      finanse: 'financial_services',
+      bankowość: 'financial_services',
+      insurance: 'financial_services',
+      retail: 'retail',
+      handel: 'retail',
+      ecommerce: 'retail',
       'e-commerce': 'retail',
-      'healthcare': 'healthcare',
-      'health': 'healthcare',
-      'pharma': 'healthcare',
-      'medical': 'healthcare',
-      'ochrona_zdrowia': 'healthcare',
-      'energy': 'energy',
-      'energia': 'energy',
-      'utilities': 'energy',
-      'oil_gas': 'energy',
+      healthcare: 'healthcare',
+      health: 'healthcare',
+      pharma: 'healthcare',
+      medical: 'healthcare',
+      ochrona_zdrowia: 'healthcare',
+      energy: 'energy',
+      energia: 'energy',
+      utilities: 'energy',
+      oil_gas: 'energy',
     };
 
     return map[industry.toLowerCase().replace(/\s+/g, '_')] || 'manufacturing';
   }
 
   private normalizeAxis(axis: string): string {
-    return axis.toLowerCase().replace(/[\s-]+/g, '_').replace(/[^a-z0-9_]/g, '');
+    return axis
+      .toLowerCase()
+      .replace(/[\s-]+/g, '_')
+      .replace(/[^a-z0-9_]/g, '');
   }
 }
 

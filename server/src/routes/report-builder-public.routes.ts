@@ -199,9 +199,10 @@ router.get('/:token', async (req: Request, res: Response, next: NextFunction) =>
     }
 
     // Return enriched report data for public view
-    const reportConfig = typeof result.report.config === 'string'
-      ? JSON.parse(result.report.config)
-      : (result.report.config || {});
+    const reportConfig =
+      typeof result.report.config === 'string'
+        ? JSON.parse(result.report.config)
+        : result.report.config || {};
 
     res.json({
       report: {
@@ -229,9 +230,10 @@ router.get('/:token', async (req: Request, res: Response, next: NextFunction) =>
           content: s.editedContent || s.generatedContent || '',
           renderKind: s.renderKind,
           blockTypeId: (s as any).blockTypeId,
-          blockConfig: typeof (s as any).blockConfig === 'string'
-            ? JSON.parse((s as any).blockConfig || '{}')
-            : ((s as any).blockConfig || {}),
+          blockConfig:
+            typeof (s as any).blockConfig === 'string'
+              ? JSON.parse((s as any).blockConfig || '{}')
+              : (s as any).blockConfig || {},
           contentFormat: (s as any).contentFormat,
           orderIndex: s.orderIndex,
           chapter: (s as any).chapter,
@@ -353,9 +355,10 @@ router.get('/:token/pptx', async (req: Request, res: Response, next: NextFunctio
       .filter((s) => s.enabled)
       .sort((a, b) => a.orderIndex - b.orderIndex);
 
-    const reportConfig = typeof result.report.config === 'string'
-      ? JSON.parse(result.report.config)
-      : (result.report.config || {});
+    const reportConfig =
+      typeof result.report.config === 'string'
+        ? JSON.parse(result.report.config)
+        : result.report.config || {};
 
     const pptxResult = await pipeline.generateFromLegacyReport(
       {
@@ -380,7 +383,10 @@ router.get('/:token/pptx', async (req: Request, res: Response, next: NextFunctio
       slides: pptxResult.slideCount,
     });
 
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    );
     res.setHeader(
       'Content-Disposition',
       `attachment; filename="${result.report.title || 'report'}.pptx"`
@@ -479,7 +485,10 @@ router.get('/:token/check-auth', async (req: Request, res: Response) => {
     const jwt = await import('jsonwebtoken');
     const token = authHeader.split(' ')[1];
     try {
-      const decoded = jwt.default.verify(token, process.env.JWT_SECRET || 'consultify-secret') as any;
+      const decoded = jwt.default.verify(
+        token,
+        process.env.JWT_SECRET || 'consultify-secret'
+      ) as any;
       return res.json({
         authenticated: true,
         userId: decoded.userId || decoded.id,

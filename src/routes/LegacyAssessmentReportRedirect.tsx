@@ -32,10 +32,5 @@ export const LegacyAssessmentReportRedirect: React.FC = () => {
   if (!reportId) return <Navigate to="/reports/builder" replace />;
 
   // If we can't resolve a linked report builder id, fall back to previous behavior
-  return (
-    <Navigate
-      to={target || `/reports/builder/${encodeURIComponent(reportId)}`}
-      replace
-    />
-  );
+  return <Navigate to={target || `/reports/builder/${encodeURIComponent(reportId)}`} replace />;
 };

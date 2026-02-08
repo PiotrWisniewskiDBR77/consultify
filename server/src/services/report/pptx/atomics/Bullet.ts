@@ -2,7 +2,7 @@
  * Atomic: Bullet List
  * Renders a list of items as bullet points (max 5 per spec).
  */
-import type { DesignTokens, RenderedElement, ElementPosition } from '../types.js';
+import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface BulletProps {
   items: string[];

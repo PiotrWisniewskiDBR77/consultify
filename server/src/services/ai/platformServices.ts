@@ -69,17 +69,25 @@ export function getTierLimits(tier: string): TierLimits {
 export function checkTierAccess(tier: string, feature: string): boolean {
   const limits = getTierLimits(tier);
   switch (feature) {
-    case 'deepThinking': return limits.deepThinkingEnabled;
-    case 'voice': return limits.voiceEnabled;
-    case 'decisionRoom': return limits.decisionRoomEnabled;
-    default: return true;
+    case 'deepThinking':
+      return limits.deepThinkingEnabled;
+    case 'voice':
+      return limits.voiceEnabled;
+    case 'decisionRoom':
+      return limits.decisionRoomEnabled;
+    default:
+      return true;
   }
 }
 
 // In-memory per-tier usage tracking
 const dailyUsage = new Map<string, { count: number; tokens: number; resetAt: number }>();
 
-export function trackTierUsage(userId: string, tier: string, tokensUsed: number): { allowed: boolean; reason?: string } {
+export function trackTierUsage(
+  userId: string,
+  tier: string,
+  tokensUsed: number
+): { allowed: boolean; reason?: string } {
   const limits = getTierLimits(tier);
   const key = `daily:${userId}`;
   const now = Date.now();
@@ -91,11 +99,17 @@ export function trackTierUsage(userId: string, tier: string, tokensUsed: number)
   }
 
   if (usage.count >= limits.aiRequestsPerDay) {
-    return { allowed: false, reason: `Daily request limit (${limits.aiRequestsPerDay}) exceeded for ${tier} tier` };
+    return {
+      allowed: false,
+      reason: `Daily request limit (${limits.aiRequestsPerDay}) exceeded for ${tier} tier`,
+    };
   }
 
   if (usage.tokens + tokensUsed > limits.maxTokensPerDay) {
-    return { allowed: false, reason: `Daily token limit (${limits.maxTokensPerDay}) exceeded for ${tier} tier` };
+    return {
+      allowed: false,
+      reason: `Daily token limit (${limits.maxTokensPerDay}) exceeded for ${tier} tier`,
+    };
   }
 
   usage.count++;
@@ -167,7 +181,12 @@ setInterval(() => {
   }
 }, 60_000);
 
-function generateCacheKey(userId: string, projectId: string | null, screen: string | null, promptHash: string): string {
+function generateCacheKey(
+  userId: string,
+  projectId: string | null,
+  screen: string | null,
+  promptHash: string
+): string {
   return `${userId}:${projectId || 'none'}:${screen || 'any'}:${promptHash}`;
 }
 
@@ -177,7 +196,12 @@ function hashPrompt(prompt: string): string {
   return `${core.length}:${core}`.slice(0, 64);
 }
 
-export function getCachedResponse(userId: string, projectId: string | null, screen: string | null, prompt: string): any | null {
+export function getCachedResponse(
+  userId: string,
+  projectId: string | null,
+  screen: string | null,
+  prompt: string
+): any | null {
   const key = generateCacheKey(userId, projectId, screen, hashPrompt(prompt));
   const entry = promptCache.get(key);
 

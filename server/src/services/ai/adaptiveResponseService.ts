@@ -406,11 +406,13 @@ class AdaptiveResponseService {
     const trimmed = sections.map((section, i) => {
       if (i === 0) return section;
       // For each section, keep header + first 3 bullet points or 2 paragraphs
-      const lines = section.split('\n').filter(l => l.trim());
+      const lines = section.split('\n').filter((l) => l.trim());
       const header = lines[0] || '';
       const bodyLines = lines.slice(1);
 
-      const bulletLines = bodyLines.filter(l => /^[-*•]\s/.test(l.trim()) || /^\d+\.\s/.test(l.trim()));
+      const bulletLines = bodyLines.filter(
+        (l) => /^[-*•]\s/.test(l.trim()) || /^\d+\.\s/.test(l.trim())
+      );
       if (bulletLines.length > 0) {
         return '\n## ' + header + '\n' + bulletLines.slice(0, 4).join('\n');
       }
@@ -426,7 +428,7 @@ class AdaptiveResponseService {
   private prependExecutiveSummary(content: string): string {
     // Extract key takeaways from bullets and bold text
     const boldMatches = content.match(/\*\*([^*]+)\*\*/g)?.slice(0, 3) || [];
-    const keyPoints = boldMatches.map(m => m.replace(/\*\*/g, ''));
+    const keyPoints = boldMatches.map((m) => m.replace(/\*\*/g, ''));
 
     if (keyPoints.length === 0) return content;
 
@@ -438,10 +440,7 @@ class AdaptiveResponseService {
    * Convert paragraph-heavy content to bullet format.
    */
   private convertToBullets(content: string): string {
-    return content.replace(
-      /^([A-Z][^.\n]{30,}\.)\s*$/gm,
-      (match) => `- ${match.trim()}`
-    );
+    return content.replace(/^([A-Z][^.\n]{30,}\.)\s*$/gm, (match) => `- ${match.trim()}`);
   }
 
   /**
@@ -449,11 +448,11 @@ class AdaptiveResponseService {
    */
   private simplifyJargon(content: string): string {
     const jargonMap: Record<string, string> = {
-      'NPV': 'NPV (Net Present Value — wartość netto inwestycji)',
-      'IRR': 'IRR (Internal Rate of Return — wewnętrzna stopa zwrotu)',
-      'MECE': 'MECE (wzajemnie wykluczające, wspólnie wyczerpujące)',
-      'OEE': 'OEE (Overall Equipment Effectiveness — efektywność urządzeń)',
-      'KPI': 'KPI (Key Performance Indicator — kluczowy wskaźnik)',
+      NPV: 'NPV (Net Present Value — wartość netto inwestycji)',
+      IRR: 'IRR (Internal Rate of Return — wewnętrzna stopa zwrotu)',
+      MECE: 'MECE (wzajemnie wykluczające, wspólnie wyczerpujące)',
+      OEE: 'OEE (Overall Equipment Effectiveness — efektywność urządzeń)',
+      KPI: 'KPI (Key Performance Indicator — kluczowy wskaźnik)',
     };
 
     let simplified = content;

@@ -326,10 +326,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
   if (stage === 'deepening') {
     activityItems.push({
       icon: <RefreshCw size={12} className="text-purple-500 animate-spin" />,
-      text: t(
-        'research.generatingFollowUp',
-        'Analyzing gaps and generating follow-up queries...'
-      ),
+      text: t('research.generatingFollowUp', 'Analyzing gaps and generating follow-up queries...'),
       isActive: true,
     });
   }
@@ -339,9 +336,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
     activityItems.push({
       icon: <Sparkles size={12} className="text-amber-500 animate-pulse" />,
       text: t('research.synthesizingReport', 'Synthesizing comprehensive report...'),
-      detail: researchType
-        ? `Type: ${researchType.replace(/_/g, ' ')}`
-        : undefined,
+      detail: researchType ? `Type: ${researchType.replace(/_/g, ' ')}` : undefined,
       isActive: true,
     });
   }
@@ -430,10 +425,8 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
                 }`}
               >
                 {tab === 'activity' && t('research.activity', 'Activity')}
-                {tab === 'queries' &&
-                  `${t('research.queries', 'Queries')} (${totalQueries})`}
-                {tab === 'sources' &&
-                  `${t('research.topSources', 'Sources')} (${sources.length})`}
+                {tab === 'queries' && `${t('research.queries', 'Queries')} (${totalQueries})`}
+                {tab === 'sources' && `${t('research.topSources', 'Sources')} (${sources.length})`}
               </button>
             ))}
           </div>
@@ -550,11 +543,7 @@ export const ResearchStatusBadge: React.FC<{
           {sourcesCount}
         </span>
       )}
-      {round && round > 1 && (
-        <span className="text-purple-500">
-          R{round}
-        </span>
-      )}
+      {round && round > 1 && <span className="text-purple-500">R{round}</span>}
     </button>
   );
 };

@@ -812,10 +812,7 @@ router.post(
       const heuristicTitle = (): string => {
         const firstUserMsg = messages.find((m) => m.role === 'user');
         if (firstUserMsg?.content) {
-          const cleaned = firstUserMsg.content
-            .replace(/\n/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim();
+          const cleaned = firstUserMsg.content.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
           return cleaned.length > 50 ? cleaned.slice(0, 47) + '...' : cleaned;
         }
         return 'New conversation';
@@ -835,11 +832,7 @@ router.post(
             stream: false,
           });
 
-          generatedTitle = (
-            (response as any).text ||
-            (response as any).content ||
-            ''
-          )
+          generatedTitle = ((response as any).text || (response as any).content || '')
             .trim()
             .replace(/^["']|["']$/g, '')
             .slice(0, 50);
@@ -849,7 +842,10 @@ router.post(
             generatedTitle = heuristicTitle();
           }
         } catch (aiErr: any) {
-          logger.warn(`[Conversations] AI title generation failed for ${id}, using heuristic:`, aiErr?.message);
+          logger.warn(
+            `[Conversations] AI title generation failed for ${id}, using heuristic:`,
+            aiErr?.message
+          );
           generatedTitle = heuristicTitle();
         }
       } else {
@@ -1138,7 +1134,7 @@ router.get(
   '/search',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const query = (req.query.q as string || '').trim();
+    const query = ((req.query.q as string) || '').trim();
     if (!query || query.length < 2) {
       return res.json({ conversations: [] });
     }
@@ -1204,7 +1200,9 @@ router.post(
 
       const archivedCount = (result as any)?.changes || 0;
 
-      logger.info(`[Conversations] Auto-archived ${archivedCount} conversations for user ${req.userId}`);
+      logger.info(
+        `[Conversations] Auto-archived ${archivedCount} conversations for user ${req.userId}`
+      );
 
       return res.json({
         archived: archivedCount,

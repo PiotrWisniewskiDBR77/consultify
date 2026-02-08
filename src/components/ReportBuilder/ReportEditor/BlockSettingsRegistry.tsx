@@ -187,8 +187,10 @@ const CONTENT_INSTRUCTIONS: SettingDefinition = {
   labelPl: 'Instrukcje treści',
   description: 'Tell AI exactly what to include in this block',
   descriptionPl: 'Powiedz AI dokładnie co ma zawierać ten blok',
-  placeholder: 'E.g., "Start with a brief overview of current state, then list 5 key gaps with evidence, conclude with a priority ranking"',
-  placeholderPl: 'Np. "Zacznij od przeglądu stanu obecnego, wymień 5 kluczowych luk z uzasadnieniem, zakończ rankingiem priorytetów"',
+  placeholder:
+    'E.g., "Start with a brief overview of current state, then list 5 key gaps with evidence, conclude with a priority ranking"',
+  placeholderPl:
+    'Np. "Zacznij od przeglądu stanu obecnego, wymień 5 kluczowych luk z uzasadnieniem, zakończ rankingiem priorytetów"',
   group: 'quality',
   defaultValue: '',
 };
@@ -321,13 +323,24 @@ const BLOCK_SETTINGS: BlockSettingsDefinition[] = [
         id: 'executive_brief',
         label: 'Executive Brief',
         labelPl: 'Brief zarządczy',
-        values: { outputFormat: 'mixed', executiveStyle: true, maxFindings: 3, analysisDepth: 'overview' },
+        values: {
+          outputFormat: 'mixed',
+          executiveStyle: true,
+          maxFindings: 3,
+          analysisDepth: 'overview',
+        },
       },
       {
         id: 'detailed_summary',
         label: 'Detailed Summary',
         labelPl: 'Szczegółowe podsumowanie',
-        values: { outputFormat: 'mixed', executiveStyle: false, maxFindings: 7, analysisDepth: 'detailed', includeKeyMetrics: true },
+        values: {
+          outputFormat: 'mixed',
+          executiveStyle: false,
+          maxFindings: 7,
+          analysisDepth: 'detailed',
+          includeKeyMetrics: true,
+        },
       },
     ],
   },
@@ -395,19 +408,37 @@ const BLOCK_SETTINGS: BlockSettingsDefinition[] = [
         id: 'quick_wins',
         label: 'Quick Wins Focus',
         labelPl: 'Szybkie wygrane',
-        values: { maxRecommendations: 5, prioritization: 'quick_wins', timeHorizon: 'short', highlightQuickWins: true },
+        values: {
+          maxRecommendations: 5,
+          prioritization: 'quick_wins',
+          timeHorizon: 'short',
+          highlightQuickWins: true,
+        },
       },
       {
         id: 'strategic',
         label: 'Strategic Deep Dive',
         labelPl: 'Strategia pogłębiona',
-        values: { maxRecommendations: 10, prioritization: 'impact', timeHorizon: 'long', includeTimeline: true, includeOwners: true, includeResources: true },
+        values: {
+          maxRecommendations: 10,
+          prioritization: 'impact',
+          timeHorizon: 'long',
+          includeTimeline: true,
+          includeOwners: true,
+          includeResources: true,
+        },
       },
       {
         id: 'board_ready',
         label: 'Board Ready',
         labelPl: 'Na zarząd',
-        values: { maxRecommendations: 5, prioritization: 'impact', executiveStyle: true, outputFormat: 'mixed', highlightCritical: true },
+        values: {
+          maxRecommendations: 5,
+          prioritization: 'impact',
+          executiveStyle: true,
+          outputFormat: 'mixed',
+          highlightCritical: true,
+        },
       },
     ],
   },
@@ -971,19 +1002,40 @@ const BLOCK_SETTINGS: BlockSettingsDefinition[] = [
         id: 'executive_portfolio',
         label: 'Executive Portfolio',
         labelPl: 'Portfel zarządczy',
-        values: { layout: 'grid', columns: '2', maxItems: 6, showEffortBars: false, executiveStyle: true, includeMetrics: true },
+        values: {
+          layout: 'grid',
+          columns: '2',
+          maxItems: 6,
+          showEffortBars: false,
+          executiveStyle: true,
+          includeMetrics: true,
+        },
       },
       {
         id: 'detailed_catalog',
         label: 'Detailed Catalog',
         labelPl: 'Szczegółowy katalog',
-        values: { layout: 'list', columns: '1', maxItems: 12, showEffortBars: true, includeMetrics: true, includeEvidence: true },
+        values: {
+          layout: 'list',
+          columns: '1',
+          maxItems: 12,
+          showEffortBars: true,
+          includeMetrics: true,
+          includeEvidence: true,
+        },
       },
       {
         id: 'quick_wins_focus',
         label: 'Quick Wins Focus',
         labelPl: 'Szybkie wygrane',
-        values: { layout: 'grid', columns: '3', maxItems: 6, prioritization: 'quick_wins', showEffortBars: true, includeMetrics: false },
+        values: {
+          layout: 'grid',
+          columns: '3',
+          maxItems: 6,
+          prioritization: 'quick_wins',
+          showEffortBars: true,
+          includeMetrics: false,
+        },
       },
     ],
   },
@@ -1149,7 +1201,10 @@ const BLUEPRINT_SETTINGS: SettingDefinition[] = [
  * Falls back to 'custom' if no specific definition exists.
  * Automatically appends Blueprint settings (REQ-1) to every block.
  */
-export function getBlockSettings(blockType: string, blockTypeId?: string): BlockSettingsDefinition | null {
+export function getBlockSettings(
+  blockType: string,
+  blockTypeId?: string
+): BlockSettingsDefinition | null {
   // First try exact blockType match
   let base = BLOCK_SETTINGS.find(
     (def) => def.blockType === blockType || def.blockTypeIds?.includes(blockTypeId || '')

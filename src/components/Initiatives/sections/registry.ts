@@ -8,8 +8,6 @@
 
 import type React from 'react';
 
-import type { InitiativeSectionProps } from './types';
-
 // Section component imports
 import { AttachmentsSection } from './AttachmentsSection';
 import { CommentsSection } from './CommentsSection';
@@ -35,6 +33,7 @@ import { TargetStateSection } from './TargetStateSection';
 import { TasksMilestonesSection } from './TasksMilestonesSection';
 import { TeamSection } from './TeamSection';
 import { TimelineSection } from './TimelineSection';
+import type { InitiativeSectionProps } from './types';
 
 /**
  * Registry mapping component_key -> React component.
@@ -78,7 +77,9 @@ export const SECTION_REGISTRY: Record<string, React.ComponentType<InitiativeSect
 /**
  * Get a section component by key, with fallback.
  */
-export function getSectionComponent(componentKey: string): React.ComponentType<InitiativeSectionProps> | null {
+export function getSectionComponent(
+  componentKey: string
+): React.ComponentType<InitiativeSectionProps> | null {
   return SECTION_REGISTRY[componentKey] || null;
 }
 

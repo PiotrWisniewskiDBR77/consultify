@@ -2,12 +2,18 @@
  * Layout: Next Steps
  * Call to action — action items table + closing message.
  */
-import type { DesignTokens, LayoutResult, UnifiedSlide, UnifiedReportMeta, NextStepsContent } from '../types.js';
-import { SlideTitle } from '../atomics/SlideTitle.js';
-import { HeaderBar } from '../atomics/HeaderBar.js';
-import { PageNumber } from '../atomics/PageNumber.js';
 import { BodyText } from '../atomics/BodyText.js';
 import { Footnote } from '../atomics/Footnote.js';
+import { HeaderBar } from '../atomics/HeaderBar.js';
+import { PageNumber } from '../atomics/PageNumber.js';
+import { SlideTitle } from '../atomics/SlideTitle.js';
+import type {
+  DesignTokens,
+  LayoutResult,
+  NextStepsContent,
+  UnifiedReportMeta,
+  UnifiedSlide,
+} from '../types.js';
 
 export function NextStepsLayout(
   slide: UnifiedSlide,
@@ -19,22 +25,93 @@ export function NextStepsLayout(
   const g = tokens.grid;
 
   elements.push(HeaderBar({}, tokens));
-  elements.push(SlideTitle({ text: slide.key_message || (meta.language === 'pl' ? 'Kolejne Kroki' : 'Next Steps') }, tokens));
+  elements.push(
+    SlideTitle(
+      { text: slide.key_message || (meta.language === 'pl' ? 'Kolejne Kroki' : 'Next Steps') },
+      tokens
+    )
+  );
   elements.push(PageNumber({}, tokens));
 
   // Actions table
   const headerRow = [
-    { text: '#', options: { bold: true, fill: { color: tokens.colors.primary }, color: 'FFFFFF', fontSize: 9, fontFace: tokens.fonts.body, align: 'center' as const } },
-    { text: 'Action', options: { bold: true, fill: { color: tokens.colors.primary }, color: 'FFFFFF', fontSize: 10, fontFace: tokens.fonts.body } },
-    { text: 'Owner', options: { bold: true, fill: { color: tokens.colors.primary }, color: 'FFFFFF', fontSize: 10, fontFace: tokens.fonts.body, align: 'center' as const } },
-    { text: 'Deadline', options: { bold: true, fill: { color: tokens.colors.primary }, color: 'FFFFFF', fontSize: 10, fontFace: tokens.fonts.body, align: 'center' as const } },
+    {
+      text: '#',
+      options: {
+        bold: true,
+        fill: { color: tokens.colors.primary },
+        color: 'FFFFFF',
+        fontSize: 9,
+        fontFace: tokens.fonts.body,
+        align: 'center' as const,
+      },
+    },
+    {
+      text: 'Action',
+      options: {
+        bold: true,
+        fill: { color: tokens.colors.primary },
+        color: 'FFFFFF',
+        fontSize: 10,
+        fontFace: tokens.fonts.body,
+      },
+    },
+    {
+      text: 'Owner',
+      options: {
+        bold: true,
+        fill: { color: tokens.colors.primary },
+        color: 'FFFFFF',
+        fontSize: 10,
+        fontFace: tokens.fonts.body,
+        align: 'center' as const,
+      },
+    },
+    {
+      text: 'Deadline',
+      options: {
+        bold: true,
+        fill: { color: tokens.colors.primary },
+        color: 'FFFFFF',
+        fontSize: 10,
+        fontFace: tokens.fonts.body,
+        align: 'center' as const,
+      },
+    },
   ];
 
   const dataRows = c.actions.map((a, i) => [
-    { text: String(i + 1), options: { fontSize: 9, fontFace: tokens.fonts.body, color: tokens.colors.textSecondary, align: 'center' as const } },
-    { text: a.action, options: { fontSize: 10, fontFace: tokens.fonts.body, color: tokens.colors.textPrimary } },
-    { text: a.owner ?? '—', options: { fontSize: 10, fontFace: tokens.fonts.body, color: tokens.colors.textSecondary, align: 'center' as const } },
-    { text: a.deadline ?? '—', options: { fontSize: 10, fontFace: tokens.fonts.body, color: tokens.colors.textSecondary, align: 'center' as const } },
+    {
+      text: String(i + 1),
+      options: {
+        fontSize: 9,
+        fontFace: tokens.fonts.body,
+        color: tokens.colors.textSecondary,
+        align: 'center' as const,
+      },
+    },
+    {
+      text: a.action,
+      options: { fontSize: 10, fontFace: tokens.fonts.body, color: tokens.colors.textPrimary },
+    },
+    {
+      text: a.owner ?? '—',
+      options: {
+        fontSize: 10,
+        fontFace: tokens.fonts.body,
+        color: tokens.colors.textSecondary,
+        align: 'center' as const,
+      },
+    },
+    {
+      text: a.deadline ?? '—',
+      options: {
+        fontSize: 10,
+        fontFace: tokens.fonts.body,
+        color: tokens.colors.textSecondary,
+        align: 'center' as const,
+      },
+    },
   ]);
 
   const tableH = c.closing_message ? g.contentH - 0.7 : g.contentH;
@@ -57,13 +134,16 @@ export function NextStepsLayout(
   // Closing message
   if (c.closing_message) {
     elements.push(
-      BodyText({
-        text: c.closing_message,
-        position: { x: g.contentX, y: g.contentY + tableH + 0.1, w: g.contentW, h: 0.5 },
-        bold: true,
-        color: tokens.colors.primary,
-        align: 'center',
-      }, tokens)
+      BodyText(
+        {
+          text: c.closing_message,
+          position: { x: g.contentX, y: g.contentY + tableH + 0.1, w: g.contentW, h: 0.5 },
+          bold: true,
+          color: tokens.colors.primary,
+          align: 'center',
+        },
+        tokens
+      )
     );
   }
 

@@ -2,7 +2,7 @@
  * Atomic: Footnote
  * Small text at the bottom of a slide — source, disclaimer, note.
  */
-import type { DesignTokens, RenderedElement, ElementPosition } from '../types.js';
+import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface FootnoteProps {
   text: string;

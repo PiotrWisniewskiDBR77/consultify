@@ -16,8 +16,8 @@ import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import AssessmentInitiativeService from '../services/assessmentInitiativeService.js';
-import NotificationService from '../services/notificationService.js';
 import { getAssessmentRoles } from '../services/assessmentPermissionService.js';
+import NotificationService from '../services/notificationService.js';
 import { hasPermission } from '../services/permissionService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { assessmentAuditLogger } from '../utils/AssessmentAuditLogger.js';
@@ -230,7 +230,10 @@ async function notifyAssessmentTeam(params: {
   audience?: 'approvers' | 'team';
 }) {
   try {
-    const roles = await getAssessmentRoles(String(params.assessmentId), String(params.organizationId));
+    const roles = await getAssessmentRoles(
+      String(params.assessmentId),
+      String(params.organizationId)
+    );
     const unique = new Set<string>();
     for (const r of roles || []) {
       const role = String((r as any).role || '').toLowerCase();
@@ -1102,7 +1105,7 @@ export class AssessmentController {
         actorId: user.id,
         type: 'ASSESSMENT_REVIEW_REQUESTED',
         title: 'Assessment submitted for review',
-        body: `Assessment \"${assessment.name}\" was submitted for review.`,
+        body: `Assessment "${assessment.name}" was submitted for review.`,
         actionUrl: `/assessment/${String(assessment.assessment_type || 'drd').toLowerCase()}/${assessmentId}`,
         audience: 'approvers',
       }).catch(() => {});
@@ -1211,7 +1214,7 @@ export class AssessmentController {
         actorId: user.id,
         type: 'ASSESSMENT_REPORT_APPROVED',
         title: 'Report approved',
-        body: `Report for assessment \"${assessment.name}\" was approved.`,
+        body: `Report for assessment "${assessment.name}" was approved.`,
         actionUrl: `/assessment/${String(assessment.assessment_type || 'drd').toLowerCase()}/${assessmentId}`,
         audience: 'team',
       }).catch(() => {});
@@ -1310,7 +1313,7 @@ export class AssessmentController {
         actorId: user.id,
         type: 'ASSESSMENT_APPROVED',
         title: 'Assessment approved',
-        body: `Assessment \"${assessment.name}\" has been approved.`,
+        body: `Assessment "${assessment.name}" has been approved.`,
         actionUrl: `/assessment/${String(assessment.assessment_type || 'drd').toLowerCase()}/${assessmentId}`,
         audience: 'team',
       }).catch(() => {});
@@ -1398,7 +1401,7 @@ export class AssessmentController {
         actorId: user.id,
         type: 'ASSESSMENT_SENT_BACK',
         title: 'Assessment sent back to draft',
-        body: `Assessment \"${assessment.name}\" was sent back to draft. Comment: ${String(comment)}`,
+        body: `Assessment "${assessment.name}" was sent back to draft. Comment: ${String(comment)}`,
         actionUrl: `/assessment/${String(assessment.assessment_type || 'drd').toLowerCase()}/${assessmentId}`,
         audience: 'team',
       }).catch(() => {});

@@ -5,11 +5,11 @@
 import { queryAll, queryOne } from '../utils/queryHelpers.js';
 
 export const dbAll = async <T = any>(sql: string, params: any[] = []): Promise<T[]> => {
-    return queryAll<T>(sql, params);
+  return queryAll<T>(sql, params);
 };
 
 export const dbGet = async <T = any>(sql: string, params: any[] = []): Promise<T | null> => {
-    return queryOne<T>(sql, params);
+  return queryOne<T>(sql, params);
 };
 
 export default { dbAll, dbGet };

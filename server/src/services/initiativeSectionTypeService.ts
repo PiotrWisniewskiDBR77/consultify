@@ -116,7 +116,10 @@ export class InitiativeSectionTypeService {
   /**
    * Get a single section type by key.
    */
-  async getSectionTypeByKey(key: string, organizationId?: string | null): Promise<InitiativeSectionType | null> {
+  async getSectionTypeByKey(
+    key: string,
+    organizationId?: string | null
+  ): Promise<InitiativeSectionType | null> {
     let sql = `SELECT * FROM initiative_section_types WHERE key = ? AND is_active = 1`;
     const params: any[] = [key];
 
@@ -173,7 +176,10 @@ export class InitiativeSectionTypeService {
   /**
    * Update a section type (organization-specific only; system types are immutable).
    */
-  async updateSectionType(id: string, params: UpdateSectionTypeParams): Promise<InitiativeSectionType> {
+  async updateSectionType(
+    id: string,
+    params: UpdateSectionTypeParams
+  ): Promise<InitiativeSectionType> {
     const existing = await this.getSectionTypeById(id);
     if (!existing) throw new Error('Section type not found');
     if (existing.isSystem) throw new Error('Cannot modify system section types');
@@ -181,21 +187,66 @@ export class InitiativeSectionTypeService {
     const updates: string[] = [];
     const values: any[] = [];
 
-    if (params.name !== undefined) { updates.push('name = ?'); values.push(params.name); }
-    if (params.namePl !== undefined) { updates.push('name_pl = ?'); values.push(params.namePl); }
-    if (params.description !== undefined) { updates.push('description = ?'); values.push(params.description); }
-    if (params.descriptionPl !== undefined) { updates.push('description_pl = ?'); values.push(params.descriptionPl); }
-    if (params.category !== undefined) { updates.push('category = ?'); values.push(params.category); }
-    if (params.columnPosition !== undefined) { updates.push('column_position = ?'); values.push(params.columnPosition); }
-    if (params.defaultOrder !== undefined) { updates.push('default_order = ?'); values.push(params.defaultOrder); }
-    if (params.icon !== undefined) { updates.push('icon = ?'); values.push(params.icon); }
-    if (params.iconColor !== undefined) { updates.push('icon_color = ?'); values.push(params.iconColor); }
-    if (params.iconBg !== undefined) { updates.push('icon_bg = ?'); values.push(params.iconBg); }
-    if (params.componentKey !== undefined) { updates.push('component_key = ?'); values.push(params.componentKey); }
-    if (params.aiPromptTemplate !== undefined) { updates.push('ai_prompt_template = ?'); values.push(params.aiPromptTemplate); }
-    if (params.renderConfig !== undefined) { updates.push('render_config = ?'); values.push(JSON.stringify(params.renderConfig)); }
-    if (params.defaultConfig !== undefined) { updates.push('default_config = ?'); values.push(JSON.stringify(params.defaultConfig)); }
-    if (params.isActive !== undefined) { updates.push('is_active = ?'); values.push(params.isActive ? 1 : 0); }
+    if (params.name !== undefined) {
+      updates.push('name = ?');
+      values.push(params.name);
+    }
+    if (params.namePl !== undefined) {
+      updates.push('name_pl = ?');
+      values.push(params.namePl);
+    }
+    if (params.description !== undefined) {
+      updates.push('description = ?');
+      values.push(params.description);
+    }
+    if (params.descriptionPl !== undefined) {
+      updates.push('description_pl = ?');
+      values.push(params.descriptionPl);
+    }
+    if (params.category !== undefined) {
+      updates.push('category = ?');
+      values.push(params.category);
+    }
+    if (params.columnPosition !== undefined) {
+      updates.push('column_position = ?');
+      values.push(params.columnPosition);
+    }
+    if (params.defaultOrder !== undefined) {
+      updates.push('default_order = ?');
+      values.push(params.defaultOrder);
+    }
+    if (params.icon !== undefined) {
+      updates.push('icon = ?');
+      values.push(params.icon);
+    }
+    if (params.iconColor !== undefined) {
+      updates.push('icon_color = ?');
+      values.push(params.iconColor);
+    }
+    if (params.iconBg !== undefined) {
+      updates.push('icon_bg = ?');
+      values.push(params.iconBg);
+    }
+    if (params.componentKey !== undefined) {
+      updates.push('component_key = ?');
+      values.push(params.componentKey);
+    }
+    if (params.aiPromptTemplate !== undefined) {
+      updates.push('ai_prompt_template = ?');
+      values.push(params.aiPromptTemplate);
+    }
+    if (params.renderConfig !== undefined) {
+      updates.push('render_config = ?');
+      values.push(JSON.stringify(params.renderConfig));
+    }
+    if (params.defaultConfig !== undefined) {
+      updates.push('default_config = ?');
+      values.push(JSON.stringify(params.defaultConfig));
+    }
+    if (params.isActive !== undefined) {
+      updates.push('is_active = ?');
+      values.push(params.isActive ? 1 : 0);
+    }
 
     if (updates.length === 0) return existing;
 
@@ -228,7 +279,11 @@ export class InitiativeSectionTypeService {
   /**
    * Duplicate a system section type to an organization.
    */
-  async duplicateSectionType(id: string, organizationId: string, createdBy?: string): Promise<InitiativeSectionType> {
+  async duplicateSectionType(
+    id: string,
+    organizationId: string,
+    createdBy?: string
+  ): Promise<InitiativeSectionType> {
     const source = await this.getSectionTypeById(id);
     if (!source) throw new Error('Source section type not found');
 

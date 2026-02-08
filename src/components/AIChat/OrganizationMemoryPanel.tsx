@@ -138,9 +138,7 @@ const DecisionCard: React.FC<{
           )}
           {decision.recommendationText && (
             <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-relaxed">
-              <span className="font-semibold">
-                {isPl ? 'Rekomendacja:' : 'Recommendation:'}
-              </span>{' '}
+              <span className="font-semibold">{isPl ? 'Rekomendacja:' : 'Recommendation:'}</span>{' '}
               {decision.recommendationText.slice(0, 200)}
               {decision.recommendationText.length > 200 ? '…' : ''}
             </p>
@@ -289,8 +287,7 @@ export const OrganizationMemoryPanel: React.FC<OrganizationMemoryPanelProps> = (
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
-              {isPl ? 'Decyzje' : 'Decisions'}{' '}
-              {decisions.length > 0 && `(${decisions.length})`}
+              {isPl ? 'Decyzje' : 'Decisions'} {decisions.length > 0 && `(${decisions.length})`}
             </button>
             <button
               onClick={() => setActiveTab('patterns')}
@@ -300,8 +297,7 @@ export const OrganizationMemoryPanel: React.FC<OrganizationMemoryPanelProps> = (
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
-              {isPl ? 'Wzorce' : 'Patterns'}{' '}
-              {patterns.length > 0 && `(${patterns.length})`}
+              {isPl ? 'Wzorce' : 'Patterns'} {patterns.length > 0 && `(${patterns.length})`}
             </button>
           </div>
 

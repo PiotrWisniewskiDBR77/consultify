@@ -12,14 +12,21 @@ import { LinkedItemsSection as SharedLinkedItemsSection } from '../../MyWork/sha
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
 
-export const LinkedItemsSection: React.FC<InitiativeSectionProps> = ({ sectionType, expanded, onToggle }) => {
+export const LinkedItemsSection: React.FC<InitiativeSectionProps> = ({
+  sectionType,
+  expanded,
+  onToggle,
+}) => {
   const { linkedItems, setLinkedItems, isPolish } = useInitiativeContext();
 
   return (
     <SharedLinkedItemsSection
       items={linkedItems}
       onAdd={async (item) => {
-        setLinkedItems((prev) => [...prev, { ...item, id: Math.random().toString(36).substr(2, 9) }]);
+        setLinkedItems((prev) => [
+          ...prev,
+          { ...item, id: Math.random().toString(36).substr(2, 9) },
+        ]);
         toast.success(isPolish ? 'Element powiązany' : 'Item linked');
       }}
       onRemove={async (id) => {

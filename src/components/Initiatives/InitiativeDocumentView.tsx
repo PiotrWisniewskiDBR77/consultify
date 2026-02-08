@@ -52,19 +52,17 @@ import {
   type TaskDependency,
   type WarningThresholds,
 } from '../MyWork/shared';
-
 import {
-  InitiativeContext,
-  SECTION_REGISTRY,
-  DEFAULT_VISIBLE_SECTIONS,
   DEFAULT_SECTION_ORDER,
-  getModuleFromStatus,
-  MODULE_CONFIG,
-  GATE_DEFINITIONS,
+  DEFAULT_VISIBLE_SECTIONS,
   GATE_CONFIG,
+  GATE_DEFINITIONS,
+  getModuleFromStatus,
   getNextGateForStatus,
+  InitiativeContext,
+  MODULE_CONFIG,
+  SECTION_REGISTRY,
 } from './sections';
-
 import type {
   Decision,
   HistoryEvent,
@@ -163,8 +161,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [newDecisionTitle, setNewDecisionTitle] = useState('');
   const [newDecisionType, setNewDecisionType] = useState('GOVERNANCE_DECISION_MAKING');
   const [newRaidTitle, setNewRaidTitle] = useState('');
-  const [newRaidType, setNewRaidType] = useState<'risk' | 'issue' | 'assumption' | 'dependency'>('risk');
-  const [newRaidSeverity, setNewRaidSeverity] = useState<'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'>('MEDIUM');
+  const [newRaidType, setNewRaidType] = useState<'risk' | 'issue' | 'assumption' | 'dependency'>(
+    'risk'
+  );
+  const [newRaidSeverity, setNewRaidSeverity] = useState<'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'>(
+    'MEDIUM'
+  );
   const [newRaidDescription, setNewRaidDescription] = useState('');
 
   const [currentUserId] = useState<string>('current-user');
@@ -189,20 +191,45 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     });
   }, []);
 
-  const tasksDone = useMemo(() => tasks.filter((t) => t.status === 'done' || t.status === 'DONE').length, [tasks]);
-  const tasksInProgress = useMemo(() => tasks.filter((t) => t.status === 'in_progress' || t.status === 'IN_PROGRESS').length, [tasks]);
+  const tasksDone = useMemo(
+    () => tasks.filter((t) => t.status === 'done' || t.status === 'DONE').length,
+    [tasks]
+  );
+  const tasksInProgress = useMemo(
+    () => tasks.filter((t) => t.status === 'in_progress' || t.status === 'IN_PROGRESS').length,
+    [tasks]
+  );
   const milestones = useMemo(() => tasks.filter((t) => t.isMilestone), [tasks]);
   const riskCount = useMemo(() => raidItems.filter((r) => r.type === 'risk').length, [raidItems]);
   const issueCount = useMemo(() => raidItems.filter((r) => r.type === 'issue').length, [raidItems]);
-  const criticalRaids = useMemo(() => raidItems.filter((r) => r.severity === 'CRITICAL' || r.severity === 'HIGH').length, [raidItems]);
-  const ownerName = useMemo(() => { const user = users.find((u) => u.id === ownerId); return user ? `${user.firstName} ${user.lastName}` : ''; }, [users, ownerId]);
-  const sponsorName = useMemo(() => { const user = users.find((u) => u.id === sponsorId); return user ? `${user.firstName} ${user.lastName}` : ''; }, [users, sponsorId]);
+  const criticalRaids = useMemo(
+    () => raidItems.filter((r) => r.severity === 'CRITICAL' || r.severity === 'HIGH').length,
+    [raidItems]
+  );
+  const ownerName = useMemo(() => {
+    const user = users.find((u) => u.id === ownerId);
+    return user ? `${user.firstName} ${user.lastName}` : '';
+  }, [users, ownerId]);
+  const sponsorName = useMemo(() => {
+    const user = users.find((u) => u.id === sponsorId);
+    return user ? `${user.firstName} ${user.lastName}` : '';
+  }, [users, sponsorId]);
 
-  const isWatching = useMemo(() => watchers.some((w) => w.userId === currentUserId), [watchers, currentUserId]);
+  const isWatching = useMemo(
+    () => watchers.some((w) => w.userId === currentUserId),
+    [watchers, currentUserId]
+  );
 
-  const requiredGates = useMemo(() => GATE_DEFINITIONS.filter((g) => g.forStatus === status), [status]);
+  const requiredGates = useMemo(
+    () => GATE_DEFINITIONS.filter((g) => g.forStatus === status),
+    [status]
+  );
   const pendingGates = useMemo(
-    () => requiredGates.filter((g) => { const match = decisions.find((d) => d.type === g.pmoDomain); return !match || match.status === 'PENDING'; }),
+    () =>
+      requiredGates.filter((g) => {
+        const match = decisions.find((d) => d.type === g.pmoDomain);
+        return !match || match.status === 'PENDING';
+      }),
     [requiredGates, decisions]
   );
 
@@ -224,25 +251,41 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // Resolve which sections to render, split by column
   const { leftSections, rightSections } = useMemo(() => {
     // If we have section types from the API, use them; otherwise fall back to defaults
-    const resolvedTypes: SectionTypeInfo[] = sectionTypes.length > 0
-      ? sectionTypes
-      : Object.keys(DEFAULT_VISIBLE_SECTIONS).map((key) => ({
-          id: `default-${key}`,
-          key,
-          name: key,
-          namePl: null,
-          description: null,
-          descriptionPl: null,
-          category: 'content' as const,
-          columnPosition: (DEFAULT_SECTION_ORDER[key] !== undefined && ['control', 'team', 'timeline', 'resources', 'stakeholders', 'dependencies', 'attachments', 'linkedItems', 'tags', 'reminders', 'watchers'].includes(key) ? 'right' : 'left') as 'left' | 'right',
-          defaultOrder: DEFAULT_SECTION_ORDER[key] || 100,
-          icon: null,
-          iconColor: null,
-          iconBg: null,
-          componentKey: key,
-          isSystem: true,
-          isActive: true,
-        }));
+    const resolvedTypes: SectionTypeInfo[] =
+      sectionTypes.length > 0
+        ? sectionTypes
+        : Object.keys(DEFAULT_VISIBLE_SECTIONS).map((key) => ({
+            id: `default-${key}`,
+            key,
+            name: key,
+            namePl: null,
+            description: null,
+            descriptionPl: null,
+            category: 'content' as const,
+            columnPosition: (DEFAULT_SECTION_ORDER[key] !== undefined &&
+            [
+              'control',
+              'team',
+              'timeline',
+              'resources',
+              'stakeholders',
+              'dependencies',
+              'attachments',
+              'linkedItems',
+              'tags',
+              'reminders',
+              'watchers',
+            ].includes(key)
+              ? 'right'
+              : 'left') as 'left' | 'right',
+            defaultOrder: DEFAULT_SECTION_ORDER[key] || 100,
+            icon: null,
+            iconColor: null,
+            iconBg: null,
+            componentKey: key,
+            isSystem: true,
+            isActive: true,
+          }));
 
     const visible = resolvedTypes.filter((st) => {
       const key = st.key;
@@ -251,11 +294,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
     const left = visible
       .filter((st) => st.columnPosition === 'left')
-      .sort((a, b) => (sectionOrder[a.key] ?? a.defaultOrder) - (sectionOrder[b.key] ?? b.defaultOrder));
+      .sort(
+        (a, b) => (sectionOrder[a.key] ?? a.defaultOrder) - (sectionOrder[b.key] ?? b.defaultOrder)
+      );
 
     const right = visible
       .filter((st) => st.columnPosition === 'right')
-      .sort((a, b) => (sectionOrder[a.key] ?? a.defaultOrder) - (sectionOrder[b.key] ?? b.defaultOrder));
+      .sort(
+        (a, b) => (sectionOrder[a.key] ?? a.defaultOrder) - (sectionOrder[b.key] ?? b.defaultOrder)
+      );
 
     return { leftSections: left, rightSections: right };
   }, [sectionTypes, visibleSections, sectionOrder]);
@@ -285,30 +332,80 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
       // Fetch related data (best-effort, parallel)
       const fetches = [
-        Api.get(`/decisions?relatedObjectId=${initiativeId}&relatedObjectType=initiative`).then((ds: any) => setDecisions(Array.isArray(ds) ? ds : ds?.decisions || [])).catch(() => setDecisions([])),
-        Api.get(`/initiatives/${initiativeId}/raid`).then((r: any) => setRaidItems(r?.items || r?.raid || (Array.isArray(r) ? r : []))).catch(() => setRaidItems([])),
-        Api.get(`/initiatives/${initiativeId}/watchers`).then((w: any) => setWatchers(w?.watchers || (Array.isArray(w) ? w : []))).catch(() => setWatchers([])),
-        Api.get(`/initiatives/${initiativeId}/history`).then((h: any) => setHistory(h?.events || h?.history || (Array.isArray(h) ? h : []))).catch(() => setHistory([])),
-        Api.get(`/tasks?initiativeId=${initiativeId}`).then((ts: any) => {
-          const taskList = Array.isArray(ts) ? ts : ts?.tasks || [];
-          setTasks(taskList.map((t: any) => ({ id: t.id, title: t.title, status: t.status, priority: t.priority, dueDate: t.dueDate, assigneeName: t.assigneeName || t.assignee?.name, isMilestone: t.isMilestone || false, milestoneDate: t.milestoneDate })));
-        }).catch(() => setTasks([])),
-        Api.get(`/initiatives/${initiativeId}/stakeholders`).then((st: any) => {
-          const mapped: Stakeholder[] = (st?.stakeholders || (Array.isArray(st) ? st : [])).map((s: any) => ({
-            id: s.id, decisionId: initiativeId, userId: s.userId || s.user_id,
-            userName: s.name || `${s.firstName || ''} ${s.lastName || ''}`.trim(), userEmail: s.email,
-            role: (s.role === 'R' ? 'responsible' : s.role === 'A' ? 'accountable' : s.role === 'C' ? 'consulted' : 'informed') as StakeholderRole,
-            notificationSettings: { email: true, inApp: true, slack: false },
-          }));
-          setStakeholders(mapped);
-        }).catch(() => setStakeholders([])),
-        Api.get('/users').then((u: any) => setUsers(Array.isArray(u) ? u : u?.users || [])).catch(() => setUsers([])),
-        Api.get(`/decisions?relatedObjectId=${initiativeId}&relatedObjectType=initiative&type=GATE_APPROVAL`).then((ad: any) => {
-          const approvals = (Array.isArray(ad) ? ad : ad?.decisions || [])
-            .filter((d: any) => d.status === 'PENDING')
-            .map((d: any) => ({ id: d.id, gateType: d.gateType || d.metadata?.gateType || 'UNKNOWN', gateName: d.title, requiredRole: d.metadata?.requiredRole || 'sponsor', status: d.status, requestedAt: d.createdAt, deciderId: d.deciderId, deciderName: d.deciderName || d.decider?.name, dueDate: d.dueDate }));
-          setPendingApprovals(approvals);
-        }).catch(() => setPendingApprovals([])),
+        Api.get(`/decisions?relatedObjectId=${initiativeId}&relatedObjectType=initiative`)
+          .then((ds: any) => setDecisions(Array.isArray(ds) ? ds : ds?.decisions || []))
+          .catch(() => setDecisions([])),
+        Api.get(`/initiatives/${initiativeId}/raid`)
+          .then((r: any) => setRaidItems(r?.items || r?.raid || (Array.isArray(r) ? r : [])))
+          .catch(() => setRaidItems([])),
+        Api.get(`/initiatives/${initiativeId}/watchers`)
+          .then((w: any) => setWatchers(w?.watchers || (Array.isArray(w) ? w : [])))
+          .catch(() => setWatchers([])),
+        Api.get(`/initiatives/${initiativeId}/history`)
+          .then((h: any) => setHistory(h?.events || h?.history || (Array.isArray(h) ? h : [])))
+          .catch(() => setHistory([])),
+        Api.get(`/tasks?initiativeId=${initiativeId}`)
+          .then((ts: any) => {
+            const taskList = Array.isArray(ts) ? ts : ts?.tasks || [];
+            setTasks(
+              taskList.map((t: any) => ({
+                id: t.id,
+                title: t.title,
+                status: t.status,
+                priority: t.priority,
+                dueDate: t.dueDate,
+                assigneeName: t.assigneeName || t.assignee?.name,
+                isMilestone: t.isMilestone || false,
+                milestoneDate: t.milestoneDate,
+              }))
+            );
+          })
+          .catch(() => setTasks([])),
+        Api.get(`/initiatives/${initiativeId}/stakeholders`)
+          .then((st: any) => {
+            const mapped: Stakeholder[] = (st?.stakeholders || (Array.isArray(st) ? st : [])).map(
+              (s: any) => ({
+                id: s.id,
+                decisionId: initiativeId,
+                userId: s.userId || s.user_id,
+                userName: s.name || `${s.firstName || ''} ${s.lastName || ''}`.trim(),
+                userEmail: s.email,
+                role: (s.role === 'R'
+                  ? 'responsible'
+                  : s.role === 'A'
+                    ? 'accountable'
+                    : s.role === 'C'
+                      ? 'consulted'
+                      : 'informed') as StakeholderRole,
+                notificationSettings: { email: true, inApp: true, slack: false },
+              })
+            );
+            setStakeholders(mapped);
+          })
+          .catch(() => setStakeholders([])),
+        Api.get('/users')
+          .then((u: any) => setUsers(Array.isArray(u) ? u : u?.users || []))
+          .catch(() => setUsers([])),
+        Api.get(
+          `/decisions?relatedObjectId=${initiativeId}&relatedObjectType=initiative&type=GATE_APPROVAL`
+        )
+          .then((ad: any) => {
+            const approvals = (Array.isArray(ad) ? ad : ad?.decisions || [])
+              .filter((d: any) => d.status === 'PENDING')
+              .map((d: any) => ({
+                id: d.id,
+                gateType: d.gateType || d.metadata?.gateType || 'UNKNOWN',
+                gateName: d.title,
+                requiredRole: d.metadata?.requiredRole || 'sponsor',
+                status: d.status,
+                requestedAt: d.createdAt,
+                deciderId: d.deciderId,
+                deciderName: d.deciderName || d.decider?.name,
+                dueDate: d.dueDate,
+              }));
+            setPendingApprovals(approvals);
+          })
+          .catch(() => setPendingApprovals([])),
       ];
 
       await Promise.allSettled(fetches);
@@ -334,15 +431,26 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // Fetch template when initiative loads
   useEffect(() => {
     const tplId = initiative?.initiativeTemplateId || initiative?.initiative_template_id;
-    if (!tplId) { setInitiativeTemplate(null); return; }
+    if (!tplId) {
+      setInitiativeTemplate(null);
+      return;
+    }
     let cancelled = false;
     Api.get(`/initiatives/templates/${encodeURIComponent(String(tplId))}`)
-      .then((resp: any) => { if (!cancelled) setInitiativeTemplate(resp?.template || null); })
-      .catch(() => { if (!cancelled) setInitiativeTemplate(null); });
-    return () => { cancelled = true; };
+      .then((resp: any) => {
+        if (!cancelled) setInitiativeTemplate(resp?.template || null);
+      })
+      .catch(() => {
+        if (!cancelled) setInitiativeTemplate(null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [initiative?.initiativeTemplateId, initiative?.initiative_template_id]);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
 
   // ==========================================
   // HANDLERS
@@ -356,8 +464,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       onStatusChange?.(action.targetStatus);
       toast.success(isPolish ? 'Status zaktualizowany' : 'Status updated');
       fetchAll();
-    } catch (e: any) { toast.error(e?.message || 'Failed to update status'); }
-    finally { setIsMutating(false); }
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to update status');
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   const handleToggleWatch = async () => {
@@ -369,66 +480,139 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         setWatchers((prev) => prev.filter((w) => w.userId !== currentUserId));
         toast.success(isPolish ? 'Przestałeś obserwować' : 'Stopped watching');
       } else {
-        const res = await Api.post(`/initiatives/${initiativeId}/watchers`, { userId: currentUserId });
+        const res = await Api.post(`/initiatives/${initiativeId}/watchers`, {
+          userId: currentUserId,
+        });
         setWatchers((prev) => [...prev, res]);
         toast.success(isPolish ? 'Obserwujesz inicjatywę' : 'Now watching');
       }
-    } catch (e: any) { toast.error(e?.message || 'Failed'); }
-    finally { setIsMutating(false); }
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed');
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   const handleSave = async () => {
     setIsMutating(true);
     try {
-      await Api.patch(`/initiatives/${initiativeId}`, { summary, description, tags, priority, ownerId, sponsorId, plannedEndDate: targetDate });
+      await Api.patch(`/initiatives/${initiativeId}`, {
+        summary,
+        description,
+        tags,
+        priority,
+        ownerId,
+        sponsorId,
+        plannedEndDate: targetDate,
+      });
       toast.success(isPolish ? 'Zapisano' : 'Saved');
-    } catch (e: any) { toast.error(e?.message || 'Failed to save'); }
-    finally { setIsMutating(false); }
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to save');
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   const handleCreateTask = async () => {
     if (!newTaskTitle.trim()) return;
     setIsMutating(true);
     try {
-      const res = await Api.post('/tasks', { title: newTaskTitle, initiativeId, status: 'todo', isMilestone: newTaskIsMilestone, milestoneDate: newTaskIsMilestone ? newTaskMilestoneDate : undefined });
-      setTasks((prev) => [...prev, { id: res.id, title: res.title, status: res.status, isMilestone: res.isMilestone, milestoneDate: res.milestoneDate }]);
-      setNewTaskTitle(''); setNewTaskIsMilestone(false); setNewTaskMilestoneDate(''); setShowCreateTask(false);
+      const res = await Api.post('/tasks', {
+        title: newTaskTitle,
+        initiativeId,
+        status: 'todo',
+        isMilestone: newTaskIsMilestone,
+        milestoneDate: newTaskIsMilestone ? newTaskMilestoneDate : undefined,
+      });
+      setTasks((prev) => [
+        ...prev,
+        {
+          id: res.id,
+          title: res.title,
+          status: res.status,
+          isMilestone: res.isMilestone,
+          milestoneDate: res.milestoneDate,
+        },
+      ]);
+      setNewTaskTitle('');
+      setNewTaskIsMilestone(false);
+      setNewTaskMilestoneDate('');
+      setShowCreateTask(false);
       toast.success(isPolish ? 'Zadanie utworzone' : 'Task created');
-    } catch (e: any) { toast.error(e?.message || 'Failed'); }
-    finally { setIsMutating(false); }
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed');
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   const handleCreateDecision = async () => {
     if (!newDecisionTitle.trim()) return;
     setIsMutating(true);
     try {
-      const res = await Api.post('/decisions', { title: newDecisionTitle, type: newDecisionType, relatedObjectId: initiativeId, relatedObjectType: 'initiative', status: 'PENDING' });
+      const res = await Api.post('/decisions', {
+        title: newDecisionTitle,
+        type: newDecisionType,
+        relatedObjectId: initiativeId,
+        relatedObjectType: 'initiative',
+        status: 'PENDING',
+      });
       setDecisions((prev) => [...prev, res]);
-      setNewDecisionTitle(''); setShowCreateDecision(false);
+      setNewDecisionTitle('');
+      setShowCreateDecision(false);
       toast.success(isPolish ? 'Decyzja utworzona' : 'Decision created');
-    } catch (e: any) { toast.error(e?.message || 'Failed'); }
-    finally { setIsMutating(false); }
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed');
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   const handleCreateRaid = async () => {
     if (!newRaidTitle.trim()) return;
     setIsMutating(true);
     try {
-      const res = await Api.post(`/initiatives/${initiativeId}/raid`, { type: newRaidType, title: newRaidTitle, description: newRaidDescription, severity: newRaidSeverity, status: 'OPEN' });
+      const res = await Api.post(`/initiatives/${initiativeId}/raid`, {
+        type: newRaidType,
+        title: newRaidTitle,
+        description: newRaidDescription,
+        severity: newRaidSeverity,
+        status: 'OPEN',
+      });
       setRaidItems((prev) => [...prev, res]);
-      setNewRaidTitle(''); setNewRaidDescription(''); setShowCreateRaid(false);
+      setNewRaidTitle('');
+      setNewRaidDescription('');
+      setShowCreateRaid(false);
       toast.success(isPolish ? 'Element RAID dodany' : 'RAID item added');
-    } catch (e: any) { toast.error(e?.message || 'Failed'); }
-    finally { setIsMutating(false); }
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed');
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   const handleAddComment = async (content: string) => {
-    const newComment: Comment = { id: Math.random().toString(36).substr(2, 9), content, authorId: currentUserId, authorName: 'Current User', createdAt: new Date().toISOString(), likes: 0, likedByMe: false };
+    const newComment: Comment = {
+      id: Math.random().toString(36).substr(2, 9),
+      content,
+      authorId: currentUserId,
+      authorName: 'Current User',
+      createdAt: new Date().toISOString(),
+      likes: 0,
+      likedByMe: false,
+    };
     setComments((prev) => [...prev, newComment]);
   };
 
-  const handleCopyLink = () => { navigator.clipboard.writeText(window.location.href); toast.success(isPolish ? 'Link skopiowany' : 'Link copied'); setShowMoreMenu(false); };
-  const handleExportPDF = () => { toast.success(isPolish ? 'Eksport PDF w przygotowaniu...' : 'Preparing PDF export...'); setShowMoreMenu(false); };
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast.success(isPolish ? 'Link skopiowany' : 'Link copied');
+    setShowMoreMenu(false);
+  };
+  const handleExportPDF = () => {
+    toast.success(isPolish ? 'Eksport PDF w przygotowaniu...' : 'Preparing PDF export...');
+    setShowMoreMenu(false);
+  };
 
   const handleGenerateAI = async (section: string): Promise<any> => {
     setIsGeneratingAI(section);
@@ -488,92 +672,311 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     setIsMutating(true);
     try {
       const targetUserId = role === 'owner' ? ownerId : sponsorId;
-      if (!targetUserId) { toast.error(isPolish ? `Wybierz ${role === 'owner' ? 'właściciela' : 'sponsora'}` : `Select ${role} first`); return; }
-      await Api.post('/decisions', { title: `${gateType} - ${initiative?.name}`, type: gateType, relatedObjectId: initiativeId, relatedObjectType: 'initiative', status: 'PENDING', deciderId: targetUserId, dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() });
+      if (!targetUserId) {
+        toast.error(
+          isPolish
+            ? `Wybierz ${role === 'owner' ? 'właściciela' : 'sponsora'}`
+            : `Select ${role} first`
+        );
+        return;
+      }
+      await Api.post('/decisions', {
+        title: `${gateType} - ${initiative?.name}`,
+        type: gateType,
+        relatedObjectId: initiativeId,
+        relatedObjectType: 'initiative',
+        status: 'PENDING',
+        deciderId: targetUserId,
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      });
       toast.success(isPolish ? 'Wysłano prośbę o zatwierdzenie' : 'Approval request sent');
       fetchAll();
-    } catch (e: any) { toast.error(e?.message || 'Failed to request approval'); }
-    finally { setIsMutating(false); }
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to request approval');
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   const handleOpenChat = () => {
     if (isChatCollapsed) toggleChatCollapse();
     updateWorkspaceFromView(AppView.INITIATIVE_GENERATOR, initiativeId, {
-      type: 'initiative', id: initiativeId, title: initiative?.name || '', status, phase: isPolish ? moduleConfig.labelPl : moduleConfig.label,
-      summary, tasksCount: tasks.length, tasksDone, decisionsCount: decisions.length, raidCount: raidItems.length,
+      type: 'initiative',
+      id: initiativeId,
+      title: initiative?.name || '',
+      status,
+      phase: isPolish ? moduleConfig.labelPl : moduleConfig.label,
+      summary,
+      tasksCount: tasks.length,
+      tasksDone,
+      decisionsCount: decisions.length,
+      raidCount: raidItems.length,
     });
   };
 
   const handleArchive = async () => {
-    if (!confirm(isPolish ? 'Czy na pewno chcesz zarchiwizować tę inicjatywę?' : 'Are you sure you want to archive this initiative?')) return;
+    if (
+      !confirm(
+        isPolish
+          ? 'Czy na pewno chcesz zarchiwizować tę inicjatywę?'
+          : 'Are you sure you want to archive this initiative?'
+      )
+    )
+      return;
     setIsMutating(true);
-    try { await Api.patch(`/initiatives/${initiativeId}`, { status: 'ARCHIVED' }); toast.success(isPolish ? 'Inicjatywa zarchiwizowana' : 'Initiative archived'); setShowMoreMenu(false); fetchAll(); }
-    catch (e: any) { toast.error(e?.message || 'Failed'); }
-    finally { setIsMutating(false); }
+    try {
+      await Api.patch(`/initiatives/${initiativeId}`, { status: 'ARCHIVED' });
+      toast.success(isPolish ? 'Inicjatywa zarchiwizowana' : 'Initiative archived');
+      setShowMoreMenu(false);
+      fetchAll();
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed');
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   const handleDelete = async () => {
-    if (status !== 'DRAFT') { toast.error(isPolish ? 'Można usunąć tylko szkice' : 'Only drafts can be deleted'); return; }
-    if (!confirm(isPolish ? 'Czy na pewno chcesz usunąć tę inicjatywę?' : 'Are you sure you want to delete this initiative?')) return;
+    if (status !== 'DRAFT') {
+      toast.error(isPolish ? 'Można usunąć tylko szkice' : 'Only drafts can be deleted');
+      return;
+    }
+    if (
+      !confirm(
+        isPolish
+          ? 'Czy na pewno chcesz usunąć tę inicjatywę?'
+          : 'Are you sure you want to delete this initiative?'
+      )
+    )
+      return;
     setIsMutating(true);
-    try { await Api.delete(`/initiatives/${initiativeId}`); toast.success(isPolish ? 'Inicjatywa usunięta' : 'Initiative deleted'); setShowMoreMenu(false); onBack?.(); }
-    catch (e: any) { toast.error(e?.message || 'Failed'); }
-    finally { setIsMutating(false); }
+    try {
+      await Api.delete(`/initiatives/${initiativeId}`);
+      toast.success(isPolish ? 'Inicjatywa usunięta' : 'Initiative deleted');
+      setShowMoreMenu(false);
+      onBack?.();
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed');
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   // ==========================================
   // CONTEXT VALUE
   // ==========================================
 
-  const contextValue = useMemo(() => ({
-    initiative, initiativeId, initiativeTemplate, isPolish,
-    decisions, setDecisions, raidItems, setRaidItems, watchers, setWatchers,
-    history, tasks, setTasks, comments, setComments, linkedItems, setLinkedItems,
-    attachments, setAttachments, stakeholders, setStakeholders, dependencies, setDependencies,
-    tags, setTags, users, pendingApprovals,
-    summary, setSummary, description, setDescription, priority, setPriority,
-    ownerId, setOwnerId, sponsorId, setSponsorId, targetDate, setTargetDate,
-    startDate, setStartDate, endDate, setEndDate,
-    reminders, setReminders, escalation, setEscalation, thresholds, setThresholds,
-    expandedSections, toggleSection, isGeneratingAI, isMutating, currentUserId,
-    status, ownerName, sponsorName, tasksDone, tasksInProgress, milestones,
-    riskCount, issueCount, criticalRaids, isWatching, pendingGates, statusActions, primaryActions,
-    handleSave, handleStatusAction, handleToggleWatch, handleGenerateAI,
-    handleCreateTask, handleCreateDecision, handleCreateRaid, handleAddComment,
-    handleRequestApproval, handleOpenChat, handleArchive, handleDelete,
-    handleCopyLink, handleExportPDF, fetchAll,
-    newTaskTitle, setNewTaskTitle, newTaskIsMilestone, setNewTaskIsMilestone,
-    newTaskMilestoneDate, setNewTaskMilestoneDate, showCreateTask, setShowCreateTask,
-    newDecisionTitle, setNewDecisionTitle, newDecisionType, setNewDecisionType,
-    showCreateDecision, setShowCreateDecision,
-    newRaidTitle, setNewRaidTitle, newRaidType, setNewRaidType,
-    newRaidSeverity, setNewRaidSeverity, newRaidDescription, setNewRaidDescription,
-    showCreateRaid, setShowCreateRaid,
-    showMoreMenu, setShowMoreMenu, showStatusDropdown, setShowStatusDropdown,
-    showPriorityDropdown, setShowPriorityDropdown, showPhaseDropdown, setShowPhaseDropdown,
-    showApprovalWorkflow, setShowApprovalWorkflow,
-    newTag, setNewTag,
-    onBack, onStatusChange, onOpenTask, onOpenDecision,
-  }), [
-    initiative, initiativeId, initiativeTemplate, isPolish,
-    decisions, raidItems, watchers, history, tasks, comments, linkedItems,
-    attachments, stakeholders, dependencies, tags, users, pendingApprovals,
-    summary, description, priority, ownerId, sponsorId, targetDate,
-    startDate, endDate,
-    reminders, escalation, thresholds,
-    expandedSections, toggleSection, isGeneratingAI, isMutating, currentUserId,
-    status, ownerName, sponsorName, tasksDone, tasksInProgress, milestones,
-    riskCount, issueCount, criticalRaids, isWatching, pendingGates, statusActions, primaryActions,
-    handleSave, handleStatusAction, handleToggleWatch, handleGenerateAI,
-    handleCreateTask, handleCreateDecision, handleCreateRaid, handleAddComment,
-    handleRequestApproval, handleOpenChat, handleArchive, handleDelete,
-    handleCopyLink, handleExportPDF, fetchAll,
-    newTaskTitle, newTaskIsMilestone, newTaskMilestoneDate, showCreateTask,
-    newDecisionTitle, newDecisionType, showCreateDecision,
-    newRaidTitle, newRaidType, newRaidSeverity, newRaidDescription, showCreateRaid,
-    showMoreMenu, showStatusDropdown, showPriorityDropdown, showPhaseDropdown, showApprovalWorkflow,
-    newTag, onBack, onStatusChange, onOpenTask, onOpenDecision,
-  ]);
+  const contextValue = useMemo(
+    () => ({
+      initiative,
+      initiativeId,
+      initiativeTemplate,
+      isPolish,
+      decisions,
+      setDecisions,
+      raidItems,
+      setRaidItems,
+      watchers,
+      setWatchers,
+      history,
+      tasks,
+      setTasks,
+      comments,
+      setComments,
+      linkedItems,
+      setLinkedItems,
+      attachments,
+      setAttachments,
+      stakeholders,
+      setStakeholders,
+      dependencies,
+      setDependencies,
+      tags,
+      setTags,
+      users,
+      pendingApprovals,
+      summary,
+      setSummary,
+      description,
+      setDescription,
+      priority,
+      setPriority,
+      ownerId,
+      setOwnerId,
+      sponsorId,
+      setSponsorId,
+      targetDate,
+      setTargetDate,
+      startDate,
+      setStartDate,
+      endDate,
+      setEndDate,
+      reminders,
+      setReminders,
+      escalation,
+      setEscalation,
+      thresholds,
+      setThresholds,
+      expandedSections,
+      toggleSection,
+      isGeneratingAI,
+      isMutating,
+      currentUserId,
+      status,
+      ownerName,
+      sponsorName,
+      tasksDone,
+      tasksInProgress,
+      milestones,
+      riskCount,
+      issueCount,
+      criticalRaids,
+      isWatching,
+      pendingGates,
+      statusActions,
+      primaryActions,
+      handleSave,
+      handleStatusAction,
+      handleToggleWatch,
+      handleGenerateAI,
+      handleCreateTask,
+      handleCreateDecision,
+      handleCreateRaid,
+      handleAddComment,
+      handleRequestApproval,
+      handleOpenChat,
+      handleArchive,
+      handleDelete,
+      handleCopyLink,
+      handleExportPDF,
+      fetchAll,
+      newTaskTitle,
+      setNewTaskTitle,
+      newTaskIsMilestone,
+      setNewTaskIsMilestone,
+      newTaskMilestoneDate,
+      setNewTaskMilestoneDate,
+      showCreateTask,
+      setShowCreateTask,
+      newDecisionTitle,
+      setNewDecisionTitle,
+      newDecisionType,
+      setNewDecisionType,
+      showCreateDecision,
+      setShowCreateDecision,
+      newRaidTitle,
+      setNewRaidTitle,
+      newRaidType,
+      setNewRaidType,
+      newRaidSeverity,
+      setNewRaidSeverity,
+      newRaidDescription,
+      setNewRaidDescription,
+      showCreateRaid,
+      setShowCreateRaid,
+      showMoreMenu,
+      setShowMoreMenu,
+      showStatusDropdown,
+      setShowStatusDropdown,
+      showPriorityDropdown,
+      setShowPriorityDropdown,
+      showPhaseDropdown,
+      setShowPhaseDropdown,
+      showApprovalWorkflow,
+      setShowApprovalWorkflow,
+      newTag,
+      setNewTag,
+      onBack,
+      onStatusChange,
+      onOpenTask,
+      onOpenDecision,
+    }),
+    [
+      initiative,
+      initiativeId,
+      initiativeTemplate,
+      isPolish,
+      decisions,
+      raidItems,
+      watchers,
+      history,
+      tasks,
+      comments,
+      linkedItems,
+      attachments,
+      stakeholders,
+      dependencies,
+      tags,
+      users,
+      pendingApprovals,
+      summary,
+      description,
+      priority,
+      ownerId,
+      sponsorId,
+      targetDate,
+      startDate,
+      endDate,
+      reminders,
+      escalation,
+      thresholds,
+      expandedSections,
+      toggleSection,
+      isGeneratingAI,
+      isMutating,
+      currentUserId,
+      status,
+      ownerName,
+      sponsorName,
+      tasksDone,
+      tasksInProgress,
+      milestones,
+      riskCount,
+      issueCount,
+      criticalRaids,
+      isWatching,
+      pendingGates,
+      statusActions,
+      primaryActions,
+      handleSave,
+      handleStatusAction,
+      handleToggleWatch,
+      handleGenerateAI,
+      handleCreateTask,
+      handleCreateDecision,
+      handleCreateRaid,
+      handleAddComment,
+      handleRequestApproval,
+      handleOpenChat,
+      handleArchive,
+      handleDelete,
+      handleCopyLink,
+      handleExportPDF,
+      fetchAll,
+      newTaskTitle,
+      newTaskIsMilestone,
+      newTaskMilestoneDate,
+      showCreateTask,
+      newDecisionTitle,
+      newDecisionType,
+      showCreateDecision,
+      newRaidTitle,
+      newRaidType,
+      newRaidSeverity,
+      newRaidDescription,
+      showCreateRaid,
+      showMoreMenu,
+      showStatusDropdown,
+      showPriorityDropdown,
+      showPhaseDropdown,
+      showApprovalWorkflow,
+      newTag,
+      onBack,
+      onStatusChange,
+      onOpenTask,
+      onOpenDecision,
+    ]
+  );
 
   // ==========================================
   // LOADING & ERROR STATES
@@ -610,7 +1013,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       <div className="h-full overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
             {/* ====== HEADER - Full Width ====== */}
             <motion.div
               initial={{ opacity: 0, y: -20 }}
@@ -620,74 +1022,164 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4 flex-1 min-w-0">
                   {onBack && (
-                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={onBack} className="p-2 rounded-xl bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={onBack}
+                      className="p-2 rounded-xl bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+                    >
                       <ChevronLeft size={20} className="text-slate-500" />
                     </motion.button>
                   )}
-                  <div className={`px-3 py-1.5 rounded-xl text-xs font-semibold ${moduleConfig.bgLight} ${moduleConfig.textColor}`}>
+                  <div
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold ${moduleConfig.bgLight} ${moduleConfig.textColor}`}
+                  >
                     {isPolish ? moduleConfig.labelPl : moduleConfig.label}
                   </div>
-                  <input type="text" value={initiative.name || ''} readOnly className="flex-1 text-xl font-bold text-slate-800 dark:text-white bg-transparent border-none focus:outline-none truncate" />
+                  <input
+                    type="text"
+                    value={initiative.name || ''}
+                    readOnly
+                    className="flex-1 text-xl font-bold text-slate-800 dark:text-white bg-transparent border-none focus:outline-none truncate"
+                  />
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className={`flex items-center gap-2.5 px-4 py-2 rounded-xl border-2 ${statusMeta.bgColor} ${statusMeta.dotColor.replace('bg-', 'border-').replace('-400', '-500/50')} transition-all`}>
-                    <div className={`w-2.5 h-2.5 rounded-full ${statusMeta.dotColor} animate-pulse`} />
-                    <span className={`text-sm font-semibold ${statusMeta.color}`}>{statusMeta.label}</span>
+                  <div
+                    className={`flex items-center gap-2.5 px-4 py-2 rounded-xl border-2 ${statusMeta.bgColor} ${statusMeta.dotColor.replace('bg-', 'border-').replace('-400', '-500/50')} transition-all`}
+                  >
+                    <div
+                      className={`w-2.5 h-2.5 rounded-full ${statusMeta.dotColor} animate-pulse`}
+                    />
+                    <span className={`text-sm font-semibold ${statusMeta.color}`}>
+                      {statusMeta.label}
+                    </span>
                   </div>
-                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSave} disabled={isMutating}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-blue-500/40 dark:border-blue-400/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 dark:hover:bg-blue-500/10 text-sm font-semibold transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed">
-                    {isMutating ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleSave}
+                    disabled={isMutating}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-blue-500/40 dark:border-blue-400/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 dark:hover:bg-blue-500/10 text-sm font-semibold transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {isMutating ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Save size={16} />
+                    )}
                     <span>{isPolish ? 'Zapisz' : 'Save'}</span>
                   </motion.button>
-                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleOpenChat}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-purple-500/40 dark:border-purple-400/30 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 dark:hover:bg-purple-500/10 text-sm font-semibold transition-all shadow-sm">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleOpenChat}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-purple-500/40 dark:border-purple-400/30 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 dark:hover:bg-purple-500/10 text-sm font-semibold transition-all shadow-sm"
+                  >
                     <MessageSquare size={16} />
                     <span>{isPolish ? 'Czat' : 'Chat'}</span>
                   </motion.button>
                   {/* More Menu */}
                   <div className="relative">
-                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setShowMoreMenu(!showMoreMenu)}
-                      className="p-2 rounded-xl bg-white/70 dark:bg-navy-900/50 text-slate-400 hover:text-slate-600 border border-slate-200 dark:border-navy-700 transition-all">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setShowMoreMenu(!showMoreMenu)}
+                      className="p-2 rounded-xl bg-white/70 dark:bg-navy-900/50 text-slate-400 hover:text-slate-600 border border-slate-200 dark:border-navy-700 transition-all"
+                    >
                       <MoreVertical size={18} />
                     </motion.button>
                     <AnimatePresence>
                       {showMoreMenu && (
-                        <motion.div initial={{ opacity: 0, y: -8, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                          className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-navy-800 rounded-xl shadow-xl border border-slate-200 dark:border-navy-600 py-1 z-50 max-h-80 overflow-y-auto">
-                          <button onClick={() => { setShowMoreMenu(false); toggleSection('tasks'); setShowCreateTask(true); }}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10">
-                            <CheckSquare size={16} />{isPolish ? 'Nowe zadanie' : 'New Task'}
+                        <motion.div
+                          initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                          className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-navy-800 rounded-xl shadow-xl border border-slate-200 dark:border-navy-600 py-1 z-50 max-h-80 overflow-y-auto"
+                        >
+                          <button
+                            onClick={() => {
+                              setShowMoreMenu(false);
+                              toggleSection('tasks');
+                              setShowCreateTask(true);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
+                          >
+                            <CheckSquare size={16} />
+                            {isPolish ? 'Nowe zadanie' : 'New Task'}
                           </button>
-                          <button onClick={() => { setShowMoreMenu(false); toggleSection('decisions'); setShowCreateDecision(true); }}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10">
-                            <Scale size={16} />{isPolish ? 'Nowa decyzja' : 'New Decision'}
+                          <button
+                            onClick={() => {
+                              setShowMoreMenu(false);
+                              toggleSection('decisions');
+                              setShowCreateDecision(true);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10"
+                          >
+                            <Scale size={16} />
+                            {isPolish ? 'Nowa decyzja' : 'New Decision'}
                           </button>
-                          <button onClick={() => { setShowMoreMenu(false); toggleSection('raid'); setShowCreateRaid(true); }}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10">
-                            <AlertTriangle size={16} />{isPolish ? 'Dodaj RAID' : 'Add RAID'}
+                          <button
+                            onClick={() => {
+                              setShowMoreMenu(false);
+                              toggleSection('raid');
+                              setShowCreateRaid(true);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                          >
+                            <AlertTriangle size={16} />
+                            {isPolish ? 'Dodaj RAID' : 'Add RAID'}
                           </button>
                           <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
-                          <button onClick={() => { setShowMoreMenu(false); window.open(window.location.href, '_blank'); }}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700">
-                            <ExternalLink size={16} />{isPolish ? 'Nowa karta' : 'New tab'}
+                          <button
+                            onClick={() => {
+                              setShowMoreMenu(false);
+                              window.open(window.location.href, '_blank');
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+                          >
+                            <ExternalLink size={16} />
+                            {isPolish ? 'Nowa karta' : 'New tab'}
                           </button>
-                          <button onClick={() => { setShowMoreMenu(false); handleCopyLink(); }}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700">
-                            <Copy size={16} />{isPolish ? 'Kopiuj link' : 'Copy link'}
+                          <button
+                            onClick={() => {
+                              setShowMoreMenu(false);
+                              handleCopyLink();
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+                          >
+                            <Copy size={16} />
+                            {isPolish ? 'Kopiuj link' : 'Copy link'}
                           </button>
-                          <button onClick={() => { setShowMoreMenu(false); handleExportPDF(); }}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700">
-                            <Download size={16} />PDF
+                          <button
+                            onClick={() => {
+                              setShowMoreMenu(false);
+                              handleExportPDF();
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+                          >
+                            <Download size={16} />
+                            PDF
                           </button>
                           <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
-                          <button onClick={() => { setShowMoreMenu(false); handleArchive(); }}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10">
-                            <Archive size={16} />{isPolish ? 'Archiwizuj' : 'Archive'}
+                          <button
+                            onClick={() => {
+                              setShowMoreMenu(false);
+                              handleArchive();
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10"
+                          >
+                            <Archive size={16} />
+                            {isPolish ? 'Archiwizuj' : 'Archive'}
                           </button>
                           {status === 'DRAFT' && (
-                            <button onClick={() => { setShowMoreMenu(false); handleDelete(); }}
-                              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10">
-                              <Trash2 size={16} />{isPolish ? 'Usuń' : 'Delete'}
+                            <button
+                              onClick={() => {
+                                setShowMoreMenu(false);
+                                handleDelete();
+                              }}
+                              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+                            >
+                              <Trash2 size={16} />
+                              {isPolish ? 'Usuń' : 'Delete'}
                             </button>
                           )}
                         </motion.div>

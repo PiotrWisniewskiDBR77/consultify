@@ -1677,10 +1677,16 @@ For example: REMEMBER: preferred_language: Polish`;
               {
                 icon: Brain,
                 label: t('aiChat.capabilities.deepThinking', 'Deep Thinking'),
-                desc: t('aiChat.capabilities.deepThinkingDesc', 'Multi-step analysis with web research'),
+                desc: t(
+                  'aiChat.capabilities.deepThinkingDesc',
+                  'Multi-step analysis with web research'
+                ),
                 color: 'text-violet-500',
                 bg: 'bg-violet-50 dark:bg-violet-900/20',
-                prompt: t('aiChat.capabilities.deepThinkingPrompt', 'Analyze the biggest risk to our current strategy and suggest 3 mitigations'),
+                prompt: t(
+                  'aiChat.capabilities.deepThinkingPrompt',
+                  'Analyze the biggest risk to our current strategy and suggest 3 mitigations'
+                ),
               },
               {
                 icon: BarChart3,
@@ -1688,7 +1694,10 @@ For example: REMEMBER: preferred_language: Polish`;
                 desc: t('aiChat.capabilities.scenariosDesc', 'Monte Carlo ROI & what-if analysis'),
                 color: 'text-emerald-500',
                 bg: 'bg-emerald-50 dark:bg-emerald-900/20',
-                prompt: t('aiChat.capabilities.scenariosPrompt', 'Run a Monte Carlo simulation for the ROI of our top initiative'),
+                prompt: t(
+                  'aiChat.capabilities.scenariosPrompt',
+                  'Run a Monte Carlo simulation for the ROI of our top initiative'
+                ),
               },
               {
                 icon: Shield,
@@ -1696,7 +1705,10 @@ For example: REMEMBER: preferred_language: Polish`;
                 desc: t('aiChat.capabilities.riskAlertsDesc', 'Predictive risk & budget warnings'),
                 color: 'text-amber-500',
                 bg: 'bg-amber-50 dark:bg-amber-900/20',
-                prompt: t('aiChat.capabilities.riskAlertsPrompt', 'What are the top risks in my portfolio right now?'),
+                prompt: t(
+                  'aiChat.capabilities.riskAlertsPrompt',
+                  'What are the top risks in my portfolio right now?'
+                ),
               },
               {
                 icon: Zap,
@@ -1704,7 +1716,10 @@ For example: REMEMBER: preferred_language: Polish`;
                 desc: t('aiChat.capabilities.actionsDesc', 'Create tasks, decisions & reports'),
                 color: 'text-blue-500',
                 bg: 'bg-blue-50 dark:bg-blue-900/20',
-                prompt: t('aiChat.capabilities.actionsPrompt', 'Create a task to review our Q1 roadmap progress'),
+                prompt: t(
+                  'aiChat.capabilities.actionsPrompt',
+                  'Create a task to review our Q1 roadmap progress'
+                ),
               },
             ].map((cap) => (
               <button
@@ -1731,7 +1746,10 @@ For example: REMEMBER: preferred_language: Polish`;
           <div className="w-full max-w-2xl mt-6 text-center">
             <p className="text-[11px] text-slate-400 dark:text-slate-600 flex items-center justify-center gap-1.5">
               <Sparkles size={11} />
-              {t('aiChat.onboarding.hint', 'Tip: Try voice mode, attach files, or enable Deep Thinking for multi-step analysis')}
+              {t(
+                'aiChat.onboarding.hint',
+                'Tip: Try voice mode, attach files, or enable Deep Thinking for multi-step analysis'
+              )}
             </p>
           </div>
         </div>

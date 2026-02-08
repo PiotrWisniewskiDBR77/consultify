@@ -531,7 +531,10 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 <textarea
                   value={customInstructions}
                   onChange={(e) => setCustomInstructions(e.target.value.slice(0, 1000))}
-                  placeholder={t('aiChat.menu.customInstructionsPlaceholder', 'np. "Zawsze odpowiadaj po polsku", "Preferuję tabele nad tekstem", "Jestem CTO w firmie produkcyjnej"')}
+                  placeholder={t(
+                    'aiChat.menu.customInstructionsPlaceholder',
+                    'np. "Zawsze odpowiadaj po polsku", "Preferuję tabele nad tekstem", "Jestem CTO w firmie produkcyjnej"'
+                  )}
                   className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
                   rows={3}
                 />

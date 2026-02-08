@@ -33,7 +33,9 @@ export function mapReportBuilderStatusToAssessmentReportStatus(
 }
 
 async function ensureColumn(table: string, name: string, ddl: string) {
-  const cols = (await queryHelpers.queryAll(`PRAGMA table_info(${table})`)) as Array<{ name: string }>;
+  const cols = (await queryHelpers.queryAll(`PRAGMA table_info(${table})`)) as Array<{
+    name: string;
+  }>;
   const existing = new Set((cols || []).map((c) => String(c.name)));
   if (existing.has(name)) return;
   await queryHelpers.queryRun(`ALTER TABLE ${table} ADD COLUMN ${ddl}`);
@@ -141,4 +143,3 @@ export async function upsertAssessmentReportForBuilder(params: {
 
   return { assessmentReportId: id, created: true };
 }
-

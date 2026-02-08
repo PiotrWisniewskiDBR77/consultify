@@ -17,10 +17,10 @@ import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import AssessmentInitiativeGenerationRunService from '../services/assessmentInitiativeGenerationRunService.js';
 import AssessmentPermissionService from '../services/assessmentPermissionService.js';
+import { mapReportBuilderStatusToAssessmentReportStatus } from '../services/assessmentReportBuilderLinkService.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
-import { mapReportBuilderStatusToAssessmentReportStatus } from '../services/assessmentReportBuilderLinkService.js';
 
 const router = Router();
 
@@ -1449,7 +1449,11 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
     if (next === current && !llmService) {
       if (act === 'summarize') {
         // Best-effort: truncate to first ~600 chars as a simple summary
-        next = current.slice(0, 600) + (current.length > 600 ? '\n\n_(AI summarization is currently unavailable. Showing truncated content.)_\n' : '');
+        next =
+          current.slice(0, 600) +
+          (current.length > 600
+            ? '\n\n_(AI summarization is currently unavailable. Showing truncated content.)_\n'
+            : '');
       } else if (act === 'expand') {
         // Return original content with a note – don't insert TODO markers
         return res.status(503).json({
@@ -1798,9 +1802,10 @@ router.post('/:reportId/approve', async (req: AuthRequest, res: Response) => {
 
     const currentStatus = String(reportRow.status || 'DRAFT').toUpperCase();
     if (!['FINAL', 'PENDING_APPROVAL'].includes(currentStatus)) {
-      return res
-        .status(409)
-        .json({ error: 'Report must be FINAL or PENDING_APPROVAL to approve', status: currentStatus });
+      return res.status(409).json({
+        error: 'Report must be FINAL or PENDING_APPROVAL to approve',
+        status: currentStatus,
+      });
     }
 
     const roleInfo = await AssessmentPermissionService.getUserRole(
@@ -1904,10 +1909,15 @@ router.post('/:reportId/reject', async (req: AuthRequest, res: Response) => {
     if (!reportRow) return res.status(404).json({ error: 'Report not found' });
 
     const currentStatus = String(reportRow.status || 'DRAFT').toUpperCase();
-    if (currentStatus !== 'FINAL' && currentStatus !== 'PENDING_APPROVAL' && currentStatus !== 'APPROVED') {
-      return res
-        .status(409)
-        .json({ error: 'Report must be FINAL, PENDING_APPROVAL or APPROVED to reject', status: currentStatus });
+    if (
+      currentStatus !== 'FINAL' &&
+      currentStatus !== 'PENDING_APPROVAL' &&
+      currentStatus !== 'APPROVED'
+    ) {
+      return res.status(409).json({
+        error: 'Report must be FINAL, PENDING_APPROVAL or APPROVED to reject',
+        status: currentStatus,
+      });
     }
 
     // RBAC check

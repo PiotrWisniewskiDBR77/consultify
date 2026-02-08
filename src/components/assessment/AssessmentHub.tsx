@@ -292,9 +292,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
 
             // Fetch ALL reports linked to user's assessments (all statuses).
             // Status filtering is done client-side via the status dropdown.
-            const reportsResponse = await Api.get(
-              '/assessment-reports'
-            ).catch(() => null);
+            const reportsResponse = await Api.get('/assessment-reports').catch(() => null);
             const reportData = reportsResponse?.reports || [];
             setReports(Array.isArray(reportData) ? reportData : []);
 
@@ -462,7 +460,12 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       render: (row) => <span className="text-sm text-white font-medium">{row.name}</span>,
     };
     const progressCol: TableColumn = { id: 'progress', label: 'Progress', width: '150px' };
-    const updatedCol: TableColumn = { id: 'updatedAt', label: 'Updated', width: '120px', sortable: true };
+    const updatedCol: TableColumn = {
+      id: 'updatedAt',
+      label: 'Updated',
+      width: '120px',
+      sortable: true,
+    };
 
     if (activeTab === 'reports') {
       return [
@@ -493,7 +496,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           label: 'Source Report',
           width: '200px',
           render: (row) => (
-            <span className="text-xs text-slate-400 truncate block max-w-[180px]" title={row.sourceReport || ''}>
+            <span
+              className="text-xs text-slate-400 truncate block max-w-[180px]"
+              title={row.sourceReport || ''}
+            >
               {row.sourceReport || '—'}
             </span>
           ),
@@ -717,9 +723,12 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             refreshData();
             if (newId) navigate(`/reports/builder/${encodeURIComponent(newId)}`);
           } else if (docType === 'initiative') {
-            const resp: any = await Api.post(`/initiatives/${encodeURIComponent(row.id)}/duplicate`, {
-              title: `${row.name || 'Initiative'} (Copy)`,
-            });
+            const resp: any = await Api.post(
+              `/initiatives/${encodeURIComponent(row.id)}/duplicate`,
+              {
+                title: `${row.name || 'Initiative'} (Copy)`,
+              }
+            );
             const newId = String(resp?.id || resp?.initiative?.id || '');
             toast.success('Initiative duplicated', { id: toastId });
             refreshData();
@@ -751,7 +760,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             : activeTab === 'reports'
               ? 'report'
               : 'assessment';
-        if (!window.confirm(`Are you sure you want to delete this ${docType}? This cannot be undone.`)) return;
+        if (
+          !window.confirm(`Are you sure you want to delete this ${docType}? This cannot be undone.`)
+        )
+          return;
         const toastId = toast.loading(`Deleting ${docType}...`);
         try {
           if (docType === 'assessment') {
@@ -761,7 +773,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           } else if (docType === 'initiative') {
             await Api.delete(`/initiatives/${row.id}`);
           }
-          toast.success(`${docType.charAt(0).toUpperCase() + docType.slice(1)} deleted`, { id: toastId });
+          toast.success(`${docType.charAt(0).toUpperCase() + docType.slice(1)} deleted`, {
+            id: toastId,
+          });
           refreshData();
         } catch (e: any) {
           toast.error(e?.message || 'Failed to delete', { id: toastId });
@@ -845,13 +859,15 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           name: (item as any).name || (item as any).title,
           framework: mapApiFramework((item as any).assessmentType),
           status: mapReportApiStatus(item.status),
-          builderReportId:
-            (item as any).builderReportId || (item as any).builder_report_id || null,
+          builderReportId: (item as any).builderReportId || (item as any).builder_report_id || null,
           progress:
-            mapReportApiStatus(item.status) === 'APPROVED' ? 100
-            : mapReportApiStatus(item.status) === 'UTILIZED' ? 100
-            : mapReportApiStatus(item.status) === 'FINAL' ? 80
-            : 40,
+            mapReportApiStatus(item.status) === 'APPROVED'
+              ? 100
+              : mapReportApiStatus(item.status) === 'UTILIZED'
+                ? 100
+                : mapReportApiStatus(item.status) === 'FINAL'
+                  ? 80
+                  : 40,
           updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
           assessmentName: (item as any).assessmentName,
         }));
@@ -1161,10 +1177,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             className="fixed inset-0 z-50 bg-black/40 transition-opacity"
             onClick={() => {
               setSlideOverReportOpen(false);
-                setTimeout(() => {
-                  setSlideOverReportId(null);
-                  setSlideOverBuilderReportId(null);
-                }, 300);
+              setTimeout(() => {
+                setSlideOverReportId(null);
+                setSlideOverBuilderReportId(null);
+              }, 300);
             }}
           />
           {/* Slide-over panel */}
@@ -1261,7 +1277,9 @@ const ReportSlideOverContent: React.FC<{
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [assessmentReportId]);
 
   if (loading) {
@@ -1315,32 +1333,45 @@ const ReportSlideOverContent: React.FC<{
     <div className="space-y-6">
       {/* Report header info */}
       <div className="bg-navy-800/60 rounded-xl p-4 border border-navy-700">
-        <h4 className="text-white font-semibold text-lg mb-2">{report.name || report.title || 'Untitled Report'}</h4>
+        <h4 className="text-white font-semibold text-lg mb-2">
+          {report.name || report.title || 'Untitled Report'}
+        </h4>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <span className="text-slate-400 text-xs uppercase font-semibold">Status</span>
             <div className="mt-1">
-              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
-                report.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-300'
-                : report.status === 'FINAL' ? 'bg-indigo-500/20 text-indigo-300'
-                : report.status === 'DRAFT' ? 'bg-slate-500/20 text-slate-300'
-                : 'bg-amber-500/20 text-amber-300'
-              }`}>
+              <span
+                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
+                  report.status === 'APPROVED'
+                    ? 'bg-emerald-500/20 text-emerald-300'
+                    : report.status === 'FINAL'
+                      ? 'bg-indigo-500/20 text-indigo-300'
+                      : report.status === 'DRAFT'
+                        ? 'bg-slate-500/20 text-slate-300'
+                        : 'bg-amber-500/20 text-amber-300'
+                }`}
+              >
                 {String(report.status || 'DRAFT').replace(/_/g, ' ')}
               </span>
             </div>
           </div>
           <div>
             <span className="text-slate-400 text-xs uppercase font-semibold">Template</span>
-            <div className="mt-1 text-slate-300">{report.templateId || report.template_id || '—'}</div>
+            <div className="mt-1 text-slate-300">
+              {report.templateId || report.template_id || '—'}
+            </div>
           </div>
           <div>
             <span className="text-slate-400 text-xs uppercase font-semibold">Created</span>
-            <div className="mt-1 text-slate-300">{report.createdAt ? new Date(report.createdAt).toLocaleDateString() : '—'}</div>
+            <div className="mt-1 text-slate-300">
+              {report.createdAt ? new Date(report.createdAt).toLocaleDateString() : '—'}
+            </div>
           </div>
           <div>
             <span className="text-slate-400 text-xs uppercase font-semibold">Updated</span>
-            <div className="mt-1 text-slate-300">{report.updatedAt ? new Date(report.updatedAt).toLocaleDateString() : '—'}</div>
+            <div className="mt-1 text-slate-300">
+              {report.updatedAt ? new Date(report.updatedAt).toLocaleDateString() : '—'}
+            </div>
           </div>
         </div>
       </div>
@@ -1348,7 +1379,9 @@ const ReportSlideOverContent: React.FC<{
       {/* Executive Summary */}
       {report.executiveSummary && (
         <div className="bg-navy-800/60 rounded-xl p-4 border border-navy-700">
-          <h5 className="text-slate-300 font-semibold text-sm mb-2 uppercase tracking-wider">Executive Summary</h5>
+          <h5 className="text-slate-300 font-semibold text-sm mb-2 uppercase tracking-wider">
+            Executive Summary
+          </h5>
           <p className="text-slate-200 text-sm leading-relaxed">{report.executiveSummary}</p>
         </div>
       )}
@@ -1356,12 +1389,20 @@ const ReportSlideOverContent: React.FC<{
       {/* Sections */}
       {report.sections && report.sections.length > 0 && (
         <div className="bg-navy-800/60 rounded-xl p-4 border border-navy-700">
-          <h5 className="text-slate-300 font-semibold text-sm mb-3 uppercase tracking-wider">Sections</h5>
+          <h5 className="text-slate-300 font-semibold text-sm mb-3 uppercase tracking-wider">
+            Sections
+          </h5>
           <div className="space-y-2">
             {report.sections.map((section: any, idx: number) => {
-              const sectionTitle = typeof section === 'string' ? section : section?.title || section?.name || `Section ${idx + 1}`;
+              const sectionTitle =
+                typeof section === 'string'
+                  ? section
+                  : section?.title || section?.name || `Section ${idx + 1}`;
               return (
-                <div key={idx} className="flex items-center gap-3 p-2 rounded-lg bg-navy-900/50 border border-navy-700/50">
+                <div
+                  key={idx}
+                  className="flex items-center gap-3 p-2 rounded-lg bg-navy-900/50 border border-navy-700/50"
+                >
                   <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-300 text-xs font-semibold flex items-center justify-center">
                     {idx + 1}
                   </span>

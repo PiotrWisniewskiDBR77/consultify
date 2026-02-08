@@ -2,7 +2,7 @@
  * Atomic: KPI Label
  * Small label text beneath a KPI value.
  */
-import type { DesignTokens, RenderedElement, ElementPosition } from '../types.js';
+import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface KpiLabelProps {
   text: string;

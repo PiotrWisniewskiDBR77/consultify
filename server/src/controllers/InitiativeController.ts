@@ -630,9 +630,7 @@ export class InitiativeController {
       const finalStart = (body.plannedStartDate ?? (existing as any).planned_start_date) as
         | string
         | null;
-      const finalEnd = (body.plannedEndDate ?? (existing as any).planned_end_date) as
-        | string
-        | null;
+      const finalEnd = (body.plannedEndDate ?? (existing as any).planned_end_date) as string | null;
       if (finalStart && finalEnd) {
         const startDate = new Date(finalStart);
         const endDate = new Date(finalEnd);
@@ -691,8 +689,7 @@ export class InitiativeController {
       try {
         const ownerBusinessChanged =
           body.ownerBusinessId !== undefined &&
-          String(body.ownerBusinessId || '') !==
-            String((existing as any).owner_business_id || '');
+          String(body.ownerBusinessId || '') !== String((existing as any).owner_business_id || '');
         const ownerExecutionChanged =
           body.ownerExecutionId !== undefined &&
           String(body.ownerExecutionId || '') !==
@@ -1095,7 +1092,17 @@ export class InitiativeController {
         await queryHelpers.queryRun(
           `INSERT INTO initiative_status_history (id, initiative_id, organization_id, from_status, to_status, changed_by, reason, gate_type, created_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [historyId, id, orgId, currentStatus, nextStatus, actorId || null, reason || null, gate || null, now]
+          [
+            historyId,
+            id,
+            orgId,
+            currentStatus,
+            nextStatus,
+            actorId || null,
+            reason || null,
+            gate || null,
+            now,
+          ]
         );
       } catch {
         // status_history table may not exist yet — best-effort
@@ -1115,7 +1122,12 @@ export class InitiativeController {
             'status_changed',
             actorId || null,
             actorName || null,
-            JSON.stringify({ from: currentStatus, to: nextStatus, reason: reason || null, gate: gate || null }),
+            JSON.stringify({
+              from: currentStatus,
+              to: nextStatus,
+              reason: reason || null,
+              gate: gate || null,
+            }),
             now,
           ]
         );
@@ -1148,7 +1160,8 @@ export class InitiativeController {
                 actionUrl: '/initiatives',
                 actorId,
                 actorName,
-                priority: nextStatus === 'BLOCKED' || nextStatus === 'CANCELLED' ? 'high' : 'normal',
+                priority:
+                  nextStatus === 'BLOCKED' || nextStatus === 'CANCELLED' ? 'high' : 'normal',
                 metadata: { from: currentStatus, to: nextStatus, reason, gate },
               })
             )

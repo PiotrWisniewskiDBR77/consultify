@@ -192,7 +192,9 @@ function renderCoverPage(
     const title = parsed.title || reportTitle || 'Report';
     const subtitle = parsed.subtitle || '';
     const company = parsed.companyName || parsed.company || '';
-    const date = parsed.date || new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+    const date =
+      parsed.date ||
+      new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
     const assessmentType = parsed.assessmentType || '';
 
     return (
@@ -215,9 +217,7 @@ function renderCoverPage(
           {title}
         </h1>
         {subtitle && (
-          <p className="text-lg text-slate-500 dark:text-slate-400 mb-8 max-w-2xl">
-            {subtitle}
-          </p>
+          <p className="text-lg text-slate-500 dark:text-slate-400 mb-8 max-w-2xl">{subtitle}</p>
         )}
         <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-sm mt-4">
           {company && <span className="font-medium">{company}</span>}
@@ -289,14 +289,19 @@ const SmartContentRenderer: React.FC<{
                       <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">
                         {axis.axisName}
                       </td>
-                      <td className="py-3 px-4 text-center font-semibold" style={{ color: styling.primaryColor }}>
+                      <td
+                        className="py-3 px-4 text-center font-semibold"
+                        style={{ color: styling.primaryColor }}
+                      >
                         {axis.score}
                       </td>
                       <td className="py-3 px-4 text-center text-slate-500">
                         {axis.maxScore || parsed.scaleMax}
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <span className={`font-medium ${axis.gap > 2 ? 'text-red-500' : axis.gap > 1 ? 'text-amber-500' : 'text-green-500'}`}>
+                        <span
+                          className={`font-medium ${axis.gap > 2 ? 'text-red-500' : axis.gap > 1 ? 'text-amber-500' : 'text-green-500'}`}
+                        >
                           {axis.gap}
                         </span>
                       </td>
@@ -846,15 +851,19 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             let parsedBlockSettings: Record<string, unknown> = {};
             try {
               if ((s as any).blockConfigJson) {
-                parsedBlockSettings = typeof (s as any).blockConfigJson === 'string'
-                  ? JSON.parse((s as any).blockConfigJson)
-                  : (s as any).blockConfigJson;
+                parsedBlockSettings =
+                  typeof (s as any).blockConfigJson === 'string'
+                    ? JSON.parse((s as any).blockConfigJson)
+                    : (s as any).blockConfigJson;
               } else if ((s as any).blockConfig) {
-                parsedBlockSettings = typeof (s as any).blockConfig === 'string'
-                  ? JSON.parse((s as any).blockConfig)
-                  : (s as any).blockConfig;
+                parsedBlockSettings =
+                  typeof (s as any).blockConfig === 'string'
+                    ? JSON.parse((s as any).blockConfig)
+                    : (s as any).blockConfig;
               }
-            } catch { /* ignore parse errors */ }
+            } catch {
+              /* ignore parse errors */
+            }
 
             return {
               // IMPORTANT: use sectionKey as stable identifier
@@ -1094,14 +1103,24 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   );
 
   const updateBlock = useCallback((blockId: string, updates: Partial<BlockConfig>) => {
-    setBlocks((prev) => prev.map((b) => {
-      if (b.id !== blockId) return b;
-      // Auto-mark as needsRegeneration when AI-relevant fields change on already-generated block
-      const aiRelevantKeys: (keyof BlockConfig)[] = ['customPrompt', 'sourceContext', 'blockSettings', 'length', 'includeVisuals'];
-      const hasAiChange = Object.keys(updates).some((k) => aiRelevantKeys.includes(k as keyof BlockConfig));
-      const markDirty = b.isGenerated && hasAiChange && !('needsRegeneration' in updates);
-      return { ...b, ...updates, ...(markDirty ? { needsRegeneration: true } : {}) };
-    }));
+    setBlocks((prev) =>
+      prev.map((b) => {
+        if (b.id !== blockId) return b;
+        // Auto-mark as needsRegeneration when AI-relevant fields change on already-generated block
+        const aiRelevantKeys: (keyof BlockConfig)[] = [
+          'customPrompt',
+          'sourceContext',
+          'blockSettings',
+          'length',
+          'includeVisuals',
+        ];
+        const hasAiChange = Object.keys(updates).some((k) =>
+          aiRelevantKeys.includes(k as keyof BlockConfig)
+        );
+        const markDirty = b.isGenerated && hasAiChange && !('needsRegeneration' in updates);
+        return { ...b, ...updates, ...(markDirty ? { needsRegeneration: true } : {}) };
+      })
+    );
   }, []);
 
   const removeBlock = useCallback((blockId: string) => {
@@ -1133,9 +1152,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       const hasExistingChapters = existingChapterKeys.size > 0;
       const chapterNum = existingChapterKeys.size + 1;
       const newKey = `chapter_${chapterNum}_${Date.now()}`;
-      const newTitle =
-        chapterName ||
-        (isPl ? `Rozdział ${chapterNum}` : `Chapter ${chapterNum}`);
+      const newTitle = chapterName || (isPl ? `Rozdział ${chapterNum}` : `Chapter ${chapterNum}`);
 
       if (!hasExistingChapters) {
         // FIRST TIME creating chapters: auto-split blocks into 2 chapters
@@ -1167,9 +1184,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           // Assign the target block to the new chapter
           setBlocks((prev) =>
             prev.map((b) =>
-              b.id === targetBlockId
-                ? { ...b, chapterKey: newKey, chapterTitle: newTitle }
-                : b
+              b.id === targetBlockId ? { ...b, chapterKey: newKey, chapterTitle: newTitle } : b
             )
           );
         } else {
@@ -1179,9 +1194,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           if (blockToMove) {
             setBlocks((prev) =>
               prev.map((b) =>
-                b.id === blockToMove
-                  ? { ...b, chapterKey: newKey, chapterTitle: newTitle }
-                  : b
+                b.id === blockToMove ? { ...b, chapterKey: newKey, chapterTitle: newTitle } : b
               )
             );
           }
@@ -1195,7 +1208,11 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     setBlocks((prev) =>
       prev.map((b) =>
         b.id === blockId
-          ? { ...b, chapterKey: chapterKey || undefined, chapterTitle: chapterKey ? b.chapterTitle : undefined }
+          ? {
+              ...b,
+              chapterKey: chapterKey || undefined,
+              chapterTitle: chapterKey ? b.chapterTitle : undefined,
+            }
           : b
       )
     );
@@ -1203,9 +1220,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
 
   const renameChapter = useCallback((chapterKey: string, newTitle: string) => {
     setBlocks((prev) =>
-      prev.map((b) =>
-        b.chapterKey === chapterKey ? { ...b, chapterTitle: newTitle } : b
-      )
+      prev.map((b) => (b.chapterKey === chapterKey ? { ...b, chapterTitle: newTitle } : b))
     );
   }, []);
 
@@ -1213,9 +1228,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   const deleteChapter = useCallback((chapterKey: string) => {
     setBlocks((prev) =>
       prev.map((b) =>
-        b.chapterKey === chapterKey
-          ? { ...b, chapterKey: undefined, chapterTitle: undefined }
-          : b
+        b.chapterKey === chapterKey ? { ...b, chapterKey: undefined, chapterTitle: undefined } : b
       )
     );
   }, []);
@@ -1235,28 +1248,31 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   }, []);
 
   // Move block to a different chapter
-  const moveBlockToChapter = useCallback((blockId: string, targetChapterKey: string | undefined) => {
-    setBlocks((prev) => {
-      const block = prev.find((b) => b.id === blockId);
-      if (!block) return prev;
+  const moveBlockToChapter = useCallback(
+    (blockId: string, targetChapterKey: string | undefined) => {
+      setBlocks((prev) => {
+        const block = prev.find((b) => b.id === blockId);
+        if (!block) return prev;
 
-      // Get chapter title from existing blocks in target chapter
-      const existingInChapter = prev.find(
-        (b) => b.chapterKey === targetChapterKey && targetChapterKey
-      );
-      const chapterTitle = existingInChapter?.chapterTitle || targetChapterKey;
+        // Get chapter title from existing blocks in target chapter
+        const existingInChapter = prev.find(
+          (b) => b.chapterKey === targetChapterKey && targetChapterKey
+        );
+        const chapterTitle = existingInChapter?.chapterTitle || targetChapterKey;
 
-      return prev.map((b) =>
-        b.id === blockId
-          ? {
-              ...b,
-              chapterKey: targetChapterKey || undefined,
-              chapterTitle: targetChapterKey ? chapterTitle : undefined,
-            }
-          : b
-      );
-    });
-  }, []);
+        return prev.map((b) =>
+          b.id === blockId
+            ? {
+                ...b,
+                chapterKey: targetChapterKey || undefined,
+                chapterTitle: targetChapterKey ? chapterTitle : undefined,
+              }
+            : b
+        );
+      });
+    },
+    []
+  );
 
   // Regenerate single block with AI instruction (REQ-3)
   const regenerateBlock = useCallback(
@@ -1266,9 +1282,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       if (!block || block.id.startsWith('tmp_')) return;
 
       // Mark block as generating
-      setBlocks((prev) =>
-        prev.map((b) => (b.id === blockId ? { ...b, isGenerating: true } : b))
-      );
+      setBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, isGenerating: true } : b)));
 
       try {
         const response = await Api.post(
@@ -1308,9 +1322,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       const block = blocks.find((b) => b.id === blockId);
       if (!block || block.id.startsWith('tmp_')) return;
 
-      setBlocks((prev) =>
-        prev.map((b) => (b.id === blockId ? { ...b, isGenerating: true } : b))
-      );
+      setBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, isGenerating: true } : b)));
 
       try {
         const response = await Api.post(
@@ -1373,7 +1385,9 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     async (sectionKey: string) => {
       if (!report?.id) return [];
       try {
-        const response = await Api.get(`/report-builder/${report.id}/comments?sectionKey=${sectionKey}`);
+        const response = await Api.get(
+          `/report-builder/${report.id}/comments?sectionKey=${sectionKey}`
+        );
         return (response.comments || []).map((c: any) => ({
           id: c.id,
           content: c.content,
@@ -1494,32 +1508,38 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     }
   }, [report?.id]);
 
-  const createManualVersion = useCallback(async (summary?: string) => {
-    if (!report?.id) return;
-    try {
-      await Api.post(`/report-builder/${report.id}/versions`, {
-        changeSummary: summary || (isPl ? 'Ręczny zapis' : 'Manual save'),
-      });
-      toast.success(isPl ? 'Wersja zapisana' : 'Version saved');
-      loadVersions();
-    } catch (err) {
-      console.error('Failed to create version:', err);
-      toast.error(isPl ? 'Błąd zapisu wersji' : 'Failed to save version');
-    }
-  }, [report?.id, isPl, loadVersions]);
+  const createManualVersion = useCallback(
+    async (summary?: string) => {
+      if (!report?.id) return;
+      try {
+        await Api.post(`/report-builder/${report.id}/versions`, {
+          changeSummary: summary || (isPl ? 'Ręczny zapis' : 'Manual save'),
+        });
+        toast.success(isPl ? 'Wersja zapisana' : 'Version saved');
+        loadVersions();
+      } catch (err) {
+        console.error('Failed to create version:', err);
+        toast.error(isPl ? 'Błąd zapisu wersji' : 'Failed to save version');
+      }
+    },
+    [report?.id, isPl, loadVersions]
+  );
 
-  const rollbackToVersion = useCallback(async (versionId: string) => {
-    if (!report?.id) return;
-    try {
-      await Api.post(`/report-builder/versions/${versionId}/rollback`);
-      toast.success(isPl ? 'Przywrócono wersję' : 'Version restored');
-      loadReport(report.id);
-      loadVersions();
-    } catch (err) {
-      console.error('Failed to rollback:', err);
-      toast.error(isPl ? 'Błąd przywracania wersji' : 'Failed to restore version');
-    }
-  }, [report?.id, isPl, loadVersions]);
+  const rollbackToVersion = useCallback(
+    async (versionId: string) => {
+      if (!report?.id) return;
+      try {
+        await Api.post(`/report-builder/versions/${versionId}/rollback`);
+        toast.success(isPl ? 'Przywrócono wersję' : 'Version restored');
+        loadReport(report.id);
+        loadVersions();
+      } catch (err) {
+        console.error('Failed to rollback:', err);
+        toast.error(isPl ? 'Błąd przywracania wersji' : 'Failed to restore version');
+      }
+    },
+    [report?.id, isPl, loadVersions]
+  );
 
   // ==========================================
   // AUTO-SAVE (debounced 30s after changes)
@@ -1546,7 +1566,10 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
 
         // Save section order/config for persisted blocks
         const sectionUpdates = blocks
-          .filter((b) => !b.id.startsWith('tmp_') && !b.id.startsWith('preset_') && !b.id.startsWith('tpl_'))
+          .filter(
+            (b) =>
+              !b.id.startsWith('tmp_') && !b.id.startsWith('preset_') && !b.id.startsWith('tpl_')
+          )
           .map((b, idx) => ({
             sectionKey: b.id,
             enabled: b.enabled,
@@ -1573,7 +1596,16 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [report?.id, isTemplateMode, hasUnsavedChanges, isSaving, isGenerating, blocks, intent, styling]);
+  }, [
+    report?.id,
+    isTemplateMode,
+    hasUnsavedChanges,
+    isSaving,
+    isGenerating,
+    blocks,
+    intent,
+    styling,
+  ]);
 
   // Save report title on blur
   const handleTitleBlur = useCallback(async () => {
@@ -1893,7 +1925,9 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     try {
       if (mode === 'modified') {
         // Only regenerate blocks marked as needsRegeneration
-        const dirtyBlocks = blocks.filter((b) => b.enabled && b.needsRegeneration && !b.id.startsWith('tmp_'));
+        const dirtyBlocks = blocks.filter(
+          (b) => b.enabled && b.needsRegeneration && !b.id.startsWith('tmp_')
+        );
         if (dirtyBlocks.length === 0) {
           toast(isPl ? 'Brak bloków do ponownego wygenerowania' : 'No blocks need regeneration');
           setIsGenerating(false);
@@ -1901,7 +1935,9 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         }
         // Generate them one by one
         for (const block of dirtyBlocks) {
-          setBlocks((prev) => prev.map((b) => (b.id === block.id ? { ...b, isGenerating: true } : b)));
+          setBlocks((prev) =>
+            prev.map((b) => (b.id === block.id ? { ...b, isGenerating: true } : b))
+          );
           try {
             const response = await Api.post(
               `/report-builder/${report.id}/generate-section/${block.id}`,
@@ -1913,7 +1949,8 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   b.id === block.id
                     ? {
                         ...b,
-                        content: response.section.editedContent || response.section.generatedContent,
+                        content:
+                          response.section.editedContent || response.section.generatedContent,
                         isGenerated: true,
                         isGenerating: false,
                         needsRegeneration: false,
@@ -1924,10 +1961,16 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             }
           } catch (err) {
             console.error(`Failed to regenerate block ${block.id}:`, err);
-            setBlocks((prev) => prev.map((b) => (b.id === block.id ? { ...b, isGenerating: false } : b)));
+            setBlocks((prev) =>
+              prev.map((b) => (b.id === block.id ? { ...b, isGenerating: false } : b))
+            );
           }
         }
-        toast.success(isPl ? `Zaktualizowano ${dirtyBlocks.length} bloków` : `Updated ${dirtyBlocks.length} blocks`);
+        toast.success(
+          isPl
+            ? `Zaktualizowano ${dirtyBlocks.length} bloków`
+            : `Updated ${dirtyBlocks.length} blocks`
+        );
       } else {
         // new_only (regenerateAll: false) or all (regenerateAll: true)
         const response = await Api.post(`/report-builder/${report.id}/generate`, {
@@ -2012,7 +2055,10 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
 
           {/* Unsaved dot indicator (no text) */}
           {!isTemplateMode && report?.id && hasUnsavedChanges && (
-            <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0 animate-pulse" title={isPl ? 'Niezapisane zmiany' : 'Unsaved changes'} />
+            <span
+              className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0 animate-pulse"
+              title={isPl ? 'Niezapisane zmiany' : 'Unsaved changes'}
+            />
           )}
         </div>
 
@@ -2025,7 +2071,15 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                 ? 'text-white bg-blue-600 hover:bg-blue-700 shadow-sm'
                 : 'text-slate-500 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 opacity-60'
             }`}
-            title={hasUnsavedChanges ? (isPl ? 'Zapisz zmiany' : 'Save changes') : (isPl ? 'Zapisano' : 'Saved')}
+            title={
+              hasUnsavedChanges
+                ? isPl
+                  ? 'Zapisz zmiany'
+                  : 'Save changes'
+                : isPl
+                  ? 'Zapisano'
+                  : 'Saved'
+            }
           >
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           </button>
@@ -2039,7 +2093,6 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               {isPl ? 'Podgląd' : 'Preview'}
             </button>
           )}
-
         </div>
       </header>
 
@@ -2091,7 +2144,8 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                           {chapter.title}
                         </h2>
                         <span className="text-xs text-slate-400">
-                          {chapter.blocks.filter((b) => b.enabled).length} {isPl ? 'bloków' : 'blocks'}
+                          {chapter.blocks.filter((b) => b.enabled).length}{' '}
+                          {isPl ? 'bloków' : 'blocks'}
                         </span>
                       </div>
                     )}
@@ -2115,8 +2169,16 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                             canMoveUp={globalIndex > 0}
                             canMoveDown={globalIndex < blocks.length - 1}
                             isPl={isPl}
-                            previousBlockSummary={globalIndex > 0 ? getBlockSummary(blocks[globalIndex - 1].id) : undefined}
-                            nextBlockSummary={globalIndex < blocks.length - 1 ? getBlockSummary(blocks[globalIndex + 1].id) : undefined}
+                            previousBlockSummary={
+                              globalIndex > 0
+                                ? getBlockSummary(blocks[globalIndex - 1].id)
+                                : undefined
+                            }
+                            nextBlockSummary={
+                              globalIndex < blocks.length - 1
+                                ? getBlockSummary(blocks[globalIndex + 1].id)
+                                : undefined
+                            }
                             reportId={report?.id}
                             onLoadComments={loadBlockComments}
                             onAddComment={addBlockComment}
@@ -2149,8 +2211,12 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                     canMoveUp={index > 0}
                     canMoveDown={index < blocks.length - 1}
                     isPl={isPl}
-                    previousBlockSummary={index > 0 ? getBlockSummary(blocks[index - 1].id) : undefined}
-                    nextBlockSummary={index < blocks.length - 1 ? getBlockSummary(blocks[index + 1].id) : undefined}
+                    previousBlockSummary={
+                      index > 0 ? getBlockSummary(blocks[index - 1].id) : undefined
+                    }
+                    nextBlockSummary={
+                      index < blocks.length - 1 ? getBlockSummary(blocks[index + 1].id) : undefined
+                    }
                     reportId={report?.id}
                     onLoadComments={loadBlockComments}
                     onAddComment={addBlockComment}

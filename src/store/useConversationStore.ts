@@ -249,7 +249,12 @@ export function getConversationEntityType(
   // Fallback: check title prefix (set by useOpenChatWithContext)
   const title = (conv.title || '').toLowerCase();
   if (title.startsWith('task:') || title.startsWith('task ')) return 'task';
-  if (title.startsWith('decision:') || title.startsWith('decision ') || title.startsWith('decyzja:')) return 'decision';
+  if (
+    title.startsWith('decision:') ||
+    title.startsWith('decision ') ||
+    title.startsWith('decyzja:')
+  )
+    return 'decision';
   return null;
 }
 
@@ -794,9 +799,7 @@ export const useConversationStore = create<ConversationState>()(
                   ),
                   groupedConversations: groupConversations(
                     state.conversations.map((c) =>
-                      c.id === id
-                        ? { ...c, title: retry.title!, titleSource: 'auto' as const }
-                        : c
+                      c.id === id ? { ...c, title: retry.title!, titleSource: 'auto' as const } : c
                     )
                   ),
                 }));

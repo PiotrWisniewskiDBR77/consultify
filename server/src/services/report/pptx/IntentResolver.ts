@@ -91,11 +91,23 @@ const SECTION_TYPE_MAP: Record<string, SlideIntent> = {
  * Validate a string as a known SlideIntent.
  */
 const VALID_INTENTS = new Set<string>([
-  'cover', 'executive_summary', 'section_intro', 'key_messages',
-  'performance_overview', 'single_insight', 'comparison', 'assessment',
-  'root_cause', 'recommendation_single', 'recommendation_portfolio',
-  'initiative_portfolio', 'prioritization_matrix',
-  'roadmap', 'risk_management', 'next_steps', 'appendix',
+  'cover',
+  'executive_summary',
+  'section_intro',
+  'key_messages',
+  'performance_overview',
+  'single_insight',
+  'comparison',
+  'assessment',
+  'root_cause',
+  'recommendation_single',
+  'recommendation_portfolio',
+  'initiative_portfolio',
+  'prioritization_matrix',
+  'roadmap',
+  'risk_management',
+  'next_steps',
+  'appendix',
 ]);
 
 function isValidIntent(s: string): s is SlideIntent {

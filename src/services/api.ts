@@ -643,7 +643,9 @@ export const Api = {
    * Deep Research: Get clarification questions before starting research.
    * Returns 2-3 questions with options to focus the research scope.
    */
-  deepResearchClarify: async (message: string): Promise<{
+  deepResearchClarify: async (
+    message: string
+  ): Promise<{
     success: boolean;
     questions: Array<{ id: string; question: string; options: string[] }>;
     researchType: string;

@@ -34,12 +34,12 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
 
-    const settings = await dbGet(
+    const settings = (await dbGet(
       `
     SELECT settings FROM notification_settings WHERE user_id = ?
   `,
       [userId]
-    ) as { settings: string } | null;
+    )) as { settings: string } | null;
 
     if (settings?.settings) {
       try {
@@ -72,14 +72,14 @@ router.put(
 
     const settingsJson = JSON.stringify(newSettings);
 
-    const result = await dbRun(
+    const result = (await dbRun(
       `
     INSERT INTO notification_settings (user_id, settings, updated_at)
     VALUES (?, ?, datetime('now'))
     ON CONFLICT(user_id) DO UPDATE SET settings = ?, updated_at = datetime('now')
   `,
       [userId, settingsJson, settingsJson]
-    ) as { success?: boolean; error?: string };
+    )) as { success?: boolean; error?: string };
 
     if (!result.success) {
       throw new Error(result.error || 'Failed to update notification settings');
@@ -109,12 +109,12 @@ router.patch(
     }
 
     // Get existing settings
-    const existing = await dbGet(
+    const existing = (await dbGet(
       `
     SELECT settings FROM notification_settings WHERE user_id = ?
   `,
       [userId]
-    ) as { settings: string } | null;
+    )) as { settings: string } | null;
 
     let currentSettings = DEFAULT_SETTINGS;
     if (existing?.settings) {
@@ -131,14 +131,14 @@ router.patch(
 
     const settingsJson = JSON.stringify(currentSettings);
 
-    const result = await dbRun(
+    const result = (await dbRun(
       `
     INSERT INTO notification_settings (user_id, settings, updated_at)
     VALUES (?, ?, datetime('now'))
     ON CONFLICT(user_id) DO UPDATE SET settings = ?, updated_at = datetime('now')
   `,
       [userId, settingsJson, settingsJson]
-    ) as { success?: boolean; error?: string };
+    )) as { success?: boolean; error?: string };
 
     if (!result.success) {
       throw new Error(result.error || 'Failed to update channel settings');
@@ -163,12 +163,12 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
 
-    const result = await dbRun(
+    const result = (await dbRun(
       `
     DELETE FROM notification_settings WHERE user_id = ?
   `,
       [userId]
-    ) as { success?: boolean; error?: string };
+    )) as { success?: boolean; error?: string };
 
     if (!result.success) {
       throw new Error(result.error || 'Failed to reset notification settings');

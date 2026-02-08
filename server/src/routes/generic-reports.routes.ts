@@ -135,10 +135,10 @@ router.post(
 
         const content = String(result?.content || '');
         if (content.length > 50) {
-          await dbRun(
-            `UPDATE reports SET status = 'completed', content = ? WHERE id = ?`,
-            [content, id]
-          );
+          await dbRun(`UPDATE reports SET status = 'completed', content = ? WHERE id = ?`, [
+            content,
+            id,
+          ]);
           generated = true;
         }
       }
@@ -162,10 +162,7 @@ router.delete(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
-    await dbRun('DELETE FROM reports WHERE id = ? AND organization_id = ?', [
-      req.params.id,
-      orgId,
-    ]);
+    await dbRun('DELETE FROM reports WHERE id = ? AND organization_id = ?', [req.params.id, orgId]);
     res.json({ success: true });
   })
 );

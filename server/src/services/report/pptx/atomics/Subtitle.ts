@@ -2,7 +2,7 @@
  * Atomic: Subtitle
  * Secondary heading text — used below titles, in intros, etc.
  */
-import type { DesignTokens, RenderedElement, ElementPosition } from '../types.js';
+import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface SubtitleProps {
   text: string;

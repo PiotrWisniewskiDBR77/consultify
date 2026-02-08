@@ -2,7 +2,7 @@
  * Atomic: Slide Title
  * Renders the main title text of a slide inside the header bar.
  */
-import type { DesignTokens, RenderedElement, ElementPosition } from '../types.js';
+import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface SlideTitleProps {
   text: string;

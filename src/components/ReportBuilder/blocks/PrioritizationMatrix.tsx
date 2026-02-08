@@ -89,24 +89,52 @@ function parsePrioritizationData(content: string): PrioritizationData | null {
 }
 
 const QUADRANT_COLORS = [
-  { bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-800', label: 'Quick Wins', labelPl: 'Szybkie wygrane', emoji: '🚀' },
-  { bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-200 dark:border-blue-800', label: 'Strategic', labelPl: 'Strategiczne', emoji: '🎯' },
-  { bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800', label: 'Fill-ins', labelPl: 'Uzupełnienia', emoji: '📋' },
-  { bg: 'bg-red-50 dark:bg-red-900/20', border: 'border-red-200 dark:border-red-800', label: 'Avoid', labelPl: 'Unikaj', emoji: '⚠️' },
+  {
+    bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+    border: 'border-emerald-200 dark:border-emerald-800',
+    label: 'Quick Wins',
+    labelPl: 'Szybkie wygrane',
+    emoji: '🚀',
+  },
+  {
+    bg: 'bg-blue-50 dark:bg-blue-900/20',
+    border: 'border-blue-200 dark:border-blue-800',
+    label: 'Strategic',
+    labelPl: 'Strategiczne',
+    emoji: '🎯',
+  },
+  {
+    bg: 'bg-amber-50 dark:bg-amber-900/20',
+    border: 'border-amber-200 dark:border-amber-800',
+    label: 'Fill-ins',
+    labelPl: 'Uzupełnienia',
+    emoji: '📋',
+  },
+  {
+    bg: 'bg-red-50 dark:bg-red-900/20',
+    border: 'border-red-200 dark:border-red-800',
+    label: 'Avoid',
+    labelPl: 'Unikaj',
+    emoji: '⚠️',
+  },
 ];
 
 const ITEM_COLORS = [
-  'bg-blue-500', 'bg-purple-500', 'bg-emerald-500', 'bg-amber-500',
-  'bg-rose-500', 'bg-cyan-500', 'bg-indigo-500', 'bg-pink-500',
+  'bg-blue-500',
+  'bg-purple-500',
+  'bg-emerald-500',
+  'bg-amber-500',
+  'bg-rose-500',
+  'bg-cyan-500',
+  'bg-indigo-500',
+  'bg-pink-500',
 ];
 
 // ==========================================
 // COMPONENT
 // ==========================================
 
-export const PrioritizationMatrix: React.FC<PrioritizationMatrixProps> = ({
-  content,
-}) => {
+export const PrioritizationMatrix: React.FC<PrioritizationMatrixProps> = ({ content }) => {
   const data = useMemo(() => parsePrioritizationData(content), [content]);
 
   if (!data || !data.items || data.items.length === 0) {
@@ -136,7 +164,9 @@ export const PrioritizationMatrix: React.FC<PrioritizationMatrixProps> = ({
         <div className="ml-6">
           <div className="grid grid-cols-2 gap-1 aspect-square max-w-md mx-auto">
             {/* Q1: High Impact, Low Effort (Quick Wins) - top-left */}
-            <div className={`relative p-3 rounded-tl-xl ${QUADRANT_COLORS[0].bg} ${QUADRANT_COLORS[0].border} border`}>
+            <div
+              className={`relative p-3 rounded-tl-xl ${QUADRANT_COLORS[0].bg} ${QUADRANT_COLORS[0].border} border`}
+            >
               <div className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mb-2">
                 {QUADRANT_COLORS[0].emoji} {QUADRANT_COLORS[0].label}
               </div>
@@ -156,7 +186,9 @@ export const PrioritizationMatrix: React.FC<PrioritizationMatrixProps> = ({
             </div>
 
             {/* Q2: High Impact, High Effort (Strategic) - top-right */}
-            <div className={`relative p-3 rounded-tr-xl ${QUADRANT_COLORS[1].bg} ${QUADRANT_COLORS[1].border} border`}>
+            <div
+              className={`relative p-3 rounded-tr-xl ${QUADRANT_COLORS[1].bg} ${QUADRANT_COLORS[1].border} border`}
+            >
               <div className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 mb-2">
                 {QUADRANT_COLORS[1].emoji} {QUADRANT_COLORS[1].label}
               </div>
@@ -176,7 +208,9 @@ export const PrioritizationMatrix: React.FC<PrioritizationMatrixProps> = ({
             </div>
 
             {/* Q3: Low Impact, Low Effort (Fill-ins) - bottom-left */}
-            <div className={`relative p-3 rounded-bl-xl ${QUADRANT_COLORS[2].bg} ${QUADRANT_COLORS[2].border} border`}>
+            <div
+              className={`relative p-3 rounded-bl-xl ${QUADRANT_COLORS[2].bg} ${QUADRANT_COLORS[2].border} border`}
+            >
               <div className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 mb-2">
                 {QUADRANT_COLORS[2].emoji} {QUADRANT_COLORS[2].label}
               </div>
@@ -196,7 +230,9 @@ export const PrioritizationMatrix: React.FC<PrioritizationMatrixProps> = ({
             </div>
 
             {/* Q4: Low Impact, High Effort (Avoid) - bottom-right */}
-            <div className={`relative p-3 rounded-br-xl ${QUADRANT_COLORS[3].bg} ${QUADRANT_COLORS[3].border} border`}>
+            <div
+              className={`relative p-3 rounded-br-xl ${QUADRANT_COLORS[3].bg} ${QUADRANT_COLORS[3].border} border`}
+            >
               <div className="text-[10px] font-semibold text-red-600 dark:text-red-400 mb-2">
                 {QUADRANT_COLORS[3].emoji} {QUADRANT_COLORS[3].label}
               </div>

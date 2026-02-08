@@ -12,6 +12,7 @@
  */
 
 import { useCallback } from 'react';
+
 import { useConversationStore } from '../store/useConversationStore';
 
 export interface OpenChatOptions {
@@ -34,12 +35,8 @@ export interface OpenChatOptions {
 }
 
 export function useOpenChatWithContext() {
-  const {
-    activeConversationId,
-    conversations,
-    createConversation,
-    setWorkspaceContext,
-  } = useConversationStore();
+  const { activeConversationId, conversations, createConversation, setWorkspaceContext } =
+    useConversationStore();
 
   return useCallback(
     async (options: OpenChatOptions) => {

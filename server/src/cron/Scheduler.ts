@@ -28,7 +28,9 @@ export const Scheduler = {
 
     // Resolve lazy services
     const [ls_p, amms_p, accs_p, slas_p, tass_p, decs_p, amm_p, fs_p] = await Promise.all([
-      import('../services/ai/learningSystem').then((m) => (m as any).learningSystem || (m as any).default),
+      import('../services/ai/learningSystem').then(
+        (m) => (m as any).learningSystem || (m as any).default
+      ),
       import('../services/ai/aiMemoryMetricsService').then((m) => m.default),
       import('../services/aiCostControlService').then((m) => m.default),
       import('../services/slaService').then((m) => m.default),
@@ -98,9 +100,11 @@ export const Scheduler = {
     // 7. Task Overdue Reminders (assignee/owner/backup) - Run every 30 minutes
     const job7 = cron.schedule('*/30 * * * *', () => {
       logger.info('[Scheduler] Running Task Overdue Stakeholder Notifications');
-      taskAssignmentService.checkAndNotifyOverdueStakeholders({ limit: 200 }).catch((err: Error) => {
-        logger.error('[Scheduler] Task Overdue Notification job failed:', err.message);
-      });
+      taskAssignmentService
+        .checkAndNotifyOverdueStakeholders({ limit: 200 })
+        .catch((err: Error) => {
+          logger.error('[Scheduler] Task Overdue Notification job failed:', err.message);
+        });
     });
     this.jobs.push(job7);
 

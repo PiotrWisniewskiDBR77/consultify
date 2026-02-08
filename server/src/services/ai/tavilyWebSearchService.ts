@@ -90,11 +90,12 @@ export class TavilyWebSearchService {
         title: String(r.title || ''),
         snippet: typeof r.content === 'string' ? r.content.slice(0, 500) : String(r.snippet || ''),
         // Full page content: prefer raw_content (complete page), fall back to content (Tavily summary)
-        content: typeof r.raw_content === 'string'
-          ? r.raw_content.slice(0, 8000)
-          : typeof r.content === 'string'
-            ? r.content
-            : undefined,
+        content:
+          typeof r.raw_content === 'string'
+            ? r.raw_content.slice(0, 8000)
+            : typeof r.content === 'string'
+              ? r.content
+              : undefined,
         score: typeof r.score === 'number' ? r.score : undefined,
         publishedDate: r.published_date ? String(r.published_date) : undefined,
       })),

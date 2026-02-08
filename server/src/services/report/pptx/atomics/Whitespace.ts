@@ -3,7 +3,7 @@
  * Intentional empty space — used for breathing room in layouts.
  * No-op element that occupies logical space but renders nothing.
  */
-import type { RenderedElement, ElementPosition } from '../types.js';
+import type { ElementPosition, RenderedElement } from '../types.js';
 
 export interface WhitespaceProps {
   position: ElementPosition;

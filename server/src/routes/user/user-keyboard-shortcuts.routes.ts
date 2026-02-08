@@ -17,10 +17,10 @@ router.get(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const settings = await dbGet(
+    const settings = (await dbGet(
       'SELECT shortcuts FROM user_keyboard_shortcuts WHERE user_id = ?',
       [req.user?.id]
-    ) as { shortcuts: string } | null;
+    )) as { shortcuts: string } | null;
     res.json(settings?.shortcuts ? JSON.parse(settings.shortcuts) : {});
   })
 );

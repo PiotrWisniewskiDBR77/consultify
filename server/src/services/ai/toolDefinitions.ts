@@ -31,13 +31,15 @@ export const AI_TOOLS: ToolDefinition[] = [
     type: 'function',
     function: {
       name: 'search_web',
-      description: 'Search the web for current information about a topic. Use when the user asks about external data, market trends, competitors, or information not in the organization context.',
+      description:
+        'Search the web for current information about a topic. Use when the user asks about external data, market trends, competitors, or information not in the organization context.',
       parameters: {
         type: 'object',
         properties: {
           query: {
             type: 'string',
-            description: 'Search query — be specific and include relevant context (industry, region, year)',
+            description:
+              'Search query — be specific and include relevant context (industry, region, year)',
           },
           max_results: {
             type: 'number',
@@ -52,7 +54,8 @@ export const AI_TOOLS: ToolDefinition[] = [
     type: 'function',
     function: {
       name: 'search_knowledge_base',
-      description: 'Search the organization\'s internal knowledge base (uploaded documents, reports, policies). Use when user asks about internal data or when you need to verify claims against organizational documents.',
+      description:
+        "Search the organization's internal knowledge base (uploaded documents, reports, policies). Use when user asks about internal data or when you need to verify claims against organizational documents.",
       parameters: {
         type: 'object',
         properties: {
@@ -74,13 +77,15 @@ export const AI_TOOLS: ToolDefinition[] = [
     type: 'function',
     function: {
       name: 'get_assessment_data',
-      description: 'Retrieve digital maturity assessment scores for the current project. Use when discussing maturity gaps, benchmarks, or improvement areas.',
+      description:
+        'Retrieve digital maturity assessment scores for the current project. Use when discussing maturity gaps, benchmarks, or improvement areas.',
       parameters: {
         type: 'object',
         properties: {
           axis: {
             type: 'string',
-            description: 'Specific DRD axis to query (e.g., "cybersecurity", "data_analytics"). Leave empty for all axes.',
+            description:
+              'Specific DRD axis to query (e.g., "cybersecurity", "data_analytics"). Leave empty for all axes.',
           },
           include_benchmarks: {
             type: 'boolean',
@@ -95,7 +100,8 @@ export const AI_TOOLS: ToolDefinition[] = [
     type: 'function',
     function: {
       name: 'calculate_financial',
-      description: 'Calculate financial metrics for initiatives. Use when discussing ROI, NPV, IRR, payback period, or comparing investment scenarios.',
+      description:
+        'Calculate financial metrics for initiatives. Use when discussing ROI, NPV, IRR, payback period, or comparing investment scenarios.',
       parameters: {
         type: 'object',
         properties: {
@@ -106,11 +112,13 @@ export const AI_TOOLS: ToolDefinition[] = [
           },
           initiative_id: {
             type: 'string',
-            description: 'ID of the initiative to calculate for (optional — uses current context if not provided)',
+            description:
+              'ID of the initiative to calculate for (optional — uses current context if not provided)',
           },
           parameters: {
             type: 'object',
-            description: 'Calculation parameters (investment, revenue, discount_rate, period_months)',
+            description:
+              'Calculation parameters (investment, revenue, discount_rate, period_months)',
             properties: {
               investment: { type: 'number' },
               annual_benefit: { type: 'number' },
@@ -127,7 +135,8 @@ export const AI_TOOLS: ToolDefinition[] = [
     type: 'function',
     function: {
       name: 'run_monte_carlo',
-      description: 'Run a Monte Carlo simulation to forecast ROI under uncertainty. Use when the user asks about risk-adjusted ROI, probability of success, scenario modeling, or "what are the chances" of an investment succeeding.',
+      description:
+        'Run a Monte Carlo simulation to forecast ROI under uncertainty. Use when the user asks about risk-adjusted ROI, probability of success, scenario modeling, or "what are the chances" of an investment succeeding.',
       parameters: {
         type: 'object',
         properties: {
@@ -160,7 +169,8 @@ export const AI_TOOLS: ToolDefinition[] = [
     type: 'function',
     function: {
       name: 'get_initiative_status',
-      description: 'Get current status, progress, and details of a specific initiative or all initiatives in the project.',
+      description:
+        'Get current status, progress, and details of a specific initiative or all initiatives in the project.',
       parameters: {
         type: 'object',
         properties: {
@@ -185,13 +195,15 @@ export const AI_TOOLS: ToolDefinition[] = [
     type: 'function',
     function: {
       name: 'compare_benchmarks',
-      description: 'Compare organization\'s metrics against industry benchmarks. Use when the user wants to know how they compare to peers.',
+      description:
+        "Compare organization's metrics against industry benchmarks. Use when the user wants to know how they compare to peers.",
       parameters: {
         type: 'object',
         properties: {
           industry: {
             type: 'string',
-            description: 'Industry to benchmark against (e.g., "manufacturing", "financial_services", "retail")',
+            description:
+              'Industry to benchmark against (e.g., "manufacturing", "financial_services", "retail")',
           },
           metric_type: {
             type: 'string',
@@ -207,7 +219,8 @@ export const AI_TOOLS: ToolDefinition[] = [
     type: 'function',
     function: {
       name: 'find_similar_decisions',
-      description: 'Search the organization\'s decision history for similar past decisions and their outcomes. Use when the user faces a decision that resembles something done before.',
+      description:
+        "Search the organization's decision history for similar past decisions and their outcomes. Use when the user faces a decision that resembles something done before.",
       parameters: {
         type: 'object',
         properties: {
@@ -229,7 +242,8 @@ export const AI_TOOLS: ToolDefinition[] = [
     type: 'function',
     function: {
       name: 'get_stakeholder_analysis',
-      description: 'Run multi-stakeholder analysis on a topic from different executive perspectives (CFO, CTO, COO, CMO, CHRO, CEO). Use for strategic decisions needing broad executive buy-in.',
+      description:
+        'Run multi-stakeholder analysis on a topic from different executive perspectives (CFO, CTO, COO, CMO, CHRO, CEO). Use for strategic decisions needing broad executive buy-in.',
       parameters: {
         type: 'object',
         properties: {
@@ -268,7 +282,9 @@ export async function executeToolCall(
   args: Record<string, any>,
   context: ToolExecutionContext
 ): Promise<string> {
-  logger.info(`[ToolExecutor] Executing tool: ${toolName}`, { args: JSON.stringify(args).slice(0, 200) });
+  logger.info(`[ToolExecutor] Executing tool: ${toolName}`, {
+    args: JSON.stringify(args).slice(0, 200),
+  });
 
   try {
     switch (toolName) {
@@ -322,7 +338,10 @@ async function executeWebSearch(args: any, ctx: ToolExecutionContext): Promise<s
       answer: results.answer || null,
     });
   } catch (err: any) {
-    return JSON.stringify({ source: 'web_search', error: `Web search unavailable: ${err.message}` });
+    return JSON.stringify({
+      source: 'web_search',
+      error: `Web search unavailable: ${err.message}`,
+    });
   }
 }
 
@@ -331,7 +350,11 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
     const ragMod = await import('../ragService.js');
     const ragService = ragMod.default || ragMod;
     if (!ragService?.hybridSearch) {
-      return JSON.stringify({ source: 'knowledge_base', results: [], note: 'RAG service not available' });
+      return JSON.stringify({
+        source: 'knowledge_base',
+        results: [],
+        note: 'RAG service not available',
+      });
     }
     const results = await ragService.hybridSearch(args.query, {
       organizationId: ctx.organizationId,
@@ -357,11 +380,11 @@ async function executeGetAssessment(args: any, ctx: ToolExecutionContext): Promi
     const projectId = ctx.projectId;
     if (!projectId) return JSON.stringify({ source: 'assessment', note: 'No active project' });
 
-    const assessment = await dbGet(
+    const assessment = (await dbGet(
       `SELECT id, name, framework, status, overall_score, target_score 
        FROM maturity_assessments WHERE project_id = ? ORDER BY created_at DESC LIMIT 1`,
       [projectId]
-    ) as any;
+    )) as any;
 
     if (!assessment) return JSON.stringify({ source: 'assessment', note: 'No assessment found' });
 
@@ -373,7 +396,12 @@ async function executeGetAssessment(args: any, ctx: ToolExecutionContext): Promi
 
     return JSON.stringify({
       source: 'assessment',
-      assessment: { name: assessment.name, framework: assessment.framework, overallScore: assessment.overall_score, targetScore: assessment.target_score },
+      assessment: {
+        name: assessment.name,
+        framework: assessment.framework,
+        overallScore: assessment.overall_score,
+        targetScore: assessment.target_score,
+      },
       axes: (axes || []).slice(0, 12).map((a: any) => ({
         axis: a.axis_name || a.axis_id,
         current: a.current_score,
@@ -398,7 +426,10 @@ async function executeFinancialCalc(args: any, ctx: ToolExecutionContext): Promi
 
   switch (args.calculation_type) {
     case 'roi':
-      results.roi = investment > 0 ? ((annualBenefit * years - investment) / investment * 100).toFixed(1) + '%' : 'N/A';
+      results.roi =
+        investment > 0
+          ? (((annualBenefit * years - investment) / investment) * 100).toFixed(1) + '%'
+          : 'N/A';
       break;
     case 'npv': {
       let npv = -investment;
@@ -410,7 +441,8 @@ async function executeFinancialCalc(args: any, ctx: ToolExecutionContext): Promi
       break;
     }
     case 'payback':
-      results.paybackMonths = annualBenefit > 0 ? Math.ceil(investment / (annualBenefit / 12)) : 'N/A';
+      results.paybackMonths =
+        annualBenefit > 0 ? Math.ceil(investment / (annualBenefit / 12)) : 'N/A';
       break;
     default:
       results.note = `Calculation type "${args.calculation_type}" — provide investment, annual_benefit, discount_rate, period_months in parameters.`;
@@ -477,8 +509,11 @@ async function executeGetInitiativeStatus(args: any, ctx: ToolExecutionContext):
       source: 'initiatives',
       total: (initiatives || []).length,
       summary: (initiatives || []).map((i: any) => ({
-        name: i.name, status: i.status, priority: i.priority,
-        progress: i.progress, roi: i.expected_roi,
+        name: i.name,
+        status: i.status,
+        priority: i.priority,
+        progress: i.progress,
+        roi: i.expected_roi,
       })),
     });
   } catch (err: any) {
@@ -496,7 +531,10 @@ async function executeCompareBenchmarks(args: any, ctx: ToolExecutionContext): P
     }
     return JSON.stringify({ source: 'benchmarks', note: 'Benchmark service not available' });
   } catch {
-    return JSON.stringify({ source: 'benchmarks', note: 'Industry benchmarks not configured for this deployment' });
+    return JSON.stringify({
+      source: 'benchmarks',
+      note: 'Industry benchmarks not configured for this deployment',
+    });
   }
 }
 
@@ -528,8 +566,10 @@ async function executeFindDecisions(args: any, ctx: ToolExecutionContext): Promi
 
 async function executeStakeholderAnalysis(args: any, ctx: ToolExecutionContext): Promise<string> {
   try {
-    const stakeholderMod = await import('./multiStakeholderService.js') as any;
-    const analyzeFromMultiplePerspectives = stakeholderMod.analyzeFromMultiplePerspectives || stakeholderMod.default?.analyzeFromMultiplePerspectives;
+    const stakeholderMod = (await import('./multiStakeholderService.js')) as any;
+    const analyzeFromMultiplePerspectives =
+      stakeholderMod.analyzeFromMultiplePerspectives ||
+      stakeholderMod.default?.analyzeFromMultiplePerspectives;
     if (analyzeFromMultiplePerspectives) {
       const analysis = await analyzeFromMultiplePerspectives(
         args.topic,
@@ -538,7 +578,10 @@ async function executeStakeholderAnalysis(args: any, ctx: ToolExecutionContext):
       );
       return JSON.stringify({ source: 'stakeholder_analysis', topic: args.topic, analysis });
     }
-    return JSON.stringify({ source: 'stakeholder_analysis', note: 'Multi-stakeholder service not available' });
+    return JSON.stringify({
+      source: 'stakeholder_analysis',
+      note: 'Multi-stakeholder service not available',
+    });
   } catch (err: any) {
     return JSON.stringify({ source: 'stakeholder_analysis', error: err.message });
   }
@@ -547,15 +590,18 @@ async function executeStakeholderAnalysis(args: any, ctx: ToolExecutionContext):
 /**
  * Get tool definitions filtered by context (e.g., don't offer web search if no Tavily key).
  */
-export function getAvailableTools(options?: { hasWebSearch?: boolean; hasRAG?: boolean }): ToolDefinition[] {
+export function getAvailableTools(options?: {
+  hasWebSearch?: boolean;
+  hasRAG?: boolean;
+}): ToolDefinition[] {
   let tools = [...AI_TOOLS];
 
   if (!options?.hasWebSearch) {
-    tools = tools.filter(t => t.function.name !== 'search_web');
+    tools = tools.filter((t) => t.function.name !== 'search_web');
   }
 
   if (!options?.hasRAG) {
-    tools = tools.filter(t => t.function.name !== 'search_knowledge_base');
+    tools = tools.filter((t) => t.function.name !== 'search_knowledge_base');
   }
 
   return tools;

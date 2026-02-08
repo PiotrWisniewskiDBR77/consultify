@@ -295,10 +295,7 @@ const MetricCell: React.FC<{
   </div>
 );
 
-const ImpactEffortDots: React.FC<{ impact?: number; effort?: number }> = ({
-  impact,
-  effort,
-}) => {
+const ImpactEffortDots: React.FC<{ impact?: number; effort?: number }> = ({ impact, effort }) => {
   if (impact === undefined && effort === undefined) return null;
 
   const renderDots = (count: number, maxCount: number, activeColor: string) => (
@@ -388,7 +385,9 @@ const InitiativeCardItem: React.FC<{
             </span>
           )}
           {priorityBadge.label && (
-            <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded ${priorityBadge.color}`}>
+            <span
+              className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded ${priorityBadge.color}`}
+            >
               {priorityBadge.label}
             </span>
           )}
@@ -452,14 +451,18 @@ const InitiativeCardItem: React.FC<{
         {/* Metrics Grid */}
         {(item.budget || item.roi || item.timeline || item.timeframe || item.owner) && (
           <div className="grid grid-cols-3 gap-2 mt-3">
-            {(item.budget !== undefined) && (
+            {item.budget !== undefined && (
               <MetricCell
                 icon={<DollarSign className="w-3 h-3" />}
                 label="Budget"
-                value={typeof item.budget === 'number' ? `$${item.budget.toLocaleString()}` : String(item.budget)}
+                value={
+                  typeof item.budget === 'number'
+                    ? `$${item.budget.toLocaleString()}`
+                    : String(item.budget)
+                }
               />
             )}
-            {(item.roi !== undefined) && (
+            {item.roi !== undefined && (
               <MetricCell
                 icon={<TrendingUp className="w-3 h-3" />}
                 label="ROI"
@@ -475,11 +478,7 @@ const InitiativeCardItem: React.FC<{
               />
             )}
             {item.owner && (
-              <MetricCell
-                icon={<User className="w-3 h-3" />}
-                label="Owner"
-                value={item.owner}
-              />
+              <MetricCell icon={<User className="w-3 h-3" />} label="Owner" value={item.owner} />
             )}
           </div>
         )}
@@ -576,10 +575,14 @@ export const InitiativeCards: React.FC<InitiativeCardsProps> = ({
           {data.items.length} initiative{data.items.length !== 1 ? 's' : ''}
         </span>
         <div className="flex items-center gap-3 text-[10px] text-slate-400">
-          {data.items.filter((i) => i.priority === 'high' || i.priority === 'critical').length > 0 && (
+          {data.items.filter((i) => i.priority === 'high' || i.priority === 'critical').length >
+            0 && (
             <span className="flex items-center gap-1 text-red-500">
               <AlertTriangle className="w-3 h-3" />
-              {data.items.filter((i) => i.priority === 'high' || i.priority === 'critical').length} high priority
+              {
+                data.items.filter((i) => i.priority === 'high' || i.priority === 'critical').length
+              }{' '}
+              high priority
             </span>
           )}
           {data.items.filter((i) => i.strategicIntent === 'Grow').length > 0 && (

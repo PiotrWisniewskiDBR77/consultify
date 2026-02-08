@@ -68,9 +68,7 @@ export interface MessageRendererProps {
   agentAuditBusy: boolean;
   agentRegistryById: Record<string, any>;
   agentAuditActiveTabByMessageId: Record<string, string>;
-  setAgentAuditActiveTabByMessageId: React.Dispatch<
-    React.SetStateAction<Record<string, string>>
-  >;
+  setAgentAuditActiveTabByMessageId: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 
   // Deep Thinking state
   deepThinkingHint: { reason: string; confidence: 'low' | 'medium' | 'high' } | null;
@@ -141,7 +139,10 @@ export interface MessageRendererProps {
   handleRunDirectedDeepening: (agentAuditPayload: any) => void;
   handleMultiSelectToggle: (value: string) => void;
   handleMultiSelectConfirm: () => void;
-  refreshAgentAuditSuggestionsOnly: (overrides?: { userIntent?: 'validate' | 'stress_test' | 'approve'; maxAgents?: 2 | 3 | 4 }) => void;
+  refreshAgentAuditSuggestionsOnly: (overrides?: {
+    userIntent?: 'validate' | 'stress_test' | 'approve';
+    maxAgents?: 2 | 3 | 4;
+  }) => void;
   speak: (text: string) => void;
   stopSpeaking: () => void;
   setDtHintDismissed: (v: boolean) => void;
@@ -224,7 +225,9 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   const { t } = useTranslation();
 
   // Quick feedback state (hover toolbar thumbs)
-  const [quickFeedbackGiven, setQuickFeedbackGiven] = useState<'positive' | 'negative' | null>(null);
+  const [quickFeedbackGiven, setQuickFeedbackGiven] = useState<'positive' | 'negative' | null>(
+    null
+  );
 
   const isLastMessage = index === displayMessages.length - 1;
   const isHovered = hoveredMessageId === msg.id;
@@ -246,20 +249,22 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
       onMouseLeave={() => setHoveredMessageId(null)}
     >
       {/* Cursor-like thinking log: plain dim text, no background, no panel */}
-      {msg.role === 'ai' && msg.isStreaming && (thinkingSteps.length > 0 || !msg.content?.trim()) && (
-        <div className={`${isCompact ? 'ml-7' : 'ml-9'} max-w-[85%]`}>
-          <ThinkingStatusLine
-            compact={isCompact}
-            show
-            showSpinner={false}
-            lines={thinkingSteps
-              .map((s) => String((s as any)?.label || '').trim())
-              .filter(Boolean)
-              .slice(-6)}
-            label={t('thinking.processing', 'Rozważam Twoje zapytanie...') as string}
-          />
-        </div>
-      )}
+      {msg.role === 'ai' &&
+        msg.isStreaming &&
+        (thinkingSteps.length > 0 || !msg.content?.trim()) && (
+          <div className={`${isCompact ? 'ml-7' : 'ml-9'} max-w-[85%]`}>
+            <ThinkingStatusLine
+              compact={isCompact}
+              show
+              showSpinner={false}
+              lines={thinkingSteps
+                .map((s) => String((s as any)?.label || '').trim())
+                .filter(Boolean)
+                .slice(-6)}
+              label={t('thinking.processing', 'Rozważam Twoje zapytanie...') as string}
+            />
+          </div>
+        )}
 
       <div
         className={`flex gap-2 ${isCompact ? 'gap-2' : 'gap-3'} ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
@@ -341,9 +346,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     )}
                     <ResearchProgress
                       topic={String((msg as any).metadata?.researchProgress?.topic || '')}
-                      stage={
-                        ((msg as any).metadata?.researchProgress?.stage || 'searching') as any
-                      }
+                      stage={((msg as any).metadata?.researchProgress?.stage || 'searching') as any}
                       queries={((msg as any).metadata?.researchProgress?.queries || []) as any}
                       sources={((msg as any).metadata?.researchProgress?.sources || []) as any}
                       round={(msg as any).metadata?.researchProgress?.round}
@@ -521,8 +524,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                         </div>
                         <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
                           Selected: {dtPendingConfirm.agentAudit?.selectedAgentIds?.length || 0}{' '}
-                          reviewer(s) · They will audit the final report (no interference with
-                          DT).
+                          reviewer(s) · They will audit the final report (no interference with DT).
                         </div>
                       </div>
                     ) : null}
@@ -551,8 +553,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                               isDisabled ||
                               (Array.isArray(dtPendingConfirm.agentAudit?.suggested?.agents) &&
                                 dtPendingConfirm.agentAudit?.suggested?.agents?.length > 0 &&
-                                (dtPendingConfirm.agentAudit?.selectedAgentIds?.length || 0) ===
-                                  0)
+                                (dtPendingConfirm.agentAudit?.selectedAgentIds?.length || 0) === 0)
                             }
                             className="px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                           >
@@ -644,9 +645,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                 const meta = [
                                   String(s.title || 'KB'),
                                   s.version ? `v${String(s.version)}` : '',
-                                  typeof s.score === 'number'
-                                    ? `score=${s.score.toFixed(2)}`
-                                    : '',
+                                  typeof s.score === 'number' ? `score=${s.score.toFixed(2)}` : '',
                                 ]
                                   .filter(Boolean)
                                   .join(' · ');
@@ -855,9 +854,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                                     <span className="font-medium">
                                                       {String(c.withAgentId || '')}
                                                     </span>
-                                                    {c.aboutArea
-                                                      ? ` (${String(c.aboutArea)})`
-                                                      : ''}
+                                                    {c.aboutArea ? ` (${String(c.aboutArea)})` : ''}
                                                     : {String(c.conflictStatement || '')}
                                                   </li>
                                                 ))}
@@ -921,7 +918,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               <div className="mt-2 flex items-center gap-2 text-[11px] text-amber-600 dark:text-amber-400">
                 <Loader2 size={12} className="animate-spin flex-shrink-0" />
                 <span>
-                  {t('stream.retrying', 'Connection issue, retrying...')} ({retryInfo.attempt}/{retryInfo.maxRetries})
+                  {t('stream.retrying', 'Connection issue, retrying...')} ({retryInfo.attempt}/
+                  {retryInfo.maxRetries})
                 </span>
               </div>
             )}
@@ -935,8 +933,19 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 </span>
                 {/* Cost-per-analysis estimate badge */}
                 {msg.content && msg.content.length > 50 && (
-                  <span className="text-slate-400 dark:text-slate-500" title={t('stream.costEstimateTooltip', 'Estimated AI cost for this response based on token usage')}>
-                    ~${((msg.content.length / 4) * 0.000015 + (msg.content.length / 4) * 0.00006).toFixed(4)} est.
+                  <span
+                    className="text-slate-400 dark:text-slate-500"
+                    title={t(
+                      'stream.costEstimateTooltip',
+                      'Estimated AI cost for this response based on token usage'
+                    )}
+                  >
+                    ~$
+                    {(
+                      (msg.content.length / 4) * 0.000015 +
+                      (msg.content.length / 4) * 0.00006
+                    ).toFixed(4)}{' '}
+                    est.
                   </span>
                 )}
               </div>
@@ -946,7 +955,9 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             {!msg.isStreaming && isLastMessage && abortFeedback && (
               <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 transition-opacity duration-500">
                 {abortFeedback === 'partial' ? (
-                  <span>{t('stream.stoppedPartial', 'Response stopped. Partial answer shown above.')}</span>
+                  <span>
+                    {t('stream.stoppedPartial', 'Response stopped. Partial answer shown above.')}
+                  </span>
                 ) : (
                   <span>{t('stream.cancelled', 'Response cancelled.')}</span>
                 )}
@@ -1134,10 +1145,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             className={`${isCompact ? 'ml-7' : 'ml-9'} mt-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-lg`}
           >
             <div className="flex items-start gap-2">
-              <Lightbulb
-                size={16}
-                className="text-amber-500 dark:text-amber-400 mt-0.5 shrink-0"
-              />
+              <Lightbulb size={16} className="text-amber-500 dark:text-amber-400 mt-0.5 shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-amber-800 dark:text-amber-200">
                   {t(
@@ -1276,9 +1284,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             <div className="flex gap-2">
               <button
                 onClick={() =>
-                  handleSendMessage(
-                    t('deepThinking.narrowFocus', 'Narrow focus on the first path')
-                  )
+                  handleSendMessage(t('deepThinking.narrowFocus', 'Narrow focus on the first path'))
                 }
                 className="px-3 py-1 text-xs font-medium rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
               >
