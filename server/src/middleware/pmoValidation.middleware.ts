@@ -264,7 +264,7 @@ export const logStatusChange = (entityType: string) => {
           await DbPromise.run(logSql, [
             uuidv4(),
             req.organizationId || 'unknown',
-            req.userId,
+            req.userId || null,
             entityType,
             req.params.id,
             JSON.stringify({ status: req.previousStatus }),
@@ -272,7 +272,15 @@ export const logStatusChange = (entityType: string) => {
           ]);
         } catch (err: any) {
           // Log error but don't fail the request
-          logger.error('[PMO Validation] Failed to log status change:', err);
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          logger.error('[PMO Validation] Failed to log status change:', {
+            error: errorMessage,
+            sql: logSql,
+            organizationId: req.organizationId,
+            userId: req.userId,
+            entityType,
+            entityId: req.params.id,
+          });
         }
       }
 
