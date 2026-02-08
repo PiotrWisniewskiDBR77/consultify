@@ -1190,7 +1190,7 @@ export async function updateReportStatus(
   const now = new Date().toISOString();
 
   let additionalFields = '';
-  const params: unknown[] = [status, now, userId, now];
+  const params: unknown[] = [status, now, userId];
 
   if (status === 'GENERATED') {
     additionalFields = ', generated_at = ?';

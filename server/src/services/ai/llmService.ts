@@ -733,45 +733,45 @@ export class LLMService {
             abortSignal: AbortSignal.timeout(60000),
           });
 
-          // Wrap textStream so that errors thrown during iteration (e.g. 429
-          // rate limit from Gemini free tier) are properly propagated instead
-          // of silently ending the iterator with zero chunks.
-          const rawStream = result.textStream;
-          const responsePromise = result.response; // resolves/rejects when the stream completes
+          // Force-consume the first chunk BEFORE returning. This detects 429 /
+          // rate-limit errors that only manifest during iteration (the Vercel AI
+          // SDK resolves streamText() but the underlying API call fails lazily).
+          // If we don't do this, the error surfaces only inside the route's
+          // for-await loop, AFTER process() has already returned, making the
+          // provider-fallback mechanism in AIPipeline.process() useless.
+          const rawIterator = result.textStream[Symbol.asyncIterator]();
+          let firstChunk: IteratorResult<string>;
+          try {
+            firstChunk = await rawIterator.next();
+          } catch (firstChunkError: any) {
+            // The actual API call failed (e.g. Gemini 429)
+            aiLogger.warn(
+              'LLMService',
+              `Stream first-chunk failed (${providerId}/${modelConfig.id}): ${firstChunkError?.message?.slice(0, 200)}`
+            );
+            throw firstChunkError;
+          }
 
-          async function* safeTextStream(): AsyncGenerator<string> {
-            let hasYielded = false;
-            try {
-              for await (const chunk of rawStream) {
-                hasYielded = true;
-                yield chunk;
-              }
-            } catch (streamError: any) {
-              // Re-throw stream iteration errors so callers can handle them
-              await circuitBreaker.recordFailure(providerId, streamError);
-              throw streamError;
+          // Build a generator that yields the first chunk we already consumed,
+          // then delegates to the rest of the iterator.
+          async function* prependedStream(): AsyncGenerator<string> {
+            if (!firstChunk.done && firstChunk.value) {
+              yield firstChunk.value;
             }
-
-            // If no chunks were yielded, the underlying request likely failed
-            // silently (Vercel AI SDK may swallow errors in certain cases).
-            // Check the response promise for the actual error.
-            if (!hasYielded) {
-              try {
-                await responsePromise;
-              } catch (respError: any) {
-                await circuitBreaker.recordFailure(providerId, respError);
-                throw respError;
-              }
+            while (true) {
+              const next = await rawIterator.next();
+              if (next.done) break;
+              if (next.value) yield next.value;
             }
           }
 
           await circuitBreaker.recordSuccess(providerId);
-          return { stream: safeTextStream() };
+          return { stream: prependedStream() };
         } catch (error: unknown) {
           lastError = error as Error;
           aiLogger.warn(
             'LLMService',
-            `Stream initialization failed (attempt ${attempt + 1}/2): ${lastError.message}`
+            `Stream initialization failed (attempt ${attempt + 1}/2): ${lastError.message?.slice(0, 200)}`
           );
           if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 1000));
         }

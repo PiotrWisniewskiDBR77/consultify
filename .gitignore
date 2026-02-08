@@ -168,3 +168,6 @@ server/logs/
 
 # Analysis artifacts
 _analysis/
+
+# Cursor IDE workspace
+.cursor/
