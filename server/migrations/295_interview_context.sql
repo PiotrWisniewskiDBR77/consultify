@@ -256,11 +256,12 @@ CREATE TABLE IF NOT EXISTS interview_context_exports (
 -- PERMISSIONS
 -- ==========================================
 
-INSERT OR IGNORE INTO permissions (key, name, description, category, icon) VALUES
-('INTERVIEW_START', 'Interview: Start Session', 'Start interview session', 'INTERVIEW', 'clipboard_list'),
-('INTERVIEW_VIEW_ALL', 'Interview: View All Sessions', 'View all interview sessions in organization', 'INTERVIEW', 'eye'),
-('INTERVIEW_EXPORT_CONTEXT', 'Interview: Export Context', 'Export interview context to Tools/Assessment', 'INTERVIEW', 'download'),
-('INTERVIEW_COMPLETE', 'Interview: Mark Complete', 'Mark interview as complete', 'INTERVIEW', 'check_circle');
+-- Note: PostgreSQL permissions table may not have 'name' and 'icon' columns
+INSERT OR IGNORE INTO permissions (key, description, category) VALUES
+('INTERVIEW_START', 'Start interview session', 'INTERVIEW'),
+('INTERVIEW_VIEW_ALL', 'View all interview sessions in organization', 'INTERVIEW'),
+('INTERVIEW_EXPORT_CONTEXT', 'Export interview context to Tools/Assessment', 'INTERVIEW'),
+('INTERVIEW_COMPLETE', 'Mark interview as complete', 'INTERVIEW');
 
 INSERT OR IGNORE INTO role_permissions (id, role, permission_key, description) VALUES
 ('rp_interview_start_user', 'USER', 'INTERVIEW_START', 'Start interview session'),

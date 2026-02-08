@@ -108,8 +108,9 @@ CREATE INDEX IF NOT EXISTS idx_interview_assignments_due_status
 -- PERMISSIONS FOR REMINDER/ESCALATION
 -- ==========================================
 
-INSERT OR IGNORE INTO permissions (key, name, description, category, icon) VALUES
-    ('INTERVIEW_REMIND', 'Interview: Send Reminders', 'Send reminders for interview assignments', 'INTERVIEW', 'bell');
+-- Note: PostgreSQL permissions table may not have 'name' and 'icon' columns
+INSERT OR IGNORE INTO permissions (key, description, category) VALUES
+    ('INTERVIEW_REMIND', 'Send reminders for interview assignments', 'INTERVIEW');
 
 INSERT OR IGNORE INTO role_permissions (id, role, permission_key, description) VALUES
     ('rp_interview_remind_pm', 'PROJECT_MANAGER', 'INTERVIEW_REMIND', 'Send interview reminders'),

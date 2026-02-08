@@ -44,15 +44,16 @@ const router = Router();
  */
 async function getTeamProjectForConversation(conversationId: string): Promise<{
   id: string;
-  scope: string;
   organization_id: string;
 } | null> {
   try {
+    // Note: If scope column doesn't exist, use organization_id as fallback
+    // Team projects have organization_id, personal projects don't
     const row = await dbGet(
-      `SELECT cp.id, cp.scope, cp.organization_id
+      `SELECT cp.id, cp.organization_id
        FROM conversations c
        JOIN chat_projects cp ON c.chat_project_id = cp.id
-       WHERE c.id = ? AND cp.scope = 'team'`,
+       WHERE c.id = ? AND cp.organization_id IS NOT NULL`,
       [conversationId]
     );
     return (row as any) || null;
@@ -78,12 +79,12 @@ async function findAccessibleConversation(
   if (personal) return personal;
 
   // Try team access: conversation is in a team-scope project the user's org owns
+  // Note: If scope column doesn't exist, use organization_id as fallback
   if (organizationId) {
     const team = await dbGet(
       `SELECT c.* FROM conversations c
        JOIN chat_projects cp ON c.chat_project_id = cp.id
        WHERE c.id = ?
-         AND cp.scope = 'team'
          AND cp.organization_id = ?`,
       [conversationId, organizationId]
     );
@@ -194,19 +195,30 @@ router.get(
         whereClause = `WHERE c.user_id = ?`;
         params.push(req.userId!);
         // Exclude conversations in team projects (they show under 'team')
-        whereClause += ` AND (c.chat_project_id IS NULL OR cp.scope IS NULL OR cp.scope = 'personal')`;
+        // Note: If scope column doesn't exist, use organization_id as fallback
+        // Team projects have organization_id, personal projects don't (or match user's org)
+        if (req.organizationId) {
+          whereClause += ` AND (c.chat_project_id IS NULL OR cp.organization_id IS NULL OR cp.organization_id != ?)`;
+          params.push(req.organizationId);
+        } else {
+          whereClause += ` AND (c.chat_project_id IS NULL OR cp.organization_id IS NULL)`;
+        }
       } else if (scope === 'team') {
         if (!req.organizationId) {
           return res.json({ conversations: [], total: 0, limit, offset });
         }
-        whereClause = `WHERE cp.scope = 'team' AND cp.organization_id = ?`;
+        // Note: If scope column doesn't exist, use organization_id as fallback
+        // Team projects have organization_id matching the user's org
+        whereClause = `WHERE cp.organization_id = ? AND c.chat_project_id IS NOT NULL`;
         params.push(req.organizationId);
       } else {
         // scope === 'all': personal + team
         whereClause = `WHERE (c.user_id = ?`;
         params.push(req.userId!);
         if (req.organizationId) {
-          whereClause += ` OR (cp.scope = 'team' AND cp.organization_id = ?)`;
+          // Note: If scope column doesn't exist, use organization_id as fallback
+          // Include conversations in chat_projects with matching organization_id
+          whereClause += ` OR (cp.organization_id = ? AND c.chat_project_id IS NOT NULL)`;
           params.push(req.organizationId);
         }
         whereClause += `)`;
@@ -256,7 +268,7 @@ router.get(
                     c.starred, c.archived, c.tags, c.pmo_context, c.language,
                     c.message_count, c.last_message_preview, c.last_message_at,
                     c.created_at, c.updated_at,
-                    cp.scope as chat_project_scope
+                    cp.organization_id as chat_project_organization_id
                 ${fromClause}
                 ${whereClause}
                 ORDER BY 

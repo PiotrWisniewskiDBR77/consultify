@@ -211,8 +211,6 @@ router.get(
           d.description,
           d.type as decisionType,
           d.status,
-          d.priority,
-          d.impact,
           d.deadline as dueDate,
           d.created_at as createdAt,
           p.name as projectName
@@ -310,7 +308,7 @@ router.get(
     const pendingDecisions =
       (await queryHelpers.queryAll<any>(
         `
-        SELECT d.id, d.title, d.description, d.type as decisionType, d.status, d.priority, d.deadline as dueDate, d.created_at as createdAt,
+        SELECT d.id, d.title, d.description, d.type as decisionType, d.status, d.deadline as dueDate, d.created_at as createdAt,
                p.name as projectName
         FROM decisions d
         LEFT JOIN projects p ON d.project_id = p.id
@@ -701,9 +699,11 @@ router.get(
          AND lower(coalesce(status,'')) NOT IN ('done','completed','validated')`,
       [orgId, userId, today]
     );
+    // Note: PostgreSQL doesn't support datetime() function - columns are already timestamps
+    // Compare timestamps directly without function calls
     const onTime = await queryHelpers.queryOne<{ onTime: number; totalDone: number }>(
       `SELECT
-         SUM(CASE WHEN due_date IS NOT NULL AND completed_at IS NOT NULL AND datetime(completed_at) <= datetime(due_date) THEN 1 ELSE 0 END) as onTime,
+         SUM(CASE WHEN due_date IS NOT NULL AND completed_at IS NOT NULL AND completed_at <= due_date THEN 1 ELSE 0 END) as onTime,
          SUM(CASE WHEN completed_at IS NOT NULL THEN 1 ELSE 0 END) as totalDone
        FROM tasks
        WHERE organization_id = ? AND assignee_id = ? AND completed_at IS NOT NULL AND completed_at >= ?`,

@@ -170,11 +170,52 @@ function adaptQuery(sql: string): string {
     }
   );
 
+  // Replace date('now', 'start of month', '-N months') FIRST (most specific)
+  // Handle both single and double quotes, flexible whitespace (including newlines via \s)
+  // Match with non-greedy quantifiers to avoid over-matching
+  adapted = adapted.replace(
+    /date\s*\(\s*['"]now['"]\s*,\s*['"]start\s+of\s+month['"]\s*,\s*['"]-(\d+)\s+months?['"]\s*\)/gi,
+    (_match, months) => {
+      return `date_trunc('month', CURRENT_DATE) - INTERVAL '${months} month'`;
+    }
+  );
+
+  // Replace date('now', 'start of month') - must come after the pattern with 3 args
+  adapted = adapted.replace(
+    /date\s*\(\s*['"]now['"]\s*,\s*['"]start\s+of\s+month['"]\s*\)/gi,
+    "date_trunc('month', CURRENT_DATE)"
+  );
+  
+  // Debug: Log if date functions are still present (for troubleshooting)
+  if (adapted.includes("date('now'") || adapted.includes('date("now"')) {
+    logger.warn('[Postgres] adaptQuery: Date function still present after replacement:', adapted.substring(0, 200));
+  }
+
   // Replace date('now') with CURRENT_DATE
-  adapted = adapted.replace(/date\(['"]now['"]\)/g, 'CURRENT_DATE');
+  adapted = adapted.replace(/date\s*\(\s*['"]now['"]\s*\)/g, 'CURRENT_DATE');
 
   // Replace date(column) with column::date (PostgreSQL cast)
-  adapted = adapted.replace(/date\(([^)]+)\)/g, '$1::date');
+  // This must come LAST - all date('now', ...) patterns should already be replaced above
+  // Match date(anything) that hasn't been replaced yet (doesn't start with quotes or 'now')
+  adapted = adapted.replace(/date\s*\(\s*([^'"]+?)\s*\)/g, (match, content) => {
+    // Skip if it looks like it might be a date('now', ...) pattern that wasn't caught
+    if (content.trim().startsWith('now')) {
+      return match; // Don't replace
+    }
+    return `${content}::date`;
+  });
+
+  // Replace datetime(column) with just column (PostgreSQL timestamps can be compared directly)
+  // This must come after datetime('now', ...) patterns are replaced
+  // Match datetime(column) where column is not 'now' or a string literal
+  adapted = adapted.replace(/datetime\s*\(\s*([^'"]+?)\s*\)/gi, (match, content) => {
+    // Skip if it looks like datetime('now', ...) that wasn't caught
+    if (content.trim().startsWith('now') || content.trim().startsWith("now")) {
+      return match; // Don't replace
+    }
+    // Return just the column/expression - PostgreSQL timestamps can be compared directly
+    return content.trim();
+  });
 
   // Replace DATETIME column type with TIMESTAMP for PostgreSQL
   adapted = adapted.replace(/\bDATETIME\b/gi, 'TIMESTAMP');

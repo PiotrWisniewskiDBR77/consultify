@@ -391,11 +391,13 @@ router.get('/dashboard', async (req: Request, res: Response, next: NextFunction)
     const { get: dbGet, all: dbAll } = await import('../utils/DbPromise.js');
 
     // Get partner organization info
+    // Note: commission_rate may not exist in partner_organizations table
+    // It's stored per-attribution in partner_attributions.commission_rate_percent
     const partnerOrg = await dbGet<{
       tier: string;
       status: string;
-      commission_rate: number;
-    }>(db, `SELECT tier, status, commission_rate FROM partner_organizations WHERE id = ?`, [
+      commission_rate?: number;
+    }>(db, `SELECT tier, status FROM partner_organizations WHERE id = ?`, [
       partnerOrgId,
     ]);
 

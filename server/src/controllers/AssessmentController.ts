@@ -93,9 +93,7 @@ let decisionColumnsCache: Set<string> | null = null;
 const getDecisionColumns = async (): Promise<Set<string>> => {
   if (decisionColumnsCache) return decisionColumnsCache;
   try {
-    const rows = (await queryHelpers.queryAll(`PRAGMA table_info(decisions)`)) as Array<{
-      name?: string;
-    }>;
+    const rows = await queryHelpers.getTableColumns('decisions');
     const cols = new Set((rows || []).map((row) => row.name).filter(Boolean) as string[]);
     if (cols.size > 0) {
       decisionColumnsCache = cols;
@@ -264,17 +262,13 @@ const ensureAssessmentSchema = async (): Promise<void> => {
       const cached = tableColumnsCache.get(table);
       if (cached) return cached;
       const cols = new Set<string>();
-      if (isSQLite) {
-        try {
-          const rows = (await queryHelpers.queryAll(`PRAGMA table_info(${table})`)) as Array<{
-            name?: string;
-          }>;
-          for (const r of rows || []) {
-            if (r?.name) cols.add(String(r.name));
-          }
-        } catch {
-          // ignore
+      try {
+        const rows = await queryHelpers.getTableColumns(table);
+        for (const r of rows || []) {
+          if (r?.name) cols.add(String(r.name));
         }
+      } catch {
+        // ignore
       }
       tableColumnsCache.set(table, cols);
       return cols;
@@ -481,22 +475,23 @@ const ensureAssessmentSchema = async (): Promise<void> => {
     );
 
     // Permissions
-    const permissionInsertSql = `INSERT OR IGNORE INTO permissions (key, name, description, category, icon) VALUES
-      ('ASSESSMENT_REQUEST_REVIEW', 'Assessment: Request Review', 'Request review for assessment', 'ASSESSMENT', 'fact_check'),
-      ('ASSESSMENT_APPROVE_REPORT', 'Assessment: Approve Report', 'Approve assessment report', 'ASSESSMENT', 'description'),
-      ('ASSESSMENT_APPROVE', 'Assessment: Approve Assessment', 'Approve assessment', 'ASSESSMENT', 'check_circle'),
-      ('ASSESSMENT_GENERATE_INITIATIVES', 'Assessment: Generate Initiatives', 'Generate initiatives from assessment', 'ASSESSMENT', 'lightbulb')`;
+    // Note: permissions table may not have 'name' and 'icon' columns in PostgreSQL
+    const permissionInsertSql = `INSERT OR IGNORE INTO permissions (key, description, category) VALUES
+      ('ASSESSMENT_REQUEST_REVIEW', 'Request review for assessment', 'ASSESSMENT'),
+      ('ASSESSMENT_APPROVE_REPORT', 'Approve assessment report', 'ASSESSMENT'),
+      ('ASSESSMENT_APPROVE', 'Approve assessment', 'ASSESSMENT'),
+      ('ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessment', 'ASSESSMENT')`;
     try {
       await queryHelpers.queryRun(permissionInsertSql);
     } catch {
       // Try with ON CONFLICT
       try {
         await queryHelpers.queryRun(
-          `INSERT INTO permissions (key, name, description, category, icon) VALUES
-            ('ASSESSMENT_REQUEST_REVIEW', 'Assessment: Request Review', 'Request review for assessment', 'ASSESSMENT', 'fact_check'),
-            ('ASSESSMENT_APPROVE_REPORT', 'Assessment: Approve Report', 'Approve assessment report', 'ASSESSMENT', 'description'),
-            ('ASSESSMENT_APPROVE', 'Assessment: Approve Assessment', 'Approve assessment', 'ASSESSMENT', 'check_circle'),
-            ('ASSESSMENT_GENERATE_INITIATIVES', 'Assessment: Generate Initiatives', 'Generate initiatives from assessment', 'ASSESSMENT', 'lightbulb')
+          `INSERT INTO permissions (key, description, category) VALUES
+            ('ASSESSMENT_REQUEST_REVIEW', 'Request review for assessment', 'ASSESSMENT'),
+            ('ASSESSMENT_APPROVE_REPORT', 'Approve assessment report', 'ASSESSMENT'),
+            ('ASSESSMENT_APPROVE', 'Approve assessment', 'ASSESSMENT'),
+            ('ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessment', 'ASSESSMENT')
           ON CONFLICT (key) DO NOTHING`
         );
       } catch {
@@ -1389,11 +1384,7 @@ export class AssessmentController {
       // Detect columns to keep compatibility.
       const batchCols = await (async (): Promise<Set<string> | null> => {
         try {
-          const rows = (await queryHelpers.queryAll(
-            `PRAGMA table_info(assessment_initiative_batches)`
-          )) as Array<{
-            name?: string;
-          }>;
+          const rows = await queryHelpers.getTableColumns('assessment_initiative_batches');
           return new Set((rows || []).map((r) => r.name).filter(Boolean) as string[]);
         } catch {
           // Unknown schema: avoid inserting optional columns like report_id.
@@ -1464,11 +1455,7 @@ export class AssessmentController {
       // - else fallback to latest report by updated/created
       const reportColumns = await (async () => {
         try {
-          const rows = (await queryHelpers.queryAll(
-            `PRAGMA table_info(assessment_reports)`
-          )) as Array<{
-            name?: string;
-          }>;
+          const rows = await queryHelpers.getTableColumns('assessment_reports');
           return new Set((rows || []).map((r) => r.name).filter(Boolean) as string[]);
         } catch {
           return new Set<string>();

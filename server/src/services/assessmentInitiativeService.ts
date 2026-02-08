@@ -573,9 +573,7 @@ Return a JSON array with exactly ${count} initiatives in this format:
       return async (): Promise<Set<string> | null> => {
         if (cache !== undefined) return cache;
         try {
-          const rows = (await queryHelpers.queryAll(`PRAGMA table_info(initiatives)`)) as Array<{
-            name?: string;
-          }>;
+          const rows = await queryHelpers.getTableColumns('initiatives');
           cache = new Set((rows || []).map((r) => r.name).filter(Boolean) as string[]);
           return cache;
         } catch {

@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as xlsx from 'xlsx';
 
 import { getDatabase } from '../database/index.js';
+import { getDatabaseType } from '../config/DatabaseConfig.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
@@ -128,7 +129,12 @@ const ensureAssessmentReportsSchema = async (): Promise<void> => {
 
   // SQLite migrations in this repo vary; patch missing columns (best-effort).
   try {
-    const cols = await all<any>(`PRAGMA table_info(assessment_reports)`, []);
+    const dbType = getDatabaseType();
+    const tableInfoQuery =
+      dbType === 'postgres'
+        ? `SELECT column_name as name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'assessment_reports'`
+        : `PRAGMA table_info(assessment_reports)`;
+    const cols = await all<any>(tableInfoQuery, []);
     const existing = new Set((cols || []).map((c: any) => String(c.name)));
     const add = async (name: string, type: string) => {
       if (existing.has(name)) return;
@@ -178,7 +184,12 @@ const ensureAssessmentReportsSchema = async (): Promise<void> => {
   );
 
   try {
-    const cols = await all<any>(`PRAGMA table_info(assessment_report_sections)`, []);
+    const dbType = getDatabaseType();
+    const tableInfoQuery =
+      dbType === 'postgres'
+        ? `SELECT column_name as name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'assessment_report_sections'`
+        : `PRAGMA table_info(assessment_report_sections)`;
+    const cols = await all<any>(tableInfoQuery, []);
     const existing = new Set((cols || []).map((c: any) => String(c.name)));
     const add = async (name: string, type: string) => {
       if (existing.has(name)) return;

@@ -85,11 +85,13 @@ CREATE INDEX IF NOT EXISTS idx_tool_links_batch ON tool_initiative_links(batch_i
 -- ==========================================
 -- PERMISSIONS (Admin-configurable)
 -- ==========================================
+-- Note: PostgreSQL permissions table may not have 'name' and 'icon' columns
+-- Using only: key, description, category
 
-INSERT OR IGNORE INTO permissions (key, name, description, category, icon) VALUES
-('TOOLS_REQUEST_REVIEW', 'Tools: Request Review', 'Request review for tool session', 'TOOLS', 'fact_check'),
-('TOOLS_APPROVE', 'Tools: Approve Tool', 'Approve tool session', 'TOOLS', 'check_circle'),
-('TOOLS_GENERATE_INITIATIVES', 'Tools: Generate Initiatives', 'Generate initiatives from tool', 'TOOLS', 'lightbulb');
+INSERT OR IGNORE INTO permissions (key, description, category) VALUES
+('TOOLS_REQUEST_REVIEW', 'Request review for tool session', 'TOOLS'),
+('TOOLS_APPROVE', 'Approve tool session', 'TOOLS'),
+('TOOLS_GENERATE_INITIATIVES', 'Generate initiatives from tool', 'TOOLS');
 
 INSERT OR IGNORE INTO role_permissions (id, role, permission_key, description) VALUES
 ('rp_tools_request_review_admin', 'ADMIN', 'TOOLS_REQUEST_REVIEW', 'Request review for tools'),

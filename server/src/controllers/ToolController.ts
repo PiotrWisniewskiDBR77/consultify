@@ -47,9 +47,7 @@ let decisionColumnsCache: Set<string> | null = null;
 const getDecisionColumns = async (): Promise<Set<string>> => {
   if (decisionColumnsCache) return decisionColumnsCache;
   try {
-    const rows = (await queryHelpers.queryAll(`PRAGMA table_info(decisions)`)) as Array<{
-      name?: string;
-    }>;
+    const rows = await queryHelpers.getTableColumns('decisions');
     const cols = new Set((rows || []).map((row) => row.name).filter(Boolean) as string[]);
     if (cols.size > 0) {
       decisionColumnsCache = cols;
@@ -231,11 +229,8 @@ const ensureToolsSchema = async (): Promise<void> => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`
     );
-    try {
-      await queryHelpers.queryRun(`ALTER TABLE tool_decisions ADD COLUMN decision_id TEXT`);
-    } catch {
-      // ignore if column already exists
-    }
+    // Note: decision_id is already in CREATE TABLE above, so no need to ALTER
+    // Migration 292_tools_decisions_link.sql handles adding it for existing tables
     await queryHelpers.queryRun(
       `CREATE TABLE IF NOT EXISTS tool_initiative_batches (
         id TEXT PRIMARY KEY,
@@ -281,18 +276,19 @@ const ensureToolsSchema = async (): Promise<void> => {
       `CREATE INDEX IF NOT EXISTS idx_tool_links_batch ON tool_initiative_links(batch_id)`
     );
 
-    const permissionInsertSql = `INSERT OR IGNORE INTO permissions (key, name, description, category, icon) VALUES
-      ('TOOLS_REQUEST_REVIEW', 'Tools: Request Review', 'Request review for tool session', 'TOOLS', 'fact_check'),
-      ('TOOLS_APPROVE', 'Tools: Approve Tool', 'Approve tool session', 'TOOLS', 'check_circle'),
-      ('TOOLS_GENERATE_INITIATIVES', 'Tools: Generate Initiatives', 'Generate initiatives from tool', 'TOOLS', 'lightbulb')`;
+    // Note: permissions table may not have 'name' and 'icon' columns in PostgreSQL
+    const permissionInsertSql = `INSERT OR IGNORE INTO permissions (key, description, category) VALUES
+      ('TOOLS_REQUEST_REVIEW', 'Request review for tool session', 'TOOLS'),
+      ('TOOLS_APPROVE', 'Approve tool session', 'TOOLS'),
+      ('TOOLS_GENERATE_INITIATIVES', 'Generate initiatives from tool', 'TOOLS')`;
     try {
       await queryHelpers.queryRun(permissionInsertSql);
     } catch {
       await queryHelpers.queryRun(
-        `INSERT INTO permissions (key, name, description, category, icon) VALUES
-          ('TOOLS_REQUEST_REVIEW', 'Tools: Request Review', 'Request review for tool session', 'TOOLS', 'fact_check'),
-          ('TOOLS_APPROVE', 'Tools: Approve Tool', 'Approve tool session', 'TOOLS', 'check_circle'),
-          ('TOOLS_GENERATE_INITIATIVES', 'Tools: Generate Initiatives', 'Generate initiatives from tool', 'TOOLS', 'lightbulb')
+        `INSERT INTO permissions (key, description, category) VALUES
+          ('TOOLS_REQUEST_REVIEW', 'Request review for tool session', 'TOOLS'),
+          ('TOOLS_APPROVE', 'Approve tool session', 'TOOLS'),
+          ('TOOLS_GENERATE_INITIATIVES', 'Generate initiatives from tool', 'TOOLS')
         ON CONFLICT (key) DO NOTHING`
       );
     }

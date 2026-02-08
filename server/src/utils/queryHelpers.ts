@@ -5,6 +5,7 @@
  * Eliminates callback hell and provides consistent error handling.
  */
 
+import { getDatabaseType } from '../config/DatabaseConfig.js';
 import { getDatabase } from '../database/Database.js';
 import logger from './Logger.js';
 
@@ -228,5 +229,47 @@ export function disablePerformanceTracking(): void {
 export function recordQueryPerformance(type: string, duration: number): void {
   if (trackingCallback) {
     trackingCallback(type, duration);
+  }
+}
+
+/**
+ * Get table column information (database-agnostic)
+ * Returns column names for a given table, compatible with both PostgreSQL and SQLite
+ */
+export interface TableColumnInfo {
+  name: string;
+  type?: string;
+  notnull?: number;
+  dflt_value?: unknown;
+  pk?: number;
+}
+
+export async function getTableColumns(tableName: string): Promise<TableColumnInfo[]> {
+  const dbType = getDatabaseType();
+  
+  if (dbType === 'postgres') {
+    // PostgreSQL: Query information_schema
+    const sql = `SELECT 
+      column_name as name,
+      data_type as type,
+      CASE WHEN is_nullable = 'NO' THEN 1 ELSE 0 END as notnull,
+      column_default as dflt_value,
+      CASE WHEN column_name IN (
+        SELECT column_name 
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.key_column_usage kcu 
+          ON tc.constraint_name = kcu.constraint_name
+        WHERE tc.table_name = $1 
+          AND tc.constraint_type = 'PRIMARY KEY'
+          AND tc.table_schema = 'public'
+      ) THEN 1 ELSE 0 END as pk
+    FROM information_schema.columns 
+    WHERE table_schema = 'public' AND table_name = $1
+    ORDER BY ordinal_position`;
+    
+    return queryAll<TableColumnInfo>(sql, [tableName]);
+  } else {
+    // SQLite: Use PRAGMA table_info
+    return queryAll<TableColumnInfo>(`PRAGMA table_info(${tableName})`, []);
   }
 }

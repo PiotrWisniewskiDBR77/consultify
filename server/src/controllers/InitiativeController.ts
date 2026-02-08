@@ -119,7 +119,7 @@ const hasPendingExecutionGateDecisions = async (
   orgId: string,
   initiativeId: string
 ): Promise<boolean> => {
-  const columns = await queryHelpers.queryAll<{ name: string }>('PRAGMA table_info(decisions)');
+  const columns = await queryHelpers.getTableColumns('decisions');
   const hasColumn = (column: string) => columns.some((col) => col.name === column);
   const hasInitiativeId = hasColumn('initiative_id');
   const hasTaskId = hasColumn('task_id');

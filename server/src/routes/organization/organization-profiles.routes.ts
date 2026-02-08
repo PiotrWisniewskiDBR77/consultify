@@ -38,15 +38,22 @@ router.get(
       const org = await dbGet<{
         id: string;
         name: string;
-        logo_url: string;
-        branding_primary_color: string;
-        branding_accent_color: string;
         default_timezone: string;
         default_language: string;
       }>(
-        `SELECT id, name, logo_url, branding_primary_color, branding_accent_color, 
-                        default_timezone, default_language 
+        `SELECT id, name, default_timezone, default_language 
                  FROM organizations WHERE id = ?`,
+        [orgId]
+      );
+
+      // Get branding info from organization_branding table (if it exists)
+      const branding = await dbGet<{
+        logo_light_url: string | null;
+        primary_color: string | null;
+        accent_color: string | null;
+      }>(
+        `SELECT logo_light_url, primary_color, accent_color 
+                 FROM organization_branding WHERE organization_id = ?`,
         [orgId]
       );
 
@@ -86,7 +93,7 @@ router.get(
       // Calculate profile completeness
       const fields = [
         org.name,
-        org.logo_url,
+        branding?.logo_light_url,
         profile?.industry,
         profile?.company_size,
         brandingSettings.description,
@@ -99,7 +106,7 @@ router.get(
         profile: {
           // Basic info
           name: org.name,
-          logoUrl: org.logo_url || brandingSettings.logoUrl,
+          logoUrl: branding?.logo_light_url || brandingSettings.logoUrl || '',
           description: brandingSettings.description || '',
 
           // Company details
@@ -108,8 +115,8 @@ router.get(
           website: brandingSettings.website || '',
 
           // Branding
-          brandColor: org.branding_primary_color || brandingSettings.brandColor || '#8B5CF6',
-          accentColor: org.branding_accent_color || brandingSettings.accentColor || '#10B981',
+          brandColor: branding?.primary_color || brandingSettings.brandColor || '#8B5CF6',
+          accentColor: branding?.accent_color || brandingSettings.accentColor || '#10B981',
           faviconUrl: brandingSettings.faviconUrl || '',
 
           // Regional
@@ -179,18 +186,39 @@ router.put(
     } = req.body;
 
     try {
-      // Update organizations table directly for core fields
+      // Update organizations table directly for core fields (timezone and language only)
       await dbRun(
         `UPDATE organizations SET 
-                    logo_url = COALESCE(?, logo_url),
-                    branding_primary_color = COALESCE(?, branding_primary_color),
-                    branding_accent_color = COALESCE(?, branding_accent_color),
                     default_timezone = COALESCE(?, default_timezone),
                     default_language = COALESCE(?, default_language),
                     updated_at = datetime('now')
                  WHERE id = ?`,
-        [logoUrl, brandColor, accentColor, defaultTimezone, defaultLanguage, orgId]
+        [defaultTimezone, defaultLanguage, orgId]
       );
+
+      // Update or insert branding in organization_branding table
+      const existingBranding = await dbGet(
+        `SELECT id FROM organization_branding WHERE organization_id = ?`,
+        [orgId]
+      );
+
+      if (existingBranding) {
+        await dbRun(
+          `UPDATE organization_branding SET 
+                        logo_light_url = COALESCE(?, logo_light_url),
+                        primary_color = COALESCE(?, primary_color),
+                        accent_color = COALESCE(?, accent_color),
+                        updated_at = datetime('now')
+                     WHERE organization_id = ?`,
+          [logoUrl, brandColor, accentColor, orgId]
+        );
+      } else {
+        await dbRun(
+          `INSERT INTO organization_branding (id, organization_id, logo_light_url, primary_color, accent_color, created_at, updated_at)
+                     VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+          [uuidv4(), orgId, logoUrl || null, brandColor || '#8B5CF6', accentColor || '#10B981']
+        );
+      }
 
       // Upsert organization_profiles for extended data
       const existingProfile = await dbGet(

@@ -146,11 +146,13 @@ CREATE INDEX IF NOT EXISTS idx_assessment_sessions_open ON assessment_sessions(u
 -- PERMISSIONS (Admin-configurable)
 -- ==========================================
 
-INSERT OR IGNORE INTO permissions (key, name, description, category, icon) VALUES
-('ASSESSMENT_REQUEST_REVIEW', 'Assessment: Request Review', 'Request review for assessment', 'ASSESSMENT', 'fact_check'),
-('ASSESSMENT_APPROVE_REPORT', 'Assessment: Approve Report', 'Approve assessment report', 'ASSESSMENT', 'description'),
-('ASSESSMENT_APPROVE', 'Assessment: Approve Assessment', 'Approve assessment', 'ASSESSMENT', 'check_circle'),
-('ASSESSMENT_GENERATE_INITIATIVES', 'Assessment: Generate Initiatives', 'Generate initiatives from assessment', 'ASSESSMENT', 'lightbulb');
+-- Note: PostgreSQL permissions table may not have 'name' and 'icon' columns
+-- Using only: key, description, category
+INSERT OR IGNORE INTO permissions (key, description, category) VALUES
+('ASSESSMENT_REQUEST_REVIEW', 'Request review for assessment', 'ASSESSMENT'),
+('ASSESSMENT_APPROVE_REPORT', 'Approve assessment report', 'ASSESSMENT'),
+('ASSESSMENT_APPROVE', 'Approve assessment', 'ASSESSMENT'),
+('ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessment', 'ASSESSMENT');
 
 -- Role permissions
 INSERT OR IGNORE INTO role_permissions (id, role, permission_key, description) VALUES

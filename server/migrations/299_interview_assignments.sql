@@ -47,9 +47,10 @@ CREATE INDEX IF NOT EXISTS idx_interview_sessions_assignment ON interview_sessio
 -- PERMISSIONS (Assignments)
 -- ==========================================
 
-INSERT OR IGNORE INTO permissions (key, name, description, category, icon) VALUES
-('INTERVIEW_ASSIGN_VIEW', 'Interview: View Assignments', 'View interview assignments', 'INTERVIEW', 'assignment'),
-('INTERVIEW_ASSIGN_MANAGE', 'Interview: Manage Assignments', 'Create and manage interview assignments', 'INTERVIEW', 'assignment_ind');
+-- Note: PostgreSQL permissions table may not have 'name' and 'icon' columns
+INSERT OR IGNORE INTO permissions (key, description, category) VALUES
+('INTERVIEW_ASSIGN_VIEW', 'View interview assignments', 'INTERVIEW'),
+('INTERVIEW_ASSIGN_MANAGE', 'Create and manage interview assignments', 'INTERVIEW');
 
 INSERT OR IGNORE INTO role_permissions (id, role, permission_key, description) VALUES
 ('rp_interview_assign_view_pm', 'PROJECT_MANAGER', 'INTERVIEW_ASSIGN_VIEW', 'View interview assignments'),
