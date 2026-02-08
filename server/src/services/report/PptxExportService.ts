@@ -102,13 +102,9 @@ export class PptxExportService {
     const pptx = new PptxGenJS();
 
     // Set presentation properties
-    // @ts-expect-error - pptxgenjs API may vary by version
     pptx.author = 'Consultify';
-    // @ts-expect-error - pptxgenjs API may vary by version
     pptx.title = report.name;
-    // @ts-expect-error - pptxgenjs API may vary by version
     pptx.subject = `${report.sourceType} Report`;
-    // @ts-expect-error - pptxgenjs API may vary by version
     pptx.company = report.organizationName || 'Organization';
 
     // Define master slides
@@ -145,7 +141,6 @@ export class PptxExportService {
     this.addClosingSlide(pptx, report, isPolish);
 
     // Generate buffer
-    // @ts-expect-error - pptxgenjs API may vary by version
     const buffer = await pptx.write({ outputType: 'nodebuffer' });
 
     logger.info(`[PptxExport] Presentation generated successfully`);
@@ -160,7 +155,6 @@ export class PptxExportService {
     const brandColor = options.brandColor || COLORS.primary;
 
     // Title slide master
-    // @ts-expect-error - pptxgenjs API may vary by version
     pptx.defineSlideMaster({
       title: 'TITLE_SLIDE',
       background: { color: brandColor },
@@ -175,7 +169,7 @@ export class PptxExportService {
               w: 9,
               h: 1.5,
               fontSize: 44,
-              // @ts-expect-error - pptxgenjs API may vary by version
+              
       fontFace: FONTS.title,
               color: 'FFFFFF',
               bold: true,
@@ -194,7 +188,7 @@ export class PptxExportService {
               w: 9,
               h: 1,
               fontSize: 20,
-              // @ts-expect-error - pptxgenjs API may vary by version
+              
       fontFace: FONTS.body,
               color: 'FFFFFF',
               align: 'center',
@@ -206,7 +200,6 @@ export class PptxExportService {
     });
 
     // Content slide master
-    // @ts-expect-error - pptxgenjs API may vary by version
     pptx.defineSlideMaster({
       title: 'CONTENT_SLIDE',
       background: { color: COLORS.background },
@@ -232,7 +225,7 @@ export class PptxExportService {
               w: 9,
               h: 0.5,
               fontSize: 24,
-              // @ts-expect-error - pptxgenjs API may vary by version
+              
       fontFace: FONTS.title,
               color: 'FFFFFF',
               bold: true,
@@ -250,7 +243,7 @@ export class PptxExportService {
               w: 4,
               h: 0.3,
               fontSize: 10,
-              // @ts-expect-error - pptxgenjs API may vary by version
+              
       fontFace: FONTS.body,
               color: COLORS.darkGray,
             },
@@ -266,7 +259,7 @@ export class PptxExportService {
               w: 1,
               h: 0.3,
               fontSize: 10,
-              // @ts-expect-error - pptxgenjs API may vary by version
+              
       fontFace: FONTS.body,
               color: COLORS.darkGray,
               align: 'right',
@@ -277,7 +270,6 @@ export class PptxExportService {
     });
 
     // Section divider master
-    // @ts-expect-error - pptxgenjs API may vary by version
     pptx.defineSlideMaster({
       title: 'SECTION_DIVIDER',
       background: { color: COLORS.lightGray },
@@ -301,7 +293,7 @@ export class PptxExportService {
               w: 9,
               h: 1.4,
               fontSize: 36,
-              // @ts-expect-error - pptxgenjs API may vary by version
+              
       fontFace: FONTS.title,
               color: 'FFFFFF',
               bold: true,
@@ -333,8 +325,8 @@ export class PptxExportService {
       w: 9,
       h: 1.5,
       fontSize: 40,
-      // @ts-expect-error - pptxgenjs API may vary by version
-      // @ts-expect-error - pptxgenjs API may vary by version
+      
+      
       fontFace: FONTS.title,
       color: 'FFFFFF',
       bold: true,
@@ -359,7 +351,7 @@ export class PptxExportService {
       w: 9,
       h: 0.5,
       fontSize: 18,
-      // @ts-expect-error - pptxgenjs API may vary by version
+      
       fontFace: FONTS.body,
       color: 'FFFFFF',
       align: 'center',
@@ -378,7 +370,7 @@ export class PptxExportService {
       w: 9,
       h: 0.4,
       fontSize: 14,
-      // @ts-expect-error - pptxgenjs API may vary by version
+      
       fontFace: FONTS.body,
       color: 'FFFFFF',
       align: 'center',
@@ -391,7 +383,7 @@ export class PptxExportService {
       w: 9,
       h: 0.4,
       fontSize: 12,
-      // @ts-expect-error - pptxgenjs API may vary by version
+      
       fontFace: FONTS.body,
       color: 'FFFFFF',
       align: 'center',
@@ -410,7 +402,7 @@ export class PptxExportService {
       w: 9,
       h: 0.5,
       fontSize: 24,
-      // @ts-expect-error - pptxgenjs API may vary by version
+      
       fontFace: FONTS.title,
       color: 'FFFFFF',
       bold: true,
@@ -420,7 +412,7 @@ export class PptxExportService {
       text: `${index + 1}. ${section.title}`,
       options: {
         fontSize: 16,
-        // @ts-expect-error - pptxgenjs API may vary by version
+        
       fontFace: FONTS.body,
         color: COLORS.secondary,
         bullet: false,
@@ -428,7 +420,7 @@ export class PptxExportService {
       },
     }));
 
-    // @ts-expect-error - pptxgenjs API may vary by version
+    
     slide.addText(tocItems, {
       x: 0.5,
       y: 1.2,
@@ -455,7 +447,7 @@ export class PptxExportService {
       w: 9,
       h: 0.5,
       fontSize: 24,
-      // @ts-expect-error - pptxgenjs API may vary by version
+      
       fontFace: FONTS.title,
       color: 'FFFFFF',
       bold: true,
@@ -465,14 +457,14 @@ export class PptxExportService {
     const content = this.cleanMarkdown(section.content);
     const lines = content.split('\n').filter((l) => l.trim());
 
-    // @ts-expect-error - pptxgenjs API may vary by version
-    // @ts-expect-error - pptxgenjs API may vary by version
+    
+    
     slide.addText(
       lines.slice(0, 8).map((line) => ({
         text: line,
         options: {
           fontSize: 14,
-          // @ts-expect-error - pptxgenjs API may vary by version
+          
       fontFace: FONTS.body,
           color: COLORS.secondary,
           bullet: line.startsWith('-') || line.startsWith('•'),
@@ -505,7 +497,7 @@ export class PptxExportService {
       w: 9,
       h: 0.5,
       fontSize: 24,
-      // @ts-expect-error - pptxgenjs API may vary by version
+      
       fontFace: FONTS.title,
       color: 'FFFFFF',
       bold: true,
@@ -513,8 +505,7 @@ export class PptxExportService {
 
     // Overall score box
     if (report.scoreSummary?.overall) {
-      // @ts-expect-error - pptxgenjs API may vary by version
-      slide.addShape((pptx as any).ShapeType.rect, {
+      slide.addShape(pptx.ShapeType.rect, {
         x: 0.5,
         y: 1.2,
         w: 2,
@@ -529,7 +520,7 @@ export class PptxExportService {
         w: 2,
         h: 0.8,
         fontSize: 36,
-        // @ts-expect-error - pptxgenjs API may vary by version
+        
       fontFace: FONTS.title,
         color: 'FFFFFF',
         bold: true,
@@ -542,7 +533,7 @@ export class PptxExportService {
         w: 2,
         h: 0.4,
         fontSize: 12,
-        // @ts-expect-error - pptxgenjs API may vary by version
+        
       fontFace: FONTS.body,
         color: 'FFFFFF',
         align: 'center',
@@ -554,8 +545,7 @@ export class PptxExportService {
       const chartData = this.prepareChartData(report.scoreSummary);
 
       if (chartData.labels.length > 0) {
-        // @ts-expect-error - pptxgenjs API may vary by version
-        slide.addChart((pptx as any).ChartType.bar, chartData.data, {
+        slide.addChart(pptx.ChartType.bar, chartData.data, {
           x: 3,
           y: 1.2,
           w: 6.5,
@@ -591,7 +581,7 @@ export class PptxExportService {
       w: 9,
       h: 1.4,
       fontSize: 32,
-      // @ts-expect-error - pptxgenjs API may vary by version
+      
       fontFace: FONTS.title,
       color: 'FFFFFF',
       bold: true,
@@ -617,7 +607,7 @@ export class PptxExportService {
         w: 9,
         h: 0.5,
         fontSize: 24,
-        // @ts-expect-error - pptxgenjs API may vary by version
+        
       fontFace: FONTS.title,
         color: 'FFFFFF',
         bold: true,
@@ -630,14 +620,14 @@ export class PptxExportService {
         // Default: text content
         const lines = contentChunks[i].split('\n').filter((l) => l.trim());
 
-        // @ts-expect-error - pptxgenjs API may vary by version
-        // @ts-expect-error - pptxgenjs API may vary by version
+        
+        
         slide.addText(
           lines.map((line) => ({
             text: line.replace(/^[-•*]\s*/, ''),
             options: {
               fontSize: 13,
-              // @ts-expect-error - pptxgenjs API may vary by version
+              
       fontFace: FONTS.body,
               color: COLORS.secondary,
               bullet: line.match(/^[-•*]\s/) ? true : false,
@@ -696,7 +686,7 @@ export class PptxExportService {
       w: 9,
       colW: headers.map(() => 9 / headers.length),
       border: { pt: 0.5, color: COLORS.lightGray },
-      // @ts-expect-error - pptxgenjs API may vary by version
+      
       fontFace: FONTS.body,
     });
   }
@@ -713,7 +703,7 @@ export class PptxExportService {
       w: 9,
       h: 1,
       fontSize: 44,
-      // @ts-expect-error - pptxgenjs API may vary by version
+      
       fontFace: FONTS.title,
       color: 'FFFFFF',
       bold: true,
@@ -728,7 +718,7 @@ export class PptxExportService {
         w: 9,
         h: 0.5,
         fontSize: 16,
-        // @ts-expect-error - pptxgenjs API may vary by version
+        
       fontFace: FONTS.body,
         color: 'FFFFFF',
         align: 'center',
@@ -747,7 +737,7 @@ export class PptxExportService {
       w: 9,
       h: 0.4,
       fontSize: 12,
-      // @ts-expect-error - pptxgenjs API may vary by version
+      
       fontFace: FONTS.body,
       color: 'FFFFFF',
       align: 'center',
