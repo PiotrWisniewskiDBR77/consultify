@@ -10,7 +10,7 @@ import { z } from 'zod';
 // ==========================================
 
 export const CreateTaskSchema = z.object({
-  projectId: z.string().uuid('Invalid project ID'),
+  projectId: z.string().uuid('Invalid project ID').optional().nullable(),
   title: z.string().min(1, 'Task title is required').max(255, 'Task title too long').trim(),
   description: z.string().max(10000, 'Description too long').optional(),
   status: z.enum(['todo', 'in_progress', 'review', 'done', 'blocked']).optional().default('todo'),

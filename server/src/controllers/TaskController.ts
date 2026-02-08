@@ -605,11 +605,7 @@ export class TaskController {
         blockedReason,
       } = body;
 
-      if (!projectId) {
-        res.status(400).json({ error: 'projectId is required' });
-        return;
-      }
-
+      // projectId is optional - tasks can be created without a project
       const id = uuidv4();
       const now = new Date().toISOString();
 
@@ -651,7 +647,7 @@ export class TaskController {
 
       const result = await DbPromise.run(sql, [
         id,
-        projectId,
+        projectId || null, // projectId is optional
         orgId,
         title,
         description,
