@@ -30,6 +30,8 @@ WORKDIR /app
 # Copy package files and workspace structure for npm workspaces
 COPY package.json package-lock.json ./
 COPY packages/ ./packages/
+# Copy recharts tarball if it exists (needed for file: dependency)
+COPY recharts-2.15.4.tgz* ./ || true
 # Use npm ci for deterministic builds, fallback to npm install if lock file is out of sync
 # Ignore scripts (like husky) as they're not needed in Docker builds
 RUN npm ci --ignore-scripts || (echo "Lock file out of sync, updating..." && npm install --ignore-scripts)
