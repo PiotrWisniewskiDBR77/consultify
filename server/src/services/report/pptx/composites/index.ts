@@ -38,3 +38,9 @@ export type { SectionIntroBlockProps } from './SectionIntroBlock.js';
 
 export { ExecutiveSummaryPanel } from './ExecutiveSummaryPanel.js';
 export type { ExecutiveSummaryPanelProps } from './ExecutiveSummaryPanel.js';
+
+export { InitiativeCard } from './InitiativeCard.js';
+export type { InitiativeCardProps, InitiativeCardItem } from './InitiativeCard.js';
+
+export { EffortProfileBar } from './EffortProfileBar.js';
+export type { EffortProfileBarProps } from './EffortProfileBar.js';

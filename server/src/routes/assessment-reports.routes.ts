@@ -1394,12 +1394,18 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
       }
     }
 
-    // Stub fallbacks (only used if LLM is not available or failed)
+    // Fallbacks (only used if LLM is not available or failed)
     if (next === current && !llmService) {
       if (act === 'summarize') {
-        next = current.slice(0, 600) + (current.length > 600 ? '\n\n_(summary truncated)_\n' : '');
+        // Best-effort: truncate to first ~600 chars as a simple summary
+        next = current.slice(0, 600) + (current.length > 600 ? '\n\n_(AI summarization is currently unavailable. Showing truncated content.)_\n' : '');
       } else if (act === 'expand') {
-        next = `${current}\n\n---\n\n_TODO: expand this section with examples, metrics and context._\n`;
+        // Return original content with a note – don't insert TODO markers
+        return res.status(503).json({
+          success: false,
+          error: 'AI service unavailable',
+          message: 'AI content expansion is temporarily unavailable. Please try again later.',
+        });
       } else if (act === 'regenerate') {
         next = createDraftContent({
           sectionType: sectionRow.section_type as SectionType,
@@ -1410,9 +1416,17 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
           axisId: sectionRow.axis_id || null,
         });
       } else if (act === 'improve') {
-        next = `${current}\n\n---\n\n_TODO: improve clarity, structure and tone._\n`;
+        return res.status(503).json({
+          success: false,
+          error: 'AI service unavailable',
+          message: 'AI content improvement is temporarily unavailable. Please try again later.',
+        });
       } else if (act === 'translate') {
-        next = `${current}\n\n---\n\n_TODO: translation requested (not yet implemented)._\n`;
+        return res.status(503).json({
+          success: false,
+          error: 'AI service unavailable',
+          message: 'AI translation is temporarily unavailable. Please try again later.',
+        });
       }
     }
 
@@ -1458,9 +1472,81 @@ router.get('/:reportId/sections/:sectionId/history', async (req: AuthRequest, re
   }
 });
 
-router.post('/:reportId/ai-edit', async (_req: AuthRequest, res: Response) => {
-  // Minimal stub for now (UI expects endpoint)
-  return res.json({ success: true });
+router.post('/:reportId/ai-edit', async (req: AuthRequest, res: Response) => {
+  try {
+    await ensureAssessmentReportsSchema();
+    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const userId = req.user?.id || 'system';
+    const { reportId } = req.params;
+    const { sectionId, instruction, content } = req.body || {};
+
+    if (!sectionId || !instruction) {
+      return res.status(400).json({ error: 'sectionId and instruction are required' });
+    }
+
+    // Verify report exists
+    const reportRow = await get<any>(
+      `SELECT id FROM assessment_reports WHERE id = ? AND organization_id = ?`,
+      [reportId, organizationId]
+    );
+    if (!reportRow) return res.status(404).json({ error: 'Report not found' });
+
+    // Get section
+    const sectionRow = await get<any>(
+      `SELECT id, title, content, version, section_type FROM assessment_report_sections WHERE id = ? AND report_id = ?`,
+      [sectionId, reportId]
+    );
+    if (!sectionRow) return res.status(404).json({ error: 'Section not found' });
+
+    const currentContent = content || sectionRow.content || '';
+
+    // Try LLM
+    let llmService: any = null;
+    try {
+      const mod = await import('../services/ai/llmService.js');
+      llmService = mod.llmService || mod.default;
+    } catch {
+      // LLM not available
+    }
+
+    if (!llmService) {
+      return res.status(503).json({
+        success: false,
+        error: 'AI service unavailable',
+        message: 'AI editing is temporarily unavailable. Please try again later.',
+      });
+    }
+
+    const result = await llmService.call({
+      type: 'text',
+      modelConfig: { id: 'standard' },
+      systemPrompt:
+        'You are a professional consulting report editor. Apply the user instruction to the provided content. Output only the edited content in Markdown format. Do not add explanations.',
+      messages: [
+        {
+          role: 'user',
+          content: `Section: "${sectionRow.title}"\n\nInstruction: ${instruction}\n\nContent:\n${currentContent}`,
+        },
+      ],
+      maxTokens: 4096,
+      temperature: 0.7,
+    });
+
+    const editedContent = String(result?.content || currentContent);
+    const nextVersion = Number(sectionRow.version || 1) + 1;
+
+    await run(
+      `UPDATE assessment_report_sections
+       SET content = ?, is_ai_generated = 1, version = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND report_id = ?`,
+      [editedContent, nextVersion, userId, sectionId, reportId]
+    );
+
+    return res.json({ success: true, content: editedContent, version: nextVersion });
+  } catch (err: any) {
+    logger.error('[AssessmentReports] Error ai-edit:', err);
+    return res.status(500).json({ error: 'Failed AI edit', message: err.message });
+  }
 });
 
 // =============================================================================

@@ -1,8 +1,8 @@
 # 🧩 Moduł: Assessment – Overview
 
-## Status: ✅ KOMPLETNY (Full Workflow + Edytory DRD/SIRI/ADMA + AI Suggestions)
+## Status: ✅ KOMPLETNY (Full Workflow + Edytory DRD/SIRI/ADMA/CMMI/Lean + AI Suggestions + Knowledge Base)
 
-**Ostatnia aktualizacja:** 2026-02-05
+**Ostatnia aktualizacja:** 2026-02-08
 
 ---
 
@@ -66,7 +66,7 @@ Raport w module Assessment jest artefaktem Discovery (wyniki + gaps + evidence +
 - ✅ **Assessment Level Attachments API** (upload/download/delete evidence files)
 - ✅ **Backward compatibility** dla SQLite (brakujące kolumny `version`, `project_id`)
 
-### Frontend (kompletny)
+### Frontend (kompletny - wszystkie 5 frameworkow zintegrowane 2026-02-08)
 
 - ✅ AssessmentModuleHub (lista, filtry, wyszukiwanie)
 - ✅ DRDForm, SIRIForm (live scoring)

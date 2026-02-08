@@ -19,6 +19,8 @@ import { RoadmapLayout } from './RoadmapLayout.js';
 import { RiskMitigationLayout } from './RiskMitigationLayout.js';
 import { NextStepsLayout } from './NextStepsLayout.js';
 import { AppendixLayout } from './AppendixLayout.js';
+import { InitiativePortfolioLayout } from './InitiativePortfolioLayout.js';
+import { PrioritizationMatrixLayout } from './PrioritizationMatrixLayout.js';
 
 // ================================================================
 // LAYOUT REGISTRY — intent → layout function (immutable mapping)
@@ -38,6 +40,8 @@ const LAYOUT_REGISTRY: Record<SlideIntent, LayoutFn> = {
   root_cause: ProblemCauseImpactLayout,
   recommendation_single: RecommendationSingleLayout,
   recommendation_portfolio: RecommendationStackLayout,
+  initiative_portfolio: InitiativePortfolioLayout,
+  prioritization_matrix: PrioritizationMatrixLayout,
   roadmap: RoadmapLayout,
   risk_management: RiskMitigationLayout,
   next_steps: NextStepsLayout,
@@ -74,3 +78,5 @@ export { RoadmapLayout } from './RoadmapLayout.js';
 export { RiskMitigationLayout } from './RiskMitigationLayout.js';
 export { NextStepsLayout } from './NextStepsLayout.js';
 export { AppendixLayout } from './AppendixLayout.js';
+export { InitiativePortfolioLayout } from './InitiativePortfolioLayout.js';
+export { PrioritizationMatrixLayout } from './PrioritizationMatrixLayout.js';

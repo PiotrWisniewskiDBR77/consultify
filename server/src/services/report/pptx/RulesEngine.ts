@@ -20,6 +20,8 @@ import type {
   KeyMessagesContent,
   ExecutiveSummaryContent,
   RecommendationPortfolioContent,
+  InitiativePortfolioContent,
+  PrioritizationMatrixContent,
   RiskManagementContent,
   NextStepsContent,
   RoadmapContent,
@@ -41,6 +43,8 @@ const MAX_TITLE_WORDS = 14;
 const MAX_BULLETS = 5;
 const MAX_KPI_DASHBOARD = 6;
 const MAX_RECOMMENDATIONS_STACK = 8;
+const MAX_INITIATIVES_PER_SLIDE = 6;
+const MAX_PRIORITIZATION_ITEMS = 5;
 const MAX_RISKS = 8;
 const MAX_ACTIONS = 10;
 const MAX_ROADMAP_PHASES = 5;
@@ -218,6 +222,60 @@ const STRUCTURAL_RULES: Rule[] = [
     },
   },
   {
+    id: 'MAX_INITIATIVES',
+    description: `Initiative portfolio: max ${MAX_INITIATIVES_PER_SLIDE} initiatives per slide`,
+    check(slide, index) {
+      if (slide.intent !== 'initiative_portfolio') return null;
+      const c = slide.content as InitiativePortfolioContent;
+      if (c.initiatives && c.initiatives.length > MAX_INITIATIVES_PER_SLIDE) {
+        return {
+          rule: 'MAX_INITIATIVES',
+          message: `Slide ${index + 1}: ${c.initiatives.length} initiatives (max ${MAX_INITIATIVES_PER_SLIDE} per slide). Extra items will be truncated.`,
+          severity: 'warning',
+          slideIndex: index,
+        };
+      }
+      return null;
+    },
+  },
+  {
+    id: 'INITIATIVE_REQUIRED_FIELDS',
+    description: 'Each initiative must have at least a name',
+    check(slide, index) {
+      if (slide.intent !== 'initiative_portfolio') return null;
+      const c = slide.content as InitiativePortfolioContent;
+      const nameless = (c.initiatives || []).filter((i) => !i.name || i.name.trim() === '');
+      if (nameless.length > 0) {
+        return {
+          rule: 'INITIATIVE_REQUIRED_FIELDS',
+          message: `Slide ${index + 1}: ${nameless.length} initiatives missing name.`,
+          severity: 'error',
+          slideIndex: index,
+        };
+      }
+      return null;
+    },
+  },
+  {
+    id: 'PRIORITIZATION_QUADRANT_LIMIT',
+    description: `Prioritization matrix: max ${MAX_PRIORITIZATION_ITEMS} items per quadrant`,
+    check(slide, index) {
+      if (slide.intent !== 'prioritization_matrix') return null;
+      const c = slide.content as PrioritizationMatrixContent;
+      for (const quad of (c.quadrants || [])) {
+        if (quad.items && quad.items.length > MAX_PRIORITIZATION_ITEMS) {
+          return {
+            rule: 'PRIORITIZATION_QUADRANT_LIMIT',
+            message: `Slide ${index + 1}: quadrant "${quad.label}" has ${quad.items.length} items (max ${MAX_PRIORITIZATION_ITEMS}). Overflow will be summarized.`,
+            severity: 'warning',
+            slideIndex: index,
+          };
+        }
+      }
+      return null;
+    },
+  },
+  {
     id: 'APPENDIX_BODY_LENGTH',
     description: 'Appendix body should be reasonable for a slide',
     check(slide, index) {
@@ -287,4 +345,12 @@ export function decideRecommendationIntent(count: number): 'recommendation_singl
  */
 export function decideKpiIntent(kpiCount: number): 'executive_summary' | 'performance_overview' {
   return kpiCount > 2 ? 'performance_overview' : 'executive_summary';
+}
+
+/**
+ * Determine how many slides are needed for an initiative portfolio.
+ * Max MAX_INITIATIVES_PER_SLIDE per slide → auto-paginate.
+ */
+export function decideInitiativeSlideCount(initiativeCount: number): number {
+  return Math.max(1, Math.ceil(initiativeCount / MAX_INITIATIVES_PER_SLIDE));
 }

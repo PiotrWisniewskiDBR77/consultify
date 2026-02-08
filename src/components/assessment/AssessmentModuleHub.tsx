@@ -511,7 +511,6 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
 
     const autoSaveInterval = setInterval(async () => {
       if (hasUnsavedChanges && !isSaving) {
-        console.log('[AutoSave] Saving...');
         await handleSaveAssessment();
       }
     }, 30000); // 30 seconds

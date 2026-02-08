@@ -38,6 +38,7 @@ export type SectionType =
   | 'list'
   | 'recommendations'
   | 'action_plan'
+  | 'initiatives'
   | 'appendix'
   | 'custom';
 
@@ -93,6 +94,8 @@ export interface SectionRecord {
   repeatKey?: string;
   repeatName?: string;
   repeatData?: string;
+  chapterKey?: string;
+  chapterTitle?: string;
 }
 
 export interface CreateReportParams {
@@ -118,6 +121,8 @@ export interface UpdateSectionConfigParams {
   language?: SectionLanguage;
   customPrompt?: string;
   title?: string;
+  chapterKey?: string | null;
+  chapterTitle?: string | null;
 }
 
 export interface GenerateSectionParams {
@@ -650,6 +655,8 @@ export async function getReport(
       repeatKey: s.repeat_key,
       repeatName: s.repeat_name,
       repeatData: s.repeat_data,
+      chapterKey: (s as any).chapter_key || undefined,
+      chapterTitle: (s as any).chapter_title || undefined,
     })),
   };
 }
@@ -668,9 +675,15 @@ export async function listReports(
   }
 ): Promise<ReportRecord[]> {
   let sql = `
-    SELECT r.*, u.first_name || ' ' || u.last_name as created_by_name
+    SELECT r.*, u.first_name || ' ' || u.last_name as created_by_name,
+      COALESCE(ini.total_initiatives, 0) as initiatives_count
     FROM report_builder_reports r
     LEFT JOIN users u ON r.created_by = u.id
+    LEFT JOIN (
+      SELECT b.assessment_id, SUM(b.initiatives_count) as total_initiatives
+      FROM assessment_initiative_batches b
+      GROUP BY b.assessment_id
+    ) ini ON r.source_type = 'ASSESSMENT' AND ini.assessment_id = r.source_id
     WHERE r.organization_id = ?
   `;
   const params: unknown[] = [organizationId];
@@ -719,6 +732,8 @@ export async function listReports(
     generatedAt: row.generated_at,
     approvedAt: row.approved_at,
     version: row.version,
+    initiativesCount: Number(row.initiatives_count || 0),
+    createdByName: row.created_by_name || undefined,
   }));
 }
 
@@ -937,6 +952,14 @@ export async function updateSectionConfig(
       setClauses.push('title = ?');
       params.push(update.title);
     }
+    if (update.chapterKey !== undefined) {
+      setClauses.push('chapter_key = ?');
+      params.push(update.chapterKey);
+    }
+    if (update.chapterTitle !== undefined) {
+      setClauses.push('chapter_title = ?');
+      params.push(update.chapterTitle);
+    }
 
     params.push(reportId, update.sectionKey);
 
@@ -986,6 +1009,8 @@ export async function updateSectionConfig(
     repeatFor: s.repeat_for,
     repeatKey: s.repeat_key,
     repeatName: s.repeat_name,
+    chapterKey: (s as any).chapter_key || undefined,
+    chapterTitle: (s as any).chapter_title || undefined,
   }));
 }
 
@@ -1224,6 +1249,41 @@ export async function updateReportStatus(
   );
 
   await logActivity(reportId, `STATUS_${status}`, userId);
+}
+
+/**
+ * Update report metadata (title, description) without changing status
+ */
+export async function updateReportMetadata(
+  reportId: string,
+  organizationId: string,
+  userId: string,
+  updates: { title?: string; description?: string }
+): Promise<void> {
+  const setClauses: string[] = ['updated_at = ?', 'updated_by = ?'];
+  const params: unknown[] = [new Date().toISOString(), userId];
+
+  if (updates.title !== undefined) {
+    setClauses.push('title = ?');
+    params.push(updates.title);
+  }
+  if (updates.description !== undefined) {
+    setClauses.push('description = ?');
+    params.push(updates.description);
+  }
+
+  params.push(reportId, organizationId);
+
+  await queryRun(
+    `
+    UPDATE report_builder_reports
+    SET ${setClauses.join(', ')}
+    WHERE id = ? AND organization_id = ?
+  `,
+    params
+  );
+
+  await logActivity(reportId, 'METADATA_UPDATED', userId, updates);
 }
 
 /**
@@ -2052,7 +2112,7 @@ export async function listVersions(reportId: string, organizationId: string): Pr
 
   const rows = await queryAll<any>(
     `
-    SELECT v.*, u.name as created_by_name
+    SELECT v.*, u.first_name || ' ' || u.last_name as created_by_name
     FROM report_builder_versions v
     LEFT JOIN users u ON v.created_by = u.id
     WHERE v.report_id = ?
@@ -2316,6 +2376,7 @@ const ReportBuilderService = {
   removeSection,
   updateSectionContent,
   updateReportStatus,
+  updateReportMetadata,
   updateReportConfig,
   duplicateReport,
   getSourceDataForReport,

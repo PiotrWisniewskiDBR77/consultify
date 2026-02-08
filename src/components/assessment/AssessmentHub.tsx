@@ -539,7 +539,6 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
 
   const handleRowAction = useCallback(
     (action: string, row: any) => {
-      console.log('Row action:', action, row);
       if (action === 'view' || action === 'edit') {
         handleOpenDocument(row);
       }
@@ -711,18 +710,13 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         );
       }
 
-      // Show document editor (placeholder for reports)
-      return (
-        <div className="flex items-center justify-center h-full text-slate-500">
-          <div className="text-center">
-            <p className="text-lg">Editing: {doc?.name}</p>
-            <p className="text-sm">
-              ({doc?.subType} - {doc?.status})
-            </p>
-            <p className="mt-4 text-xs">Editor placeholder - report editor will be here</p>
-          </div>
-        </div>
-      );
+      // Reports – navigate to the full Report Builder
+      if (doc) {
+        navigate(`/reports/builder/${encodeURIComponent(doc.id)}`);
+        return null;
+      }
+
+      return null;
     }
 
     // Show list/grid view

@@ -53,7 +53,9 @@ const SECTION_TYPE_MAP: Record<string, SlideIntent> = {
   roadmap: 'roadmap',
   kpis: 'performance_overview',
   risk: 'risk_management',
-  prioritization: 'assessment',
+  prioritization: 'prioritization_matrix',
+  initiatives: 'initiative_portfolio',
+  initiative_cards: 'initiative_portfolio',
 
   // ── Consulting blocks ──
   consulting_takeaway: 'key_messages',
@@ -92,6 +94,7 @@ const VALID_INTENTS = new Set<string>([
   'cover', 'executive_summary', 'section_intro', 'key_messages',
   'performance_overview', 'single_insight', 'comparison', 'assessment',
   'root_cause', 'recommendation_single', 'recommendation_portfolio',
+  'initiative_portfolio', 'prioritization_matrix',
   'roadmap', 'risk_management', 'next_steps', 'appendix',
 ]);
 
@@ -186,6 +189,8 @@ export function getAllIntents(): Array<{ intent: SlideIntent; description: strin
     { intent: 'root_cause', description: 'Problem analysis' },
     { intent: 'recommendation_single', description: 'Single action' },
     { intent: 'recommendation_portfolio', description: 'Set of actions' },
+    { intent: 'initiative_portfolio', description: 'Strategic initiative cards' },
+    { intent: 'prioritization_matrix', description: 'Impact vs effort quadrants' },
     { intent: 'roadmap', description: 'Sequenced plan' },
     { intent: 'risk_management', description: 'Risks & mitigation' },
     { intent: 'next_steps', description: 'Call to action' },

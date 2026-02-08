@@ -103,16 +103,6 @@ class AIHealthMonitor {
         ok: !!process.env.GEMINI_API_KEY || !!process.env.GOOGLE_AI_API_KEY,
         missingError: 'GEMINI_API_KEY / GOOGLE_AI_API_KEY is not set',
       },
-      {
-        key: 'anthropic',
-        ok: !!process.env.ANTHROPIC_API_KEY,
-        missingError: 'ANTHROPIC_API_KEY is not set',
-      },
-      {
-        key: 'mistral',
-        ok: !!process.env.MISTRAL_API_KEY,
-        missingError: 'MISTRAL_API_KEY is not set',
-      },
     ];
 
     for (const p of providerDefs) {

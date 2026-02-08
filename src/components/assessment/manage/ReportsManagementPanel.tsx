@@ -29,7 +29,7 @@ import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
-import { Api } from '../../../services/api';
+import { Api, getHeaders } from '../../../services/api';
 
 // ============================================
 // Types
@@ -501,8 +501,8 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
         canGenerateInitiatives: ['APPROVED', 'SENT_INTERNAL', 'SENT_EXTERNAL'].includes(
           String(r.status || '').toUpperCase()
         ),
-        initiativesGenerated: false,
-        initiativesCount: 0,
+        initiativesGenerated: Number(r.initiativesCount || 0) > 0,
+        initiativesCount: Number(r.initiativesCount || 0),
       }));
       setReports(mapped);
     } catch (err) {
@@ -547,38 +547,17 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
     }
   };
 
-  const handleExportPDF = async (reportId: string, reportName: string) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/report-builder/${reportId}/export/pdf`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${reportName.replace(/\s+/g, '_')}_Report.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        toast.success('PDF exported');
-      }
-    } catch (err) {
-      toast.error('Failed to export PDF');
-    }
-  };
-
+  /** Download a report export as a binary blob and trigger browser download. */
   const downloadExport = async (
-    format: 'pdf' | 'pptx' | 'excel',
+    format: 'pdf' | 'pptx' | 'doc' | 'excel',
     reportId: string,
     reportName: string
   ) => {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`/api/report-builder/${reportId}/export/${format}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    });
+    const headers = getHeaders();
+    // Remove Content-Type for GET blob requests
+    delete (headers as Record<string, string>)['Content-Type'];
+
+    const response = await fetch(`/api/report-builder/${reportId}/export/${format}`, { headers });
     if (!response.ok) {
       const text = await response.text().catch(() => '');
       throw new Error(text || `Export failed (${format})`);
@@ -589,11 +568,21 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
     const a = document.createElement('a');
     a.href = url;
     const safeTitle = (reportName || 'report').replace(/[^\p{L}\p{N}_-]+/gu, '_');
-    a.download = `${safeTitle}.${format}`;
+    const ext = format === 'doc' ? 'docx' : format;
+    a.download = `${safeTitle}.${ext}`;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
+  };
+
+  const handleExportPDF = async (reportId: string, reportName: string) => {
+    try {
+      await downloadExport('pdf', reportId, reportName);
+      toast.success('PDF exported');
+    } catch (err) {
+      toast.error('Failed to export PDF');
+    }
   };
 
   const handleExportPPTX = async (reportId: string, reportName: string) => {
@@ -606,7 +595,12 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
   };
 
   const handleExportWord = async (reportId: string, reportName: string) => {
-    toast.error('Word export not available for this report type');
+    try {
+      await downloadExport('doc', reportId, reportName);
+      toast.success('Word exported');
+    } catch (err) {
+      toast.error('Failed to export Word');
+    }
   };
 
   const handleExportExcel = async (reportId: string, reportName: string) => {

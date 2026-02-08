@@ -26,6 +26,8 @@ import {
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '@/services/api';
+
 // ============================================
 // TYPES
 // ============================================
@@ -552,30 +554,18 @@ export const AISuggestionPanel: React.FC<Props> = ({
     setError(null);
 
     try {
-      const response = await fetch('/api/ai-suggestions/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const data = await Api.post('/ai-suggestions/generate', {
+        framework,
+        organizationContext: organizationContext || {
+          industry: 'manufacturing',
+          size: 'medium',
         },
-        body: JSON.stringify({
-          framework,
-          organizationContext: organizationContext || {
-            industry: 'manufacturing',
-            size: 'medium',
-          },
-          currentScores,
-          targetScores,
-        }),
+        currentScores,
+        targetScores,
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch suggestions');
-      }
-
-      const data = await response.json();
-      setSuggestions(data.data);
+      setSuggestions((data as any)?.data ?? data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : 'Failed to fetch suggestions');
     } finally {
       setIsLoading(false);
     }

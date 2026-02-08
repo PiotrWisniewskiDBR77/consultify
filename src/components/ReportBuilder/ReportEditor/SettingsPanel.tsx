@@ -9,18 +9,30 @@
  */
 
 import {
+  ArrowDownToLine,
+  Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ClipboardCheck,
+  Clock,
   FileText,
+  GitBranch,
   Globe,
+  History,
   Image,
   Layers,
   LayoutGrid,
+  Loader2,
   Monitor,
   Palette,
   Plus,
+  RefreshCw,
+  RotateCcw,
+  Save,
+  Shield,
   Smartphone,
+  Sparkles,
   Target,
   Trash2,
   Upload,
@@ -28,7 +40,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { ReportSourceType } from '../useReportBuilder';
@@ -100,6 +112,19 @@ const MODULE_TOOLS: Record<
   ],
 };
 
+type SettingsSection = 'intent' | 'styling' | 'export' | 'review' | 'versions';
+
+interface VersionEntry {
+  id: string;
+  versionNumber: number;
+  changeType: 'auto' | 'manual' | 'rollback';
+  changeSummary?: string;
+  createdAt: string;
+  createdByName?: string;
+  previousStatus?: string;
+  newStatus?: string;
+}
+
 interface SettingsPanelProps {
   intent: ReportIntent;
   styling: ReportStyling;
@@ -107,8 +132,8 @@ interface SettingsPanelProps {
   sourceName: string | null;
   onIntentChange: (updates: Partial<ReportIntent>) => void;
   onStylingChange: (updates: Partial<ReportStyling>) => void;
-  activeSection: 'intent' | 'styling' | 'export' | 'review';
-  onSectionChange: (section: 'intent' | 'styling' | 'export' | 'review') => void;
+  activeSection: SettingsSection;
+  onSectionChange: (section: SettingsSection) => void;
   exportPanel?: React.ReactNode;
   reviewPanel?: React.ReactNode;
   isCollapsed?: boolean;
@@ -117,6 +142,18 @@ interface SettingsPanelProps {
   onApplyPreset?: (preset: 'assessment_full' | 'board_pack' | 'ops_delivery') => void;
   templateMeta?: TemplateMeta;
   onTemplateMetaChange?: (updates: Partial<TemplateMeta>) => void;
+  /** Current version number */
+  currentVersion?: number;
+  /** Version history data */
+  versions?: VersionEntry[];
+  isLoadingVersions?: boolean;
+  onCreateVersion?: (summary?: string) => void;
+  onRollbackVersion?: (versionId: string) => void;
+  onLoadVersions?: () => void;
+  /** Report status for context in versions */
+  reportStatus?: string;
+  /** Last saved timestamp */
+  lastSavedAt?: string | null;
 }
 
 // ==========================================
@@ -156,19 +193,19 @@ const QuickPreviewBar: React.FC<QuickPreviewBarProps> = ({ intent, styling, isPl
   const langLabel = REPORT_LANGUAGES.find((l) => l.value === intent.language)?.flag || '🌐';
 
   return (
-    <div className="px-4 py-2 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-800 border-b border-slate-200 dark:border-slate-700">
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="px-2 py-1 bg-white dark:bg-slate-900 rounded-md shadow-sm border border-slate-200 dark:border-slate-700">
+    <div className="px-3 py-1.5 bg-slate-800/30 border-b border-slate-800/40">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-slate-800/80 text-slate-400 rounded border border-slate-700/40">
           {audienceLabels[intent.audience] || intent.audience}
         </span>
-        <span className="px-2 py-1 bg-white dark:bg-slate-900 rounded-md shadow-sm border border-slate-200 dark:border-slate-700">
+        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-slate-800/80 text-slate-400 rounded border border-slate-700/40">
           {orientationLabel}
         </span>
-        <span className="px-2 py-1 bg-white dark:bg-slate-900 rounded-md shadow-sm border border-slate-200 dark:border-slate-700">
+        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-slate-800/80 text-slate-400 rounded border border-slate-700/40">
           {langLabel} {intent.language?.toUpperCase()}
         </span>
         <span
-          className="w-4 h-4 rounded-full shadow-sm border border-slate-200 dark:border-slate-700"
+          className="w-3.5 h-3.5 rounded-full border border-slate-600/50"
           style={{ backgroundColor: styling.primaryColor }}
           title={isPl ? 'Kolor główny' : 'Primary color'}
         />
@@ -178,7 +215,7 @@ const QuickPreviewBar: React.FC<QuickPreviewBarProps> = ({ intent, styling, isPl
 };
 
 // ==========================================
-// SECTION CARD COMPONENT
+// COLLAPSIBLE SECTION CARD COMPONENT
 // ==========================================
 
 interface SectionCardProps {
@@ -186,19 +223,301 @@ interface SectionCardProps {
   icon?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
+  defaultOpen?: boolean;
 }
 
-const SectionCard: React.FC<SectionCardProps> = ({ title, icon, children, className = '' }) => (
-  <div className={`p-4 ${className}`}>
-    <div className="flex items-center gap-2 mb-3">
-      {icon && <span className="text-slate-400">{icon}</span>}
-      <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-        {title}
-      </h3>
+const SectionCard: React.FC<SectionCardProps> = ({
+  title,
+  icon,
+  children,
+  className = '',
+  defaultOpen = true,
+}) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div className={`${className}`}>
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-800/40 transition-colors cursor-pointer select-none"
+      >
+        {icon && <span className="text-slate-500">{icon}</span>}
+        <h3 className="text-[10px] font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider flex-1 text-left">
+          {title}
+        </h3>
+        <ChevronDown
+          className={`w-3 h-3 text-slate-600 transition-transform duration-200 ${
+            isOpen ? 'rotate-0' : '-rotate-90'
+          }`}
+        />
+      </button>
+      {isOpen && <div className="px-4 pb-4">{children}</div>}
     </div>
-    {children}
-  </div>
-);
+  );
+};
+
+// ==========================================
+// VERSIONS TAB CONTENT
+// ==========================================
+
+interface VersionsTabContentProps {
+  versions: VersionEntry[];
+  isLoadingVersions: boolean;
+  onCreateVersion?: (summary?: string) => void;
+  onRollbackVersion?: (versionId: string) => void;
+  reportStatus?: string;
+  lastSavedAt?: string | null;
+  currentVersion?: number;
+  isPl: boolean;
+}
+
+const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
+  versions,
+  isLoadingVersions,
+  onCreateVersion,
+  onRollbackVersion,
+  reportStatus,
+  lastSavedAt,
+  currentVersion,
+  isPl,
+}) => {
+  const [saveSummary, setSaveSummary] = useState('');
+  const [showSaveForm, setShowSaveForm] = useState(false);
+
+  const manualCount = versions.filter(v => v.changeType === 'manual').length;
+  const autoCount = versions.filter(v => v.changeType === 'auto').length;
+  const rollbackCount = versions.filter(v => v.changeType === 'rollback').length;
+
+  const handleSaveVersion = () => {
+    onCreateVersion?.(saveSummary.trim() || undefined);
+    setSaveSummary('');
+    setShowSaveForm(false);
+  };
+
+  const formatRelativeTime = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const min = Math.floor(diff / 60000);
+    if (min < 1) return isPl ? 'Przed chwilą' : 'Just now';
+    if (min < 60) return `${min}m ${isPl ? 'temu' : 'ago'}`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr}h ${isPl ? 'temu' : 'ago'}`;
+    const d = Math.floor(hr / 24);
+    return `${d}d ${isPl ? 'temu' : 'ago'}`;
+  };
+
+  return (
+    <div className="p-3 space-y-3">
+      {/* --- Status bar --- */}
+      <div className="flex items-center justify-between p-2 rounded-lg bg-slate-800/50 border border-slate-700/40">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-md bg-indigo-600/30 flex items-center justify-center">
+            <GitBranch className="w-3 h-3 text-indigo-400" />
+          </div>
+          <div>
+            <span className="text-[11px] font-bold text-slate-200 font-mono">
+              v{currentVersion || versions.length}
+            </span>
+            {reportStatus && (
+              <span className="ml-1.5 text-[8px] px-1.5 py-0.5 rounded bg-slate-700/60 text-slate-400 uppercase font-bold tracking-wider">
+                {reportStatus}
+              </span>
+            )}
+          </div>
+        </div>
+        {lastSavedAt && (
+          <span className="text-[9px] text-slate-500 flex items-center gap-1">
+            <Clock className="w-2.5 h-2.5" />
+            {formatRelativeTime(lastSavedAt)}
+          </span>
+        )}
+      </div>
+
+      {/* --- Save version card --- */}
+      {onCreateVersion && (
+        <div className="rounded-lg border border-indigo-500/30 bg-indigo-900/10 overflow-hidden">
+          {!showSaveForm ? (
+            <button
+              onClick={() => setShowSaveForm(true)}
+              className="w-full flex items-center justify-center gap-2 py-2.5 text-[11px] font-semibold text-indigo-300 hover:bg-indigo-900/20 transition-colors"
+            >
+              <ArrowDownToLine className="w-3.5 h-3.5" />
+              {isPl ? 'Zapisz wersję' : 'Save version'}
+            </button>
+          ) : (
+            <div className="p-3 space-y-2">
+              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                {isPl ? 'Opis zmian (opcjonalnie)' : 'Change summary (optional)'}
+              </label>
+              <textarea
+                value={saveSummary}
+                onChange={(e) => setSaveSummary(e.target.value)}
+                placeholder={isPl ? 'Co zmieniłeś w tej wersji...' : 'What changed in this version...'}
+                className="w-full px-2.5 py-2 text-[11px] bg-slate-800/60 border border-slate-700/50 rounded-lg resize-none h-14 focus:ring-1 focus:ring-indigo-500 text-slate-300 placeholder:text-slate-600 leading-relaxed"
+                autoFocus
+                onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSaveVersion(); }}
+              />
+              <div className="flex items-center gap-1.5">
+                <button onClick={handleSaveVersion}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[10px] font-semibold transition-colors">
+                  <Save className="w-3 h-3" />
+                  {isPl ? 'Zapisz' : 'Save'}
+                </button>
+                <button onClick={() => { setShowSaveForm(false); setSaveSummary(''); }}
+                  className="px-3 py-1.5 text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 rounded-lg text-[10px] font-medium transition-colors">
+                  {isPl ? 'Anuluj' : 'Cancel'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* --- Stats --- */}
+      {versions.length > 0 && (
+        <div className="grid grid-cols-3 gap-1.5">
+          <div className="text-center py-1.5 px-1 rounded-md bg-slate-800/40 border border-slate-700/30">
+            <div className="text-[13px] font-bold text-blue-400 font-mono">{manualCount}</div>
+            <div className="text-[8px] text-slate-500 uppercase tracking-wider font-semibold">{isPl ? 'Ręcznych' : 'Manual'}</div>
+          </div>
+          <div className="text-center py-1.5 px-1 rounded-md bg-slate-800/40 border border-slate-700/30">
+            <div className="text-[13px] font-bold text-slate-400 font-mono">{autoCount}</div>
+            <div className="text-[8px] text-slate-500 uppercase tracking-wider font-semibold">Auto</div>
+          </div>
+          <div className="text-center py-1.5 px-1 rounded-md bg-slate-800/40 border border-slate-700/30">
+            <div className="text-[13px] font-bold text-amber-400 font-mono">{rollbackCount}</div>
+            <div className="text-[8px] text-slate-500 uppercase tracking-wider font-semibold">{isPl ? 'Cofnięć' : 'Rollback'}</div>
+          </div>
+        </div>
+      )}
+
+      {/* --- Timeline --- */}
+      {isLoadingVersions ? (
+        <div className="flex items-center justify-center py-10">
+          <Loader2 className="w-5 h-5 animate-spin text-slate-500" />
+        </div>
+      ) : versions.length === 0 ? (
+        <div className="text-center py-8">
+          <Shield className="w-7 h-7 text-slate-600/40 mx-auto mb-2" />
+          <p className="text-[11px] text-slate-500 leading-relaxed">
+            {isPl ? 'Brak zapisanych wersji' : 'No saved versions'}
+          </p>
+          <p className="text-[9px] text-slate-600 mt-0.5">
+            {isPl ? 'Zapisz pierwszą wersję raportu' : 'Save the first version of your report'}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-0">
+          <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
+            {isPl ? 'Historia' : 'History'} ({versions.length})
+          </div>
+          {versions.map((v, idx) => {
+            const isLatest = idx === 0;
+            const isLast = idx === versions.length - 1;
+            return (
+              <div key={v.id} className="flex gap-2.5 group/ver">
+                {/* Timeline line */}
+                <div className="flex flex-col items-center flex-shrink-0" style={{ width: '18px' }}>
+                  <div className={`w-2.5 h-2.5 rounded-full border-2 flex-shrink-0 ${
+                    isLatest
+                      ? 'border-indigo-400 bg-indigo-500 shadow-sm shadow-indigo-500/40'
+                      : v.changeType === 'manual'
+                        ? 'border-blue-500/60 bg-blue-500/30'
+                        : v.changeType === 'rollback'
+                          ? 'border-amber-500/60 bg-amber-500/30'
+                          : 'border-slate-600 bg-slate-700'
+                  }`} />
+                  {!isLast && (
+                    <div className="w-px flex-1 bg-slate-700/50 min-h-[24px]" />
+                  )}
+                </div>
+
+                {/* Version card */}
+                <div className={`flex-1 pb-3 ${isLast ? '' : ''}`}>
+                  <div className={`p-2 rounded-lg transition-all ${
+                    isLatest
+                      ? 'bg-indigo-900/15 border border-indigo-500/25'
+                      : 'hover:bg-slate-800/40'
+                  }`}>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[11px] font-bold font-mono ${isLatest ? 'text-indigo-300' : 'text-slate-300'}`}>
+                          v{v.versionNumber}
+                        </span>
+                        {isLatest && (
+                          <span className="text-[7px] px-1 py-0.5 rounded bg-indigo-500/30 text-indigo-300 font-bold uppercase tracking-wider">
+                            {isPl ? 'Aktualna' : 'Current'}
+                          </span>
+                        )}
+                        <span className={`text-[7px] px-1 py-0.5 rounded font-bold uppercase tracking-wider ${
+                          v.changeType === 'manual'
+                            ? 'bg-blue-900/40 text-blue-400'
+                            : v.changeType === 'rollback'
+                              ? 'bg-amber-900/40 text-amber-400'
+                              : 'bg-slate-700/60 text-slate-500'
+                        }`}>
+                          {v.changeType === 'manual'
+                            ? (isPl ? 'Ręczny' : 'Manual')
+                            : v.changeType === 'rollback'
+                              ? (isPl ? 'Cofnięcie' : 'Rollback')
+                              : 'Auto'}
+                        </span>
+                      </div>
+                      {/* Restore button (not for latest) */}
+                      {!isLatest && onRollbackVersion && (
+                        <button
+                          onClick={() => {
+                            if (window.confirm(
+                              isPl
+                                ? `Przywrócić wersję v${v.versionNumber}?`
+                                : `Restore version v${v.versionNumber}?`
+                            )) {
+                              onRollbackVersion(v.id);
+                            }
+                          }}
+                          className="opacity-0 group-hover/ver:opacity-100 flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-medium text-indigo-400 hover:bg-indigo-900/30 rounded transition-all"
+                        >
+                          <RotateCcw className="w-2.5 h-2.5" />
+                          {isPl ? 'Przywróć' : 'Restore'}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Summary */}
+                    {v.changeSummary && (
+                      <p className="text-[10px] text-slate-400 mb-1 line-clamp-2 leading-snug">{v.changeSummary}</p>
+                    )}
+
+                    {/* Status change */}
+                    {v.previousStatus && v.newStatus && v.previousStatus !== v.newStatus && (
+                      <div className="flex items-center gap-1 mb-1">
+                        <span className="text-[8px] px-1 py-0.5 bg-slate-700/50 text-slate-500 rounded">{v.previousStatus}</span>
+                        <span className="text-[8px] text-slate-600">&rarr;</span>
+                        <span className="text-[8px] px-1 py-0.5 bg-slate-700/50 text-slate-500 rounded">{v.newStatus}</span>
+                      </div>
+                    )}
+
+                    {/* Meta */}
+                    <div className="flex items-center gap-1.5 text-[9px] text-slate-600">
+                      <User className="w-2.5 h-2.5" />
+                      <span>{v.createdByName || 'System'}</span>
+                      <span>·</span>
+                      <span>
+                        {new Date(v.createdAt).toLocaleString(isPl ? 'pl-PL' : 'en-US', {
+                          month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
 
 // ==========================================
 // MAIN COMPONENT
@@ -219,6 +538,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onApplyPreset,
   templateMeta,
   onTemplateMetaChange,
+  currentVersion,
+  versions = [],
+  isLoadingVersions = false,
+  onCreateVersion,
+  onRollbackVersion,
+  onLoadVersions,
+  reportStatus,
+  lastSavedAt,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -259,46 +586,73 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
   // Collapsed state
   if (isCollapsed) {
+    const SideIcon: React.FC<{ icon: React.ReactNode; active: boolean; label: string; onClick: () => void; badge?: string | number }> = ({ icon, active, label, onClick, badge }) => (
+      <button
+        onClick={onClick}
+        title={label}
+        className={`relative w-9 h-9 flex items-center justify-center rounded-lg transition-all duration-150 ${
+          active
+            ? 'bg-blue-600/15 text-blue-400 shadow-[inset_0_0_0_1px_rgba(59,130,246,0.25)]'
+            : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/60'
+        }`}
+      >
+        {icon}
+        {badge && (
+          <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 px-0.5 bg-indigo-500 text-white text-[7px] font-bold rounded-full flex items-center justify-center shadow-sm">
+            {badge}
+          </span>
+        )}
+      </button>
+    );
+
     return (
       <aside className="relative flex-shrink-0">
-        <div className="w-12 h-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col items-center py-4">
-          <button
-            onClick={onToggleCollapse}
-            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
-          >
-            <ChevronLeft className="w-5 h-5" />
+        <div className="w-11 h-full bg-slate-900/80 border-l border-slate-800/60 flex flex-col items-center py-3 gap-1">
+          {/* Expand */}
+          <button onClick={onToggleCollapse}
+            className="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-slate-300 hover:bg-slate-800 rounded-md transition-colors mb-2">
+            <ChevronLeft className="w-4 h-4" />
           </button>
-          <div className="mt-4 space-y-2">
-            <button
-              onClick={() => {
-                onToggleCollapse?.();
-                onSectionChange('intent');
-              }}
-              className={`p-2 rounded-lg ${activeSection === 'intent' ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-            >
-              <Target className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => {
-                onToggleCollapse?.();
-                onSectionChange('styling');
-              }}
-              className={`p-2 rounded-lg ${activeSection === 'styling' ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-            >
-              <Palette className="w-5 h-5" />
-            </button>
-            {!isTemplateMode && (
-              <button
-                onClick={() => {
-                  onToggleCollapse?.();
-                  onSectionChange('review');
-                }}
-                className={`p-2 rounded-lg ${activeSection === 'review' ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-              >
-                <ClipboardCheck className="w-5 h-5" />
-              </button>
-            )}
-          </div>
+
+          {/* Versions */}
+          {!isTemplateMode && (
+            <SideIcon
+              icon={<History className="w-4 h-4" />}
+              active={activeSection === 'versions'}
+              label={isPl ? 'Wersje' : 'Versions'}
+              onClick={() => { onToggleCollapse?.(); onSectionChange('versions'); onLoadVersions?.(); }}
+              badge={currentVersion && currentVersion > 0 ? `v${currentVersion}` : undefined}
+            />
+          )}
+
+          {/* Divider */}
+          <div className="w-5 border-t border-slate-700/50 my-0.5" />
+
+          {/* Content */}
+          <SideIcon
+            icon={<Target className="w-4 h-4" />}
+            active={activeSection === 'intent'}
+            label={isPl ? 'Treść' : 'Content'}
+            onClick={() => { onToggleCollapse?.(); onSectionChange('intent'); }}
+          />
+
+          {/* Design */}
+          <SideIcon
+            icon={<Palette className="w-4 h-4" />}
+            active={activeSection === 'styling'}
+            label={isPl ? 'Wygląd' : 'Design'}
+            onClick={() => { onToggleCollapse?.(); onSectionChange('styling'); }}
+          />
+
+          {/* Review */}
+          {!isTemplateMode && (
+            <SideIcon
+              icon={<ClipboardCheck className="w-4 h-4" />}
+              active={activeSection === 'review'}
+              label={isPl ? 'Recenzja' : 'Review'}
+              onClick={() => { onToggleCollapse?.(); onSectionChange('review'); }}
+            />
+          )}
         </div>
       </aside>
     );
@@ -306,57 +660,74 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
   return (
     <aside className="w-80 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden flex-shrink-0">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-        <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-          {isPl ? 'Ustawienia' : 'Settings'}
-        </span>
-        <button
-          onClick={onToggleCollapse}
-          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
-      </div>
-
-      {/* Quick Preview Bar */}
-      <QuickPreviewBar intent={intent} styling={styling} isPl={isPl} />
-
-      {/* Tabs: Content | Design | (Review) */}
-      <div className="flex border-b border-slate-200 dark:border-slate-800">
-        <button
-          onClick={() => onSectionChange('intent')}
-          className={`flex-1 py-3 text-sm font-medium transition-colors ${
-            activeSection === 'intent'
-              ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50 dark:bg-blue-900/10'
-              : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
-          }`}
-        >
-          {isPl ? 'Treść' : 'Content'}
-        </button>
-        <button
-          onClick={() => onSectionChange('styling')}
-          className={`flex-1 py-3 text-sm font-medium transition-colors ${
-            activeSection === 'styling'
-              ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50 dark:bg-blue-900/10'
-              : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
-          }`}
-        >
-          {isPl ? 'Wygląd' : 'Design'}
-        </button>
-        {!isTemplateMode && (
+      {/* Header — segmented toggle */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-700/40 bg-slate-800/50">
+        {/* Segmented control */}
+        <div className="flex items-center bg-slate-800/80 rounded-lg p-0.5 border border-slate-700/40">
+          {/* Settings pill */}
           <button
-            onClick={() => onSectionChange('review')}
-            className={`flex-1 py-3 text-sm font-medium transition-colors ${
-              activeSection === 'review'
-                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50 dark:bg-blue-900/10'
-                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+            onClick={() => { if (activeSection === 'versions') onSectionChange('intent'); }}
+            className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all duration-200 ${
+              activeSection !== 'versions'
+                ? 'bg-slate-700/80 text-slate-100 shadow-sm shadow-black/20'
+                : 'text-slate-500 hover:text-slate-300'
             }`}
           >
-            {isPl ? 'Recenzja' : 'Review'}
+            <Layers className="w-3 h-3" />
+            {isPl ? 'Ustawienia' : 'Settings'}
           </button>
-        )}
+
+          {/* Versions pill */}
+          {!isTemplateMode && (
+            <button
+              onClick={() => { onSectionChange('versions'); onLoadVersions?.(); }}
+              className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all duration-200 ${
+                activeSection === 'versions'
+                  ? 'bg-indigo-600/80 text-white shadow-sm shadow-indigo-900/30'
+                  : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              <History className="w-3 h-3" />
+              {isPl ? 'Wersje' : 'Versions'}
+            </button>
+          )}
+        </div>
+
+        {/* Collapse */}
+        <button
+          onClick={onToggleCollapse}
+          className="p-1 text-slate-600 hover:text-slate-300 hover:bg-slate-700/50 rounded-md transition-colors"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
       </div>
+
+      {/* Quick Preview Bar — hide on versions */}
+      {activeSection !== 'versions' && (
+        <QuickPreviewBar intent={intent} styling={styling} isPl={isPl} />
+      )}
+
+      {/* Tabs — hide on versions */}
+      {activeSection !== 'versions' && (
+      <div className="flex border-b border-slate-200 dark:border-slate-800/60 bg-slate-800/20">
+        {([
+          { key: 'intent' as const, en: 'Content', pl: 'Treść' },
+          { key: 'styling' as const, en: 'Design', pl: 'Wygląd' },
+          ...(!isTemplateMode ? [{ key: 'review' as const, en: 'Review', pl: 'Recenzja' }] : []),
+        ]).map((tab) => (
+          <button key={tab.key}
+            onClick={() => onSectionChange(tab.key)}
+            className={`flex-1 py-2 text-[11px] font-semibold tracking-wide uppercase transition-all ${
+              activeSection === tab.key
+                ? 'text-blue-400 border-b-2 border-blue-500 bg-blue-950/20'
+                : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/40 border-b-2 border-transparent'
+            }`}
+          >
+            {isPl ? tab.pl : tab.en}
+          </button>
+        ))}
+      </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
@@ -543,7 +914,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </SectionCard>
 
             {/* Scope */}
-            <SectionCard title={isPl ? 'Zakres' : 'Scope'} icon={<Layers className="w-4 h-4" />}>
+            <SectionCard title={isPl ? 'Zakres' : 'Scope'} icon={<Layers className="w-4 h-4" />} defaultOpen={false}>
               <div className="space-y-3">
                 <div className="flex gap-1">
                   {[
@@ -600,10 +971,61 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               </div>
             </SectionCard>
 
+            {/* Content Coherence (REQ-5) */}
+            <SectionCard
+              title={isPl ? 'Spójność treści' : 'Content Coherence'}
+              icon={<Target className="w-4 h-4" />}
+              defaultOpen={false}
+            >
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1">
+                    {isPl ? 'Główna teza raportu' : 'Narrative Thread'}
+                  </label>
+                  <textarea
+                    value={(intent as any).narrativeThread || ''}
+                    onChange={(e) => onIntentChange({ narrativeThread: e.target.value } as any)}
+                    placeholder={
+                      isPl
+                        ? 'Np. "Organizacja potrzebuje fundamentalnej zmiany w podejściu do danych..."'
+                        : 'E.g., "The organization needs a fundamental shift in data strategy..."'
+                    }
+                    className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg resize-none h-16"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    {isPl
+                      ? 'Ten wątek będzie podkreślany w każdej sekcji raportu'
+                      : 'This thread will be emphasized across all report sections'}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1">
+                    {isPl ? 'Kluczowe terminy / Słownik' : 'Key Terms / Glossary'}
+                  </label>
+                  <textarea
+                    value={(intent as any).glossaryTerms || ''}
+                    onChange={(e) => onIntentChange({ glossaryTerms: e.target.value } as any)}
+                    placeholder={
+                      isPl
+                        ? 'Np. "DRD = Digital Readiness Diagnosis; transformacja cyfrowa; Industry 4.0"'
+                        : 'E.g., "DRD = Digital Readiness Diagnosis; digital transformation; Industry 4.0"'
+                    }
+                    className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg resize-none h-16"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    {isPl
+                      ? 'AI będzie konsekwentnie używać tych terminów'
+                      : 'AI will consistently use these terms throughout'}
+                  </p>
+                </div>
+              </div>
+            </SectionCard>
+
             {/* Language - 6 languages */}
             <SectionCard
               title={isPl ? 'Język raportu' : 'Report Language'}
               icon={<Globe className="w-4 h-4" />}
+              defaultOpen={false}
             >
               <div className="grid grid-cols-3 gap-2">
                 {REPORT_LANGUAGES.map((lang) => (
@@ -627,6 +1049,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <SectionCard
               title={isPl ? 'Wizualizacje' : 'Visuals'}
               icon={<Image className="w-4 h-4" />}
+              defaultOpen={false}
             >
               <div className="space-y-2">
                 {[
@@ -721,7 +1144,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </SectionCard>
 
             {/* Theme & Font */}
-            <SectionCard title={isPl ? 'Styl' : 'Style'} icon={<Palette className="w-4 h-4" />}>
+            <SectionCard title={isPl ? 'Styl' : 'Style'} icon={<Palette className="w-4 h-4" />} defaultOpen={false}>
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">
                   {[
@@ -790,7 +1213,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </SectionCard>
 
             {/* Colors */}
-            <SectionCard title={isPl ? 'Kolory' : 'Colors'} icon={<Palette className="w-4 h-4" />}>
+            <SectionCard title={isPl ? 'Kolory' : 'Colors'} icon={<Palette className="w-4 h-4" />} defaultOpen={false}>
               <div className="space-y-3">
                 {/* Primary & Accent in row */}
                 <div className="flex gap-4">
@@ -864,7 +1287,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </SectionCard>
 
             {/* Branding */}
-            <SectionCard title="Branding" icon={<Image className="w-4 h-4" />}>
+            <SectionCard title="Branding" icon={<Image className="w-4 h-4" />} defaultOpen={false}>
               <div className="space-y-4">
                 {/* Logo upload */}
                 <div>
@@ -938,6 +1361,20 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         {/* ========== REVIEW TAB ========== */}
         {activeSection === 'review' && !isTemplateMode && (
           <div className="p-4">{reviewPanel || null}</div>
+        )}
+
+        {/* ========== VERSIONS TAB — Professional Version Management ========== */}
+        {activeSection === 'versions' && !isTemplateMode && (
+          <VersionsTabContent
+            versions={versions}
+            isLoadingVersions={isLoadingVersions}
+            onCreateVersion={onCreateVersion}
+            onRollbackVersion={onRollbackVersion}
+            reportStatus={reportStatus}
+            lastSavedAt={lastSavedAt}
+            currentVersion={currentVersion}
+            isPl={isPl}
+          />
         )}
 
         {/* ========== EXPORT TAB (hidden, but kept for compatibility) ========== */}

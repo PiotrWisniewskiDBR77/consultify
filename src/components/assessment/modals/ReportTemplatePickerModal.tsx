@@ -2,6 +2,7 @@ import { ChevronDown, FileText, Grid3X3, List, Loader2, Plus, Sparkles, X } from
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { ReportEditor } from '@/components/ReportBuilder/ReportEditor';
+import { Api } from '@/services/api';
 import { cn } from '@/utils/cn';
 
 type ReportTemplate = {
@@ -109,16 +110,8 @@ export function ReportTemplatePickerModal(props: {
     setSelectedId(null);
     setSubmitting(false);
 
-    const token = localStorage.getItem('token');
-    fetch(`/api/report-builder/templates?sourceType=${encodeURIComponent(sourceType)}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    })
-      .then(async (r) => {
-        const json = await r.json().catch(() => ({}));
-        if (!r.ok) throw new Error(json?.error || json?.message || 'Failed to load templates');
-        return json;
-      })
-      .then((json) => {
+    Api.get(`/report-builder/templates?sourceType=${encodeURIComponent(sourceType)}`)
+      .then((json: any) => {
         if (cancelled) return;
         setTemplates(Array.isArray(json?.templates) ? json.templates : []);
       })

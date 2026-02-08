@@ -209,8 +209,8 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         createdByName: r.createdByName,
         canGenerateInitiatives:
           r.status === 'APPROVED' || r.status === 'SENT_INTERNAL' || r.status === 'SENT_EXTERNAL',
-        initiativesGenerated: false, // TODO: Check if initiatives exist
-        initiativesCount: 0,
+        initiativesGenerated: Number(r.initiativesCount || 0) > 0,
+        initiativesCount: Number(r.initiativesCount || 0),
       }));
 
       setReports(mappedReports);

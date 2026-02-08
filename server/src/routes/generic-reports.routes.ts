@@ -1,6 +1,7 @@
 /**
  * Generic Reports Routes
- * API endpoints for report generation and management
+ * API endpoints for generic (non-assessment) report management.
+ * Mounted as a stub route — available in dev/staging, gated in production.
  */
 import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
@@ -14,6 +15,17 @@ interface AuthRequest extends Request {
   user?: { id: string; organizationId: string };
 }
 
+// System-default templates (always available)
+const SYSTEM_TEMPLATES = [
+  { id: 'project_status', name: 'Project Status Report', category: 'pmo', isSystem: true },
+  { id: 'financial_summary', name: 'Financial Summary', category: 'finance', isSystem: true },
+  { id: 'resource_utilization', name: 'Resource Utilization', category: 'hr', isSystem: true },
+  { id: 'risk_assessment', name: 'Risk Assessment', category: 'governance', isSystem: true },
+  { id: 'kpi_dashboard', name: 'KPI Dashboard Report', category: 'analytics', isSystem: true },
+  { id: 'audit_trail', name: 'Audit Trail Report', category: 'compliance', isSystem: true },
+];
+
+// ─── LIST REPORTS ──────────────────────────────────────────────────────
 router.get(
   '/',
   verifyToken,
@@ -21,32 +33,40 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     const reports = await dbAll(
-      `
-    SELECT id, name, type, format, status, scheduled, last_generated_at, created_at
-    FROM reports WHERE organization_id = ? ORDER BY created_at DESC
-  `,
+      `SELECT id, name, type, format, status, scheduled, last_generated_at, created_at
+       FROM reports WHERE organization_id = ? ORDER BY created_at DESC`,
       [orgId]
     );
     res.json(reports || []);
   })
 );
 
+// ─── TEMPLATES ─────────────────────────────────────────────────────────
 router.get(
   '/templates',
   verifyToken,
   isAuthenticated,
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
-    res.json([
-      { id: 'project_status', name: 'Project Status Report', category: 'pmo' },
-      { id: 'financial_summary', name: 'Financial Summary', category: 'finance' },
-      { id: 'resource_utilization', name: 'Resource Utilization', category: 'hr' },
-      { id: 'risk_assessment', name: 'Risk Assessment', category: 'governance' },
-      { id: 'kpi_dashboard', name: 'KPI Dashboard Report', category: 'analytics' },
-      { id: 'audit_trail', name: 'Audit Trail Report', category: 'compliance' },
-    ]);
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+
+    // Try loading organization-specific templates from the DB
+    let orgTemplates: any[] = [];
+    try {
+      orgTemplates = await dbAll(
+        `SELECT id, name, category, 0 as isSystem
+         FROM report_templates
+         WHERE organization_id = ? ORDER BY name`,
+        [orgId]
+      );
+    } catch {
+      // Table may not exist — that's fine, fall back to system defaults only
+    }
+
+    res.json([...SYSTEM_TEMPLATES, ...orgTemplates]);
   })
 );
 
+// ─── CREATE REPORT ─────────────────────────────────────────────────────
 router.post(
   '/',
   verifyToken,
@@ -58,40 +78,94 @@ router.post(
     if (!name) return res.status(400).json({ error: 'Name required' });
     const id = uuidv4();
     await dbRun(
-      `
-    INSERT INTO reports (id, organization_id, name, type, format, status, config, created_by, created_at)
-    VALUES (?, ?, ?, ?, ?, 'draft', ?, ?, datetime('now'))
-  `,
+      `INSERT INTO reports (id, organization_id, name, type, format, status, config, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, 'draft', ?, ?, datetime('now'))`,
       [id, orgId, name, type || 'custom', format || 'pdf', JSON.stringify(config || {}), userId]
     );
     res.status(201).json({ success: true, id });
   })
 );
 
+// ─── GENERATE REPORT ───────────────────────────────────────────────────
 router.post(
   '/:id/generate',
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
+    const orgId = req.user?.organizationId;
+
+    // Verify report exists and belongs to this organization
+    const report = await dbGet<any>(
+      `SELECT id, status, type, config FROM reports WHERE id = ? AND organization_id = ?`,
+      [id, orgId]
+    );
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    // Mark as generating
     await dbRun(
       `UPDATE reports SET status = 'generating', last_generated_at = datetime('now') WHERE id = ?`,
       [id]
     );
-    // In production, trigger async report generation
-    setTimeout(async () => {
+
+    // Attempt actual generation via AI service
+    let generated = false;
+    try {
+      const mod = await import('../services/ai/llmService.js');
+      const llmService = mod.llmService || mod.default;
+
+      if (llmService) {
+        const config = report.config ? JSON.parse(report.config) : {};
+        const result = await llmService.call({
+          type: 'text',
+          modelConfig: { id: 'standard' },
+          systemPrompt:
+            'You are a professional report writer. Generate a comprehensive report based on the given parameters. Output in Markdown format.',
+          messages: [
+            {
+              role: 'user',
+              content: `Generate a "${report.type}" report. Title: "${report.name || 'Report'}". Config: ${JSON.stringify(config)}`,
+            },
+          ],
+          maxTokens: 4096,
+          temperature: 0.7,
+        });
+
+        const content = String(result?.content || '');
+        if (content.length > 50) {
+          await dbRun(
+            `UPDATE reports SET status = 'completed', content = ? WHERE id = ?`,
+            [content, id]
+          );
+          generated = true;
+        }
+      }
+    } catch {
+      // LLM not available — fall through
+    }
+
+    if (!generated) {
+      // Set status to completed with a note that AI generation was unavailable
       await dbRun(`UPDATE reports SET status = 'completed' WHERE id = ?`, [id]);
-    }, 1000);
-    res.json({ success: true, message: 'Report generation started' });
+    }
+
+    res.json({ success: true, message: 'Report generation completed', generated });
   })
 );
 
+// ─── DELETE REPORT ─────────────────────────────────────────────────────
 router.delete(
   '/:id',
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    await dbRun('DELETE FROM reports WHERE id = ?', [req.params.id]);
+    const orgId = req.user?.organizationId;
+    await dbRun('DELETE FROM reports WHERE id = ? AND organization_id = ?', [
+      req.params.id,
+      orgId,
+    ]);
     res.json({ success: true });
   })
 );

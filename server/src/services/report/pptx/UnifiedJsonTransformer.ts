@@ -29,6 +29,8 @@ import type {
   RootCauseContent,
   RecommendationSingleContent,
   RecommendationPortfolioContent,
+  InitiativePortfolioContent,
+  PrioritizationMatrixContent,
   RoadmapContent,
   RiskManagementContent,
   NextStepsContent,
@@ -161,11 +163,40 @@ export function transformToUnifiedJson(
     );
 
     if (slideContent) {
-      slides.push({
-        intent,
-        key_message: extractKeyMessage(section.title, content, intent),
-        content: slideContent,
-      });
+      // Auto-paginate initiative_portfolio slides (max 6 per slide)
+      if (intent === 'initiative_portfolio' && 'initiatives' in slideContent) {
+        const iContent = slideContent as InitiativePortfolioContent;
+        const allInitiatives = iContent.initiatives || [];
+        const PAGE_SIZE = 6;
+
+        if (allInitiatives.length > PAGE_SIZE) {
+          const pageCount = Math.ceil(allInitiatives.length / PAGE_SIZE);
+          for (let page = 0; page < pageCount; page++) {
+            const pageItems = allInitiatives.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+            const suffix = pageCount > 1 ? ` (${page + 1}/${pageCount})` : '';
+            slides.push({
+              intent,
+              key_message: extractKeyMessage(section.title, content, intent) + suffix,
+              content: {
+                type: 'initiative_portfolio',
+                initiatives: pageItems,
+              } as InitiativePortfolioContent,
+            });
+          }
+        } else {
+          slides.push({
+            intent,
+            key_message: extractKeyMessage(section.title, content, intent),
+            content: slideContent,
+          });
+        }
+      } else {
+        slides.push({
+          intent,
+          key_message: extractKeyMessage(section.title, content, intent),
+          content: slideContent,
+        });
+      }
     }
   }
 
@@ -213,7 +244,7 @@ function buildSlideContent(
 ): SlideContent | null {
   // Try to parse JSON content first
   let parsed: any = null;
-  if (section.contentFormat === 'json' || section.renderKind === 'json' || section.renderKind === 'matrix') {
+  if (section.contentFormat === 'json' || section.renderKind === 'json' || section.renderKind === 'matrix' || section.renderKind === 'initiatives') {
     try {
       parsed = JSON.parse(rawContent);
     } catch {
@@ -259,6 +290,12 @@ function buildSlideContent(
 
     case 'recommendation_portfolio':
       return buildRecommendationPortfolio(section, rawContent, parsed);
+
+    case 'initiative_portfolio':
+      return buildInitiativePortfolio(section, rawContent, parsed);
+
+    case 'prioritization_matrix':
+      return buildPrioritizationMatrix(section, rawContent, parsed);
 
     case 'roadmap':
       return buildRoadmap(section, rawContent, parsed);
@@ -596,6 +633,97 @@ function buildNextSteps(
     actions: bullets.slice(0, 10).map((b) => ({
       action: b,
     })),
+  };
+}
+
+// ============================================================
+// INITIATIVE + PRIORITIZATION BUILDERS
+// ============================================================
+
+function buildInitiativePortfolio(
+  section: ReportInput['sections'][0],
+  rawContent: string,
+  parsed: any
+): InitiativePortfolioContent {
+  // Direct structured JSON from AI
+  if (parsed && (parsed.type === 'initiatives' || parsed.type === 'initiative_cards' || parsed.type === 'initiative_portfolio')) {
+    return {
+      type: 'initiative_portfolio',
+      initiatives: (parsed.items || parsed.initiatives || []).map((item: any) => ({
+        name: item.name || 'Unnamed Initiative',
+        summary: item.summary || item.description,
+        strategicIntent: item.strategicIntent,
+        strategicRole: item.strategicRole,
+        priority: item.priority,
+        timeline: item.timeline,
+        impact: typeof item.impact === 'number' ? item.impact : undefined,
+        effort: typeof item.effort === 'number' ? item.effort : undefined,
+        effortProfile: item.effortProfile,
+        budget: item.budget,
+        roi: item.roi,
+        owner: item.owner,
+        relatedGap: item.relatedGap,
+        relatedAxis: item.relatedAxis,
+        tags: item.tags,
+      })),
+    };
+  }
+
+  // If parsed is an array of initiatives
+  if (parsed && Array.isArray(parsed)) {
+    return {
+      type: 'initiative_portfolio',
+      initiatives: parsed.map((item: any) => ({
+        name: item.name || 'Initiative',
+        summary: item.summary,
+        strategicIntent: item.strategicIntent,
+        priority: item.priority || 'medium',
+        impact: item.impact,
+        effort: item.effort,
+        timeline: item.timeline,
+      })),
+    };
+  }
+
+  // Fallback: parse from markdown bullet points
+  const bullets = extractBulletPoints(rawContent);
+  return {
+    type: 'initiative_portfolio',
+    initiatives: bullets.slice(0, 8).map((b, i) => ({
+      name: b,
+      priority: i < 3 ? 'high' as const : 'medium' as const,
+    })),
+  };
+}
+
+function buildPrioritizationMatrix(
+  section: ReportInput['sections'][0],
+  rawContent: string,
+  parsed: any
+): PrioritizationMatrixContent {
+  // Direct structured JSON
+  if (parsed && parsed.quadrants) {
+    return {
+      type: 'prioritization_matrix',
+      quadrants: parsed.quadrants,
+      xAxisLabel: parsed.xAxisLabel || 'Effort',
+      yAxisLabel: parsed.yAxisLabel || 'Impact',
+    };
+  }
+
+  // Fallback: create empty matrix structure
+  const bullets = extractBulletPoints(rawContent);
+  const quarter = Math.ceil(bullets.length / 4);
+  return {
+    type: 'prioritization_matrix',
+    quadrants: [
+      { label: 'Quick Wins', position: 'top_left' as const, items: bullets.slice(0, quarter).map(b => ({ name: b })) },
+      { label: 'Major Projects', position: 'top_right' as const, items: bullets.slice(quarter, quarter * 2).map(b => ({ name: b })) },
+      { label: 'Fill-ins', position: 'bottom_left' as const, items: bullets.slice(quarter * 2, quarter * 3).map(b => ({ name: b })) },
+      { label: 'Reconsider', position: 'bottom_right' as const, items: bullets.slice(quarter * 3).map(b => ({ name: b })) },
+    ],
+    xAxisLabel: 'Effort',
+    yAxisLabel: 'Impact',
   };
 }
 

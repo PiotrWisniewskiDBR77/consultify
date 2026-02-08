@@ -74,24 +74,12 @@ export const TIER_DEFAULTS: Record<string, string> = {
 };
 
 export const TIER_FALLBACK_CHAINS: Record<string, string[]> = {
-  BUDGET: ['gpt-4o-mini', 'gemini-2.0-flash', 'deepseek-chat', 'qwen-turbo', 'glm-4-flash'],
-  STANDARD: [
-    'gpt-4o',
-    'gemini-2.5-flash',
-    'claude-3-5-sonnet',
-    'command-r-plus',
-    'qwen-max',
-    'glm-4-plus',
-  ],
-  PREMIUM: [
-    'gpt-4o',
-    'gemini-2.5-pro',
-    'claude-3-opus',
-    'meta/llama-3.1-405b-instruct',
-    'glm-4-plus',
-  ],
-  REASONING: ['o1-preview', 'gpt-4o', 'gemini-2.5-pro', 'deepseek-chat', 'claude-3-opus'],
-  VISION: ['gpt-4o', 'gemini-2.5-flash', 'claude-3-5-sonnet', 'qwen-vl-max'],
+  // Active providers: OpenAI + Gemini (Anthropic/Mistral not configured)
+  BUDGET: ['gpt-4o-mini', 'gemini-2.0-flash'],
+  STANDARD: ['gpt-4o', 'gemini-2.5-flash'],
+  PREMIUM: ['gpt-4o', 'gemini-2.5-pro'],
+  REASONING: ['o1-preview', 'gpt-4o', 'gemini-2.5-pro'],
+  VISION: ['gpt-4o', 'gemini-2.5-flash'],
 };
 
 export const TIER_FALLBACKS: Record<string, string> = {

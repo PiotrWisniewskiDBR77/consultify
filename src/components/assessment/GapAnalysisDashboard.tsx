@@ -49,13 +49,20 @@ export const GapAnalysisDashboard: React.FC<GapAnalysisDashboardProps> = ({
   const generateInitiatives = async () => {
     setGenerating(true);
     try {
-      // Call initiative generator service
+      // Derive assessment IDs from the overview data fetched earlier
+      const drdAssessmentId = overview?.drd?.assessmentId || overview?.drd?.id || null;
+      const leanAssessmentId =
+        overview?.rapidLean?.assessmentId || overview?.rapidLean?.id || null;
+      const externalIds: string[] = Array.isArray(overview?.externalDigital?.assessments)
+        ? overview.externalDigital.assessments.map((a: any) => a.id).filter(Boolean)
+        : [];
+
       const response = await axios.post('/api/initiatives/generate-from-assessments', {
         projectId,
         organizationId,
-        drdAssessmentId: null, // TODO: get from overview
-        leanAssessmentId: null,
-        externalAssessmentIds: [],
+        drdAssessmentId,
+        leanAssessmentId,
+        externalAssessmentIds: externalIds,
       });
 
       setGeneratedInitiatives(response.data.initiatives || []);

@@ -21,6 +21,8 @@ export type SlideIntent =
   | 'root_cause'
   | 'recommendation_single'
   | 'recommendation_portfolio'
+  | 'initiative_portfolio'
+  | 'prioritization_matrix'
   | 'roadmap'
   | 'risk_management'
   | 'next_steps'
@@ -70,6 +72,8 @@ export type SlideContent =
   | RootCauseContent
   | RecommendationSingleContent
   | RecommendationPortfolioContent
+  | InitiativePortfolioContent
+  | PrioritizationMatrixContent
   | RoadmapContent
   | RiskManagementContent
   | NextStepsContent
@@ -209,6 +213,41 @@ export interface AppendixContent {
   body: string;
   tables?: TableData[];
   footnotes?: string[];
+}
+
+export interface InitiativePortfolioContent {
+  type: 'initiative_portfolio';
+  initiatives: Array<{
+    name: string;
+    summary?: string;
+    strategicIntent?: 'Grow' | 'Fix' | 'Stabilize' | 'De-risk' | 'Build Capability' | string;
+    strategicRole?: 'Foundation' | 'Enabler' | 'Accelerator' | 'Scaling' | string;
+    priority?: 'critical' | 'high' | 'medium' | 'low';
+    timeline?: string;
+    impact?: number;     // 1-5
+    effort?: number;     // 1-5
+    effortProfile?: { analytical: number; operational: number; change: number };
+    budget?: string;
+    roi?: string;
+    owner?: string;
+    relatedGap?: string;
+    relatedAxis?: string;
+    tags?: string[];
+  }>;
+}
+
+export interface PrioritizationMatrixContent {
+  type: 'prioritization_matrix';
+  quadrants: Array<{
+    label: string;
+    position: 'top_left' | 'top_right' | 'bottom_left' | 'bottom_right';
+    items: Array<{
+      name: string;
+      description?: string;
+    }>;
+  }>;
+  xAxisLabel: string;
+  yAxisLabel: string;
 }
 
 // ============================================================

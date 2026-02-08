@@ -341,6 +341,19 @@ const BLOCK_TYPES: BlockType[] = [
     color: 'from-purple-500 to-purple-600',
     category: 'visual',
   },
+  {
+    id: 'initiatives',
+    type: 'initiatives',
+    title: 'Initiative Cards',
+    titlePl: 'Karty Inicjatyw',
+    description: 'Rich initiative cards with strategy, effort, metrics',
+    descriptionPl: 'Karty inicjatyw ze strategią, wysiłkiem, metrykami',
+    icon: <Zap className="w-6 h-6" />,
+    color: 'from-indigo-500 to-violet-600',
+    category: 'visual',
+    renderKind: 'initiatives',
+    defaultLength: 'long',
+  },
 ];
 
 // ==========================================

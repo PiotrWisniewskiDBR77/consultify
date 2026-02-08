@@ -31,10 +31,72 @@ import {
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { default as defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import notificationService from '../services/notificationService.js';
 import ReportBuilderCommentsService from '../services/reportBuilderCommentsService.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
 import ReportGenerationService from '../services/reportGenerationService.js';
 import logger from '../utils/Logger.js';
+
+// ==========================================
+// HELPER: Auto-version + Notify on status change
+// ==========================================
+
+async function createAutoVersionOnStatusChange(
+  reportId: string,
+  organizationId: string,
+  userId: string,
+  previousStatus: string,
+  newStatus: string,
+  changeSummary: string
+): Promise<void> {
+  try {
+    await ReportBuilderService.createVersion(reportId, organizationId, userId, {
+      changeType: 'auto',
+      changeSummary,
+      previousStatus,
+      newStatus,
+    });
+    logger.info('[ReportBuilder] Auto-version created on status change', {
+      reportId,
+      previousStatus,
+      newStatus,
+    });
+  } catch (err) {
+    logger.warn('[ReportBuilder] Failed to create auto-version (non-fatal)', { reportId, err });
+  }
+}
+
+async function notifyOnStatusChange(
+  reportId: string,
+  organizationId: string,
+  actorUserId: string,
+  targetUserIds: string[],
+  notifType: string,
+  title: string,
+  body: string,
+  reportTitle?: string
+): Promise<void> {
+  for (const targetId of targetUserIds) {
+    if (targetId === actorUserId) continue; // Don't notify yourself
+    try {
+      await notificationService.send({
+        userId: targetId,
+        organizationId,
+        type: notifType,
+        title,
+        body,
+        entityType: 'report_builder',
+        entityId: reportId,
+        actionUrl: `/reports/builder/${reportId}`,
+        actorId: actorUserId,
+        priority: 'normal',
+        metadata: { reportTitle },
+      });
+    } catch (err) {
+      logger.warn('[ReportBuilder] Failed to send notification (non-fatal)', { targetId, err });
+    }
+  }
+}
 
 const router = Router();
 
@@ -1061,6 +1123,44 @@ router.post('/:id/duplicate', async (req: Request, res: Response, next: NextFunc
 });
 
 // ==========================================
+// REPORT METADATA
+// ==========================================
+
+/**
+ * PATCH /api/report-builder/:id/metadata
+ * Update report title, description without changing status.
+ */
+router.patch('/:id/metadata', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = paramStr(req.params.id);
+    const { userId, organizationId } = getAuthContext(req);
+    const { title, description } = req.body;
+
+    if (!title && description === undefined) {
+      return res.status(400).json({ error: 'At least one of title or description is required' });
+    }
+
+    const existing = await ReportBuilderService.getReport(id, organizationId);
+    if (!existing) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    await ReportBuilderService.updateReportMetadata(id, organizationId, userId, {
+      title: title || undefined,
+      description: description !== undefined ? description : undefined,
+    });
+
+    const refreshed = await ReportBuilderService.getReport(id, organizationId);
+
+    logger.info('[ReportBuilder] Report metadata updated', { reportId: id, title, userId });
+    res.json({ report: refreshed?.report });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error updating report metadata:', err);
+    next(err);
+  }
+});
+
+// ==========================================
 // SECTION CONFIGURATION ENDPOINTS
 // ==========================================
 
@@ -1368,6 +1468,7 @@ router.post('/:id/finalize', async (req: Request, res: Response, next: NextFunct
   try {
     const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
+    const { reviewers, message } = req.body || {};
 
     const report = await ReportBuilderService.getReport(id, organizationId);
     if (!report) {
@@ -1390,9 +1491,29 @@ router.post('/:id/finalize', async (req: Request, res: Response, next: NextFunct
       });
     }
 
+    const previousStatus = report.report.status;
     await ReportBuilderService.updateReportStatus(id, 'IN_REVIEW', userId);
 
-    logger.info('[ReportBuilder] Report finalized', { reportId: id });
+    // Auto-version: snapshot before review
+    await createAutoVersionOnStatusChange(
+      id, organizationId, userId, previousStatus, 'IN_REVIEW',
+      `Sent for review${message ? `: ${message}` : ''}`
+    );
+
+    // Notify reviewers
+    const reviewerIds = Array.isArray(reviewers) ? reviewers : [];
+    if (reviewerIds.length > 0) {
+      const reportTitle = report.report.title || 'Report';
+      await notifyOnStatusChange(
+        id, organizationId, userId, reviewerIds,
+        'report_review_requested',
+        'Review requested',
+        `You have been asked to review "${reportTitle}"${message ? `. Message: ${message}` : ''}`,
+        reportTitle
+      );
+    }
+
+    logger.info('[ReportBuilder] Report finalized', { reportId: id, reviewers: reviewerIds });
 
     res.json({ success: true, status: 'IN_REVIEW' });
   } catch (err) {
@@ -1434,7 +1555,26 @@ router.post('/:id/approve', async (req: Request, res: Response, next: NextFuncti
       });
     }
 
+    const previousStatus = report.report.status;
     await ReportBuilderService.updateReportStatus(id, 'APPROVED', userId);
+
+    // Auto-version: approved version snapshot (immutable reference)
+    await createAutoVersionOnStatusChange(
+      id, organizationId, userId, previousStatus, 'APPROVED',
+      'Report approved — approved version snapshot'
+    );
+
+    // Notify report author
+    const authorId = report.report.createdBy || report.report.created_by;
+    if (authorId) {
+      await notifyOnStatusChange(
+        id, organizationId, userId, [authorId],
+        'report_approved',
+        'Report approved',
+        `Your report "${report.report.title || 'Report'}" has been approved.`,
+        report.report.title
+      );
+    }
 
     logger.info('[ReportBuilder] Report approved', { reportId: id });
 
@@ -1463,7 +1603,26 @@ router.post('/:id/send-back', async (req: Request, res: Response, next: NextFunc
       return res.status(400).json({ error: 'Report must be in review to send back' });
     }
 
+    const previousStatus = report.report.status;
     await ReportBuilderService.updateReportStatus(id, 'DRAFT', userId);
+
+    // Auto-version before reverting
+    await createAutoVersionOnStatusChange(
+      id, organizationId, userId, previousStatus, 'DRAFT',
+      'Sent back for revision'
+    );
+
+    // Notify author
+    const authorId = report.report.createdBy || report.report.created_by;
+    if (authorId) {
+      await notifyOnStatusChange(
+        id, organizationId, userId, [authorId],
+        'report_sent_back',
+        'Report sent back',
+        `Your report "${report.report.title || 'Report'}" was sent back for revision.`,
+        report.report.title
+      );
+    }
 
     logger.info('[ReportBuilder] Report sent back to draft', { reportId: id });
 
@@ -1495,6 +1654,24 @@ router.post('/:id/reject', async (req: Request, res: Response, next: NextFunctio
     }
 
     await ReportBuilderService.updateReportStatus(id, 'DRAFT', userId);
+
+    // Auto-version before rejection
+    await createAutoVersionOnStatusChange(
+      id, organizationId, userId, status, 'DRAFT',
+      `Rejected${reason ? `: ${reason}` : ''}`
+    );
+
+    // Notify author
+    const authorId = report.report.createdBy || report.report.created_by;
+    if (authorId) {
+      await notifyOnStatusChange(
+        id, organizationId, userId, [authorId],
+        'report_rejected',
+        'Report rejected',
+        `Your report "${report.report.title || 'Report'}" was rejected.${reason ? ` Reason: ${reason}` : ''}`,
+        report.report.title
+      );
+    }
 
     logger.info('[ReportBuilder] Report rejected', {
       reportId: id,
@@ -1531,6 +1708,11 @@ router.post('/:id/utilize', async (req: Request, res: Response, next: NextFuncti
 
     await ReportBuilderService.updateReportStatus(id, 'UTILIZED', userId);
 
+    await createAutoVersionOnStatusChange(
+      id, organizationId, userId, status, 'UTILIZED',
+      `Report utilized${notes ? `: ${notes}` : ''}`
+    );
+
     logger.info('[ReportBuilder] Report utilized', { reportId: id, userId, notes });
 
     res.json({ success: true, status: 'UTILIZED' });
@@ -1560,6 +1742,11 @@ router.post('/:id/mark-sent-internal', async (req: Request, res: Response, next:
 
     await ReportBuilderService.updateReportStatus(id, 'SENT_INTERNAL', userId);
 
+    await createAutoVersionOnStatusChange(
+      id, organizationId, userId, 'APPROVED', 'SENT_INTERNAL',
+      'Sent internally'
+    );
+
     logger.info('[ReportBuilder] Report marked as sent internally', { reportId: id, userId });
 
     res.json({ success: true, status: 'SENT_INTERNAL' });
@@ -1588,6 +1775,11 @@ router.post('/:id/mark-sent-external', async (req: Request, res: Response, next:
     }
 
     await ReportBuilderService.updateReportStatus(id, 'SENT_EXTERNAL', userId);
+
+    await createAutoVersionOnStatusChange(
+      id, organizationId, userId, 'SENT_INTERNAL', 'SENT_EXTERNAL',
+      'Sent to client'
+    );
 
     logger.info('[ReportBuilder] Report marked as sent externally', { reportId: id, userId });
 

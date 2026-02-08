@@ -214,3 +214,41 @@ export function likelihoodImpactColor(
     case 'low': return tokens.colors.success;
   }
 }
+
+// ============================================================
+// STRATEGIC INTENT / ROLE COLORS
+// ============================================================
+
+/** Strategic intent → hex color (without #) */
+export function strategicIntentColor(intent: string): string {
+  switch (intent) {
+    case 'Grow': return '22C55E';       // green
+    case 'Fix': return 'EF4444';        // red
+    case 'Stabilize': return '3B82F6';  // blue
+    case 'De-risk': return 'F59E0B';    // amber
+    case 'Build Capability': return '6366F1'; // indigo
+    default: return '94A3B8';           // slate
+  }
+}
+
+/** Strategic role → hex color (without #) */
+export function strategicRoleColor(role: string): string {
+  switch (role) {
+    case 'Foundation': return '64748B';   // slate
+    case 'Enabler': return '3B82F6';      // blue
+    case 'Accelerator': return 'F59E0B';  // amber
+    case 'Scaling': return '8B5CF6';      // purple
+    default: return '94A3B8';
+  }
+}
+
+/** Priority → hex color (without #) */
+export function priorityColor(priority: string, tokens: DesignTokens): string {
+  switch (priority) {
+    case 'critical': return tokens.colors.danger;
+    case 'high': return tokens.colors.warning;
+    case 'medium': return tokens.colors.info;
+    case 'low': return tokens.colors.success;
+    default: return tokens.colors.muted;
+  }
+}

@@ -407,6 +407,59 @@ function buildSettingsGuidance(sectionType: string, settings: Record<string, unk
     guidance.push(`- Focus on these areas: ${settings.focusAreas}`);
   }
 
+  // ── REQ-1: Block Blueprint Settings ──
+
+  // Content Instructions (detailed instructions for what to include)
+  if (settings.contentInstructions && typeof settings.contentInstructions === 'string' && settings.contentInstructions.trim()) {
+    guidance.push(`\nCONTENT BLUEPRINT (follow strictly):\n${settings.contentInstructions.trim()}`);
+  }
+
+  // Required Sub-sections
+  if (settings.requiredSectionsList && typeof settings.requiredSectionsList === 'string' && settings.requiredSectionsList.trim()) {
+    const subSections = settings.requiredSectionsList.trim().split('\n').filter(Boolean);
+    if (subSections.length > 0) {
+      guidance.push(`\nREQUIRED SUB-SECTIONS (include all of these):`);
+      subSections.forEach((s, i) => {
+        guidance.push(`  ${i + 1}. ${s.trim()}`);
+      });
+    }
+  }
+
+  // Output structure
+  if (settings.outputStructure && settings.outputStructure !== 'auto') {
+    const structureMap: Record<string, string> = {
+      narrative: 'Write in a flowing narrative style with natural transitions between points. Use paragraphs, not lists.',
+      structured: 'Use a clearly structured format with numbered sections, headers, and organized sub-points.',
+      data_driven: 'Lead with data and numbers. Every claim must reference a specific metric, score, or percentage. Use tables where appropriate.',
+    };
+    if (structureMap[settings.outputStructure as string]) {
+      guidance.push(`- OUTPUT STRUCTURE: ${structureMap[settings.outputStructure as string]}`);
+    }
+  }
+
+  // Min/Max items count
+  if (settings.minItemsCount !== undefined) {
+    guidance.push(`- Include at least ${settings.minItemsCount} items/points/findings`);
+  }
+  if (settings.maxItemsCount !== undefined) {
+    guidance.push(`- Include no more than ${settings.maxItemsCount} items/points/findings`);
+  }
+
+  // Require data references
+  if (settings.requireDataReferences === true) {
+    guidance.push('- MANDATORY: Every finding or recommendation MUST cite specific scores, percentages, or data points from the assessment. No unsupported claims.');
+  }
+
+  // Require actionable conclusions
+  if (settings.requireActionable === true) {
+    guidance.push('- MANDATORY: Each section MUST end with concrete, actionable next steps. Avoid vague conclusions.');
+  }
+
+  // Forbidden topics
+  if (settings.forbiddenTopics && typeof settings.forbiddenTopics === 'string' && settings.forbiddenTopics.trim()) {
+    guidance.push(`- DO NOT discuss these topics: ${settings.forbiddenTopics.trim()}`);
+  }
+
   return guidance.join('\n');
 }
 
@@ -426,6 +479,9 @@ function getSectionPrompt(
   // Block-specific settings from frontend
   const blockSettings = section.blockConfig || {};
 
+  // Extract sourceContext from blockConfig (stored as _sourceContext by frontend)
+  const sourceContext = (blockSettings as any)._sourceContext || '';
+
   // Build settings guidance string from blockSettings
   const settingsGuidance = buildSettingsGuidance(sectionType, blockSettings);
 
@@ -437,6 +493,7 @@ function getSectionPrompt(
 Write in ${section.language} style. ${languageGuidance}
 Target length: ${lengthGuidance}
 ${section.customPrompt ? `\nAdditional guidance: ${section.customPrompt}` : ''}
+${sourceContext ? `\nUser-provided source data and context:\n${sourceContext}` : ''}
 ${settingsGuidance ? `\nBlock-specific settings:\n${settingsGuidance}` : ''}
 ${styleGuidance}`;
 
@@ -648,6 +705,58 @@ For each action, specify:
 - What success looks like
 
 Be practical and realistic.`,
+      };
+
+    case 'initiatives':
+      return {
+        system: `${baseSystem}\n\nIMPORTANT: You MUST return ONLY valid JSON. No markdown, no explanation, no code fences. Just the JSON object.`,
+        user: `Generate a structured set of digital transformation initiatives for ${companyName} based on the ${assessmentType} assessment.
+
+Assessment Data:
+${JSON.stringify(scores, null, 2)}
+
+Company Context:
+${JSON.stringify(companyContext, null, 2)}
+
+Return a JSON object in this EXACT format:
+{
+  "type": "initiatives",
+  "title": "Recommended Initiatives Portfolio",
+  "items": [
+    {
+      "name": "Initiative name (concise, actionable)",
+      "summary": "1-2 sentence description of what this initiative does and why",
+      "strategicIntent": "Grow" | "Fix" | "Stabilize" | "De-risk" | "Build Capability",
+      "strategicRole": "Foundation" | "Enabler" | "Accelerator" | "Scaling",
+      "priority": "high" | "medium" | "low",
+      "timeline": "e.g. 0-3 months, 3-6 months, 6-12 months",
+      "budget": "e.g. $50k, $100k-200k",
+      "roi": "e.g. 3x, 5-8x",
+      "impact": 1-5 (number),
+      "effort": 1-5 (number),
+      "effortProfile": { "analytical": 1-5, "operational": 1-5, "change": 1-5 },
+      "owner": "Suggested owner role",
+      "relatedGap": "The specific gap from assessment this addresses",
+      "relatedAxis": "Assessment axis this relates to",
+      "tags": ["tag1", "tag2"],
+      "problemStatement": "The core problem this initiative solves"
+    }
+  ]
+}
+
+Guidelines:
+- Generate ${(section.blockConfig as any)?.maxItems || 6}-${((section.blockConfig as any)?.maxItems || 6) + 4} initiatives
+- Each initiative must directly relate to assessment findings
+- Include a mix of strategic intents (Grow/Fix/Stabilize/De-risk/Build Capability)
+- Include a mix of strategic roles (Foundation/Enabler/Accelerator/Scaling)
+- Cover different time horizons (short/medium/long)
+- Be specific about gaps and axes from the actual assessment data
+- Ensure initiatives are realistic and actionable for the organization
+${(section.blockConfig as any)?.prioritization === 'quick_wins' ? '- Focus on quick wins: high impact, low effort items' : ''}
+${(section.blockConfig as any)?.groupBy === 'axis' ? '- Group related initiatives by assessment axis' : ''}
+${(section.blockConfig as any)?.groupBy === 'intent' ? '- Group related initiatives by strategic intent' : ''}
+
+CRITICAL: Return ONLY valid JSON. No markdown formatting, no code fences, no explanations.`,
       };
 
     case 'appendix':
@@ -1310,13 +1419,18 @@ export async function generateSectionContent(
   // Call AI
   const result = await callAI(prompts.system, prompts.user, maxTokens);
 
+  // Detect if the result is JSON-based (e.g. initiatives, dashboard, kpis)
+  const isJsonSection = ['initiatives'].includes(section.sectionType);
+  const detectedFormat = isJsonSection ? 'json' : undefined;
+  const detectedRenderKind = isJsonSection ? 'initiatives' : undefined;
+
   // Save generated content
   const now = new Date().toISOString();
   await queryRun(
     `
     UPDATE report_builder_sections
     SET generated_content = ?, generated_at = ?, tokens_used = ?, generation_model = ?,
-        source_data_snapshot = ?, updated_at = ?
+        source_data_snapshot = ?${detectedFormat ? ', content_format = ?, render_kind = ?' : ''}, updated_at = ?
     WHERE report_id = ? AND section_key = ?
   `,
     [
@@ -1325,6 +1439,7 @@ export async function generateSectionContent(
       result.tokensUsed,
       result.model,
       JSON.stringify(context.sourceData),
+      ...(detectedFormat ? [detectedFormat, detectedRenderKind] : []),
       now,
       reportId,
       sectionKey,
@@ -1380,8 +1495,90 @@ export async function generateFullReport(
   let totalTokens = 0;
   const generatedSections: string[] = [];
 
+  // ── REQ-5: Cross-Block Coherence ──
+  // Step 1: Generate a report outline to guide all sections
+  let reportOutline = '';
+  if (sectionsToGenerate.length >= 3) {
+    try {
+      const sourceData = await ReportBuilderService.getSourceDataForReport(reportId, organizationId);
+      const companyName = (reportData.report.companyContext as any)?.organizationName || 'the organization';
+      const assessmentType = sourceData?.assessment?.assessmentType || 'DRD';
+      const sectionList = sectionsToGenerate.map((s, i) => `${i + 1}. ${s.title || s.sectionKey} (${s.sectionType})`).join('\n');
+
+      const outlineResult = await callAI(
+        `You are a senior report strategist. Generate a concise report outline that ensures coherence across all sections.`,
+        `Create a coherent narrative outline for a ${assessmentType} assessment report for ${companyName}.
+
+The report has these sections:
+${sectionList}
+
+For each section, provide:
+- 1-sentence description of what it should focus on
+- Key transition from previous section
+- 2-3 key points to emphasize
+
+Keep the outline concise (max 400 words). Focus on narrative flow and avoiding repetition between sections.`,
+        600
+      );
+
+      reportOutline = outlineResult.content;
+      totalTokens += outlineResult.tokensUsed;
+      logger.info('[ReportGeneration] Generated coherence outline', { reportId, tokensUsed: outlineResult.tokensUsed });
+    } catch (err) {
+      logger.warn('[ReportGeneration] Failed to generate outline, continuing without it', err);
+    }
+  }
+
+  // Build narrative context that accumulates as we generate sections sequentially.
+  // Each section receives a summary of previously generated content for coherence.
+  const previousSectionsSummaries: Array<{ key: string; title: string; summary: string }> = [];
+
+  // Build narrative thread from report config (if set by user)
+  // Config structure: { intent: { narrativeThread, glossaryTerms, ... }, styling: {...} }
+  const reportConfig = reportData.report.config || {};
+  const intentConfig = (reportConfig as any)?.intent || {};
+  const narrativeThread = intentConfig?.narrativeThread
+    || (reportConfig as any)?.narrativeThread
+    || (reportConfig as any)?.keyMessages
+    || '';
+  const glossaryTerms = intentConfig?.glossaryTerms
+    || (reportConfig as any)?.glossaryTerms
+    || '';
+
   for (let i = 0; i < sectionsToGenerate.length; i++) {
     const section = sectionsToGenerate[i];
+
+    // Inject cross-block context into section's customPrompt temporarily
+    let coherenceContext = '';
+
+    // Add report outline for coherence
+    if (reportOutline) {
+      coherenceContext += `\n\nREPORT OUTLINE (follow this structure, maintain coherent narrative flow):\n${reportOutline}\n`;
+    }
+
+    if (previousSectionsSummaries.length > 0) {
+      // Include summaries of previous sections (last 5 for token efficiency)
+      const recentSummaries = previousSectionsSummaries.slice(-5);
+      coherenceContext += '\n\nPREVIOUS SECTIONS CONTEXT (maintain coherence, avoid repetition):\n';
+      for (const ps of recentSummaries) {
+        coherenceContext += `- "${ps.title}": ${ps.summary}\n`;
+      }
+    }
+    if (narrativeThread) {
+      coherenceContext += `\nNARRATIVE THREAD (emphasize throughout): ${narrativeThread}\n`;
+    }
+    if (glossaryTerms) {
+      coherenceContext += `\nTERMINOLOGY (use consistently): ${glossaryTerms}\n`;
+    }
+
+    // Temporarily append coherence context to section's customPrompt
+    const originalCustomPrompt = section.customPrompt || '';
+    if (coherenceContext) {
+      await queryRun(
+        `UPDATE report_builder_sections SET custom_prompt = ? WHERE report_id = ? AND section_key = ?`,
+        [(originalCustomPrompt + coherenceContext).slice(0, 4000), reportId, section.sectionKey]
+      );
+    }
 
     try {
       const result = await generateSectionContent(
@@ -1393,12 +1590,28 @@ export async function generateFullReport(
       totalTokens += result.tokensUsed;
       generatedSections.push(section.sectionKey);
 
+      // Build summary of generated content for next sections (first 300 chars)
+      const contentPreview = result.content.replace(/[#*_\n]+/g, ' ').trim();
+      previousSectionsSummaries.push({
+        key: section.sectionKey,
+        title: section.title || section.sectionKey,
+        summary: contentPreview.length > 300 ? contentPreview.slice(0, 300) + '...' : contentPreview,
+      });
+
       // Report progress
       const progress = Math.round(((i + 1) / sectionsToGenerate.length) * 100);
       options?.onProgress?.(progress, section.sectionKey);
     } catch (err) {
       logger.error(`[ReportGeneration] Failed to generate section ${section.sectionKey}`, err);
       // Continue with other sections
+    } finally {
+      // Restore original customPrompt (remove coherence injection)
+      if (coherenceContext) {
+        await queryRun(
+          `UPDATE report_builder_sections SET custom_prompt = ? WHERE report_id = ? AND section_key = ?`,
+          [originalCustomPrompt || null, reportId, section.sectionKey]
+        );
+      }
     }
   }
 

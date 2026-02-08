@@ -56,3 +56,9 @@ export type { ProgressBarProps } from './ProgressBar.js';
 
 export { HeaderBar } from './HeaderBar.js';
 export type { HeaderBarProps } from './HeaderBar.js';
+
+export { DotScale } from './DotScale.js';
+export type { DotScaleProps } from './DotScale.js';
+
+export { MiniBar } from './MiniBar.js';
+export type { MiniBarProps } from './MiniBar.js';

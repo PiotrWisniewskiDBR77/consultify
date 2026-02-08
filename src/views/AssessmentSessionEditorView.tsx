@@ -19,14 +19,20 @@ import { toast } from 'react-hot-toast';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { UnifiedChatPanel } from '@/components/AIChat/UnifiedChatPanel';
+import { ADMAAssessmentEditor } from '@/components/assessment/adma/ADMAAssessmentEditor';
 import { DRDAssessmentEditor } from '@/components/assessment/drd/DRDAssessmentEditor';
 import { InitiativesGenerationWizardModal } from '@/components/assessment/InitiativesGenerationWizardModal';
 import { AssessmentManagePanel } from '@/components/assessment/manage/AssessmentManagePanel';
 import { ReportTemplatePickerModal } from '@/components/assessment/modals/ReportTemplatePickerModal';
 import { RequestAccessModal, useAssessmentPermissions } from '@/components/assessment/permissions';
-import { SIRIForm } from '@/components/assessment/tools/SIRIForm';
+import { SIRIAssessmentEditor } from '@/components/assessment/siri/SIRIAssessmentEditor';
+import { CMPracticeForm } from '@/components/assessment/tools/CMPracticeForm';
+import { LeanForm } from '@/components/assessment/tools/LeanForm';
 import { Api } from '@/services/api';
+import { ADMA_DIMENSIONS } from '@/services/admaStructure';
+import { CMMI_PRACTICE_AREAS } from '@/services/cmmiStructure';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
+import { SIRI_DIMENSIONS } from '@/services/siriStructure';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
@@ -150,6 +156,118 @@ function calcAxisProgress(
     total: axis.areas.length,
     percent: axis.areas.length > 0 ? Math.round((completed / axis.areas.length) * 100) : 0,
   };
+}
+
+/**
+ * SIRI completion%: a dimension is "answered" when its current score > 0
+ * or it has target, notes, or evidence set.
+ * Total = 8 dimensions.
+ */
+function calcSiriCompletionPercent(siri: any): number {
+  const dims = siri?.dimensions || {};
+  const totalDims = SIRI_DIMENSIONS.length; // 8
+  if (totalDims === 0) return 0;
+  const answered = SIRI_DIMENSIONS.filter((d) => {
+    const s = dims[d.id];
+    if (!s) return false;
+    const hasCurrent = Number(s.current || 0) > 0;
+    const hasTarget = Number(s.target || 0) > 0;
+    const hasNotes = Boolean(String(s.notes || '').trim());
+    const hasEvidence = Boolean(String(s.evidence || '').trim());
+    return hasCurrent || hasTarget || hasNotes || hasEvidence;
+  }).length;
+  // Also count prioritisation areas if present
+  const priMatrix = siri?.prioritisationMatrix || siri?.prioritisation || {};
+  const priCount = Object.values(priMatrix).filter((v: any) => {
+    if (typeof v === 'number') return v > 0;
+    if (typeof v === 'object' && v !== null) return Number((v as any).score || 0) > 0;
+    return false;
+  }).length;
+  // Weight: 70% from dimensions, 30% from prioritisation areas (16 total)
+  const dimPercent = (answered / totalDims) * 100;
+  const priPercent = priCount > 0 ? (priCount / 16) * 100 : 0;
+  return Math.round(dimPercent * 0.7 + priPercent * 0.3);
+}
+
+/**
+ * ADMA completion%: a dimension is "answered" when its current score differs
+ * from default (1) or has target/notes/evidence.
+ * Total = 12 dimensions.
+ */
+function calcAdmaCompletionPercent(adma: any): number {
+  const dims = adma?.dimensions || {};
+  const totalDims = ADMA_DIMENSIONS.length; // 12
+  if (totalDims === 0) return 0;
+  const answered = ADMA_DIMENSIONS.filter((d) => {
+    const s = dims[d.id];
+    if (!s) return false;
+    // ADMA scale starts at 1 (default). Treat as "answered" if explicitly set > 1
+    // OR if target/notes/evidence exist (even at level 1 — user consciously set it)
+    const hasCurrent = Number(s.current || 0) > 1;
+    const hasTarget = Number(s.target || 0) > 0;
+    const hasNotes = Boolean(String(s.notes || '').trim());
+    const hasEvidence = Boolean(String(s.evidence || '').trim());
+    return hasCurrent || hasTarget || hasNotes || hasEvidence;
+  }).length;
+  return Math.round((answered / totalDims) * 100);
+}
+
+/**
+ * CMMI completion%: a practice area is "answered" when its level > 1
+ * or has target/evidence. Total = 20 practice areas.
+ */
+function calcCmmiCompletionPercent(cmmi: any): number {
+  const cats = cmmi?.categories || {};
+  const totalPAs = CMMI_PRACTICE_AREAS.length; // 20
+  if (totalPAs === 0) return 0;
+  let answered = 0;
+  for (const catData of Object.values(cats) as any[]) {
+    const scores = catData?.practiceAreaScores || {};
+    for (const pa of Object.values(scores) as any[]) {
+      const hasLevel = Number(pa?.level || 0) > 1;
+      const hasTarget = Number(pa?.target || 0) > 0;
+      const hasEvidence = Boolean(String(pa?.evidence || '').trim());
+      if (hasLevel || hasTarget || hasEvidence) answered++;
+    }
+  }
+  return Math.round((answered / totalPAs) * 100);
+}
+
+/**
+ * Lean completion%: count processes + workstations with meaningful data.
+ */
+function calcLeanCompletionPercent(lean: any): number {
+  const processes = Array.isArray(lean?.processes) ? lean.processes : [];
+  const workstations = Array.isArray(lean?.workstations) ? lean.workstations : [];
+  const total = processes.length + workstations.length;
+  if (total === 0) return 0;
+  const answeredProcesses = processes.filter((p: any) => {
+    return Number(p?.leanMaturity || 0) > 0 || Number(p?.automationPotential || 0) > 0;
+  }).length;
+  const answeredWorkstations = workstations.filter((w: any) => {
+    return Number(w?.leanMaturity || 0) > 0 || Number(w?.automationPotential || 0) > 0;
+  }).length;
+  return Math.round(((answeredProcesses + answeredWorkstations) / total) * 100);
+}
+
+/**
+ * Universal completion percent calculator based on framework
+ */
+function calcCompletionPercent(framework: string, answers: Record<string, any>): number {
+  switch (framework) {
+    case 'drd':
+      return calcDrdCompletionPercent(answers?.drd || {});
+    case 'siri':
+      return calcSiriCompletionPercent(answers?.siri || {});
+    case 'adma':
+      return calcAdmaCompletionPercent(answers?.adma || {});
+    case 'cmmi':
+      return calcCmmiCompletionPercent(answers?.cmmi || {});
+    case 'lean':
+      return calcLeanCompletionPercent(answers?.lean || {});
+    default:
+      return 0;
+  }
 }
 
 export const AssessmentSessionEditorView: React.FC = () => {
@@ -502,10 +620,9 @@ export const AssessmentSessionEditorView: React.FC = () => {
     if (!assessmentId || isSaving) return;
     setIsSaving(true);
     try {
-      const completionPercent =
-        framework === 'drd'
-          ? calcDrdCompletionPercent(answers?.drd || {})
-          : (assessment?.completion_percent ?? 0);
+      const completionPercent = framework
+        ? calcCompletionPercent(framework, answers)
+        : (assessment?.completion_percent ?? 0);
       const confidenceAvg = calcConfidenceAvgFromCompletion(completionPercent);
       const payload: any = {
         answers,
@@ -573,10 +690,9 @@ export const AssessmentSessionEditorView: React.FC = () => {
     }
     setIsExiting(true);
     try {
-      const completionPercent =
-        framework === 'drd'
-          ? calcDrdCompletionPercent(answers?.drd || {})
-          : (assessment?.completion_percent ?? 0);
+      const completionPercent = framework
+        ? calcCompletionPercent(framework, answers)
+        : (assessment?.completion_percent ?? 0);
       const confidenceAvg = calcConfidenceAvgFromCompletion(completionPercent);
       const payload: any = {
         answers,
@@ -733,10 +849,9 @@ export const AssessmentSessionEditorView: React.FC = () => {
                 ? AppView.ASSESSMENT_LEAN
                 : AppView.ASSESSMENT_OVERVIEW;
 
-    const completionPercent =
-      framework === 'drd'
-        ? calcDrdCompletionPercent(answers?.drd || {})
-        : (assessment?.completion_percent ?? 0);
+    const completionPercent = framework
+      ? calcCompletionPercent(framework, answers)
+      : (assessment?.completion_percent ?? 0);
     const confidenceAvg = calcConfidenceAvgFromCompletion(completionPercent);
 
     const drdData: any = answers?.drd || {};
@@ -835,17 +950,16 @@ export const AssessmentSessionEditorView: React.FC = () => {
     const parts: string[] = [];
     if (framework) parts.push(framework.toUpperCase());
     parts.push(status);
-    const completionPercent =
-      framework === 'drd'
-        ? calcDrdCompletionPercent(answers?.drd || {})
-        : (assessment?.completion_percent ?? 0);
+    const completionPercent = framework
+      ? calcCompletionPercent(framework, answers)
+      : (assessment?.completion_percent ?? 0);
     if (completionPercent > 0) parts.push(`${completionPercent}% complete`);
     return parts.join(' · ');
   }, [framework, status, answers, assessment?.completion_percent]);
 
   const overallProgress = useMemo(() => {
-    if (framework === 'drd') {
-      return calcDrdCompletionPercent(answers?.drd || {});
+    if (framework) {
+      return calcCompletionPercent(framework, answers);
     }
     return assessment?.completion_percent ?? 0;
   }, [framework, answers, assessment?.completion_percent]);
@@ -1061,16 +1175,64 @@ export const AssessmentSessionEditorView: React.FC = () => {
     }
 
     if (framework === 'siri') {
-      const siriData: SIRIFormData = answers?.siri || {};
+      const siriData = answers?.siri || {};
       return (
-        <SIRIForm
-          data={siriData}
+        <SIRIAssessmentEditor
+          assessmentId={assessmentId || ''}
+          readOnly={isLocked}
+          value={siriData}
           onChange={(next) => {
             const nextAnswers = { ...answers, siri: next };
             setAnswers(nextAnswers);
-            // TODO: add a real completion% heuristic for SIRI
-            scheduleSave(nextAnswers, assessment?.completion_percent ?? 0);
+            scheduleSave(nextAnswers, calcSiriCompletionPercent(next));
           }}
+        />
+      );
+    }
+
+    if (framework === 'adma') {
+      const admaData = answers?.adma || {};
+      return (
+        <ADMAAssessmentEditor
+          assessmentId={assessmentId || ''}
+          readOnly={isLocked}
+          value={admaData}
+          onChange={(next) => {
+            const nextAnswers = { ...answers, adma: next };
+            setAnswers(nextAnswers);
+            scheduleSave(nextAnswers, calcAdmaCompletionPercent(next));
+          }}
+        />
+      );
+    }
+
+    if (framework === 'cmmi') {
+      const cmmiData = answers?.cmmi || { maturityLevel: 1, categories: {}, overallScore: 0 };
+      return (
+        <CMPracticeForm
+          data={cmmiData}
+          onChange={(next) => {
+            const nextAnswers = { ...answers, cmmi: next };
+            setAnswers(nextAnswers);
+            scheduleSave(nextAnswers, calcCmmiCompletionPercent(next));
+          }}
+          readOnly={isLocked}
+          showProgress={true}
+        />
+      );
+    }
+
+    if (framework === 'lean') {
+      const leanData = answers?.lean || { phase: 'MEASURE', processes: [], workstations: [] };
+      return (
+        <LeanForm
+          data={leanData}
+          onChange={(next) => {
+            const nextAnswers = { ...answers, lean: next };
+            setAnswers(nextAnswers);
+            scheduleSave(nextAnswers, calcLeanCompletionPercent(next));
+          }}
+          readOnly={isLocked}
           showProgress={true}
         />
       );
@@ -1083,7 +1245,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
             Editor not available yet
           </div>
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            Framework: {framework.toUpperCase()}
+            Framework: {framework?.toUpperCase()}
           </div>
         </div>
       </div>

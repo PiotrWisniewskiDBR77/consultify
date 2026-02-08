@@ -9,6 +9,7 @@
 
 import {
   BookTemplate,
+  Check,
   ChevronDown,
   ChevronRight,
   Download,
@@ -20,6 +21,7 @@ import {
   MoreHorizontal,
   Palette,
   Plus,
+  RefreshCw,
   Save,
   Settings,
   Share2,
@@ -29,11 +31,13 @@ import {
   Wand2,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import ReactMarkdown from 'react-markdown';
 
 import { Api } from '../../../services/api';
+import { SmartBlockRenderer } from '../blocks/SmartBlockRenderer';
 import { ExportSharePanel } from '../ExportSharePanel';
 import type {
   Report,
@@ -44,6 +48,7 @@ import type {
 } from '../useReportBuilder';
 import { BlockCard } from './BlockCard';
 import { BlockPalette } from './BlockPalette';
+import { ChapterNavigation, groupBlocksIntoChapters, hasChapters } from './ChapterNavigation';
 import { ReviewPanel } from './ReviewPanel';
 import { SettingsPanel } from './SettingsPanel';
 
@@ -118,6 +123,17 @@ export interface BlockConfig {
    * These settings customize how the block is generated and rendered.
    */
   blockSettings?: Record<string, unknown>;
+  /**
+   * Chapter/section grouping key for organizing long reports (REQ-7).
+   * All blocks with the same chapterKey are grouped visually under that chapter.
+   */
+  chapterKey?: string;
+  /** Display title for the chapter this block belongs to */
+  chapterTitle?: string;
+  /** User-provided source data, context, and references for AI generation */
+  sourceContext?: string;
+  /** Tracks if settings/prompt changed since last generation - block should be re-generated */
+  needsRegeneration?: boolean;
 }
 
 interface ReportEditorProps {
@@ -141,6 +157,311 @@ interface ReportEditorProps {
   onTemplateSaved?: (template: { id: string; name: string }) => void;
   onClose?: () => void;
 }
+
+// ==========================================
+// PREVIEW MODAL
+// ==========================================
+
+interface ReportPreviewModalProps {
+  blocks: BlockConfig[];
+  reportTitle: string;
+  sourceName: string | null;
+  styling: ReportStyling;
+  intent: ReportIntent;
+  isPl: boolean;
+  onClose: () => void;
+}
+
+/**
+ * Renders a cover page block nicely instead of showing raw JSON.
+ */
+function renderCoverPage(
+  content: string,
+  reportTitle: string,
+  styling: ReportStyling
+): React.ReactNode {
+  let parsed: Record<string, string> | null = null;
+  try {
+    // Cover pages are often stored as JSON
+    const trimmed = content.trim();
+    if (trimmed.startsWith('{')) {
+      parsed = JSON.parse(trimmed);
+    }
+  } catch {
+    // Not JSON — render as markdown
+  }
+
+  if (parsed) {
+    const title = parsed.title || reportTitle || 'Report';
+    const subtitle = parsed.subtitle || '';
+    const company = parsed.companyName || parsed.company || '';
+    const date = parsed.date || new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+    const assessmentType = parsed.assessmentType || '';
+
+    return (
+      <div
+        className="flex flex-col items-center justify-center text-center py-24 px-8"
+        style={{ minHeight: '60vh' }}
+      >
+        {assessmentType && (
+          <div
+            className="text-sm font-semibold uppercase tracking-widest mb-6 opacity-70"
+            style={{ color: styling.accentColor }}
+          >
+            {assessmentType} Assessment
+          </div>
+        )}
+        <h1
+          className="text-4xl md:text-5xl font-bold mb-4 leading-tight"
+          style={{ color: styling.primaryColor }}
+        >
+          {title}
+        </h1>
+        {subtitle && (
+          <p className="text-lg text-slate-500 dark:text-slate-400 mb-8 max-w-2xl">
+            {subtitle}
+          </p>
+        )}
+        <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-sm mt-4">
+          {company && <span className="font-medium">{company}</span>}
+          {company && date && <span>·</span>}
+          {date && <span>{date}</span>}
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback: render as markdown
+  return (
+    <div className="prose prose-lg dark:prose-invert max-w-none">
+      <ReactMarkdown>{content}</ReactMarkdown>
+    </div>
+  );
+}
+
+/**
+ * Detects if content is JSON (e.g. assessment_matrix) and renders it
+ * as a nice table; otherwise renders markdown.
+ */
+const SmartContentRenderer: React.FC<{
+  content: string;
+  blockType: string;
+  styling: ReportStyling;
+}> = ({ content, blockType, styling }) => {
+  const trimmed = content.trim();
+
+  // Try to parse JSON matrix data
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+
+      // Assessment matrix format: { type: "assessment_matrix", axes: [...] }
+      if (parsed.type === 'assessment_matrix' && Array.isArray(parsed.axes)) {
+        return (
+          <div className="not-prose">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="border-b-2 border-slate-200 dark:border-slate-700">
+                  <th className="text-left py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">
+                    Axis
+                  </th>
+                  <th className="text-center py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">
+                    Score
+                  </th>
+                  <th className="text-center py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">
+                    Max
+                  </th>
+                  <th className="text-center py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">
+                    Gap
+                  </th>
+                  <th className="text-left py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 w-40">
+                    Progress
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {parsed.axes.map((axis: any, i: number) => {
+                  const pct = parsed.scaleMax
+                    ? Math.round((axis.score / parsed.scaleMax) * 100)
+                    : 0;
+                  return (
+                    <tr
+                      key={axis.axisId || i}
+                      className="border-b border-slate-100 dark:border-slate-800"
+                    >
+                      <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">
+                        {axis.axisName}
+                      </td>
+                      <td className="py-3 px-4 text-center font-semibold" style={{ color: styling.primaryColor }}>
+                        {axis.score}
+                      </td>
+                      <td className="py-3 px-4 text-center text-slate-500">
+                        {axis.maxScore || parsed.scaleMax}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <span className={`font-medium ${axis.gap > 2 ? 'text-red-500' : axis.gap > 1 ? 'text-amber-500' : 'text-green-500'}`}>
+                          {axis.gap}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                          <div
+                            className="h-2 rounded-full transition-all"
+                            style={{
+                              width: `${pct}%`,
+                              backgroundColor: styling.primaryColor,
+                            }}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        );
+      }
+    } catch {
+      // Not valid JSON — fall through to markdown
+    }
+  }
+
+  return <ReactMarkdown>{content}</ReactMarkdown>;
+};
+
+const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
+  blocks,
+  reportTitle,
+  sourceName,
+  styling,
+  intent,
+  isPl,
+  onClose,
+}) => {
+  const enabledBlocks = useMemo(
+    () => blocks.filter((b) => b.enabled).sort((a, b) => a.orderIndex - b.orderIndex),
+    [blocks]
+  );
+
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  const fontClass =
+    styling.fontFamily === 'inter'
+      ? 'font-sans'
+      : styling.fontFamily === 'roboto'
+        ? 'font-sans'
+        : styling.fontFamily === 'poppins'
+          ? 'font-sans'
+          : 'font-sans';
+
+  return (
+    <div className="fixed inset-0 z-[100] flex flex-col bg-white dark:bg-slate-950">
+      {/* Preview Header */}
+      <header className="h-12 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 flex-shrink-0 print:hidden">
+        <div className="flex items-center gap-3">
+          <Eye className="w-4 h-4 text-slate-500" />
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            {isPl ? 'Podgląd raportu' : 'Report Preview'}
+          </span>
+          <span className="text-xs text-slate-400 ml-2">
+            {enabledBlocks.length} {isPl ? 'sekcji' : 'sections'}
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+          >
+            <Download className="w-4 h-4" />
+            {isPl ? 'Drukuj / PDF' : 'Print / PDF'}
+          </button>
+          <button
+            onClick={onClose}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-700 rounded-lg"
+          >
+            <X className="w-4 h-4" />
+            {isPl ? 'Zamknij' : 'Close'}
+          </button>
+        </div>
+      </header>
+
+      {/* Preview Body */}
+      <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-950 print:bg-white">
+        <div
+          className={`max-w-4xl mx-auto my-8 bg-white dark:bg-slate-900 shadow-xl rounded-lg print:shadow-none print:rounded-none print:my-0 print:max-w-none ${fontClass}`}
+        >
+          {enabledBlocks.map((block, idx) => {
+            const content = block.content || '';
+            const isCover = block.type === 'cover' || block.type === 'cover_page';
+            const hasContent = content.trim().length > 0;
+
+            return (
+              <section
+                key={block.id}
+                className={`${idx > 0 ? 'border-t border-slate-100 dark:border-slate-800' : ''} ${isCover ? '' : 'px-12 py-10 md:px-16 md:py-12'}`}
+                style={{ pageBreakBefore: idx > 0 ? 'always' : undefined }}
+              >
+                {isCover && hasContent ? (
+                  renderCoverPage(content, reportTitle, styling)
+                ) : (
+                  <>
+                    {/* Section title */}
+                    {!isCover && (
+                      <h2
+                        className="text-2xl font-bold mb-6"
+                        style={{ color: styling.primaryColor }}
+                      >
+                        {block.title}
+                      </h2>
+                    )}
+
+                    {/* Section content */}
+                    {hasContent ? (
+                      <div className="prose prose-slate dark:prose-invert max-w-none prose-headings:font-semibold prose-h3:text-lg prose-p:leading-relaxed prose-li:leading-relaxed">
+                        <SmartBlockRenderer
+                          content={content}
+                          blockType={block.type}
+                          renderKind={block.renderKind}
+                          primaryColor={styling.primaryColor}
+                          accentColor={styling.accentColor}
+                          blockSettings={block.blockSettings}
+                        />
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 text-slate-400">
+                        <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                        <p className="text-sm italic">
+                          {isPl
+                            ? 'Ta sekcja nie ma jeszcze treści. Kliknij "Generuj" w edytorze.'
+                            : 'This section has no content yet. Click "Generate" in the editor.'}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </section>
+            );
+          })}
+
+          {/* Footer */}
+          {styling.showBranding && (
+            <div className="border-t border-slate-100 dark:border-slate-800 px-12 py-6 text-center text-xs text-slate-400 print:text-slate-500">
+              {isPl ? 'Utworzono w' : 'Created with'} Consultinity
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // ==========================================
 // MAIN COMPONENT
@@ -192,13 +513,23 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
 
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showGenerateMenu, setShowGenerateMenu] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showBlockPalette, setShowBlockPalette] = useState(false);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [settingsSection, setSettingsSection] = useState<
-    'intent' | 'styling' | 'export' | 'review'
+    'intent' | 'styling' | 'export' | 'review' | 'versions'
   >('intent');
   const [isSettingsPanelCollapsed, setIsSettingsPanelCollapsed] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [showChapterNav, setShowChapterNav] = useState(true);
+  // Version history is now rendered inline inside SettingsPanel
+  const [versions, setVersions] = useState<any[]>([]);
+  const [isLoadingVersions, setIsLoadingVersions] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
 
   // Source state
   const [sourceType, setSourceType] = useState<ReportSourceType | null>(initialSourceType || null);
@@ -514,28 +845,48 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
 
         // Convert sections to blocks
         if (response.sections) {
-          const loadedBlocks: BlockConfig[] = response.sections.map((s: ReportSection) => ({
-            // IMPORTANT: use sectionKey as stable identifier
-            id: s.sectionKey,
-            type: (s as any).blockTypeId || s.sectionType,
-            title: s.title,
-            length: s.length || 'medium',
-            includeVisuals:
-              s.renderKind === 'matrix' ||
-              Boolean(
-                (s as any).renderKind &&
-                ['json', 'matrix', 'table', 'chart', 'callout'].includes(
-                  String((s as any).renderKind)
-                )
-              ),
-            blockTypeId: (s as any).blockTypeId,
-            renderKind: (s as any).renderKind,
-            enabled: s.enabled,
-            orderIndex: s.orderIndex,
-            content: s.editedContent || s.generatedContent,
-            isGenerated: Boolean(s.generatedContent),
-            customPrompt: s.customPrompt,
-          }));
+          const loadedBlocks: BlockConfig[] = response.sections.map((s: ReportSection) => {
+            // Parse blockConfig from backend
+            let parsedBlockSettings: Record<string, unknown> = {};
+            try {
+              if ((s as any).blockConfigJson) {
+                parsedBlockSettings = typeof (s as any).blockConfigJson === 'string'
+                  ? JSON.parse((s as any).blockConfigJson)
+                  : (s as any).blockConfigJson;
+              } else if ((s as any).blockConfig) {
+                parsedBlockSettings = typeof (s as any).blockConfig === 'string'
+                  ? JSON.parse((s as any).blockConfig)
+                  : (s as any).blockConfig;
+              }
+            } catch { /* ignore parse errors */ }
+
+            return {
+              // IMPORTANT: use sectionKey as stable identifier
+              id: s.sectionKey,
+              type: (s as any).blockTypeId || s.sectionType,
+              title: s.title,
+              length: s.length || 'medium',
+              includeVisuals:
+                s.renderKind === 'matrix' ||
+                Boolean(
+                  (s as any).renderKind &&
+                  ['json', 'matrix', 'table', 'chart', 'callout'].includes(
+                    String((s as any).renderKind)
+                  )
+                ),
+              blockTypeId: (s as any).blockTypeId,
+              renderKind: (s as any).renderKind,
+              enabled: s.enabled,
+              orderIndex: s.orderIndex,
+              content: s.editedContent || s.generatedContent,
+              isGenerated: Boolean(s.generatedContent),
+              customPrompt: s.customPrompt,
+              blockSettings: parsedBlockSettings,
+              sourceContext: (parsedBlockSettings as any)?._sourceContext || undefined,
+              chapterKey: (s as any).chapterKey || undefined,
+              chapterTitle: (s as any).chapterTitle || undefined,
+            };
+          });
           setBlocks(loadedBlocks.sort((a, b) => a.orderIndex - b.orderIndex));
         }
       }
@@ -747,7 +1098,14 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   );
 
   const updateBlock = useCallback((blockId: string, updates: Partial<BlockConfig>) => {
-    setBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, ...updates } : b)));
+    setBlocks((prev) => prev.map((b) => {
+      if (b.id !== blockId) return b;
+      // Auto-mark as needsRegeneration when AI-relevant fields change on already-generated block
+      const aiRelevantKeys: (keyof BlockConfig)[] = ['customPrompt', 'sourceContext', 'blockSettings', 'length', 'includeVisuals'];
+      const hasAiChange = Object.keys(updates).some((k) => aiRelevantKeys.includes(k as keyof BlockConfig));
+      const markDirty = b.isGenerated && hasAiChange && !('needsRegeneration' in updates);
+      return { ...b, ...updates, ...(markDirty ? { needsRegeneration: true } : {}) };
+    }));
   }, []);
 
   const removeBlock = useCallback((blockId: string) => {
@@ -771,6 +1129,466 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       return updated.map((b, i) => ({ ...b, orderIndex: i }));
     });
   }, []);
+
+  // Chapter operations (REQ-7)
+  const addChapter = useCallback(
+    (chapterName?: string) => {
+      const existingChapterKeys = new Set(blocks.map((b) => b.chapterKey).filter(Boolean));
+      const hasExistingChapters = existingChapterKeys.size > 0;
+      const chapterNum = existingChapterKeys.size + 1;
+      const newKey = `chapter_${chapterNum}_${Date.now()}`;
+      const newTitle =
+        chapterName ||
+        (isPl ? `Rozdział ${chapterNum}` : `Chapter ${chapterNum}`);
+
+      if (!hasExistingChapters) {
+        // FIRST TIME creating chapters: auto-split blocks into 2 chapters
+        // Chapter 1 gets the first half, the user's chapter gets the second half
+        const midpoint = Math.ceil(blocks.length / 2);
+        const ts = Date.now();
+        const ch1Key = `chapter_1_${ts}`;
+        const ch1Title = isPl ? 'Rozdział 1' : 'Chapter 1';
+        const ch2Key = `chapter_2_${ts}`;
+        const ch2Title = newTitle || (isPl ? 'Rozdział 2' : 'Chapter 2');
+
+        setBlocks((prev) =>
+          prev.map((b, idx) => ({
+            ...b,
+            chapterKey: idx < midpoint ? ch1Key : ch2Key,
+            chapterTitle: idx < midpoint ? ch1Title : ch2Title,
+          }))
+        );
+      } else {
+        // Chapters already exist: create a new empty chapter
+        // Assign the selected block to it, or the first ungrouped block
+        const ungroupedBlocks = blocks.filter((b) => !b.chapterKey);
+        const targetBlockId =
+          (selectedBlockId && !blocks.find((b) => b.id === selectedBlockId)?.chapterKey
+            ? selectedBlockId
+            : null) || ungroupedBlocks[0]?.id;
+
+        if (targetBlockId) {
+          // Assign the target block to the new chapter
+          setBlocks((prev) =>
+            prev.map((b) =>
+              b.id === targetBlockId
+                ? { ...b, chapterKey: newKey, chapterTitle: newTitle }
+                : b
+            )
+          );
+        } else {
+          // All blocks are in chapters. Move the selected block (or last block)
+          // to the new chapter so it's not empty.
+          const blockToMove = selectedBlockId || blocks[blocks.length - 1]?.id;
+          if (blockToMove) {
+            setBlocks((prev) =>
+              prev.map((b) =>
+                b.id === blockToMove
+                  ? { ...b, chapterKey: newKey, chapterTitle: newTitle }
+                  : b
+              )
+            );
+          }
+        }
+      }
+    },
+    [blocks, isPl, selectedBlockId]
+  );
+
+  const assignChapter = useCallback((blockId: string, chapterKey: string | undefined) => {
+    setBlocks((prev) =>
+      prev.map((b) =>
+        b.id === blockId
+          ? { ...b, chapterKey: chapterKey || undefined, chapterTitle: chapterKey ? b.chapterTitle : undefined }
+          : b
+      )
+    );
+  }, []);
+
+  const renameChapter = useCallback((chapterKey: string, newTitle: string) => {
+    setBlocks((prev) =>
+      prev.map((b) =>
+        b.chapterKey === chapterKey ? { ...b, chapterTitle: newTitle } : b
+      )
+    );
+  }, []);
+
+  // Delete chapter - move all its blocks to ungrouped
+  const deleteChapter = useCallback((chapterKey: string) => {
+    setBlocks((prev) =>
+      prev.map((b) =>
+        b.chapterKey === chapterKey
+          ? { ...b, chapterKey: undefined, chapterTitle: undefined }
+          : b
+      )
+    );
+  }, []);
+
+  // Reorder blocks by swapping positions (for drag & drop)
+  const reorderBlocks = useCallback((activeBlockId: string, overBlockId: string) => {
+    setBlocks((prev) => {
+      const activeIdx = prev.findIndex((b) => b.id === activeBlockId);
+      const overIdx = prev.findIndex((b) => b.id === overBlockId);
+      if (activeIdx === -1 || overIdx === -1) return prev;
+
+      const updated = [...prev];
+      const [moved] = updated.splice(activeIdx, 1);
+      updated.splice(overIdx, 0, moved);
+      return updated.map((b, i) => ({ ...b, orderIndex: i }));
+    });
+  }, []);
+
+  // Move block to a different chapter
+  const moveBlockToChapter = useCallback((blockId: string, targetChapterKey: string | undefined) => {
+    setBlocks((prev) => {
+      const block = prev.find((b) => b.id === blockId);
+      if (!block) return prev;
+
+      // Get chapter title from existing blocks in target chapter
+      const existingInChapter = prev.find(
+        (b) => b.chapterKey === targetChapterKey && targetChapterKey
+      );
+      const chapterTitle = existingInChapter?.chapterTitle || targetChapterKey;
+
+      return prev.map((b) =>
+        b.id === blockId
+          ? {
+              ...b,
+              chapterKey: targetChapterKey || undefined,
+              chapterTitle: targetChapterKey ? chapterTitle : undefined,
+            }
+          : b
+      );
+    });
+  }, []);
+
+  // Regenerate single block with AI instruction (REQ-3)
+  const regenerateBlock = useCallback(
+    async (blockId: string, instruction: string) => {
+      if (!report?.id) return;
+      const block = blocks.find((b) => b.id === blockId);
+      if (!block || block.id.startsWith('tmp_')) return;
+
+      // Mark block as generating
+      setBlocks((prev) =>
+        prev.map((b) => (b.id === blockId ? { ...b, isGenerating: true } : b))
+      );
+
+      try {
+        const response = await Api.post(
+          `/report-builder/${report.id}/generate-section/${blockId}`,
+          { customPrompt: instruction }
+        );
+
+        if (response?.section) {
+          setBlocks((prev) =>
+            prev.map((b) =>
+              b.id === blockId
+                ? {
+                    ...b,
+                    content: response.section.editedContent || response.section.generatedContent,
+                    isGenerated: true,
+                    isGenerating: false,
+                    needsRegeneration: false,
+                  }
+                : b
+            )
+          );
+        }
+      } catch (err) {
+        console.error('Failed to regenerate block:', err);
+        setBlocks((prev) =>
+          prev.map((b) => (b.id === blockId ? { ...b, isGenerating: false } : b))
+        );
+      }
+    },
+    [report?.id, blocks]
+  );
+
+  // Generate a single block (no instruction - uses block's own settings & customPrompt)
+  const generateSingleBlock = useCallback(
+    async (blockId: string) => {
+      if (!report?.id) return;
+      const block = blocks.find((b) => b.id === blockId);
+      if (!block || block.id.startsWith('tmp_')) return;
+
+      setBlocks((prev) =>
+        prev.map((b) => (b.id === blockId ? { ...b, isGenerating: true } : b))
+      );
+
+      try {
+        const response = await Api.post(
+          `/report-builder/${report.id}/generate-section/${blockId}`,
+          {}
+        );
+
+        if (response?.section) {
+          setBlocks((prev) =>
+            prev.map((b) =>
+              b.id === blockId
+                ? {
+                    ...b,
+                    content: response.section.editedContent || response.section.generatedContent,
+                    isGenerated: true,
+                    isGenerating: false,
+                    needsRegeneration: false,
+                  }
+                : b
+            )
+          );
+          toast.success(isPl ? `Wygenerowano: ${block.title}` : `Generated: ${block.title}`);
+        }
+      } catch (err) {
+        console.error('Failed to generate block:', err);
+        toast.error(isPl ? 'Błąd generowania' : 'Generation failed');
+        setBlocks((prev) =>
+          prev.map((b) => (b.id === blockId ? { ...b, isGenerating: false } : b))
+        );
+      }
+    },
+    [report?.id, blocks, isPl]
+  );
+
+  // Save edited content to backend (REQ-6: Inline Editing)
+  const saveBlockContent = useCallback(
+    async (blockId: string, newContent: string) => {
+      // Update local state immediately
+      setBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, content: newContent } : b)));
+
+      // Persist to backend if report exists and block is not temporary
+      if (report?.id && !blockId.startsWith('tmp_')) {
+        try {
+          await Api.put(`/report-builder/${report.id}/sections/${blockId}/content`, {
+            content: newContent,
+            contentFormat: 'markdown',
+          });
+        } catch (err) {
+          console.error('Failed to save block content:', err);
+          toast.error(isPl ? 'Błąd zapisu treści' : 'Failed to save content');
+        }
+      }
+    },
+    [report?.id, isPl]
+  );
+
+  // ===== COMMENTS (Backend CRUD) =====
+
+  const loadBlockComments = useCallback(
+    async (sectionKey: string) => {
+      if (!report?.id) return [];
+      try {
+        const response = await Api.get(`/report-builder/${report.id}/comments?sectionKey=${sectionKey}`);
+        return (response.comments || []).map((c: any) => ({
+          id: c.id,
+          content: c.content,
+          commentType: c.commentType || c.comment_type || 'FEEDBACK',
+          status: c.status || 'OPEN',
+          userId: c.userId || c.user_id,
+          userName: c.userName || c.user_name || 'User',
+          userAvatar: c.userAvatar || c.user_avatar,
+          createdAt: c.createdAt || c.created_at,
+          resolvedAt: c.resolvedAt || c.resolved_at,
+          resolutionNotes: c.resolutionNotes || c.resolution_notes,
+          parentCommentId: c.parentCommentId || c.parent_comment_id,
+        }));
+      } catch (err) {
+        console.error('Failed to load comments:', err);
+        return [];
+      }
+    },
+    [report?.id]
+  );
+
+  const addBlockComment = useCallback(
+    async (sectionKey: string, content: string, commentType: string) => {
+      if (!report?.id) return null;
+      try {
+        const response = await Api.post(`/report-builder/${report.id}/comments`, {
+          sectionKey,
+          content,
+          commentType,
+        });
+        const c = response.comment || response;
+        return {
+          id: c.id,
+          content: c.content,
+          commentType: c.commentType || c.comment_type || commentType,
+          status: c.status || 'OPEN',
+          userId: c.userId || c.user_id,
+          userName: c.userName || c.user_name || 'You',
+          createdAt: c.createdAt || c.created_at || new Date().toISOString(),
+        };
+      } catch (err) {
+        console.error('Failed to add comment:', err);
+        toast.error(isPl ? 'Błąd dodawania komentarza' : 'Failed to add comment');
+        return null;
+      }
+    },
+    [report?.id, isPl]
+  );
+
+  const resolveBlockComment = useCallback(
+    async (commentId: string, notes?: string) => {
+      if (!report?.id) return;
+      try {
+        await Api.post(`/report-builder/${report.id}/comments/${commentId}/resolve`, {
+          resolutionNotes: notes,
+        });
+      } catch (err) {
+        console.error('Failed to resolve comment:', err);
+      }
+    },
+    [report?.id]
+  );
+
+  const dismissBlockComment = useCallback(
+    async (commentId: string) => {
+      if (!report?.id) return;
+      try {
+        await Api.patch(`/report-builder/${report.id}/comments/${commentId}`, {
+          status: 'DISMISSED',
+        });
+      } catch (err) {
+        console.error('Failed to dismiss comment:', err);
+      }
+    },
+    [report?.id]
+  );
+
+  const bulkResolveComments = useCallback(
+    async (commentIds: string[]) => {
+      if (!report?.id) return;
+      try {
+        await Api.post(`/report-builder/${report.id}/comments/bulk-resolve`, {
+          commentIds,
+        });
+      } catch (err) {
+        console.error('Failed to bulk resolve comments:', err);
+      }
+    },
+    [report?.id]
+  );
+
+  /** Get summary of a block's content (for context-aware regeneration) */
+  const getBlockSummary = useCallback(
+    (blockId: string): string | undefined => {
+      const block = blocks.find((b) => b.id === blockId);
+      if (!block?.content) return undefined;
+      const content = block.content;
+      // Truncate to first 200 chars for context
+      return content.length > 200 ? `${content.slice(0, 200)}...` : content;
+    },
+    [blocks]
+  );
+
+  // ==========================================
+  // VERSION HISTORY
+  // ==========================================
+
+  const loadVersions = useCallback(async () => {
+    if (!report?.id) return;
+    setIsLoadingVersions(true);
+    try {
+      const res = await Api.get(`/report-builder/${report.id}/versions`);
+      setVersions(res?.versions || []);
+    } catch (err) {
+      console.error('Failed to load versions:', err);
+    } finally {
+      setIsLoadingVersions(false);
+    }
+  }, [report?.id]);
+
+  const createManualVersion = useCallback(async (summary?: string) => {
+    if (!report?.id) return;
+    try {
+      await Api.post(`/report-builder/${report.id}/versions`, {
+        changeSummary: summary || (isPl ? 'Ręczny zapis' : 'Manual save'),
+      });
+      toast.success(isPl ? 'Wersja zapisana' : 'Version saved');
+      loadVersions();
+    } catch (err) {
+      console.error('Failed to create version:', err);
+      toast.error(isPl ? 'Błąd zapisu wersji' : 'Failed to save version');
+    }
+  }, [report?.id, isPl, loadVersions]);
+
+  const rollbackToVersion = useCallback(async (versionId: string) => {
+    if (!report?.id) return;
+    try {
+      await Api.post(`/report-builder/versions/${versionId}/rollback`);
+      toast.success(isPl ? 'Przywrócono wersję' : 'Version restored');
+      loadReport(report.id);
+      loadVersions();
+    } catch (err) {
+      console.error('Failed to rollback:', err);
+      toast.error(isPl ? 'Błąd przywracania wersji' : 'Failed to restore version');
+    }
+  }, [report?.id, isPl, loadVersions]);
+
+  // ==========================================
+  // AUTO-SAVE (debounced 30s after changes)
+  // ==========================================
+
+  // Track unsaved changes
+  useEffect(() => {
+    if (!report?.id || isTemplateMode) return;
+    setHasUnsavedChanges(true);
+  }, [blocks, intent, styling, reportTitle]);
+
+  // Auto-save with debounce
+  useEffect(() => {
+    if (!report?.id || isTemplateMode || !hasUnsavedChanges || isSaving || isGenerating) return;
+
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    autoSaveTimerRef.current = setTimeout(async () => {
+      try {
+        // Save config (intent + styling)
+        await Api.put(`/report-builder/${report.id}/intent`, { config: { intent, styling } });
+
+        // Save section order/config for persisted blocks
+        const sectionUpdates = blocks
+          .filter((b) => !b.id.startsWith('tmp_') && !b.id.startsWith('preset_') && !b.id.startsWith('tpl_'))
+          .map((b, idx) => ({
+            sectionKey: b.id,
+            enabled: b.enabled,
+            orderIndex: idx,
+            title: b.title,
+            length: b.length,
+            customPrompt: b.customPrompt,
+            blockConfig: { ...b.blockSettings, _sourceContext: b.sourceContext || undefined },
+            chapterKey: b.chapterKey || null,
+            chapterTitle: b.chapterTitle || null,
+          }));
+
+        if (sectionUpdates.length > 0) {
+          await Api.put(`/report-builder/${report.id}/config`, { sections: sectionUpdates });
+        }
+
+        setHasUnsavedChanges(false);
+        setLastSavedAt(new Date().toISOString());
+      } catch (err) {
+        console.error('[AutoSave] Failed:', err);
+      }
+    }, 30000); // 30-second debounce
+
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [report?.id, isTemplateMode, hasUnsavedChanges, isSaving, isGenerating, blocks, intent, styling]);
+
+  // Save report title on blur
+  const handleTitleBlur = useCallback(async () => {
+    setIsEditingTitle(false);
+    if (!report?.id || !reportTitle.trim()) return;
+    try {
+      await Api.patch(`/report-builder/${report.id}/metadata`, { title: reportTitle.trim() });
+    } catch (err) {
+      console.error('Failed to save title:', err);
+    }
+  }, [report?.id, reportTitle]);
 
   // Save & Generate
   const handleSave = async () => {
@@ -798,6 +1616,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   'list',
                   'recommendations',
                   'action_plan',
+                  'initiatives',
                   'appendix',
                   'custom',
                 ] as const
@@ -816,6 +1635,9 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             description: b.description,
             dataSource: b.dataSource,
             includeVisuals: Boolean(b.includeVisuals),
+            blockConfig: { ...b.blockSettings, _sourceContext: b.sourceContext || undefined },
+            chapterKey: b.chapterKey,
+            chapterTitle: b.chapterTitle,
           }));
 
         let saved: any;
@@ -895,6 +1717,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               'list',
               'recommendations',
               'action_plan',
+              'initiatives',
               'appendix',
               'custom',
             ] as const
@@ -910,6 +1733,8 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             customPrompt: b.customPrompt,
             blockTypeId: b.blockTypeId,
             renderKind: b.type === 'matrix' ? 'matrix' : b.renderKind,
+            blockConfig: { ...b.blockSettings, _sourceContext: b.sourceContext || undefined },
+            chapterKey: b.chapterKey,
           });
 
           const newSectionKey = created?.section?.sectionKey;
@@ -933,6 +1758,9 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             title: b.title,
             length: b.length,
             customPrompt: b.customPrompt,
+            blockConfig: { ...b.blockSettings, _sourceContext: b.sourceContext || undefined },
+            chapterKey: b.chapterKey || null,
+            chapterTitle: b.chapterTitle || null,
           }));
         await Api.put(`/report-builder/${report.id}/config`, { sections: sectionUpdates });
       } else {
@@ -982,6 +1810,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                 'list',
                 'recommendations',
                 'action_plan',
+                'initiatives',
                 'appendix',
                 'custom',
               ] as const
@@ -997,6 +1826,8 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               customPrompt: b.customPrompt,
               blockTypeId: b.blockTypeId,
               renderKind: b.type === 'matrix' ? 'matrix' : b.renderKind,
+              blockConfig: { ...b.blockSettings, _sourceContext: b.sourceContext || undefined },
+              chapterKey: b.chapterKey,
             });
             const newSectionKey = created?.section?.sectionKey;
             if (newSectionKey) {
@@ -1028,6 +1859,9 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             title: b.title,
             length: b.length,
             customPrompt: b.customPrompt,
+            blockConfig: { ...b.blockSettings, _sourceContext: b.sourceContext || undefined },
+            chapterKey: b.chapterKey || null,
+            chapterTitle: b.chapterTitle || null,
           }));
 
           const sectionUpdates = [...visibleUpdates, ...disabledUpdates];
@@ -1038,6 +1872,13 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           onSave?.(response.report.id);
         }
       }
+      // Create a version snapshot on manual save
+      if (report?.id) {
+        await createManualVersion(isPl ? 'Ręczny zapis' : 'Manual save');
+        setLastSavedAt(new Date().toISOString());
+        setHasUnsavedChanges(false);
+        toast.success(isPl ? 'Raport zapisany' : 'Report saved');
+      }
     } catch (err) {
       console.error('Failed to save:', err);
     } finally {
@@ -1045,36 +1886,75 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     }
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (mode: 'new_only' | 'modified' | 'all' = 'new_only') => {
     if (isTemplateMode) return;
     if (!report?.id) {
-      // Save first
       await handleSave();
     }
-
     if (!report?.id) return;
 
     setIsGenerating(true);
     try {
-      const response = await Api.post(`/report-builder/${report.id}/generate`, {
-        regenerateAll: false,
-      });
-
-      if (response?.sections) {
-        const updatedBlocks = blocks.map((block) => {
-          const section = response.sections.find(
-            (s: ReportSection) => s.sectionKey === block.id || s.id === block.id
-          );
-          if (section) {
-            return {
-              ...block,
-              content: section.editedContent || section.generatedContent,
-              isGenerated: true,
-            };
+      if (mode === 'modified') {
+        // Only regenerate blocks marked as needsRegeneration
+        const dirtyBlocks = blocks.filter((b) => b.enabled && b.needsRegeneration && !b.id.startsWith('tmp_'));
+        if (dirtyBlocks.length === 0) {
+          toast(isPl ? 'Brak bloków do ponownego wygenerowania' : 'No blocks need regeneration');
+          setIsGenerating(false);
+          return;
+        }
+        // Generate them one by one
+        for (const block of dirtyBlocks) {
+          setBlocks((prev) => prev.map((b) => (b.id === block.id ? { ...b, isGenerating: true } : b)));
+          try {
+            const response = await Api.post(
+              `/report-builder/${report.id}/generate-section/${block.id}`,
+              {}
+            );
+            if (response?.section) {
+              setBlocks((prev) =>
+                prev.map((b) =>
+                  b.id === block.id
+                    ? {
+                        ...b,
+                        content: response.section.editedContent || response.section.generatedContent,
+                        isGenerated: true,
+                        isGenerating: false,
+                        needsRegeneration: false,
+                      }
+                    : b
+                )
+              );
+            }
+          } catch (err) {
+            console.error(`Failed to regenerate block ${block.id}:`, err);
+            setBlocks((prev) => prev.map((b) => (b.id === block.id ? { ...b, isGenerating: false } : b)));
           }
-          return block;
+        }
+        toast.success(isPl ? `Zaktualizowano ${dirtyBlocks.length} bloków` : `Updated ${dirtyBlocks.length} blocks`);
+      } else {
+        // new_only (regenerateAll: false) or all (regenerateAll: true)
+        const response = await Api.post(`/report-builder/${report.id}/generate`, {
+          regenerateAll: mode === 'all',
         });
-        setBlocks(updatedBlocks);
+
+        if (response?.sections) {
+          const updatedBlocks = blocks.map((block) => {
+            const section = response.sections.find(
+              (s: ReportSection) => s.sectionKey === block.id || s.id === block.id
+            );
+            if (section) {
+              return {
+                ...block,
+                content: section.editedContent || section.generatedContent,
+                isGenerated: true,
+                needsRegeneration: false,
+              };
+            }
+            return block;
+          });
+          setBlocks(updatedBlocks);
+        }
       }
     } catch (err) {
       console.error('Failed to generate:', err);
@@ -1112,7 +1992,16 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           <input
             type="text"
             value={reportTitle}
-            onChange={(e) => setReportTitle(e.target.value)}
+            onChange={(e) => {
+              setReportTitle(e.target.value);
+              setIsEditingTitle(true);
+            }}
+            onBlur={handleTitleBlur}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                (e.target as HTMLInputElement).blur();
+              }
+            }}
             placeholder={
               isTemplateMode
                 ? isPl
@@ -1122,53 +2011,165 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   ? 'Tytuł raportu...'
                   : 'Report title...'
             }
-            className="text-lg font-semibold bg-transparent border-none outline-none text-slate-900 dark:text-white placeholder-slate-400 w-80"
+            className="text-lg font-semibold bg-transparent border-none outline-none text-slate-900 dark:text-white placeholder-slate-400 w-80 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded px-2 py-0.5 -ml-2 transition-colors focus:bg-slate-50 dark:focus:bg-slate-800/50"
           />
+
+          {/* Unsaved dot indicator (no text) */}
+          {!isTemplateMode && report?.id && hasUnsavedChanges && (
+            <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0 animate-pulse" title={isPl ? 'Niezapisane zmiany' : 'Unsaved changes'} />
+          )}
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+              hasUnsavedChanges
+                ? 'text-white bg-blue-600 hover:bg-blue-700 shadow-sm'
+                : 'text-slate-500 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 opacity-60'
+            }`}
+            title={hasUnsavedChanges ? (isPl ? 'Zapisz zmiany' : 'Save changes') : (isPl ? 'Zapisano' : 'Saved')}
           >
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {isTemplateMode
-              ? isPl
-                ? 'Zapisz szablon'
-                : 'Save template'
-              : isPl
-                ? 'Zapisz'
-                : 'Save'}
           </button>
 
           {!isTemplateMode && (
-            <>
-              <button className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
-                <Eye className="w-4 h-4" />
-                {isPl ? 'Podgląd' : 'Preview'}
-              </button>
+            <button
+              onClick={() => setShowPreview(true)}
+              className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+            >
+              <Eye className="w-4 h-4" />
+              {isPl ? 'Podgląd' : 'Preview'}
+            </button>
+          )}
 
-              <button
-                onClick={handleGenerate}
-                disabled={isGenerating || blocks.filter((b) => b.enabled).length === 0}
-                className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-              >
-                {isGenerating ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Sparkles className="w-4 h-4" />
-                )}
-                {isPl ? 'Generuj' : 'Generate'}
-              </button>
-            </>
+          {/* Generate button with dropdown */}
+          {!isTemplateMode && (
+            <div className="relative">
+              <div className="flex items-center">
+                <button
+                  onClick={() => handleGenerate('new_only')}
+                  disabled={isGenerating || blocks.filter((b) => b.enabled).length === 0}
+                  className="flex items-center gap-2 pl-5 pr-3 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-l-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                  {isGenerating ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-4 h-4" />
+                  )}
+                  {isPl ? 'Generuj' : 'Generate'}
+                  {(() => {
+                    const dirtyCount = blocks.filter((b) => b.enabled && b.needsRegeneration).length;
+                    return dirtyCount > 0 ? (
+                      <span className="ml-1 min-w-[18px] h-[18px] px-1 bg-white/25 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                        {dirtyCount}
+                      </span>
+                    ) : null;
+                  })()}
+                </button>
+                <button
+                  onClick={() => setShowGenerateMenu((prev) => !prev)}
+                  disabled={isGenerating}
+                  className="flex items-center px-2 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-r-lg hover:from-purple-700 hover:to-purple-800 disabled:opacity-50 disabled:cursor-not-allowed border-l border-white/20"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </div>
+
+              {showGenerateMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowGenerateMenu(false)} />
+                  <div className="absolute right-0 top-full mt-1 z-50 w-64 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div className="p-1.5">
+                      <button
+                        onClick={() => { handleGenerate('new_only'); setShowGenerateMenu(false); }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 text-left transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center flex-shrink-0">
+                          <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                            {isPl ? 'Nowe bloki' : 'New blocks only'}
+                          </div>
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                            {isPl ? 'Generuj tylko puste sekcje' : 'Generate only empty sections'}
+                          </div>
+                        </div>
+                      </button>
+
+                      <button
+                        onClick={() => { handleGenerate('modified'); setShowGenerateMenu(false); }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 text-left transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center flex-shrink-0">
+                          <RefreshCw className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                            {isPl ? 'Zmienione' : 'Modified'}
+                            {(() => {
+                              const cnt = blocks.filter((b) => b.enabled && b.needsRegeneration).length;
+                              return cnt > 0 ? (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded-full font-bold">
+                                  {cnt}
+                                </span>
+                              ) : null;
+                            })()}
+                          </div>
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                            {isPl ? 'Regeneruj bloki z nowymi ustawieniami' : 'Regenerate blocks with new settings'}
+                          </div>
+                        </div>
+                      </button>
+
+                      <div className="mx-3 my-1 border-t border-slate-100 dark:border-slate-700" />
+
+                      <button
+                        onClick={() => { handleGenerate('all'); setShowGenerateMenu(false); }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-left transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0">
+                          <Wand2 className="w-4 h-4 text-red-600 dark:text-red-400" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                            {isPl ? 'Wszystko od nowa' : 'Regenerate all'}
+                          </div>
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                            {isPl ? 'Zastąp wszystkie treści' : 'Replace all existing content'}
+                          </div>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
       </header>
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left - Block Canvas */}
+        {/* Left - Chapter Navigation (TOC) */}
+        <ChapterNavigation
+          blocks={blocks}
+          selectedBlockId={selectedBlockId}
+          onSelectBlock={setSelectedBlockId}
+          onAddChapter={addChapter}
+          onAssignChapter={assignChapter}
+          onRenameChapter={renameChapter}
+          onDeleteChapter={deleteChapter}
+          onReorderBlocks={reorderBlocks}
+          onMoveBlockToChapter={moveBlockToChapter}
+          isPl={isPl}
+          isVisible={showChapterNav && blocks.length > 3}
+          onToggle={() => setShowChapterNav((prev) => !prev)}
+        />
+
+        {/* Center - Block Canvas */}
         <main className="flex-1 overflow-y-auto p-8">
           <div className="max-w-3xl mx-auto space-y-4">
             {/* Source Info */}
@@ -1181,25 +2182,93 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               </div>
             )}
 
-            {/* Blocks */}
-            {blocks.map((block, index) => (
-              <BlockCard
-                key={block.id}
-                block={block}
-                isSelected={selectedBlockId === block.id}
-                onSelect={() => setSelectedBlockId(block.id)}
-                onUpdate={(updates) => updateBlock(block.id, updates)}
-                onRemove={() => removeBlock(block.id)}
-                onMoveUp={() => moveBlock(block.id, 'up')}
-                onMoveDown={() => moveBlock(block.id, 'down')}
-                onAddBelow={() => {
-                  setShowBlockPalette(true);
-                }}
-                canMoveUp={index > 0}
-                canMoveDown={index < blocks.length - 1}
-                isPl={isPl}
-              />
-            ))}
+            {/* Blocks with Chapter Grouping */}
+            {(() => {
+              const useChapters = hasChapters(blocks);
+              if (useChapters) {
+                const chapters = groupBlocksIntoChapters(blocks);
+                return chapters.map((chapter) => (
+                  <div key={chapter.key} className="space-y-4">
+                    {/* Chapter Header */}
+                    {chapter.key !== '__ungrouped__' && (
+                      <div className="flex items-center gap-3 pt-6 pb-2 border-b-2 border-slate-300 dark:border-slate-600">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold">
+                          {chapters.filter((c) => c.key !== '__ungrouped__').indexOf(chapter) + 1}
+                        </div>
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-white flex-1">
+                          {chapter.title}
+                        </h2>
+                        <span className="text-xs text-slate-400">
+                          {chapter.blocks.filter((b) => b.enabled).length} {isPl ? 'bloków' : 'blocks'}
+                        </span>
+                      </div>
+                    )}
+                    {/* Chapter Blocks */}
+                    {chapter.blocks.map((block) => {
+                      const globalIndex = blocks.findIndex((b) => b.id === block.id);
+                      return (
+                        <div key={block.id} id={`block-${block.id}`}>
+                          <BlockCard
+                            block={block}
+                            isSelected={selectedBlockId === block.id}
+                            onSelect={() => setSelectedBlockId(block.id)}
+                            onUpdate={(updates) => updateBlock(block.id, updates)}
+                            onRemove={() => removeBlock(block.id)}
+                            onMoveUp={() => moveBlock(block.id, 'up')}
+                            onMoveDown={() => moveBlock(block.id, 'down')}
+                            onAddBelow={() => setShowBlockPalette(true)}
+                            onRegenerate={(instruction) => regenerateBlock(block.id, instruction)}
+                            onGenerateBlock={() => generateSingleBlock(block.id)}
+                            onSaveContent={(newContent) => saveBlockContent(block.id, newContent)}
+                            canMoveUp={globalIndex > 0}
+                            canMoveDown={globalIndex < blocks.length - 1}
+                            isPl={isPl}
+                            previousBlockSummary={globalIndex > 0 ? getBlockSummary(blocks[globalIndex - 1].id) : undefined}
+                            nextBlockSummary={globalIndex < blocks.length - 1 ? getBlockSummary(blocks[globalIndex + 1].id) : undefined}
+                            reportId={report?.id}
+                            onLoadComments={loadBlockComments}
+                            onAddComment={addBlockComment}
+                            onResolveComment={resolveBlockComment}
+                            onDismissComment={dismissBlockComment}
+                            onBulkResolve={bulkResolveComments}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                ));
+              }
+
+              // No chapters - flat list
+              return blocks.map((block, index) => (
+                <div key={block.id} id={`block-${block.id}`}>
+                  <BlockCard
+                    block={block}
+                    isSelected={selectedBlockId === block.id}
+                    onSelect={() => setSelectedBlockId(block.id)}
+                    onUpdate={(updates) => updateBlock(block.id, updates)}
+                    onRemove={() => removeBlock(block.id)}
+                    onMoveUp={() => moveBlock(block.id, 'up')}
+                    onMoveDown={() => moveBlock(block.id, 'down')}
+                    onAddBelow={() => setShowBlockPalette(true)}
+                    onRegenerate={(instruction) => regenerateBlock(block.id, instruction)}
+                    onGenerateBlock={() => generateSingleBlock(block.id)}
+                    onSaveContent={(newContent) => saveBlockContent(block.id, newContent)}
+                    canMoveUp={index > 0}
+                    canMoveDown={index < blocks.length - 1}
+                    isPl={isPl}
+                    previousBlockSummary={index > 0 ? getBlockSummary(blocks[index - 1].id) : undefined}
+                    nextBlockSummary={index < blocks.length - 1 ? getBlockSummary(blocks[index + 1].id) : undefined}
+                    reportId={report?.id}
+                    onLoadComments={loadBlockComments}
+                    onAddComment={addBlockComment}
+                    onResolveComment={resolveBlockComment}
+                    onDismissComment={dismissBlockComment}
+                    onBulkResolve={bulkResolveComments}
+                  />
+                </div>
+              ));
+            })()}
 
             {/* Add Block Button */}
             <button
@@ -1254,6 +2323,14 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           isCollapsed={isSettingsPanelCollapsed}
           onToggleCollapse={() => setIsSettingsPanelCollapsed((prev) => !prev)}
           reviewPanel={isTemplateMode ? undefined : reviewPanel}
+          currentVersion={report?.version}
+          versions={versions}
+          isLoadingVersions={isLoadingVersions}
+          onCreateVersion={(summary) => createManualVersion(summary)}
+          onRollbackVersion={rollbackToVersion}
+          onLoadVersions={loadVersions}
+          reportStatus={reportStatus}
+          lastSavedAt={lastSavedAt}
         />
       </div>
 
@@ -1266,6 +2343,21 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           sourceType={isTemplateMode ? templateSourceType : sourceType}
         />
       )}
+
+      {/* Preview Modal */}
+      {showPreview && (
+        <ReportPreviewModal
+          blocks={blocks}
+          reportTitle={reportTitle}
+          sourceName={sourceName}
+          styling={styling}
+          intent={intent}
+          isPl={isPl}
+          onClose={() => setShowPreview(false)}
+        />
+      )}
+
+      {/* Version History slide-over removed — now integrated into SettingsPanel tabs */}
     </div>
   );
 };
