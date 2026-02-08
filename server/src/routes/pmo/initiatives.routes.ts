@@ -13,6 +13,8 @@ import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
+import initiativeGenerationService from '../../services/initiativeGenerationService.js';
+import initiativeSectionTypeService from '../../services/initiativeSectionTypeService.js';
 import initiativeTemplateService from '../../services/initiativeTemplateService.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import {
@@ -111,6 +113,123 @@ router.get('/templates/:templateId', async (req: any, res: any) => {
 });
 
 /**
+ * POST /api/initiatives/templates
+ * Create a new initiative template (org-scoped)
+ */
+router.post('/templates', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const template = await initiativeTemplateService.createTemplate(
+      { ...req.body, organizationId: String(orgId) },
+      String(userId)
+    );
+    return res.status(201).json({ template });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to create template', message: err.message });
+  }
+});
+
+/**
+ * PUT /api/initiatives/templates/:templateId
+ * Update an initiative template (org-scoped only)
+ */
+router.put('/templates/:templateId', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { templateId } = req.params;
+    const existing = await initiativeTemplateService.getTemplateById(String(templateId));
+    if (!existing) return res.status(404).json({ error: 'Template not found' });
+    if (existing.isPublic && !existing.organizationId) {
+      return res.status(403).json({ error: 'Cannot edit system templates' });
+    }
+    if (existing.organizationId && existing.organizationId !== String(orgId)) {
+      return res.status(403).json({ error: 'Not authorized to edit this template' });
+    }
+
+    const updated = await initiativeTemplateService.updateTemplate(
+      String(templateId),
+      req.body,
+      req.user?.id
+    );
+    return res.json({ template: updated });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to update template', message: err.message });
+  }
+});
+
+/**
+ * DELETE /api/initiatives/templates/:templateId
+ * Delete an initiative template (org-scoped only, cannot delete system)
+ */
+router.delete('/templates/:templateId', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { templateId } = req.params;
+    const existing = await initiativeTemplateService.getTemplateById(String(templateId));
+    if (!existing) return res.status(404).json({ error: 'Template not found' });
+    if (existing.isPublic && !existing.organizationId) {
+      return res.status(403).json({ error: 'Cannot delete system templates' });
+    }
+    if (existing.organizationId && existing.organizationId !== String(orgId)) {
+      return res.status(403).json({ error: 'Not authorized to delete this template' });
+    }
+
+    await initiativeTemplateService.deleteTemplate(String(templateId));
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to delete template', message: err.message });
+  }
+});
+
+/**
+ * POST /api/initiatives/templates/:templateId/duplicate
+ * Duplicate a template to the org scope
+ */
+router.post('/templates/:templateId/duplicate', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { templateId } = req.params;
+    const source = await initiativeTemplateService.getTemplateById(String(templateId));
+    if (!source) return res.status(404).json({ error: 'Source template not found' });
+
+    const newName = req.body?.name || `${source.name} (Copy)`;
+
+    // Create a duplicate as org-scoped
+    const duplicate = await initiativeTemplateService.createTemplate(
+      {
+        name: newName,
+        category: source.category,
+        description: source.description || undefined,
+        applicableAxes: source.applicableAxes,
+        problemStructured: source.problemStructured || undefined,
+        targetState: source.targetState || undefined,
+        killCriteria: source.killCriteria,
+        suggestedTasks: source.suggestedTasks,
+        suggestedRoles: source.suggestedRoles,
+        typicalTimeline: source.typicalTimeline || undefined,
+        typicalBudgetRange: source.typicalBudgetRange || undefined,
+        isPublic: false,
+        organizationId: String(orgId),
+      },
+      String(userId)
+    );
+    return res.status(201).json({ template: duplicate });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to duplicate template', message: err.message });
+  }
+});
+
+/**
  * PATCH /api/initiatives/:id/template
  * Change initiative template (card scope).
  */
@@ -153,6 +272,172 @@ router.patch(
     }
   }
 );
+
+// ==========================================
+// INITIATIVE SECTION TYPES (Library)
+// ==========================================
+
+/**
+ * GET /api/initiatives/section-types
+ * List all section types (system + org-specific)
+ */
+router.get('/section-types', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    const sectionTypes = await initiativeSectionTypeService.getAllSectionTypes(orgId);
+    return res.json(sectionTypes);
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to fetch section types', message: err.message });
+  }
+});
+
+/**
+ * GET /api/initiatives/section-types/:id
+ * Get single section type by ID
+ */
+router.get('/section-types/:id', async (req: any, res: any) => {
+  try {
+    const sectionType = await initiativeSectionTypeService.getSectionTypeById(req.params.id);
+    if (!sectionType) return res.status(404).json({ error: 'Section type not found' });
+    return res.json(sectionType);
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to fetch section type', message: err.message });
+  }
+});
+
+/**
+ * POST /api/initiatives/section-types
+ * Create a new organization section type
+ */
+router.post('/section-types', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const created = await initiativeSectionTypeService.createSectionType({
+      ...req.body,
+      organizationId: orgId,
+      createdBy: req.user?.id,
+    });
+    return res.status(201).json(created);
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to create section type', message: err.message });
+  }
+});
+
+/**
+ * PUT /api/initiatives/section-types/:id
+ * Update an organization section type
+ */
+router.put('/section-types/:id', async (req: any, res: any) => {
+  try {
+    const updated = await initiativeSectionTypeService.updateSectionType(req.params.id, req.body);
+    return res.json(updated);
+  } catch (err: any) {
+    if (err.message?.includes('system')) {
+      return res.status(403).json({ error: err.message });
+    }
+    return res.status(500).json({ error: 'Failed to update section type', message: err.message });
+  }
+});
+
+/**
+ * DELETE /api/initiatives/section-types/:id
+ * Deactivate a section type (soft delete)
+ */
+router.delete('/section-types/:id', async (req: any, res: any) => {
+  try {
+    await initiativeSectionTypeService.deleteSectionType(req.params.id);
+    return res.json({ success: true });
+  } catch (err: any) {
+    if (err.message?.includes('system')) {
+      return res.status(403).json({ error: err.message });
+    }
+    return res.status(500).json({ error: 'Failed to delete section type', message: err.message });
+  }
+});
+
+/**
+ * POST /api/initiatives/section-types/:id/duplicate
+ * Duplicate a section type to organization
+ */
+router.post('/section-types/:id/duplicate', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const duplicated = await initiativeSectionTypeService.duplicateSectionType(
+      req.params.id,
+      orgId,
+      req.user?.id
+    );
+    return res.status(201).json(duplicated);
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to duplicate section type', message: err.message });
+  }
+});
+
+// ==========================================
+// AI GENERATION ENDPOINTS
+// ==========================================
+
+/**
+ * POST /api/initiatives/generate-section
+ * Generate AI content for a specific initiative section
+ * Body: { sectionKey, initiativeId?, initiativeName, summary?, language?, ... }
+ */
+router.post('/generate-section', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { sectionKey, ...context } = req.body;
+    if (!sectionKey) {
+      return res.status(400).json({ error: 'sectionKey is required' });
+    }
+
+    const result = await initiativeGenerationService.generateSectionContent(
+      sectionKey,
+      { ...context, language: context.language || 'en' },
+      String(orgId)
+    );
+
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(500).json({
+      error: 'Failed to generate section content',
+      message: err.message,
+    });
+  }
+});
+
+/**
+ * POST /api/initiatives/suggest-sections
+ * Get AI suggestions for which sections to enable
+ * Body: { initiativeName, summary?, category?, module? }
+ */
+router.post('/suggest-sections', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const suggestions = await initiativeGenerationService.suggestSections(
+      { ...req.body, language: req.body.language || 'en' },
+      String(orgId)
+    );
+
+    return res.json({ suggestions });
+  } catch (err: any) {
+    return res.status(500).json({
+      error: 'Failed to suggest sections',
+      message: err.message,
+    });
+  }
+});
+
+// ==========================================
+// INITIATIVE CRUD
+// ==========================================
 
 /**
  * POST /api/initiatives

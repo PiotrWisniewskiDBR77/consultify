@@ -21,6 +21,7 @@ import {
   Database,
   FileText,
   Key,
+  LayoutGrid,
   MessageSquare,
   Palette,
   Receipt,
@@ -47,7 +48,8 @@ export type AdminSettingsSection =
   | 'audit'
   | 'report-creator'
   | 'block-library'
-  | 'initiative-creator'
+  | 'initiative-templates'
+  | 'initiative-sections'
   | 'integrations'
   | 'api'
   | 'feedback';
@@ -169,9 +171,16 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
             icon: Blocks,
           },
           {
-            id: 'initiative-creator',
-            label: t('admin.tabs.initiativeCreator', 'Initiative Creator'),
+            id: 'initiative-templates',
+            label: t('admin.tabs.initiativeTemplates', 'Initiative Templates'),
             icon: Sparkles,
+          },
+          {
+            id: 'initiative-sections',
+            label: t('admin.tabs.initiativeSections', 'Section Library'),
+            icon: LayoutGrid,
+            badge: 'new',
+            badgeType: 'new' as const,
           },
         ],
       },

@@ -1164,9 +1164,24 @@ export const Api = {
             try {
               const data = JSON.parse(dataStr);
 
-              // Handle non-text stream events (thinking/progress/state/research)
-              // - legacy: { type: 'thought', ... }
-              // - new: { type: 'dt_state', ... } / { type: 'research_progress', ... }
+              // ── 1) Typed events (thinking/progress/state/research) ──
+              // Route BEFORE error handling so that typed events carrying an
+              // `error` field (e.g. research_progress with TAVILY_API_KEY
+              // missing) go to their own handler and are NOT rendered as
+              // chat-bubble text.
+              if (typeof data.type === 'string' && onThinking && data.type !== 'error') {
+                const hasText =
+                  typeof (data as any).text === 'string' && (data as any).text.length > 0;
+                if (hasText) {
+                  // Count as visible output even though we don't pass it through onChunk().
+                  // (useAIStream will apply it via handleEvent, e.g. replace strategy)
+                  hasAnyVisibleOutput = true;
+                }
+                onThinking(data);
+                continue;
+              }
+
+              // ── 2) Error events (access/auth/stream errors) ──
               if (data.error) {
                 // Errors are visible output (either inline or via friendly message).
                 console.error('Stream error from server:', data.error, data.code);
@@ -1253,22 +1268,6 @@ export const Api = {
                     // ignore
                   }
                 }
-              }
-
-              // Typed events should be routed to the event handler, even if they include `text`.
-              // This is critical for control events like:
-              // - dt_repair_replace: replace the accumulated content, not append it
-              // - resume: restore partial content before continuing
-              if (typeof data.type === 'string' && onThinking && data.type !== 'error') {
-                const hasText =
-                  typeof (data as any).text === 'string' && (data as any).text.length > 0;
-                if (hasText) {
-                  // Count as visible output even though we don't pass it through onChunk().
-                  // (useAIStream will apply it via handleEvent, e.g. replace strategy)
-                  hasAnyVisibleOutput = true;
-                }
-                onThinking(data);
-                continue;
               }
 
               if (typeof data.text === 'string') {

@@ -9,7 +9,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { AdminInitiativeCreatorPanel } from '../../components/Admin/AdminInitiativeCreatorPanel';
+import { AdminInitiativeSectionTypesPanel } from '../../components/Admin/AdminInitiativeSectionTypesPanel';
+import { AdminInitiativeTemplatesPanel } from '../../components/Admin/AdminInitiativeTemplatesPanel';
 import {
   AdminSettingsSection,
   AdminSettingsSidebar,
@@ -62,9 +63,13 @@ const sectionMeta: Record<AdminSettingsSection, { title: string; subtitle: strin
     title: 'Block Library',
     subtitle: 'Define block types (render + prompt) reusable across reports',
   },
-  'initiative-creator': {
-    title: 'Initiative Creator',
-    subtitle: 'Generate initiatives based on analysis',
+  'initiative-templates': {
+    title: 'Initiative Templates',
+    subtitle: 'Manage initiative templates and process blueprints',
+  },
+  'initiative-sections': {
+    title: 'Initiative Section Library',
+    subtitle: 'Define section types (render + prompt) reusable across initiatives',
   },
   integrations: { title: 'Integrations', subtitle: 'Manage third-party integrations' },
   api: { title: 'API', subtitle: 'Manage API keys and access' },
@@ -163,9 +168,9 @@ const AdminTemplatesPanel: React.FC = () => {
   return <TemplatesManager />;
 };
 
-// Admin Initiatives Panel - Uses the custom AdminInitiativeCreatorPanel
+// Admin Initiatives Panel - Uses the Initiative Templates manager
 const AdminInitiativesPanel: React.FC = () => {
-  return <AdminInitiativeCreatorPanel />;
+  return <AdminInitiativeTemplatesPanel />;
 };
 
 export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
@@ -255,8 +260,10 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
         return <AdminTemplatesPanel />;
       case 'block-library':
         return <BlockTypesManager embedded />;
-      case 'initiative-creator':
+      case 'initiative-templates':
         return <AdminInitiativesPanel />;
+      case 'initiative-sections':
+        return <AdminInitiativeSectionTypesPanel />;
       case 'integrations':
         return <IntegrationsManagementPanel />;
       case 'api':
