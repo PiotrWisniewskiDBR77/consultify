@@ -273,14 +273,21 @@ export const logStatusChange = (entityType: string) => {
         } catch (err: any) {
           // Log error but don't fail the request
           const errorMessage = err instanceof Error ? err.message : String(err);
-          logger.error('[PMO Validation] Failed to log status change:', {
-            error: errorMessage,
-            sql: logSql,
-            organizationId: req.organizationId,
-            userId: req.userId,
-            entityType,
-            entityId: req.params.id,
-          });
+          const errorStack = err instanceof Error ? err.stack : undefined;
+          try {
+            logger.error('[PMO Validation] Failed to log status change:', {
+              error: errorMessage,
+              stack: errorStack,
+              sql: logSql,
+              organizationId: req.organizationId || 'unknown',
+              userId: req.userId || null,
+              entityType,
+              entityId: req.params.id,
+            });
+          } catch (logErr) {
+            // Fallback if logging itself fails (e.g., circular reference)
+            logger.error('[PMO Validation] Failed to log status change:', errorMessage);
+          }
         }
       }
 
